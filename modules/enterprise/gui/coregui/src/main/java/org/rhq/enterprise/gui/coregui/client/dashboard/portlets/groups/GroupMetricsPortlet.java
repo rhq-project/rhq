@@ -487,11 +487,11 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
     }
 
     private boolean isAutoGroup() {
-        return ResourceGroupDetailView.AUTO_GROUP_VIEW_PATH.equals(getBaseViewPath());
+        return ResourceGroupDetailView.AUTO_GROUP_VIEW.equals(getBaseViewPath());
     }
 
     private boolean isAutoCluster() {
-        return ResourceGroupDetailView.AUTO_CLUSTER_VIEW_PATH.equals(getBaseViewPath());
+        return ResourceGroupDetailView.AUTO_CLUSTER_VIEW.equals(getBaseViewPath());
     }
 
     public String getBaseViewPath() {

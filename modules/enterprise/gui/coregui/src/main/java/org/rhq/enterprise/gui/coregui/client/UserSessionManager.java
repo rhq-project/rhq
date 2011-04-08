@@ -77,7 +77,7 @@ public class UserSessionManager {
     // Currently: 1 hour
     private static int SESSION_TIMEOUT = 60 * 60 * 1000;
 
-    // After CoreGUI logiut, the delay before the server-side logout. Thisis the period in which we allow in-flight
+    // After CoreGUI logout, the delay before the server-side logout. This is the period in which we allow in-flight
     // async requests to complete. 
     // Currently: 5 seconds
     private static int LOGOUT_DELAY = 5 * 1000; // 5 seconds
@@ -192,12 +192,12 @@ public class UserSessionManager {
                             Log.info("sessionAccess-savingSessionId: " + sessionId);
                             saveSessionId(sessionId);
 
-                            // new sessions get the full 29 minutes to expire
+                            // new sessions get the full SESSION_TIMEOUT period prior to expire
                             Log.info("sessionAccess-schedulingSessionTimeout: " + SESSION_TIMEOUT);
                             coreGuiSessionTimer.schedule(SESSION_TIMEOUT);
                         } else {
 
-                            // existing sessions should expire 29 minutes from the previous access time
+                            // existing sessions should expire SESSION_TIMEOUT minutes from the previous access time
                             long expiryTime = lastAccess + SESSION_TIMEOUT;
                             long expiryMillis = expiryTime - System.currentTimeMillis();
 
@@ -205,7 +205,7 @@ public class UserSessionManager {
                             if (expiryMillis < 1) {
                                 expiryMillis = 1; // expire VERY quickly
                             } else if (expiryMillis > SESSION_TIMEOUT) {
-                                expiryMillis = SESSION_TIMEOUT; // guarantees maximum is 29 minutes
+                                expiryMillis = SESSION_TIMEOUT; // guarantees maximum
                             }
 
                             Log.info("sessionAccess-reschedulingSessionTimeout: " + expiryMillis);

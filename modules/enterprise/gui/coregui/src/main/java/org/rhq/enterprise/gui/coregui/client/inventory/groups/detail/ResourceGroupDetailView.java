@@ -73,8 +73,8 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTyp
  * @author Ian Springer
  */
 public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<ResourceGroupComposite, ResourceGroupTitleBar> {
-    public static final String AUTO_CLUSTER_VIEW_PATH = "ResourceGroup/AutoCluster";
-    public static final String AUTO_GROUP_VIEW_PATH = "Resource/AutoGroup";
+    public static final String AUTO_CLUSTER_VIEW = "ResourceGroup/AutoCluster";
+    public static final String AUTO_GROUP_VIEW = "Resource/AutoGroup";
 
     private Integer groupId;
     private ResourceGroupComposite groupComposite;
@@ -476,11 +476,11 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
     }
 
     private boolean isAutoGroup() {
-        return AUTO_GROUP_VIEW_PATH.equals(getBaseViewPath());
+        return AUTO_GROUP_VIEW.equals(getBaseViewPath());
     }
 
     private boolean isAutoCluster() {
-        return AUTO_CLUSTER_VIEW_PATH.equals(getBaseViewPath());
+        return AUTO_CLUSTER_VIEW.equals(getBaseViewPath());
     }
 
     private void loadResourceType(final ResourceGroupComposite groupComposite, final ViewPath viewPath) {

@@ -299,7 +299,7 @@ public class ResourceTreeView extends LocatableVLayout {
     }
 
     private void renderAutoGroup(ResourceGroup backingGroup) {
-        String viewPath = ResourceGroupDetailView.AUTO_GROUP_VIEW_PATH + "/" + backingGroup.getId();
+        String viewPath = ResourceGroupDetailView.AUTO_GROUP_VIEW + "/" + backingGroup.getId();
         String currentViewPath = History.getToken();
         if (!currentViewPath.startsWith(viewPath)) {
             CoreGUI.goToView(viewPath);

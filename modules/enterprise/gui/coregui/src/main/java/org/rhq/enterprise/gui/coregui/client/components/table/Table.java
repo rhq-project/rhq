@@ -437,12 +437,12 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
                     menu.addItem(item);
                 }
 
-                IMenuButton menuButton = new LocatableIMenuButton(tableAction.getLocatorId(), tableAction.getTitle(),
-                    menu);
+                IMenuButton menuButton = new LocatableIMenuButton(tableAction.getLocatorId(), tableAction.getTitle());
+                menuButton.setMenu(menu);
                 menuButton.setDisabled(true);
-                // this makes it pretty tight, but maybe better than the default, which is pretty wide
-                menuButton.setAutoFit(true);
+                menuButton.setAutoFit(true); // this makes it pretty tight, but maybe better than the default, which is pretty wide
                 menuButton.setOverflow(Overflow.VISIBLE);
+                menuButton.setShowMenuBelow(false);
 
                 tableAction.actionCanvas = menuButton;
                 footer.addMember(menuButton);
@@ -757,7 +757,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             unqualifiedLocatorId = locatorId;
         }
         TableActionInfo info = new TableActionInfo(this.footer.extendLocatorId(unqualifiedLocatorId), title,
-                confirmation, valueMap, tableAction);
+            confirmation, valueMap, tableAction);
         tableActions.add(info);
     }
 

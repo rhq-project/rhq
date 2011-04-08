@@ -67,7 +67,6 @@ public class Operation {
     public Operation(String operation, List<PROPERTY_VALUE> address) {
         this.operation = operation;
         this.address = address;
-        additionalProperties = Collections.emptyMap();
 
     }
 
@@ -76,7 +75,7 @@ public class Operation {
     }
 
     @JsonAnySetter
-    public void addAdditionalProperty(String key, String value) {
+    public void addAdditionalProperty(String key, Object value) {
         if (additionalProperties == null)
             additionalProperties = new HashMap<String, Object>();
         additionalProperties.put(key,value);

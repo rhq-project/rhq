@@ -68,7 +68,7 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
         String parentPath = parentComponent.getPath();
 
         String path;
-        if (cpath.endsWith("/*")) {
+        if (cpath!=null && cpath.endsWith("/*")) {
             path = cpath.substring(0,cpath.length()-2);
             recursive = true;
         }
@@ -105,7 +105,7 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
                     subNode = json.get(subPath);  // TODO clean this up. to get the 'key' in a path from the AS we need to use get()
 
 //                Map<String,Subsystem> subsystemMap = mapper.readValue(subNode,new TypeReference<Map<String,Subsystem>>() {});
-                if (subNode.isArray()) {
+                if (subNode!=null && subNode.isArray()) {
 
                    Iterator<JsonNode> iter = subNode.getElements();
 //                if (subsystemMap==null) {
@@ -139,7 +139,10 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
                 }
                 }
                 else {
+
                     System.out.println("subnode was no array");
+                    if (subNode==null)
+                        log.error("subNode was null for " + path + " and type " + context.getResourceType().getName());
                 }
 
             }

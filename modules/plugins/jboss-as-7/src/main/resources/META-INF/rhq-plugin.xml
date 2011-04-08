@@ -150,7 +150,11 @@
                 <c:simple-property name="jvm"/>
                 <c:simple-property name="deployment" required="false"/> <!-- TODO change structure. Or put below as resource? -->
             </resource-configuration>
-            <service name="Deployment" class="BaseComponent" discovery="SubsystemDiscovery" createDeletePolicy="create-only"/>
+            <service name="Deployment" class="BaseComponent" discovery="SubsystemDiscovery" createDeletePolicy="create-only">
+                <plugin-configuration>
+                    <c:simple-property name="path" default="/deployment/*" readOnly="true"/>
+                </plugin-configuration>
+            </service>
         </server>
         <server name="Host"
                 description="Host involved in this domain"

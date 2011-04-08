@@ -84,6 +84,7 @@ public class OperationJsonTest {
         props.put("someBool",true);
 
         Operation operation = new Operation("add",address,props);
+        operation.addAdditionalProperty("foo","bar");
 
         ObjectMapper mapper = new ObjectMapper();
 
@@ -97,8 +98,22 @@ public class OperationJsonTest {
         assert op.getOperation().equals(operation.getOperation()) : "Operation is " + op.getOperation();
         assert op.getAdditionalProperties().containsKey("someBool") : "Key someBool not found ";
         Object someBool = op.getAdditionalProperties().get("someBool");
-        assert Boolean.valueOf((String) someBool) : "someBool was not true";
+        assert Boolean.valueOf((Boolean) someBool) : "someBool was not true";
 
+    }
+
+    public void addPropsTest() throws Exception {
+        List<PROPERTY_VALUE> address=new ArrayList<PROPERTY_VALUE>(2);
+        PROPERTY_VALUE part = new PROPERTY_VALUE("/server-group","newOne");
+        address.add(part);
+
+        Operation operation = new Operation("add",address);
+        operation.addAdditionalProperty("foo","bar");
+
+        ObjectMapper mapper = new ObjectMapper();
+
+        String result = mapper.writeValueAsString(operation);
+        System.out.println(result);
 
     }
 }

@@ -20,9 +20,11 @@ package org.rhq.modules.plugins.jbossas7;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -32,6 +34,7 @@ import com.sun.org.apache.xerces.internal.impl.xpath.regex.REUtil;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.map.ObjectMapper;
 
 /**
  * Connection for uploading of content.
@@ -53,7 +56,7 @@ public class ASUploadConnection {
     private final Log log = LogFactory.getLog(ASUploadConnection.class);
 
     BufferedOutputStream os = null;
-    BufferedInputStream is = null;
+    InputStream is = null;
     private HttpURLConnection connection;
 
     public OutputStream getOutputStream(String fileName) {
@@ -78,12 +81,35 @@ public class ASUploadConnection {
     }
 
     public JsonNode finishUpload()  {
+        JsonNode tree = null;
         try {
             os.write(buildPostRequestFooter());
             os.flush();
 
-            is = new BufferedInputStream(connection.getInputStream());
-            // TODO read from IN
+            int code = connection.getResponseCode();
+            if (code==500)
+                is = connection.getErrorStream();
+            else
+                is = connection.getInputStream();
+
+            if (is != null) {
+                BufferedReader in = new BufferedReader(new InputStreamReader(is));
+                String line;
+                StringBuilder builder = new StringBuilder();
+                while ((line = in.readLine()) != null) {
+                    builder.append(line);
+                }
+
+                ObjectMapper mapper = new ObjectMapper();
+
+                String s = builder.toString();
+                if (s!=null)
+                    tree = mapper.readTree(s);
+                else
+                    System.out.println("- no result received from InputStream -");
+            }
+            else
+                System.out.println("- no InputStream available -");
 
         } catch (IOException e) {
             e.printStackTrace();  // TODO: Customise this generated block
@@ -93,7 +119,7 @@ public class ASUploadConnection {
             closeQuietly(os);
         }
 
-        return null;
+        return tree;
     }
 
 

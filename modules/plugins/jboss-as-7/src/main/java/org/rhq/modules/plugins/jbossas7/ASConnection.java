@@ -185,6 +185,7 @@ public class ASConnection {
 
             String result = mapper.writeValueAsString(operation);
             System.out.println("Json to send: " + result);
+            System.out.flush();
             mapper.writeValue(out, operation);
 
             out.flush();

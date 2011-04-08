@@ -20,6 +20,9 @@ package org.rhq.modules.plugins.jbossas7;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -27,7 +30,10 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonNode;
 
+import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageType;
+import org.rhq.core.domain.content.transfer.ContentResponseResult;
+import org.rhq.core.domain.content.transfer.DeployIndividualPackageResponse;
 import org.rhq.core.domain.content.transfer.DeployPackageStep;
 import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
 import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
@@ -38,6 +44,10 @@ import org.rhq.core.pluginapi.content.ContentFacet;
 import org.rhq.core.pluginapi.content.ContentServices;
 import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
+import org.rhq.modules.plugins.jbossas7.json.CompositeOperation;
+import org.rhq.modules.plugins.jbossas7.json.Operation;
+import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
+import org.rhq.modules.plugins.jbossas7.json.ReadChildrenNames;
 
 /**
  * Component dealing with server group specific things
@@ -58,17 +68,54 @@ public class ServerGroupComponent extends DomainComponent implements ContentFace
 
         ContentContext cctx = context.getContentContext();
 
-        String uploadUrl = "http://localhost:9990/domain-api/add-content";
+        DeployPackagesResponse response = new DeployPackagesResponse();
 
         for (ResourcePackageDetails details : packages) {
+
             ASUploadConnection uploadConnection = new ASUploadConnection();
-            OutputStream out = uploadConnection.getOutputStream(details.getFileName());
+            String fileName = details.getFileName();
+            OutputStream out = uploadConnection.getOutputStream(fileName);
             contentServices.downloadPackageBits(cctx, details.getKey(), out, false);
-            JsonNode result = uploadConnection.finishUpload();
+            JsonNode uploadResult = uploadConnection.finishUpload();
+            if (uploadResult.has("outcome")) {
+                String outcome = uploadResult.get("outcome").getTextValue();
+                if (outcome.equals("success")) { // Upload was successful, so now add the file to the server group
+                    JsonNode resultNode = uploadResult.get("result");
+                    String hash = resultNode.get("BYTES_VALUE").getTextValue();
+                    ASConnection connection = getASConnection();
+
+                    List<PROPERTY_VALUE> deploymentsAddress = new ArrayList<PROPERTY_VALUE>(1);
+                    deploymentsAddress.add(new PROPERTY_VALUE("deployment", fileName));
+                    Operation step1 = new Operation("add",deploymentsAddress);
+                    step1.addAdditionalProperty("hash", new PROPERTY_VALUE("BYTES_VALUE", hash));
+                    step1.addAdditionalProperty("name", fileName);
+
+                    List<PROPERTY_VALUE> serverGroupAddress = new ArrayList<PROPERTY_VALUE>(1);
+                    serverGroupAddress.add(new PROPERTY_VALUE("server-group",serverGroupFromKey()));
+                    serverGroupAddress.add(new PROPERTY_VALUE("deployment", fileName));
+                    Operation step2 = new Operation("add",serverGroupAddress,"enabled","true");
+
+                    CompositeOperation cop = new CompositeOperation();
+                    cop.addStep(step1);
+                    cop.addStep(step2);
+
+                    JsonNode result = connection.execute(cop);
+                    if (connection.isErrorReply(result)) // TODO get failure message into response
+                        response.addPackageResponse(new DeployIndividualPackageResponse(details.getKey(),ContentResponseResult.FAILURE));
+                    else
+                        response.addPackageResponse(new DeployIndividualPackageResponse(details.getKey(),ContentResponseResult.SUCCESS));
+                }
+                else
+                    response.addPackageResponse(new DeployIndividualPackageResponse(details.getKey(),ContentResponseResult.FAILURE));
+            }
+            else {
+                response.addPackageResponse(
+                        new DeployIndividualPackageResponse(details.getKey(), ContentResponseResult.FAILURE));
+            }
         }
 
 
-        return null;  // TODO: Customise this generated block
+        return response;
     }
 
     @Override
@@ -78,7 +125,32 @@ public class ServerGroupComponent extends DomainComponent implements ContentFace
 
     @Override
     public Set<ResourcePackageDetails> discoverDeployedPackages(PackageType type) {
-        return null;  // TODO: Customise this generated block
+
+        List<PROPERTY_VALUE> serverGroupAddress = new ArrayList<PROPERTY_VALUE>(1);
+        serverGroupAddress.add(new PROPERTY_VALUE("server-group",serverGroupFromKey()));
+
+        Operation op = new ReadChildrenNames(serverGroupAddress,"deployment"); // TODO read full packages not onyl names
+        JsonNode node = connection.execute(op);
+        if (connection.isErrorReply(node))
+            return null;
+
+        JsonNode result = node.get("result");
+        Iterator<JsonNode> iter = result.getElements();
+        Set<ResourcePackageDetails> details = new HashSet<ResourcePackageDetails>();
+        while (iter.hasNext()) {
+            JsonNode jNode = iter.next();
+            String file = jNode.getTextValue();
+            String t;
+            if (file.contains("."))
+                t = file.substring(file.lastIndexOf(".")+1);
+            else
+                t = "-none-";
+
+            ResourcePackageDetails detail = new ResourcePackageDetails(new PackageDetailsKey(file,"1.0",t,"all"));
+            details.add(detail);
+        }
+        return details;
+
     }
 
     @Override
@@ -109,5 +181,11 @@ public class ServerGroupComponent extends DomainComponent implements ContentFace
 
         return report;
 
+    }
+
+
+    private String serverGroupFromKey() {
+        String key1 = context.getResourceKey();
+        return key1.substring(key1.lastIndexOf("/")+1);
     }
 }

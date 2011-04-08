@@ -329,7 +329,11 @@ public class GroupOperationsPortlet extends LocatableVLayout implements CustomSe
     @Override
     public void redraw() {
         super.redraw();
-        loadData();
+        if (!isRefreshing()) {
+            if (groupOperations != null) {
+                groupOperations.refresh();
+            }
+        }
     }
 
     protected void setCurrentlyRefreshing(boolean currentlyRefreshing) {

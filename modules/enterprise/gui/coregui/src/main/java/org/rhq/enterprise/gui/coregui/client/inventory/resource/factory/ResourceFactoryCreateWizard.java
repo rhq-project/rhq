@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.factory;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -79,7 +80,12 @@ public class ResourceFactoryCreateWizard extends AbstractResourceFactoryWizard {
 
             ConfigurationDefinition resourceConfigDef = getChildType().getResourceConfigurationDefinition();
             this.setNewResourceConfigurationDefinition(resourceConfigDef);
-            Map<String, ConfigurationTemplate> templates = resourceConfigDef.getTemplates();
+            Map<String, ConfigurationTemplate> templates;
+            if (resourceConfigDef == null) {
+                templates = new LinkedHashMap<String, ConfigurationTemplate>();
+            } else {
+                templates = resourceConfigDef.getTemplates();
+            }
             steps.add(new ResourceFactoryInfoStep(ResourceFactoryCreateWizard.this, MSG
                 .widget_resourceFactoryWizard_namePrompt(), MSG.widget_resourceFactoryWizard_configTemplatePrompt(),
                 templates));

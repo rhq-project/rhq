@@ -22,9 +22,11 @@ import com.smartgwt.client.widgets.Canvas;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Jay Shaughnessy
@@ -32,6 +34,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
  */
 public class ResourceFactoryConfigurationStep extends AbstractWizardStep {
 
+    private boolean noConfigurationNeeded = false; // if true, it has been determined the user doesn't have to set any config
     private ConfigurationEditor editor;
     AbstractResourceFactoryWizard wizard;
 
@@ -43,20 +46,33 @@ public class ResourceFactoryConfigurationStep extends AbstractWizardStep {
         if (editor == null) {
 
             ConfigurationDefinition def = wizard.getNewResourceConfigurationDefinition();
-            Configuration startingConfig = wizard.getNewResourceStartingConfiguration();
-
-            if (parent != null) {
-                editor = new ConfigurationEditor(parent.extendLocatorId("ResourceFactoryConfig"), def, startingConfig);
+            if (def != null) {
+                Configuration startingConfig = wizard.getNewResourceStartingConfiguration();
+                if (parent != null) {
+                    editor = new ConfigurationEditor(parent.extendLocatorId("ResourceFactoryConfig"), def,
+                        startingConfig);
+                } else {
+                    editor = new ConfigurationEditor("ResourceFactoryConfig", def, startingConfig);
+                }
             } else {
-                editor = new ConfigurationEditor("ResourceFactoryConfig", def, startingConfig);
+                // there is no configuration to edit, just return a static message indicating that there is nothing to do
+                noConfigurationNeeded = true;
+                LocatableVLayout layout = new LocatableVLayout("noConfigMsgLayout");
+                layout.setMargin(Integer.valueOf(20));
+                layout.setWidth100();
+                layout.setHeight(10);
+                HeaderLabel label = new HeaderLabel(MSG.widget_resourceFactoryWizard_editConfigStep_nothingToDo());
+                label.setWidth100();
+                layout.addMember(label);
+                return layout;
             }
         }
         return editor;
     }
 
     public boolean nextPage() {
-        if (editor.validate()) {
-            wizard.setNewResourceConfiguration(editor.getConfiguration());
+        if (noConfigurationNeeded == true || (editor != null && editor.validate())) {
+            wizard.setNewResourceConfiguration((noConfigurationNeeded) ? null : editor.getConfiguration());
             wizard.execute();
             return true;
         }

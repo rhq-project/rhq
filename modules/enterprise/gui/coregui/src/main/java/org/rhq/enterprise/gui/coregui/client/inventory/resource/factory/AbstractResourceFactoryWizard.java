@@ -102,8 +102,10 @@ public abstract class AbstractResourceFactoryWizard extends AbstractWizard {
         if (null == this.newResourceConfigurationDefinition
             || !this.newResourceConfigurationDefinition.equals(newResourceConfigurationDefinition)) {
             this.newResourceConfigurationDefinition = newResourceConfigurationDefinition;
-            this.newResourceStartingConfiguration = this.newResourceConfigurationDefinition.getDefaultTemplate()
-                .createConfiguration();
+            if (newResourceConfigurationDefinition != null) {
+                this.newResourceStartingConfiguration = this.newResourceConfigurationDefinition.getDefaultTemplate()
+                    .createConfiguration();
+            }
         }
     }
 

@@ -24,8 +24,8 @@
     long begin = Long.parseLong(WebUtility.getRequiredRequestParameter(request, "begin"));
 
     ResourceFactoryManagerLocal resourceFactoryManager = LookupUtil.getResourceFactoryManager();
-    PageList<CreateResourceHistory> creates = resourceFactoryManager.findCreateChildResourceHistory(resourceId, begin, end, new PageControl(0,100));
-    PageList<DeleteResourceHistory> deletes = resourceFactoryManager.findDeleteChildResourceHistory(resourceId, begin, end, new PageControl(0,100));
+    PageList<CreateResourceHistory> creates = resourceFactoryManager.findCreateChildResourceHistory(subject, resourceId, begin, end, new PageControl(0, 100));
+    PageList<DeleteResourceHistory> deletes = resourceFactoryManager.findDeleteChildResourceHistory(subject, resourceId, begin, end, new PageControl(0, 100));
 %>
 
 

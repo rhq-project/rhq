@@ -49,11 +49,17 @@ public class DomainComponent extends BaseComponent implements OperationFacet{
             address.add(new PROPERTY_VALUE("host",host));
             address.add(new PROPERTY_VALUE("server-config",myServerName));
             Operation getStatus = new Operation("read-attribute",address,"name","status");
-            JsonNode result = connection.execute(getStatus);
-            if (connection.isErrorReply(result))
+            JsonNode result = null;
+            try {
+                result = connection.execute(getStatus);
+            } catch (Exception e) {
+                log.warn(e.getMessage());
+                return AvailabilityType.DOWN;
+            }
+            if (ASConnection.isErrorReply(result))
                 return AvailabilityType.DOWN;
 
-            String msg = connection.getSuccessDescription(result);
+            String msg = ASConnection.getSuccessDescription(result);
             if (msg.contains("STARTED"))
                 return AvailabilityType.UP;
             else
@@ -126,11 +132,11 @@ public class DomainComponent extends BaseComponent implements OperationFacet{
         if (operation!=null) {
             JsonNode result = connection.execute(operation);
 
-            if (connection.isErrorReply(result)) {
-                operationResult.setErrorMessage(connection.getFailureDescription(result));
+            if (ASConnection.isErrorReply(result)) {
+                operationResult.setErrorMessage(ASConnection.getFailureDescription(result));
             }
             else {
-                operationResult.setSimpleResult(connection.getSuccessDescription(result));
+                operationResult.setSimpleResult(ASConnection.getSuccessDescription(result));
             }
         }
         else {

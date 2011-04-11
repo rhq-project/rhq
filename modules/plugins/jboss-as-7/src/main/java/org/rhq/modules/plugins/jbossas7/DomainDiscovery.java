@@ -69,7 +69,7 @@ public class DomainDiscovery implements ResourceDiscoveryComponent<BaseComponent
         // A domain has a server group so check for it.
         boolean found = false;
         JsonNode json = connection.getLevelData(null,null);
-        if (!connection.isErrorReply(json)) {
+        if (!ASConnection.isErrorReply(json)) {
 
             Iterator<String> fields = json.getFieldNames();
             while (fields.hasNext()) {

@@ -137,7 +137,7 @@ public class ASConnection {
     }
 
 
-    boolean isErrorReply(JsonNode in) {
+    static boolean isErrorReply(JsonNode in) {
         if (in == null)
             return true;
 
@@ -154,7 +154,7 @@ public class ASConnection {
                         reasonNode = in.findValue("host-failure-descriptions"); // TODO JBAS-9182
 
                     String reason = reasonNode.getTextValue();
-                    log.info(reason);
+//                    log.info(reason);
                     return true;
                 }
 
@@ -262,7 +262,7 @@ public class ASConnection {
         return url2;
     }
 
-    public String getFailureDescription(JsonNode jsonNode) {
+    public static String getFailureDescription(JsonNode jsonNode) {
         if (jsonNode==null)
             return "getFailureDescription: -input was null-";
         JsonNode node = jsonNode.findValue("failure-description");
@@ -273,7 +273,7 @@ public class ASConnection {
         return node.getValueAsText();
     }
 
-    public String getSuccessDescription(JsonNode jsonNode) {
+    public static String getSuccessDescription(JsonNode jsonNode) {
         if (jsonNode==null)
             return "No message found";
         JsonNode node = jsonNode.findValue("result");

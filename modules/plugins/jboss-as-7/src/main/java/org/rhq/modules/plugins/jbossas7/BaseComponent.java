@@ -62,7 +62,7 @@ import com.sun.org.apache.xml.internal.security.utils.Base64;
 
 public class BaseComponent implements ResourceComponent, MeasurementFacet, ConfigurationFacet
 {
-    private final Log log = LogFactory.getLog(this.getClass());
+    final Log log = LogFactory.getLog(this.getClass());
 
     ResourceContext context;
     Configuration conf;
@@ -321,9 +321,9 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
             NameValuePair nvp = new NameValuePair(entry.getKey(),entry.getValue().getStringValue());
             Operation writeAttribute = new Operation("write-attribute",pathToAddress(getResultingPath()),nvp);
             JsonNode result= connection.execute(writeAttribute);
-            if(connection.isErrorReply(result)) {
+            if(ASConnection.isErrorReply(result)) {
                 report.setStatus(ConfigurationUpdateStatus.FAILURE);
-                report.setErrorMessage(connection.getFailureDescription(result));
+                report.setErrorMessage(ASConnection.getFailureDescription(result));
             }
         }
 

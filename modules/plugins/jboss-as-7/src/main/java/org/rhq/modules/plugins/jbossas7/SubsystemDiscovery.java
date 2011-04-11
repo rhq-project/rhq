@@ -98,7 +98,7 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
                 childType = childType.substring(1);
             json = connection.execute(new ReadChildrenNames(addr, childType));
         }
-        if (!connection.isErrorReply(json)) {
+        if (!ASConnection.isErrorReply(json)) {
             if (recursive) {
                 int i = path.lastIndexOf("/");
                 String subPath = path.substring(i+1);
@@ -130,13 +130,12 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
                         String name = resKey.substring(resKey.lastIndexOf("/") + 1);
 
 
-
                         DiscoveredResourceDetails detail = new DiscoveredResourceDetails(
                                 context.getResourceType(), // DataType
                                 resKey, // Key
                                 name, // Name
                                 null, // Version
-                                "TODO", // subsystem.description, // Description
+                                "TODO", // subsystem.description, // TODO Description
                                 config2,
                                 null);
                         details.add(detail);

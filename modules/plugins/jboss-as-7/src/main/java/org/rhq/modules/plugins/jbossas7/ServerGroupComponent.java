@@ -55,6 +55,8 @@ import org.rhq.modules.plugins.jbossas7.json.ReadChildrenNames;
  */
 public class ServerGroupComponent extends DomainComponent implements ContentFacet, CreateChildResourceFacet {
 
+    private static final String SUCCESS = "success";
+    private static final String OUTCOME = "outcome";
     private final Log log = LogFactory.getLog(ServerGroupComponent.class);
 
     @Override
@@ -77,9 +79,9 @@ public class ServerGroupComponent extends DomainComponent implements ContentFace
             OutputStream out = uploadConnection.getOutputStream(fileName);
             contentServices.downloadPackageBits(cctx, details.getKey(), out, false);
             JsonNode uploadResult = uploadConnection.finishUpload();
-            if (uploadResult.has("outcome")) {
-                String outcome = uploadResult.get("outcome").getTextValue();
-                if (outcome.equals("success")) { // Upload was successful, so now add the file to the server group
+            if (uploadResult.has(OUTCOME)) {
+                String outcome = uploadResult.get(OUTCOME).getTextValue();
+                if (outcome.equals(SUCCESS)) { // Upload was successful, so now add the file to the server group
                     JsonNode resultNode = uploadResult.get("result");
                     String hash = resultNode.get("BYTES_VALUE").getTextValue();
                     ASConnection connection = getASConnection();
@@ -100,7 +102,7 @@ public class ServerGroupComponent extends DomainComponent implements ContentFace
                     cop.addStep(step2);
 
                     JsonNode result = connection.execute(cop);
-                    if (connection.isErrorReply(result)) // TODO get failure message into response
+                    if (ASConnection.isErrorReply(result)) // TODO get failure message into response
                         response.addPackageResponse(new DeployIndividualPackageResponse(details.getKey(),ContentResponseResult.FAILURE));
                     else
                         response.addPackageResponse(new DeployIndividualPackageResponse(details.getKey(),ContentResponseResult.SUCCESS));
@@ -131,7 +133,7 @@ public class ServerGroupComponent extends DomainComponent implements ContentFace
 
         Operation op = new ReadChildrenNames(serverGroupAddress,"deployment"); // TODO read full packages not onyl names
         JsonNode node = connection.execute(op);
-        if (connection.isErrorReply(node))
+        if (ASConnection.isErrorReply(node))
             return null;
 
         JsonNode result = node.get("result");
@@ -168,16 +170,49 @@ public class ServerGroupComponent extends DomainComponent implements ContentFace
         ContentServices contentServices = cctx.getContentServices();
         String resourceTypeName = report.getResourceType().getName();
 
-        ASUploadConnection connection = new ASUploadConnection();
-        OutputStream out = connection.getOutputStream(details.getFileName());
+        ASUploadConnection uploadConnection = new ASUploadConnection();
+        OutputStream out = uploadConnection.getOutputStream(details.getFileName());
 //        contentServices.downloadPackageBits(cctx,details.getKey(),out,false);
         contentServices.downloadPackageBitsForChildResource(cctx, resourceTypeName, details.getKey(), out);
 
-        JsonNode result = connection.finishUpload();
-        System.out.println(result);
+        JsonNode uploadResult = uploadConnection.finishUpload();
+        System.out.println(uploadResult);
+        if (ASConnection.isErrorReply(uploadResult)) {
+            report.setStatus(CreateResourceStatus.FAILURE);
+            report.setErrorMessage(ASConnection.getFailureDescription(uploadResult));
 
+            return report;
+        }
 
-        report.setStatus(CreateResourceStatus.SUCCESS)       ;
+        String fileName = report.getUserSpecifiedResourceName();
+
+        JsonNode resultNode = uploadResult.get("result");
+        String hash = resultNode.get("BYTES_VALUE").getTextValue();
+        ASConnection connection = getASConnection();
+
+        List<PROPERTY_VALUE> deploymentsAddress = new ArrayList<PROPERTY_VALUE>(1);
+        deploymentsAddress.add(new PROPERTY_VALUE("deployment", fileName));
+        Operation step1 = new Operation("add",deploymentsAddress);
+        step1.addAdditionalProperty("hash", new PROPERTY_VALUE("BYTES_VALUE", hash));
+        step1.addAdditionalProperty("name", fileName);
+
+        List<PROPERTY_VALUE> serverGroupAddress = new ArrayList<PROPERTY_VALUE>(1);
+        serverGroupAddress.add(new PROPERTY_VALUE("server-group",serverGroupFromKey()));
+        serverGroupAddress.add(new PROPERTY_VALUE("deployment", fileName));
+        Operation step2 = new Operation("add",serverGroupAddress,"enabled","true");
+
+        CompositeOperation cop = new CompositeOperation();
+        cop.addStep(step1);
+        cop.addStep(step2);
+
+        JsonNode result = connection.execute(cop);
+        if (ASConnection.isErrorReply(result)) {
+            report.setErrorMessage(ASConnection.getFailureDescription(resultNode));
+            report.setStatus(CreateResourceStatus.FAILURE);
+        }
+        else {
+            report.setStatus(CreateResourceStatus.SUCCESS);
+        }
 
         return report;
 

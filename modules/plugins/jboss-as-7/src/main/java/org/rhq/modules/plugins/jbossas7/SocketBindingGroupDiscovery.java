@@ -64,7 +64,7 @@ public class SocketBindingGroupDiscovery implements ResourceDiscoveryComponent<B
 
 
         JsonNode json = connection.getLevelData(null, null);
-        if (!connection.isErrorReply(json)) {
+        if (!ASConnection.isErrorReply(json)) {
             Domain domain = mapper.readValue(json, new TypeReference<Domain>() {});
 
             for (Map.Entry<String,String> entry: domain.socketBindingGroup.entrySet()) {

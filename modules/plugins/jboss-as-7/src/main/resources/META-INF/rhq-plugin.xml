@@ -150,10 +150,20 @@
                 <c:simple-property name="jvm"/>
                 <c:simple-property name="deployment" required="false"/> <!-- TODO change structure. Or put below as resource? -->
             </resource-configuration>
-            <service name="Deployment" class="BaseComponent" discovery="SubsystemDiscovery" createDeletePolicy="create-only">
+
+            <service name="Deployment" class="BaseComponent" discovery="SubsystemDiscovery" createDeletePolicy="create-only" creationDataType="content">
                 <plugin-configuration>
                     <c:simple-property name="path" default="/deployment/*" readOnly="true"/>
                 </plugin-configuration>
+
+                <content name="deployment" category="deployable" isCreationType="true" description="Deployments on this domain">
+                    <configuration>
+                       <c:group name="deployment" displayName="Deployment Options">
+                           <c:simple-property name="runtimeName" required="true"/>
+                       </c:group>
+                    </configuration>
+                </content>
+
             </service>
         </server>
         <server name="Host"
@@ -489,6 +499,21 @@
             <plugin-configuration>
                 <c:simple-property name="path" readOnly="true" default="data-source/*"/>
             </plugin-configuration>
+
+            <resource-configuration>
+                <c:map-property name="configuration">
+                    <c:simple-property name="connection-url"/>
+                    <c:simple-property name="driver-class"/>
+                    <c:simple-property name="jndi-name"/>
+                    <c:simple-property name="driver"/>
+                    <c:simple-property name="pool-name"/>
+                    <c:simple-property name="use-java-context" type="boolean"/>
+                    <c:simple-property name="enabled" type="boolean"/>
+                    <c:simple-property name="user-name"/>
+                    <c:simple-property name="password"/>
+                    <!-- TODO more when they become available in the AS -->
+                </c:map-property>
+            </resource-configuration>
         </service>
 
         <service name="XADataSource"

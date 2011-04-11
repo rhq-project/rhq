@@ -76,11 +76,14 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
             path = cpath;
 
         if (parentPath!=null && !parentPath.isEmpty()) {
-            if (parentPath.endsWith("/") || path.startsWith("/"))
+            if (recursive)
+                path = parentPath;
+            else if (parentPath.endsWith("/") || path.startsWith("/"))
                 path = parentPath + path;
             else
                 path = parentPath + "/" + path;
         }
+
         System.out.println("total path: [" + path + "]");
 
 
@@ -105,7 +108,7 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
                     subNode = json.get(subPath);  // TODO clean this up. to get the 'key' in a path from the AS we need to use get()
 
 //                Map<String,Subsystem> subsystemMap = mapper.readValue(subNode,new TypeReference<Map<String,Subsystem>>() {});
-                if (subNode!=null && subNode.isArray()) {
+                if (subNode!=null && subNode.isContainerNode()){
 
                    Iterator<JsonNode> iter = subNode.getElements();
 //                if (subsystemMap==null) {
@@ -123,13 +126,19 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
                     PropertySimple pathProp = new PropertySimple("path",newPath);
                     config2.put(pathProp);
 
-                    String resKey = context.getParentResourceContext().getResourceKey() + "/" + val;
+                    String resKey;
+                            String childType = cpath.substring(0, cpath.length() - 2);
+                            if (childType.startsWith("/"))
+                                childType = childType.substring(1);
+
+                            resKey = context.getParentResourceContext().getResourceKey() + "/" +childType + "/" + val;
                     String name = resKey.substring(resKey.lastIndexOf("/") + 1);
+
 
 
                     DiscoveredResourceDetails detail = new DiscoveredResourceDetails(
                             context.getResourceType(), // DataType
-                            path + "/" + val, // Key
+                            resKey, // Key
                             name, // Name
                             null, // Version
                             "TODO", // subsystem.description, // Description

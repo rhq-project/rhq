@@ -231,12 +231,10 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
         //       try to find a pid file under the server root, and then check if the
         //       process is running.
         boolean available;
-        Configuration pluginConfig = resourceContext.getPluginConfiguration();
-        PropertySimple disableCertValidation = pluginConfig.getSimple("disableCertificateValidation");
         try {
             if (this.url != null) {
                 long t1 = System.currentTimeMillis();
-                available = WWWUtils.isAvailable(this.url, disableCertValidation.getBooleanValue());
+                available = WWWUtils.isAvailable(this.url);
                 availPingTime = System.currentTimeMillis() - t1;
             } else {
                 available = getSNMPSession().ping();

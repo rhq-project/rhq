@@ -49,14 +49,14 @@ public abstract class WWWUtils {
          * @return true if connecting to the URL succeeds, or false otherwise
          */
 
-    public static boolean isAvailable(URL httpURL, boolean disableCertValidation) {
+    public static boolean isAvailable(URL httpURL) {
         String failMsg = "URL [" + httpURL + "] returned unavailable";
         try {
             HttpURLConnection connection = (HttpURLConnection) httpURL.openConnection();
             connection.setRequestMethod("HEAD");
             connection.setConnectTimeout(3000);
 
-            if ((connection instanceof HttpsURLConnection) && disableCertValidation) {
+            if (connection instanceof HttpsURLConnection) {
                 disableCertificateVerification((HttpsURLConnection) connection);
             }
 

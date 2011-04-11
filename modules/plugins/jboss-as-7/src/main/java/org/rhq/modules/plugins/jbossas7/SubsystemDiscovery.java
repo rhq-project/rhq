@@ -107,51 +107,48 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
                 if (subNode==null || subNode.isNull())
                     subNode = json.get(subPath);  // TODO clean this up. to get the 'key' in a path from the AS we need to use get()
 
-//                Map<String,Subsystem> subsystemMap = mapper.readValue(subNode,new TypeReference<Map<String,Subsystem>>() {});
                 if (subNode!=null && subNode.isContainerNode()){
 
-                   Iterator<JsonNode> iter = subNode.getElements();
-//                if (subsystemMap==null) {
-//                    log.warn("SubsystemMap was null for path [" + path + "] and subPath ["+ subPath + "] and subNode [" + subNode + "]");
-//                    return Collections.emptySet();
-//                }
+                    Iterator<JsonNode> iter = subNode.getElements();
                     while (iter.hasNext()) {
 
                         JsonNode node = iter.next();
-                    String val = node.getTextValue();
+                        String val = node.getTextValue();
 
 
-                    String newPath = cpath.replaceAll("\\*",val);
-                    Configuration config2 = context.getDefaultPluginConfiguration();
-                    PropertySimple pathProp = new PropertySimple("path",newPath);
-                    config2.put(pathProp);
+                        String newPath = cpath.replaceAll("\\*",val);
+                        Configuration config2 = context.getDefaultPluginConfiguration();
+                        PropertySimple pathProp = new PropertySimple("path",newPath);
+                        config2.put(pathProp);
 
-                    String resKey;
-                            String childType = cpath.substring(0, cpath.length() - 2);
-                            if (childType.startsWith("/"))
-                                childType = childType.substring(1);
+                        String resKey;
+                        String childType = cpath.substring(0, cpath.length() - 2);
+                        if (childType.startsWith("/"))
+                            childType = childType.substring(1);
 
-                            resKey = context.getParentResourceContext().getResourceKey() + "/" +childType + "/" + val;
-                    String name = resKey.substring(resKey.lastIndexOf("/") + 1);
+                        resKey = context.getParentResourceContext().getResourceKey() + "/" +childType + "/" + val;
+                        String name = resKey.substring(resKey.lastIndexOf("/") + 1);
 
 
 
-                    DiscoveredResourceDetails detail = new DiscoveredResourceDetails(
-                            context.getResourceType(), // DataType
-                            resKey, // Key
-                            name, // Name
-                            null, // Version
-                            "TODO", // subsystem.description, // Description
-                            config2,
-                            null);
-                    details.add(detail);
-                }
+                        DiscoveredResourceDetails detail = new DiscoveredResourceDetails(
+                                context.getResourceType(), // DataType
+                                resKey, // Key
+                                name, // Name
+                                null, // Version
+                                "TODO", // subsystem.description, // Description
+                                config2,
+                                null);
+                        details.add(detail);
+                    }
                 }
                 else {
 
-                    System.out.println("subnode was no array");
-                    if (subNode==null)
+                    if (subNode==null) {
                         log.error("subNode was null for " + path + " and type " + context.getResourceType().getName());
+                    }
+                    else if (!subNode.isNull())
+                        log.info("subnode was no container");
                 }
 
             }

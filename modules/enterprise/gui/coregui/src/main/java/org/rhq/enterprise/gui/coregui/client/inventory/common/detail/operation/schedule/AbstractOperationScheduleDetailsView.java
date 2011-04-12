@@ -277,9 +277,13 @@ public abstract class AbstractOperationScheduleDetailsView extends
 
         StaticTextItem notesItem = (StaticTextItem) this.notesForm
             .getField(AbstractOperationScheduleDataSource.Field.DESCRIPTION);
-        // Notes field is user-editable, so escape HTML to prevent an XSS attack.
-        notesItem.setOutputAsHTML(true);
-        notesItem.setValue(getForm().getValue(AbstractOperationScheduleDataSource.Field.DESCRIPTION));
+        // Notes field is user-editable, so escape HTML to prevent an XSS attack. Unless empty, then don't to prevent
+        // displaying &nbsp; as the value.
+        String notesValue = getForm().getValue(AbstractOperationScheduleDataSource.Field.DESCRIPTION).toString();
+        if (null != notesValue && !notesValue.isEmpty()) {
+            notesItem.setOutputAsHTML(true);
+        }
+        notesItem.setValue(notesValue);
 
         this.parameters = (Configuration) record
             .getAttributeAsObject(AbstractOperationScheduleDataSource.Field.PARAMETERS);

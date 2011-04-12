@@ -75,11 +75,11 @@ public abstract class AbstractAlertDefinitionsView extends TableSection<Abstract
         ListGridField descriptionField = listGrid.getField(AbstractAlertDefinitionsDataSource.FIELD_DESCRIPTION);
         descriptionField.setCellFormatter(new EscapedHtmlCellFormatter());
 
-        boolean permitted = isAllowedToModifyAlertDefinitions();
+        final boolean isAuthorized = isAuthorizedToModifyAlertDefinitions();
 
         addTableAction(extendLocatorId("New"), MSG.common_button_new(), null, new AbstractTableAction() {
             public boolean isEnabled(ListGridRecord[] selection) {
-                return super.isEnabled(selection) && isAllowedToModifyAlertDefinitions();
+                return super.isEnabled(selection) && isAuthorized;
             }
 
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
@@ -90,7 +90,7 @@ public abstract class AbstractAlertDefinitionsView extends TableSection<Abstract
         addTableAction(extendLocatorId("Enable"), MSG.common_button_enable(), MSG
             .view_alert_definitions_enable_confirm(), new AbstractTableAction(TableActionEnablement.ANY) {
             public boolean isEnabled(ListGridRecord[] selection) {
-                return super.isEnabled(selection) && isAllowedToModifyAlertDefinitions();
+                return super.isEnabled(selection) && isAuthorized;
             }
 
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
@@ -101,7 +101,7 @@ public abstract class AbstractAlertDefinitionsView extends TableSection<Abstract
         addTableAction(extendLocatorId("Disable"), MSG.common_button_disable(), MSG
             .view_alert_definitions_disable_confirm(), new AbstractTableAction(TableActionEnablement.ANY) {
             public boolean isEnabled(ListGridRecord[] selection) {
-                return super.isEnabled(selection) && isAllowedToModifyAlertDefinitions();
+                return super.isEnabled(selection) && isAuthorized;
             }
 
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
@@ -112,7 +112,7 @@ public abstract class AbstractAlertDefinitionsView extends TableSection<Abstract
         addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), MSG
             .view_alert_definitions_delete_confirm(), new AbstractTableAction(TableActionEnablement.ANY) {
             public boolean isEnabled(ListGridRecord[] selection) {
-                return super.isEnabled(selection) && isAllowedToModifyAlertDefinitions();
+                return super.isEnabled(selection) && isAuthorized;
             }
 
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
@@ -156,7 +156,7 @@ public abstract class AbstractAlertDefinitionsView extends TableSection<Abstract
             singleAlertDefinitionView.setAlertDefinition(newAlertDef);
             singleAlertDefinitionView.makeEditable();
         } else {
-            final AlertDefinitionCriteria criteria = new AlertDefinitionCriteria();
+            final AlertDefinitionCriteria criteria = getDetailCriteria();
             criteria.addFilterId(id);
             criteria.fetchGroupAlertDefinition(true);
             criteria.fetchConditions(true);
@@ -179,13 +179,21 @@ public abstract class AbstractAlertDefinitionsView extends TableSection<Abstract
         return singleAlertDefinitionView;
     }
 
+    /**
+     * Override to add any criteria that must be present when fetching the alert definition detail.
+     * @return
+     */
+    protected AlertDefinitionCriteria getDetailCriteria() {
+        return new AlertDefinitionCriteria();
+    }
+
     protected abstract ResourceType getResourceType();
 
     protected abstract Criteria getCriteria();
 
     protected abstract AbstractAlertDefinitionsDataSource getAlertDefinitionDataSource();
 
-    protected abstract boolean isAllowedToModifyAlertDefinitions();
+    protected abstract boolean isAuthorizedToModifyAlertDefinitions();
 
     protected abstract void newButtonPressed(ListGridRecord[] selection);
 

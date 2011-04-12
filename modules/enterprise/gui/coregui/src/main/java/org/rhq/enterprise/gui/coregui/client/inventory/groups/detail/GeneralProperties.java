@@ -38,7 +38,7 @@ import org.rhq.enterprise.gui.coregui.client.components.form.CheckboxEditableFor
 import org.rhq.enterprise.gui.coregui.client.components.form.EditableFormItem;
 import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.components.form.StringLengthValidator;
-import org.rhq.enterprise.gui.coregui.client.components.form.EditableFormItem.ValueEditedHandler;
+import org.rhq.enterprise.gui.coregui.client.components.form.SimpleEditableFormItem.ValueEditedHandler;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
@@ -199,10 +199,11 @@ public class GeneralProperties extends LocatableVLayout {
 
         FormItem recursiveItem;
         if (isEditable) {
-            CheckboxEditableFormItem editableRecursiveItem = new CheckboxEditableFormItem("recursive", MSG.view_group_summary_recursive());
+            CheckboxEditableFormItem editableRecursiveItem = new CheckboxEditableFormItem("recursive", MSG
+                .view_group_summary_recursive());
             editableRecursiveItem.setValueEditedHandler(new ValueEditedHandler() {
                 public void editedValue(Object newValue) {
-                    boolean isRecursive = ((newValue != null) && (Boolean)newValue);
+                    boolean isRecursive = ((newValue != null) && (Boolean) newValue);
                     resourceGroupService.setRecursive(group.getId(), isRecursive, new AsyncCallback<Void>() {
                         public void onSuccess(Void result) {
                             CoreGUI.getMessageCenter().notify(
@@ -241,8 +242,7 @@ public class GeneralProperties extends LocatableVLayout {
             GroupDefinition groupDefinition = group.getGroupDefinition();
             String groupDefinitionUrl = LinkManager.getGroupDefinitionLink(groupDefinition.getId());
             String groupDefinitionName = StringUtility.escapeHtml(groupDefinition.getName());
-            groupDefinitionItem
-                .setValue("<a href=\"" + groupDefinitionUrl + "\">" + groupDefinitionName + "</a>");
+            groupDefinitionItem.setValue("<a href=\"" + groupDefinitionUrl + "\">" + groupDefinitionName + "</a>");
             formItems.add(groupDefinitionItem);
         }
 

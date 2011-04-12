@@ -18,16 +18,13 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.templates;
 
+import java.util.Set;
+
 import com.smartgwt.client.data.Criteria;
 
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.criteria.MeasurementScheduleCriteria;
-import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
-import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMeasurementScheduleListView;
-
-import java.util.EnumSet;
-import java.util.Set;
 
 /**
  * A view for viewing and updating the default metric schedules ("metric templates") for a particular ResourceType.
@@ -42,25 +39,15 @@ public class TemplateSchedulesView extends AbstractMeasurementScheduleListView {
     private boolean updateExistingSchedules = true;
     private Set<Permission> globalPermissions;
 
-    public TemplateSchedulesView(String locatorId, int resourceTypeId) {
+    public TemplateSchedulesView(String locatorId, int resourceTypeId, Set<Permission> globalPermissions) {
         super(locatorId, TITLE, new TemplateSchedulesDataSource(resourceTypeId), createCriteria(resourceTypeId),
             EXCLUDED_FIELD_NAMES);
 
-        this.globalPermissions = EnumSet.noneOf(Permission.class);
-        loadGlobalPermissions();
+        this.globalPermissions = globalPermissions;
     }
 
     public boolean hasManageMeasurementsPermission() {
-        loadGlobalPermissions();
         return globalPermissions.contains(Permission.MANAGE_INVENTORY);
-    }
-
-    private void loadGlobalPermissions() {
-        new PermissionsLoader().loadExplicitGlobalPermissions(new PermissionsLoadedListener() {
-            public void onPermissionsLoaded(Set<Permission> permissions) {
-                globalPermissions = permissions;
-            }
-        });
     }
 
     private static Criteria createCriteria(int resourceTypeId) {

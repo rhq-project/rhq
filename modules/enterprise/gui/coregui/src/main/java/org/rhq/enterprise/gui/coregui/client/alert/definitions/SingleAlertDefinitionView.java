@@ -28,6 +28,8 @@ import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.tab.Tab;
+import com.smartgwt.client.widgets.tab.events.TabDeselectedEvent;
+import com.smartgwt.client.widgets.tab.events.TabDeselectedHandler;
 
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableButton;
@@ -52,7 +54,7 @@ public class SingleAlertDefinitionView extends LocatableVLayout {
     private Button saveButton;
     private Button cancelButton;
 
-    private boolean allowedToModifyAlertDefinitions;
+    private boolean isAuthorizedToModifyAlertDefinitions;
 
     public SingleAlertDefinitionView(String locatorId, AbstractAlertDefinitionsView alertDefView) {
         this(locatorId, alertDefView, null);
@@ -63,15 +65,24 @@ public class SingleAlertDefinitionView extends LocatableVLayout {
         super(locatorId);
 
         this.alertDefinition = alertDefinition;
-        this.allowedToModifyAlertDefinitions = alertDefView.isAllowedToModifyAlertDefinitions();
+        this.isAuthorizedToModifyAlertDefinitions = alertDefView.isAuthorizedToModifyAlertDefinitions();
 
-        LocatableTabSet tabSet = new LocatableTabSet(this.getLocatorId());
+        final LocatableTabSet tabSet = new LocatableTabSet(this.getLocatorId());
         tabSet.setHeight100();
 
-        Tab generalPropertiesTab = new LocatableTab(tabSet.extendLocatorId("General"), MSG
+        final Tab generalPropertiesTab = new LocatableTab(tabSet.extendLocatorId("General"), MSG
             .view_alert_common_tab_general());
         generalProperties = new GeneralPropertiesAlertDefinitionForm(this.getLocatorId(), alertDefinition);
         generalPropertiesTab.setPane(generalProperties);
+        generalPropertiesTab.addTabDeselectedHandler(new TabDeselectedHandler() {
+
+            @Override
+            public void onTabDeselected(TabDeselectedEvent event) {
+                if (!generalProperties.validate()) {
+                    event.cancel();
+                }
+            }
+        });
 
         Tab conditionsTab = new LocatableTab(tabSet.extendLocatorId("Conditions"), MSG
             .view_alert_common_tab_conditions());
@@ -110,7 +121,7 @@ public class SingleAlertDefinitionView extends LocatableVLayout {
         buttons.addMember(saveButton);
         buttons.addMember(cancelButton);
 
-        editButton.setDisabled(!allowedToModifyAlertDefinitions);
+        editButton.setDisabled(!isAuthorizedToModifyAlertDefinitions);
 
         editButton.addClickHandler(new ClickHandler() {
             @Override
@@ -122,11 +133,15 @@ public class SingleAlertDefinitionView extends LocatableVLayout {
         saveButton.addClickHandler(new ClickHandler() {
             @Override
             public void onClick(ClickEvent event) {
-                saveAlertDefinition();
-                setAlertDefinition(getAlertDefinition()); // loads data into static fields
-                makeViewOnly();
+                if (generalProperties.validate()) {
+                    saveAlertDefinition();
+                    setAlertDefinition(getAlertDefinition()); // loads data into static fields
+                    makeViewOnly();
 
-                alertDefView.commitAlertDefinition(getAlertDefinition());
+                    alertDefView.commitAlertDefinition(getAlertDefinition());
+                } else {
+                    tabSet.selectTab(generalPropertiesTab);
+                }
             }
         });
 
@@ -160,11 +175,11 @@ public class SingleAlertDefinitionView extends LocatableVLayout {
     }
 
     public void makeEditable() {
-        if (!this.allowedToModifyAlertDefinitions) {
-            // this is just a safety measure - we should never get here if we don't have perms, but just in case,
-            // don't do anything to allow the def to be editable. Should we notify the message center?
-            return;
-        }
+        // if (!this.allowedToModifyAlertDefinitions) {
+        // this is just a safety measure - we should never get here if we don't have perms, but just in case,
+        // don't do anything to allow the def to be editable. Should we notify the message center?
+        //   return;
+        // }
 
         saveButton.show();
         cancelButton.show();

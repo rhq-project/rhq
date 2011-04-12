@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client.admin.templates;
 
 import java.util.Map;
+import java.util.Set;
 
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.Alignment;
@@ -39,12 +40,15 @@ import com.smartgwt.client.widgets.tree.TreeGrid;
 import com.smartgwt.client.widgets.tree.TreeGridField;
 import com.smartgwt.client.widgets.tree.TreeNode;
 
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
+import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
@@ -215,25 +219,35 @@ public class ResourceTypeTreeView extends LocatableVLayout implements Bookmarkab
     private void editAlertTemplate(int resourceTypeId, final ViewPath viewPath) {
         final Integer[] idArray = new Integer[] { resourceTypeId };
         ResourceTypeRepository.Cache.getInstance().getResourceTypes(idArray, new TypesLoadedCallback() {
-            @Override
-            public void onTypesLoaded(Map<Integer, ResourceType> types) {
-                ResourceType rt = types.get(idArray[0]);
-                Layout alertCanvas = getAlertTemplateCanvas();
-                String locatorId = extendLocatorId("alertTemplateDef");
-                TemplateAlertDefinitionsView def = new TemplateAlertDefinitionsView(locatorId, rt);
-                def.renderView(viewPath.next());
-                prepareSubCanvas(alertCanvas, def, viewPath.isEnd()); // don't show our back button if we are going to a template details pane which has its own back button
-                switchToCanvas(ResourceTypeTreeView.this, alertCanvas);
+
+            public void onTypesLoaded(final Map<Integer, ResourceType> types) {
+                new PermissionsLoader().loadExplicitGlobalPermissions(new PermissionsLoadedListener() {
+
+                    public void onPermissionsLoaded(Set<Permission> permissions) {
+                        ResourceType rt = types.get(idArray[0]);
+                        Layout alertCanvas = getAlertTemplateCanvas();
+                        String locatorId = extendLocatorId("alertTemplateDef");
+                        TemplateAlertDefinitionsView def = new TemplateAlertDefinitionsView(locatorId, rt, permissions);
+                        def.renderView(viewPath.next());
+                        prepareSubCanvas(alertCanvas, def, viewPath.isEnd()); // don't show our back button if we are going to a template details pane which has its own back button
+                        switchToCanvas(ResourceTypeTreeView.this, alertCanvas);
+                    }
+                });
             }
         });
     }
 
-    private void editMetricTemplate(int resourceTypeId) {
-        Layout metricCanvas = getMetricTemplateCanvas();
-        TemplateSchedulesView templateSchedulesView = new TemplateSchedulesView(extendLocatorId("MetricTemplate"),
-            resourceTypeId);
-        prepareSubCanvas(metricCanvas, templateSchedulesView, true);
-        switchToCanvas(ResourceTypeTreeView.this, metricCanvas);
+    private void editMetricTemplate(final int resourceTypeId) {
+        new PermissionsLoader().loadExplicitGlobalPermissions(new PermissionsLoadedListener() {
+
+            public void onPermissionsLoaded(Set<Permission> permissions) {
+                Layout metricCanvas = getMetricTemplateCanvas();
+                TemplateSchedulesView templateSchedulesView = new TemplateSchedulesView(
+                    extendLocatorId("MetricTemplate"), resourceTypeId, permissions);
+                prepareSubCanvas(metricCanvas, templateSchedulesView, true);
+                switchToCanvas(ResourceTypeTreeView.this, metricCanvas);
+            }
+        });
     }
 
     public class CustomResourceTypeListGrid extends LocatableListGrid {
@@ -287,8 +301,8 @@ public class ResourceTypeTreeView extends LocatableVLayout implements Bookmarkab
             enabledMetricTemplatesField.setPrompt(MSG.view_adminTemplates_prompt_enabledMetricTemplates());
             disabledMetricTemplatesField.setPrompt(MSG.view_adminTemplates_prompt_disabledMetricTemplates());
 
-            setFields(nameField, pluginField, categoryField, enabledAlertTemplatesField, disabledAlertTemplatesField, enabledMetricTemplatesField,
-                disabledMetricTemplatesField);
+            setFields(nameField, pluginField, categoryField, enabledAlertTemplatesField, disabledAlertTemplatesField,
+                enabledMetricTemplatesField, disabledMetricTemplatesField);
         }
 
         @Override
@@ -401,7 +415,7 @@ public class ResourceTypeTreeView extends LocatableVLayout implements Bookmarkab
             disabledMetricTemplatesField.setPrompt(MSG.view_adminTemplates_prompt_disabledMetricTemplates());
 
             setFields(nameField, pluginField, categoryField, enabledAlertTemplatesField, disabledAlertTemplatesField,
-                    enabledMetricTemplatesField, disabledMetricTemplatesField);
+                enabledMetricTemplatesField, disabledMetricTemplatesField);
         }
 
         @Override

@@ -23,7 +23,6 @@
 
 package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Set;
 
@@ -33,10 +32,9 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
-import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.MetadataType;
@@ -53,9 +51,10 @@ public class TemplateAlertDefinitionsView extends AbstractAlertDefinitionsView {
     private ResourceType resourceType;
     private Set<Permission> globalPermissions;
 
-    public TemplateAlertDefinitionsView(String locatorId, ResourceType resourceType) {
+    public TemplateAlertDefinitionsView(String locatorId, ResourceType resourceType, Set<Permission> globalPermissions) {
         super(locatorId, "Alert Templates");
         this.resourceType = resourceType;
+        this.globalPermissions = globalPermissions;
 
         // make sure we loaded all the type info we'll need. if one of these is null, either the type
         // doesn't have it or we haven't loaded it yet. since we can't know for sure if it was loaded, we have to ask.
@@ -77,14 +76,11 @@ public class TemplateAlertDefinitionsView extends AbstractAlertDefinitionsView {
                     }
                 });
         }
+    }
 
-        this.globalPermissions = Collections.emptySet();
-        new PermissionsLoader().loadExplicitGlobalPermissions(new PermissionsLoadedListener() {
-            public void onPermissionsLoaded(Set<Permission> globalPermissions) {
-                TemplateAlertDefinitionsView.this.globalPermissions = globalPermissions;
-                refreshTableInfo();
-            }
-        });
+    @Override
+    protected boolean isAuthorizedToModifyAlertDefinitions() {
+        return globalPermissions.contains(Permission.MANAGE_SETTINGS);
     }
 
     @Override
@@ -112,11 +108,6 @@ public class TemplateAlertDefinitionsView extends AbstractAlertDefinitionsView {
             view.getAlertDefinition().setResourceType(resourceType);
         }
         return view;
-    }
-
-    @Override
-    protected boolean isAllowedToModifyAlertDefinitions() {
-        return globalPermissions.contains(Permission.MANAGE_SETTINGS);
     }
 
     @Override
@@ -246,4 +237,11 @@ public class TemplateAlertDefinitionsView extends AbstractAlertDefinitionsView {
                 });
         }
     }
+
+    protected AlertDefinitionCriteria getDetailCriteria() {
+        AlertDefinitionCriteria criteria = super.getDetailCriteria();
+        criteria.addFilterAlertTemplateOnly(true);
+        return criteria;
+    }
+
 }

@@ -393,7 +393,7 @@ public class DashboardView extends LocatableVLayout {
         });
 
         //refresh interval
-        LocatableMenu refreshMenu = new LocatableMenu(editForm.extendLocatorId("AutoRefreshMenu"));
+        LocatableMenu refreshMenu = new LocatableMenu("AutoRefreshMenu");
         refreshMenu.setShowShadow(true);
         refreshMenu.setShadowDepth(10);
         refreshMenu.setAutoWidth();
@@ -440,8 +440,8 @@ public class DashboardView extends LocatableVLayout {
         }
 
         refreshMenu.setItems(refreshMenuItems);
-        refreshMenuButton = new LocatableIMenuButton(editForm.extendLocatorId("AutoRefreshButton"), MSG
-            .common_title_change_refresh_time(), refreshMenu);
+        refreshMenuButton = new LocatableIMenuButton("AutoRefreshButton", MSG.common_title_change_refresh_time(),
+            refreshMenu);
         refreshMenu.setAutoHeight();
         refreshMenuButton.getMenu().setItems(refreshMenuItems);
         refreshMenuButton.setWidth(140);

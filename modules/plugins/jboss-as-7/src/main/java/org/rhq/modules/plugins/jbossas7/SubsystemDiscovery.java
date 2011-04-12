@@ -63,26 +63,31 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
 
         Configuration config = context.getDefaultPluginConfiguration();
         String cpath = config.getSimpleValue("path", null);
+        if (cpath==null) {
+            log.error("Path plugin config is null for ResourceType [" + context.getResourceType().getName() +"].");
+            return details;
+        }
+
+
         boolean recursive = false;
 
         String parentPath = parentComponent.getPath();
 
         String path;
-        if (cpath!=null && cpath.endsWith("/*")) {
-            path = cpath.substring(0,cpath.length()-2);
+        String childType = null;
+        if (!cpath.contains("=")) { // NO = -> no sub path, but a type
             recursive = true;
-        }
-        else
-            path = cpath;
+            childType = cpath;
 
-        if (parentPath!=null && !parentPath.isEmpty()) {
-            if (recursive)
-                path = parentPath;
-            else if (parentPath.endsWith("/") || path.startsWith("/"))
-                path = parentPath + path;
-            else
-                path = parentPath + "/" + path;
         }
+
+        if (parentPath==null || parentPath.isEmpty())
+            path = "";
+        else
+            path = parentPath;
+
+        if (cpath.contains("="))
+            path += "," + cpath;
 
         System.out.println("total path: [" + path + "]");
 
@@ -93,19 +98,12 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
         else {
             List<PROPERTY_VALUE> addr ;
             addr = parentComponent.pathToAddress(parentPath);
-            String childType = cpath.substring(0, cpath.length() - 2);
-            if (childType.startsWith("/"))
-                childType = childType.substring(1);
             json = connection.execute(new ReadChildrenNames(addr, childType));
         }
         if (!ASConnection.isErrorReply(json)) {
             if (recursive) {
-                int i = path.lastIndexOf("/");
-                String subPath = path.substring(i+1);
 
                 JsonNode subNode = json.findPath("result");
-                if (subNode==null || subNode.isNull())
-                    subNode = json.get(subPath);  // TODO clean this up. to get the 'key' in a path from the AS we need to use get()
 
                 if (subNode!=null && subNode.isContainerNode()){
 
@@ -116,24 +114,24 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
                         String val = node.getTextValue();
 
 
-                        String newPath = cpath.replaceAll("\\*",val);
+                        String newPath = cpath + "=" + val;
                         Configuration config2 = context.getDefaultPluginConfiguration();
-                        PropertySimple pathProp = new PropertySimple("path",newPath);
-                        config2.put(pathProp);
+
 
                         String resKey;
-                        String childType = cpath.substring(0, cpath.length() - 2);
-                        if (childType.startsWith("/"))
-                            childType = childType.substring(1);
 
-                        resKey = context.getParentResourceContext().getResourceKey() + "/" +childType + "/" + val;
-                        String name = resKey.substring(resKey.lastIndexOf("/") + 1);
+                        if (path==null||path.isEmpty())
+                            resKey = newPath;
+                        else
+                            resKey = path + "," +childType + "=" + val;
 
+                        PropertySimple pathProp = new PropertySimple("path",resKey);
+                        config2.put(pathProp);
 
                         DiscoveredResourceDetails detail = new DiscoveredResourceDetails(
                                 context.getResourceType(), // DataType
                                 resKey, // Key
-                                name, // Name
+                                val, // Name
                                 null, // Version
                                 "TODO", // subsystem.description, // TODO Description
                                 config2,
@@ -155,7 +153,7 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
 
 
                 String resKey = path;
-                String name = resKey.substring(resKey.lastIndexOf("/") + 1);
+                String name = resKey.substring(resKey.lastIndexOf("=") + 1);
                 Configuration config2 = context.getDefaultPluginConfiguration();
                 PropertySimple pathProp = new PropertySimple("path",path);
                 config2.put(pathProp);

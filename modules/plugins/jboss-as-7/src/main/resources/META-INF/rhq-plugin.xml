@@ -108,6 +108,12 @@
             class="DomainComponent"
             description="An AS7 management profile">
 
+        <subcategories>
+            <subcategory name="Integration" />
+            <subcategory name="Core"/>
+            <subcategory name="Web"/>
+        </subcategories>
+
         <operation name="server-group:add" displayName="Add ServerGroup" description="Add a server group to the Domain.">
             <parameters>
                 <c:simple-property name="name" description="Name of Group to add"/>
@@ -126,7 +132,7 @@
                 class="BaseComponent">
 
             <plugin-configuration>
-                <c:simple-property name="path" default="/profile/*" readOnly="true"/>
+                <c:simple-property name="path" default="profile" readOnly="true"/>
             </plugin-configuration>
         </server>
         <server name="ServerGroup"
@@ -137,7 +143,7 @@
             <!-- TODO move operation to createDeletePolicy="create-only" -->
 
             <plugin-configuration>
-                <c:simple-property name="path" default="/server-group/*" readOnly="true"/>
+                <c:simple-property name="path" default="server-group" readOnly="true"/>
             </plugin-configuration>
 
 
@@ -153,7 +159,7 @@
 
             <service name="Deployment" class="BaseComponent" discovery="SubsystemDiscovery" createDeletePolicy="create-only" creationDataType="content">
                 <plugin-configuration>
-                    <c:simple-property name="path" default="/deployment/*" readOnly="true"/>
+                    <c:simple-property name="path" default="deployment" readOnly="true"/>
                 </plugin-configuration>
 
                 <content name="deployment" category="deployable" isCreationType="true" description="Deployments on this domain">
@@ -172,7 +178,7 @@
                 class="DomainComponent"
                 >
             <plugin-configuration>
-                <c:simple-property name="path" default="/host/*" readOnly="true"/>
+                <c:simple-property name="path" default="host" readOnly="true"/>
             </plugin-configuration>
 
             <operation name="server:add" displayName="Create server" description="Add a new server to this host.">
@@ -307,7 +313,7 @@
         </runs-inside>
 
         <plugin-configuration>
-            <c:simple-property name="path" readOnly="true" default="/subsystem/messaging"/>
+            <c:simple-property name="path" readOnly="true" default="subsystem=messaging"/>
         </plugin-configuration>
 
         <operation name="destination:add" displayName="Add destination" description="Add a Queue or Topic">
@@ -363,7 +369,7 @@
                  class="BaseComponent"
                 >
             <plugin-configuration>
-                <c:simple-property name="path" readOnly="true" default="queue/*"/>
+                <c:simple-property name="path" readOnly="true" default="queue"/>
             </plugin-configuration>
             <resource-configuration>
                 <c:simple-property name="queue-address" required="true"/>
@@ -386,7 +392,7 @@
         </runs-inside>
 
         <plugin-configuration>
-            <c:simple-property name="path" readOnly="true" default="/subsystem/jms"/>
+            <c:simple-property name="path" readOnly="true" default="subsystem=jms"/>
         </plugin-configuration>
 
         <service name="Queue"
@@ -394,7 +400,7 @@
             class="BaseComponent"
             >
             <plugin-configuration>
-                <c:simple-property name="path" readOnly="true" default="queue/*"/>
+                <c:simple-property name="path" readOnly="true" default="queue"/>
             </plugin-configuration>
         </service>
         <service name="Topic"
@@ -402,7 +408,7 @@
             class="BaseComponent"
             >
             <plugin-configuration>
-                <c:simple-property name="path" readOnly="true" default="topic/*"/>
+                <c:simple-property name="path" readOnly="true" default="topic"/>
             </plugin-configuration>
         </service>
         <service name="Connection-Factory"
@@ -410,7 +416,7 @@
             class="BaseComponent"
             >
             <plugin-configuration>
-                <c:simple-property name="path" readOnly="true" default="connection-factory/*"/>
+                <c:simple-property name="path" readOnly="true" default="connection-factory"/>
             </plugin-configuration>
         </service>
 
@@ -428,7 +434,7 @@
         </runs-inside>
 
         <plugin-configuration>
-            <c:simple-property name="path" readOnly="true" default="/subsystem/web"/>
+            <c:simple-property name="path" readOnly="true" default="subsystem=web"/>
         </plugin-configuration>
 
         <service name="Connector"
@@ -436,7 +442,7 @@
                  class="BaseComponent"
                 >
             <plugin-configuration>
-                <c:simple-property name="path" readOnly="true" default="/connector/*"/>
+                <c:simple-property name="path" readOnly="true" default="connector"/>
             </plugin-configuration>
 
 
@@ -459,7 +465,7 @@
                  discovery="SubsystemDiscovery"
                  class="BaseComponent">
             <plugin-configuration>
-                <c:simple-property name="path" readOnly="true" default="/virtual-server/*"/>
+                <c:simple-property name="path" readOnly="true" default="virtual-server"/>
             </plugin-configuration>
 
             <resource-configuration>
@@ -487,7 +493,7 @@
         </runs-inside>
 
         <plugin-configuration>
-            <c:simple-property name="path" readOnly="true" default="/subsystem/datasources"/>
+            <c:simple-property name="path" readOnly="true" default="subsystem=datasources"/>
         </plugin-configuration>
 
         <service name="DataSource"
@@ -497,7 +503,7 @@
                 >
 
             <plugin-configuration>
-                <c:simple-property name="path" readOnly="true" default="data-source/*"/>
+                <c:simple-property name="path" readOnly="true" default="data-source"/>
             </plugin-configuration>
 
             <resource-configuration>
@@ -523,7 +529,7 @@
                 >
 
             <plugin-configuration>
-                <c:simple-property name="path" readOnly="true" default="xa-data-source/*"/>
+                <c:simple-property name="path" readOnly="true" default="xa-data-source"/>
             </plugin-configuration>
         </service>
 
@@ -534,7 +540,7 @@
                 >
 
             <plugin-configuration>
-                <c:simple-property name="path" readOnly="true" default="jdbc-driver/*"/>
+                <c:simple-property name="path" readOnly="true" default="jdbc-driver"/>
             </plugin-configuration>
         </service>
 
@@ -552,7 +558,7 @@
         </runs-inside>
 
         <plugin-configuration>
-            <c:simple-property name="path" readOnly="true" default="/"/>
+            <c:simple-property name="path" readOnly="true" default="interface"/>
         </plugin-configuration>
     </service>
 
@@ -567,7 +573,7 @@
 
 
         <plugin-configuration>
-            <c:simple-property name="path" readOnly="true" default="/socket-binding-group/"/>
+            <c:simple-property name="path" readOnly="true" default="socket-binding-group"/>
         </plugin-configuration>
 
         <resource-configuration>

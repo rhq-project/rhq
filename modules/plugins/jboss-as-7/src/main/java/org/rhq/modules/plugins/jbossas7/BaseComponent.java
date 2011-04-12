@@ -33,6 +33,7 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
+import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
@@ -45,11 +46,12 @@ import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
-import org.rhq.core.pluginapi.operation.OperationFacet;
-import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.modules.plugins.jbossas7.json.NameValuePair;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
+import org.rhq.modules.plugins.jbossas7.json.ReadAttribute;
+import org.rhq.modules.plugins.jbossas7.json.ReadResource;
+import org.rhq.modules.plugins.jbossas7.json.Result;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -57,8 +59,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import com.sun.org.apache.xml.internal.security.utils.Base64;
 
 public class BaseComponent implements ResourceComponent, MeasurementFacet, ConfigurationFacet
 {
@@ -129,14 +129,24 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
 
         for (MeasurementScheduleRequest req : metrics) {
 
-            JsonNode obj = connection.getAttributeValue(key, req.getName()); // TODO batching
 
-            String val = obj.getValueAsText();
+            Operation op = new ReadAttribute(pathToAddress(path),req.getName()); // TODO batching
+            //JsonNode obj = connection.execute(op);
+            Result res = connection.execute2(op, false);
+            if (!res.isSuccess())
+                continue;
+
+            String val = (String) res.getResult();
+
             if (req.getDataType()== DataType.MEASUREMENT) {
 
-                Double d = Double.parseDouble(val);
-                MeasurementDataNumeric data = new MeasurementDataNumeric(req,d);
-                report.addData(data);
+                try {
+                    Double d = Double.parseDouble(val);
+                    MeasurementDataNumeric data = new MeasurementDataNumeric(req,d);
+                    report.addData(data);
+                } catch (NumberFormatException e) {
+                    log.warn("Non numeric input for [" + req.getName() + "] : [" + val + "]");
+                }
             } else if (req.getDataType()== DataType.TRAIT) {
                 MeasurementDataTrait data = new MeasurementDataTrait(req,val);
                 report.addData(data);
@@ -154,15 +164,18 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
 
     public Configuration loadResourceConfiguration() throws Exception {
         ConfigurationDefinition configDef = context.getResourceType().getResourceConfigurationDefinition();
-        String myPath = getResultingPath();
+//        String myPath = getResultingPath();
 
-
-        JsonNode json = connection.getLevelData(myPath,true,false);
+        List<PROPERTY_VALUE> address = pathToAddress(path);
+        Operation op = new ReadResource(address); // TOTO set recursive flag?
+        JsonNode json = connection.execute(op);
 
         Configuration ret = new Configuration();
         ObjectMapper mapper = new ObjectMapper();
 
-        for (PropertyDefinition propDef: configDef.getNonGroupedProperties()) {
+        Set<Map.Entry<String, PropertyDefinition>> entrySet = configDef.getPropertyDefinitions().entrySet();
+        for (Map.Entry<String,PropertyDefinition> propDefEntry: entrySet) { // TODO all properties
+            PropertyDefinition propDef = propDefEntry.getValue();
             JsonNode sub = json.findValue(propDef.getName());
             if (propDef instanceof PropertyDefinitionSimple) {
                 PropertySimple propertySimple;
@@ -285,11 +298,46 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
                     }
                 }
                 ret.put(propertyList);
+            } // end List of ..
+            else if (propDef instanceof PropertyDefinitionMap) {
+                PropertyDefinitionMap mapDef = (PropertyDefinitionMap) propDef;
+                Map<String,PropertyDefinition> memberDefMap = mapDef.getPropertyDefinitions();
+                for (Map.Entry<String,PropertyDefinition> maEntry : memberDefMap.entrySet()) {
+                    JsonNode valueNode = json.findValue(maEntry.getKey());
+                    System.out.println(valueNode);
+                    PropertySimple p = putProperty(valueNode,maEntry.getValue());
+                    ret.put(p);
+                }
             }
         }
 
 
         return ret;
+    }
+
+    PropertySimple putProperty(JsonNode value, PropertyDefinition def) {
+        String name = def.getName();
+        PropertySimpleType type = ((PropertyDefinitionSimple) def).getType();
+        PropertySimple ps;
+        switch (type) {
+        case BOOLEAN:
+            ps = new PropertySimple(name,value.getBooleanValue());
+            break;
+        case FLOAT:
+        case DOUBLE:
+            ps = new PropertySimple(name,value.getDoubleValue());
+            break;
+        case INTEGER:
+            ps = new PropertySimple(name,value.getIntValue());
+            break;
+        case LONG:
+            ps = new PropertySimple(name,value.getLongValue());
+            break;
+        default:
+            ps = new PropertySimple(name,value.getTextValue());
+        }
+
+        return ps;
     }
 
     protected String getResultingPath() {
@@ -302,10 +350,7 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
         }
 
         if (parentPath!=null) {
-            if (parentPath.endsWith("/") || path.startsWith("/"))
-                myPath = parentPath + path;
-            else
-                myPath = parentPath + "/" + path;
+                myPath = parentPath + "," + path;
         }
         else
             myPath = path;
@@ -329,21 +374,29 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
 
     }
 
-    protected List<PROPERTY_VALUE> pathToAddress(String path) {
+    /**
+     * Convert a path in the form key=value,key=value... to a List of properties.
+     * @param path Path to translate
+     * @return List of properties
+     */
+    public List<PROPERTY_VALUE> pathToAddress(String path) {
         if (path==null || path.isEmpty())
             return Collections.emptyList();
 
-        if (path.endsWith("/"))
-            path = path.substring(0,path.length()-1);
-
-        if (path.startsWith("/"))
-            path = path.substring(1);
-
         List<PROPERTY_VALUE> result = new ArrayList<PROPERTY_VALUE>();
-        String[] components = path.split("/");
-        for (int i = 0; i < components.length ; i+=2) {
-            PROPERTY_VALUE valuePair = new PROPERTY_VALUE(components[i],components[i+1]);
-            result.add(valuePair);
+        String[] components = path.split(",");
+        for (String component : components) {
+            String tmp = component.trim();
+
+            if (tmp.contains("=")) {
+                // strip / from the start of the key if it happens to be there
+                if (tmp.startsWith("/"))
+                    tmp = tmp.substring(1);
+
+                String[] pair = tmp.split("=");
+                PROPERTY_VALUE valuePair = new PROPERTY_VALUE(pair[0], pair[1]);
+                result.add(valuePair);
+            }
         }
 
         return result;

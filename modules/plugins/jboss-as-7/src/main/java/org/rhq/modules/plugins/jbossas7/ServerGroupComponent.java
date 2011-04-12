@@ -128,8 +128,7 @@ public class ServerGroupComponent extends DomainComponent implements ContentFace
     @Override
     public Set<ResourcePackageDetails> discoverDeployedPackages(PackageType type) {
 
-        List<PROPERTY_VALUE> serverGroupAddress = new ArrayList<PROPERTY_VALUE>(1);
-        serverGroupAddress.add(new PROPERTY_VALUE("server-group",serverGroupFromKey()));
+        List<PROPERTY_VALUE> serverGroupAddress = pathToAddress(path);
 
         Operation op = new ReadChildrenNames(serverGroupAddress,"deployment"); // TODO read full packages not onyl names
         JsonNode node = connection.execute(op);
@@ -194,7 +193,8 @@ public class ServerGroupComponent extends DomainComponent implements ContentFace
         deploymentsAddress.add(new PROPERTY_VALUE("deployment", fileName));
         Operation step1 = new Operation("add",deploymentsAddress);
         step1.addAdditionalProperty("hash", new PROPERTY_VALUE("BYTES_VALUE", hash));
-        step1.addAdditionalProperty("name", fileName);
+        step1.addAdditionalProperty("name", fileName);  // TODO set a random name here - or wait on AS to "fix" this
+        step1.addAdditionalProperty("runtime-name", fileName);
 
         List<PROPERTY_VALUE> serverGroupAddress = new ArrayList<PROPERTY_VALUE>(1);
         serverGroupAddress.add(new PROPERTY_VALUE("server-group",serverGroupFromKey()));

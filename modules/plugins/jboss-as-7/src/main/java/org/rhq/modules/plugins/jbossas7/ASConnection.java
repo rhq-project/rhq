@@ -27,8 +27,6 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -36,9 +34,9 @@ import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.jetbrains.annotations.Nullable;
 
-import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
-import org.rhq.modules.plugins.jbossas7.json.NameValuePair;
+import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
+import org.rhq.modules.plugins.jbossas7.json.Result;
 
 /**
  * Provide connections to the AS and reading / writing date from/to it.
@@ -52,6 +50,7 @@ public class ASConnection {
     URL url;
     String urlString;
     private StringBuilder builder;
+    private ObjectMapper mapper;
 
     public ASConnection(String host, int port) {
         this.host = host;
@@ -63,6 +62,8 @@ public class ASConnection {
         } catch (MalformedURLException e) {
             throw new IllegalArgumentException(e.getMessage());
         }
+
+        mapper = new ObjectMapper();
     }
 
 
@@ -131,11 +132,6 @@ public class ASConnection {
         return tree;
     }
 
-    JsonNode getAttributeValue(@Nullable String base, @Nullable String attributeName) throws Exception {
-        String op = "operation=attribute&name=" + attributeName;
-        return getLevelData(base,op);
-    }
-
 
     static boolean isErrorReply(JsonNode in) {
         if (in == null)
@@ -180,8 +176,6 @@ public class ASConnection {
             conn.setDoOutput(true);
             conn.setRequestMethod("POST");
             OutputStream out = conn.getOutputStream();
-
-            ObjectMapper mapper = new ObjectMapper();
 
             String result = mapper.writeValueAsString(operation);
             System.out.println("Json to send: " + result);
@@ -236,6 +230,22 @@ public class ASConnection {
         }
 
         return null;
+    }
+
+    public Result execute2(Operation op, boolean isComplex){
+        JsonNode node = execute(op);
+
+        try {
+            Result res;
+            if (isComplex)
+                res = mapper.readValue(node,ComplexResult.class);
+            else
+                res = mapper.readValue(node,Result.class);
+            return res;
+        } catch (IOException e) {
+            e.printStackTrace();  // TODO: Customise this generated block
+            return null;
+        }
     }
 
 

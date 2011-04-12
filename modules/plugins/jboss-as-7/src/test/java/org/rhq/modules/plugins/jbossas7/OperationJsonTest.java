@@ -26,9 +26,11 @@ import java.util.Map;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.testng.annotations.Test;
 
+import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
 import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
 import org.rhq.modules.plugins.jbossas7.json.NameValuePair;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
+import org.rhq.modules.plugins.jbossas7.json.Result;
 
 /**
  * @author Heiko W. Rupp
@@ -115,5 +117,49 @@ public class OperationJsonTest {
         String result = mapper.writeValueAsString(operation);
         System.out.println(result);
 
+    }
+
+    public void simpleResult() throws Exception {
+
+        String resultString = "{\"outcome\" : \"success\", \"result\" : \"no metrics available\", \"compensating-operation\" : null}";
+
+        ObjectMapper mapper = new ObjectMapper();
+        Result result = mapper.readValue(resultString,Result.class);
+
+        assert result != null;
+        assert result.getOutcome().equals("success");
+        assert result.isSuccess();
+    }
+
+    public void simpleResult2() throws Exception {
+
+        String resultString = "{\"outcome\" : \"success\", \"result\" : \"DISABLED\", \"compensating-operation\" : null}";
+
+        ObjectMapper mapper = new ObjectMapper();
+        Result result = mapper.readValue(resultString,Result.class);
+
+        assert result != null;
+        assert result.getOutcome().equals("success");
+        assert result.isSuccess();
+    }
+
+    public void complexResult1() throws Exception {
+
+        String resultString = " {\"outcome\" : \"success\", \"result\" : {\"alias\" : [\"example.com\"], \"access-log\" : null, \"rewrite\" : null}, \"compensating-operation\" : null}";
+
+        ObjectMapper mapper = new ObjectMapper();
+        ComplexResult result = mapper.readValue(resultString,ComplexResult.class);
+
+        assert result != null;
+        assert result.getOutcome().equals("success");
+        assert result.isSuccess();
+        assert result.getResult().size()==3;
+        String rewrite = (String) result.getResult().get("rewrite");
+        assert rewrite == null;
+
+        List<String> aliases = (List<String>) result.getResult().get("alias");
+        assert aliases != null;
+        assert aliases.size()==1;
+        assert aliases.get(0).equals("example.com");
     }
 }

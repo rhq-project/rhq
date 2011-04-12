@@ -82,6 +82,7 @@ public class TemplateAlertDefinitionsView extends AbstractAlertDefinitionsView {
         new PermissionsLoader().loadExplicitGlobalPermissions(new PermissionsLoadedListener() {
             public void onPermissionsLoaded(Set<Permission> globalPermissions) {
                 TemplateAlertDefinitionsView.this.globalPermissions = globalPermissions;
+                refreshTableInfo();
             }
         });
     }

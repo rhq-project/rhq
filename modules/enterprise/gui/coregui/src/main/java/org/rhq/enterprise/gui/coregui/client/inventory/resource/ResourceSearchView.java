@@ -24,6 +24,7 @@ import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceD
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.NAME;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.PLUGIN;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.TYPE;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.VERSION;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -48,6 +49,7 @@ import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.search.SearchSubsystem;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.components.table.EscapedHtmlCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.components.table.RecordExtractor;
 import org.rhq.enterprise.gui.coregui.client.components.table.ResourceAuthorizedTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.IconField;
@@ -160,10 +162,14 @@ public class ResourceSearchView extends Table {
         ListGridField ancestryField = AncestryUtil.setupAncestryListGridField();
 
         ListGridField descriptionField = new ListGridField(DESCRIPTION.propertyName(), DESCRIPTION.title());
+        descriptionField.setCellFormatter(new EscapedHtmlCellFormatter());
 
         ListGridField typeNameField = new ListGridField(TYPE.propertyName(), TYPE.title(), 130);
 
         ListGridField pluginNameField = new ListGridField(PLUGIN.propertyName(), PLUGIN.title(), 100);
+
+        ListGridField versionField = new ListGridField(VERSION.propertyName(), VERSION.title(), 60);
+        versionField.setHidden(true);
 
         ListGridField categoryField = new ListGridField(CATEGORY.propertyName(), CATEGORY.title(), 60);
         categoryField.setCellFormatter(new ResourceCategoryCellFormatter());
@@ -172,7 +178,7 @@ public class ResourceSearchView extends Table {
         IconField availabilityField = new IconField(AVAILABILITY.propertyName(), AVAILABILITY.title(), 70);
 
         setListGridFields(iconField, nameField, ancestryField, descriptionField, typeNameField, pluginNameField,
-            categoryField, availabilityField);
+            versionField, categoryField, availabilityField);
 
         addTableAction(extendLocatorId("Uninventory"), MSG.common_button_uninventory(), MSG
             .view_inventory_resources_uninventoryConfirm(), new ResourceAuthorizedTableAction(ResourceSearchView.this,

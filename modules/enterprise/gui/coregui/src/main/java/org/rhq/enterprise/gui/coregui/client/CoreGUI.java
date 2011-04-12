@@ -149,6 +149,16 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
             }
         });
 
+        KeyIdentifier testTopViewKey = new KeyIdentifier();
+        testTopViewKey.setCtrlKey(true);
+        testTopViewKey.setAltKey(true);
+        testTopViewKey.setKeyName("t");
+        Page.registerKey(testTopViewKey, new KeyCallback() {
+            public void execute(String keyName) {
+                goToView("Test");
+            }
+        });
+
         GWT.setUncaughtExceptionHandler(new GWT.UncaughtExceptionHandler() {
             public void onUncaughtException(Throwable e) {
                 getErrorHandler().handleError(MSG.view_core_uncaught(), e);

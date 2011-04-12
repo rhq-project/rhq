@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright 2010, Red Hat Middleware LLC, and individual contributors
+ * Copyright 2010-2011, Red Hat Middleware LLC, and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -78,7 +78,6 @@ public abstract class TestConfigurationFactory {
 
         simplePropDef = createBooleanPropDef();
         addPropertyDefinition(configDef, simplePropDef, orderIndex++);
-        simplePropDef.setRequired(true);
 
         simplePropDef = createIntegerPropDef();
         addPropertyDefinition(configDef, simplePropDef, orderIndex++);
@@ -294,7 +293,7 @@ public abstract class TestConfigurationFactory {
     private static PropertyDefinitionSimple createStringPropDef1() {
         PropertyDefinitionSimple stringPropDef1;
         stringPropDef1 = new PropertyDefinitionSimple("String1",
-            "an optional String simple prop", false, PropertySimpleType.STRING);
+            "a String simple prop", false, PropertySimpleType.STRING);
         stringPropDef1.setDisplayName(stringPropDef1.getName());
         return stringPropDef1;
     }
@@ -302,7 +301,7 @@ public abstract class TestConfigurationFactory {
     private static PropertyDefinitionSimple createStringPropDef2() {
         PropertyDefinitionSimple stringPropDef2;
         stringPropDef2 = new PropertyDefinitionSimple("String2",
-            "a read-only String simple prop", false, PropertySimpleType.STRING);
+            "a read-only required String simple prop", true, PropertySimpleType.STRING);
         stringPropDef2.setDisplayName(stringPropDef2.getName());
         stringPropDef2.setReadOnly(true);
         return stringPropDef2;
@@ -311,7 +310,7 @@ public abstract class TestConfigurationFactory {
     private static PropertyDefinitionSimple createBooleanPropDef() {
         PropertyDefinitionSimple propDef;
         propDef = new PropertyDefinitionSimple("Boolean",
-            "a Boolean simple prop", false, PropertySimpleType.BOOLEAN);
+            "a summary Boolean simple prop", false, PropertySimpleType.BOOLEAN);
         propDef.setDisplayName(propDef.getName());
         propDef.setSummary(true);
         return propDef;
@@ -320,7 +319,7 @@ public abstract class TestConfigurationFactory {
     private static PropertyDefinitionSimple createIntegerPropDef() {
         PropertyDefinitionSimple integerPropDef;
         integerPropDef = new PropertyDefinitionSimple("Integer",
-            "a required summary Integer simple prop", true, PropertySimpleType.INTEGER);
+            "a summary Integer simple prop", false, PropertySimpleType.INTEGER);
         integerPropDef.setDisplayName(integerPropDef.getName());
         integerPropDef.setSummary(true);
         return integerPropDef;

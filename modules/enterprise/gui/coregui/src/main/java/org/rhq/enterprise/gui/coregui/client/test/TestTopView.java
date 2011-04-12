@@ -22,8 +22,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.smartgwt.client.widgets.Canvas;
-
 import com.smartgwt.client.widgets.Label;
+
+import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
 import org.rhq.enterprise.gui.coregui.client.components.view.AbstractSectionedLeftNavigationView;
 import org.rhq.enterprise.gui.coregui.client.components.view.NavigationItem;
@@ -65,10 +66,19 @@ public class TestTopView extends AbstractSectionedLeftNavigationView {
     private static final ViewName PAGE_GROUP_CONFIG_EDITOR = new ViewName("GroupConfigEditor");
     private static final ViewName PAGE_READONLY_GROUP_CONFIG_EDITOR = new ViewName("ReadOnlyGroupConfigEditor");
 
+    // view IDs for Server Access section
+    private static final ViewName SERVERACCESS_SECTION_VIEW_ID = new ViewName("ServerAccess");
+    private static final ViewName PAGE_REMOTE_SERVICE_STATISTICS = new ViewName("RemoteServiceStatistics");
+    private static final ViewName PAGE_SQL = new ViewName("SQL");
+    private static final ViewName PAGE_HIBERNATE = new ViewName("Hibernate");
+    private static final ViewName PAGE_ENTITY_BROWSER = new ViewName("EntityBrowser");
+    private static final ViewName PAGE_EMAIL = new ViewName("EmailTest");
+    private static final ViewName PAGE_AGENT = new ViewName("AgentConnectivityTest");
+    private static final ViewName PAGE_USER_PREFERENCES = new ViewName("UserPreferences");
+
     // view IDs for Misc section
     private static final ViewName MISC_SECTION_VIEW_ID = new ViewName("Misc");
     private static final ViewName PAGE_PLURALIZATION_TEST = new ViewName("PluralizationTest");
-    private static final ViewName PAGE_REMOTE_SERVICE_STATISTICS = new ViewName("RemoteServiceStatistics");
     private static final ViewName PAGE_ASYNC = new ViewName("Async");
 
     public TestTopView() {
@@ -81,7 +91,7 @@ public class TestTopView extends AbstractSectionedLeftNavigationView {
         vLayout.setWidth100();
 
         // TODO: Help icon.
-        TitleBar titleBar = new TitleBar(this,  MSG.view_testTop_title());
+        TitleBar titleBar = new TitleBar(this, MSG.view_testTop_title());
         vLayout.addMember(titleBar);
 
         Label label = new Label(MSG.view_testTop_description());
@@ -100,6 +110,9 @@ public class TestTopView extends AbstractSectionedLeftNavigationView {
 
         NavigationSection configurationSection = buildConfigurationSection();
         sections.add(configurationSection);
+
+        NavigationSection serverAccessSection = buildServerAccessSection();
+        sections.add(serverAccessSection);
 
         NavigationSection miscSection = buildMiscSection();
         sections.add(miscSection);
@@ -161,10 +174,10 @@ public class TestTopView extends AbstractSectionedLeftNavigationView {
             groupConfigEditorItem, readOnlyGroupConfigEditorItem);
     }
 
-    private NavigationSection buildMiscSection() {
-        NavigationItem pluralizationItem = new NavigationItem(PAGE_PLURALIZATION_TEST, null, new ViewFactory() {
+    private NavigationSection buildServerAccessSection() {
+        NavigationItem userPrefsItem = new NavigationItem(PAGE_USER_PREFERENCES, null, new ViewFactory() {
             public Canvas createView() {
-                return new TestPluralizationView(extendLocatorId(PAGE_PLURALIZATION_TEST.getName()));
+                return new TestUserPreferencesView(extendLocatorId(PAGE_USER_PREFERENCES.getName()));
             }
         });
 
@@ -176,14 +189,54 @@ public class TestTopView extends AbstractSectionedLeftNavigationView {
                 }
             });
 
-        NavigationItem asyncItem = new NavigationItem(PAGE_ASYNC, null,
-            new ViewFactory() {
-                public Canvas createView() {
-                    return new TestAsyncView(extendLocatorId(PAGE_ASYNC.getName()));
-                }
-            });
+        NavigationItem sqlItem = new NavigationItem(PAGE_SQL, null, new ViewFactory() {
+            public Canvas createView() {
+                return new FullHTMLPane(extendLocatorId(PAGE_SQL.getName()), "/admin/test/sql.jsp");
+            }
+        });
 
-        return new NavigationSection(MISC_SECTION_VIEW_ID, pluralizationItem, remoteServiceStatisticsItem, asyncItem);
+        NavigationItem hibernateItem = new NavigationItem(PAGE_HIBERNATE, null, new ViewFactory() {
+            public Canvas createView() {
+                return new FullHTMLPane(extendLocatorId(PAGE_HIBERNATE.getName()), "/admin/test/hibernate.jsp");
+            }
+        });
+
+        NavigationItem entityBrowserItem = new NavigationItem(PAGE_ENTITY_BROWSER, null, new ViewFactory() {
+            public Canvas createView() {
+                return new FullHTMLPane(extendLocatorId(PAGE_ENTITY_BROWSER.getName()), "/admin/test/browser.jsp");
+            }
+        });
+
+        NavigationItem emailItem = new NavigationItem(PAGE_EMAIL, null, new ViewFactory() {
+            public Canvas createView() {
+                return new FullHTMLPane(extendLocatorId(PAGE_EMAIL.getName()), "/admin/test/email.jsp");
+            }
+        });
+
+        NavigationItem agentItem = new NavigationItem(PAGE_AGENT, null, new ViewFactory() {
+            public Canvas createView() {
+                return new FullHTMLPane(extendLocatorId(PAGE_AGENT.getName()), "/admin/test/agent.jsp");
+            }
+        });
+
+        return new NavigationSection(SERVERACCESS_SECTION_VIEW_ID, remoteServiceStatisticsItem, sqlItem, hibernateItem,
+            entityBrowserItem, emailItem, agentItem, userPrefsItem);
+    }
+
+    private NavigationSection buildMiscSection() {
+        NavigationItem pluralizationItem = new NavigationItem(PAGE_PLURALIZATION_TEST, null, new ViewFactory() {
+            public Canvas createView() {
+                return new TestPluralizationView(extendLocatorId(PAGE_PLURALIZATION_TEST.getName()));
+            }
+        });
+
+        NavigationItem asyncItem = new NavigationItem(PAGE_ASYNC, null, new ViewFactory() {
+            public Canvas createView() {
+                return new TestAsyncView(extendLocatorId(PAGE_ASYNC.getName()));
+            }
+        });
+
+        return new NavigationSection(MISC_SECTION_VIEW_ID, pluralizationItem, asyncItem);
     }
 
 }

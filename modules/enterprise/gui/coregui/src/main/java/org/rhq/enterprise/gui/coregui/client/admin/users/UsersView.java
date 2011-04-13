@@ -101,7 +101,7 @@ public class UsersView extends TableSection<UsersDataSource> {
             public void onPermissionsLoaded(Set<Permission> permissions) {
                 if (permissions != null) {
                     hasManageSecurity = permissions.contains(Permission.MANAGE_SECURITY);
-                    refresh();
+                    refreshTableInfo();
                 } else {
                     hasManageSecurity = false;
                 }

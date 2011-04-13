@@ -118,7 +118,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     private boolean showFilterForm = true;
 
     private String tableTitle;
-    private Criteria criteria;
+    private Criteria fixedCriteria;
     private SortSpecifier[] sortSpecifiers;
     private String[] excludedFieldNames;
     private boolean autoFetchData;
@@ -174,7 +174,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         setOverflow(Overflow.HIDDEN);
 
         this.tableTitle = tableTitle;
-        this.criteria = criteria;
+        this.fixedCriteria = criteria;
         this.sortSpecifiers = sortSpecifiers;
         this.excludedFieldNames = excludedFieldNames;
         this.autoFetchData = autoFetchData;
@@ -235,8 +235,8 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         listGrid = new LocatableListGrid(contents.extendLocatorId("ListGrid"));
         listGrid.setAutoFetchData(autoFetchData);
 
-        if (criteria != null) {
-            listGrid.setInitialCriteria(criteria);
+        if (fixedCriteria != null) {
+            listGrid.setInitialCriteria(fixedCriteria);
         }
         if (sortSpecifiers != null) {
             listGrid.setInitialSort(sortSpecifiers);
@@ -478,7 +478,6 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             public void onDataArrived(DataArrivedEvent dataArrivedEvent) {
                 if (null != listGrid) {
                     refreshTableInfo();
-                    fieldSizes.clear();
                 }
             }
         });
@@ -544,57 +543,44 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         this.showFooter = showFooter;
     }
 
-    private ArrayList<Integer> fieldSizes = new ArrayList<Integer>();
-
     /**
-     * Refreshes the list grid with the explicit criteria.
-     * Usually you do not want to call this - to maintain proper filtering
-     * and usage of the initial criteria, call {@link #refresh()} instead.
-     *  
-     * @param criteria the criteria to use to refresh the table with
+     * Refreshes the list grid's data, filtered by any fixed criteria, as well as any user-specified filters.
      */
-    protected void refresh(Criteria criteria) {
-        if (null != this.listGrid) {
-            if (criteria != null) {
-                this.listGrid.setCriteria(criteria);
-            }
+    public void refresh() {
+        if (this.listGrid != null) {
+            Criteria criteria = getCurrentCriteria();
+            this.listGrid.setCriteria(criteria);
             this.listGrid.invalidateCache();
             this.listGrid.markForRedraw();
         }
     }
 
     /**
-     * Refreshes the list grid so it reloads. This attempts to maintain
-     * the original criteria along with any current filter settings.
+     *
+     * @return the current criteria, which includes any fixed criteria, as well as any user-specified filters; may be
+     *         null if there are no fixed criteria or user-specified filters
      */
-    public void refresh() {
-        if (null != this.listGrid) {
-            // if this table has a filter form (table filters OR search bar)
-            // we need to refresh it as per the filtering.
-            if (this.filterForm != null && this.filterForm.hasContent()) {
-                Criteria filterFormCriteria = this.filterForm.getValuesAsCriteria();
-                if (this.criteria == null) {
-                    // there was no initial criteria, filter based on the filter form data only
-                    refresh(filterFormCriteria);
-                } else {
-                    // there is both initial criteria and filters. We need criteria that combines both.
-                    Criteria fullCriteria = new Criteria();
-                    addCriteria(fullCriteria, this.criteria);
-                    if (filterFormCriteria != null) {
-                        addCriteria(fullCriteria, filterFormCriteria);
-                    }
-                    refresh(fullCriteria);
+    protected Criteria getCurrentCriteria() {
+        Criteria criteria;
+        // If this table has a filter form (table filters OR search bar),
+        // we need to refresh it as per the filtering, combined with any fixed criteria.
+        if (this.filterForm != null && this.filterForm.hasContent()) {
+            criteria = this.filterForm.getValuesAsCriteria();
+            if (criteria != null) {
+                if (this.fixedCriteria != null) {
+                    // There is fixed criteria - add it to the filter form criteria.
+                    addCriteria(criteria, this.fixedCriteria);
                 }
             } else {
-                // If there are no filters, just do a default refresh by simply invalidating the cache.
-                // This should reuse the original initial criteria.
-                this.listGrid.invalidateCache();
-                this.listGrid.markForRedraw();
+                criteria = this.fixedCriteria;
             }
+        } else {
+            criteria = this.fixedCriteria;
         }
+        return criteria;
     }
 
-    // Smartgwt 2.4's version of Criteria.addCriteria for some reason doesn't have else clauses for the array types
+    // SmartGWT 2.4's version of Criteria.addCriteria for some reason doesn't have else clauses for the array types
     // and it doesn't handle Object types properly (seeing odd behavior because of this), so this method explicitly
     // supports adding array types and Objects.
     // This method takes the src criteria and adds it to the dest criteria.

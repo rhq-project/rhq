@@ -33,7 +33,9 @@ import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.criteria.PluginConfigurationUpdateCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
@@ -160,7 +162,9 @@ public class PluginConfigurationHistoryDataSource extends
         criteria.fetchResource(true);
         criteria.fetchGroupConfigurationUpdate(true);
 
-        criteria.setPageControl(getPageControl(request));
+        PageControl pc = getPageControl(request);
+        pc.addDefaultOrderingField(Field.ID, PageOrdering.DESC);
+        criteria.setPageControl(pc);
 
         final Integer resourceId = (Integer) request.getCriteria().getValues().get(CriteriaField.RESOURCE_ID);
         if (resourceId != null) {

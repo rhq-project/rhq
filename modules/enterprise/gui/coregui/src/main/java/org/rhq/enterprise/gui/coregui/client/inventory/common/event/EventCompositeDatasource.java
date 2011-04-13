@@ -133,6 +133,7 @@ public class EventCompositeDatasource extends RPCDataSource<EventComposite, Even
             });
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     protected EventCriteria getFetchCriteria(final DSRequest request) {
         EventSeverity[] severities = getArrayFilter(request, "severities", EventSeverity.class);

@@ -118,7 +118,8 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     private boolean showFilterForm = true;
 
     private String tableTitle;
-    private Criteria fixedCriteria;
+    private Criteria initialCriteria;
+    private boolean initialCriteriaFixed = true;
     private SortSpecifier[] sortSpecifiers;
     private String[] excludedFieldNames;
     private boolean autoFetchData;
@@ -152,6 +153,10 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         this(locatorId, tableTitle, null, sortSpecifiers, null, true);
     }
 
+    protected Table(String locatorId, String tableTitle, SortSpecifier[] sortSpecifiers, Criteria criteria) {
+        this(locatorId, tableTitle, criteria, sortSpecifiers, null, true);
+    }
+
     public Table(String locatorId, String tableTitle, boolean autoFetchData) {
         this(locatorId, tableTitle, null, null, null, autoFetchData);
     }
@@ -174,7 +179,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         setOverflow(Overflow.HIDDEN);
 
         this.tableTitle = tableTitle;
-        this.fixedCriteria = criteria;
+        this.initialCriteria = criteria;
         this.sortSpecifiers = sortSpecifiers;
         this.excludedFieldNames = excludedFieldNames;
         this.autoFetchData = autoFetchData;
@@ -235,8 +240,8 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         listGrid = new LocatableListGrid(contents.extendLocatorId("ListGrid"));
         listGrid.setAutoFetchData(autoFetchData);
 
-        if (fixedCriteria != null) {
-            listGrid.setInitialCriteria(fixedCriteria);
+        if (initialCriteria != null) {
+            listGrid.setInitialCriteria(initialCriteria);
         }
         if (sortSpecifiers != null) {
             listGrid.setInitialSort(sortSpecifiers);
@@ -555,28 +560,47 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         }
     }
 
+    protected boolean isInitialCriteriaFixed() {
+        return initialCriteriaFixed;
+    }
+
+    /**
+     * @param initialCriteriaFixed If true initialCriteria is applied to all subsequent fetch criteria. If false
+     * initialCriteria is used only for the initial autoFetch. Irrelevant if autoFetch is false. Default is true.
+     */
+    protected void setInitialCriteriaFixed(boolean initialCriteriaFixed) {
+        this.initialCriteriaFixed = initialCriteriaFixed;
+    }
+
     /**
      *
      * @return the current criteria, which includes any fixed criteria, as well as any user-specified filters; may be
      *         null if there are no fixed criteria or user-specified filters
      */
     protected Criteria getCurrentCriteria() {
-        Criteria criteria;
+        Criteria criteria = null;
+
         // If this table has a filter form (table filters OR search bar),
         // we need to refresh it as per the filtering, combined with any fixed criteria.
         if (this.filterForm != null && this.filterForm.hasContent()) {
+
             criteria = this.filterForm.getValuesAsCriteria();
-            if (criteria != null) {
-                if (this.fixedCriteria != null) {
-                    // There is fixed criteria - add it to the filter form criteria.
-                    addCriteria(criteria, this.fixedCriteria);
+
+            if (this.initialCriteriaFixed) {
+                if (criteria != null) {
+                    if (this.initialCriteria != null) {
+                        // There is fixed criteria - add it to the filter form criteria.
+                        addCriteria(criteria, this.initialCriteria);
+                    }
+                } else {
+                    criteria = this.initialCriteria;
                 }
-            } else {
-                criteria = this.fixedCriteria;
             }
-        } else {
-            criteria = this.fixedCriteria;
+        } else if (this.initialCriteriaFixed) {
+
+            criteria = this.initialCriteria;
         }
+
         return criteria;
     }
 

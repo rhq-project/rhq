@@ -72,6 +72,10 @@ public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> i
         super(locatorId, tableTitle, sortSpecifiers);
     }
 
+    protected TableSection(String locatorId, String tableTitle, Criteria criteria, SortSpecifier[] sortSpecifiers) {
+        super(locatorId, tableTitle, sortSpecifiers, criteria);
+    }
+
     protected TableSection(String locatorId, String tableTitle, boolean autoFetchData) {
         super(locatorId, tableTitle, autoFetchData);
     }
@@ -175,8 +179,8 @@ public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> i
                 }
                 Integer recordId = getId(record);
                 String detailsUrl = "#" + getBasePath() + "/" + recordId;
-                String formattedValue = (escapeHtmlInDetailsLinkColumn) ? StringUtility.escapeHtml(value.toString()) :
-                        value.toString();
+                String formattedValue = (escapeHtmlInDetailsLinkColumn) ? StringUtility.escapeHtml(value.toString())
+                    : value.toString();
                 return SeleniumUtility.getLocatableHref(detailsUrl, formattedValue, null);
             }
         };

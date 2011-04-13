@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.SortDirection;
@@ -57,9 +58,21 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  */
 public class EventCompositeHistoryView extends TableSection<EventCompositeDatasource> {
 
-    private static SortSpecifier DEFAULT_SORT_SPECIFIER = new SortSpecifier("timestamp", SortDirection.DESCENDING);
+    private static final SortSpecifier DEFAULT_SORT_SPECIFIER = new SortSpecifier("timestamp", SortDirection.DESCENDING);
+    private static final Criteria INITIAL_CRITERIA = new Criteria();
     private EntityContext context;
     private boolean hasWriteAccess;
+
+    static {
+        EventSeverity[] severityValues = EventSeverity.values();
+        String[] severityNames = new String[severityValues.length];
+        int i = 0;
+        for (EventSeverity s : severityValues) {
+            severityNames[i++] = s.name();
+        }
+
+        INITIAL_CRITERIA.addCriteria("severities", severityNames);
+    }
 
     public static EventCompositeHistoryView get(String locatorId, ResourceGroupComposite composite) {
         String tableTitle = MSG.view_inventory_eventHistory_groupEventHistory();
@@ -76,10 +89,11 @@ public class EventCompositeHistoryView extends TableSection<EventCompositeDataso
     }
 
     private EventCompositeHistoryView(String locatorId, String tableTitle, EntityContext context, boolean hasWriteAccess) {
-        super(locatorId, tableTitle, new SortSpecifier[] { DEFAULT_SORT_SPECIFIER });
+        super(locatorId, tableTitle, INITIAL_CRITERIA, new SortSpecifier[] { DEFAULT_SORT_SPECIFIER });
         this.context = context;
         this.hasWriteAccess = hasWriteAccess;
 
+        setInitialCriteriaFixed(false);
         setDataSource(new EventCompositeDatasource(this.context));
     }
 

@@ -41,7 +41,7 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.form.EditableFormItem;
 import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.components.form.StringLengthValidator;
-import org.rhq.enterprise.gui.coregui.client.components.form.EditableFormItem.ValueEditedHandler;
+import org.rhq.enterprise.gui.coregui.client.components.form.SimpleEditableFormItem.ValueEditedHandler;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
@@ -280,7 +280,7 @@ public class OverviewForm extends EnhancedDynamicForm {
         // Version
         StaticTextItem versionItem = new StaticTextItem("version", MSG.view_summaryOverviewForm_field_version());
         String version = (resource.getVersion() != null) ? resource.getVersion() : "<i>" + MSG.common_label_none()
-                + "</i>";
+            + "</i>";
         versionItem.setValue(version);
         versionItem.setEndRow(true);
         formItems.add(versionItem);

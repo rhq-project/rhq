@@ -315,11 +315,11 @@ public class GroupOperationsPortlet extends LocatableVLayout implements CustomSe
     }
 
     private boolean isAutoGroup() {
-        return ResourceGroupDetailView.AUTO_GROUP_VIEW_PATH.equals(getBaseViewPath());
+        return ResourceGroupDetailView.AUTO_GROUP_VIEW.equals(getBaseViewPath());
     }
 
     private boolean isAutoCluster() {
-        return ResourceGroupDetailView.AUTO_CLUSTER_VIEW_PATH.equals(getBaseViewPath());
+        return ResourceGroupDetailView.AUTO_CLUSTER_VIEW.equals(getBaseViewPath());
     }
 
     public String getBaseViewPath() {
@@ -329,7 +329,11 @@ public class GroupOperationsPortlet extends LocatableVLayout implements CustomSe
     @Override
     public void redraw() {
         super.redraw();
-        loadData();
+        if (!isRefreshing()) {
+            if (groupOperations != null) {
+                groupOperations.refresh();
+            }
+        }
     }
 
     protected void setCurrentlyRefreshing(boolean currentlyRefreshing) {

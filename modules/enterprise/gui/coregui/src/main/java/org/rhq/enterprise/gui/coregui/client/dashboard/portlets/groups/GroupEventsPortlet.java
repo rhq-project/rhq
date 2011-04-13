@@ -32,7 +32,6 @@ import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.events.SubmitValuesEvent;
 import com.smartgwt.client.widgets.form.events.SubmitValuesHandler;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
-import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -102,7 +101,6 @@ public class GroupEventsPortlet extends LocatableVLayout implements CustomSettin
 
     @Override
     protected void onInit() {
-        super.onInit();
         //disable the refresh timer for this run
         currentlyLoading = true;
         initializeUi();
@@ -190,7 +188,7 @@ public class GroupEventsPortlet extends LocatableVLayout implements CustomSettin
     /** Fetches recent events and updates the DynamicForm instance with the latest
      *  event information over last 24hrs.
      */
-    private void getRecentEventUpdates() {
+    protected void getRecentEventUpdates() {
         final int groupId = this.groupId;
         long end = System.currentTimeMillis();
         long start = end - (24 * 60 * 60 * 1000);
@@ -250,7 +248,7 @@ public class GroupEventsPortlet extends LocatableVLayout implements CustomSettin
                         }
                     }
                     //build display
-                    VLayout column = new VLayout();
+                    LocatableVLayout column = new LocatableVLayout(recentEventsContent.extendLocatorId("canvas"));
                     column.setHeight(10);
 
                     if (!results.isEmpty()) {
@@ -259,7 +257,7 @@ public class GroupEventsPortlet extends LocatableVLayout implements CustomSettin
                             // event history records do not have a usable locatorId, we'll use rownum, which is unique and
                             // may be repeatable.
                             LocatableDynamicForm row = new LocatableDynamicForm(recentEventsContent
-                                .extendLocatorId(String.valueOf(rowNum)));
+                                .extendLocatorId(String.valueOf(rowNum++)));
                             row.setNumCols(2);
                             row.setWidth(10);//pack.
 
@@ -275,7 +273,7 @@ public class GroupEventsPortlet extends LocatableVLayout implements CustomSettin
                         column.markForRedraw();
                         //insert see more link
                         LocatableDynamicForm row = new LocatableDynamicForm(recentEventsContent.extendLocatorId(String
-                            .valueOf(rowNum)));
+                            .valueOf(rowNum++)));
                         AbstractActivityView.addSeeMoreLink(row, ReportDecorator.GWT_GROUP_URL + groupId
                             + "/Events/History/", column);
                     } else {

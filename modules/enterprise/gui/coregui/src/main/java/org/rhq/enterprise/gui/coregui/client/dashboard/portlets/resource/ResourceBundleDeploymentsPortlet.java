@@ -64,21 +64,6 @@ public class ResourceBundleDeploymentsPortlet extends GroupBundleDeploymentsPort
         this.resourceId = currentResourceIdentifier;
     }
 
-    @Override
-    protected void onInit() {
-        super.onInit();
-        initializeUi();
-        loadData();
-    }
-
-    /**Defines layout for the portlet page.
-     */
-    protected void initializeUi() {
-        setPadding(5);
-        setMembersMargin(5);
-        addMember(recentBundleDeployContent);
-    }
-
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
@@ -87,13 +72,9 @@ public class ResourceBundleDeploymentsPortlet extends GroupBundleDeploymentsPort
         }
     }
 
-    protected void loadData() {
-        currentlyLoading = true;
-        getRecentBundleDeployments();
-    }
-
     /** Fetches recent bundle deployment information and updates the DynamicForm instance with details.
      */
+    @Override
     protected void getRecentBundleDeployments() {
         final int resourceId = this.resourceId;
         ResourceBundleDeploymentCriteria criteria = new ResourceBundleDeploymentCriteria();

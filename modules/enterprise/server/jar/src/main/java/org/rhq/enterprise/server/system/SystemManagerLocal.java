@@ -24,6 +24,7 @@ import javax.ejb.Local;
 
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.core.domain.common.ServerDetails;
 
 /**
@@ -140,6 +141,8 @@ public interface SystemManagerLocal {
     // The following are shared with the Remote Interface
     //
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    ProductInfo getProductInfo(Subject subject);
 
     ServerDetails getServerDetails(Subject subject);
 

@@ -71,7 +71,7 @@ public class ResourceGroupTopView extends LocatableHLayout implements Bookmarkab
         if (null == detailView) {
             if (isAutoClusterPath) {
                 detailView = new ResourceGroupDetailView(this.extendLocatorId("AutoClusterDetail"),
-                    ResourceGroupDetailView.AUTO_CLUSTER_VIEW_PATH);
+                    ResourceGroupDetailView.AUTO_CLUSTER_VIEW);
             } else {
                 detailView = new ResourceGroupDetailView(this.extendLocatorId("groupDetail"), this.VIEW_ID.getName());
             }

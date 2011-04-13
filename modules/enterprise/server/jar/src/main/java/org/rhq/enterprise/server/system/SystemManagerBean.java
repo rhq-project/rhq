@@ -576,7 +576,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
         return serverDetails;
     }
 
-    private ProductInfo getProductInfo(Subject subject) {
+    public ProductInfo getProductInfo(Subject subject) {
         CoreServerMBean coreServer = LookupUtil.getCoreServer();
         ProductInfo productInfo = coreServer.getProductInfo();
         return productInfo;

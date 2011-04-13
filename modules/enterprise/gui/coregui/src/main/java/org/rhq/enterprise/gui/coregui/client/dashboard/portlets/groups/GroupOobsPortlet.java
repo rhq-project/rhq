@@ -95,7 +95,6 @@ public class GroupOobsPortlet extends LocatableVLayout implements CustomSettings
 
     @Override
     protected void onInit() {
-        super.onInit();
         initializeUi();
         loadData();
     }
@@ -183,7 +182,7 @@ public class GroupOobsPortlet extends LocatableVLayout implements CustomSettings
     /** Fetches OOB measurements and updates the DynamicForm instance with the latest N
      *  oob change details.
      */
-    private void getRecentOobs() {
+    protected void getRecentOobs() {
         final int groupId = this.groupId;
         int resultCount = 5;//default to
 
@@ -266,7 +265,8 @@ public class GroupOobsPortlet extends LocatableVLayout implements CustomSettings
     public void redraw() {
         super.redraw();
         //spinder 4/3/11: although screen does not flash autorefresh is being called on time. Too fast for user to notice.
-        loadData();
+        if (!isRefreshing()) {
+            loadData();
+        }
     }
-
 }

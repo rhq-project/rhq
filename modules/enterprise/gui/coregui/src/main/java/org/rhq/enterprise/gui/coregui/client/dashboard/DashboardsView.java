@@ -62,7 +62,7 @@ import org.rhq.enterprise.gui.coregui.client.components.tab.NamedTab;
 import org.rhq.enterprise.gui.coregui.client.components.tab.NamedTabSet;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.alerts.RecentAlertsPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.operations.OperationsPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.operations.OperationHistoryPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.problems.ProblemResourcesPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.summary.InventorySummaryPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.util.MashupPortlet;
@@ -268,7 +268,7 @@ public class DashboardsView extends LocatableVLayout implements DashboardContain
     }
 
     /**
-     * The stored name for a dashboard is initally set to a generated, localizable name. It can later be edited
+     * The stored name for a dashboard is initially set to a generated, localizable name. It can later be edited
      * by the user. Automation tests must be valid independent of localization so we must use repeatable locators.
      * This method checks for generated dash names and returns a repeatable locator for them.
      * 
@@ -363,8 +363,6 @@ public class DashboardsView extends LocatableVLayout implements DashboardContain
 
         // Left Column
         DashboardPortlet welcome = new DashboardPortlet(MessagePortlet.NAME, MessagePortlet.KEY, 250);
-        welcome.getConfiguration().put(
-            new PropertySimple("message", MSG.view_dashboardsManager_message_title_details()));
         dashboard.addPortlet(welcome, 0, 0);
 
         DashboardPortlet summary = new DashboardPortlet(InventorySummaryPortlet.NAME, InventorySummaryPortlet.KEY, 250);
@@ -392,12 +390,8 @@ public class DashboardsView extends LocatableVLayout implements DashboardContain
                     ProblemResourcesPortlet.defaultValue));
         dashboard.addPortlet(problemResources, 1, 1);
 
-        DashboardPortlet operations = new DashboardPortlet(OperationsPortlet.NAME, OperationsPortlet.KEY, 350);
-        //initialize config for the operations portlet.
-        operations.getConfiguration().put(
-            new PropertySimple(OperationsPortlet.OPERATIONS_RANGE_COMPLETED, OperationsPortlet.defaultValue));
-        operations.getConfiguration().put(
-            new PropertySimple(OperationsPortlet.OPERATIONS_RANGE_SCHEDULED, OperationsPortlet.defaultValue));
+        DashboardPortlet operations = new DashboardPortlet(OperationHistoryPortlet.NAME, OperationHistoryPortlet.KEY,
+            200);
         dashboard.addPortlet(operations, 1, 2);
 
         return dashboard;

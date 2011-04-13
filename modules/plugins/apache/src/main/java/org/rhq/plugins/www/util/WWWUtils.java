@@ -21,6 +21,21 @@ package org.rhq.plugins.www.util;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.X509Certificate;
+
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+import javax.xml.ws.handler.LogicalHandler;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 /**
  * Helper class that contains methods that send http requests and evaluate results
@@ -28,20 +43,33 @@ import java.net.URL;
  */
 public abstract class WWWUtils {
 
-    /**
-     * Sends a HEAD request to the passed url and returns if the server was reachable
-     * @param  httpURL a http or https URL to check
-     * @return true if connecting to the URL succeeds, or false otherwise
-     */
+        /**
+         * Sends a HEAD request to the passed url and returns if the server was reachable
+         * @param  httpURL a http or https URL to check
+         * @return true if connecting to the URL succeeds, or false otherwise
+         */
+
     public static boolean isAvailable(URL httpURL) {
+        String failMsg = "URL [" + httpURL + "] returned unavailable";
         try {
             HttpURLConnection connection = (HttpURLConnection) httpURL.openConnection();
             connection.setRequestMethod("HEAD");
             connection.setConnectTimeout(3000);
+
+            if (connection instanceof HttpsURLConnection) {
+                disableCertificateVerification((HttpsURLConnection) connection);
+            }
+
             connection.connect();
             // get the respone code to actually trigger sending the Request.
             connection.getResponseCode();
+        } catch (SSLException e) {
+            Log log = LogFactory.getLog(WWWUtils.class);
+            log.warn(failMsg + " due to: " + e.getLocalizedMessage(), e);
+            return false;
         } catch (IOException e) {
+            Log log = LogFactory.getLog(WWWUtils.class);
+            log.debug(failMsg + " due to: " + e.getLocalizedMessage(), e);
             return false;
         }
 
@@ -70,4 +98,39 @@ public abstract class WWWUtils {
         }
         return ret;
     }
+
+    // This method has been added in support of https://bugzilla.redhat.com/show_bug.cgi?id=690430.
+    private static void disableCertificateVerification(HttpsURLConnection connection) {
+        TrustManager[] trustAllCerts = new TrustManager[]{
+            new X509TrustManager() {
+                public X509Certificate[] getAcceptedIssuers() {
+                    return new X509Certificate[] {};
+                }
+
+                public void checkClientTrusted(X509Certificate[] certs, String authType) {
+                }
+
+                public void checkServerTrusted(X509Certificate[] certs, String authType) {
+                }
+            }
+        };
+        try {
+            SSLContext sslContext = SSLContext.getInstance("SSL");
+            sslContext.init(null, trustAllCerts, new java.security.SecureRandom());
+            connection.setSSLSocketFactory(sslContext.getSocketFactory());
+            connection.setHostnameVerifier(new HostnameVerifier() {
+                @Override
+                public boolean verify(String s, SSLSession sslSession) {
+                    return true;
+                }
+            });
+        } catch (NoSuchAlgorithmException e) {
+            Log log = LogFactory.getLog(WWWUtils.class);
+            log.warn("Failed to disable certificate validation.", e);
+        } catch (KeyManagementException e) {
+            Log log = LogFactory.getLog(WWWUtils.class);
+            log.warn("Failed to disable certificate validation.", e);
+        }
+    }
+
 }

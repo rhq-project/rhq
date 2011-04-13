@@ -40,9 +40,9 @@ import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.TextAreaItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
-
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.VLayout;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.JobTrigger;
 import org.rhq.core.domain.configuration.Configuration;
@@ -69,7 +69,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  *
  * @author Ian Springer
  */
-public abstract class AbstractOperationScheduleDetailsView extends AbstractRecordEditor<AbstractOperationScheduleDataSource> {
+public abstract class AbstractOperationScheduleDetailsView extends
+    AbstractRecordEditor<AbstractOperationScheduleDataSource> {
 
     private static final String FIELD_OPERATION_DESCRIPTION = "operationDescription";
     private static final String FIELD_OPERATION_PARAMETERS = "operationParameters";
@@ -78,8 +79,7 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
 
     private Map<Integer, String> operationIdToNameMap = new HashMap<Integer, String>();
     private Map<String, String> operationNameToDescriptionMap = new HashMap<String, String>();
-    private Map<String, ConfigurationDefinition> operationNameToParametersDefinitionMap =
-        new HashMap<String, ConfigurationDefinition>();
+    private Map<String, ConfigurationDefinition> operationNameToParametersDefinitionMap = new HashMap<String, ConfigurationDefinition>();
     private StaticTextItem operationDescriptionItem;
     private StaticTextItem operationParametersItem;
     private LocatableHLayout operationParametersConfigurationHolder;
@@ -89,15 +89,15 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
     private Integer operationDefinitionId;
 
     public AbstractOperationScheduleDetailsView(String locatorId, AbstractOperationScheduleDataSource dataSource,
-                                                ResourceType resourceType, int scheduleId) {
+        ResourceType resourceType, int scheduleId) {
         super(locatorId, dataSource, scheduleId, MSG.view_operationScheduleDetails_operationSchedule(), null);
 
         Set<OperationDefinition> operationDefinitions = resourceType.getOperationDefinitions();
         for (OperationDefinition operationDefinition : operationDefinitions) {
             this.operationIdToNameMap.put(operationDefinition.getId(), operationDefinition.getName());
             this.operationNameToDescriptionMap.put(operationDefinition.getName(), operationDefinition.getDescription());
-            this.operationNameToParametersDefinitionMap.put(operationDefinition.getName(),
-                operationDefinition.getParametersConfigurationDefinition());
+            this.operationNameToParametersDefinitionMap.put(operationDefinition.getName(), operationDefinition
+                .getParametersConfigurationDefinition());
         }
     }
 
@@ -146,13 +146,13 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
             }
         });
 
-        this.operationDescriptionItem = new StaticTextItem(FIELD_OPERATION_DESCRIPTION,
-                MSG.view_operationScheduleDetails_field_description());
+        this.operationDescriptionItem = new StaticTextItem(FIELD_OPERATION_DESCRIPTION, MSG
+            .view_operationScheduleDetails_field_description());
         this.operationDescriptionItem.setShowTitle(false);
         items.add(this.operationDescriptionItem);
 
-        this.operationParametersItem = new StaticTextItem(FIELD_OPERATION_PARAMETERS,
-                MSG.view_operationScheduleDetails_field_parameters());
+        this.operationParametersItem = new StaticTextItem(FIELD_OPERATION_PARAMETERS, MSG
+            .view_operationScheduleDetails_field_parameters());
         this.operationParametersItem.setColSpan(2);
         items.add(this.operationParametersItem);
 
@@ -190,20 +190,20 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
         supportedUnits.add(TimeUnit.SECONDS);
         supportedUnits.add(TimeUnit.MINUTES);
         supportedUnits.add(TimeUnit.HOURS);
-        DurationItem timeoutItem = new DurationItem(AbstractOperationScheduleDataSource.Field.TIMEOUT,
-                MSG.view_operationScheduleDetails_field_timeout(),
-                supportedUnits, false, isReadOnly(), this.notesForm);
+        DurationItem timeoutItem = new DurationItem(AbstractOperationScheduleDataSource.Field.TIMEOUT, MSG
+            .view_operationScheduleDetails_field_timeout(), supportedUnits, false, isReadOnly(), this.notesForm);
         timeoutItem.setContextualHelp(MSG.view_operationScheduleDetails_fieldHelp_timeout());
         notesFields.add(timeoutItem);
 
         if (!isNewRecord()) {
-            StaticTextItem nextFireTimeItem = new StaticTextItem(AbstractOperationScheduleDataSource.Field.NEXT_FIRE_TIME,
-                    MSG.dataSource_operationSchedule_field_nextFireTime());
+            StaticTextItem nextFireTimeItem = new StaticTextItem(
+                AbstractOperationScheduleDataSource.Field.NEXT_FIRE_TIME, MSG
+                    .dataSource_operationSchedule_field_nextFireTime());
             notesFields.add(nextFireTimeItem);
         }
 
-        TextAreaItem notesItem = new TextAreaItem(ResourceOperationScheduleDataSource.Field.DESCRIPTION,
-                MSG.dataSource_operationSchedule_field_description());
+        TextAreaItem notesItem = new TextAreaItem(ResourceOperationScheduleDataSource.Field.DESCRIPTION, MSG
+            .dataSource_operationSchedule_field_description());
         notesItem.setWidth(450);
         notesItem.setHeight(60);
         notesItem.setShowTitle(true);
@@ -220,7 +220,11 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
     @Override
     protected ButtonBar buildButtonBar() {
         ButtonBar buttonBar = super.buildButtonBar();
-        buttonBar.getSaveButton().setTitle(MSG.common_button_schedule());
+
+        if (null != buttonBar) {
+            buttonBar.getSaveButton().setTitle(MSG.common_button_schedule());
+        }
+
         return buttonBar;
     }
 
@@ -239,8 +243,8 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
         }
 
         Subject sessionSubject = UserSessionManager.getSessionSubject();
-        AbstractOperationScheduleDataSource.SubjectRecord subjectRecord =
-                new AbstractOperationScheduleDataSource.SubjectRecord(sessionSubject);
+        AbstractOperationScheduleDataSource.SubjectRecord subjectRecord = new AbstractOperationScheduleDataSource.SubjectRecord(
+            sessionSubject);
         record.setAttribute(ResourceOperationScheduleDataSource.Field.SUBJECT, subjectRecord);
 
         return record;
@@ -256,26 +260,33 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
 
     @Override
     protected void editExistingRecord(Record record) {
-        JavaScriptObject jobTriggerJavaScriptObject =
-                (JavaScriptObject) getForm().getValue(AbstractOperationScheduleDataSource.Field.JOB_TRIGGER);
-        Record jobTriggerRecord =  new ListGridRecord(jobTriggerJavaScriptObject);
+        JavaScriptObject jobTriggerJavaScriptObject = (JavaScriptObject) getForm().getValue(
+            AbstractOperationScheduleDataSource.Field.JOB_TRIGGER);
+        Record jobTriggerRecord = new ListGridRecord(jobTriggerJavaScriptObject);
         JobTrigger jobTrigger = getDataSource().createJobTrigger(jobTriggerRecord);
         this.triggerEditor.setJobTrigger(jobTrigger);
 
         FormItem nextFireTimeItem = this.notesForm.getField(AbstractOperationScheduleDataSource.Field.NEXT_FIRE_TIME);
         nextFireTimeItem.setValue(getForm().getValue(AbstractOperationScheduleDataSource.Field.NEXT_FIRE_TIME));
 
-        DurationItem timeoutItem = (DurationItem) this.notesForm.getField(AbstractOperationScheduleDataSource.Field.TIMEOUT);
+        DurationItem timeoutItem = (DurationItem) this.notesForm
+            .getField(AbstractOperationScheduleDataSource.Field.TIMEOUT);
         Object value = getForm().getValue(AbstractOperationScheduleDataSource.Field.TIMEOUT);
         Integer integerValue = TypeConversionUtility.toInteger(value);
         timeoutItem.setValue(integerValue, UnitType.TIME);
 
-        StaticTextItem notesItem = (StaticTextItem) this.notesForm.getField(AbstractOperationScheduleDataSource.Field.DESCRIPTION);
-        // Notes field is user-editable, so escape HTML to prevent an XSS attack.
-        notesItem.setOutputAsHTML(true);
-        notesItem.setValue(getForm().getValue(AbstractOperationScheduleDataSource.Field.DESCRIPTION));
+        StaticTextItem notesItem = (StaticTextItem) this.notesForm
+            .getField(AbstractOperationScheduleDataSource.Field.DESCRIPTION);
+        // Notes field is user-editable, so escape HTML to prevent an XSS attack. Unless empty, then don't to prevent
+        // displaying &nbsp; as the value.
+        String notesValue = getForm().getValue(AbstractOperationScheduleDataSource.Field.DESCRIPTION).toString();
+        if (null != notesValue && !notesValue.isEmpty()) {
+            notesItem.setOutputAsHTML(true);
+        }
+        notesItem.setValue(notesValue);
 
-        this.parameters = (Configuration) record.getAttributeAsObject(AbstractOperationScheduleDataSource.Field.PARAMETERS);
+        this.parameters = (Configuration) record
+            .getAttributeAsObject(AbstractOperationScheduleDataSource.Field.PARAMETERS);
 
         super.editExistingRecord(record);
     }
@@ -309,16 +320,17 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
 
         form.setValue(AbstractOperationScheduleDataSource.Field.JOB_TRIGGER, jobTriggerRecord);
 
-        DurationItem timeoutItem = (DurationItem)this.notesForm.getItem(AbstractOperationScheduleDataSource.Field.TIMEOUT);
+        DurationItem timeoutItem = (DurationItem) this.notesForm
+            .getItem(AbstractOperationScheduleDataSource.Field.TIMEOUT);
         Long timeout = timeoutItem.getValueAsLong();
         if (timeout != null) {
             form.setValue(AbstractOperationScheduleDataSource.Field.TIMEOUT, timeout);
         } else {
-            form.setValue(AbstractOperationScheduleDataSource.Field.TIMEOUT, (String)null);
+            form.setValue(AbstractOperationScheduleDataSource.Field.TIMEOUT, (String) null);
         }
 
         FormItem notesItem = this.notesForm.getField(AbstractOperationScheduleDataSource.Field.DESCRIPTION);
-        form.setValue(AbstractOperationScheduleDataSource.Field.DESCRIPTION, (String)notesItem.getValue());
+        form.setValue(AbstractOperationScheduleDataSource.Field.DESCRIPTION, (String) notesItem.getValue());
 
         super.save(requestProperties);
     }
@@ -340,7 +352,8 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
         if (operationName == null) {
             value = "<i>" + MSG.view_operationScheduleDetails_fieldDefault_parameters() + "</i>";
         } else {
-            ConfigurationDefinition parametersDefinition = this.operationNameToParametersDefinitionMap.get(operationName);
+            ConfigurationDefinition parametersDefinition = this.operationNameToParametersDefinitionMap
+                .get(operationName);
             if (parametersDefinition == null || parametersDefinition.getPropertyDefinitions().isEmpty()) {
                 value = "<i>" + MSG.view_operationScheduleDetails_noParameters() + "</i>";
 
@@ -361,13 +374,13 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
                 this.operationParametersConfigurationHolder.addMember(horizontalSpacer);
 
                 if (isNewRecord()) {
-                    this.parameters = (parametersDefinition.getDefaultTemplate() != null) ?
-                        parametersDefinition.getDefaultTemplate().createConfiguration() : new Configuration();
+                    this.parameters = (parametersDefinition.getDefaultTemplate() != null) ? parametersDefinition
+                        .getDefaultTemplate().createConfiguration() : new Configuration();
                 } else {
 
                 }
-                ConfigurationEditor configurationEditor = new ConfigurationEditor("ParametersEditor", parametersDefinition,
-                    this.parameters);
+                ConfigurationEditor configurationEditor = new ConfigurationEditor("ParametersEditor",
+                    parametersDefinition, this.parameters);
                 configurationEditor.setReadOnly(isReadOnly());
                 this.operationParametersConfigurationHolder.addMember(configurationEditor);
                 this.operationParametersConfigurationHolder.show();
@@ -378,7 +391,7 @@ public abstract class AbstractOperationScheduleDetailsView extends AbstractRecor
 
     private String getSelectedOperationName() {
         FormItem operationNameItem = getForm().getField(AbstractOperationScheduleDataSource.Field.OPERATION_NAME);
-        return (String)operationNameItem.getValue();
+        return (String) operationNameItem.getValue();
     }
 
 }

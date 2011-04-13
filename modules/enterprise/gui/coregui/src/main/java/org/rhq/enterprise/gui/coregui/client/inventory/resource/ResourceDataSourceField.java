@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,7 +20,6 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-
 package org.rhq.enterprise.gui.coregui.client.inventory.resource;
 
 import com.smartgwt.client.widgets.grid.ListGridField;
@@ -36,6 +35,8 @@ public enum ResourceDataSourceField {
     TYPE("resourceType.name", CoreGUI.getMessages().common_title_type()),
 
     PLUGIN("pluginName", CoreGUI.getMessages().common_title_plugin()),
+
+    VERSION("version", CoreGUI.getMessages().common_title_version()),
 
     CATEGORY("resourceType.category", CoreGUI.getMessages().common_title_category()),
 

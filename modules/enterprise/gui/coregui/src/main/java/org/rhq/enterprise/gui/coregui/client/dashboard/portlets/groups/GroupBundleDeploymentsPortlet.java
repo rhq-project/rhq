@@ -100,7 +100,6 @@ public class GroupBundleDeploymentsPortlet extends LocatableVLayout implements C
 
     @Override
     protected void onInit() {
-        super.onInit();
         initializeUi();
         loadData();
     }
@@ -282,7 +281,9 @@ public class GroupBundleDeploymentsPortlet extends LocatableVLayout implements C
     @Override
     public void redraw() {
         super.redraw();
-        loadData();
+        if (!isRefreshing()) {
+            loadData();
+        }
     }
 
 }

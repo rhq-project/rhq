@@ -377,7 +377,7 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
     }
 
     private void renderAutoCluster(ResourceGroup backingGroup) {
-        String viewPath = ResourceGroupDetailView.AUTO_CLUSTER_VIEW_PATH + "/" + backingGroup.getId();
+        String viewPath = ResourceGroupDetailView.AUTO_CLUSTER_VIEW + "/" + backingGroup.getId();
         String currentViewPath = History.getToken();
         if (!currentViewPath.startsWith(viewPath)) {
             CoreGUI.goToView(viewPath);

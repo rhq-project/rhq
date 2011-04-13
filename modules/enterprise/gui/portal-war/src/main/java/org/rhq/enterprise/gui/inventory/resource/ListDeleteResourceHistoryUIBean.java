@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.inventory.resource;
 
 import javax.faces.model.DataModel;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.DeleteResourceHistory;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
@@ -73,11 +74,12 @@ public class ListDeleteResourceHistoryUIBean extends PagedDataTableUIBean {
 
         @Override
         public PageList<DeleteResourceHistory> fetchPage(PageControl pageControl) {
+            Subject user = EnterpriseFacesContextUtility.getSubject();
             Resource parentresource = EnterpriseFacesContextUtility.getResourceIfExists();
             ResourceFactoryManagerLocal resourceFactoryManager = LookupUtil.getResourceFactoryManager();
 
             pageControl.initDefaultOrderingField("drh.id", PageOrdering.DESC);
-            PageList<DeleteResourceHistory> pageList = resourceFactoryManager.findDeleteChildResourceHistory(
+            PageList<DeleteResourceHistory> pageList = resourceFactoryManager.findDeleteChildResourceHistory(user,
                 parentresource.getId(), null, null, pageControl);
 
             return pageList;

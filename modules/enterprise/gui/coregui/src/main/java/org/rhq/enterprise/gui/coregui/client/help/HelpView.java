@@ -28,19 +28,21 @@ import java.util.MissingResourceException;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.HTMLFlow;
 
+import com.smartgwt.client.widgets.Label;
 import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.MessageConstants;
 import org.rhq.enterprise.gui.coregui.client.components.AboutModalWindow;
 import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
+import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
 import org.rhq.enterprise.gui.coregui.client.components.view.AbstractSectionedLeftNavigationView;
 import org.rhq.enterprise.gui.coregui.client.components.view.NavigationItem;
 import org.rhq.enterprise.gui.coregui.client.components.view.NavigationSection;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewFactory;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * The Help top-level view.
@@ -48,6 +50,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
  * @author Jay Shaughnessy
  */
 public class HelpView extends AbstractSectionedLeftNavigationView {
+
     public static final ViewName VIEW_ID = new ViewName("Help", MSG.common_title_help());
 
     private static final ViewName SECTION_PRODUCT_VIEW_ID = new ViewName("Product", MSG.view_help_section_product());
@@ -72,11 +75,19 @@ public class HelpView extends AbstractSectionedLeftNavigationView {
     }
 
     @Override
-    protected HTMLFlow defaultView() {
-        String contents = "<h1>" + MSG.common_title_help() + "</h1>\n" + MSG.view_helpTop_description();
-        HTMLFlow flow = new HTMLFlow(contents);
-        flow.setPadding(20);
-        return flow;
+    protected LocatableVLayout defaultView() {
+        LocatableVLayout vLayout = new LocatableVLayout(this.extendLocatorId("Default"));
+        vLayout.setWidth100();
+
+        // TODO: Help icon.
+        TitleBar titleBar = new TitleBar(this, MSG.common_title_help());
+        vLayout.addMember(titleBar);
+
+        Label label = new Label(MSG.view_helpTop_description());
+        label.setPadding(10);
+        vLayout.addMember(label);
+
+        return vLayout;
     }
 
     private NavigationSection buildProductSection() {
@@ -84,7 +95,7 @@ public class HelpView extends AbstractSectionedLeftNavigationView {
         NavigationItem aboutItem = new NavigationItem(new ViewName("AboutBox", MSG.view_help_section_product_about()),
             "[SKIN]/../actions/help.png", new ViewFactory() {
                 public Canvas createView() {
-                    final AboutModalWindow aboutModalWindow = new AboutModalWindow();
+                    final AboutModalWindow aboutModalWindow = new AboutModalWindow(extendLocatorId("AboutModalWindow"));
                     if (PRODUCT_INFO == null) {
                         GWTServiceLookup.getSystemService().getProductInfo(new AsyncCallback<ProductInfo>() {
                             public void onFailure(Throwable caught) {
@@ -103,6 +114,7 @@ public class HelpView extends AbstractSectionedLeftNavigationView {
                     return aboutModalWindow;
                 }
             });
+        aboutItem.setRefreshRequired(true);
 
         return new NavigationSection(SECTION_PRODUCT_VIEW_ID, aboutItem);
     }
@@ -140,4 +152,5 @@ public class HelpView extends AbstractSectionedLeftNavigationView {
             sections.add(section);
         }
     }
+
 }

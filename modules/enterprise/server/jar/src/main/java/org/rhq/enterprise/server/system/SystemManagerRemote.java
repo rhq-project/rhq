@@ -26,6 +26,7 @@ import javax.jws.WebParam;
 import javax.jws.WebService;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.core.domain.common.ServerDetails;
 
 /**
@@ -35,7 +36,18 @@ import org.rhq.core.domain.common.ServerDetails;
 @Remote
 public interface SystemManagerRemote {
     /**
-     * Provides details (such as product version) of the server processing the request. 
+     * Provides product information suitable for "About" details. 
+     * 
+     * @param subject user making the request
+     * 
+     * @return the product info
+     */
+    @WebMethod
+    ProductInfo getProductInfo( //
+        @WebParam(name = "subject") Subject subject);
+
+    /**
+     * Provides details (such as product version) of the server processing the request.  Requires MANAGE_SETTINGS. 
      * 
      * @param subject user making the request
      * 

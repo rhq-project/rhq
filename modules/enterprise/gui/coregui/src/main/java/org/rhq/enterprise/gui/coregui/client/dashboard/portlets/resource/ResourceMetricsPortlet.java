@@ -79,21 +79,6 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
         baseViewPath = elements[0];
     }
 
-    @Override
-    protected void onInit() {
-        super.onInit();
-        initializeUi();
-        loadData();
-    }
-
-    /**Defines layout for the portlet page.
-     */
-    protected void initializeUi() {
-        setPadding(5);
-        setMembersMargin(5);
-        addMember(recentMeasurementsContent);
-    }
-
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
@@ -102,16 +87,12 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
         }
     }
 
-    protected void loadData() {
-        currentlyLoading = true;
-        getRecentMetrics();
-    }
-
     /** Fetches recent metric information and updates the DynamicForm instance with i)sparkline information,
      * ii) link to recent metric graph for more details and iii) last metric value formatted to show significant
      * digits.
      */
-    private void getRecentMetrics() {
+    @Override
+    protected void getRecentMetrics() {
         //display container
         final VLayout column = new VLayout();
         column.setHeight(10);//pack

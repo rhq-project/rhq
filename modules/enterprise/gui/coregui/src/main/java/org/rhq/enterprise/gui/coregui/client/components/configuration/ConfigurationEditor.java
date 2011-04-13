@@ -146,6 +146,13 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 //
 public class ConfigurationEditor extends LocatableVLayout {
 
+    private static final LinkedHashMap<String, String> BOOLEAN_PROPERTY_ITEM_VALUE_MAP =
+            new LinkedHashMap<String, String>();
+    static {
+        BOOLEAN_PROPERTY_ITEM_VALUE_MAP.put(Boolean.TRUE.toString(), MSG.common_val_yes());
+        BOOLEAN_PROPERTY_ITEM_VALUE_MAP.put(Boolean.FALSE.toString(), MSG.common_val_no());
+    }
+
     private ConfigurationGWTServiceAsync configurationService = GWTServiceLookup.getConfigurationService();
 
     private LocatableToolStrip toolStrip;
@@ -1296,11 +1303,8 @@ public class ConfigurationEditor extends LocatableVLayout {
                 case BOOLEAN:
                     RadioGroupItem radioGroupItem = new RadioGroupItem();
                     radioGroupItem.setVertical(false);
+                    radioGroupItem.setValueMap(BOOLEAN_PROPERTY_ITEM_VALUE_MAP);
                     valueItem = radioGroupItem;
-                    LinkedHashMap<String, String> valueMap = new LinkedHashMap<String, String>();
-                    valueMap.put("true", MSG.common_val_yes());
-                    valueMap.put("false", MSG.common_val_no());
-                    valueItem.setValueMap(valueMap);
                     break;
                 case INTEGER:
                 case LONG:
@@ -1344,9 +1348,7 @@ public class ConfigurationEditor extends LocatableVLayout {
             // Property values are user-editable, so escape HTML when displayed as static text, to prevent XSS attacks.
             value = StringUtility.escapeHtml(value);
         }
-        // TODO (ips): I don't think we want to use setDefaultValue(), as it will cause the input to be reset to the
-        //             value if the user clears it.
-        valueItem.setDefaultValue(value);
+        valueItem.setValue(value);
 
         valueItem.setRequired(propertyDefinitionSimple.isRequired());
         valueItem.setWidth(220);

@@ -186,7 +186,7 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
 
             // set the resource deleted and update the db in case it matters to the child operations
             resource.setInventoryStatus(InventoryStatus.DELETED);
-            resource.setParentResource(null);
+            //resource.setParentResource(null); can't null this out since the query DeleteResourceHistory.QUERY_FIND_BY_PARENT_RESOURCE_ID needs it
             resource.setItime(System.currentTimeMillis());
             entityManager.merge(resource);
 
@@ -262,7 +262,7 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
         ResourceType resourceType = entityManager.getReference(ResourceType.class, resourceTypeId);
 
         // CreateResourceHistory.configuration is one-to-one, so make sure to clone the config, zeroing out all id's.
-        Configuration configurationClone = configuration.deepCopy(false);
+        Configuration configurationClone = (configuration != null) ? configuration.deepCopy(false) : null;
 
         // Persist and establish relationships
         CreateResourceHistory history = new CreateResourceHistory(parentResource, resourceType, user.getName(),
@@ -346,8 +346,8 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<CreateResourceHistory> findCreateChildResourceHistory(int parentResourceId, Long beginDate,
-        Long endDate, PageControl pageControl) {
+    public PageList<CreateResourceHistory> findCreateChildResourceHistory(Subject subject, int parentResourceId,
+        Long beginDate, Long endDate, PageControl pageControl) {
         pageControl.initDefaultOrderingField("crh.id", PageOrdering.DESC);
 
         int totalCount = getCreateChildResourceHistoryCount(parentResourceId, beginDate, endDate);
@@ -379,8 +379,8 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<DeleteResourceHistory> findDeleteChildResourceHistory(int parentResourceId, Long beginDate,
-        Long endDate, PageControl pageControl) {
+    public PageList<DeleteResourceHistory> findDeleteChildResourceHistory(Subject subject, int parentResourceId,
+        Long beginDate, Long endDate, PageControl pageControl) {
         pageControl.initDefaultOrderingField("drh.id", PageOrdering.DESC);
 
         int totalCount = getDeleteChildResourceHistoryCount(parentResourceId, beginDate, endDate);
@@ -435,11 +435,11 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
         // Create/locate package and package version
         PackageVersion packageVersion = null;
         if (packageUploadDetails == null) {
-            packageVersion = contentManager.createPackageVersion(user, packageName,
-                newPackageType.getId(), packageVersionNumber, architectureId, packageBitStream);
+            packageVersion = contentManager.createPackageVersion(user, packageName, newPackageType.getId(),
+                packageVersionNumber, architectureId, packageBitStream);
         } else {
-            packageVersion = contentManager.getUploadedPackageVersion(user, packageName,
-                newPackageType.getId(), packageVersionNumber, architectureId, packageBitStream, packageUploadDetails, null);
+            packageVersion = contentManager.getUploadedPackageVersion(user, packageName, newPackageType.getId(),
+                packageVersionNumber, architectureId, packageBitStream, packageUploadDetails, null);
         }
 
         return doCreatePackageBackedResource(user, parentResource, newResourceType, newResourceName,

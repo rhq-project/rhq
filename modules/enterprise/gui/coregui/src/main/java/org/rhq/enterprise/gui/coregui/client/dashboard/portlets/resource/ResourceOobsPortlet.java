@@ -59,21 +59,6 @@ public class ResourceOobsPortlet extends GroupOobsPortlet {
         this.resourceId = Integer.valueOf(elements[1]);
     }
 
-    @Override
-    protected void onInit() {
-        super.onInit();
-        initializeUi();
-        loadData();
-    }
-
-    /**Defines layout for the portlet page.
-     */
-    protected void initializeUi() {
-        setPadding(5);
-        setMembersMargin(5);
-        addMember(recentOobContent);
-    }
-
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
@@ -82,15 +67,11 @@ public class ResourceOobsPortlet extends GroupOobsPortlet {
         }
     }
 
-    protected void loadData() {
-        currentlyLoading = true;
-        getRecentOobs();
-    }
-
     /** Fetches OOB measurements and updates the DynamicForm instance with the latest N
      *  oob change details.
      */
-    private void getRecentOobs() {
+    @Override
+    protected void getRecentOobs() {
         final int resourceId = this.resourceId;
         int resultCount = 5;//default to
 

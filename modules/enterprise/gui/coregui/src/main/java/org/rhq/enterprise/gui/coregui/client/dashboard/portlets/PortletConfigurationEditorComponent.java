@@ -214,7 +214,7 @@ public class PortletConfigurationEditorComponent {
      * @return
      */
     public static CustomConfigMeasurementRangeEditor getMeasurementRangeEditor(Configuration portletConfig) {
-        return new CustomConfigMeasurementRangeEditor("alertTimeFrame", portletConfig);
+        return new CustomConfigMeasurementRangeEditor("timeFrame", portletConfig);
     }
 
     public static SelectItem getOperationStatusEditor(Configuration portletConfig) {

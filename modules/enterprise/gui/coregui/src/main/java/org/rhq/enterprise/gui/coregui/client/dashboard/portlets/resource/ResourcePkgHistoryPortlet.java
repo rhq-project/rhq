@@ -63,21 +63,6 @@ public class ResourcePkgHistoryPortlet extends GroupPkgHistoryPortlet {
         this.resourceId = currentResourceIdentifier;
     }
 
-    @Override
-    protected void onInit() {
-        super.onInit();
-        initializeUi();
-        loadData();
-    }
-
-    /**Defines layout for the portlet page.
-     */
-    protected void initializeUi() {
-        setPadding(5);
-        setMembersMargin(5);
-        addMember(recentPkgHistoryContent);
-    }
-
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
@@ -86,14 +71,10 @@ public class ResourcePkgHistoryPortlet extends GroupPkgHistoryPortlet {
         }
     }
 
-    protected void loadData() {
-        currentlyLoading = true;
-        getRecentPkgHistory();
-    }
-
     /** Fetches recent package history information and updates the DynamicForm instance with details.
      */
-    private void getRecentPkgHistory() {
+    @Override
+    protected void getRecentPkgHistory() {
         final int resourceId = this.resourceId;
         InstalledPackageHistoryCriteria criteria = new InstalledPackageHistoryCriteria();
 

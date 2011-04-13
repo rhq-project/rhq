@@ -26,6 +26,7 @@ import com.google.gwt.user.client.rpc.RemoteService;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.resource.CreateResourceHistory;
 import org.rhq.core.domain.resource.DeleteResourceHistory;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
@@ -50,6 +51,12 @@ public interface ResourceGWTService extends RemoteService {
         Configuration deploymentTimeConfiguration, int packageVersionId) throws RuntimeException;
 
     List<DeleteResourceHistory> deleteResources(int[] resourceIds) throws RuntimeException;
+
+    PageList<CreateResourceHistory> findCreateChildResourceHistory(int parentId, Long beginDate, Long endDate,
+        PageControl pc) throws RuntimeException;
+
+    PageList<DeleteResourceHistory> findDeleteChildResourceHistory(int parentId, Long beginDate, Long endDate,
+        PageControl pc) throws RuntimeException;
 
     List<RecentlyAddedResourceComposite> findRecentlyAddedResources(long ctime, int maxItems) throws RuntimeException;
 

@@ -27,7 +27,6 @@ import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
-import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.event.EventSeverity;
@@ -42,6 +41,7 @@ import org.rhq.enterprise.gui.coregui.client.resource.disambiguation.ReportDecor
 import org.rhq.enterprise.gui.coregui.client.util.GwtTuple;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**This portlet allows the end user to customize the Events display
  *
@@ -64,21 +64,6 @@ public class ResourceEventsPortlet extends GroupEventsPortlet {
         this.resourceId = Integer.valueOf(elements[1]);
     }
 
-    @Override
-    protected void onInit() {
-        super.onInit();
-        initializeUi();
-        loadData();
-    }
-
-    /**Defines layout for the portlet page.
-     */
-    protected void initializeUi() {
-        setPadding(5);
-        setMembersMargin(5);
-        addMember(recentEventsContent);
-    }
-
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
@@ -87,15 +72,11 @@ public class ResourceEventsPortlet extends GroupEventsPortlet {
         }
     }
 
-    protected void loadData() {
-        currentlyLoading = true;
-        getRecentEventUpdates();
-    }
-
     /** Fetches recent events and updates the DynamicForm instance with the latest
      *  event information over last 24hrs.
      */
-    private void getRecentEventUpdates() {
+    @Override
+    protected void getRecentEventUpdates() {
         final int resourceId = this.resourceId;
         long end = System.currentTimeMillis();
         long start = end - (24 * 60 * 60 * 1000);
@@ -152,7 +133,7 @@ public class ResourceEventsPortlet extends GroupEventsPortlet {
                         }
                     }
                     //build display
-                    VLayout column = new VLayout();
+                    LocatableVLayout column = new LocatableVLayout(recentEventsContent.extendLocatorId("canvas"));
                     column.setHeight(10);
 
                     if (!results.isEmpty()) {
@@ -161,7 +142,7 @@ public class ResourceEventsPortlet extends GroupEventsPortlet {
                             // event history records do not have a usable locatorId, we'll use rownum, which is unique and
                             // may be repeatable.
                             LocatableDynamicForm row = new LocatableDynamicForm(recentEventsContent
-                                .extendLocatorId(String.valueOf(rowNum)));
+                                .extendLocatorId(String.valueOf(rowNum++)));
                             row.setNumCols(2);
                             row.setWidth(10);//pack.
 
@@ -176,7 +157,7 @@ public class ResourceEventsPortlet extends GroupEventsPortlet {
                         }
                         //insert see more link
                         LocatableDynamicForm row = new LocatableDynamicForm(recentEventsContent.extendLocatorId(String
-                            .valueOf(rowNum)));
+                            .valueOf(rowNum++)));
                         AbstractActivityView.addSeeMoreLink(row, ReportDecorator.GWT_RESOURCE_URL + resourceId
                             + "/Events/History/", column);
                     } else {

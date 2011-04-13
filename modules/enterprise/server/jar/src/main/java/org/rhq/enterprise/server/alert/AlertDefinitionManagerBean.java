@@ -61,6 +61,7 @@ import org.rhq.enterprise.server.plugin.pc.alert.AlertSender;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderPluginManager;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
+import org.rhq.enterprise.server.util.CriteriaQueryGenerator.AuthorizationTokenType;
 
 /**
  * @author Joseph Marques
@@ -484,7 +485,8 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
          * is not currently deleted
          */
         boolean isResourceLevel = (oldAlertDefinition.getResource() != null);
-        checkAlertDefinition(subject, alertDefinition, isResourceLevel ? oldAlertDefinition.getResource().getId() : null);
+        checkAlertDefinition(subject, alertDefinition, isResourceLevel ? oldAlertDefinition.getResource().getId()
+            : null);
 
         /*
          * Should not be able to update an alert definition if the old alert definition is in an invalid state
@@ -600,7 +602,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
     private void checkAlertDefinition(Subject subject, AlertDefinition alertDefinition, Integer resourceId)
         throws InvalidAlertDefinitionException {
         // if someone enters a really long description, we need to truncate it - the column is only 250 chars
-        if (alertDefinition.getDescription()!=null && alertDefinition.getDescription().length() > 250) {
+        if (alertDefinition.getDescription() != null && alertDefinition.getDescription().length() > 250) {
             alertDefinition.setDescription(alertDefinition.getDescription().substring(0, 250));
         }
 
@@ -712,9 +714,15 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
     @SuppressWarnings("unchecked")
     public PageList<AlertDefinition> findAlertDefinitionsByCriteria(Subject subject, AlertDefinitionCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
-        if (authorizationManager.isInventoryManager(subject) == false) {
-            generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.RESOURCE, subject
-                .getId());
+
+        // Inv managers can do anything and anyone can inspect templates
+        if (!authorizationManager.isInventoryManager(subject) && !criteria.isTemplateCriteria()) {
+
+            // otherwise, for group alert defs ensure group view authz and for everything else, assume resource view authz 
+            AuthorizationTokenType tokenType = criteria.isGroupCriteria() ? AuthorizationTokenType.GROUP
+                : AuthorizationTokenType.RESOURCE;
+
+            generator.setAuthorizationResourceFragment(tokenType, subject.getId());
         }
 
         CriteriaQueryRunner<AlertDefinition> queryRunner = new CriteriaQueryRunner(criteria, generator, entityManager);

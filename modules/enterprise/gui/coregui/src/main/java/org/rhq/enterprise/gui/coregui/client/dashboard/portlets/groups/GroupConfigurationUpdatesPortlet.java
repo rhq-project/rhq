@@ -293,7 +293,6 @@ public class GroupConfigurationUpdatesPortlet extends LocatableVLayout implement
 
     @Override
     protected void onInit() {
-        super.onInit();
         //disable the refresh timer for this run
         currentlyLoading = true;
         initializeUi();
@@ -312,10 +311,12 @@ public class GroupConfigurationUpdatesPortlet extends LocatableVLayout implement
     @Override
     public void redraw() {
         super.redraw();
-        loadData();
+        if (!isRefreshing()) {
+            loadData();
+        }
     }
 
-    private void loadData() {
+    protected void loadData() {
         //populate composite data
         //locate resourceGroupRef
         ResourceGroupCriteria criteria = new ResourceGroupCriteria();
@@ -389,11 +390,11 @@ public class GroupConfigurationUpdatesPortlet extends LocatableVLayout implement
     }
 
     private boolean isAutoGroup() {
-        return ResourceGroupDetailView.AUTO_GROUP_VIEW_PATH.equals(getBaseViewPath());
+        return ResourceGroupDetailView.AUTO_GROUP_VIEW.equals(getBaseViewPath());
     }
 
     private boolean isAutoCluster() {
-        return ResourceGroupDetailView.AUTO_CLUSTER_VIEW_PATH.equals(getBaseViewPath());
+        return ResourceGroupDetailView.AUTO_CLUSTER_VIEW.equals(getBaseViewPath());
     }
 
     public String getBaseViewPath() {

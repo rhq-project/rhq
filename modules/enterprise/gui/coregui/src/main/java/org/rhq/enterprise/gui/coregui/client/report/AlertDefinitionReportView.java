@@ -37,6 +37,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.TypesLoadedCallback;
+import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
@@ -115,7 +116,7 @@ public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.D
                             int resourceId = alertDef.getResource().getId();
                             int alertDefId = alertDef.getId();
                             String link = LinkManager.getSubsystemAlertDefinitionLink(resourceId, alertDefId);
-                            return "<a href=\"" + link + "\">" + alertDef.getName() + "</a>";
+                            return "<a href=\"" + link + "\">" + StringUtility.escapeHtml(alertDef.getName()) + "</a>";
                         }
                     });
                 }
@@ -131,7 +132,7 @@ public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.D
                     if (record.getAttribute(FIELD_PARENT) != null) {
                         return MSG.view_reports_alertDefinitions_parentHover();
                     }
-                    return null;
+                    return MSG.common_val_na();
                 }
             });
             parentField.addRecordClickHandler(new RecordClickHandler() {
@@ -181,15 +182,14 @@ public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.D
 
             ListGridField resourceField = new ListGridField(FIELD_RESOURCE, MSG.common_title_resource());
             resourceField.setCellFormatter(new CellFormatter() {
-                public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
+                public String format(Object value, ListGridRecord listGridRecord, int i, int i1) {
                     String url = LinkManager
                         .getResourceLink(listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
-                    return SeleniumUtility.getLocatableHref(url, o.toString(), null);
+                    return SeleniumUtility.getLocatableHref(url, StringUtility.escapeHtml(value.toString()), null);
                 }
             });
             resourceField.setShowHover(true);
             resourceField.setHoverCustomizer(new HoverCustomizer() {
-
                 public String hoverHTML(Object value, ListGridRecord listGridRecord, int rowNum, int colNum) {
                     return AncestryUtil.getResourceHoverHTML(listGridRecord, 0);
                 }

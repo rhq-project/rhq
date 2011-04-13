@@ -152,6 +152,18 @@ public class LinkManager {
         return link;
     }
 
+    public static String getSubsystemResourceOperationScheduleLink(int resourceId, int opScheduleId) {
+        String link;
+        if (GWT) {
+            link = "#Resource/" + resourceId + "/Operations/Schedules/" + opScheduleId;
+        } else {
+            link = "/rhq/resource/operation/resourceOperationScheduleDetails-plain.xhtml?id=" + resourceId + "&opId="
+                + opScheduleId;
+
+        }
+        return link;
+    }
+
     public static String getSubsystemAlertHistoryLink(int resourceId, int alertHistoryId) {
         String link;
         if (GWT) {

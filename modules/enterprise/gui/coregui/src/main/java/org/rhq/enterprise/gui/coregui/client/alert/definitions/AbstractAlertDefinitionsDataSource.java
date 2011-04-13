@@ -41,6 +41,7 @@ import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.components.table.EscapedHtmlCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
@@ -79,10 +80,12 @@ public abstract class AbstractAlertDefinitionsDataSource extends
 
         ListGridField nameField = new ListGridField(FIELD_NAME, MSG.view_alerts_field_name());
         nameField.setWidth("20%");
+        nameField.setCellFormatter(new EscapedHtmlCellFormatter());
         fields.add(nameField);
 
         ListGridField descriptionField = new ListGridField(FIELD_DESCRIPTION, MSG.common_title_description());
         descriptionField.setWidth("20%");
+        descriptionField.setCellFormatter(new EscapedHtmlCellFormatter());
         fields.add(descriptionField);
 
         ListGridField ctimeField = new ListGridField(FIELD_CTIME, MSG.view_alerts_field_created_time());

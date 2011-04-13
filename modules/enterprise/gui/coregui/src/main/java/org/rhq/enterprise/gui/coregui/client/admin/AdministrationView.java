@@ -1,13 +1,13 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
- * This program is free software; you can retribute it and/or modify
+ * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation version 2 of the License.
  *
- * This program is tributed in the hope that it will be useful,
+ * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
@@ -49,6 +49,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Ian Springer
  */
 public class AdministrationView extends AbstractSectionedLeftNavigationView {
+
     public static final ViewName VIEW_ID = new ViewName("Administration", MSG.view_admin_administration());
 
     public static final ViewName SECTION_SECURITY_VIEW_ID = new ViewName("Security", MSG.view_admin_security());
@@ -136,14 +137,14 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
                     return new FullHTMLPane(extendLocatorId(PAGE_SERVERS_VIEW_ID.getName()),
                         "/rhq/ha/listServers-plain.xhtml?nomenu=true");
                 }
-            });
+            }, getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
 
         NavigationItem agentsItem = new NavigationItem(PAGE_AGENTS_VIEW_ID, "global/Agent_16.png", new ViewFactory() {
             public Canvas createView() {
                 return new FullHTMLPane(extendLocatorId(PAGE_AGENTS_VIEW_ID.getName()),
                     "/rhq/ha/listAgents-plain.xhtml?nomenu=true");
             }
-        });
+        }, getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
 
         NavigationItem affinityGroupsItem = new NavigationItem(PAGE_AFFINITY_GROUPS_VIEW_ID, "types/Group_up_16.png",
             new ViewFactory() {
@@ -151,7 +152,7 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
                     return new FullHTMLPane(extendLocatorId(PAGE_AFFINITY_GROUPS_VIEW_ID.getName()),
                         "/rhq/ha/listAffinityGroups-plain.xhtml?nomenu=true");
                 }
-            });
+            }, getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
 
         NavigationItem partitionEventsItem = new NavigationItem(PAGE_PARTITION_EVENTS_VIEW_ID,
             "subsystems/event/Events_16.png", new ViewFactory() {
@@ -159,14 +160,14 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
                     return new FullHTMLPane(extendLocatorId(PAGE_PARTITION_EVENTS_VIEW_ID.getName()),
                         "/rhq/ha/listPartitionEvents-plain.xhtml?nomenu=true");
                 }
-            });
+            }, getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
 
         NavigationItem remoteAgentInstallItem = new NavigationItem(RemoteAgentInstallView.VIEW_ID,
             "global/Agent_16.png", new ViewFactory() {
                 public Canvas createView() {
                     return new RemoteAgentInstallView(extendLocatorId("RemoteAgentInstall"));
                 }
-            });
+            }, getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
 
         return new NavigationSection(SECTION_TOPOLOGY_VIEW_ID, serversItem, agentsItem, affinityGroupsItem,
             partitionEventsItem, remoteAgentInstallItem);
@@ -178,7 +179,7 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
                 public Canvas createView() {
                     return new SystemSettingsView(extendLocatorId(SystemSettingsView.VIEW_ID.getName()));
                 }
-            });
+            }, getGlobalPermissions().contains(Permission.MANAGE_SETTINGS));
         systemSettingsItem.setRefreshRequired(true); // refresh so it always reloads the latest settings
 
         NavigationItem templatesItem = new NavigationItem(ResourceTypeTreeView.VIEW_ID, ImageManager
@@ -202,7 +203,7 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
                     return new FullHTMLPane(extendLocatorId(PAGE_PLUGINS_VIEW_ID.getName()),
                         "/rhq/admin/plugin/plugin-list-plain.xhtml?nomenu=true");
                 }
-            });
+            }, getGlobalPermissions().contains(Permission.MANAGE_SETTINGS));
 
         return new NavigationSection(SECTION_CONFIGURATION_VIEW_ID, systemSettingsItem, templatesItem, downloadsItem,
             pluginsItem);

@@ -273,7 +273,10 @@
          <c:simple-property name="configFile" required="true" readOnly="true"
                              description="the path to the httpd.conf file - if the path is not absolute, it will be resolved relative to the server root directory; if unset, default will be 'conf/httpd.conf' on UNIX"/>
          <c:simple-property name="url" displayName="URL" required="false"
-                            description="the http or https URL that will be used to check availability for this Apache server; if not set, availablity will be determined based on whether plugin can connect to the Apache server's SNMP agent"/>
+                            description="The http or https URL that will be used to check availability for this Apache
+                                server; if not set, availablity will be determined based on whether plugin can connect
+                                to the Apache server's SNMP agent. Note that SSL certificate validation is disabled
+                                during availability checks if this is an HTTPS URL."/>
          <c:simple-property name="snmpAgentHost" displayName="SNMP Agent Host" default="127.0.0.1"
                             description="the host name or IP address of the Apache SNMP agent (typically '127.0.0.1')"/>
          <c:simple-property name="snmpAgentPort" displayName="SNMP Agent Port" type="integer" default="1610"
@@ -492,7 +495,9 @@
 
          <plugin-configuration>
             <c:simple-property name="url" displayName="URL"
-                               description="the http or https URL that will be used to check availability for this virtual host"/>
+                               description="The http or https URL that will be used to check availability for this
+                                virtual host. Note that SSL certificate validation is disabled during availability
+                                checks if this is an HTTPS URL."/>
             <c:group name="ResponseTime">
                <c:simple-property name="responseTimeLogFile" required="false"
                                   description="the full path to the log file containing response-time stats for this virtual host"/>

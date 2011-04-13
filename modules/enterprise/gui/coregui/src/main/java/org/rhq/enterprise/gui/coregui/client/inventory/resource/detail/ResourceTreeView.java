@@ -299,7 +299,7 @@ public class ResourceTreeView extends LocatableVLayout {
     }
 
     private void renderAutoGroup(ResourceGroup backingGroup) {
-        String viewPath = ResourceGroupDetailView.AUTO_GROUP_VIEW_PATH + "/" + backingGroup.getId();
+        String viewPath = ResourceGroupDetailView.AUTO_GROUP_VIEW + "/" + backingGroup.getId();
         String currentViewPath = History.getToken();
         if (!currentViewPath.startsWith(viewPath)) {
             CoreGUI.goToView(viewPath);
@@ -629,13 +629,16 @@ public class ResourceTreeView extends LocatableVLayout {
 
         } else {
             // This is for cases where we have to load the tree fresh including down to the currently visible node
-            loadTree(selectedResourceId, null);
+            loadTree(selectedResourceId, true, null);
         }
 
     }
 
-    private void loadTree(final int selectedResourceId, final AsyncCallback<Void> callback) {
-        selectedNodeId = ResourceTreeNode.idOf(selectedResourceId);
+    private void loadTree(final int selectedResourceId, final boolean updateSelection,
+        final AsyncCallback<Void> callback) {
+        if (updateSelection) {
+            selectedNodeId = ResourceTreeNode.idOf(selectedResourceId);
+        }
 
         final ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
 
@@ -679,7 +682,10 @@ public class ResourceTreeView extends LocatableVLayout {
 
                             public void execute(DSResponse response, Object rawData, DSRequest request) {
                                 Log.info("Done fetching data for tree.");
-                                updateSelection();
+
+                                if (updateSelection) {
+                                    updateSelection();
+                                }
 
                                 if (null != callback) {
                                     callback.onSuccess(null);
@@ -687,14 +693,9 @@ public class ResourceTreeView extends LocatableVLayout {
                             }
                         });
 
-                        updateSelection();
-
                     } else {
-                        ResourceTypeRepository.Cache.getInstance().loadResourceTypes(
-                            lineage,
-                            EnumSet.of(ResourceTypeRepository.MetadataType.operations,
-                                ResourceTypeRepository.MetadataType.children,
-                                ResourceTypeRepository.MetadataType.subCategory),
+                        ResourceTypeRepository.Cache.getInstance().loadResourceTypes(lineage,
+                            EnumSet.of(ResourceTypeRepository.MetadataType.subCategory),
                             new ResourceTypeRepository.ResourceTypeLoadedCallback() {
 
                                 public void onResourceTypeLoaded(List<Resource> result) {
@@ -702,7 +703,7 @@ public class ResourceTreeView extends LocatableVLayout {
                                         .linkNodes(ResourceTreeDatasource.buildNodes(lineage, lockedData));
 
                                     TreeNode selectedNode = treeGrid.getTree().findById(selectedNodeId);
-                                    if (selectedNode != null) {
+                                    if (selectedNode != null && updateSelection) {
                                         updateSelection();
 
                                     } else {
@@ -744,8 +745,10 @@ public class ResourceTreeView extends LocatableVLayout {
 
                 public void onSuccess(PageList<ResourceGroup> result) {
                     final ResourceGroup backingGroup = result.get(0);
-                    // load the tree up to the autogroup's parent resource                    
-                    loadTree(backingGroup.getAutoGroupParentResource().getId(), new AsyncCallback<Void>() {
+                    // load the tree up to the autogroup's parent resource. Don't select the resource node
+                    // to avoid an unnecessary navigation to the resource, we just need the tree in place so
+                    // we can navigate to the autogroup node.
+                    loadTree(backingGroup.getAutoGroupParentResource().getId(), false, new AsyncCallback<Void>() {
 
                         public void onFailure(Throwable caught) {
                             CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_loadFailed_children(), caught);

@@ -21,7 +21,6 @@ package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -39,7 +38,6 @@ import org.rhq.enterprise.gui.coregui.client.components.table.EscapedHtmlCellFor
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 
 /**
  * Superclass to the different alert definition views. This should be subclassed
@@ -77,34 +75,46 @@ public abstract class AbstractAlertDefinitionsView extends TableSection<Abstract
         ListGridField descriptionField = listGrid.getField(AbstractAlertDefinitionsDataSource.FIELD_DESCRIPTION);
         descriptionField.setCellFormatter(new EscapedHtmlCellFormatter());
 
-        boolean permitted = isAllowedToModifyAlertDefinitions();
+        final boolean isAuthorized = isAuthorizedToModifyAlertDefinitions();
 
-        TableActionEnablement enablement = (permitted) ? TableActionEnablement.ALWAYS : TableActionEnablement.NEVER;
-        addTableAction(extendLocatorId("New"), MSG.common_button_new(), null, new AbstractTableAction(enablement) {
+        addTableAction(extendLocatorId("New"), MSG.common_button_new(), null, new AbstractTableAction() {
+            public boolean isEnabled(ListGridRecord[] selection) {
+                return super.isEnabled(selection) && isAuthorized;
+            }
+
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 newButtonPressed(selection);
-                // I don't think you want this refresh, it will recreate the new alert detail 
-                //refresh();
             }
         });
 
-        enablement = (permitted) ? TableActionEnablement.ANY : TableActionEnablement.NEVER;
         addTableAction(extendLocatorId("Enable"), MSG.common_button_enable(), MSG
-            .view_alert_definitions_enable_confirm(), new AbstractTableAction(enablement) {
+            .view_alert_definitions_enable_confirm(), new AbstractTableAction(TableActionEnablement.ANY) {
+            public boolean isEnabled(ListGridRecord[] selection) {
+                return super.isEnabled(selection) && isAuthorized;
+            }
+
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 enableButtonPressed(selection);
                 refresh();
             }
         });
         addTableAction(extendLocatorId("Disable"), MSG.common_button_disable(), MSG
-            .view_alert_definitions_disable_confirm(), new AbstractTableAction(enablement) {
+            .view_alert_definitions_disable_confirm(), new AbstractTableAction(TableActionEnablement.ANY) {
+            public boolean isEnabled(ListGridRecord[] selection) {
+                return super.isEnabled(selection) && isAuthorized;
+            }
+
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 disableButtonPressed(selection);
                 refresh();
             }
         });
         addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), MSG
-            .view_alert_definitions_delete_confirm(), new AbstractTableAction(enablement) {
+            .view_alert_definitions_delete_confirm(), new AbstractTableAction(TableActionEnablement.ANY) {
+            public boolean isEnabled(ListGridRecord[] selection) {
+                return super.isEnabled(selection) && isAuthorized;
+            }
+
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 deleteButtonPressed(selection);
             }
@@ -146,7 +156,7 @@ public abstract class AbstractAlertDefinitionsView extends TableSection<Abstract
             singleAlertDefinitionView.setAlertDefinition(newAlertDef);
             singleAlertDefinitionView.makeEditable();
         } else {
-            final AlertDefinitionCriteria criteria = new AlertDefinitionCriteria();
+            final AlertDefinitionCriteria criteria = getDetailCriteria();
             criteria.addFilterId(id);
             criteria.fetchGroupAlertDefinition(true);
             criteria.fetchConditions(true);
@@ -169,13 +179,21 @@ public abstract class AbstractAlertDefinitionsView extends TableSection<Abstract
         return singleAlertDefinitionView;
     }
 
+    /**
+     * Override to add any criteria that must be present when fetching the alert definition detail.
+     * @return
+     */
+    protected AlertDefinitionCriteria getDetailCriteria() {
+        return new AlertDefinitionCriteria();
+    }
+
     protected abstract ResourceType getResourceType();
 
     protected abstract Criteria getCriteria();
 
     protected abstract AbstractAlertDefinitionsDataSource getAlertDefinitionDataSource();
 
-    protected abstract boolean isAllowedToModifyAlertDefinitions();
+    protected abstract boolean isAuthorizedToModifyAlertDefinitions();
 
     protected abstract void newButtonPressed(ListGridRecord[] selection);
 

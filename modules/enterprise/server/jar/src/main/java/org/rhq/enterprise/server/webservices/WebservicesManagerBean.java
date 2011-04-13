@@ -49,6 +49,7 @@ import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite;
 import org.rhq.core.domain.common.EntityContext;
+import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.core.domain.common.ServerDetails;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
@@ -883,7 +884,17 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return resourceFactoryManager.deleteResources(subject, resourceIds);
     }
 
-    //RESOURCEFACTORYMANAGER: END ----------------------------------
+    public PageList<CreateResourceHistory> findCreateChildResourceHistory(Subject subject, int parentResourceId,
+        Long beginDate, Long endDate, PageControl pageControl) {
+        return resourceFactoryManager.findCreateChildResourceHistory(subject, parentResourceId, beginDate, endDate,
+            pageControl);
+    }
+
+    public PageList<DeleteResourceHistory> findDeleteChildResourceHistory(Subject subject, int parentResourceId,
+        Long beginDate, Long endDate, PageControl pageControl) {
+        return resourceFactoryManager.findDeleteChildResourceHistory(subject, parentResourceId, beginDate, endDate,
+            pageControl);
+    }
 
     //RESOURCEMANAGER: BEGIN ----------------------------------
     public List<Resource> findResourceLineage(Subject subject, int resourceId) {
@@ -1116,6 +1127,10 @@ public class WebservicesManagerBean implements WebservicesRemote {
     //SUPPORTMANAGER: END ------------------------------------
 
     //SYSTEMMANAGER: BEGIN ------------------------------------
+
+    public ProductInfo getProductInfo(Subject subject) {
+        return systemManager.getProductInfo(subject);
+    }
 
     public ServerDetails getServerDetails(Subject subject) {
         return systemManager.getServerDetails(subject);

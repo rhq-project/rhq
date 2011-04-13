@@ -392,7 +392,7 @@ public class InstalledPluginsUIBean {
             Subject subject = EnterpriseFacesContextUtility.getSubject();
             pluginMgr.markPluginsForPurge(subject, getIds(getSelectedAgentPlugins()));
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Preparing to purge agent plugins: " +
-                pluginNames + ". This make take a few minutes since all type definitions from the plugins must " +
+                pluginNames + ". This may take a few minutes since all type definitions from the plugins must " +
                 "first be purged from the system. The plugins will still be visible on this page until they have " +
                 "been purged.");
         } catch (Exception e) {

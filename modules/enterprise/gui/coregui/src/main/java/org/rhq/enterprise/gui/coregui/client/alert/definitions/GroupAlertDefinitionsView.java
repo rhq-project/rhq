@@ -104,7 +104,7 @@ public class GroupAlertDefinitionsView extends AbstractAlertDefinitionsView {
     }
 
     @Override
-    protected boolean isAllowedToModifyAlertDefinitions() {
+    protected boolean isAuthorizedToModifyAlertDefinitions() {
         return this.permissions.isAlert();
     }
 

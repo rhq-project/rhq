@@ -38,6 +38,7 @@ import org.rhq.core.domain.operation.composite.ResourceOperationScheduleComposit
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.gwt.OperationGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
@@ -196,6 +197,7 @@ public class OperationGWTServiceImpl extends AbstractGWTServiceImpl implements O
     public PageList<ResourceOperationScheduleComposite> findScheduledOperations(int pageSize) throws RuntimeException {
         try {
             PageControl pageControl = new PageControl(0, pageSize);
+            pageControl.initDefaultOrderingField("ro.nextFireTime", PageOrdering.ASC);
             PageList<ResourceOperationScheduleComposite> scheduledResourceOps = operationManager
                 .findCurrentlyScheduledResourceOperations(getSessionSubject(), pageControl);
 

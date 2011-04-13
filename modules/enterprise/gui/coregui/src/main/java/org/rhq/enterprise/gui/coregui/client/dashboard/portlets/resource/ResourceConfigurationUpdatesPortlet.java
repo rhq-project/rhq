@@ -76,13 +76,6 @@ public class ResourceConfigurationUpdatesPortlet extends GroupConfigurationUpdat
         baseViewPath = elements[0];
     }
 
-    @Override
-    protected void onInit() {
-        super.onInit();
-        initializeUi();
-        loadData();
-    }
-
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
@@ -104,12 +97,7 @@ public class ResourceConfigurationUpdatesPortlet extends GroupConfigurationUpdat
     }
 
     @Override
-    public void redraw() {
-        super.redraw();
-        loadData();
-    }
-
-    private void loadData() {
+    protected void loadData() {
         //populate composite data
         //locate resourceRef
         ResourceCriteria criteria = new ResourceCriteria();
@@ -216,7 +204,6 @@ public class ResourceConfigurationUpdatesPortlet extends GroupConfigurationUpdat
         protected void executeFetch(final DSRequest request, final DSResponse response,
             final ResourceConfigurationUpdateCriteria criteria) {
             ConfigurationGWTServiceAsync configurationService = GWTServiceLookup.getConfigurationService();
-
             configurationService.findResourceConfigurationUpdatesByCriteria(criteria,
                 new AsyncCallback<PageList<ResourceConfigurationUpdate>>() {
 

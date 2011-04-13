@@ -18,6 +18,29 @@
  */
 package org.rhq.enterprise.server.core.plugin;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+
+import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
+import javax.persistence.Query;
+import javax.transaction.TransactionManager;
+
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
 import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.plugin.Plugin;
@@ -27,23 +50,10 @@ import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.resource.metadata.PluginManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
-import org.testng.annotations.*;
-
-import javax.persistence.EntityManager;
-import javax.persistence.NoResultException;
-import javax.persistence.Query;
-import javax.transaction.TransactionManager;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.util.*;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 //make sure we run this after the plugins.metadata tests are done so that
 //the db contents don't interfere
-@Test(dependsOnGroups = "plugins.metadata") 
+@Test(dependsOnGroups = "plugin.metadata")
 public class DatabaseAndFilePluginDeploymentTest extends AbstractEJB3Test {
 
     private static final String PLUGIN_NAME = "DeployTest"; // as defined in our test descriptors
@@ -493,8 +503,7 @@ public class DatabaseAndFilePluginDeploymentTest extends AbstractEJB3Test {
             pluginDup.setVersion(plugin.getVersion());
             PluginDescriptor pluginDescriptor = this.testPluginDescriptors.get(pluginId);
             File localPluginFile = this.testPluginFiles.get(pluginId);
-            pluginMgr.registerPlugin(subjectManager.getOverlord(), pluginDup, pluginDescriptor, localPluginFile,
-                false);
+            pluginMgr.registerPlugin(subjectManager.getOverlord(), pluginDup, pluginDescriptor, localPluginFile, false);
         }
         return;
     }

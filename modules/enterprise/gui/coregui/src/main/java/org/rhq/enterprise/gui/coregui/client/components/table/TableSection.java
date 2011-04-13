@@ -175,7 +175,8 @@ public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> i
                 }
                 Integer recordId = getId(record);
                 String detailsUrl = "#" + getBasePath() + "/" + recordId;
-                String formattedValue = (escapeHtmlInDetailsLinkColumn) ? StringUtility.escapeHtml(value.toString()) : value.toString();
+                String formattedValue = (escapeHtmlInDetailsLinkColumn) ? StringUtility.escapeHtml(value.toString()) :
+                        value.toString();
                 return SeleniumUtility.getLocatableHref(detailsUrl, formattedValue, null);
             }
         };
@@ -358,13 +359,12 @@ public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> i
     protected void switchToTableView() {
         final Canvas contents = getTableContents();
         if (contents != null) {
-            // First refresh the table's data.
-            Log.debug("Refreshing data for [" + getClass().getName() + "]...");
-            // If this is not the initial display of the table, refresh the table data . Otherwise, a refresh would be
+            // If this is not the initial display of the table, refresh the table's data. Otherwise, a refresh would be
             // redundant, since the data was just loaded when the table was drawn.
             if (this.initialDisplay) {
                 this.initialDisplay = false;
             } else {
+                Log.debug("Refreshing data for Table [" + getClass().getName() + "]...");
                 refresh();
             }
             if (detailsHolder != null && detailsHolder.isVisible()) {
@@ -381,4 +381,5 @@ public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> i
             }
         }
     }
+
 }

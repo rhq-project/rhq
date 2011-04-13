@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.smartgwt.client.data.Criteria;
-import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridField;
@@ -90,7 +89,6 @@ public abstract class AbstractConfigurationHistoryView<T extends AbstractConfigu
     protected void configureTable() {
         List<ListGridField> fields = getDataSource().getListGridFields(this.resourceId == null);
         setListGridFields(true, fields.toArray(new ListGridField[fields.size()])); // true = always show the ID field
-        getListGrid().sort(AbstractConfigurationHistoryDataSource.Field.ID, SortDirection.DESCENDING);
 
         addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), MSG.common_msg_areYouSure(),
             new AbstractTableAction(hasWritePerm ? TableActionEnablement.ANY : TableActionEnablement.NEVER) {

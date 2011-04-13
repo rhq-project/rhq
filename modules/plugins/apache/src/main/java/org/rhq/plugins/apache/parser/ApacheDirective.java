@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class ApacheDirective {
+public class ApacheDirective implements Cloneable {
 
     private String name;
     private List<String> values;
@@ -194,5 +194,24 @@ public class ApacheDirective {
     
     public void addValue(String val){
         values.add(val);
+    }
+    
+    @Override
+    public ApacheDirective clone() {
+        try {
+            ApacheDirective copy = (ApacheDirective) super.clone();
+            
+            List<ApacheDirective> newChildNodes = new ArrayList<ApacheDirective>(childNodes.size());
+            for(ApacheDirective child : childNodes) {
+                ApacheDirective childCopy = child.clone();
+                childCopy.parentNode = copy;
+                newChildNodes.add(childCopy);
+            }
+            copy.childNodes = newChildNodes;
+            
+            return copy;
+        } catch (CloneNotSupportedException e) {
+            throw new IllegalStateException("ApacheDirective not cloneable even though it is declared as such.", e);
+        }
     }
 }

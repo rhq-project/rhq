@@ -183,7 +183,7 @@ public class PluginDescriptorBasedAugeasConfiguration implements AugeasConfigura
 	            throw new IllegalStateException("Expecting at least once inclusion pattern for configuration files.");
 	        }
 
-	        List<File> files = Glob.matchAll(root, includeGlobs);
+	        List<File> files = Glob.matchAll(root, includeGlobs, Glob.ALPHABETICAL_COMPARATOR);
 
 	        if (module.getExcludedGlobs() != null) {
 	            List<String> excludeGlobs = module.getExcludedGlobs();

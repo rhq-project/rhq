@@ -23,8 +23,10 @@ import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -60,7 +62,9 @@ public class ApacheBinaryInfo {
     private String built;
     private String mpm;
     private long lastModified = 0;
-
+    private Set<String> compiledInModules = new HashSet<String>();
+    private Set<String> compiledInDefines = new HashSet<String>();
+    
     private ApacheBinaryInfo(@NotNull
     String binaryPath) {
         this.binaryPath = binaryPath;
@@ -133,6 +137,8 @@ public class ApacheBinaryInfo {
         BufferedReader is = null;
 
         try {
+            compiledInDefines.clear();
+            
             ProcessExecution processExecution = new ProcessExecution(binaryPath);
             processExecution.setArguments(new String[] { "-V" });
             processExecution.setWaitForCompletion(10000L);
@@ -164,7 +170,56 @@ public class ApacheBinaryInfo {
                     }
 
                     this.mpm = line;
+                } else if (line.startsWith("-D")) {
+                    String define = line.substring(3);
+                    int equalsIdx = define.indexOf('=');
+                    if (equalsIdx >= 0) {
+                        define = define.substring(0, equalsIdx);
+                    }
+                    
+                    compiledInDefines.add(define);
                 }
+            }
+        } catch (Throwable t) {
+            String msg = "Error running binary '" + binaryPath + "': " + t.getMessage();
+            LOG.error(msg, t);
+        } finally {
+            if (is != null) {
+                try {
+                    is.close();
+                } catch (IOException e) {
+                }
+            }
+        }
+    }
+    
+    private void getCompiledInModules(String binaryPath, SystemInfo systemInfo) {
+        BufferedReader is = null;
+
+        try {
+            
+            compiledInModules.clear();
+            
+            ProcessExecution processExecution = new ProcessExecution(binaryPath);
+            processExecution.setArguments(new String[] { "-l" });
+            processExecution.setWaitForCompletion(10000L);
+            processExecution.setCaptureOutput(true);
+            ProcessExecutionResults results = systemInfo.executeProcess(processExecution);
+
+            if (results.getError() != null) {
+                throw results.getError();
+            }
+
+            String line;
+            is = new BufferedReader(new StringReader(results.getCapturedOutput()));
+            boolean firstLine = true;
+            while ((line = is.readLine()) != null) {
+                if (firstLine) {
+                    firstLine = false;
+                    continue;
+                }
+                
+                compiledInModules.add(line.trim());
             }
         } catch (Throwable t) {
             String msg = "Error running binary '" + binaryPath + "': " + t.getMessage();
@@ -192,7 +247,8 @@ public class ApacheBinaryInfo {
         this.lastModified = binaryFile.lastModified();
 
         getVersionCommandInfo(binaryPath, systemInfo);
-
+        getCompiledInModules(binaryPath, systemInfo);
+        
         File libHttpd = getHttpdSharedLibrary(binaryFile);
 
         this.version = findVersion((libHttpd != null) ? libHttpd.getPath() : this.binaryPath);
@@ -316,5 +372,13 @@ public class ApacheBinaryInfo {
 
     private static boolean isUnix() {
         return File.separatorChar == '/';
+    }
+    
+    public Set<String> getCompiledInModules() {
+        return compiledInModules;
+    }
+    
+    public Set<String> getCompiledInDefines() {
+        return compiledInDefines;
     }
 }

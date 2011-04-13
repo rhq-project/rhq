@@ -20,16 +20,17 @@ package org.rhq.plugins.apache;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URI;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -37,10 +38,13 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
 import org.rhq.augeas.util.Glob;
 import org.rhq.augeas.util.GlobFilter;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.PropertyList;
+import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.resource.ResourceUpgradeReport;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
@@ -63,6 +67,7 @@ import org.rhq.plugins.apache.util.AugeasNodeValueUtil;
 import org.rhq.plugins.apache.util.HttpdAddressUtility;
 import org.rhq.plugins.apache.util.HttpdAddressUtility.Address;
 import org.rhq.plugins.apache.util.OsProcessUtility;
+import org.rhq.plugins.apache.util.RuntimeApacheConfiguration;
 import org.rhq.plugins.platform.PlatformComponent;
 import org.rhq.rhqtransform.impl.PluginDescriptorBasedAugeasConfiguration;
 
@@ -84,6 +89,151 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
         public DiscoveryFailureException(String message) {
             super(message);
         }
+    }
+
+    private static final Map<String, String> MODULE_SOURCE_FILE_TO_MODULE_NAME_20;
+    private static final Map<String, String> MODULE_SOURCE_FILE_TO_MODULE_NAME_13;
+    
+    static {
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20 = new LinkedHashMap<String, String>();
+        
+        //these are extracted from http://httpd.apache.org/docs/current/mod/
+        //and linked pages
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("beos.c", "mpm_beos_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("event.c", "mpm_event_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mpm_netware.c", "mpm_netware_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mpmt_os2.c", "mpm_mpmt_os2_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("prefork.c", "mpm_prefork_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mpm_winnt.c", "mpm_winnt_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("worker.c", "mpm_worker_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_actions.c", "actions_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_alias.c", "alias_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_asis.c", "asis_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_auth_basic.c", "auth_basic_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_auth_digest.c", "auth_digest_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_authn_alias.c", "authn_alias_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_authn_anon.c", "authn_anon_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_authn_dbd.c", "authn_dbd_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_authn_dbm.c", "authn_dbm_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_authn_default.c", "authn_default_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_authn_file.c", "authn_file_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_authnz_ldap.c", "authnz_ldap_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_authz_dbm.c", "authz_dbm_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_authz_default.c", "authz_default_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_authz_groupfile.c", "authz_groupfile_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_authz_host.c", "authz_host_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_authz_owner.c", "authz_owner_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_authz_user.c", "authz_user_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_autoindex.c", "autoindex_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_cache.c", "cache_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_cern_meta.c", "cern_meta_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_cgi.c", "cgi_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_cgid.c", "cgid_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_charset_lite.c", "charset_lite_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_dav.c", "dav_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_dav_fs.c", "dav_fs_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_dav_lock.c", "dav_lock_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_dbd.c", "dbd_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_deflate.c", "deflate_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_dir.c", "dir_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_disk_cache.c", "disk_cache_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_dumpio.c", "dumpio_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_echo.c", "echo_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_env.c", "env_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_example.c", "example_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_expires.c", "expires_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_ext_filter.c", "ext_filter_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_file_cache.c", "file_cache_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_filter.c", "filter_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_headers.c", "headers_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_ident.c", "ident_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_imagemap.c", "imagemap_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_include.c", "include_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_info.c", "info_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_isapi.c", "isapi_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("util_ldap.c", "ldap_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_log_config.c", "log_config_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_log_forensic.c", "log_forensic_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_logio.c", "logio_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_mem_cache.c", "mem_cache_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_mime.c", "mime_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_mime_magic.c", "mime_magic_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_negotiation.c", "negotiation_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_nw_ssl.c", "nwssl_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_proxy.c", "proxy_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_proxy_ajp.c", "proxy_ajp_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_proxy_balancer.c", "proxy_balancer_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_proxy_connect.c", "proxy_connect_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_proxy_ftp.c", "proxy_ftp_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_proxy_http.c", "proxy_http_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_proxy_scgi.c", "proxy_scgi_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_reqtimeout.c", "reqtimeout_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_rewrite.c", "rewrite_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_setenvif.c", "setenvif_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_so.c", "so_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_speling.c", "speling_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_ssl.c", "ssl_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_status.c", "status_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_substitute.c", "substitute_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_suexec.c", "suexec_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_unique_id.c", "unique_id_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_userdir.c", "userdir_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_usertrack.c", "usertrack_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_version.c", "version_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_vhost_alias.c", "vhost_alias_module");
+        
+        //some hand picked modules
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_jk.c", "jk_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod-snmpcommon.c", "snmpcommon_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod-snmpagt.c", "snmpagt_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("covalent-snmp-v20.c", "snmp_agt_module");
+        
+        //this list is for apache 1.3
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13 = new LinkedHashMap<String, String>();
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_access.c", "access_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_actions.c", "action_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_alias.c", "alias_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_asis.c", "asis_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_auth.c", "auth_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_auth_anon.c", "anon_auth_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_auth_db.c", "db_auth_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_auth_dbm.c", "dbm_auth_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_auth_digest.c", "digest_auth_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_autoindex.c", "autoindex_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_cern_meta.c", "cern_meta_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_cgi.c", "cgi_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_digest.c", "digest_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_dir.c", "dir_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_env.c", "env_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_example.c", "example_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_expires.c", "expires_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_headers.c", "headers_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_imap.c", "imap_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_include.c", "includes_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_info.c", "info_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_isapi.c", "isapi_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_log_agent.c", "agent_log_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_log_config.c", "config_log_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_log_forensic.c", "log_forensic_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_log_referer.c", "referer_log_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_mime.c", "mime_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_mime_magic.c", "mime_magic_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_mmap_static.c", "mmap_static_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_negotiation.c", "negotiation_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_proxy.c", "proxy_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_rewrite.c", "rewrite_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_setenvif.c", "setenvif_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_so.c", "so_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_speling.c", "speling_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_status.c", "status_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_unique_id.c", "unique_id_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_userdir.c", "userdir_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_usertrack.c", "usertrack_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_vhost_alias.c", "vhost_alias_module");
+
+        //and some hand-picks
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_jk.c", "jk_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("covalent-snmp-v13.c", "snmp_agt_module");        
     }
     
     public Set<DiscoveredResourceDetails>
@@ -169,8 +319,13 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
             PluginDescriptorBasedAugeasConfiguration.INCLUDE_GLOBS_PROP, serverConfigFile);
         pluginConfig.put(inclusionGlobs);
 
+        addModuleNames(pluginConfig, binaryInfo.getVersion());
+        
         ApacheDirectiveTree serverConfig = loadParser(serverConfigFile.getAbsolutePath(), serverRoot);
 
+        //extract the runtime configuration out of declared config
+        serverConfig = RuntimeApacheConfiguration.extract(serverConfig, process.getProcessInfo(), binaryInfo, getModuleNames(binaryInfo.getVersion()));
+        
         String serverUrl = null;
         String vhostsGlobInclude = null;
 
@@ -181,6 +336,7 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
             serverRootProp.setValue(serverRoot);
             //reparse the configuration with the new ServerRoot
             serverConfig = loadParser(serverConfigFile.getAbsolutePath(), serverRoot);
+            serverConfig = RuntimeApacheConfiguration.extract(serverConfig, process.getProcessInfo(), binaryInfo, getModuleNames(binaryInfo.getVersion()));            
         }
 
         serverUrl = getUrl(serverConfig, binaryInfo.getVersion());
@@ -441,7 +597,7 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
         }
     }
 
-    private static ApacheDirectiveTree loadParser(String path, String serverRoot) throws Exception {
+    public static ApacheDirectiveTree loadParser(String path, String serverRoot) {
 
         ApacheDirectiveTree tree = new ApacheDirectiveTree();
         ApacheParser parser = new ApacheParserImpl(tree, serverRoot);
@@ -590,5 +746,28 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
         } finally {
             rdr.close();
         }
+    }
+
+    private static void addModuleNames(Configuration pluginConfig, String version) {
+        PropertyList list = new PropertyList(ApacheServerComponent.PLUGIN_CONFIG_MODULE_NAMES); 
+        pluginConfig.put(list);
+        
+        for(Map.Entry<String, String> entry : getModuleNames(version).entrySet()) {
+            PropertyMap map = new PropertyMap(ApacheServerComponent.PLUGIN_CONFIG_MODULE_MAPPING);
+            list.add(map);
+            
+            map.put(new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_MODULE_SOURCE_FILE, entry.getKey()));
+            map.put(new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_MODULE_NAME, entry.getValue()));
+        }
+    }
+    
+    private static Map<String, String> getModuleNames(String version) {
+        switch (HttpdAddressUtility.get(version)) {
+        case APACHE_1_3 : 
+            return MODULE_SOURCE_FILE_TO_MODULE_NAME_13;
+        case APACHE_2_x:
+            return MODULE_SOURCE_FILE_TO_MODULE_NAME_20;
+        default: throw new IllegalStateException("Unknown HttpdAddressUtility instance.");
+    }        
     }
 }

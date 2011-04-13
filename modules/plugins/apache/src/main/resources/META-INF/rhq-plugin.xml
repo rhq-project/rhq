@@ -355,6 +355,21 @@
 
           </c:group>
 
+          <c:group name="Advanced">
+              <c:list-property name="moduleNames">
+                  <c:description>This list contains all the known mappings from the module source file name (as used in IfModule directive)
+                  to module name (as used in LoadModule directive). Extracting this information from the module binary is rather difficult without
+                  having to support the different binary layouts of those files between apache versions (and operating systems).
+                  This list contains all the standard modules referenced in the official apache documentation.
+                  Please add all the modules you are using in your apache configuration so that the plugin can
+                  correctly detect the configuration in use (if some of it is guarded by using IfModule directives, the plugin needs an entry in 
+                  this map to figure out whether the module is in fact being used at runtime or not).</c:description>
+                  <c:map-property name="moduleMapping">
+                      <c:simple-property name="moduleSourceFile" description="The source file of the module (as used in IfModule directives)"/>
+                      <c:simple-property name="moduleName" description="The name of the module (as used in LoadModule directives)"/>
+                  </c:map-property>
+              </c:list-property>  
+          </c:group>
       </plugin-configuration>
 
       <!-- all httpd processes that are not child processes of another httpd process -->

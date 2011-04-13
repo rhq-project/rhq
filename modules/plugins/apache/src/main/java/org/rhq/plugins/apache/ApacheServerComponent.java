@@ -22,8 +22,11 @@ import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -43,6 +46,9 @@ import org.rhq.augeas.util.Glob;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
+import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.PropertyList;
+import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.event.EventSeverity;
@@ -65,6 +71,7 @@ import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.system.OperatingSystemType;
+import org.rhq.core.system.ProcessInfo;
 import org.rhq.core.system.SystemInfo;
 import org.rhq.plugins.apache.augeas.ApacheAugeasNode;
 import org.rhq.plugins.apache.augeas.AugeasConfigurationApache;
@@ -121,6 +128,11 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
     public static final String PLUGIN_CONFIG_VHOST_IN_SINGLE_FILE_PROP_VALUE = "single-file";
     public static final String PLUGIN_CONFIG_VHOST_PER_FILE_PROP_VALUE = "vhost-per-file";
     
+    public static final String PLUGIN_CONFIG_MODULE_NAMES = "moduleNames";
+    public static final String PLUGIN_CONFIG_MODULE_MAPPING = "moduleMapping";
+    public static final String PLUGIN_CONFIG_MODULE_NAME = "moduleName";
+    public static final String PLUGIN_CONFIG_MODULE_SOURCE_FILE = "moduleSourceFile";
+    
     public static final String AUXILIARY_INDEX_PROP = "_index";
 
     public static final String SERVER_BUILT_TRAIT = "serverBuilt";
@@ -154,7 +166,7 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
         this.resourceContext = resourceContext;
         this.eventContext = resourceContext.getEventContext();
         this.snmpClient = new SNMPClient();
-
+        
         try {
             boolean configured = false;
 
@@ -401,7 +413,7 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
                 ApacheParser parser = new ApacheParserImpl(parserTree,getServerRoot().getAbsolutePath());
          
                 ApacheConfigReader.buildTree(getHttpdConfFile().getAbsolutePath(), parser);
-                addr = getAddressUtility().getVirtualHostSampleAddress(parserTree, vhostDefs[0], serverName, false);
+                addr = getAddressUtility().getVirtualHostSampleAddress(parserTree, vhostDefs[0], serverName);
             } catch (Exception e) {
               report.setStatus(CreateResourceStatus.FAILURE);
               report.setErrorMessage("Wrong format of virtual host resource name.");
@@ -749,6 +761,42 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
         if (fileContents.size() == 0) {
             file.delete();
         }
+    }
+    
+    public Map<String, String> getModuleNames() {
+        PropertyList list = resourceContext.getPluginConfiguration().getList(PLUGIN_CONFIG_MODULE_NAMES);
+        
+        if (list == null) {
+            log.warn("Could not find the list of the module names. This should not happen as that is a required property.");
+            return Collections.emptyMap();
+        }
+        
+        Map<String, String> ret = new HashMap<String, String>();
+        
+        for (Property p : list.getList()) {
+            PropertyMap map = (PropertyMap) p;
+            String sourceFile = map.getSimpleValue(PLUGIN_CONFIG_MODULE_SOURCE_FILE, null);
+            String moduleName = map.getSimpleValue(PLUGIN_CONFIG_MODULE_NAME, null);
+
+            if (sourceFile == null || moduleName == null) {
+                log.info("A corrupted module name mapping found (" + sourceFile + " = " + moduleName
+                    + "). Check your module mappings in the plugin configuration for the server: "
+                    + resourceContext.getResourceKey());
+                continue;
+            }
+
+            ret.put(sourceFile, moduleName);
+        }
+        
+        return ret;
+    }
+    
+    public ProcessInfo getCurrentProcessInfo() {
+        return resourceContext.getNativeProcess();
+    }
+    
+    public ApacheBinaryInfo getCurrentBinaryInfo() {
+        return binaryInfo;
     }
     
     // TODO: Move this method to a helper class.

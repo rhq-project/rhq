@@ -37,6 +37,10 @@ import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ProcessScanResult;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.system.ProcessInfo;
+import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
+import org.rhq.modules.plugins.jbossas7.json.Operation;
+import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
+import org.rhq.modules.plugins.jbossas7.json.ReadResource;
 
 /**
  * Discovery class for managed AS 7 instances.
@@ -79,10 +83,19 @@ public class ManagedASDiscovery extends AbstractBaseDiscovery
                 config.put(new PropertySimple("group",serverInfo.group));
                 config.put(new PropertySimple("port",managementHostPort.port));
                 config.put(new PropertySimple("hostname",managementHostPort.host));
-                if (serverInfo.bindingGroup!=null)
+                if (serverInfo.bindingGroup!=null) {
                     config.put(new PropertySimple("socket-binding-group",serverInfo.bindingGroup));
-                else
-                    config.put(new PropertySimple("socket-binding-group", "standard-sockets")); // TODO remove when AS has no more "undefined"
+                    config.put(new PropertySimple("socket-binding-port-offset",serverInfo.portOffset));
+                }
+                else {
+                    HostPort dcHP = getDomainControllerFromHostXml();
+                    if (dcHP.port == 9999)
+                        dcHP.port = 9990;  // TODO Hack until JBAS-9306 is solved
+
+                    ServerInfo dcInfo = getBindingsFromDC(dcHP, serverInfo.group);
+                    config.put(new PropertySimple("socket-binding-group", dcInfo.bindingGroup));
+                    config.put(new PropertySimple("socket-binding-port-offset",dcInfo.portOffset));
+                }
                 config.put(new PropertySimple("socket-binding-port-offset",serverInfo.portOffset));
 
 
@@ -107,6 +120,25 @@ public class ManagedASDiscovery extends AbstractBaseDiscovery
             }
         }
         return discoveredResources;
+    }
+
+    private ServerInfo getBindingsFromDC(HostPort domainController, String serverGroup) {
+        ASConnection dcConnection = new ASConnection(domainController.host,domainController.port);
+        List<PROPERTY_VALUE> address = new ArrayList<PROPERTY_VALUE>();
+        address.add(new PROPERTY_VALUE("server-group",serverGroup));
+        Operation op = new ReadResource(address);
+        ComplexResult res = (ComplexResult) dcConnection.execute2(op,true);
+        if (res.isSuccess()) {
+            if (res.getResult().containsKey("socket-binding-group")) {
+                String sbg = (String) res.getResult().get("socket-binding-group");
+
+                ServerInfo serverInfo = new ServerInfo();
+                serverInfo.bindingGroup = sbg;
+                return serverInfo;
+            }
+        }
+
+        return new ServerInfo();
     }
 
     /**

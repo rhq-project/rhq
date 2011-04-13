@@ -18,11 +18,15 @@
  */
 package org.rhq.modules.plugins.jbossas7.json;
 
+import java.util.List;
+import java.util.Map;
+
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonProperty;
 
 /**
- * {"outcome" : "success", "result" : "no metrics available", "compensating-operation" : null}
+ * Counterpart of a result JSON object like e.g.:
+ * <pre>{"outcome" : "success", "result" : "no metrics available", "compensating-operation" : null}</pre>
  * @author Heiko W. Rupp
  */
 public class Result {
@@ -30,7 +34,13 @@ public class Result {
     private String outcome;
     private Object result;
     @JsonProperty("compensating-operation")
-    private Object compensatingOperation;
+    private Operation compensatingOperation;
+    @JsonProperty("failure-description")
+    private List<Map<String, String>> failureDescription;
+    @JsonProperty("host-failure-description") // TODO JBAS-9182
+    private List<Map<String, String>> hostFailureDescription;
+    @JsonProperty("domain-failure-description") // TODO JBAS-9182
+    private List<Map<String, String>> domainFailureDescription;
     @JsonIgnore
     private boolean success = false;
 
@@ -60,11 +70,35 @@ public class Result {
         this.result = result;
     }
 
-    public Object getCompensatingOperation() {
+    public Operation getCompensatingOperation() {
         return compensatingOperation;
     }
 
-    public void setCompensatingOperation(Object compensatingOperation) {
+    public void setCompensatingOperation(Operation compensatingOperation) {
         this.compensatingOperation = compensatingOperation;
+    }
+
+    public List<Map<String, String>> getFailureDescription() {
+        return failureDescription;
+    }
+
+    public void setFailureDescription(List<Map<String, String>> failureDescription) {
+        this.failureDescription = failureDescription;
+    }
+
+    public List<Map<String, String>> getHostFailureDescription() {
+        return hostFailureDescription;
+    }
+
+    public void setHostFailureDescription(List<Map<String, String>> hostFailureDescription) {
+        this.hostFailureDescription = hostFailureDescription;
+    }
+
+    public List<Map<String, String>> getDomainFailureDescription() {
+        return domainFailureDescription;
+    }
+
+    public void setDomainFailureDescription(List<Map<String, String>> domainFailureDescription) {
+        this.domainFailureDescription = domainFailureDescription;
     }
 }

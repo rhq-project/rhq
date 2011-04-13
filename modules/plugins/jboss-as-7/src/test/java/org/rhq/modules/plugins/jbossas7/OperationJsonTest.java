@@ -141,6 +141,23 @@ public class OperationJsonTest {
         assert result != null;
         assert result.getOutcome().equals("success");
         assert result.isSuccess();
+        assert result.getFailureDescription() == null;
+    }
+    public void simpleResultWithFailure() throws Exception {
+
+        String resultString = "{\"outcome\" : \"failed\", \"failure-description\" : [{ \"java.util.NoSuchElementException\" : \"No child 'profile' exists\" }]}";
+
+        ObjectMapper mapper = new ObjectMapper();
+        Result result = mapper.readValue(resultString,Result.class);
+
+        assert result != null;
+        assert result.getOutcome().equals("failed");
+        assert !result.isSuccess();
+
+        assert result.getResult() == null;
+        assert result.getCompensatingOperation() == null;
+        assert result.getFailureDescription() != null;
+        assert result.getFailureDescription().size() == 1;
     }
 
     public void complexResult1() throws Exception {
@@ -162,4 +179,24 @@ public class OperationJsonTest {
         assert aliases.size()==1;
         assert aliases.get(0).equals("example.com");
     }
+
+    public void compensatingOp() throws Exception {
+
+        String resultString = "{\"outcome\" : \"success\", \"result\" : null, \"compensating-operation\" : {\"operation\" : \"remove\", \"address\" : [{\"deployment\" : \"test.war\"}]}}";
+
+        ObjectMapper mapper = new ObjectMapper();
+        Result result = mapper.readValue(resultString,Result.class);
+
+        assert result != null;
+        assert result.getOutcome().equals("success");
+        assert result.isSuccess();
+
+        assert result.getCompensatingOperation()!=null;
+
+        Operation op = result.getCompensatingOperation();
+
+        assert op.getOperation().equals("remove");
+
+    }
+
 }

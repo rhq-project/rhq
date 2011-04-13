@@ -43,6 +43,7 @@ public class UploadAndDeployTest {
     static final String TEST_WAR = "test.war";
     private static final String UPLOAD_FILE = "test-simple.war";
 
+    @Test(timeOut = 60*1000L)
     public void testUploadIndividualSteps() throws Exception {
 
         String bytes_value = prepare();
@@ -101,6 +102,7 @@ public class UploadAndDeployTest {
 
     }
 
+    @Test(timeOut = 60*1000L)
     public void testUploadComposite() throws Exception {
 
         String bytes_value = prepare();

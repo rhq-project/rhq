@@ -450,15 +450,23 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
      * the member prop def for the list.  If the member prop def is a nested structure the whole thing
      * is replaced from the top.
      *
-     * @param exList the existing prop def list 
+     * @param exList the existing prop def list
      * @param newList the new prop def list
      */
     private void replaceListProperty(PropertyDefinitionList exList, PropertyDefinitionList newList) {
         PropertyDefinition doomedMemberDef = null;
 
+        if (newList.getMemberDefinition()==null) {
+            log.error("\n\n!! Member definition for new list property [" + newList.getName() + "] is null - check and fix the plugin descriptor\n");
+            return;
+        }
+
+        // We did not have a member definition before (which is wrong )
+        // we need to add it now
         // only remove the existing member if it is a different entity
-        if (exList.getMemberDefinition().getId() != newList.getMemberDefinition().getId()) {
-            doomedMemberDef = exList.getMemberDefinition();
+        PropertyDefinition exListMemberDefinition = exList.getMemberDefinition();
+        if (exListMemberDefinition !=null && exListMemberDefinition.getId() != newList.getMemberDefinition().getId()) {
+            doomedMemberDef = exListMemberDefinition;
         }
 
         exList.setMemberDefinition(newList.getMemberDefinition());

@@ -79,8 +79,8 @@
 
            ie6: IE6/IE7
            ie8: IE8
-           gecko: FF2
-           gecko1_8: FF3
+           gecko: FF1 (NOTE: Support for this was dropped in GWT 2.1.)
+           gecko1_8: FF2/FF3/FF4
            safari: Safari/Chrome
            opera: Opera
 
@@ -88,7 +88,7 @@
 
          The gwt.userAgent property is substituted by the Maven resources plugin
          during the resources phase. The default value (defined in coregui/pom.xml)
-         is "ie6,ie8,gecko,gecko1_8,safari,opera" (i.e. all supported browsers).
+         is "ie6,ie8,gecko1_8,safari,opera" (i.e. all supported browsers, except FF1).
          To override this value, specify the user.agent property on the mvn
          command line (e.g. -Duser.agent=gecko1_8) or in your ~/.m2/settings.xml.
     -->

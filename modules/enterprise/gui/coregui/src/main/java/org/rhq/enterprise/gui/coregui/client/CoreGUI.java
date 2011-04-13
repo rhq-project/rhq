@@ -51,6 +51,7 @@ import org.rhq.enterprise.gui.coregui.client.menu.MenuBarView;
 import org.rhq.enterprise.gui.coregui.client.report.ReportTopView;
 import org.rhq.enterprise.gui.coregui.client.report.tag.TaggedView;
 import org.rhq.enterprise.gui.coregui.client.test.TestRemoteServiceStatisticsView;
+import org.rhq.enterprise.gui.coregui.client.test.TestDataSourceResponseStatisticsView;
 import org.rhq.enterprise.gui.coregui.client.test.TestTopView;
 import org.rhq.enterprise.gui.coregui.client.util.ErrorHandler;
 import org.rhq.enterprise.gui.coregui.client.util.WidgetUtility;
@@ -131,12 +132,27 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
             });
         }
 
+        // Control-Shift-S for aggregate rpc service stats
         KeyIdentifier statisticsWindowKey = new KeyIdentifier();
         statisticsWindowKey.setCtrlKey(true);
+        statisticsWindowKey.setShiftKey(true);
+        statisticsWindowKey.setAltKey(false);
         statisticsWindowKey.setKeyName("S");
         Page.registerKey(statisticsWindowKey, new KeyCallback() {
             public void execute(String keyName) {
                 TestRemoteServiceStatisticsView.showInWindow();
+            }
+        });
+
+        // Control-Alt-S for response stats
+        KeyIdentifier responseStatsWindowKey = new KeyIdentifier();
+        responseStatsWindowKey.setCtrlKey(true);
+        statisticsWindowKey.setShiftKey(false);
+        responseStatsWindowKey.setAltKey(true);
+        responseStatsWindowKey.setKeyName("s");
+        Page.registerKey(responseStatsWindowKey, new KeyCallback() {
+            public void execute(String keyName) {
+                TestDataSourceResponseStatisticsView.showInWindow();
             }
         });
 

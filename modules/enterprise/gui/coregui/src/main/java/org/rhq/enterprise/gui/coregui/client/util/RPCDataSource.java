@@ -59,6 +59,7 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.util.effects.ColoringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.rpc.DataSourceResponseStatistics;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
@@ -204,6 +205,12 @@ public abstract class RPCDataSource<T, C extends org.rhq.core.domain.criteria.Cr
                 pageControl.addDefaultOrderingField(columnName, ordering);
             }
         }
+    }
+
+    @Override
+    public void processResponse(String requestId, DSResponse responseProperties) {
+        super.processResponse(requestId, responseProperties);
+        DataSourceResponseStatistics.record(requestId, responseProperties);
     }
 
     protected void sendSuccessResponse(DSRequest request, DSResponse response, T dataObject) {

@@ -226,7 +226,7 @@ public class ASConnection {
 
 
         } catch (IOException e) {
-            e.printStackTrace();  // TODO: Customise this generated block
+            log.error("Failed to get data: " + e.getMessage()  );
         }
 
         return null;

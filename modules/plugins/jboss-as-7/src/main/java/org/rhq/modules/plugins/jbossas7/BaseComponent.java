@@ -101,7 +101,6 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
 
 
 
-//        Object o = connection.getLevelData("", false); // BASE entries
 
         myServerName = context.getResourceKey().substring(context.getResourceKey().lastIndexOf("/")+1);
 

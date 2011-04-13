@@ -18,29 +18,28 @@
  */
 package org.rhq.modules.plugins.jbossas7;
 
-import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.map.DeserializationConfig;
-import org.codehaus.jackson.map.ObjectMapper;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
-import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
+import org.rhq.core.pluginapi.inventory.ProcessScanResult;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.core.system.ProcessInfo;
 
 /**
- * Discover the domain
+ * Discover the domain. This is done by scanning for host controllers.
+ * If they are also DC, the domain-controller element points to local.
  *
  * @author Heiko W. Rupp
  */
 @SuppressWarnings("unused")
-public class DomainDiscovery implements ResourceDiscoveryComponent<BaseComponent> {
+public class DomainDiscovery extends AbstractBaseDiscovery<BaseComponent>  {
 
     private final Log log = LogFactory.getLog(this.getClass());
 
@@ -49,50 +48,45 @@ public class DomainDiscovery implements ResourceDiscoveryComponent<BaseComponent
 
         Set<DiscoveredResourceDetails> details = new HashSet<DiscoveredResourceDetails>(1);
 
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES,false);
-        mapper.configure(DeserializationConfig.Feature.READ_ENUMS_USING_TO_STRING,true);
 
-        // TODO get next from some host.xml file
-        String host = "localhost";
-        String portString = "9990";
-        int port = Integer.parseInt(portString);
-        ASConnection connection = new ASConnection(host,port);
+        List<ProcessScanResult> scans = context.getAutoDiscoveredProcesses();
 
+        for (ProcessScanResult psr : scans) {
 
-        Configuration config = context.getDefaultPluginConfiguration();
+            // get the HostController, to find host.xml
+            String psName = psr.getProcessScan().getName();
+            if (!psName.equals("HostController"))
+                continue;
 
+            // Now we have the host controller, lets get the host.xml file
+            // and obtain the domain controller info from there
+            ProcessInfo processInfo = psr.getProcessInfo();
+            readHostXml(processInfo);
+            HostPort dcHp = getDomainControllerFromHostXml();
 
-        // A domain has a server group so check for it.
-        boolean found = false;
-        JsonNode json = connection.getLevelData(null,null);
-        if (!ASConnection.isErrorReply(json)) {
-
-            Iterator<String> fields = json.getFieldNames();
-            while (fields.hasNext()) {
-                String field = fields.next();
-                if (field.equals("server-group"))
-                    found=true;
-
+            if (!dcHp.isLocal) {
+                log.info("Domain controller is not local, but at " + dcHp);
+                continue;
             }
 
-            if (found) {
+            // Ok, this is a domain controller, so we can return a Domain resource.
 
-                DiscoveredResourceDetails detail = new DiscoveredResourceDetails(
-                        context.getResourceType(), // DataType
-                        "Domain", // Key
-                        "Domain", // Name
-                        null, // Version
-                        context.getResourceType().getDescription(), // Description
-                        config,
-                        null);
-                details.add(detail);
-            }
+            // Get the management port and save for later use
+            HostPort managementHostPort = getManagementPortFromHostXml();
+            Configuration config = context.getDefaultPluginConfiguration();
+            config.put(new PropertySimple("port",managementHostPort.port));
+            config.put(new PropertySimple("hostname",managementHostPort.host));
 
-            return details;
+            DiscoveredResourceDetails detail = new DiscoveredResourceDetails(
+                    context.getResourceType(), // DataType
+                    "Domain", // Key
+                    "Domain", // Name
+                    null, // Version
+                    context.getResourceType().getDescription(), // Description
+                    config,
+                    null);
+            details.add(detail);
         }
-
-        return Collections.emptySet();
+        return details;
     }
-
 }

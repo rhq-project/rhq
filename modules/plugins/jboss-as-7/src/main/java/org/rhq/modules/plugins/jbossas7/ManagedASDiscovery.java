@@ -19,20 +19,12 @@
 package org.rhq.modules.plugins.jbossas7;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
@@ -43,7 +35,6 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.event.log.LogFileEventResourceComponentHelper;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ProcessScanResult;
-import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.system.ProcessInfo;
 
@@ -52,17 +43,9 @@ import org.rhq.core.system.ProcessInfo;
  *
  * @author Heiko W. Rupp
  */
-public class ManagedASDiscovery implements ResourceDiscoveryComponent
+public class ManagedASDiscovery extends AbstractBaseDiscovery
 
 {
-
-    static final String DJBOSS_SERVER_BASE_DIR = "-Djboss.server.base.dir=";
-    static final String DORG_JBOSS_BOOT_LOG_FILE = "-Dorg.jboss.boot.log.file=";
-    static final String DLOGGING_CONFIGURATION = "-Dlogging.configuration=";
-    static final int DEFAULT_MGMT_PORT = 9990;
-    private final Log log = LogFactory.getLog(this.getClass());
-    private Document hostXml;
-    private static final String DJBOSS_SERVER_HOME_DIR = "-Djboss.home.dir";
 
     /**
      * Run the auto-discovery
@@ -85,7 +68,7 @@ public class ManagedASDiscovery implements ResourceDiscoveryComponent
             ProcessInfo processInfo = psr.getProcessInfo();
             readHostXml(processInfo);
             String hostName = findHostName();
-            int port = getManagementPortFromHostXml();
+            HostPort managementHostPort = getManagementPortFromHostXml();
 
 
             List<ServerInfo> serverNames = getServersFromHostXml();
@@ -94,7 +77,15 @@ public class ManagedASDiscovery implements ResourceDiscoveryComponent
                 Configuration config = discoveryContext.getDefaultPluginConfiguration();
                 config.put(new PropertySimple("domainHost",hostName));
                 config.put(new PropertySimple("group",serverInfo.group));
-                config.put(new PropertySimple("port",port));
+                config.put(new PropertySimple("port",managementHostPort.port));
+                config.put(new PropertySimple("hostname",managementHostPort.host));
+                if (serverInfo.bindingGroup!=null)
+                    config.put(new PropertySimple("socket-binding-group",serverInfo.bindingGroup));
+                else
+                    config.put(new PropertySimple("socket-binding-group", "standard-sockets")); // TODO remove when AS has no more "undefined"
+                config.put(new PropertySimple("socket-binding-port-offset",serverInfo.portOffset));
+
+
 
                 // TODO this fails for the downed servers.
                 // get from the domain or other place as soon as the domain provides it.
@@ -140,32 +131,6 @@ public class ManagedASDiscovery implements ResourceDiscoveryComponent
         }
     }
 
-    private int getManagementPortFromHostXml() {
-        Element host =  hostXml.getDocumentElement();
-        NodeList interfaceParent = host.getElementsByTagName("management-interfaces");
-        if (interfaceParent ==null || interfaceParent.getLength()==0) {
-            log.warn("No <management-interfaces> found in host.xml");
-            return DEFAULT_MGMT_PORT;
-        }
-        NodeList mgmtInterfaces = interfaceParent.item(0).getChildNodes();
-        if (mgmtInterfaces==null || mgmtInterfaces.getLength()==0) {
-            log.warn("No <*-interface> found in host.xml");
-            return DEFAULT_MGMT_PORT;
-        }
-        for (int i = 0 ; i < mgmtInterfaces.getLength(); i++) {
-            if (!(mgmtInterfaces.item(i) instanceof Element))
-                continue;
-
-            Element mgmtInterface = (Element) mgmtInterfaces.item(i);
-            if (mgmtInterface.getNodeName().equals("http-interface")) {
-                String tmp = mgmtInterface.getAttribute("port");
-                int port = Integer.valueOf(tmp);
-                return port;
-            }
-        }
-        return DEFAULT_MGMT_PORT;
-    }
-
     private List<ServerInfo> getServersFromHostXml() {
 
         Element host = hostXml.getDocumentElement();
@@ -193,70 +158,30 @@ public class ManagedASDiscovery implements ResourceDiscoveryComponent
                 autoStart = "false";
             info.autoStart = Boolean.getBoolean(autoStart);
 
+            // Look for  <socket-binding-group ref="standard-sockets" port-offset="250"/>
+            NodeList sbgs = server.getChildNodes();
+            if (sbgs!=null) {
+                for (int j = 0 ; j < sbgs.getLength(); j++) {
+                    if (!(sbgs.item(j) instanceof Element))
+                        continue;
+
+                    Element sbg = (Element) sbgs.item(j);
+                    if (!sbg.getNodeName().equals("socket-binding-group"))
+                        continue;
+
+                    info.bindingGroup = sbg.getAttribute("ref");
+                    String portOffset = sbg.getAttribute("port-offset");
+                    if (portOffset!=null && !portOffset.isEmpty())
+                        info.portOffset = Integer.parseInt(portOffset);
+
+                }
+            }
             result.add(info);
         }
 
         return result;
     }
 
-
-    private String findHostName() {
-        String hostName = hostXml.getDocumentElement().getAttribute("name");
-        return hostName;
-    }
-
-    private void readHostXml(ProcessInfo processInfo) {
-        String hostXmlFile = getHostXmlFileLocation(processInfo);
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        try {
-            DocumentBuilder builder = factory.newDocumentBuilder();
-            InputStream is = new FileInputStream(hostXmlFile);
-            hostXml = builder.parse(is);
-            is.close();
-        } catch (Exception e) {
-            e.printStackTrace();  // TODO: Customise this generated block
-        }
-    }
-
-    /**
-     * Get the location of the host definition file (host.xml in domain mode, standalone.xml
-     * in standalone mode.
-     *
-     * @param processInfo ProcessInfo structure containing the ENV variables
-     * @return The path to the definition file.
-     */
-    private String getHostXmlFileLocation(ProcessInfo processInfo) {
-
-        String home = getHomeDirFromCommandLine(processInfo.getCommandLine());
-        StringBuilder builder = new StringBuilder(home);
-        builder.append("/domain");
-        builder.append("/configuration");
-        builder.append("/host.xml");
-        return builder.toString();
-
-    }
-
-
-
-    String getHomeDirFromCommandLine(String[] commandLine) {
-            for (String line: commandLine) {
-                if (line.startsWith(DJBOSS_SERVER_HOME_DIR))
-                    return line.substring(DJBOSS_SERVER_HOME_DIR.length()+1);
-            }
-            return "";
-    }
-
-//-Dorg.jboss.boot.log.file=/devel/jbas7/jboss-as/build/target/jboss-7.0.0.Alpha2/domain/log/server-manager/boot.log
-//-Dlogging.configuration=file:/devel/jbas7/jboss-as/build/target/jboss-7.0.0.Alpha2/domain/configuration/logging.properties
-
-    String getLogFileFromCommandLine(String[] commandLine) {
-
-        for (String line: commandLine) {
-            if (line.startsWith(DORG_JBOSS_BOOT_LOG_FILE))
-                return line.substring(DORG_JBOSS_BOOT_LOG_FILE.length());
-        }
-        return "";
-    }
 
     private void initLogEventSourcesConfigProp(String fileName, Configuration pluginConfiguration) {
 
@@ -278,12 +203,12 @@ public class ManagedASDiscovery implements ResourceDiscoveryComponent
         }
     }
 
-    private class ServerInfo {
+    private static class ServerInfo {
         String name;
         String group;
         boolean autoStart;
-
-
+        int portOffset;
+        String bindingGroup;
     }
 
 }

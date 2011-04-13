@@ -114,6 +114,15 @@
             <subcategory name="Web"/>
         </subcategories>
 
+        <plugin-configuration>
+            <c:simple-property name="hostname" default="localhost" displayName="Management host" required="true"/>
+            <c:simple-property name="port" default="9990" type="integer" displayName="Management port" required="true"/>
+        </plugin-configuration>
+
+        <!-- Scan for host controller is intentional -->
+        <process-scan name="HostController" query="process|basename|match=^java.*,arg|org.jboss.as.host-controller|match=.*"/>
+
+
         <operation name="server-group:add" displayName="Add ServerGroup" description="Add a server group to the Domain.">
             <parameters>
                 <c:simple-property name="name" description="Name of Group to add"/>
@@ -251,10 +260,12 @@
             class="DomainComponent"
             >
         <plugin-configuration>
-            <c:simple-property name="hostname" default="localhost" required="true"/>
-            <c:simple-property name="port" default="9990" type="integer" required="true"/>
+            <c:simple-property name="hostname" default="localhost" displayName="Management host" required="true"/>
+            <c:simple-property name="port" default="9990" type="integer" displayName="Management port" required="true"/>
             <c:simple-property name="domainHost" readOnly="true" description="Hostname in the domain"/>
             <c:simple-property name="group" readOnly="true" displayName="Server Group" description="Server Group this instance belongs to."/>
+            <c:simple-property name="socket-binding-group" readOnly="true" displayName="Socket binding group" description="Socket bindngs to use"/>
+            <c:simple-property name="socket-binding-port-offset" readOnly="true" displayName="Port Offset" type="integer" default="0" description="Offset to the base ports"/>
 
             &logSources;
         </plugin-configuration>

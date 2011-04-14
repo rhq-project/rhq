@@ -70,6 +70,13 @@ public class Operation {
 
     }
 
+    public Operation(String operation, String addressKey, String addressValue) {
+        this.operation = operation;
+        List<PROPERTY_VALUE> address = new ArrayList<PROPERTY_VALUE>(1);
+        address.add(new PROPERTY_VALUE(addressKey, addressValue));
+        this.address = address;
+    }
+
     public Operation() {
         // needed for Jackson
     }

@@ -180,6 +180,23 @@ public class OperationJsonTest {
         assert aliases.get(0).equals("example.com");
     }
 
+    public void arrayResult1() throws Exception {
+
+        String resultString = "{\"outcome\":\"success\",\"result\":[\"standard-sockets\",\"messaging-sockets\"],\"compensating-operation\":null}";
+
+        ObjectMapper mapper = new ObjectMapper();
+        Result result = mapper.readValue(resultString,Result.class);
+
+        assert result != null;
+        assert result.getOutcome().equals("success");
+        assert result.isSuccess();
+        List<String> stringList = (List<String>) result.getResult();
+        assert stringList.size()==2;
+        assert stringList.get(0).equals("standard-sockets");
+        assert stringList.get(1).equals("messaging-sockets");
+
+    }
+
     public void compensatingOp() throws Exception {
 
         String resultString = "{\"outcome\" : \"success\", \"result\" : null, \"compensating-operation\" : {\"operation\" : \"remove\", \"address\" : [{\"deployment\" : \"test.war\"}]}}";

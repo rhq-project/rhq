@@ -63,6 +63,7 @@ public class ASConnection {
     }
 
 
+    @Deprecated
     JsonNode getLevelData(@Nullable String base, boolean recursive, boolean includeMetrics) throws Exception{
         String ops = null;
         if (recursive)
@@ -72,24 +73,16 @@ public class ASConnection {
 
         return getLevelData(base,ops);
 }
-    /**
-     * Return the default data for base
-     * @param base
-     * @return
-     * @throws Exception
-     */
-    JsonNode getLevelData(@Nullable String base) throws Exception {
-        return getLevelData(base,"operation=resource-description&recursive&include-runtime=true");
-    }
 
     /**
-     * Return the JSON-Ojbect for a certain path.
+     * Return the JSON-Object for a certain path.
      *
      * @param base Path to the object/subsystem. Can be null/"" for the base objects
      * @param ops OperationDescription to run on the api can be null
      * @return  A JSONObject encoding the level plus sub levels provided
      * @throws Exception If anything goes wrong
      */
+    @Deprecated
     JsonNode getLevelData(@Nullable String base, @Nullable String ops) throws Exception {
 
         URL url2;

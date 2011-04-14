@@ -26,7 +26,13 @@ import java.util.List;
  */
 public class ReadResource extends Operation {
 
+    private static final String READ_RESOURCE = "read-resource";
+
     public ReadResource(List<PROPERTY_VALUE> address) {
-        super("read-resource", address);
+        super(READ_RESOURCE, address);
+    }
+
+    public ReadResource(String resourceType,String typeValue) {
+        super(READ_RESOURCE,resourceType,typeValue);
     }
 }

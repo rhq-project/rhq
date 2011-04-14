@@ -169,6 +169,7 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
 
         List<PROPERTY_VALUE> address = pathToAddress(path);
         Operation op = new ReadResource(address); // TOTO set recursive flag?
+        op.addAdditionalProperty("recursive","true");
         JsonNode json = connection.executeRaw(op);
 
         Configuration ret = new Configuration();

@@ -558,7 +558,7 @@
     </server>
 
     <service name="NetworkInterface"
-             discovery="InterfaceDiscovery"
+             discovery="SubsystemDiscovery"
              class="BaseComponent"
              description="A named network interface, along with required criteria for determining the IP address to associate with that interface">
 
@@ -574,7 +574,7 @@
     </service>
 
     <service name="SocketBindingGroup"
-             discovery="SocketBindingGroupDiscovery"
+             discovery="SubsystemDiscovery"
              class="BaseComponent"
             >
         <runs-inside>

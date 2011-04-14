@@ -71,13 +71,15 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * @author John Mazzitelli
  */
 public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
-    private AlertGWTServiceAsync alertService = GWTServiceLookup.getAlertService();
-
-    private EntityContext entityContext;
-
     public static final String PRIORITY_ICON_HIGH = ImageManager.getAlertIcon(AlertPriority.HIGH);
     public static final String PRIORITY_ICON_MEDIUM = ImageManager.getAlertIcon(AlertPriority.MEDIUM);
     public static final String PRIORITY_ICON_LOW = ImageManager.getAlertIcon(AlertPriority.LOW);
+
+    public static final String FILTER_PRIORITIES = "priorities";
+
+    private AlertGWTServiceAsync alertService = GWTServiceLookup.getAlertService();
+
+    private EntityContext entityContext;
 
     public AlertDataSource() {
         this(EntityContext.forSubsystemView());
@@ -224,7 +226,7 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
     @Override
     protected void executeFetch(final DSRequest request, final DSResponse response, final AlertCriteria criteria) {
         if (criteria == null) {
-            // the user selected no severities in the filter - it makes sense from the UI perspective to show 0 rows
+            // the user selected no priorities in the filter - it makes sense from the UI perspective to show 0 rows
             response.setTotalRows(0);
             processResponse(request.getRequestId(), response);
             return;
@@ -303,16 +305,16 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
 
     @Override
     protected AlertCriteria getFetchCriteria(DSRequest request) {
-        AlertPriority[] severitiesFilter = getArrayFilter(request, "severities", AlertPriority.class);
+        AlertPriority[] prioritiesFilter = getArrayFilter(request, FILTER_PRIORITIES, AlertPriority.class);
 
-        if (severitiesFilter == null || severitiesFilter.length == 0) {
-            return null; // user didn't select any severities - return null to indicate no data should be displayed
+        if (prioritiesFilter == null || prioritiesFilter.length == 0) {
+            return null; // user didn't select any priorities - return null to indicate no data should be displayed
         }
 
         AlertCriteria criteria = new AlertCriteria();
         criteria.setPageControl(getPageControl(request));
 
-        criteria.addFilterPriorities(severitiesFilter);
+        criteria.addFilterPriorities(prioritiesFilter);
         criteria.addFilterEntityContext(entityContext);
         criteria.fetchConditionLogs(true);
 

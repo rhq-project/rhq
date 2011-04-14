@@ -53,6 +53,8 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
  */
 public class EventCompositeDatasource extends RPCDataSource<EventComposite, EventCriteria> {
 
+    public static final String FILTER_SEVERITIES = "severities";
+
     private EntityContext entityContext;
 
     public EventCompositeDatasource(EntityContext context) {
@@ -136,7 +138,7 @@ public class EventCompositeDatasource extends RPCDataSource<EventComposite, Even
     @SuppressWarnings("unchecked")
     @Override
     protected EventCriteria getFetchCriteria(final DSRequest request) {
-        EventSeverity[] severities = getArrayFilter(request, "severities", EventSeverity.class);
+        EventSeverity[] severities = getArrayFilter(request, FILTER_SEVERITIES, EventSeverity.class);
         if (severities == null || severities.length == 0) {
             return null; // user didn't select any severities - return null to indicate no data should be displayed
         }

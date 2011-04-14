@@ -128,7 +128,7 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
     public static final String PLUGIN_CONFIG_VHOST_IN_SINGLE_FILE_PROP_VALUE = "single-file";
     public static final String PLUGIN_CONFIG_VHOST_PER_FILE_PROP_VALUE = "vhost-per-file";
     
-    public static final String PLUGIN_CONFIG_MODULE_NAMES = "moduleNames";
+    public static final String PLUGIN_CONFIG_CUSTOM_MODULE_NAMES = "customModuleNames";
     public static final String PLUGIN_CONFIG_MODULE_MAPPING = "moduleMapping";
     public static final String PLUGIN_CONFIG_MODULE_NAME = "moduleName";
     public static final String PLUGIN_CONFIG_MODULE_SOURCE_FILE = "moduleSourceFile";
@@ -155,6 +155,8 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
     private URL url;
     private ApacheBinaryInfo binaryInfo;
     private long availPingTime = -1;
+    
+    private Map<String, String> moduleNames;
     
     /**
      * Delegate instance for handling all calls to invoke operations on this component.
@@ -221,6 +223,29 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
             this.operationsDelegate = new ApacheServerOperationsDelegate(this, pluginConfig, this.resourceContext
                 .getSystemInformation());
 
+            //init the module names with the defaults
+            moduleNames = new HashMap<String, String>(ApacheServerDiscoveryComponent.getDefaultModuleNames(binaryInfo.getVersion()));
+            
+            //and add the user-provided overrides/additions
+            PropertyList list = resourceContext.getPluginConfiguration().getList(PLUGIN_CONFIG_CUSTOM_MODULE_NAMES);
+            
+            if (list != null) {
+                for (Property p : list.getList()) {
+                    PropertyMap map = (PropertyMap) p;
+                    String sourceFile = map.getSimpleValue(PLUGIN_CONFIG_MODULE_SOURCE_FILE, null);
+                    String moduleName = map.getSimpleValue(PLUGIN_CONFIG_MODULE_NAME, null);
+    
+                    if (sourceFile == null || moduleName == null) {
+                        log.info("A corrupted module name mapping found (" + sourceFile + " = " + moduleName
+                            + "). Check your module mappings in the plugin configuration for the server: "
+                            + resourceContext.getResourceKey());
+                        continue;
+                    }
+    
+                    moduleNames.put(sourceFile, moduleName);
+                }
+            }
+            
             startEventPollers();
         } catch (Exception e) {
             if (this.snmpClient != null) {
@@ -764,31 +789,7 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
     }
     
     public Map<String, String> getModuleNames() {
-        PropertyList list = resourceContext.getPluginConfiguration().getList(PLUGIN_CONFIG_MODULE_NAMES);
-        
-        if (list == null) {
-            log.warn("Could not find the list of the module names. This should not happen as that is a required property.");
-            return Collections.emptyMap();
-        }
-        
-        Map<String, String> ret = new HashMap<String, String>();
-        
-        for (Property p : list.getList()) {
-            PropertyMap map = (PropertyMap) p;
-            String sourceFile = map.getSimpleValue(PLUGIN_CONFIG_MODULE_SOURCE_FILE, null);
-            String moduleName = map.getSimpleValue(PLUGIN_CONFIG_MODULE_NAME, null);
-
-            if (sourceFile == null || moduleName == null) {
-                log.info("A corrupted module name mapping found (" + sourceFile + " = " + moduleName
-                    + "). Check your module mappings in the plugin configuration for the server: "
-                    + resourceContext.getResourceKey());
-                continue;
-            }
-
-            ret.put(sourceFile, moduleName);
-        }
-        
-        return ret;
+        return moduleNames;
     }
     
     public ProcessInfo getCurrentProcessInfo() {

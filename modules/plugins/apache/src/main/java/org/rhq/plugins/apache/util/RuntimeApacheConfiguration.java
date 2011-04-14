@@ -131,15 +131,23 @@ public class RuntimeApacheConfiguration {
                     moduleName = moduleFile;
                     moduleFile = moduleFiles.get(moduleName);
  
-                    //reverse lookup failed - there is really no such module, then
                     if (moduleFile == null) {
-                        LOG.warn("Encountered unknown module name in an IfModule directive: " + moduleFile);
-                        continue;
+                        //reverse lookup failed - there is no such module in the mappings                        
+                        //the last attempt is to see if the modulename wasn't used one of the previous
+                        //load module directives
+                        if (!currentlyLoadedModules.contains(moduleName)) {
+                            LOG.warn("Encountered unknown module name in an IfModule directive: " + moduleFile);
+                            continue;
+                        }
                     }
                 }
-                
-                boolean result = currentlyLoadedModules.contains(moduleFile);
-                
+
+                //the compiled in modules are being reported by apache using their source file
+                //and the on-demand loaded modules are identified by their 
+                //module name - consistent, huh?
+                boolean result = currentlyLoadedModules.contains(moduleFile)
+                    || currentlyLoadedModules.contains(moduleName);
+
                 if (result != negate) {
                     nodesToPromote.add(node);
                 } else {

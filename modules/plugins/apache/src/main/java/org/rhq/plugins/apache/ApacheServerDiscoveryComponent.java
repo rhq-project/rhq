@@ -91,8 +91,8 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
         }
     }
 
-    private static final Map<String, String> MODULE_SOURCE_FILE_TO_MODULE_NAME_20;
-    private static final Map<String, String> MODULE_SOURCE_FILE_TO_MODULE_NAME_13;
+    public static final Map<String, String> MODULE_SOURCE_FILE_TO_MODULE_NAME_20;
+    public static final Map<String, String> MODULE_SOURCE_FILE_TO_MODULE_NAME_13;
     
     static {
         MODULE_SOURCE_FILE_TO_MODULE_NAME_20 = new LinkedHashMap<String, String>();
@@ -319,12 +319,12 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
             PluginDescriptorBasedAugeasConfiguration.INCLUDE_GLOBS_PROP, serverConfigFile);
         pluginConfig.put(inclusionGlobs);
 
-        addModuleNames(pluginConfig, binaryInfo.getVersion());
+        pluginConfig.put(new PropertyList(ApacheServerComponent.PLUGIN_CONFIG_CUSTOM_MODULE_NAMES));
         
         ApacheDirectiveTree serverConfig = loadParser(serverConfigFile.getAbsolutePath(), serverRoot);
 
         //extract the runtime configuration out of declared config
-        serverConfig = RuntimeApacheConfiguration.extract(serverConfig, process.getProcessInfo(), binaryInfo, getModuleNames(binaryInfo.getVersion()));
+        serverConfig = RuntimeApacheConfiguration.extract(serverConfig, process.getProcessInfo(), binaryInfo, getDefaultModuleNames(binaryInfo.getVersion()));
         
         String serverUrl = null;
         String vhostsGlobInclude = null;
@@ -336,7 +336,7 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
             serverRootProp.setValue(serverRoot);
             //reparse the configuration with the new ServerRoot
             serverConfig = loadParser(serverConfigFile.getAbsolutePath(), serverRoot);
-            serverConfig = RuntimeApacheConfiguration.extract(serverConfig, process.getProcessInfo(), binaryInfo, getModuleNames(binaryInfo.getVersion()));            
+            serverConfig = RuntimeApacheConfiguration.extract(serverConfig, process.getProcessInfo(), binaryInfo, getDefaultModuleNames(binaryInfo.getVersion()));            
         }
 
         serverUrl = getUrl(serverConfig, binaryInfo.getVersion());
@@ -748,20 +748,7 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
         }
     }
 
-    private static void addModuleNames(Configuration pluginConfig, String version) {
-        PropertyList list = new PropertyList(ApacheServerComponent.PLUGIN_CONFIG_MODULE_NAMES); 
-        pluginConfig.put(list);
-        
-        for(Map.Entry<String, String> entry : getModuleNames(version).entrySet()) {
-            PropertyMap map = new PropertyMap(ApacheServerComponent.PLUGIN_CONFIG_MODULE_MAPPING);
-            list.add(map);
-            
-            map.put(new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_MODULE_SOURCE_FILE, entry.getKey()));
-            map.put(new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_MODULE_NAME, entry.getValue()));
-        }
-    }
-    
-    private static Map<String, String> getModuleNames(String version) {
+    public static Map<String, String> getDefaultModuleNames(String version) {
         switch (HttpdAddressUtility.get(version)) {
         case APACHE_1_3 : 
             return MODULE_SOURCE_FILE_TO_MODULE_NAME_13;

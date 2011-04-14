@@ -214,7 +214,7 @@ public abstract class Criteria implements Serializable {
      * 
      * The restriction, once set, can be removed by passing NULL to this method.
      * 
-     * @eee Restriction
+     * @see Restriction
      */
     public void setRestriction(Restriction restriction) {
         this.restriction = restriction;
@@ -254,6 +254,7 @@ public abstract class Criteria implements Serializable {
      * @param requiredPermissions the permissions required by the user on any applicable objects.
      * Typically resource permissions needed by the user on returned resources or resource related data.
      */
+    // TODO (ips): This should really be renamed setRequiredPermissions()...
     public void addRequiredPermissions(Permission... requiredPermissions) {
         this.requiredPermissions = Arrays.asList(requiredPermissions);
     }

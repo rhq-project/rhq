@@ -309,6 +309,7 @@ public class ResourceTreeView extends LocatableVLayout {
     private void updateSelection() {
 
         TreeNode selectedNode;
+
         if (treeGrid != null && treeGrid.getTree() != null
             && (selectedNode = treeGrid.getTree().findById(selectedNodeId)) != null) {
 
@@ -636,6 +637,7 @@ public class ResourceTreeView extends LocatableVLayout {
 
     private void loadTree(final int selectedResourceId, final boolean updateSelection,
         final AsyncCallback<Void> callback) {
+
         if (updateSelection) {
             selectedNodeId = ResourceTreeNode.idOf(selectedResourceId);
         }
@@ -692,6 +694,18 @@ public class ResourceTreeView extends LocatableVLayout {
                                 }
                             }
                         });
+
+                        // OK, there is no good reason for this to be here.  But there are times when the
+                        // callback above seems to get called prior to the treeGrid.getTree() having been
+                        // updated with the fetched data. I think this is a smartgwt bug but it's hard to
+                        // prove.  Furthermore, given that the fetchData call is async there is really no
+                        // reason why this should get called after the callback above. Having said all that,
+                        // this seems to fix the issue as it 1) does currently get called after the callback
+                        // and 2) the tree seems to be update immediately after the callback completes.
+                        // So, for now use this, but TODO: find a better way.
+                        if (updateSelection) {
+                            updateSelection();
+                        }
 
                     } else {
                         ResourceTypeRepository.Cache.getInstance().loadResourceTypes(lineage,

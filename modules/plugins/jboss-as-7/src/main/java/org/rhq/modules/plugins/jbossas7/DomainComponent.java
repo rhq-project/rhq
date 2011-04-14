@@ -19,7 +19,6 @@
 package org.rhq.modules.plugins.jbossas7;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,7 +50,7 @@ public class DomainComponent extends BaseComponent implements OperationFacet{
             Operation getStatus = new Operation("read-attribute",address,"name","status");
             JsonNode result = null;
             try {
-                result = connection.execute(getStatus);
+                result = connection.executeRaw(getStatus);
             } catch (Exception e) {
                 log.warn(e.getMessage());
                 return AvailabilityType.DOWN;
@@ -130,7 +129,7 @@ public class DomainComponent extends BaseComponent implements OperationFacet{
 
         OperationResult operationResult = new OperationResult();
         if (operation!=null) {
-            JsonNode result = connection.execute(operation);
+            JsonNode result = connection.executeRaw(operation);
 
             if (ASConnection.isErrorReply(result)) {
                 operationResult.setErrorMessage(ASConnection.getFailureDescription(result));

@@ -45,16 +45,12 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
 public class ASConnection {
 
     private final Log log = LogFactory.getLog(ASConnection.class);
-    private int port;
-    private String host;
     URL url;
     String urlString;
     private StringBuilder builder;
     private ObjectMapper mapper;
 
     public ASConnection(String host, int port) {
-        this.host = host;
-        this.port = port;
 
         try {
             url = new URL("http",host,port,"/domain-api");
@@ -167,7 +163,7 @@ public class ASConnection {
      * @return JsonNode that describes the result
      * @param operation an Operation that should be run on the domain controller
      */
-    public JsonNode execute(Operation operation) {
+    public JsonNode executeRaw(Operation operation) {
 
         InputStream inputStream = null;
         BufferedReader br=null;
@@ -187,30 +183,18 @@ public class ASConnection {
 
             if (conn.getResponseCode()==HttpURLConnection.HTTP_OK) {
                 inputStream = conn.getInputStream();
+            } else {
+                inputStream = conn.getErrorStream();
+            }
 
-                 br = new BufferedReader(new InputStreamReader(
-                        inputStream));
-                String line;
-                builder = new StringBuilder();
-                while ((line = br.readLine()) != null) {
-                    builder.append(line);
-                }
-                br.close();
+
+            br = new BufferedReader(new InputStreamReader(
+                    inputStream));
+            String line;
+            builder = new StringBuilder();
+            while ((line = br.readLine()) != null) {
+                builder.append(line);
             }
-            else {
-                InputStream errorStream = conn.getErrorStream();
-                if (errorStream!=null) {
-                    br = new BufferedReader(new InputStreamReader(errorStream));
-                    String line;
-                    builder = new StringBuilder();
-                    while ((line = br.readLine()) != null) {
-                        builder.append(line);
-                    }
-                    br.close();
-                }
-            }
-            if (br!=null)
-                br.close();
 
             String outcome;
             JsonNode operationResult=null;
@@ -227,13 +211,20 @@ public class ASConnection {
 
         } catch (IOException e) {
             log.error("Failed to get data: " + e.getMessage()  );
+        } finally {
+            if (br!=null)
+                try {
+                    br.close();
+                } catch (IOException e) {
+                    e.printStackTrace();  // TODO: Customise this generated block
+                }
         }
 
         return null;
     }
 
-    public Result execute2(Operation op, boolean isComplex){
-        JsonNode node = execute(op);
+    public Result execute(Operation op, boolean isComplex){
+        JsonNode node = executeRaw(op);
 
         try {
             Result res;

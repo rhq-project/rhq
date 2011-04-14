@@ -42,8 +42,10 @@ public class UploadAndDeployTest {
 
     static final String TEST_WAR = "test.war";
     private static final String UPLOAD_FILE = "test-simple.war";
+    private static final String DC_HOST = "localhost";
+    private static final int DC_HTTP_PORT = 9990;
 
-    @Test(timeOut = 60*1000L)
+    @Test(timeOut = 60*1000L, enabled = true)
     public void testUploadIndividualSteps() throws Exception {
 
         String bytes_value = prepare();
@@ -51,7 +53,7 @@ public class UploadAndDeployTest {
         System.out.println("sha: " + bytes_value);
 
         System.out.println();
-        ASConnection connection = new ASConnection("localhost",9990);
+        ASConnection connection = new ASConnection(DC_HOST, DC_HTTP_PORT);
 
         List<PROPERTY_VALUE> deploymentsAddress = new ArrayList<PROPERTY_VALUE>(1);
         deploymentsAddress.add(new PROPERTY_VALUE("deployment", TEST_WAR));
@@ -60,7 +62,7 @@ public class UploadAndDeployTest {
         op.addAdditionalProperty("name", TEST_WAR); // this needs to be separate per upload
         op.addAdditionalProperty("runtime-name", TEST_WAR);
         System.out.flush();
-        JsonNode ret = connection.execute(op);
+        JsonNode ret = connection.executeRaw(op);
         System.out.println("Add to /deploy done " + ret);
         System.out.flush();
 
@@ -73,7 +75,7 @@ public class UploadAndDeployTest {
         op.addAdditionalProperty("runtime-name", TEST_WAR);
         Operation deploy = new Operation("add",serverGroupAddress,"enabled","true");
         System.out.flush();
-        ret = connection.execute(deploy);
+        ret = connection.executeRaw(deploy);
         System.out.println("Add to server group done: " + ret);
         System.out.flush();
 
@@ -84,7 +86,7 @@ public class UploadAndDeployTest {
         // Now tear down stuff again
 
         Operation undeploy = new Operation("remove",serverGroupAddress);
-        ret = connection.execute(undeploy);
+        ret = connection.executeRaw(undeploy);
 
         assert ret.has("outcome") : "Ret not valied " + ret.toString();
         assert ret.get("outcome").getTextValue().equals("success") : "remove from sg was no success " + ret.getTextValue();
@@ -93,7 +95,7 @@ public class UploadAndDeployTest {
         // remove from domain
 
         Operation remove = new Operation("remove",deploymentsAddress);
-        ret = connection.execute(remove);
+        ret = connection.executeRaw(remove);
 
         assert ret.has("outcome") : "Ret not valied " + ret.toString();
         assert ret.get("outcome").getTextValue().equals("success") : "remove from domain was no success " + ret.getTextValue();
@@ -102,7 +104,7 @@ public class UploadAndDeployTest {
 
     }
 
-    @Test(timeOut = 60*1000L)
+    @Test(timeOut = 60*1000L, enabled = true)
     public void testUploadComposite() throws Exception {
 
         String bytes_value = prepare();
@@ -129,8 +131,8 @@ public class UploadAndDeployTest {
         cop.addStep(step2);
 
 
-        ASConnection connection = new ASConnection("localhost",9990);
-        JsonNode ret = connection.execute(cop);
+        ASConnection connection = new ASConnection(DC_HOST, DC_HTTP_PORT);
+        JsonNode ret = connection.executeRaw(cop);
         System.out.println(ret);
         System.out.flush();
 
@@ -139,7 +141,7 @@ public class UploadAndDeployTest {
         cop = new CompositeOperation();
         cop.addStep(step3);
         cop.addStep(step4);
-        ret = connection.execute(cop);
+        ret = connection.executeRaw(cop);
 
         System.out.println(ret);
         System.out.flush();
@@ -148,8 +150,8 @@ public class UploadAndDeployTest {
     }
 
     private String prepare() throws IOException {
-        ASUploadConnection conn = new ASUploadConnection();
-        OutputStream os = conn.getOutputStream("test1.war");
+        ASUploadConnection conn = new ASUploadConnection(DC_HOST, DC_HTTP_PORT);
+        OutputStream os = conn.getOutputStream("test.war");
 
 
 

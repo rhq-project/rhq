@@ -127,7 +127,7 @@ public class ManagedASDiscovery extends AbstractBaseDiscovery
         List<PROPERTY_VALUE> address = new ArrayList<PROPERTY_VALUE>();
         address.add(new PROPERTY_VALUE("server-group",serverGroup));
         Operation op = new ReadResource(address);
-        ComplexResult res = (ComplexResult) dcConnection.execute2(op,true);
+        ComplexResult res = (ComplexResult) dcConnection.execute(op, true);
         if (res.isSuccess()) {
             if (res.getResult().containsKey("socket-binding-group")) {
                 String sbg = (String) res.getResult().get("socket-binding-group");

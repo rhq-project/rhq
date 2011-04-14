@@ -18,7 +18,6 @@
  */
 package org.rhq.modules.plugins.jbossas7;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.Closeable;
@@ -28,8 +27,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-
-import com.sun.org.apache.xerces.internal.impl.xpath.regex.REUtil;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -51,18 +48,26 @@ public class ASUploadConnection {
 
     private static final String POST_REQUEST_METHOD = "POST";
 
-    private static final String UPLOAD_URL = "http://localhost:9990/domain-api/add-content";
+    private static final String UPLOAD_URL_PATH = "/domain-api/add-content";
 
     private final Log log = LogFactory.getLog(ASUploadConnection.class);
 
     BufferedOutputStream os = null;
     InputStream is = null;
     private HttpURLConnection connection;
+    private String host;
+    private int port;
+
+    public ASUploadConnection(String dcHost, int port) {
+        this.host = dcHost;
+        this.port = port;
+    }
 
     public OutputStream getOutputStream(String fileName) {
          try {
             // Create the HTTP connection to the upload URL
-            connection = (HttpURLConnection) new URL(UPLOAD_URL).openConnection();
+            String url = "http://" + host + ":" + port + UPLOAD_URL_PATH;
+            connection = (HttpURLConnection) new URL(url).openConnection();
             connection.setDoInput(true);
             connection.setDoOutput(true);
             connection.setRequestMethod(POST_REQUEST_METHOD);

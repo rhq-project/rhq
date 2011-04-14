@@ -70,6 +70,8 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
     ASConnection connection;
     String path;
     String key;
+    String host;
+    int port;
 
     /**
      * Return availability of this resource
@@ -91,9 +93,9 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
         // TODO add code to start the resource / connection to it
 
         String typeName = context.getResourceType().getName();
-        String host = conf.getSimpleValue("hostname","localhost");
+        host = conf.getSimpleValue("hostname","localhost");
         String portString = conf.getSimpleValue("port","9990");
-        int port = Integer.parseInt(portString);
+        port = Integer.parseInt(portString);
         connection = new ASConnection(host,port);
 
         path = conf.getSimpleValue("path", null);
@@ -130,8 +132,8 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
 
 
             Operation op = new ReadAttribute(pathToAddress(path),req.getName()); // TODO batching
-            //JsonNode obj = connection.execute(op);
-            Result res = connection.execute2(op, false);
+            //JsonNode obj = connection.executeRaw(op);
+            Result res = connection.execute(op, false);
             if (!res.isSuccess())
                 continue;
 
@@ -167,7 +169,7 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
 
         List<PROPERTY_VALUE> address = pathToAddress(path);
         Operation op = new ReadResource(address); // TOTO set recursive flag?
-        JsonNode json = connection.execute(op);
+        JsonNode json = connection.executeRaw(op);
 
         Configuration ret = new Configuration();
         ObjectMapper mapper = new ObjectMapper();
@@ -364,7 +366,7 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
 
             NameValuePair nvp = new NameValuePair(entry.getKey(),entry.getValue().getStringValue());
             Operation writeAttribute = new Operation("write-attribute",pathToAddress(getResultingPath()),nvp);
-            JsonNode result= connection.execute(writeAttribute);
+            JsonNode result= connection.executeRaw(writeAttribute);
             if(ASConnection.isErrorReply(result)) {
                 report.setStatus(ConfigurationUpdateStatus.FAILURE);
                 report.setErrorMessage(ASConnection.getFailureDescription(result));

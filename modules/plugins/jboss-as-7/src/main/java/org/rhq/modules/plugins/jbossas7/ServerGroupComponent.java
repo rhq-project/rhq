@@ -26,8 +26,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonNode;
 
 import org.rhq.core.domain.content.PackageDetailsKey;
@@ -53,11 +51,11 @@ import org.rhq.modules.plugins.jbossas7.json.ReadChildrenNames;
  * Component dealing with server group specific things
  * @author Heiko W. Rupp
  */
+@SuppressWarnings("unused")
 public class ServerGroupComponent extends DomainComponent implements ContentFacet, CreateChildResourceFacet {
 
     private static final String SUCCESS = "success";
     private static final String OUTCOME = "outcome";
-    private final Log log = LogFactory.getLog(ServerGroupComponent.class);
 
     @Override
     public List<DeployPackageStep> generateInstallationSteps(ResourcePackageDetails packageDetails) {
@@ -74,7 +72,7 @@ public class ServerGroupComponent extends DomainComponent implements ContentFace
 
         for (ResourcePackageDetails details : packages) {
 
-            ASUploadConnection uploadConnection = new ASUploadConnection();
+            ASUploadConnection uploadConnection = new ASUploadConnection(host,port);
             String fileName = details.getFileName();
             OutputStream out = uploadConnection.getOutputStream(fileName);
             contentServices.downloadPackageBits(cctx, details.getKey(), out, false);
@@ -101,7 +99,7 @@ public class ServerGroupComponent extends DomainComponent implements ContentFace
                     cop.addStep(step1);
                     cop.addStep(step2);
 
-                    JsonNode result = connection.execute(cop);
+                    JsonNode result = connection.executeRaw(cop);
                     if (ASConnection.isErrorReply(result)) // TODO get failure message into response
                         response.addPackageResponse(new DeployIndividualPackageResponse(details.getKey(),ContentResponseResult.FAILURE));
                     else
@@ -131,7 +129,7 @@ public class ServerGroupComponent extends DomainComponent implements ContentFace
         List<PROPERTY_VALUE> serverGroupAddress = pathToAddress(path);
 
         Operation op = new ReadChildrenNames(serverGroupAddress,"deployment"); // TODO read full packages not onyl names
-        JsonNode node = connection.execute(op);
+        JsonNode node = connection.executeRaw(op);
         if (ASConnection.isErrorReply(node))
             return null;
 
@@ -169,9 +167,8 @@ public class ServerGroupComponent extends DomainComponent implements ContentFace
         ContentServices contentServices = cctx.getContentServices();
         String resourceTypeName = report.getResourceType().getName();
 
-        ASUploadConnection uploadConnection = new ASUploadConnection();
+        ASUploadConnection uploadConnection = new ASUploadConnection(host,port);
         OutputStream out = uploadConnection.getOutputStream(details.getFileName());
-//        contentServices.downloadPackageBits(cctx,details.getKey(),out,false);
         contentServices.downloadPackageBitsForChildResource(cctx, resourceTypeName, details.getKey(), out);
 
         JsonNode uploadResult = uploadConnection.finishUpload();
@@ -205,7 +202,7 @@ public class ServerGroupComponent extends DomainComponent implements ContentFace
         cop.addStep(step1);
         cop.addStep(step2);
 
-        JsonNode result = connection.execute(cop);
+        JsonNode result = connection.executeRaw(cop);
         if (ASConnection.isErrorReply(result)) {
             report.setErrorMessage(ASConnection.getFailureDescription(resultNode));
             report.setStatus(CreateResourceStatus.FAILURE);

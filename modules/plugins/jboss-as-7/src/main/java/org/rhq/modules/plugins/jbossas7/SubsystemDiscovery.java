@@ -98,7 +98,7 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
         else {
             List<PROPERTY_VALUE> addr ;
             addr = parentComponent.pathToAddress(parentPath);
-            json = connection.execute(new ReadChildrenNames(addr, childType));
+            json = connection.executeRaw(new ReadChildrenNames(addr, childType));
         }
         if (!ASConnection.isErrorReply(json)) {
             if (recursive) {

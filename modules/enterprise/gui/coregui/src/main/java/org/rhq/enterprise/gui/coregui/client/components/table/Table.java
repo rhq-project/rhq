@@ -88,6 +88,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.VERSION;
+
 /**
  * A tabular view of set of data records from an {@link RPCDataSource}.
  *
@@ -904,6 +906,11 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
 
     protected String getDeleteConfirmMessage() {
         return MSG.common_msg_deleteConfirm(getDataTypeNamePlural());
+    }
+
+    protected void hideField(ListGridField field) {
+        getListGrid().hideField(field.getName());
+        field.setHidden(true);
     }
 
     // -------------- Inner utility classes ------------- //

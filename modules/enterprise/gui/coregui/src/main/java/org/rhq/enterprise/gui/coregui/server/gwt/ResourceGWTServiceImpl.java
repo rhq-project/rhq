@@ -74,13 +74,13 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         "name", //
         "ancestry", //
         //                    "connected                       \n" +
-        //                    "version                         \n" +
+        "version", //
         "description", //
         //                    "ctime                           \n" +
         //                    "mtime                           \n" +
         //                    "itime                           \n" +
         //                    "modifiedBy                      \n" +
-        //                    "location                        \n" +
+        "location", //
         "resourceType", //
         "childResources", //
         "parentResource", //

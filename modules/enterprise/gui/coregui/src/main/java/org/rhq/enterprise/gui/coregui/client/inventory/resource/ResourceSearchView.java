@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.AVAILABILITY;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.CATEGORY;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.DESCRIPTION;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.LOCATION;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.NAME;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.PLUGIN;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.TYPE;
@@ -49,6 +50,7 @@ import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.search.SearchSubsystem;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.admin.roles.RolesDataSource;
 import org.rhq.enterprise.gui.coregui.client.components.table.EscapedHtmlCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.components.table.RecordExtractor;
 import org.rhq.enterprise.gui.coregui.client.components.table.ResourceAuthorizedTableAction;
@@ -127,58 +129,8 @@ public class ResourceSearchView extends Table {
 
     @Override
     protected void configureTable() {
-        IconField iconField = new IconField();
-        iconField.setShowHover(true);
-        iconField.setHoverCustomizer(new HoverCustomizer() {
-            public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
-                String resCat = record.getAttribute(CATEGORY.propertyName());
-                switch (ResourceCategory.valueOf(resCat)) {
-                case PLATFORM:
-                    return MSG.common_title_platform();
-                case SERVER:
-                    return MSG.common_title_server();
-                case SERVICE:
-                    return MSG.common_title_service();
-                }
-                return null;
-            }
-        });
-
-        ListGridField nameField = new ListGridField(NAME.propertyName(), NAME.title(), 250);
-        nameField.setCellFormatter(new CellFormatter() {
-            public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
-                String url = LinkManager.getResourceLink(record.getAttributeAsInt("id"));
-                String name = StringUtility.escapeHtml(value.toString());
-                return SeleniumUtility.getLocatableHref(url, name, null);
-            }
-        });
-        nameField.setShowHover(true);
-        nameField.setHoverCustomizer(new HoverCustomizer() {
-            public String hoverHTML(Object value, ListGridRecord listGridRecord, int rowNum, int colNum) {
-                return AncestryUtil.getResourceHoverHTML(listGridRecord, 0);
-            }
-        });
-
-        ListGridField ancestryField = AncestryUtil.setupAncestryListGridField();
-
-        ListGridField descriptionField = new ListGridField(DESCRIPTION.propertyName(), DESCRIPTION.title());
-        descriptionField.setCellFormatter(new EscapedHtmlCellFormatter());
-
-        ListGridField typeNameField = new ListGridField(TYPE.propertyName(), TYPE.title(), 130);
-
-        ListGridField pluginNameField = new ListGridField(PLUGIN.propertyName(), PLUGIN.title(), 100);
-
-        ListGridField versionField = new ListGridField(VERSION.propertyName(), VERSION.title(), 60);
-        versionField.setHidden(true);
-
-        ListGridField categoryField = new ListGridField(CATEGORY.propertyName(), CATEGORY.title(), 60);
-        categoryField.setCellFormatter(new ResourceCategoryCellFormatter());
-        categoryField.setHidden(true); // the icon field already shows us this, no need to show it in another column
-
-        IconField availabilityField = new IconField(AVAILABILITY.propertyName(), AVAILABILITY.title(), 70);
-
-        setListGridFields(iconField, nameField, ancestryField, descriptionField, typeNameField, pluginNameField,
-            versionField, categoryField, availabilityField);
+        List<ListGridField> fields = createFields();
+        setListGridFields(fields.toArray(new ListGridField[fields.size()]));
 
         addTableAction(extendLocatorId("Uninventory"), MSG.common_button_uninventory(), MSG
             .view_inventory_resources_uninventoryConfirm(), new ResourceAuthorizedTableAction(ResourceSearchView.this,
@@ -223,6 +175,73 @@ public class ResourceSearchView extends Table {
                 }
             }
         });
+    }
+
+    protected List<ListGridField> createFields() {
+        List<ListGridField> fields = new ArrayList<ListGridField>();
+
+        IconField iconField = new IconField();
+        iconField.setShowHover(true);
+        iconField.setHoverCustomizer(new HoverCustomizer() {
+            public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
+                String resCat = record.getAttribute(CATEGORY.propertyName());
+                switch (ResourceCategory.valueOf(resCat)) {
+                case PLATFORM:
+                    return MSG.common_title_platform();
+                case SERVER:
+                    return MSG.common_title_server();
+                case SERVICE:
+                    return MSG.common_title_service();
+                }
+                return null;
+            }
+        });
+        fields.add(iconField);
+
+        ListGridField nameField = new ListGridField(NAME.propertyName(), NAME.title(), 250);
+        nameField.setCellFormatter(new CellFormatter() {
+            public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
+                String url = LinkManager.getResourceLink(record.getAttributeAsInt("id"));
+                String name = StringUtility.escapeHtml(value.toString());
+                return SeleniumUtility.getLocatableHref(url, name, null);
+            }
+        });
+        nameField.setShowHover(true);
+        nameField.setHoverCustomizer(new HoverCustomizer() {
+            public String hoverHTML(Object value, ListGridRecord listGridRecord, int rowNum, int colNum) {
+                return AncestryUtil.getResourceHoverHTML(listGridRecord, 0);
+            }
+        });
+        fields.add(nameField);
+
+        ListGridField ancestryField = AncestryUtil.setupAncestryListGridField();
+        fields.add(ancestryField);
+
+        ListGridField descriptionField = new ListGridField(DESCRIPTION.propertyName(), DESCRIPTION.title());
+        descriptionField.setCellFormatter(new EscapedHtmlCellFormatter());
+        fields.add(descriptionField);
+
+        ListGridField locationField = new ListGridField(LOCATION.propertyName(), LOCATION.title(), 180);
+        locationField.setCellFormatter(new EscapedHtmlCellFormatter());
+        fields.add(locationField);
+
+        ListGridField typeNameField = new ListGridField(TYPE.propertyName(), TYPE.title(), 130);
+        fields.add(typeNameField);
+
+        ListGridField pluginNameField = new ListGridField(PLUGIN.propertyName(), PLUGIN.title(), 100);
+        fields.add(pluginNameField);
+
+        ListGridField versionField = new ListGridField(VERSION.propertyName(), VERSION.title(), 60);
+        fields.add(versionField);
+
+        ListGridField categoryField = new ListGridField(CATEGORY.propertyName(), CATEGORY.title(), 60);
+        categoryField.setCellFormatter(new ResourceCategoryCellFormatter());
+        fields.add(categoryField);
+
+        IconField availabilityField = new IconField(AVAILABILITY.propertyName(), AVAILABILITY.title(), 70);
+        fields.add(availabilityField);
+
+        return fields;
     }
 
     public int getMatches() {

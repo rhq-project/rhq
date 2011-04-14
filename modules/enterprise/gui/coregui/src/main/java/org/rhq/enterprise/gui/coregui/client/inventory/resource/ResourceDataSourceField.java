@@ -32,6 +32,8 @@ public enum ResourceDataSourceField {
 
     DESCRIPTION("description", CoreGUI.getMessages().common_title_description()),
 
+    LOCATION("location", "Location"), // TODO: i18n //
+
     TYPE("resourceType.name", CoreGUI.getMessages().common_title_type()),
 
     PLUGIN("pluginName", CoreGUI.getMessages().common_title_plugin()),

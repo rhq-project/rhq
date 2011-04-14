@@ -21,9 +21,11 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.AVAILABILITY;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.CATEGORY;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.DESCRIPTION;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.LOCATION;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.NAME;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.PLUGIN;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.TYPE;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.VERSION;
 
 import java.util.HashSet;
 import java.util.List;
@@ -104,14 +106,24 @@ public class ResourceDatasource extends RPCDataSource<Resource, ResourceCriteria
         descriptionDataField.setCanEdit(false);
         fields.add(descriptionDataField);
 
+        DataSourceTextField locationDataField = new DataSourceTextField(LOCATION.propertyName(), LOCATION.title());
+        locationDataField.setCanEdit(false);
+        locationDataField.setDetail(true);
+        fields.add(locationDataField);
+
         DataSourceTextField typeNameDataField = new DataSourceTextField(TYPE.propertyName(), TYPE.title());
         fields.add(typeNameDataField);
 
         DataSourceTextField pluginNameDataField = new DataSourceTextField(PLUGIN.propertyName(), PLUGIN.title());
+        pluginNameDataField.setDetail(true);
         fields.add(pluginNameDataField);
 
+        DataSourceTextField versionDataField = new DataSourceTextField(VERSION.propertyName(), VERSION.title());
+        fields.add(versionDataField);
+
         DataSourceTextField categoryDataField = new DataSourceTextField(CATEGORY.propertyName(), CATEGORY.title());
-        categoryDataField.setHidden(true); // our icon will show this, no need to make this visible by default
+        // The icon field will show the category, no need to make the category field visible by default.
+        categoryDataField.setDetail(true);
         fields.add(categoryDataField);
 
         DataSourceImageField availabilityDataField = new DataSourceImageField(AVAILABILITY.propertyName(), AVAILABILITY
@@ -222,8 +234,10 @@ public class ResourceDatasource extends RPCDataSource<Resource, ResourceCriteria
         record.setAttribute("uuid", from.getUuid());
         record.setAttribute(NAME.propertyName(), from.getName());
         record.setAttribute(DESCRIPTION.propertyName(), from.getDescription());
+        record.setAttribute(LOCATION.propertyName(), from.getLocation());
         record.setAttribute(TYPE.propertyName(), from.getResourceType().getId());
         record.setAttribute(PLUGIN.propertyName(), from.getResourceType().getPlugin());
+        record.setAttribute(VERSION.propertyName(), from.getVersion());
         record.setAttribute(CATEGORY.propertyName(), from.getResourceType().getCategory().name());
         record.setAttribute("icon", ImageManager.getResourceIcon(from.getResourceType().getCategory(), from
             .getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP));

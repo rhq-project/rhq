@@ -375,7 +375,7 @@ public abstract class AncestryUtil {
         return resourceName;
     }
 
-    // We do not want smargwt to see we are storing our map into an attribute because it barfs on our key/value pairs
+    // We do not want smartgwt to see we are storing our map into an attribute because it barfs on our key/value pairs
     // so instead we have to wrap it in a non-Map POJO Object so smartgwt just handles it as a java.lang.Object.
     public static class MapWrapper {
         private Map<Integer, ResourceType> map;

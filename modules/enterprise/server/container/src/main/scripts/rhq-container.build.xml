@@ -570,8 +570,13 @@ rhq.server.content.filesystem=${jboss.server.data.dir}/packagebits
 # The frequency (in millis) the server checks for updated plugins
 rhq.server.plugin-scan-period-ms=${rhq.server.plugin-scan-period-ms}
 
-# TODO: please explain what this is - how is ${rhq.sync.endpoint-address} set?
-rhq.sync.endpoint-address=${rhq.sync.endpoint-address}
+# When this is enabled, the server at start up will compare its endpoint
+# address to the host name/address found on the host machine. If they differ,
+# the server endpoint address will be updated to the value found on the host
+# machine. This is targeted for use in cloud deployments where IP addresses
+# change frequently, but it can be of use in other deployment settings where
+# you have to deal with IP address changes.
+rhq.sync.endpoint-address=false
 
 # Auto-Install Pre-Configuration Settings
 # If you wish to circumvent the installer webapp and auto-install the server

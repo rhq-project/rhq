@@ -42,6 +42,7 @@ import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
+import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
@@ -60,7 +61,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class BaseComponent implements ResourceComponent, MeasurementFacet, ConfigurationFacet
+public class BaseComponent implements ResourceComponent, MeasurementFacet, ConfigurationFacet, DeleteResourceFacet
 {
     final Log log = LogFactory.getLog(this.getClass());
 
@@ -404,4 +405,10 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
         return result;
     }
 
+    @Override
+    public void deleteResource() throws Exception {
+        // TODO: Customise this generated block
+
+        System.out.println("delete resource: " + path);
+    }
 }

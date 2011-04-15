@@ -105,7 +105,7 @@ public class BaseProcessDiscovery implements ResourceDiscoveryComponent
             }
             String logFile = getLogFileFromCommandLine(commandLine);
             initLogEventSourcesConfigProp(logFile,config);
-            String javaClazz = psr.getProcessInfo().getName();
+//            String javaClazz = psr.getProcessInfo().getName();
 
 
                 /*
@@ -115,11 +115,11 @@ public class BaseProcessDiscovery implements ResourceDiscoveryComponent
                  */
 //                config.put(new PropertySimple(JMXDiscoveryComponent.COMMAND_LINE_CONFIG_PROPERTY,
 //                        javaClazz));
-                config.put(new PropertySimple(JMXDiscoveryComponent.CONNECTION_TYPE,
-                        LocalVMTypeDescriptor.class.getName()));
-
-                // TODO vmid will change when the detected server is bounced - how do we follow this?
-                config.put(new PropertySimple(JMXDiscoveryComponent.VMID_CONFIG_PROPERTY,psr.getProcessInfo().getPid()));
+//                config.put(new PropertySimple(JMXDiscoveryComponent.CONNECTION_TYPE,
+//                        LocalVMTypeDescriptor.class.getName()));
+//
+//                // TODO vmid will change when the detected server is bounced - how do we follow this?
+//                config.put(new PropertySimple(JMXDiscoveryComponent.VMID_CONFIG_PROPERTY,psr.getProcessInfo().getPid()));
 
 
             DiscoveredResourceDetails detail = new DiscoveredResourceDetails(

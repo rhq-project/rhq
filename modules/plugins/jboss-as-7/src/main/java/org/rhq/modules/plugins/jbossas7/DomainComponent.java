@@ -125,6 +125,26 @@ public class DomainComponent extends BaseComponent implements OperationFacet{
             Map<String,Object> props = new HashMap<String, Object>();
             props.put("queue-address",queueName);
             operation = new Operation(op,address);
+        } else if (what.equals("managed-server")) {
+            String chost = parameters.getSimpleValue("hostname","");
+            String serverName = parameters.getSimpleValue("servername","");
+            String serverGroup = parameters.getSimpleValue("server-group","");
+            String socketBindings = parameters.getSimpleValue("socket-bindings","");
+            String portS = parameters.getSimpleValue("port-offset","0");
+            int port = Integer.parseInt(portS);
+            String autostartS = parameters.getSimpleValue("auto-start","false");
+            boolean autoStart = Boolean.getBoolean(autostartS);
+
+            address.add(new PROPERTY_VALUE("host", chost));
+            address.add(new PROPERTY_VALUE("server-config",serverName));
+            Map<String,Object> props = new HashMap<String, Object>();
+            props.put("name",serverName);
+            props.put("group",serverGroup);
+            props.put("socket-binding-group",socketBindings);
+            props.put("socket-binding-port-offset",port);
+            props.put("auto-start",autoStart);
+
+            operation = new Operation(op,address,props);
         }
 
         OperationResult operationResult = new OperationResult();

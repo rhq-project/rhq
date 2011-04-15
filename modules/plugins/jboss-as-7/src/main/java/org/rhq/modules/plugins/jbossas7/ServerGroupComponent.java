@@ -91,7 +91,7 @@ public class ServerGroupComponent extends DomainComponent implements ContentFace
                     step1.addAdditionalProperty("name", fileName);
 
                     List<PROPERTY_VALUE> serverGroupAddress = new ArrayList<PROPERTY_VALUE>(1);
-                    serverGroupAddress.add(new PROPERTY_VALUE("server-group",serverGroupFromKey()));
+                    serverGroupAddress.addAll(pathToAddress(context.getResourceKey()));
                     serverGroupAddress.add(new PROPERTY_VALUE("deployment", fileName));
                     Operation step2 = new Operation("add",serverGroupAddress,"enabled","true");
 
@@ -180,22 +180,21 @@ public class ServerGroupComponent extends DomainComponent implements ContentFace
             return report;
         }
 
-        String fileName = report.getUserSpecifiedResourceName();
+        String fileName = details.getFileName();
+        String tmpName = fileName; // TODO figure out the tmp-name biz with the AS guys
 
         JsonNode resultNode = uploadResult.get("result");
         String hash = resultNode.get("BYTES_VALUE").getTextValue();
         ASConnection connection = getASConnection();
 
-        List<PROPERTY_VALUE> deploymentsAddress = new ArrayList<PROPERTY_VALUE>(1);
-        deploymentsAddress.add(new PROPERTY_VALUE("deployment", fileName));
-        Operation step1 = new Operation("add",deploymentsAddress);
+        Operation step1 = new Operation("add","deployment",tmpName);
         step1.addAdditionalProperty("hash", new PROPERTY_VALUE("BYTES_VALUE", hash));
-        step1.addAdditionalProperty("name", fileName);  // TODO set a random name here - or wait on AS to "fix" this
+        step1.addAdditionalProperty("name", tmpName);
         step1.addAdditionalProperty("runtime-name", fileName);
 
         List<PROPERTY_VALUE> serverGroupAddress = new ArrayList<PROPERTY_VALUE>(1);
-        serverGroupAddress.add(new PROPERTY_VALUE("server-group",serverGroupFromKey()));
-        serverGroupAddress.add(new PROPERTY_VALUE("deployment", fileName));
+        serverGroupAddress.addAll(pathToAddress(context.getResourceKey()));
+        serverGroupAddress.add(new PROPERTY_VALUE("deployment", tmpName));
         Operation step2 = new Operation("add",serverGroupAddress,"enabled","true");
 
         CompositeOperation cop = new CompositeOperation();

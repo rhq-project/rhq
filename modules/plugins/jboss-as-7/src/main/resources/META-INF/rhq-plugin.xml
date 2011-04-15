@@ -134,6 +134,30 @@
                 <c:simple-property name="name" description="Name of Group to add"/>
             </parameters>
         </operation>
+        <operation name="managed-server:add" displayName="Add managed server" description="Add a new managed server">
+            <parameters>
+                <c:simple-property name="servername" displayName="Name of the new server" required="true"/>
+                <c:simple-property name="hostname" displayName="Name of the host to put the server on" required="true"/>
+                <c:simple-property name="server-group" displayName="Server group to add to" required="true"/>
+                <c:simple-property name="socket-bindings" displayName="Socket bindings to base upon" default="standard-sockets" description="Socket bindings to base upon"/>
+                <c:simple-property name="port-offset" displayName="Port offset" default="0" type="integer" />
+                <c:simple-property name="auto-start" displayName="Autostart" default="false" type="boolean" />
+            </parameters>
+            <results>
+                <c:simple-property name="result" description="Outcome of the create server operation"/>
+            </results>
+        </operation>
+        <operation name="managed-server:remove" displayName="Remove managed server" description="Remove a managed server">
+            <parameters>
+                <c:simple-property name="servername" displayName="Name of the server to remove" required="true"/>
+                <c:simple-property name="hostname" displayName="Name of the host where the server is on" required="true"/>
+            </parameters>
+            <results>
+                <c:simple-property name="result" description="Outcome of the remove server operation"/>
+            </results>
+
+        </operation>
+
 
         <server name="Profile"
                 description="One profile in a domain"
@@ -166,12 +190,16 @@
                 <c:simple-property name="deployment" required="false"/> <!-- TODO change structure. Or put below as resource? -->
             </resource-configuration>
 
-            <service name="Deployment" class="BaseComponent" discovery="SubsystemDiscovery" createDeletePolicy="create-only" creationDataType="content">
+            <service name="Deployment"
+                     class="BaseComponent"
+                     discovery="SubsystemDiscovery"
+                     createDeletePolicy="create-only"
+                     creationDataType="content">
                 <plugin-configuration>
                     <c:simple-property name="path" default="deployment" readOnly="true"/>
                 </plugin-configuration>
 
-                <content name="deployment" category="deployable" isCreationType="true" description="Deployments on this domain">
+                <content name="file" category="deployable" isCreationType="true" description="Deployments on this domain">
                     <configuration>
                        <c:group name="deployment" displayName="Deployment Options">
                            <c:simple-property name="runtimeName" required="true"/>
@@ -208,13 +236,6 @@
                     <c:simple-property name="result" description="Outcome of the delete server operation"/>
                 </results>
             </operation>
-
-<!--
-            <resource-configuration>
-                <c:list-property name="server-config" />
-            </resource-configuration>
--->
-
         </server>
 
     </server>

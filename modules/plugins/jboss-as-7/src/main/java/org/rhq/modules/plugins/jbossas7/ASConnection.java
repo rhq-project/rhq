@@ -174,12 +174,14 @@ public class ASConnection {
             out.flush();
             out.close();
 
-            if (conn.getResponseCode()==HttpURLConnection.HTTP_OK) {
+            int responseCode = conn.getResponseCode();
+            if (responseCode ==HttpURLConnection.HTTP_OK) {
                 inputStream = conn.getInputStream();
             } else {
                 inputStream = conn.getErrorStream();
             }
 
+            if (inputStream!=null) {
 
             br = new BufferedReader(new InputStreamReader(
                     inputStream));
@@ -200,6 +202,10 @@ public class ASConnection {
             }
             System.out.println("==> " + outcome);
             return operationResult;
+            }
+            else {
+                System.err.println("IS was null and code was " + responseCode);
+            }
 
 
         } catch (IOException e) {

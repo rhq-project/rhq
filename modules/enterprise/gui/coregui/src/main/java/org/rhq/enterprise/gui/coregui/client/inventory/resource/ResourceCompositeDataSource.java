@@ -22,14 +22,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource;
 
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.AVAILABILITY;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.CATEGORY;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.DESCRIPTION;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.LOCATION;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.NAME;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.PLUGIN;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.TYPE;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.VERSION;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.*;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -196,6 +189,7 @@ public class ResourceCompositeDataSource extends RPCDataSource<ResourceComposite
         record.setAttribute("resource", res);
         record.setAttribute("id", res.getId());
         record.setAttribute(NAME.propertyName(), res.getName());
+        record.setAttribute(KEY.propertyName(), res.getResourceKey());
         record.setAttribute(DESCRIPTION.propertyName(), res.getDescription());
         record.setAttribute(LOCATION.propertyName(), res.getLocation());
         record.setAttribute(TYPE.propertyName(), res.getResourceType().getId());
@@ -206,6 +200,10 @@ public class ResourceCompositeDataSource extends RPCDataSource<ResourceComposite
             .getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP));
         record.setAttribute(AVAILABILITY.propertyName(), ImageManager.getAvailabilityIconFromAvailType(res
             .getCurrentAvailability().getAvailabilityType()));
+        record.setAttribute(CTIME.propertyName(), res.getCtime());
+        record.setAttribute(ITIME.propertyName(), res.getItime());
+        record.setAttribute(MTIME.propertyName(), res.getMtime());
+        record.setAttribute(MODIFIER.propertyName(), res.getModifiedBy());
 
         record.setAttribute("resourcePermission", from.getResourcePermission());
 

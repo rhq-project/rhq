@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -18,14 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource;
 
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.AVAILABILITY;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.CATEGORY;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.DESCRIPTION;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.LOCATION;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.NAME;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.PLUGIN;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.TYPE;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.VERSION;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -50,7 +43,6 @@ import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.search.SearchSubsystem;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
-import org.rhq.enterprise.gui.coregui.client.admin.roles.RolesDataSource;
 import org.rhq.enterprise.gui.coregui.client.components.table.EscapedHtmlCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.components.table.RecordExtractor;
 import org.rhq.enterprise.gui.coregui.client.components.table.ResourceAuthorizedTableAction;
@@ -58,6 +50,7 @@ import org.rhq.enterprise.gui.coregui.client.components.table.IconField;
 import org.rhq.enterprise.gui.coregui.client.components.table.ResourceCategoryCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
+import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
@@ -68,6 +61,8 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
+ * The list view for {@link Resource}s.
+ *
  * @author Greg Hinkle
  */
 public class ResourceSearchView extends Table {
@@ -186,12 +181,12 @@ public class ResourceSearchView extends Table {
             public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
                 String resCat = record.getAttribute(CATEGORY.propertyName());
                 switch (ResourceCategory.valueOf(resCat)) {
-                case PLATFORM:
-                    return MSG.common_title_platform();
-                case SERVER:
-                    return MSG.common_title_server();
-                case SERVICE:
-                    return MSG.common_title_service();
+                    case PLATFORM:
+                        return MSG.common_title_platform();
+                    case SERVER:
+                        return MSG.common_title_server();
+                    case SERVICE:
+                        return MSG.common_title_service();
                 }
                 return null;
             }
@@ -213,6 +208,9 @@ public class ResourceSearchView extends Table {
             }
         });
         fields.add(nameField);
+
+        ListGridField keyField = new ListGridField(KEY.propertyName(), KEY.title(), 170);
+        fields.add(keyField);
 
         ListGridField ancestryField = AncestryUtil.setupAncestryListGridField();
         fields.add(ancestryField);
@@ -240,6 +238,21 @@ public class ResourceSearchView extends Table {
 
         IconField availabilityField = new IconField(AVAILABILITY.propertyName(), AVAILABILITY.title(), 70);
         fields.add(availabilityField);
+
+        ListGridField ctimeField = new ListGridField(CTIME.propertyName(), CTIME.title(), 120);
+        ctimeField.setCellFormatter(new TimestampCellFormatter());
+        fields.add(ctimeField);
+
+        ListGridField itimeField = new ListGridField(ITIME.propertyName(), ITIME.title(), 120);
+        itimeField.setCellFormatter(new TimestampCellFormatter());
+        fields.add(itimeField);
+
+        ListGridField mtimeField = new ListGridField(MTIME.propertyName(), MTIME.title(), 120);
+        mtimeField.setCellFormatter(new TimestampCellFormatter());
+        fields.add(mtimeField);
+
+        ListGridField modifiedByField = new ListGridField(MODIFIER.propertyName(), MODIFIER.title(), 100);
+        fields.add(modifiedByField);
 
         return fields;
     }

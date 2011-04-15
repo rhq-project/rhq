@@ -42,9 +42,11 @@ import org.rhq.enterprise.gui.coregui.client.components.form.EditableFormItem;
 import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.components.form.StringLengthValidator;
 import org.rhq.enterprise.gui.coregui.client.components.form.SimpleEditableFormItem.ValueEditedHandler;
+import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
@@ -128,14 +130,6 @@ public class OverviewForm extends EnhancedDynamicForm {
     }
 
     private void buildForm(ResourceType type) {
-        List<MeasurementDefinition> traits = new ArrayList<MeasurementDefinition>();
-
-        for (MeasurementDefinition measurement : type.getMetricDefinitions()) {
-            if (measurement.getDataType() == DataType.TRAIT && measurement.getDisplayType() == DisplayType.SUMMARY) {
-                traits.add(measurement);
-            }
-        }
-
         StringLengthValidator notEmptyOrNullValidator = new StringLengthValidator(1, null, false);
         StringLengthValidator notNullValidator = new StringLengthValidator(null, null, false);
 
@@ -155,6 +149,13 @@ public class OverviewForm extends EnhancedDynamicForm {
         formItems.add(typeItem);
 
         final Resource resource = this.resourceComposite.getResource();
+
+        // Key
+        StaticTextItem keyItem = new StaticTextItem(ResourceDataSourceField.KEY.propertyName(),
+                ResourceDataSourceField.KEY.title());
+        keyItem.setValue(resource.getResourceKey());
+        formItems.add(keyItem);
+
         boolean modifiable = this.resourceComposite.getResourcePermission().isInventory();
 
         // Name
@@ -282,17 +283,47 @@ public class OverviewForm extends EnhancedDynamicForm {
         String version = (resource.getVersion() != null) ? resource.getVersion() : "<i>" + MSG.common_label_none()
             + "</i>";
         versionItem.setValue(version);
-        versionItem.setEndRow(true);
         formItems.add(versionItem);
 
+        // Timestamps
+        StaticTextItem ctimeItem = new StaticTextItem(ResourceDataSourceField.CTIME.propertyName(),
+                ResourceDataSourceField.CTIME.title());
+        String ctime = TimestampCellFormatter.format(resource.getCtime());
+        ctimeItem.setValue(ctime);
+        formItems.add(ctimeItem);
+
+        StaticTextItem itimeItem = new StaticTextItem(ResourceDataSourceField.ITIME.propertyName(),
+                ResourceDataSourceField.ITIME.title());
+        String itime = TimestampCellFormatter.format(resource.getItime());
+        itimeItem.setValue(itime);
+        formItems.add(itimeItem);
+
+        StaticTextItem mtimeItem = new StaticTextItem(ResourceDataSourceField.MTIME.propertyName(),
+                ResourceDataSourceField.MTIME.title());
+        String mtime = TimestampCellFormatter.format(resource.getMtime());
+        mtimeItem.setValue(mtime);
+        formItems.add(mtimeItem);
+
+        StaticTextItem modifierItem = new StaticTextItem(ResourceDataSourceField.MODIFIER.propertyName(),
+                ResourceDataSourceField.MODIFIER.title());
+        modifierItem.setValue(resource.getModifiedBy());
+        formItems.add(modifierItem);
+
         // Traits
-        Collections.sort(traits, new Comparator<MeasurementDefinition>() {
-            public int compare(MeasurementDefinition o1, MeasurementDefinition o2) {
-                return new Integer(o1.getDisplayOrder()).compareTo(o2.getDisplayOrder());
+        List<MeasurementDefinition> summaryTraitDefs = new ArrayList<MeasurementDefinition>();
+        for (MeasurementDefinition measurementDef : type.getMetricDefinitions()) {
+            if (measurementDef.getDataType() == DataType.TRAIT && measurementDef.getDisplayType() == DisplayType.SUMMARY) {
+                summaryTraitDefs.add(measurementDef);
+            }
+        }
+
+        Collections.sort(summaryTraitDefs, new Comparator<MeasurementDefinition>() {
+            public int compare(MeasurementDefinition md1, MeasurementDefinition md2) {
+                return new Integer(md1.getDisplayOrder()).compareTo(md2.getDisplayOrder());
             }
         });
 
-        for (MeasurementDefinition trait : traits) {
+        for (MeasurementDefinition trait : summaryTraitDefs) {
             String formItemId = buildFormItemIdFromTraitDisplayName(trait.getDisplayName());
             StaticTextItem formItem = new StaticTextItem(formItemId, trait.getDisplayName());
             formItem.setTooltip(trait.getDescription());

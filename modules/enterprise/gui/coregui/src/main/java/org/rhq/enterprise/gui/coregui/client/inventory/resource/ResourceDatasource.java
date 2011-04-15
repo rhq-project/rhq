@@ -18,14 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource;
 
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.AVAILABILITY;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.CATEGORY;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.DESCRIPTION;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.LOCATION;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.NAME;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.PLUGIN;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.TYPE;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.VERSION;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.*;
 
 import java.util.HashSet;
 import java.util.List;
@@ -36,6 +29,7 @@ import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
+import com.smartgwt.client.data.fields.DataSourceDateTimeField;
 import com.smartgwt.client.data.fields.DataSourceImageField;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
@@ -101,6 +95,11 @@ public class ResourceDatasource extends RPCDataSource<Resource, ResourceCriteria
         nameDataField.setCanEdit(false);
         fields.add(nameDataField);
 
+        DataSourceTextField keyDataField = new DataSourceTextField(KEY.propertyName(), KEY.title(), 200);
+        keyDataField.setCanEdit(false);
+        keyDataField.setDetail(true);
+        fields.add(keyDataField);
+
         DataSourceTextField descriptionDataField = new DataSourceTextField(DESCRIPTION.propertyName(), DESCRIPTION
             .title());
         descriptionDataField.setCanEdit(false);
@@ -130,6 +129,22 @@ public class ResourceDatasource extends RPCDataSource<Resource, ResourceCriteria
             .title(), 20);
         availabilityDataField.setCanEdit(false);
         fields.add(availabilityDataField);
+
+        DataSourceTextField ctimeDataField = new DataSourceTextField(CTIME.propertyName(), CTIME.title());
+        ctimeDataField.setDetail(true);
+        fields.add(ctimeDataField);
+
+        DataSourceTextField itimeDataField = new DataSourceTextField(ITIME.propertyName(), ITIME.title());
+        itimeDataField.setDetail(true);
+        fields.add(itimeDataField);
+
+        DataSourceTextField mtimeDataField = new DataSourceTextField(MTIME.propertyName(), MTIME.title());
+        mtimeDataField.setDetail(true);
+        fields.add(mtimeDataField);
+
+        DataSourceTextField modifiedByDataField = new DataSourceTextField(MODIFIER.propertyName(), MODIFIER.title());
+        modifiedByDataField.setDetail(true);
+        fields.add(modifiedByDataField);
 
         return fields;
     }
@@ -233,6 +248,7 @@ public class ResourceDatasource extends RPCDataSource<Resource, ResourceCriteria
         record.setAttribute("id", from.getId());
         record.setAttribute("uuid", from.getUuid());
         record.setAttribute(NAME.propertyName(), from.getName());
+        record.setAttribute(KEY.propertyName(), from.getResourceKey());
         record.setAttribute(DESCRIPTION.propertyName(), from.getDescription());
         record.setAttribute(LOCATION.propertyName(), from.getLocation());
         record.setAttribute(TYPE.propertyName(), from.getResourceType().getId());
@@ -243,6 +259,10 @@ public class ResourceDatasource extends RPCDataSource<Resource, ResourceCriteria
             .getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP));
         record.setAttribute(AVAILABILITY.propertyName(), ImageManager.getAvailabilityIconFromAvailType(from
             .getCurrentAvailability().getAvailabilityType()));
+        record.setAttribute(CTIME.propertyName(), from.getCtime());
+        record.setAttribute(ITIME.propertyName(), from.getItime());
+        record.setAttribute(MTIME.propertyName(), from.getMtime());
+        record.setAttribute(MODIFIER.propertyName(), from.getModifiedBy());
 
         record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY, from.getAncestry());
         record.setAttribute(AncestryUtil.RESOURCE_TYPE_ID, from.getResourceType().getId());

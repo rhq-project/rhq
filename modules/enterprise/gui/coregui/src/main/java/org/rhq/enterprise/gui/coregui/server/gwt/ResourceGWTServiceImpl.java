@@ -70,16 +70,16 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         //                    "ROOT_ID                         \n" +
         "id", //
         "uuid", // This is important, because it is what Resource's equals() and hashCode() impls use.
-        //                    "resourceKey                     \n" +
+        "resourceKey", //
         "name", //
         "ancestry", //
-        //                    "connected                       \n" +
+        //"connected", //
         "version", //
         "description", //
-        //                    "ctime                           \n" +
-        //                    "mtime                           \n" +
-        //                    "itime                           \n" +
-        //                    "modifiedBy                      \n" +
+        "ctime", //
+        "mtime", //
+        "itime", //
+        "modifiedBy", //
         "location", //
         "resourceType", //
         "childResources", //

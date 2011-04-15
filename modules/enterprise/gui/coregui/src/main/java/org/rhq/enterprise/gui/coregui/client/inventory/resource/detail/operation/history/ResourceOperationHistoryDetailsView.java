@@ -145,8 +145,7 @@ public class ResourceOperationHistoryDetailsView extends AbstractOperationHistor
                 editor.setReadOnly(true);
                 resultsSection.addMember(editor);
             } else {
-                // TODO: i18n
-                Label noResultsLabel = new Label("This operation does not return any results.");
+                Label noResultsLabel = new Label(MSG.view_operationHistoryDetails_noResults());
                 noResultsLabel.setHeight(17);
                 resultsSection.addMember(noResultsLabel);
             }

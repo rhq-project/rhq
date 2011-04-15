@@ -194,10 +194,10 @@ public class EventCompositeHistoryView extends TableSection<EventCompositeDataso
             }
         });
 
-        timestampField.setWidth("20%");
-        severityField.setWidth("25");
+        timestampField.setWidth(155);
+        severityField.setWidth(55);
         detailsField.setWidth("*");
-        sourceField.setWidth("20%");
+        sourceField.setWidth(220);
 
         setListGridFields(timestampField, severityField, detailsField, sourceField);
 
@@ -284,4 +284,5 @@ public class EventCompositeHistoryView extends TableSection<EventCompositeDataso
     public Canvas getDetailsView(int eventId) {
         return EventCompositeDetailsView.getInstance();
     }
+
 }

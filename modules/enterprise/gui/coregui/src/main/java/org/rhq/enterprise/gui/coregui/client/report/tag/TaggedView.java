@@ -23,16 +23,20 @@
 package org.rhq.enterprise.gui.coregui.client.report.tag;
 
 import java.util.ArrayList;
+import java.util.Set;
 
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.widgets.tab.Tab;
 import com.smartgwt.client.widgets.tab.events.TabSelectedEvent;
 import com.smartgwt.client.widgets.tab.events.TabSelectedHandler;
 
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.tagging.Tag;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
+import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.bundle.deployment.BundleDeploymentListView;
 import org.rhq.enterprise.gui.coregui.client.bundle.destination.BundleDestinationListView;
@@ -61,6 +65,7 @@ public class TaggedView extends LocatableVLayout implements BookmarkableView {
     private LocatableTabSet container;
     private ArrayList<Table> viewsWithTags = new ArrayList<Table>();
     private int selectedTabNum = 0;
+    private Set<Permission> globalPermissions;
 
     public TaggedView(String locatorId) {
         super(locatorId);
@@ -128,9 +133,9 @@ public class TaggedView extends LocatableVLayout implements BookmarkableView {
             tab.setPane(bundleVersionListView);
             container.addTab(tab);
 
-            // TODO: get manage_bundle perm, if user has it pass true
             BundleDeploymentListView bundleDeploymentListView = new BundleDeploymentListView(
-                extendLocatorId("bundleDeploymentListView"), criteria, false);
+                extendLocatorId("bundleDeploymentListView"), criteria,
+                    this.globalPermissions.contains(Permission.MANAGE_BUNDLE));
             viewsWithTags.add(bundleDeploymentListView);
             tab = new LocatableTab(extendLocatorId("bundleDeploymentsList"), MSG.view_bundle_bundleDeployments());
             tab.setIcon("subsystems/bundle/BundleDeployment_16.png");
@@ -174,7 +179,17 @@ public class TaggedView extends LocatableVLayout implements BookmarkableView {
         }
     }
 
-    public void renderView(ViewPath viewPath) {
+    public void renderView(final ViewPath viewPath) {
+        new PermissionsLoader().loadExplicitGlobalPermissions(new PermissionsLoadedListener() {
+            public void onPermissionsLoaded(Set<Permission> globalPermissions) {
+                TaggedView.this.globalPermissions = globalPermissions;
+                completeRenderView(viewPath);
+            }
+        });
+
+    }
+
+    private void completeRenderView(ViewPath viewPath) {
         if (!viewPath.isEnd()) {
             String tagString = viewPath.getCurrent().getPath();
             viewTag(tagString);
@@ -183,4 +198,5 @@ public class TaggedView extends LocatableVLayout implements BookmarkableView {
             tagCloudView.setSelectedTag(null);
         }
     }
+
 }

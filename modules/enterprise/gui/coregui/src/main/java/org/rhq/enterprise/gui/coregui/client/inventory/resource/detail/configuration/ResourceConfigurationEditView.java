@@ -168,7 +168,7 @@ public class ResourceConfigurationEditView extends LocatableVLayout implements P
                                 Message.Severity.Info);
                     } else {
                         // TODO: i18n
-                        message = new Message("Configuration was not updated, since the new configuration is equivalent to the current configuration.",
+                        message = new Message(MSG.view_configurationDetails_configNotUpdatedDueToNoChange(),
                                 Message.Severity.Warning);
                     }
                     String configHistoryUrl = LinkManager.getResourceTabLink(resource.getId(),

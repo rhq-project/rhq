@@ -91,7 +91,6 @@ public class RolesDataSource extends RPCDataSource<Role, RoleCriteria> {
         addFields(fields);
     }
 
-    // TODO: i18n field titles
     @Override
     protected List<DataSourceField> addDataSourceFields() {
         List<DataSourceField> fields = super.addDataSourceFields();
@@ -109,16 +108,19 @@ public class RolesDataSource extends RPCDataSource<Role, RoleCriteria> {
         fields.add(descriptionField);
 
         DataSourceField resourceGroupsField = new DataSourceField(Field.RESOURCE_GROUPS, FieldType.ANY,
-            "Resource Groups");
+           MSG.datasource_roles_field_resourceGroups());
         fields.add(resourceGroupsField);
 
-        DataSourceField permissionsField = new DataSourceField(Field.PERMISSIONS, FieldType.ANY, "Permissions");
+        DataSourceField permissionsField = new DataSourceField(Field.PERMISSIONS, FieldType.ANY,
+                MSG.datasource_roles_field_permissions());
         fields.add(permissionsField);
 
-        DataSourceField subjectsField = new DataSourceField(Field.SUBJECTS, FieldType.ANY, "Subjects");
+        DataSourceField subjectsField = new DataSourceField(Field.SUBJECTS, FieldType.ANY,
+                MSG.datasource_roles_field_subjects());
         fields.add(subjectsField);
 
-        DataSourceField ldapGroupsField = new DataSourceField(Field.LDAP_GROUPS, FieldType.ANY, "LDAP Groups");
+        DataSourceField ldapGroupsField = new DataSourceField(Field.LDAP_GROUPS, FieldType.ANY,
+                MSG.datasource_roles_field_ldapGroups());
         fields.add(ldapGroupsField);
 
         return fields;

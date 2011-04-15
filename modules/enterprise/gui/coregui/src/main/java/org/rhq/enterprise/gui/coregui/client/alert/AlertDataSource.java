@@ -45,6 +45,7 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionLog;
+import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.alert.notification.AlertNotificationLog;
 import org.rhq.core.domain.common.EntityContext;
@@ -71,6 +72,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * @author John Mazzitelli
  */
 public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
+
     public static final String PRIORITY_ICON_HIGH = ImageManager.getAlertIcon(AlertPriority.HIGH);
     public static final String PRIORITY_ICON_MEDIUM = ImageManager.getAlertIcon(AlertPriority.MEDIUM);
     public static final String PRIORITY_ICON_LOW = ImageManager.getAlertIcon(AlertPriority.LOW);
@@ -267,8 +269,8 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
 
         // disambiguate as the results could be cross-resource
         default:
-            HashSet<Integer> typesSet = new HashSet<Integer>();
-            HashSet<String> ancestries = new HashSet<String>();
+            Set<Integer> typesSet = new HashSet<Integer>();
+            Set<String> ancestries = new HashSet<String>();
             for (Alert alert : result) {
                 Resource resource = alert.getAlertDefinition().getResource();
                 typesSet.add(resource.getResourceType().getId());
@@ -340,10 +342,13 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
         }
         record.setAttribute("acknowledgingSubject", from.getAcknowledgingSubject());
 
-        record.setAttribute("definitionId", from.getAlertDefinition().getId());
-        Resource resource = from.getAlertDefinition().getResource();
-        record.setAttribute("name", from.getAlertDefinition().getName());
-        record.setAttribute("priority", ImageManager.getAlertIcon(from.getAlertDefinition().getPriority()));
+        AlertDefinition alertDefinition = from.getAlertDefinition();
+
+        record.setAttribute("definitionId", alertDefinition.getId());
+        Resource resource = alertDefinition.getResource();
+        record.setAttribute("name", alertDefinition.getName());
+        record.setAttribute("description", alertDefinition.getDescription());
+        record.setAttribute("priority", ImageManager.getAlertIcon(alertDefinition.getPriority()));
 
         // for ancestry handling       
         record.setAttribute(AncestryUtil.RESOURCE_ID, resource.getId());
@@ -389,7 +394,7 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
             conditions[i++] = dc;
         }
         record.setAttribute("conditionLogs", conditions);
-        record.setAttribute("conditionExpression", from.getAlertDefinition().getConditionExpression());
+        record.setAttribute("conditionExpression", alertDefinition.getConditionExpression());
 
         String recoveryInfo = AlertFormatUtility.getAlertRecoveryInfo(from);
         record.setAttribute("recoveryInfo", recoveryInfo);
@@ -425,4 +430,5 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
     protected void setEntityContext(EntityContext entityContext) {
         this.entityContext = entityContext;
     }
+
 }

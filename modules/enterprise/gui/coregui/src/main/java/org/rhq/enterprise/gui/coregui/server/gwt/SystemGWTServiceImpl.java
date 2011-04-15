@@ -80,6 +80,7 @@ public class SystemGWTServiceImpl extends AbstractGWTServiceImpl implements Syst
         try {
             Properties props = convertToProperties(map);
             systemManager.setSystemConfiguration(getSessionSubject(), props, skipValidation);
+            systemManager.reconfigureSystem(getSessionSubject());
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

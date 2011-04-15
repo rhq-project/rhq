@@ -71,6 +71,8 @@ import com.smartgwt.client.widgets.form.fields.events.ChangeEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangeHandler;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
+import com.smartgwt.client.widgets.form.fields.events.TitleHoverEvent;
+import com.smartgwt.client.widgets.form.fields.events.TitleHoverHandler;
 import com.smartgwt.client.widgets.form.validator.CustomValidator;
 import com.smartgwt.client.widgets.form.validator.FloatRangeValidator;
 import com.smartgwt.client.widgets.form.validator.IntegerRangeValidator;
@@ -662,7 +664,9 @@ public class ConfigurationEditor extends LocatableVLayout {
 
         if (memberDefinition instanceof PropertyDefinitionMap) {
             // List of Maps is a specially supported case with summary fields as columns in a table
-            // Note: This field spans 3 columns.
+            // Note: This field spans 3 columns. Since the description column is supplanted, show
+            // the description as a tooltip when the user hovers over the property name.
+            nameItem.setTooltip(propertyDefinition.getDescription());
             PropertyDefinitionMap memberDefinitionMap = (PropertyDefinitionMap) memberDefinition;
             CanvasItem listOfMapsItem = buildListOfMapsField(locatorId, memberDefinitionMap, propertyDefinitionList,
                 propertyList);

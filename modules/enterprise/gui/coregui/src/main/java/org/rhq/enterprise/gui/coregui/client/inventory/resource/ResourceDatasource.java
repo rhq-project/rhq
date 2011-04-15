@@ -18,7 +18,19 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource;
 
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.*;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.AVAILABILITY;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.CATEGORY;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.CTIME;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.DESCRIPTION;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.ITIME;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.KEY;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.LOCATION;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.MODIFIER;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.MTIME;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.NAME;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.PLUGIN;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.TYPE;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.VERSION;
 
 import java.util.HashSet;
 import java.util.List;
@@ -29,7 +41,6 @@ import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
-import com.smartgwt.client.data.fields.DataSourceDateTimeField;
 import com.smartgwt.client.data.fields.DataSourceImageField;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
@@ -217,7 +228,7 @@ public class ResourceDatasource extends RPCDataSource<Resource, ResourceCriteria
         criteria.addFilterCurrentAvailability(getFilter(request, AVAILABILITY.propertyName(), AvailabilityType.class));
         criteria.addFilterResourceCategories(getArrayFilter(request, CATEGORY.propertyName(), ResourceCategory.class));
         criteria.addFilterIds(getArrayFilter(request, "resourceIds", Integer.class));
-        criteria.addFilterImplicitGroupIds(getFilter(request, "groupId", Integer.class));
+        criteria.addFilterExplicitGroupIds(getFilter(request, "groupId", Integer.class));
         criteria.addFilterName(getFilter(request, NAME.propertyName(), String.class));
         criteria.addFilterResourceTypeId(getFilter(request, TYPE.propertyName(), Integer.class));
         criteria.addFilterPluginName(getFilter(request, PLUGIN.propertyName(), String.class));

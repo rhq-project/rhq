@@ -157,64 +157,6 @@ public class ServerGroupComponent extends DomainComponent implements ContentFace
         return null;  // TODO: Customise this generated block
     }
 
-    @Override
-    public CreateResourceReport createResource(CreateResourceReport report) {
-
-
-        ResourcePackageDetails details = report.getPackageDetails();
-
-        ContentContext cctx = context.getContentContext();
-        ContentServices contentServices = cctx.getContentServices();
-        String resourceTypeName = report.getResourceType().getName();
-
-        ASUploadConnection uploadConnection = new ASUploadConnection(host,port);
-        OutputStream out = uploadConnection.getOutputStream(details.getFileName());
-        contentServices.downloadPackageBitsForChildResource(cctx, resourceTypeName, details.getKey(), out);
-
-        JsonNode uploadResult = uploadConnection.finishUpload();
-        System.out.println(uploadResult);
-        if (ASConnection.isErrorReply(uploadResult)) {
-            report.setStatus(CreateResourceStatus.FAILURE);
-            report.setErrorMessage(ASConnection.getFailureDescription(uploadResult));
-
-            return report;
-        }
-
-        String fileName = details.getFileName();
-        String tmpName = fileName; // TODO figure out the tmp-name biz with the AS guys
-
-        JsonNode resultNode = uploadResult.get("result");
-        String hash = resultNode.get("BYTES_VALUE").getTextValue();
-        ASConnection connection = getASConnection();
-
-        Operation step1 = new Operation("add","deployment",tmpName);
-        step1.addAdditionalProperty("hash", new PROPERTY_VALUE("BYTES_VALUE", hash));
-        step1.addAdditionalProperty("name", tmpName);
-        step1.addAdditionalProperty("runtime-name", fileName);
-
-        List<PROPERTY_VALUE> serverGroupAddress = new ArrayList<PROPERTY_VALUE>(1);
-        serverGroupAddress.addAll(pathToAddress(context.getResourceKey()));
-        serverGroupAddress.add(new PROPERTY_VALUE("deployment", tmpName));
-        Operation step2 = new Operation("add",serverGroupAddress,"enabled","true");
-
-        CompositeOperation cop = new CompositeOperation();
-        cop.addStep(step1);
-        cop.addStep(step2);
-
-        JsonNode result = connection.executeRaw(cop);
-        if (ASConnection.isErrorReply(result)) {
-            report.setErrorMessage(ASConnection.getFailureDescription(resultNode));
-            report.setStatus(CreateResourceStatus.FAILURE);
-        }
-        else {
-            report.setStatus(CreateResourceStatus.SUCCESS);
-        }
-
-        return report;
-
-    }
-
-
     private String serverGroupFromKey() {
         String key1 = context.getResourceKey();
         return key1.substring(key1.lastIndexOf("/")+1);

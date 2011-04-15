@@ -34,20 +34,27 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
+import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
+import org.rhq.core.domain.resource.CreateResourceStatus;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
+import org.rhq.core.pluginapi.content.ContentContext;
+import org.rhq.core.pluginapi.content.ContentServices;
+import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
+import org.rhq.core.pluginapi.inventory.CreateResourceReport;
 import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
+import org.rhq.modules.plugins.jbossas7.json.CompositeOperation;
 import org.rhq.modules.plugins.jbossas7.json.NameValuePair;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
@@ -55,6 +62,7 @@ import org.rhq.modules.plugins.jbossas7.json.ReadAttribute;
 import org.rhq.modules.plugins.jbossas7.json.ReadResource;
 import org.rhq.modules.plugins.jbossas7.json.Result;
 
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -62,7 +70,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class BaseComponent implements ResourceComponent, MeasurementFacet, ConfigurationFacet, DeleteResourceFacet
+public class BaseComponent implements ResourceComponent, MeasurementFacet, ConfigurationFacet, DeleteResourceFacet,
+        CreateChildResourceFacet
 {
     final Log log = LogFactory.getLog(this.getClass());
 
@@ -178,7 +187,7 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
         ObjectMapper mapper = new ObjectMapper();
 
         Set<Map.Entry<String, PropertyDefinition>> entrySet = configDef.getPropertyDefinitions().entrySet();
-        for (Map.Entry<String,PropertyDefinition> propDefEntry: entrySet) { // TODO all properties
+        for (Map.Entry<String,PropertyDefinition> propDefEntry: entrySet) {
             PropertyDefinition propDef = propDefEntry.getValue();
             JsonNode sub = json.findValue(propDef.getName());
             if (propDef instanceof PropertyDefinitionSimple) {
@@ -187,7 +196,7 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
                 if (sub!=null)
                     propertySimple = new PropertySimple(propDef.getName(),sub.getValueAsText());
                 else {
-                    propertySimple = new PropertySimple(propDef.getName(),null); // TODO store it at all when it is null?
+                    propertySimple = new PropertySimple(propDef.getName(),"- null -"); // TODO store it at all when it is null?
                 }
                     ret.put(propertySimple);
             } else if (propDef instanceof PropertyDefinitionList) {
@@ -414,5 +423,71 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
         ComplexResult res = (ComplexResult) connection.execute(op, true);
         if (!res.isSuccess())
             throw new IllegalArgumentException("Delete for [" + path + "] failed: " + res.getFailureDescription());
+    }
+
+
+    @Override
+    public CreateResourceReport createResource(CreateResourceReport report) {
+
+
+        ResourcePackageDetails details = report.getPackageDetails();
+
+        ContentContext cctx = context.getContentContext();
+        ContentServices contentServices = cctx.getContentServices();
+        String resourceTypeName = report.getResourceType().getName();
+
+        ASUploadConnection uploadConnection = new ASUploadConnection(host,port);
+        OutputStream out = uploadConnection.getOutputStream(details.getFileName());
+        contentServices.downloadPackageBitsForChildResource(cctx, resourceTypeName, details.getKey(), out);
+
+        JsonNode uploadResult = uploadConnection.finishUpload();
+        System.out.println(uploadResult);
+        if (ASConnection.isErrorReply(uploadResult)) {
+            report.setStatus(CreateResourceStatus.FAILURE);
+            report.setErrorMessage(ASConnection.getFailureDescription(uploadResult));
+
+            return report;
+        }
+
+        String fileName = details.getFileName();
+        String tmpName = fileName; // TODO figure out the tmp-name biz with the AS guys
+
+        JsonNode resultNode = uploadResult.get("result");
+        String hash = resultNode.get("BYTES_VALUE").getTextValue();
+        ASConnection connection = getASConnection();
+
+        Operation step1 = new Operation("add","deployment",tmpName);
+        step1.addAdditionalProperty("hash", new PROPERTY_VALUE("BYTES_VALUE", hash));
+        step1.addAdditionalProperty("name", tmpName);
+        step1.addAdditionalProperty("runtime-name", fileName);
+
+        CompositeOperation cop = new CompositeOperation();
+        cop.addStep(step1);
+
+        /*
+         * We need to check here if this is an upload to /deployment only
+         * or if this should be deployed to a server group too
+         */
+        if (context.getResourceKey().contains("server-group=")) {
+
+            List<PROPERTY_VALUE> serverGroupAddress = new ArrayList<PROPERTY_VALUE>(1);
+            serverGroupAddress.addAll(pathToAddress(context.getResourceKey()));
+            serverGroupAddress.add(new PROPERTY_VALUE("deployment", tmpName));
+            Operation step2 = new Operation("add",serverGroupAddress,"enabled","true");
+
+            cop.addStep(step2);
+        }
+
+        JsonNode result = connection.executeRaw(cop);
+        if (ASConnection.isErrorReply(result)) {
+            report.setErrorMessage(ASConnection.getFailureDescription(resultNode));
+            report.setStatus(CreateResourceStatus.FAILURE);
+        }
+        else {
+            report.setStatus(CreateResourceStatus.SUCCESS);
+        }
+
+        return report;
+
     }
 }

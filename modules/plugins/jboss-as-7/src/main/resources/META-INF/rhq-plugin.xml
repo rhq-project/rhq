@@ -202,6 +202,7 @@
                     <configuration>
                        <c:group name="deployment" displayName="Deployment Options">
                            <c:simple-property name="runtimeName" required="true"/>
+                           <c:simple-property name="alreadyUploaded" type="boolean" description="Was this already uploaded to the Domain? TODO"/>
                        </c:group>
                     </configuration>
                 </content>
@@ -237,6 +238,24 @@
             </operation>
         </server>
 
+        <service name="DomainDeployment"
+                 class="BaseComponent"
+                 discovery="SubsystemDiscovery"
+                 createDeletePolicy="both"
+                 creationDataType="content">
+            <plugin-configuration>
+                <c:simple-property name="path" default="deployment" readOnly="true"/>
+            </plugin-configuration>
+
+            <content name="file" category="deployable" isCreationType="true" description="Deployments on this domain">
+            </content>
+
+            <resource-configuration>
+                <c:simple-property name="name" readOnly="true"/>
+                <c:simple-property name="runtime-name" readOnly="true"/>
+                <c:simple-property name="hash" readOnly="true"/>
+            </resource-configuration>
+        </service>
     </server>
 
     <server name="JBossAS7-Standalone"

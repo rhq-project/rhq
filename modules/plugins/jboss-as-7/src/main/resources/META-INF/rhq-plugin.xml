@@ -186,14 +186,13 @@
             <resource-configuration>
                 <c:simple-property name="profile" />
                 <c:simple-property name="socket-binding-group"/>
-                <c:simple-property name="jvm"/>
-                <c:simple-property name="deployment" required="false"/> <!-- TODO change structure. Or put below as resource? -->
+                <c:simple-property name="jvm" required="false"/>
             </resource-configuration>
 
             <service name="Deployment"
                      class="BaseComponent"
                      discovery="SubsystemDiscovery"
-                     createDeletePolicy="create-only"
+                     createDeletePolicy="both"
                      creationDataType="content">
                 <plugin-configuration>
                     <c:simple-property name="path" default="deployment" readOnly="true"/>

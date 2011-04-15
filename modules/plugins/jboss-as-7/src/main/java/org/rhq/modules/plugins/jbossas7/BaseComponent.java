@@ -47,6 +47,7 @@ import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
+import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
 import org.rhq.modules.plugins.jbossas7.json.NameValuePair;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
@@ -407,8 +408,11 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
 
     @Override
     public void deleteResource() throws Exception {
-        // TODO: Customise this generated block
 
         System.out.println("delete resource: " + path);
+        Operation op = new Operation("remove",pathToAddress(path));
+        ComplexResult res = (ComplexResult) connection.execute(op, true);
+        if (!res.isSuccess())
+            throw new IllegalArgumentException("Delete for [" + path + "] failed: " + res.getFailureDescription());
     }
 }

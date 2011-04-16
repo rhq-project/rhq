@@ -67,6 +67,7 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 public class ResourceDatasource extends RPCDataSource<Resource, ResourceCriteria> {
 
     public static final String FILTER_GROUP_ID = "groupId";
+    public static final String FILTER_RESOURCE_IDS = "resourceIds";
 
     private static ResourceDatasource INSTANCE;
 
@@ -227,8 +228,8 @@ public class ResourceDatasource extends RPCDataSource<Resource, ResourceCriteria
         criteria.addFilterParentResourceId(getFilter(request, "parentId", Integer.class));
         criteria.addFilterCurrentAvailability(getFilter(request, AVAILABILITY.propertyName(), AvailabilityType.class));
         criteria.addFilterResourceCategories(getArrayFilter(request, CATEGORY.propertyName(), ResourceCategory.class));
-        criteria.addFilterIds(getArrayFilter(request, "resourceIds", Integer.class));
-        criteria.addFilterExplicitGroupIds(getFilter(request, "groupId", Integer.class));
+        criteria.addFilterIds(getArrayFilter(request, FILTER_RESOURCE_IDS, Integer.class));
+        criteria.addFilterExplicitGroupIds(getFilter(request, FILTER_GROUP_ID, Integer.class));
         criteria.addFilterName(getFilter(request, NAME.propertyName(), String.class));
         criteria.addFilterResourceTypeId(getFilter(request, TYPE.propertyName(), Integer.class));
         criteria.addFilterPluginName(getFilter(request, PLUGIN.propertyName(), String.class));

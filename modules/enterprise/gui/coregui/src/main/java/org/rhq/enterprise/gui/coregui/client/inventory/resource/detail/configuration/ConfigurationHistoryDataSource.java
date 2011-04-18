@@ -163,9 +163,9 @@ public class ConfigurationHistoryDataSource extends
         criteria.fetchResource(true);
         criteria.fetchGroupConfigurationUpdate(true);
 
-        PageControl pc = getPageControl(request);
-        pc.addDefaultOrderingField(Field.ID, PageOrdering.DESC);
-        criteria.setPageControl(pc);
+        PageControl pageControl = getPageControl(request);
+        pageControl.addDefaultOrderingField(Field.ID, PageOrdering.DESC);
+        criteria.setPageControl(pageControl);
 
         final Integer resourceId = (Integer) request.getCriteria().getValues().get(CriteriaField.RESOURCE_ID);
         if (resourceId != null) {

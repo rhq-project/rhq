@@ -26,6 +26,8 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
 import org.rhq.modules.plugins.jbossas7.json.ReadChildrenNames;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -62,119 +64,129 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
 
 
         Configuration config = context.getDefaultPluginConfiguration();
-        String cpath = config.getSimpleValue("path", null);
-        if (cpath==null) {
+        String confPath = config.getSimpleValue("path", null);
+        if (confPath==null) {
             log.error("Path plugin config is null for ResourceType [" + context.getResourceType().getName() +"].");
             return details;
         }
 
-
-        boolean recursive = false;
-
-        String parentPath = parentComponent.getPath();
-
-        String path;
-        String childType = null;
-        if (!cpath.contains("=")) { // NO = -> no sub path, but a type
-            recursive = true;
-            childType = cpath;
-
+        List<String> subTypes = new ArrayList<String>();
+        if (confPath.contains("|")) {
+            subTypes.addAll(Arrays.asList(confPath.split("\\|")));
         }
-
-        if (parentPath==null || parentPath.isEmpty())
-            path = "";
         else
-            path = parentPath;
-
-        if (cpath.contains("="))
-            path += "," + cpath;
-
-        System.out.println("total path: [" + path + "]");
+            subTypes.add(confPath);
 
 
-        JsonNode json ;
-        if (!recursive)
-            json = connection.getLevelData(path,recursive, false);
-        else {
-            List<PROPERTY_VALUE> addr ;
-            addr = parentComponent.pathToAddress(parentPath);
-            json = connection.executeRaw(new ReadChildrenNames(addr, childType));
-        }
-        if (!ASConnection.isErrorReply(json)) {
-            if (recursive) {
-
-                JsonNode subNode = json.findPath("result");
-
-                if (subNode!=null && subNode.isContainerNode()){
-
-                    Iterator<JsonNode> iter = subNode.getElements();
-                    while (iter.hasNext()) {
-
-                        JsonNode node = iter.next();
-                        String val = node.getTextValue();
+        for (String cpath : subTypes) {
 
 
-                        String newPath = cpath + "=" + val;
-                        Configuration config2 = context.getDefaultPluginConfiguration();
+            boolean recursive = false;
+
+            String parentPath = parentComponent.getPath();
+
+            String path;
+            String childType = null;
+            if (!cpath.contains("=")) { // NO = -> no sub path, but a type
+                recursive = true;
+                childType = cpath;
+
+            }
+
+            if (parentPath==null || parentPath.isEmpty())
+                path = "";
+            else
+                path = parentPath;
+
+            if (cpath.contains("="))
+                path += "," + cpath;
+
+            System.out.println("total path: [" + path + "]");
 
 
-                        String resKey;
+            JsonNode json ;
+            if (!recursive)
+                json = connection.getLevelData(path,recursive, false);
+            else {
+                List<PROPERTY_VALUE> addr ;
+                addr = parentComponent.pathToAddress(parentPath);
+                json = connection.executeRaw(new ReadChildrenNames(addr, childType));
+            }
+            if (!ASConnection.isErrorReply(json)) {
+                if (recursive) {
 
-                        if (path==null||path.isEmpty())
-                            resKey = newPath;
-                        else
-                            resKey = path + "," +childType + "=" + val;
+                    JsonNode subNode = json.findPath("result");
 
-                        PropertySimple pathProp = new PropertySimple("path",resKey);
-                        config2.put(pathProp);
+                    if (subNode!=null && subNode.isContainerNode()){
 
-                        DiscoveredResourceDetails detail = new DiscoveredResourceDetails(
-                                context.getResourceType(), // DataType
-                                resKey, // Key
-                                val, // Name
-                                null, // Version
-                                "TODO", // subsystem.description, // TODO Description
-                                config2,
-                                null);
-                        details.add(detail);
+                        Iterator<JsonNode> iter = subNode.getElements();
+                        while (iter.hasNext()) {
+
+                            JsonNode node = iter.next();
+                            String val = node.getTextValue();
+
+
+                            String newPath = cpath + "=" + val;
+                            Configuration config2 = context.getDefaultPluginConfiguration();
+
+
+                            String resKey;
+
+                            if (path==null||path.isEmpty())
+                                resKey = newPath;
+                            else
+                                resKey = path + "," +childType + "=" + val;
+
+                            PropertySimple pathProp = new PropertySimple("path",resKey);
+                            config2.put(pathProp);
+
+                            DiscoveredResourceDetails detail = new DiscoveredResourceDetails(
+                                    context.getResourceType(), // DataType
+                                    resKey, // Key
+                                    val, // Name
+                                    null, // Version
+                                    "TODO", // subsystem.description, // TODO Description
+                                    config2,
+                                    null);
+                            details.add(detail);
+                        }
                     }
+                    else {
+
+                        if (subNode==null) {
+                            log.error("subNode was null for " + path + " and type " + context.getResourceType().getName());
+                        }
+                        else if (!subNode.isNull())
+                            log.info("subnode was no container");
+                    }
+
                 }
                 else {
 
-                    if (subNode==null) {
-                        log.error("subNode was null for " + path + " and type " + context.getResourceType().getName());
-                    }
-                    else if (!subNode.isNull())
-                        log.info("subnode was no container");
+
+                    String resKey = path;
+                    String name = resKey.substring(resKey.lastIndexOf("=") + 1);
+                    Configuration config2 = context.getDefaultPluginConfiguration();
+                    PropertySimple pathProp = new PropertySimple("path",path);
+                    config2.put(pathProp);
+
+
+
+                    DiscoveredResourceDetails detail = new DiscoveredResourceDetails(
+                            context.getResourceType(), // DataType
+                            path, // Key
+                            name, // Name
+                            null, // Version
+                            path, // Description
+                            config2,
+                            null);
+                    details.add(detail);
                 }
 
             }
-            else {
 
-
-                String resKey = path;
-                String name = resKey.substring(resKey.lastIndexOf("=") + 1);
-                Configuration config2 = context.getDefaultPluginConfiguration();
-                PropertySimple pathProp = new PropertySimple("path",path);
-                config2.put(pathProp);
-
-
-
-                DiscoveredResourceDetails detail = new DiscoveredResourceDetails(
-                        context.getResourceType(), // DataType
-                        path, // Key
-                        name, // Name
-                        null, // Version
-                        path, // Description
-                        config2,
-                        null);
-                details.add(detail);
-            }
-
-            return details;
         }
-
-        return Collections.emptySet();
+        return details;
     }
 
 }

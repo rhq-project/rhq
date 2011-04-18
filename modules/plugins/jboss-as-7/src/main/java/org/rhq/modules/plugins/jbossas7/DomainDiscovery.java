@@ -61,7 +61,7 @@ public class DomainDiscovery extends AbstractBaseDiscovery<BaseComponent>  {
             // Now we have the host controller, lets get the host.xml file
             // and obtain the domain controller info from there
             ProcessInfo processInfo = psr.getProcessInfo();
-            readHostXml(processInfo);
+            readHostXml(processInfo,true);
             HostPort dcHp = getDomainControllerFromHostXml();
 
             if (!dcHp.isLocal) {

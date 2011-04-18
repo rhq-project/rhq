@@ -49,7 +49,7 @@ import org.rhq.plugins.jmx.JMXDiscoveryComponent;
 /**
  * Discovery class
  */
-public class BaseProcessDiscovery implements ResourceDiscoveryComponent
+public class BaseProcessDiscovery extends AbstractBaseDiscovery implements ResourceDiscoveryComponent
 
 {
 
@@ -80,8 +80,19 @@ public class BaseProcessDiscovery implements ResourceDiscoveryComponent
                 serverNameFull = "ProcessController";
                 serverName = "ProcessController";
             } else if (psName.equals("HostController")) {
-                serverName = "HostController";
-                serverNameFull = "HostController";
+                readHostXml(psr.getProcessInfo(),true);
+                HostPort hp = getDomainControllerFromHostXml();
+                if (hp.isLocal) {
+                    serverName = "DomainController";
+                    serverNameFull = "DomainController";
+                }
+                else {
+                    serverName = "HostController";
+                    serverNameFull = "HostController";
+                }
+                config.put(new PropertySimple("homedir",getHomeDirFromCommandLine(psr.getProcessInfo().getCommandLine())));
+                // TODO add the start script
+
             } else {
                 serverNameFull = getBaseDirFromCommandLine(commandLine);
                 if (serverNameFull==null || serverNameFull.isEmpty()) {
@@ -127,7 +138,7 @@ public class BaseProcessDiscovery implements ResourceDiscoveryComponent
                 serverNameFull, // key TODO distinguish per domain?
                 serverName,  // Name
                 null,  // TODO real version ?
-                "TODO", // Description
+                discoveryContext.getResourceType().getDescription(), // Description
                 config,
                 psr.getProcessInfo()
             );
@@ -158,30 +169,6 @@ public class BaseProcessDiscovery implements ResourceDiscoveryComponent
         if (hostName==null)
             hostName="local"; // Fallback to the installation default
         return hostName;
-    }
-
-    /**
-     * Get the location of the host definition file (host.xml in domain mode, standalone.xml
-     * in standalone mode.
-     * @param processInfo ProcessInfo structure containing the ENV variables
-     * @param isDomain Are we looking for host.xml (=isDomain) or not
-     * @return The path to the definition file.
-     */
-    private String getHostXmlFileLocation(ProcessInfo processInfo, boolean isDomain) {
-
-        String home = processInfo.getEnvironmentVariable("jboss.home.dir");
-        StringBuilder builder = new StringBuilder(home);
-        if (isDomain)
-            builder.append("/domain");
-        else
-            builder.append("/standalone");
-        builder.append("/configuration");
-        if (isDomain)
-            builder.append("/host.xml");
-        else
-            builder.append("/standalone.xml");
-        return builder.toString();
-
     }
 
     String getBaseDirFromCommandLine(String[] commandLine) {

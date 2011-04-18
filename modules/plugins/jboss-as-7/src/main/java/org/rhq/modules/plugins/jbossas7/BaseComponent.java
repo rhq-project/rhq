@@ -53,6 +53,8 @@ import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
+import org.rhq.core.pluginapi.operation.OperationFacet;
+import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
 import org.rhq.modules.plugins.jbossas7.json.CompositeOperation;
 import org.rhq.modules.plugins.jbossas7.json.NameValuePair;
@@ -71,7 +73,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class BaseComponent implements ResourceComponent, MeasurementFacet, ConfigurationFacet, DeleteResourceFacet,
-        CreateChildResourceFacet
+        CreateChildResourceFacet, OperationFacet
 {
     final Log log = LogFactory.getLog(this.getClass());
 
@@ -489,5 +491,11 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
 
         return report;
 
+    }
+
+    @Override
+    public OperationResult invokeOperation(String name,
+                                           Configuration parameters) throws InterruptedException, Exception {
+        return null;  // TODO: Customise this generated block
     }
 }

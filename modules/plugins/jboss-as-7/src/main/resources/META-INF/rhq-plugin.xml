@@ -83,7 +83,7 @@
     <server name="HostController"
             discovery="BaseProcessDiscovery"
             class="BaseComponent"
-            description="Domain controller delegate for this host"
+            description="Domain controller (delegate) for this host"
             >
 
         <plugin-configuration>
@@ -96,8 +96,7 @@
         <process-scan name="HostController" query="process|basename|match=^java.*,arg|org.jboss.as.host-controller|match=.*"/>
 
 
-        <operation name="dummyOperation">
-            <!-- TODO supply parameters and return values -->
+        <operation name="shutdown" description="Shut this Host-/Domaincontroller down with all managed servers.">
         </operation>
 
 

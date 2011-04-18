@@ -70,7 +70,7 @@ public class ManagedASDiscovery extends AbstractBaseDiscovery
             // Now we have the host controller, lets get the host.xml file
             // and obtain the servers from there.
             ProcessInfo processInfo = psr.getProcessInfo();
-            readHostXml(processInfo);
+            readHostXml(processInfo,true);
             String hostName = findHostName();
             HostPort managementHostPort = getManagementPortFromHostXml();
 

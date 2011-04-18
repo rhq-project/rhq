@@ -48,8 +48,8 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent> impleme
 
 //    private final Log log = LogFactory.getLog(AbstractBaseDiscovery.class);
 
-    protected void readHostXml(ProcessInfo processInfo) {
-        String hostXmlFile = getHostXmlFileLocation(processInfo);
+    protected void readHostXml(ProcessInfo processInfo,boolean isDomainMode) {
+        String hostXmlFile = getHostXmlFileLocation(processInfo,isDomainMode);
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         try {
             DocumentBuilder builder = factory.newDocumentBuilder();
@@ -61,23 +61,6 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent> impleme
         }
     }
 
-    /**
-     * Get the location of the host definition file (host.xml in domain mode, standalone.xml
-     * in standalone mode.
-     *
-     * @param processInfo ProcessInfo structure containing the ENV variables
-     * @return The path to the definition file.
-     */
-    private String getHostXmlFileLocation(ProcessInfo processInfo) {
-
-        String home = getHomeDirFromCommandLine(processInfo.getCommandLine());
-        StringBuilder builder = new StringBuilder(home);
-        builder.append("/domain");
-        builder.append("/configuration");
-        builder.append("/host.xml");
-        return builder.toString();
-
-    }
 
     String getHomeDirFromCommandLine(String[] commandLine) {
             for (String line: commandLine) {
@@ -200,6 +183,32 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent> impleme
         }
 
         return new HostPort(false);
+    }
+
+    /**
+     * Get the location of the host definition file (host.xml in domain mode, standalone.xml
+     * in standalone mode.
+     * @param processInfo ProcessInfo structure containing the ENV variables
+     * @param isDomain Are we looking for host.xml (=isDomain) or not
+     * @return The path to the definition file.
+     */
+    protected String getHostXmlFileLocation(ProcessInfo processInfo, boolean isDomain) {
+
+        String home = processInfo.getEnvironmentVariable("jboss.home.dir");
+        if (home==null)
+            home = getHomeDirFromCommandLine(processInfo.getCommandLine());
+        StringBuilder builder = new StringBuilder(home);
+        if (isDomain)
+            builder.append("/domain");
+        else
+            builder.append("/standalone");
+        builder.append("/configuration");
+        if (isDomain)
+            builder.append("/host.xml");
+        else
+            builder.append("/standalone.xml");
+        return builder.toString();
+
     }
 
     protected static class HostPort {

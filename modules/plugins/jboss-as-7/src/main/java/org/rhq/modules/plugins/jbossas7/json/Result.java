@@ -37,10 +37,6 @@ public class Result {
     private Operation compensatingOperation;
     @JsonProperty("failure-description")
     private List<Map<String, String>> failureDescription;
-    @JsonProperty("host-failure-description") // TODO JBAS-9182
-    private List<Map<String, String>> hostFailureDescription;
-    @JsonProperty("domain-failure-description") // TODO JBAS-9182
-    private List<Map<String, String>> domainFailureDescription;
     @JsonIgnore
     private boolean success = false;
 
@@ -86,19 +82,4 @@ public class Result {
         this.failureDescription = failureDescription;
     }
 
-    public List<Map<String, String>> getHostFailureDescription() {
-        return hostFailureDescription;
-    }
-
-    public void setHostFailureDescription(List<Map<String, String>> hostFailureDescription) {
-        this.hostFailureDescription = hostFailureDescription;
-    }
-
-    public List<Map<String, String>> getDomainFailureDescription() {
-        return domainFailureDescription;
-    }
-
-    public void setDomainFailureDescription(List<Map<String, String>> domainFailureDescription) {
-        this.domainFailureDescription = domainFailureDescription;
-    }
 }

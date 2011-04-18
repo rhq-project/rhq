@@ -78,9 +78,6 @@ public class ResourceOperationHistoryDataSource extends
                 }
 
                 public void onSuccess(PageList<ResourceOperationHistory> result) {
-                    //ListGridRecord[] resourceOperationHistoryRecords = buildRecordsFromDisambiguationReports(result);
-                    //response.setData(resourceOperationHistoryRecords);
-                    //processResponse(request.getRequestId(), response);
                     dataRetrieved(result, response, request);
                 }
             });

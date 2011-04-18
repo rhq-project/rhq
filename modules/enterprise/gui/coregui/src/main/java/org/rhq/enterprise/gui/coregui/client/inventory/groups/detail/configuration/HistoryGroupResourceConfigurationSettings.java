@@ -27,10 +27,9 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
 
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.composite.ResourceConfigurationComposite;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.resource.ResourceAncestryFormat;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
@@ -41,7 +40,6 @@ import org.rhq.enterprise.gui.coregui.client.components.configuration.GroupConfi
 import org.rhq.enterprise.gui.coregui.client.components.configuration.GroupMemberConfiguration;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
-import org.rhq.enterprise.gui.coregui.client.resource.disambiguation.ReportDecorator;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
@@ -117,34 +115,48 @@ public class HistoryGroupResourceConfigurationSettings extends LocatableVLayout 
     private void loadConfigurations() {
         this.memberConfigurations = null;
         GWTServiceLookup.getConfigurationService().findResourceConfigurationsForGroupUpdate(groupUpdateId,
-            new AsyncCallback<List<DisambiguationReport<ResourceConfigurationComposite>>>() {
+            new AsyncCallback<Map<Integer, Configuration>>() {
+
                 public void onFailure(Throwable caught) {
-                    if (caught.getMessage().contains("ConfigurationUpdateStillInProgressException")) {
-                        CoreGUI.getMessageCenter().notify(
-                            new Message(MSG.view_group_resConfig_members_fetchFailureConfigInProgress(), caught,
-                                Severity.Info));
-                    } else {
-                        CoreGUI.getErrorHandler().handleError(
-                            MSG.view_group_resConfig_members_fetchFailureConfig(group.toString()), caught);
-                    }
+                    handleLoadFailure(caught);
                 }
 
-                public void onSuccess(List<DisambiguationReport<ResourceConfigurationComposite>> results) {
-                    memberConfigurations = new ArrayList<GroupMemberConfiguration>(results.size());
-                    for (DisambiguationReport<ResourceConfigurationComposite> result : results) {
-                        int resourceId = result.getOriginal().getResourceId();
-                        String label = ReportDecorator.decorateDisambiguationReport(result, resourceId, false);
-                        Configuration configuration = result.getOriginal().getConfiguration();
-                        GroupMemberConfiguration memberConfiguration = new GroupMemberConfiguration(resourceId, label,
-                            configuration);
-                        if (configuration == null || configuration.getProperties().isEmpty()) {
-                            throw new RuntimeException(
-                                "One or more null or empty member resource configurations was returned by the Server.");
-                        }
-                        memberConfigurations.add(memberConfiguration);
-                    }
-                    initEditor();
+                public void onSuccess(final Map<Integer, Configuration> configMap) {
+                    final Integer[] resourceIds = configMap.keySet().toArray(new Integer[configMap.size()]);
+                    GWTServiceLookup.getResourceService().getResourcesAncestry(resourceIds,
+                        ResourceAncestryFormat.EXTENDED, new AsyncCallback<Map<Integer, String>>() {
+
+                            public void onFailure(Throwable caught) {
+                                handleLoadFailure(caught);
+                            }
+
+                            public void onSuccess(Map<Integer, String> labelMap) {
+                                memberConfigurations = new ArrayList<GroupMemberConfiguration>(configMap.size());
+                                for (Integer resourceId : resourceIds) {
+                                    String label = labelMap.get(resourceId);
+                                    Configuration configuration = configMap.get(resourceId);
+                                    GroupMemberConfiguration memberConfiguration = new GroupMemberConfiguration(
+                                        resourceId, label, configuration);
+                                    if (configuration == null || configuration.getProperties().isEmpty()) {
+                                        throw new RuntimeException(
+                                            "One or more null or empty member connection settings was returned by the Server.");
+                                    }
+                                    memberConfigurations.add(memberConfiguration);
+                                }
+                                initEditor();
+                            }
+                        });
                 }
             });
+    }
+
+    private void handleLoadFailure(Throwable caught) {
+        if (caught.getMessage().contains("ConfigurationUpdateStillInProgressException")) {
+            CoreGUI.getMessageCenter().notify(
+                new Message(MSG.view_group_resConfig_members_fetchFailureConfigInProgress(), caught, Severity.Info));
+        } else {
+            CoreGUI.getErrorHandler().handleError(
+                MSG.view_group_resConfig_members_fetchFailureConfig(group.toString()), caught);
+        }
     }
 }

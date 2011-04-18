@@ -1,6 +1,7 @@
 package org.rhq.enterprise.gui.coregui.client.gwt;
 
 import java.util.List;
+import java.util.Map;
 
 import com.google.gwt.user.client.rpc.RemoteService;
 import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
@@ -16,7 +17,6 @@ import org.rhq.core.domain.criteria.GroupPluginConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.GroupResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.PluginConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
-import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 
@@ -67,17 +67,13 @@ public interface ConfigurationGWTService extends RemoteService {
     PageList<GroupPluginConfigurationUpdate> findGroupPluginConfigurationUpdatesByCriteria(
         GroupPluginConfigurationUpdateCriteria criteria) throws RuntimeException;
 
-    List<DisambiguationReport<ResourceConfigurationComposite>> findResourceConfigurationsForGroup(int groupId)
-        throws RuntimeException;
+    Map<Integer, Configuration> findResourceConfigurationsForGroup(int groupId) throws RuntimeException;
 
-    List<DisambiguationReport<ResourceConfigurationComposite>> findPluginConfigurationsForGroup(int groupId)
-        throws RuntimeException;
+    Map<Integer, Configuration> findPluginConfigurationsForGroup(int groupId) throws RuntimeException;
 
-    List<DisambiguationReport<ResourceConfigurationComposite>> findResourceConfigurationsForGroupUpdate(
-        int groupUpdateId) throws RuntimeException;
+    Map<Integer, Configuration> findResourceConfigurationsForGroupUpdate(int groupUpdateId) throws RuntimeException;
 
-    List<DisambiguationReport<ResourceConfigurationComposite>> findPluginConfigurationsForGroupUpdate(int groupUpdateId)
-        throws RuntimeException;
+    Map<Integer, Configuration> findPluginConfigurationsForGroupUpdate(int groupUpdateId) throws RuntimeException;
 
     void updateResourceConfigurationsForGroup(int groupId, List<ResourceConfigurationComposite> resourceConfigurations)
         throws RuntimeException;

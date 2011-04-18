@@ -37,6 +37,7 @@ import org.rhq.core.domain.resource.CreateResourceHistory;
 import org.rhq.core.domain.resource.DeleteResourceHistory;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceAncestryFormat;
 import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.composite.ProblemResourceComposite;
 import org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite;
@@ -170,6 +171,15 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
                 resourceManager.getResourceLineageAndSiblings(getSessionSubject(), resourceId),
                 "ResourceService.getResourceLineageAndSiblings");
 
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    public Map<Integer, String> getResourcesAncestry(Integer[] resourceIds, ResourceAncestryFormat format)
+        throws RuntimeException {
+        try {
+            return resourceManager.getResourcesAncestry(getSessionSubject(), resourceIds, format);
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

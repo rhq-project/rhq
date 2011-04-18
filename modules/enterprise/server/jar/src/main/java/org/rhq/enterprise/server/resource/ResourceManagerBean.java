@@ -903,23 +903,32 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     private String getDecodedAncestry(Resource resource, List<ResourceType> typeList, ResourceAncestryFormat format) {
+
         String ancestry = resource.getAncestry();
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder("");
 
         if (ResourceAncestryFormat.VERBOSE != format) {
-            if (null == ancestry) {
-                sb.append("");
+
+            if (ResourceAncestryFormat.EXTENDED == format) {
+                sb.append(resource.getName());
             }
 
-            String[] ancestryEntries = ancestry.split(Resource.ANCESTRY_DELIM);
-            for (int i = 0; i < ancestryEntries.length; ++i) {
-                String[] entryTokens = ancestryEntries[i].split(Resource.ANCESTRY_ENTRY_DELIM);
-                String ancestorName = entryTokens[2];
+            if (null != ancestry) {
+                if (ResourceAncestryFormat.EXTENDED == format) {
+                    sb.append(" < ");
+                }
 
-                sb.append((i > 0) ? " < " : "");
-                sb.append(ancestorName);
+                String[] ancestryEntries = ancestry.split(Resource.ANCESTRY_DELIM);
+                for (int i = 0; i < ancestryEntries.length; ++i) {
+                    String[] entryTokens = ancestryEntries[i].split(Resource.ANCESTRY_ENTRY_DELIM);
+                    String ancestorName = entryTokens[2];
+
+                    sb.append((i > 0) ? " < " : "");
+                    sb.append(ancestorName);
+                }
             }
         } else {
+
             Map<Integer, ResourceType> types = new HashMap<Integer, ResourceType>(typeList.size());
             for (ResourceType type : typeList) {
                 types.put(type.getId(), type);

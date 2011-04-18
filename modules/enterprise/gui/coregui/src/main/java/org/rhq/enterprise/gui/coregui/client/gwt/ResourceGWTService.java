@@ -30,6 +30,7 @@ import org.rhq.core.domain.resource.CreateResourceHistory;
 import org.rhq.core.domain.resource.DeleteResourceHistory;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceAncestryFormat;
 import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.composite.ProblemResourceComposite;
 import org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite;
@@ -73,6 +74,9 @@ public interface ResourceGWTService extends RemoteService {
     Resource getPlatformForResource(int resourceId) throws RuntimeException;
 
     Map<Resource, List<Resource>> getQueuedPlatformsAndServers(HashSet<InventoryStatus> statuses, PageControl pc)
+        throws RuntimeException;
+
+    Map<Integer, String> getResourcesAncestry(Integer[] resourceIds, ResourceAncestryFormat format)
         throws RuntimeException;
 
     List<ResourceLineageComposite> getResourceLineageAndSiblings(int resourceId) throws RuntimeException;

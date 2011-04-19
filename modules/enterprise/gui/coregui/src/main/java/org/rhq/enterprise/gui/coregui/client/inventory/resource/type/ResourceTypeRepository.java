@@ -274,7 +274,7 @@ public class ResourceTypeRepository {
                                     cachedType.setPackageTypes(type.getPackageTypes());
                                     break;
                                 case events:
-                                    cachedType.setPackageTypes(type.getPackageTypes());
+                                    cachedType.setEventDefinitions(type.getEventDefinitions());
                                     break;
                                 case measurements:
                                     cachedType.setMetricDefinitions(type.getMetricDefinitions());

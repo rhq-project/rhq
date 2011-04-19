@@ -96,31 +96,8 @@
         <process-scan name="HostController" query="process|basename|match=^java.*,arg|org.jboss.as.host-controller|match=.*"/>
 
 
-        <operation name="shutdown" description="Shut this Host-/Domaincontroller down with all managed servers.">
+        <operation name="domain:shutdown" displayName="Shutdown Domain" description="Shut this Host-/Domaincontroller down with all managed servers.">
         </operation>
-
-
-    </server>
-
-    <server name="Domain"
-            discovery="DomainDiscovery"
-            class="DomainComponent"
-            description="An AS7 management profile">
-
-        <subcategories>
-            <subcategory name="Integration" />
-            <subcategory name="Core"/>
-            <subcategory name="Web"/>
-        </subcategories>
-
-        <plugin-configuration>
-            <c:simple-property name="hostname" default="localhost" displayName="Management host" required="true"/>
-            <c:simple-property name="port" default="9990" type="integer" displayName="Management port" required="true"/>
-        </plugin-configuration>
-
-        <!-- Scan for host controller is intentional -->
-        <process-scan name="HostController" query="process|basename|match=^java.*,arg|org.jboss.as.host-controller|match=.*"/>
-
 
         <operation name="server-group:add" displayName="Add ServerGroup" description="Add a server group to the Domain.">
             <parameters>
@@ -556,18 +533,75 @@
             </plugin-configuration>
 
             <resource-configuration>
-                <c:map-property name="configuration">
-                    <c:simple-property name="connection-url"/>
-                    <c:simple-property name="driver-class"/>
-                    <c:simple-property name="jndi-name"/>
-                    <c:simple-property name="driver"/>
-                    <c:simple-property name="pool-name"/>
-                    <c:simple-property name="use-java-context" type="boolean"/>
-                    <c:simple-property name="enabled" type="boolean"/>
-                    <c:simple-property name="user-name"/>
-                    <c:simple-property name="password"/>
-                    <!-- TODO more when they become available in the AS -->
-                </c:map-property>
+                <c:simple-property name="connection-url" required="true" type="string" readOnly="true" description="The JDBC driver connection URL"/>
+                <c:simple-property name="driver-class" required="true" type="string" readOnly="true"
+                         description="The fully qualifed name of the JDBC driver class"/>
+                <c:simple-property name="jndi-name" required="true" type="string" readOnly="true"
+                         description="Specifies the JNDI name for the datasource"/>
+                <c:simple-property name="driver" required="true" type="string" readOnly="true"
+                         description="Defines the JDBC driver the datasource should use with this format: &lt;driver-name>#&lt;major-version>.&lt;minor-version> where &lt;driver-name> is the fully qualifed name of the JDBC driver class"/>
+                <c:simple-property name="new-connection-sql" type="string" readOnly="true"
+                         description="Specifies an SQL statement to execute whenever a connection is added to the connection pool."/>
+                <c:simple-property name="pool-name" type="string" readOnly="true"
+                         description="Specifies the pool name for the datasource used for management"/>
+                <c:simple-property name="url-delimiter" type="string" readOnly="true"
+                         description="Specifies the delimeter for URLs in connection-url for HA datasources"/>
+                <c:simple-property name="url-selector-strategy-class-name" type="string" readOnly="true"
+                         description="A class that implements org.jboss.jca.adapters.jdbc.URLSelectorStrategy"/>
+                <c:simple-property name="use-java-context" type="boolean" readOnly="true"
+                         description="Setting this to false will bind the DataSource into global JNDI;"/>
+                <c:simple-property name="enabled" type="string" readOnly="true" description="Specifies if the datasource should be enabled"/>
+                <c:simple-property name="max-pool-size" type="integer" readOnly="false"
+                         description="The max-pool-size element indicates the maximum number of connections for a pool. No more connections will be created in each sub-pool."/>
+                <c:simple-property name="min-pool-size" type="integer" readOnly="false"
+                         description="The min-pool-size element indicates the minimum number of connections a pool should hold. These are not created until a Subject is known from a request for a connection."/>
+                <c:simple-property name="pool-prefill" type="boolean" readOnly="false"
+                         description="Whether to attempt to prefill the connection pool. Changing this value require a server restart."/>
+                <c:simple-property name="pool-use-strict-min" type="boolean" readOnly="false"
+                         description="Define if the min-pool-size should be considered a strictly."/>
+                <c:simple-property name="user-name" type="string" readOnly="true"
+                         description="Specify the username used when creating a new connection."/>
+                <c:simple-property name="password" type="password" readOnly="true"
+                         description="Specify the passwprd used when creating a new connection."/>
+                <c:simple-property name="prepared-statements-cacheSize" type="long" readOnly="true"
+                         description="The number of prepared statements per connection in an LRU cache"/>
+                <c:simple-property name="share-prepared-statements" type="boolean" readOnly="true"
+                         description="Whether to share prepare statements, i.e. whether asking for same statement twice without closing uses the same underlying prepared statement"/>
+                <c:simple-property name="track-statements" type="string" readOnly="true"
+                         description="Whether to check for unclosed statements when a connection is returned to the pool and result sets are closed when a statement is closed/return to the prepared statement cache. valid values are: false - do not track statements and results true - track statements and result sets and warn when they are not closed nowarn - track statements but do no warn about them being unclosed"/>
+                <c:simple-property name="allocation-retry" type="integer" readOnly="true"
+                         description="The allocation retry element indicates the number of times that allocating a connection should be tried before throwing an exception."/>
+                <c:simple-property name="allocation-retry-wait-millis" type="long" readOnly="true"
+                         description="Indicates the time in milliseconds to wait between retrying to allocate a connection."/>
+                <c:simple-property name="blocking-timeout-wait-millis" type="long" readOnly="false"
+                         description="The blocking-timeout-millis element indicates the maximum time in milliseconds to block while waiting for a connection before throwing an exception. Note that this blocks only while waiting for a permit for a connection, and will never throw an exception if creating a new connection takes an inordinately long time."/>
+                <c:simple-property name="idle-timeout-minutes" type="long" readOnly="false"
+                         description="The idle-timeout-minutes elements indicates the maximum time in minutes a connection may be idle before being closed. The actual maximum time depends also on the IdleRemover scan time, which is 1/2 the smallest idle-timeout-minutes of any pool. Changing this value require a server restart."/>
+                <c:simple-property name="query-timeout" type="long" readOnly="true"
+                         description="Any configured query timeout in seconds The default is no timeout"/>
+                <c:simple-property name="use-try-lock" type="long" readOnly="true"
+                         description="Any configured timeout for internal locks on the resource adapter objects in seconds"/>
+                <c:simple-property name="set-tx-query-timeout" type="boolean" readOnly="true"
+                         description="Whether to set the query timeout based on the time remaining until transaction timeout, any configured query timeout will be used if there is no transaction."/>
+                <c:simple-property name="transaction-isolation" type="string" readOnly="true"
+                         description="Set java.sql.Connection transaction isolation level to use. The constants defined by transaction-isolation-values are the possible transaction isolation levels and include: TRANSACTION_READ_UNCOMMITTED TRANSACTION_READ_COMMITTED TRANSACTION_REPEATABLE_READ TRANSACTION_SERIALIZABLE TRANSACTION_NONE"/>
+                <c:simple-property name="check-valid-connection-sql" type="string" readOnly="true"
+                         description="Specify an SQL statement to check validity of a pool connection. This may be called when managed connection is taken from pool for use."/>
+                <c:simple-property name="exception-sorter-class-name" type="string" readOnly="true"
+                         description="An org.jboss.jca.adapters.jdbc.ExceptionSorter that provides a boolean isExceptionFatal(SQLException e) method to validate is an exception should be broadcast to all javax.resource.spi.ConnectionEventListener as a connectionErrorOccurred"/>
+                <c:simple-property name="stale-connection-checker-class-name" type="string" readOnly="true"
+                         description="An org.jboss.jca.adapters.jdbc.StaleConnectionChecker that provides a boolean isStaleConnection(SQLException e) method which if it it returns true will wrap the exception in an org.jboss.jca.adapters.jdbc.StaleConnectionException"/>
+                <c:simple-property name="valid-connection-checker-class-name" type="string" readOnly="true"
+                         description="An org.jboss.jca.adapters.jdbc.ValidConnectionChecker that provides a SQLException isValidConnection(Connection e) method to validate is a connection is valid. An exception means the connection is destroyed. This overrides the check-valid-connection-sql when present."/>
+                <c:simple-property name="background-validation-minutes" type="long" readOnly="false"
+                         description="The background-validation-minutes element specifies the amount of time, in minutes, that background validation will run. Changing this value require a server restart."/>
+                <c:simple-property name="background-validation" type="boolean" readOnly="false"
+                         description="An element to specify that connections should be validated on a background thread versus being validated prior to use. Changing this value require a server restart."/>
+                <c:simple-property name="use-fast-fail" type="boolean" readOnly="false"
+                         description="Whether fail a connection allocation on the first connection if it is invalid (true) or keep trying until the pool is exhausted of all potential connections (false)"/>
+                <c:simple-property name="validate-on-match" type="boolean" readOnly="true"
+                         description="The validate-on-match element indicates whether or not connection level validation should be done when a connection factory attempts to match a managed connection for a given set. This is typically exclusive to the use of background validation"/>
+                <c:simple-property name="spy" type="boolean" readOnly="true" description="whatever spy or not the jdbc connection"/>
             </resource-configuration>
         </service>
 
@@ -595,13 +629,73 @@
 
     </server>
 
+    <server name="Threads"
+        discovery="SubsystemDiscovery"
+        class="BaseComponent"
+        singleton="true"
+        >
+
+        <runs-inside>
+            <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
+            <parent-resource-type name="JBossAS7-Standalone"  plugin="jboss-as-7"/>
+        </runs-inside>
+
+        <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="subsystem=threads"/>
+        </plugin-configuration>
+
+        <service name="ThreadFactory"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent"
+                 singleton="true"
+                >
+
+            <plugin-configuration>
+                <c:simple-property name="path" readOnly="true" default="thread-factory"/>
+            </plugin-configuration>
+
+            <resource-configuration>
+                <c:simple-property name="name" required="true" type="string" readOnly="true" description="The bean name of the created thread factory."/>
+                <c:simple-property name="group-name" type="string" readOnly="false"
+                         description="Specifies the name of a the thread group to create for this thread factory."/>
+                <c:simple-property name="thread-name-pattern" type="string" readOnly="false"
+                         description="The template used to create names for threads.  The following patterns may be used:
+                    %% - emit a percent sign
+                    %t - emit the per-factory thread sequence number
+                    %g - emit the global thread sequence number
+                    %f - emit the factory sequence number
+                    %i - emit the thread ID."/>
+                <c:simple-property name="priority" type="integer" readOnly="false"
+                         description="May be used to specify the thread priority of created threads."/>
+                <c:list-property name="properties" >
+                    <c:simple-property name="properties" />  <!-- TODO list of maps ? -->
+                </c:list-property>
+            </resource-configuration>
+        </service>
+
+        <service name="ThreadPool"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent"
+                 singleton="true"
+                >
+
+            <plugin-configuration>
+                <c:simple-property name="path" readOnly="true" default="bounded-queue-thread-pool|queueless-thread-pool|scheduled-thread-pool|unbounded-queue-thread-pool"/>
+            </plugin-configuration>
+        </service>
+
+
+
+
+    </server>
+
     <service name="NetworkInterface"
              discovery="SubsystemDiscovery"
              class="BaseComponent"
              description="A named network interface, along with required criteria for determining the IP address to associate with that interface">
 
         <runs-inside>
-            <parent-resource-type name="Domain"  plugin="jboss-as-7"/>
+            <parent-resource-type name="HostController"  plugin="jboss-as-7"/>
             <parent-resource-type name="Host"  plugin="jboss-as-7"/>
             <parent-resource-type name="JBossAS7-Standalone"  plugin="jboss-as-7"/>
         </runs-inside>
@@ -616,7 +710,7 @@
              class="BaseComponent"
             >
         <runs-inside>
-            <parent-resource-type name="Domain"  plugin="jboss-as-7"/>
+            <parent-resource-type name="HostController"  plugin="jboss-as-7"/>
             <parent-resource-type name="JBossAS7-Standalone"  plugin="jboss-as-7"/>
         </runs-inside>
 

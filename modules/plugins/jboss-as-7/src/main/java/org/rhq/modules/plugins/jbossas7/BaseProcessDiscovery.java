@@ -76,6 +76,7 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
             String serverNameFull;
             String serverName;
             String psName = psr.getProcessScan().getName();
+            String description = discoveryContext.getResourceType().getDescription();
             if (psName.equals("ProcessController")) {
                 serverNameFull = "ProcessController";
                 serverName = "ProcessController";
@@ -85,6 +86,7 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
                 if (hp.isLocal) {
                     serverName = "DomainController";
                     serverNameFull = "DomainController";
+                    description = "Domain controller for an AS7 domain";
                 }
                 else {
                     serverName = "HostController";
@@ -138,7 +140,7 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
                 serverNameFull, // key TODO distinguish per domain?
                 serverName,  // Name
                 null,  // TODO real version ?
-                discoveryContext.getResourceType().getDescription(), // Description
+                    description, // Description
                 config,
                 psr.getProcessInfo()
             );

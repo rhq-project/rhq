@@ -67,6 +67,7 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -316,13 +317,16 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
             } // end List of ..
             else if (propDef instanceof PropertyDefinitionMap) {
                 PropertyDefinitionMap mapDef = (PropertyDefinitionMap) propDef;
+                PropertyMap pm = new PropertyMap(mapDef.getName());
+
                 Map<String,PropertyDefinition> memberDefMap = mapDef.getPropertyDefinitions();
                 for (Map.Entry<String,PropertyDefinition> maEntry : memberDefMap.entrySet()) {
                     JsonNode valueNode = json.findValue(maEntry.getKey());
-                    System.out.println(valueNode);
                     PropertySimple p = putProperty(valueNode,maEntry.getValue());
-                    ret.put(p);
+                    System.out.println(p);
+                    pm.put(p);
                 }
+                ret.put(pm);
             }
         }
 
@@ -496,6 +500,99 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
     @Override
     public OperationResult invokeOperation(String name,
                                            Configuration parameters) throws InterruptedException, Exception {
-        return null;  // TODO: Customise this generated block
+
+        if (!name.contains(":")) {
+            OperationResult badName = new OperationResult("Operation name did not contain a ':'");
+            badName.setErrorMessage("Operation name did not contain a ':'");
+            return badName;
+        }
+
+        int colonPos = name.indexOf(':');
+        String what = name.substring(0, colonPos);
+        String op = name.substring(colonPos+1);
+        Operation operation=null;
+
+        List<PROPERTY_VALUE> address = new ArrayList<PROPERTY_VALUE>();
+
+        if (what.equals("server-group")) {
+            String groupName = parameters.getSimpleValue("name",null);
+            String profile = parameters.getSimpleValue("profile","default");
+
+            address.add(new PROPERTY_VALUE("server-group",groupName));
+
+            operation = new Operation(op,address,"profile",profile);
+        } else if (what.equals("server")) {
+
+            if (context.getResourceType().getName().equals("JBossAS-Managed")) {
+                String host = conf.getSimpleValue("domainHost","local");
+                address.add(new PROPERTY_VALUE("host",host));
+                address.add(new PROPERTY_VALUE("server-config",myServerName));
+                operation = new Operation(op,address);
+            }
+            else if (context.getResourceType().getName().equals("Host")) {
+                address.addAll(pathToAddress(getPath()));
+                String serverName = parameters.getSimpleValue("name",null);
+                address.add(new PROPERTY_VALUE("server-config",serverName));
+                Map<String,Object> props = new HashMap<String, Object>();
+                String serverGroup = parameters.getSimpleValue("group",null);
+                props.put("group",serverGroup);
+                if (op.equals("add")) {
+                    props.put("name",serverName);
+                    boolean autoStart = parameters.getSimple("auto-start").getBooleanValue();
+                    props.put("auto-start",autoStart);
+                    // TODO put more properties in
+                }
+
+                operation = new Operation(op,address,props);
+            }
+        } else if (what.equals("destination")) {
+            address.addAll(pathToAddress(getPath()));
+            String newName = parameters.getSimpleValue("name","");
+//            String type = parameters.getSimpleValue("type","Queue").toLowerCase();
+//            address.add(new PROPERTY_VALUE(type,newName));
+            String queueName = parameters.getSimpleValue("queue-address","");
+            Map<String,Object> props = new HashMap<String, Object>();
+            props.put("queue-address",queueName);
+            operation = new Operation(op,address);
+        } else if (what.equals("managed-server")) {
+            String chost = parameters.getSimpleValue("hostname","");
+            String serverName = parameters.getSimpleValue("servername","");
+            String serverGroup = parameters.getSimpleValue("server-group","");
+            String socketBindings = parameters.getSimpleValue("socket-bindings","");
+            String portS = parameters.getSimpleValue("port-offset","0");
+            int port = Integer.parseInt(portS);
+            String autostartS = parameters.getSimpleValue("auto-start","false");
+            boolean autoStart = Boolean.getBoolean(autostartS);
+
+            address.add(new PROPERTY_VALUE("host", chost));
+            address.add(new PROPERTY_VALUE("server-config",serverName));
+            Map<String,Object> props = new HashMap<String, Object>();
+            props.put("name",serverName);
+            props.put("group",serverGroup);
+            props.put("socket-binding-group",socketBindings);
+            props.put("socket-binding-port-offset",port);
+            props.put("auto-start",autoStart);
+
+            operation = new Operation(op,address,props);
+        } else if (what.equals("domain")) {
+            operation = new Operation(op,Collections.<PROPERTY_VALUE>emptyList());
+        }
+
+        OperationResult operationResult = new OperationResult();
+        if (operation!=null) {
+            JsonNode result = connection.executeRaw(operation);
+
+            if (ASConnection.isErrorReply(result)) {
+                operationResult.setErrorMessage(ASConnection.getFailureDescription(result));
+            }
+            else {
+                operationResult.setSimpleResult(ASConnection.getSuccessDescription(result));
+            }
+        }
+        else {
+            operationResult.setErrorMessage("No valid operation was given");
+        }
+        // TODO throw an exception if the operation failed?
+        return operationResult;
     }
 }

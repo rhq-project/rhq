@@ -33,8 +33,8 @@ import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.composite.PackageAndLatestVersionComposite;
 import org.rhq.core.domain.content.composite.PackageTypeAndVersionFormatComposite;
-import org.rhq.core.domain.criteria.PackageCriteria;
 import org.rhq.core.domain.criteria.InstalledPackageHistoryCriteria;
+import org.rhq.core.domain.criteria.PackageCriteria;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
 import org.rhq.core.domain.util.PageList;
 
@@ -48,18 +48,22 @@ public interface ContentGWTService extends RemoteService {
 
     PageList<PackageVersion> findPackageVersionsByCriteria(PackageVersionCriteria criteria) throws RuntimeException;
 
-    PageList<Package> findPackagesByCriteria(PackageCriteria criteria);
-    
-    PageList<PackageAndLatestVersionComposite> findPackagesWithLatestVersion(PackageCriteria criteria);
-    
-    PageList<InstalledPackageHistory> getInstalledPackageHistoryForResource(int resourceId, int count);
+    PageList<Package> findPackagesByCriteria(PackageCriteria criteria) throws RuntimeException;;
 
-    PageList<InstalledPackageHistory> findInstalledPackageHistoryByCriteria(InstalledPackageHistoryCriteria criteria);
+    PageList<PackageAndLatestVersionComposite> findPackagesWithLatestVersion(PackageCriteria criteria)
+        throws RuntimeException;;
+
+    PageList<InstalledPackageHistory> getInstalledPackageHistoryForResource(int resourceId, int count)
+        throws RuntimeException;;
+
+    PageList<InstalledPackageHistory> findInstalledPackageHistoryByCriteria(InstalledPackageHistoryCriteria criteria)
+        throws RuntimeException;;
 
     List<Architecture> getArchitectures() throws RuntimeException;
 
     PackageType getResourceCreationPackageType(int resourceTypeId) throws RuntimeException;
-    
-    PackageTypeAndVersionFormatComposite findPackageType(Integer resourceTypeId, String packageTypeName) throws RuntimeException;
-    
+
+    PackageTypeAndVersionFormatComposite findPackageType(Integer resourceTypeId, String packageTypeName)
+        throws RuntimeException;
+
 }

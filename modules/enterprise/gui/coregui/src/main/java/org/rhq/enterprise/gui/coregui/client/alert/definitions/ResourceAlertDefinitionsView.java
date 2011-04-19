@@ -53,7 +53,7 @@ public class ResourceAlertDefinitionsView extends AbstractAlertDefinitionsView {
     private ResourcePermission permissions;
 
     public ResourceAlertDefinitionsView(String locatorId, ResourceComposite resourceComposite) {
-        super(locatorId, "Alert Definitions");
+        super(locatorId, "Alert Definitions", getCriteria(resourceComposite));
         this.resource = resourceComposite.getResource();
         this.permissions = resourceComposite.getResourcePermission();
 
@@ -81,10 +81,9 @@ public class ResourceAlertDefinitionsView extends AbstractAlertDefinitionsView {
         return resource.getResourceType();
     }
 
-    @Override
-    protected Criteria getCriteria() {
+    private static Criteria getCriteria(ResourceComposite composite) {
         Criteria criteria = new Criteria();
-        criteria.addCriteria(CRITERIA_RESOURCE_ID, resource.getId());
+        criteria.addCriteria(CRITERIA_RESOURCE_ID, composite.getResource().getId());
         return criteria;
     }
 

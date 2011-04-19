@@ -19,12 +19,16 @@
 package org.rhq.plugins.apache;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.StringReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -34,6 +38,7 @@ import java.util.regex.PatternSyntaxException;
 import net.augeas.Augeas;
 import net.augeas.AugeasException;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
@@ -50,6 +55,7 @@ import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.measurement.AvailabilityType;
@@ -60,6 +66,7 @@ import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.resource.CreateResourceStatus;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
+import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
 import org.rhq.core.pluginapi.event.EventContext;
 import org.rhq.core.pluginapi.event.EventPoller;
 import org.rhq.core.pluginapi.event.log.LogFileEventPoller;
@@ -73,6 +80,7 @@ import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.system.OperatingSystemType;
 import org.rhq.core.system.ProcessInfo;
 import org.rhq.core.system.SystemInfo;
+import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.plugins.apache.augeas.ApacheAugeasNode;
 import org.rhq.plugins.apache.augeas.AugeasConfigurationApache;
 import org.rhq.plugins.apache.augeas.AugeasTreeBuilderApache;
@@ -100,7 +108,7 @@ import org.rhq.rhqtransform.AugeasRHQComponent;
  * @author Lukas Krejci
  */
 public class ApacheServerComponent implements AugeasRHQComponent<PlatformComponent>, MeasurementFacet, OperationFacet,
-    ConfigurationFacet, CreateChildResourceFacet {
+    ResourceConfigurationFacet, CreateChildResourceFacet {
 
     public static final String CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE = "Configuration is supported only for Apache version 2 and up using Augeas. You either have an old version of Apache or Augeas is not installed.";
 
@@ -389,6 +397,65 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
             }
         }
    }
+
+    @Override
+    public Configuration loadStructuredConfiguration() {
+        return null;
+    }
+
+    @Override
+    public Set<RawConfiguration> loadRawConfigurations() {
+        AugeasConfigurationApache augeasConfig = new AugeasConfigurationApache(
+            resourceContext.getTemporaryDirectory().getAbsolutePath(), resourceContext.getPluginConfiguration());
+        Set<RawConfiguration> rawConfigs = new HashSet<RawConfiguration>();
+        MessageDigestGenerator digestGenerator = new MessageDigestGenerator(MessageDigestGenerator.SHA_256);
+
+        for (File file : augeasConfig.getAllConfigurationFiles()) {
+            try {
+                RawConfiguration rawConfig = new RawConfiguration();
+                rawConfig.setPath(file.getAbsolutePath());
+                rawConfig.setContents(IOUtils.toString(new FileInputStream(file)),
+                    digestGenerator.calcDigestString(file));
+                rawConfigs.add(rawConfig);
+            } catch (IOException e) {
+                log.warn("Unable to load raw configuration for " + file.getAbsolutePath(), e);
+            }
+        }
+
+        return rawConfigs;
+    }
+
+    @Override
+    public RawConfiguration mergeRawConfiguration(Configuration from, RawConfiguration to) {
+        return null;
+    }
+
+    @Override
+    public void mergeStructuredConfiguration(RawConfiguration from, Configuration to) {
+    }
+
+    @Override
+    public void persistStructuredConfiguration(Configuration configuration) {
+    }
+
+    @Override
+    public void persistRawConfiguration(RawConfiguration rawConfiguration) {
+        try {
+            IOUtils.copy(new StringReader(rawConfiguration.getContents()),
+                new FileOutputStream(new File(rawConfiguration.getPath())));
+        } catch (IOException e) {
+            log.warn("Failed to save configurtion updates to " + rawConfiguration.getPath(), e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void validateStructuredConfiguration(Configuration configuration) throws IllegalArgumentException {
+    }
+
+    @Override
+    public void validateRawConfiguration(RawConfiguration rawConfiguration) throws IllegalArgumentException {
+    }
 
     public AugeasProxy getAugeasProxy() throws AugeasException {
         File tempDir = resourceContext.getDataDirectory();

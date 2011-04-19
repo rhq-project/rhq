@@ -484,30 +484,30 @@
 
       <event name="errorLogEntry" description="an entry in the error log file"/>
 
-      <resource-configuration>
-        <c:list-property name="Listen">
-            <c:map-property name="Listen">
-                <c:simple-property name="ip" required="false"/>
-                <c:simple-property name="port">
-                    <c:constraint><c:integer-constraint minimum="0" maximum="65535"/></c:constraint>
-                </c:simple-property>
-                <c:simple-property name="scheme" required="false"/>
-            </c:map-property>
-        </c:list-property>
-          <c:list-property name="NameVirtualHost" required="false">
-             <c:description>
-                 A required directive if you want to configure name-based virtual hosts.
-                 Although the value can be hostname it is recommended that you always use an IP address.
-                 IPv6 addresses must be enclosed in square brackets.
-                 To receive requests on all interfaces, you can set the value to *.
-                 Note that the IP address of a name-based virtual host must exactly match the value of this property.
-                 The address may be optionally followed by the port specification to further limit the directive effect.                
-             </c:description>
-            <c:map-property name="NameVirtualHost">
-                <c:simple-property name="address" description="A hostname, an IP address (recommended), or a * optionally followed by the port specification."/>
-                <c:simple-property name="_index" readOnly="true" required="false" description="Helper property to retain the consistent ordering inside Apache configuration files."/>
-            </c:map-property>
-        </c:list-property>
+      <resource-configuration configurationFormat="raw">
+        <!--<c:list-property name="Listen">-->
+            <!--<c:map-property name="Listen">-->
+                <!--<c:simple-property name="ip" required="false"/>-->
+                <!--<c:simple-property name="port">-->
+                    <!--<c:constraint><c:integer-constraint minimum="0" maximum="65535"/></c:constraint>-->
+                <!--</c:simple-property>-->
+                <!--<c:simple-property name="scheme" required="false"/>-->
+            <!--</c:map-property>-->
+        <!--</c:list-property>-->
+          <!--<c:list-property name="NameVirtualHost" required="false">-->
+             <!--<c:description>-->
+                 <!--A required directive if you want to configure name-based virtual hosts.-->
+                 <!--Although the value can be hostname it is recommended that you always use an IP address.-->
+                 <!--IPv6 addresses must be enclosed in square brackets.-->
+                 <!--To receive requests on all interfaces, you can set the value to *.-->
+                 <!--Note that the IP address of a name-based virtual host must exactly match the value of this property.-->
+                 <!--The address may be optionally followed by the port specification to further limit the directive effect.                -->
+             <!--</c:description>-->
+            <!--<c:map-property name="NameVirtualHost">-->
+                <!--<c:simple-property name="address" description="A hostname, an IP address (recommended), or a * optionally followed by the port specification."/>-->
+                <!--<c:simple-property name="_index" readOnly="true" required="false" description="Helper property to retain the consistent ordering inside Apache configuration files."/>-->
+            <!--</c:map-property>-->
+        <!--</c:list-property>-->
       </resource-configuration>
       
       <service name="Apache Virtual Host" discovery="ApacheVirtualHostServiceDiscoveryComponent" class="ApacheVirtualHostServiceComponent" createDeletePolicy="both">

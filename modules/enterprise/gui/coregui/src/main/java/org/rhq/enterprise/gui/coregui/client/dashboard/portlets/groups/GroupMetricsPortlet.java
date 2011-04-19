@@ -51,6 +51,7 @@ import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.measurement.CustomConfigMeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortletUtil;
@@ -64,7 +65,6 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupDetailView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
-import org.rhq.enterprise.gui.coregui.client.resource.disambiguation.ReportDecorator;
 import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableCanvas;
@@ -422,9 +422,9 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
                                                             LocatableDynamicForm row = new LocatableDynamicForm(
                                                                 recentMeasurementsContent
                                                                     .extendLocatorId("RecentMeasurementsContentSeeMore"));
-                                                            AbstractActivityView.addSeeMoreLink(row,
-                                                                ReportDecorator.GWT_GROUP_URL + groupId
-                                                                    + "/Monitoring/Graphs/", column);
+                                                            String link = LinkManager
+                                                                .getGroupMonitoringGraphsLink(groupId);
+                                                            AbstractActivityView.addSeeMoreLink(row, link, column);
                                                         }
                                                         //call out to 3rd party javascript lib
                                                         BrowserUtility.graphSparkLines();

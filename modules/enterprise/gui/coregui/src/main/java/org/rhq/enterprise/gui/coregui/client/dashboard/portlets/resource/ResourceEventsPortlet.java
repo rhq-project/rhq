@@ -31,13 +31,13 @@ import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent.Constant;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupEventsPortlet;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView;
-import org.rhq.enterprise.gui.coregui.client.resource.disambiguation.ReportDecorator;
 import org.rhq.enterprise.gui.coregui.client.util.GwtTuple;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
@@ -158,8 +158,9 @@ public class ResourceEventsPortlet extends GroupEventsPortlet {
                         //insert see more link
                         LocatableDynamicForm row = new LocatableDynamicForm(recentEventsContent.extendLocatorId(String
                             .valueOf(rowNum++)));
-                        AbstractActivityView.addSeeMoreLink(row, ReportDecorator.GWT_RESOURCE_URL + resourceId
-                            + "/Events/History/", column);
+
+                        String link = LinkManager.getResourceEventHistoryListLink(resourceId);
+                        AbstractActivityView.addSeeMoreLink(row, link, column);
                     } else {
                         LocatableDynamicForm row = AbstractActivityView.createEmptyDisplayRow(recentEventsContent
                             .extendLocatorId("None"), AbstractActivityView.RECENT_CRITERIA_EVENTS_NONE);

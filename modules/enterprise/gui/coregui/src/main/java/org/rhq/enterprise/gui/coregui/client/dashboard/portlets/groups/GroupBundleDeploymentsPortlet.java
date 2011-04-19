@@ -43,6 +43,7 @@ import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortletUtil;
 import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
@@ -53,7 +54,6 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigura
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent.Constant;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView;
-import org.rhq.enterprise.gui.coregui.client.resource.disambiguation.ReportDecorator;
 import org.rhq.enterprise.gui.coregui.client.util.GwtRelativeDurationConverter;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableCanvas;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
@@ -232,9 +232,8 @@ public class GroupBundleDeploymentsPortlet extends LocatableVLayout implements C
                                 "subsystems/content/Content_16.png", null);
                             String title = deployment.getBundleVersion().getName() + "["
                                 + deployment.getBundleVersion().getVersion() + "]:";
-                            String destination = ReportDecorator.GWT_BUNDLE_URL
-                                + deployment.getBundleVersion().getBundle().getId() + "/destinations/"
-                                + deployment.getDestination().getId();
+                            String destination = LinkManager.getBundleDestinationLink(deployment.getBundleVersion()
+                                .getBundle().getId(), deployment.getDestination().getId());
                             LinkItem link = AbstractActivityView.newLinkItem(title, destination);
                             StaticTextItem time = AbstractActivityView.newTextItem(GwtRelativeDurationConverter
                                 .format(deployment.getCtime()));

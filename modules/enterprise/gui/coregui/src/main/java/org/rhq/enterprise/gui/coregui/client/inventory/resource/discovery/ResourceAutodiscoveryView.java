@@ -43,6 +43,7 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionEvent;
 import com.smartgwt.client.widgets.layout.HLayout;
+import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 import com.smartgwt.client.widgets.tree.TreeGrid;
 import com.smartgwt.client.widgets.tree.TreeGridField;
@@ -180,6 +181,16 @@ public class ResourceAutodiscoveryView extends LocatableVLayout {
             }
         });
         footer.addMember(form);
+
+        footer.addMember(new LayoutSpacer());
+
+        IButton refreshButton = new LocatableIButton(extendLocatorId("Refresh"), MSG.common_button_refresh());
+        refreshButton.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent clickEvent) {
+                refresh();
+            }
+        });
+        footer.addMember(refreshButton);
 
         treeGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
             // use this to ignore selection changes we initiate from within this handler

@@ -278,8 +278,7 @@ public class GroupBundleDeploymentsPortlet extends LocatableVLayout implements C
     }
 
     @Override
-    public void redraw() {
-        super.redraw();
+    public void refresh() {
         if (!isRefreshing()) {
             loadData();
         }

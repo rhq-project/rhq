@@ -308,17 +308,6 @@ public class OperationSchedulePortlet extends LocatableVLayout implements Custom
         }
     }
 
-    /** Custom refresh operation as we cannot directly extend Table because it only
-     * contains one ListGrid while the OperationsPortlet displays two tables.
-     */
-    @Override
-    public void redraw() {
-        super.redraw();
-        //now reload the table data
-        this.scheduledOperationsGrid.invalidateCache();
-        this.scheduledOperationsGrid.markForRedraw();
-    }
-
     public ConfigurationDefinition getConfigurationDefinition() {
         ConfigurationDefinition definition = new ConfigurationDefinition(MSG.view_portlet_configure_definitionTitle(),
             MSG.view_portlet_configure_definitionDesc());
@@ -353,4 +342,17 @@ public class OperationSchedulePortlet extends LocatableVLayout implements Custom
     public boolean isRefreshing() {
         return false;
     }
+
+    // Custom refresh operation as we cannot directly extend Table because it only
+    // contains one ListGrid while the OperationsPortlet displays two tables.    
+    @Override
+    public void refresh() {
+        if (!isRefreshing()) {
+            if (null != this.scheduledOperationsGrid) {
+                this.scheduledOperationsGrid.invalidateCache();
+            }
+            markForRedraw();
+        }
+    }
+
 }

@@ -461,6 +461,7 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
     @Override
     public void startRefreshCycle() {
         refreshTimer = AutoRefreshPortletUtil.startRefreshCycle(this, this, refreshTimer);
+
         //call out to 3rd party javascript lib
         BrowserUtility.graphSparkLines();
         recentMeasurementsContent.markForRedraw();
@@ -479,8 +480,7 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
     }
 
     @Override
-    public void redraw() {
-        super.redraw();
+    public void refresh() {
         if (!isRefreshing()) {
             loadData();
         }

@@ -263,8 +263,14 @@ public abstract class AbstractOperationHistoryPortlet extends OperationHistoryVi
     }
 
     public boolean isRefreshing() {
-        // TODO: actually keep track of when the portlet is refreshing data
         return false;
+    }
+
+    @Override
+    public void refresh() {
+        if (!isRefreshing()) {
+            super.refresh();
+        }
     }
 
     @Override
@@ -272,12 +278,6 @@ public abstract class AbstractOperationHistoryPortlet extends OperationHistoryVi
         AutoRefreshPortletUtil.onDestroy(this, refreshTimer);
 
         super.onDestroy();
-    }
-
-    @Override
-    public void redraw() {
-        super.refresh();
-        markForRedraw();
     }
 
     static public class OperationHistoryPortletDataSource extends OperationHistoryDataSource {

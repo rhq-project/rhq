@@ -295,7 +295,6 @@ public class GroupEventsPortlet extends LocatableVLayout implements CustomSettin
 
     public void startRefreshCycle() {
         refreshTimer = AutoRefreshPortletUtil.startRefreshCycle(this, this, refreshTimer);
-        markForRedraw();
     }
 
     @Override
@@ -311,9 +310,10 @@ public class GroupEventsPortlet extends LocatableVLayout implements CustomSettin
     }
 
     @Override
-    public void redraw() {
-        super.redraw();
-        loadData();
+    public void refresh() {
+        if (!isRefreshing()) {
+            loadData();
+        }
     }
 
     protected void setCurrentlyRefreshing(boolean currentlyRefreshing) {

@@ -98,6 +98,8 @@ public class ${props.componentClass} implements ResourceComponent<#if props.pare
 
     private static final int CHANGEME = 1; // TODO remove or change this
 
+    private ResourceContext<#if props.parentType??><${props.parentType}></#if> context;
+
 
     <#if props.events>
     public static final String DUMMY_EVENT = "${props.name}DummyEvent"; // Same as in Plugin-Descriptor
@@ -139,6 +141,7 @@ public class ${props.componentClass} implements ResourceComponent<#if props.pare
      */
     public void start(ResourceContext<#if props.parentType??><${props.parentType}></#if> context) throws InvalidPluginConfigurationException, Exception {
 
+        this.context = context;
         Configuration conf = context.getPluginConfiguration();
         // TODO add code to start the resource / connection to it
 

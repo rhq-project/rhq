@@ -8,19 +8,19 @@
 <tiles:importAttribute name="multiResource" ignore="true"/>
 
 <hq:constant
-      classname="org.rhq.enterprise.server.measurement.uibean.MetricDisplayConstants"
+      classname="org.rhq.core.domain.measurement.ui.MetricDisplayConstants"
       symbol="MAX_KEY"
       var="max"/>
 <hq:constant
-      classname="org.rhq.enterprise.server.measurement.uibean.MetricDisplayConstants"
+      classname="org.rhq.core.domain.measurement.ui.MetricDisplayConstants"
       symbol="MIN_KEY"
       var="min"/>
 <hq:constant
-      classname="org.rhq.enterprise.server.measurement.uibean.MetricDisplayConstants"
+      classname="org.rhq.core.domain.measurement.ui.MetricDisplayConstants"
       symbol="AVERAGE_KEY"
       var="average"/>
 <hq:constant
-      classname="org.rhq.enterprise.server.measurement.uibean.MetricDisplayConstants"
+      classname="org.rhq.core.domain.measurement.ui.MetricDisplayConstants"
       symbol="LAST_KEY"
       var="last"/>
 

@@ -11,11 +11,11 @@
 <c:set var="parent" value="${param.parent}"/>
 
 <hq:constant 
-  classname="org.rhq.enterprise.server.measurement.uibean.MetricDisplayConstants"
+  classname="org.rhq.core.domain.measurement.ui.MetricDisplayConstants"
   symbol="HIGH_RANGE_KEY"
   var="high"/>
 <hq:constant 
-  classname="org.rhq.enterprise.server.measurement.uibean.MetricDisplayConstants"
+  classname="org.rhq.core.domain.measurement.ui.MetricDisplayConstants"
   symbol="LOW_RANGE_KEY"
   var="low"/>
 

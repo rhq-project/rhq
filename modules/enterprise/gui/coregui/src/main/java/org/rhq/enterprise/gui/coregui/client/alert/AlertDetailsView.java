@@ -288,4 +288,5 @@ public class AlertDetailsView extends LocatableVLayout implements BookmarkableVi
 
         show(alertId);
     }
+
 }

@@ -51,6 +51,7 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
  * @author Joseph Marques
  */
 public class GroupDefinitionListView extends TableSection<GroupDefinitionDataSource> {
+
     private static final String TITLE = MSG.view_dynagroup_definitions();
 
     public GroupDefinitionListView(String locatorId, String headerIcon) {
@@ -126,8 +127,8 @@ public class GroupDefinitionListView extends TableSection<GroupDefinitionDataSou
         setListGridFields(idField, nameField, descriptionField, expressionField, lastCalculationTimeField,
             nextCalculationTimeField);
 
-        addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), null, new AbstractTableAction(
-            TableActionEnablement.ANY) {
+        addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), MSG.common_msg_areYouSure(),
+                new AbstractTableAction(TableActionEnablement.ANY) {
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 final int[] groupDefinitionIds = TableUtility.getIds(selection);
                 ResourceGroupGWTServiceAsync groupManager = GWTServiceLookup.getResourceGroupService(60000);
@@ -204,4 +205,5 @@ public class GroupDefinitionListView extends TableSection<GroupDefinitionDataSou
             }
         });
     }
+
 }

@@ -121,6 +121,33 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
 
         coreGUI = this;
 
+        registerPageKeys();
+
+        GWT.setUncaughtExceptionHandler(new GWT.UncaughtExceptionHandler() {
+            public void onUncaughtException(Throwable e) {
+                getErrorHandler().handleError(MSG.view_core_uncaught(), e);
+            }
+        });
+
+        /* after having this enabled for a while, the majority opinion is that this is more annoying than helpful 
+         *  
+        Window.addWindowClosingHandler(new Window.ClosingHandler() {
+            public void onWindowClosing(Window.ClosingEvent event) {
+                event.setMessage("Are you sure you want to leave RHQ?");                              
+            }
+        });
+        */
+
+        messageCenter = new MessageCenter();
+
+        UserSessionManager.login();
+
+        // removing loading image, which can be seen if LoginView doesn't completely cover it
+        Element loadingPanel = DOM.getElementById("Loading-Panel");
+        loadingPanel.removeFromParent();
+    }
+
+    private void registerPageKeys() {
         if (isDebugMode()) {
             KeyIdentifier debugKey = new KeyIdentifier();
             debugKey.setCtrlKey(true);
@@ -174,29 +201,6 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
                 goToView("Test");
             }
         });
-
-        GWT.setUncaughtExceptionHandler(new GWT.UncaughtExceptionHandler() {
-            public void onUncaughtException(Throwable e) {
-                getErrorHandler().handleError(MSG.view_core_uncaught(), e);
-            }
-        });
-
-        /* after having this enabled for a while, the majority opinion is that this is more annoying than helpful 
-         *  
-        Window.addWindowClosingHandler(new Window.ClosingHandler() {
-            public void onWindowClosing(Window.ClosingEvent event) {
-                event.setMessage("Are you sure you want to leave RHQ?");                              
-            }
-        });
-        */
-
-        messageCenter = new MessageCenter();
-
-        UserSessionManager.login();
-
-        // removing loading image, which can be seen if LoginView doesn't completely cover it
-        Element loadingPanel = DOM.getElementById("Loading-Panel");
-        loadingPanel.removeFromParent();
     }
 
     public static CoreGUI get() {

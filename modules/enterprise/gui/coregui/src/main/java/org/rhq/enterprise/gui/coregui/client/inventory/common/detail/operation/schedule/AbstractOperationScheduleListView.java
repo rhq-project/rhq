@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright 2010, Red Hat Middleware LLC, and individual contributors
+ * Copyright 2010-2011, Red Hat Middleware LLC, and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -22,6 +22,7 @@ package org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.enterprise.gui.coregui.client.components.table.EscapedHtmlCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.components.table.SubjectRecordCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
@@ -56,6 +57,7 @@ public abstract class AbstractOperationScheduleListView extends TableSection<Abs
         TimestampCellFormatter.prepareDateField(nextFireTimeField);
 
         ListGridField descriptionField = new ListGridField(AbstractOperationScheduleDataSource.Field.DESCRIPTION);
+        descriptionField.setCellFormatter(new EscapedHtmlCellFormatter());
 
         setListGridFields(true, idField, operationField, subjectField, nextFireTimeField, descriptionField);
 

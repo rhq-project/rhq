@@ -153,24 +153,6 @@ public class InventorySummaryPortlet extends LocatableVLayout implements AutoRef
         return new HTMLFlow(MSG.view_portlet_help_inventorySummary());
     }
 
-    /** Custom refresh operation as we are not directly extending Table
-     */
-    @Override
-    public void redraw() {
-        super.redraw();
-
-        //now reload the data
-        loadInventoryViewData();
-    }
-
-    public static final class Factory implements PortletViewFactory {
-        public static PortletViewFactory INSTANCE = new Factory();
-
-        public final Portlet getInstance(String locatorId) {
-            return new InventorySummaryPortlet(locatorId);
-        }
-    }
-
     public void startRefreshCycle() {
         refreshTimer = AutoRefreshPortletUtil.startRefreshCycle(this, this, refreshTimer);
     }
@@ -185,4 +167,21 @@ public class InventorySummaryPortlet extends LocatableVLayout implements AutoRef
     public boolean isRefreshing() {
         return false;
     }
+
+    //Custom refresh operation as we are not directly extending Table
+    @Override
+    public void refresh() {
+        if (!isRefreshing()) {
+            loadInventoryViewData();
+        }
+    }
+
+    public static final class Factory implements PortletViewFactory {
+        public static PortletViewFactory INSTANCE = new Factory();
+
+        public final Portlet getInstance(String locatorId) {
+            return new InventorySummaryPortlet(locatorId);
+        }
+    }
+
 }

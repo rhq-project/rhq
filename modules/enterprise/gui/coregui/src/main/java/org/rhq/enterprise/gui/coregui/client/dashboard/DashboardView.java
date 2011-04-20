@@ -450,8 +450,7 @@ public class DashboardView extends LocatableVLayout {
         refreshMenuButton.setIconOrientation("left");
 
         CanvasItem refreshCanvas = new CanvasItem();
-        refreshCanvas.setTitle(MSG.common_title_portlet_auto_refresh());
-        refreshCanvas.setWrapTitle(false);
+        refreshCanvas.setShowTitle(false);
         refreshCanvas.setCanvas(refreshMenuButton);
         refreshCanvas.setStartRow(false);
         refreshCanvas.setEndRow(false);

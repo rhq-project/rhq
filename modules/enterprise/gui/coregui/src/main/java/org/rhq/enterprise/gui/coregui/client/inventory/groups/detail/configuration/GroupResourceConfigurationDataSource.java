@@ -11,7 +11,9 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.configuration.group.GroupResourceConfigurationUpdate;
 import org.rhq.core.domain.criteria.GroupResourceConfigurationUpdateCriteria;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.ConfigurationGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -89,9 +91,16 @@ public class GroupResourceConfigurationDataSource extends
     @Override
     protected GroupResourceConfigurationUpdateCriteria getFetchCriteria(final DSRequest request) {
         GroupResourceConfigurationUpdateCriteria criteria = new GroupResourceConfigurationUpdateCriteria();
-        ArrayList<Integer> groupList = new ArrayList<Integer>(1);
-        groupList.add(this.groupId);
-        criteria.addFilterResourceGroupIds(groupList);
+
+        ArrayList<Integer> groupIds = new ArrayList<Integer>(1);
+        groupIds.add(this.groupId);
+        criteria.addFilterResourceGroupIds(groupIds);
+
+        PageControl pageControl = getPageControl(request);
+        pageControl.addDefaultOrderingField(Field.ID, PageOrdering.DESC);
+        criteria.setPageControl(pageControl);
+
         return criteria;
     }
+
 }

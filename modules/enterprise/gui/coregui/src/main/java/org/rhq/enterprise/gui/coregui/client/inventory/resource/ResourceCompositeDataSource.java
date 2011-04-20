@@ -20,20 +20,15 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-
 package org.rhq.enterprise.gui.coregui.client.inventory.resource;
 
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.AVAILABILITY;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.CATEGORY;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.DESCRIPTION;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.NAME;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.PLUGIN;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.TYPE;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.*;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
@@ -66,6 +61,7 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
  * @author Jay Shaughnessy
  */
 public class ResourceCompositeDataSource extends RPCDataSource<ResourceComposite, ResourceCriteria> {
+
     private static ResourceCompositeDataSource INSTANCE;
 
     private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
@@ -108,9 +104,9 @@ public class ResourceCompositeDataSource extends RPCDataSource<ResourceComposite
 
     protected void dataRetrieved(final PageList<ResourceComposite> result, final DSResponse response,
         final DSRequest request) {
-        HashSet<Integer> typesSet = new HashSet<Integer>();
-        HashSet<String> ancestries = new HashSet<String>();
-        ArrayList<Resource> resources = new ArrayList<Resource>(result.size());
+        Set<Integer> typesSet = new HashSet<Integer>();
+        Set<String> ancestries = new HashSet<String>();
+        List<Resource> resources = new ArrayList<Resource>(result.size());
         for (ResourceComposite resourceComposite : result) {
             Resource resource = resourceComposite.getResource();
             resources.add(resource);
@@ -193,14 +189,21 @@ public class ResourceCompositeDataSource extends RPCDataSource<ResourceComposite
         record.setAttribute("resource", res);
         record.setAttribute("id", res.getId());
         record.setAttribute(NAME.propertyName(), res.getName());
+        record.setAttribute(KEY.propertyName(), res.getResourceKey());
         record.setAttribute(DESCRIPTION.propertyName(), res.getDescription());
+        record.setAttribute(LOCATION.propertyName(), res.getLocation());
         record.setAttribute(TYPE.propertyName(), res.getResourceType().getId());
         record.setAttribute(PLUGIN.propertyName(), res.getResourceType().getPlugin());
+        record.setAttribute(VERSION.propertyName(), res.getVersion());
         record.setAttribute(CATEGORY.propertyName(), res.getResourceType().getCategory().name());
         record.setAttribute("icon", ImageManager.getResourceIcon(res.getResourceType().getCategory(), res
             .getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP));
         record.setAttribute(AVAILABILITY.propertyName(), ImageManager.getAvailabilityIconFromAvailType(res
             .getCurrentAvailability().getAvailabilityType()));
+        record.setAttribute(CTIME.propertyName(), res.getCtime());
+        record.setAttribute(ITIME.propertyName(), res.getItime());
+        record.setAttribute(MTIME.propertyName(), res.getMtime());
+        record.setAttribute(MODIFIER.propertyName(), res.getModifiedBy());
 
         record.setAttribute("resourcePermission", from.getResourcePermission());
 
@@ -214,4 +217,5 @@ public class ResourceCompositeDataSource extends RPCDataSource<ResourceComposite
     public ResourceGWTServiceAsync getResourceService() {
         return resourceService;
     }
+
 }

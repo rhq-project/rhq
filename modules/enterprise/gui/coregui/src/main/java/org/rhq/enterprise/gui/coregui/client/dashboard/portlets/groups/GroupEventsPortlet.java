@@ -38,6 +38,7 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.measurement.CustomConfigMeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortletUtil;
@@ -49,7 +50,6 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigura
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent.Constant;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView;
-import org.rhq.enterprise.gui.coregui.client.resource.disambiguation.ReportDecorator;
 import org.rhq.enterprise.gui.coregui.client.util.GwtTuple;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableCanvas;
@@ -274,8 +274,8 @@ public class GroupEventsPortlet extends LocatableVLayout implements CustomSettin
                         //insert see more link
                         LocatableDynamicForm row = new LocatableDynamicForm(recentEventsContent.extendLocatorId(String
                             .valueOf(rowNum++)));
-                        AbstractActivityView.addSeeMoreLink(row, ReportDecorator.GWT_GROUP_URL + groupId
-                            + "/Events/History/", column);
+                        String link = LinkManager.getGroupEventHistoryListLink(groupId);
+                        AbstractActivityView.addSeeMoreLink(row, link, column);
                     } else {
                         LocatableDynamicForm row = AbstractActivityView.createEmptyDisplayRow(recentEventsContent
                             .extendLocatorId("None"), AbstractActivityView.RECENT_CRITERIA_EVENTS_NONE);
@@ -295,7 +295,6 @@ public class GroupEventsPortlet extends LocatableVLayout implements CustomSettin
 
     public void startRefreshCycle() {
         refreshTimer = AutoRefreshPortletUtil.startRefreshCycle(this, this, refreshTimer);
-        markForRedraw();
     }
 
     @Override
@@ -311,9 +310,10 @@ public class GroupEventsPortlet extends LocatableVLayout implements CustomSettin
     }
 
     @Override
-    public void redraw() {
-        super.redraw();
-        loadData();
+    public void refresh() {
+        if (!isRefreshing()) {
+            loadData();
+        }
     }
 
     protected void setCurrentlyRefreshing(boolean currentlyRefreshing) {

@@ -108,6 +108,22 @@ public class LinkManager {
         return getResourceGroupLink(groupId) + "/Operations/History/" + groupOperationHistoryId;
     }
 
+    public static String getResourceEventHistoryListLink(int resourceId) {
+        return "#Resource/" + resourceId + "/Events/History/";
+    }
+
+    public static String getGroupEventHistoryListLink(int groupId) {
+        return getResourceGroupLink(groupId) + "/Events/History/";
+    }
+
+    public static String getResourceMonitoringGraphsLink(int resourceId) {
+        return "#Resource/" + resourceId + "/Monitoring/Graphs/";
+    }
+
+    public static String getGroupMonitoringGraphsLink(int groupId) {
+        return getResourceGroupLink(groupId) + "/Monitoring/Graphs/";
+    }
+
     public static String getGroupDefinitionLink(int groupDefinitionId) {
         if (GWT) {
             return "#Inventory/Groups/DynagroupDefinitions/" + groupDefinitionId;

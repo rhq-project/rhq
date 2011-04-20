@@ -314,6 +314,15 @@ public class GroupOperationsPortlet extends LocatableVLayout implements CustomSe
         return currentlyRefreshing;
     }
 
+    @Override
+    public void refresh() {
+        if (!isRefreshing()) {
+            if (groupOperations != null) {
+                groupOperations.refresh();
+            }
+        }
+    }
+
     private boolean isAutoGroup() {
         return ResourceGroupDetailView.AUTO_GROUP_VIEW.equals(getBaseViewPath());
     }
@@ -324,16 +333,6 @@ public class GroupOperationsPortlet extends LocatableVLayout implements CustomSe
 
     public String getBaseViewPath() {
         return baseViewPath;
-    }
-
-    @Override
-    public void redraw() {
-        super.redraw();
-        if (!isRefreshing()) {
-            if (groupOperations != null) {
-                groupOperations.refresh();
-            }
-        }
     }
 
     protected void setCurrentlyRefreshing(boolean currentlyRefreshing) {

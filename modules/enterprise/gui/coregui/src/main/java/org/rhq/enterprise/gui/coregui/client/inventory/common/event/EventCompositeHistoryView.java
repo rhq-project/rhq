@@ -23,6 +23,7 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.common.event;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -71,7 +72,7 @@ public class EventCompositeHistoryView extends TableSection<EventCompositeDataso
             severityNames[i++] = s.name();
         }
 
-        INITIAL_CRITERIA.addCriteria("severities", severityNames);
+        INITIAL_CRITERIA.addCriteria(EventCompositeDatasource.FILTER_SEVERITIES, severityNames);
     }
 
     public static EventCompositeHistoryView get(String locatorId, ResourceGroupComposite composite) {
@@ -108,8 +109,21 @@ public class EventCompositeHistoryView extends TableSection<EventCompositeDataso
     protected void configureTableFilters() {
         final TextItem sourceFilter = new TextItem("source", MSG.view_inventory_eventHistory_sourceFilter());
         final TextItem detailsFilter = new TextItem("details", MSG.view_inventory_eventHistory_detailsFilter());
-        final EnumSelectItem severityFilter = new EnumSelectItem("severities", MSG
-            .view_inventory_eventHistory_severityFilter(), EventSeverity.class);
+
+        LinkedHashMap<String, String> severities = new LinkedHashMap<String, String>(5);
+        severities.put(EventSeverity.DEBUG.name(), MSG.common_severity_debug());
+        severities.put(EventSeverity.INFO.name(), MSG.common_severity_info());
+        severities.put(EventSeverity.WARN.name(), MSG.common_severity_warn());
+        severities.put(EventSeverity.ERROR.name(), MSG.common_severity_error());
+        severities.put(EventSeverity.FATAL.name(), MSG.common_severity_fatal());
+        LinkedHashMap<String, String> severityIcons = new LinkedHashMap<String, String>(5);
+        severityIcons.put(EventSeverity.DEBUG.name(), ImageManager.getEventSeverityBadge(EventSeverity.DEBUG));
+        severityIcons.put(EventSeverity.INFO.name(), ImageManager.getEventSeverityBadge(EventSeverity.INFO));
+        severityIcons.put(EventSeverity.WARN.name(), ImageManager.getEventSeverityBadge(EventSeverity.WARN));
+        severityIcons.put(EventSeverity.ERROR.name(), ImageManager.getEventSeverityBadge(EventSeverity.ERROR));
+        severityIcons.put(EventSeverity.FATAL.name(), ImageManager.getEventSeverityBadge(EventSeverity.FATAL));
+        final EnumSelectItem severityFilter = new EnumSelectItem(EventCompositeDatasource.FILTER_SEVERITIES, MSG
+            .view_inventory_eventHistory_severityFilter(), EventSeverity.class, severities, severityIcons);
 
         setFilterFormItems(sourceFilter, detailsFilter, severityFilter);
     }
@@ -180,10 +194,10 @@ public class EventCompositeHistoryView extends TableSection<EventCompositeDataso
             }
         });
 
-        timestampField.setWidth("20%");
-        severityField.setWidth("25");
+        timestampField.setWidth(155);
+        severityField.setWidth(55);
         detailsField.setWidth("*");
-        sourceField.setWidth("20%");
+        sourceField.setWidth(220);
 
         setListGridFields(timestampField, severityField, detailsField, sourceField);
 
@@ -270,4 +284,5 @@ public class EventCompositeHistoryView extends TableSection<EventCompositeDataso
     public Canvas getDetailsView(int eventId) {
         return EventCompositeDetailsView.getInstance();
     }
+
 }

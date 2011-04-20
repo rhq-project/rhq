@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -29,16 +29,20 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.util.PageOrdering;
 
 /**
+ * Criteria for retrieving Resource (not plugin) configuration {@link ResourceConfigurationUpdate}s.
+ *
  * @author Greg Hinkle
  */
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
 @SuppressWarnings("unused")
 public class ResourceConfigurationUpdateCriteria extends AbstractResourceConfigurationUpdateCriteria {
+
     private static final long serialVersionUID = 1L;
 
     public static final String SORT_FIELD_RESOURCE_NAME = "resourceName";
@@ -57,6 +61,7 @@ public class ResourceConfigurationUpdateCriteria extends AbstractResourceConfigu
     private PageOrdering sortResourceId; // requires sort override
 
     public ResourceConfigurationUpdateCriteria() {
+        addRequiredPermissions(Permission.CONFIGURE_READ);
 
         filterOverrides.put("groupConfigurationUpdateId", "groupConfigurationUpdate.id = ?");
         filterOverrides.put("resourceTypeId", "resource.resourceType.id = ?");
@@ -114,4 +119,5 @@ public class ResourceConfigurationUpdateCriteria extends AbstractResourceConfigu
         addSortField(SORT_FIELD_RESOURCE_ID);
         this.sortResourceId = sortResourceId;
     }
+
 }

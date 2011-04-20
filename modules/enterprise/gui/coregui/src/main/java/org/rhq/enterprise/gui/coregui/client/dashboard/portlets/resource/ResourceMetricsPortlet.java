@@ -44,6 +44,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent.Constant;
@@ -51,7 +52,6 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupMetr
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
-import org.rhq.enterprise.gui.coregui.client.resource.disambiguation.ReportDecorator;
 import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
@@ -292,9 +292,9 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
                                                         LocatableDynamicForm row = new LocatableDynamicForm(
                                                             recentMeasurementsContent
                                                                 .extendLocatorId("RecentMeasurementsContentSeeMore"));
-                                                        AbstractActivityView.addSeeMoreLink(row,
-                                                            ReportDecorator.GWT_RESOURCE_URL + resourceId
-                                                                + "/Monitoring/Graphs/", column);
+                                                        String link = LinkManager
+                                                            .getResourceMonitoringGraphsLink(resourceId);
+                                                        AbstractActivityView.addSeeMoreLink(row, link, column);
                                                     }
                                                     //call out to 3rd party javascript lib
                                                     BrowserUtility.graphSparkLines();

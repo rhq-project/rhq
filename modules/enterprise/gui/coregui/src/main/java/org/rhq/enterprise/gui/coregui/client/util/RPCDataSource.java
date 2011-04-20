@@ -564,7 +564,7 @@ public abstract class RPCDataSource<T, C extends org.rhq.core.domain.criteria.Cr
         return result;
     }
 
-    protected DataSourceTextField createTextField(String name, String title, Integer minLength, Integer maxLength,
+    protected static DataSourceTextField createTextField(String name, String title, Integer minLength, Integer maxLength,
         Boolean required) {
         DataSourceTextField textField = new DataSourceTextField(name, title);
         textField.setLength(maxLength);
@@ -578,7 +578,7 @@ public abstract class RPCDataSource<T, C extends org.rhq.core.domain.criteria.Cr
         return textField;
     }
 
-    protected DataSourceTextField createBooleanField(String name, String title, Boolean required) {
+    protected static DataSourceTextField createBooleanField(String name, String title, Boolean required) {
         DataSourceTextField textField = new DataSourceTextField(name, title);
         textField.setLength(Boolean.FALSE.toString().length());
         textField.setRequired(required);
@@ -589,7 +589,7 @@ public abstract class RPCDataSource<T, C extends org.rhq.core.domain.criteria.Cr
         return textField;
     }
 
-    protected DataSourceIntegerField createIntegerField(String name, String title, Integer minValue, Integer maxValue,
+    protected static DataSourceIntegerField createIntegerField(String name, String title, Integer minValue, Integer maxValue,
         Boolean required) {
         DataSourceIntegerField textField = new DataSourceIntegerField(name, title);
         textField.setRequired(required);

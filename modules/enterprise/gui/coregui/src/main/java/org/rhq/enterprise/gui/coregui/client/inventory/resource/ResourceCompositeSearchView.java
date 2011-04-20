@@ -175,4 +175,5 @@ public class ResourceCompositeSearchView extends ResourceSearchView {
         return new ResourceCompositeSearchView(locatorId, parentResourceComposite, new Criteria("parentId", String
             .valueOf(parentResourceComposite.getResource().getId())), MSG.view_inventory_resources_title_children());
     }
+
 }

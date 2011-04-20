@@ -57,7 +57,6 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent.Constant;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.OperationGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
@@ -363,8 +362,7 @@ public class OperationHistoryDataSource extends
 
     @Override
     protected ResourceOperationHistoryCriteria getFetchCriteria(DSRequest request) {
-        OperationRequestStatus[] statusFilter = getArrayFilter(request, Constant.OPERATION_STATUS,
-            OperationRequestStatus.class);
+        OperationRequestStatus[] statusFilter = getArrayFilter(request, Field.STATUS, OperationRequestStatus.class);
 
         if (statusFilter == null || statusFilter.length == 0) {
             return null; // user didn't select any severities - return null to indicate no data should be displayed

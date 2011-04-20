@@ -28,8 +28,6 @@ import java.util.Date;
 import java.util.List;
 
 import com.google.gwt.user.client.Timer;
-import com.smartgwt.client.types.Alignment;
-import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
@@ -354,10 +352,12 @@ public class ProblemResourcesPortlet extends Table<ProblemResourcesDataSource> i
     }
 
     @Override
-    public void redraw() {
-        super.refresh();
-        markForRedraw();
+    public void refresh() {
+        if (!isRefreshing()) {
+            super.refresh();
+        }
     }
+
 }
 
 /**Construct table widget Label to display timerange settings used with latest datasource query.

@@ -84,6 +84,6 @@ public interface AuthorizationGWTService extends RemoteService {
      *
      * @return true if the current user possesses the specified resource permission for the specified resource
      */
-    boolean hasResourcePermission(Permission permission, Collection<Integer> resourceIds);
+    boolean hasResourcePermission(Permission permission, Collection<Integer> resourceIds) throws RuntimeException;
 
 }

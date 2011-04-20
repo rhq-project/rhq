@@ -47,8 +47,8 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
  */
 public abstract class AbstractAlertDefinitionsView extends TableSection<AbstractAlertDefinitionsDataSource> {
 
-    public AbstractAlertDefinitionsView(String locatorId, String tableTitle) {
-        super(locatorId, tableTitle);
+    public AbstractAlertDefinitionsView(String locatorId, String tableTitle, Criteria initialCriteria) {
+        super(locatorId, tableTitle, initialCriteria);
 
         setEscapeHtmlInDetailsLinkColumn(true);
     }
@@ -62,8 +62,6 @@ public abstract class AbstractAlertDefinitionsView extends TableSection<Abstract
         listGrid.setDataSource(ds);
         listGrid.setFields(ds.getListGridFields().toArray(new ListGridField[0]));
 
-        Criteria criteria = getCriteria();
-        listGrid.setCriteria(criteria);
         listGrid.setUseAllDataSourceFields(true);
         listGrid.setWrapCells(true);
         listGrid.setFixedRecordHeights(false);
@@ -188,8 +186,6 @@ public abstract class AbstractAlertDefinitionsView extends TableSection<Abstract
     }
 
     protected abstract ResourceType getResourceType();
-
-    protected abstract Criteria getCriteria();
 
     protected abstract AbstractAlertDefinitionsDataSource getAlertDefinitionDataSource();
 

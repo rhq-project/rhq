@@ -237,17 +237,6 @@ public class RecentlyAddedResourcesPortlet extends LocatableVLayout implements C
         }
     }
 
-    /** Custom refresh operation as we cannot directly extend Table because it
-     * contains a TreeGrid which is not a Table.
-     */
-    @Override
-    public void redraw() {
-        super.redraw();
-        //now reload the table data
-        this.treeGrid.invalidateCache();
-        this.treeGrid.markForRedraw();
-    }
-
     public RecentlyAddedResourceDS getDataSource() {
         return dataSource;
     }
@@ -266,4 +255,18 @@ public class RecentlyAddedResourcesPortlet extends LocatableVLayout implements C
     public boolean isRefreshing() {
         return false;
     }
+
+    // Custom refresh operation as we cannot directly extend Table because it
+    // contains a TreeGrid which is not a Table.
+    @Override
+    public void refresh() {
+        if (!isRefreshing()) {
+            if (null != treeGrid) {
+                //now reload the table data
+                treeGrid.invalidateCache();
+            }
+            markForRedraw();
+        }
+    }
+
 }

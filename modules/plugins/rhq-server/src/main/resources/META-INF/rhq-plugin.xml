@@ -2,7 +2,6 @@
         displayName="RHQ Server"
         package="org.rhq.plugins.server"
         description="Monitoring of RHQ Server features and performance"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">
 
@@ -19,9 +18,9 @@
       </runs-inside>
 
       <plugin-configuration>
-         <c:simple-property name="objectName" readOnly="true" default="rhq:service=AlertConditionCacheMonitor"/>
-         <c:simple-property name="nameTemplate" default="Alert Subsystem"/>
-         <c:simple-property name="descriptionTemplate" default="Statistics for the RHQ Server Alerts Engine Subsystem."/>
+         <c:simple-property name="objectName" default="rhq:service=AlertConditionCacheMonitor" readOnly="true"/>
+         <c:simple-property name="nameTemplate" default="Alert Subsystem" readOnly="true"/>
+         <c:simple-property name="descriptionTemplate" default="Statistics for the RHQ Server Alerts Engine Subsystem." readOnly="true"/>
       </plugin-configuration>
 
       <operation name="reloadCaches" description="Unloads then reloads all caches managed by the containing RHQ Server">
@@ -89,15 +88,15 @@
       </runs-inside>
 
       <plugin-configuration>
-         <c:simple-property name="objectName" readOnly="true" default="rhq:service=MeasurementMonitor"/>
-         <c:simple-property name="nameTemplate" default="Measurement Subsystem"/>
-         <c:simple-property name="descriptionTemplate" default="Statistics for the RHQ Server Measurement Subsystem."/>
+         <c:simple-property name="objectName" default="rhq:service=MeasurementMonitor" readOnly="true"/>
+         <c:simple-property name="nameTemplate" default="Measurement Subsystem" readOnly="true"/>
+         <c:simple-property name="descriptionTemplate" default="Statistics for the RHQ Server Measurement Subsystem." readOnly="true"/>
       </plugin-configuration>
 
       <metric property="CalltimeValuesInserted" category="throughput" displayType="summary" measurementType="trendsup"
               description="The total number of call time data records inserted into the database by this RHQ Server instance since it was started"/>
-       <metric property="CallTimeInsertTime" units="milliseconds" displayType="summary" measurementType="trendsup"
-               description="The total amount of time taken to insert call time data into the database by this RHQ Server instance since it was started"/>
+      <metric property="CallTimeInsertTime" units="milliseconds" displayType="summary" measurementType="trendsup"
+              description="The total amount of time taken to insert call time data into the database by this RHQ Server instance since it was started"/>
 
       <metric property="MeasurementsInserted" category="throughput" displayType="summary" measurementType="trendsup"
               description="The total number of measurement records (incl. Calltime data) inserted into the database by this RHQ Server instance since it was started"/>
@@ -151,9 +150,9 @@
       </runs-inside>
 
       <plugin-configuration>
-         <c:simple-property name="objectName" readOnly="true" default="rhq:service=GroupDefinitionRecalculationThreadMonitor"/>
-         <c:simple-property name="nameTemplate" default="Group Definition Subsystem"/>
-         <c:simple-property name="descriptionTemplate" default="Statistics for the RHQ Server Group Definition / DynaGroups Subsystem."/>
+         <c:simple-property name="objectName" default="rhq:service=GroupDefinitionRecalculationThreadMonitor" readOnly="true"/>
+         <c:simple-property name="nameTemplate" default="Group Definition Subsystem" readOnly="true"/>
+         <c:simple-property name="descriptionTemplate" default="Statistics for the RHQ Server Group Definition / DynaGroups Subsystem." readOnly="true"/>
       </plugin-configuration>
 
       <operation name="clear" displayName="Clear Statistics" description="Clear the collected statistics, and start collecting anew"/>
@@ -197,9 +196,9 @@
       </runs-inside>
 
       <plugin-configuration>
-         <c:simple-property name="objectName" readOnly="true" default="rhq:service=ServerCommunications"/>
-         <c:simple-property name="nameTemplate" default="Communications Subsystem"/>
-         <c:simple-property name="descriptionTemplate" default="Details on communications with agents"/>
+         <c:simple-property name="objectName" default="rhq:service=ServerCommunications" readOnly="true"/>
+         <c:simple-property name="nameTemplate" default="Communications Subsystem" readOnly="true"/>
+         <c:simple-property name="descriptionTemplate" default="Details on communications with agents" readOnly="true"/>
       </plugin-configuration>
 
       <operation name="clear" displayName="Clear Metrics" description="Clear the collected metric data and start collecting anew"/>
@@ -274,9 +273,9 @@
       </runs-inside>
 
       <plugin-configuration>
-         <c:simple-property name="objectName" readOnly="true" default="rhq.remoting:type=RemoteApiMetrics"/>
-         <c:simple-property name="nameTemplate" default="Remote API Subsystem"/>
-         <c:simple-property name="descriptionTemplate" default="Details on remote API communications with external clients, including the CLI"/>
+         <c:simple-property name="objectName" default="rhq.remoting:type=RemoteApiMetrics" readOnly="true"/>
+         <c:simple-property name="nameTemplate" default="Remote API Subsystem" readOnly="true"/>
+         <c:simple-property name="descriptionTemplate" default="Details on remote API communications with external clients, including the CLI" readOnly="true"/>
       </plugin-configuration>
 
       <operation name="clear" displayName="Clear Metrics" description="Clear the collected metric data and start collecting anew"/>
@@ -319,9 +318,9 @@
       </runs-inside>
 
       <plugin-configuration>
-         <c:simple-property name="objectName" readOnly="true" default="rhq.serverplugin:service=ServerPluginService"/>
-         <c:simple-property name="nameTemplate" default="Plugin Subsystem"/>
-         <c:simple-property name="descriptionTemplate" default="Details on the server-side plugin container subsystem"/>
+         <c:simple-property name="objectName" default="rhq.serverplugin:service=ServerPluginService" readOnly="true"/>
+         <c:simple-property name="nameTemplate" default="Plugin Subsystem" readOnly="true"/>
+         <c:simple-property name="descriptionTemplate" default="Details on the server-side plugin container subsystem" readOnly="true"/>
       </plugin-configuration>
 
       <operation name="startMasterPluginContainer"

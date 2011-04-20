@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -1903,29 +1903,47 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     }
 
     @SuppressWarnings("unchecked")
-    public ConfigurationUpdateStatus updateGroupPluginConfigurationUpdateStatus(int groupConfigurationUpdateId,
+    public ConfigurationUpdateStatus updateGroupResourceConfigurationUpdateStatus(int groupResourceConfigurationUpdateId,
         String errorMessages) {
-
-        GroupPluginConfigurationUpdate groupUpdate = configurationManager
-            .getGroupPluginConfigurationById(groupConfigurationUpdateId);
-
-        Query query = entityManager.createNamedQuery(PluginConfigurationUpdate.QUERY_FIND_STATUS_BY_PARENT_UPDATE_ID);
-        query.setParameter("groupConfigurationUpdateId", groupConfigurationUpdateId);
+        GroupResourceConfigurationUpdate groupResourceConfigUpdate = configurationManager
+            .getGroupResourceConfigurationById(groupResourceConfigurationUpdateId);
 
         // NOTE: None of the individual updates should still be INPROGRESS at the time this method is called!
-        ConfigurationUpdateStatus groupUpdateStatus;
+        Query query = entityManager.createNamedQuery(ResourceConfigurationUpdate.QUERY_FIND_STATUS_BY_PARENT_UPDATE_ID);
+        query.setParameter("groupConfigurationUpdateId", groupResourceConfigUpdate.getId());
         List<ConfigurationUpdateStatus> updateStatusTuples = query.getResultList();
-        if (updateStatusTuples.contains(ConfigurationUpdateStatus.FAILURE) || errorMessages != null) {
-            groupUpdateStatus = ConfigurationUpdateStatus.FAILURE;
+
+        return completeGroupConfigurationUpdate(groupResourceConfigUpdate, updateStatusTuples, errorMessages);
+    }
+
+    @SuppressWarnings("unchecked")
+    public ConfigurationUpdateStatus updateGroupPluginConfigurationUpdateStatus(int groupPluginConfigurationUpdateId,
+        String errorMessages) {
+        GroupPluginConfigurationUpdate groupPluginConfigUpdate = configurationManager
+            .getGroupPluginConfigurationById(groupPluginConfigurationUpdateId);
+
+        // NOTE: None of the individual updates should still be INPROGRESS at the time this method is called!
+        Query query = entityManager.createNamedQuery(PluginConfigurationUpdate.QUERY_FIND_STATUS_BY_PARENT_UPDATE_ID);
+        query.setParameter("groupConfigurationUpdateId", groupPluginConfigUpdate.getId());
+        List<ConfigurationUpdateStatus> updateStatusTuples = query.getResultList();
+
+        return completeGroupConfigurationUpdate(groupPluginConfigUpdate, updateStatusTuples, errorMessages);
+    }
+
+    private ConfigurationUpdateStatus completeGroupConfigurationUpdate(AbstractGroupConfigurationUpdate groupConfigUpdate,
+                                                                       List<ConfigurationUpdateStatus> memberConfigUpdateStatusTuples,
+                                                                       String errorMessages) {
+        ConfigurationUpdateStatus groupConfigUpdateStatus;
+        if (memberConfigUpdateStatusTuples.contains(ConfigurationUpdateStatus.FAILURE) || errorMessages != null) {
+            groupConfigUpdateStatus = ConfigurationUpdateStatus.FAILURE;
         } else {
-            groupUpdateStatus = ConfigurationUpdateStatus.SUCCESS;
+            groupConfigUpdateStatus = ConfigurationUpdateStatus.SUCCESS;
         }
+        groupConfigUpdate.setStatus(groupConfigUpdateStatus);
+        groupConfigUpdate.setErrorMessage(errorMessages);
+        configurationManager.updateGroupConfigurationUpdate(groupConfigUpdate);
 
-        groupUpdate.setStatus(groupUpdateStatus);
-        groupUpdate.setErrorMessage(errorMessages);
-        configurationManager.updateGroupConfigurationUpdate(groupUpdate);
-
-        return groupUpdateStatus; // if the caller wants to know what the new status was
+        return groupConfigUpdateStatus; // if the caller wants to know what the new status was
     }
 
     public int deleteGroupPluginConfigurationUpdates(Subject subject, Integer resourceGroupId,

@@ -92,18 +92,19 @@ public class AgentPluginScanner {
     }
 
     void registerAgentPlugins() throws Exception {
-        for (DeploymentInfo di : this.scanned) {
-            log.debug("Hot deploying agent plugin [" + di.url + "]...");
-            this.agentPluginDeployer.pluginDetected(di);
+        try {
+            for (DeploymentInfo di : this.scanned) {
+                log.debug("Hot deploying agent plugin [" + di.url + "]...");
+                this.agentPluginDeployer.pluginDetected(di);
+            }
+
+            // Register all the new plugins.
+            // Call this even if we don't have any update files this time, in case an error occurred last time
+            // and we need to finish what we started before.
+            this.agentPluginDeployer.registerPlugins();
+        } finally {
+            scanned.clear();
         }
-        this.scanned.clear();
-
-        // Register all the new plugins.
-        // Call this even if we don't have any update files this time, in case an error occurred last time
-        // and we need to finish what we started before.
-        this.agentPluginDeployer.registerPlugins();
-
-        return;
     }
 
     void agentPluginScan() throws Exception {

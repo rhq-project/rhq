@@ -56,7 +56,9 @@ public interface EventGWTService extends RemoteService {
 
     int purgeEventsForContext(EntityContext context) throws RuntimeException;
 
-    Map<EventSeverity, Integer> getEventCountsBySeverity(int resourceId, long startDate, long endDate);
+    Map<EventSeverity, Integer> getEventCountsBySeverity(int resourceId, long startDate, long endDate)
+        throws RuntimeException;
 
-    Map<EventSeverity, Integer> getEventCountsBySeverityForGroup(int groupId, long startDate, long endDate);
+    Map<EventSeverity, Integer> getEventCountsBySeverityForGroup(int groupId, long startDate, long endDate)
+        throws RuntimeException;
 }

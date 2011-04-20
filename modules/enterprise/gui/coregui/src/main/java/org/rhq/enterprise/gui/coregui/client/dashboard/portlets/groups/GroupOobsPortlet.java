@@ -262,9 +262,7 @@ public class GroupOobsPortlet extends LocatableVLayout implements CustomSettings
     }
 
     @Override
-    public void redraw() {
-        super.redraw();
-        //spinder 4/3/11: although screen does not flash autorefresh is being called on time. Too fast for user to notice.
+    public void refresh() {
         if (!isRefreshing()) {
             loadData();
         }

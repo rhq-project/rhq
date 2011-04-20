@@ -279,7 +279,7 @@ public abstract class AbstractOperationScheduleDetailsView extends
             .getField(AbstractOperationScheduleDataSource.Field.DESCRIPTION);
         // Notes field is user-editable, so escape HTML to prevent an XSS attack. Unless empty, then don't to prevent
         // displaying &nbsp; as the value.
-        String notesValue = getForm().getValue(AbstractOperationScheduleDataSource.Field.DESCRIPTION).toString();
+        String notesValue = getForm().getValueAsString(AbstractOperationScheduleDataSource.Field.DESCRIPTION);
         if (null != notesValue && !notesValue.isEmpty()) {
             notesItem.setOutputAsHTML(true);
         }

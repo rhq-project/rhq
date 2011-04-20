@@ -303,7 +303,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
             newCondition.setName(measDef.getDisplayName()); // TODO should not use display name
             newCondition.setThreshold(Double.valueOf(getValueAsString(BASELINE_PERCENTAGE_ITEMNAME)) / 100.0);
             newCondition.setComparator(getValueAsString(BASELINE_COMPARATOR_ITEMNAME));
-            newCondition.setOption(null);
+            newCondition.setOption(getValueAsString(BASELINE_SELECTION_ITEMNAME));
             newCondition.setMeasurementDefinition(measDef);
             break;
         }

@@ -96,30 +96,37 @@
                 db = project.properties.db
                 if (db == 'dev') {
                   database = project.properties['rhq.dev.ds.db-name']
-		  }
+                  server = project.properties['rhq.dev.ds.server-name'] ?: '127.0.0.1'
+                  rhqUser = project.properties['rhq.dev.ds.user-name'] ?: 'rhqadmin'
+		}
 		  // This is a bit of a temporary hack to work around
 		  // https://cvs.codehaus.org/browse/GMAVEN-46 which results in
 		  // groovy scripts not being able to get the correct values of
 		  // build properties that are overridden on the command line.
 		  // This is being done in support of the hudson job which is
 		  // trying to use a database named rhqupgrade.
-		  else if (project.properties['upgrade.db']) {
-                    database = 'rhqupgrade'
-		  }
-		  else {
+		else if (project.properties['upgrade.db']) {
+                  database = 'rhqupgrade'
+		}
+		else {
                   database = project.properties['rhq.test.ds.db-name']
+                  server = project.properties['rhq.test.ds.server-name'] ?: '127.0.0.1'
+                  rhqUser = project.properties['rhq.test.ds.user-name'] ?: 'rhqadmin'
                 }
+
+                adminUsername = project.properties['rhq.db.admin.username'] ?: 'postgres'
+                adminPassword = project.properties['rhq.db.admin.password'] ?: 'postgres'
                 project.properties.dbsetup = 'true'
 
                 sql = Sql.newInstance(
-                     "jdbc:postgresql://127.0.0.1:5432/postgres",
-                     "postgres",
-                     "postgres",
+                     "jdbc:postgresql://${server}:5432/postgres",
+                     adminUsername,
+                     adminPassword,
                      "org.postgresql.Driver")
 
                 sql.execute("drop database if exists ${Sql.expand(database)};")
                 log.info("dropped database $database")
-                sql.execute("create database ${Sql.expand(database)} with owner rhqadmin;")
+                sql.execute("create database ${Sql.expand(database)} with owner ${Sql.expand(rhqUser)};")
                 log.info("created database $database")
               </source>
             </configuration>

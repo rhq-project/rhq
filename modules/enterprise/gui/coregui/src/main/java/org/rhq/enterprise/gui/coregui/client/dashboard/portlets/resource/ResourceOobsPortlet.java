@@ -24,17 +24,21 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.fields.LinkItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
+import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
+import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent.Constant;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupOobsPortlet;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView.ChartViewWindow;
 import org.rhq.enterprise.gui.coregui.client.util.GwtRelativeDurationConverter;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
@@ -104,10 +108,23 @@ public class ResourceOobsPortlet extends GroupOobsPortlet {
                                 .getScheduleName()));
                             row.setNumCols(2);
 
-                            String title = oob.getScheduleName() + ":";
-                            String destination = "/resource/common/monitor/Visibility.do?m=" + oob.getDefinitionId()
-                                + "&id=" + resourceId + "&mode=chartSingleMetricSingleResource";
+                            final String title = oob.getScheduleName() + ":";
+                            final String destination = "/resource/common/monitor/Visibility.do?m="
+                                + oob.getDefinitionId() + "&id=" + resourceId + "&mode=chartSingleMetricSingleResource";
                             LinkItem link = AbstractActivityView.newLinkItem(title, destination);
+                            link.addClickHandler(new ClickHandler() {
+                                @Override
+                                public void onClick(ClickEvent event) {
+                                    ChartViewWindow window = new ChartViewWindow(recentOobContent
+                                        .extendLocatorId("ChartWindow"), title);
+                                    //generate and include iframed content
+                                    FullHTMLPane iframe = new FullHTMLPane(recentOobContent.extendLocatorId("View"),
+                                        destination);
+                                    window.addItem(iframe);
+                                    window.show();
+                                }
+                            });
+
                             StaticTextItem time = AbstractActivityView.newTextItem(GwtRelativeDurationConverter
                                 .format(oob.getTimestamp()));
 

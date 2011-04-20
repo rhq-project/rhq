@@ -28,6 +28,8 @@ import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.Img;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
+import com.smartgwt.client.widgets.events.CloseClickHandler;
+import com.smartgwt.client.widgets.events.CloseClientEvent;
 import com.smartgwt.client.widgets.form.fields.CheckboxItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.FormItemIcon;
@@ -66,6 +68,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
@@ -108,6 +111,7 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
     public static String RECENT_BUNDLE_DEPLOY_NONE = MSG.view_resource_inventory_activity_no_recent_bundle_deploy();
     public static String SEE_MORE = MSG.common_msg_see_more();
     public static String RECENT_CRITERIA_EVENTS_NONE = MSG.view_resource_inventory_activity_criteria_no_recent_events();
+    public static final String CHART_TITLE = MSG.common_title_metric_chart();
 
     private ResourceGroupComposite groupComposite = null;
     private ResourceComposite resourceComposite = null;
@@ -648,5 +652,34 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
             }
         }
         return groupBasePath;
+    }
+
+    public static class ChartViewWindow extends LocatableWindow {
+
+        public ChartViewWindow(String locatorId, String title) {
+            super(locatorId);
+            setTitle(CHART_TITLE + ": " + title);
+            setShowMinimizeButton(true);
+            setShowMaximizeButton(true);
+            setShowCloseButton(true);
+            setIsModal(true);
+            setShowModalMask(true);
+            setWidth(850);
+            setHeight(650);
+            setShowResizer(true);
+            setCanDragResize(true);
+            centerInPage();
+
+            addCloseClickHandler(new CloseClickHandler() {
+                @Override
+                public void onCloseClick(CloseClientEvent event) {
+                    try {
+                        hide();
+                    } catch (Throwable e) {
+                        Log.warn("Cannot destroy chart display window.", e);
+                    }
+                }
+            });
+        }
     }
 }

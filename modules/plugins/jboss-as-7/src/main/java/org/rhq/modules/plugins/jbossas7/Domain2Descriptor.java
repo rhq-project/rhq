@@ -23,11 +23,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import com.apple.java.Usage;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
@@ -36,44 +31,68 @@ import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
  * Generate properties from a domain dump
  * @author Heiko W. Rupp
  */
-public class Domain2Properties {
+public class Domain2Descriptor {
 
     public static void main(String[] args) throws Exception {
 
-        if (args.length<2) {
+        if (args.length<1) {
             usage();
             System.exit(1);
         }
 
-        Domain2Properties dp = new Domain2Properties();
-        dp.run(args);
+        Domain2Descriptor d2d = new Domain2Descriptor();
+        d2d.run(args);
 
 
     }
 
     private void run(String[] args) {
 
-        String path = args[0];
-        String type = args[1];
+        boolean doMetrcis = false;
+        int pos = 0;
+        if (args[0].startsWith("-")) {
+            if (args[0].equals("-m"))
+                doMetrcis = true;
+            else if (args[0].equals("-p"))
+                doMetrcis = false;
+            else {
+                usage();
+                return;
+            }
+            pos++;
+        }
+
+        String path = args[pos];
+        String childType = null;
+        if (args.length>pos+1)
+            childType = args[pos+1];
 
         ASConnection conn = new ASConnection("localhost",9990);
 
         List<PROPERTY_VALUE> address = pathToAddress(path);
-        Operation op = new Operation("read-resource-description",address,"operations",true);
+        Operation op = new Operation("read-resource-description",address); // ,"operations",true);
         op.addAdditionalProperty("recursive","true");
+        if (doMetrcis)
+            op.addAdditionalProperty("include-runtime",true);
         ComplexResult res = (ComplexResult) conn.execute(op,true);
         if (!res.isSuccess()) {
             System.err.println("Failure: " + res.getFailureDescription());
             return;
         }
 
+        Map<String,Object> attributesMap;
 
         Map<String,Object> resMap = res.getResult();
-        Map childMap = (Map) resMap.get("children");
-        Map <String,Object> typeMap = (Map<String, Object>) childMap.get(type);
-        Map descriptionMap = (Map) typeMap.get("model-description");
-        Map starMap = (Map) descriptionMap.get("*");
-        Map<String,Object> attributesMap = (Map<String, Object>) starMap.get("attributes");
+        if (childType!=null) {
+            Map childMap = (Map) resMap.get("children");
+            Map <String,Object> typeMap = (Map<String, Object>) childMap.get(childType);
+            Map descriptionMap = (Map) typeMap.get("model-description");
+            Map starMap = (Map) descriptionMap.get("*");
+            attributesMap = (Map<String, Object>) starMap.get("attributes");
+        }
+        else {
+            attributesMap = (Map<String, Object>) resMap.get("attributes");
+        }
 
 
 
@@ -95,7 +114,7 @@ public class Domain2Properties {
             case LONG:
                 typeString = "long"; break;
             case BIG_DECIMAL:
-                typeString = "long"; break; // TODO bettter float or double?
+                typeString = "long"; break; // TODO better float or double?
             case LIST:
                 typeString = "-list-";
                 break; // Handled below
@@ -104,7 +123,7 @@ public class Domain2Properties {
                 System.err.println("Unknown type " + ptype + " for " + entry.getKey());
             }
 
-            if (ptype==Type.LIST) {
+            if (ptype==Type.LIST && !doMetrcis) {
 
                 System.out.println("<c:list-property name=\"" + entry.getKey() +"\" >");
                 System.out.println("  <c:simple-property name=\"" + entry.getKey() + "\" />");
@@ -115,28 +134,54 @@ public class Domain2Properties {
                 continue;
             }
 
-            StringBuilder sb = new StringBuilder("<c:simple-property name=\"");
-            sb.append(entry.getKey()).append('"');
+            if (doMetrcis) {
+                if (!props.get("access-type").equals("metric"))
+                    continue;
 
-            if ((Boolean) props.get("required")) {
-                sb.append(" required=\"true\"");
+                StringBuilder sb = new StringBuilder("<metric property=\"");
+                sb.append(entry.getKey()).append('"');
+                sb.append(" type=\"").append(typeString).append("\"");
+                if (ptype==Type.STRING)
+                    sb.append(" dataType=\"trait\"");
+
+                String description = (String) props.get("description");
+                if (description!=null) {
+                    if (sb.length()+description.length() > 120)
+                        sb.append("\n        ");
+                    sb.append(" description=\"").append(description).append('"');
+                }
+                sb.append("/>");
+                System.out.println(sb.toString());
+
             }
+            else {
 
-            sb.append(" type=\"").append(typeString).append("\"");
-            sb.append(" readOnly=\"");
-            if (props.get("access-type").equals("read-only"))
-                sb.append("true");
-            else
-                sb.append("false");
-            sb.append('"');
+                StringBuilder sb = new StringBuilder("<c:simple-property name=\"");
+                sb.append(entry.getKey()).append('"');
 
-            String description = (String) props.get("description");
-            if (sb.length()+description.length() > 120)
-                sb.append("\n        ");
-            sb.append(" description=\"").append(description).append('"');
-            sb.append("/>");
+                Object required = props.get("required");
+                if (required != null && (Boolean) required) {
+                    sb.append(" required=\"true\"");
+                }
 
-            System.out.println(sb.toString());
+                sb.append(" type=\"").append(typeString).append("\"");
+                sb.append(" readOnly=\"");
+                if (props.get("access-type").equals("read-only"))
+                    sb.append("true");
+                else
+                    sb.append("false");
+                sb.append('"');
+
+                String description = (String) props.get("description");
+                if (description!=null) {
+                    if (sb.length()+description.length() > 120)
+                        sb.append("\n        ");
+                    sb.append(" description=\"").append(description).append('"');
+                }
+                sb.append("/>");
+
+                System.out.println(sb.toString());
+            }
         }
 
 
@@ -181,8 +226,10 @@ public class Domain2Properties {
 
 
     private static void usage() {
-        System.out.println("Domain2Properties path type");
+        System.out.println("Domain2Properties [-p|-m] path type");
         System.out.println("   path is of kind 'key=value[,key=value]+");
+        System.out.println(" -p create properties (default)");
+        System.out.println(" -m create metrics");
     }
 
     public enum Type {

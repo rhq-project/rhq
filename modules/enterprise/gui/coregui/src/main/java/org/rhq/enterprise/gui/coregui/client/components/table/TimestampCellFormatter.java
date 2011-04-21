@@ -74,6 +74,9 @@ public class TimestampCellFormatter implements CellFormatter {
             } else {
                 throw new IllegalArgumentException("value parameter is not a Date, Long, Integer, or a String.");
             }
+            if (longValue == 0) {
+                return "";
+            }
             date = new Date(longValue);
         }
 

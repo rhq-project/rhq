@@ -70,31 +70,33 @@ public class RuntimeApacheConfiguration {
         
         List<String> defines = new ArrayList<String>(httpdBinaryInfo.getCompiledInDefines());
         
-        String[] args = httpdProcessInfo.getCommandLine();
-        for(int i = 1; i < args.length; ++i) {
-            String define = null;
-            if (args[i] != null && args[i].startsWith("-D")) {
-                define = args[i].substring(2).trim();
-            }
-            
-            if (define != null && define.isEmpty()) {
-                //this means we saw an empty -D arg. This can happen if there is a space between -D and the value.
-                //That is legal though, so we have to accomodate for that.
-                if (i < args.length - 1) {
-                    define = args[i + 1].trim();
-                    if (define.startsWith("-")) {
-                        //this would be another option
-                        define = null;
-                    } else {
-                        ++i; //we can skip the next arg
-                    }
-                } else {
-                    define = null; //well -D is the last argument
+        if (httpdProcessInfo != null) {
+            String[] args = httpdProcessInfo.getCommandLine();
+            for(int i = 1; i < args.length; ++i) {
+                String define = null;
+                if (args[i] != null && args[i].startsWith("-D")) {
+                    define = args[i].substring(2).trim();
                 }
-            }
-            
-            if (define != null) {
-                defines.add(define);
+                
+                if (define != null && define.isEmpty()) {
+                    //this means we saw an empty -D arg. This can happen if there is a space between -D and the value.
+                    //That is legal though, so we have to accomodate for that.
+                    if (i < args.length - 1) {
+                        define = args[i + 1].trim();
+                        if (define.startsWith("-")) {
+                            //this would be another option
+                            define = null;
+                        } else {
+                            ++i; //we can skip the next arg
+                        }
+                    } else {
+                        define = null; //well -D is the last argument
+                    }
+                }
+                
+                if (define != null) {
+                    defines.add(define);
+                }
             }
         }
         

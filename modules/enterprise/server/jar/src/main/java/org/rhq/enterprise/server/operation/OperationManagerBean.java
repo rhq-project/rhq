@@ -848,6 +848,19 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
             history.setParameters(parameters);
         }
 
+        // to avoid TransientObjectExceptions during the merge, we need to attach all resource operation histories, if there are any
+        if (history instanceof GroupOperationHistory) {
+            GroupOperationHistory groupHistory = (GroupOperationHistory) history;
+            List<ResourceOperationHistory> roh = groupHistory.getResourceOperationHistories();
+            if (roh != null && roh.size() > 0) {
+                List<ResourceOperationHistory> attached = new ArrayList<ResourceOperationHistory>(roh.size());
+                for (ResourceOperationHistory unattachedHistory : roh) {
+                    attached.add(entityManager.getReference(ResourceOperationHistory.class, unattachedHistory.getId()));
+                }
+                groupHistory.setResourceOperationHistories(attached);
+            }
+        }
+
         history = entityManager.merge(history); // merge will persist if it doesn't exist yet
 
         if (history.getParameters() != null) {

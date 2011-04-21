@@ -100,8 +100,10 @@ public abstract class OperationJob implements Job {
             schedule.getResource(), groupHistory);
 
         // persist the results of the initial create
-        history = (ResourceOperationHistory) operationManager.updateOperationHistory(schedule.getSubject(), history);
+        ResourceOperationHistory persisted;
+        persisted = (ResourceOperationHistory) operationManager.updateOperationHistory(schedule.getSubject(), history);
+        history.setId(persisted.getId()); // we need this - this enables the server to successfully update the group history later
 
-        return history;
+        return persisted;
     }
 }

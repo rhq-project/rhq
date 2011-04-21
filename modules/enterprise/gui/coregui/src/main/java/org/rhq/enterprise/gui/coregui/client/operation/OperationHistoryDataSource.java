@@ -303,15 +303,30 @@ public class OperationHistoryDataSource extends
                     Log.info(result.size() + " operation histories fetched in: " + fetchTime + "ms");
 
                     dataRetrieved(result, response, request);
-                    processResponse(request.getRequestId(), response);
                 }
             });
     }
 
     /**
+     * Sub-classes can override this to add fine-grained control over the result set size. By default the
+     * total rows are set to the total result set for the query, allowing proper paging.  But some views (portlets)
+     * may want to limit results to a small set (like most recent).  
+     * @param result
+     * @param response
+     * @param request
+     * 
+     * @return should not exceed result.getTotalSize(). 
+     */
+    protected int getTotalRows(final PageList<ResourceOperationHistory> result, final DSResponse response,
+        final DSRequest request) {
+
+        return result.getTotalSize();
+    }
+
+    /**
      * Additional processing to support entity-specific or cross-resource views, and something that can be overidden.
      */
-    protected void dataRetrieved(final PageList<ResourceOperationHistory> result, final DSResponse response,
+    private void dataRetrieved(final PageList<ResourceOperationHistory> result, final DSResponse response,
         final DSRequest request) {
         switch (entityContext.type) {
 
@@ -319,7 +334,8 @@ public class OperationHistoryDataSource extends
         case Resource:
             response.setData(buildRecords(result));
             // for paging to work we have to specify size of full result set
-            response.setTotalRows(result.getTotalSize());
+            response.setTotalRows(getTotalRows(result, response, request));
+            processResponse(request.getRequestId(), response);
             break;
 
         // disambiguate as the results could be cross-resource
@@ -354,7 +370,8 @@ public class OperationHistoryDataSource extends
                     }
                     response.setData(records);
                     // for paging to work we have to specify size of full result set
-                    response.setTotalRows(result.getTotalSize());
+                    response.setTotalRows(getTotalRows(result, response, request));
+                    processResponse(request.getRequestId(), response);
                 }
             });
         }

@@ -45,8 +45,12 @@ public class ComparableVersionTest {
         compareVersions("1.1.0.GA", "1.1.1.RC1"); // ver2 version number is still after ver1 version number, although ver2 is not production ready
         compareVersions("4.0.0-SNAPSHOT", "4.0.0.CR2"); // CR is an alias for RC
         compareVersions("4.0.0-SNAPSHOT", "4.0.0.CR"); // CR is an alias for RC
-        compareVersions("4.0.0-SNAPSHOT", "4.0.0");
+    }
+
+    public void testSnapshotBetaGACompare() {
+        compareVersions("4.0.0-SNAPSHOT", "4.0.0.Beta1");
         compareVersions("4.0.0.Beta1", "4.0.0");
+        compareVersions("4.0.0.Beta1", "4.0.0.GA");
     }
 
     private void compareVersions(String ver1String, String ver2String) {

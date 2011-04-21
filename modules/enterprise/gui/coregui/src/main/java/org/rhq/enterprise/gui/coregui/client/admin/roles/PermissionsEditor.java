@@ -357,36 +357,50 @@ public class PermissionsEditor extends LocatableVStack {
     }
 
     private void updatePermissions(Boolean authorized, Permission permission) {
+        String messageString = null;
         boolean redrawRequired = false;
         if (authorized) {
             this.selectedPermissions.add(permission);
             if (permission == Permission.MANAGE_SECURITY) {
                 // MANAGE_SECURITY implies all other perms.
-                this.selectedPermissions.addAll(EnumSet.allOf(Permission.class));
-                redrawRequired = true;
+                if (this.selectedPermissions.addAll(EnumSet.allOf(Permission.class))) {
+                    messageString = MSG.view_adminRoles_permissions_autoselecting_manageSecurity_implied();
+                    redrawRequired = true;
+                }
             } else if (permission == Permission.MANAGE_INVENTORY) {
                 // MANAGE_INVENTORY implies all Resource perms.
-                this.selectedPermissions.addAll(Permission.RESOURCE_ALL);
-                redrawRequired = true;
+                if (this.selectedPermissions.addAll(Permission.RESOURCE_ALL)) {
+                    messageString = MSG.view_adminRoles_permissions_autoselecting_manageInventory_implied();
+                    redrawRequired = true;
+                }
             } else if (permission == Permission.CONFIGURE_WRITE) {
                 // CONFIGURE_WRITE implies CONFIGURE_READ.
-                this.selectedPermissions.add(Permission.CONFIGURE_READ);
-                redrawRequired = true;
+                if (this.selectedPermissions.add(Permission.CONFIGURE_READ)) {
+                    messageString = MSG.view_adminRoles_permissions_autoselecting_configureWrite_implied();
+                    redrawRequired = true;
+                }
             }            
         } else {
             this.selectedPermissions.remove(permission);
             if (permission == Permission.CONFIGURE_READ) {
                 // Lack of CONFIGURE_READ implies lack of CONFIGURE_WRITE.
-                this.selectedPermissions.remove(Permission.CONFIGURE_WRITE);
-                redrawRequired = true;
+                if (this.selectedPermissions.remove(Permission.CONFIGURE_WRITE)) {
+                    messageString = MSG.view_adminRoles_permissions_autoselecting_configureRead_implied();
+                    redrawRequired = true;
+                }
             }
         }
-        
+
         ListGridRecord[] permissionRecords = RolesDataSource.toRecordArray(this.selectedPermissions);
         this.roleEditView.getForm().setValue(RolesDataSource.Field.PERMISSIONS, permissionRecords);
 
         if (redrawRequired) {
             redraw();
+        }
+
+        if (messageString != null) {
+            Message message = new Message(messageString, EnumSet.of(Message.Option.Transient));
+            CoreGUI.getMessageCenter().notify(message);
         }
     }
 

@@ -339,11 +339,17 @@ public class PermissionsEditor extends LocatableVStack {
                     if (permission == Permission.VIEW_RESOURCE) {
                         String messageString = MSG.view_adminRoles_permissions_readAccessImplied(permissionDisplayName);
                         handleIllegalPermissionSelection(event, messageString);
-                    } else if (!authorized && selectedPermissions.contains(Permission.MANAGE_SECURITY) && permission != Permission.MANAGE_SECURITY) {
-                        String messageString = MSG.view_adminRoles_permissions_illegal_deselection_due_to_manageSecurity_selection(permissionDisplayName);
+                    } else if (!authorized && selectedPermissions.contains(Permission.MANAGE_SECURITY) &&
+                        permission != Permission.MANAGE_SECURITY) {
+                        String messageString = MSG.view_adminRoles_permissions_illegalDeselectionDueToManageSecuritySelection(permissionDisplayName);
                         handleIllegalPermissionSelection(event, messageString);
-                    } else if (!authorized && selectedPermissions.contains(Permission.MANAGE_INVENTORY) && permission.getTarget() == Permission.Target.RESOURCE) {
-                        String messageString = MSG.view_adminRoles_permissions_illegal_deselection_due_to_manageInventory_selection(permissionDisplayName);
+                    } else if (!authorized && selectedPermissions.contains(Permission.MANAGE_INVENTORY) &&
+                        permission.getTarget() == Permission.Target.RESOURCE) {
+                        String messageString = MSG.view_adminRoles_permissions_illegalDeselectionDueToManageInventorySelection(permissionDisplayName);
+                        handleIllegalPermissionSelection(event, messageString);
+                    } else if (!authorized && selectedPermissions.contains(Permission.CONFIGURE_WRITE) &&
+                        permission == Permission.CONFIGURE_READ) {
+                        String messageString = MSG.view_adminRoles_permissions_illegalDeselectionDueToCorrespondingWritePermSelection(permissionDisplayName);
                         handleIllegalPermissionSelection(event, messageString);
                     } else {
                         updatePermissions(authorized, permission);
@@ -391,13 +397,6 @@ public class PermissionsEditor extends LocatableVStack {
             }            
         } else {
             this.selectedPermissions.remove(permission);
-            if (permission == Permission.CONFIGURE_READ) {
-                // Lack of CONFIGURE_READ implies lack of CONFIGURE_WRITE.
-                if (this.selectedPermissions.remove(Permission.CONFIGURE_WRITE)) {
-                    messageString = MSG.view_adminRoles_permissions_autoselecting_configureRead_implied();
-                    redrawRequired = true;
-                }
-            }
         }
 
         ListGridRecord[] permissionRecords = RolesDataSource.toRecordArray(this.selectedPermissions);

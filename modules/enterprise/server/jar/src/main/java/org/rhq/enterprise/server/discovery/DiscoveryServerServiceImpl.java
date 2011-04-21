@@ -206,6 +206,8 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
         pojoResource.setName(resource.getName());
         pojoResource.setDescription(resource.getDescription());
         pojoResource.setLocation(resource.getLocation());
+        pojoResource.setVersion(resource.getVersion());
+        
         if (resource.getParentResource() != null) {
             pojoResource.setParentResource(convertToPojoResource(resource.getParentResource(), false));
         }

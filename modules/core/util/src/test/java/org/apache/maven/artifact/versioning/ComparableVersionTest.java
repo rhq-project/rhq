@@ -23,152 +23,41 @@ import org.testng.annotations.Test;
 @Test
 public class ComparableVersionTest {
     public void testSimpleVersionCompare() {
-        ComparableVersion ver1;
-        ComparableVersion ver2;
-
-        ver1 = new ComparableVersion("1.0");
-        ver2 = new ComparableVersion("1.1");
-        assert !ver1.equals(ver2);
-        assert !ver2.equals(ver1);
-        assert ver1.compareTo(ver1) == 0;
-        assert ver2.compareTo(ver2) == 0;
-        assert ver1.compareTo(ver2) < 0;
-        assert ver2.compareTo(ver1) > 0;
-
-        ver1 = new ComparableVersion("1.0");
-        ver2 = new ComparableVersion("2.0");
-        assert !ver1.equals(ver2);
-        assert !ver2.equals(ver1);
-        assert ver1.compareTo(ver1) == 0;
-        assert ver2.compareTo(ver2) == 0;
-        assert ver1.compareTo(ver2) < 0;
-        assert ver2.compareTo(ver1) > 0;
-
-        ver1 = new ComparableVersion("1.0.0");
-        ver2 = new ComparableVersion("1.0.1");
-        assert !ver1.equals(ver2);
-        assert !ver2.equals(ver1);
-        assert ver1.compareTo(ver1) == 0;
-        assert ver2.compareTo(ver2) == 0;
-        assert ver1.compareTo(ver2) < 0;
-        assert ver2.compareTo(ver1) > 0;
+        compareVersions("1.0", "1.1");
+        compareVersions("1.0", "2.0");
+        compareVersions("1.0.0", "1.0.1");
     }
 
     public void testSnapshotVersionCompare() {
-        ComparableVersion ver1;
-        ComparableVersion ver2;
-
-        ver1 = new ComparableVersion("1.0-SNAPSHOT");
-        ver2 = new ComparableVersion("1.1-SNAPSHOT");
-        assert !ver1.equals(ver2);
-        assert !ver2.equals(ver1);
-        assert ver1.compareTo(ver1) == 0;
-        assert ver2.compareTo(ver2) == 0;
-        assert ver1.compareTo(ver2) < 0;
-        assert ver2.compareTo(ver1) > 0;
-
-        ver1 = new ComparableVersion("1.1-SNAPSHOT");
-        ver2 = new ComparableVersion("1.1.0.RC1");
-        assert !ver1.equals(ver2);
-        assert !ver2.equals(ver1);
-        assert ver1.compareTo(ver1) == 0;
-        assert ver2.compareTo(ver2) == 0;
-        assert ver1.compareTo(ver2) < 0;
-        assert ver2.compareTo(ver1) > 0;
-
-        ver1 = new ComparableVersion("1.1-SNAPSHOT");
-        ver2 = new ComparableVersion("1.1.0.GA");
-        assert !ver1.equals(ver2);
-        assert !ver2.equals(ver1);
-        assert ver1.compareTo(ver1) == 0;
-        assert ver2.compareTo(ver2) == 0;
-        assert ver1.compareTo(ver2) < 0;
-        assert ver2.compareTo(ver1) > 0;
-
-        ver1 = new ComparableVersion("1.1-SNAPSHOT");
-        ver2 = new ComparableVersion("1.1.0.GA");
-        assert !ver1.equals(ver2);
-        assert !ver2.equals(ver1);
-        assert ver1.compareTo(ver1) == 0;
-        assert ver2.compareTo(ver2) == 0;
-        assert ver1.compareTo(ver2) < 0;
-        assert ver2.compareTo(ver1) > 0;
-
-        ver1 = new ComparableVersion("1.1.1-SNAPSHOT");
-        ver2 = new ComparableVersion("1.1.1.GA");
-        assert !ver1.equals(ver2);
-        assert !ver2.equals(ver1);
-        assert ver1.compareTo(ver1) == 0;
-        assert ver2.compareTo(ver2) == 0;
-        assert ver1.compareTo(ver2) < 0;
-        assert ver2.compareTo(ver1) > 0;
-
-        ver1 = new ComparableVersion("1.1.1-SNAPSHOT");
-        ver2 = new ComparableVersion("1.1.0.GA");
-        assert !ver1.equals(ver2);
-        assert !ver2.equals(ver1);
-        assert ver1.compareTo(ver1) == 0;
-        assert ver2.compareTo(ver2) == 0;
-        assert ver1.compareTo(ver2) > 0; // ver1 is after ver2!
-        assert ver2.compareTo(ver1) < 0; // ver1 is after ver2!
+        compareVersions("1.0-SNAPSHOT", "1.1-SNAPSHOT");
+        compareVersions("1.1-SNAPSHOT", "1.1.0.RC1");
+        compareVersions("1.1-SNAPSHOT", "1.1.0.GA");
+        compareVersions("1.1-SNAPSHOT", "1.1.0.GA");
+        compareVersions("1.1.1-SNAPSHOT", "1.1.1.GA");
+        compareVersions("1.1.0.GA", "1.1.1-SNAPSHOT"); // ver2 version number is still after ver1 version number, although ver2 is not production ready
     }
 
     public void testRCVersionCompare() {
-        ComparableVersion ver1;
-        ComparableVersion ver2;
+        compareVersions("1.0.0.RC1", "1.1.0.RC1");
+        compareVersions("1.1.0.RC1", "1.1.0.RC2");
+        compareVersions("1.1.0.RC1", "1.1.0.RC10");
+        compareVersions("1.1.0.RC1", "1.1.0.GA");
+        compareVersions("1.1.0.GA", "1.1.1.RC1"); // ver2 version number is still after ver1 version number, although ver2 is not production ready
+        compareVersions("4.0.0-SNAPSHOT", "4.0.0.CR2"); // CR is an alias for RC
+        compareVersions("4.0.0-SNAPSHOT", "4.0.0.CR"); // CR is an alias for RC
+        compareVersions("4.0.0-SNAPSHOT", "4.0.0");
+        compareVersions("4.0.0.Beta1", "4.0.0");
+    }
 
-        ver1 = new ComparableVersion("1.0.0.RC1");
-        ver2 = new ComparableVersion("1.1.0.RC1");
-        assert !ver1.equals(ver2);
-        assert !ver2.equals(ver1);
-        assert ver1.compareTo(ver1) == 0;
-        assert ver2.compareTo(ver2) == 0;
-        assert ver1.compareTo(ver2) < 0;
-        assert ver2.compareTo(ver1) > 0;
+    private void compareVersions(String ver1String, String ver2String) {
+        ComparableVersion ver1 = new ComparableVersion(ver1String);
+        ComparableVersion ver2 = new ComparableVersion(ver2String);
 
-        ver1 = new ComparableVersion("1.1.0.RC1");
-        ver2 = new ComparableVersion("1.1.0.RC2");
-        assert !ver1.equals(ver2);
-        assert !ver2.equals(ver1);
-        assert ver1.compareTo(ver1) == 0;
-        assert ver2.compareTo(ver2) == 0;
-        assert ver1.compareTo(ver2) < 0;
-        assert ver2.compareTo(ver1) > 0;
-
-        ver1 = new ComparableVersion("1.1.0.RC1");
-        ver2 = new ComparableVersion("1.1.0.RC10");
-        assert !ver1.equals(ver2);
-        assert !ver2.equals(ver1);
-        assert ver1.compareTo(ver1) == 0;
-        assert ver2.compareTo(ver2) == 0;
-        assert ver1.compareTo(ver2) < 0;
-        assert ver2.compareTo(ver1) > 0;
-
-        ver1 = new ComparableVersion("1.1.0.RC1");
-        ver2 = new ComparableVersion("1.1.0.GA");
-        assert !ver1.equals(ver2);
-        assert !ver2.equals(ver1);
-        assert ver1.compareTo(ver1) == 0;
-        assert ver2.compareTo(ver2) == 0;
-        assert ver1.compareTo(ver2) < 0;
-        assert ver2.compareTo(ver1) > 0;
-
-        ver1 = new ComparableVersion("1.1.1.RC1");
-        ver2 = new ComparableVersion("1.1.0.GA");
-        assert !ver1.equals(ver2);
-        assert !ver2.equals(ver1);
-        assert ver1.compareTo(ver1) == 0;
-        assert ver2.compareTo(ver2) == 0;
-        assert ver1.compareTo(ver2) > 0; // ver1 is after ver2!
-        assert ver2.compareTo(ver1) < 0; // ver1 is after ver2!
-
-        ver1 = new ComparableVersion("4.0.0-SNAPSHOT");
-        ver2 = new ComparableVersion("4.0.0.CR2"); // CR is an alias for RC
-        assert !ver1.equals(ver2);
-        assert !ver2.equals(ver1);
-        assert ver1.compareTo(ver1) == 0;
-        assert ver2.compareTo(ver2) == 0;
-        assert ver1.compareTo(ver2) < 0;
-        assert ver2.compareTo(ver1) > 0;
+        assert !ver1.equals(ver2) : "Should not be equal 1=[" + ver1String + "]; 2=[" + ver2String + "]";
+        assert !ver2.equals(ver1) : "Should not be equal 1=[" + ver1String + "]; 2=[" + ver2String + "]";
+        assert ver1.compareTo(ver1) == 0 : "Identity compare failed 1=[" + ver1String + "]; 2=[" + ver2String + "]";
+        assert ver2.compareTo(ver2) == 0 : "Identity compare failed 1=[" + ver1String + "]; 2=[" + ver2String + "]";
+        assert ver1.compareTo(ver2) < 0 : "1 should be before 2: 1=[" + ver1String + "]; 2=[" + ver2String + "]";
+        assert ver2.compareTo(ver1) > 0 : "2 should be after 1: 1=[" + ver1String + "]; 2=[" + ver2String + "]";
     }
 }

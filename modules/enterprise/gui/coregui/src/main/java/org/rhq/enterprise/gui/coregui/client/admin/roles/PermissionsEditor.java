@@ -335,25 +335,34 @@ public class PermissionsEditor extends LocatableVStack {
                     ListGridRecord record = grid.getRecord(recordNum);
                     String permissionName = record.getAttribute(nameField);
                     Permission permission = Permission.valueOf(permissionName);
+                    String permissionDisplayName = record.getAttribute("displayName");
                     if (permission == Permission.VIEW_RESOURCE) {
-                        event.getItem().setValue(true);
-                        String permissionDisplayName = record.getAttribute("displayName");
-                        Message message = new Message(
-                            MSG.view_adminRoles_permissions_readAccessImplied(permissionDisplayName),
-                            Message.Severity.Warning);
-                        CoreGUI.getMessageCenter().notify(message);                                                    
+                        String messageString = MSG.view_adminRoles_permissions_readAccessImplied(permissionDisplayName);
+                        handleIllegalPermissionSelection(event, messageString);
+                    } else if (!authorized && selectedPermissions.contains(Permission.MANAGE_SECURITY) && permission != Permission.MANAGE_SECURITY) {
+                        String messageString = MSG.view_adminRoles_permissions_illegal_deselection_due_to_manageSecurity_selection(permissionDisplayName);
+                        handleIllegalPermissionSelection(event, messageString);
+                    } else if (!authorized && selectedPermissions.contains(Permission.MANAGE_INVENTORY) && permission.getTarget() == Permission.Target.RESOURCE) {
+                        String messageString = MSG.view_adminRoles_permissions_illegal_deselection_due_to_manageInventory_selection(permissionDisplayName);
+                        handleIllegalPermissionSelection(event, messageString);
                     } else {
                         updatePermissions(authorized, permission);
 
                         // Let our parent role editor know the permissions have been changed, so it can update the
                         // enablement of its Save and Reset buttons.
-                        org.rhq.enterprise.gui.coregui.client.admin.roles.PermissionsEditor.this.roleEditView.onItemChanged();
+                        PermissionsEditor.this.roleEditView.onItemChanged();
                     }
                 }
             });            
         }
 
         return authorizedField;
+    }
+
+    private static void handleIllegalPermissionSelection(ChangedEvent event, String messageString) {
+        event.getItem().setValue(true);
+        Message message = new Message(messageString, Message.Severity.Warning, EnumSet.of(Message.Option.Transient));
+        CoreGUI.getMessageCenter().notify(message);
     }
 
     private void updatePermissions(Boolean authorized, Permission permission) {

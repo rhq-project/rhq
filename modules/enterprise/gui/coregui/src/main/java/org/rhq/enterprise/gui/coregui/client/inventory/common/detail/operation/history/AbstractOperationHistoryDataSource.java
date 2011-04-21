@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -35,6 +35,7 @@ import org.rhq.core.domain.operation.OperationHistory;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.OperationGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
  * @author Greg Hinkle
@@ -42,8 +43,6 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
  */
 public abstract class AbstractOperationHistoryDataSource<T extends OperationHistory, C extends OperationHistoryCriteria>
     extends RPCDataSource<T, C> {
-
-    private T currentOperationHistory;
 
     public static abstract class Field {
         public static final String ID = "id";
@@ -58,6 +57,10 @@ public abstract class AbstractOperationHistoryDataSource<T extends OperationHist
         public static final String PARAMETERS = "parameters";
     }
 
+    public static abstract class RequestAttribute {
+        public static final String FORCE = "force";
+    }
+
     protected OperationGWTServiceAsync operationService = GWTServiceLookup.getOperationService();
 
     public AbstractOperationHistoryDataSource() {
@@ -66,13 +69,13 @@ public abstract class AbstractOperationHistoryDataSource<T extends OperationHist
     }
 
     @Override
-    protected void executeRemove(Record recordToRemove, DSRequest request, DSResponse response) {
-        final OperationHistory operationHistoryToRemove = copyValues(recordToRemove);
-        Boolean forceValue = request.getAttributeAsBoolean("force");
+    protected void executeRemove(Record recordToRemove, final DSRequest request, final DSResponse response) {
+        final T operationHistoryToRemove = copyValues(recordToRemove);
+        Boolean forceValue = request.getAttributeAsBoolean(RequestAttribute.FORCE);
         boolean force = ((forceValue != null) && forceValue);
         operationService.deleteOperationHistory(operationHistoryToRemove.getId(), force, new AsyncCallback<Void>() {
             public void onSuccess(Void result) {
-                return;
+                sendSuccessResponse(request, response, operationHistoryToRemove, new Message("success"));
             }
 
             public void onFailure(Throwable caught) {
@@ -113,13 +116,15 @@ public abstract class AbstractOperationHistoryDataSource<T extends OperationHist
 
     @Override
     public T copyValues(Record from) {
-        return this.currentOperationHistory;
+        T operationHistory = createOperationHistory();
+        operationHistory.setId(from.getAttributeAsInt(Field.ID));
+        return operationHistory;
     }
+
+    protected abstract T createOperationHistory();
 
     @Override
     public ListGridRecord copyValues(T from) {
-        this.currentOperationHistory = from;
-
         ListGridRecord record = new ListGridRecord();
 
         record.setAttribute(Field.ID, from.getId());

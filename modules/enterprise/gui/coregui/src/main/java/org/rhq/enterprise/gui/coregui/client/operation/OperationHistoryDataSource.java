@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2009 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -46,8 +46,9 @@ import com.smartgwt.client.widgets.grid.events.RecordClickEvent;
 import com.smartgwt.client.widgets.grid.events.RecordClickHandler;
 
 import org.rhq.core.domain.common.EntityContext;
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
-import org.rhq.core.domain.operation.OperationHistory;
+import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.resource.Resource;
@@ -75,8 +76,6 @@ public class OperationHistoryDataSource extends
     RPCDataSource<ResourceOperationHistory, ResourceOperationHistoryCriteria> {
 
     private EntityContext entityContext;
-
-    private ResourceOperationHistory currentOperationHistory;
 
     public static abstract class Field {
         public static final String ID = "id";
@@ -109,7 +108,9 @@ public class OperationHistoryDataSource extends
         // for some reason, the client seems to crash if you don't specify any data source fields
         // even though we know we defined override ListGridFields for all columns.
         List<DataSourceField> fields = super.addDataSourceFields();
-        fields.add(new DataSourceTextField(Field.OPERATION_NAME));
+        DataSourceTextField idField = new DataSourceTextField(Field.ID);
+        idField.setPrimaryKey(true);
+        fields.add(idField);
         return fields;
     }
 
@@ -120,7 +121,10 @@ public class OperationHistoryDataSource extends
      * @return list grid fields used to display the datasource data
      */
     public ArrayList<ListGridField> getListGridFields() {
-        ArrayList<ListGridField> fields = new ArrayList<ListGridField>(6);
+        ArrayList<ListGridField> fields = new ArrayList<ListGridField>(7);
+
+        ListGridField idField = new ListGridField(Field.ID, MSG.common_title_id());
+        fields.add(idField);
 
         ListGridField startTimeField = createStartedTimeField();
         fields.add(startTimeField);
@@ -207,18 +211,18 @@ public class OperationHistoryDataSource extends
                 String statusStr = record.getAttribute(Field.STATUS);
                 OperationRequestStatus status = OperationRequestStatus.valueOf(statusStr);
                 switch (status) {
-                case SUCCESS: {
-                    return MSG.common_status_success();
-                }
-                case FAILURE: {
-                    return MSG.common_status_failed();
-                }
-                case INPROGRESS: {
-                    return MSG.common_status_inprogress();
-                }
-                case CANCELED: {
-                    return MSG.common_status_canceled();
-                }
+                    case SUCCESS: {
+                        return MSG.common_status_success();
+                    }
+                    case FAILURE: {
+                        return MSG.common_status_failed();
+                    }
+                    case INPROGRESS: {
+                        return MSG.common_status_inprogress();
+                    }
+                    case CANCELED: {
+                        return MSG.common_status_canceled();
+                    }
                 }
                 // should never get here
                 return MSG.common_status_unknown();
@@ -289,22 +293,22 @@ public class OperationHistoryDataSource extends
         final long start = System.currentTimeMillis();
 
         this.operationService.findResourceOperationHistoriesByCriteria(criteria,
-            new AsyncCallback<PageList<ResourceOperationHistory>>() {
+                new AsyncCallback<PageList<ResourceOperationHistory>>() {
 
-                public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler()
-                        .handleError(MSG.view_operationHistoryDetails_error_fetchFailure(), caught);
-                    response.setStatus(RPCResponse.STATUS_FAILURE);
-                    processResponse(request.getRequestId(), response);
-                }
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler()
+                                .handleError(MSG.view_operationHistoryDetails_error_fetchFailure(), caught);
+                        response.setStatus(RPCResponse.STATUS_FAILURE);
+                        processResponse(request.getRequestId(), response);
+                    }
 
-                public void onSuccess(PageList<ResourceOperationHistory> result) {
-                    long fetchTime = System.currentTimeMillis() - start;
-                    Log.info(result.size() + " operation histories fetched in: " + fetchTime + "ms");
+                    public void onSuccess(PageList<ResourceOperationHistory> result) {
+                        long fetchTime = System.currentTimeMillis() - start;
+                        Log.info(result.size() + " operation histories fetched in: " + fetchTime + "ms");
 
-                    dataRetrieved(result, response, request);
-                }
-            });
+                        dataRetrieved(result, response, request);
+                    }
+                });
     }
 
     /**
@@ -404,13 +408,13 @@ public class OperationHistoryDataSource extends
     }
 
     @Override
-    protected void executeRemove(Record recordToRemove, DSRequest request, DSResponse response) {
-        final OperationHistory operationHistoryToRemove = copyValues(recordToRemove);
+    protected void executeRemove(Record recordToRemove, final DSRequest request, final DSResponse response) {
+        final ResourceOperationHistory operationHistoryToRemove = copyValues(recordToRemove);
         Boolean forceValue = request.getAttributeAsBoolean("force");
         boolean force = ((forceValue != null) && forceValue);
         operationService.deleteOperationHistory(operationHistoryToRemove.getId(), force, new AsyncCallback<Void>() {
             public void onSuccess(Void result) {
-                return;
+                sendSuccessResponse(request, response, operationHistoryToRemove, null);
             }
 
             public void onFailure(Throwable caught) {
@@ -421,13 +425,17 @@ public class OperationHistoryDataSource extends
 
     @Override
     public ResourceOperationHistory copyValues(Record from) {
-        return this.currentOperationHistory;
+        Resource resource = new Resource();
+        resource.setId(from.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
+        ResourceOperationHistory resourceOperationHistory = new ResourceOperationHistory(null, null,
+                from.getAttribute(Field.SUBJECT), (OperationDefinition)from.getAttributeAsObject(Field.OPERATION_DEFINITION),
+                (Configuration)from.getAttributeAsObject(Field.PARAMETERS), resource, null);
+        resourceOperationHistory.setId(from.getAttributeAsInt(Field.ID));
+        return resourceOperationHistory;
     }
 
     @Override
     public ListGridRecord copyValues(ResourceOperationHistory from) {
-        this.currentOperationHistory = from;
-
         ListGridRecord record = new ListGridRecord();
 
         record.setAttribute(Field.ID, from.getId());

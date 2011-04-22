@@ -21,7 +21,6 @@ package org.rhq.enterprise.gui.coregui.client.alert;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -31,9 +30,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.core.DataClass;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
-import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
-import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.ListGridFieldType;
@@ -94,15 +91,6 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
         addDataSourceFields();
     }
 
-    @Override
-    protected List<DataSourceField> addDataSourceFields() {
-        // for some reason, the client seems to crash if you don't specify any data source fields
-        // even though we know we defined override ListGridFields for all columns.
-        List<DataSourceField> fields = super.addDataSourceFields();
-        fields.add(new DataSourceTextField("name"));
-        return fields;
-    }
-
     /**
      * The view that contains the list grid which will display this datasource's data will call this
      * method to get the field information which is used to control the display of the data.
@@ -131,6 +119,8 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
         fields.add(nameField);
 
         ListGridField conditionField = new ListGridField("conditionText", MSG.view_alerts_field_condition_text());
+        // the cell value is formatted giventhe actual conditions. It can't be sorted server-side.
+        conditionField.setCanSortClientOnly(true);
         fields.add(conditionField);
 
         ListGridField priorityField = new ListGridField("priority", MSG.view_alerts_field_priority());
@@ -321,6 +311,24 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
         criteria.fetchConditionLogs(true);
 
         return criteria;
+    }
+
+    @Override
+    protected String getSortFieldForColumn(String columnName) {
+        if (AncestryUtil.RESOURCE_ANCESTRY.equals(columnName)) {
+            return "alertDefinition.resource.ancestry";
+        }
+        if ("status".equals(columnName)) {
+            return "acknowledgeTime";
+        }
+        if ("conditionText".equals(columnName)) {
+            // Note: I don't think this should even be getting called, but it is. We already setCanSortClientOnly(true)
+            // on this ListGridField. To me that should mean any sorting done client side on this field should
+            // not be passed in on the Request, but it seems to be...
+            return null;
+        }
+
+        return super.getSortFieldForColumn(columnName);
     }
 
     @Override

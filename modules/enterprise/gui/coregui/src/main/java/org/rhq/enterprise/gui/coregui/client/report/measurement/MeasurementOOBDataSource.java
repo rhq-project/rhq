@@ -77,6 +77,7 @@ public class MeasurementOOBDataSource extends RPCDataSource<MeasurementOOBCompos
         ArrayList<ListGridField> fields = new ArrayList<ListGridField>();
 
         ListGridField resourceNameField = new ListGridField(AncestryUtil.RESOURCE_NAME, MSG.common_title_resource());
+        resourceNameField.setCanSortClientOnly(true);
         resourceNameField.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
                 String url = LinkManager.getResourceLink(listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
@@ -93,21 +94,26 @@ public class MeasurementOOBDataSource extends RPCDataSource<MeasurementOOBCompos
         fields.add(resourceNameField);
 
         ListGridField ancestryField = AncestryUtil.setupAncestryListGridField();
+        ancestryField.setCanSortClientOnly(true);
         fields.add(ancestryField);
 
         ListGridField scheduleNameField = new ListGridField("scheduleName", MSG
             .dataSource_measurementOob_field_scheduleName());
+        scheduleNameField.setCanSortClientOnly(true);
         fields.add(scheduleNameField);
 
         ListGridField bandField = new ListGridField("formattedBaseband", MSG
             .dataSource_measurementOob_field_formattedBaseband());
+        bandField.setCanSortClientOnly(true);
         fields.add(bandField);
 
         ListGridField outlierField = new ListGridField("formattedOutlier", MSG
             .dataSource_measurementOob_field_formattedOutlier());
+        outlierField.setCanSortClientOnly(true);
         fields.add(outlierField);
 
         ListGridField factorField = new ListGridField("factor", MSG.dataSource_measurementOob_field_factor());
+        factorField.setCanSortClientOnly(true);
         fields.add(factorField);
 
         resourceNameField.setWidth("20%");
@@ -174,6 +180,16 @@ public class MeasurementOOBDataSource extends RPCDataSource<MeasurementOOBCompos
     @Override
     protected Criteria getFetchCriteria(DSRequest request) {
         // we don't use criterias for this datasource, just return null
+        return null;
+
+    }
+
+    protected String getSortFieldForColumn(String columnName) {
+        // Note: I don't think this should even be getting called, but it is. We already setCanSortClientOnly(true)
+        // on all of the ListGridFields. To me that should mean any sorting done client side on those fields should
+        // not be passed in on the Request, but it seems to be...
+
+        // we don't use criterias for this datasource, just return null, don't try and apply any sort.        
         return null;
     }
 

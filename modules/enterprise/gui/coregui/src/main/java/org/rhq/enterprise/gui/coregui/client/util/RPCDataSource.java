@@ -202,9 +202,26 @@ public abstract class RPCDataSource<T, C extends org.rhq.core.domain.criteria.Cr
             for (String sort : sorts) {
                 PageOrdering ordering = (sort.startsWith("-")) ? PageOrdering.DESC : PageOrdering.ASC;
                 String columnName = (ordering == PageOrdering.DESC) ? sort.substring(1) : sort;
-                pageControl.addDefaultOrderingField(columnName, ordering);
+                String sortField = getSortFieldForColumn(columnName);
+                if (null != sortField)
+                    pageControl.addDefaultOrderingField(sortField, ordering);
             }
         }
+    }
+
+    /**
+     * By default, for a sortable column, the field name (usually a ListGridField name) is used as the
+     * OrderingField in the PageControl passed to the server.  If for some reason the field name does not
+     * properly map to a sortable entity field, this method can be overrident to provide the proper maping.
+     * Note that certain columns may also leverage sort fields in the underlying (rhq) criteria class itself, but
+     * not every sortable column may be appropriate as a sort field in the criteria.      
+     * 
+     * @param columnName The column field name 
+     * @return The entity field for the desired sort. By default just returns back the columnName. Can be null if
+     * there is no valid mapping. 
+     */
+    protected String getSortFieldForColumn(String columnName) {
+        return columnName;
     }
 
     @Override
@@ -564,8 +581,8 @@ public abstract class RPCDataSource<T, C extends org.rhq.core.domain.criteria.Cr
         return result;
     }
 
-    protected static DataSourceTextField createTextField(String name, String title, Integer minLength, Integer maxLength,
-        Boolean required) {
+    protected static DataSourceTextField createTextField(String name, String title, Integer minLength,
+        Integer maxLength, Boolean required) {
         DataSourceTextField textField = new DataSourceTextField(name, title);
         textField.setLength(maxLength);
         textField.setRequired(required);
@@ -589,8 +606,8 @@ public abstract class RPCDataSource<T, C extends org.rhq.core.domain.criteria.Cr
         return textField;
     }
 
-    protected static DataSourceIntegerField createIntegerField(String name, String title, Integer minValue, Integer maxValue,
-        Boolean required) {
+    protected static DataSourceIntegerField createIntegerField(String name, String title, Integer minValue,
+        Integer maxValue, Boolean required) {
         DataSourceIntegerField textField = new DataSourceIntegerField(name, title);
         textField.setRequired(required);
         if (minValue != null || maxValue != null) {

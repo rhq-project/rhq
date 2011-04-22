@@ -21,16 +21,13 @@ package org.rhq.enterprise.gui.coregui.client.operation;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 
 import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
-import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
-import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.Overflow;
@@ -84,7 +81,7 @@ public class OperationHistoryDataSource extends
         public static final String STARTED_TIME = "startedTime";
         public static final String CREATED_TIME = "createdTime";
         public static final String DURATION = "duration";
-        public static final String SUBJECT = "subject";
+        public static final String SUBJECT = "subjectName";
         public static final String OPERATION_DEFINITION = "operationDefinition";
         public static final String ERROR_MESSAGE = "errorMessage";
         public static final String PARAMETERS = "parameters";
@@ -103,17 +100,6 @@ public class OperationHistoryDataSource extends
         addDataSourceFields();
     }
 
-    @Override
-    protected List<DataSourceField> addDataSourceFields() {
-        // for some reason, the client seems to crash if you don't specify any data source fields
-        // even though we know we defined override ListGridFields for all columns.
-        List<DataSourceField> fields = super.addDataSourceFields();
-        DataSourceTextField idField = new DataSourceTextField(Field.ID);
-        idField.setPrimaryKey(true);
-        fields.add(idField);
-        return fields;
-    }
-
     /**
      * The view that contains the list grid which will display this datasource's data will call this
      * method to get the field information which is used to control the display of the data.
@@ -122,9 +108,6 @@ public class OperationHistoryDataSource extends
      */
     public ArrayList<ListGridField> getListGridFields() {
         ArrayList<ListGridField> fields = new ArrayList<ListGridField>(7);
-
-        ListGridField idField = new ListGridField(Field.ID, MSG.common_title_id());
-        fields.add(idField);
 
         ListGridField startTimeField = createStartedTimeField();
         fields.add(startTimeField);
@@ -211,18 +194,18 @@ public class OperationHistoryDataSource extends
                 String statusStr = record.getAttribute(Field.STATUS);
                 OperationRequestStatus status = OperationRequestStatus.valueOf(statusStr);
                 switch (status) {
-                    case SUCCESS: {
-                        return MSG.common_status_success();
-                    }
-                    case FAILURE: {
-                        return MSG.common_status_failed();
-                    }
-                    case INPROGRESS: {
-                        return MSG.common_status_inprogress();
-                    }
-                    case CANCELED: {
-                        return MSG.common_status_canceled();
-                    }
+                case SUCCESS: {
+                    return MSG.common_status_success();
+                }
+                case FAILURE: {
+                    return MSG.common_status_failed();
+                }
+                case INPROGRESS: {
+                    return MSG.common_status_inprogress();
+                }
+                case CANCELED: {
+                    return MSG.common_status_canceled();
+                }
                 }
                 // should never get here
                 return MSG.common_status_unknown();
@@ -293,22 +276,22 @@ public class OperationHistoryDataSource extends
         final long start = System.currentTimeMillis();
 
         this.operationService.findResourceOperationHistoriesByCriteria(criteria,
-                new AsyncCallback<PageList<ResourceOperationHistory>>() {
+            new AsyncCallback<PageList<ResourceOperationHistory>>() {
 
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler()
-                                .handleError(MSG.view_operationHistoryDetails_error_fetchFailure(), caught);
-                        response.setStatus(RPCResponse.STATUS_FAILURE);
-                        processResponse(request.getRequestId(), response);
-                    }
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler()
+                        .handleError(MSG.view_operationHistoryDetails_error_fetchFailure(), caught);
+                    response.setStatus(RPCResponse.STATUS_FAILURE);
+                    processResponse(request.getRequestId(), response);
+                }
 
-                    public void onSuccess(PageList<ResourceOperationHistory> result) {
-                        long fetchTime = System.currentTimeMillis() - start;
-                        Log.info(result.size() + " operation histories fetched in: " + fetchTime + "ms");
+                public void onSuccess(PageList<ResourceOperationHistory> result) {
+                    long fetchTime = System.currentTimeMillis() - start;
+                    Log.info(result.size() + " operation histories fetched in: " + fetchTime + "ms");
 
-                        dataRetrieved(result, response, request);
-                    }
-                });
+                    dataRetrieved(result, response, request);
+                }
+            });
     }
 
     /**
@@ -408,6 +391,15 @@ public class OperationHistoryDataSource extends
     }
 
     @Override
+    protected String getSortFieldForColumn(String columnName) {
+        if (AncestryUtil.RESOURCE_ANCESTRY.equals(columnName)) {
+            return "resource.ancestry";
+        }
+
+        return super.getSortFieldForColumn(columnName);
+    }
+
+    @Override
     protected void executeRemove(Record recordToRemove, final DSRequest request, final DSResponse response) {
         final ResourceOperationHistory operationHistoryToRemove = copyValues(recordToRemove);
         Boolean forceValue = request.getAttributeAsBoolean("force");
@@ -427,9 +419,9 @@ public class OperationHistoryDataSource extends
     public ResourceOperationHistory copyValues(Record from) {
         Resource resource = new Resource();
         resource.setId(from.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
-        ResourceOperationHistory resourceOperationHistory = new ResourceOperationHistory(null, null,
-                from.getAttribute(Field.SUBJECT), (OperationDefinition)from.getAttributeAsObject(Field.OPERATION_DEFINITION),
-                (Configuration)from.getAttributeAsObject(Field.PARAMETERS), resource, null);
+        ResourceOperationHistory resourceOperationHistory = new ResourceOperationHistory(null, null, from
+            .getAttribute(Field.SUBJECT), (OperationDefinition) from.getAttributeAsObject(Field.OPERATION_DEFINITION),
+            (Configuration) from.getAttributeAsObject(Field.PARAMETERS), resource, null);
         resourceOperationHistory.setId(from.getAttributeAsInt(Field.ID));
         return resourceOperationHistory;
     }

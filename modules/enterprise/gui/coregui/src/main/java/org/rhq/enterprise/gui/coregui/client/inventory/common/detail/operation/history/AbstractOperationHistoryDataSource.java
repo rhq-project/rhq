@@ -51,7 +51,7 @@ public abstract class AbstractOperationHistoryDataSource<T extends OperationHist
         public static final String STARTED_TIME = "startedTime";
         public static final String CREATED_TIME = "createdTime";
         public static final String DURATION = "duration";
-        public static final String SUBJECT = "subject";
+        public static final String SUBJECT = "subjectName";
         public static final String OPERATION_DEFINITION = "operationDefinition";
         public static final String ERROR_MESSAGE = "errorMessage";
         public static final String PARAMETERS = "parameters";

@@ -80,7 +80,7 @@ public class EventCompositeDatasource extends RPCDataSource<EventComposite, Even
         DataSourceTextField severity = new DataSourceTextField("severity", MSG.view_inventory_eventHistory_severity());
         fields.add(severity);
 
-        DataSourceTextField details = new HighlightingDatasourceTextField("details", MSG
+        DataSourceTextField details = new HighlightingDatasourceTextField("detail", MSG
             .view_inventory_eventHistory_details());
         fields.add(details);
 
@@ -102,7 +102,7 @@ public class EventCompositeDatasource extends RPCDataSource<EventComposite, Even
 
         record.setAttribute("id", from.getEventId());
         record.setAttribute("timestamp", from.getTimestamp());
-        record.setAttribute("details", from.getEventDetail());
+        record.setAttribute("detail", from.getEventDetail());
         record.setAttribute("severity", from.getSeverity().name());
         record.setAttribute("source", from.getSourceLocation());
 
@@ -157,7 +157,7 @@ public class EventCompositeDatasource extends RPCDataSource<EventComposite, Even
         Map<String, Object> criteriaMap = request.getCriteria().getValues();
 
         criteria.addFilterSourceName((String) criteriaMap.get("source"));
-        criteria.addFilterDetail((String) criteriaMap.get("details"));
+        criteria.addFilterDetail((String) criteriaMap.get("detail"));
 
         criteria.addFilterSeverities(severities);
 

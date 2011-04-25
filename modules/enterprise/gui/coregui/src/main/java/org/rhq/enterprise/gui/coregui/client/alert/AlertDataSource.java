@@ -119,8 +119,6 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
         fields.add(nameField);
 
         ListGridField conditionField = new ListGridField("conditionText", MSG.view_alerts_field_condition_text());
-        // the cell value is formatted giventhe actual conditions. It can't be sorted server-side.
-        conditionField.setCanSortClientOnly(true);
         fields.add(conditionField);
 
         ListGridField priorityField = new ListGridField("priority", MSG.view_alerts_field_priority());

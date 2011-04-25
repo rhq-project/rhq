@@ -32,10 +32,10 @@ public class GroupResourceConfigurationDataSource extends
 
     public class Field {
         public static final String ID = "id";
-        public static final String DATECREATED = "dateCreated";
-        public static final String LASTUPDATED = "lastUpdated";
+        public static final String DATECREATED = "createdTime";
+        public static final String LASTUPDATED = "modifiedTime";
         public static final String STATUS = "status";
-        public static final String USER = "user";
+        public static final String USER = "subjectName";
         public static final String OBJECT = "object";
     }
 

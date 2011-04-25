@@ -356,4 +356,15 @@ public class UsersDataSource extends RPCDataSource<Subject, SubjectCriteria> {
         return criteria;
     }
 
+    @Override
+    protected String getSortFieldForColumn(String columnName) {
+
+        // this is a calculated field, can't perform server-side sort
+        if (Field.LDAP.equals(columnName)) {
+            return null;
+        }
+
+        return super.getSortFieldForColumn(columnName);
+    }
+
 }

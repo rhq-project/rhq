@@ -56,6 +56,7 @@ public class ResourceOperationHistoryCriteria extends OperationHistoryCriteria {
         filterOverrides.put("resourceIds", "resource.id IN ( ? )");
         filterOverrides.put("groupOperationHistoryId", "groupOperationHistory.id = ?");
 
+        sortOverrides.put(SORT_FIELD_RESOURCE_NAME, "resource.id");
         sortOverrides.put(SORT_FIELD_RESOURCE_NAME, "resource.name");
     }
 

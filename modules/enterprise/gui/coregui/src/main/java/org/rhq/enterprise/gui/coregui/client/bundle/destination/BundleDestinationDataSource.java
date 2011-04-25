@@ -174,6 +174,21 @@ public class BundleDestinationDataSource extends RPCDataSource<BundleDestination
     }
 
     @Override
+    protected String getSortFieldForColumn(String columnName) {
+        if (FIELD_LATEST_DEPLOY_DATE.equals(columnName)) {
+            return null;
+        }
+        if (FIELD_LATEST_DEPLOY_STATUS.equals(columnName)) {
+            return null;
+        }
+        if (FIELD_LATEST_DEPLOY_VERSION.equals(columnName)) {
+            return null;
+        }
+
+        return super.getSortFieldForColumn(columnName);
+    }
+
+    @Override
     public BundleDestination copyValues(Record from) {
         return (BundleDestination) from.getAttributeAsObject("object");
     }

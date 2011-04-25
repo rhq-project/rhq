@@ -68,7 +68,7 @@
           <tr>
             <td align="right"><b>Private:</b></td>
             <td align="left"><h:selectBooleanCheckbox 
-                rendered="${mode eq 'edit'}" value="#{CreateRepoUIBean.repo.private}"/>
+                rendered="${mode eq 'edit'}" value="#{RepoDetailsUIBean.repo.private}"/>
                 <h:outputText rendered="${mode ne 'edit'}" value="#{RepoDetailsUIBean.repo.private}" />
             </td>
           </tr>
@@ -381,7 +381,7 @@
 
     <!-- SUBSCRIBER RESOURCE LIST -->
 
-    <h:form id="repoResourcesListForm" rendered="#{RepoDetailsUIBean.repositoryManager}">
+    <h:form id="repoResourcesListForm" rendered="#{RepoDetailsUIBean.inventoryManager}">
       <input type="hidden" name="id" value="${param.id}" />
       <input type="hidden" name="mode" value="${param.mode}" />
 

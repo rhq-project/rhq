@@ -42,6 +42,7 @@ import org.rhq.plugins.apache.parser.ApacheDirective;
 import org.rhq.plugins.apache.parser.ApacheDirectiveTree;
 import org.rhq.plugins.apache.util.HttpdAddressUtility;
 import org.rhq.plugins.apache.util.HttpdAddressUtility.Address;
+import org.rhq.plugins.apache.util.RuntimeApacheConfiguration;
 import org.rhq.plugins.www.snmp.SNMPException;
 import org.rhq.plugins.www.snmp.SNMPSession;
 import org.rhq.plugins.www.snmp.SNMPValue;
@@ -75,6 +76,7 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
         
         ApacheServerComponent serverComponent = context.getParentResourceComponent();
         ApacheDirectiveTree tree = serverComponent.loadParser();
+
         //first define the root server as one virtual host
         discoverMainServer(context, discoveredResources, snmpDiscoveries);
 
@@ -193,7 +195,11 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
             //BZ 612189 - remove this once we have resource upgrade
             key = host + ":" + port;
         }
-
+        
+        //the SNMP WWW service index of the main server is always 1
+        mainServerPluginConfig.put(new PropertySimple(
+            ApacheVirtualHostServiceComponent.SNMP_WWW_SERVICE_INDEX_CONFIG_PROP, 1));
+        
         //BZ 612189 - this can simply the MAIN_SERVER_RESOURCE_KEY only once we have resource upgrade
         if (key == null) {
             key = ApacheVirtualHostServiceComponent.MAIN_SERVER_RESOURCE_KEY;

@@ -497,6 +497,19 @@
                                description="The http or https URL that will be used to check availability for this
                                 virtual host. Note that SSL certificate validation is disabled during availability
                                 checks if this is an HTTPS URL."/>
+            <c:simple-property name="snmpWwwServiceIndex" displayName="SNMP WWW Service Index" type="integer" readOnly="false">
+                <c:description>
+                    The row index for this virtual host in the MIB table of WWW services (i.e. virtual hosts).
+                    This value can either be read out of the SNMP (using utilities like snmpwalk) or can be determined
+                    by examining the order of the virtual host directives in the Apache configuration files.
+                    The main server always has index 1.
+                    If you join all the apache configuration files (i.e. replace all the Include directives with the contents
+                    of the files being included (files determined by a glob pattern in alphabetical order)), the SNMP WWW Service
+                    Index is the reverse order of the corresponding VirtualHost directive in such joined configuration. I.e.
+                    the last virtual host directive has index 2, the second last has 3, etc.
+                </c:description> 
+                <c:constraint><c:integer-constraint minimum="1" /></c:constraint>
+            </c:simple-property>
             <c:group name="ResponseTime">
                <c:simple-property name="responseTimeLogFile" required="false"
                                   description="the full path to the log file containing response-time stats for this virtual host"/>

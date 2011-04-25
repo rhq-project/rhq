@@ -23,7 +23,9 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -67,6 +69,7 @@ import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.system.OperatingSystemType;
+import org.rhq.core.system.ProcessInfo;
 import org.rhq.core.system.SystemInfo;
 import org.rhq.plugins.apache.augeas.ApacheAugeasNode;
 import org.rhq.plugins.apache.augeas.AugeasConfigurationApache;
@@ -145,6 +148,7 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
     private URL url;
     private ApacheBinaryInfo binaryInfo;
     private long availPingTime = -1;
+    private Map<String, String> moduleNames;
     
     /**
      * Delegate instance for handling all calls to invoke operations on this component.
@@ -211,6 +215,9 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
             this.operationsDelegate = new ApacheServerOperationsDelegate(this, pluginConfig, this.resourceContext
                 .getSystemInformation());
 
+            //init the module names with the defaults
+            moduleNames = new HashMap<String, String>(ApacheServerDiscoveryComponent.getDefaultModuleNames(binaryInfo.getVersion()));
+            
             startEventPollers();
         } catch (Exception e) {
             if (this.snmpClient != null) {
@@ -759,6 +766,18 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
         }
     }
     
+    public Map<String, String> getModuleNames() {
+        return moduleNames;
+    }
+    
+    public ProcessInfo getCurrentProcessInfo() {
+        return resourceContext.getNativeProcess();
+    }
+    
+    public ApacheBinaryInfo getCurrentBinaryInfo() {
+        return binaryInfo;
+    }
+        
     // TODO: Move this method to a helper class.
     static void addSnmpMetricValueToReport(MeasurementReport report, MeasurementScheduleRequest schedule,
         SNMPValue snmpValue, boolean valueIsTimestamp) throws SNMPException {
@@ -924,4 +943,18 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
             return false;                
         }
     }
+    
+    private String getVersion() {
+        String ret = resourceContext.getVersion();
+        if (ret == null) {
+            //strange, but this happens sometimes when 
+            //the resource is synced with the server for the first
+            //time after data purge on the agent side
+            
+            //let's determine the version from the binary info
+            ret = binaryInfo.getVersion();
+        }
+        
+        return ret;
+    }    
 }

@@ -3,7 +3,7 @@ package org.rhq.plugins.apache.parser;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ApacheDirectiveTree {
+public class ApacheDirectiveTree implements Cloneable {
 
     private ApacheDirective rootNode;
     
@@ -60,5 +60,13 @@ public class ApacheDirectiveTree {
        dir.setParentNode(parentNode);
        parentNode.addChildDirective(dir);
        return dir;
+    }
+    
+    @Override
+    public ApacheDirectiveTree clone() {
+        ApacheDirectiveTree copy = new ApacheDirectiveTree();
+        copy.rootNode = rootNode.clone();
+        
+        return copy;
     }
 }

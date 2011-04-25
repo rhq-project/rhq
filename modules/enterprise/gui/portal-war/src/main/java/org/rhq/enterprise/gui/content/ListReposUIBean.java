@@ -25,6 +25,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -58,6 +59,11 @@ public class ListReposUIBean extends PagedDataTableUIBean {
         return "importRepos";
     }
 
+    public boolean isRepositoryManager() {
+        Subject subject = EnterpriseFacesContextUtility.getSubject();
+        return LookupUtil.getAuthorizationManager().hasGlobalPermission(subject, Permission.MANAGE_REPOSITORIES);
+    }
+    
     public String syncSelectedRepos() {
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         String[] selected = getSelectedRepos();

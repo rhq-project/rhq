@@ -143,6 +143,19 @@
     <finalName>rhq-installer</finalName>
 
     <plugins>
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <systemPropertyVariables>
+            <rhq.test.ds.server-name>${rhq.test.ds.server-name}</rhq.test.ds.server-name>
+            <rhq.test.ds.connection-url>${rhq.test.ds.connection-url}</rhq.test.ds.connection-url>
+            <rhq.db.admin.username>${rhq.db.admin.username}</rhq.db.admin.username>
+            <rhq.db.admin.password>${rhq.db.admin.password}</rhq.db.admin.password>
+            <rhq.test.ds.user-name>${rhq.test.ds.user-name}</rhq.test.ds.user-name>
+            <rhq.test.ds.password>${rhq.test.ds.password}</rhq.test.ds.password>
+          </systemPropertyVariables>
+        </configuration>
+      </plugin>
 
       <plugin>
         <artifactId>maven-war-plugin</artifactId>
@@ -239,19 +252,6 @@
 
          <build>
             <plugins>
-              <plugin>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <configuration>
-                  <systemPropertyVariables>
-                    <rhq.test.ds.server-name>${rhq.test.ds.server-name}</rhq.test.ds.server-name>
-                    <rhq.test.ds.connection-url>${rhq.test.ds.connection-url}</rhq.test.ds.connection-url>
-                    <rhq.db.admin.username>${rhq.db.admin.username}</rhq.db.admin.username>
-                    <rhq.db.admin.password>${rhq.db.admin.password}</rhq.db.admin.password>
-                    <rhq.test.ds.user-name>${rhq.test.ds.user-name}</rhq.test.ds.user-name>
-                    <rhq.test.ds.password>${rhq.test.ds.password}</rhq.test.ds.password>
-                  </systemPropertyVariables>
-                </configuration>
-              </plugin>
 
                <plugin>
                  <artifactId>maven-antrun-plugin</artifactId>

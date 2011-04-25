@@ -311,6 +311,14 @@ public class CreateNewPackageUIBean {
     }
 
     public SelectItem[] getPackageTypes() {
+        return getPackageTypes(false);
+    }
+
+    public SelectItem[] getPackageTypesWithResourceTypeNames() {
+        return getPackageTypes(true);
+    }
+    
+    private SelectItem[] getPackageTypes(boolean includeResourceTypeResolution) {
         Resource resource = EnterpriseFacesContextUtility.getResourceIfExists();
 
         List<PackageType> packageTypes = null;
@@ -324,13 +332,18 @@ public class CreateNewPackageUIBean {
         SelectItem[] items = new SelectItem[packageTypes.size()];
         int itemCounter = 0;
         for (PackageType packageType : packageTypes) {
-            SelectItem item = new SelectItem(packageType.getId(), packageType.getDisplayName());
+            String displayName = packageType.getDisplayName();
+            if (includeResourceTypeResolution && packageType.getResourceType() != null) {
+                ResourceType rt = packageType.getResourceType();
+                displayName += " [" + rt.getName() + ":" + rt.getPlugin() + "]";
+            }
+            SelectItem item = new SelectItem(packageType.getId(), displayName);
             items[itemCounter++] = item;
         }
 
         return items;
     }
-
+    
     public SelectItem[] getSubscribedRepos() {
         Resource resource = EnterpriseFacesContextUtility.getResource();
 

@@ -142,15 +142,23 @@ public class OperationGWTServiceImpl extends AbstractGWTServiceImpl implements O
     }
 
     public ResourceOperationSchedule getResourceOperationSchedule(int scheduleId) throws RuntimeException {
-        ResourceOperationSchedule resourceOperationSchedule = operationManager.getResourceOperationSchedule(
-            getSessionSubject(), scheduleId);
-        return SerialUtility.prepare(resourceOperationSchedule, "getResourceOperationSchedule");
+        try {
+            ResourceOperationSchedule resourceOperationSchedule = operationManager.getResourceOperationSchedule(
+                getSessionSubject(), scheduleId);
+            return SerialUtility.prepare(resourceOperationSchedule, "getResourceOperationSchedule");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
     }
 
     public GroupOperationSchedule getGroupOperationSchedule(int scheduleId) throws RuntimeException {
-        GroupOperationSchedule groupOperationSchedule = operationManager.getGroupOperationSchedule(getSessionSubject(),
-            scheduleId);
-        return SerialUtility.prepare(groupOperationSchedule, "getGroupOperationSchedule");
+        try {
+            GroupOperationSchedule groupOperationSchedule = operationManager.getGroupOperationSchedule(
+                getSessionSubject(), scheduleId);
+            return SerialUtility.prepare(groupOperationSchedule, "getGroupOperationSchedule");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
     }
 
     public void unscheduleResourceOperation(ResourceOperationSchedule resourceOperationSchedule)

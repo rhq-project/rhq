@@ -126,6 +126,15 @@ public class BundleVersionDataSource extends RPCDataSource<BundleVersion, Bundle
     }
 
     @Override
+    protected String getSortFieldForColumn(String columnName) {
+        if (FIELD_FILECOUNT.equals(columnName)) {
+            return null;
+        }
+
+        return super.getSortFieldForColumn(columnName);
+    }
+
+    @Override
     public BundleVersion copyValues(Record from) {
         return (BundleVersion) from.getAttributeAsObject("object");
     }

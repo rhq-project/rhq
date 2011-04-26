@@ -276,11 +276,9 @@ public class GroupPkgHistoryPortlet extends LocatableVLayout implements CustomSe
     }
 
     @Override
-    public void redraw() {
-        super.redraw();
+    public void refresh() {
         if (!isRefreshing()) {
             loadData();
         }
     }
-
 }

@@ -63,7 +63,7 @@ public abstract class AbstractConfigurationHistoryDataSource<T extends AbstractR
         public static final String ID = "id";
         public static final String CREATED_TIME = "createdTime";
         public static final String STATUS = "status";
-        public static final String SUBJECT = "subject";
+        public static final String SUBJECT = "subjectName";
         public static final String CONFIGURATION = "configuration";
         public static final String GROUP_CONFIG_UPDATE_ID = "groupConfigUpdateId";
         public static final String GROUP_ID = "groupId"; // will only be non-null if group config update id is non-null
@@ -295,6 +295,18 @@ public abstract class AbstractConfigurationHistoryDataSource<T extends AbstractR
 
         record.setAttribute(Field.OBJECT, from);
         return record;
+    }
+
+    @Override
+    protected String getSortFieldForColumn(String columnName) {
+        if (Field.GROUP_CONFIG_UPDATE_ID.equals(columnName)) {
+            return "groupConfigurationUpdate.id";
+        }
+        if (AncestryUtil.RESOURCE_ANCESTRY.equals(columnName)) {
+            return "resource.ancestry";
+        }
+
+        return super.getSortFieldForColumn(columnName);
     }
 
     protected abstract String getConfigurationUpdateStatusIcon(ConfigurationUpdateStatus status);

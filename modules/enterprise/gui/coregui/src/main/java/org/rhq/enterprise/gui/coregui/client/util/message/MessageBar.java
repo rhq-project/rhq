@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright 2010, Red Hat Middleware LLC, and individual contributors
+ * Copyright 2010-2011, Red Hat Middleware LLC, and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -45,6 +45,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableMenu;
  * @author Jay Shaughnessy
  */
 public class MessageBar extends LocatableHLayout implements MessageCenter.MessageListener {
+
     private static final String LOCATOR_ID = "MessageBar";
     private static final int AUTO_HIDE_DELAY_MILLIS = 30000;
     private static final String NON_BREAKING_SPACE = "&nbsp;";
@@ -53,6 +54,7 @@ public class MessageBar extends LocatableHLayout implements MessageCenter.Messag
     private Message currentMessage;
     private Message stickyMessage; // this message will always be shown until dismissed by user.
     private Menu showDetailsMenu;
+    private Timer messageClearingTimer;
 
     public MessageBar() {
         super(LOCATOR_ID);
@@ -108,6 +110,10 @@ public class MessageBar extends LocatableHLayout implements MessageCenter.Messag
     @Override
     public void onMessage(Message message) {
         if (!message.isBackgroundJobResult()) {
+            if (this.messageClearingTimer != null) {
+                this.messageClearingTimer.cancel();
+            }
+
             this.currentMessage = message;
             updateLabel(message);
 
@@ -115,8 +121,7 @@ public class MessageBar extends LocatableHLayout implements MessageCenter.Messag
             if (message.isSticky()) {
                 this.stickyMessage = message;
             } else {
-                new Timer() {
-                    @Override
+                this.messageClearingTimer = new Timer() {
                     public void run() {
                         clearMessage(false);
                         // if we had a sticky message before, show it again, now that our more recent message has gone away
@@ -124,7 +129,8 @@ public class MessageBar extends LocatableHLayout implements MessageCenter.Messag
                             updateLabel(stickyMessage);
                         }
                     }
-                }.schedule(AUTO_HIDE_DELAY_MILLIS);
+                };
+                this.messageClearingTimer.schedule(AUTO_HIDE_DELAY_MILLIS);
             }
         }
     }
@@ -157,4 +163,5 @@ public class MessageBar extends LocatableHLayout implements MessageCenter.Messag
 
         markForRedraw();
     }
+
 }

@@ -81,7 +81,8 @@
    <td rowspan="4">
       <html:img page="/images/spacer.gif" width="30" height="1" border="0"/>
    </td>
-   <td rowspan="4" valign="top">
+   <!-- commenting for iframe display in coregui.-->
+   <!--<td rowspan="4" valign="top">
 
       <table border="0">
          <tr>
@@ -120,7 +121,7 @@
          </tr>
       </table>
 
-   </td>
+   </td>-->
 </tr>
 <tr>
    <td>

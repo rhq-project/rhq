@@ -211,4 +211,13 @@ public class AutodiscoveryPortlet extends ResourceAutodiscoveryView implements C
         return false;
     }
 
+    @Override
+    public void refresh() {
+        if (!isRefreshing()) {
+            if (null != dataSource) {
+                dataSource.invalidateCache();
+            }
+            markForRedraw();
+        }
+    }
 }

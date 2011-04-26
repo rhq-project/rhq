@@ -151,6 +151,11 @@ public class GroupOperationJob extends OperationJob {
                         if (hadFailure) {
                             // there was a failure during execution of this group operation;
                             // thus, mark all remaining operation histories as cancelled
+                            composite.history.setErrorMessage("This has been cancelled due to halt-on-error "
+                                + "being set on the parent group operation schedule. "
+                                + "A previous resource operation that executed prior "
+                                + "to this resource operation failed, thus causing "
+                                + "this resource operation to be cancelled.");
                             composite.history.setStatus(OperationRequestStatus.CANCELED);
                             composite.history = (ResourceOperationHistory) operationManager.updateOperationHistory(
                                 getUserWithSession(user, true), composite.history);
@@ -189,7 +194,7 @@ public class GroupOperationJob extends OperationJob {
                             getUserWithSession(user, true), groupHistory);
 
                         if (schedule.isHaltOnFailure()) {
-                            throw e;
+                            hadFailure = true;
                         }
                     }
                 }
@@ -208,6 +213,10 @@ public class GroupOperationJob extends OperationJob {
                         groupHistory = (GroupOperationHistory) operationManager.updateOperationHistory(
                             getUserWithSession(user, true), groupHistory);
 
+                        // Note: in actuality - I don't think users have a way in the user interface to turn on halt-on-failure for parallel execution.
+                        // So this isHaltOnFailure will probably always be false. But in case we want to support this, leave this here.
+                        // What will happen is we will stop sending requests to the agents to invoke more resource operations. Any previous
+                        // resource operations invoked, however, will still be running and allowed to finish on their respective agents.
                         if (schedule.isHaltOnFailure()) {
                             throw e;
                         }

@@ -30,6 +30,7 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 
 import org.rhq.core.domain.operation.ResourceOperationHistory;
+import org.rhq.core.domain.util.PageOrdering;
 
 /**
  * @author Joseph Marques
@@ -40,14 +41,23 @@ import org.rhq.core.domain.operation.ResourceOperationHistory;
 public class ResourceOperationHistoryCriteria extends OperationHistoryCriteria {
     private static final long serialVersionUID = 1L;
 
+    public static final String SORT_FIELD_RESOURCE_NAME = "resourceName";
+    public static final String SORT_FIELD_RESOURCE_ID = "resourceId";
+
     private List<Integer> filterResourceIds; // requires override
     private Integer filterGroupOperationHistoryId; // requires override
 
     private boolean fetchResults;
 
+    private PageOrdering sortResourceName; // requires sort override
+    private PageOrdering sortResourceId; // requires sort override    
+
     public ResourceOperationHistoryCriteria() {
         filterOverrides.put("resourceIds", "resource.id IN ( ? )");
         filterOverrides.put("groupOperationHistoryId", "groupOperationHistory.id = ?");
+
+        sortOverrides.put(SORT_FIELD_RESOURCE_NAME, "resource.id");
+        sortOverrides.put(SORT_FIELD_RESOURCE_NAME, "resource.name");
     }
 
     @Override
@@ -66,4 +76,15 @@ public class ResourceOperationHistoryCriteria extends OperationHistoryCriteria {
     public void fetchResults(boolean fetchResults) {
         this.fetchResults = fetchResults;
     }
+
+    public void addSortResourceName(PageOrdering sortName) {
+        addSortField(SORT_FIELD_RESOURCE_NAME);
+        this.sortResourceName = sortName;
+    }
+
+    public void addSortResourceId(PageOrdering sortResourceId) {
+        addSortField(SORT_FIELD_RESOURCE_ID);
+        this.sortResourceId = sortResourceId;
+    }
+
 }

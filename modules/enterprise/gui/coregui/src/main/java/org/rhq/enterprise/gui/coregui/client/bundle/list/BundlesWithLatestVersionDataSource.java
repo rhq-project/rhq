@@ -93,6 +93,18 @@ public class BundlesWithLatestVersionDataSource extends RPCDataSource<BundleWith
     }
 
     @Override
+    protected String getSortFieldForColumn(String columnName) {
+        if (FIELD_LATEST_VERSION.equals(columnName)) {
+            return null;
+        }
+        if (FIELD_VERSIONS_COUNT.equals(columnName)) {
+            return null;
+        }
+
+        return super.getSortFieldForColumn(columnName);
+    }
+
+    @Override
     public BundleWithLatestVersionComposite copyValues(Record from) {
         return (BundleWithLatestVersionComposite) from.getAttributeAsObject("object");
     }

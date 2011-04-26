@@ -263,8 +263,14 @@ public abstract class AbstractOperationHistoryPortlet extends OperationHistoryVi
     }
 
     public boolean isRefreshing() {
-        // TODO: actually keep track of when the portlet is refreshing data
         return false;
+    }
+
+    @Override
+    public void refresh() {
+        if (!isRefreshing()) {
+            super.refresh();
+        }
     }
 
     @Override
@@ -272,12 +278,6 @@ public abstract class AbstractOperationHistoryPortlet extends OperationHistoryVi
         AutoRefreshPortletUtil.onDestroy(this, refreshTimer);
 
         super.onDestroy();
-    }
-
-    @Override
-    public void redraw() {
-        super.refresh();
-        markForRedraw();
     }
 
     static public class OperationHistoryPortletDataSource extends OperationHistoryDataSource {
@@ -301,16 +301,16 @@ public abstract class AbstractOperationHistoryPortlet extends OperationHistoryVi
         }
 
         /* (non-Javadoc)
-         * This override allows us to set the total rows to the number of recent op histpry configured for
+         * This override allows us to set the total rows to the number of recent op history configured for
          * the portlet. This sets the counter appropriately and stops further queries to the server.
          * 
-         * @see org.rhq.enterprise.gui.coregui.client.operation.OperationHistoryDataSource#dataRetrieved(org.rhq.core.domain.util.PageList, com.smartgwt.client.data.DSResponse, com.smartgwt.client.data.DSRequest)
+         * @see org.rhq.enterprise.gui.coregui.client.operation.OperationHistoryDataSource#getTotalRows(org.rhq.core.domain.util.PageList, com.smartgwt.client.data.DSResponse, com.smartgwt.client.data.DSRequest)
          */
         @Override
-        protected void dataRetrieved(PageList<ResourceOperationHistory> result, DSResponse response, DSRequest request) {
-            super.dataRetrieved(result, response, request);
+        protected int getTotalRows(final PageList<ResourceOperationHistory> result, final DSResponse response,
+            final DSRequest request) {
 
-            response.setTotalRows(result.size());
+            return result.size();
         }
 
         @Override

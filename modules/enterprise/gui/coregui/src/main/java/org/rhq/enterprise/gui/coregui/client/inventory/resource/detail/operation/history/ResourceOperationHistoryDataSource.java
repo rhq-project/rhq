@@ -101,6 +101,15 @@ public class ResourceOperationHistoryDataSource extends
         return criteria;
     }
 
+    @Override
+    protected String getSortFieldForColumn(String columnName) {
+        if (AncestryUtil.RESOURCE_ANCESTRY.equals(columnName)) {
+            return "resource.ancestry";
+        }
+
+        return super.getSortFieldForColumn(columnName);
+    }
+
     protected void dataRetrieved(final PageList<ResourceOperationHistory> result, final DSResponse response,
         final DSRequest request) {
         HashSet<Integer> typesSet = new HashSet<Integer>();
@@ -137,6 +146,11 @@ public class ResourceOperationHistoryDataSource extends
                 processResponse(request.getRequestId(), response);
             }
         });
+    }
+
+    @Override
+    protected ResourceOperationHistory createOperationHistory() {
+        return new ResourceOperationHistory(null, null, null, null, null, null, null);
     }
 
     @Override

@@ -151,7 +151,12 @@ public abstract class AbstractOperationHistoryDetailsView<T extends OperationHis
 
         StaticTextItem submittedItem = new StaticTextItem(AbstractOperationHistoryDataSource.Field.STARTED_TIME, MSG
             .view_operationHistoryDetails_dateSubmitted());
-        submittedItem.setValue(TimestampCellFormatter.format(operationHistory.getStartedTime()));
+        if (operationHistory.getStartedTime() == 0) {
+            // must have executed serially, halt-on-error was true and a previous resource op failed, thus this never even got submitted to the agent for invocation
+            submittedItem.setValue(MSG.common_val_never());
+        } else {
+            submittedItem.setValue(TimestampCellFormatter.format(operationHistory.getStartedTime()));
+        }
         items.add(submittedItem);
 
         StaticTextItem completedItem = new StaticTextItem("completed", MSG.view_operationHistoryDetails_dateCompleted());
@@ -176,12 +181,18 @@ public abstract class AbstractOperationHistoryDetailsView<T extends OperationHis
             .view_operationHistoryDetails_status());
         String icon = ImageManager.getFullImagePath(ImageManager.getOperationResultsIcon(status));
         statusItem.setValue("<img src='" + icon + "'/>");
+        items.add(statusItem);
         switch (status) {
         case SUCCESS:
             statusItem.setTooltip(MSG.common_status_success());
             break;
+        case CANCELED:
         case FAILURE:
-            statusItem.setTooltip(MSG.common_status_failed());
+            if (status == OperationRequestStatus.CANCELED) {
+                statusItem.setTooltip(MSG.common_status_canceled());
+            } else {
+                statusItem.setTooltip(MSG.common_status_failed());
+            }
             LinkItem errorLinkItem = new LinkItem("errorLink");
             errorLinkItem.setTitle(MSG.common_title_error());
             errorLinkItem.setLinkTitle(getShortErrorMessage(operationHistory));
@@ -226,9 +237,6 @@ public abstract class AbstractOperationHistoryDetailsView<T extends OperationHis
             break;
         case INPROGRESS:
             statusItem.setTooltip(MSG.common_status_inprogress());
-            break;
-        case CANCELED:
-            statusItem.setTooltip(MSG.common_status_canceled());
             break;
         }
 

@@ -335,19 +335,28 @@ public class PermissionsEditor extends LocatableVStack {
                     ListGridRecord record = grid.getRecord(recordNum);
                     String permissionName = record.getAttribute(nameField);
                     Permission permission = Permission.valueOf(permissionName);
+                    String permissionDisplayName = record.getAttribute("displayName");
                     if (permission == Permission.VIEW_RESOURCE) {
-                        event.getItem().setValue(true);
-                        String permissionDisplayName = record.getAttribute("displayName");
-                        Message message = new Message(
-                            MSG.view_adminRoles_permissions_readAccessImplied(permissionDisplayName),
-                            Message.Severity.Warning);
-                        CoreGUI.getMessageCenter().notify(message);                                                    
+                        String messageString = MSG.view_adminRoles_permissions_readAccessImplied(permissionDisplayName);
+                        handleIllegalPermissionSelection(event, messageString);
+                    } else if (!authorized && selectedPermissions.contains(Permission.MANAGE_SECURITY) &&
+                        permission != Permission.MANAGE_SECURITY) {
+                        String messageString = MSG.view_adminRoles_permissions_illegalDeselectionDueToManageSecuritySelection(permissionDisplayName);
+                        handleIllegalPermissionSelection(event, messageString);
+                    } else if (!authorized && selectedPermissions.contains(Permission.MANAGE_INVENTORY) &&
+                        permission.getTarget() == Permission.Target.RESOURCE) {
+                        String messageString = MSG.view_adminRoles_permissions_illegalDeselectionDueToManageInventorySelection(permissionDisplayName);
+                        handleIllegalPermissionSelection(event, messageString);
+                    } else if (!authorized && selectedPermissions.contains(Permission.CONFIGURE_WRITE) &&
+                        permission == Permission.CONFIGURE_READ) {
+                        String messageString = MSG.view_adminRoles_permissions_illegalDeselectionDueToCorrespondingWritePermSelection(permissionDisplayName);
+                        handleIllegalPermissionSelection(event, messageString);
                     } else {
                         updatePermissions(authorized, permission);
 
                         // Let our parent role editor know the permissions have been changed, so it can update the
                         // enablement of its Save and Reset buttons.
-                        org.rhq.enterprise.gui.coregui.client.admin.roles.PermissionsEditor.this.roleEditView.onItemChanged();
+                        PermissionsEditor.this.roleEditView.onItemChanged();
                     }
                 }
             });            
@@ -356,37 +365,50 @@ public class PermissionsEditor extends LocatableVStack {
         return authorizedField;
     }
 
+    private static void handleIllegalPermissionSelection(ChangedEvent event, String messageString) {
+        event.getItem().setValue(true);
+        Message message = new Message(messageString, Message.Severity.Warning, EnumSet.of(Message.Option.Transient));
+        CoreGUI.getMessageCenter().notify(message);
+    }
+
     private void updatePermissions(Boolean authorized, Permission permission) {
+        String messageString = null;
         boolean redrawRequired = false;
         if (authorized) {
             this.selectedPermissions.add(permission);
             if (permission == Permission.MANAGE_SECURITY) {
                 // MANAGE_SECURITY implies all other perms.
-                this.selectedPermissions.addAll(EnumSet.allOf(Permission.class));
-                redrawRequired = true;
+                if (this.selectedPermissions.addAll(EnumSet.allOf(Permission.class))) {
+                    messageString = MSG.view_adminRoles_permissions_autoselecting_manageSecurity_implied();
+                    redrawRequired = true;
+                }
             } else if (permission == Permission.MANAGE_INVENTORY) {
                 // MANAGE_INVENTORY implies all Resource perms.
-                this.selectedPermissions.addAll(Permission.RESOURCE_ALL);
-                redrawRequired = true;
+                if (this.selectedPermissions.addAll(Permission.RESOURCE_ALL)) {
+                    messageString = MSG.view_adminRoles_permissions_autoselecting_manageInventory_implied();
+                    redrawRequired = true;
+                }
             } else if (permission == Permission.CONFIGURE_WRITE) {
                 // CONFIGURE_WRITE implies CONFIGURE_READ.
-                this.selectedPermissions.add(Permission.CONFIGURE_READ);
-                redrawRequired = true;
+                if (this.selectedPermissions.add(Permission.CONFIGURE_READ)) {
+                    messageString = MSG.view_adminRoles_permissions_autoselecting_configureWrite_implied();
+                    redrawRequired = true;
+                }
             }            
         } else {
             this.selectedPermissions.remove(permission);
-            if (permission == Permission.CONFIGURE_READ) {
-                // Lack of CONFIGURE_READ implies lack of CONFIGURE_WRITE.
-                this.selectedPermissions.remove(Permission.CONFIGURE_WRITE);
-                redrawRequired = true;
-            }
         }
-        
+
         ListGridRecord[] permissionRecords = RolesDataSource.toRecordArray(this.selectedPermissions);
         this.roleEditView.getForm().setValue(RolesDataSource.Field.PERMISSIONS, permissionRecords);
 
         if (redrawRequired) {
             redraw();
+        }
+
+        if (messageString != null) {
+            Message message = new Message(messageString, EnumSet.of(Message.Option.Transient));
+            CoreGUI.getMessageCenter().notify(message);
         }
     }
 

@@ -66,7 +66,6 @@ import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.operation.ResourceOperationScheduleEntity;
 import org.rhq.core.domain.operation.ScheduleJobId;
 import org.rhq.core.domain.operation.bean.GroupOperationSchedule;
-import org.rhq.core.domain.operation.bean.OperationSchedule;
 import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.rhq.core.domain.operation.composite.GroupOperationLastCompletedComposite;
 import org.rhq.core.domain.operation.composite.GroupOperationScheduleComposite;
@@ -195,9 +194,9 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
                     executionOrderResourceIds[i] = executionOrderResource.getId();
                 }
             }
-            GroupOperationSchedule groupOperationSchedule = scheduleGroupOperation(subject, schedule
-                .getGroup().getId(), executionOrderResourceIds, schedule.getHaltOnFailure(),
-                    schedule.getOperationName(), schedule.getParameters(), trigger, schedule.getDescription());
+            GroupOperationSchedule groupOperationSchedule = scheduleGroupOperation(subject,
+                schedule.getGroup().getId(), executionOrderResourceIds, schedule.getHaltOnFailure(), schedule
+                    .getOperationName(), schedule.getParameters(), trigger, schedule.getDescription());
             return groupOperationSchedule.getId();
         } catch (SchedulerException e) {
             throw new ScheduleException(e);
@@ -470,7 +469,8 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     public ResourceOperationSchedule getResourceOperationSchedule(Subject whoami, int scheduleId) {
         OperationScheduleEntity operationScheduleEntity = entityManager.find(OperationScheduleEntity.class, scheduleId);
         try {
-            ResourceOperationSchedule resourceOperationSchedule = getResourceOperationSchedule(whoami, operationScheduleEntity.getJobId().toString());
+            ResourceOperationSchedule resourceOperationSchedule = getResourceOperationSchedule(whoami,
+                operationScheduleEntity.getJobId().toString());
             return resourceOperationSchedule;
         } catch (SchedulerException e) {
             throw new RuntimeException("Failed to retrieve ResourceOperationSchedule with id [" + scheduleId + "].", e);
@@ -480,7 +480,8 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     public GroupOperationSchedule getGroupOperationSchedule(Subject whoami, int scheduleId) {
         OperationScheduleEntity operationScheduleEntity = entityManager.find(OperationScheduleEntity.class, scheduleId);
         try {
-            GroupOperationSchedule groupOperationSchedule = getGroupOperationSchedule(whoami, operationScheduleEntity.getJobId().toString());
+            GroupOperationSchedule groupOperationSchedule = getGroupOperationSchedule(whoami, operationScheduleEntity
+                .getJobId().toString());
             return groupOperationSchedule;
         } catch (SchedulerException e) {
             throw new RuntimeException("Failed to retrieve GroupOperationSchedule with id [" + scheduleId + "].", e);
@@ -845,6 +846,19 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         if ((parameters != null) && (parameters.getId() == 0)) {
             entityManager.persist(parameters);
             history.setParameters(parameters);
+        }
+
+        // to avoid TransientObjectExceptions during the merge, we need to attach all resource operation histories, if there are any
+        if (history instanceof GroupOperationHistory) {
+            GroupOperationHistory groupHistory = (GroupOperationHistory) history;
+            List<ResourceOperationHistory> roh = groupHistory.getResourceOperationHistories();
+            if (roh != null && roh.size() > 0) {
+                List<ResourceOperationHistory> attached = new ArrayList<ResourceOperationHistory>(roh.size());
+                for (ResourceOperationHistory unattachedHistory : roh) {
+                    attached.add(entityManager.getReference(ResourceOperationHistory.class, unattachedHistory.getId()));
+                }
+                groupHistory.setResourceOperationHistories(attached);
+            }
         }
 
         history = entityManager.merge(history); // merge will persist if it doesn't exist yet
@@ -1281,11 +1295,24 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
             for (ResourceOperationHistory history : histories) {
                 long timeout = getOperationTimeout(history.getOperationDefinition(), history.getParameters());
 
+                // there are two cases we need to check. First, did the resource history start but it took too long? (aka timed out?)
+                // Or, second, did the resource history not even start yet, but its been a very long time (1 day) since it was created?
+                // In either case, we can't wait forever, so we'll mark them as failed with an appropriate error message.
                 long duration = history.getDuration();
-                if (duration > timeout) {
-                    LOG.info("Operation execution seems to have been orphaned - timing it out: " + history);
-                    history.setErrorMessage("Timed out : did not complete after " + duration + " ms"
-                        + " (the timeout period was " + timeout + " ms)");
+                long createdTime = history.getCreatedTime();
+                boolean timedOut = (duration > timeout);
+                boolean neverStarted = ((System.currentTimeMillis() - createdTime) > (1000 * 60 * 60 * 24));
+                if (timedOut || neverStarted) {
+                    if (timedOut) {
+                        // the operation started, but the agent never told us how it finished prior to exceeding the timeout 
+                        LOG.info("Operation execution seems to have been orphaned - timing it out: " + history);
+                        history.setErrorMessage("Timed out : did not complete after " + duration + " ms"
+                            + " (the timeout period was " + timeout + " ms)");
+                    } else {
+                        // the operation never even started, but its been at least a day since it was created
+                        LOG.info("Operation execution seems to have never started - timing it out: " + history);
+                        history.setErrorMessage("Failed to start : operation never started");
+                    }
                     history.setStatus(OperationRequestStatus.FAILURE);
                     notifyAlertConditionCacheManager("checkForTimedOutOperations", history);
 
@@ -1355,7 +1382,6 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
                          * where sent to the remaining INPROGRESS elements).
                          */
                         cancelOperationHistory(subject, resourceHistory.getId(), true);
-                        break;
                     }
                 }
 
@@ -2021,12 +2047,12 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
             SimpleTrigger simpleTrigger = new SimpleTrigger();
             Date startTime = null;
             switch (jobTrigger.getStartType()) {
-                case NOW:
-                    startTime = new Date();
-                    break;
-                case DATETIME:
-                    startTime = jobTrigger.getStartDate();
-                    break;
+            case NOW:
+                startTime = new Date();
+                break;
+            case DATETIME:
+                startTime = jobTrigger.getStartDate();
+                break;
             }
             simpleTrigger.setStartTime(startTime);
             if (jobTrigger.getRecurrenceType() == JobTrigger.RecurrenceType.REPEAT_INTERVAL) {

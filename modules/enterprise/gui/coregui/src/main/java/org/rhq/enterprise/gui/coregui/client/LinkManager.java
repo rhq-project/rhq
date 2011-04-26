@@ -22,6 +22,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client;
 
+import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.enterprise.gui.coregui.client.admin.roles.RolesView;
 import org.rhq.enterprise.gui.coregui.client.admin.users.UsersView;
 
@@ -81,6 +82,21 @@ public class LinkManager {
         } else {
             return "/rhq/group/inventory/view.xhtml?groupId=" + resourceGroupId;
         }
+    }
+
+    public static String getResourceGroupTabLink(ResourceGroup group, String tabName, String subTabName) {
+        String link;
+        if (group.getSubject() != null) {
+            // autogroup
+            link = getAutoGroupTabLink(group.getId(), tabName, subTabName);
+        } else if (group.getClusterResourceGroup() != null) {
+            // autocluster
+            link = getAutoClusterTabLink(group.getId(), tabName, subTabName);
+        } else {
+            // regular group
+            link = getResourceGroupTabLink(group.getId(), tabName, subTabName);
+        }
+        return link;
     }
 
     public static String getResourcePluginConfigurationUpdateHistoryLink(int groupId) {

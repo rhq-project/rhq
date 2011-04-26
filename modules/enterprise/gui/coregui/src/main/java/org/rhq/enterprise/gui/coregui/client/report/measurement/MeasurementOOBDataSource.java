@@ -175,6 +175,16 @@ public class MeasurementOOBDataSource extends RPCDataSource<MeasurementOOBCompos
     protected Criteria getFetchCriteria(DSRequest request) {
         // we don't use criterias for this datasource, just return null
         return null;
+
+    }
+
+    protected String getSortFieldForColumn(String columnName) {
+        // Note: I don't think this should even be getting called, but it is. We already setCanSortClientOnly(true)
+        // on all of the ListGridFields. To me that should mean any sorting done client side on those fields should
+        // not be passed in on the Request, but it seems to be...
+
+        // we don't use criterias for this datasource, just return null, don't try and apply any sort.        
+        return null;
     }
 
     @Override

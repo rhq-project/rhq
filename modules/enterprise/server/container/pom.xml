@@ -431,6 +431,42 @@
           </plugins>
        </build>
      </profile>  
+
+     <!--
+       As the profile id indicates, this is a short-term temporary hack until
+       our hudson server gets the M2 Extra Build Steps plugin involved. Once
+       that plugin is available, this profile along with the shell script it
+       references will be removed.
+     -->
+     <profile>
+       <id>hudson-hack</id>
+       <activation>
+         <property>
+           <name>hudson.hack</name>
+         </property>
+       </activation>
+       <build>
+         <plugins>
+           <plugin>
+             <groupId>org.codehaus.mojo</groupId>
+             <artifactId>exec-maven-plugin</artifactId>
+             <executions>
+               <execution>
+                 <id>generate-plugin-zip</id>
+                 <phase>generate-sources</phase>
+                 <goals>
+                   <goal>exec</goal>
+                 </goals>
+                 <configuration>
+                   <executable>${basedir}/src/main/shell/zip_all_plugins</executable>
+                   <workingDirectory>../../../</workingDirectory>
+                 </configuration>
+               </execution>
+             </executions>
+           </plugin>
+         </plugins>
+       </build>
+     </profile>
   </profiles>
 
 </project>

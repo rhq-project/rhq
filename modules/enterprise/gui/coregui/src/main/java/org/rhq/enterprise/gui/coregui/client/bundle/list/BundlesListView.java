@@ -108,14 +108,12 @@ public class BundlesListView extends Table<BundlesWithLatestVersionDataSource> {
             MSG.view_bundle_latestVersion());
         latestVersionField.setWidth("20%");
         latestVersionField.setAlign(Alignment.CENTER);
-        latestVersionField.setCanSort(false); // need to figure out how we can sort on this projection field of the composite
 
         ListGridField versionsCountField = new ListGridField(BundlesWithLatestVersionDataSource.FIELD_VERSIONS_COUNT,
             MSG.view_bundle_list_versionsCount());
         versionsCountField.setType(ListGridFieldType.INTEGER);
         versionsCountField.setWidth("*");
         versionsCountField.setAlign(Alignment.CENTER);
-        versionsCountField.setCanSort(false); // need to figure out how we can sort on this projection field of the composite
 
         setListGridFields(idField, nameField, descField, latestVersionField, versionsCountField);
 

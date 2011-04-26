@@ -142,4 +142,11 @@ public class FavoriteResourcesPortlet extends ResourceSearchView implements Auto
         return false;
     }
 
+    @Override
+    public void refresh() {
+        if (!isRefreshing()) {
+            super.refresh();
+        }
+    }
+
 }

@@ -108,7 +108,7 @@ public class EventCompositeHistoryView extends TableSection<EventCompositeDataso
     @Override
     protected void configureTableFilters() {
         final TextItem sourceFilter = new TextItem("source", MSG.view_inventory_eventHistory_sourceFilter());
-        final TextItem detailsFilter = new TextItem("details", MSG.view_inventory_eventHistory_detailsFilter());
+        final TextItem detailsFilter = new TextItem("detail", MSG.view_inventory_eventHistory_detailsFilter());
 
         LinkedHashMap<String, String> severities = new LinkedHashMap<String, String>(5);
         severities.put(EventSeverity.DEBUG.name(), MSG.common_severity_debug());
@@ -162,11 +162,13 @@ public class EventCompositeHistoryView extends TableSection<EventCompositeDataso
             }
         });
 
-        ListGridField detailsField = new ListGridField("details-highlight", MSG.view_inventory_eventHistory_details());
-        detailsField.setCellFormatter(new CellFormatter() {
+        ListGridField detailField = new ListGridField("detail", MSG.view_inventory_eventHistory_details());
+        detailField.setCellFormatter(new CellFormatter() {
             @Override
             public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
-                if (((String) value).length() <= 200) {
+                if (null == value) {
+                    return "";
+                } else if (((String) value).length() <= 200) {
                     return (String) value;
                 } else {
                     return ((String) value).substring(0, 200); // first 200 chars
@@ -196,10 +198,10 @@ public class EventCompositeHistoryView extends TableSection<EventCompositeDataso
 
         timestampField.setWidth(155);
         severityField.setWidth(55);
-        detailsField.setWidth("*");
+        detailField.setWidth("*");
         sourceField.setWidth(220);
 
-        setListGridFields(timestampField, severityField, detailsField, sourceField);
+        setListGridFields(timestampField, severityField, detailField, sourceField);
 
         setupTableInteractions();
 

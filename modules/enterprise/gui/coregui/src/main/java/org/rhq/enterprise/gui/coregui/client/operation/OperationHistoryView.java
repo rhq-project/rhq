@@ -21,9 +21,15 @@ package org.rhq.enterprise.gui.coregui.client.operation;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 
+import com.allen_sauer.gwt.log.client.Log;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.data.DSCallback;
 import com.smartgwt.client.data.DSRequest;
+import com.smartgwt.client.data.DSResponse;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.widgets.Canvas;
@@ -33,12 +39,16 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.operation.OperationRequestStatus;
+import org.rhq.core.domain.operation.ResourceOperationHistory;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.components.form.EnumSelectItem;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.history.ResourceOperationHistoryDetailsView;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
  * A view that displays a paginated table of operation history. Support exists of subsystem and resource contexts.
@@ -172,6 +182,47 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
             });
     }
 
+    @Override
+    protected void deleteSelectedRecords(DSRequest requestProperties) {
+        final ListGridRecord[] recordsToBeDeleted = getListGrid().getSelection();
+        final int numberOfRecordsToBeDeleted = recordsToBeDeleted.length;
+        Boolean forceValue = (requestProperties != null && requestProperties.getAttributeAsBoolean("force"));
+        boolean force = ((forceValue != null) && forceValue);
+        final List<Integer> successIds = new ArrayList<Integer>();
+        final List<Integer> failureIds = new ArrayList<Integer>();
+        for (ListGridRecord record : recordsToBeDeleted) {
+            final ResourceOperationHistory operationHistoryToRemove = new OperationHistoryDataSource().copyValues(record);
+            GWTServiceLookup.getOperationService().deleteOperationHistory(operationHistoryToRemove.getId(), force,
+                new AsyncCallback<Void>() {
+                    public void onSuccess(Void result) {
+                        successIds.add(operationHistoryToRemove.getId());
+                        handleCompletion(successIds, failureIds, numberOfRecordsToBeDeleted);
+                    }
+
+                    public void onFailure(Throwable caught) {
+                        // TODO: i18n
+                        CoreGUI.getErrorHandler().handleError("Failed to delete " + operationHistoryToRemove + ".",
+                                caught);
+                        failureIds.add(operationHistoryToRemove.getId());
+                        handleCompletion(successIds, failureIds, numberOfRecordsToBeDeleted);
+                    }
+                });
+        }
+    }
+
+    private void handleCompletion(List<Integer> successIds, List<Integer> failureIds, int numberOfRecordsToBeDeleted) {
+        if ((successIds.size() + failureIds.size()) == numberOfRecordsToBeDeleted) {
+            // TODO: i18n
+            if (successIds.size() == numberOfRecordsToBeDeleted) {
+                CoreGUI.getMessageCenter().notify(new Message("Deleted " + numberOfRecordsToBeDeleted + " operation history items."));
+            } else {
+                CoreGUI.getMessageCenter().notify(new Message("Deleted " + successIds.size()
+                        + " operation history items, but failed to delete the items with the following IDs: " + failureIds));
+            }
+            refresh();
+        }
+    }
+
     public EntityContext getContext() {
         return context;
     }
@@ -180,5 +231,11 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
     public Canvas getDetailsView(int id) {
         return new ResourceOperationHistoryDetailsView(extendLocatorId("Detail"));
     }
+
+    @Override
+    protected String getTitleFieldName() {
+        return OperationHistoryDataSource.Field.OPERATION_NAME;
+    }
+
 
 }

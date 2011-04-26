@@ -18,14 +18,14 @@
  */
 package org.rhq.enterprise.gui.coregui.server.util;
 
-import org.rhq.enterprise.server.util.HibernateDetachUtility;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import org.rhq.enterprise.server.util.HibernateDetachUtility;
 
 /**
  * @author Greg Hinkle
@@ -34,20 +34,18 @@ public class SerialUtility {
 
     private static Log log = LogFactory.getLog(SerialUtility.class);
 
-    public static <T> T prepare(T value, String message) {
+    public static <T> T prepare(T value, String message) throws Exception {
 
         long start = System.currentTimeMillis();
-        try {
-            HibernateDetachUtility.nullOutUninitializedFields(value, HibernateDetachUtility.SerializationType.SERIALIZATION);
-            if (log.isDebugEnabled())
-               log.debug("SerialUtility.prepare [" + message + "] Detached in: " + (System.currentTimeMillis() - start) +
-                     "ms, Size is: " + serialSize(value));
-        } catch (Exception e) {
-            e.printStackTrace();
+        HibernateDetachUtility
+            .nullOutUninitializedFields(value, HibernateDetachUtility.SerializationType.SERIALIZATION);
+        if (log.isDebugEnabled()) {
+            log.debug("SerialUtility.prepare [" + message + "] Detached in: " + (System.currentTimeMillis() - start)
+                + "ms, Size is: " + serialSize(value));
         }
+
         return value;
     }
-
 
     public static int serialSize(Object value) {
 

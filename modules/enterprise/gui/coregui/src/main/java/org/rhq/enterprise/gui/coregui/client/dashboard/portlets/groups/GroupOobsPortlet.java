@@ -222,7 +222,9 @@ public class GroupOobsPortlet extends LocatableVLayout implements CustomSettings
 
                             final String title = oob.getScheduleName() + ":";
                             final String destination = "/resource/common/monitor/Visibility.do?m="
-                                + oob.getDefinitionId() + "&id=" + groupId + "&mode=chartSingleMetricSingleResource";
+                                //                                                            + oob.getDefinitionId() + "&id=" + groupId + "&mode=chartSingleMetricSingleResource";
+                                + oob.getDefinitionId() + "&groupId=" + groupId
+                                + "&mode=chartSingleMetricSingleResource";
                             LinkItem link = AbstractActivityView.newLinkItem(title, destination);
                             link.addClickHandler(new ClickHandler() {
                                 @Override

@@ -408,6 +408,8 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
                                                                     FullHTMLPane iframe = new FullHTMLPane(
                                                                         recentMeasurementsContent
                                                                             .extendLocatorId("View"), destination);
+                                                                    //                                                                            .extendLocatorId("View"),
+                                                                    //                                                                        AbstractActivityView.iframeLink(destination));
                                                                     window.addItem(iframe);
                                                                     window.show();
                                                                 }

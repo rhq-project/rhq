@@ -155,14 +155,14 @@
                      "
                   </c:if>
                   class="<c:out value='${resCellClass}'/>" valign="top">
-               <html:link href="${parentResourceUrl}"> 
+               <%--<html:link href="${parentResourceUrl}">--%>
                   <c:out value="${resource.parentResource.name}"/>
-               </html:link>
+               <%--</html:link>--%>
                <br>
                <html:img page="/images/hierarchy.gif" width="16" height="16" alt="" border="0"/>
-               <html:link href="${resourceUrl}">
+               <%--<html:link href="${resourceUrl}">--%>
                   <c:out value="${resource.name}"/>
-               </html:link>
+               <%--</html:link>--%>
             </td>
          </c:if>
             <%--

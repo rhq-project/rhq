@@ -69,6 +69,11 @@
             height="1" border="0"/></td>
         </tr>
         <tr>
+          <td class="MonitorChartCell">
+            <tiles:insert definition=".resource.common.monitor.visibility.charts.metric.chartlegend"/>
+          </td>
+        </tr>
+        <tr>
           <td class="MonitorChartBlock" colspan="3">
             <tiles:insert page="/resource/common/monitor/visibility/ChartTimeIntervalToolbar.jsp">
             <tiles:put name="rangeNow" beanName="ViewChartForm" beanProperty="rangeNow"/>

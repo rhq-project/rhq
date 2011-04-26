@@ -682,4 +682,12 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
             });
         }
     }
+
+    public static String iframeLink(String destination) {
+        String link = destination;
+        if (destination != null) {
+            link += "&iframe=true";
+        }
+        return link;
+    }
 }

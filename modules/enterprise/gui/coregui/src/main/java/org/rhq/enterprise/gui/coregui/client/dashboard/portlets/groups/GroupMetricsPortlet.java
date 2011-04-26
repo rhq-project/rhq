@@ -391,7 +391,7 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
                                                             graphContainer.setCanvas(graph);
 
                                                             //Link/title element
-                                                            final String title = md.getDisplayName() + ":";
+                                                            final String title = md.getDisplayName();
                                                             //                            String destination = "/resource/common/monitor/Visibility.do?mode=chartSingleMetricSingleResource&id="
                                                             //                                + resourceId + "&m=" + md.getId();
                                                             final String destination = "/resource/common/monitor/Visibility.do?mode=chartSingleMetricMultiResource&groupId="

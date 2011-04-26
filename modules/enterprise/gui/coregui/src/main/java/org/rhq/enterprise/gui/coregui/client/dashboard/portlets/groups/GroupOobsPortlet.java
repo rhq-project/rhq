@@ -220,7 +220,7 @@ public class GroupOobsPortlet extends LocatableVLayout implements CustomSettings
                                 .getScheduleName()));
                             row.setNumCols(2);
 
-                            final String title = oob.getScheduleName() + ":";
+                            final String title = oob.getScheduleName();
                             final String destination = "/resource/common/monitor/Visibility.do?m="
                                 //                                                            + oob.getDefinitionId() + "&id=" + groupId + "&mode=chartSingleMetricSingleResource";
                                 + oob.getDefinitionId() + "&groupId=" + groupId

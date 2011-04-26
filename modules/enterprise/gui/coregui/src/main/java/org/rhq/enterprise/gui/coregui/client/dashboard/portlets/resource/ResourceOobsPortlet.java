@@ -108,7 +108,7 @@ public class ResourceOobsPortlet extends GroupOobsPortlet {
                                 .getScheduleName()));
                             row.setNumCols(2);
 
-                            final String title = oob.getScheduleName() + ":";
+                            final String title = oob.getScheduleName();
                             final String destination = "/resource/common/monitor/Visibility.do?m="
                                 + oob.getDefinitionId() + "&id=" + resourceId + "&mode=chartSingleMetricSingleResource";
                             LinkItem link = AbstractActivityView.newLinkItem(title, destination);

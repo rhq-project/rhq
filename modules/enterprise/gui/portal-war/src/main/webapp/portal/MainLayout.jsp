@@ -56,17 +56,19 @@
       -->
    </head>
    <body>
-      <tiles:insert attribute="header">
+
+      <!--spinder 4/20/11: commenting for better iframing for coregui. Portal.war full view with menus no longer maintained. -->
+      <!--<tiles:insert attribute="header">
          <tiles:put name="breadcrumb" beanName="breadcrumb"/>
          <tiles:put name="location" beanName="location"/>
-      </tiles:insert>
+      </tiles:insert>-->
 
       <div id="content-full">
-	     <div id="Breadcrumb">
+	     <!--<div id="Breadcrumb">
 	        <tiles:insert attribute="breadcrumb">
 	           <tiles:put name="location" beanName="location"/>
 	        </tiles:insert>
-	     </div>
+	     </div>-->
 	     <tiles:insert attribute='body'/>
       </div>
    </body>

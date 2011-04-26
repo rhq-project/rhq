@@ -38,6 +38,8 @@ import com.smartgwt.client.widgets.form.events.SubmitValuesHandler;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.LinkItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
+import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
+import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.configuration.Configuration;
@@ -52,6 +54,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.components.measurement.CustomConfigMeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortletUtil;
@@ -63,6 +66,7 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigura
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent.Constant;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView.ChartViewWindow;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupDetailView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
@@ -387,14 +391,29 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
                                                             graphContainer.setCanvas(graph);
 
                                                             //Link/title element
-                                                            //TODO: spinder, change link whenever portal.war/graphing is removed.
-                                                            String title = md.getDisplayName() + ":";
+                                                            final String title = md.getDisplayName();
                                                             //                            String destination = "/resource/common/monitor/Visibility.do?mode=chartSingleMetricSingleResource&id="
                                                             //                                + resourceId + "&m=" + md.getId();
-                                                            String destination = "/resource/common/monitor/Visibility.do?mode=chartSingleMetricMultiResource&groupId="
+                                                            final String destination = "/resource/common/monitor/Visibility.do?mode=chartSingleMetricMultiResource&groupId="
                                                                 + groupId + "&m=" + md.getId();
                                                             LinkItem link = AbstractActivityView.newLinkItem(title,
                                                                 destination);
+                                                            link.addClickHandler(new ClickHandler() {
+                                                                @Override
+                                                                public void onClick(ClickEvent event) {
+                                                                    ChartViewWindow window = new ChartViewWindow(
+                                                                        recentMeasurementsContent
+                                                                            .extendLocatorId("ChartWindow"), title);
+                                                                    //generate and include iframed content
+                                                                    FullHTMLPane iframe = new FullHTMLPane(
+                                                                        recentMeasurementsContent
+                                                                            .extendLocatorId("View"), destination);
+                                                                    //                                                                            .extendLocatorId("View"),
+                                                                    //                                                                        AbstractActivityView.iframeLink(destination));
+                                                                    window.addItem(iframe);
+                                                                    window.show();
+                                                                }
+                                                            });
 
                                                             //Value
                                                             String convertedValue = lastValue + " " + md.getUnits();

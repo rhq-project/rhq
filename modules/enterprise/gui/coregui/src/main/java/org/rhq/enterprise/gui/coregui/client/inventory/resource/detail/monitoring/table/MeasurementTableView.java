@@ -34,10 +34,12 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.components.measurement.UserPreferencesMeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView.ChartViewWindow;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
@@ -125,6 +127,49 @@ public class MeasurementTableView extends Table<MeasurementTableDataSource> {
                             CoreGUI.getErrorHandler().handleError(MSG.view_measureTable_getLive_failure(), caught);
                         }
                     });
+            }
+        });
+        //add chart selected metric action
+        addTableAction(extendLocatorId("chartValues"), MSG.view_measureTable_chartMetricValues(), new TableAction() {
+            @Override
+            public boolean isEnabled(ListGridRecord[] selection) {
+                return selection != null && selection.length > 0;
+            }
+
+            @Override
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                if (selection == null || selection.length == 0) {
+                    return;
+                }
+                // keyed on metric name - string[0] is the metric label, [1] is the units
+                final HashMap<String, String[]> scheduleNamesAndUnits = new HashMap<String, String[]>();
+                int[] definitionIds = new int[selection.length];
+                int i = 0;
+                for (ListGridRecord record : selection) {
+                    Integer defId = record.getAttributeAsInt(MeasurementTableDataSource.FIELD_METRIC_DEF_ID);
+                    definitionIds[i++] = defId.intValue();
+
+                    String name = record.getAttribute(MeasurementTableDataSource.FIELD_METRIC_NAME);
+                    String label = record.getAttribute(MeasurementTableDataSource.FIELD_METRIC_LABEL);
+                    String units = record.getAttribute(MeasurementTableDataSource.FIELD_METRIC_UNITS);
+                    if (units == null || units.length() < 1) {
+                        units = MeasurementUnits.NONE.name();
+                    }
+
+                    scheduleNamesAndUnits.put(name, new String[] { label, units });
+                }
+
+                //build portal.war chart page to iFrame
+                String destination = "/resource/common/monitor/Visibility.do?mode=chartMultiMetricSingleResource&id="
+                    + resourceId;
+                for (int mId : definitionIds) {
+                    destination += "&m=" + mId;
+                }
+                ChartViewWindow window = new ChartViewWindow(extendLocatorId("ChartWindow"), "");
+                //generate and include iframed content
+                FullHTMLPane iframe = new FullHTMLPane(extendLocatorId("View"), destination);
+                window.addItem(iframe);
+                window.show();
             }
         });
     }

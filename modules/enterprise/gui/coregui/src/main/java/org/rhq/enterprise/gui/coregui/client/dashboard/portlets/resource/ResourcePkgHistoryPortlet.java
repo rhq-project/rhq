@@ -22,7 +22,6 @@ import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.form.fields.LinkItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.layout.VLayout;
 
@@ -120,7 +119,9 @@ public class ResourcePkgHistoryPortlet extends GroupPkgHistoryPortlet {
                         String title = history.getPackageVersion().getFileName() + ":";
                         String destination = "/rhq/resource/content/audit-trail-item.xhtml?id=" + resourceId
                             + "&selectedHistoryId=" + history.getId();
-                        LinkItem link = AbstractActivityView.newLinkItem(title, destination);
+                        //spinder 4/27/11: diabling links as they point into portal.war content pages
+                        //                        LinkItem link = AbstractActivityView.newLinkItem(title, destination);
+                        StaticTextItem link = AbstractActivityView.newTextItem(title);
                         StaticTextItem time = AbstractActivityView.newTextItem(GwtRelativeDurationConverter
                             .format(history.getTimestamp()));
 

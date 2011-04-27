@@ -672,7 +672,7 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
             setShowCloseButton(true);
             setIsModal(true);
             setShowModalMask(true);
-            setWidth(850);
+            setWidth(900);
             setHeight(650);
             setShowResizer(true);
             setCanDragResize(true);

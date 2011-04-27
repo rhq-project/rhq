@@ -124,21 +124,22 @@ public class MenuBarView extends LocatableVLayout {
     }
 
     private String setupLinks() {
+        // TODO: Replace the below HTML with SmartGWT widgets.
         StringBuilder headerString = new StringBuilder(
             "<table style=\"height: 34px;\" cellpadding=\"0\" cellspacing=\"0\"><tr>");
 
         headerString.append("<td style=\"width: 1px;\"><img src=\"images/header/header_bg_line.png\"/></td>");
-        for (ViewName section : SECTIONS) {
+        for (ViewName sectionName : SECTIONS) {
 
             String styleClass = "TopSectionLink";
-            if (section.getName().equals(currentlySelectedSection)) {
+            if (sectionName.getName().equals(currentlySelectedSection)) {
                 styleClass = "TopSectionLinkSelected";
             }
 
             // Set explicit identifiers because the generated scLocator is not getting picked up by Selenium.
-            headerString.append("<td style=\"vertical-align:middle\" id=\"").append(section).append("\" class=\"")
-                .append(styleClass).append("\" onclick=\"document.location='#").append(section).append("'\" >");
-            headerString.append(section.getTitle());
+            headerString.append("<td style=\"vertical-align:middle\" id=\"").append(sectionName).append("\" class=\"")
+                .append(styleClass).append("\" onclick=\"window.location.href='#").append(sectionName).append("'\" >");
+            headerString.append(sectionName.getTitle());
             headerString.append("</td>\n");
 
             headerString.append("<td style=\"width: 1px;\"><img src=\"images/header/header_bg_line.png\"/></td>");

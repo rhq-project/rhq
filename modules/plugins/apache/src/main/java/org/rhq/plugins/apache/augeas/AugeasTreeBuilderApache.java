@@ -78,7 +78,7 @@ public class AugeasTreeBuilderApache implements AugeasTreeBuilder {
 
             File check = new File(inclName);        
             File root = new File(check.isAbsolute() ? Glob.rootPortion(inclName) : apacheConfig.getServerRootPath());                     
-            files.addAll(Glob.match(root, inclName));
+            files.addAll(Glob.match(root, inclName, Glob.ALPHABETICAL_COMPARATOR));
             
             if (module.getExcludedGlobs() != null)
                 Glob.excludeAll(files, module.getExcludedGlobs());

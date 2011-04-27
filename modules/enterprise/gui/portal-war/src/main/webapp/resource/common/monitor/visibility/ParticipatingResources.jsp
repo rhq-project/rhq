@@ -8,19 +8,19 @@
 <tiles:importAttribute name="multiResource" ignore="true"/>
 
 <hq:constant
-      classname="org.rhq.enterprise.server.measurement.uibean.MetricDisplayConstants"
+      classname="org.rhq.core.domain.measurement.ui.MetricDisplayConstants"
       symbol="MAX_KEY"
       var="max"/>
 <hq:constant
-      classname="org.rhq.enterprise.server.measurement.uibean.MetricDisplayConstants"
+      classname="org.rhq.core.domain.measurement.ui.MetricDisplayConstants"
       symbol="MIN_KEY"
       var="min"/>
 <hq:constant
-      classname="org.rhq.enterprise.server.measurement.uibean.MetricDisplayConstants"
+      classname="org.rhq.core.domain.measurement.ui.MetricDisplayConstants"
       symbol="AVERAGE_KEY"
       var="average"/>
 <hq:constant
-      classname="org.rhq.enterprise.server.measurement.uibean.MetricDisplayConstants"
+      classname="org.rhq.core.domain.measurement.ui.MetricDisplayConstants"
       symbol="LAST_KEY"
       var="last"/>
 
@@ -155,14 +155,14 @@
                      "
                   </c:if>
                   class="<c:out value='${resCellClass}'/>" valign="top">
-               <html:link href="${parentResourceUrl}"> 
+               <%--<html:link href="${parentResourceUrl}">--%>
                   <c:out value="${resource.parentResource.name}"/>
-               </html:link>
+               <%--</html:link>--%>
                <br>
                <html:img page="/images/hierarchy.gif" width="16" height="16" alt="" border="0"/>
-               <html:link href="${resourceUrl}">
+               <%--<html:link href="${resourceUrl}">--%>
                   <c:out value="${resource.name}"/>
-               </html:link>
+               <%--</html:link>--%>
             </td>
          </c:if>
             <%--

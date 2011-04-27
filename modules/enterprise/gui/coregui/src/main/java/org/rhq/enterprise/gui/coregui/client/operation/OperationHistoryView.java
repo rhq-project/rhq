@@ -21,10 +21,16 @@ package org.rhq.enterprise.gui.coregui.client.operation;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 
+import com.allen_sauer.gwt.log.client.Log;
+import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.data.DSCallback;
 import com.smartgwt.client.data.DSRequest;
+import com.smartgwt.client.data.DSResponse;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.SortSpecifier;
-import com.smartgwt.client.types.MultipleAppearance;
 import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
@@ -33,13 +39,16 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.operation.OperationRequestStatus;
+import org.rhq.core.domain.operation.ResourceOperationHistory;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.components.form.EnumSelectItem;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent.Constant;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.AbstractConfigurationHistoryDataSource.Field;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.history.ResourceOperationHistoryDetailsView;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
  * A view that displays a paginated table of operation history. Support exists of subsystem and resource contexts.
@@ -52,14 +61,26 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
 
     public static final ViewName SUBSYSTEM_VIEW_ID = new ViewName("RecentOperations", MSG
         .common_title_recent_operations());
+    private static final Criteria INITIAL_CRITERIA = new Criteria();
 
     private static final String HEADER_ICON = "subsystems/control/Operation_24.png";
-    private static final SortSpecifier DEFAULT_SORT_SPECIFIER = new SortSpecifier(Field.CREATED_TIME,
-        SortDirection.DESCENDING);
+    private static final SortSpecifier DEFAULT_SORT_SPECIFIER = new SortSpecifier(
+        OperationHistoryDataSource.Field.CREATED_TIME, SortDirection.DESCENDING);
 
     EntityContext context;
     boolean hasControlPermission;
     OperationHistoryDataSource dataSource;
+
+    static {
+        OperationRequestStatus[] statusValues = OperationRequestStatus.values();
+        String[] statusNames = new String[statusValues.length];
+        int i = 0;
+        for (OperationRequestStatus s : statusValues) {
+            statusNames[i++] = s.name();
+        }
+
+        INITIAL_CRITERIA.addCriteria(OperationHistoryDataSource.Field.STATUS, statusNames);
+    }
 
     // for subsystem views
     public OperationHistoryView(String locatorId) {
@@ -76,10 +97,11 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
 
     protected OperationHistoryView(String locatorId, String tableTitle, EntityContext context,
         boolean hasControlPermission) {
-        super(locatorId, tableTitle, new SortSpecifier[] { DEFAULT_SORT_SPECIFIER });
+        super(locatorId, tableTitle, INITIAL_CRITERIA, new SortSpecifier[] { DEFAULT_SORT_SPECIFIER });
         this.context = context;
         this.hasControlPermission = hasControlPermission;
 
+        setInitialCriteriaFixed(false);
         setDataSource(getDataSource());
     }
 
@@ -93,18 +115,11 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
 
     @Override
     protected void configureTableFilters() {
-        SelectItem statusFilter = new SelectItem(Constant.OPERATION_STATUS, MSG.common_title_operation_status());
-        statusFilter.setWrapTitle(false);
-        statusFilter.setWidth(325);
-        statusFilter.setMultiple(true);
-        statusFilter.setMultipleAppearance(MultipleAppearance.PICKLIST);
-
-        LinkedHashMap<String, String> stati = new LinkedHashMap<String, String>(4);
-        stati.put(OperationRequestStatus.SUCCESS.name(), MSG.common_status_success());
-        stati.put(OperationRequestStatus.INPROGRESS.name(), MSG.common_status_inprogress());
-        stati.put(OperationRequestStatus.CANCELED.name(), MSG.common_status_canceled());
-        stati.put(OperationRequestStatus.FAILURE.name(), MSG.common_status_failed());
-
+        LinkedHashMap<String, String> statusValues = new LinkedHashMap<String, String>(4);
+        statusValues.put(OperationRequestStatus.SUCCESS.name(), MSG.common_status_success());
+        statusValues.put(OperationRequestStatus.INPROGRESS.name(), MSG.common_status_inprogress());
+        statusValues.put(OperationRequestStatus.CANCELED.name(), MSG.common_status_canceled());
+        statusValues.put(OperationRequestStatus.FAILURE.name(), MSG.common_status_failed());
         LinkedHashMap<String, String> statusIcons = new LinkedHashMap<String, String>(3);
         statusIcons.put(OperationRequestStatus.SUCCESS.name(), ImageManager
             .getOperationResultsIcon(OperationRequestStatus.SUCCESS));
@@ -114,10 +129,10 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
             .getOperationResultsIcon(OperationRequestStatus.CANCELED));
         statusIcons.put(OperationRequestStatus.FAILURE.name(), ImageManager
             .getOperationResultsIcon(OperationRequestStatus.FAILURE));
-        statusFilter.setValueMap(stati);
-        statusFilter.setValueIcons(statusIcons);
-        statusFilter.setValues(OperationRequestStatus.SUCCESS.name(), OperationRequestStatus.INPROGRESS.name(),
-            OperationRequestStatus.FAILURE.name(), OperationRequestStatus.CANCELED.name());
+
+        SelectItem statusFilter = new EnumSelectItem(OperationHistoryDataSource.Field.STATUS, MSG
+            .common_title_operation_status(), OperationRequestStatus.class, statusValues, statusIcons);
+        statusFilter.setWidth(325);
 
         if (isShowFilterForm()) {
             setFilterFormItems(statusFilter);
@@ -167,6 +182,47 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
             });
     }
 
+    @Override
+    protected void deleteSelectedRecords(DSRequest requestProperties) {
+        final ListGridRecord[] recordsToBeDeleted = getListGrid().getSelection();
+        final int numberOfRecordsToBeDeleted = recordsToBeDeleted.length;
+        Boolean forceValue = (requestProperties != null && requestProperties.getAttributeAsBoolean("force"));
+        boolean force = ((forceValue != null) && forceValue);
+        final List<Integer> successIds = new ArrayList<Integer>();
+        final List<Integer> failureIds = new ArrayList<Integer>();
+        for (ListGridRecord record : recordsToBeDeleted) {
+            final ResourceOperationHistory operationHistoryToRemove = new OperationHistoryDataSource().copyValues(record);
+            GWTServiceLookup.getOperationService().deleteOperationHistory(operationHistoryToRemove.getId(), force,
+                new AsyncCallback<Void>() {
+                    public void onSuccess(Void result) {
+                        successIds.add(operationHistoryToRemove.getId());
+                        handleCompletion(successIds, failureIds, numberOfRecordsToBeDeleted);
+                    }
+
+                    public void onFailure(Throwable caught) {
+                        // TODO: i18n
+                        CoreGUI.getErrorHandler().handleError("Failed to delete " + operationHistoryToRemove + ".",
+                                caught);
+                        failureIds.add(operationHistoryToRemove.getId());
+                        handleCompletion(successIds, failureIds, numberOfRecordsToBeDeleted);
+                    }
+                });
+        }
+    }
+
+    private void handleCompletion(List<Integer> successIds, List<Integer> failureIds, int numberOfRecordsToBeDeleted) {
+        if ((successIds.size() + failureIds.size()) == numberOfRecordsToBeDeleted) {
+            // TODO: i18n
+            if (successIds.size() == numberOfRecordsToBeDeleted) {
+                CoreGUI.getMessageCenter().notify(new Message("Deleted " + numberOfRecordsToBeDeleted + " operation history items."));
+            } else {
+                CoreGUI.getMessageCenter().notify(new Message("Deleted " + successIds.size()
+                        + " operation history items, but failed to delete the items with the following IDs: " + failureIds));
+            }
+            refresh();
+        }
+    }
+
     public EntityContext getContext() {
         return context;
     }
@@ -175,5 +231,11 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
     public Canvas getDetailsView(int id) {
         return new ResourceOperationHistoryDetailsView(extendLocatorId("Detail"));
     }
+
+    @Override
+    protected String getTitleFieldName() {
+        return OperationHistoryDataSource.Field.OPERATION_NAME;
+    }
+
 
 }

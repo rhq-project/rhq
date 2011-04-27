@@ -112,7 +112,7 @@ public class MeasurementTableDataSource extends RPCDataSource<MetricDisplaySumma
         return record;
     }
 
-    private String getMetricStringValue(MetricDisplayValue value) {
+    protected String getMetricStringValue(MetricDisplayValue value) {
         return (value != null) ? value.toString() : "";
     }
 

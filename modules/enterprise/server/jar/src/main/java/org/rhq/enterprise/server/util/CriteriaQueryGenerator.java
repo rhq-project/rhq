@@ -181,18 +181,18 @@ public final class CriteriaQueryGenerator {
         List<Permission> requiredPerms = this.criteria.getRequiredPermissions();
         if (!(null == requiredPerms || requiredPerms.isEmpty())) {
             this.authorizationPermsFragment = "" //
-                + "AND ( SELECT COUNT(DISTINCT p)" + NL //
-                + "      FROM Subject innerSubject" + NL //
-                + "      JOIN innerSubject.roles r" + NL //
-                + "      JOIN r.permissions p" + NL //
-                + "      WHERE innerSubject.id = " + this.authorizationSubjectId + NL //
-                + "      AND p IN ( :requiredPerms ) ) = :requiredPermsSize" + NL;
+                + "( SELECT COUNT(DISTINCT p)" + NL //
+                + "   FROM Subject innerSubject" + NL //
+                + "   JOIN innerSubject.roles r" + NL //
+                + "   JOIN r.permissions p" + NL //
+                + "   WHERE innerSubject.id = " + this.authorizationSubjectId + NL //
+                + "   AND p IN ( :requiredPerms ) ) = :requiredPermsSize" + NL;
         }
     }
 
     private String getEnhancedResourceAuthorizationWhereFragment(String fragment, int subjectId) {
         String customAuthzFragment = "" //
-            + "( %aliasWithFragment%.id IN ( SELECT %aliasWithFragment%.id " + NL //
+            + "( %aliasWithFragment%.id IN ( SELECT %innerAlias%.id " + NL //
             + "                    FROM %alias% innerAlias " + NL //
             + "                    JOIN %innerAlias%.implicitGroups g JOIN g.roles r JOIN r.subjects s " + NL //
             + "                   WHERE s.id = %subjectId% ) )" + NL; //
@@ -207,17 +207,17 @@ public final class CriteriaQueryGenerator {
 
     private String getEnhancedGroupAuthorizationWhereFragment(String fragment, int subjectId) {
         String customAuthzFragment = "" //
-            + "( %aliasWithFragment%.id IN ( SELECT %aliasWithFragment%.id " + NL //
+            + "( %aliasWithFragment%.id IN ( SELECT %innerAlias%.id " + NL //
             + "                    FROM %alias% innerAlias " + NL //
             + "                    JOIN %innerAlias%.roles r JOIN r.subjects s " + NL //
             + "                   WHERE s.id = %subjectId% )" + NL //
             + "  OR" + NL //
-            + "  %aliasWithFragment%.id IN ( SELECT %aliasWithFragment%.id " + NL //
+            + "  %aliasWithFragment%.id IN ( SELECT %innerAlias%.id " + NL //
             + "                    FROM %alias% innerAlias " + NL //
             + "                    JOIN %innerAlias%.clusterResourceGroup crg JOIN crg.roles r JOIN r.subjects s " + NL //
             + "                   WHERE crg.recursive = true AND s.id = %subjectId% )" + NL //
             + "  OR" + NL //
-            + "  %aliasWithFragment%.id IN ( SELECT %aliasWithFragment%.id" + NL //
+            + "  %aliasWithFragment%.id IN ( SELECT %innerAlias%.id" + NL //
             + "                    FROM %alias% innerAlias " + NL //
             + "                    JOIN %innerAlias%.subject s" + NL //
             + "                   WHERE s.id = %subjectId% ) ) " + NL;

@@ -161,7 +161,7 @@ public class RolesView extends TableSection<RolesDataSource> implements Bookmark
             public void onPermissionsLoaded(Set<Permission> permissions) {
                 if (permissions != null) {
                     hasManageSecurity = permissions.contains(Permission.MANAGE_SECURITY);
-                    refresh();
+                    refreshTableInfo();
                 } else {
                     hasManageSecurity = false;
                 }

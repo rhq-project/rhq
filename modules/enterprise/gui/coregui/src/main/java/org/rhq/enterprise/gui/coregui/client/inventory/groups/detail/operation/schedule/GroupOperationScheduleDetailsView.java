@@ -150,29 +150,58 @@ public class GroupOperationScheduleDetailsView extends AbstractOperationSchedule
         return contentPane;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    protected void editExistingRecord(Record record) {
+    protected void editExistingRecord(final Record record) {
         List<Resource> executionOrder = (List<Resource>) record
             .getAttributeAsObject(GroupOperationScheduleDataSource.Field.EXECUTION_ORDER);
+
         if (executionOrder != null) {
-            this.executionModeForm.setValue(FIELD_EXECUTION_MODE, EXECUTION_ORDER_SEQUENTIAL);
+            Integer[] resourceIds = new Integer[executionOrder.size()];
+            int i = 0;
+            for (Resource resource : executionOrder) {
+                resourceIds[i++] = resource.getId();
+            }
             ResourceDatasource resourceDatasource = new ResourceDatasource();
-            ListGridRecord[] resourceRecords = resourceDatasource.buildRecords(executionOrder);
-            this.memberExecutionOrderer.setRecords(resourceRecords);
-            this.memberExecutionOrderer.show();
-            FormItem haltOnFailureItem = executionModeForm
-                .getField(GroupOperationScheduleDataSource.Field.HALT_ON_FAILURE);
-            haltOnFailureItem.show();
+            Criteria criteria = new Criteria();
+            criteria.addCriteria(ResourceDatasource.FILTER_RESOURCE_IDS, resourceIds);
+            resourceDatasource.fetchData(criteria, new DSCallback() {
+                public void execute(DSResponse response, Object rawData, DSRequest request) {
+                    if (response.getStatus() != DSResponse.STATUS_SUCCESS) {
+                        throw new RuntimeException(MSG.view_group_operationScheduleDetails_failedToLoadMembers());
+                    }
+                    Record[] data = response.getData();
+                    ListGridRecord[] resourceRecords = new ListGridRecord[data.length];
+                    for (int i = 0, dataLength = data.length; i < dataLength; i++) {
+                        Record record = data[i];
+                        ListGridRecord listGridRecord = (ListGridRecord) record;
+                        resourceRecords[i] = listGridRecord;
+                    }
+
+                    executionModeForm.setValue(FIELD_EXECUTION_MODE, EXECUTION_ORDER_SEQUENTIAL);
+                    memberExecutionOrderer.setRecords(resourceRecords);
+                    memberExecutionOrderer.show();
+
+                    FormItem haltOnFailureItem = executionModeForm
+                        .getField(GroupOperationScheduleDataSource.Field.HALT_ON_FAILURE);
+                    Object haltOnFailure = getForm().getValue(GroupOperationScheduleDataSource.Field.HALT_ON_FAILURE);
+                    haltOnFailureItem.setValue(haltOnFailure);
+                    haltOnFailureItem.show();
+
+                    GroupOperationScheduleDetailsView.super.editExistingRecord(record);
+                }
+            });
         } else {
             this.executionModeForm.setValue(FIELD_EXECUTION_MODE, EXECUTION_ORDER_PARALLEL);
+
+            Object haltOnFailure = getForm().getValue(GroupOperationScheduleDataSource.Field.HALT_ON_FAILURE);
+            FormItem haltOnFailureItem = this.executionModeForm
+                .getField(GroupOperationScheduleDataSource.Field.HALT_ON_FAILURE);
+            haltOnFailureItem.setValue(haltOnFailure);
+
+            super.editExistingRecord(record);
         }
 
-        Object haltOnFailure = getForm().getValue(GroupOperationScheduleDataSource.Field.HALT_ON_FAILURE);
-        FormItem haltOnFailureItem = this.executionModeForm
-            .getField(GroupOperationScheduleDataSource.Field.HALT_ON_FAILURE);
-        haltOnFailureItem.setValue(haltOnFailure);
-
-        super.editExistingRecord(record);
     }
 
     @Override

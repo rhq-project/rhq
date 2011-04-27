@@ -24,9 +24,9 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.ResultSet;
 import com.smartgwt.client.data.SortSpecifier;
-import com.smartgwt.client.types.MultipleAppearance;
 import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
@@ -41,6 +41,7 @@ import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.components.form.EnumSelectItem;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
@@ -71,9 +72,21 @@ public class AlertHistoryView extends TableSection<AlertDataSource> {
 
     private static SortSpecifier DEFAULT_SORT_SPECIFIER = new SortSpecifier(AlertCriteria.SORT_FIELD_CTIME,
         SortDirection.DESCENDING);
+    private static final Criteria INITIAL_CRITERIA = new Criteria();
     EntityContext context;
     boolean hasWriteAccess;
     AlertDataSource dataSource;
+
+    static {
+        AlertPriority[] priorityValues = AlertPriority.values();
+        String[] priorityNames = new String[priorityValues.length];
+        int i = 0;
+        for (AlertPriority s : priorityValues) {
+            priorityNames[i++] = s.name();
+        }
+
+        INITIAL_CRITERIA.addCriteria(AlertDataSource.FILTER_PRIORITIES, priorityNames);
+    }
 
     // for subsystem views
     public AlertHistoryView(String locatorId) {
@@ -89,10 +102,11 @@ public class AlertHistoryView extends TableSection<AlertDataSource> {
     }
 
     protected AlertHistoryView(String locatorId, String tableTitle, EntityContext context, boolean hasWriteAccess) {
-        super(locatorId, tableTitle, new SortSpecifier[] { DEFAULT_SORT_SPECIFIER });
+        super(locatorId, tableTitle, INITIAL_CRITERIA, new SortSpecifier[] { DEFAULT_SORT_SPECIFIER });
         this.context = context;
         this.hasWriteAccess = hasWriteAccess;
 
+        setInitialCriteriaFixed(false);
         setDataSource(getDataSource());
     }
 
@@ -106,10 +120,6 @@ public class AlertHistoryView extends TableSection<AlertDataSource> {
 
     @Override
     protected void configureTableFilters() {
-        SelectItem priorityFilter = new SelectItem("severities", MSG.view_alerts_table_filter_priority());
-        priorityFilter.setMultiple(true);
-        priorityFilter.setMultipleAppearance(MultipleAppearance.PICKLIST);
-
         LinkedHashMap<String, String> priorities = new LinkedHashMap<String, String>(3);
         priorities.put(AlertPriority.HIGH.name(), MSG.common_alert_high());
         priorities.put(AlertPriority.MEDIUM.name(), MSG.common_alert_medium());
@@ -118,9 +128,8 @@ public class AlertHistoryView extends TableSection<AlertDataSource> {
         priorityIcons.put(AlertPriority.HIGH.name(), ImageManager.getAlertIcon(AlertPriority.HIGH));
         priorityIcons.put(AlertPriority.MEDIUM.name(), ImageManager.getAlertIcon(AlertPriority.MEDIUM));
         priorityIcons.put(AlertPriority.LOW.name(), ImageManager.getAlertIcon(AlertPriority.LOW));
-        priorityFilter.setValueMap(priorities);
-        priorityFilter.setValueIcons(priorityIcons);
-        priorityFilter.setValues(AlertPriority.HIGH.name(), AlertPriority.MEDIUM.name(), AlertPriority.LOW.name());
+        SelectItem priorityFilter = new EnumSelectItem(AlertDataSource.FILTER_PRIORITIES, MSG
+            .view_alerts_table_filter_priority(), AlertPriority.class, priorities, priorityIcons);
 
         if (isShowFilterForm()) {
             setFilterFormItems(priorityFilter);

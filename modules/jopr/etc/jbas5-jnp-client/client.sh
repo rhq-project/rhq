@@ -9,7 +9,11 @@
 MAIN_JAR_NAME=jbas5-jnp-client-1.0.jar
 MAIN_CLASS=test.RmiClient
 
-JBOSS_HOME=/home/ips/Applications/jboss-6.0.0-SNAPSHOT
+JBOSS_HOME=/home/ips/Applications/jboss-eap-5.1/jboss-as
+if [ ! -d "$JBOSS_HOME" ]; then
+   echo "Dir specified by JBOSS_HOME variable ($JBOSS_HOME) does not exist."
+   exit 1
+fi
 JAVA_OPTS="-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=8788"
 
 
@@ -44,6 +48,12 @@ JAVA=$JAVA_HOME/bin/java
 # JBOSS_CLASSPATH was not yet set
 #if not "%JBOSS_CLASSPATH%" == "" GOTO HAVE_JB_CP
 JBOSS_CLASSPATH=$JBOSS_HOME/client/jbossall-client.jar
+# AS 6.0 M1 and later needs the following two jars
+JBOSS_CLASSPATH=$JBOSS_CLASSPATH:$JBOSS_HOME/lib/jboss-classpool.jar
+JBOSS_CLASSPATH=$JBOSS_CLASSPATH:$JBOSS_HOME/lib/jboss-classpool-scoped.jar
+# AS 6.0 M4 and later needs the following two jars
+JBOSS_CLASSPATH=$JBOSS_CLASSPATH:$JBOSS_HOME/common/lib/jboss-as-profileservice.jar
+JBOSS_CLASSPATH=$JBOSS_CLASSPATH:$JBOSS_HOME/lib/jboss-profileservice-spi.jar
 
 # For the call to new InitialContext() (using org.jnp.interfaces.NamingContextFactory)...
 #JBOSS_CLASSPATH=$JBOSS_CLASSPATH:$JBOSS_HOME/client/jnp-client.jar

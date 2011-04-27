@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2009 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -21,16 +21,13 @@ package org.rhq.enterprise.gui.coregui.client.operation;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 
 import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
-import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
-import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.Overflow;
@@ -46,8 +43,9 @@ import com.smartgwt.client.widgets.grid.events.RecordClickEvent;
 import com.smartgwt.client.widgets.grid.events.RecordClickHandler;
 
 import org.rhq.core.domain.common.EntityContext;
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
-import org.rhq.core.domain.operation.OperationHistory;
+import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.resource.Resource;
@@ -57,7 +55,6 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent.Constant;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.OperationGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
@@ -77,8 +74,6 @@ public class OperationHistoryDataSource extends
 
     private EntityContext entityContext;
 
-    private ResourceOperationHistory currentOperationHistory;
-
     public static abstract class Field {
         public static final String ID = "id";
         public static final String OPERATION_NAME = "operationName";
@@ -86,7 +81,7 @@ public class OperationHistoryDataSource extends
         public static final String STARTED_TIME = "startedTime";
         public static final String CREATED_TIME = "createdTime";
         public static final String DURATION = "duration";
-        public static final String SUBJECT = "subject";
+        public static final String SUBJECT = "subjectName";
         public static final String OPERATION_DEFINITION = "operationDefinition";
         public static final String ERROR_MESSAGE = "errorMessage";
         public static final String PARAMETERS = "parameters";
@@ -105,15 +100,6 @@ public class OperationHistoryDataSource extends
         addDataSourceFields();
     }
 
-    @Override
-    protected List<DataSourceField> addDataSourceFields() {
-        // for some reason, the client seems to crash if you don't specify any data source fields
-        // even though we know we defined override ListGridFields for all columns.
-        List<DataSourceField> fields = super.addDataSourceFields();
-        fields.add(new DataSourceTextField(Field.OPERATION_NAME));
-        return fields;
-    }
-
     /**
      * The view that contains the list grid which will display this datasource's data will call this
      * method to get the field information which is used to control the display of the data.
@@ -121,7 +107,7 @@ public class OperationHistoryDataSource extends
      * @return list grid fields used to display the datasource data
      */
     public ArrayList<ListGridField> getListGridFields() {
-        ArrayList<ListGridField> fields = new ArrayList<ListGridField>(6);
+        ArrayList<ListGridField> fields = new ArrayList<ListGridField>(7);
 
         ListGridField startTimeField = createStartedTimeField();
         fields.add(startTimeField);
@@ -304,15 +290,30 @@ public class OperationHistoryDataSource extends
                     Log.info(result.size() + " operation histories fetched in: " + fetchTime + "ms");
 
                     dataRetrieved(result, response, request);
-                    processResponse(request.getRequestId(), response);
                 }
             });
     }
 
     /**
+     * Sub-classes can override this to add fine-grained control over the result set size. By default the
+     * total rows are set to the total result set for the query, allowing proper paging.  But some views (portlets)
+     * may want to limit results to a small set (like most recent).  
+     * @param result
+     * @param response
+     * @param request
+     * 
+     * @return should not exceed result.getTotalSize(). 
+     */
+    protected int getTotalRows(final PageList<ResourceOperationHistory> result, final DSResponse response,
+        final DSRequest request) {
+
+        return result.getTotalSize();
+    }
+
+    /**
      * Additional processing to support entity-specific or cross-resource views, and something that can be overidden.
      */
-    protected void dataRetrieved(final PageList<ResourceOperationHistory> result, final DSResponse response,
+    private void dataRetrieved(final PageList<ResourceOperationHistory> result, final DSResponse response,
         final DSRequest request) {
         switch (entityContext.type) {
 
@@ -320,7 +321,8 @@ public class OperationHistoryDataSource extends
         case Resource:
             response.setData(buildRecords(result));
             // for paging to work we have to specify size of full result set
-            response.setTotalRows(result.getTotalSize());
+            response.setTotalRows(getTotalRows(result, response, request));
+            processResponse(request.getRequestId(), response);
             break;
 
         // disambiguate as the results could be cross-resource
@@ -355,7 +357,8 @@ public class OperationHistoryDataSource extends
                     }
                     response.setData(records);
                     // for paging to work we have to specify size of full result set
-                    response.setTotalRows(result.getTotalSize());
+                    response.setTotalRows(getTotalRows(result, response, request));
+                    processResponse(request.getRequestId(), response);
                 }
             });
         }
@@ -363,8 +366,7 @@ public class OperationHistoryDataSource extends
 
     @Override
     protected ResourceOperationHistoryCriteria getFetchCriteria(DSRequest request) {
-        OperationRequestStatus[] statusFilter = getArrayFilter(request, Constant.OPERATION_STATUS,
-            OperationRequestStatus.class);
+        OperationRequestStatus[] statusFilter = getArrayFilter(request, Field.STATUS, OperationRequestStatus.class);
 
         if (statusFilter == null || statusFilter.length == 0) {
             return null; // user didn't select any severities - return null to indicate no data should be displayed
@@ -389,13 +391,22 @@ public class OperationHistoryDataSource extends
     }
 
     @Override
-    protected void executeRemove(Record recordToRemove, DSRequest request, DSResponse response) {
-        final OperationHistory operationHistoryToRemove = copyValues(recordToRemove);
+    protected String getSortFieldForColumn(String columnName) {
+        if (AncestryUtil.RESOURCE_ANCESTRY.equals(columnName)) {
+            return "resource.ancestry";
+        }
+
+        return super.getSortFieldForColumn(columnName);
+    }
+
+    @Override
+    protected void executeRemove(Record recordToRemove, final DSRequest request, final DSResponse response) {
+        final ResourceOperationHistory operationHistoryToRemove = copyValues(recordToRemove);
         Boolean forceValue = request.getAttributeAsBoolean("force");
         boolean force = ((forceValue != null) && forceValue);
         operationService.deleteOperationHistory(operationHistoryToRemove.getId(), force, new AsyncCallback<Void>() {
             public void onSuccess(Void result) {
-                return;
+                sendSuccessResponse(request, response, operationHistoryToRemove, null);
             }
 
             public void onFailure(Throwable caught) {
@@ -406,13 +417,17 @@ public class OperationHistoryDataSource extends
 
     @Override
     public ResourceOperationHistory copyValues(Record from) {
-        return this.currentOperationHistory;
+        Resource resource = new Resource();
+        resource.setId(from.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
+        ResourceOperationHistory resourceOperationHistory = new ResourceOperationHistory(null, null, from
+            .getAttribute(Field.SUBJECT), (OperationDefinition) from.getAttributeAsObject(Field.OPERATION_DEFINITION),
+            (Configuration) from.getAttributeAsObject(Field.PARAMETERS), resource, null);
+        resourceOperationHistory.setId(from.getAttributeAsInt(Field.ID));
+        return resourceOperationHistory;
     }
 
     @Override
     public ListGridRecord copyValues(ResourceOperationHistory from) {
-        this.currentOperationHistory = from;
-
         ListGridRecord record = new ListGridRecord();
 
         record.setAttribute(Field.ID, from.getId());

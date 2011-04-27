@@ -837,13 +837,8 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
 
         Map<String, Object> filterFields = generator.getFilterFields(criteria);
         if (!this.authorizationManager.isInventoryManager(subject)) {
-            if (filterFields.get(MeasurementDataTraitCriteria.FILTER_FIELD_GROUP_ID) != null) {
-                generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.GROUP, subject
-                    .getId());
-            } else {
-                generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.RESOURCE,
-                    subject.getId());
-            }
+            generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.RESOURCE,
+                "schedule.resource", subject.getId());
         }
 
         CriteriaQueryRunner<MeasurementDataTrait> queryRunner = new CriteriaQueryRunner(criteria, generator,

@@ -39,7 +39,6 @@ import org.rhq.enterprise.gui.coregui.client.test.configuration.TestGroupConfigu
 import org.rhq.enterprise.gui.coregui.client.test.configuration.TestReadOnlyConfigurationView;
 import org.rhq.enterprise.gui.coregui.client.test.configuration.TestReadOnlyGroupConfigurationView;
 import org.rhq.enterprise.gui.coregui.client.test.i18n.TestPluralizationView;
-import org.rhq.enterprise.gui.coregui.client.test.i18n.TestRemoteServiceStatisticsView;
 import org.rhq.enterprise.gui.coregui.client.test.inventory.TestSearchBarView;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 

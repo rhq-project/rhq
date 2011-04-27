@@ -22,6 +22,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.dashboard;
 
+
 /**
  * @author Simeon Pinder
  */
@@ -38,4 +39,10 @@ public interface AutoRefreshPortlet extends Portlet {
      * to ignore refresh requests until a prior request is completed. 
      */
     boolean isRefreshing();
+
+    /**
+     * Refresh this portlet, reload data, redraw widgets, whatever is needed to refresh the portlet
+     */
+    void refresh();
+
 }

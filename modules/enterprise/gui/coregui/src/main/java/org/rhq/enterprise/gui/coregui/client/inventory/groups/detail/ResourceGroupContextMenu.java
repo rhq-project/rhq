@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -46,6 +46,7 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.groups.graph.ResourceGroupGraphPortlet;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceDetailView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableMenu;
@@ -116,8 +117,8 @@ public class ResourceGroupContextMenu extends LocatableMenu {
                 ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
             new ResourceTypeRepository.TypeLoadedCallback() {
                 public void onTypesLoaded(ResourceType type) {
-                    groupMemberType = type;
 
+                    groupMemberType = type;
                     buildResourceGroupContextMenu(group, type);
                     showContextMenu();
                 }
@@ -136,27 +137,31 @@ public class ResourceGroupContextMenu extends LocatableMenu {
 
         // plugin config
         MenuItem pluginConfiguration = new MenuItem(MSG.view_tabs_common_connectionSettings());
-        pluginConfiguration.addClickHandler(new ClickHandler() {
-            public void onClick(MenuItemClickEvent event) {
-                if (isAutoGroup) {
-                    CoreGUI.goToView(LinkManager.getAutoGroupTabLink(group.getId(), "Inventory", "ConnectionSettings"));
-                } else if (isAutoCluster) {
-                    CoreGUI.goToView(LinkManager
-                        .getAutoClusterTabLink(group.getId(), "Inventory", "ConnectionSettings"));
-                } else {
-                    CoreGUI.goToView(LinkManager.getResourceGroupTabLink(group.getId(), "Inventory",
-                        "ConnectionSettings"));
+        boolean pluginConfigEnabled = resourceType.getPluginConfigurationDefinition() != null;
+        pluginConfiguration.setEnabled(pluginConfigEnabled);
+        if (pluginConfigEnabled) {
+            pluginConfiguration.addClickHandler(new ClickHandler() {
+                public void onClick(MenuItemClickEvent event) {
+                    if (isAutoGroup) {
+                        CoreGUI.goToView(LinkManager.getAutoGroupTabLink(group.getId(), "Inventory", "ConnectionSettings"));
+                    } else if (isAutoCluster) {
+                        CoreGUI.goToView(LinkManager
+                            .getAutoClusterTabLink(group.getId(), "Inventory", "ConnectionSettings"));
+                    } else {
+                        CoreGUI.goToView(LinkManager.getResourceGroupTabLink(group.getId(), "Inventory",
+                            "ConnectionSettings"));
+                    }
                 }
-            }
-        });
-        pluginConfiguration.setEnabled(resourceType.getPluginConfigurationDefinition() != null);
+            });
+        }
         addItem(pluginConfiguration);
 
+        // resource config
         MenuItem resourceConfiguration = new MenuItem(MSG.view_tree_common_contextMenu_resourceConfiguration());
-        boolean enabled = groupComposite.getResourcePermission().isConfigureRead()
+        boolean resourceConfigEnabled = groupComposite.getResourcePermission().isConfigureRead()
             && resourceType.getResourceConfigurationDefinition() != null;
-        resourceConfiguration.setEnabled(enabled);
-        if (enabled) {
+        resourceConfiguration.setEnabled(resourceConfigEnabled);
+        if (resourceConfigEnabled) {
             resourceConfiguration.addClickHandler(new ClickHandler() {
                 public void onClick(MenuItemClickEvent event) {
                     if (isAutoGroup) {
@@ -177,16 +182,19 @@ public class ResourceGroupContextMenu extends LocatableMenu {
 
         // Operations Menu
         MenuItem operations = new MenuItem(MSG.view_tree_common_contextMenu_operations());
-        enabled = (groupComposite.getResourcePermission().isControl() && null != resourceType.getOperationDefinitions() && !resourceType
+        boolean operationsEnabled = (groupComposite.getResourcePermission().isControl() && null != resourceType.getOperationDefinitions() && !resourceType
             .getOperationDefinitions().isEmpty());
-        operations.setEnabled(enabled);
-        if (enabled) {
+        operations.setEnabled(operationsEnabled);
+        if (operationsEnabled) {
             Menu opSubMenu = new Menu();
             for (final OperationDefinition operationDefinition : resourceType.getOperationDefinitions()) {
                 MenuItem operationItem = new MenuItem(operationDefinition.getDisplayName());
                 operationItem.addClickHandler(new ClickHandler() {
                     public void onClick(MenuItemClickEvent event) {
-                        // TODO Group version, wizard invoke or tab nav?
+                        String viewPath = LinkManager.getResourceGroupTabLink(group,
+                                ResourceDetailView.Tab.OPERATIONS, ResourceDetailView.OperationsSubTab.SCHEDULES)
+                                + "/0/" + operationDefinition.getId();
+                        CoreGUI.goToView(viewPath);
                     }
                 });
                 opSubMenu.addItem(operationItem);

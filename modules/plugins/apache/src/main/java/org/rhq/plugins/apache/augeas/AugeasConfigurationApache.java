@@ -109,7 +109,7 @@ public class AugeasConfigurationApache extends PluginDescriptorBasedAugeasConfig
 
             File check = new File(expression);        
             File root = new File(check.isAbsolute() ? Glob.rootPortion(expression) : serverRootPath);                     
-            files.addAll(Glob.match(root, expression));
+            files.addAll(Glob.match(root, expression, Glob.ALPHABETICAL_COMPARATOR));
                        
            for (File fl : files){         
             if (fl.exists() && fl.isFile()) {
@@ -155,7 +155,7 @@ public class AugeasConfigurationApache extends PluginDescriptorBasedAugeasConfig
                 File check = new File(incl);        
                 File root = new File(check.isAbsolute() ? Glob.rootPortion(incl) : serverRootPath);
                          
-                files.addAll(Glob.match(root, incl));                                 
+                files.addAll(Glob.match(root, incl, Glob.ALPHABETICAL_COMPARATOR));                                 
             }
 
             if (module.getExcludedGlobs() != null) {
@@ -191,7 +191,7 @@ public class AugeasConfigurationApache extends PluginDescriptorBasedAugeasConfig
         for (String path : foundIncludes) {
             File check = new File(path);                            
             File root = new File(check.isAbsolute() ? Glob.rootPortion(path) : serverRoot);                     
-            for (File f :Glob.match(root, path)){
+            for (File f :Glob.match(root, path, Glob.ALPHABETICAL_COMPARATOR)){
                 ret.add(f);
             }
         }

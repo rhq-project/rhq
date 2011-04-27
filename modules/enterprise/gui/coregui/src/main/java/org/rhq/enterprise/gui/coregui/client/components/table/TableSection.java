@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -58,6 +58,7 @@ public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> i
     private Canvas detailsView;
     private String basePath;
     private boolean escapeHtmlInDetailsLinkColumn;
+    private boolean initialDisplay;
 
     protected TableSection(String locatorId, String tableTitle) {
         super(locatorId, tableTitle);
@@ -69,6 +70,10 @@ public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> i
 
     protected TableSection(String locatorId, String tableTitle, SortSpecifier[] sortSpecifiers) {
         super(locatorId, tableTitle, sortSpecifiers);
+    }
+
+    protected TableSection(String locatorId, String tableTitle, Criteria criteria, SortSpecifier[] sortSpecifiers) {
+        super(locatorId, tableTitle, sortSpecifiers, criteria);
     }
 
     protected TableSection(String locatorId, String tableTitle, boolean autoFetchData) {
@@ -94,6 +99,8 @@ public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> i
     protected void onInit() {
         super.onInit();
 
+        this.initialDisplay = true;
+
         detailsHolder = new LocatableVLayout(extendLocatorId("tableSection"));
         detailsHolder.setAlign(VerticalAlignment.TOP);
         //detailsHolder.setWidth100();
@@ -111,10 +118,10 @@ public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> i
     }
 
     /**
-     * The default implementation wraps the {@link getDetailsLinkColumnCellFormatter()} column with the
+     * The default implementation wraps the {@link #getDetailsLinkColumnCellFormatter()} column with the
      * {@link #getDetailsLinkColumnCellFormatter()}. This is typically the 'name' column linking to the detail
      * view, given the 'id'. Also, establishes a double click handler for the row which invokes
-     * {@link showDetails()}</br>
+     * {@link #showDetails(com.smartgwt.client.widgets.grid.ListGridRecord)}</br>
      * </br>
      * In general, in overrides, call super.configureTable *after* manipulating the ListGrid fields.
      * 
@@ -172,7 +179,8 @@ public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> i
                 }
                 Integer recordId = getId(record);
                 String detailsUrl = "#" + getBasePath() + "/" + recordId;
-                String formattedValue = (escapeHtmlInDetailsLinkColumn) ? StringUtility.escapeHtml(value.toString()) : value.toString();
+                String formattedValue = (escapeHtmlInDetailsLinkColumn) ? StringUtility.escapeHtml(value.toString())
+                    : value.toString();
                 return SeleniumUtility.getLocatableHref(detailsUrl, formattedValue, null);
             }
         };
@@ -355,9 +363,14 @@ public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> i
     protected void switchToTableView() {
         final Canvas contents = getTableContents();
         if (contents != null) {
-            // First refresh the table's data.
-            Log.debug("Refreshing data for [" + getClass().getName() + "]...");
-            refresh();
+            // If this is not the initial display of the table, refresh the table's data. Otherwise, a refresh would be
+            // redundant, since the data was just loaded when the table was drawn.
+            if (this.initialDisplay) {
+                this.initialDisplay = false;
+            } else {
+                Log.debug("Refreshing data for Table [" + getClass().getName() + "]...");
+                refresh();
+            }
             if (detailsHolder != null && detailsHolder.isVisible()) {
                 detailsHolder.animateHide(AnimationEffect.WIPE, new AnimationCallback() {
                     @Override
@@ -372,4 +385,5 @@ public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> i
             }
         }
     }
+
 }

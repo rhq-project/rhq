@@ -58,6 +58,14 @@ public class UserPreferences {
 
     private ArrayList<UserPreferenceChangeListener> changeListeners = new ArrayList<UserPreferenceChangeListener>();
 
+    // when these preferences change, they should not trigger a refresh.
+    private static ArrayList<String> preferencesThatShouldNotCauseRefresh;
+    static {
+        preferencesThatShouldNotCauseRefresh = new ArrayList<String>();
+        preferencesThatShouldNotCauseRefresh.add(UserPreferenceNames.RECENT_RESOURCES);
+        preferencesThatShouldNotCauseRefresh.add(UserPreferenceNames.RECENT_RESOURCE_GROUPS);
+    }
+
     public UserPreferences(Subject subject) {
         this.subject = subject;
         this.userConfiguration = subject.getUserConfiguration();
@@ -77,20 +85,24 @@ public class UserPreferences {
                 this.autoPersister = new UserPreferenceChangeListener() {
                     @Override
                     public void onPreferenceChange(UserPreferenceChangeEvent event) {
-                        persist();
+                        persist(event.name);
                     }
 
                     @Override
                     public void onPreferenceRemove(UserPreferenceChangeEvent event) {
-                        persist();
+                        persist(event.name);
                     }
 
-                    private void persist() {
+                    private void persist(final String preferenceThatChanged) {
                         store(new AsyncCallback<Subject>() {
                             @Override
                             public void onSuccess(Subject result) {
-                                // don't announce anything, should happen under the covers - just refresh the current page
-                                CoreGUI.refresh();
+                                // Don't announce anything to message center, this should happen under the covers - just refresh the current page.
+                                // But we should not blindly refresh - if we are changing preferences that should not affect the current
+                                // page, don't refresh as this could cause additional and unnecessary server-side hits (BZ 680167)
+                                if (!preferencesThatShouldNotCauseRefresh.contains(preferenceThatChanged)) {
+                                    CoreGUI.refresh();
+                                }
                             }
 
                             @Override
@@ -207,7 +219,7 @@ public class UserPreferences {
         }
         return value;
     }
-    
+
     protected void setPreference(String name, Collection<?> value) {
         StringBuilder buffer = new StringBuilder();
         boolean first = true;

@@ -26,8 +26,11 @@ import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.GroupOperationHistoryCriteria;
 import org.rhq.core.domain.operation.GroupOperationHistory;
+import org.rhq.core.domain.operation.OperationDefinition;
+import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history.AbstractOperationHistoryDataSource;
@@ -73,6 +76,11 @@ public class GroupOperationHistoryDataSource extends
 
         criteria.setPageControl(getPageControl(request));
         return criteria;
+    }
+
+    @Override
+    protected GroupOperationHistory createOperationHistory() {
+        return new GroupOperationHistory(null, null, null, null, null, null);
     }
 
     @Override

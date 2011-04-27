@@ -474,24 +474,10 @@ rhq.server.startup.pooledinvoker.rmiport=7445
 rhq.server.startup.ajp.port=9009
 rhq.server.startup.unifiedinvoker.port=5446
 rhq.server.startup.aspectdeployer.bind-port=4873
-# It is not recommended to increase this value
+          
+# The number of concurrent threads used to deploy plugins.
+# Currently, it is not recommended to increase this value.
 rhq.server.plugin-deployer-threads=1
-
-# Cluster configuration
-# The cluster service has been disabled in 1.1. It will be revisited when we look at cluster management support.
-#jboss.partition.name=RHQPartition
-#jgroups.bind_addr=127.0.0.1
-#jgroups.udp.mcast_addr=228.1.2.4
-#jboss.hapartition.mcast_port=55566
-#jboss.ejb3entitypartition.mcast_port=53333
-#jboss.alertcachepartition.mcast_port=58899
-#rhq.server.startup.partition.udpLoopback=false
-#rhq.server.startup.hajndi.port=2100
-#rhq.server.startup.hajndi.rmiport=2101
-#rhq.server.startup.hajndi.autodiscoverygroupport=2102
-#rhq.server.startup.hajrmpinvoker.rmiport=5447
-#rhq.server.startup.hapooledinvoker.port=5448
-#jgroups.udp.ip_ttl=2
 
 # RHQ Server's remote endpoint for agents to talk to
 # bind-address and bind-port are derived from the HA server definition,
@@ -584,6 +570,14 @@ rhq.server.content.filesystem=${jboss.server.data.dir}/packagebits
 # The frequency (in millis) the server checks for updated plugins
 rhq.server.plugin-scan-period-ms=${rhq.server.plugin-scan-period-ms}
 
+# When this is enabled, the server at start up will compare its endpoint
+# address to the host name/address found on the host machine. If they differ,
+# the server endpoint address will be updated to the value found on the host
+# machine. This is targeted for use in cloud deployments where IP addresses
+# change frequently, but it can be of use in other deployment settings where
+# you have to deal with IP address changes.
+rhq.sync.endpoint-address=false
+
 # Auto-Install Pre-Configuration Settings
 # If you wish to circumvent the installer webapp and auto-install the server
 # immediately upon first startup, make sure all of the settings above are
@@ -606,7 +600,6 @@ rhq.server.plugin-scan-period-ms=${rhq.server.plugin-scan-period-ms}
 rhq.autoinstall.enabled=false
 rhq.autoinstall.database=auto
 rhq.autoinstall.public-endpoint-address=
-rhq.sync.endpoint-address=${rhq.sync.endpoint-address}
 
 </echo>
 

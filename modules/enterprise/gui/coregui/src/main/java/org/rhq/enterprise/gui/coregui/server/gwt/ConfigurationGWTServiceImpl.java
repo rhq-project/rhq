@@ -17,17 +17,13 @@ import org.rhq.core.domain.criteria.GroupResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.PluginConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.core.util.IntExtractor;
-import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.coregui.client.gwt.ConfigurationGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
-import org.rhq.enterprise.server.resource.disambiguation.DefaultDisambiguationUpdateStrategies;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -37,12 +33,6 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implements ConfigurationGWTService {
 
     private static final long serialVersionUID = 1L;
-
-    private static final IntExtractor<ResourceConfigurationComposite> RESOURCE_CONFIGURATION_COMPOSITE_RESOURCE_ID_EXTRACTOR = new IntExtractor<ResourceConfigurationComposite>() {
-        public int extract(ResourceConfigurationComposite configurationComposite) {
-            return configurationComposite.getResourceId();
-        }
-    };
 
     private ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
     private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
@@ -271,60 +261,38 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
     }
 
     @Override
-    public List<DisambiguationReport<ResourceConfigurationComposite>> findResourceConfigurationsForGroup(int groupId)
-        throws RuntimeException {
+    public Map<Integer, Configuration> findResourceConfigurationsForGroup(int groupId) throws RuntimeException {
         try {
             ResourceGroup group = this.groupManager.getResourceGroup(getSessionSubject(), groupId);
             Map<Integer, Configuration> configurations = this.configurationManager
                 .getResourceConfigurationMapForCompatibleGroup(group);
-            List<ResourceConfigurationComposite> configurationComposites = convertToCompositesList(configurations);
 
-            // Disambiguate - i.e. generate unambiguous Resource names for each of the Resource id's.
-            List<DisambiguationReport<ResourceConfigurationComposite>> disambiguatedConfigurationComposites = resourceManager
-                .disambiguate(configurationComposites, RESOURCE_CONFIGURATION_COMPOSITE_RESOURCE_ID_EXTRACTOR,
-                    DefaultDisambiguationUpdateStrategies.getDefault());
-
-            return SerialUtility.prepare(disambiguatedConfigurationComposites,
-                "ConfigurationService.findResourceConfigurationsForGroup");
+            return SerialUtility.prepare(configurations, "ConfigurationService.findResourceConfigurationsForGroup");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
     }
 
     @Override
-    public List<DisambiguationReport<ResourceConfigurationComposite>> findPluginConfigurationsForGroup(int groupId)
-        throws RuntimeException {
+    public Map<Integer, Configuration> findPluginConfigurationsForGroup(int groupId) throws RuntimeException {
         try {
             Map<Integer, Configuration> configurations = this.configurationManager
                 .getPluginConfigurationsForCompatibleGroup(getSessionSubject(), groupId);
-            List<ResourceConfigurationComposite> configurationComposites = convertToCompositesList(configurations);
 
-            // Disambiguate - i.e. generate unambiguous Resource names for each of the Resource id's.
-            List<DisambiguationReport<ResourceConfigurationComposite>> disambiguatedConfigurationComposites = resourceManager
-                .disambiguate(configurationComposites, RESOURCE_CONFIGURATION_COMPOSITE_RESOURCE_ID_EXTRACTOR,
-                    DefaultDisambiguationUpdateStrategies.getDefault());
-
-            return SerialUtility.prepare(disambiguatedConfigurationComposites,
-                "ConfigurationService.findPluginConfigurationsForGroup");
+            return SerialUtility.prepare(configurations, "ConfigurationService.findPluginConfigurationsForGroup");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
     }
 
     @Override
-    public List<DisambiguationReport<ResourceConfigurationComposite>> findResourceConfigurationsForGroupUpdate(
-        int groupUpdateId) throws RuntimeException {
+    public Map<Integer, Configuration> findResourceConfigurationsForGroupUpdate(int groupUpdateId)
+        throws RuntimeException {
         try {
             Map<Integer, Configuration> configurations = this.configurationManager
                 .getResourceConfigurationMapForGroupUpdate(getSessionSubject(), groupUpdateId);
-            List<ResourceConfigurationComposite> configurationComposites = convertToCompositesList(configurations);
 
-            // Disambiguate - i.e. generate unambiguous Resource names for each of the Resource id's.
-            List<DisambiguationReport<ResourceConfigurationComposite>> disambiguatedConfigurationComposites = resourceManager
-                .disambiguate(configurationComposites, RESOURCE_CONFIGURATION_COMPOSITE_RESOURCE_ID_EXTRACTOR,
-                    DefaultDisambiguationUpdateStrategies.getDefault());
-
-            return SerialUtility.prepare(disambiguatedConfigurationComposites,
+            return SerialUtility.prepare(configurations,
                 "ConfigurationService.findResourceConfigurationsForGroupUpdate");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
@@ -332,20 +300,13 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
     }
 
     @Override
-    public List<DisambiguationReport<ResourceConfigurationComposite>> findPluginConfigurationsForGroupUpdate(
-        int groupUpdateId) throws RuntimeException {
+    public Map<Integer, Configuration> findPluginConfigurationsForGroupUpdate(int groupUpdateId)
+        throws RuntimeException {
         try {
             Map<Integer, Configuration> configurations = this.configurationManager
                 .getPluginConfigurationMapForGroupUpdate(getSessionSubject(), groupUpdateId);
-            List<ResourceConfigurationComposite> configurationComposites = convertToCompositesList(configurations);
 
-            // Disambiguate - i.e. generate unambiguous Resource names for each of the Resource id's.
-            List<DisambiguationReport<ResourceConfigurationComposite>> disambiguatedConfigurationComposites = resourceManager
-                .disambiguate(configurationComposites, RESOURCE_CONFIGURATION_COMPOSITE_RESOURCE_ID_EXTRACTOR,
-                    DefaultDisambiguationUpdateStrategies.getDefault());
-
-            return SerialUtility.prepare(disambiguatedConfigurationComposites,
-                "ConfigurationService.findPluginConfigurationsForGroupUpdate");
+            return SerialUtility.prepare(configurations, "ConfigurationService.findPluginConfigurationsForGroupUpdate");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

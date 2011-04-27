@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.Record;
@@ -39,13 +40,19 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.RecordClickEvent;
 import com.smartgwt.client.widgets.grid.events.RecordClickHandler;
 
+import org.rhq.core.domain.operation.OperationHistory;
 import org.rhq.core.domain.operation.OperationRequestStatus;
+import org.rhq.core.domain.operation.ResourceOperationHistory;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
+import org.rhq.enterprise.gui.coregui.client.operation.OperationHistoryDataSource;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
@@ -79,9 +86,9 @@ public abstract class AbstractOperationHistoryListView<T extends AbstractOperati
         setListGridFields(fields.toArray(new ListGridField[fields.size()]));
 
         // explicitly sort on started time so the user can see the last operation at the top and is sorted descendingly
-        SortSpecifier sortspec = new SortSpecifier(AbstractOperationHistoryDataSource.Field.STARTED_TIME,
+        SortSpecifier sortSpec = new SortSpecifier(AbstractOperationHistoryDataSource.Field.STARTED_TIME,
             SortDirection.DESCENDING);
-        getListGrid().setSort(new SortSpecifier[] { sortspec });
+        getListGrid().setSort(new SortSpecifier[] { sortSpec });
 
         addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), getDeleteConfirmMessage(),
             new TableAction() {
@@ -95,7 +102,6 @@ public abstract class AbstractOperationHistoryListView<T extends AbstractOperati
                 }
             });
 
-        // TODO: i18n
         addTableAction(extendLocatorId("ForceDelete"), MSG.view_operationHistoryList_button_forceDelete(),
             getDeleteConfirmMessage(), new TableAction() {
                 public boolean isEnabled(ListGridRecord[] selection) {
@@ -264,6 +270,48 @@ public abstract class AbstractOperationHistoryListView<T extends AbstractOperati
     protected ListGridField createAncestryField() {
         ListGridField ancestryField = AncestryUtil.setupAncestryListGridField();
         return ancestryField;
+    }
+
+    @Override
+    protected void deleteSelectedRecords(DSRequest requestProperties) {
+        final ListGridRecord[] recordsToBeDeleted = getListGrid().getSelection();
+        final int numberOfRecordsToBeDeleted = recordsToBeDeleted.length;
+        Boolean forceValue = (requestProperties != null &&
+                requestProperties.getAttributeAsBoolean(AbstractOperationHistoryDataSource.RequestAttribute.FORCE));
+        boolean force = ((forceValue != null) && forceValue);
+        final List<Integer> successIds = new ArrayList<Integer>();
+        final List<Integer> failureIds = new ArrayList<Integer>();
+        for (ListGridRecord record : recordsToBeDeleted) {
+            final OperationHistory operationHistoryToRemove = getDataSource().copyValues(record);
+            GWTServiceLookup.getOperationService().deleteOperationHistory(operationHistoryToRemove.getId(), force,
+                new AsyncCallback<Void>() {
+                    public void onSuccess(Void result) {
+                        successIds.add(operationHistoryToRemove.getId());
+                        handleCompletion(successIds, failureIds, numberOfRecordsToBeDeleted);
+                    }
+
+                    public void onFailure(Throwable caught) {
+                        // TODO: i18n
+                        CoreGUI.getErrorHandler().handleError("Failed to delete " + operationHistoryToRemove + ".",
+                                caught);
+                        failureIds.add(operationHistoryToRemove.getId());
+                        handleCompletion(successIds, failureIds, numberOfRecordsToBeDeleted);
+                    }
+                });
+        }
+    }
+
+    private void handleCompletion(List<Integer> successIds, List<Integer> failureIds, int numberOfRecordsToBeDeleted) {
+        if ((successIds.size() + failureIds.size()) == numberOfRecordsToBeDeleted) {
+            // TODO: i18n
+            if (successIds.size() == numberOfRecordsToBeDeleted) {
+                CoreGUI.getMessageCenter().notify(new Message("Deleted " + numberOfRecordsToBeDeleted + " operation history items."));
+            } else {
+                CoreGUI.getMessageCenter().notify(new Message("Deleted " + successIds.size()
+                        + " operation history items, but failed to delete the items with the following IDs: " + failureIds));
+            }
+            refresh();
+        }
     }
 
     @Override

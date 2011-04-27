@@ -11,7 +11,9 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.configuration.group.GroupResourceConfigurationUpdate;
 import org.rhq.core.domain.criteria.GroupResourceConfigurationUpdateCriteria;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.ConfigurationGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -30,10 +32,10 @@ public class GroupResourceConfigurationDataSource extends
 
     public class Field {
         public static final String ID = "id";
-        public static final String DATECREATED = "dateCreated";
-        public static final String LASTUPDATED = "lastUpdated";
+        public static final String DATECREATED = "createdTime";
+        public static final String LASTUPDATED = "modifiedTime";
         public static final String STATUS = "status";
-        public static final String USER = "user";
+        public static final String USER = "subjectName";
         public static final String OBJECT = "object";
     }
 
@@ -89,9 +91,16 @@ public class GroupResourceConfigurationDataSource extends
     @Override
     protected GroupResourceConfigurationUpdateCriteria getFetchCriteria(final DSRequest request) {
         GroupResourceConfigurationUpdateCriteria criteria = new GroupResourceConfigurationUpdateCriteria();
-        ArrayList<Integer> groupList = new ArrayList<Integer>(1);
-        groupList.add(this.groupId);
-        criteria.addFilterResourceGroupIds(groupList);
+
+        ArrayList<Integer> groupIds = new ArrayList<Integer>(1);
+        groupIds.add(this.groupId);
+        criteria.addFilterResourceGroupIds(groupIds);
+
+        PageControl pageControl = getPageControl(request);
+        pageControl.addDefaultOrderingField(Field.ID, PageOrdering.DESC);
+        criteria.setPageControl(pageControl);
+
         return criteria;
     }
+
 }

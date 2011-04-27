@@ -11,6 +11,7 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history.AbstractOperationHistoryDataSource;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history.AbstractOperationHistoryListView;
@@ -83,4 +84,22 @@ public class GroupMemberResourceOperationHistoryListView extends
         return new ResourceOperationHistoryDetailsView(extendLocatorId("DetailsView"), true);
     }
 
+    @Override
+    public void showDetails(ListGridRecord record) {
+        if (record == null) {
+            throw new IllegalArgumentException("'record' parameter is null.");
+        }
+
+        int resourceId = record.getAttributeAsInt(AncestryUtil.RESOURCE_ID);
+        int opHistoryId = record.getAttributeAsInt(ResourceOperationHistoryDataSource.Field.ID);
+
+        if (resourceId > 0 && opHistoryId > 0) {
+            CoreGUI.goToView(LinkManager.getSubsystemResourceOperationHistoryLink(resourceId, opHistoryId));
+        } else {
+            String msg = MSG.view_tableSection_error_badId(this.getClass().toString(), Integer.toString(resourceId)
+                + "," + Integer.toString(opHistoryId));
+            CoreGUI.getErrorHandler().handleError(msg);
+            throw new IllegalArgumentException(msg);
+        }
+    }
 }

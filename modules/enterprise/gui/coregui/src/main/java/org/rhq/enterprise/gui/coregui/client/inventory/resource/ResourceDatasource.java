@@ -20,10 +20,17 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource;
 
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.AVAILABILITY;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.CATEGORY;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.CTIME;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.DESCRIPTION;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.ITIME;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.KEY;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.LOCATION;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.MODIFIER;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.MTIME;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.NAME;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.PLUGIN;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.TYPE;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.VERSION;
 
 import java.util.HashSet;
 import java.util.List;
@@ -60,6 +67,7 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 public class ResourceDatasource extends RPCDataSource<Resource, ResourceCriteria> {
 
     public static final String FILTER_GROUP_ID = "groupId";
+    public static final String FILTER_RESOURCE_IDS = "resourceIds";
 
     private static ResourceDatasource INSTANCE;
 
@@ -99,25 +107,56 @@ public class ResourceDatasource extends RPCDataSource<Resource, ResourceCriteria
         nameDataField.setCanEdit(false);
         fields.add(nameDataField);
 
+        DataSourceTextField keyDataField = new DataSourceTextField(KEY.propertyName(), KEY.title(), 200);
+        keyDataField.setCanEdit(false);
+        keyDataField.setDetail(true);
+        fields.add(keyDataField);
+
         DataSourceTextField descriptionDataField = new DataSourceTextField(DESCRIPTION.propertyName(), DESCRIPTION
             .title());
         descriptionDataField.setCanEdit(false);
         fields.add(descriptionDataField);
 
+        DataSourceTextField locationDataField = new DataSourceTextField(LOCATION.propertyName(), LOCATION.title());
+        locationDataField.setCanEdit(false);
+        locationDataField.setDetail(true);
+        fields.add(locationDataField);
+
         DataSourceTextField typeNameDataField = new DataSourceTextField(TYPE.propertyName(), TYPE.title());
         fields.add(typeNameDataField);
 
         DataSourceTextField pluginNameDataField = new DataSourceTextField(PLUGIN.propertyName(), PLUGIN.title());
+        pluginNameDataField.setDetail(true);
         fields.add(pluginNameDataField);
 
+        DataSourceTextField versionDataField = new DataSourceTextField(VERSION.propertyName(), VERSION.title());
+        fields.add(versionDataField);
+
         DataSourceTextField categoryDataField = new DataSourceTextField(CATEGORY.propertyName(), CATEGORY.title());
-        categoryDataField.setHidden(true); // our icon will show this, no need to make this visible by default
+        // The icon field will show the category, no need to make the category field visible by default.
+        categoryDataField.setDetail(true);
         fields.add(categoryDataField);
 
         DataSourceImageField availabilityDataField = new DataSourceImageField(AVAILABILITY.propertyName(), AVAILABILITY
             .title(), 20);
         availabilityDataField.setCanEdit(false);
         fields.add(availabilityDataField);
+
+        DataSourceTextField ctimeDataField = new DataSourceTextField(CTIME.propertyName(), CTIME.title());
+        ctimeDataField.setDetail(true);
+        fields.add(ctimeDataField);
+
+        DataSourceTextField itimeDataField = new DataSourceTextField(ITIME.propertyName(), ITIME.title());
+        itimeDataField.setDetail(true);
+        fields.add(itimeDataField);
+
+        DataSourceTextField mtimeDataField = new DataSourceTextField(MTIME.propertyName(), MTIME.title());
+        mtimeDataField.setDetail(true);
+        fields.add(mtimeDataField);
+
+        DataSourceTextField modifiedByDataField = new DataSourceTextField(MODIFIER.propertyName(), MODIFIER.title());
+        modifiedByDataField.setDetail(true);
+        fields.add(modifiedByDataField);
 
         return fields;
     }
@@ -189,8 +228,8 @@ public class ResourceDatasource extends RPCDataSource<Resource, ResourceCriteria
         criteria.addFilterParentResourceId(getFilter(request, "parentId", Integer.class));
         criteria.addFilterCurrentAvailability(getFilter(request, AVAILABILITY.propertyName(), AvailabilityType.class));
         criteria.addFilterResourceCategories(getArrayFilter(request, CATEGORY.propertyName(), ResourceCategory.class));
-        criteria.addFilterIds(getArrayFilter(request, "resourceIds", Integer.class));
-        criteria.addFilterImplicitGroupIds(getFilter(request, "groupId", Integer.class));
+        criteria.addFilterIds(getArrayFilter(request, FILTER_RESOURCE_IDS, Integer.class));
+        criteria.addFilterExplicitGroupIds(getFilter(request, FILTER_GROUP_ID, Integer.class));
         criteria.addFilterName(getFilter(request, NAME.propertyName(), String.class));
         criteria.addFilterResourceTypeId(getFilter(request, TYPE.propertyName(), Integer.class));
         criteria.addFilterPluginName(getFilter(request, PLUGIN.propertyName(), String.class));
@@ -221,14 +260,21 @@ public class ResourceDatasource extends RPCDataSource<Resource, ResourceCriteria
         record.setAttribute("id", from.getId());
         record.setAttribute("uuid", from.getUuid());
         record.setAttribute(NAME.propertyName(), from.getName());
+        record.setAttribute(KEY.propertyName(), from.getResourceKey());
         record.setAttribute(DESCRIPTION.propertyName(), from.getDescription());
+        record.setAttribute(LOCATION.propertyName(), from.getLocation());
         record.setAttribute(TYPE.propertyName(), from.getResourceType().getId());
         record.setAttribute(PLUGIN.propertyName(), from.getResourceType().getPlugin());
+        record.setAttribute(VERSION.propertyName(), from.getVersion());
         record.setAttribute(CATEGORY.propertyName(), from.getResourceType().getCategory().name());
         record.setAttribute("icon", ImageManager.getResourceIcon(from.getResourceType().getCategory(), from
             .getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP));
         record.setAttribute(AVAILABILITY.propertyName(), ImageManager.getAvailabilityIconFromAvailType(from
             .getCurrentAvailability().getAvailabilityType()));
+        record.setAttribute(CTIME.propertyName(), from.getCtime());
+        record.setAttribute(ITIME.propertyName(), from.getItime());
+        record.setAttribute(MTIME.propertyName(), from.getMtime());
+        record.setAttribute(MODIFIER.propertyName(), from.getModifiedBy());
 
         record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY, from.getAncestry());
         record.setAttribute(AncestryUtil.RESOURCE_TYPE_ID, from.getResourceType().getId());

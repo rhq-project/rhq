@@ -27,6 +27,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import org.apache.commons.logging.Log;
@@ -41,6 +42,16 @@ public class Glob {
 
     private static final Log log = LogFactory.getLog(Glob.class);
 
+    public static final Comparator<File> ALPHABETICAL_COMPARATOR = new Comparator<File>() {
+        
+        public int compare(File o1, File o2) {
+            String path1 = o1.getAbsolutePath();
+            String path2 = o2.getAbsolutePath();
+            
+            return path1.compareTo(path2);
+        }
+    };
+    
     private Glob() {
         
     }
@@ -79,6 +90,16 @@ public class Glob {
     }
     
     /**
+     * This is an overloaded version of the {@link #match(File, String, Comparator)} method
+     * that passes <code>null</code> as the comparator to use.
+     * 
+     * @see #match(File, String, Comparator) 
+     */
+    public static List<File> match(File parentPath, String globPattern) {
+        return match(parentPath, globPattern, null);
+    }
+    
+    /**
      * Returns a fixed size list of matches.
      * 
      * The parent path specifies the "root" from which the glob pattern applies.
@@ -90,9 +111,10 @@ public class Glob {
      * 
      * @param parentPath the parent path to start the pattern search
      * @param globPattern the glob pattern to match against
+     * @param resultComparator the comparator using which to sort the results or null if no sorting is necessary
      * @return the list of matches
      */
-    public static List<File> match(File parentPath, String globPattern) {
+    public static List<File> match(File parentPath, String globPattern, Comparator<? super File> resultComparator) {
         if (!parentPath.exists()) {
             throw new IllegalArgumentException("Path '" + parentPath + "' does not exist.");
         }
@@ -133,6 +155,11 @@ public class Glob {
             log.debug("Could list files in " + parentPath);
             return Collections.emptyList();
         }
+        
+        if (resultComparator != null) {
+            Arrays.sort(files, resultComparator);
+        }
+        
         return Arrays.asList(files);
     }
     
@@ -141,14 +168,25 @@ public class Glob {
             parent = parent + File.separatorChar;
          return parent+pattern;
     }
-    public static List<File> matchAll(File parentPath, String... globPattern) {
-        return matchAll(parentPath, Arrays.asList(globPattern));
+    
+    /**
+     * This is an overloaded version of the {@link #matchAll(File, List, Comparator)} method
+     * that passes <code>null</code> as the comparator to use.
+     * 
+     * @see #matchAll(File, List, Comparator) 
+     */
+    public static List<File> matchAll(File parentPath, List<String> globPatterns) {
+        return matchAll(parentPath, globPatterns, null);
     }
     
-    public static List<File> matchAll(File parentPath, List<String> globPatterns) {
+    public static List<File> matchAll(File parentPath, List<String> globPatterns, Comparator<? super File> resultComparator) {
         ArrayList<File> matches = new ArrayList<File>();
         for(String p : globPatterns) {
-            matches.addAll(match(parentPath, p));
+            matches.addAll(match(parentPath, p, null));
+        }
+        
+        if (resultComparator != null) {
+            Collections.sort(matches, resultComparator);
         }
         
         return matches;

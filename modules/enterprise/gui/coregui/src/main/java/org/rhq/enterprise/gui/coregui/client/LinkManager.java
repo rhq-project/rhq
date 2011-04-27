@@ -22,6 +22,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client;
 
+import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.enterprise.gui.coregui.client.admin.roles.RolesView;
 import org.rhq.enterprise.gui.coregui.client.admin.users.UsersView;
 
@@ -83,6 +84,21 @@ public class LinkManager {
         }
     }
 
+    public static String getResourceGroupTabLink(ResourceGroup group, String tabName, String subTabName) {
+        String link;
+        if (group.getSubject() != null) {
+            // autogroup
+            link = getAutoGroupTabLink(group.getId(), tabName, subTabName);
+        } else if (group.getClusterResourceGroup() != null) {
+            // autocluster
+            link = getAutoClusterTabLink(group.getId(), tabName, subTabName);
+        } else {
+            // regular group
+            link = getResourceGroupTabLink(group.getId(), tabName, subTabName);
+        }
+        return link;
+    }
+
     public static String getResourcePluginConfigurationUpdateHistoryLink(int groupId) {
         return getResourceLink(groupId) + "/Inventory/ConnectionSettingsHistory";
     }
@@ -106,6 +122,22 @@ public class LinkManager {
 
     public static String getGroupOperationHistoryLink(int groupId, int groupOperationHistoryId) {
         return getResourceGroupLink(groupId) + "/Operations/History/" + groupOperationHistoryId;
+    }
+
+    public static String getResourceEventHistoryListLink(int resourceId) {
+        return "#Resource/" + resourceId + "/Events/History/";
+    }
+
+    public static String getGroupEventHistoryListLink(int groupId) {
+        return getResourceGroupLink(groupId) + "/Events/History/";
+    }
+
+    public static String getResourceMonitoringGraphsLink(int resourceId) {
+        return "#Resource/" + resourceId + "/Monitoring/Graphs/";
+    }
+
+    public static String getGroupMonitoringGraphsLink(int groupId) {
+        return getResourceGroupLink(groupId) + "/Monitoring/Graphs/";
     }
 
     public static String getGroupDefinitionLink(int groupDefinitionId) {

@@ -36,7 +36,6 @@ import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.SortSpecifier;
-import com.smartgwt.client.types.Autofit;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.SelectionStyle;
@@ -118,7 +117,8 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     private boolean showFilterForm = true;
 
     private String tableTitle;
-    private Criteria criteria;
+    private Criteria initialCriteria;
+    private boolean initialCriteriaFixed = true;
     private SortSpecifier[] sortSpecifiers;
     private String[] excludedFieldNames;
     private boolean autoFetchData;
@@ -152,6 +152,10 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         this(locatorId, tableTitle, null, sortSpecifiers, null, true);
     }
 
+    protected Table(String locatorId, String tableTitle, SortSpecifier[] sortSpecifiers, Criteria criteria) {
+        this(locatorId, tableTitle, criteria, sortSpecifiers, null, true);
+    }
+
     public Table(String locatorId, String tableTitle, boolean autoFetchData) {
         this(locatorId, tableTitle, null, null, null, autoFetchData);
     }
@@ -174,7 +178,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         setOverflow(Overflow.HIDDEN);
 
         this.tableTitle = tableTitle;
-        this.criteria = criteria;
+        this.initialCriteria = criteria;
         this.sortSpecifiers = sortSpecifiers;
         this.excludedFieldNames = excludedFieldNames;
         this.autoFetchData = autoFetchData;
@@ -235,8 +239,8 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         listGrid = new LocatableListGrid(contents.extendLocatorId("ListGrid"));
         listGrid.setAutoFetchData(autoFetchData);
 
-        if (criteria != null) {
-            listGrid.setInitialCriteria(criteria);
+        if (initialCriteria != null) {
+            listGrid.setInitialCriteria(initialCriteria);
         }
         if (sortSpecifiers != null) {
             listGrid.setInitialSort(sortSpecifiers);
@@ -248,7 +252,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         listGrid.setSelectionType(getDefaultSelectionStyle());
 
         if (flexRowDisplay) {
-            listGrid.setAutoFitData(Autofit.HORIZONTAL);
+            //listGrid.setAutoFitData(Autofit.HORIZONTAL); // do NOT set this - smartgwt appears to have a problem that causes it to eat CPU
             listGrid.setWrapCells(true);
             listGrid.setFixedRecordHeights(false);
         }
@@ -478,7 +482,6 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             public void onDataArrived(DataArrivedEvent dataArrivedEvent) {
                 if (null != listGrid) {
                     refreshTableInfo();
-                    fieldSizes.clear();
                 }
             }
         });
@@ -544,57 +547,63 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         this.showFooter = showFooter;
     }
 
-    private ArrayList<Integer> fieldSizes = new ArrayList<Integer>();
-
     /**
-     * Refreshes the list grid with the explicit criteria.
-     * Usually you do not want to call this - to maintain proper filtering
-     * and usage of the initial criteria, call {@link #refresh()} instead.
-     *  
-     * @param criteria the criteria to use to refresh the table with
+     * Refreshes the list grid's data, filtered by any fixed criteria, as well as any user-specified filters.
      */
-    protected void refresh(Criteria criteria) {
-        if (null != this.listGrid) {
-            if (criteria != null) {
-                this.listGrid.setCriteria(criteria);
-            }
+    public void refresh() {
+        if (this.listGrid != null) {
+            Criteria criteria = getCurrentCriteria();
+            this.listGrid.setCriteria(criteria);
             this.listGrid.invalidateCache();
             this.listGrid.markForRedraw();
         }
     }
 
-    /**
-     * Refreshes the list grid so it reloads. This attempts to maintain
-     * the original criteria along with any current filter settings.
-     */
-    public void refresh() {
-        if (null != this.listGrid) {
-            // if this table has a filter form (table filters OR search bar)
-            // we need to refresh it as per the filtering.
-            if (this.filterForm != null && this.filterForm.hasContent()) {
-                Criteria filterFormCriteria = this.filterForm.getValuesAsCriteria();
-                if (this.criteria == null) {
-                    // there was no initial criteria, filter based on the filter form data only
-                    refresh(filterFormCriteria);
-                } else {
-                    // there is both initial criteria and filters. We need criteria that combines both.
-                    Criteria fullCriteria = new Criteria();
-                    addCriteria(fullCriteria, this.criteria);
-                    if (filterFormCriteria != null) {
-                        addCriteria(fullCriteria, filterFormCriteria);
-                    }
-                    refresh(fullCriteria);
-                }
-            } else {
-                // If there are no filters, just do a default refresh by simply invalidating the cache.
-                // This should reuse the original initial criteria.
-                this.listGrid.invalidateCache();
-                this.listGrid.markForRedraw();
-            }
-        }
+    protected boolean isInitialCriteriaFixed() {
+        return initialCriteriaFixed;
     }
 
-    // Smartgwt 2.4's version of Criteria.addCriteria for some reason doesn't have else clauses for the array types
+    /**
+     * @param initialCriteriaFixed If true initialCriteria is applied to all subsequent fetch criteria. If false
+     * initialCriteria is used only for the initial autoFetch. Irrelevant if autoFetch is false. Default is true.
+     */
+    protected void setInitialCriteriaFixed(boolean initialCriteriaFixed) {
+        this.initialCriteriaFixed = initialCriteriaFixed;
+    }
+
+    /**
+     *
+     * @return the current criteria, which includes any fixed criteria, as well as any user-specified filters; may be
+     *         null if there are no fixed criteria or user-specified filters
+     */
+    protected Criteria getCurrentCriteria() {
+        Criteria criteria = null;
+
+        // If this table has a filter form (table filters OR search bar),
+        // we need to refresh it as per the filtering, combined with any fixed criteria.
+        if (this.filterForm != null && this.filterForm.hasContent()) {
+
+            criteria = this.filterForm.getValuesAsCriteria();
+
+            if (this.initialCriteriaFixed) {
+                if (criteria != null) {
+                    if (this.initialCriteria != null) {
+                        // There is fixed criteria - add it to the filter form criteria.
+                        addCriteria(criteria, this.initialCriteria);
+                    }
+                } else {
+                    criteria = this.initialCriteria;
+                }
+            }
+        } else if (this.initialCriteriaFixed) {
+
+            criteria = this.initialCriteria;
+        }
+
+        return criteria;
+    }
+
+    // SmartGWT 2.4's version of Criteria.addCriteria for some reason doesn't have else clauses for the array types
     // and it doesn't handle Object types properly (seeing odd behavior because of this), so this method explicitly
     // supports adding array types and Objects.
     // This method takes the src criteria and adds it to the dest criteria.
@@ -894,6 +903,11 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
 
     protected String getDeleteConfirmMessage() {
         return MSG.common_msg_deleteConfirm(getDataTypeNamePlural());
+    }
+
+    protected void hideField(ListGridField field) {
+        getListGrid().hideField(field.getName());
+        field.setHidden(true);
     }
 
     // -------------- Inner utility classes ------------- //

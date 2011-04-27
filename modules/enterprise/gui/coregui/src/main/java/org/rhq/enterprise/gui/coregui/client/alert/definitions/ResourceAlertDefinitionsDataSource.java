@@ -42,6 +42,7 @@ import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 
 /**
  * @author John Mazzitelli
@@ -141,6 +142,18 @@ public class ResourceAlertDefinitionsDataSource extends AbstractAlertDefinitions
 
         criteria.setPageControl(getPageControl(request));
         return criteria;
+    }
+
+    @Override
+    protected String getSortFieldForColumn(String columnName) {
+        if (AncestryUtil.RESOURCE_ANCESTRY.equals(columnName)) {
+            return "resource.ancestry";
+        }
+        if (FIELD_PARENT.equals(columnName)) {
+            return "parentId";
+        }
+
+        return super.getSortFieldForColumn(columnName);
     }
 
     @Override

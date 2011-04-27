@@ -52,7 +52,7 @@ public class TemplateAlertDefinitionsView extends AbstractAlertDefinitionsView {
     private Set<Permission> globalPermissions;
 
     public TemplateAlertDefinitionsView(String locatorId, ResourceType resourceType, Set<Permission> globalPermissions) {
-        super(locatorId, "Alert Templates");
+        super(locatorId, "Alert Templates", getCriteria(resourceType));
         this.resourceType = resourceType;
         this.globalPermissions = globalPermissions;
 
@@ -88,10 +88,9 @@ public class TemplateAlertDefinitionsView extends AbstractAlertDefinitionsView {
         return resourceType;
     }
 
-    @Override
-    protected Criteria getCriteria() {
+    private static Criteria getCriteria(ResourceType type) {
         Criteria criteria = new Criteria();
-        criteria.addCriteria(CRITERIA_RESOURCE_TYPE_ID, resourceType.getId());
+        criteria.addCriteria(CRITERIA_RESOURCE_TYPE_ID, type.getId());
         return criteria;
     }
 

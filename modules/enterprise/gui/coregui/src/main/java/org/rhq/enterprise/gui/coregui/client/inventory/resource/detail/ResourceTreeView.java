@@ -98,8 +98,6 @@ public class ResourceTreeView extends LocatableVLayout {
 
     private Resource rootResource;
 
-    private ViewId currentViewId;
-
     private Menu resourceContextMenu;
     private ResourceGroupContextMenu autoGroupContextMenu;
 
@@ -309,6 +307,7 @@ public class ResourceTreeView extends LocatableVLayout {
     private void updateSelection() {
 
         TreeNode selectedNode;
+
         if (treeGrid != null && treeGrid.getTree() != null
             && (selectedNode = treeGrid.getTree().findById(selectedNodeId)) != null) {
 
@@ -400,21 +399,24 @@ public class ResourceTreeView extends LocatableVLayout {
 
         // plugin config
         MenuItem pluginConfiguration = new MenuItem(MSG.view_tabs_common_connectionSettings());
-        pluginConfiguration.addClickHandler(new ClickHandler() {
+        boolean pluginConfigEnabled = resourceType.getPluginConfigurationDefinition() != null;
+        pluginConfiguration.setEnabled(pluginConfigEnabled);
+        if (pluginConfigEnabled) {
+            pluginConfiguration.addClickHandler(new ClickHandler() {
 
-            public void onClick(MenuItemClickEvent event) {
-                CoreGUI.goToView(LinkManager.getResourceTabLink(resource.getId(), "Inventory", "ConnectionSettings"));
-            }
-        });
-        pluginConfiguration.setEnabled(resourceType.getPluginConfigurationDefinition() != null);
+                public void onClick(MenuItemClickEvent event) {
+                    CoreGUI.goToView(LinkManager.getResourceTabLink(resource.getId(), "Inventory", "ConnectionSettings"));
+                }
+            });
+        }
         resourceContextMenu.addItem(pluginConfiguration);
 
         // resource config
         MenuItem resourceConfiguration = new MenuItem(MSG.view_tree_common_contextMenu_resourceConfiguration());
-        boolean enabled = resourcePermission.isConfigureRead()
+        boolean resourceConfigEnabled = resourcePermission.isConfigureRead()
             && resourceType.getResourceConfigurationDefinition() != null;
-        resourceConfiguration.setEnabled(enabled);
-        if (enabled) {
+        resourceConfiguration.setEnabled(resourceConfigEnabled);
+        if (resourceConfigEnabled) {
             resourceConfiguration.addClickHandler(new ClickHandler() {
 
                 public void onClick(MenuItemClickEvent event) {
@@ -429,19 +431,20 @@ public class ResourceTreeView extends LocatableVLayout {
 
         // Operations Menu
         MenuItem operations = new MenuItem(MSG.view_tree_common_contextMenu_operations());
-        enabled = (resourcePermission.isControl() && (resourceType.getOperationDefinitions() != null) && !resourceType
+        boolean operationsEnabled = (resourcePermission.isControl() && (resourceType.getOperationDefinitions() != null) && !resourceType
             .getOperationDefinitions().isEmpty());
-        operations.setEnabled(enabled);
-        if (enabled) {
+        operations.setEnabled(operationsEnabled);
+        if (operationsEnabled) {
             Menu opSubMenu = new Menu();
             for (final OperationDefinition operationDefinition : resourceType.getOperationDefinitions()) {
                 MenuItem operationItem = new MenuItem(operationDefinition.getDisplayName());
                 operationItem.addClickHandler(new ClickHandler() {
 
                     public void onClick(MenuItemClickEvent event) {
-                        CoreGUI.goToView(LinkManager.getResourceTabLink(resource.getId(),
-                            ResourceDetailView.Tab.OPERATIONS, ResourceDetailView.OperationsSubTab.SCHEDULES)
-                            + "/0/" + operationDefinition.getId());
+                        String viewPath = LinkManager.getResourceTabLink(resource.getId(),
+                                ResourceDetailView.Tab.OPERATIONS, ResourceDetailView.OperationsSubTab.SCHEDULES)
+                                + "/0/" + operationDefinition.getId();
+                        CoreGUI.goToView(viewPath);
                     }
                 });
                 opSubMenu.addItem(operationItem);
@@ -455,8 +458,8 @@ public class ResourceTreeView extends LocatableVLayout {
 
         // Create Child Menu
         MenuItem createChildMenu = new MenuItem(MSG.common_button_create_child());
-        enabled = resourcePermission.isCreateChildResources();
-        if (enabled) {
+        boolean createChildResourcesEnabled = resourcePermission.isCreateChildResources();
+        if (createChildResourcesEnabled) {
             Menu createChildSubMenu = new Menu();
             for (final ResourceType childType : resourceType.getChildResourceTypes()) {
                 if (childType.isCreatable()) {
@@ -474,15 +477,15 @@ public class ResourceTreeView extends LocatableVLayout {
                 }
             }
             createChildMenu.setSubmenu(createChildSubMenu);
-            enabled = createChildSubMenu.getItems().length > 0;
+            createChildResourcesEnabled = createChildSubMenu.getItems().length > 0;
         }
-        createChildMenu.setEnabled(enabled);
+        createChildMenu.setEnabled(createChildResourcesEnabled);
         resourceContextMenu.addItem(createChildMenu);
 
         // Manual Import Menu
         MenuItem importChildMenu = new MenuItem(MSG.common_button_import());
-        enabled = resourcePermission.isCreateChildResources();
-        if (enabled) {
+        boolean manualImportEnabled = resourcePermission.isCreateChildResources();
+        if (manualImportEnabled) {
             Menu importChildSubMenu = new Menu();
             for (final ResourceType childType : resourceType.getChildResourceTypes()) {
                 if (childType.isSupportsManualAdd()) {
@@ -504,9 +507,9 @@ public class ResourceTreeView extends LocatableVLayout {
             }
 
             importChildMenu.setSubmenu(importChildSubMenu);
-            enabled = importChildSubMenu.getItems().length > 0;
+            manualImportEnabled = importChildSubMenu.getItems().length > 0;
         }
-        importChildMenu.setEnabled(enabled);
+        importChildMenu.setEnabled(manualImportEnabled);
         resourceContextMenu.addItem(importChildMenu);
     }
 
@@ -636,6 +639,7 @@ public class ResourceTreeView extends LocatableVLayout {
 
     private void loadTree(final int selectedResourceId, final boolean updateSelection,
         final AsyncCallback<Void> callback) {
+
         if (updateSelection) {
             selectedNodeId = ResourceTreeNode.idOf(selectedResourceId);
         }
@@ -692,6 +696,18 @@ public class ResourceTreeView extends LocatableVLayout {
                                 }
                             }
                         });
+
+                        // OK, there is no good reason for this to be here.  But there are times when the
+                        // callback above seems to get called prior to the treeGrid.getTree() having been
+                        // updated with the fetched data. I think this is a smartgwt bug but it's hard to
+                        // prove.  Furthermore, given that the fetchData call is async there is really no
+                        // reason why this should get called after the callback above. Having said all that,
+                        // this seems to fix the issue as it 1) does currently get called after the callback
+                        // and 2) the tree seems to be update immediately after the callback completes.
+                        // So, for now use this, but TODO: find a better way.
+                        if (updateSelection) {
+                            updateSelection();
+                        }
 
                     } else {
                         ResourceTypeRepository.Cache.getInstance().loadResourceTypes(lineage,
@@ -794,7 +810,7 @@ public class ResourceTreeView extends LocatableVLayout {
     */
 
     public void renderView(ViewPath viewPath) {
-        currentViewId = viewPath.getCurrent();
+        ViewId currentViewId = viewPath.getCurrent();
         String currentViewIdPath = currentViewId.getPath();
         if ("AutoGroup".equals(currentViewIdPath)) {
             // Move the currentViewId to the ID portion to play better with other code

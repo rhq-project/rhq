@@ -78,9 +78,6 @@ public class ResourceOperationHistoryDataSource extends
                 }
 
                 public void onSuccess(PageList<ResourceOperationHistory> result) {
-                    //ListGridRecord[] resourceOperationHistoryRecords = buildRecordsFromDisambiguationReports(result);
-                    //response.setData(resourceOperationHistoryRecords);
-                    //processResponse(request.getRequestId(), response);
                     dataRetrieved(result, response, request);
                 }
             });
@@ -102,6 +99,15 @@ public class ResourceOperationHistoryDataSource extends
 
         criteria.setPageControl(getPageControl(request));
         return criteria;
+    }
+
+    @Override
+    protected String getSortFieldForColumn(String columnName) {
+        if (AncestryUtil.RESOURCE_ANCESTRY.equals(columnName)) {
+            return "resource.ancestry";
+        }
+
+        return super.getSortFieldForColumn(columnName);
     }
 
     protected void dataRetrieved(final PageList<ResourceOperationHistory> result, final DSResponse response,
@@ -140,6 +146,11 @@ public class ResourceOperationHistoryDataSource extends
                 processResponse(request.getRequestId(), response);
             }
         });
+    }
+
+    @Override
+    protected ResourceOperationHistory createOperationHistory() {
+        return new ResourceOperationHistory(null, null, null, null, null, null, null);
     }
 
     @Override

@@ -39,12 +39,12 @@ public interface SystemGWTService extends RemoteService {
 
     HashMap<String, String> getSystemConfiguration() throws RuntimeException;
 
-    void setSystemConfiguration(HashMap<String, String> properties, boolean skipValidation);
+    void setSystemConfiguration(HashMap<String, String> properties, boolean skipValidation) throws RuntimeException;
 
     /**
      * @return metadata properties about the agent download available on the server. 
      */
-    HashMap<String, String> getAgentVersionProperties();
+    HashMap<String, String> getAgentVersionProperties() throws RuntimeException;
 
     /**
      * Returns the name and download URL (key and value respectively) of all connector downloads
@@ -53,12 +53,12 @@ public interface SystemGWTService extends RemoteService {
      * 
      * @return information about connectors that can be downloaded from the server
      */
-    HashMap<String, String> getConnectorDownloads();
+    HashMap<String, String> getConnectorDownloads() throws RuntimeException;
 
     /**
      * @return metadata properties about the CLI download available on the server. 
      */
-    HashMap<String, String> getClientVersionProperties();
+    HashMap<String, String> getClientVersionProperties() throws RuntimeException;
 
     /**
      * Returns the name and download URL (key and value respectively) of the
@@ -71,5 +71,5 @@ public interface SystemGWTService extends RemoteService {
      * 
      * @return information about the bundle deployer tool that can be downloaded from the server
      */
-    HashMap<String, String> getBundleDeployerDownload();
+    HashMap<String, String> getBundleDeployerDownload() throws RuntimeException;
 }

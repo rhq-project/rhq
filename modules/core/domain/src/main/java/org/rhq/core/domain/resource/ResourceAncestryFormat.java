@@ -39,9 +39,11 @@ public enum ResourceAncestryFormat {
      *    <li>RAW: The raw, encoded value.  This is already provided by the Resource.ancestry field. 
      *    
      *    <li>SIMPLE: Short, name only format: (eg. parentName < grandParentName < etc...)
+     *    
+     *    <li>EXTENDED: Prepends resource name to SIMPLE format: (eg. resourceName < parentName < grandParentName < etc...)
      *                 
      *    <li>VERBOSE: Verbose, MultiLine format incorporating name, type and indentation.
      * </ul>
      */
-    RAW, SIMPLE, VERBOSE
+    RAW, SIMPLE, EXTENDED, VERBOSE
 }

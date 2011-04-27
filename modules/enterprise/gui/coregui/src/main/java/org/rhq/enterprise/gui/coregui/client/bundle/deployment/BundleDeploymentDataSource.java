@@ -52,7 +52,7 @@ public class BundleDeploymentDataSource extends RPCDataSource<BundleDeployment, 
     public static final String FIELD_NAME = "name";
     public static final String FIELD_DEPLOY_DIR = "deployDir";
     public static final String FIELD_DESCRIPTION = "description";
-    public static final String FIELD_DEPLOY_TIME = "deploymentTime";
+    public static final String FIELD_DEPLOY_TIME = "ctime";
     public static final String FIELD_ERROR_MESSAGE = "errorMessage";
     public static final String FIELD_CONFIG = "configuration";
     public static final String FIELD_STATUS = "status";
@@ -143,6 +143,15 @@ public class BundleDeploymentDataSource extends RPCDataSource<BundleDeployment, 
             criteria.addFilterTagName((String) request.getCriteria().getValues().get("tagName"));
         }
         return criteria;
+    }
+
+    @Override
+    protected String getSortFieldForColumn(String columnName) {
+        if (FIELD_BUNDLE_VERSION_VERSION.equals(columnName)) {
+            return "bundleVersion.version";
+        }
+
+        return super.getSortFieldForColumn(columnName);
     }
 
     @Override

@@ -32,6 +32,10 @@ public enum ResourceDataSourceField {
 
     DESCRIPTION("description", CoreGUI.getMessages().common_title_description()),
 
+    LOCATION("location", CoreGUI.getMessages().dataSource_resources_field_location()),
+
+    KEY("resourceKey", CoreGUI.getMessages().dataSource_resources_field_key()),
+
     TYPE("resourceType.name", CoreGUI.getMessages().common_title_type()),
 
     PLUGIN("pluginName", CoreGUI.getMessages().common_title_plugin()),
@@ -40,7 +44,15 @@ public enum ResourceDataSourceField {
 
     CATEGORY("resourceType.category", CoreGUI.getMessages().common_title_category()),
 
-    AVAILABILITY("currentAvailability", CoreGUI.getMessages().common_title_availability());
+    AVAILABILITY("currentAvailability", CoreGUI.getMessages().common_title_availability()),
+
+    CTIME("ctime", CoreGUI.getMessages().dataSource_resources_field_discoveryTime()),
+
+    ITIME("itime", CoreGUI.getMessages().dataSource_resources_field_importTime()),
+
+    MTIME("mtime", CoreGUI.getMessages().dataSource_resources_field_lastModifiedTime()),
+
+    MODIFIER("modifiedBy", CoreGUI.getMessages().dataSource_resources_field_lastModifier());
 
     /**
      * Corresponds to a property name of Resource (e.g. resourceType.name).

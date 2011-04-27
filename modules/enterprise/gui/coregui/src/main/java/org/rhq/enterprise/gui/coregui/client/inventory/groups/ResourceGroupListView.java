@@ -172,7 +172,6 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
         if (this.showDeleteButton) {
             addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), MSG.common_msg_areYouSure(),
                 new AuthorizedTableAction(this, TableActionEnablement.ANY, Permission.MANAGE_INVENTORY) {
-
                     public void executeAction(ListGridRecord[] selections, Object actionValue) {
                         int[] groupIds = new int[selections.length];
                         int index = 0;

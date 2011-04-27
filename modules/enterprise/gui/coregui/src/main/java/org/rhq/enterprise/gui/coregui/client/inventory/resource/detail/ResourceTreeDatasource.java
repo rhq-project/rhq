@@ -47,7 +47,6 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.components.tree.EnhancedTreeNode;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.gwt.MeasurementScheduleGWTService;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
@@ -127,25 +126,24 @@ public class ResourceTreeDatasource extends DataSource {
         final String parentResourceId = request.getCriteria().getAttribute("parentId");
         //com.allen_sauer.gwt.log.client.Log.info("All attributes: " + Arrays.toString(request.getCriteria().getAttributes()));
 
-        ResourceCriteria criteria = new ResourceCriteria();
-
         if (parentResourceId == null) {
             // If this gets called more than once it's a problem. Don't load initial data more than once.
             // Subsequent fetches should be due to parent node tree expansion
             if (null != this.initialData) {
                 Log.debug("ResourceTreeDatasource: Loading initial data...");
-
-                processIncomingData(this.initialData, response, requestId);
-                response.setStatus(DSResponse.STATUS_SUCCESS);
+                List<Resource> temp = this.initialData;
                 this.initialData = null;
+
+                processIncomingData(temp, response, requestId);
             } else {
-                processResponse(requestId, response);
                 response.setStatus(DSResponse.STATUS_FAILURE);
+                processResponse(requestId, response);
             }
 
         } else {
             Log.debug("ResourceTreeDatasource: Loading Resource [" + parentResourceId + "]...");
 
+            ResourceCriteria criteria = new ResourceCriteria();
             criteria.addFilterParentResourceId(Integer.parseInt(parentResourceId));
 
             resourceService.findResourcesByCriteria(criteria, new AsyncCallback<PageList<Resource>>() {
@@ -169,11 +167,11 @@ public class ResourceTreeDatasource extends DataSource {
             EnumSet.of(ResourceTypeRepository.MetadataType.operations, ResourceTypeRepository.MetadataType.children,
                 ResourceTypeRepository.MetadataType.subCategory),
             new ResourceTypeRepository.ResourceTypeLoadedCallback() {
+
                 public void onResourceTypeLoaded(List<Resource> result) {
                     TreeNode[] treeNodes = buildNodes(result, lockedData);
                     response.setData(treeNodes);
                     processResponse(requestId, response);
-                    response.setStatus(DSResponse.STATUS_SUCCESS);
                 }
             });
     }
@@ -210,8 +208,7 @@ public class ResourceTreeDatasource extends DataSource {
         // ensure a clean set.
         Set<String> allNodeIds = new HashSet<String>(resourceNodes.size() * 2);
 
-        Map<String, Map<String, AutoGroupTreeNode>> parentNodeIdToAutoGroupsByName =
-                new HashMap<String, Map<String, AutoGroupTreeNode>>();
+        Map<String, Map<String, AutoGroupTreeNode>> parentNodeIdToAutoGroupsByName = new HashMap<String, Map<String, AutoGroupTreeNode>>();
         Set<AutoGroupTreeNode> ambiguouslyNamedAutoGroupNodes = new HashSet<AutoGroupTreeNode>();
 
         for (ResourceTreeNode resourceNode : resourceNodes) {
@@ -242,7 +239,8 @@ public class ResourceTreeDatasource extends DataSource {
                         autoGroupNodesByName = new HashMap<String, AutoGroupTreeNode>();
                         parentNodeIdToAutoGroupsByName.put(parentID, autoGroupNodesByName);
                     } else {
-                        AutoGroupTreeNode ambiguouslyNamedAutogroupNode = autoGroupNodesByName.get(autogroupNode.getName());
+                        AutoGroupTreeNode ambiguouslyNamedAutogroupNode = autoGroupNodesByName.get(autogroupNode
+                            .getName());
                         if (ambiguouslyNamedAutogroupNode != null) {
                             ambiguouslyNamedAutoGroupNodes.add(ambiguouslyNamedAutogroupNode);
                             ambiguouslyNamedAutoGroupNodes.add(autogroupNode);
@@ -482,8 +480,8 @@ public class ResourceTreeDatasource extends DataSource {
 
         public void disambiguateName() {
             String typeName = StringUtility.pluralize(this.resourceType.getName());
-            String name = typeName + " (" + this.resourceType.getPlugin() + " " + MSG.common_title_plugin().toLowerCase()
-                    + ")";
+            String name = typeName + " (" + this.resourceType.getPlugin() + " "
+                + MSG.common_title_plugin().toLowerCase() + ")";
             setName(name);
         }
     }

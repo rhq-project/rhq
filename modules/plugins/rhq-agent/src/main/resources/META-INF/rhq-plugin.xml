@@ -4,7 +4,6 @@
         displayName="RHQ Agent"
         package="org.rhq.plugins.agent"
         description="Management and monitoring of the RHQ Agent"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">
 
@@ -645,9 +644,9 @@
                singleton="true">
 
          <plugin-configuration>
-            <c:simple-property name="objectName" default="rhq.pc:type=MeasurementManager"/>
-            <c:simple-property name="nameTemplate" default="Agent Measurement Subsystem"/>
-            <c:simple-property name="descriptionTemplate" default="information about this agent's measurement subsystem"/>
+            <c:simple-property name="objectName" default="rhq.pc:type=MeasurementManager" readOnly="true"/>
+            <c:simple-property name="nameTemplate" default="Agent Measurement Subsystem" readOnly="true"/>
+            <c:simple-property name="descriptionTemplate" default="information about this agent's measurement subsystem" readOnly="true"/>
          </plugin-configuration>
 
          <metric property="CurrentlyScheduleMeasurements" displayType="summary"
@@ -670,9 +669,9 @@
                singleton="true">
 
          <plugin-configuration>
-            <c:simple-property name="objectName" default="rhq.pc:type=PluginContainer"/>
-            <c:simple-property name="nameTemplate" default="Agent Plugin Container"/>
-            <c:simple-property name="descriptionTemplate" default="information about this agent's plugin container"/>
+            <c:simple-property name="objectName" default="rhq.pc:type=PluginContainer" readOnly="true"/>
+            <c:simple-property name="nameTemplate" default="Agent Plugin Container" readOnly="true"/>
+            <c:simple-property name="descriptionTemplate" default="information about this agent's plugin container" readOnly="true"/>
          </plugin-configuration>
 
          <operation name="retrievePluginDependencyGraph"

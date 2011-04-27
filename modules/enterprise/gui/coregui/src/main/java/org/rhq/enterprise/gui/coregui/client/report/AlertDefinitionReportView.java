@@ -91,6 +91,18 @@ public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.D
         }
 
         @Override
+        protected String getSortFieldForColumn(String columnName) {
+            if (AncestryUtil.RESOURCE_ANCESTRY.equals(columnName)) {
+                return "resource.ancestry";
+            }
+            if (FIELD_PARENT.equals(columnName)) {
+                return "parentId";
+            }
+
+            return super.getSortFieldForColumn(columnName);
+        }
+
+        @Override
         protected AlertDefinitionCriteria getSimpleCriteriaForAll() {
             AlertDefinitionCriteria criteria = new AlertDefinitionCriteria();
             criteria.addFilterResourceOnly(true);

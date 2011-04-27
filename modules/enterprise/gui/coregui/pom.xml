@@ -48,15 +48,15 @@
 
            ie6: IE6/IE7
            ie8: IE8
-           gecko: FF2
-           gecko1_8: FF3
+           gecko: FF1 (NOTE: Support for this was dropped in GWT 2.1.)
+           gecko1_8: FF2/FF3/FF4
            safari: Safari/Chrome
            opera: Opera
 
          Multiple agents can be specified as a comma-delimited list, as demonstrated by the default
          value below.
         -->
-        <gwt.userAgent>ie6,ie8,gecko,gecko1_8,safari,opera</gwt.userAgent>
+        <gwt.userAgent>ie6,ie8,gecko1_8,safari,opera</gwt.userAgent>
 
         <!-- Change this to "true" via the mvn command line or your ~/.m2/settings.xml to speed 
              up gwt compilation. -->

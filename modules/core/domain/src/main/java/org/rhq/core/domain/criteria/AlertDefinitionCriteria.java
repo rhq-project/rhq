@@ -42,6 +42,9 @@ import org.rhq.core.domain.util.PageOrdering;
 public class AlertDefinitionCriteria extends Criteria {
     private static final long serialVersionUID = 1L;
 
+    public static final String SORT_FIELD_RESOURCE_ID = "resourceId";
+    public static final String SORT_FIELD_RESOURCE_NAME = "resourceName";
+
     private Integer filterId;
     private List<Integer> filterIds;
     private String filterName;
@@ -67,6 +70,8 @@ public class AlertDefinitionCriteria extends Criteria {
 
     private PageOrdering sortName;
     private PageOrdering sortPriority;
+    private PageOrdering sortResourceId; // requires sort override
+    private PageOrdering sortResourceName; // requires sort override    
 
     public AlertDefinitionCriteria() {
         filterOverrides.put("alertTemplateOnly", "resourceType IS NOT NULL");
@@ -79,6 +84,9 @@ public class AlertDefinitionCriteria extends Criteria {
         filterOverrides.put("notificationSenderNames", "id IN ("
             + "SELECT notif.alertDefinition.id FROM AlertNotification notif " + "WHERE notif.senderName IN ( ? ))");
         filterOverrides.put("filterIds", "id IN ( ? )");
+
+        sortOverrides.put(SORT_FIELD_RESOURCE_ID, "resource.id");
+        sortOverrides.put(SORT_FIELD_RESOURCE_NAME, "resource.name");
     }
 
     @Override
@@ -192,6 +200,16 @@ public class AlertDefinitionCriteria extends Criteria {
 
     public boolean isGroupCriteria() {
         return null != filterResourceGroupIds;
+    }
+
+    public void addSortResourceId(PageOrdering sortResourceId) {
+        addSortField(SORT_FIELD_RESOURCE_ID);
+        this.sortResourceId = sortResourceId;
+    }
+
+    public void addSortResourceName(PageOrdering sortResourceName) {
+        addSortField(SORT_FIELD_RESOURCE_NAME);
+        this.sortResourceName = sortResourceName;
     }
 
 }

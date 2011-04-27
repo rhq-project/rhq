@@ -262,7 +262,6 @@ public abstract class AbstractRecentAlertsPortlet extends AlertHistoryView imple
     }
 
     public boolean isRefreshing() {
-        // TODO: actually keep track of when the portlet is refreshing data
         return false;
     }
 
@@ -274,9 +273,10 @@ public abstract class AbstractRecentAlertsPortlet extends AlertHistoryView imple
     }
 
     @Override
-    public void redraw() {
-        super.refresh();
-        markForRedraw();
+    public void refresh() {
+        if (!isRefreshing()) {
+            super.refresh();
+        }
     }
 
     static public class AlertsPortletDataSource extends AlertDataSource {

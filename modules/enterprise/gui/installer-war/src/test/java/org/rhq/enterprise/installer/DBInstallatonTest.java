@@ -45,9 +45,9 @@ import java.util.Properties;
  */
 public class DBInstallatonTest {
 
-    final String TEST_DB = "installer_test_db";
-    final String USERNAME = "rhqadmin";
-    final String PASSWORD = "rhqadmin";
+    final String TEST_DB = "rhq_installer_test_db";
+    final String USERNAME = System.getProperty("rhq.test.ds.user-name", "rhqadmin");
+    final String PASSWORD = System.getProperty("rhq.test.ds.password", "rhqadmin");
 
     ServerInformation installer = new ServerInformation();
 
@@ -98,9 +98,13 @@ public class DBInstallatonTest {
         Statement createDB = null;
 
         try {
-            String dbUrl = "jdbc:postgresql://127.0.0.1:5432/postgres";
+            String server = System.getProperty("rhq.test.ds.server-name", "127.0.0.1");
+            String adminUsername = System.getProperty("rhq.db.admin.username", "postgres");
+            String adminPassword = System.getProperty("rhq.db.admin.password", "postgres");
 
-            connection = DbUtil.getConnection(dbUrl, "postgres", "postgres");
+            String dbUrl = "jdbc:postgresql://" + server + ":5432/postgres";
+
+            connection = DbUtil.getConnection(dbUrl, adminUsername, adminPassword);
             dropDB = connection.createStatement();
             createDB = connection.createStatement();
 
@@ -161,7 +165,8 @@ public class DBInstallatonTest {
     }
 
     private String getTestDbUrl() {
-        return "jdbc:postgresql://127.0.0.1:5432/" + TEST_DB;
+        String server = System.getProperty("rhq.test.ds.server-name", "127.0.0.1");
+        return "jdbc:postgresql://" + server + ":5432/" + TEST_DB;
     }
 
 

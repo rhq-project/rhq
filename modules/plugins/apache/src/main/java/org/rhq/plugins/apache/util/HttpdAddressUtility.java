@@ -120,6 +120,9 @@ public enum HttpdAddressUtility {
 
     private static final Log log = LogFactory.getLog(HttpdAddressUtility.class);
 
+    public static final String BOGUS_HOST_WITHOUT_FORWARD_DNS = "bogus_host_without_forward_dns";
+    public static final String BOGUS_HOST_WITHOUT_REVERSE_DNS = "bogus_host_without_reverse_dns";
+    
     public static HttpdAddressUtility get(String version) {
         return version.startsWith("1.") ? APACHE_1_3 : APACHE_2_x;
     }
@@ -159,8 +162,8 @@ public enum HttpdAddressUtility {
             }
             
             int lastColonIdx = address.lastIndexOf(':');
-            if (lastColonIdx == NO_PORT_SPECIFIED_VALUE) {
-                return new Address(address, -1);
+            if (lastColonIdx == -1) {
+                return new Address(address, NO_PORT_SPECIFIED_VALUE);
             } else {
                 int lastRightBracketPos = address.lastIndexOf(']');
                 if (lastColonIdx > lastRightBracketPos) {
@@ -319,20 +322,14 @@ public enum HttpdAddressUtility {
      * @param ag the augeas tree of the httpd configuration
      * @param virtualHost the port or address:port of the virtual host
      * @param serverName the server name for the namebased virtual hosts (or null if the virtual host is ip based)
-     * @param snmpModuleCompatibleMode if true, generates a sample address in the same way as snmp module. Namely
-     * deals with the host name wildcard the same way as snmp module (i.e. by assuming it means "localhost", even though it doesn't have to).
      * @return the address on which the virtual host can be accessed or null on error
      */
-    public Address getVirtualHostSampleAddress(ApacheDirectiveTree ag, String virtualHost, String serverName, boolean snmpModuleCompatibleMode) {
+    public Address getVirtualHostSampleAddress(ApacheDirectiveTree ag, String virtualHost, String serverName) {
         try {
             Address addr = Address.parse(virtualHost);
             if (addr.isHostDefault() || addr.isHostWildcard()) {
                 Address serverAddr = null;
-                if (snmpModuleCompatibleMode) {
-                    serverAddr = getLocalhost(addr.port);
-                } else {
-                    serverAddr = getMainServerSampleAddress(ag, null, addr.port);
-                }
+                serverAddr = getMainServerSampleAddress(ag, null, addr.port);
                 if (serverAddr == null)
                     return null;
                 addr.host = serverAddr.host;
@@ -347,6 +344,76 @@ public enum HttpdAddressUtility {
             log.warn("Failed to obtain virtual host address.", e);
             return null;
         }
+    }
+    
+    public Address getHttpdInternalMainServerAddressRepresentation(ApacheDirectiveTree runtimeConfig) {
+        Address ret = null;
+        
+        List<ApacheDirective> serverNames = runtimeConfig.search("/ServerName");
+        if (serverNames.size() == 0) {
+            //no servername directive in the apache config
+            ret = new Address(Address.WILDCARD, Address.NO_PORT_SPECIFIED_VALUE);
+            try {
+                ret.host = InetAddress.getLocalHost().getCanonicalHostName();
+            } catch (UnknownHostException e) {
+                ret.host = "127.0.0.1";
+            }
+            
+            ret.port = 0;
+        } else {
+            String serverName = serverNames.get(serverNames.size() - 1).getValuesAsString();
+            ret = HttpdAddressUtility.Address.parse(serverName);
+            if (!ret.isPortDefined()) {
+                ret.port = 0;
+            }
+        }
+        
+        return ret;
+    }
+    
+    public Address getHttpdInternalVirtualHostAddressRepresentation(ApacheDirectiveTree runtimeConfig, String virtualHost, String serverName) {
+        Address ret = null;
+        
+        if (serverName != null) {
+            ret = Address.parse(serverName);
+            if (!ret.isPortDefined()) {
+                ret.port = 0;
+            }
+            
+            //servername is taken literally and no reverse dns lookup is made
+            //if the servername host is an IP address. We're done here...
+        } else {
+            ret = Address.parse(virtualHost);
+            if (!ret.isPortDefined() || ret.isPortWildcard() || ret.isHostDefault() || ret.isHostWildcard()) {
+                Address mainAddress = getHttpdInternalMainServerAddressRepresentation(runtimeConfig);
+                
+                if (!ret.isPortDefined() || ret.isPortWildcard()) {
+                    ret.port = mainAddress.port;
+                }
+                
+                if (ret.isHostDefault() || ret.isHostWildcard()) {
+                    ret.host = mainAddress.host;
+                }
+            }
+            
+            //if the vhost hostname is an IP address, a reverse dns lookup is attempted
+            //to get the actual hostname.
+            //the BOGUS* constants are what the apache actually uses to identify such
+            //"error" conditions.
+            try {
+                InetAddress iAddr = InetAddress.getByName(ret.host);
+                String reverseLookup = iAddr.getHostName();
+                if (iAddr.getHostAddress().equals(reverseLookup)) {
+                    ret.host = BOGUS_HOST_WITHOUT_REVERSE_DNS;
+                } else {
+                    ret.host = reverseLookup;
+                }
+            } catch (UnknownHostException e) {
+                ret.host = BOGUS_HOST_WITHOUT_FORWARD_DNS;
+            }
+        }
+        
+        return ret;
     }
     
     private static Address parseListen(String listenValue) {
@@ -388,7 +455,7 @@ public enum HttpdAddressUtility {
      * If this flag is set to true, this method takes that into account.
      * @return
      */
-    public static boolean isAddressConforming(Address listen, String limitingHost, int limitingPort, boolean snmpModuleCompatibleMode) {
+    private static boolean isAddressConforming(Address listen, String limitingHost, int limitingPort, boolean snmpModuleCompatibleMode) {
         if (Address.DEFAULT_HOST.equals(limitingHost) || Address.WILDCARD.equals(limitingHost)) {
             limitingHost = null;
         }

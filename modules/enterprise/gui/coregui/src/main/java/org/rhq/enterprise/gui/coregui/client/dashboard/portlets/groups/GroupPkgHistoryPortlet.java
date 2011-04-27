@@ -30,7 +30,6 @@ import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.events.SubmitValuesEvent;
 import com.smartgwt.client.widgets.form.events.SubmitValuesHandler;
-import com.smartgwt.client.widgets.form.fields.LinkItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.layout.VLayout;
@@ -231,7 +230,9 @@ public class GroupPkgHistoryPortlet extends LocatableVLayout implements CustomSe
                         String title = history.getPackageVersion().getFileName() + ":";
                         String destination = "/rhq/resource/content/audit-trail-item.xhtml?id=" + groupId
                             + "&selectedHistoryId=" + history.getId();
-                        LinkItem link = AbstractActivityView.newLinkItem(title, destination);
+                        //spinder 4/27/11: diabling links as they point into portal.war content pages
+                        //                        LinkItem link = AbstractActivityView.newLinkItem(title, destination);
+                        StaticTextItem link = AbstractActivityView.newTextItem(title);
                         StaticTextItem time = AbstractActivityView.newTextItem(GwtRelativeDurationConverter
                             .format(history.getTimestamp()));
 
@@ -276,11 +277,9 @@ public class GroupPkgHistoryPortlet extends LocatableVLayout implements CustomSe
     }
 
     @Override
-    public void redraw() {
-        super.redraw();
+    public void refresh() {
         if (!isRefreshing()) {
             loadData();
         }
     }
-
 }

@@ -371,6 +371,9 @@ public interface ConfigurationManagerLocal {
     PageList<GroupResourceConfigurationUpdate> findGroupResourceConfigurationUpdates(Subject subject, int groupId,
         PageControl pc);
 
+    ConfigurationUpdateStatus updateGroupResourceConfigurationUpdateStatus(int groupResourceConfigurationUpdateId,
+        String errorMessages);
+
     ConfigurationUpdateStatus updateGroupPluginConfigurationUpdateStatus(int groupPluginConfigurationUpdateId,
         String errorMessages);
 

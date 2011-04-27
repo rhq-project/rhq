@@ -128,7 +128,7 @@ public class UsersDataSource extends RPCDataSource<Subject, SubjectCriteria> {
             .dataSource_users_field_passwordVerify(), 100, true);
         MatchesFieldValidator passwordsEqualValidator = new MatchesFieldValidator();
         passwordsEqualValidator.setOtherField(Field.PASSWORD);
-        passwordsEqualValidator.setErrorMessage("Passwords do not match.");
+        passwordsEqualValidator.setErrorMessage(MSG.dataSource_users_passwordsDoNotMatch());
         passwordVerifyField.setValidators(passwordsEqualValidator);
         fields.add(passwordVerifyField);
 
@@ -144,7 +144,7 @@ public class UsersDataSource extends RPCDataSource<Subject, SubjectCriteria> {
             .dataSource_users_field_emailAddress(), null, 100, true);
         fields.add(emailAddressField);
         RegExpValidator emailAddressValidator = new RegExpValidator(EMAIL_ADDRESS_REGEXP);
-        emailAddressValidator.setErrorMessage("Invalid email address.");
+        emailAddressValidator.setErrorMessage(MSG.dataSource_users_invalidEmailAddress());
         emailAddressField.setValidators(emailAddressValidator);
 
         DataSourceTextField phoneNumberField = createTextField(Field.PHONE_NUMBER, MSG
@@ -354,6 +354,17 @@ public class UsersDataSource extends RPCDataSource<Subject, SubjectCriteria> {
         //       count across the wire.  this count will not require permission checks at all.
 
         return criteria;
+    }
+
+    @Override
+    protected String getSortFieldForColumn(String columnName) {
+
+        // this is a calculated field, can't perform server-side sort
+        if (Field.LDAP.equals(columnName)) {
+            return null;
+        }
+
+        return super.getSortFieldForColumn(columnName);
     }
 
 }

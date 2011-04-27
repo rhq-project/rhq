@@ -68,6 +68,9 @@ public class IconField extends ListGridField {
         setType(ListGridFieldType.IMAGE);
         setAlign(Alignment.CENTER);
         setShowDefaultContextMenu(false);
+        if (DEFAULT_TITLE.equals(getTitle())) {
+            setCanHide(false);
+        }
     }
 
 }

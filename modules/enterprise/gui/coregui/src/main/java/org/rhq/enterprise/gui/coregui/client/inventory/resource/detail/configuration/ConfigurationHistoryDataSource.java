@@ -33,7 +33,9 @@ import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
@@ -161,7 +163,9 @@ public class ConfigurationHistoryDataSource extends
         criteria.fetchResource(true);
         criteria.fetchGroupConfigurationUpdate(true);
 
-        criteria.setPageControl(getPageControl(request));
+        PageControl pageControl = getPageControl(request);
+        pageControl.addDefaultOrderingField(Field.ID, PageOrdering.DESC);
+        criteria.setPageControl(pageControl);
 
         final Integer resourceId = (Integer) request.getCriteria().getValues().get(CriteriaField.RESOURCE_ID);
         if (resourceId != null) {

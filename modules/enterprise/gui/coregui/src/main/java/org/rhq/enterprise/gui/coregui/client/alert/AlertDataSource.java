@@ -21,7 +21,6 @@ package org.rhq.enterprise.gui.coregui.client.alert;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -31,9 +30,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.core.DataClass;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
-import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
-import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.ListGridFieldType;
@@ -45,6 +42,7 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionLog;
+import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.alert.notification.AlertNotificationLog;
 import org.rhq.core.domain.common.EntityContext;
@@ -71,13 +69,16 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * @author John Mazzitelli
  */
 public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
-    private AlertGWTServiceAsync alertService = GWTServiceLookup.getAlertService();
-
-    private EntityContext entityContext;
 
     public static final String PRIORITY_ICON_HIGH = ImageManager.getAlertIcon(AlertPriority.HIGH);
     public static final String PRIORITY_ICON_MEDIUM = ImageManager.getAlertIcon(AlertPriority.MEDIUM);
     public static final String PRIORITY_ICON_LOW = ImageManager.getAlertIcon(AlertPriority.LOW);
+
+    public static final String FILTER_PRIORITIES = "priorities";
+
+    private AlertGWTServiceAsync alertService = GWTServiceLookup.getAlertService();
+
+    private EntityContext entityContext;
 
     public AlertDataSource() {
         this(EntityContext.forSubsystemView());
@@ -88,15 +89,6 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
         this.entityContext = context;
 
         addDataSourceFields();
-    }
-
-    @Override
-    protected List<DataSourceField> addDataSourceFields() {
-        // for some reason, the client seems to crash if you don't specify any data source fields
-        // even though we know we defined override ListGridFields for all columns.
-        List<DataSourceField> fields = super.addDataSourceFields();
-        fields.add(new DataSourceTextField("name"));
-        return fields;
     }
 
     /**
@@ -224,7 +216,7 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
     @Override
     protected void executeFetch(final DSRequest request, final DSResponse response, final AlertCriteria criteria) {
         if (criteria == null) {
-            // the user selected no severities in the filter - it makes sense from the UI perspective to show 0 rows
+            // the user selected no priorities in the filter - it makes sense from the UI perspective to show 0 rows
             response.setTotalRows(0);
             processResponse(request.getRequestId(), response);
             return;
@@ -265,8 +257,8 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
 
         // disambiguate as the results could be cross-resource
         default:
-            HashSet<Integer> typesSet = new HashSet<Integer>();
-            HashSet<String> ancestries = new HashSet<String>();
+            Set<Integer> typesSet = new HashSet<Integer>();
+            Set<String> ancestries = new HashSet<String>();
             for (Alert alert : result) {
                 Resource resource = alert.getAlertDefinition().getResource();
                 typesSet.add(resource.getResourceType().getId());
@@ -303,20 +295,38 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
 
     @Override
     protected AlertCriteria getFetchCriteria(DSRequest request) {
-        AlertPriority[] severitiesFilter = getArrayFilter(request, "severities", AlertPriority.class);
+        AlertPriority[] prioritiesFilter = getArrayFilter(request, FILTER_PRIORITIES, AlertPriority.class);
 
-        if (severitiesFilter == null || severitiesFilter.length == 0) {
-            return null; // user didn't select any severities - return null to indicate no data should be displayed
+        if (prioritiesFilter == null || prioritiesFilter.length == 0) {
+            return null; // user didn't select any priorities - return null to indicate no data should be displayed
         }
 
         AlertCriteria criteria = new AlertCriteria();
         criteria.setPageControl(getPageControl(request));
 
-        criteria.addFilterPriorities(severitiesFilter);
+        criteria.addFilterPriorities(prioritiesFilter);
         criteria.addFilterEntityContext(entityContext);
         criteria.fetchConditionLogs(true);
 
         return criteria;
+    }
+
+    @Override
+    protected String getSortFieldForColumn(String columnName) {
+        if (AncestryUtil.RESOURCE_ANCESTRY.equals(columnName)) {
+            return "alertDefinition.resource.ancestry";
+        }
+        if ("status".equals(columnName)) {
+            return "acknowledgeTime";
+        }
+        if ("conditionText".equals(columnName)) {
+            // Note: I don't think this should even be getting called, but it is. We already setCanSortClientOnly(true)
+            // on this ListGridField. To me that should mean any sorting done client side on this field should
+            // not be passed in on the Request, but it seems to be...
+            return null;
+        }
+
+        return super.getSortFieldForColumn(columnName);
     }
 
     @Override
@@ -338,10 +348,13 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
         }
         record.setAttribute("acknowledgingSubject", from.getAcknowledgingSubject());
 
-        record.setAttribute("definitionId", from.getAlertDefinition().getId());
-        Resource resource = from.getAlertDefinition().getResource();
-        record.setAttribute("name", from.getAlertDefinition().getName());
-        record.setAttribute("priority", ImageManager.getAlertIcon(from.getAlertDefinition().getPriority()));
+        AlertDefinition alertDefinition = from.getAlertDefinition();
+
+        record.setAttribute("definitionId", alertDefinition.getId());
+        Resource resource = alertDefinition.getResource();
+        record.setAttribute("name", alertDefinition.getName());
+        record.setAttribute("description", alertDefinition.getDescription());
+        record.setAttribute("priority", ImageManager.getAlertIcon(alertDefinition.getPriority()));
 
         // for ancestry handling       
         record.setAttribute(AncestryUtil.RESOURCE_ID, resource.getId());
@@ -387,7 +400,7 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
             conditions[i++] = dc;
         }
         record.setAttribute("conditionLogs", conditions);
-        record.setAttribute("conditionExpression", from.getAlertDefinition().getConditionExpression());
+        record.setAttribute("conditionExpression", alertDefinition.getConditionExpression());
 
         String recoveryInfo = AlertFormatUtility.getAlertRecoveryInfo(from);
         record.setAttribute("recoveryInfo", recoveryInfo);
@@ -423,4 +436,5 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
     protected void setEntityContext(EntityContext entityContext) {
         this.entityContext = entityContext;
     }
+
 }

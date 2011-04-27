@@ -191,6 +191,7 @@
            <module>twitter</module>
            <module>virt</module>
            <module>kickstart</module>
+           <module>pattern-generator</module>
 
         </modules>
     </profile>

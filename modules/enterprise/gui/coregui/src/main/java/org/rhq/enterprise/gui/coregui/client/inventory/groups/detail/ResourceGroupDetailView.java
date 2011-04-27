@@ -60,11 +60,14 @@ import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.inventory.G
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.inventory.HistoryGroupPluginConfigurationView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.inventory.MembersView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.schedules.SchedulesView;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.GroupMeasurementTableView;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.GroupMembersHealthView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.traits.TraitsView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.operation.history.GroupOperationHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.operation.schedule.GroupOperationScheduleListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.summary.ActivityView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * Right panel of the Resource Group view (#ResourceGroup/*).
@@ -275,8 +278,18 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
             viewFactory = (!visible) ? null : new ViewFactory() {
                 @Override
                 public Canvas createView() {
-                    return new FullHTMLPane(monitorTables.extendLocatorId("View"),
-                        "/rhq/group/monitor/tables-plain.xhtml?groupId=" + groupId);
+                    //                    return new FullHTMLPane(monitorTables.extendLocatorId("View"),
+                    //                        "/rhq/group/monitor/tables-plain.xhtml?groupId=" + groupId);
+                    //gwt version of group table view.
+                    LocatableVLayout groupTableView = new LocatableVLayout(monitorTables
+                        .extendLocatorId("monitorTable"));
+                    GroupMeasurementTableView metrics = new GroupMeasurementTableView(monitorTables
+                        .extendLocatorId("ViewMetrics"), groupComposite, groupId);
+                    GroupMembersHealthView memberHealth = new GroupMembersHealthView(monitorTables
+                        .extendLocatorId("ViewHealth"), groupId, false);
+                    groupTableView.addMember(metrics);
+                    groupTableView.addMember(memberHealth);
+                    return groupTableView;
                 }
             };
             updateSubTab(this.monitoringTab, this.monitorTables, visible, true, viewFactory);

@@ -68,18 +68,18 @@ widgetProperties = getWidgetProperties('<c:out value="${widgetInstanceName}"/>')
   symbol="LAST_KEY"
   var="last"/>
 <!--  COMPARE METRICS TITLE Need to bring this back once we get the groupname in the params-->
-<%--<c:set var="titleName" value="${CompareMetricsForm.name}" />--%>
+<%--<c:set var="titleName" value="${CompareMetricsForm.name}" />
 <tiles:insert definition=".page.title.resource.generic">
   <tiles:put name="titleKey" value="resource.common.monitor.visibility.CompareMetricsTitle"/>
-  <tiles:put name="titleName" beanName="titleName" />
-</tiles:insert>
-<html:form action="/resource/common/monitor/visibility/CompareMetrics">
+ <tiles:put name="titleName" beanName="titleName" />
+</tiles:insert>--%>
+<!--<html:form action="/resource/common/monitor/visibility/CompareMetrics">-->
 
-<html:link href="/rhq/group/monitor/tables.xhtml?groupId=${groupId}&amp;category=COMPATIBLE">
+<!--<html:link href="/rhq/group/monitor/tables.xhtml?groupId=${groupId}&amp;category=COMPATIBLE">
   <fmt:message key="resource.common.monitor.visibility.CompareMetricsReturnLink">
     <fmt:param value="${TitleParam}"/>
   </fmt:message>
-</html:link>
+</html:link>-->
 <tiles:insert definition=".header.tab">
   <tiles:put name="tabKey" value="resource.common.monitor.visibility.CompareMetricsTab"/>
 </tiles:insert>
@@ -136,8 +136,13 @@ widgetProperties = getWidgetProperties('<c:out value="${widgetInstanceName}"/>')
       </c:url>
       <tr class="ListRow">
          <td class="ListCellCheckbox">&nbsp;</td>
-         <td width="1%" class="ListCellCheckbox"><a href="<c:out value="${chartUrl}" />"><html:img page="/images/icon_chart.gif" width="10" height="10" alt="" border="0"/></a></td>
-         <td class="ListCell"><a href="<c:out value="${chartUrl}" />"><c:out value="${metricList.key.displayName}" /></a></td>
+         <td width="1%" class="ListCellCheckbox"><!--<a href="<c:out value="${chartUrl}" />">-->
+		<html:img page="/images/icon_chart.gif" width="10" height="10" alt="" border="0"/>
+		<!--</a> --></td>
+         <td class="ListCell">
+		<!--<a href="<c:out value="${chartUrl}" />">-->
+		<c:out value="${metricList.key.displayName}" />
+		<!--</a>--></td>
          <td class="ListCellRight" nowrap>&nbsp;</td>
          <td class="ListCellRight" nowrap>&nbsp;</td>
          <td class="ListCellRight" nowrap>&nbsp;</td>
@@ -154,9 +159,9 @@ widgetProperties = getWidgetProperties('<c:out value="${widgetInstanceName}"/>')
             <td class="ListCellCheckbox">&nbsp;</td>
             <td width="1%" class="ListCellCheckbox">&nbsp;</td>
             <td class="ListCell">
-               <a href="<c:out value="${singleResourceSingleMetricChartUrl}"/>">
+               <!--<a href="<c:out value="${singleResourceSingleMetricChartUrl}"/>">-->
                   <c:out value="${rmds.resource.name}"/>
-               </a>
+               <!--</a>-->
             </td>
             <td class="ListCellRight" width="%5" nowrap><c:out value="${rmds.metrics[min].valueFmt}" /></td>
             <c:choose>
@@ -181,11 +186,11 @@ widgetProperties = getWidgetProperties('<c:out value="${widgetInstanceName}"/>')
   <tiles:put name="useCurrentButton" value="true"/>
 </tiles:insert> 
 </div>
-<html:link href="/rhq/group/monitor/tables.xhtml?groupId=${groupId}&amp;category=COMPATIBLE">
+<!--<html:link href="/rhq/group/monitor/tables.xhtml?groupId=${groupId}&amp;category=COMPATIBLE">
   <fmt:message key="resource.common.monitor.visibility.CompareMetricsReturnLink">
     <fmt:param value="${TitleParam}"/>
   </fmt:message>
-</html:link>
+</html:link>-->
 
 <html:hidden property="groupId"/>
 <html:hidden property="category"/>

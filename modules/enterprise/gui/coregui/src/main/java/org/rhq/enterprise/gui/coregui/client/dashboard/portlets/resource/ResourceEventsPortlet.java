@@ -28,7 +28,9 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
@@ -77,6 +79,8 @@ public class ResourceEventsPortlet extends GroupEventsPortlet {
      */
     @Override
     protected void getRecentEventUpdates() {
+        final DashboardPortlet storedPortlet = this.portletWindow.getStoredPortlet();
+        final Configuration portletConfig = storedPortlet.getConfiguration();
         final int resourceId = this.resourceId;
         long end = System.currentTimeMillis();
         long start = end - (24 * 60 * 60 * 1000);
@@ -120,6 +124,7 @@ public class ResourceEventsPortlet extends GroupEventsPortlet {
                 @Override
                 public void onFailure(Throwable caught) {
                     Log.debug("Error retrieving event counts for resource [" + resourceId + "]:" + caught.getMessage());
+                    setCurrentlyRefreshing(false);
                 }
 
                 @Override
@@ -171,6 +176,7 @@ public class ResourceEventsPortlet extends GroupEventsPortlet {
                         child.destroy();
                     }
                     recentEventsContent.addChild(column);
+                    setCurrentlyRefreshing(false);
                     recentEventsContent.markForRedraw();
                 }
             });

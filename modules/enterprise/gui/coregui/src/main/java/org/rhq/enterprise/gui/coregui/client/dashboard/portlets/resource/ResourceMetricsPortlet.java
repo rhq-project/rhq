@@ -38,8 +38,10 @@ import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 import com.smartgwt.client.widgets.layout.VLayout;
 
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.resource.Resource;
@@ -97,6 +99,8 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
      */
     @Override
     protected void getRecentMetrics() {
+        final DashboardPortlet storedPortlet = this.portletWindow.getStoredPortlet();
+        final Configuration portletConfig = storedPortlet.getConfiguration();
         //display container
         final VLayout column = new VLayout();
         column.setHeight(10);//pack

@@ -84,8 +84,6 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
     private int groupId = -1;
     protected LocatableCanvas recentMeasurementsContent = new LocatableCanvas(extendLocatorId("RecentMetrics"));
     protected boolean currentlyLoading = false;
-    protected Configuration portletConfig = null;
-    protected DashboardPortlet storedPortlet;
     protected String baseViewPath = "";
     protected long start = -1;
     protected long end = -1;
@@ -148,8 +146,8 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
         if ((null == storedPortlet) || (null == storedPortlet.getConfiguration())) {
             return;
         }
-        this.storedPortlet = storedPortlet;
-        portletConfig = storedPortlet.getConfiguration();
+
+        Configuration portletConfig = storedPortlet.getConfiguration();
 
         //lazy init any elements not yet configured.
         for (String key : PortletConfigurationEditorComponent.CONFIG_PROPERTY_INITIALIZATION.keySet()) {
@@ -185,6 +183,8 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
         LocatableDynamicForm customSettings = new LocatableDynamicForm(extendLocatorId("customSettings"));
         //embed range editor in it own container
         LocatableVLayout page = new LocatableVLayout(customSettings.extendLocatorId("page"));
+        final DashboardPortlet storedPortlet = this.portletWindow.getStoredPortlet();
+        final Configuration portletConfig = storedPortlet.getConfiguration();
         final CustomConfigMeasurementRangeEditor measurementRangeEditor = PortletConfigurationEditorComponent
             .getMeasurementRangeEditor(portletConfig);
 
@@ -193,13 +193,13 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
             @Override
             public void onSubmitValues(SubmitValuesEvent event) {
                 //retrieve range editor values
-                portletConfig = AbstractActivityView.saveMeasurementRangeEditorSettings(measurementRangeEditor,
-                    portletConfig);
+                Configuration updatedConfig = AbstractActivityView.saveMeasurementRangeEditorSettings(
+                    measurementRangeEditor, portletConfig);
 
                 //persist
-                storedPortlet.setConfiguration(portletConfig);
+                storedPortlet.setConfiguration(updatedConfig);
                 configure(portletWindow, storedPortlet);
-                loadData();
+                refresh();
             }
         });
         page.addMember(measurementRangeEditor);
@@ -212,6 +212,9 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
      * digits.
      */
     protected void getRecentMetrics() {
+        final DashboardPortlet storedPortlet = this.portletWindow.getStoredPortlet();
+        final Configuration portletConfig = storedPortlet.getConfiguration();
+
         //display container
         final VLayout column = new VLayout();
         column.setHeight(10);//pack

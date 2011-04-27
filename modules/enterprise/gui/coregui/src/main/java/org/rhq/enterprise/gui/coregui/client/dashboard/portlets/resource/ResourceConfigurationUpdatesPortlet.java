@@ -35,6 +35,7 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -98,6 +99,8 @@ public class ResourceConfigurationUpdatesPortlet extends GroupConfigurationUpdat
 
     @Override
     protected void loadData() {
+        final DashboardPortlet storedPortlet = this.portletWindow.getStoredPortlet();
+        final Configuration portletConfig = storedPortlet.getConfiguration();
         //populate composite data
         //locate resourceRef
         ResourceCriteria criteria = new ResourceCriteria();

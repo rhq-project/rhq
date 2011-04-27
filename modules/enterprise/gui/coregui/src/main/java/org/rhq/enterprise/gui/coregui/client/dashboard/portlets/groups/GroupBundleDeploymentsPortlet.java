@@ -70,8 +70,6 @@ public class GroupBundleDeploymentsPortlet extends LocatableVLayout implements C
     protected LocatableCanvas recentBundleDeployContent = new LocatableCanvas(
         extendLocatorId("RecentBundleDeployments"));
     protected boolean currentlyLoading = false;
-    protected Configuration portletConfig = null;
-    protected DashboardPortlet storedPortlet;
 
     // A non-displayed, persisted identifier for the portlet
     public static final String KEY = "GroupBundleDeployments";
@@ -123,8 +121,8 @@ public class GroupBundleDeploymentsPortlet extends LocatableVLayout implements C
         if ((null == storedPortlet) || (null == storedPortlet.getConfiguration())) {
             return;
         }
-        this.storedPortlet = storedPortlet;
-        portletConfig = storedPortlet.getConfiguration();
+
+        Configuration portletConfig = storedPortlet.getConfiguration();
 
         //lazy init any elements not yet configured.
         for (String key : PortletConfigurationEditorComponent.CONFIG_PROPERTY_INITIALIZATION.keySet()) {
@@ -154,6 +152,9 @@ public class GroupBundleDeploymentsPortlet extends LocatableVLayout implements C
 
     @Override
     public DynamicForm getCustomSettingsForm() {
+        final DashboardPortlet storedPortlet = this.portletWindow.getStoredPortlet();
+        final Configuration portletConfig = storedPortlet.getConfiguration();
+
         LocatableDynamicForm customSettings = new LocatableDynamicForm(extendLocatorId("customSettings"));
         LocatableVLayout page = new LocatableVLayout(customSettings.extendLocatorId("page"));
         //build editor form container
@@ -170,12 +171,13 @@ public class GroupBundleDeploymentsPortlet extends LocatableVLayout implements C
             public void onSubmitValues(SubmitValuesEvent event) {
 
                 //results count
-                portletConfig = AbstractActivityView.saveResultCounterSettings(resultCountSelector, portletConfig);
+                Configuration updatedConfig = AbstractActivityView.saveResultCounterSettings(resultCountSelector,
+                    portletConfig);
 
                 //persist
-                storedPortlet.setConfiguration(portletConfig);
+                storedPortlet.setConfiguration(updatedConfig);
                 configure(portletWindow, storedPortlet);
-                loadData();
+                refresh();
             }
 
         });
@@ -187,6 +189,8 @@ public class GroupBundleDeploymentsPortlet extends LocatableVLayout implements C
     /** Fetches recent bundle deployment information and updates the DynamicForm instance with details.
      */
     protected void getRecentBundleDeployments() {
+        final DashboardPortlet storedPortlet = this.portletWindow.getStoredPortlet();
+        final Configuration portletConfig = storedPortlet.getConfiguration();
         final int groupId = this.groupId;
         GroupBundleDeploymentCriteria criteria = new GroupBundleDeploymentCriteria();
 
@@ -256,8 +260,8 @@ public class GroupBundleDeploymentsPortlet extends LocatableVLayout implements C
                     }
                     recentBundleDeployContent.addChild(column);
                     recentBundleDeployContent.markForRedraw();
-                    markForRedraw();
                     currentlyLoading = false;
+                    markForRedraw();
                 }
             });
     }

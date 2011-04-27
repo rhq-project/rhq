@@ -103,8 +103,6 @@ public class GroupOperationsPortlet extends LocatableVLayout implements CustomSe
     protected Canvas containerCanvas;
 
     protected Timer refreshTimer;
-    protected DashboardPortlet storedPortlet;
-    protected Configuration portletConfig;
     protected int groupId;
     protected boolean portletConfigInitialized = false;
     private ResourceGroupComposite groupComposite;
@@ -117,7 +115,7 @@ public class GroupOperationsPortlet extends LocatableVLayout implements CustomSe
         this.locatorId = locatorId;
         //figure out which page we're loading
         String currentPage = History.getToken();
-        String[] elements = currentPage.split("/");
+        //String[] elements = currentPage.split("/");
         int groupId = AbstractActivityView.groupIdLookup(currentPage);
         this.groupId = groupId;
         //populate basepath
@@ -134,6 +132,9 @@ public class GroupOperationsPortlet extends LocatableVLayout implements CustomSe
     }
 
     private void loadData() {
+        final DashboardPortlet storedPortlet = this.portletWindow.getStoredPortlet();
+        final Configuration portletConfig = storedPortlet.getConfiguration();
+
         //populate composite data
         //locate resourceGroupRef
         ResourceGroupCriteria criteria = new ResourceGroupCriteria();
@@ -189,8 +190,8 @@ public class GroupOperationsPortlet extends LocatableVLayout implements CustomSe
                         child.destroy();
                     }
                     recentOperationsContent.addChild(groupOperations);
-                    recentOperationsContent.markForRedraw();
                     currentlyRefreshing = false;
+                    recentOperationsContent.markForRedraw();
                 }
             });
     }
@@ -218,8 +219,8 @@ public class GroupOperationsPortlet extends LocatableVLayout implements CustomSe
         if ((null == storedPortlet) || (null == storedPortlet.getConfiguration())) {
             return;
         }
-        this.storedPortlet = storedPortlet;
-        portletConfig = storedPortlet.getConfiguration();
+
+        Configuration portletConfig = storedPortlet.getConfiguration();
 
         //lazy init any elements not yet configured.
         for (String key : PortletConfigurationEditorComponent.CONFIG_PROPERTY_INITIALIZATION.keySet()) {
@@ -236,6 +237,9 @@ public class GroupOperationsPortlet extends LocatableVLayout implements CustomSe
 
     @Override
     public DynamicForm getCustomSettingsForm() {
+        final DashboardPortlet storedPortlet = this.portletWindow.getStoredPortlet();
+        final Configuration portletConfig = storedPortlet.getConfiguration();
+
         LocatableDynamicForm customSettings = new LocatableDynamicForm(extendLocatorId("customSettings"));
         LocatableVLayout page = new LocatableVLayout(customSettings.extendLocatorId("page"));
         //build editor form container
@@ -265,23 +269,24 @@ public class GroupOperationsPortlet extends LocatableVLayout implements CustomSe
             public void onSubmitValues(SubmitValuesEvent event) {
 
                 //result count
-                portletConfig = AbstractActivityView.saveResultCounterSettings(resultCountSelector, portletConfig);
+                Configuration updatedConfig = AbstractActivityView.saveResultCounterSettings(resultCountSelector,
+                    portletConfig);
 
                 //time range configuration
-                portletConfig = AbstractActivityView.saveMeasurementRangeEditorSettings(measurementRangeEditor,
+                updatedConfig = AbstractActivityView.saveMeasurementRangeEditorSettings(measurementRangeEditor,
                     portletConfig);
 
                 //operation priority
-                portletConfig = AbstractActivityView.saveOperationStatusSelectorSettings(operationStatusSelector,
+                updatedConfig = AbstractActivityView.saveOperationStatusSelectorSettings(operationStatusSelector,
                     portletConfig);
 
                 //persist and reload portlet
-                storedPortlet.setConfiguration(portletConfig);
+                storedPortlet.setConfiguration(updatedConfig);
                 configure(portletWindow, storedPortlet);
                 //resynch the config object in the datasource
                 groupOperations.setDatasource(new GroupOperationsCriteriaDataSource(portletConfig));
                 //apply latest settings to the visible result set
-                redraw();
+                refresh();
             }
         });
         form.markForRedraw();

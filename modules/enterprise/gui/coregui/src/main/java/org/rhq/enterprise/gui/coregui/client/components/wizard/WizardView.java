@@ -219,8 +219,8 @@ public class WizardView extends LocatableVLayout {
         // a valid step, continue 
         currentStep = stepIndex;
 
-        // TODO: i18n
-        stepLabel.setContents("Step " + (stepIndex + 1) + " of " + wizardSteps.size());
+        stepLabel.setContents(MSG.common_msg_step_x_of_y(String.valueOf(stepIndex + 1), String.valueOf(wizardSteps
+            .size())));
         stepLabel.setWrap(false);
 
         WizardStep step = wizardSteps.get(currentStep);

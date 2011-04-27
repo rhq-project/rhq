@@ -71,8 +71,6 @@ public class GroupPkgHistoryPortlet extends LocatableVLayout implements CustomSe
     private int groupId = -1;
     protected LocatableCanvas recentPkgHistoryContent = new LocatableCanvas(extendLocatorId("RecentPkgHistory"));
     protected boolean currentlyLoading = false;
-    protected Configuration portletConfig = null;
-    protected DashboardPortlet storedPortlet;
 
     public static final String ID = "id";
 
@@ -120,8 +118,8 @@ public class GroupPkgHistoryPortlet extends LocatableVLayout implements CustomSe
         if ((null == storedPortlet) || (null == storedPortlet.getConfiguration())) {
             return;
         }
-        this.storedPortlet = storedPortlet;
-        portletConfig = storedPortlet.getConfiguration();
+
+        Configuration portletConfig = storedPortlet.getConfiguration();
 
         //lazy init any elements not yet configured.
         for (String key : PortletConfigurationEditorComponent.CONFIG_PROPERTY_INITIALIZATION.keySet()) {
@@ -151,6 +149,9 @@ public class GroupPkgHistoryPortlet extends LocatableVLayout implements CustomSe
 
     @Override
     public DynamicForm getCustomSettingsForm() {
+        final DashboardPortlet storedPortlet = this.portletWindow.getStoredPortlet();
+        final Configuration portletConfig = storedPortlet.getConfiguration();
+
         LocatableDynamicForm customSettings = new LocatableDynamicForm(extendLocatorId("customSettings"));
         LocatableVLayout page = new LocatableVLayout(customSettings.extendLocatorId("page"));
         //build editor form container
@@ -167,12 +168,13 @@ public class GroupPkgHistoryPortlet extends LocatableVLayout implements CustomSe
             public void onSubmitValues(SubmitValuesEvent event) {
 
                 //results count
-                portletConfig = AbstractActivityView.saveResultCounterSettings(resultCountSelector, portletConfig);
+                Configuration updatedConfig = AbstractActivityView.saveResultCounterSettings(resultCountSelector,
+                    portletConfig);
 
                 //persist
-                storedPortlet.setConfiguration(portletConfig);
+                storedPortlet.setConfiguration(updatedConfig);
                 configure(portletWindow, storedPortlet);
-                loadData();
+                refresh();
             }
 
         });
@@ -184,6 +186,8 @@ public class GroupPkgHistoryPortlet extends LocatableVLayout implements CustomSe
     /** Fetches recent package history information and updates the DynamicForm instance with details.
      */
     protected void getRecentPkgHistory() {
+        final DashboardPortlet storedPortlet = this.portletWindow.getStoredPortlet();
+        final Configuration portletConfig = storedPortlet.getConfiguration();
         final int groupId = this.groupId;
         InstalledPackageHistoryCriteria criteria = new InstalledPackageHistoryCriteria();
 
@@ -255,8 +259,8 @@ public class GroupPkgHistoryPortlet extends LocatableVLayout implements CustomSe
                 }
                 recentPkgHistoryContent.addChild(column);
                 recentPkgHistoryContent.markForRedraw();
-                markForRedraw();
                 currentlyLoading = false;
+                markForRedraw();
             }
         });
     }

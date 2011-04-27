@@ -93,9 +93,11 @@ public class HibernateDetachUtility {
             return;
 
         } else {
-            // TODO: this can be tuned down to debug after we're done evaluating this logic 
-            LOG.warn("UNEQUAL IDENTITY HASHCODE [" + valueIdentity + "]\n\tCurrent  : " + value.getClass().getName()
-                + "\n\t" + value + "\n\tPrevious: " + checkedObject.getClass().getName() + "\n\t" + checkedObject);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("UNEQUAL IDENTITY HASHCODE [" + valueIdentity + "]\n\tCurrent  : "
+                    + value.getClass().getName() + "\n\t" + value + "\n\tPrevious: "
+                    + checkedObject.getClass().getName() + "\n\t" + checkedObject);
+            }
         }
 
         if (value instanceof Object[]) {

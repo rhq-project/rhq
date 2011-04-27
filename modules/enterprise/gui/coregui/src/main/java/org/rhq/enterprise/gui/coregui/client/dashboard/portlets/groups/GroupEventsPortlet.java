@@ -104,7 +104,7 @@ public class GroupEventsPortlet extends LocatableVLayout implements CustomSettin
         //disable the refresh timer for this run
         currentlyLoading = true;
         initializeUi();
-        redraw();
+        loadData();
     }
 
     /**Defines layout for the portlet page.

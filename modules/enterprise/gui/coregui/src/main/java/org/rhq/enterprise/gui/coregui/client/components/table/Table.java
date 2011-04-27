@@ -36,7 +36,6 @@ import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.SortSpecifier;
-import com.smartgwt.client.types.Autofit;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.SelectionStyle;
@@ -87,8 +86,6 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableMenu;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
-
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.VERSION;
 
 /**
  * A tabular view of set of data records from an {@link RPCDataSource}.
@@ -255,7 +252,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         listGrid.setSelectionType(getDefaultSelectionStyle());
 
         if (flexRowDisplay) {
-            listGrid.setAutoFitData(Autofit.HORIZONTAL);
+            //listGrid.setAutoFitData(Autofit.HORIZONTAL); // do NOT set this - smartgwt appears to have a problem that causes it to eat CPU
             listGrid.setWrapCells(true);
             listGrid.setFixedRecordHeights(false);
         }

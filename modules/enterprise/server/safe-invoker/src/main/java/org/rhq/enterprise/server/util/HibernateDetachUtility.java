@@ -57,33 +57,51 @@ public class HibernateDetachUtility {
 
     public static void nullOutUninitializedFields(Object value, SerializationType serializationType) throws Exception {
         long start = System.currentTimeMillis();
-        Set<Integer> checkedObjs = new HashSet<Integer>();
-        nullOutUninitializedFields(value, checkedObjs, 0, serializationType);
+        Map<Integer, Object> checkedObjects = new HashMap<Integer, Object>();
+        nullOutUninitializedFields(value, checkedObjects, 0, serializationType);
         long duration = System.currentTimeMillis() - start;
         if (duration > 1000) {
-            LOG.info("Detached [" + checkedObjs.size() + "] objects in [" + duration + "]ms");
+            LOG.info("Detached [" + checkedObjects.size() + "] objects in [" + duration + "]ms");
         } else {
-            LOG.debug("Detached [" + checkedObjs.size() + "] objects in [" + duration + "]ms");
+            LOG.debug("Detached [" + checkedObjects.size() + "] objects in [" + duration + "]ms");
         }
+        // help the garbage collector be clearing these before we leave
+        checkedObjects.clear();
     }
 
-    private static void nullOutUninitializedFields(Object value, Set<Integer> nulledObjects, int depth,
+    private static void nullOutUninitializedFields(Object value, Map<Integer, Object> checkedObjects, int depth,
         SerializationType serializationType) throws Exception {
         if (depth > 50) {
             LOG.warn("Getting different object hierarchies back from calls: " + value.getClass().getName());
             return;
         }
 
-        if ((value == null) || nulledObjects.contains(System.identityHashCode(value))) {
+        if (null == value) {
             return;
         }
 
-        nulledObjects.add(System.identityHashCode(value));
+        // System.identityHashCode is a hash code, and therefore not guaranteed to be unique. And we've seen this
+        // be the case.  So, we use it to try and avoid duplicating work, but handle the case when two objects may
+        // have an identity crisis.
+        Integer valueIdentity = System.identityHashCode(value);
+        Object checkedObject = checkedObjects.get(valueIdentity);
+
+        if (null == checkedObject) {
+            checkedObjects.put(valueIdentity, value);
+
+        } else if (value == checkedObject) {
+            return;
+
+        } else {
+            // TODO: this can be tuned down to debug after we're done evaluating this logic 
+            LOG.warn("UNEQUAL IDENTITY HASHCODE [" + valueIdentity + "]\n\tCurrent  : " + value.getClass().getName()
+                + "\n\t" + value + "\n\tPrevious: " + checkedObject.getClass().getName() + "\n\t" + checkedObject);
+        }
 
         if (value instanceof Object[]) {
             Object[] objArray = (Object[]) value;
             for (int i = 0; i < objArray.length; i++) {
-                nullOutUninitializedFields(objArray[i], nulledObjects, depth + 1, serializationType);
+                nullOutUninitializedFields(objArray[i], checkedObjects, depth + 1, serializationType);
             }
 
         } else if (value instanceof List) {
@@ -96,7 +114,7 @@ public class HibernateDetachUtility {
                     val = replace;
                     i.set(replace);
                 }
-                nullOutUninitializedFields(val, nulledObjects, depth + 1, serializationType);
+                nullOutUninitializedFields(val, checkedObjects, depth + 1, serializationType);
             }
 
         } else if (value instanceof Collection) {
@@ -110,14 +128,14 @@ public class HibernateDetachUtility {
                     replacementItems.add(replacementItem);
                     item = replacementItem;
                 }
-                nullOutUninitializedFields(item, nulledObjects, depth + 1, serializationType);
+                nullOutUninitializedFields(item, checkedObjects, depth + 1, serializationType);
             }
             collection.removeAll(itemsToBeReplaced);
             collection.addAll(replacementItems); // watch out! if this collection is a Set, HashMap$MapSet doesn't support addAll. See BZ 688000
         } else if (value instanceof Map) {
             for (Object key : ((Map) value).keySet()) {
-                nullOutUninitializedFields(((Map) value).get(key), nulledObjects, depth + 1, serializationType);
-                nullOutUninitializedFields(key, nulledObjects, depth + 1, serializationType);
+                nullOutUninitializedFields(((Map) value).get(key), checkedObjects, depth + 1, serializationType);
+                nullOutUninitializedFields(key, checkedObjects, depth + 1, serializationType);
             }
         } else if (value instanceof Enum) {
             // don't need to detach enums, treat them as special objects
@@ -127,17 +145,17 @@ public class HibernateDetachUtility {
         if (serializationType == SerializationType.JAXB) {
             XmlAccessorType at = value.getClass().getAnnotation(XmlAccessorType.class);
             if (at != null && at.value() == XmlAccessType.FIELD) {
-                nullOutFieldsByFieldAccess(value, nulledObjects, depth, serializationType);
+                nullOutFieldsByFieldAccess(value, checkedObjects, depth, serializationType);
             } else {
-                nullOutFieldsByAccessors(value, nulledObjects, depth, serializationType);
+                nullOutFieldsByAccessors(value, checkedObjects, depth, serializationType);
             }
         } else if (serializationType == SerializationType.SERIALIZATION) {
-            nullOutFieldsByFieldAccess(value, nulledObjects, depth, serializationType);
+            nullOutFieldsByFieldAccess(value, checkedObjects, depth, serializationType);
         }
 
     }
 
-    private static void nullOutFieldsByFieldAccess(Object object, Set<Integer> nulledObjects, int depth,
+    private static void nullOutFieldsByFieldAccess(Object object, Map<Integer, Object> checkedObjects, int depth,
         SerializationType serializationType) throws Exception {
 
         Class tmpClass = object.getClass();
@@ -147,11 +165,11 @@ public class HibernateDetachUtility {
             tmpClass = tmpClass.getSuperclass();
         }
 
-        nullOutFieldsByFieldAccess(object, fieldsToClean, nulledObjects, depth, serializationType);
+        nullOutFieldsByFieldAccess(object, fieldsToClean, checkedObjects, depth, serializationType);
     }
 
-    private static void nullOutFieldsByFieldAccess(Object object, List<Field> classFields, Set<Integer> nulledObjects,
-        int depth, SerializationType serializationType) throws Exception {
+    private static void nullOutFieldsByFieldAccess(Object object, List<Field> classFields,
+        Map<Integer, Object> checkedObjects, int depth, SerializationType serializationType) throws Exception {
 
         boolean accessModifierFlag = false;
         for (Field field : classFields) {
@@ -176,7 +194,7 @@ public class HibernateDetachUtility {
                         String className = fieldValue.getClass().getName();
                         className = className.substring(0, className.indexOf("_$$_"));
                         if (!replacement.getClass().getName().contains("hibernate")) {
-                            nullOutUninitializedFields(replacement, nulledObjects, depth + 1, serializationType);
+                            nullOutUninitializedFields(replacement, checkedObjects, depth + 1, serializationType);
 
                             field.set(object, replacement);
                         } else {
@@ -236,7 +254,7 @@ public class HibernateDetachUtility {
                             replacement = new ArrayList((List) fieldValue);
                         } else if (fieldValue instanceof Set) {
                             ArrayList l = new ArrayList((Set) fieldValue); // cannot recurse Sets, see BZ 688000
-                            nullOutUninitializedFields(l, nulledObjects, depth + 1, serializationType);
+                            nullOutUninitializedFields(l, checkedObjects, depth + 1, serializationType);
                             replacement = new HashSet(l); // convert it back to a Set since that's the type of the real collection, see BZ 688000
                             needToNullOutFields = false;
                         } else if (fieldValue instanceof Collection) {
@@ -245,7 +263,7 @@ public class HibernateDetachUtility {
                         setField(object, field.getName(), replacement);
 
                         if (needToNullOutFields) {
-                            nullOutUninitializedFields(replacement, nulledObjects, depth + 1, serializationType);
+                            nullOutUninitializedFields(replacement, checkedObjects, depth + 1, serializationType);
                         }
                     }
 
@@ -253,7 +271,7 @@ public class HibernateDetachUtility {
                     if (fieldValue != null
                         && (fieldValue.getClass().getName().contains("org.rhq") || fieldValue instanceof Collection
                             || fieldValue instanceof Object[] || fieldValue instanceof Map))
-                        nullOutUninitializedFields((fieldValue), nulledObjects, depth + 1, serializationType);
+                        nullOutUninitializedFields((fieldValue), checkedObjects, depth + 1, serializationType);
                 }
             }
             if (accessModifierFlag) {
@@ -282,7 +300,7 @@ public class HibernateDetachUtility {
         return replacement;
     }
 
-    private static void nullOutFieldsByAccessors(Object value, Set<Integer> nulledObjects, int depth,
+    private static void nullOutFieldsByAccessors(Object value, Map<Integer, Object> checkedObjects, int depth,
         SerializationType serializationType) throws Exception {
         // Null out any collections that aren't loaded
         BeanInfo bi = Introspector.getBeanInfo(value.getClass(), Object.class);
@@ -318,7 +336,7 @@ public class HibernateDetachUtility {
             } else {
                 if ((propertyValue instanceof Collection)
                     || ((propertyValue != null) && propertyValue.getClass().getName().startsWith("org.rhq.core.domain"))) {
-                    nullOutUninitializedFields(propertyValue, nulledObjects, depth + 1, serializationType);
+                    nullOutUninitializedFields(propertyValue, checkedObjects, depth + 1, serializationType);
                 }
             }
         }

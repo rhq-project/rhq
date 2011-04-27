@@ -657,8 +657,16 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
     public static class ChartViewWindow extends LocatableWindow {
 
         public ChartViewWindow(String locatorId, String title) {
+            this(locatorId, title, null);
+        }
+
+        public ChartViewWindow(String locatorId, String title, String windowTitle) {
             super(locatorId);
-            setTitle(CHART_TITLE + ": " + title);
+            if ((windowTitle != null) && (!windowTitle.trim().isEmpty())) {
+                setTitle(windowTitle + ": " + title);
+            } else {
+                setTitle(CHART_TITLE + ": " + title);
+            }
             setShowMinimizeButton(true);
             setShowMaximizeButton(true);
             setShowCloseButton(true);
@@ -680,6 +688,7 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
                     }
                 }
             });
+
         }
     }
 

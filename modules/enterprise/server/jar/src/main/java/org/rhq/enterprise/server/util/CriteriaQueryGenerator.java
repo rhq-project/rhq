@@ -306,13 +306,13 @@ public final class CriteriaQueryGenerator {
         return EnumType.STRING; // catch-all
     }
 
-    // for testing purposes only, should use getQuery(EntityManager) or getCountQuery(EntityManager) instead
     public String getQueryString(boolean countQuery) {
         StringBuilder results = new StringBuilder();
         results.append("SELECT ");
         if (countQuery) {
             if (groupByClause == null) { // non-grouped method
-                results.append("COUNT(").append(alias).append(")").append(NL);
+                // use count(*) instead of count(alias) due to https://bugzilla.redhat.com/show_bug.cgi?id=699842
+                results.append("COUNT(*)").append(NL);
             } else {
                 // gets the count of the number of aggregate/grouped rows
                 // NOTE: this only works when the groupBy is a single element, as opposed to a list of elements

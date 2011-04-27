@@ -28,7 +28,9 @@ import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 import com.smartgwt.client.widgets.layout.VLayout;
 
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
@@ -76,6 +78,8 @@ public class ResourceOobsPortlet extends GroupOobsPortlet {
      */
     @Override
     protected void getRecentOobs() {
+        final DashboardPortlet storedPortlet = this.portletWindow.getStoredPortlet();
+        final Configuration portletConfig = storedPortlet.getConfiguration();
         final int resourceId = this.resourceId;
         int resultCount = 5;//default to
 
@@ -96,6 +100,7 @@ public class ResourceOobsPortlet extends GroupOobsPortlet {
                 public void onFailure(Throwable caught) {
                     Log.debug("Error retrieving out of bound metrics for resource [" + resourceId + "]:"
                         + caught.getMessage());
+                    currentlyLoading = false;
                 }
 
                 @Override
@@ -142,6 +147,7 @@ public class ResourceOobsPortlet extends GroupOobsPortlet {
                         child.destroy();
                     }
                     recentOobContent.addChild(column);
+                    currentlyLoading = false;
                     recentOobContent.markForRedraw();
                 }
             });

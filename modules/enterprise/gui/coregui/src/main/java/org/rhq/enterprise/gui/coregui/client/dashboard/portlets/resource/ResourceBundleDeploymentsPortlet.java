@@ -27,8 +27,10 @@ import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.bundle.BundleDeployment;
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.criteria.ResourceBundleDeploymentCriteria;
+import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
@@ -76,6 +78,8 @@ public class ResourceBundleDeploymentsPortlet extends GroupBundleDeploymentsPort
      */
     @Override
     protected void getRecentBundleDeployments() {
+        final DashboardPortlet storedPortlet = this.portletWindow.getStoredPortlet();
+        final Configuration portletConfig = storedPortlet.getConfiguration();
         final int resourceId = this.resourceId;
         ResourceBundleDeploymentCriteria criteria = new ResourceBundleDeploymentCriteria();
 
@@ -104,6 +108,7 @@ public class ResourceBundleDeploymentsPortlet extends GroupBundleDeploymentsPort
                 public void onFailure(Throwable caught) {
                     Log.debug("Error retrieving installed bundle deployments for resource [" + resourceId + "]:"
                         + caught.getMessage());
+                    currentlyLoading = false;
                 }
 
                 @Override
@@ -146,6 +151,7 @@ public class ResourceBundleDeploymentsPortlet extends GroupBundleDeploymentsPort
                     column.markForRedraw();
                     recentBundleDeployContent.addChild(column);
                     recentBundleDeployContent.markForRedraw();
+                    currentlyLoading = false;
                     markForRedraw();
                 }
             });

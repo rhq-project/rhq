@@ -289,10 +289,9 @@ public class OperationSchedulePortlet extends LocatableVLayout implements Custom
                         new PropertySimple(OPERATIONS_RANGE_SCHEDULED_ENABLED, form
                             .getValue(OPERATIONS_RANGE_SCHEDULED_ENABLED)));
                 }
-
+                storedPortlet.setConfiguration(storedPortlet.getConfiguration());
                 configure(portletWindow, storedPortlet);
-
-                redraw();
+                refresh();
             }
         });
 

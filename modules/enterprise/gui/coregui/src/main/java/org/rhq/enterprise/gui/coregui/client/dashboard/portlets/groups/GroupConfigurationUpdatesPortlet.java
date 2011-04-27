@@ -106,8 +106,6 @@ public class GroupConfigurationUpdatesPortlet extends LocatableVLayout implement
     protected Canvas containerCanvas;
 
     protected Timer refreshTimer;
-    protected DashboardPortlet storedPortlet;
-    protected Configuration portletConfig;
     private ResourceGroupComposite groupComposite;
     protected boolean portletConfigInitialized = false;
     protected boolean currentlyLoading = false;
@@ -155,8 +153,8 @@ public class GroupConfigurationUpdatesPortlet extends LocatableVLayout implement
         if ((null == storedPortlet) || (null == storedPortlet.getConfiguration())) {
             return;
         }
-        this.storedPortlet = storedPortlet;
-        portletConfig = storedPortlet.getConfiguration();
+
+        Configuration portletConfig = storedPortlet.getConfiguration();
 
         //lazy init any elements not yet configured.
         for (String key : PortletConfigurationEditorComponent.CONFIG_PROPERTY_INITIALIZATION.keySet()) {
@@ -173,6 +171,8 @@ public class GroupConfigurationUpdatesPortlet extends LocatableVLayout implement
 
     @Override
     public DynamicForm getCustomSettingsForm() {
+        final DashboardPortlet storedPortlet = this.portletWindow.getStoredPortlet();
+        final Configuration portletConfig = storedPortlet.getConfiguration();
         LocatableDynamicForm customSettings = new LocatableDynamicForm(extendLocatorId("customSettings"));
         LocatableVLayout page = new LocatableVLayout(customSettings.extendLocatorId("page"));
         //build editor form container
@@ -201,8 +201,6 @@ public class GroupConfigurationUpdatesPortlet extends LocatableVLayout implement
 
             @Override
             public void onSubmitValues(SubmitValuesEvent event) {
-                String selectedValue;
-
                 //                //result sort order
                 //                selectedValue = resultSortSelector.getValue().toString();
                 //                if ((selectedValue.trim().isEmpty()) || (selectedValue.equalsIgnoreCase(PageOrdering.DESC.name()))) {//then desc
@@ -211,21 +209,20 @@ public class GroupConfigurationUpdatesPortlet extends LocatableVLayout implement
                 //                    portletConfig.put(new PropertySimple(Constant.RESULT_SORT_ORDER, PageOrdering.ASC));
                 //                }
                 //config status
-                portletConfig = AbstractActivityView.saveConfigUpdateStatusSelectorSettings(resultStatusSelector,
-                    portletConfig);
+                Configuration updatedConfig = AbstractActivityView.saveConfigUpdateStatusSelectorSettings(
+                    resultStatusSelector, portletConfig);
 
                 //result count
-                portletConfig = AbstractActivityView.saveResultCounterSettings(resultCountSelector, portletConfig);
+                updatedConfig = AbstractActivityView.saveResultCounterSettings(resultCountSelector, updatedConfig);
 
                 //time range settings
-                portletConfig = AbstractActivityView.saveMeasurementRangeEditorSettings(measurementRangeEditor,
-                    portletConfig);
+                updatedConfig = AbstractActivityView.saveMeasurementRangeEditorSettings(measurementRangeEditor,
+                    updatedConfig);
 
                 //persist and reload portlet
                 storedPortlet.setConfiguration(portletConfig);
                 configure(portletWindow, storedPortlet);
-                //                refresh();
-                redraw();
+                refresh();
             }
         });
         form.markForRedraw();
@@ -297,6 +294,9 @@ public class GroupConfigurationUpdatesPortlet extends LocatableVLayout implement
     }
 
     protected void loadData() {
+        final DashboardPortlet storedPortlet = this.portletWindow.getStoredPortlet();
+        final Configuration portletConfig = storedPortlet.getConfiguration();
+
         //populate composite data
         //locate resourceGroupRef
         ResourceGroupCriteria criteria = new ResourceGroupCriteria();
@@ -352,7 +352,7 @@ public class GroupConfigurationUpdatesPortlet extends LocatableVLayout implement
                             groupComposite);
                     }
 
-                    //update table for portlet display.
+                    //update table for portlet display.                    
                     groupHistoryTable.setDataSource(new GroupConfigurationUdpatesCriteriaDataSource(portletConfig,
                         groupId));
                     groupHistoryTable.setShowHeader(false);

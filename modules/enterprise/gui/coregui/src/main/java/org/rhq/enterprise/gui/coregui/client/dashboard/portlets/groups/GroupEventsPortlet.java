@@ -88,8 +88,6 @@ public class GroupEventsPortlet extends LocatableVLayout implements CustomSettin
     private int groupId = -1;
     protected LocatableCanvas recentEventsContent = new LocatableCanvas(extendLocatorId("RecentEvents"));
     protected boolean currentlyLoading = false;
-    protected Configuration portletConfig = null;
-    protected DashboardPortlet storedPortlet;
 
     public GroupEventsPortlet(String locatorId) {
         super(locatorId);
@@ -126,8 +124,8 @@ public class GroupEventsPortlet extends LocatableVLayout implements CustomSettin
         if ((null == storedPortlet) || (null == storedPortlet.getConfiguration())) {
             return;
         }
-        this.storedPortlet = storedPortlet;
-        portletConfig = storedPortlet.getConfiguration();
+
+        Configuration portletConfig = storedPortlet.getConfiguration();
 
         //lazy init any elements not yet configured.
         for (String key : PortletConfigurationEditorComponent.CONFIG_PROPERTY_INITIALIZATION.keySet()) {
@@ -159,6 +157,9 @@ public class GroupEventsPortlet extends LocatableVLayout implements CustomSettin
         final LocatableDynamicForm customSettings = new LocatableDynamicForm(extendLocatorId("customSettings"));
         LocatableVLayout page = new LocatableVLayout(customSettings.extendLocatorId("page"));
 
+        final DashboardPortlet storedPortlet = this.portletWindow.getStoredPortlet();
+        final Configuration portletConfig = storedPortlet.getConfiguration();
+
         //add range selector
         final CustomConfigMeasurementRangeEditor measurementRangeEditor = PortletConfigurationEditorComponent
             .getMeasurementRangeEditor(portletConfig);
@@ -170,14 +171,13 @@ public class GroupEventsPortlet extends LocatableVLayout implements CustomSettin
             public void onSubmitValues(SubmitValuesEvent event) {
 
                 //persist the measurement range selections
-                portletConfig = AbstractActivityView.saveMeasurementRangeEditorSettings(measurementRangeEditor,
-                    portletConfig);
+                Configuration updatedConfig = AbstractActivityView.saveMeasurementRangeEditorSettings(
+                    measurementRangeEditor, portletConfig);
 
                 //persist
-                storedPortlet.setConfiguration(portletConfig);
+                storedPortlet.setConfiguration(updatedConfig);
                 configure(portletWindow, storedPortlet);
-                redraw();
-                customSettings.markForRedraw();
+                refresh();
             }
         });
         page.addMember(measurementRangeEditor);
@@ -192,6 +192,9 @@ public class GroupEventsPortlet extends LocatableVLayout implements CustomSettin
         final int groupId = this.groupId;
         long end = System.currentTimeMillis();
         long start = end - (24 * 60 * 60 * 1000);
+
+        final DashboardPortlet storedPortlet = this.portletWindow.getStoredPortlet();
+        final Configuration portletConfig = storedPortlet.getConfiguration();
 
         //result timeframe if enabled
         PropertySimple property = portletConfig.getSimple(Constant.METRIC_RANGE_ENABLE);
@@ -287,8 +290,8 @@ public class GroupEventsPortlet extends LocatableVLayout implements CustomSettin
                     }
                     recentEventsContent.addChild(column);
                     recentEventsContent.markForRedraw();
-                    markForRedraw();
                     setCurrentlyRefreshing(false);
+                    markForRedraw();
                 }
             });
     }

@@ -74,8 +74,6 @@ public class GroupOobsPortlet extends LocatableVLayout implements CustomSettings
     private int groupId = -1;
     protected LocatableCanvas recentOobContent = new LocatableCanvas(extendLocatorId("RecentOobs"));
     protected boolean currentlyLoading = false;
-    protected Configuration portletConfig = null;
-    protected DashboardPortlet storedPortlet;
 
     // set on initial configuration, the window for this portlet view.
     protected PortletWindow portletWindow;
@@ -122,8 +120,8 @@ public class GroupOobsPortlet extends LocatableVLayout implements CustomSettings
         if ((null == storedPortlet) || (null == storedPortlet.getConfiguration())) {
             return;
         }
-        this.storedPortlet = storedPortlet;
-        portletConfig = storedPortlet.getConfiguration();
+
+        Configuration portletConfig = storedPortlet.getConfiguration();
 
         //lazy init any elements not yet configured.
         for (String key : PortletConfigurationEditorComponent.CONFIG_PROPERTY_INITIALIZATION.keySet()) {
@@ -153,6 +151,9 @@ public class GroupOobsPortlet extends LocatableVLayout implements CustomSettings
 
     @Override
     public DynamicForm getCustomSettingsForm() {
+        final DashboardPortlet storedPortlet = this.portletWindow.getStoredPortlet();
+        final Configuration portletConfig = storedPortlet.getConfiguration();
+
         LocatableDynamicForm customSettings = new LocatableDynamicForm(extendLocatorId("customSettings"));
         LocatableVLayout page = new LocatableVLayout(customSettings.extendLocatorId("page"));
         //build editor form container
@@ -169,12 +170,13 @@ public class GroupOobsPortlet extends LocatableVLayout implements CustomSettings
             public void onSubmitValues(SubmitValuesEvent event) {
 
                 //results count
-                portletConfig = AbstractActivityView.saveResultCounterSettings(resultCountSelector, portletConfig);
+                Configuration updatedConfig = AbstractActivityView.saveResultCounterSettings(resultCountSelector,
+                    portletConfig);
 
                 //persist
-                storedPortlet.setConfiguration(portletConfig);
+                storedPortlet.setConfiguration(updatedConfig);
                 configure(portletWindow, storedPortlet);
-                loadData();
+                refresh();
             }
 
         });
@@ -187,6 +189,9 @@ public class GroupOobsPortlet extends LocatableVLayout implements CustomSettings
      *  oob change details.
      */
     protected void getRecentOobs() {
+        final DashboardPortlet storedPortlet = this.portletWindow.getStoredPortlet();
+        final Configuration portletConfig = storedPortlet.getConfiguration();
+
         final int groupId = this.groupId;
         int resultCount = 5;//default to
 

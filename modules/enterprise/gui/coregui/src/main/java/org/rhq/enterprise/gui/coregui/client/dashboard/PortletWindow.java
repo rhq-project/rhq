@@ -95,9 +95,12 @@ public class PortletWindow extends LocatableWindow {
     };
 
     private ClickHandler refreshHandler = new ClickHandler() {
+
         @SuppressWarnings("unchecked")
         public void onClick(ClickEvent clickEvent) {
-            if (PortletWindow.this.view instanceof Table) {
+            if (PortletWindow.this.view instanceof AutoRefreshPortlet) {
+                ((AutoRefreshPortlet) PortletWindow.this.view).refresh();
+            } else if (PortletWindow.this.view instanceof Table) {
                 ((Table) PortletWindow.this.view).refresh();
             } else {
                 ((Canvas) PortletWindow.this.view).redraw();

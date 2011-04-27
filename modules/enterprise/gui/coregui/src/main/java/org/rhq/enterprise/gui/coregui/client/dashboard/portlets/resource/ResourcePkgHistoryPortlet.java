@@ -25,9 +25,11 @@ import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.layout.VLayout;
 
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.content.InstalledPackageHistory;
 import org.rhq.core.domain.criteria.InstalledPackageHistoryCriteria;
+import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
@@ -74,6 +76,8 @@ public class ResourcePkgHistoryPortlet extends GroupPkgHistoryPortlet {
      */
     @Override
     protected void getRecentPkgHistory() {
+        final DashboardPortlet storedPortlet = this.portletWindow.getStoredPortlet();
+        final Configuration portletConfig = storedPortlet.getConfiguration();
         final int resourceId = this.resourceId;
         InstalledPackageHistoryCriteria criteria = new InstalledPackageHistoryCriteria();
 
@@ -101,6 +105,7 @@ public class ResourcePkgHistoryPortlet extends GroupPkgHistoryPortlet {
             public void onFailure(Throwable caught) {
                 Log.debug("Error retrieving installed package history for group [" + resourceId + "]:"
                     + caught.getMessage());
+                currentlyLoading = false;
             }
 
             @Override
@@ -144,6 +149,7 @@ public class ResourcePkgHistoryPortlet extends GroupPkgHistoryPortlet {
                 }
                 recentPkgHistoryContent.addChild(column);
                 recentPkgHistoryContent.markForRedraw();
+                currentlyLoading = false;
                 markForRedraw();
             }
         });

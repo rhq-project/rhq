@@ -114,10 +114,9 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
         super(locatorId);
         //figure out which page we're loading
         String currentPage = History.getToken();
-        String[] elements = currentPage.split("/");
         int groupId = AbstractActivityView.groupIdLookup(currentPage);
         this.groupId = groupId;
-        baseViewPath = elements[0];
+        baseViewPath = AbstractActivityView.groupPathLookup(currentPage);
     }
 
     @Override
@@ -437,7 +436,7 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
                                                             LocatableDynamicForm row = AbstractActivityView
                                                                 .createEmptyDisplayRow(recentMeasurementsContent
                                                                     .extendLocatorId("None"),
-                                                                    AbstractActivityView.RECENT_MEASUREMENTS_NONE);
+                                                                    AbstractActivityView.RECENT_MEASUREMENTS_GROUP_NONE);
                                                             column.addMember(row);
                                                         } else {
                                                             //insert see more link
@@ -454,7 +453,7 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
                                                         LocatableDynamicForm row = AbstractActivityView
                                                             .createEmptyDisplayRow(recentMeasurementsContent
                                                                 .extendLocatorId("None"),
-                                                                AbstractActivityView.RECENT_MEASUREMENTS_NONE);
+                                                                AbstractActivityView.RECENT_MEASUREMENTS_GROUP_NONE);
                                                         column.addMember(row);
                                                     }
                                                     setRefreshing(false);
@@ -465,7 +464,7 @@ public class GroupMetricsPortlet extends LocatableVLayout implements CustomSetti
                         }
                     } else {
                         LocatableDynamicForm row = AbstractActivityView.createEmptyDisplayRow(recentMeasurementsContent
-                            .extendLocatorId("None"), AbstractActivityView.RECENT_MEASUREMENTS_NONE);
+                            .extendLocatorId("None"), AbstractActivityView.RECENT_MEASUREMENTS_GROUP_NONE);
                         column.addMember(row);
                         setRefreshing(false);
                     }

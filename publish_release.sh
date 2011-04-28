@@ -175,6 +175,8 @@ elif [ -z "$WORKING_DIR" ]; then
    MAVEN_SETTINGS_FILE="$HOME/release/m2-settings.xml"
 fi
 
+MAVEN_SETTINGS_FILE="$WORKSPACE/settings.xml"
+
 PROJECT_GIT_URL="git://git.fedorahosted.org/rhq/rhq.git"
 
 MAVEN_ARGS="--settings $MAVEN_SETTINGS_FILE --batch-mode --errors -Penterprise,dist,release"

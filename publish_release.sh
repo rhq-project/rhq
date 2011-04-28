@@ -177,7 +177,7 @@ MAVEN_SETTINGS_FILE="$WORKSPACE/settings.xml"
 
 PROJECT_GIT_URL="git://git.fedorahosted.org/rhq/rhq.git"
 
-MAVEN_ARGS="--settings $MAVEN_SETTINGS_FILE --batch-mode --errors -Penterprise,dist,release"
+MAVEN_ARGS="--settings $MAVEN_SETTINGS_FILE --batch-mode --errors -Prhq-publish-release,enterprise,dist"
 
 if [ "$MODE" = "test" ]; then
    MAVEN_ARGS="$MAVEN_ARGS -DskipTests=true"

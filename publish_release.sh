@@ -28,7 +28,7 @@ abort()
 
 usage() 
 {   
-   abort "$@" "Usage:   $EXE community|enterprise RELEASE_VERSION DEVELOPMENT_VERSION RELEASE_BRANCH GIT_USERNAME test|production" "Example: $EXE enterprise 3.0.0.GA 3.0.0-SNAPSHOT release-3.0.0 ips test"
+   abort "$@" "Usage:   $EXE community|enterprise RELEASE_BRANCH test|production" "Example: $EXE enterprise release-3.0.0 test"
 }
 
 
@@ -42,11 +42,9 @@ RELEASE_TYPE="$1"
 if [ "$RELEASE_TYPE" != "community" ] && [ "$RELEASE_TYPE" != "enterprise" ]; then
    usage "Invalid release type: $RELEASE_TYPE (valid release types are 'community' or 'enterprise')"
 fi
-RELEASE_VERSION="$2"
-DEVELOPMENT_VERSION="$3"
-RELEASE_BRANCH="$4"
-GIT_USERNAME="$5"
-MODE="$6"
+RELEASE_BRANCH="$2"
+MODE="$3"
+
 if [ "$MODE" != "test" ] && [ "$MODE" != "production" ]; then
    usage "Invalid mode: $MODE (valid modes are 'test' or 'production')"
 fi
@@ -205,10 +203,6 @@ fi
 #fi
 
 
-TAG_VERSION=`echo $RELEASE_VERSION | sed 's/\./_/g'`
-RELEASE_TAG="${TAG_PREFIX}_${TAG_VERSION}"
-
-
 # Set the system character encoding to ISO-8859-1 to ensure i18log reads its 
 # messages and writes its resource bundle properties files in that encoding, 
 # since that is how the German and French I18NMessage annotation values are
@@ -233,10 +227,8 @@ echo "WORKING_DIR=$WORKING_DIR"
 echo "PROJECT_NAME=$PROJECT_NAME"
 echo "PROJECT_GIT_URL=$PROJECT_GIT_URL"
 echo "RELEASE_TYPE=$RELEASE_TYPE"
-echo "RELEASE_VERSION=$RELEASE_VERSION"
 echo "DEVELOPMENT_VERSION=$DEVELOPMENT_VERSION"
 echo "RELEASE_BRANCH=$RELEASE_BRANCH"
-echo "RELEASE_TAG=$RELEASE_TAG"
 echo "MODE=$MODE"
 echo "MAVEN_LOCAL_REPO_DIR=$MAVEN_LOCAL_REPO_DIR"
 echo "MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS=$MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS"
@@ -324,12 +316,3 @@ mvn $MAVEN_RELEASE_PERFORM_GOAL $MAVEN_ARGS -Ddbreset
 [ "$?" -ne 0 ] && abort "Release build failed. Please see above Maven output for details, fix any issues, then try again."
 echo
 echo "Release build succeeded!"
-
-
-echo
-echo "=============================== Release Info =================================="
-echo "Version: $RELEASE_VERSION"
-echo "Branch URL: $PROJECT_GIT_WEB_URL;a=shortlog;h=refs/heads/$RELEASE_BRANCH"
-echo "Tag URL: $PROJECT_GIT_WEB_URL;a=shortlog;h=refs/tags/$RELEASE_TAG"
-echo "==============================================================================="
-

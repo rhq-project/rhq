@@ -26,13 +26,11 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLConnection;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.jetbrains.annotations.Nullable;
 
 import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
@@ -47,7 +45,6 @@ public class ASConnection {
     private final Log log = LogFactory.getLog(ASConnection.class);
     URL url;
     String urlString;
-    private StringBuilder builder;
     private ObjectMapper mapper;
 
     public ASConnection(String host, int port) {
@@ -62,64 +59,6 @@ public class ASConnection {
         mapper = new ObjectMapper();
     }
 
-
-    @Deprecated
-    JsonNode getLevelData(@Nullable String base, boolean recursive, boolean includeMetrics) throws Exception{
-        String ops = null;
-        if (recursive)
-            ops = "recursive";
-        if (includeMetrics)
-            ops += "&include-runtime=true";
-
-        return getLevelData(base,ops);
-}
-
-    /**
-     * Return the JSON-Object for a certain path.
-     *
-     * @param base Path to the object/subsystem. Can be null/"" for the base objects
-     * @param ops OperationDescription to run on the api can be null
-     * @return  A JSONObject encoding the level plus sub levels provided
-     * @throws Exception If anything goes wrong
-     */
-    @Deprecated
-    JsonNode getLevelData(@Nullable String base, @Nullable String ops) throws Exception {
-
-        URL url2;
-        String spec;
-        url2 = getBaseUrl(base, ops);
-
-        JsonNode tree = null;
-
-        URLConnection conn = url2.openConnection();
-        InputStream inputStream = null;
-        try {
-            inputStream = conn.getInputStream();
-        } catch (IOException e) {
-            System.err.println(e.getMessage());
-            return tree;
-        }
-        BufferedReader in = new BufferedReader(new InputStreamReader(
-                inputStream));
-        try {
-            String line;
-            StringBuilder builder = new StringBuilder();
-            while ((line = in.readLine()) != null) {
-                builder.append(line);
-            }
-
-            ObjectMapper mapper = new ObjectMapper();
-
-            tree = mapper.readTree(builder.toString());
-
-        } catch (IOException ioe) {
-            System.err.println("for in put " + url2 + " : " + ioe.getMessage());
-        } finally {
-            in.close();
-        }
-
-        return tree;
-    }
 
 
     static boolean isErrorReply(JsonNode in) {
@@ -182,14 +121,14 @@ public class ASConnection {
             br = new BufferedReader(new InputStreamReader(
                     inputStream));
             String line;
-            builder = new StringBuilder();
+            StringBuilder builder = new StringBuilder();
             while ((line = br.readLine()) != null) {
                 builder.append(line);
             }
 
             String outcome;
             JsonNode operationResult=null;
-            if (builder!=null) {
+            if (builder !=null) {
                 outcome= builder.toString();
                 operationResult = mapper.readTree(outcome);
             }

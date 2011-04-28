@@ -25,6 +25,7 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
 import org.rhq.modules.plugins.jbossas7.json.ReadChildrenNames;
+import org.rhq.modules.plugins.jbossas7.json.ReadResource;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -106,7 +107,7 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
 
             JsonNode json ;
             if (!recursive)
-                json = connection.getLevelData(path,recursive, false);
+                json = connection.executeRaw(new ReadResource(parentComponent.pathToAddress(path)));
             else {
                 List<PROPERTY_VALUE> addr ;
                 addr = parentComponent.pathToAddress(parentPath);

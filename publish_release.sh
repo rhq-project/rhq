@@ -35,7 +35,7 @@ usage()
 # Process command line args.
 
 EXE=`basename $0`
-if [ "$#" -ne 6 ]; then
+if [ "$#" -ne 3 ]; then
    usage
 fi  
 RELEASE_TYPE="$1"

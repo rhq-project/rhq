@@ -167,7 +167,7 @@ if [ -n "$HUDSON_URL" ] && [ -n "$WORKSPACE" ]; then
    echo "We appear to be running in a Hudson job." 
    WORKING_DIR="$WORKSPACE"
    MAVEN_LOCAL_REPO_DIR="$HOME/.m2/hudson-release-$RELEASE_TYPE-repository"
-   MAVEN_SETTINGS_FILE="$HOME/.m2/hudson-$JOB_NAME-settings.xml"
+   #MAVEN_SETTINGS_FILE="$HOME/.m2/hudson-$JOB_NAME-settings.xml"
 elif [ -z "$WORKING_DIR" ]; then
    WORKING_DIR="$HOME/release/rhq"
    MAVEN_LOCAL_REPO_DIR="$HOME/release/m2-repository"
@@ -269,55 +269,6 @@ if [ -f "$MAVEN_LOCAL_REPO_DIR" ]; then
    
 fi
 mkdir -p "$MAVEN_LOCAL_REPO_DIR"
-
-
-# Create the Maven settings file.
-cat <<EOF >"${MAVEN_SETTINGS_FILE}"
-<settings>
-   <localRepository>$MAVEN_LOCAL_REPO_DIR</localRepository>
-   
-   <profiles>
-
-      <profile>
-         <id>release</id>
-         <properties>
-<rhq.test.ds.server-name>vmg01.mw.lab.eng.bos.redhat.com</rhq.test.ds.server-name>
-	    <rhq.db.admin.username>jon2</rhq.db.admin.username>
-            <rhq.db.admin.password>jboss42</rhq.db.admin.password>
-	    <rhq.test.ds.user-name>jon2</rhq.test.ds.user-name>
-	    <rhq.test.ds.password>jboss42</rhq.test.ds.password>
-            <rhq.test.ds.db-name>rhq_release</rhq.test.ds.db-name>
-	    <rhq.test.ds.connection-url>jdbc:postgresql://${rhq.test.ds.server-name}:5432/${rhq.test.ds.db-name}</rhq.test.ds.connection-url>
-            <rhq.test.ds.type-mapping>PostgreSQL</rhq.test.ds.type-mapping>
-            <rhq.test.ds.driver-class>org.postgresql.Driver</rhq.test.ds.driver-class>
-            <rhq.test.ds.xa-datasource-class>org.postgresql.xa.PGXADataSource</rhq.test.ds.xa-datasource-class>
-            <rhq.test.ds.hibernate-dialect>org.hibernate.dialect.PostgreSQLDialect</rhq.test.ds.hibernate-dialect>
-            <!-- quartz properties -->
-            <rhq.test.quartz.driverDelegateClass>org.quartz.impl.jdbcjobstore.PostgreSQLDelegate</rhq.test.quartz.driverDelegateClass>
-            <rhq.test.quartz.selectWithLockSQL>SELECT * FROM {0}LOCKS ROWLOCK WHERE LOCK_NAME = ? FOR UPDATE</rhq.test.quartz.selectWithLockSQL>
-            <rhq.test.quartz.lockHandlerClass>org.quartz.impl.jdbcjobstore.StdRowLockSemaphore</rhq.test.quartz.lockHandlerClass>
-
-            <DatabaseTest.nofail>true</DatabaseTest.nofail>
-
-            <rhq.testng.excludedGroups>agent-comm,comm-client,postgres-plugin,native-system</rhq.testng.excludedGroups>
-
-            <gwt-plugin.extraJvmArgs>-Xms512M -Xmx1024M -XX:PermSize=256M -XX:MaxPermSize=512M</gwt-plugin.extraJvmArgs>
-         </properties>
-      </profile>
-
-   </profiles>
-
-   <!-- This is used by the deploy plugin to publish release artifacts to the jboss.org Nexus repo. -->
-   <servers>
-      <server>
-         <id>jboss-releases-repository</id>
-         <username>$JBOSS_ORG_USERNAME</username>
-         <password>$JBOSS_ORG_PASSWORD</password>
-      </server>
-   </servers>
- 
-</settings>
-EOF
 
 # We only need to worry about cloning the repo if we are not running on hudson
 if [ ! "$HUDSON_URL" ]; then

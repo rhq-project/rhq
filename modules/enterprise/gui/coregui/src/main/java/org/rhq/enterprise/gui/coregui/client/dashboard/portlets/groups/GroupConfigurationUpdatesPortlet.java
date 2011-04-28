@@ -121,9 +121,8 @@ public class GroupConfigurationUpdatesPortlet extends LocatableVLayout implement
         super(locatorId);
         //figure out which page we're loading
         String currentPage = History.getToken();
-        String[] elements = currentPage.split("/");
         this.groupId = groupId;
-        baseViewPath = elements[0];
+        baseViewPath = AbstractActivityView.groupPathLookup(currentPage);
     }
 
     public GroupConfigurationUpdatesPortlet(String locatorId) {

@@ -24,7 +24,7 @@ pass()
 fail()
 {
    _MSG="$1"
-   echo "[FAILED] $_MSG" >&2
+   echo "[FAILED] $_MSG"
    EXIT_CODE=2
    return 1
 }
@@ -87,10 +87,10 @@ else
 fi
 
 # Unzip the dist zip to a temp dir.
-TMP_DIR="/tmp/chkjondist$$"
+TMP_DIR="/tmp/chkdist$$"
 unzip -q "$RHQ_DIST_ZIPFILE" -d $TMP_DIR
 
-# e.g.: /tmp/chkjondist12345/rhq-server-4.0.0)
+# e.g.: /tmp/chkdist12345/rhq-server-4.0.0)
 RHQ_DIR=`ls -d $TMP_DIR/*`
 
 AS_CONFIG_DIR="$RHQ_DIR/jbossas/server/default"
@@ -117,7 +117,8 @@ SNAPSHOT_JARS=`find "$RHQ_EAR_DIR" -name "*-SNAPSHOT.jar"`
 if [ -z "$SNAPSHOT_JARS" ]; then
    pass "No snapshot jars are included."
 else 
-   fail "The following snapshot jars are included: $SNAPSHOT_JARS"
+   fail "The following snapshot jars are included:"
+   echo "$SNAPSHOT_JARS"
 fi
 
 # Check encoding of message bundles.

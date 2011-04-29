@@ -196,11 +196,11 @@ if [ -z "$MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS" ]; then
    MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS="6"
 fi
 
-#if [ "$MODE" = "production" ] && [ "$RELEASE_TYPE" = "community" ]; then
-#   MAVEN_RELEASE_PERFORM_GOAL="deploy"
-#else   
+if [ "$MODE" = "production" ] && [ "$RELEASE_TYPE" = "community" ]; then
+   MAVEN_RELEASE_PERFORM_GOAL="deploy"
+else   
    MAVEN_RELEASE_PERFORM_GOAL="install"
-#fi
+fi
 
 
 # Set the system character encoding to ISO-8859-1 to ensure i18log reads its 

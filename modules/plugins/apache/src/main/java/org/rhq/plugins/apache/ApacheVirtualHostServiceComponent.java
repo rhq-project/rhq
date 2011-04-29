@@ -58,11 +58,13 @@ import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.util.ResponseTimeConfiguration;
 import org.rhq.core.pluginapi.util.ResponseTimeLogParser;
 import org.rhq.plugins.apache.mapping.ApacheAugeasMapping;
+import org.rhq.plugins.apache.parser.ApacheDirective;
 import org.rhq.plugins.apache.parser.ApacheDirectiveTree;
 import org.rhq.plugins.apache.util.AugeasNodeSearch;
 import org.rhq.plugins.apache.util.AugeasNodeValueUtil;
 import org.rhq.plugins.apache.util.ConfigurationTimestamp;
 import org.rhq.plugins.apache.util.HttpdAddressUtility;
+import org.rhq.plugins.apache.util.RuntimeApacheConfiguration;
 import org.rhq.plugins.www.snmp.SNMPException;
 import org.rhq.plugins.www.snmp.SNMPSession;
 import org.rhq.plugins.www.snmp.SNMPValue;
@@ -333,99 +335,51 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
      */
     public AugeasNode getNode(AugeasTree tree) {
         String resourceKey = resourceContext.getResourceKey();
-
-        if (ApacheVirtualHostServiceComponent.MAIN_SERVER_RESOURCE_KEY.equals(resourceKey)) {
+        String idxString = resourceContext.getPluginConfiguration().getSimpleValue(SNMP_WWW_SERVICE_INDEX_CONFIG_PROP, null);
+        
+        ApacheServerComponent server = resourceContext.getParentResourceComponent();
+        
+        if (idxString == null || idxString.trim().length() == 0) {
+            throw new IllegalStateException("The SNMP WWW Service Index property has to be a positive integer. Without it, it is impossible to locate the configuration of the virtual host with resource key [" + resourceKey + "]");            
+        }
+        
+        int snmpIdx = Integer.parseInt(idxString);
+        
+        if (snmpIdx < 1) {
+            throw new IllegalStateException("The SNMP WWW Service Index property has to be a positive integer. Without it, it is impossible to locate the configuration of the virtual host with resource key [" + resourceKey + "]");
+        }
+        
+        if (snmpIdx == 1) {
             return tree.getRootNode();
         }
 
-        String serverName = null;
-        int pipeIdx = resourceKey.indexOf('|');
-        if (pipeIdx >= 0) {
-            serverName = resourceKey.substring(0, pipeIdx);
-        }
-
-        String[] addrs = resourceKey.substring(pipeIdx + 1).split(" ");
-        List<AugeasNode> nodes = tree.matchRelative(tree.getRootNode(), "<VirtualHost");
-        List<AugeasNode> virtualHosts = new ArrayList<AugeasNode>();
-        boolean updated = false;
-
-//BZ 612189 - uncomment this algo once the resource upgrade is in place        
-//        for (AugeasNode node : nodes) {
-//               updated = false;
-//            List<AugeasNode> serverNameNodes = tree.matchRelative(node, "ServerName/param");
-//            String tempServerName = null;
-//
-//            if (!(serverNameNodes.isEmpty())) {
-//                tempServerName = serverNameNodes.get(0).getValue();
-//            }
-//                if (tempServerName == null & serverName == null)
-//                   updated = true;
-//                if (tempServerName != null & serverName != null)
-//                    if (tempServerName.equals(serverName)){
-//                            updated = true;
-//                     }
-//                
-//
-//               if (updated){ 
-//                    updated = false;
-//                    List<AugeasNode> params = node.getChildByLabel("param");
-//                    for (AugeasNode nd : params) {
-//                        updated = false;
-//                        for (String adr : addrs) {
-//                            if (adr.equals(nd.getValue()))
-//                                updated = true;
-//                        }
-//                        if (!updated)
-//                            break;
-//                      }
-//
-//                    if (updated) 
-//                        virtualHosts.add(node);                    
-//                }
-//           }
-       
-        //BZ 612189 - remove this once resource upgrade is in place
-        HttpdAddressUtility.Address resourceKeyAddress = HttpdAddressUtility.Address.parse(resourceKey); 
+        final List<AugeasNode> allVhosts = new ArrayList<AugeasNode>();
         
-        AugeasNode bestNode = null;
-        int bestMatch = 0;
-        for(AugeasNode node : nodes) {
-            List<AugeasNode> vhostAddressNodes = node.getChildByLabel("param");
-            
-            List<HttpdAddressUtility.Address> vhostAddresses = new ArrayList<HttpdAddressUtility.Address>();
-            for (AugeasNode vhostAddressNode : vhostAddressNodes) {
-                vhostAddresses.add(HttpdAddressUtility.Address.parse(vhostAddressNode.getValue()));
+        RuntimeApacheConfiguration.walkRuntimeConfig(new RuntimeApacheConfiguration.NodeVisitor<AugeasNode>() {            
+            public void visitOrdinaryNode(AugeasNode node) {
+                if ("<VirtualHost".equalsIgnoreCase(node.getLabel())) {
+                    allVhosts.add(node);
+                }
             }
             
-            int matchRate = matchRate(vhostAddresses, resourceKeyAddress);
-            if (bestMatch < matchRate) {
-                bestNode = node;
+            public void visitConditionalNode(AugeasNode node, boolean isSatisfied) {
             }
-        }
-
-        if (bestNode != null) {
-            return bestNode;
-        }
+        }, tree, server.getCurrentProcessInfo(), server.getCurrentBinaryInfo(), server.getModuleNames());
         
-        //BZ 612189 - remove this once we have resource upgrade
-        //ok, one final attempt... the legacy resource key format for the MainServer is just a host:port as with the rest of the vhosts, let's try that
-        try {
-            String serverUrl = resourceContext.getParentResourceComponent().getServerUrl();
-            URI serverUri = new URI(serverUrl);
-            String expectedResourceKey = serverUri.getHost() + ":" + serverUri.getPort();
-            
-            HttpdAddressUtility.Address expectedAddress = HttpdAddressUtility.Address.parse(expectedResourceKey);
-            HttpdAddressUtility.Address actualAddress = HttpdAddressUtility.Address.parse(resourceKey);
-            
-            if (matchRate(Collections.singletonList(expectedAddress), actualAddress) > 0) {
-                return tree.getRootNode();
-            }
-        } catch (URISyntaxException e) {
-            log.warn("Failed to parse the server URL when trying to match the vhost with the main server.", e);
-        }
+        //transform the SNMP index into the index of the vhost
+        int idx = allVhosts.size() - snmpIdx + 1;
         
-        throw new IllegalStateException("Could not find virtual host configuration for virtual host resource : "
-            + resourceKey + ". Reading and updating configuration of virtual hosts nested inside If* directives is not supported by this plugin.");
+        AugeasNode vhost = allVhosts.get(idx);
+        
+        //now check if there are any If* directives underneath this vhost.
+        //we don't support configuring such beasts.
+        if (vhost.getChildByLabel("<IfDefine").isEmpty() && vhost.getChildByLabel("<IfModule").isEmpty()
+            && vhost.getChildByLabel("<IfVersion").isEmpty()) {
+            
+            return vhost;
+        } else {
+            throw new IllegalStateException("Configuration of the virtual host [" + resourceKey + "] contains conditional blocks. This is not supported by this plugin.");
+        }
     }
 
     /**

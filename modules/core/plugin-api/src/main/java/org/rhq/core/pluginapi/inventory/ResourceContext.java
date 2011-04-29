@@ -202,14 +202,28 @@ public class ResourceContext<T extends ResourceComponent> {
      * @return information on the resource's process
      */
     public ProcessInfo getNativeProcess() {
-        if ((this.processInfo == null) || !this.processInfo.isRunning()) {
-            // TODO: should we null out processInfo?  if it isn't running, the old processInfo is no longer valid
+        boolean rediscover = this.processInfo == null;
+
+        if (!rediscover) {
+            //if the process info thinks the process is running,
+            //refresh it to check its facts again
+            if (this.processInfo.isRunning()) {
+                this.processInfo.refresh();
+            }
+            rediscover = !this.processInfo.isRunning();
+        }
+        
+        if (rediscover) {
+            //This method is documented to return null if the process can no longer be found.
+            //Let's make sure that's the case and null it out now. The discovery might or might not
+            //reassign it.
+            this.processInfo = null;
             if (this.resourceDiscoveryComponent != null) {
                 try {
                     Set<DiscoveredResourceDetails> details;
-                    ResourceDiscoveryContext context;
+                    ResourceDiscoveryContext<ResourceComponent<?>> context;
 
-                    context = new ResourceDiscoveryContext(this.resourceType, this.parentResourceComponent, this,
+                    context = new ResourceDiscoveryContext<ResourceComponent<?>>(this.resourceType, this.parentResourceComponent, this,
                         this.systemInformation, getNativeProcessesForType(), Collections.EMPTY_LIST,
                         getPluginContainerName(), getPluginContainerDeployment());
 

@@ -76,9 +76,11 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
         
         ApacheServerComponent serverComponent = context.getParentResourceComponent();
         ApacheDirectiveTree tree = serverComponent.loadParser();
-
+        
+        tree = RuntimeApacheConfiguration.extract(tree, serverComponent.getCurrentProcessInfo(), serverComponent.getCurrentBinaryInfo(), serverComponent.getModuleNames());
+        
         //first define the root server as one virtual host
-        discoverMainServer(context, discoveredResources, snmpDiscoveries);
+        discoverMainServer(context, discoveredResources, snmpDiscoveries, tree);
 
         ResourceType resourceType = context.getResourceType();
 
@@ -87,6 +89,8 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
 
         List<ApacheDirective> virtualHosts = tree.search("/<VirtualHost");
 
+        int currentVhostIndex = 0;
+        
         for (ApacheDirective node : virtualHosts) {
             List<String> hosts = node.getValues();
             String firstAddress = hosts.get(0);
@@ -102,7 +106,7 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
 
             Configuration pluginConfiguration = context.getDefaultPluginConfiguration();
 
-            Address address = serverComponent.getAddressUtility().getVirtualHostSampleAddress(tree, firstAddress, serverName, false);
+            Address address = serverComponent.getAddressUtility().getVirtualHostSampleAddress(tree, firstAddress, serverName);
             if (address != null) {
                 String scheme = address.scheme;
                 String hostToPing = address.host;
@@ -146,13 +150,23 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
             }
 
             //BZ 612189 - remove this once we have resource upgrade
+            //ok, this is hacky, but...
+            //in order not to change the semantics of the resource key creation
+            //we use the legacy resource key (i.e. the one based on SNMP) only
+            //if SNMP is available, even though we now have algorithm that can
+            //determine the SNMP resource key without it being available.
             if (snmpDiscoveries != null) {
-                String legacyResourceKey = getLegacyResourceKey(context, resourceKey, snmpDiscoveries);
-                resourceKey = legacyResourceKey != null ? legacyResourceKey : resourceKey;
+                resourceKey = serverComponent.getAddressUtility().getHttpdInternalVirtualHostAddressRepresentation(tree, firstAddress, serverName).toString(false);
             }
+            
+            //as the last thing, let's determine the SNMP WWW Service Index of this vhost
+            int snmpWwwServiceIndex = virtualHosts.size() - currentVhostIndex + 1;            
+            pluginConfiguration.put(new PropertySimple(ApacheVirtualHostServiceComponent.SNMP_WWW_SERVICE_INDEX_CONFIG_PROP, snmpWwwServiceIndex));
             
             discoveredResources.add(new DiscoveredResourceDetails(resourceType, resourceKey, resourceName, null, null,
                 pluginConfiguration, null));
+            
+            currentVhostIndex++;
         }
 
         return discoveredResources;
@@ -160,7 +174,7 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
 
 
     private void discoverMainServer(ResourceDiscoveryContext<ApacheServerComponent> context,
-        Set<DiscoveredResourceDetails> discoveredResources, SnmpWwwServiceIndexes snmpDiscoveries) throws Exception {
+        Set<DiscoveredResourceDetails> discoveredResources, SnmpWwwServiceIndexes snmpDiscoveries, ApacheDirectiveTree runtimeConfig) throws Exception {
 
         ResourceType resourceType = context.getResourceType();
         Configuration mainServerPluginConfig = context.getDefaultPluginConfiguration();
@@ -206,9 +220,13 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
         }
         
         //BZ 612189 - remove this once we have resource upgrade
+        //ok, this is hacky, but...
+        //in order not to change the semantics of the resource key creation
+        //we use the legacy resource key (i.e. the one based on SNMP) only
+        //if SNMP is available, even though we now have algorithm that can
+        //determine the SNMP resource key without it being available.
         if (snmpDiscoveries != null) {
-            String legacyKey = getLegacyResourceKey(context, key, snmpDiscoveries);
-            key = legacyKey != null ? legacyKey : key;
+            key = context.getParentResourceComponent().getAddressUtility().getHttpdInternalMainServerAddressRepresentation(runtimeConfig).toString(false);
         }
         
         DiscoveredResourceDetails mainServer = new DiscoveredResourceDetails(resourceType,
@@ -217,30 +235,30 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
         discoveredResources.add(mainServer);
     }
     
-    /**
-     * @deprecated remove this once we have resource upgrade
-     * @param discoveryContext
-     * @param newStyleResourceKey
-     * @param snmpDiscoveries
-     * @return
-     */
-    @Deprecated
-    private String getLegacyResourceKey(ResourceDiscoveryContext<ApacheServerComponent> discoveryContext, String newStyleResourceKey, SnmpWwwServiceIndexes snmpDiscoveries) {
-        int snmpWwwServiceIndex = ApacheVirtualHostServiceComponent.getMatchingWwwServiceIndex(discoveryContext.getParentResourceComponent(), newStyleResourceKey, snmpDiscoveries.names, snmpDiscoveries.ports);
-        
-        if (snmpWwwServiceIndex < 1) {
-            return null;
-        } else {
-            String host = snmpDiscoveries.names.get(snmpWwwServiceIndex - 1).toString();
-            String fullPort = snmpDiscoveries.ports.get(snmpWwwServiceIndex - 1).toString();
-
-            // The port value will be in the form "1.3.6.1.2.1.6.XXXXX",
-            // where "1.3.6.1.2.1.6" represents the TCP protocol ID,
-            // and XXXXX is the actual port number
-            String port = fullPort.substring(fullPort.lastIndexOf(".") + 1);
-            return host + ":" + port;
-        }
-    }
+//    /**
+//     * @deprecated remove this once we have resource upgrade
+//     * @param discoveryContext
+//     * @param newStyleResourceKey
+//     * @param snmpDiscoveries
+//     * @return
+//     */
+//    @Deprecated
+//    private String getLegacyResourceKey(ResourceDiscoveryContext<ApacheServerComponent> discoveryContext, String newStyleResourceKey, SnmpWwwServiceIndexes snmpDiscoveries) {
+//        int snmpWwwServiceIndex = ApacheVirtualHostServiceComponent.getMatchingWwwServiceIndex(discoveryContext.getParentResourceComponent(), newStyleResourceKey, snmpDiscoveries.names, snmpDiscoveries.ports);
+//        
+//        if (snmpWwwServiceIndex < 1) {
+//            return null;
+//        } else {
+//            String host = snmpDiscoveries.names.get(snmpWwwServiceIndex - 1).toString();
+//            String fullPort = snmpDiscoveries.ports.get(snmpWwwServiceIndex - 1).toString();
+//
+//            // The port value will be in the form "1.3.6.1.2.1.6.XXXXX",
+//            // where "1.3.6.1.2.1.6" represents the TCP protocol ID,
+//            // and XXXXX is the actual port number
+//            String port = fullPort.substring(fullPort.lastIndexOf(".") + 1);
+//            return host + ":" + port;
+//        }
+//    }
     
     public static String createResourceKey(String serverName, List<String> hosts) {
 //BZ 612189 - swap the impls once resource upgrade is in place

@@ -3288,10 +3288,14 @@
                 <!-- Finally, make ID the primary key, rather than (JOB_NAME, JOB_GROUP), and make
                      (JOB_NAME, JOB_GROUP) a unique index instead. -->
                 <schema-directSQL>
-                    <statement desc="Changing primary key of RHQ_OPERATION_SCHEDULE to ID...">
-                        ALTER TABLE RHQ_OPERATION_SCHEDULE DROP CONSTRAINT RHQ_OPERATION_SCHEDULE_KEY;
-                        ALTER TABLE RHQ_OPERATION_SCHEDULE ADD PRIMARY KEY (ID);
-                        CREATE UNIQUE INDEX RHQ_OPERATION_SCHEDULE_KEY_IDX ON RHQ_OPERATION_SCHEDULE (JOB_NAME, JOB_GROUP);
+                    <statement desc="Changing primary key of RHQ_OPERATION_SCHEDULE to ID. Step1/3...">
+                        ALTER TABLE RHQ_OPERATION_SCHEDULE DROP CONSTRAINT RHQ_OPERATION_SCHEDULE_KEY
+                    </statement>                        
+                    <statement desc="Changing primary key of RHQ_OPERATION_SCHEDULE to ID. Step2/3...">                    
+                        ALTER TABLE RHQ_OPERATION_SCHEDULE ADD PRIMARY KEY (ID)
+                    </statement>                    
+                    <statement desc="Changing primary key of RHQ_OPERATION_SCHEDULE to ID. Step3/3...">                    
+                        CREATE UNIQUE INDEX RHQ_OPERATION_SCHEDULE_KEY_IDX ON RHQ_OPERATION_SCHEDULE (JOB_NAME, JOB_GROUP)
                     </statement>
                 </schema-directSQL>
             </schemaSpec>
@@ -3350,15 +3354,13 @@
                 <schema-addColumn table="RHQ_REPO" column="IS_PRIVATE" columnType="BOOLEAN" />
             	<schema-directSQL>
                     <statement targetDBVendor="postgresql" desc="Set is_private flag for existing repos to false">
-                        UPDATE RHQ_REPO
-                        SET IS_PRIVATE = false
+                        UPDATE RHQ_REPO SET IS_PRIVATE = false
                     </statement>
                     <statement targetDBVendor="oracle" desc="Set is_private flag for existing repos to false">
-                        UPDATE RHQ_REPO
-                        SET IS_PRIVATE = 0
+                        UPDATE RHQ_REPO SET IS_PRIVATE = 0
                     </statement>
             	</schema-directSQL>
-                <schema-alterColumn table="RHQ_REPO" column="IS_PRIVATE" nullable="FALSE" default="TRUE"/>
+                <schema-alterColumn table="RHQ_REPO" column="IS_PRIVATE" nullable="FALSE"/>
                 <schema-directSQL>
                     <statement desc="Creating OWNER_ID foreign key relation on RHQ_REPO">
                         ALTER TABLE RHQ_REPO

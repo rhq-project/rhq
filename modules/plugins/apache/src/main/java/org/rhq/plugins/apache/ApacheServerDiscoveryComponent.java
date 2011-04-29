@@ -58,6 +58,7 @@ import org.rhq.plugins.apache.util.AugeasNodeValueUtil;
 import org.rhq.plugins.apache.util.HttpdAddressUtility;
 import org.rhq.plugins.apache.util.OsProcessUtility;
 import org.rhq.plugins.apache.util.HttpdAddressUtility.Address;
+import org.rhq.plugins.apache.util.RuntimeApacheConfiguration;
 import org.rhq.plugins.platform.PlatformComponent;
 import org.rhq.rhqtransform.impl.PluginDescriptorBasedAugeasConfiguration;
 
@@ -432,7 +433,7 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
 
    
     @Nullable
-    private String getServerRoot(@NotNull ApacheBinaryInfo binaryInfo, @NotNull ProcessInfo processInfo) {
+    public static String getServerRoot(@NotNull ApacheBinaryInfo binaryInfo, @NotNull ProcessInfo processInfo) {
         // First see if -d was specified on the httpd command line.
         String[] cmdLine = processInfo.getCommandLine();
         String root = getCommandLineOption(cmdLine, "-d");
@@ -475,7 +476,7 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
     }
 
     @Nullable
-    private File getServerConfigFile(ApacheBinaryInfo binaryInfo, ProcessInfo processInfo, String serverRoot) {
+    public static File getServerConfigFile(ApacheBinaryInfo binaryInfo, ProcessInfo processInfo, String serverRoot) {
         // First see if -f was specified on the httpd command line.
         String[] cmdLine = processInfo.getCommandLine();
         String serverConfigFile = getCommandLineOption(cmdLine, "-f");
@@ -503,7 +504,7 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
         return new File(serverConfigFile);
     }
 
-    private String getCommandLineOption(String[] cmdLine, String option) {
+    private static String getCommandLineOption(String[] cmdLine, String option) {
         String root = null;
         for (int i = 1; i < cmdLine.length; i++) {
             String arg = cmdLine[i];

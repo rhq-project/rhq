@@ -778,6 +778,10 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
         return binaryInfo;
     }
         
+    public String getResourceKey() {
+        return resourceContext.getResourceKey();
+    }
+    
     // TODO: Move this method to a helper class.
     static void addSnmpMetricValueToReport(MeasurementReport report, MeasurementScheduleRequest schedule,
         SNMPValue snmpValue, boolean valueIsTimestamp) throws SNMPException {

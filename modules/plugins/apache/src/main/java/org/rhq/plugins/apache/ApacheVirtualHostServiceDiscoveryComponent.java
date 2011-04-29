@@ -24,8 +24,10 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
@@ -38,10 +40,17 @@ import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.core.system.ProcessInfo;
+import org.rhq.core.system.SystemInfoFactory;
+import org.rhq.plugins.apache.parser.ApacheConfigReader;
 import org.rhq.plugins.apache.parser.ApacheDirective;
 import org.rhq.plugins.apache.parser.ApacheDirectiveTree;
+import org.rhq.plugins.apache.parser.ApacheParser;
+import org.rhq.plugins.apache.parser.ApacheParserImpl;
 import org.rhq.plugins.apache.util.HttpdAddressUtility;
 import org.rhq.plugins.apache.util.HttpdAddressUtility.Address;
+import org.rhq.plugins.apache.util.ApacheBinaryInfo;
+import org.rhq.plugins.apache.util.OsProcessUtility;
 import org.rhq.plugins.apache.util.RuntimeApacheConfiguration;
 import org.rhq.plugins.www.snmp.SNMPException;
 import org.rhq.plugins.www.snmp.SNMPSession;
@@ -72,7 +81,7 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
 
         //BZ 612189 - prepare for the legacy overrides. We need to revert to the old-style resource keys until
         //resource upgrade functionality is ready.
-        SnmpWwwServiceIndexes snmpDiscoveries = getSnmpDiscoveries(context);
+        SnmpWwwServiceIndexes snmpDiscoveries = getSnmpDiscoveries(context.getParentResourceComponent());
         
         ApacheServerComponent serverComponent = context.getParentResourceComponent();
         ApacheDirectiveTree tree = serverComponent.loadParser();
@@ -101,7 +110,7 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
                 serverName = serverNames.get(0).getValuesAsString();
             }
 
-            String resourceKey = createResourceKey(serverName, hosts);
+            String resourceKey = createResourceKey(serverName, hosts, tree, serverComponent, snmpDiscoveries);
             String resourceName = resourceKey; //this'll get overridden below if we find a better value using the address variable
 
             Configuration pluginConfiguration = context.getDefaultPluginConfiguration();
@@ -146,19 +155,9 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
                 pluginConfiguration.put(rtLogProp);
 
                 //redefine the resourcename using the virtual host sample address
-                resourceName = address.toString(false);
+                resourceName = address.toString(false, true);
             }
 
-            //BZ 612189 - remove this once we have resource upgrade
-            //ok, this is hacky, but...
-            //in order not to change the semantics of the resource key creation
-            //we use the legacy resource key (i.e. the one based on SNMP) only
-            //if SNMP is available, even though we now have algorithm that can
-            //determine the SNMP resource key without it being available.
-            if (snmpDiscoveries != null) {
-                resourceKey = serverComponent.getAddressUtility().getHttpdInternalVirtualHostAddressRepresentation(tree, firstAddress, serverName).toString(false);
-            }
-            
             //as the last thing, let's determine the SNMP WWW Service Index of this vhost
             int snmpWwwServiceIndex = virtualHosts.size() - currentVhostIndex + 1;            
             pluginConfiguration.put(new PropertySimple(ApacheVirtualHostServiceComponent.SNMP_WWW_SERVICE_INDEX_CONFIG_PROP, snmpWwwServiceIndex));
@@ -185,7 +184,7 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
         String mainServerUrl = context.getParentResourceContext().getPluginConfiguration().getSimple(
             ApacheServerComponent.PLUGIN_CONFIG_PROP_URL).getStringValue();
         
-        String key = null;
+        String key = createMainServerResourceKey(context.getParentResourceComponent(), runtimeConfig, snmpDiscoveries);
         
         if (mainServerUrl != null && !"null".equals(mainServerUrl)) {
             PropertySimple mainServerUrlProp = new PropertySimple(ApacheVirtualHostServiceComponent.URL_CONFIG_PROP,
@@ -205,29 +204,11 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
             PropertySimple rtLogProp = new PropertySimple(
                 ApacheVirtualHostServiceComponent.RESPONSE_TIME_LOG_FILE_CONFIG_PROP, rtLogFile.toString());
             mainServerPluginConfig.put(rtLogProp);
-            
-            //BZ 612189 - remove this once we have resource upgrade
-            key = host + ":" + port;
         }
         
         //the SNMP WWW service index of the main server is always 1
         mainServerPluginConfig.put(new PropertySimple(
             ApacheVirtualHostServiceComponent.SNMP_WWW_SERVICE_INDEX_CONFIG_PROP, 1));
-        
-        //BZ 612189 - this can simply the MAIN_SERVER_RESOURCE_KEY only once we have resource upgrade
-        if (key == null) {
-            key = ApacheVirtualHostServiceComponent.MAIN_SERVER_RESOURCE_KEY;
-        }
-        
-        //BZ 612189 - remove this once we have resource upgrade
-        //ok, this is hacky, but...
-        //in order not to change the semantics of the resource key creation
-        //we use the legacy resource key (i.e. the one based on SNMP) only
-        //if SNMP is available, even though we now have algorithm that can
-        //determine the SNMP resource key without it being available.
-        if (snmpDiscoveries != null) {
-            key = context.getParentResourceComponent().getAddressUtility().getHttpdInternalMainServerAddressRepresentation(runtimeConfig).toString(false);
-        }
         
         DiscoveredResourceDetails mainServer = new DiscoveredResourceDetails(resourceType,
             key, "Main", null, null,
@@ -260,7 +241,38 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
 //        }
 //    }
     
-    public static String createResourceKey(String serverName, List<String> hosts) {
+    public static String createMainServerResourceKey(ApacheServerComponent serverComponent, ApacheDirectiveTree runtimeConfig, SnmpWwwServiceIndexes snmpDiscoveries) throws Exception {
+        String mainServerUrl = serverComponent.getServerUrl();
+    
+        String key = null;
+        
+        if (mainServerUrl != null && !"null".equals(mainServerUrl)) {
+            URI mainServerUri = new URI(mainServerUrl);
+            String host = mainServerUri.getHost();
+            int port = mainServerUri.getPort();
+            if (port == -1) {
+                port = 80;
+            }
+
+            key = host + ":" + port;
+        } else {
+            key = ApacheVirtualHostServiceComponent.MAIN_SERVER_RESOURCE_KEY;
+        }
+        
+        //BZ 612189 - remove this once we have resource upgrade
+        //ok, this is hacky, but...
+        //in order not to change the semantics of the resource key creation
+        //we use the legacy resource key (i.e. the one based on SNMP) only
+        //if SNMP is available, even though we now have algorithm that can
+        //determine the SNMP resource key without it being available.
+        if (snmpDiscoveries != null) {
+            key = serverComponent.getAddressUtility().getHttpdInternalMainServerAddressRepresentation(runtimeConfig).toString(false, false);
+        }
+        
+        return key;
+    }
+    
+    public static String createResourceKey(String serverName, List<String> hosts, ApacheDirectiveTree runtimeConfig, ApacheServerComponent serverComponent, SnmpWwwServiceIndexes snmpDiscoveries) {
 //BZ 612189 - swap the impls once resource upgrade is in place
 //        StringBuilder keyBuilder = new StringBuilder();
 //        if (serverName != null) {
@@ -274,6 +286,16 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
 //        }
 //        
 //        return keyBuilder.toString();
+        
+        //BZ 612189 - remove this once we have resource upgrade
+        //ok, this is hacky, but...
+        //in order not to change the semantics of the resource key creation
+        //we use the legacy resource key (i.e. the one based on SNMP) only
+        //if SNMP is available, even though we now have algorithm that can
+        //determine the SNMP resource key without it being available.
+        if (snmpDiscoveries != null) {
+            return serverComponent.getAddressUtility().getHttpdInternalVirtualHostAddressRepresentation(runtimeConfig, hosts.get(0), serverName).toString(false, false);
+        }
         
         //try to derive the same resource key as the SNMP would have... this is to prevent the duplication of
         //vhost resources after the SNMP was configured - how I wish resource upgrade made it to 3.0 to prevent this
@@ -302,9 +324,9 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
      * @return
      */
     @Deprecated
-    private SnmpWwwServiceIndexes getSnmpDiscoveries(ResourceDiscoveryContext<ApacheServerComponent> discoveryContext) {
+    public static SnmpWwwServiceIndexes getSnmpDiscoveries(ApacheServerComponent serverComponent) {
         try {
-            SNMPSession snmpSession = discoveryContext.getParentResourceComponent().getSNMPSession();
+            SNMPSession snmpSession = serverComponent.getSNMPSession();
             List<SNMPValue> nameValues;
             List<SNMPValue> portValues;
             SNMPValue descValue;
@@ -338,7 +360,7 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
             
             return ret;
         } catch (Exception e) {
-            log.debug("Error while trying to contact SNMP of the apache server " + discoveryContext.getParentResourceContext().getResourceKey(), e);
+            log.debug("Error while trying to contact SNMP of the apache server " + serverComponent.getResourceKey(), e);
             return null;
         }
     }
@@ -349,7 +371,7 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
      * @author Lukas Krejci
      */
     @Deprecated
-    private static class SnmpWwwServiceIndexes {
+    public static class SnmpWwwServiceIndexes {
         public List<SNMPValue> names;
         public List<SNMPValue> ports;
         public SNMPValue desc;

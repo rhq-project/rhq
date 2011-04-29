@@ -19,9 +19,13 @@
 package org.rhq.plugins.apache;
 
 import java.io.File;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertyList;
+import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.operation.OperationContext;
 import org.rhq.core.pluginapi.operation.OperationFacet;
@@ -30,7 +34,18 @@ import org.rhq.core.pluginapi.util.ProcessExecutionUtility;
 import org.rhq.core.system.OperatingSystemType;
 import org.rhq.core.system.ProcessExecution;
 import org.rhq.core.system.ProcessExecutionResults;
+import org.rhq.core.system.ProcessInfo;
 import org.rhq.core.system.SystemInfo;
+import org.rhq.core.system.SystemInfoFactory;
+import org.rhq.plugins.apache.parser.ApacheConfigReader;
+import org.rhq.plugins.apache.parser.ApacheDirective;
+import org.rhq.plugins.apache.parser.ApacheDirectiveTree;
+import org.rhq.plugins.apache.parser.ApacheParser;
+import org.rhq.plugins.apache.parser.ApacheParserImpl;
+import org.rhq.plugins.apache.util.ApacheBinaryInfo;
+import org.rhq.plugins.apache.util.HttpdAddressUtility;
+import org.rhq.plugins.apache.util.OsProcessUtility;
+import org.rhq.plugins.apache.util.RuntimeApacheConfiguration;
 
 /**
  * Executes operations on an Apache server ({@link ApacheServerComponent} delegates to this class).
@@ -123,6 +138,10 @@ public class ApacheServerOperationsDelegate implements OperationFacet {
             processExecution.getArguments().add("-t");
             break;
         }
+        
+        case DETECT_SNMP_INDEXES: {
+            return detectSnmpIndexes();
+        }
         }
 
         ProcessExecutionResults processExecutionResults = this.systemInfo.executeProcess(processExecution);
@@ -199,10 +218,61 @@ public class ApacheServerOperationsDelegate implements OperationFacet {
         }
     }
 
+    private OperationResult detectSnmpIndexes() throws Exception {
+        PropertyList vhostList = new PropertyList("snmpIndexesPerResourceKey");
+        
+        ApacheDirectiveTree tree = serverComponent.loadParser();
+        tree = RuntimeApacheConfiguration.extract(tree, serverComponent.getCurrentProcessInfo(), serverComponent.getCurrentBinaryInfo(), serverComponent.getModuleNames());
+        ApacheVirtualHostServiceDiscoveryComponent.SnmpWwwServiceIndexes snmpDiscoveries = ApacheVirtualHostServiceDiscoveryComponent.getSnmpDiscoveries(serverComponent);
+        
+        String mainVhostRK = ApacheVirtualHostServiceDiscoveryComponent.createMainServerResourceKey(serverComponent, tree, snmpDiscoveries);
+        
+        List<ApacheDirective> virtualHosts = tree.search("/<VirtualHost");
+        
+        //the vhosts detected can actually have conflicting resource keys. So before we build the resulting configuration object
+        //let's pass the results through this map where we can check for those conflicts more easily.
+        LinkedHashMap<String, Integer> mapping = new LinkedHashMap<String, Integer>();
+        mapping.put(mainVhostRK, 1);
+        
+        int idx = 0;
+        for(ApacheDirective vhost : virtualHosts) {
+            List<String> hosts = vhost.getValues();
+
+            List<ApacheDirective> serverNames = vhost.getChildByName("ServerName");
+            String serverName = null;
+            if (serverNames.size() > 0) {
+                serverName = serverNames.get(0).getValuesAsString();
+            }
+
+            String resourceKey = ApacheVirtualHostServiceDiscoveryComponent.createResourceKey(serverName, hosts, tree, serverComponent, snmpDiscoveries);
+            
+            int snmpIdx = virtualHosts.size() - idx + 1;
+                      
+            if (!mapping.containsKey(resourceKey)) {
+                mapping.put(resourceKey, snmpIdx);
+            }
+            
+            ++idx;
+        }
+        
+        for (Map.Entry<String, Integer> entry : mapping.entrySet()) {
+            PropertyMap vhostRow = new PropertyMap("snmpIndexForResourceKey");
+            vhostList.add(vhostRow);
+            
+            vhostRow.put(new PropertySimple("resourceKey", entry.getKey()));
+            vhostRow.put(new PropertySimple("snmpWwwServiceIndex", entry.getValue()));
+        }
+        
+        OperationResult ret = new OperationResult();
+        ret.getComplexResults().put(vhostList);
+        
+        return ret;
+    }
+    
     /**
      * Enumeration of supported operations for an Apache server.
      */
     private enum Operation {
-        START, STOP, RESTART, START_SSL, GRACEFUL_RESTART, CONFIG_TEST
+        START, STOP, RESTART, START_SSL, GRACEFUL_RESTART, CONFIG_TEST, DETECT_SNMP_INDEXES
     }
 }

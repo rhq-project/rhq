@@ -441,6 +441,18 @@
 
       </operation>
 
+      <operation name="detect_snmp_indexes" displayName="Detect SNMP WWW Service Index values for Virtual Hosts"
+        description="If the order of the virtual hosts changed in your apache configuration file, you will need to reconfigure each of the virtual host resources of this server with the new SNMP WWW Service Index. This value is needed for correct reading of the configuration as well as monitoring. You will need to manually update each of the inventoried virtual host resources to correspond to the results of this operation.">        
+        <results>
+            <c:list-property name="snmpIndexesPerResourceKey">
+                <c:map-property name="snmpIndexForResourceKey">
+                    <c:simple-property name="resourceKey" displayName="Virtual Host Resource Key" />
+                    <c:simple-property name="snmpWwwServiceIndex" displayName="SNMP WWW Service Index" type="integer"/>
+                </c:map-property>
+            </c:list-property>
+        </results>
+      </operation>
+      
        <metric displayName="Number of Concurrent Connections" property="applInboundAssociations"
                destinationType="The number of current connections to this application"
                defaultOn="true" defaultInterval="300000" displayType="summary" units="none"/>

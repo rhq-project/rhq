@@ -312,7 +312,7 @@ fi
 
 
 echo "Building release from tag and publishing Maven artifacts (this will take about 10-15 minutes)..."
-mvn $MAVEN_RELEASE_PERFORM_GOAL $MAVEN_ARGS -Ddbreset
+mvn clean $MAVEN_RELEASE_PERFORM_GOAL $MAVEN_ARGS -Ddbreset
 [ "$?" -ne 0 ] && abort "Release build failed. Please see above Maven output for details, fix any issues, then try again."
 echo
 echo "Release build succeeded!"

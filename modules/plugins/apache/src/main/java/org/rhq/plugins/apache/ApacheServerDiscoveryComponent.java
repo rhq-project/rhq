@@ -309,7 +309,8 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
         pluginConfig.put(inclusionGlobs);
 
         ApacheDirectiveTree serverConfig = loadParser(serverConfigFile.getAbsolutePath(), serverRoot);
-
+        serverConfig = RuntimeApacheConfiguration.extract(serverConfig, process.getProcessInfo(), binaryInfo, getDefaultModuleNames(binaryInfo.getVersion()));
+        
         String serverUrl = null;
         String vhostsGlobInclude = null;
 

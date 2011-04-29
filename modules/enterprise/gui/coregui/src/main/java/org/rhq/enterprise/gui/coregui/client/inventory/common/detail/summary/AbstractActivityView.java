@@ -95,6 +95,7 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
     //retrieve localized text
     public static String RECENT_MEASUREMENTS = MSG.common_title_recent_measurements();
     public static String RECENT_MEASUREMENTS_NONE = MSG.view_resource_inventory_activity_no_recent_metrics();
+    public static String RECENT_MEASUREMENTS_GROUP_NONE = MSG.view_group_inventory_activity_no_recent_metrics();
     public static String RECENT_ALERTS = MSG.common_title_recent_alerts();
     public static String RECENT_ALERTS_NONE = MSG.view_resource_inventory_activity_no_recent_alerts();
     public static String RECENT_OOB = MSG.common_title_recent_oob_metrics();
@@ -636,19 +637,19 @@ public abstract class AbstractActivityView extends LocatableVLayout implements R
         return groupId;
     }
 
-    /* Utility method to extract groupId from
+    /* Utility method to extract group base path from current page
      *
      */
     public static String groupPathLookup(String currentPage) {
         String groupBasePath = "";
         if ((currentPage != null) && (!currentPage.trim().isEmpty())) {
             String[] elements = currentPage.split("/");
-            //process for groups and auto groups Ex. ResourceGroup/10111 or ResourceGroup/AutoCluster/10321
+            //process for groups and auto groups Ex. ResourceGroup/10111 , ResourceGroup/AutoCluster/10321 , Resource/AutoGroup/10141
             try {
                 Integer.valueOf(elements[1]);
                 groupBasePath = elements[0];
             } catch (NumberFormatException nfe) {
-                groupBasePath = elements[1] + "/" + elements[1];
+                groupBasePath = elements[0] + "/" + elements[1];
             }
         }
         return groupBasePath;

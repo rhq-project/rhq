@@ -7,7 +7,7 @@
   <parent>
     <artifactId>rhq-modules-parent</artifactId>
     <groupId>org.rhq</groupId>
-    <version>4.0.0</version>
+    <version>4.0.1-SNAPSHOT</version>
   </parent>
 
   <artifactId>test-utils</artifactId>

@@ -322,6 +322,7 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
             serverRootProp.setValue(serverRoot);
             //reparse the configuration with the new ServerRoot
             serverConfig = loadParser(serverConfigFile.getAbsolutePath(), serverRoot);
+            serverConfig = RuntimeApacheConfiguration.extract(serverConfig, process.getProcessInfo(), binaryInfo, getDefaultModuleNames(binaryInfo.getVersion()));
         }
 
         serverUrl = getUrl(serverConfig, binaryInfo.getVersion());

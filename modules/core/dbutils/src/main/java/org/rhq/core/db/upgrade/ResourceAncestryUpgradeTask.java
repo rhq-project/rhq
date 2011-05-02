@@ -18,6 +18,7 @@
  */
 package org.rhq.core.db.upgrade;
 
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
@@ -50,8 +51,16 @@ public class ResourceAncestryUpgradeTask implements DatabaseUpgradeTask {
             + "       res.RESOURCE_TYPE_ID=rt.ID and rt.CATEGORY='PLATFORM'";
         List<Object[]> rs = databaseType.executeSelectSql(connection, sql);
         for (Object[] result : rs) {
-            int rtId = (Integer) result[0];
-            int resId = (Integer) result[1];
+            int rtId;
+            int resId;
+
+            if (result[0] instanceof BigDecimal) {
+                rtId = ((BigDecimal) result[0]).intValue();
+                resId = ((BigDecimal) result[1]).intValue();
+            } else {
+                rtId = (Integer) result[0];
+                resId = (Integer) result[1];
+            }
             String resName = (String) result[2];
 
             handleChildren(rtId, resId, resName, null);
@@ -66,8 +75,16 @@ public class ResourceAncestryUpgradeTask implements DatabaseUpgradeTask {
             + "       res.RESOURCE_TYPE_ID=rt.ID and res.PARENT_RESOURCE_ID=" + parentResId;
         List<Object[]> rs = databaseType.executeSelectSql(connection, sql);
         for (Object[] result : rs) {
-            int rtId = (Integer) result[0];
-            int resId = (Integer) result[1];
+            int rtId;
+            int resId;
+
+            if (result[0] instanceof BigDecimal) {
+                rtId = ((BigDecimal) result[0]).intValue();
+                resId = ((BigDecimal) result[1]).intValue();
+            } else {
+                rtId = (Integer) result[0];
+                resId = (Integer) result[1];
+            }
             String resName = (String) result[2];
             String ancestry = getAncestry(parentRtId, parentResId, parentResName, parentAncestry);
             String updateSql = "update RHQ_RESOURCE set ANCESTRY='" + ancestry + "' where ID=" + resId;

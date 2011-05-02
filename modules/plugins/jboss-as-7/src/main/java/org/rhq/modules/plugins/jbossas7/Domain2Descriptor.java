@@ -94,8 +94,11 @@ public class Domain2Descriptor {
             attributesMap = (Map<String, Object>) resMap.get("attributes");
         }
 
+        createProperties(doMetrcis, attributesMap, 0);
 
+    }
 
+    private void createProperties(boolean doMetrcis, Map<String, Object> attributesMap, int indent) {
         for (Map.Entry<String,Object> entry : attributesMap.entrySet()) {
 
             Map<String,Object> props = (Map<String, Object>) entry.getValue();
@@ -118,12 +121,21 @@ public class Domain2Descriptor {
             case LIST:
                 typeString = "-list-";
                 break; // Handled below
+            case OBJECT: // an embedded map
+                typeString = "-object-";
+                System.out.println("<c:list-property name=\"" + entry.getKey() +"\" description=\"" +
+                        props.get("description") + "\" >");
+                createProperties(doMetrcis,
+                        (Map<String, Object>) ((Map<String, Object>) entry.getValue()).get("attributes"), indent+4);
+                System.out.println("</c:list-property>");
+
+                continue;
             default:
                 typeString = "- unknown -";
                 System.err.println("Unknown type " + ptype + " for " + entry.getKey());
             }
 
-            if (ptype==Type.LIST && !doMetrcis) {
+            if (ptype== Type.LIST && !doMetrcis) {
 
                 System.out.println("<c:list-property name=\"" + entry.getKey() +"\" >");
                 System.out.println("  <c:simple-property name=\"" + entry.getKey() + "\" />");
@@ -134,14 +146,19 @@ public class Domain2Descriptor {
                 continue;
             }
 
+            String accessType = (String) props.get("access-type");
+            if (accessType==null)
+                accessType = "read-only"; // default of as7
             if (doMetrcis) {
-                if (!props.get("access-type").equals("metric"))
+                if (!accessType.equals("metric"))
                     continue;
 
-                StringBuilder sb = new StringBuilder("<metric property=\"");
+                StringBuilder sb = new StringBuilder();
+                doIndent(indent,sb);
+                sb.append("<metric property=\"");
                 sb.append(entry.getKey()).append('"');
                 sb.append(" type=\"").append(typeString).append("\"");
-                if (ptype==Type.STRING)
+                if (ptype== Type.STRING)
                     sb.append(" dataType=\"trait\"");
 
                 String description = (String) props.get("description");
@@ -155,8 +172,12 @@ public class Domain2Descriptor {
 
             }
             else {
+                if (accessType.equals("metric"))
+                    continue;
 
-                StringBuilder sb = new StringBuilder("<c:simple-property name=\"");
+                StringBuilder sb = new StringBuilder();
+                doIndent(indent,sb);
+                sb.append("<c:simple-property name=\"");
                 sb.append(entry.getKey()).append('"');
 
                 Object required = props.get("required");
@@ -166,7 +187,7 @@ public class Domain2Descriptor {
 
                 sb.append(" type=\"").append(typeString).append("\"");
                 sb.append(" readOnly=\"");
-                if (props.get("access-type").equals("read-only"))
+                if (accessType!=null && accessType.equals("read-only")) // TODO if no access-type is given, the one from the parent applies
                     sb.append("true");
                 else
                     sb.append("false");
@@ -183,8 +204,11 @@ public class Domain2Descriptor {
                 System.out.println(sb.toString());
             }
         }
+    }
 
-
+    private void doIndent(int indent, StringBuilder sb) {
+        for (int i = 0 ; i < indent ; i++)
+            sb.append(' ');
     }
 
     private Type getTypeFromProps(Map<String, Object> props) {

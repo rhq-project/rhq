@@ -312,7 +312,7 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
     }
 
     public List<File> getConfigurationFiles() {
-        List<File> files = Glob.matchAll(new File(this.augeasRootPath), includeGlobs);
+        List<File> files = Glob.matchAll(new File(this.augeasRootPath), includeGlobs, Glob.ALPHABETICAL_COMPARATOR);
         Glob.excludeAll(files, excludeGlobs);
         return files;
     }

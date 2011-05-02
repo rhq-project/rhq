@@ -60,12 +60,16 @@ public class AugeasConfigurationDiscoveryComponent<T extends ResourceComponent> 
         pluginConfig.put(includeProps);
         pluginConfig.put(excludeProps);
 
-        checkFiles(pluginConfig);
+        try {
+            checkFiles(pluginConfig);
 
-        DiscoveredResourceDetails resource = createResourceDetails(discoveryContext, pluginConfig);
-        discoveredResources.add(resource);
-        log.debug("Discovered " + discoveryContext.getResourceType().getName() + " Resource with key ["
-            + resource.getResourceKey() + "].");
+            DiscoveredResourceDetails resource = createResourceDetails(discoveryContext, pluginConfig);
+            discoveredResources.add(resource);
+            log.debug("Discovered " + discoveryContext.getResourceType().getName() + " Resource with key ["
+                + resource.getResourceKey() + "].");
+        } catch (IllegalStateException e) { // Thrown by augeas if it can not read a file
+            log.warn("Discovery failed: " + e.getMessage());
+        }
 
         return discoveredResources;
     }
@@ -127,7 +131,7 @@ public class AugeasConfigurationDiscoveryComponent<T extends ResourceComponent> 
             throw new IllegalStateException("Expecting at least one inclusion pattern for configuration files.");
         }
 
-        List<File> files = Glob.matchAll(root, includeGlobs);
+        List<File> files = Glob.matchAll(root, includeGlobs, Glob.ALPHABETICAL_COMPARATOR);
 
         if (excludeGlobsProp != null) {
             List<String> excludeGlobs = getGlobList(excludeGlobsProp);

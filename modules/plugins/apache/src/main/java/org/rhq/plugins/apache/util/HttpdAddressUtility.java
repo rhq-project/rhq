@@ -410,6 +410,12 @@ public enum HttpdAddressUtility {
                 }
             } catch (UnknownHostException e) {
                 ret.host = BOGUS_HOST_WITHOUT_FORWARD_DNS;
+                
+                //weird, as it seems, apache uses the port of the main server
+                //with the unknown host even if the port was specified in the vhost
+                //definition
+                Address mainAddress = getHttpdInternalMainServerAddressRepresentation(runtimeConfig);
+                ret.port = mainAddress.port;
             }
         }
         

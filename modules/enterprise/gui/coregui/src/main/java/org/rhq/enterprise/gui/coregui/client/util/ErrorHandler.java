@@ -25,6 +25,7 @@ import com.allen_sauer.gwt.log.client.Log;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 
 /**
  * @author Greg Hinkle
@@ -42,7 +43,17 @@ public class ErrorHandler {
     }
 
     public void handleError(String message, Throwable t) {
-        Message errorMessage = new Message(message, t, Message.Severity.Error);
+        Severity severity;
+
+        if ((t != null) && (t instanceof com.google.gwt.http.client.RequestTimeoutException)) {
+            // if its a timeout exception, log it as a warning since the request might still complete on the server
+            severity = Message.Severity.Warning;
+            message = MSG.common_msg_asyncTimeout(message);
+        } else {
+            severity = Message.Severity.Error;
+        }
+
+        Message errorMessage = new Message(message, t, severity);
         CoreGUI.getMessageCenter().notify(errorMessage);
 
         if (t != null) {

@@ -119,7 +119,12 @@ public class ChildHistoryDetails extends LocatableVLayout {
         StaticTextItem createdResourceKey = new StaticTextItem("createdResourceKey", MSG.common_title_resource_key());
         createdResourceKey.setValue(history.getNewResourceKey());
 
-        // TODO: show resource info, like type
+        StaticTextItem createdResourceType = new StaticTextItem("createdResourceType", MSG.common_title_resource_type());
+        if (history.getResourceType() != null) {
+            createdResourceType.setValue(history.getResourceType().getName());
+        } else {
+            createdResourceType.setValue(MSG.common_status_unknown());
+        }
 
         TextAreaItem errorMessage = new TextAreaItem("errorMessage", MSG.common_title_error());
         errorMessage.setValue(history.getErrorMessage());
@@ -130,10 +135,10 @@ public class ChildHistoryDetails extends LocatableVLayout {
 
         if (history.getErrorMessage() != null && history.getErrorMessage().length() > 0) {
             form.setItems(id, type, createdTimestamp, modifiedTimestamp, subject, createdResourceName,
-                createdResourceKey, status, errorMessage);
+                createdResourceKey, createdResourceType, status, errorMessage);
         } else {
             form.setItems(id, type, createdTimestamp, modifiedTimestamp, subject, createdResourceName,
-                createdResourceKey, status);
+                createdResourceKey, createdResourceType, status);
         }
 
         return form;
@@ -182,7 +187,20 @@ public class ChildHistoryDetails extends LocatableVLayout {
             status.setValue("?");
         }
 
-        // TODO: show resource info, like name, type
+        StaticTextItem deletedResourceName = new StaticTextItem("deletedResourceName", MSG.common_title_resource_name());
+        StaticTextItem deletedResourceType = new StaticTextItem("deletedResourceType", MSG.common_title_resource_type());
+
+        if (history.getResource() != null) {
+            deletedResourceName.setValue(history.getResource().getName());
+            if (history.getResource().getResourceType() != null) {
+                deletedResourceType.setValue(history.getResource().getResourceType().getName());
+            } else {
+                deletedResourceType.setValue(MSG.common_status_unknown());
+            }
+        } else {
+            deletedResourceName.setValue(MSG.common_status_unknown());
+            deletedResourceType.setValue(MSG.common_status_unknown());
+        }
 
         TextAreaItem errorMessage = new TextAreaItem("errorMessage", MSG.common_title_error());
         errorMessage.setValue(history.getErrorMessage());
@@ -192,9 +210,11 @@ public class ChildHistoryDetails extends LocatableVLayout {
         errorMessage.setHeight("100%");
 
         if (history.getErrorMessage() != null && history.getErrorMessage().length() > 0) {
-            form.setItems(id, type, createdTimestamp, modifiedTimestamp, subject, status, errorMessage);
+            form.setItems(id, type, createdTimestamp, modifiedTimestamp, subject, deletedResourceName,
+                deletedResourceType, status, errorMessage);
         } else {
-            form.setItems(id, type, createdTimestamp, modifiedTimestamp, subject, status);
+            form.setItems(id, type, createdTimestamp, modifiedTimestamp, subject, deletedResourceName,
+                deletedResourceType, status);
         }
 
         return form;

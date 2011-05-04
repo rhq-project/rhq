@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -22,10 +22,13 @@ import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.EventTarget;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
@@ -54,7 +57,6 @@ import org.rhq.enterprise.gui.coregui.client.test.TestRemoteServiceStatisticsVie
 import org.rhq.enterprise.gui.coregui.client.test.TestDataSourceResponseStatisticsView;
 import org.rhq.enterprise.gui.coregui.client.test.TestTopView;
 import org.rhq.enterprise.gui.coregui.client.util.ErrorHandler;
-import org.rhq.enterprise.gui.coregui.client.util.WidgetUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenter;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
@@ -65,7 +67,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * @author Greg Hinkle
  * @author Ian Springer
  */
-public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
+public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.NativePreviewHandler {
 
     public static final String CONTENT_CANVAS_ID = "BaseContent";
 
@@ -121,6 +123,8 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
 
         coreGUI = this;
 
+        Event.addNativePreviewHandler(this);
+
         registerPageKeys();
 
         GWT.setUncaughtExceptionHandler(new GWT.UncaughtExceptionHandler() {
@@ -145,6 +149,42 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
         // removing loading image, which can be seen if LoginView doesn't completely cover it
         Element loadingPanel = DOM.getElementById("Loading-Panel");
         loadingPanel.removeFromParent();
+    }
+
+    public void onPreviewNativeEvent(Event.NativePreviewEvent event) {
+        if (SC.isIE() && event.getTypeInt() == Event.ONCLICK) {
+            NativeEvent nativeEvent = event.getNativeEvent();
+            EventTarget target = nativeEvent.getEventTarget();
+            if (Element.is(target)) {
+                Element element = Element.as(target);
+                if ("a".equalsIgnoreCase(element.getTagName())) {
+                    // make sure it's not a hyperlink that GWT already handles
+                    if (element.getPropertyString("__listener") == null) {
+                        String url = element.getAttribute("href");
+                        String viewPath = getViewPath(url);
+                        if (viewPath != null) {
+                            GWT.log("Forcing CoreGUI.goToView(\"" + viewPath + "\")...");
+                            CoreGUI.goToView(viewPath);
+                            nativeEvent.preventDefault();
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private static String getViewPath(String url) {
+        String token;
+        if (url.startsWith("#")) {
+            token = url.substring(1);
+        } else if (url.startsWith("/#")) {
+            token = url.substring(2);
+        } else if (url.contains(Location.getHost()) && url.indexOf('#') > 0) {
+            token = url.substring(url.indexOf('#') + 1);
+        } else {
+            token = null;
+        }
+        return token;
     }
 
     private void registerPageKeys() {
@@ -308,10 +348,6 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
 
     public static ErrorHandler getErrorHandler() {
         return errorHandler;
-    }
-
-    public static void printWidgetTree() {
-        WidgetUtility.printWidgetTree(coreGUI.rootCanvas);
     }
 
     private static String getDefaultView() {
@@ -501,4 +537,5 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
     public static boolean isDebugMode() {
         return !GWT.isScript();
     }
+
 }

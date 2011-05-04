@@ -161,10 +161,10 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
                     // make sure it's not a hyperlink that GWT already handles
                     if (element.getPropertyString("__listener") == null) {
                         String url = element.getAttribute("href");
-                        String token = getHistoryToken(url);
-                        if (token != null) {
-                            GWT.log("Forcing History.newItem(\"" + token + "\")...");
-                            History.newItem(token);
+                        String viewPath = getViewPath(url);
+                        if (viewPath != null) {
+                            GWT.log("Forcing CoreGUI.goToView(\"" + viewPath + "\")...");
+                            CoreGUI.goToView(viewPath);
                             nativeEvent.preventDefault();
                         }
                     }
@@ -173,7 +173,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
         }
     }
 
-    private static String getHistoryToken(String url) {
+    private static String getViewPath(String url) {
         String token;
         if (url.startsWith("#")) {
             token = url.substring(1);
@@ -537,4 +537,5 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
     public static boolean isDebugMode() {
         return !GWT.isScript();
     }
+
 }

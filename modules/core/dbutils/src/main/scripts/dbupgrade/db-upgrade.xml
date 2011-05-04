@@ -3204,7 +3204,7 @@
                 <!-- give the 'SUPER USER' and 'ALL RESOURCES' roles permission to delete/purge events (this permission
                      previously did not exist, and event deletion/purging could be performed by any user with authz to
                      view the resource/group in question).
-                     
+
                      a user with MANAGE_SECURITY must explicitly grant this permission to other roles after upgrade-->
                 <schema-directSQL>
                     <statement desc="Inserting MANAGE_EVENTS permission for 'Super User' role">
@@ -3235,7 +3235,7 @@
                     </statement>
                 </schema-directSQL>
             </schemaSpec>
-            
+
             <schemaSpec version="2.97">
                 <!-- Support subject-owned groups (e.g. autogroups) -->
                 <schema-addColumn table="RHQ_RESOURCE_GROUP" column="SUBJECT_ID" columnType="INTEGER" />
@@ -3288,10 +3288,14 @@
                 <!-- Finally, make ID the primary key, rather than (JOB_NAME, JOB_GROUP), and make
                      (JOB_NAME, JOB_GROUP) a unique index instead. -->
                 <schema-directSQL>
-                    <statement desc="Changing primary key of RHQ_OPERATION_SCHEDULE to ID...">
-                        ALTER TABLE RHQ_OPERATION_SCHEDULE DROP CONSTRAINT RHQ_OPERATION_SCHEDULE_KEY;
-                        ALTER TABLE RHQ_OPERATION_SCHEDULE ADD PRIMARY KEY (ID);
-                        CREATE UNIQUE INDEX RHQ_OPERATION_SCHEDULE_KEY_IDX ON RHQ_OPERATION_SCHEDULE (JOB_NAME, JOB_GROUP);
+                    <statement desc="Changing primary key of RHQ_OPERATION_SCHEDULE to ID. Step1/3...">
+                        ALTER TABLE RHQ_OPERATION_SCHEDULE DROP CONSTRAINT RHQ_OPERATION_SCHEDULE_KEY
+                    </statement>                        
+                    <statement desc="Changing primary key of RHQ_OPERATION_SCHEDULE to ID. Step2/3...">                    
+                        ALTER TABLE RHQ_OPERATION_SCHEDULE ADD PRIMARY KEY (ID)
+                    </statement>                    
+                    <statement desc="Changing primary key of RHQ_OPERATION_SCHEDULE to ID. Step3/3...">                    
+                        CREATE UNIQUE INDEX RHQ_OPERATION_SCHEDULE_KEY_IDX ON RHQ_OPERATION_SCHEDULE (JOB_NAME, JOB_GROUP)
                     </statement>
                 </schema-directSQL>
             </schemaSpec>
@@ -3328,7 +3332,7 @@
                         REFERENCES RHQ_RESOURCE_GROUP (ID)
                     </statement>
                 </schema-directSQL>
-                
+
                 <!-- Add category for distinguishing what kind of dashboard this is -->
                 <schema-addColumn table="RHQ_DASHBOARD" column="CATEGORY" columnType="VARCHAR2" precision="20"/>
                 <schema-directSQL>
@@ -3337,12 +3341,12 @@
                         SET CATEGORY = 'INVENTORY'
                     </statement>
                 </schema-directSQL>
-                <schema-alterColumn table="RHQ_DASHBOARD" column="CATEGORY" nullable="FALSE" />                
+                <schema-alterColumn table="RHQ_DASHBOARD" column="CATEGORY" nullable="FALSE" />
             </schemaSpec>
 
             <schemaSpec version="2.104">
                 <!-- package types no longer require to be coupled with a resource type. They can exist on their own. -->
-                <schema-alterColumn table="RHQ_PACKAGE_TYPE" column="RESOURCE_TYPE_ID" nullable="true"/>                            
+                <schema-alterColumn table="RHQ_PACKAGE_TYPE" column="RESOURCE_TYPE_ID" nullable="true"/>
             </schemaSpec>
 
             <schemaSpec version="2.105">
@@ -3350,15 +3354,13 @@
                 <schema-addColumn table="RHQ_REPO" column="IS_PRIVATE" columnType="BOOLEAN" />
             	<schema-directSQL>
                     <statement targetDBVendor="postgresql" desc="Set is_private flag for existing repos to false">
-                        UPDATE RHQ_REPO
-                        SET IS_PRIVATE = false
+                        UPDATE RHQ_REPO SET IS_PRIVATE = false
                     </statement>
                     <statement targetDBVendor="oracle" desc="Set is_private flag for existing repos to false">
-                        UPDATE RHQ_REPO
-                        SET IS_PRIVATE = 0
+                        UPDATE RHQ_REPO SET IS_PRIVATE = 0
                     </statement>
             	</schema-directSQL>
-                <schema-alterColumn table="RHQ_REPO" column="IS_PRIVATE" nullable="FALSE" default="TRUE"/>
+                <schema-alterColumn table="RHQ_REPO" column="IS_PRIVATE" nullable="FALSE"/>
                 <schema-directSQL>
                     <statement desc="Creating OWNER_ID foreign key relation on RHQ_REPO">
                         ALTER TABLE RHQ_REPO
@@ -3367,12 +3369,12 @@
                         REFERENCES RHQ_SUBJECT (ID)
                     </statement>
                 </schema-directSQL>
-                
+
                 <!-- Now add modify the permissions to give all the roles with MANAGE_INVENTORY
                 the new  MANAGE_REPOSITORIES privilege so that people's privs remain unchanged. -->
                 <schema-directSQL>
                     <statement>
-                        INSERT INTO RHQ_PERMISSION (role_id, operation) 
+                        INSERT INTO RHQ_PERMISSION (role_id, operation)
                             SELECT role_id, 15 FROM RHQ_PERMISSION WHERE operation = 1
                     </statement>
                 </schema-directSQL>
@@ -3381,9 +3383,12 @@
             <schemaSpec version="2.106">
                 <!-- add pre-computed disambiguated name for Resource -->
                 <schema-addColumn table="RHQ_RESOURCE" column="ANCESTRY" columnType="VARCHAR2" precision="4000" />
-                <schema-javaTask className="ResourceAncestryUpgradeTask" />                
+                <schema-javaTask className="ResourceAncestryUpgradeTask" />
             </schemaSpec>
 
+            <schemaSpec version="2.107">
+                <schema-createSequence name="RHQ_OPERATION_SCHEDULE_ID_SEQ" initial="10001"/>
+            </schemaSpec>
         </dbupgrade>
     </target>
 </project>

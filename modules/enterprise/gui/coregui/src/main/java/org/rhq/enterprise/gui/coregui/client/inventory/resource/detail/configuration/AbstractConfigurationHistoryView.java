@@ -97,7 +97,8 @@ public abstract class AbstractConfigurationHistoryView<T extends AbstractConfigu
                         int[] doomedIds = new int[selection.length];
                         int i = 0;
                         for (ListGridRecord selected : selection) {
-                            doomedIds[i] = selected.getAttributeAsInt(AbstractConfigurationHistoryDataSource.Field.ID);
+                            doomedIds[i++] = selected
+                                .getAttributeAsInt(AbstractConfigurationHistoryDataSource.Field.ID);
                             if (selected
                                 .getAttribute(AbstractConfigurationHistoryDataSource.Field.GROUP_CONFIG_UPDATE_ID) != null) {
                                 CoreGUI.getMessageCenter().notify(

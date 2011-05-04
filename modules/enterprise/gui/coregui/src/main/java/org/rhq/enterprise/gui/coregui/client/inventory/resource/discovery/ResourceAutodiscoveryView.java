@@ -74,7 +74,7 @@ public class ResourceAutodiscoveryView extends LocatableVLayout {
     private ToolStrip footer;
     private DataSource dataSource;
 
-    private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
+    private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService(60000);
 
     public ResourceAutodiscoveryView(String locatorId) {
         super(locatorId);

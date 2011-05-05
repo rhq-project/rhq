@@ -49,9 +49,7 @@ public class BundleDeploymentCriteria extends TaggedCriteria {
     private String filterSubjectName;
 
     private boolean fetchBundleVersion;
-    private boolean fetchConfiguration;
     private boolean fetchDestination;
-    private boolean fetchReplacedBundleDeployment;
     private boolean fetchResourceDeployments;
 
     public BundleDeploymentCriteria() {
@@ -110,16 +108,8 @@ public class BundleDeploymentCriteria extends TaggedCriteria {
         this.fetchBundleVersion = fetchBundleVersion;
     }
 
-    public void fetchConfiguration(boolean fetchConfiguration) {
-        this.fetchConfiguration = fetchConfiguration;
-    }
-
     public void fetchDestination(boolean fetchDestination) {
         this.fetchDestination = fetchDestination;
-    }
-
-    public void fetchReplacedBundleDeployment(boolean fetchReplacedBundleDeployment) {
-        this.fetchReplacedBundleDeployment = fetchReplacedBundleDeployment;
     }
 
     public void fetchResourceDeployments(boolean fetchResourceDeployments) {

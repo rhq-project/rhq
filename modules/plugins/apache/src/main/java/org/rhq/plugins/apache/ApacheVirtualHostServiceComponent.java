@@ -341,73 +341,47 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
     public AugeasNode getNode(AugeasTree tree) {
         String resourceKey = resourceContext.getResourceKey();
 
-        if (ApacheVirtualHostServiceComponent.MAIN_SERVER_RESOURCE_KEY.equals(resourceKey)) {
+        int snmpIdx = getWwwServiceIndex();
+
+        ApacheServerComponent server = resourceContext.getParentResourceComponent();
+
+        if (snmpIdx < 1) {
+            throw new IllegalStateException(
+                "Could not determine the index of the virtual host [" + resourceKey + "] in the runtime configuration. This is very strange.");
+        }
+
+        if (snmpIdx == 1) {
             return tree.getRootNode();
         }
 
-        String serverName = null;
-        int pipeIdx = resourceKey.indexOf('|');
-        //the resource key always contains the '|' so we're only checking for non-empty
-        //server names
-        if (pipeIdx > 0) {
-            serverName = resourceKey.substring(0, pipeIdx);
-        }
+        final List<AugeasNode> allVhosts = new ArrayList<AugeasNode>();
 
-        String[] addrs = resourceKey.substring(pipeIdx + 1).split(" ");
-        List<AugeasNode> nodes = tree.matchRelative(tree.getRootNode(), "<VirtualHost");
-        List<AugeasNode> virtualHosts = new ArrayList<AugeasNode>();
-
-        boolean matching = false;
-
-        for (AugeasNode node : nodes) {
-            matching = false;
-            List<AugeasNode> serverNameNodes = tree.matchRelative(node, "ServerName/param");
-            String tempServerName = null;
-
-            if (!(serverNameNodes.isEmpty())) {
-                tempServerName = serverNameNodes.get(0).getValue();
-            }
-            if (tempServerName == null & serverName == null) {
-                matching = true;
-            }
-            
-            if (tempServerName != null & serverName != null) {
-                if (tempServerName.equals(serverName)) {
-                    matching = true;
+        RuntimeApacheConfiguration.walkRuntimeConfig(new RuntimeApacheConfiguration.NodeVisitor<AugeasNode>() {
+            public void visitOrdinaryNode(AugeasNode node) {
+                if ("<VirtualHost".equalsIgnoreCase(node.getLabel())) {
+                    allVhosts.add(node);
                 }
             }
-            
-            if (matching) {
-                List<AugeasNode> params = node.getChildByLabel("param");
-                for (AugeasNode nd : params) {
-                    matching = false;
-                    for (String adr : addrs) {
-                        if (adr.equals(nd.getValue())) {
-                            matching = true;
-                        }
-                    }
-                    if (!matching) {
-                        break;
-                    }
-                }
 
-                if (matching) {
-                    virtualHosts.add(node);
-                }
+            public void visitConditionalNode(AugeasNode node, boolean isSatisfied) {
             }
-        }
-       
-        if (virtualHosts.size() == 0) {
-            throw new IllegalStateException("Could not find virtual host configuration in augeas for virtual host: "
-                + resourceKey);
-        }
+        }, tree, server.getCurrentProcessInfo(), server.getCurrentBinaryInfo(), server.getModuleNames());
 
-        if (virtualHosts.size() > 1) {
-            throw new IllegalStateException("Found more than 1 virtual host configuration in augeas for virtual host: "
-                + resourceKey);
-        }
+        //transform the SNMP index into the index of the vhost
+        int idx = allVhosts.size() - snmpIdx + 1;
 
-        return virtualHosts.get(0);
+        AugeasNode vhost = allVhosts.get(idx);
+
+        //now check if there are any If* directives underneath this vhost.
+        //we don't support configuring such beasts.
+        if (vhost.getChildByLabel("<IfDefine").isEmpty() && vhost.getChildByLabel("<IfModule").isEmpty()
+            && vhost.getChildByLabel("<IfVersion").isEmpty()) {
+
+            return vhost;
+        } else {
+            throw new IllegalStateException("Configuration of the virtual host [" + resourceKey
+                + "] contains conditional blocks. This is not supported by this plugin.");
+        }
     }
 
     /**

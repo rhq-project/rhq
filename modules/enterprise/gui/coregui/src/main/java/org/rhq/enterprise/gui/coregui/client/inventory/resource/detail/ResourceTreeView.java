@@ -27,8 +27,14 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeSet;
 
 import com.allen_sauer.gwt.log.client.Log;
+import com.google.gwt.http.client.Request;
+import com.google.gwt.http.client.RequestBuilder;
+import com.google.gwt.http.client.RequestCallback;
+import com.google.gwt.http.client.RequestException;
+import com.google.gwt.http.client.Response;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSCallback;
@@ -57,7 +63,9 @@ import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.dashboard.Dashboard;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
+import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
@@ -344,6 +352,7 @@ public class ResourceTreeView extends LocatableVLayout {
         // fetch the resource composite, we need resource permission info for enablement decisions
         ResourceCriteria criteria = new ResourceCriteria();
         criteria.addFilterId(resourceId);
+        criteria.fetchSchedules(true);
         GWTServiceLookup.getResourceService().findResourceCompositesByCriteria(criteria,
             new AsyncCallback<PageList<ResourceComposite>>() {
 
@@ -405,7 +414,8 @@ public class ResourceTreeView extends LocatableVLayout {
             pluginConfiguration.addClickHandler(new ClickHandler() {
 
                 public void onClick(MenuItemClickEvent event) {
-                    CoreGUI.goToView(LinkManager.getResourceTabLink(resource.getId(), "Inventory", "ConnectionSettings"));
+                    CoreGUI.goToView(LinkManager
+                        .getResourceTabLink(resource.getId(), "Inventory", "ConnectionSettings"));
                 }
             });
         }
@@ -436,14 +446,24 @@ public class ResourceTreeView extends LocatableVLayout {
         operations.setEnabled(operationsEnabled);
         if (operationsEnabled) {
             Menu opSubMenu = new Menu();
-            for (final OperationDefinition operationDefinition : resourceType.getOperationDefinitions()) {
+
+            //sort the display items alphabetically
+            TreeSet<String> ordered = new TreeSet<String>();
+            Map<String, OperationDefinition> definitionMap = new HashMap<String, OperationDefinition>();
+            for (OperationDefinition o : resourceType.getOperationDefinitions()) {
+                ordered.add(o.getDisplayName());
+                definitionMap.put(o.getDisplayName(), o);
+            }
+            for (String displayName : ordered) {
+                final OperationDefinition operationDefinition = definitionMap.get(displayName);
+
                 MenuItem operationItem = new MenuItem(operationDefinition.getDisplayName());
                 operationItem.addClickHandler(new ClickHandler() {
 
                     public void onClick(MenuItemClickEvent event) {
                         String viewPath = LinkManager.getResourceTabLink(resource.getId(),
-                                ResourceDetailView.Tab.OPERATIONS, ResourceDetailView.OperationsSubTab.SCHEDULES)
-                                + "/0/" + operationDefinition.getId();
+                            ResourceDetailView.Tab.OPERATIONS, ResourceDetailView.OperationsSubTab.SCHEDULES)
+                            + "/0/" + operationDefinition.getId();
                         CoreGUI.goToView(viewPath);
                     }
                 });
@@ -461,7 +481,16 @@ public class ResourceTreeView extends LocatableVLayout {
         boolean createChildResourcesEnabled = resourcePermission.isCreateChildResources();
         if (createChildResourcesEnabled) {
             Menu createChildSubMenu = new Menu();
-            for (final ResourceType childType : resourceType.getChildResourceTypes()) {
+            //sort the display items alphabetically
+            TreeSet<String> ordered = new TreeSet<String>();
+            Map<String, ResourceType> typeMap = new HashMap<String, ResourceType>();
+            for (ResourceType o : resourceType.getChildResourceTypes()) {
+                ordered.add(o.getName());
+                typeMap.put(o.getName(), o);
+            }
+
+            for (String type : ordered) {
+                final ResourceType childType = typeMap.get(type);
                 if (childType.isCreatable()) {
                     MenuItem createItem = new MenuItem(childType.getName());
 
@@ -487,7 +516,16 @@ public class ResourceTreeView extends LocatableVLayout {
         boolean manualImportEnabled = resourcePermission.isCreateChildResources();
         if (manualImportEnabled) {
             Menu importChildSubMenu = new Menu();
-            for (final ResourceType childType : resourceType.getChildResourceTypes()) {
+
+            //sort the display items alphabetically
+            TreeSet<String> ordered = new TreeSet<String>();
+            Map<String, ResourceType> typeMap = new HashMap<String, ResourceType>();
+            for (ResourceType o : resourceType.getChildResourceTypes()) {
+                ordered.add(o.getName());
+                typeMap.put(o.getName(), o);
+            }
+            for (String name : ordered) {
+                final ResourceType childType = typeMap.get(name);
                 if (childType.isSupportsManualAdd()) {
                     MenuItem importItem = new MenuItem(childType.getName());
 
@@ -501,7 +539,6 @@ public class ResourceTreeView extends LocatableVLayout {
                     importChildSubMenu.addItem(importItem);
                 }
             }
-
             if (resourceType.getCategory() == ResourceCategory.PLATFORM) {
                 loadManuallyAddServersToPlatforms(importChildSubMenu, resource);
             }
@@ -527,7 +564,17 @@ public class ResourceTreeView extends LocatableVLayout {
             }
 
             public void onSuccess(PageList<ResourceType> result) {
-                for (final ResourceType type : result) {
+                //sort the display items alphabetically
+                TreeSet<String> ordered = new TreeSet<String>();
+                Map<String, ResourceType> displayTypes = new HashMap<String, ResourceType>();
+                for (ResourceType type : result) {
+                    displayTypes.put(type.getName(), type);
+                    ordered.add(type.getName());
+                }
+
+                int idx = 0;
+                for (String displayType : ordered) {
+                    final ResourceType type = displayTypes.get(displayType);
                     if (type.getParentResourceTypes() == null || type.getParentResourceTypes().isEmpty()) {
                         MenuItem item = new MenuItem(type.getName());
 
@@ -538,7 +585,7 @@ public class ResourceTreeView extends LocatableVLayout {
                             }
                         });
 
-                        manuallyAddMenu.addItem(item);
+                        manuallyAddMenu.addItem(item, idx++);
                     }
                 }
             }
@@ -559,62 +606,143 @@ public class ResourceTreeView extends LocatableVLayout {
                 }
 
                 public void onSuccess(PageList<Dashboard> result) {
-
-                    for (final MeasurementDefinition def : type.getMetricDefinitions()) {
-
-                        MenuItem defItem = new MenuItem(def.getDisplayName());
-                        measurementsSubMenu.addItem(defItem);
-                        Menu defSubItem = new Menu();
-                        defItem.setSubmenu(defSubItem);
-
-                        for (final Dashboard d : result) {
-                            MenuItem addToDBItem = new MenuItem(MSG.view_tree_common_contextMenu_addChartToDashboard(d
-                                .getName()));
-                            defSubItem.addItem(addToDBItem);
-
-                            addToDBItem.addClickHandler(new ClickHandler() {
-
-                                public void onClick(MenuItemClickEvent menuItemClickEvent) {
-                                    DashboardPortlet p = new DashboardPortlet(MSG
-                                        .view_tree_common_contextMenu_resourceGraph(), ResourceGraphPortlet.KEY, 250);
-                                    p.getConfiguration().put(
-                                        new PropertySimple(ResourceGraphPortlet.CFG_RESOURCE_ID, resource.getId()));
-                                    p.getConfiguration().put(
-                                        new PropertySimple(ResourceGraphPortlet.CFG_DEFINITION_ID, def.getId()));
-
-                                    d.addPortlet(p);
-
-                                    GWTServiceLookup.getDashboardService().storeDashboard(d,
-                                        new AsyncCallback<Dashboard>() {
-
-                                            public void onFailure(Throwable caught) {
-                                                CoreGUI.getErrorHandler().handleError(
-                                                    MSG.view_tree_common_contextMenu_saveChartToDashboardFailure(),
-                                                    caught);
-                                            }
-
-                                            public void onSuccess(Dashboard result) {
-                                                CoreGUI
-                                                    .getMessageCenter()
-                                                    .notify(
-                                                        new Message(
-                                                            MSG
-                                                                .view_tree_common_contextMenu_saveChartToDashboardSuccessful(result
-                                                                    .getName()), Message.Severity.Info));
-                                            }
-                                        });
-
-                                }
-                            });
-
-                        }
-
+                    //sort the display items alphabetically
+                    TreeSet<String> ordered = new TreeSet<String>();
+                    Map<String, MeasurementDefinition> definitionMap = new HashMap<String, MeasurementDefinition>();
+                    for (MeasurementDefinition m : type.getMetricDefinitions()) {
+                        ordered.add(m.getDisplayName());
+                        definitionMap.put(m.getDisplayName(), m);
                     }
+
+                    for (String displayName : ordered) {
+                        final MeasurementDefinition def = definitionMap.get(displayName);
+                        //only add menu items for Measurement
+                        if (def.getDataType().equals(DataType.MEASUREMENT)) {
+                            MenuItem defItem = new MenuItem(def.getDisplayName());
+                            measurementsSubMenu.addItem(defItem);
+                            Menu defSubItem = new Menu();
+                            defItem.setSubmenu(defSubItem);
+
+                            for (final Dashboard d : result) {
+                                MenuItem addToDBItem = new MenuItem(MSG
+                                    .view_tree_common_contextMenu_addChartToDashboard(d.getName()));
+                                defSubItem.addItem(addToDBItem);
+
+                                addToDBItem.addClickHandler(new ClickHandler() {
+
+                                    public void onClick(MenuItemClickEvent menuItemClickEvent) {
+                                        DashboardPortlet p = new DashboardPortlet(MSG
+                                            .view_tree_common_contextMenu_resourceGraph(), ResourceGraphPortlet.KEY,
+                                            250);
+                                        p.getConfiguration().put(
+                                            new PropertySimple(ResourceGraphPortlet.CFG_RESOURCE_ID, resource.getId()));
+                                        p.getConfiguration().put(
+                                            new PropertySimple(ResourceGraphPortlet.CFG_DEFINITION_ID, def.getId()));
+
+                                        d.addPortlet(p);
+
+                                        GWTServiceLookup.getDashboardService().storeDashboard(d,
+                                            new AsyncCallback<Dashboard>() {
+
+                                                public void onFailure(Throwable caught) {
+                                                    CoreGUI.getErrorHandler().handleError(
+                                                        MSG.view_tree_common_contextMenu_saveChartToDashboardFailure(),
+                                                        caught);
+                                                }
+
+                                                public void onSuccess(Dashboard result) {
+                                                    CoreGUI
+                                                        .getMessageCenter()
+                                                        .notify(
+                                                            new Message(
+                                                                MSG
+                                                                    .view_tree_common_contextMenu_saveChartToDashboardSuccessful(result
+                                                                        .getName()), Message.Severity.Info));
+                                                }
+                                            });
+
+                                    }
+                                });
+
+                                //add new menu item for adding current graphable element to view if on Monitor/Graphs tab
+                                String currentViewPath = History.getToken();
+                                if (currentViewPath.indexOf("Monitoring/Graphs") > -1) {
+                                    MenuItem addGraphItem = new MenuItem(MSG.common_title_add_graph_to_view());
+                                    defSubItem.addItem(addGraphItem);
+
+                                    addGraphItem.addClickHandler(new ClickHandler() {
+                                        public void onClick(MenuItemClickEvent menuItemClickEvent) {
+                                            //generate javascript to call out to.
+                                            //Ex. menuLayers.hide();addMetric('${metric.resourceId},${metric.scheduleId}')
+                                            if (getScheduleDefinitionId(resource, def.getName()) > -1) {
+                                                String resourceGraphElements = resource.getId() + ","
+                                                    + getScheduleDefinitionId(resource, def.getName());
+
+                                                //construct portal.war url to access
+                                                String baseUrl = "/resource/common/monitor/visibility/IndicatorCharts.do";
+                                                baseUrl += "?id=" + resource.getId();
+                                                baseUrl += "&view=Default";
+                                                baseUrl += "&action=addChart&metric=" + resourceGraphElements;
+                                                baseUrl += "&view=Default";
+                                                final String url = baseUrl;
+                                                //initiate HTTP request
+                                                final RequestBuilder b = new RequestBuilder(RequestBuilder.GET, baseUrl);
+
+                                                try {
+                                                    b.setCallback(new RequestCallback() {
+                                                        public void onResponseReceived(final Request request,
+                                                            final Response response) {
+                                                            Log
+                                                                .trace("Successfully submitted request to add graph to view:"
+                                                                    + url);
+
+                                                            //kick off a page reload.
+                                                            String currentViewPath = History.getToken();
+                                                            CoreGUI.goToView(currentViewPath, true);
+                                                        }
+
+                                                        @Override
+                                                        public void onError(Request request, Throwable t) {
+                                                            Log.trace("Error adding Metric:" + url, t);
+                                                        }
+                                                    });
+                                                    b.send();
+                                                } catch (RequestException e) {
+                                                    Log.trace("Error adding Metric:" + url, e);
+                                                }
+                                            }
+                                        }
+                                    });
+                                }
+                                //                            }//end trait check
+                            }//end dashboard iteration
+                        }//end trait exclusion
+                    }//end measurement def iteration
 
                 }
             });
         measurements.setSubmenu(measurementsSubMenu);
         return measurements;
+    }
+
+    /** Locate the specific schedule definition using the definition identifier.
+     */
+    private int getScheduleDefinitionId(Resource resource, String definitionName) {
+        int id = -1;
+        if (resource.getSchedules() != null) {
+            boolean located = false;
+            MeasurementSchedule[] schedules = new MeasurementSchedule[resource.getSchedules().size()];
+            resource.getSchedules().toArray(schedules);
+            for (int i = 0; (!located && i < resource.getSchedules().size()); i++) {
+                MeasurementSchedule schedule = schedules[i];
+                MeasurementDefinition definition = schedule.getDefinition();
+                if ((definition != null) && definition.getName().equals(definitionName)) {
+                    located = true;
+                    id = schedule.getId();
+                }
+            }
+        }
+        return id;
     }
 
     private void setRootResource(Resource rootResource) {

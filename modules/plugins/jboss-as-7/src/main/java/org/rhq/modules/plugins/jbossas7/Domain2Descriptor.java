@@ -99,6 +99,9 @@ public class Domain2Descriptor {
     }
 
     private void createProperties(boolean doMetrcis, Map<String, Object> attributesMap, int indent) {
+        if (attributesMap==null)
+            return;
+
         for (Map.Entry<String,Object> entry : attributesMap.entrySet()) {
 
             Map<String,Object> props = (Map<String, Object>) entry.getValue();

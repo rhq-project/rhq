@@ -69,13 +69,14 @@ public class ConfirmationStep extends AbstractWizardStep {
             }
             layout.setMembersMargin(10);
 
+            // Get the Live Deployment
             BundleDeploymentCriteria c = new BundleDeploymentCriteria();
             c.addFilterDestinationId(this.wizard.getDestination().getId());
             c.addFilterIsLive(true);
-            c.fetchReplacedBundleDeployment(true);
             c.fetchBundleVersion(true);
             bundleServer.findBundleDeploymentsByCriteria(c, //
                 new AsyncCallback<PageList<BundleDeployment>>() {
+
                     public void onSuccess(PageList<BundleDeployment> liveDeployments) {
                         if (1 != liveDeployments.size()) {
                             nextPage = false;
@@ -86,9 +87,11 @@ public class ConfirmationStep extends AbstractWizardStep {
                             CoreGUI.getMessageCenter().notify(
                                 new Message(messageConcise, message, Message.Severity.Warning));
                         }
+
                         wizard.setLiveDeployment(liveDeployments.get(0));
-                        wizard.setPreviousDeployment(wizard.getLiveDeployment().getReplacedBundleDeployment());
-                        if (null == wizard.getPreviousDeployment()) {
+                        Integer replacedBundleDeploymentId = wizard.getLiveDeployment().getReplacedBundleDeploymentId();
+
+                        if (null == replacedBundleDeploymentId) {
                             nextPage = false;
                             String messageConcise = MSG
                                 .view_bundle_revertWizard_confirmStep_noPriorDeployment_concise();
@@ -99,7 +102,39 @@ public class ConfirmationStep extends AbstractWizardStep {
                                 new Message(messageConcise, message, Message.Severity.Warning));
                         }
 
-                        setLayout();
+                        // Get the Replaced Deployment (the one we want to revert to_
+                        BundleDeploymentCriteria c = new BundleDeploymentCriteria();
+                        c.addFilterId(replacedBundleDeploymentId);
+                        bundleServer.findBundleDeploymentsByCriteria(c, //
+                            new AsyncCallback<PageList<BundleDeployment>>() {
+
+                                public void onSuccess(PageList<BundleDeployment> replacedBundleDeployments) {
+                                    if (1 != replacedBundleDeployments.size()) {
+                                        nextPage = false;
+                                        String messageConcise = MSG
+                                            .view_bundle_revertWizard_confirmStep_noPriorDeployment_concise();
+                                        String message = MSG.view_bundle_revertWizard_confirmStep_noPriorDeployment(
+                                            wizard.getLiveDeployment().toString(), wizard.getDestination().toString());
+                                        wizard.getView().showMessage(message);
+                                        CoreGUI.getMessageCenter().notify(
+                                            new Message(messageConcise, message, Message.Severity.Warning));
+                                    }
+
+                                    wizard.setPreviousDeployment(replacedBundleDeployments.get(0));
+                                    setLayout();
+                                }
+
+                                public void onFailure(Throwable caught) {
+                                    nextPage = false;
+                                    String messageConcise = MSG
+                                        .view_bundle_revertWizard_confirmStep_noPriorDeployment_concise();
+                                    String message = MSG.view_bundle_revertWizard_confirmStep_noPriorDeployment(wizard
+                                        .getLiveDeployment().toString(), wizard.getDestination().toString());
+                                    wizard.getView().showMessage(message);
+                                    CoreGUI.getMessageCenter().notify(
+                                        new Message(messageConcise, message, Message.Severity.Warning));
+                                }
+                            });
                     }
 
                     public void onFailure(Throwable caught) {

@@ -1,8 +1,11 @@
-<?xml version="1.0"?><project>
+<?xml version="1.0"?>
+
+<project>
+
   <parent>
     <artifactId>rhq-plugins-parent</artifactId>
     <groupId>org.rhq</groupId>
-    <version>4.0.0-SNAPSHOT</version>
+    <version>4.1.0-SNAPSHOT</version>
   </parent>
   
   <modelVersion>4.0.0</modelVersion>

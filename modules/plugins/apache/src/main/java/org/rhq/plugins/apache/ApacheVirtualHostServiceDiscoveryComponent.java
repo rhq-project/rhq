@@ -142,7 +142,7 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
                 pluginConfiguration.put(rtLogProp);
 
                 //redefine the resourcename using the virtual host sample address
-                resourceName = address.toString(false);
+                resourceName = address.toString(false, true);
             }
             
             discoveredResources.add(new DiscoveredResourceDetails(resourceType, resourceKey, resourceName, null, null,

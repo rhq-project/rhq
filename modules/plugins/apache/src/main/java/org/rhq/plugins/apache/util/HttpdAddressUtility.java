@@ -251,10 +251,10 @@ public enum HttpdAddressUtility {
         
         @Override
         public String toString() {
-            return toString(true);
+            return toString(true, true);
         }
         
-        public String toString(boolean includeScheme) {
+        public String toString(boolean includeScheme, boolean interpretWildcardPort) {
             StringBuilder bld = new StringBuilder();
             
             if (includeScheme) {
@@ -266,7 +266,7 @@ public enum HttpdAddressUtility {
             if (port != NO_PORT_SPECIFIED_VALUE) {
                 bld.append(":");
                 
-                if (port == PORT_WILDCARD_VALUE) {
+                if (port == PORT_WILDCARD_VALUE && interpretWildcardPort) {
                     bld.append(WILDCARD);
                 } else {
                     bld.append(port);

@@ -36,6 +36,7 @@ import org.testng.annotations.Test;
 
 import org.rhq.core.pluginapi.util.FileUtils;
 import org.rhq.core.util.file.FileUtil;
+import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.plugins.apache.parser.ApacheConfigReader;
 import org.rhq.plugins.apache.parser.ApacheDirective;
 import org.rhq.plugins.apache.parser.ApacheDirectiveTree;
@@ -61,6 +62,7 @@ public class RuntimeConfigurationTest {
         "runtime-config/conditional/ifdefine-undefined.conf",
         "runtime-config/conditional/ifmodule-loaded.conf",
         "runtime-config/conditional/ifmodule-not-loaded.conf",
+        "runtime-config/conditional/ifversion.conf",
         "runtime-config/conditional/nested-mess.conf"        
     };
     
@@ -71,27 +73,15 @@ public class RuntimeConfigurationTest {
         "runtime-config/incl-order/httpd.conf"
     };
     
-    private static final String[] VHOST_NAMES_CONFIGURATION_TEST_FILES = {
-        "runtime-config/vhost-names/httpd.conf",
-        "runtime-config/vhost-names/vhost-with-servername-by-ip.conf",
-        "runtime-config/vhost-names/vhost-with-servername-by-unresolvable-hostname.conf",
-        "runtime-config/vhost-names/vhost-without-servername-resolvable-ip.conf",
-        "runtime-config/vhost-names/vhost-without-servername-unresolvable-ip.conf"
-    };
-    
     @BeforeClass
     public void copyConfigurationFiles() throws Exception {
         tmpDir = FileUtil.createTempDirectory("apache-runtime-config-tests", null, null);
         
-        for(String path : CONDITIONAL_CONFIGURATION_TEST_FILES) {
+        for(String path : CONDITIONAL_CONFIGURATION_TEST_FILES) {            
             copyResourceToFile(path, new File(tmpDir, path));
         }
         
         for(String path : INCLUSION_ORDER_CONFIGURATION_TEST_FILES) {
-            copyResourceToFile(path, new File(tmpDir, path));
-        }
-        
-        for(String path : VHOST_NAMES_CONFIGURATION_TEST_FILES) {
             copyResourceToFile(path, new File(tmpDir, path));
         }
     }
@@ -102,12 +92,10 @@ public class RuntimeConfigurationTest {
     }
     
     public void testConditionalInclusion() {
-        //TODO add tests for IfVersion!!!
-        
         MockApacheBinaryInfo binfo = new MockApacheBinaryInfo();
         binfo.setVersion("2.2.17");
         MockProcessInfo pinfo = new MockProcessInfo();
-        pinfo.setCommandLine(new String[] {"/usr/sbin/httpd", "-D", "DEFINED"});
+        pinfo.setCommandLine(new String[] {"blahblah", "-D", "DEFINED"});
         
         ApacheDirectiveTree tree = new ApacheDirectiveTree();
         ApacheParser parser = new ApacheParserImpl(tree, new File(tmpDir, "runtime-config/conditional").getAbsolutePath());
@@ -119,11 +107,16 @@ public class RuntimeConfigurationTest {
         
         List<VhostSpec> expectedVhosts = new ArrayList<VhostSpec>();
                 
-        expectedVhosts.add(new VhostSpec(Collections.singleton("127.0.0.1:80"), "ifdefine.defined"));
-        expectedVhosts.add(new VhostSpec(Collections.singleton("127.0.0.1:82"), "ifmodule.loaded.source-file"));
-        expectedVhosts.add(new VhostSpec(Collections.singleton("127.0.0.1:83"), "ifmodule.loaded.module-name"));
-        expectedVhosts.add(new VhostSpec(Collections.singleton("127.0.0.1:88"), "ifdefine.ifmodule.loaded.source-file"));
-        expectedVhosts.add(new VhostSpec(Collections.singleton("127.0.0.1:89"), "ifdefine.ifmodule.loaded.module-name"));      
+        expectedVhosts.add(new VhostSpec(Collections.singleton("127.0.0.1:100"), "ifdefine.defined"));
+        expectedVhosts.add(new VhostSpec(Collections.singleton("127.0.0.1:300"), "ifmodule.loaded.source-file"));
+        expectedVhosts.add(new VhostSpec(Collections.singleton("127.0.0.1:301"), "ifmodule.loaded.module-name"));
+        expectedVhosts.add(new VhostSpec(Collections.singleton("127.0.0.1:501"), "ifversion.module-loaded.implied-equals"));
+        expectedVhosts.add(new VhostSpec(Collections.singleton("127.0.0.1:502"), "ifversion.module-loaded.equals"));
+        expectedVhosts.add(new VhostSpec(Collections.singleton("127.0.0.1:503"), "ifversion.module-loaded.not-equals"));
+        expectedVhosts.add(new VhostSpec(Collections.singleton("127.0.0.1:504"), "ifversion.module-loaded.regex"));
+        expectedVhosts.add(new VhostSpec(Collections.singleton("127.0.0.1:505"), "ifversion.module-loaded.implied-regex"));
+        expectedVhosts.add(new VhostSpec(Collections.singleton("127.0.0.1:602"), "ifdefine.ifmodule.loaded.source-file"));
+        expectedVhosts.add(new VhostSpec(Collections.singleton("127.0.0.1:603"), "ifdefine.ifmodule.loaded.module-name"));      
         
         assertEquals(vhosts, expectedVhosts);
     }
@@ -132,7 +125,7 @@ public class RuntimeConfigurationTest {
         MockApacheBinaryInfo binfo = new MockApacheBinaryInfo();
         binfo.setVersion("2.2.17");
         MockProcessInfo pinfo = new MockProcessInfo();
-        pinfo.setCommandLine(new String[] {"/usr/sbin/httpd"});
+        pinfo.setCommandLine(new String[] {"blahblah"});
         
         ApacheDirectiveTree tree = new ApacheDirectiveTree();
         ApacheParser parser = new ApacheParserImpl(tree, new File(tmpDir, "runtime-config/incl-order").getAbsolutePath());
@@ -149,39 +142,14 @@ public class RuntimeConfigurationTest {
         assertEquals(listens.get(2).getValuesAsString(), "82");
     }
     
-    public void testVhostNames() {
-        MockApacheBinaryInfo binfo = new MockApacheBinaryInfo();
-        binfo.setVersion("2.2.17");
-        MockProcessInfo pinfo = new MockProcessInfo();
-        pinfo.setCommandLine(new String[] {"/usr/sbin/httpd"});
-        
-        ApacheDirectiveTree tree = new ApacheDirectiveTree();
-        ApacheParser parser = new ApacheParserImpl(tree, new File(tmpDir, "runtime-config/vhost-names").getAbsolutePath());
-        ApacheConfigReader.buildTree(new File(tmpDir, "runtime-config/vhost-names/httpd.conf").getAbsolutePath(), parser);
-        
-        tree = RuntimeApacheConfiguration.extract(tree, pinfo, binfo, ApacheServerDiscoveryComponent.MODULE_SOURCE_FILE_TO_MODULE_NAME_20);
-
-        //TODO implement this
-    }
-    
-    private void copyResourceToFile(String resourcePath, File destination) throws IOException {
+    private void copyResourceToFile(String resourcePath, File destination) throws IOException {        
         InputStream input = getClass().getClassLoader().getResourceAsStream(resourcePath);
         
         if (input != null) {
             destination.getParentFile().mkdirs();
             destination.createNewFile();
             
-            BufferedOutputStream output = new BufferedOutputStream(new FileOutputStream(destination));
-            
-            try {
-                int data;
-                while((data = input.read()) != -1) {
-                    output.write(data);
-                }
-            } finally {
-                input.close();
-                output.close();
-            }
+            StreamUtil.copy(input, new BufferedOutputStream(new FileOutputStream(destination)), true);
         }
     }
     

@@ -65,7 +65,7 @@ public class ApacheBinaryInfo {
     private Set<String> compiledInModules = new HashSet<String>();
     private Set<String> compiledInDefines = new HashSet<String>();
     
-    private ApacheBinaryInfo(@NotNull
+    protected ApacheBinaryInfo(@NotNull
     String binaryPath) {
         this.binaryPath = binaryPath;
     }

@@ -23,7 +23,17 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail;
 
 import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.TreeSet;
 
+import com.allen_sauer.gwt.log.client.Log;
+import com.google.gwt.http.client.Request;
+import com.google.gwt.http.client.RequestBuilder;
+import com.google.gwt.http.client.RequestCallback;
+import com.google.gwt.http.client.RequestException;
+import com.google.gwt.http.client.Response;
+import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.menu.Menu;
 import com.smartgwt.client.widgets.menu.MenuItem;
@@ -36,6 +46,7 @@ import org.rhq.core.domain.criteria.DashboardCriteria;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.dashboard.Dashboard;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
+import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.ResourceType;
@@ -143,10 +154,11 @@ public class ResourceGroupContextMenu extends LocatableMenu {
             pluginConfiguration.addClickHandler(new ClickHandler() {
                 public void onClick(MenuItemClickEvent event) {
                     if (isAutoGroup) {
-                        CoreGUI.goToView(LinkManager.getAutoGroupTabLink(group.getId(), "Inventory", "ConnectionSettings"));
+                        CoreGUI.goToView(LinkManager.getAutoGroupTabLink(group.getId(), "Inventory",
+                            "ConnectionSettings"));
                     } else if (isAutoCluster) {
-                        CoreGUI.goToView(LinkManager
-                            .getAutoClusterTabLink(group.getId(), "Inventory", "ConnectionSettings"));
+                        CoreGUI.goToView(LinkManager.getAutoClusterTabLink(group.getId(), "Inventory",
+                            "ConnectionSettings"));
                     } else {
                         CoreGUI.goToView(LinkManager.getResourceGroupTabLink(group.getId(), "Inventory",
                             "ConnectionSettings"));
@@ -182,18 +194,28 @@ public class ResourceGroupContextMenu extends LocatableMenu {
 
         // Operations Menu
         MenuItem operations = new MenuItem(MSG.view_tree_common_contextMenu_operations());
-        boolean operationsEnabled = (groupComposite.getResourcePermission().isControl() && null != resourceType.getOperationDefinitions() && !resourceType
-            .getOperationDefinitions().isEmpty());
+        boolean operationsEnabled = (groupComposite.getResourcePermission().isControl()
+            && null != resourceType.getOperationDefinitions() && !resourceType.getOperationDefinitions().isEmpty());
         operations.setEnabled(operationsEnabled);
         if (operationsEnabled) {
             Menu opSubMenu = new Menu();
-            for (final OperationDefinition operationDefinition : resourceType.getOperationDefinitions()) {
+            //sort the display items alphabetically
+            TreeSet<String> ordered = new TreeSet<String>();
+            Map<String, OperationDefinition> definitionMap = new HashMap<String, OperationDefinition>();
+            for (OperationDefinition o : resourceType.getOperationDefinitions()) {
+                ordered.add(o.getDisplayName());
+                definitionMap.put(o.getDisplayName(), o);
+            }
+
+            for (String displayName : ordered) {
+                final OperationDefinition operationDefinition = definitionMap.get(displayName);
+
                 MenuItem operationItem = new MenuItem(operationDefinition.getDisplayName());
                 operationItem.addClickHandler(new ClickHandler() {
                     public void onClick(MenuItemClickEvent event) {
-                        String viewPath = LinkManager.getResourceGroupTabLink(group,
-                                ResourceDetailView.Tab.OPERATIONS, ResourceDetailView.OperationsSubTab.SCHEDULES)
-                                + "/0/" + operationDefinition.getId();
+                        String viewPath = LinkManager.getResourceGroupTabLink(group, ResourceDetailView.Tab.OPERATIONS,
+                            ResourceDetailView.OperationsSubTab.SCHEDULES)
+                            + "/0/" + operationDefinition.getId();
                         CoreGUI.goToView(viewPath);
                     }
                 });
@@ -284,57 +306,135 @@ public class ResourceGroupContextMenu extends LocatableMenu {
                 public void onSuccess(PageList<Dashboard> result) {
 
                     if (type.getMetricDefinitions() != null) {
-                        for (final MeasurementDefinition def : type.getMetricDefinitions()) {
+                        //sort the display items alphabetically
+                        TreeSet<String> ordered = new TreeSet<String>();
+                        Map<String, MeasurementDefinition> definitionMap = new HashMap<String, MeasurementDefinition>();
+                        for (MeasurementDefinition m : type.getMetricDefinitions()) {
+                            ordered.add(m.getDisplayName());
+                            definitionMap.put(m.getDisplayName(), m);
+                        }
 
-                            MenuItem defItem = new MenuItem(def.getDisplayName());
-                            measurementsSubMenu.addItem(defItem);
-                            Menu defSubItem = new Menu();
-                            defItem.setSubmenu(defSubItem);
+                        for (String displayName : ordered) {
+                            final MeasurementDefinition def = definitionMap.get(displayName);
+                            //only add menu items for Measurement
+                            if (def.getDataType().equals(DataType.MEASUREMENT)) {
+                                MenuItem defItem = new MenuItem(def.getDisplayName());
+                                measurementsSubMenu.addItem(defItem);
+                                Menu defSubItem = new Menu();
+                                defItem.setSubmenu(defSubItem);
 
-                            for (final Dashboard d : result) {
-                                MenuItem addToDBItem = new MenuItem(MSG
-                                    .view_tree_common_contextMenu_addChartToDashboard(d.getName()));
-                                defSubItem.addItem(addToDBItem);
+                                for (final Dashboard d : result) {
+                                    MenuItem addToDBItem = new MenuItem(MSG
+                                        .view_tree_common_contextMenu_addChartToDashboard(d.getName()));
+                                    defSubItem.addItem(addToDBItem);
 
-                                addToDBItem.addClickHandler(new ClickHandler() {
-                                    public void onClick(MenuItemClickEvent menuItemClickEvent) {
+                                    addToDBItem.addClickHandler(new ClickHandler() {
+                                        public void onClick(MenuItemClickEvent menuItemClickEvent) {
 
-                                        DashboardPortlet p = new DashboardPortlet(MSG
-                                            .view_tree_common_contextMenu_groupGraph(), ResourceGroupGraphPortlet.KEY,
-                                            250);
-                                        p.getConfiguration().put(
-                                            new PropertySimple(ResourceGroupGraphPortlet.CFG_RESOURCE_GROUP_ID, group
-                                                .getId()));
-                                        p.getConfiguration()
-                                            .put(
+                                            DashboardPortlet p = new DashboardPortlet(MSG
+                                                .view_tree_common_contextMenu_groupGraph(),
+                                                ResourceGroupGraphPortlet.KEY, 250);
+                                            p.getConfiguration().put(
+                                                new PropertySimple(ResourceGroupGraphPortlet.CFG_RESOURCE_GROUP_ID,
+                                                    group.getId()));
+                                            p.getConfiguration().put(
                                                 new PropertySimple(ResourceGroupGraphPortlet.CFG_DEFINITION_ID, def
                                                     .getId()));
 
-                                        d.addPortlet(p);
+                                            d.addPortlet(p);
 
-                                        GWTServiceLookup.getDashboardService().storeDashboard(d,
-                                            new AsyncCallback<Dashboard>() {
-                                                public void onFailure(Throwable caught) {
-                                                    CoreGUI.getErrorHandler().handleError(
-                                                        MSG.view_tree_common_contextMenu_saveChartToDashboardFailure(),
-                                                        caught);
+                                            GWTServiceLookup.getDashboardService().storeDashboard(d,
+                                                new AsyncCallback<Dashboard>() {
+                                                    public void onFailure(Throwable caught) {
+                                                        CoreGUI
+                                                            .getErrorHandler()
+                                                            .handleError(
+                                                                MSG
+                                                                    .view_tree_common_contextMenu_saveChartToDashboardFailure(),
+                                                                caught);
+                                                    }
+
+                                                    public void onSuccess(Dashboard result) {
+                                                        String msg = MSG
+                                                            .view_tree_common_contextMenu_saveChartToDashboardSuccessful(result
+                                                                .getName());
+                                                        CoreGUI.getMessageCenter().notify(
+                                                            new Message(msg, Message.Severity.Info));
+                                                    }
+                                                });
+
+                                        }
+                                    });
+
+                                    //add new menu item for adding current graphable element to view if on Monitor/Graphs tab
+                                    String currentViewPath = History.getToken();
+                                    if (currentViewPath.indexOf("Monitoring/Graphs") > -1) {
+                                        MenuItem addGraphItem = new MenuItem(MSG.common_title_add_graph_to_view());
+                                        defSubItem.addItem(addGraphItem);
+
+                                        addGraphItem.addClickHandler(new ClickHandler() {
+                                            public void onClick(MenuItemClickEvent menuItemClickEvent) {
+                                                //generate javascript to call out to.
+                                                //Ex. menuLayers.hide();addMetric('${metric.resourceId},${metric.scheduleId}')
+                                                String grpGraphElements = "";
+                                                if (isAutoGroup) {
+                                                    grpGraphElements += "ag,";
+                                                } else {
+                                                    grpGraphElements += "cg,";
                                                 }
-
-                                                public void onSuccess(Dashboard result) {
-                                                    String msg = MSG
-                                                        .view_tree_common_contextMenu_saveChartToDashboardSuccessful(result
-                                                            .getName());
-                                                    CoreGUI.getMessageCenter().notify(
-                                                        new Message(msg, Message.Severity.Info));
+                                                grpGraphElements += group.getId() + "," + def.getId();
+                                                if (isAutoGroup) {//need to postpend the resource type as third element
+                                                    grpGraphElements += "," + group.getResourceType().getId();
                                                 }
-                                            });
+                                                //construct portal.war url to access
+                                                String baseUrl = "/resource/common/monitor/visibility/IndicatorCharts.do";
+                                                //No need to rebuild the autogroup url as everything handled as a compatible group now
+                                                //                                                if (isAutoGroup) {
+                                                //                                                    //Ex. ?parent=10001&ctype=1013&view=Default
+                                                //                                                    baseUrl += "?parent=" + group.getAutoGroupParentResource().getId()
+                                                //                                                        + "&ctype="
+                                                //                                                        + group.getResourceType().getId();
+                                                //                                                    jsCode = "ag," + group.getAutoGroupParentResource().getId() + ","
+                                                //                                                        + def.getId() + ","
+                                                //                                                        + group.getResourceType().getId();
+                                                //                                                } else {
+                                                //Ex. ?groupId=10001&view=Default
+                                                baseUrl += "?groupId=" + group.getId();
+                                                baseUrl += "&view=Default";
+                                                baseUrl += "&action=addChart&metric=" + grpGraphElements;
+                                                baseUrl += "&view=Default";
+                                                final String url = baseUrl;
+                                                //initiate HTTP request
+                                                final RequestBuilder b = new RequestBuilder(RequestBuilder.GET, baseUrl);
 
-                                    }
-                                });
+                                                try {
+                                                    b.setCallback(new RequestCallback() {
+                                                        public void onResponseReceived(final Request request,
+                                                            final Response response) {
+                                                            Log
+                                                                .trace("Successfully submitted request to add graph to view:"
+                                                                    + url);
 
-                            }
+                                                            //kick off a page reload.
+                                                            String currentViewPath = History.getToken();
+                                                            CoreGUI.goToView(currentViewPath, true);
+                                                        }
 
-                        }
+                                                        @Override
+                                                        public void onError(Request request, Throwable t) {
+                                                            Log.trace("Error adding Metric:" + url, t);
+                                                        }
+                                                    });
+                                                    b.send();
+                                                } catch (RequestException e) {
+                                                    Log.trace("Error adding Metric:" + url, e);
+                                                }
+                                            }//end of onClick definition
+                                        });//end of onClick Handler definition
+                                    }//end of Monitoring/Graphs view check
+                                }//end of dashabord iteration
+                            }//end of check for Measurement
+                        }//end of metric definition iteration
                     }
 
                 }
@@ -342,4 +442,5 @@ public class ResourceGroupContextMenu extends LocatableMenu {
         measurements.setSubmenu(measurementsSubMenu);
         return measurements;
     }
+
 }

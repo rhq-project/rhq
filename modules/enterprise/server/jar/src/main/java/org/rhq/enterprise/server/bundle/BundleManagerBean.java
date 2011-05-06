@@ -926,7 +926,6 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         BundleDeploymentCriteria c = new BundleDeploymentCriteria();
         c.addFilterDestinationId(bundleDestinationId);
         c.addFilterIsLive(true);
-        c.fetchReplacedBundleDeployment(true);
         c.fetchDestination(true);
         List<BundleDeployment> liveDeployments = bundleManager.findBundleDeploymentsByCriteria(subject, c);
         if (1 != liveDeployments.size()) {
@@ -934,15 +933,15 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
                 + "]");
         }
         BundleDeployment liveDeployment = liveDeployments.get(0);
-        BundleDeployment prevDeployment = liveDeployment.getReplacedBundleDeployment();
-        if (null == prevDeployment) {
+        Integer prevDeploymentId = liveDeployment.getReplacedBundleDeploymentId();
+        if (null == prevDeploymentId) {
             throw new IllegalArgumentException(
                 "Live deployment ["
                     + liveDeployment
                     + "] can not be reverted. The Live deployment is either an initial deployment or a reverted deployment for destinationId ["
                     + bundleDestinationId + "]");
         }
-        prevDeployment = entityManager.find(BundleDeployment.class, prevDeployment.getId());
+        BundleDeployment prevDeployment = entityManager.find(BundleDeployment.class, prevDeploymentId);
         if (null == prevDeployment) {
             throw new IllegalArgumentException("Live deployment [" + liveDeployment
                 + "] can not be reverted. There is no prior deployment for destinationId [" + bundleDestinationId + "]");
@@ -999,9 +998,9 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             for (BundleDeployment d : currentDeployments) {
                 if (d.isLive()) {
                     d.setLive(false);
-                    // you can not revert a revert, it does not logically replace anything, it is
+                    // you can not revert a revert, it does not logically replace anything
                     if (!isRevert) {
-                        newDeployment.setReplacedBundleDeployment(d);
+                        newDeployment.setReplacedBundleDeploymentId(d.getId());
                     }
                     break;
                 }
@@ -1096,7 +1095,6 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         BundleDeploymentCriteria bdc = new BundleDeploymentCriteria();
         bdc.addFilterId(resourceDeployment.getBundleDeployment().getId());
         bdc.fetchBundleVersion(true);
-        bdc.fetchConfiguration(true);
         bdc.fetchDestination(true);
         BundleDeployment deployment = bundleManager.findBundleDeploymentsByCriteria(subject, bdc).get(0);
 
@@ -1471,6 +1469,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         // to break the FK dependency with nulls.
         Query q = entityManager.createNamedQuery(BundleDeployment.QUERY_UPDATE_FOR_VERSION_REMOVE);
         q.setParameter("bundleVersionId", bundleVersionId);
+        @SuppressWarnings("unused")
         int rowsUpdated = q.executeUpdate();
         entityManager.flush();
 

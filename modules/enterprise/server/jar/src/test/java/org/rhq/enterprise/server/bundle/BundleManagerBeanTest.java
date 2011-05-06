@@ -246,7 +246,8 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
             }
 
             // remove ResourceTypes which cascade remove BundleTypes
-            q = em.createQuery("SELECT rt FROM ResourceType rt WHERE rt.deleted = false and rt.name LIKE '" + TEST_PREFIX + "%'");
+            q = em.createQuery("SELECT rt FROM ResourceType rt WHERE rt.deleted = false and rt.name LIKE '"
+                + TEST_PREFIX + "%'");
             doomed = q.getResultList();
             for (Object removeMe : doomed) {
                 em.remove(em.getReference(ResourceType.class, ((ResourceType) removeMe).getId()));
@@ -788,7 +789,6 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
         BundleDeploymentCriteria bdc = new BundleDeploymentCriteria();
         bdc.addFilterId(bd1d.getId());
         bdc.fetchBundleVersion(true);
-        bdc.fetchConfiguration(true);
         bdc.fetchDestination(true);
         bdc.fetchResourceDeployments(true);
         bdc.fetchTags(true);

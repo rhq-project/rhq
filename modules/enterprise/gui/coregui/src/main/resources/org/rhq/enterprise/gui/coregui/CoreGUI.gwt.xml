@@ -10,7 +10,7 @@
     <inherits name='com.smartgwt.SmartGwt' />
     <inherits name="com.smartgwt.tools.SmartGwtTools"/>
 
-    <inherits name='com.google.gwt.user.theme.standard.Standard'/>
+    <!--<inherits name='com.google.gwt.user.theme.standard.Standard'/>-->
     <!--
      <inherits name="com.smartclient.theme.graphite.Graphite"/>
     -->

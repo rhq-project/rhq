@@ -219,6 +219,12 @@
 
       <dependency>
         <groupId>jboss</groupId>
+        <artifactId>jboss-ejb3</artifactId>
+        <version>${jboss.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>jboss</groupId>
         <artifactId>jboss-ejb3-client</artifactId>
         <version>${jboss.version}</version>
       </dependency>

@@ -233,6 +233,15 @@
          <scope>provided</scope> <!-- by JBossAS -->
       </dependency>
 
+      <!-- includes the org.jboss.ejb3.StrictMaxPool class, which is needed by the PoolClass annotation used on some
+           of our SLSB's -->
+      <dependency>
+         <groupId>jboss</groupId>
+         <artifactId>jboss-ejb3</artifactId>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+         <scope>provided</scope> <!-- by JBossAS -->
+      </dependency>
+
       <dependency>
          <groupId>jboss</groupId>
          <artifactId>jboss-j2ee</artifactId>

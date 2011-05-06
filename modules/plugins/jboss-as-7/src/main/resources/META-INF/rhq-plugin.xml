@@ -507,6 +507,42 @@
 
     </server>
 
+    <server name="General JCA connectors"
+            discovery="SubsystemDiscovery"
+            class="BaseComponent"
+            singleton="true"
+            description="General settings of the JCA engine. Not nexessarily for end-users"
+            >
+
+        <runs-inside>
+            <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
+            <parent-resource-type name="JBossAS7-Standalone"  plugin="jboss-as-7"/>
+        </runs-inside>
+
+        <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="subsystem=connector"/>
+        </plugin-configuration>
+
+        <resource-configuration>
+            <c:simple-property name="default-workmanager-short-running-thread-pool" required="true" type="string" readOnly="true"
+                               description="Specify the name of short running thread pool"/>
+            <c:simple-property name="default-workmanager-long-running-thread-pool" required="true" type="string" readOnly="true"
+                               description="Specify the name of long running thread pool"/>
+            <c:simple-property name="bean-validation-enabled" required="true" type="boolean" readOnly="true"
+                               description="Specify whether bean validation is enabled"/>
+            <c:simple-property name="archive-validation-enabled" type="boolean" readOnly="true" description="Enabling the validation"/>
+            <c:simple-property name="archive-validation-fail-on-error" type="boolean" readOnly="true"
+                               description="Should an archive validation error report fail the deployment. Default: true"/>
+            <c:simple-property name="archive-validation-fail-on-warn" type="boolean" readOnly="true"
+                               description="Should an archive validation warning report fail the deployment. Default: false"/>
+            <c:simple-property name="cached-connection-manager-debug" type="boolean" readOnly="true"
+                               description="enable/disable debug information logging for cached connection manager"/>
+            <c:simple-property name="cached-connection-manager-error" type="boolean" readOnly="true"
+                               description="enable/disable error information logging for cached connection manager"/>
+        </resource-configuration>
+
+    </server>
+
     <server name="Datasources"
             discovery="SubsystemDiscovery"
             class="BaseComponent"
@@ -629,6 +665,23 @@
 
     </server>
 
+    <server name="ResourceAdapters"
+            discovery="SubsystemDiscovery"
+            class="BaseComponent"
+            singleton="true"
+            >
+
+        <runs-inside>
+            <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
+            <parent-resource-type name="JBossAS7-Standalone"  plugin="jboss-as-7"/>
+        </runs-inside>
+
+        <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="subsystem=resource-adapters"/>
+        </plugin-configuration>
+    </server>
+
+
     <server name="Threads"
         discovery="SubsystemDiscovery"
         class="BaseComponent"
@@ -687,6 +740,33 @@
 
 
 
+    </server>
+
+    <server name="Webservices"
+        discovery="SubsystemDiscovery"
+        class="BaseComponent"
+        singleton="true"
+        >
+
+        <runs-inside>
+            <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
+            <parent-resource-type name="JBossAS7-Standalone"  plugin="jboss-as-7"/>
+        </runs-inside>
+
+        <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="subsystem=webservices"/>
+        </plugin-configuration>
+
+        <resource-configuration>
+            <c:simple-property name="modify-soap-address" required="true" type="boolean" readOnly="true"
+                               description="Whether the soap address can be modified."/>
+            <c:simple-property name="webservice-host" required="true" type="string" readOnly="true"
+                               description="The WSDL, that is a required deployment artifact for an endpoint, has a &amp;soap:address> element which points to the location of the endpoint. JBoss supports rewriting of that SOAP address. If the content of &amp;soap:address> is a valid URL, JBossWS will not rewrite it unless 'modifySOAPAddress' is true. If the content of &amp;soap:address> is not a valid URL, JBossWS will rewrite it using the attribute values given below. If 'webServiceHost' is set to 'jbossws.undefined.host', JBossWS uses requesters host when rewriting the &amp;soap:address>"/>
+            <c:simple-property name="webservice-port" type="integer" readOnly="true"
+                               description="The non-secure port that will be used for rewriting the SOAP address. If absent the port will be identified by querying the list of installed connectors."/>
+            <c:simple-property name="webservice-secure-port" type="integer" readOnly="true"
+                               description="The non-secure port that will be used for rewriting the SOAP address. If absent the port will be identified by querying the list of installed connectors."/>
+        </resource-configuration>
     </server>
 
     <service name="NetworkInterface"

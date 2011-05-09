@@ -57,6 +57,10 @@ public class SnapshotGeneratorTest {
         SnapshotGenerator generator = new SnapshotGenerator();
         generator.setSnapshotDir(snapshotsDir);
         SnapshotHandle snapshotHandle = generator.generateSnapshot(resourceId, menu);
+
+//        SnapshotHandle snapshotHandle = generator.generateSnapshot(resourceId,
+//            new File("/home/jsanda/Development/redhat/rhq/modules/core/plugin-container/jboss-eap-5.0"));
+
         long start = System.currentTimeMillis();
         long end = System.currentTimeMillis();
 

@@ -10,7 +10,11 @@
     <inherits name='com.smartgwt.SmartGwt' />
     <inherits name="com.smartgwt.tools.SmartGwtTools"/>
 
-    <!--<inherits name='com.google.gwt.user.theme.standard.Standard'/>-->
+    <!-- removing this, we can add it back if we find something that looks odd. But,
+         1) it seemed like a trouble spot during initial load for certain IE configurations
+         2) we probably don't want to be defaulting to GWT standards as opposed to SmartGWT.
+    <inherits name='com.google.gwt.user.theme.standard.Standard'/>
+    -->
     <!--
      <inherits name="com.smartclient.theme.graphite.Graphite"/>
     -->

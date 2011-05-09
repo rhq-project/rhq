@@ -30,6 +30,7 @@ import org.testng.annotations.Test;
 import org.rhq.modules.plugins.jbossas7.json.CompositeOperation;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
+import org.rhq.modules.plugins.jbossas7.json.Result;
 
 /**
  * Test uploading and deploying to the domain
@@ -44,6 +45,17 @@ public class UploadAndDeployTest {
     private static final String UPLOAD_FILE = "test-simple.war";
     private static final String DC_HOST = "localhost";
     private static final int DC_HTTP_PORT = 9990;
+
+    @Test(timeOut = 60*1000L, enabled = true)
+    public void testUploadOnly() throws Exception {
+
+        String bytes_value = prepare();
+
+        assert bytes_value != null;
+
+        System.out.println("sha: " + bytes_value);
+
+    }
 
     @Test(timeOut = 60*1000L, enabled = true)
     public void testUploadIndividualSteps() throws Exception {
@@ -79,7 +91,7 @@ public class UploadAndDeployTest {
         System.out.println("Add to server group done: " + ret);
         System.out.flush();
 
-        assert ret.has("outcome") : "Ret not valied " + ret.toString();
+        assert ret.has("outcome") : "Ret not valid " + ret.toString();
         assert ret.get("outcome").getTextValue().equals("success") : "add to sg was no success " + ret.getTextValue();
 
 
@@ -88,7 +100,7 @@ public class UploadAndDeployTest {
         Operation undeploy = new Operation("remove",serverGroupAddress);
         ret = connection.executeRaw(undeploy);
 
-        assert ret.has("outcome") : "Ret not valied " + ret.toString();
+        assert ret.has("outcome") : "Ret not valid " + ret.toString();
         assert ret.get("outcome").getTextValue().equals("success") : "remove from sg was no success " + ret.getTextValue();
 
 
@@ -97,7 +109,7 @@ public class UploadAndDeployTest {
         Operation remove = new Operation("remove",deploymentsAddress);
         ret = connection.executeRaw(remove);
 
-        assert ret.has("outcome") : "Ret not valied " + ret.toString();
+        assert ret.has("outcome") : "Ret not valid " + ret.toString();
         assert ret.get("outcome").getTextValue().equals("success") : "remove from domain was no success " + ret.getTextValue();
 
         System.out.flush();
@@ -156,13 +168,19 @@ public class UploadAndDeployTest {
 
 
         InputStream fis = getClass().getClassLoader().getResourceAsStream(UPLOAD_FILE);
-        int b;
-        while ((b = fis.read())!=-1) {
-            os.write(b);
+        final byte[] buffer = new byte[1024];
+        int numRead = 0;
+
+        while(numRead > -1) {
+            numRead = fis.read(buffer);
+            if(numRead > 0) {
+                os.write(buffer,0,numRead);
+            }
         }
         fis.close();
         JsonNode node = conn.finishUpload();
         System.out.println(node);
+        assert node != null : "No result from upload - node was null";
         assert node.has("outcome") : "No outcome from upload";
         String outcome = node.get("outcome").getTextValue();
         assert outcome.equals("success") : "Upload was no success" + outcome;

@@ -531,9 +531,9 @@
             <c:simple-property name="bean-validation-enabled" required="true" type="boolean" readOnly="true"
                                description="Specify whether bean validation is enabled"/>
             <c:simple-property name="archive-validation-enabled" type="boolean" readOnly="true" description="Enabling the validation"/>
-            <c:simple-property name="archive-validation-fail-on-error" type="boolean" readOnly="true"
+            <c:simple-property name="archive-validation-fail-on-error" type="boolean" readOnly="true" default="true"
                                description="Should an archive validation error report fail the deployment. Default: true"/>
-            <c:simple-property name="archive-validation-fail-on-warn" type="boolean" readOnly="true"
+            <c:simple-property name="archive-validation-fail-on-warn" type="boolean" readOnly="true" default="false"
                                description="Should an archive validation warning report fail the deployment. Default: false"/>
             <c:simple-property name="cached-connection-manager-debug" type="boolean" readOnly="true"
                                description="enable/disable debug information logging for cached connection manager"/>

@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
@@ -42,7 +43,9 @@ import org.codehaus.jackson.map.ObjectMapper;
  */
 public class ASUploadConnection {
 
-    private static final String BOUNDARY = "-----------------------------261773107125236";
+    private static final String BOUNDARY_PARAM = "NeAG1QNIHHOyB5joAS7Rox!!";
+
+    private static final String BOUNDARY = "--" + BOUNDARY_PARAM;
 
     private static final String CRLF = "\r\n";
 
@@ -71,6 +74,7 @@ public class ASUploadConnection {
             connection.setDoInput(true);
             connection.setDoOutput(true);
             connection.setRequestMethod(POST_REQUEST_METHOD);
+            connection.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + BOUNDARY_PARAM);
 
             // Grab the test WAR file and get a stream to its contents to be included in the POST.
             os = new BufferedOutputStream(connection.getOutputStream());
@@ -92,6 +96,7 @@ public class ASUploadConnection {
             os.flush();
 
             int code = connection.getResponseCode();
+            System.err.println("Response code " + code);
             if (code==500)
                 is = connection.getErrorStream();
             else
@@ -128,15 +133,13 @@ public class ASUploadConnection {
     }
 
 
-    private byte[] buildPostRequestHeader(String fileName) {
+    private byte[] buildPostRequestHeader(String fileName) throws UnsupportedEncodingException {
         final StringBuilder builder = new StringBuilder();
-        builder.append(buildPostRequestHeaderSection("form-data; name=\"test1\"", "", "test1"));
-        builder.append(buildPostRequestHeaderSection("form-data; name=\"test2\"", "", "test2"));
         builder.append(buildPostRequestHeaderSection("form-data; name=\"file\"; filename=\""+fileName+"\"", "application/octet-stream", ""));
-        return builder.toString().getBytes();
+        return builder.toString().getBytes("US-ASCII");
     }
 
-    private String buildPostRequestHeaderSection(final String contentDisposition, final String contentType, final String content) {
+    private StringBuilder buildPostRequestHeaderSection(final String contentDisposition, final String contentType, final String content) {
         final StringBuilder builder = new StringBuilder();
         builder.append(BOUNDARY);
         builder.append(CRLF);
@@ -152,16 +155,16 @@ public class ASUploadConnection {
             builder.append(content);
         }
         builder.append(CRLF);
-        return builder.toString();
+        return builder;
     }
 
-    private byte[] buildPostRequestFooter() {
+    private byte[] buildPostRequestFooter() throws UnsupportedEncodingException{
         final StringBuilder builder = new StringBuilder();
         builder.append(CRLF);
         builder.append(BOUNDARY);
         builder.append("--");
         builder.append(CRLF);
-        return builder.toString().getBytes();
+        return builder.toString().getBytes("US-ASCII");
     }
 
 

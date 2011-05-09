@@ -374,8 +374,13 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
             conditionText = AlertFormatUtility.formatAlertConditionForDisplay(condition);
             conditionValue = conditionLog.getValue();
             if (condition.getMeasurementDefinition() != null) {
-                conditionValue = MeasurementConverterClient.format(Double.valueOf(conditionLog.getValue()), condition
-                    .getMeasurementDefinition().getUnits(), true);
+                try {
+                    conditionValue = MeasurementConverterClient.format(Double.valueOf(conditionLog.getValue()),
+                        condition.getMeasurementDefinition().getUnits(), true);
+                } catch (Exception e) {
+                    // the condition log value was probably not a number (most likely a trait). Ignore this exception.
+                    // even if any other errors occur trying to format the value, ignore this and just use the raw value string
+                }
             }
         } else {
             conditionText = MSG.view_alerts_field_condition_text_none();
@@ -393,8 +398,13 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
             dc.setAttribute("text", AlertFormatUtility.formatAlertConditionForDisplay(condition));
             String value = log.getValue();
             if (condition.getMeasurementDefinition() != null) {
-                value = MeasurementConverterClient.format(Double.valueOf(log.getValue()), condition
-                    .getMeasurementDefinition().getUnits(), true);
+                try {
+                    value = MeasurementConverterClient.format(Double.valueOf(log.getValue()), condition
+                        .getMeasurementDefinition().getUnits(), true);
+                } catch (Exception e) {
+                    // the condition log value was probably not a number (most likely a trait). Ignore this exception.
+                    // even if any other errors occur trying to format the value, ignore this and just use the raw value string
+                }
             }
             dc.setAttribute("value", value);
             conditions[i++] = dc;

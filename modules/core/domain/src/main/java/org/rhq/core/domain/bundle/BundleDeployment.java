@@ -68,14 +68,14 @@ import org.rhq.core.domain.tagging.Tag;
     + "SELECT bd FROM BundleDeployment bd "),
     @NamedQuery(name = BundleDeployment.QUERY_UPDATE_FOR_DESTINATION_REMOVE, query = "" //
         + "UPDATE BundleDeployment bd " //
-        + "   SET bd.replacedBundleDeployment = NULL " //
-        + " WHERE bd.replacedBundleDeployment.id IN " //
+        + "   SET bd.replacedBundleDeploymentId = NULL " //
+        + " WHERE bd.replacedBundleDeploymentId IN " //
         + "     ( SELECT innerbd.id FROM BundleDeployment innerbd " //
         + "        WHERE innerbd.destination.id  = :destinationId ) "),
     @NamedQuery(name = BundleDeployment.QUERY_UPDATE_FOR_VERSION_REMOVE, query = "" //
         + "UPDATE BundleDeployment bd " //
-        + "   SET bd.replacedBundleDeployment = NULL " //
-        + " WHERE bd.replacedBundleDeployment.id IN " //
+        + "   SET bd.replacedBundleDeploymentId = NULL " //
+        + " WHERE bd.replacedBundleDeploymentId IN " //
         + "     ( SELECT innerbd.id FROM BundleDeployment innerbd " //
         + "        WHERE innerbd.bundleVersion.id  = :bundleVersionId ) ") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_BUNDLE_DEPLOYMENT_ID_SEQ")
@@ -118,20 +118,23 @@ public class BundleDeployment implements Serializable {
     @Column(name = "MTIME")
     private Long mtime = System.currentTimeMillis();
 
-    @JoinColumn(name = "REPLACED_BUNDLE_DEPLOYMENT_ID", referencedColumnName = "ID", nullable = true)
-    @OneToOne(fetch = FetchType.LAZY, optional = true)
-    private BundleDeployment replacedBundleDeployment;
+    // This is not a join column on purpose. Since it is nullable the OneToOne association would be forced to EAGER
+    // fetch. That leads to basically fetching every BundleDeployment every time, in a deeply recursive way if you
+    // have a lot deployments.
+    @Column(name = "REPLACED_BUNDLE_DEPLOYMENT_ID", nullable = true)
+    private Integer replacedBundleDeploymentId;
 
+    // note - eager fetch, can not lazy fetch an optional OneToOne
     @JoinColumn(name = "CONFIG_ID", referencedColumnName = "ID", nullable = true)
-    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, optional = true)
+    @OneToOne(cascade = CascadeType.ALL, optional = true)
     private Configuration configuration;
 
     @JoinColumn(name = "BUNDLE_VERSION_ID", referencedColumnName = "ID", nullable = false)
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     private BundleVersion bundleVersion;
 
     @JoinColumn(name = "BUNDLE_DESTINATION_ID", referencedColumnName = "ID", nullable = false)
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     private BundleDestination destination;
 
     @OneToMany(mappedBy = "bundleDeployment", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
@@ -284,12 +287,12 @@ public class BundleDeployment implements Serializable {
     /** 
      * @return The previously "live" BundleDeployment.
      */
-    public BundleDeployment getReplacedBundleDeployment() {
-        return replacedBundleDeployment;
+    public Integer getReplacedBundleDeploymentId() {
+        return replacedBundleDeploymentId;
     }
 
-    public void setReplacedBundleDeployment(BundleDeployment replacedBundleDeployment) {
-        this.replacedBundleDeployment = replacedBundleDeployment;
+    public void setReplacedBundleDeploymentId(Integer replacedBundleDeploymentId) {
+        this.replacedBundleDeploymentId = replacedBundleDeploymentId;
     }
 
     public Configuration getConfiguration() {

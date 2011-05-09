@@ -1,26 +1,17 @@
 package org.rhq.core.pc.drift;
 
 import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.util.Arrays;
-import java.util.Map;
+import java.io.StringWriter;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import com.google.common.collect.ImmutableMap;
-
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.testng.annotations.Test;
 
-import org.rhq.core.domain.drift.Snapshot;
 import org.rhq.core.util.MessageDigestGenerator;
-import org.rhq.core.util.ZipUtil;
 
 import static java.util.Arrays.asList;
 import static org.apache.commons.io.IOUtils.copy;
@@ -35,8 +26,13 @@ public class SnapshotGeneratorTest {
     @Test
     public void generateSnapshot() throws Exception {
         File basedir = new File("target/." + getClass().getSimpleName());
+        File snapshotsDir = new File("target", "snapshots");
+
         deleteDirectory(basedir);
+        deleteDirectory(snapshotsDir);
+
         assertTrue(basedir.mkdirs(), "Failed to create " + basedir.getAbsolutePath());
+        assertTrue(snapshotsDir.mkdirs(), "Failed to crete " + snapshotsDir.getAbsolutePath());
 
         File menu = new File(basedir, "menu");
         File drinks = new File(menu, "drinks");
@@ -57,15 +53,22 @@ public class SnapshotGeneratorTest {
 
         writeLines(appetizers, asList("Cheese Whiz", "Soft Pretzels", "Hummus", "Fruit Loops"));
 
+        int resourceId = 1;
         SnapshotGenerator generator = new SnapshotGenerator();
-        Snapshot snapshot = generator.generateSnapshot(menu);
+        generator.setSnapshotDir(snapshotsDir);
+        SnapshotHandle snapshotHandle = generator.generateSnapshot(resourceId, menu);
+        long start = System.currentTimeMillis();
+        long end = System.currentTimeMillis();
 
-        assertNotNull(snapshot);
+        System.out.println("TIME: " + (end - start));
 
-        Map<String, String> expected = ImmutableMap.of(
-            beers.getPath(), sha256(beers),
-            appetizers.getPath(), sha256(appetizers));
-        assertMetadataEquals("Snapshot meta data is wrong.", snapshot, expected);
+        StringWriter metadataWriter = new StringWriter();
+        metadataWriter.write("menu/drinks/beers.txt" + " " + sha256(beers) + "\n");
+        metadataWriter.write("menu/food/appetizers.txt" + " " + sha256(appetizers) + "\n");
+
+        assertEquals(sha256(snapshotHandle.getMetadataFile()), sha256(metadataWriter.toString()), "SHA-256 for " +
+            "snapshot meta data file at " + snapshotHandle.getMetadataFile().getAbsolutePath() + " does not match " +
+            "expected value");
 
         File zipFile = new File(basedir, "menu.zip");
         ZipOutputStream zos = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(zipFile)));
@@ -80,21 +83,17 @@ public class SnapshotGeneratorTest {
         ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
         copy(new FileInputStream(zipFile), byteStream);
 
-        assertEquals(sha256(snapshot.getData()), sha256(byteStream.toByteArray()),
-            "Failed to compress and/or copy snapshot data.");
+        assertEquals(sha256(zipFile), sha256(snapshotHandle.getDataFile()), "SHA-256 for snapshot data file at " +
+            snapshotHandle.getDataFile().getAbsolutePath() + " does not match expected value");
     }
 
-
-    void assertMetadataEquals(String msg, Snapshot snapshot, Map<String, String> expected) {
-        assertEquals(snapshot.getMetadata(), expected, msg);
-    }
 
     String sha256(File f) throws Exception {
         return digestGenerator.calcDigestString(f);
     }
 
-    String sha256(byte[] bytes) throws Exception {
-        return digestGenerator.calcDigestString(bytes);
+    String sha256(String string) throws Exception {
+        return digestGenerator.calcDigestString(string);
     }
 
 }

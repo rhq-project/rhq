@@ -1,29 +1,26 @@
 package org.rhq.core.domain.drift;
 
+import java.io.InputStream;
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
-public class Snapshot {
+public class Snapshot implements Serializable {
+    private static final long serialVersionUID = 1L;
 
-    private Map<String, String> metadata = new HashMap<String, String>();
+    private SnapshotMetadata metadata = new SnapshotMetadata();
 
-    private byte[] data;
+    private InputStream data;
 
-    public Map<String, String> getMetadata() {
+    public SnapshotMetadata getMetadata() {
         return metadata;
     }
 
-    public void setMetadata(Map<String, String> metadata) {
-        this.metadata = metadata;
-    }
-
-    public byte[] getData() {
+    public InputStream getData() {
         return data;
     }
 
-
-    public void setData(byte[] data) {
+    public void setData(InputStream data) {
         this.data = data;
     }
-
 }

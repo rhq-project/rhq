@@ -1,7 +1,6 @@
 package org.rhq.core.pc.drift;
 
 import org.apache.commons.io.DirectoryWalker;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 
@@ -13,47 +12,52 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
-import org.rhq.core.domain.drift.Snapshot;
 import org.rhq.core.util.MessageDigestGenerator;
-import org.rhq.core.util.ZipUtil;
 
-import static java.io.File.pathSeparatorChar;
 import static java.io.File.separator;
 
 public class SnapshotGenerator extends DirectoryWalker {
 
     private MessageDigestGenerator digestGenerator = new MessageDigestGenerator(MessageDigestGenerator.SHA_256);
 
+    private File snapshotDir;
 
-    public Snapshot generateSnapshot(File basedir) throws IOException {
+    /** @param dir The directory to which snapshot files will be written. */
+    public void setSnapshotDir(File dir) {
+        snapshotDir = dir;
+    }
+
+    /**
+     * Generates snapshot data and meta data files for the specified resource id starting at <code>basedir</code>. The
+     * files are written to the directory specified in {@link #setSnapshotDir(java.io.File)}. The files are currently
+     * stored as snapshot_dir/<resourceId>-snapshot.zip and snapshot_dir/<resourceId>_snapshot_metadata.txt.
+     *
+     * @param resourceId The id of the resource for which the snapshot is being created
+     * @param basedir The root directory from which the snapshot will be taken
+     * @return A {@link SnapshotHandle} that points the generated files on disk.
+     * @throws IOException If any errors occur
+     */
+    public SnapshotHandle generateSnapshot(int resourceId, File basedir) throws IOException {
         List<File> files = new ArrayList<File>();
         walk(basedir, files);
 
-        Snapshot snapshot = new Snapshot();
-        Map<String, String> metadata = snapshot.getMetadata();
-
-        String snapshotName = "snapshot_" + System.currentTimeMillis();
-        File snapshotDir = new File(System.getProperty("java.io.tmpdir"), "." + snapshotName);
-        File snapshotRootDir = new File(snapshotDir, basedir.getName());
-        snapshotRootDir.mkdirs();
-
-        File zipFile = new File(System.getProperty("java.io.tmpdir"), snapshotName + ".zip");
+        File metadatFile = new File(snapshotDir, resourceId + "_snapshot_metadata.txt");
+        PrintWriter metadataWriter = new PrintWriter(new BufferedOutputStream(new FileOutputStream(metadatFile)));
+        File zipFile = new File(snapshotDir, resourceId + "-snapshot" + ".zip");
         ZipOutputStream zos = null;
 
         try {
             zos = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(zipFile)));
             for (File file : files) {
-                metadata.put(file.getPath(), digestGenerator.calcDigestString(file.toURI().toURL()));
                 String relativePath = relativePath(basedir, file);
+                metadataWriter.println(relativePath + " " + sha256(file));
                 InputStream istream = null;
                 try {
                     istream = new BufferedInputStream(new FileInputStream(new File(basedir.getParent(), relativePath)));
@@ -69,6 +73,10 @@ public class SnapshotGenerator extends DirectoryWalker {
                 }
             }
         } finally {
+            if (metadataWriter != null) {
+                metadataWriter.close();
+            }
+
             if (zos != null) {
                 zos.close();
             }
@@ -76,14 +84,16 @@ public class SnapshotGenerator extends DirectoryWalker {
         ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
         IOUtils.copy(new FileInputStream(zipFile), byteStream);
 
-        snapshot.setData(byteStream.toByteArray());
-
-        return snapshot;
+        return new SnapshotHandle(zipFile, metadatFile);
     }
 
     private String relativePath(File basedir, File file) {
-        return FilenameUtils.getBaseName(basedir.getAbsolutePath()) + separator +
+        return FilenameUtils.getName(basedir.getAbsolutePath()) + separator +
             file.getAbsolutePath().substring(basedir.getAbsolutePath().length() + 1);
+    }
+
+    private String sha256(File file) throws IOException {
+        return digestGenerator.calcDigestString(file);
     }
 
     @Override
@@ -95,5 +105,4 @@ public class SnapshotGenerator extends DirectoryWalker {
     protected void handleFile(File file, int depth, Collection results) throws IOException {
         results.add(file);
     }
-
 }

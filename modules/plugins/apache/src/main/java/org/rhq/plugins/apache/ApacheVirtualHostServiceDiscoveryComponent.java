@@ -23,6 +23,7 @@ import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -115,7 +116,7 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
 
             Configuration pluginConfiguration = context.getDefaultPluginConfiguration();
 
-            Address address = serverComponent.getAddressUtility().getVirtualHostSampleAddress(tree, firstAddress, serverName);
+            Address address = serverComponent.getAddressUtility().getVirtualHostSampleAddress(tree, firstAddress, serverName, false);
             if (address != null) {
                 String scheme = address.scheme;
                 String hostToPing = address.host;
@@ -216,30 +217,30 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
         discoveredResources.add(mainServer);
     }
     
-//    /**
-//     * @deprecated remove this once we have resource upgrade
-//     * @param discoveryContext
-//     * @param newStyleResourceKey
-//     * @param snmpDiscoveries
-//     * @return
-//     */
-//    @Deprecated
-//    private String getLegacyResourceKey(ResourceDiscoveryContext<ApacheServerComponent> discoveryContext, String newStyleResourceKey, SnmpWwwServiceIndexes snmpDiscoveries) {
-//        int snmpWwwServiceIndex = ApacheVirtualHostServiceComponent.getMatchingWwwServiceIndex(discoveryContext.getParentResourceComponent(), newStyleResourceKey, snmpDiscoveries.names, snmpDiscoveries.ports);
-//        
-//        if (snmpWwwServiceIndex < 1) {
-//            return null;
-//        } else {
-//            String host = snmpDiscoveries.names.get(snmpWwwServiceIndex - 1).toString();
-//            String fullPort = snmpDiscoveries.ports.get(snmpWwwServiceIndex - 1).toString();
-//
-//            // The port value will be in the form "1.3.6.1.2.1.6.XXXXX",
-//            // where "1.3.6.1.2.1.6" represents the TCP protocol ID,
-//            // and XXXXX is the actual port number
-//            String port = fullPort.substring(fullPort.lastIndexOf(".") + 1);
-//            return host + ":" + port;
-//        }
-//    }
+    /**
+     * @deprecated remove this once we have resource upgrade
+     * @param discoveryContext
+     * @param newStyleResourceKey
+     * @param snmpDiscoveries
+     * @return
+     */
+    @Deprecated
+    private static String getLegacyResourceKey(ApacheServerComponent serverComponent, String newStyleResourceKey, SnmpWwwServiceIndexes snmpDiscoveries) {
+        int snmpWwwServiceIndex = getMatchingWwwServiceIndex(serverComponent, newStyleResourceKey, snmpDiscoveries.names, snmpDiscoveries.ports);
+        
+        if (snmpWwwServiceIndex < 1) {
+            return null;
+        } else {
+            String host = snmpDiscoveries.names.get(snmpWwwServiceIndex - 1).toString();
+            String fullPort = snmpDiscoveries.ports.get(snmpWwwServiceIndex - 1).toString();
+
+            // The port value will be in the form "1.3.6.1.2.1.6.XXXXX",
+            // where "1.3.6.1.2.1.6" represents the TCP protocol ID,
+            // and XXXXX is the actual port number
+            String port = fullPort.substring(fullPort.lastIndexOf(".") + 1);
+            return host + ":" + port;
+        }
+    }
     
     public static String createMainServerResourceKey(ApacheServerComponent serverComponent, ApacheDirectiveTree runtimeConfig, SnmpWwwServiceIndexes snmpDiscoveries) throws Exception {
         String mainServerUrl = serverComponent.getServerUrl();
@@ -260,13 +261,9 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
         }
         
         //BZ 612189 - remove this once we have resource upgrade
-        //ok, this is hacky, but...
-        //in order not to change the semantics of the resource key creation
-        //we use the legacy resource key (i.e. the one based on SNMP) only
-        //if SNMP is available, even though we now have algorithm that can
-        //determine the SNMP resource key without it being available.
         if (snmpDiscoveries != null) {
-            key = serverComponent.getAddressUtility().getHttpdInternalMainServerAddressRepresentation(runtimeConfig).toString(false, false);
+            String legacyKey = getLegacyResourceKey(serverComponent, key, snmpDiscoveries);
+            key = legacyKey != null ? legacyKey : key;
         }
         
         return key;
@@ -287,16 +284,6 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
 //        
 //        return keyBuilder.toString();
         
-        //BZ 612189 - remove this once we have resource upgrade
-        //ok, this is hacky, but...
-        //in order not to change the semantics of the resource key creation
-        //we use the legacy resource key (i.e. the one based on SNMP) only
-        //if SNMP is available, even though we now have algorithm that can
-        //determine the SNMP resource key without it being available.
-        if (snmpDiscoveries != null) {
-            return serverComponent.getAddressUtility().getHttpdInternalVirtualHostAddressRepresentation(runtimeConfig, hosts.get(0), serverName).toString(false, false);
-        }
-        
         //try to derive the same resource key as the SNMP would have... this is to prevent the duplication of
         //vhost resources after the SNMP was configured - how I wish resource upgrade made it to 3.0 to prevent this
         //kind of guessing being necessary.
@@ -315,7 +302,15 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
             log.debug("Host " + hostAddr.host + " is not resolvable.", e);
         } 
         
-        return hostAddr.host + ":" + hostAddr.port;
+        String key = hostAddr.host + ":" + hostAddr.port;
+
+        //BZ 612189 - remove this once we have resource upgrade
+        if (snmpDiscoveries != null) {
+            String legacyResourceKey = getLegacyResourceKey(serverComponent, key, snmpDiscoveries);
+            key = legacyResourceKey != null ? legacyResourceKey : key;
+        }
+    
+        return key;
     }
     
     /**
@@ -376,4 +371,160 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
         public List<SNMPValue> ports;
         public SNMPValue desc;
     }
+    
+    /**
+     * @deprecated used only in the {@link ApacheVirtualHostServiceDiscoveryComponent#getLegacyResourceKey(ApacheServerComponent, String, SnmpWwwServiceIndexes)}
+     * to figure out what the resource key should in a way compatible with the previous incarnations of the plugin in RHQ 3.
+     * <p>
+     * This method used to reside in the {@link ApacheVirtualHostServiceComponent} and was used to match a vhost with an SNMP index at runtime.
+     * Because of the non-deterministic nature of this method, it is no longer used there but we still need it in the discovery so that we
+     * maintain the same behavior and obtain the same resource keys as the previous versions of the plugin. This is to not create duplicate
+     * resources after a new version of the plugin is deployed.  
+     */
+    @Deprecated
+    private static int getMatchingWwwServiceIndex(ApacheServerComponent parent, String resourceKey, List<SNMPValue> names, List<SNMPValue> ports) {
+        int ret = -1;
+        Iterator<SNMPValue> namesIterator = names.iterator();
+        Iterator<SNMPValue> portsIterator = ports.iterator();
+
+        //figure out the servername and addresses of this virtual host
+        //from the resource key.
+        String vhostServerName = null;
+        String[] vhostAddressStrings = null;
+        int pipeIdx = resourceKey.indexOf('|');
+        if (pipeIdx >= 0) {
+            vhostServerName = resourceKey.substring(0, pipeIdx);
+        }
+        vhostAddressStrings = resourceKey.substring(pipeIdx + 1).split(" ");
+
+        ApacheDirectiveTree tree = parent.loadParser(); 
+        
+        //convert the vhost addresses into fully qualified ip/port addresses
+        List<HttpdAddressUtility.Address> vhostAddresses = new ArrayList<HttpdAddressUtility.Address>(
+            vhostAddressStrings.length);
+
+        if (vhostAddressStrings.length == 1 && ApacheVirtualHostServiceComponent.MAIN_SERVER_RESOURCE_KEY.equals(vhostAddressStrings[0])) {
+            HttpdAddressUtility.Address serverAddr = parent.getAddressUtility().getMainServerSampleAddress(tree, null, 0);
+            if (serverAddr != null) {
+                vhostAddresses.add(serverAddr);
+            }
+        } else {
+            for (int i = 0; i < vhostAddressStrings.length; ++i) {
+                HttpdAddressUtility.Address vhostAddr = parent.getAddressUtility().getVirtualHostSampleAddress(tree, vhostAddressStrings[i],
+                    vhostServerName, true);
+                if (vhostAddr != null) {
+                    vhostAddresses.add(vhostAddr);
+                } else {
+                    //this is not to choke on the old style resource keys for the main server. without this, we'd never be able
+                    //to match the main server with its snmp index below.
+                    HttpdAddressUtility.Address addr = HttpdAddressUtility.Address.parse(vhostAddressStrings[i]);
+                    vhostAddr = parent.getAddressUtility().getMainServerSampleAddress(tree, addr.host, addr.port);
+                    if (vhostAddr != null) {
+                        vhostAddresses.add(vhostAddr);
+                    }
+                }
+            }
+        }
+
+        //finding the snmp index that corresponds to the address(es) of the vhost isn't that simple
+        //because the snmp module in apache always resolves the IPs to hostnames.
+        //on the other hand, the resource key tries to be more accurate about what a 
+        //vhost can actually be represented as. A vhost is represented by at most 1 hostname (i.e. ServerName)
+        //and possibly multiple IP addresses.
+        SNMPValue bestMatch = null;
+        int bestMatchRate = 0;
+        
+        while (namesIterator.hasNext()) {
+            SNMPValue nameValue = namesIterator.next();
+            SNMPValue portValue = portsIterator.next();
+
+            String snmpHost = nameValue.toString();
+            String fullPort = portValue.toString();
+
+            int snmpPort = Integer.parseInt(fullPort.substring(fullPort.lastIndexOf(".") + 1));
+            
+            HttpdAddressUtility.Address snmpAddress = new HttpdAddressUtility.Address(snmpHost, snmpPort);
+        
+            int matchRate = matchRate(vhostAddresses, snmpAddress);
+            if (matchRate > bestMatchRate) {
+                bestMatch = nameValue;
+                bestMatchRate = matchRate;
+            }
+        }
+        
+        if (bestMatch != null) {
+            String nameOID = bestMatch.getOID();
+            ret = Integer.parseInt(nameOID.substring(nameOID.lastIndexOf(".") + 1));
+        } else {
+            log.debug("Unable to match the Virtual Host [" + resourceKey + "] with any of the SNMP advertised vhosts: " + names + ". The discovery will fallback to using the resource key not derived from an SNMP entry.");
+        }
+        return ret;
+    }
+    
+    /**
+     * @deprecated this is only used inside {@link #getMatchingWwwServiceIndex(ApacheServerComponent, String, List, List)}, which is
+     * kept only for backwards compatibility reasons. Don't use it anywhere else ever! 
+     */
+    @Deprecated
+    private static int matchRate(List<HttpdAddressUtility.Address> addresses, HttpdAddressUtility.Address addressToCheck) {
+        for(HttpdAddressUtility.Address a : addresses) {
+            if (HttpdAddressUtility.isAddressConforming(addressToCheck, a.host, a.port, true)) {
+                return 3;
+            }
+        }
+        
+        //try to get the IP of the address to check
+        InetAddress[] ipAddresses;
+        try {
+            ipAddresses = InetAddress.getAllByName(addressToCheck.host);
+            for(InetAddress ip : ipAddresses) {
+                HttpdAddressUtility.Address newCheck = new HttpdAddressUtility.Address(ip.getHostAddress(), addressToCheck.port);
+                
+                for(HttpdAddressUtility.Address a : addresses) {
+                    if (HttpdAddressUtility.isAddressConforming(newCheck, a.host, a.port, true)) {
+                        return 2;
+                    }
+                }
+            }            
+        } catch (UnknownHostException e) {
+            log.debug("Unknown host encountered in the httpd configuration: " + addressToCheck.host);
+            return 0;
+        }
+        
+        //this stupid 80 = 0 rule is to conform with snmp module
+        //the problem is that snmp module represents both 80 and * port defs as 0, 
+        //so whatever we do, we might mismatch the vhost. But there's no working around that
+        //but to modify the snmp module itself.
+        
+        int addressPort = addressToCheck.port;
+        if (addressPort == 80) {
+            addressPort = 0;
+        }
+        
+        //ok, try the hardest...
+        for(HttpdAddressUtility.Address listAddress: addresses) {
+            int listPort = listAddress.port;
+            if (listPort == 80) {
+                listPort = 0;
+            }
+            
+            InetAddress[] listAddresses;
+            try {
+                listAddresses = InetAddress.getAllByName(listAddress.host);
+            } catch (UnknownHostException e) {
+                log.debug("Unknown host encountered in the httpd configuration: " + listAddress.host);
+                return 0;
+            }
+            
+            for (InetAddress listInetAddr : listAddresses) {
+                for (InetAddress ip : ipAddresses) {
+                    if (ip.equals(listInetAddr) && addressPort == listPort) {
+                        return 1;
+                    }
+                }
+            }
+        }
+        
+        return 0;
+    }    
 }

@@ -583,6 +583,15 @@ public class PluginContainer implements ContainerService {
         }
     }
 
+    public DriftManager getDriftManager() {
+        Lock lock = obtainReadLock();
+        try {
+            return driftManager;
+        } finally {
+            releaseLock(lock);
+        }
+    }
+
     // The methods below return the manager implementations wrapped in their remote client interfaces.
     // External clients to the plugin container should probably use these rather than the getXXXManager() methods.
 

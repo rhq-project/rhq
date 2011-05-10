@@ -54,10 +54,10 @@ import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
 //       heap space to gradually leak until the Server eventually ran out of memory. Hence, we must use a
 //       {@link StrictMaxPool}, which will use a fixed pool of instances of this SLSB, instead of a ThreadlocalPool.
 //       Because most of these SLSB's are also invoked by other callers (i.e. Agents, GUI's, or CLI's) besides EJB
-//       timers, we set the max pool size to 60, which is double the default value, to minimize the chances of EJB
+//       timers, we set the max pool size to 50 (the default is 30) to lower the chances of EJB
 //       timer invocations, which are the most critical, from having to block and potentially getting backed up in the
 //       queue. For more details, see https://bugzilla.redhat.com/show_bug.cgi?id=693232 (ips, 05/05/11).
-@PoolClass(value = StrictMaxPool.class, maxSize = 60)
+@PoolClass(value = StrictMaxPool.class, maxSize = 50)
 public class CacheConsistencyManagerBean implements CacheConsistencyManagerLocal {
 
     private final Log log = LogFactory.getLog(CacheConsistencyManagerBean.class);

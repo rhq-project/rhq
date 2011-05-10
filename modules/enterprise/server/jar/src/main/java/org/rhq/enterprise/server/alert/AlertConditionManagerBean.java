@@ -60,10 +60,10 @@ import org.rhq.enterprise.server.authz.PermissionException;
 //       gradually leak until the Server eventually ran out of memory. Hence, we must use a {@link StrictMaxPool}, which
 //       will use a fixed pool of instances of this SLSB, instead of a ThreadlocalPool. Because most of these SLSB's are
 //       also invoked by other callers (i.e. Agents, GUI's, or CLI's) besides AlertConditionConsumerBean, we set the max
-//       pool size to 60, which is double the default value, to minimize the chances of AlertConditionConsumerBean
+//       pool size to 100 (30 is the default value), to lower the chances of AlertConditionConsumerBean
 //       invocations, which are the most critical, from having to block and potentially getting backed up in the queue.
 //       For more details, see https://bugzilla.redhat.com/show_bug.cgi?id=693232 (ips, 05/05/11).
-@PoolClass(value = StrictMaxPool.class, maxSize = 60)
+@PoolClass(value = StrictMaxPool.class, maxSize = 100)
 public class AlertConditionManagerBean implements AlertConditionManagerLocal {
 
     private static final Log LOG = LogFactory.getLog(AlertConditionManagerBean.class);

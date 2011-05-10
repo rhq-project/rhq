@@ -354,6 +354,25 @@
 
           </c:group>
 
+          <c:group name="Advanced">
+              <c:list-property name="customModuleNames">
+                  <c:description>
+                    Apache can use 2 values to identify a module. Either its module name that is used in the LoadModule directive
+                    or its source file that can be used in the IfModule directive (as of Apache 2.1 the IfModule directive can but doesn't have to
+                    use the module name, too).
+                    
+                    The plugin contains the mappings of the module names to module files for all the standard apache modules mentioned
+                    on the http://httpd.apache.org/docs/current/mod/ plus the SNMP module and mod_jk.
+                    
+                    If you use any non-standard modules and use their source file in the IfModule directives, you have to add the module-name-to-module-file
+                    mapping to this list so that the plugin can determine the correct runtime configuration of the apache instance.
+                  </c:description>
+                  <c:map-property name="moduleMapping">
+                      <c:simple-property name="moduleSourceFile" description="The source file of the module (as used in IfModule directives)"/>
+                      <c:simple-property name="moduleName" description="The name of the module (as used in LoadModule directives)"/>
+                  </c:map-property>
+              </c:list-property>  
+          </c:group>
       </plugin-configuration>
 
       <!-- all httpd processes that are not child processes of another httpd process -->

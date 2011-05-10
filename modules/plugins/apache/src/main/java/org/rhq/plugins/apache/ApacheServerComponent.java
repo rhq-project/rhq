@@ -38,7 +38,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
 import org.rhq.augeas.AugeasProxy;
 import org.rhq.augeas.config.AugeasModuleConfig;
 import org.rhq.augeas.node.AugeasNode;
@@ -47,6 +46,9 @@ import org.rhq.augeas.util.Glob;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
+import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.PropertyList;
+import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.event.EventSeverity;
@@ -125,6 +127,11 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
     
     public static final String PLUGIN_CONFIG_VHOST_IN_SINGLE_FILE_PROP_VALUE = "single-file";
     public static final String PLUGIN_CONFIG_VHOST_PER_FILE_PROP_VALUE = "vhost-per-file";
+    
+    public static final String PLUGIN_CONFIG_CUSTOM_MODULE_NAMES = "customModuleNames";
+    public static final String PLUGIN_CONFIG_MODULE_MAPPING = "moduleMapping";
+    public static final String PLUGIN_CONFIG_MODULE_NAME = "moduleName";
+    public static final String PLUGIN_CONFIG_MODULE_SOURCE_FILE = "moduleSourceFile";
     
     public static final String AUXILIARY_INDEX_PROP = "_index";
 
@@ -217,6 +224,26 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
 
             //init the module names with the defaults
             moduleNames = new HashMap<String, String>(ApacheServerDiscoveryComponent.getDefaultModuleNames(binaryInfo.getVersion()));
+                        
+            //and add the user-provided overrides/additions
+            PropertyList list = resourceContext.getPluginConfiguration().getList(PLUGIN_CONFIG_CUSTOM_MODULE_NAMES);
+            
+            if (list != null) {
+                for (Property p : list.getList()) {
+                    PropertyMap map = (PropertyMap) p;
+                    String sourceFile = map.getSimpleValue(PLUGIN_CONFIG_MODULE_SOURCE_FILE, null);
+                    String moduleName = map.getSimpleValue(PLUGIN_CONFIG_MODULE_NAME, null);
+    
+                    if (sourceFile == null || moduleName == null) {
+                        log.info("A corrupted module name mapping found (" + sourceFile + " = " + moduleName
+                            + "). Check your module mappings in the plugin configuration for the server: "
+                            + resourceContext.getResourceKey());
+                        continue;
+                    }
+    
+                    moduleNames.put(sourceFile, moduleName);
+                }
+            }
             
             startEventPollers();
         } catch (Exception e) {

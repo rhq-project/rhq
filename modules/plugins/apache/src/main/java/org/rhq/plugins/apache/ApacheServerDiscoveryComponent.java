@@ -39,6 +39,7 @@ import org.rhq.augeas.util.Glob;
 import org.rhq.augeas.util.GlobFilter;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
@@ -309,6 +310,8 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
             PluginDescriptorBasedAugeasConfiguration.INCLUDE_GLOBS_PROP, serverConfigFile);
         pluginConfig.put(inclusionGlobs);
 
+        pluginConfig.put(new PropertyList(ApacheServerComponent.PLUGIN_CONFIG_CUSTOM_MODULE_NAMES));
+        
         ApacheDirectiveTree serverConfig = loadParser(serverConfigFile.getAbsolutePath(), serverRoot);
         serverConfig = RuntimeApacheConfiguration.extract(serverConfig, process.getProcessInfo(), binaryInfo, getDefaultModuleNames(binaryInfo.getVersion()));
         

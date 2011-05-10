@@ -97,7 +97,7 @@ public class ResourceAvailability implements Serializable {
     private int id;
 
     @JoinColumn(name = "RESOURCE_ID", referencedColumnName = "ID", nullable = false)
-    @OneToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.LAZY, optional = false)
     private Resource resource;
 
     @Column(name = "RESOURCE_ID", insertable = false, updatable = false)

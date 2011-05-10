@@ -299,8 +299,8 @@ public class AlertCondition implements Serializable {
     @Enumerated(EnumType.STRING)
     private AlertConditionCategory category;
 
-    @JoinColumn(name = "MEASUREMENT_DEFINITION_ID", referencedColumnName = "ID")
-    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "MEASUREMENT_DEFINITION_ID", referencedColumnName = "ID", nullable = true)
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
     @XmlTransient
     private MeasurementDefinition measurementDefinition;
 
@@ -319,8 +319,8 @@ public class AlertCondition implements Serializable {
     @Column(name = "TRIGGER_ID")
     private Integer triggerId;
 
-    @JoinColumn(name = "ALERT_DEFINITION_ID", referencedColumnName = "ID")
-    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ALERT_DEFINITION_ID", referencedColumnName = "ID", nullable = true)
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
     @XmlTransient
     private AlertDefinition alertDefinition;
 

@@ -58,7 +58,7 @@ public class EventDefinition implements Serializable {
     private int id;
 
     @JoinColumn(name = "RESOURCE_TYPE_ID", referencedColumnName = "ID", nullable = false)
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     private ResourceType resourceType;
 
     @Column(name = "RESOURCE_TYPE_ID", insertable = false, updatable = false)

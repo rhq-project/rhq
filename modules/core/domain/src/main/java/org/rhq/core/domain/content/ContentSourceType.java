@@ -100,7 +100,7 @@ public class ContentSourceType implements Serializable {
     private String defaultSyncSchedule = "0 0 3 * * ?";
 
     @JoinColumn(name = "SOURCE_CONFIG_DEF_ID", nullable = true)
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY, optional = true)
     @XmlTransient
     private ConfigurationDefinition contentSourceConfigurationDefinition;
 

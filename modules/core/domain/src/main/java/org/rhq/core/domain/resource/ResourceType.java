@@ -79,15 +79,15 @@ import org.rhq.core.domain.util.Summary;
 @Table(name = ResourceType.TABLE_NAME)
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_RESOURCE_TYPE_ID_SEQ")
 @NamedQueries( {
-    @NamedQuery(name = ResourceType.QUERY_FIND_BY_PLUGIN, query = "SELECT rt FROM ResourceType AS rt " +
-        "WHERE rt.plugin = :plugin AND rt.deleted = false"),
+    @NamedQuery(name = ResourceType.QUERY_FIND_BY_PLUGIN, query = "SELECT rt FROM ResourceType AS rt "
+        + "WHERE rt.plugin = :plugin AND rt.deleted = false"),
     @NamedQuery(name = ResourceType.QUERY_FIND_BY_NAME_AND_PLUGIN, // TODO: QUERY: names are case-sensitive
-    query = "SELECT rt FROM ResourceType AS rt WHERE LOWER(rt.name) = LOWER(:name) AND rt.plugin = :plugin " +
-        "AND rt.deleted = false"),
+    query = "SELECT rt FROM ResourceType AS rt WHERE LOWER(rt.name) = LOWER(:name) AND rt.plugin = :plugin "
+        + "AND rt.deleted = false"),
     @NamedQuery(name = ResourceType.QUERY_FIND_ALL, query = "SELECT rt FROM ResourceType AS rt where rt.deleted = false"),
     @NamedQuery(name = ResourceType.QUERY_FIND_BY_PARENT_AND_NAME, // TODO: QUERY: Not looking up by the full key, get rid of this query
-    query = "SELECT rt FROM ResourceType AS rt WHERE :parent MEMBER OF rt.parentResourceTypes AND rt.name = :name " +
-        "AND rt.deleted = false"),
+    query = "SELECT rt FROM ResourceType AS rt WHERE :parent MEMBER OF rt.parentResourceTypes AND rt.name = :name "
+        + "AND rt.deleted = false"),
 
     /* authz'ed queries for ResourceTypeManagerBean */
     @NamedQuery(name = ResourceType.QUERY_FIND_CHILDREN, query = "SELECT c "
@@ -111,8 +111,7 @@ import org.rhq.core.domain.util.Summary;
     @NamedQuery(name = ResourceType.QUERY_FIND_UTILIZED_BY_CATEGORY, query = "SELECT DISTINCT res.resourceType "
         + "FROM Resource res, IN (res.implicitGroups) g, IN (g.roles) r, IN (r.subjects) s " //
         + "WHERE s = :subject " //
-        + "AND res.resourceType.category = :category "
-        + "AND res.resourceType.deleted = false "
+        + "AND res.resourceType.category = :category " + "AND res.resourceType.deleted = false "
         + "AND (UPPER(res.name) LIKE :nameFilter ESCAPE :escapeChar OR :nameFilter is null) "
         + "AND (res.resourceType.plugin = :pluginName OR :pluginName is null) "
         + "AND (:inventoryStatus = res.inventoryStatus OR :inventoryStatus is null) "
@@ -144,8 +143,7 @@ import org.rhq.core.domain.util.Summary;
         + "  JOIN rg.resourceType rt" //
         + "  JOIN rg.roles r JOIN r.subjects s " //
         + " WHERE s = :subject " //
-        + "   AND rt.deleted = false "
-        + "   AND ( rt.plugin = :pluginName OR :pluginName is null ) "),
+        + "   AND rt.deleted = false " + "   AND ( rt.plugin = :pluginName OR :pluginName is null ) "),
     @NamedQuery(name = ResourceType.QUERY_FIND_BY_RESOURCE_GROUP_admin, query = "" //
         + "SELECT DISTINCT rt " //
         + "  FROM ResourceGroup rg " //
@@ -153,12 +151,10 @@ import org.rhq.core.domain.util.Summary;
         + " WHERE rt.deleted = false AND ( rt.plugin = :pluginName OR :pluginName is null ) "),
     @NamedQuery(name = ResourceType.QUERY_GET_EXPLICIT_RESOURCE_TYPE_COUNTS_BY_GROUP, query = "SELECT type.id, type.name, COUNT(type.id) "
         + "FROM ResourceGroup rg JOIN rg.explicitResources res JOIN res.resourceType type "
-        + "WHERE rg.id = :groupId AND res.resourceType.deleted = false "
-        + "GROUP BY type.id, type.name "),
+        + "WHERE rg.id = :groupId AND res.resourceType.deleted = false " + "GROUP BY type.id, type.name "),
     @NamedQuery(name = ResourceType.QUERY_GET_IMPLICIT_RESOURCE_TYPE_COUNTS_BY_GROUP, query = "SELECT type.id, type.name, COUNT(type.id) "
         + "FROM ResourceGroup rg JOIN rg.implicitResources res JOIN res.resourceType type "
-        + "WHERE rg.id = :groupId AND res.resourceType.deleted = false "
-        + "GROUP BY type.id, type.name "),
+        + "WHERE rg.id = :groupId AND res.resourceType.deleted = false " + "GROUP BY type.id, type.name "),
     @NamedQuery(name = ResourceType.QUERY_FIND_BY_SUBCATEGORY, query = "SELECT rt " + "FROM ResourceType rt "
         + "WHERE rt.subCategory = :subCategory AND rt.deleted = false"),
     @NamedQuery(name = ResourceType.QUERY_FIND_BY_ID_WITH_ALL_OPERATIONS, query = "SELECT DISTINCT rt "
@@ -183,18 +179,13 @@ import org.rhq.core.domain.util.Summary;
     @NamedQuery(name = ResourceType.QUERY_FIND_DUPLICATE_TYPE_NAMES, query = "" //
         + "  SELECT rt.name " //
         + "  FROM ResourceType rt " //
-        + "  WHERE rt.deleted = false "
-        + "  GROUP BY rt.name " //
+        + "  WHERE rt.deleted = false " + "  GROUP BY rt.name " //
         + "  HAVING COUNT(rt.name) > 1"), //
     @NamedQuery(name = ResourceType.QUERY_DYNAMIC_CONFIG_WITH_PLUGIN, query = "" //
         + "SELECT rt.plugin || ' - ' || rt.name, rt.plugin || '-' || rt.name FROM ResourceType rt WHERE rt.deleted = false"), //
-    @NamedQuery(name = ResourceType.QUERY_MARK_TYPES_DELETED, query =
-          "UPDATE ResourceType t SET t.deleted = true WHERE t.id IN (:resourceTypeIds)"),
-    @NamedQuery(name = ResourceType.QUERY_FIND_IDS_BY_PLUGIN, query =
-          "SELECT t.id FROM ResourceType t WHERE t.plugin = :plugin AND t.deleted = false"),
-    @NamedQuery(name = ResourceType.QUERY_FIND_COUNT_BY_PLUGIN, query =
-          "SELECT COUNT(t) FROM ResourceType t WHERE t.plugin = :plugin AND t.deleted = false")
-})
+    @NamedQuery(name = ResourceType.QUERY_MARK_TYPES_DELETED, query = "UPDATE ResourceType t SET t.deleted = true WHERE t.id IN (:resourceTypeIds)"),
+    @NamedQuery(name = ResourceType.QUERY_FIND_IDS_BY_PLUGIN, query = "SELECT t.id FROM ResourceType t WHERE t.plugin = :plugin AND t.deleted = false"),
+    @NamedQuery(name = ResourceType.QUERY_FIND_COUNT_BY_PLUGIN, query = "SELECT COUNT(t) FROM ResourceType t WHERE t.plugin = :plugin AND t.deleted = false") })
 @NamedNativeQueries( {
     // TODO: Add authz conditions to the below query.
     @NamedNativeQuery(name = ResourceType.QUERY_FIND_CHILDREN_BY_CATEGORY, query = "" //
@@ -218,9 +209,9 @@ import org.rhq.core.domain.util.Summary;
         + "AND 0 = "
         + "(SELECT COUNT(rtp2.resource_type_id) "
         + "FROM RHQ_resource_type_parents rtp2 "
-        + "WHERE rtp2.resource_type_id = crt2.id) "
-        + "AND crt2.deleted = false "
-        + "AND crt2.category = ? " + " ) ORDER BY name", resultSetMapping = ResourceType.MAPPING_FIND_CHILDREN_BY_CATEGORY),
+        + "WHERE rtp2.resource_type_id = crt2.id) " + "AND crt2.deleted = false "
+        + "AND crt2.category = ? "
+        + " ) ORDER BY name", resultSetMapping = ResourceType.MAPPING_FIND_CHILDREN_BY_CATEGORY),
     @NamedNativeQuery(name = ResourceType.QUERY_FIND_CHILDREN_BY_CATEGORY_admin, query = "" //
         + "(SELECT crt.id, crt.name, crt.category, crt.creation_data_type, crt.create_delete_policy, crt.singleton, crt.supports_manual_add, crt.description, crt.plugin, crt.ctime, crt.mtime, crt.deleted, crt.subcategory_id, crt.plugin_config_def_id, crt.res_config_def_id "
         + "FROM RHQ_resource_type crt, RHQ_resource res, RHQ_resource_type rt, RHQ_resource_type_parents rtp "
@@ -347,18 +338,18 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
     //@Cache(usage = CacheConcurrencyStrategy.TRANSACTIONAL)
     private Set<ResourceType> parentResourceTypes;
 
-    @JoinColumn(name = "PLUGIN_CONFIG_DEF_ID")
-    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JoinColumn(name = "PLUGIN_CONFIG_DEF_ID", nullable = true)
+    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY, optional = true)
     //@Cache(usage = CacheConcurrencyStrategy.TRANSACTIONAL)
     private ConfigurationDefinition pluginConfigurationDefinition;
 
-    @JoinColumn(name = "RES_CONFIG_DEF_ID")
-    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JoinColumn(name = "RES_CONFIG_DEF_ID", nullable = true)
+    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY, optional = true)
     //@Cache(usage = CacheConcurrencyStrategy.TRANSACTIONAL)
     private ConfigurationDefinition resourceConfigurationDefinition;
 
-    @JoinColumn(name = "SUBCATEGORY_ID")
-    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "SUBCATEGORY_ID", nullable = true)
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
     private ResourceSubCategory subCategory;
 
     @OneToMany(mappedBy = "resourceType", cascade = CascadeType.ALL)

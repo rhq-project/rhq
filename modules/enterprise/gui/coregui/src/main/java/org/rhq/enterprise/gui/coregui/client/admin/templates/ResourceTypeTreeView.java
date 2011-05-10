@@ -26,7 +26,6 @@ import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.types.VisibilityMode;
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.ImgButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.grid.ListGrid;
@@ -59,6 +58,7 @@ import org.rhq.enterprise.gui.coregui.client.components.table.ResourceCategoryCe
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.TypesLoadedCallback;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableImgButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTreeGrid;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
@@ -315,7 +315,7 @@ public class ResourceTypeTreeView extends LocatableVLayout implements Bookmarkab
                 rollOverCanvas.setWidth(50);
                 rollOverCanvas.setHeight(22);
 
-                ImgButton metricTemplateImg = new ImgButton();
+                LocatableImgButton metricTemplateImg = new LocatableImgButton(extendLocatorId("Metric_" + rowNum));
                 metricTemplateImg.setShowDown(false);
                 metricTemplateImg.setShowRollOver(false);
                 metricTemplateImg.setLayoutAlign(Alignment.CENTER);
@@ -329,7 +329,7 @@ public class ResourceTypeTreeView extends LocatableVLayout implements Bookmarkab
                     }
                 });
 
-                ImgButton alertTemplateImg = new ImgButton();
+                LocatableImgButton alertTemplateImg = new LocatableImgButton(extendLocatorId("Alert_" + rowNum));
                 alertTemplateImg.setShowDown(false);
                 alertTemplateImg.setShowRollOver(false);
                 alertTemplateImg.setLayoutAlign(Alignment.CENTER);
@@ -428,7 +428,7 @@ public class ResourceTypeTreeView extends LocatableVLayout implements Bookmarkab
                 rollOverCanvas.setWidth(50);
                 rollOverCanvas.setHeight(22);
 
-                ImgButton metricTemplateImg = new ImgButton();
+                LocatableImgButton metricTemplateImg = new LocatableImgButton(extendLocatorId("Metric_" + rowNum));
                 metricTemplateImg.setShowDown(false);
                 metricTemplateImg.setShowRollOver(false);
                 metricTemplateImg.setLayoutAlign(Alignment.CENTER);
@@ -442,7 +442,7 @@ public class ResourceTypeTreeView extends LocatableVLayout implements Bookmarkab
                     }
                 });
 
-                ImgButton alertTemplateImg = new ImgButton();
+                LocatableImgButton alertTemplateImg = new LocatableImgButton(extendLocatorId("Alert_" + rowNum));
                 alertTemplateImg.setShowDown(false);
                 alertTemplateImg.setShowRollOver(false);
                 alertTemplateImg.setLayoutAlign(Alignment.CENTER);

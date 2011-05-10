@@ -160,7 +160,6 @@ public class Domain2Descriptor {
                 doIndent(indent,sb);
                 sb.append("<metric property=\"");
                 sb.append(entry.getKey()).append('"');
-                sb.append(" type=\"").append(typeString).append("\"");
                 if (ptype== Type.STRING)
                     sb.append(" dataType=\"trait\"");
 

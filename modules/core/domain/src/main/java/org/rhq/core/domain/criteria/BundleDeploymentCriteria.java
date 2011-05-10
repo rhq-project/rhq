@@ -49,6 +49,7 @@ public class BundleDeploymentCriteria extends TaggedCriteria {
     private String filterSubjectName;
 
     private boolean fetchBundleVersion;
+    private boolean fetchConfiguration;
     private boolean fetchDestination;
     private boolean fetchResourceDeployments;
 
@@ -106,6 +107,10 @@ public class BundleDeploymentCriteria extends TaggedCriteria {
 
     public void fetchBundleVersion(boolean fetchBundleVersion) {
         this.fetchBundleVersion = fetchBundleVersion;
+    }
+
+    public void fetchConfiguration(boolean fetchConfiguration) {
+        this.fetchConfiguration = fetchConfiguration;
     }
 
     public void fetchDestination(boolean fetchDestination) {

@@ -1095,6 +1095,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         BundleDeploymentCriteria bdc = new BundleDeploymentCriteria();
         bdc.addFilterId(resourceDeployment.getBundleDeployment().getId());
         bdc.fetchBundleVersion(true);
+        bdc.fetchConfiguration(true);
         bdc.fetchDestination(true);
         BundleDeployment deployment = bundleManager.findBundleDeploymentsByCriteria(subject, bdc).get(0);
 

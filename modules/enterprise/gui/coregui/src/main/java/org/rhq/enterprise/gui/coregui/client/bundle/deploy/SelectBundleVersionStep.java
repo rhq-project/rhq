@@ -143,6 +143,7 @@ public class SelectBundleVersionStep extends AbstractWizardStep {
                     criteria.addFilterDestinationId(wizard.getDestination().getId());
                     criteria.addFilterIsLive(true);
                     criteria.fetchBundleVersion(true);
+                    criteria.fetchConfiguration(true);
                     bundleServer.findBundleDeploymentsByCriteria(criteria, //
                         new AsyncCallback<PageList<BundleDeployment>>() {
 

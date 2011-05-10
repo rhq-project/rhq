@@ -151,16 +151,17 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
             if (!res.isSuccess())
                 continue;
 
-            String val = (String) res.getResult();
+             String val = (String) res.getResult();
 
             if (req.getDataType()== DataType.MEASUREMENT) {
-
-                try {
-                    Double d = Double.parseDouble(val);
-                    MeasurementDataNumeric data = new MeasurementDataNumeric(req,d);
-                    report.addData(data);
-                } catch (NumberFormatException e) {
-                    log.warn("Non numeric input for [" + req.getName() + "] : [" + val + "]");
+                if (!val.equals("no metrics available")) { // AS 7 returns this
+                    try {
+                        Double d = Double.parseDouble(val);
+                        MeasurementDataNumeric data = new MeasurementDataNumeric(req,d);
+                        report.addData(data);
+                    } catch (NumberFormatException e) {
+                        log.warn("Non numeric input for [" + req.getName() + "] : [" + val + "]");
+                    }
                 }
             } else if (req.getDataType()== DataType.TRAIT) {
                 MeasurementDataTrait data = new MeasurementDataTrait(req,val);
@@ -196,12 +197,18 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
             if (propDef instanceof PropertyDefinitionSimple) {
                 PropertySimple propertySimple;
 
-                if (sub!=null)
+                if (sub!=null) {
+                    // Property is non-null -> return it.
                     propertySimple = new PropertySimple(propDef.getName(),sub.getValueAsText());
-                else {
-                    propertySimple = new PropertySimple(propDef.getName(),"- null -"); // TODO store it at all when it is null?
-                }
                     ret.put(propertySimple);
+                }
+                else {
+                    // property is null? Check if it is required
+                    if (propDef.isRequired()) {
+                        propertySimple = new PropertySimple(propDef.getName(),null);
+                        ret.put(propertySimple);
+                    }
+                }
             } else if (propDef instanceof PropertyDefinitionList) {
                 PropertyList propertyList = new PropertyList(propDef.getName());
                 PropertyDefinition memberDefinition = ((PropertyDefinitionList) propDef).getMemberDefinition();

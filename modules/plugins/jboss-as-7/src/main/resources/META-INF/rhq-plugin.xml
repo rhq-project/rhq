@@ -568,6 +568,28 @@
                 <c:simple-property name="path" readOnly="true" default="data-source"/>
             </plugin-configuration>
 
+            <metric property="PreparedStatementCacheCurrentSize"
+                    description="The number of prepared and callable statements currently cached in the statement cache"/>
+            <metric property="PreparedStatementCacheMissCount"
+                    description="The number of times that a statement request could not be satisfied with a statement from the cache"/>
+            <metric property="PreparedStatementCacheAddCount" description="The number of statements added to the statement cache"/>
+            <metric property="PreparedStatementCacheAccessCount" description="The number of times that the statement cache was accessed"/>
+            <metric property="PreparedStatementCacheDeleteCount" description="The number of statements discarded from the cache"/>
+            <metric property="PreparedStatementCacheHitCount" description="The number of times that statements from the cache were used"/>
+            <metric property="AverageBlockingTime" description="The average time spent blocking for a connection"/>
+            <metric property="MaxWaitTime" description="The maximum wait time for a connection"/>
+            <metric property="ActiveCount" description="The active count"/>
+            <metric property="CreatedCount" description="The created count"/>
+            <metric property="MaxCreationTime" description="The maximum time for creating a physical connection"/>
+            <metric property="MaxWaitCount" description="The maximum number of threads waiting for a connection"/>
+            <metric property="TotalCreationTime" description="The total time spent creating physical connections"/>
+            <metric property="AvailableCount" description="The available count"/>
+            <metric property="MaxUsedCount" description="The maximum number of connections used"/>
+            <metric property="TimedOut" description="The timed out count"/>
+            <metric property="TotalBlockingTime" description="The total blocking time"/>
+            <metric property="AverageCreationTime" description="The average time spent creating a physical connection"/>
+            <metric property="DestroyedCount" description="The destroyed count"/>
+
             <resource-configuration>
                 <c:simple-property name="connection-url" required="true" type="string" readOnly="true" description="The JDBC driver connection URL"/>
                 <c:simple-property name="driver-class" required="true" type="string" readOnly="true"

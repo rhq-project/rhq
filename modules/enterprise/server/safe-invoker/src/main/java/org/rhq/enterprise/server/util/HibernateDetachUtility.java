@@ -24,9 +24,9 @@ import java.beans.PropertyDescriptor;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -55,6 +55,20 @@ public class HibernateDetachUtility {
         SERIALIZATION, JAXB
     }
 
+    // be able to configure the deepest recursion this utility will be allowed to go (see BZ 702109 that precipitated this need)
+    private static final String DEPTH_ALLOWED_SYSPROP = "rhq.server.hibernate-detach-utility.depth-allowed";
+    private static final int depthAllowed;
+    static {
+        int value;
+        try {
+            String str = System.getProperty(DEPTH_ALLOWED_SYSPROP, "50");
+            value = Integer.parseInt(str);
+        } catch (Throwable t) {
+            value = 50;
+        }
+        depthAllowed = value;
+    }
+
     public static void nullOutUninitializedFields(Object value, SerializationType serializationType) throws Exception {
         long start = System.currentTimeMillis();
         Map<Integer, Object> checkedObjects = new HashMap<Integer, Object>();
@@ -71,8 +85,13 @@ public class HibernateDetachUtility {
 
     private static void nullOutUninitializedFields(Object value, Map<Integer, Object> checkedObjects, int depth,
         SerializationType serializationType) throws Exception {
-        if (depth > 50) {
-            LOG.warn("Getting different object hierarchies back from calls: " + value.getClass().getName());
+        if (depth > depthAllowed) {
+            LOG.warn("Recursed too deep [" + depth + " > " + depthAllowed
+                + "], will not attempt to detach object of type ["
+                + ((value != null) ? value.getClass().getName() : "N/A")
+                + "]. This may cause serialization errors later. If so, "
+                + "you can try to work around this by setting the system property [" + DEPTH_ALLOWED_SYSPROP
+                + "] to a value higher than [" + depth + "].");
             return;
         }
 
@@ -163,7 +182,14 @@ public class HibernateDetachUtility {
         Class tmpClass = object.getClass();
         List<Field> fieldsToClean = new ArrayList<Field>();
         while (tmpClass != null && tmpClass != Object.class) {
-            Collections.addAll(fieldsToClean, tmpClass.getDeclaredFields());
+            Field[] declaredFields = tmpClass.getDeclaredFields();
+            for (Field declaredField : declaredFields) {
+                // do not process static final or transient fields since they won't be serialized anyway
+                int modifiers = declaredField.getModifiers();
+                if (!((Modifier.isFinal(modifiers) && Modifier.isStatic(modifiers)) || Modifier.isTransient(modifiers))) {
+                    fieldsToClean.add(declaredField);
+                }
+            }
             tmpClass = tmpClass.getSuperclass();
         }
 

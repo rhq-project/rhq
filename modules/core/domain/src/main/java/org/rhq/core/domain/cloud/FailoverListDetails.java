@@ -74,14 +74,14 @@ public class FailoverListDetails implements Serializable {
     private int id;
 
     @JoinColumn(name = "FAILOVER_LIST_ID", referencedColumnName = "ID", nullable = false)
-    @ManyToOne
+    @ManyToOne(optional = false)
     protected FailoverList failoverList;
 
     @Column(name = "ORDINAL", nullable = false)
     private int ordinal;
 
     @JoinColumn(name = "SERVER_ID", referencedColumnName = "ID", nullable = false)
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     protected Server server;
 
     @Column(name = "SERVER_ID", insertable = false, updatable = false)

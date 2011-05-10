@@ -328,6 +328,7 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
         return tagEditor;
     }
 
+    @SuppressWarnings("unchecked")
     private Table addMemberDeploymentsTable() {
         Table table = new Table(extendLocatorId("Deployments"), MSG.view_bundle_deploy_deploymentPlatforms());
 
@@ -420,7 +421,6 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
         BundleDeploymentCriteria criteria = new BundleDeploymentCriteria();
         criteria.addFilterId(bundleDeploymentId);
         criteria.fetchBundleVersion(true);
-        criteria.fetchConfiguration(true);
         criteria.fetchResourceDeployments(true);
         criteria.fetchDestination(true);
         criteria.fetchTags(true);

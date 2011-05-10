@@ -51,7 +51,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.jboss.annotation.IgnoreDependency;
+import org.jboss.annotation.ejb.PoolClass;
 import org.jboss.deployment.MainDeployerMBean;
+import org.jboss.ejb3.StrictMaxPool;
 import org.jboss.mx.util.MBeanServerLocator;
 
 import org.rhq.core.db.DatabaseType;
@@ -74,6 +76,18 @@ import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.SystemDatabaseInformation;
 
 @Stateless
+// NOTE: The CacheConsistencyManagerBean, CloudManagerBean, ServerManagerBean, StatusManagerBean, and SystemManagerBean
+//       SLSB's are all invoked, either directly or indirectly, by EJB timers. Since EJB timer invocations are always
+//       done in new threads, using the default SLSB pool impl ({@link ThreadlocalPool}) would cause a new instance of
+//       this SLSB to be created every time it was invoked by an EJB timer. This would be bad because an existing
+//       instance would not be reused, but it is really bad because the instance would also never get destroyed, causing
+//       heap space to gradually leak until the Server eventually ran out of memory. Hence, we must use a
+//       {@link StrictMaxPool}, which will use a fixed pool of instances of this SLSB, instead of a ThreadlocalPool.
+//       Because most of these SLSB's are also invoked by other callers (i.e. Agents, GUI's, or CLI's) besides EJB
+//       timers, we set the max pool size to 50 (the default is 30) to lower the chances of EJB
+//       timer invocations, which are the most critical, from having to block and potentially getting backed up in the
+//       queue. For more details, see https://bugzilla.redhat.com/show_bug.cgi?id=693232 (ips, 05/05/11).
+@PoolClass(value = StrictMaxPool.class, maxSize = 50)
 public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemote {
     private final String SQL_VACUUM = "VACUUM ANALYZE {0}";
 

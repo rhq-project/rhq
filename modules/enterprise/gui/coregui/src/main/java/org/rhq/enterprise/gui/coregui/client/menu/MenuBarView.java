@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -21,14 +21,15 @@ package org.rhq.enterprise.gui.coregui.client.menu;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.History;
-import com.google.gwt.user.client.ui.Hyperlink;
 import com.smartgwt.client.types.Alignment;
+import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.Img;
+import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.layout.HLayout;
+import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
@@ -40,13 +41,17 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.DashboardsView;
 import org.rhq.enterprise.gui.coregui.client.help.HelpView;
 import org.rhq.enterprise.gui.coregui.client.inventory.InventoryView;
 import org.rhq.enterprise.gui.coregui.client.report.ReportTopView;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHStack;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableLabel;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Greg Hinkle
  * @author Joseph Marques
+ * @author Ian Springer
  */
 public class MenuBarView extends LocatableVLayout {
 
@@ -80,7 +85,7 @@ public class MenuBarView extends LocatableVLayout {
         markForRedraw();
     }
 
-    // When redrawing, ensire the correct session infor is displayed
+    // When redrawing, ensure the correct session info is displayed
     @Override
     public void markForRedraw() {
         String currentDisplayName = userLabel.getContents();
@@ -104,50 +109,7 @@ public class MenuBarView extends LocatableVLayout {
     }
 
     private Canvas getLinksSection() {
-        final HTMLFlow linksPane = new HTMLFlow();
-        linksPane.setContents(setupLinks());
-
-        History.addValueChangeHandler(new ValueChangeHandler<String>() {
-            public void onValueChange(ValueChangeEvent<String> stringValueChangeEvent) {
-                String first = stringValueChangeEvent.getValue().split("/")[0];
-
-                if ("Resource".equals(first)) {
-                    first = "Inventory";
-                }
-
-                currentlySelectedSection = first;
-                linksPane.setContents(setupLinks());
-                linksPane.markForRedraw();
-            }
-        });
-        return linksPane;
-    }
-
-    private String setupLinks() {
-        // TODO: Replace the below HTML with SmartGWT widgets.
-        StringBuilder headerString = new StringBuilder(
-            "<table style=\"height: 34px;\" cellpadding=\"0\" cellspacing=\"0\"><tr>");
-
-        headerString.append("<td style=\"width: 1px;\"><img src=\"images/header/header_bg_line.png\"/></td>");
-        for (ViewName sectionName : SECTIONS) {
-
-            String styleClass = "TopSectionLink";
-            if (sectionName.getName().equals(currentlySelectedSection)) {
-                styleClass = "TopSectionLinkSelected";
-            }
-
-            // Set explicit identifiers because the generated scLocator is not getting picked up by Selenium.
-            headerString.append("<td style=\"vertical-align:middle\" id=\"").append(sectionName).append("\" class=\"")
-                .append(styleClass).append("\" onclick=\"window.location.href='#").append(sectionName).append("'\" >");
-            headerString.append(sectionName.getTitle());
-            headerString.append("</td>\n");
-
-            headerString.append("<td style=\"width: 1px;\"><img src=\"images/header/header_bg_line.png\"/></td>");
-        }
-
-        headerString.append("</tr></table>");
-
-        return headerString.toString();
+        return new LinkBar();
     }
 
     private Canvas getActionsSection() {
@@ -158,19 +120,92 @@ public class MenuBarView extends LocatableVLayout {
         userLabel = new LocatableLabel(this.extendLocatorId("User"), UserSessionManager.getSessionSubject().getName());
         userLabel.setAutoWidth();
 
-        LocatableLabel lineLabel = new LocatableLabel(this.extendLocatorId("Line"), " | ");
-        lineLabel.setWidth("10px");
+        Label lineLabel = new Label(" | ");
+        lineLabel.setWidth("12px");
         lineLabel.setAlign(Alignment.CENTER);
 
-        Hyperlink logoutLink = SeleniumUtility.setHtmlId(new Hyperlink(LOGOUT_VIEW_ID.getTitle(), LOGOUT_VIEW_ID
-            .getName()), LOGOUT_VIEW_ID.getName());
-        logoutLink.setWidth("50px");
+        String contents = "<a href='#" + LOGOUT_VIEW_ID.getName() + "'>" + LOGOUT_VIEW_ID.getTitle() + "</a>";
+        LocatableLabel logoutLink = new LocatableLabel(this.extendLocatorId("LogoutLink"), contents);
+        logoutLink.setAutoWidth();
 
         layout.addMember(userLabel);
         layout.addMember(lineLabel);
         layout.addMember(logoutLink);
 
         return layout;
+    }
+
+    class LinkBar extends LocatableHStack implements ValueChangeHandler<String> {
+        private final Map<String, VLayout> sectionNameToLinkVLayoutMap = new HashMap<String, VLayout>();
+
+        LinkBar() {
+            super(MenuBarView.this.extendLocatorId("LinkBar"));
+
+            setWidth100();
+            setHeight100();
+
+            Img divider = new Img("header/header_bg_line.png");
+            divider.setWidth(1);
+            divider.setHeight100();
+            addMember(divider);
+
+            for (ViewName sectionName : SECTIONS) {
+                VLayout linkVLayout = new VLayout();
+                linkVLayout.setHeight100();
+                linkVLayout.setAlign(VerticalAlignment.CENTER);
+
+                String contents = "<a class='menuBar' href='#" + sectionName.getName() + "'>" + sectionName.getTitle()
+                        + "</a>";
+                LocatableLabel link = new LocatableLabel(extendLocatorId(sectionName.getName()), contents);
+                link.setAutoHeight();
+                link.setAlign(Alignment.CENTER);
+                link.setStyleName("inheritColor");
+                linkVLayout.addMember(link);
+
+                this.sectionNameToLinkVLayoutMap.put(sectionName.getName(), linkVLayout);
+                updateLinkStyle(sectionName.getName());
+                addMember(linkVLayout);
+
+                divider = new Img("header/header_bg_line.png");
+                divider.setWidth(1);
+                divider.setHeight100();
+                addMember(divider);
+            }
+
+            History.addValueChangeHandler(this);
+        }
+
+        @Override
+        public void onValueChange(ValueChangeEvent<String> stringValueChangeEvent) {
+            String viewPath = stringValueChangeEvent.getValue();
+            String topViewId = viewPath.split("/")[0];
+            if ("Resource".equals(topViewId)) {
+                topViewId = InventoryView.VIEW_ID.getName();
+            }
+            currentlySelectedSection = topViewId;
+
+            for (String sectionName : this.sectionNameToLinkVLayoutMap.keySet()) {
+                updateLinkStyle(sectionName);
+            }
+        }
+
+        private void updateLinkStyle(String sectionName) {
+            String divStyleClass;
+            String styleClass;
+            if (sectionName.equals(currentlySelectedSection)) {
+                divStyleClass = "TopSectionLinkDivSelected";
+                styleClass = "TopSectionLinkSelected";
+            } else {
+                divStyleClass = "TopSectionLinkDiv";
+                styleClass = "TopSectionLink";
+            }
+            VLayout linkVLayout = this.sectionNameToLinkVLayoutMap.get(sectionName);
+            linkVLayout.setStyleName(divStyleClass);
+            linkVLayout.markForRedraw();
+            Canvas link = linkVLayout.getMember(0);
+            link.setStyleName(styleClass);
+            link.markForRedraw();
+        }
     }
 
 }

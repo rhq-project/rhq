@@ -915,7 +915,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     @RequiredPermission(Permission.MANAGE_BUNDLE)
     public BundleDeployment scheduleBundleDeployment(Subject subject, int bundleDeploymentId, boolean isCleanDeployment)
         throws Exception {
-        return scheduleBundleDeploymentImpl(subject, bundleDeploymentId, isCleanDeployment, false);
+        return scheduleBundleDeploymentImpl(subject, bundleDeploymentId, isCleanDeployment, false, null);
     }
 
     @Override
@@ -926,7 +926,6 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         BundleDeploymentCriteria c = new BundleDeploymentCriteria();
         c.addFilterDestinationId(bundleDestinationId);
         c.addFilterIsLive(true);
-        c.fetchReplacedBundleDeployment(true);
         c.fetchDestination(true);
         List<BundleDeployment> liveDeployments = bundleManager.findBundleDeploymentsByCriteria(subject, c);
         if (1 != liveDeployments.size()) {
@@ -934,15 +933,15 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
                 + "]");
         }
         BundleDeployment liveDeployment = liveDeployments.get(0);
-        BundleDeployment prevDeployment = liveDeployment.getReplacedBundleDeployment();
-        if (null == prevDeployment) {
+        Integer prevDeploymentId = liveDeployment.getReplacedBundleDeploymentId();
+        if (null == prevDeploymentId) {
             throw new IllegalArgumentException(
                 "Live deployment ["
                     + liveDeployment
                     + "] can not be reverted. The Live deployment is either an initial deployment or a reverted deployment for destinationId ["
                     + bundleDestinationId + "]");
         }
-        prevDeployment = entityManager.find(BundleDeployment.class, prevDeployment.getId());
+        BundleDeployment prevDeployment = entityManager.find(BundleDeployment.class, prevDeploymentId);
         if (null == prevDeployment) {
             throw new IllegalArgumentException("Live deployment [" + liveDeployment
                 + "] can not be reverted. There is no prior deployment for destinationId [" + bundleDestinationId + "]");
@@ -961,11 +960,13 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         BundleDeployment revertDeployment = bundleManager.createBundleDeploymentInNewTrans(subject, prevDeployment
             .getBundleVersion().getId(), bundleDestinationId, name, desc, config);
 
-        return scheduleBundleDeploymentImpl(subject, revertDeployment.getId(), isCleanDeployment, true);
+        return scheduleBundleDeploymentImpl(subject, revertDeployment.getId(), isCleanDeployment, true, prevDeployment
+            .getReplacedBundleDeploymentId());
     }
 
+    // revertedDeploymentReplacedDeployment is only meaningful if isRevert is true
     private BundleDeployment scheduleBundleDeploymentImpl(Subject subject, int bundleDeploymentId,
-        boolean isCleanDeployment, boolean isRevert) throws Exception {
+        boolean isCleanDeployment, boolean isRevert, Integer revertedDeploymentReplacedDeployment) throws Exception {
 
         BundleDeployment newDeployment = entityManager.find(BundleDeployment.class, bundleDeploymentId);
         if (null == newDeployment) {
@@ -999,9 +1000,22 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             for (BundleDeployment d : currentDeployments) {
                 if (d.isLive()) {
                     d.setLive(false);
-                    // you can not revert a revert, it does not logically replace anything, it is
                     if (!isRevert) {
-                        newDeployment.setReplacedBundleDeployment(d);
+                        newDeployment.setReplacedBundleDeploymentId(d.getId());
+                    } else {
+                        // we are doing a revert; so our "replacedDeployment" should be what the deployment we
+                        // are reverting to replaced. For example, assume I deployed three bundles:
+                        //   Deployment #1 - replaced nothing (hence replacedBundleDeploymentId == null)
+                        //   Deployment #2 - replaced #1
+                        //   Deployment #3 - replaced #2
+                        // Now do a revert. Reverting the live deployment #3 means we really want to re-deploy #2.
+                        // This new deployment gets a new ID of #4, but it is actually a deployment equivalent to #2.
+                        // If our deploy #4 is actually a redeploy of #2, we need to prepare for the user wanting
+                        // to revert #4 by setting the replacedBundleDeploymentId to that which #2 had - this being #1.
+                        //   Deployment #4 - replaced #1
+                        // Now if we ask to revert #4, we will actually be re-deploying #1, which is what we want.
+                        // This allows us to revert back multiple steps.
+                        newDeployment.setReplacedBundleDeploymentId(revertedDeploymentReplacedDeployment);
                     }
                     break;
                 }
@@ -1096,7 +1110,6 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         BundleDeploymentCriteria bdc = new BundleDeploymentCriteria();
         bdc.addFilterId(resourceDeployment.getBundleDeployment().getId());
         bdc.fetchBundleVersion(true);
-        bdc.fetchConfiguration(true);
         bdc.fetchDestination(true);
         BundleDeployment deployment = bundleManager.findBundleDeploymentsByCriteria(subject, bdc).get(0);
 
@@ -1471,6 +1484,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         // to break the FK dependency with nulls.
         Query q = entityManager.createNamedQuery(BundleDeployment.QUERY_UPDATE_FOR_VERSION_REMOVE);
         q.setParameter("bundleVersionId", bundleVersionId);
+        @SuppressWarnings("unused")
         int rowsUpdated = q.executeUpdate();
         entityManager.flush();
 

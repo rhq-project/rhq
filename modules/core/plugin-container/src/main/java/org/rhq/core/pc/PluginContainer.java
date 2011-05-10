@@ -54,6 +54,7 @@ import org.rhq.core.pc.bundle.BundleManager;
 import org.rhq.core.pc.configuration.ConfigurationManager;
 import org.rhq.core.pc.configuration.ConfigurationManagerInitializer;
 import org.rhq.core.pc.content.ContentManager;
+import org.rhq.core.pc.drift.DriftManager;
 import org.rhq.core.pc.event.EventManager;
 import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.inventory.ResourceContainer;
@@ -117,6 +118,7 @@ public class PluginContainer implements ContainerService {
     private EventManager eventManager;
     private SupportManager supportManager;
     private BundleManager bundleManager;
+    private DriftManager driftManager;
 
     private Collection<AgentServiceLifecycleListener> agentServiceListeners = new LinkedHashSet<AgentServiceLifecycleListener>();
     private AgentServiceStreamRemoter agentServiceStreamRemoter = null;
@@ -273,6 +275,7 @@ public class PluginContainer implements ContainerService {
                 eventManager = new EventManager();
                 supportManager = new SupportManager();
                 bundleManager = new BundleManager();
+                driftManager = new DriftManager();
 
                 startContainerService(pluginManager);
                 startContainerService(pluginComponentFactory);
@@ -285,6 +288,7 @@ public class PluginContainer implements ContainerService {
                 startContainerService(eventManager);
                 startContainerService(supportManager);
                 startContainerService(bundleManager);
+                startContainerService(driftManager);
 
                 started = true;
 
@@ -324,6 +328,7 @@ public class PluginContainer implements ContainerService {
 
                 boolean isInsideAgent = configuration.isInsideAgent();
 
+                driftManager.shutdown();
                 bundleManager.shutdown();
                 supportManager.shutdown();
                 eventManager.shutdown();
@@ -345,6 +350,7 @@ public class PluginContainer implements ContainerService {
 
                 ResourceContainer.shutdown();
 
+                driftManager = null;
                 bundleManager = null;
                 supportManager = null;
                 eventManager = null;

@@ -910,7 +910,7 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
     }
 
     public HttpdAddressUtility getAddressUtility() {
-        String version = resourceContext.getVersion();
+        String version = getVersion();
         return HttpdAddressUtility.get(version);
     }
     
@@ -963,7 +963,7 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
                 log.error("Augeas is enabled in configuration but was not found on the system.");
                 throw new RuntimeException(CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);                
             }
-            String version = resourceContext.getVersion();
+            String version = getVersion();
             
             if (!version.startsWith("2.")) {
                 log.error(CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);

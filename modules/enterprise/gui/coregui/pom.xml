@@ -64,8 +64,8 @@
         <gwt.draftCompile>false</gwt.draftCompile>
         
         <!-- Comma-separated list of the locales that should be included during GWT compilation. Currently supported
-             locales (i.e. locales for which we have localized message bundles) are "en" and "de". -->
-        <gwt.locale>en,de</gwt.locale>
+             locales (i.e. locales for which we have localized message bundles) are "en", "de", and "ja". -->
+        <gwt.locale>en,de,ja</gwt.locale>
     </properties>
 
 

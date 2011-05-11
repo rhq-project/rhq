@@ -139,12 +139,12 @@ public class PluginConfigurationUpdate extends AbstractResourceConfigurationUpda
     public static final String QUERY_DELETE_GROUP_UPDATE = "pluginConfigurationUpdate.deleteGroupUpdate";
 
     @JoinColumn(name = "PLUGIN_CONFIG_RES_ID", referencedColumnName = "ID", nullable = true)
-    @ManyToOne(cascade = CascadeType.MERGE, fetch = FetchType.LAZY)
+    @ManyToOne(cascade = CascadeType.MERGE, fetch = FetchType.LAZY, optional = true)
     @XmlTransient
     private Resource resource;
 
     @JoinColumn(name = "AGG_PLUGIN_UPDATE_ID", referencedColumnName = "ID", nullable = true)
-    @ManyToOne
+    @ManyToOne(optional = true)
     private GroupPluginConfigurationUpdate groupConfigurationUpdate;
 
     protected PluginConfigurationUpdate() {

@@ -59,7 +59,7 @@ import org.rhq.core.domain.configuration.Configuration;
  * @author Jason Dobies
  */
 @Entity
-@NamedQueries({
+@NamedQueries( {
     @NamedQuery(name = ContentSource.QUERY_FIND_ALL, query = "SELECT cs FROM ContentSource cs "),
     @NamedQuery(name = ContentSource.QUERY_FIND_ALL_WITH_CONFIG, query = "SELECT cs FROM ContentSource cs LEFT JOIN FETCH cs.configuration"),
     @NamedQuery(name = ContentSource.QUERY_FIND_BY_NAME_AND_TYPENAME, query = "SELECT cs " + "  FROM ContentSource cs "
@@ -94,7 +94,7 @@ public class ContentSource implements Serializable {
     private int id;
 
     @JoinColumn(name = "CONTENT_SOURCE_TYPE_ID", referencedColumnName = "ID", nullable = false)
-    @ManyToOne
+    @ManyToOne(optional = false)
     private ContentSourceType contentSourceType;
 
     @Column(name = "NAME", nullable = false)
@@ -117,7 +117,7 @@ public class ContentSource implements Serializable {
     private String loadErrorMessage;
 
     @JoinColumn(name = "CONFIGURATION_ID", referencedColumnName = "ID", nullable = true)
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY, optional = true)
     private Configuration configuration;
 
     @Column(name = "CREATION_TIME", nullable = false)

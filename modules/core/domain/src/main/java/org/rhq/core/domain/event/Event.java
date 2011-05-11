@@ -112,7 +112,7 @@ public class Event implements Serializable {
     private int id;
 
     @JoinColumn(name = "EVENT_SOURCE_ID", referencedColumnName = "ID", nullable = false)
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     private EventSource source;
 
     @Column(name = "TIMESTAMP", nullable = false)

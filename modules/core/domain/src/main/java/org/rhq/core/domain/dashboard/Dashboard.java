@@ -88,20 +88,20 @@ public class Dashboard implements Serializable {
     @Column(name = "SHARED", nullable = false)
     private boolean shared = false;
 
-    @JoinColumn(name = "CONFIGURATION_ID", referencedColumnName = "ID")
-    @OneToOne(cascade = { CascadeType.ALL })
+    @JoinColumn(name = "CONFIGURATION_ID", referencedColumnName = "ID", nullable = true)
+    @OneToOne(cascade = { CascadeType.ALL }, optional = true)
     private Configuration configuration = new Configuration();
 
     @JoinColumn(name = "SUBJECT_ID", nullable = false)
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     private Subject owner;
 
     @JoinColumn(name = "RESOURCE_ID", nullable = true)
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
     private Resource resource;
 
     @JoinColumn(name = "GROUP_ID", nullable = true)
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
     private ResourceGroup group;
 
     @OneToMany(mappedBy = "dashboard", fetch = FetchType.EAGER)

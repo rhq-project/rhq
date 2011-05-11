@@ -74,8 +74,8 @@ import org.rhq.core.domain.tagging.Tag;
         + "        WHERE innerbd.destination.id  = :destinationId ) "),
     @NamedQuery(name = BundleDeployment.QUERY_UPDATE_FOR_VERSION_REMOVE, query = "" //
         + "UPDATE BundleDeployment bd " //
-        + "   SET bd.replacedBundleDeploymentId = NULL " //
-        + " WHERE bd.replacedBundleDeploymentId IN " //
+        + "   SET bd.replacedBundleDeploymentId = NULL " //        
+        + " WHERE bd.replacedBundleDeploymentId IN " //        
         + "     ( SELECT innerbd.id FROM BundleDeployment innerbd " //
         + "        WHERE innerbd.bundleVersion.id  = :bundleVersionId ) ") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_BUNDLE_DEPLOYMENT_ID_SEQ")
@@ -118,15 +118,15 @@ public class BundleDeployment implements Serializable {
     @Column(name = "MTIME")
     private Long mtime = System.currentTimeMillis();
 
-    // This is not a join column on purpose. Since it is nullable the OneToOne association would be forced to EAGER
-    // fetch. That leads to basically fetching every BundleDeployment every time, in a deeply recursive way if you
-    // have a lot deployments.
+    // This is intentionally not annotated as a OneToOne association for a BundleDeployment field. If done that way
+    // then a fetch could result in a very deep recursive fetch of all replaced deployments (for many deployments
+    // to a single destination), which is typically not what we want.  And, it can cause fits in HibernateDetach
+    // which does not like extreme depth in its recursive scrubbing [BZ 702390].
     @Column(name = "REPLACED_BUNDLE_DEPLOYMENT_ID", nullable = true)
     private Integer replacedBundleDeploymentId;
 
-    // note - eager fetch, can not lazy fetch an optional OneToOne
     @JoinColumn(name = "CONFIG_ID", referencedColumnName = "ID", nullable = true)
-    @OneToOne(cascade = CascadeType.ALL, optional = true)
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY, optional = true)
     private Configuration configuration;
 
     @JoinColumn(name = "BUNDLE_VERSION_ID", referencedColumnName = "ID", nullable = false)

@@ -107,7 +107,7 @@
 
          The gwt.locale property is substituted by the Maven resources plugin
          during the resources phase. The default value (defined in coregui/pom.xml)
-         is "en,de", which are the languages for which we currently have localized
+         is "en,de,ja", which are the languages for which we currently have localized
          messages. To override this value, specify the gwt.locale property on the
          mvn command line (e.g. -Dgwt.locale=en) or in your ~/.m2/settings.xml.
     -->

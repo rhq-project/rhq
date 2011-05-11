@@ -421,6 +421,7 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
         BundleDeploymentCriteria criteria = new BundleDeploymentCriteria();
         criteria.addFilterId(bundleDeploymentId);
         criteria.fetchBundleVersion(true);
+        criteria.fetchConfiguration(true);
         criteria.fetchResourceDeployments(true);
         criteria.fetchDestination(true);
         criteria.fetchTags(true);

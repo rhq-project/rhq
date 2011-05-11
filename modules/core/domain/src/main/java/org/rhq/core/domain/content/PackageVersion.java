@@ -78,7 +78,7 @@ import org.rhq.core.domain.util.OSGiVersionComparator;
         + " WHERE pv.generalPackage.name = :packageName "
         + "   AND pv.generalPackage.packageType.name = :packageTypeName "
         + "   AND pv.generalPackage.packageType.resourceType = :resourceType "
-        + "   AND pv.architecture.name = :architectureName " + "   AND pv.version = :version "),        
+        + "   AND pv.architecture.name = :architectureName " + "   AND pv.version = :version "),
     @NamedQuery(name = PackageVersion.QUERY_FIND_ID_BY_PACKAGE_DETAILS_KEY_AND_RES_ID, query = "SELECT pv.id "
         + "  FROM PackageVersion AS pv " + "       JOIN pv.generalPackage.packageType.resourceType.resources r "
         + " WHERE pv.generalPackage.name = :packageName "
@@ -251,17 +251,13 @@ import org.rhq.core.domain.util.OSGiVersionComparator;
         + "WHERE p.id IN (SELECT pv.generalPackage.id FROM PackageVersion AS pv WHERE pv.fileName = :rpmName)"),
     @NamedQuery(name = PackageVersion.QUERY_FIND_PACKAGEVERSION_BY_FILENAME, query = "SELECT pv FROM PackageVersion AS pv WHERE pv.fileName = :rpmName)"),
     @NamedQuery(name = PackageVersion.QUERY_FIND_BY_PACKAGE_AND_REPO_ID, query = "SELECT pv"
-        + " FROM PackageVersion pv"
-        + " JOIN pv.repoPackageVersions rpv"
-        + " WHERE pv.generalPackage.id = :packageId"
+        + " FROM PackageVersion pv" + " JOIN pv.repoPackageVersions rpv" + " WHERE pv.generalPackage.id = :packageId"
         + "     AND rpv.repo.id = :repoId"),
-    @NamedQuery(name = PackageVersion.QUERY_FIND_DELETEABLE_IDS_IN_REPO, query = "SELECT pv.id FROM PackageVersion pv" 
+    @NamedQuery(name = PackageVersion.QUERY_FIND_DELETEABLE_IDS_IN_REPO, query = "SELECT pv.id FROM PackageVersion pv"
         + " WHERE (pv.id, 1) IN"
         + "   (SELECT pv2.id, (SELECT COUNT(rpv) FROM RepoPackageVersion rpv WHERE rpv.packageVersion.id = pv2.id)"
-        + "    FROM PackageVersion pv2"
-        + "    WHERE pv2.id IN ( :packageVersionIds )"
-        + "      AND pv2.id IN (SELECT rpv.packageVersion.id FROM RepoPackageVersion rpv WHERE rpv.repo.id = :repoId))")
-})
+        + "    FROM PackageVersion pv2" + "    WHERE pv2.id IN ( :packageVersionIds )"
+        + "      AND pv2.id IN (SELECT rpv.packageVersion.id FROM RepoPackageVersion rpv WHERE rpv.repo.id = :repoId))") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_PACKAGE_VERSION_ID_SEQ")
 @Table(name = "RHQ_PACKAGE_VERSION")
 public class PackageVersion implements Serializable {
@@ -300,7 +296,7 @@ public class PackageVersion implements Serializable {
     public static final String QUERY_FIND_PACKAGE_BY_FILENAME = "PackageVersion.findPackageByFilename";
     public static final String QUERY_FIND_PACKAGEVERSION_BY_FILENAME = "PackageVersion.findPackageVersionByFilename";
     public static final String QUERY_FIND_DELETEABLE_IDS_IN_REPO = "PackageVersion.findDeleteableVersionIds";
-    
+
     /**
      * This is a default {@link Comparator} implementation for package versions.
      * If the package versions being compared both have non-null {@link PackageVersion#getVersion() versions}
@@ -319,9 +315,9 @@ public class PackageVersion implements Serializable {
         public int compare(PackageVersion p1, PackageVersion p2) {
             String v1 = p1.getVersion();
             String v2 = p2.getVersion();
-            
+
             OSGiVersionComparator c = new OSGiVersionComparator();
-            
+
             if (v1 != null && v2 != null) {
                 try {
                     return c.compare(v1, v2);
@@ -329,23 +325,23 @@ public class PackageVersion implements Serializable {
                     //well, this can happen.. not all packages have OSGi type versions.
                 }
             }
-                       
+
             if (p1.getFileCreatedDate() != null && p2.getFileCreatedDate() != null) {
                 return p1.getFileCreatedDate().compareTo(p2.getFileCreatedDate());
             }
-            
+
             //hmm... there's actually nothing we can sort these two by..
             //let's compare them by id - the one inserted sooner will have a lower id
-                        
+
             return Integer.valueOf(p1.getId()).compareTo(p2.getId());
         }
     };
-    
+
     /**
      * @see DefaultPackageVersionComparator
      */
     public static final DefaultPackageVersionComparator DEFAULT_COMPARATOR = new DefaultPackageVersionComparator();
-    
+
     // Attributes  --------------------------------------------
 
     @Column(name = "ID", nullable = false)
@@ -354,7 +350,7 @@ public class PackageVersion implements Serializable {
     private int id;
 
     @JoinColumn(name = "PACKAGE_ID", referencedColumnName = "ID", nullable = false)
-    @ManyToOne(cascade = { CascadeType.MERGE, CascadeType.PERSIST })
+    @ManyToOne(cascade = { CascadeType.MERGE, CascadeType.PERSIST }, optional = false)
     private Package generalPackage;
 
     @Column(name = "DISPLAY_NAME", nullable = true)
@@ -373,7 +369,7 @@ public class PackageVersion implements Serializable {
     private String displayVersion;
 
     @JoinColumn(name = "ARCHITECTURE_ID", referencedColumnName = "ID", nullable = false)
-    @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.PERSIST)
+    @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.PERSIST, optional = false)
     private Architecture architecture;
 
     @Column(name = "FILE_NAME", nullable = true)
@@ -401,7 +397,7 @@ public class PackageVersion implements Serializable {
     private byte[] metadata;
 
     @JoinColumn(name = "CONFIG_ID", referencedColumnName = "ID", nullable = true)
-    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY, optional = true)
     private Configuration extraProperties;
 
     @OneToMany(mappedBy = "packageVersion", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
@@ -415,11 +411,11 @@ public class PackageVersion implements Serializable {
     @OneToMany(mappedBy = "packageVersion", fetch = FetchType.LAZY)
     private Set<InstalledPackageHistory> installedPackageHistory;
 
-    // No longer use cascade PERSIST on this.  We'll associate it manually due to intracacies in blob handling 
+    // No longer use cascade PERSIST on this.  We'll associate it manually due to intracacies in blob handling     
     @JoinColumn(name = "PACKAGE_BITS_ID", referencedColumnName = "ID", nullable = true)
-    @OneToOne(cascade = { CascadeType.REMOVE }, fetch = FetchType.LAZY)
+    @OneToOne(cascade = { CascadeType.REMOVE }, fetch = FetchType.LAZY, optional = true)
     @XmlTransient
-    private PackageBits packageBits; // do NOT eager load this - is has the BLOB contents of the package
+    private PackageBits packageBits;
 
     @OneToMany(mappedBy = "packageVersion", cascade = { CascadeType.REMOVE }, fetch = FetchType.LAZY)
     private Set<ProductVersionPackageVersion> productVersionPackageVersions;

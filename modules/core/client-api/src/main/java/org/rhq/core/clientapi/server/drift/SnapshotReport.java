@@ -1,8 +1,9 @@
 package org.rhq.core.clientapi.server.drift;
 
 import java.io.InputStream;
+import java.io.Serializable;
 
-public class SnapshotReport {
+public class SnapshotReport implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private String metadataFileName;

@@ -82,6 +82,7 @@ import org.rhq.core.clientapi.server.core.ConnectAgentRequest;
 import org.rhq.core.clientapi.server.core.ConnectAgentResults;
 import org.rhq.core.clientapi.server.core.CoreServerService;
 import org.rhq.core.clientapi.server.discovery.DiscoveryServerService;
+import org.rhq.core.clientapi.server.drift.DriftServerService;
 import org.rhq.core.clientapi.server.event.EventServerService;
 import org.rhq.core.clientapi.server.inventory.ResourceFactoryServerService;
 import org.rhq.core.clientapi.server.measurement.MeasurementServerService;
@@ -1781,6 +1782,7 @@ public class AgentMain {
             ContentServerService contentServerService = factory.getRemotePojo(ContentServerService.class);
             EventServerService eventServerService = factory.getRemotePojo(EventServerService.class);
             BundleServerService bundleServerService = factory.getRemotePojo(BundleServerService.class);
+            DriftServerService driftServerService = factory.getRemotePojo(DriftServerService.class);
 
             ServerServices serverServices = new ServerServices();
             serverServices.setCoreServerService(coreServerService);
@@ -1792,6 +1794,7 @@ public class AgentMain {
             serverServices.setContentServerService(contentServerService);
             serverServices.setEventServerService(eventServerService);
             serverServices.setBundleServerService(bundleServerService);
+            serverServices.setDriftServerService(driftServerService);
 
             pc_config.setServerServices(serverServices);
         } catch (Exception e) {

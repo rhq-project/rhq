@@ -4,9 +4,8 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 
-import org.rhq.core.clientapi.server.drift.SnapshotReport;
+import org.rhq.core.clientapi.server.drift.DriftServerService;
 import org.rhq.core.pc.ContainerService;
-import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.agent.AgentService;
 
@@ -34,20 +33,17 @@ public class DriftManager extends AgentService implements ContainerService {
     public void shutdown() {
     }
 
-    public SnapshotHandle generateSnapshot(int resourceId, File basedir) {
+    public SnapshotHandle generateSnapshot(int resourceId, File basedir) throws Exception{
         SnapshotGenerator generator = new SnapshotGenerator();
         generator.setSnapshotDir(snapshotsDir);
-        return generateSnapshot(resourceId, basedir);
+        return generator.generateSnapshot(resourceId, basedir);
     }
 
     public void sendSnapshotReport(int resourceId, SnapshotHandle handle) throws Exception {
-        SnapshotReport report = new SnapshotReport();
-        report.setMetadataSize(handle.getMetadataFile().length());
-        report.setDataSize(handle.getDataFile().length());
-        report.setMetadataInputStream(remoteInputStream(new BufferedInputStream(new FileInputStream(
-            handle.getMetadataFile()))));
-        report.setDataInputStream(remoteInputStream(new BufferedInputStream(new FileInputStream(
+        DriftServerService driftServer = pluginContainerConfiguration.getServerServices().getDriftServerService();
+        driftServer.uploadSnapshot(resourceId, handle.getMetadataFile().length(),
+            remoteInputStream(new BufferedInputStream(new FileInputStream(handle.getMetadataFile()))),
+            handle.getDataFile().length(), remoteInputStream(new BufferedInputStream(new FileInputStream(
             handle.getDataFile()))));
-        report.setResourceId(resourceId);
     }
 }

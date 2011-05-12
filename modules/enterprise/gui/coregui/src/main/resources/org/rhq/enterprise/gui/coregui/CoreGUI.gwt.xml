@@ -87,11 +87,14 @@
          gwt-user.jar:com/google/gwt/user/UserAgent.gwt.xml) are as follows:
 
            ie6: IE6/IE7
-           ie8: IE8
+           ie8: IE8/IE9
            gecko: FF1 (NOTE: Support for this was dropped in GWT 2.1.)
            gecko1_8: FF2/FF3/FF4
            safari: Safari/Chrome
            opera: Opera
+
+         *NOTE*: Since we specify the meta "X-UA-Compatible: IE=EmulateIE7" HTTP header in CoreGUI.html, IE8 and IE9
+                 will emulate IE7, and so in order to run on IE8/IE9, "ie6" must be specified, rather than "ie8".
 
          Multiple agents can be specified as a comma-delimited list.
 

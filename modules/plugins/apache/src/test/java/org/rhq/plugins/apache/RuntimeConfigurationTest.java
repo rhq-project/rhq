@@ -101,7 +101,7 @@ public class RuntimeConfigurationTest {
         ApacheParser parser = new ApacheParserImpl(tree, new File(tmpDir, "runtime-config/conditional").getAbsolutePath());
         ApacheConfigReader.buildTree(new File(tmpDir, "runtime-config/conditional/httpd.conf").getAbsolutePath(), parser);
         
-        tree = RuntimeApacheConfiguration.extract(tree, pinfo, binfo, ApacheServerDiscoveryComponent.MODULE_SOURCE_FILE_TO_MODULE_NAME_20);
+        tree = RuntimeApacheConfiguration.extract(tree, pinfo, binfo, ApacheServerDiscoveryComponent.MODULE_SOURCE_FILE_TO_MODULE_NAME_20, false);
         
         List<VhostSpec> vhosts = VhostSpec.detect(tree);
         
@@ -131,7 +131,7 @@ public class RuntimeConfigurationTest {
         ApacheParser parser = new ApacheParserImpl(tree, new File(tmpDir, "runtime-config/incl-order").getAbsolutePath());
         ApacheConfigReader.buildTree(new File(tmpDir, "runtime-config/incl-order/httpd.conf").getAbsolutePath(), parser);
         
-        tree = RuntimeApacheConfiguration.extract(tree, pinfo, binfo, ApacheServerDiscoveryComponent.MODULE_SOURCE_FILE_TO_MODULE_NAME_20);
+        tree = RuntimeApacheConfiguration.extract(tree, pinfo, binfo, ApacheServerDiscoveryComponent.MODULE_SOURCE_FILE_TO_MODULE_NAME_20, false);
                 
         List<ApacheDirective> listens = tree.search("/Listen");
         

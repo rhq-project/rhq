@@ -156,9 +156,6 @@
             </plugin-configuration>
 
 
-            <content name="deployment" category="deployable" isCreationType="true" description="Deployments on this domain">
-            </content>
-
             <resource-configuration>
                 <c:simple-property name="profile" />
                 <c:simple-property name="socket-binding-group"/>
@@ -174,11 +171,10 @@
                     <c:simple-property name="path" default="deployment" readOnly="true"/>
                 </plugin-configuration>
 
-                <content name="file" category="deployable" isCreationType="true" description="Deployments on this domain">
+                <content name="file" category="deployable" isCreationType="true" description="Deployments on this server group">
                     <configuration>
                        <c:group name="deployment" displayName="Deployment Options">
                            <c:simple-property name="runtimeName" required="true"/>
-                           <c:simple-property name="alreadyUploaded" type="boolean" description="Was this already uploaded to the Domain? TODO"/>
                        </c:group>
                     </configuration>
                 </content>
@@ -224,7 +220,13 @@
             </plugin-configuration>
 
             <content name="file" category="deployable" isCreationType="true" description="Deployments on this domain">
+                <configuration>
+                   <c:group name="deployment" displayName="Deployment Options">
+                       <c:simple-property name="runtimeName" required="true"/>
+                   </c:group>
+                </configuration>
             </content>
+
 
             <resource-configuration>
                 <c:simple-property name="name" readOnly="true"/>

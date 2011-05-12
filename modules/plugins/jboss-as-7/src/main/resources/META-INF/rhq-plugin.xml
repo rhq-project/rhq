@@ -482,9 +482,48 @@
             <metric property="requestCount" measurementType="trendsup" displayType="summary"/>
 
             <resource-configuration>
-                <c:simple-property name="protocol" required="false" description="The web connector protocol."/>
-                <c:simple-property name="socket-binding" required="false" description="The web connector socket-binding reference, this connector should be bound to."/>
-                <c:simple-property name="scheme" required="false" description="The web connector scheme"/>
+                <c:simple-property name="protocol" required="true" type="string" readOnly="true" description="The web connector protocol."/>
+                <c:simple-property name="socket-binding" required="true" type="string" readOnly="true"
+                                   description="The web connector socket-binding reference, this connector should be bound to."/>
+                <c:simple-property name="scheme" type="string" readOnly="true" default="http" description="The web connector scheme."/>
+                <c:simple-property name="executor" type="string" readOnly="true" required="false"
+                                   description="The name of the executor that should be used for the processing threads of this connector. Defaults to using an internal pool."/>
+                <c:simple-property name="enabled" type="boolean" readOnly="true" defaultValue="true"
+                                   description="Defines whether the connector should be started on startup."/>
+                <c:simple-property name="enable-lookups" type="boolean" readOnly="true" defaultValue="false"
+                                   description="Enable DNS lookups for Servlet API."/>
+                <c:simple-property name="proxy-name" type="string" readOnly="true" required="false"
+                                   description="The host name that will be used when sending a redirect. The default value is null."/>
+                <c:simple-property name="proxy-port" type="integer" readOnly="true" required="false"
+                                   description="The port that will be used when sending a redirect."/>
+                <c:simple-property name="max-post-size" type="integer" readOnly="true" defaultValue="2097152"
+                                   description="Maximum size in bytes of a POST request that can be parsed by the container."/>
+                <c:simple-property name="max-save-post-size" type="integer" readOnly="true" defaultValue="4096"
+                                   description="Maximum size in bytes of a POST request that will be saved during certain authentication schemes."/>
+                <c:simple-property name="secure" type="boolean" readOnly="true" defaultValue="false"
+                                   description="Indicates if content sent or recieved by the connector is secured from the user perspective."/>
+                <c:simple-property name="redirect-port" type="integer" readOnly="true" defaultValue="8443"
+                                   description="The port for redirection to a secure connector."/>
+                <c:simple-property name="max-connections" type="integer" readOnly="true" required="false"
+                                   description="Amount of concurrent connections that can be processed by the connector with optimum performance. The default value depends on the connector used."/>
+                <c:list-property name="virtual-server" description="The list of virtual servers that can be accessed through this connector. The default is to allow all virtual servers.">
+                    <c:simple-property name="virtual-server" />
+                </c:list-property>
+                <c:map-property name="ssl" description="The SSL configuration of the connector." >
+                    <c:simple-property name="name" type="string" readOnly="true" description="The configuration name."/>
+                    <c:simple-property name="key-alias" type="string" readOnly="true" description="The key alias."/>
+                    <c:simple-property name="password" type="string" readOnly="true" description="Password."/>
+                    <c:simple-property name="certificate-key-file" type="string" readOnly="true" description="Key file for the certificate."/>
+                    <c:simple-property name="cipher-suite" type="string" readOnly="true" description="The allowed cipher suite."/>
+                    <c:simple-property name="protocol" type="string" readOnly="true" description="The SSL protocols that are enabled."/>
+                    <c:simple-property name="verify-client" type="string" readOnly="true" description="Enable client certificate verification."/>
+                    <c:simple-property name="verify-depth" type="integer" readOnly="true" description="Limit certificate nesting."/>
+                    <c:simple-property name="certificate-file" type="string" readOnly="true" description="Server certificate file."/>
+                    <c:simple-property name="ca-certificate-file" type="string" readOnly="true" description="Certificate authority."/>
+                    <c:simple-property name="ca-revocation-url" type="string" readOnly="true" description="Certificate authority revocation list."/>
+                    <c:simple-property name="session-cache-size" type="string" readOnly="true" description="SSL session cache."/>
+                    <c:simple-property name="session-timeout" type="string" readOnly="true" description="SSL session cache timeout."/>
+                </c:map-property>
             </resource-configuration>
 
         </service>
@@ -497,13 +536,24 @@
             </plugin-configuration>
 
             <resource-configuration>
-                <c:simple-property name="access-log"/>
-                <c:list-property name="alias" description="The virtual server aliases">
-                    <c:simple-property name="alias"/>
+                <c:list-property name="alias" >
+                    <c:simple-property name="alias" />
                 </c:list-property>
-                <c:simple-property name="rewrite"/>
+                <c:simple-property name="default-web-module" type="string" readOnly="true" defaultValue="ROOT.war"
+                         description="The web module deployment name that will be mapped as the root webapp."/>
+                <c:map-property name="access-log" description="The access log configuration for this virtual server." >
+                    <c:simple-property name="pattern" type="string" readOnly="true" defaultValue="common" description="The access log pattern."/>
+                    <c:simple-property name="resolve-hosts" type="boolean" readOnly="true" defaultValue="false" description="Host resolution."/>
+                    <c:simple-property name="extended" type="boolean" readOnly="true" defaultValue="false"
+                         description="Enable extended pattern, with more options."/>
+                    <c:simple-property name="prefix" type="string" readOnly="true" description="Prefix for the log file name."/>
+                    <c:simple-property name="rotate" type="boolean" readOnly="true" defaultValue="true" description="Rotate the access log every day."/>
+                    <!--<c:simple-property name="directory" description="The location for the access logging." />-->
+                </c:map-property>
+                <!--<c:list-property name="rewrite" >-->
+                  <!--<c:simple-property name="rewrite" />-->
+                <!--</c:list-property>-->
             </resource-configuration>
-
         </service>
 
 

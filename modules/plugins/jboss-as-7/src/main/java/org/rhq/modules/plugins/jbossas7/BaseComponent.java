@@ -205,7 +205,8 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
                 else {
                     // property is null? Check if it is required
                     if (propDef.isRequired()) {
-                        propertySimple = new PropertySimple(propDef.getName(),null);
+                        String defaultValue = ((PropertyDefinitionSimple) propDef).getDefaultValue();
+                        propertySimple = new PropertySimple(propDef.getName(),defaultValue);
                         ret.put(propertySimple);
                     }
                 }
@@ -312,11 +313,11 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
                 }
                 else if (memberDefinition instanceof PropertyDefinitionSimple) {
                     String name = memberDefinition.getName();
-                    Iterator<String> keys = sub.getFieldNames();
+                    Iterator<JsonNode> keys = sub.getElements();
                     while(keys.hasNext()) {
-                        String entryKey = keys.next();
+                        JsonNode entry = keys.next();
 
-                        PropertySimple propertySimple = new PropertySimple(name,entryKey);
+                        PropertySimple propertySimple = new PropertySimple(name,entry.getTextValue());
                         propertyList.add(propertySimple);
                     }
                 }
@@ -329,7 +330,7 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
                 Map<String,PropertyDefinition> memberDefMap = mapDef.getPropertyDefinitions();
                 for (Map.Entry<String,PropertyDefinition> maEntry : memberDefMap.entrySet()) {
                     JsonNode valueNode = json.findValue(maEntry.getKey());
-                    PropertySimple p = putProperty(valueNode,maEntry.getValue());
+                    PropertySimple p = putProperty(valueNode, maEntry.getValue());
                     System.out.println(p);
                     pm.put(p);
                 }
@@ -345,6 +346,16 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
         String name = def.getName();
         PropertySimpleType type = ((PropertyDefinitionSimple) def).getType();
         PropertySimple ps;
+
+        if (value==null) {
+            if (def instanceof PropertyDefinitionSimple) {
+                PropertyDefinitionSimple pds = (PropertyDefinitionSimple) def;
+                return new PropertySimple(name,pds.getDefaultValue());
+            }
+            else
+                return new PropertySimple(name,null);
+        }
+
         switch (type) {
         case BOOLEAN:
             ps = new PropertySimple(name,value.getBooleanValue());

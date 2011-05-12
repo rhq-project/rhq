@@ -141,7 +141,7 @@ public class Domain2Descriptor {
             if (ptype== Type.LIST && !doMetrcis) {
 
                 System.out.println("<c:list-property name=\"" + entry.getKey() +"\" >");
-                System.out.println("  <c:simple-property name=\"" + entry.getKey() + "\" />");
+                System.out.println("    <c:simple-property name=\"" + entry.getKey() + "\" />");
                 System.out.println("</c:list-property>");
 
 
@@ -173,7 +173,7 @@ public class Domain2Descriptor {
                 System.out.println(sb.toString());
 
             }
-            else {
+            else { // configuration
                 if (accessType.equals("metric"))
                     continue;
 
@@ -186,6 +186,9 @@ public class Domain2Descriptor {
                 if (required != null && (Boolean) required) {
                     sb.append(" required=\"true\"");
                 }
+                else {
+                    sb.append(" required=\"false\"");
+                }
 
                 sb.append(" type=\"").append(typeString).append("\"");
                 sb.append(" readOnly=\"");
@@ -197,7 +200,7 @@ public class Domain2Descriptor {
 
                 Object defVal = props.get("default");
                 if (defVal!=null) {
-                    sb.append(" default=\"").append(defVal).append('\"');
+                    sb.append(" defaultValue=\"").append(defVal).append('\"');
                 }
 
                 String description = (String) props.get("description");

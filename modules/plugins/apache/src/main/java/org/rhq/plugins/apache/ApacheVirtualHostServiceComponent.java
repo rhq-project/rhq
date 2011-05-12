@@ -365,7 +365,7 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
 
             public void visitConditionalNode(AugeasNode node, boolean isSatisfied) {
             }
-        }, tree, server.getCurrentProcessInfo(), server.getCurrentBinaryInfo(), server.getModuleNames());
+        }, tree, server.getCurrentProcessInfo(), server.getCurrentBinaryInfo(), server.getModuleNames(), false);
 
         //transform the SNMP index into the index of the vhost
         int idx = allVhosts.size() - snmpIdx + 1;
@@ -484,7 +484,7 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
         //only look for the vhost entry if the vhost we're looking for isn't the main server
         if (!MAIN_SERVER_RESOURCE_KEY.equals(vhostAddressStrings[0])) {
             ApacheDirectiveTree tree = parent.loadParser(); 
-            tree = RuntimeApacheConfiguration.extract(tree, parent.getCurrentProcessInfo(), parent.getCurrentBinaryInfo(), parent.getModuleNames());            
+            tree = RuntimeApacheConfiguration.extract(tree, parent.getCurrentProcessInfo(), parent.getCurrentBinaryInfo(), parent.getModuleNames(), false);            
             
             //find the vhost entry the resource key represents
             List<ApacheDirective> vhosts = tree.search("/<VirtualHost");

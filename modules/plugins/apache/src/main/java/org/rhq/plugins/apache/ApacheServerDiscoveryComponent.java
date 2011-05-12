@@ -324,7 +324,7 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
         ApacheDirectiveTree serverConfig = loadParser(serverConfigFile.getAbsolutePath(), serverRoot);
 
         //extract the runtime configuration out of declared config
-        serverConfig = RuntimeApacheConfiguration.extract(serverConfig, process.getProcessInfo(), binaryInfo, getDefaultModuleNames(binaryInfo.getVersion()));
+        serverConfig = RuntimeApacheConfiguration.extract(serverConfig, process.getProcessInfo(), binaryInfo, getDefaultModuleNames(binaryInfo.getVersion()), true);
         
         String serverUrl = null;
         String vhostsGlobInclude = null;
@@ -336,7 +336,7 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
             serverRootProp.setValue(serverRoot);
             //reparse the configuration with the new ServerRoot
             serverConfig = loadParser(serverConfigFile.getAbsolutePath(), serverRoot);
-            serverConfig = RuntimeApacheConfiguration.extract(serverConfig, process.getProcessInfo(), binaryInfo, getDefaultModuleNames(binaryInfo.getVersion()));            
+            serverConfig = RuntimeApacheConfiguration.extract(serverConfig, process.getProcessInfo(), binaryInfo, getDefaultModuleNames(binaryInfo.getVersion()), true);            
         }
 
         serverUrl = getUrl(serverConfig, binaryInfo.getVersion());

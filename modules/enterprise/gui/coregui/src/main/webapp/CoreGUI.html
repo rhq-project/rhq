@@ -1,5 +1,18 @@
 <html>
 <head>
+    <!-- this forces us to emulate IE7 "quirks" mode regardless of IE browser version.  It:
+         1) Follows the SmartGWT recommendation of not declaring a DOCTYPE and instead using these meta elements.
+         2) solves initial app load issues that we experienced on some XP and Vista  flavors.
+         3) avoids an IE8/SmartGWT issue regarding poor tree rendering (unindented, vertical gaps).
+
+         Note, when building the app, you must include the "ie6" gwt.userAgent since we're emulating IE7 (which
+         requires the "ie6" userAgent.  
+    -->
+    <meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7" > 
+
+    <!-- support internationalized characters -->
+    <meta http-equiv="content-type" content="text/html;charset=utf-8" />
+ 
     <title>RHQ Core Application</title>
     <link rel="icon" type="image/png" href="/images/favicon.png" />
     <link rel="apple-touch-icon" href="/images/favicon.png" />
@@ -7,11 +20,6 @@
     <script type="text/javascript">
         var isomorphicDir = "org.rhq.enterprise.gui.coregui.CoreGUI/sc/";
     </script>
-    <!--<script type="text/javascript" src="js/jquery-1.4.4.js"></script>
-    <script type="text/javascript" src="js/jquery.sparkline-1.6.js"></script>-->
-
-    <!-- support internationalized characters -->
-    <meta http-equiv="content-type" content="text/html;charset=utf-8" />
 
     <link rel="stylesheet" href="CoreGUI.css">
     <link rel="stylesheet" href="css/search.css">
@@ -25,6 +33,7 @@
     </style>
 </head>
 <body>
+
 <script type="text/javascript" language="javascript"
         src="org.rhq.enterprise.gui.coregui.CoreGUI/org.rhq.enterprise.gui.coregui.CoreGUI.nocache.js"></script>
 

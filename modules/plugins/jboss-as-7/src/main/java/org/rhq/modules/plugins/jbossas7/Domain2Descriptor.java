@@ -48,13 +48,13 @@ public class Domain2Descriptor {
 
     private void run(String[] args) {
 
-        boolean doMetrcis = false;
+        boolean doMetrics = false;
         int pos = 0;
         if (args[0].startsWith("-")) {
             if (args[0].equals("-m"))
-                doMetrcis = true;
+                doMetrics = true;
             else if (args[0].equals("-p"))
-                doMetrcis = false;
+                doMetrics = false;
             else {
                 usage();
                 return;
@@ -72,7 +72,7 @@ public class Domain2Descriptor {
         List<PROPERTY_VALUE> address = pathToAddress(path);
         Operation op = new Operation("read-resource-description",address); // ,"operations",true);
         op.addAdditionalProperty("recursive","true");
-        if (doMetrcis)
+        if (doMetrics)
             op.addAdditionalProperty("include-runtime",true);
         ComplexResult res = (ComplexResult) conn.execute(op,true);
         if (!res.isSuccess()) {
@@ -94,7 +94,7 @@ public class Domain2Descriptor {
             attributesMap = (Map<String, Object>) resMap.get("attributes");
         }
 
-        createProperties(doMetrcis, attributesMap, 0);
+        createProperties(doMetrics, attributesMap, 0);
 
     }
 
@@ -194,6 +194,11 @@ public class Domain2Descriptor {
                 else
                     sb.append("false");
                 sb.append('"');
+
+                Object defVal = props.get("default");
+                if (defVal!=null) {
+                    sb.append(" default=\"").append(defVal).append('\"');
+                }
 
                 String description = (String) props.get("description");
                 if (description!=null) {

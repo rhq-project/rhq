@@ -10,6 +10,11 @@
     <inherits name='com.smartgwt.SmartGwt' />
     <inherits name="com.smartgwt.tools.SmartGwtTools"/>
 
+    <!-- TODO: Consider uncommenting this instead of enabling compression in Tomcat's server.xml once we upgrade to GWT
+               2.1 or later. -->
+    <!-- precompress .html, .js, and .css files -->
+    <!--<inherits name="com.google.gwt.precompress.Precompress"/>-->
+
     <!-- removing this, we can add it back if we find something that looks odd. But,
          1) it seemed like a trouble spot during initial load for certain IE configurations
          2) we probably don't want to be defaulting to GWT standards as opposed to SmartGWT.

@@ -14,12 +14,12 @@ public class ApacheDirective implements Cloneable {
     private boolean isComment;
     private static final String WS = "[ \t]*";
     private static final String WORD = "\"(?:[^\"\n]|\\\")*\"|'(?:[^'\n]|\\\')*'|[^'\" \t\n]+";
-    private static final String DIRECTIVE_PATTERN =  WS + "(" + WORD + ")" + WS;
-    private static final String COMMENT_PATTERN="^[\t ]*#.*+$";
+    private static final String DIRECTIVE_REGEX =  WS + "(" + WORD + ")" + WS;
+    private static final String COMMENT_REGEX="^[\t ]*#.*+$";
     private boolean updated=false;
   
-    private final Pattern directivePattern = Pattern.compile(DIRECTIVE_PATTERN);
-    private final Pattern commentPattern = Pattern.compile(COMMENT_PATTERN);
+    private static final Pattern DIRECTIVE_PATTERN = Pattern.compile(DIRECTIVE_REGEX);
+    private static final Pattern COMMENT_PATTERN = Pattern.compile(COMMENT_REGEX);
     private List<ApacheDirective> childNodes;
     private ApacheDirective parentNode;
     private String file;
@@ -33,7 +33,7 @@ public class ApacheDirective implements Cloneable {
         values = new ArrayList<String>();
         childNodes = new ArrayList<ApacheDirective>();
         
-        Matcher matcher = commentPattern.matcher(directive);
+        Matcher matcher = COMMENT_PATTERN.matcher(directive);
         if (matcher.matches()){
             isComment = true;
             values.add(directive);
@@ -43,7 +43,7 @@ public class ApacheDirective implements Cloneable {
         boolean updated = true;
         while (updated & startIndex < directive.length()){
             updated = false;          
-                Matcher m = directivePattern.matcher(directive);
+                Matcher m = DIRECTIVE_PATTERN.matcher(directive);
                 while (m.find(startIndex)) {
                     for (int i = 1; i <= m.groupCount(); i++) {
                         String val = m.group(i);

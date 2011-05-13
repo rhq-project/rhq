@@ -87,7 +87,7 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
         ApacheServerComponent serverComponent = context.getParentResourceComponent();
         ApacheDirectiveTree tree = serverComponent.loadParser();
         
-        tree = RuntimeApacheConfiguration.extract(tree, serverComponent.getCurrentProcessInfo(), serverComponent.getCurrentBinaryInfo(), serverComponent.getModuleNames());
+        tree = RuntimeApacheConfiguration.extract(tree, serverComponent.getCurrentProcessInfo(), serverComponent.getCurrentBinaryInfo(), serverComponent.getModuleNames(), true);
         
         //first define the root server as one virtual host
         discoverMainServer(context, discoveredResources, snmpDiscoveries, tree);

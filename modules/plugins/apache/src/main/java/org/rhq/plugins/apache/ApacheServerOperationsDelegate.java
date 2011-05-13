@@ -222,7 +222,7 @@ public class ApacheServerOperationsDelegate implements OperationFacet {
         PropertyList vhostList = new PropertyList("snmpIndexesPerResourceKey");
         
         ApacheDirectiveTree tree = serverComponent.loadParser();
-        tree = RuntimeApacheConfiguration.extract(tree, serverComponent.getCurrentProcessInfo(), serverComponent.getCurrentBinaryInfo(), serverComponent.getModuleNames());
+        tree = RuntimeApacheConfiguration.extract(tree, serverComponent.getCurrentProcessInfo(), serverComponent.getCurrentBinaryInfo(), serverComponent.getModuleNames(), false);
         ApacheVirtualHostServiceDiscoveryComponent.SnmpWwwServiceIndexes snmpDiscoveries = ApacheVirtualHostServiceDiscoveryComponent.getSnmpDiscoveries(serverComponent);
         
         String mainVhostRK = ApacheVirtualHostServiceDiscoveryComponent.createMainServerResourceKey(serverComponent, tree, snmpDiscoveries);

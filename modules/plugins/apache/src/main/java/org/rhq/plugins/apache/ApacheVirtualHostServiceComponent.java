@@ -364,7 +364,7 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
             
             public void visitConditionalNode(AugeasNode node, boolean isSatisfied) {
             }
-        }, tree, server.getCurrentProcessInfo(), server.getCurrentBinaryInfo(), server.getModuleNames());
+        }, tree, server.getCurrentProcessInfo(), server.getCurrentBinaryInfo(), server.getModuleNames(), false);
         
         //transform the SNMP index into the index of the vhost
         int idx = allVhosts.size() - snmpIdx + 1;

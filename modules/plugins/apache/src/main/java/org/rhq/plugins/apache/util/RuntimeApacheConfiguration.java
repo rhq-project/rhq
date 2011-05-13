@@ -22,6 +22,7 @@ package org.rhq.plugins.apache.util;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -47,6 +48,8 @@ import org.rhq.plugins.apache.parser.ApacheDirectiveTree;
 public class RuntimeApacheConfiguration {
 
     private static final Log LOG = LogFactory.getLog(RuntimeApacheConfiguration.class);
+    
+    private static final Set<String> LOGGED_UNKNOWN_MODULES = Collections.synchronizedSet(new HashSet<String>());
     
     private enum ModuleLoadedState {
         LOADED, NOT_LOADED, UNKNOWN
@@ -188,8 +191,9 @@ public class RuntimeApacheConfiguration {
         public Map<String, String> moduleNames;
         public Map<String, String> moduleFiles;
         public String httpdVersion;
+        public boolean suppressUnknownModuleWarnings;
         
-        public TransformState(ProcessInfo httpdProcessInfo, ApacheBinaryInfo httpdBinaryInfo, Map<String, String> moduleNames) {
+        public TransformState(ProcessInfo httpdProcessInfo, ApacheBinaryInfo httpdBinaryInfo, Map<String, String> moduleNames, boolean suppressUnknownModuleWarnings) {
             defines = new HashSet<String>(httpdBinaryInfo.getCompiledInDefines());
             
             if (httpdProcessInfo != null) {
@@ -234,6 +238,8 @@ public class RuntimeApacheConfiguration {
             }
             
             httpdVersion = httpdBinaryInfo.getVersion();
+            
+            this.suppressUnknownModuleWarnings = suppressUnknownModuleWarnings;
         }
     }
     
@@ -250,17 +256,18 @@ public class RuntimeApacheConfiguration {
      * @param httpdBinaryInfo
      * @param moduleNames the mapping from the module filename to the module name
      * (i.e. mapping from the name used in IfModule to the name used in LoadModule)
+     * @param suppressUnknownModuleWarnings true if the method should suppress logging the warnings about unknown modules
      * @return a new directive tree that represents the runtime configuration 
      */
-    public static ApacheDirectiveTree extract(ApacheDirectiveTree tree, ProcessInfo httpdProcessInfo, ApacheBinaryInfo httpdBinaryInfo, Map<String, String> moduleNames) {
+    public static ApacheDirectiveTree extract(ApacheDirectiveTree tree, ProcessInfo httpdProcessInfo, ApacheBinaryInfo httpdBinaryInfo, Map<String, String> moduleNames, boolean suppressUnknownModuleWarnings) {
         ApacheDirectiveTree ret = tree.clone();
                 
-        transform(new TransformingWalker(), ret.getRootNode(), new TransformState(httpdProcessInfo, httpdBinaryInfo, moduleNames));
+        transform(new TransformingWalker(), ret.getRootNode(), new TransformState(httpdProcessInfo, httpdBinaryInfo, moduleNames, suppressUnknownModuleWarnings));
 
         return ret;
     }
     
-    public static void walkRuntimeConfig(final NodeVisitor<ApacheDirective> visitor, ApacheDirectiveTree tree, ProcessInfo httpdProcessInfo, ApacheBinaryInfo httpdBinaryInfo, Map<String, String> moduleNames) {
+    public static void walkRuntimeConfig(final NodeVisitor<ApacheDirective> visitor, ApacheDirectiveTree tree, ProcessInfo httpdProcessInfo, ApacheBinaryInfo httpdBinaryInfo, Map<String, String> moduleNames, boolean suppressUnknownModuleWarnings) {
         TreeWalker<ApacheDirective> walker = new TreeWalker<ApacheDirective>() {
 
             public void visitConditionalNode(ApacheDirective node, boolean isSatisfied) {
@@ -295,10 +302,10 @@ public class RuntimeApacheConfiguration {
         
         };
         
-        transform(walker, tree.getRootNode(), new TransformState(httpdProcessInfo, httpdBinaryInfo, moduleNames));
+        transform(walker, tree.getRootNode(), new TransformState(httpdProcessInfo, httpdBinaryInfo, moduleNames, suppressUnknownModuleWarnings));
     }
     
-    public static void walkRuntimeConfig(final NodeVisitor<AugeasNode> visitor, AugeasTree tree, ProcessInfo httpdProcessInfo, ApacheBinaryInfo httpdBinaryInfo, Map<String, String> moduleNames) {
+    public static void walkRuntimeConfig(final NodeVisitor<AugeasNode> visitor, AugeasTree tree, ProcessInfo httpdProcessInfo, ApacheBinaryInfo httpdBinaryInfo, Map<String, String> moduleNames, boolean suppressUnknownModuleWarnings) {
         TreeWalker<AugeasNode> walker = new TreeWalker<AugeasNode>() {
 
             public void visitConditionalNode(AugeasNode node, boolean isSatisfied) {
@@ -344,7 +351,7 @@ public class RuntimeApacheConfiguration {
             }        
         }; 
         
-        transform(walker, tree.getRootNode(), new TransformState(httpdProcessInfo, httpdBinaryInfo, moduleNames));
+        transform(walker, tree.getRootNode(), new TransformState(httpdProcessInfo, httpdBinaryInfo, moduleNames, suppressUnknownModuleWarnings));
     }
     
     private static <T> void transform(TreeWalker<T> walker, T parentNode, TransformState state) {
@@ -374,7 +381,15 @@ public class RuntimeApacheConfiguration {
                 case LOADED : result = true; break;
                 case NOT_LOADED : result = false; break;
                 case UNKNOWN : 
-                    LOG.warn("Encountered unknown module name in an IfModule directive: " + moduleFile);
+                    if (state.suppressUnknownModuleWarnings && LOGGED_UNKNOWN_MODULES.contains(moduleFile)) {
+                        LOG.debug("Encountered unknown module name in an IfModule directive: " + moduleFile);
+                    } else {
+                        LOG.warn("Encountered unknown module name in an IfModule directive: "
+                            + moduleFile
+                            + ". If you are using Apache 2.1 or later, you can try changing the module identifier from the source file to "
+                            + "the actual module name as used in the LoadModule directive to get rid of this warning.");
+                    }
+                    LOGGED_UNKNOWN_MODULES.add(moduleFile);
                     continue;
                 }
                 
@@ -499,11 +514,19 @@ public class RuntimeApacheConfiguration {
             moduleIdentifier = moduleFiles.get(moduleName);
 
             if (moduleIdentifier == null) {
-                //reverse lookup failed - there is no such module in the mappings                        
-                //the last attempt is to see if the modulename wasn't used one of the previous
-                //load module directives
-                if (!currentlyLoadedModules.contains(moduleName)) {
+                //reverse lookup failed - there is no such module in the mappings
+                //we still have 2 options here.
+                //If the identifier we were given is a module name, we can assume that
+                //that module just wasn't loaded if we can't find it in the loaded modules set. 
+                //If on the other hand the identifier is a module source file, we have no other 
+                //option but to give up, because we don't know the mapping from module name to 
+                //module source file and thus cannot determine whether there was a LoadModule 
+                //directive that would load the module.
+                if (moduleName.endsWith(".c")) {
                     return ModuleLoadedState.UNKNOWN;
+                } else {
+                    return currentlyLoadedModules.contains(moduleName) ? ModuleLoadedState.LOADED
+                        : ModuleLoadedState.NOT_LOADED;
                 }
             }
         }

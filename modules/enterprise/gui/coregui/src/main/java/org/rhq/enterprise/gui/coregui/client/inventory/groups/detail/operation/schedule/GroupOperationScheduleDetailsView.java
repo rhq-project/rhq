@@ -90,7 +90,7 @@ public class GroupOperationScheduleDetailsView extends AbstractOperationSchedule
     protected LocatableVLayout buildContentPane() {
         LocatableVLayout contentPane = super.buildContentPane();
 
-        HTMLFlow hr = new HTMLFlow("<p/><hr/><p/>");
+        HTMLFlow hr = new HTMLFlow("<hr/>");
         contentPane.addMember(hr);
 
         this.executionModeForm = new EnhancedDynamicForm(extendLocatorId("ExecutionModeForm"), isReadOnly());

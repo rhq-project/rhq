@@ -114,13 +114,13 @@ public class Domain2Descriptor {
             if (ptype == Type.OBJECT) {
                 System.out.println("<c:map-property name=\"" + entryName +"\" description=\"" +
                         props.get("description") + "\" >");
-                Map<String, Object> attributesMap1 = (Map<String, Object>) ((Map<String, Object>) entry.getValue()).get(
+                Map<String, Object> attributesMap1 = (Map<String, Object>) props.get(
                         "attributes");
                 if (attributesMap1!=null)
                     createProperties(doMetrcis,
                         attributesMap1, indent+4);
                 else {
-                    for (Map.Entry<String,Object> emapEntry : ((Map<String,Object>)entry.getValue()).entrySet()) {
+                    for (Map.Entry<String,Object> emapEntry : props.entrySet()) {
                         String key = emapEntry.getKey();
                         if (key.equals("type") || key.equals("description") || key.equals("required"))
                             continue;
@@ -141,10 +141,29 @@ public class Domain2Descriptor {
 
             if (ptype== Type.LIST && !doMetrcis) {
 
-                System.out.println("<c:list-property name=\"" + entryName +"\" >");
-                System.out.println("    <c:simple-property name=\"" + entryName + "\" />");
-                System.out.println("</c:list-property>");
+                StringBuilder sb = new StringBuilder("<c:list-property name=\"");
+                sb.append(entryName);
+                sb.append("\"");
+                if (props.containsKey("description")) {
+                    sb.append(" description=\"");
+                    sb.append(props.get("description"));
+                    sb.append("\"");
+                }
+                sb.append(" >\n");
+                if (!props.containsKey("attributes"))
+                    sb.append("    <c:simple-property name=\"").append(entryName).append("\" />\n");
+                else {
+                    doIndent(indent,sb);
+                    sb.append("<c:map-property name=\"").append(entryName).append("\">\n");
+                    System.out.println(sb.toString());
+                    createProperties(doMetrcis, (Map<String, Object>) props.get("attributes"), indent + 4);
+                    sb = new StringBuilder();
+                    doIndent(indent,sb);
+                    sb.append("</c:map-property>\n");
+                }
+                sb.append("</c:list-property>");
 
+                System.out.println(sb.toString());
 
 
                 continue;

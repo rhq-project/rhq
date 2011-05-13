@@ -1,5 +1,168 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<jboss>
+<jboss xmlns="http://java.sun.com/xml/ns/javaee"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://www.jboss.org/j2ee/schema/jboss_5_0.xsd"
+       version="3.0">
+
+  <enterprise-beans>
+
+    <!--
+         The AlertConditionLogManagerBean, AlertConditionManagerBean, AlertDampeningManagerBean,
+         AlertDefinitionManagerBean, AlertManagerBean, AuthorizationManagerBean, CachedConditionManagerBean, and
+         SubjectManager SLSB's are all invoked, either directly or indirectly, by the AlertConditionConsumerBean MDB.
+         Since MDB invocations are always done in new threads, using the default SLSB pool impl (ThreadlocalPool) would
+         cause a new instance of these SLSB's to be created every time they were invoked by AlertConditionConsumerBean.
+         This would be bad if only because existing instances would
+         not be reused, but it is really bad because the instances would also never get destroyed, causing heap space to
+         gradually leak until the Server eventually ran out of memory. Hence, we must use a StrictMaxPool, which
+         will use a fixed pool of instances of this SLSB, instead of a ThreadlocalPool. Because lots of alert 
+         definitions could result in many concurrent calls to AlertConditionConsumerBean, and because most of these 
+         SLSB's are also invoked by other callers (i.e. Agents, GUI's, or CLI's), we set the max pool size to 100 to 
+         minimize the chances of AlertConditionConsumerBean invocations, which are the most critical, from having to
+         block and potentially getting backed up in the queue. We set the pool timeout extremely high to essentially
+         prevent queued callers from timing out. Note, MDB's are configured in ejb3-interceptors-aop.xml to use a strict
+         max pool with a max of 15 and a timeout of 10000, so AlertConditionConsumerBean might become a bottleneck for
+         systems with a lot of alerts defined. (ips, 05/10/11)
+
+         For more details, see https://bugzilla.redhat.com/show_bug.cgi?id=693232 .      
+    -->
+
+    <session>
+      <ejb-name>AlertConditionLogManagerBean</ejb-name>
+      <pool-config>
+        <pool-class>org.jboss.ejb3.StrictMaxPool</pool-class>
+        <pool-max-size>100</pool-max-size>
+        <pool-timeout>1000000000</pool-timeout>
+      </pool-config>
+    </session>
+
+    <session>
+      <ejb-name>AlertConditionManagerBean</ejb-name>
+      <pool-config>
+        <pool-class>org.jboss.ejb3.StrictMaxPool</pool-class>
+        <pool-max-size>100</pool-max-size>
+        <pool-timeout>1000000000</pool-timeout>
+      </pool-config>
+    </session>
+
+    <session>
+      <ejb-name>AlertDampeningManagerBean</ejb-name>
+      <pool-config>
+        <pool-class>org.jboss.ejb3.StrictMaxPool</pool-class>
+        <pool-max-size>100</pool-max-size>
+        <pool-timeout>1000000000</pool-timeout>
+      </pool-config>
+    </session>
+
+    <session>
+      <ejb-name>AlertDefinitionManagerBean</ejb-name>
+      <pool-config>
+        <pool-class>org.jboss.ejb3.StrictMaxPool</pool-class>
+        <pool-max-size>100</pool-max-size>
+        <pool-timeout>1000000000</pool-timeout>
+      </pool-config>
+    </session>
+
+    <session>
+      <ejb-name>AlertManagerBean</ejb-name>
+      <pool-config>
+        <pool-class>org.jboss.ejb3.StrictMaxPool</pool-class>
+        <pool-max-size>100</pool-max-size>
+        <pool-timeout>1000000000</pool-timeout>
+      </pool-config>
+    </session>
+
+    <session>
+      <ejb-name>AuthorizationManagerBean</ejb-name>
+      <pool-config>
+        <pool-class>org.jboss.ejb3.StrictMaxPool</pool-class>
+        <pool-max-size>100</pool-max-size>
+        <pool-timeout>1000000000</pool-timeout>
+      </pool-config>
+    </session>
+
+    <session>
+      <ejb-name>CachedConditionManagerBean</ejb-name>
+      <pool-config>
+        <pool-class>org.jboss.ejb3.StrictMaxPool</pool-class>
+        <pool-max-size>100</pool-max-size>
+        <pool-timeout>1000000000</pool-timeout>
+      </pool-config>
+    </session>
+
+    <session>
+      <ejb-name>SubjectManagerBean</ejb-name>
+      <pool-config>
+        <pool-class>org.jboss.ejb3.StrictMaxPool</pool-class>
+        <pool-max-size>100</pool-max-size>
+        <pool-timeout>1000000000</pool-timeout>
+      </pool-config>
+    </session>
+
+
+    <!-- 
+         The CacheConsistencyManagerBean, CloudManagerBean, ServerManagerBean, StatusManagerBean, and SystemManagerBean
+         SLSB's are all invoked, either directly or indirectly, by EJB timers. Since EJB timer invocations are always
+         done in new threads, using the default SLSB pool impl (ThreadlocalPool) would cause a new instance of this
+         SLSB to be created every time it was invoked by an EJB timer. This would be bad if only because an existing
+         instance would not be reused, but it is really bad because the instance would also never get destroyed, causing
+         heap space to gradually leak until the Server eventually ran out of memory. Hence, we must use a
+         StrictMaxPool, which will use a fixed pool of instances of this SLSB, instead of a ThreadlocalPool.
+         The timer invocations will only require one or two instances at any given time, but because most of these 
+         SLSB's are also invoked by other callers (i.e. Agents, GUI's, or CLI's, we set the max pool size to 30, to 
+         minimize the chances of EJB timer invocations, which are the most critical, from having to block and 
+         potentially getting backed up in the queue. We set the pool timeout extremely high to essentially prevent 
+         queued callers from timing out. (ips, 05/10/11)
+
+         For more details, see https://bugzilla.redhat.com/show_bug.cgi?id=693232 .
+    -->
+
+    <session>
+      <ejb-name>CacheConsistencyManagerBean</ejb-name>
+      <pool-config>
+        <pool-class>org.jboss.ejb3.StrictMaxPool</pool-class>
+        <pool-max-size>30</pool-max-size>
+        <pool-timeout>1000000000</pool-timeout>
+      </pool-config>
+    </session>
+
+    <session>
+      <ejb-name>CloudManagerBean</ejb-name>
+      <pool-config>
+        <pool-class>org.jboss.ejb3.StrictMaxPool</pool-class>
+        <pool-max-size>30</pool-max-size>
+        <pool-timeout>1000000000</pool-timeout>
+      </pool-config>
+    </session>
+
+    <session>
+      <ejb-name>ServerManagerBean</ejb-name>
+      <pool-config>
+        <pool-class>org.jboss.ejb3.StrictMaxPool</pool-class>
+        <pool-max-size>30</pool-max-size>
+        <pool-timeout>1000000000</pool-timeout>
+      </pool-config>
+    </session>
+
+    <session>
+      <ejb-name>StatusManagerBean</ejb-name>
+      <pool-config>
+        <pool-class>org.jboss.ejb3.StrictMaxPool</pool-class>
+        <pool-max-size>30</pool-max-size>
+        <pool-timeout>1000000000</pool-timeout>
+      </pool-config>
+    </session>
+
+    <session>
+      <ejb-name>SystemManagerBean</ejb-name>
+      <pool-config>
+        <pool-class>org.jboss.ejb3.StrictMaxPool</pool-class>
+        <pool-max-size>30</pool-max-size>
+        <pool-timeout>1000000000</pool-timeout>
+      </pool-config>
+    </session>
+
+  </enterprise-beans>
 
 </jboss>

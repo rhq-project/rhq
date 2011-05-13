@@ -92,6 +92,8 @@ public abstract class AbstractOperationScheduleDetailsView extends
         ResourceType resourceType, int scheduleId) {
         super(locatorId, dataSource, scheduleId, MSG.view_operationScheduleDetails_operationSchedule(), null);
 
+        this.setMembersMargin(5);
+
         Set<OperationDefinition> operationDefinitions = resourceType.getOperationDefinitions();
         for (OperationDefinition operationDefinition : operationDefinitions) {
             this.operationIdToNameMap.put(operationDefinition.getId(), operationDefinition.getName());
@@ -167,12 +169,13 @@ public abstract class AbstractOperationScheduleDetailsView extends
         this.operationParametersConfigurationHolder.setVisible(false);
         contentPane.addMember(this.operationParametersConfigurationHolder);
 
-        HTMLFlow hr = new HTMLFlow("<p/><hr/><p/>");
+        HTMLFlow hr = new HTMLFlow("<hr/>");
         contentPane.addMember(hr);
 
         this.triggerEditor = new JobTriggerEditor(extendLocatorId("TriggerEditor"), isReadOnly());
         contentPane.addMember(this.triggerEditor);
-        hr = new HTMLFlow("<p/><hr/><p/>");
+
+        hr = new HTMLFlow("<hr/>");
         contentPane.addMember(hr);
 
         this.notesForm = new EnhancedDynamicForm(extendLocatorId("NotesForm"), isReadOnly(), isNewRecord());

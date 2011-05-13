@@ -30,8 +30,9 @@ import java.io.IOException;
 import java.util.Date;
 
 /**
- * Specify the cache policy browsers should use for GWT-compiled files. See
- * http://code.google.com/webtoolkit/doc/latest/DevGuideCompilingAndDebugging.html#perfect_caching for more info.
+ * Specify the cache policy browsers should use for GWT-compiled files, as well as static images. See
+ * http://code.google.com/webtoolkit/doc/latest/DevGuideCompilingAndDebugging.html#perfect_caching for more info on
+ * caching of GWT-compiled files.
  *
  * @author Ian Springer
  */
@@ -57,7 +58,7 @@ public class CacheControlFilter implements Filter {
             httpResponse.setDateHeader("Expires", now.getTime() - 1);
             httpResponse.setHeader("Pragma", "no-cache");
             httpResponse.setHeader("Cache-Control", "public, max-age=0, must-revalidate");
-        } else if (requestURI.contains(".cache.")) {
+        } else if (requestURI.contains(".cache.") || requestURI.contains("/images/")) {
             // Tell browser to cache the content for one year.
             Date now = new Date();
             HttpServletResponse httpResponse = (HttpServletResponse) response;

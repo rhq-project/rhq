@@ -92,7 +92,8 @@
                  keystorePass="RHQManagement" />
       -->
 
-      <!-- Define an AJP 1.3 Connector --><!-- JON -->
+      <!-- Define an AJP 1.3 Connector -->
+      <!-- RHQ -->
       <!-- BZ: 557815 Commented out by default as the AJP component support is not on
                 par with the http/https connectors. 
       <Connector port="${rhq.server.startup.ajp.port}" address="${jboss.bind.address}" protocol="AJP/1.3"

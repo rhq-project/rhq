@@ -106,42 +106,43 @@ public class Domain2Descriptor {
 
             Map<String,Object> props = (Map<String, Object>) entry.getValue();
 
+            String entryName = entry.getKey();
 
             Type ptype = getTypeFromProps(props);
-            String typeString;
+            String typeString = getTypeStringForTypeAndName(ptype, entryName);
 
-            switch (ptype) {
-            case INT:
-                typeString = "integer"; break;
-            case STRING:
-                typeString = "string"; break;
-            case BOOLEAN:
-                typeString = "boolean"; break;
-            case LONG:
-                typeString = "long"; break;
-            case BIG_DECIMAL:
-                typeString = "long"; break; // TODO better float or double?
-            case LIST:
-                typeString = "-list-";
-                break; // Handled below
-            case OBJECT: // an embedded map
-                typeString = "-object-";
-                System.out.println("<c:list-property name=\"" + entry.getKey() +"\" description=\"" +
+            if (ptype == Type.OBJECT) {
+                System.out.println("<c:map-property name=\"" + entryName +"\" description=\"" +
                         props.get("description") + "\" >");
-                createProperties(doMetrcis,
-                        (Map<String, Object>) ((Map<String, Object>) entry.getValue()).get("attributes"), indent+4);
-                System.out.println("</c:list-property>");
+                Map<String, Object> attributesMap1 = (Map<String, Object>) ((Map<String, Object>) entry.getValue()).get(
+                        "attributes");
+                if (attributesMap1!=null)
+                    createProperties(doMetrcis,
+                        attributesMap1, indent+4);
+                else {
+                    for (Map.Entry<String,Object> emapEntry : ((Map<String,Object>)entry.getValue()).entrySet()) {
+                        String key = emapEntry.getKey();
+                        if (key.equals("type") || key.equals("description") || key.equals("required"))
+                            continue;
+
+                        Map<String,Object> emapEntryValue = (Map<String, Object>) emapEntry.getValue();
+                        String ts = getTypeStringForTypeAndName(getTypeFromProps(emapEntryValue),key);
+                        StringBuilder sb = generateProperty(indent, emapEntryValue,ts,emapEntry.getKey(),getAccessType(emapEntryValue));
+                        System.out.println(sb.toString());
+
+                    }
+                }
+
+                System.out.println("</c:map-property>");
 
                 continue;
-            default:
-                typeString = "- unknown -";
-                System.err.println("Unknown type " + ptype + " for " + entry.getKey());
+
             }
 
             if (ptype== Type.LIST && !doMetrcis) {
 
-                System.out.println("<c:list-property name=\"" + entry.getKey() +"\" >");
-                System.out.println("    <c:simple-property name=\"" + entry.getKey() + "\" />");
+                System.out.println("<c:list-property name=\"" + entryName +"\" >");
+                System.out.println("    <c:simple-property name=\"" + entryName + "\" />");
                 System.out.println("</c:list-property>");
 
 
@@ -149,9 +150,7 @@ public class Domain2Descriptor {
                 continue;
             }
 
-            String accessType = (String) props.get("access-type");
-            if (accessType==null)
-                accessType = "read-only"; // default of as7
+            String accessType = getAccessType(props);
             if (doMetrcis) {
                 if (!accessType.equals("metric"))
                     continue;
@@ -159,7 +158,7 @@ public class Domain2Descriptor {
                 StringBuilder sb = new StringBuilder();
                 doIndent(indent,sb);
                 sb.append("<metric property=\"");
-                sb.append(entry.getKey()).append('"');
+                sb.append(entryName).append('"');
                 if (ptype== Type.STRING)
                     sb.append(" dataType=\"trait\"");
 
@@ -177,43 +176,83 @@ public class Domain2Descriptor {
                 if (accessType.equals("metric"))
                     continue;
 
-                StringBuilder sb = new StringBuilder();
-                doIndent(indent,sb);
-                sb.append("<c:simple-property name=\"");
-                sb.append(entry.getKey()).append('"');
-
-                Object required = props.get("required");
-                if (required != null && (Boolean) required) {
-                    sb.append(" required=\"true\"");
-                }
-                else {
-                    sb.append(" required=\"false\"");
-                }
-
-                sb.append(" type=\"").append(typeString).append("\"");
-                sb.append(" readOnly=\"");
-                if (accessType!=null && accessType.equals("read-only")) // TODO if no access-type is given, the one from the parent applies
-                    sb.append("true");
-                else
-                    sb.append("false");
-                sb.append('"');
-
-                Object defVal = props.get("default");
-                if (defVal!=null) {
-                    sb.append(" defaultValue=\"").append(defVal).append('\"');
-                }
-
-                String description = (String) props.get("description");
-                if (description!=null) {
-                    if (sb.length()+description.length() > 120)
-                        sb.append("\n        ");
-                    sb.append(" description=\"").append(description).append('"');
-                }
-                sb.append("/>");
+                StringBuilder sb = generateProperty(indent, props, typeString, entryName, accessType);
 
                 System.out.println(sb.toString());
             }
         }
+    }
+
+    private String getAccessType(Map<String, Object> props) {
+        String accessType = (String) props.get("access-type");
+        if (accessType==null)
+            accessType = "read-only"; // default of as7
+        return accessType;
+    }
+
+    private String getTypeStringForTypeAndName(Type ptype, String entryName) {
+        String typeString;
+
+        switch (ptype) {
+        case INT:
+            typeString = "integer"; break;
+        case STRING:
+            typeString = "string"; break;
+        case BOOLEAN:
+            typeString = "boolean"; break;
+        case LONG:
+            typeString = "long"; break;
+        case BIG_DECIMAL:
+            typeString = "long"; break; // TODO better float or double?
+        case LIST:
+            typeString = "-list-";
+            break; // Handled below
+        case OBJECT: // an embedded map
+            typeString = "-object-";
+            break; // Handled below
+        default:
+            typeString = "- unknown -";
+            System.err.println("Unknown type " + ptype + " for " + entryName);
+        }
+        return typeString;
+    }
+
+    private StringBuilder generateProperty(int indent, Map<String, Object> props, String typeString, String entryName,
+                                           String accessType) {
+        StringBuilder sb = new StringBuilder();
+        doIndent(indent,sb);
+        sb.append("<c:simple-property name=\"");
+        sb.append(entryName).append('"');
+
+        Object required = props.get("required");
+        if (required != null && (Boolean) required) {
+            sb.append(" required=\"true\"");
+        }
+        else {
+            sb.append(" required=\"false\"");
+        }
+
+        sb.append(" type=\"").append(typeString).append("\"");
+        sb.append(" readOnly=\"");
+        if (accessType!=null && accessType.equals("read-only")) // TODO if no access-type is given, the one from the parent applies
+            sb.append("true");
+        else
+            sb.append("false");
+        sb.append('"');
+
+        Object defVal = props.get("default");
+        if (defVal!=null) {
+            sb.append(" defaultValue=\"").append(defVal).append('\"');
+        }
+
+        String description = (String) props.get("description");
+        if (description!=null) {
+            if (sb.length()+description.length() > 120)
+                sb.append("\n        ");
+            sb.append(" description=\"").append(description).append('"');
+        }
+        sb.append("/>");
+        return sb;
     }
 
     private void doIndent(int indent, StringBuilder sb) {

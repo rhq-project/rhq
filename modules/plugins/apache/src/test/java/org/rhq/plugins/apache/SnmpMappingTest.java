@@ -86,7 +86,7 @@ public class SnmpMappingTest {
     
     @BeforeClass
     public void initExpectedResults() throws Exception {
-        String localhost = InetAddress.getLocalHost().getHostName();
+        String localhost = InetAddress.getByName("127.0.0.1").getHostName();
         for(int i = 0; i < EXPECTED_SNMP_NAMES.length; ++i) {
             EXPECTED_SNMP_NAMES[i] = EXPECTED_SNMP_NAMES[i].replaceAll("<<<LOCALHOST>>>", localhost);
         }

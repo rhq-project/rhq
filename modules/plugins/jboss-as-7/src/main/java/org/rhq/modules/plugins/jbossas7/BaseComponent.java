@@ -25,6 +25,7 @@ import org.codehaus.jackson.map.ObjectMapper;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
+import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -330,9 +331,29 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
                 Map<String,PropertyDefinition> memberDefMap = mapDef.getPropertyDefinitions();
                 for (Map.Entry<String,PropertyDefinition> maEntry : memberDefMap.entrySet()) {
                     JsonNode valueNode = json.findValue(maEntry.getKey());
-                    PropertySimple p = putProperty(valueNode, maEntry.getValue());
-                    System.out.println(p);
-                    pm.put(p);
+                    Property p;
+                    if (maEntry.getValue() instanceof PropertyDefinitionSimple) {
+                        p = putProperty(valueNode, maEntry.getValue());
+                        pm.put(p);
+                    }
+                    else if (maEntry.getValue() instanceof  PropertyDefinitionMap) { // TODO make this recursive?
+
+                        PropertyDefinitionMap pdm = (PropertyDefinitionMap) maEntry.getValue();
+                        Map<String,PropertyDefinition> mmDefMap = pdm.getPropertyDefinitions();
+                        for (Map.Entry<String,PropertyDefinition> mmDefEntry : mmDefMap.entrySet()) {
+                            if (valueNode!=null) {
+                                JsonNode node2 = valueNode.findValue(mmDefEntry.getKey());
+                                System.err.println("Map not yet implemented " + node2.toString());
+                            }
+                            else
+                                System.err.println("Value node was null " );
+                        }
+                    }
+                    else { // PropDefList
+                        System.err.println("List not yet implemented");
+                    }
+
+//                    pm.put(p);
                 }
                 ret.put(pm);
             }

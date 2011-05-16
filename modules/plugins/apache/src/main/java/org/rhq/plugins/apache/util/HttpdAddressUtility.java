@@ -322,14 +322,20 @@ public enum HttpdAddressUtility {
      * @param ag the augeas tree of the httpd configuration
      * @param virtualHost the port or address:port of the virtual host
      * @param serverName the server name for the namebased virtual hosts (or null if the virtual host is ip based)
+     * @param legacyWildcardHostHandling use the legacy handling of wildcard hosts. This should always be false unless you are calling this method
+     * from the code generating the legacy resource keys during vhost upgrade
      * @return the address on which the virtual host can be accessed or null on error
      */
-    public Address getVirtualHostSampleAddress(ApacheDirectiveTree ag, String virtualHost, String serverName) {
+    public Address getVirtualHostSampleAddress(ApacheDirectiveTree ag, String virtualHost, String serverName, boolean legacyWildcardHostHandling) {
         try {
             Address addr = Address.parse(virtualHost);
             if (addr.isHostDefault() || addr.isHostWildcard()) {
                 Address serverAddr = null;
-                serverAddr = getMainServerSampleAddress(ag, null, addr.port);
+                if (legacyWildcardHostHandling) {
+                    serverAddr = getLocalhost(addr.port);
+                } else {
+                    serverAddr = getMainServerSampleAddress(ag, null, addr.port);
+                }
                 if (serverAddr == null)
                     return null;
                 addr.host = serverAddr.host;
@@ -461,7 +467,7 @@ public enum HttpdAddressUtility {
      * If this flag is set to true, this method takes that into account.
      * @return
      */
-    private static boolean isAddressConforming(Address listen, String limitingHost, int limitingPort, boolean snmpModuleCompatibleMode) {
+    public static boolean isAddressConforming(Address listen, String limitingHost, int limitingPort, boolean snmpModuleCompatibleMode) {
         if (Address.DEFAULT_HOST.equals(limitingHost) || Address.WILDCARD.equals(limitingHost)) {
             limitingHost = null;
         }

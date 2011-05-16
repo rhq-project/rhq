@@ -443,7 +443,7 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
                 if (!matcher.matches())
                      throw new Exception("Wrong format of virtual host resource name. The right format is Address:Port.");
                 
-                addr = getAddressUtility().getVirtualHostSampleAddress(parserTree, vhostDefs[0], serverName);
+                addr = getAddressUtility().getVirtualHostSampleAddress(parserTree, vhostDefs[0], serverName, false);
             } catch (Exception e) {
               report.setStatus(CreateResourceStatus.FAILURE);
               report.setErrorMessage("Wrong format of virtual host resource name.");

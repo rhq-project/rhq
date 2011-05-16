@@ -77,7 +77,6 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
 
     public static final String URL_CONFIG_PROP = "url";
     public static final String MAIN_SERVER_RESOURCE_KEY = "MainServer";
-    public static final String FAILED_UPGRADE_RESOURCE_KEY_PREFIX = "FailedUpgrade";
     
     public static final String RESPONSE_TIME_LOG_FILE_CONFIG_PROP = ResponseTimeConfiguration.RESPONSE_TIME_LOG_FILE_CONFIG_PROP;
     public static final String RESPONSE_TIME_URL_EXCLUDES_CONFIG_PROP = ResponseTimeConfiguration.RESPONSE_TIME_URL_EXCLUDES_CONFIG_PROP;
@@ -99,14 +98,6 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
     public static final String RESOURCE_TYPE_NAME = "Apache Virtual Host";
     
     public void start(ResourceContext<ApacheServerComponent> resourceContext) throws Exception {
-        if (resourceContext.getResourceKey().startsWith(FAILED_UPGRADE_RESOURCE_KEY_PREFIX)) {
-            throw new IllegalStateException(
-                "The apache plugin failed to upgrade this virtual host from a previous version. "
-                    + "A new virtual host resource will be (or has been) discovered that corresponds to this resource but it was not possible to "
-                    + "safely and deterministically find a match between these two (due to ambiguous identification of virtual hosts "
-                    + "in the previous version of the plugin). This resource is now defunct and you can uninventory it.");
-        }
-        
         this.resourceContext = resourceContext;
         Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
         String url = pluginConfig.getSimple(URL_CONFIG_PROP).getStringValue();

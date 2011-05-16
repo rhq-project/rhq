@@ -253,16 +253,10 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
 
         Set<VHostSpec> matchingVhosts = possibleMatchesPerRK.get(resourceKey);
         if (matchingVhosts == null || matchingVhosts.size() != 1) {
-            newResourceKey = ApacheVirtualHostServiceComponent.FAILED_UPGRADE_RESOURCE_KEY_PREFIX + "_" + resourceKey
-                + "_" + UUID.randomUUID().toString();
-            log.info("Failed to uniquely identify the vhost from the old-style resource key. The old resource key is '"
+            throw new IllegalArgumentException("Failed to uniquely identify the vhost from the old-style resource key. The old resource key is '"
                 + resourceKey
-                + "' which can be matched with the following new-style resource keys: "
-                + matchingVhosts
-                + ". The match could not be established and the resource key was reset to '"
-                + newResourceKey
-                + "' so that this vhost resource never starts up again. This is to prevent collisions with the discoveries made "
-                + "by this version of the plugin.");
+                + "' which couldn't be matched with any of the following possible new-style resource keys: "
+                + matchingVhosts);
         } else {
             VHostSpec vhost = matchingVhosts.iterator().next();
             if (vhost == null) {

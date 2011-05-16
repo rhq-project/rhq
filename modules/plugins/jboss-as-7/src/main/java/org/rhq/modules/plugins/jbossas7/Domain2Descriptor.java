@@ -48,13 +48,15 @@ public class Domain2Descriptor {
 
     private void run(String[] args) {
 
-        boolean doMetrics = false;
+        Mode mode = null;
         int pos = 0;
         if (args[0].startsWith("-")) {
             if (args[0].equals("-m"))
-                doMetrics = true;
+                mode = Domain2Descriptor.Mode.METRICS;
             else if (args[0].equals("-p"))
-                doMetrics = false;
+                mode = Domain2Descriptor.Mode.PROPERTIES;
+            else if (args[0].equals("-o"))
+                mode = Domain2Descriptor.Mode.OPERATION;
             else {
                 usage();
                 return;
@@ -70,39 +72,55 @@ public class Domain2Descriptor {
         ASConnection conn = new ASConnection("localhost",9990);
 
         List<PROPERTY_VALUE> address = pathToAddress(path);
-        Operation op = new Operation("read-resource-description",address); // ,"operations",true);
+        Operation op = new Operation("read-resource-description",address);
         op.addAdditionalProperty("recursive","true");
-        if (doMetrics)
+
+        if (mode==Domain2Descriptor.Mode.OPERATION)
+            op.addAdditionalProperty("operations",true);
+        if (mode == Domain2Descriptor.Mode.METRICS)
             op.addAdditionalProperty("include-runtime",true);
+
         ComplexResult res = (ComplexResult) conn.execute(op,true);
         if (!res.isSuccess()) {
             System.err.println("Failure: " + res.getFailureDescription());
             return;
         }
 
-        Map<String,Object> attributesMap;
 
         Map<String,Object> resMap = res.getResult();
-        if (childType!=null) {
-            Map childMap = (Map) resMap.get("children");
-            Map <String,Object> typeMap = (Map<String, Object>) childMap.get(childType);
-            Map descriptionMap = (Map) typeMap.get("model-description");
-            if (descriptionMap==null) {
-                System.err.println("No model description found");
-                return;
+        if (mode==Domain2Descriptor.Mode.OPERATION) {
+            Map<String,Object> operationsMap = (Map<String, Object>) resMap.get("operations");
+            for (Map.Entry<String,Object> entry : operationsMap.entrySet()) {
+                if (entry.getKey().startsWith("read-"))
+                    continue;
+                if (entry.getKey().equals("write-attribute"))
+                    continue;
+
+                createOperation((Map<String,Object>)entry.getValue());
             }
-            Map starMap = (Map) descriptionMap.get("*");
-            attributesMap = (Map<String, Object>) starMap.get("attributes");
-        }
-        else {
-            attributesMap = (Map<String, Object>) resMap.get("attributes");
-        }
 
-        createProperties(doMetrics, attributesMap, 0);
+        } else {
+            Map<String,Object> attributesMap;
+            if (childType!=null) {
+                Map childMap = (Map) resMap.get("children");
+                Map <String,Object> typeMap = (Map<String, Object>) childMap.get(childType);
+                Map descriptionMap = (Map) typeMap.get("model-description");
+                if (descriptionMap==null) {
+                    System.err.println("No model description found");
+                    return;
+                }
+                Map starMap = (Map) descriptionMap.get("*");
+                attributesMap = (Map<String, Object>) starMap.get("attributes");
+            }
+            else {
+                attributesMap = (Map<String, Object>) resMap.get("attributes");
+            }
 
+            createProperties(mode, attributesMap, 0);
+        }
     }
 
-    private void createProperties(boolean doMetrcis, Map<String, Object> attributesMap, int indent) {
+    private void createProperties(Mode mode, Map<String, Object> attributesMap, int indent) {
         if (attributesMap==null)
             return;
 
@@ -121,7 +139,7 @@ public class Domain2Descriptor {
                 Map<String, Object> attributesMap1 = (Map<String, Object>) props.get(
                         "attributes");
                 if (attributesMap1!=null)
-                    createProperties(doMetrcis,
+                    createProperties(mode,
                         attributesMap1, indent+4);
                 else {
                     for (Map.Entry<String,Object> emapEntry : props.entrySet()) {
@@ -143,7 +161,7 @@ public class Domain2Descriptor {
 
             }
 
-            if (ptype== Type.LIST && !doMetrcis) {
+            if (ptype== Type.LIST && mode!=Domain2Descriptor.Mode.METRICS) {
 
                 StringBuilder sb = new StringBuilder("<c:list-property name=\"");
                 sb.append(entryName);
@@ -160,7 +178,7 @@ public class Domain2Descriptor {
                     doIndent(indent,sb);
                     sb.append("<c:map-property name=\"").append(entryName).append("\">\n");
                     System.out.println(sb.toString());
-                    createProperties(doMetrcis, (Map<String, Object>) props.get("attributes"), indent + 4);
+                    createProperties(mode, (Map<String, Object>) props.get("attributes"), indent + 4);
                     sb = new StringBuilder();
                     doIndent(indent,sb);
                     sb.append("</c:map-property>\n");
@@ -174,7 +192,7 @@ public class Domain2Descriptor {
             }
 
             String accessType = getAccessType(props);
-            if (doMetrcis) {
+            if (mode==Domain2Descriptor.Mode.METRICS) {
                 if (!accessType.equals("metric"))
                     continue;
 
@@ -203,6 +221,54 @@ public class Domain2Descriptor {
 
                 System.out.println(sb.toString());
             }
+        }
+    }
+
+    private void createOperation(Map<String,Object> operationMap) {
+
+        StringBuilder builder = new StringBuilder("<operation name=\"");
+
+        String name = (String) operationMap.get("operation-name");
+        builder.append(name).append('"');
+
+        String description = (String) operationMap.get("description");
+        if (description!=null && !description.isEmpty()) {
+            builder.append(" description=\"").append(description).append('"');
+        }
+        builder.append(">\n");
+
+
+
+        if (!((Map)operationMap.get("request-properties")).isEmpty()) {
+            Map<String,Object> map = (Map<String, Object>) operationMap.get("request-properties");
+            builder.append("  <parameters>\n");
+            generatePropertiesForMap(builder, map);
+            builder.append("  </parameters>\n");
+
+        }
+        if (!((Map)operationMap.get("reply-properties")).isEmpty()){
+            Map<String,Object> map = (Map<String, Object>) operationMap.get("reply-properties");   // TODO not sure -- perhaps for the java code?
+            builder.append("  <results>\n");
+            generatePropertiesForMap(builder, map);
+            builder.append("  </results>\n");
+        }
+
+
+        builder.append("</operation>\n");
+        System.out.println(builder.toString());
+    }
+
+    private void generatePropertiesForMap(StringBuilder builder, Map<String, Object> map) {
+        for (Map.Entry<String,Object> entry : map.entrySet()) {
+
+            Map<String, Object> entryValue = (Map<String, Object>) entry.getValue();
+            String entryKey = entry.getKey();
+
+            Type type = getTypeFromProps(entryValue);
+            String typeString = getTypeStringForTypeAndName(type, entryKey);
+            builder.append(generateProperty(4, entryValue,typeString, entryKey,getAccessType(
+                    entryValue)));
+            builder.append('\n');
         }
     }
 
@@ -337,6 +403,13 @@ public class Domain2Descriptor {
         OBJECT,
         LIST
 
+        ;
+    }
+
+    private enum Mode {
+        METRICS,
+        PROPERTIES,
+        OPERATION
         ;
     }
 

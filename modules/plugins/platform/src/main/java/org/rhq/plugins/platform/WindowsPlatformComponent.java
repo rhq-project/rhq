@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -37,6 +37,8 @@ import org.rhq.core.domain.content.transfer.DeployPackageStep;
 import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
 import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
+import org.rhq.core.domain.measurement.MeasurementDataTrait;
+import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.pluginapi.content.ContentFacet;
 import org.rhq.core.pluginapi.content.ContentServices;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
@@ -47,6 +49,9 @@ import org.rhq.plugins.platform.win.WindowsSoftwareDelegate;
  * @author Greg Hinkle
  */
 public class WindowsPlatformComponent extends PlatformComponent implements ContentFacet {
+
+    private static final String OS_NAME_WIN32 = "Win32";
+    private static final String OS_NAME_WIN64 = "Win64";
     private final Log log = LogFactory.getLog(WindowsPlatformComponent.class);
 
     private Win32EventLogDelegate eventLogDelegate;
@@ -113,4 +118,18 @@ public class WindowsPlatformComponent extends PlatformComponent implements Conte
     public InputStream retrievePackageBits(ResourcePackageDetails packageDetails) {
         return null;
     }
+
+    @Override
+    protected MeasurementDataTrait getMeasurementDataTrait(MeasurementScheduleRequest request) {
+        MeasurementDataTrait trait = super.getMeasurementDataTrait(request);
+        // SIGAR returns "Win32" as the OS name for all Windows systems, even 64-bit ones, so add some special code
+        // to instead return "Win64" for 64-bit systems.
+        if (trait.getName().equals(TRAIT_OSNAME) && trait.getValue().equals(OS_NAME_WIN32)) {
+            if ("x64".equals(getSysinfo().getSystemArchitecture())) {
+                trait.setValue(OS_NAME_WIN64);
+            }
+        }
+        return trait;
+    }
+
 }

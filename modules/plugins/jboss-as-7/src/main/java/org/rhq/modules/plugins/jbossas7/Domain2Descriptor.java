@@ -87,6 +87,10 @@ public class Domain2Descriptor {
             Map childMap = (Map) resMap.get("children");
             Map <String,Object> typeMap = (Map<String, Object>) childMap.get(childType);
             Map descriptionMap = (Map) typeMap.get("model-description");
+            if (descriptionMap==null) {
+                System.err.println("No model description found");
+                return;
+            }
             Map starMap = (Map) descriptionMap.get("*");
             attributesMap = (Map<String, Object>) starMap.get("attributes");
         }

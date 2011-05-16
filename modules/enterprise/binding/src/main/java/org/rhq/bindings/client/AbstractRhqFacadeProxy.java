@@ -16,7 +16,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-
 package org.rhq.bindings.client;
 
 import java.lang.reflect.InvocationHandler;
@@ -93,7 +92,7 @@ public abstract class AbstractRhqFacadeProxy<T extends RhqFacade> implements Inv
      * and <code>args</code> are de-simplified (and thus the method can't be supplied just as a simple {@link Method} instance).
      * 
      * @param proxy the proxy the method is executing on
-     * @param method the original method
+     * @param originalMethod the original method
      * @param argTypes the de-simplified argument types
      * @param args the de-simplified argumens
      * @return the result of the invocation

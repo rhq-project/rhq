@@ -295,6 +295,26 @@
                     <fileset dir="${project.build.testOutputDirectory}/tmp/multi/v2" includes="**/*.class,**/rhq-plugin.xml" />
                  </jar>
 
+                 <copy toDir="${project.build.testOutputDirectory}/tmp/progress/v1/META-INF">
+                    <fileset file="${project.build.testSourceDirectory}/org/rhq/core/pc/upgrade/plugins/progress/v1/rhq-plugin.xml" />
+                 </copy>
+                 <!-- <copy toDir="${project.build.testOutputDirectory}/tmp/progress/v1/org/rhq/core/pc/upgrade/plugins/progress/v1">
+                    <fileset file="${project.build.testOutputDirectory}/org/rhq/core/pc/upgrade/plugins/progress/v1/*.class" />
+                 </copy> -->
+                 <jar destfile="${project.build.testOutputDirectory}/resource-upgrade-test-plugin-progress-test-1.0.0.jar">
+                    <fileset dir="${project.build.testOutputDirectory}/tmp/progress/v1" includes="**/*.class,**/rhq-plugin.xml" />
+                 </jar>
+
+                 <copy toDir="${project.build.testOutputDirectory}/tmp/progress/v2/META-INF">
+                    <fileset file="${project.build.testSourceDirectory}/org/rhq/core/pc/upgrade/plugins/progress/v2/rhq-plugin.xml" />
+                 </copy>
+                 <!-- <copy toDir="${project.build.testOutputDirectory}/tmp/progress/v2/org/rhq/core/pc/upgrade/plugins/progress/v2">
+                    <fileset file="${project.build.testOutputDirectory}/org/rhq/core/pc/upgrade/plugins/progress/v2/*.class" />
+                 </copy> -->
+                 <jar destfile="${project.build.testOutputDirectory}/resource-upgrade-test-plugin-progress-test-2.0.0.jar">
+                    <fileset dir="${project.build.testOutputDirectory}/tmp/progress/v2" includes="**/*.class,**/rhq-plugin.xml" />
+                 </jar>
+
                  <delete dir="${project.build.testOutputDirectory}/tmp" />
               </tasks>
             </configuration>

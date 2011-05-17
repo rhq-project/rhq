@@ -368,7 +368,7 @@ public class ResourceUpgradeFailureHandlingTest extends ResourceUpgradeTestBase 
         assertEquals(resources.get(type).size(), count, "Unexpected number of " + type + " discovered.");
     }
 
-    private static void checkResourcesUpgraded(Set<Resource> resources, int expectedSize) {
+    protected static void checkResourcesUpgraded(Set<Resource> resources, int expectedSize) {
         assertEquals(resources.size(), expectedSize, "The set of resources has unexpected size.");
         for (Resource res : resources) {
             assertTrue(res.getResourceKey().startsWith(UPGRADED_RESOURCE_KEY_PREFIX), "Resource " + res
@@ -441,7 +441,7 @@ public class ResourceUpgradeFailureHandlingTest extends ResourceUpgradeTestBase 
         }
     }
 
-    private Resource findResourceWithOrdinal(ResType resType, int ordinal) {
+    protected Resource findResourceWithOrdinal(ResType resType, int ordinal) {
         ResourceType resourceType = PluginContainer.getInstance().getPluginManager().getMetadataManager()
             .getType(resType.getResourceTypeName(), resType.getResourceTypePluginName());
 
@@ -451,7 +451,7 @@ public class ResourceUpgradeFailureHandlingTest extends ResourceUpgradeTestBase 
         return findResourceWithOrdinal(resources, ordinal);
     }
 
-    private Resource findResourceWithOrdinal(Set<Resource> resources, int ordinal) {
+    protected Resource findResourceWithOrdinal(Set<Resource> resources, int ordinal) {
         for (Resource r : resources) {
             Configuration pluginConfig = r.getPluginConfiguration();
             String ordinalString = pluginConfig.getSimpleValue("ordinal", null);
@@ -464,7 +464,7 @@ public class ResourceUpgradeFailureHandlingTest extends ResourceUpgradeTestBase 
         return null;
     }
 
-    private Set<Resource> filterResources(Set<Resource> resources, ResType resType) {
+    protected Set<Resource> filterResources(Set<Resource> resources, ResType resType) {
         Set<Resource> ret = new HashSet<Resource>(resources);
 
         Iterator<Resource> it = ret.iterator();

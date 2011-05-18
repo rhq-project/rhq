@@ -1814,13 +1814,6 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     }
 
     @SuppressWarnings("unchecked")
-    public Map<Integer, Configuration> getResourceConfigurationMapForCompatibleGroup(ResourceGroup compatibleGroup) {
-        Tuple<String, Object> groupIdParameter = new Tuple<String, Object>("resourceGroupId", compatibleGroup.getId());
-        return executeGetConfigurationMapQuery(Configuration.QUERY_GET_RESOURCE_CONFIG_MAP_BY_GROUP_ID, 100,
-            groupIdParameter);
-    }
-
-    @SuppressWarnings("unchecked")
     private Map<Integer, Configuration> executeGetConfigurationMapQuery(String memberQueryName, int maxSize,
         Tuple<String, Object>... parameters) {
         Query countQuery = PersistenceUtility.createCountQuery(entityManager, memberQueryName);

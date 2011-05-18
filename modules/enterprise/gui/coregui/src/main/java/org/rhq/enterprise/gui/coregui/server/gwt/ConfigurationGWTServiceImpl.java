@@ -17,7 +17,6 @@ import org.rhq.core.domain.criteria.GroupResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.PluginConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.gwt.ConfigurationGWTService;
@@ -263,10 +262,11 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
     @Override
     public Map<Integer, Configuration> findResourceConfigurationsForGroup(int groupId) throws RuntimeException {
         try {
-            ResourceGroup group = this.groupManager.getResourceGroup(getSessionSubject(), groupId);
+            //ResourceGroup group = this.groupManager.getResourceGroup(getSessionSubject(), groupId);
+            //Map<Integer, Configuration> configurations = this.configurationManager
+            //    .getResourceConfigurationMapForCompatibleGroup(group);
             Map<Integer, Configuration> configurations = this.configurationManager
-                .getResourceConfigurationMapForCompatibleGroup(group);
-
+                .getResourceConfigurationsForCompatibleGroup(getSessionSubject(), groupId);
             return SerialUtility.prepare(configurations, "ConfigurationService.findResourceConfigurationsForGroup");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
@@ -388,4 +388,5 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
             throw getExceptionToThrowToClient(t);
         }
     }
+
 }

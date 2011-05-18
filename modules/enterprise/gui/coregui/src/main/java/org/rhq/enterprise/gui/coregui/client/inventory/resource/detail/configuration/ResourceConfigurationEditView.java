@@ -67,7 +67,6 @@ public class ResourceConfigurationEditView extends LocatableVLayout implements P
 
     private boolean refreshing = false;
 
-
     public ResourceConfigurationEditView(String locatorId, ResourceComposite resourceComposite) {
         super(locatorId);
 
@@ -114,6 +113,11 @@ public class ResourceConfigurationEditView extends LocatableVLayout implements P
         this.refreshing = true;
         this.buttonbar.setVisible(false);
 
+        if (editor != null) {
+            editor.destroy();
+            removeMember(editor);
+        }
+
         GWTServiceLookup.getConfigurationService().getLatestResourceConfigurationUpdate(resource.getId(),
             new AsyncCallback<ResourceConfigurationUpdate>() {
                 @Override
@@ -122,10 +126,6 @@ public class ResourceConfigurationEditView extends LocatableVLayout implements P
                         EnumSet.of(MetadataType.resourceConfigurationDefinition), new TypeLoadedCallback() {
                             @Override
                             public void onTypesLoaded(ResourceType type) {
-                                if (editor != null) {
-                                    editor.destroy();
-                                    removeMember(editor);
-                                }
 
                                 editor = new ConfigurationEditor(extendLocatorId("Editor"), type
                                     .getResourceConfigurationDefinition(), result.getConfiguration());
@@ -164,15 +164,15 @@ public class ResourceConfigurationEditView extends LocatableVLayout implements P
                     if (result != null) {
                         String version = String.valueOf(result.getId());
                         message = new Message(MSG.view_configurationDetails_messageConcise(version), MSG
-                                .view_configurationDetails_messageDetailed(version, resource.getName()),
-                                Message.Severity.Info);
+                            .view_configurationDetails_messageDetailed(version, resource.getName()),
+                            Message.Severity.Info);
                     } else {
                         // TODO: i18n
                         message = new Message(MSG.view_configurationDetails_configNotUpdatedDueToNoChange(),
-                                Message.Severity.Warning);
+                            Message.Severity.Warning);
                     }
                     String configHistoryUrl = LinkManager.getResourceTabLink(resource.getId(),
-                            ResourceDetailView.Tab.CONFIGURATION, ResourceDetailView.ConfigurationSubTab.HISTORY);
+                        ResourceDetailView.Tab.CONFIGURATION, ResourceDetailView.ConfigurationSubTab.HISTORY);
                     String configHistoryView = configHistoryUrl.substring(1);
                     CoreGUI.goToView(configHistoryView, message);
                 }
@@ -191,8 +191,8 @@ public class ResourceConfigurationEditView extends LocatableVLayout implements P
                     EnumSet.of(Message.Option.Transient, Message.Option.Sticky));
             } else {
                 this.saveButton.disable();
-                message = new Message(MSG.view_configurationDetails_somePropertiesInvalid(invalidPropertyNames
-                    .values().toString()), Message.Severity.Error, EnumSet.of(Message.Option.Transient, Message.Option.Sticky));
+                message = new Message(MSG.view_configurationDetails_somePropertiesInvalid(invalidPropertyNames.values()
+                    .toString()), Message.Severity.Error, EnumSet.of(Message.Option.Transient, Message.Option.Sticky));
             }
             messageCenter.notify(message);
         } else {

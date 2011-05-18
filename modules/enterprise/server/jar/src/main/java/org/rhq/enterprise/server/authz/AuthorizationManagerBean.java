@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -193,11 +193,10 @@ public class AuthorizationManagerBean implements AuthorizationManagerLocal {
         query.setParameter("permission", permission);
         query.setParameter("parentResourceId", parentResourceId);
         query.setParameter("resourceTypeId", resourceTypeId);
-
-        query.setParameter("subject", -SUBJECT_ID_OVERLORD);
+        query.setParameter("subjectId", -1);
         long baseCount = (Long) query.getSingleResult();
 
-        query.setParameter("subject", subject);
+        query.setParameter("subjectId", subject.getId());
         long subjectCount = (Long) query.getSingleResult();
 
         /* 

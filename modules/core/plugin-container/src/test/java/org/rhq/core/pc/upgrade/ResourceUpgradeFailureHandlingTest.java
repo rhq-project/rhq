@@ -331,6 +331,55 @@ public class ResourceUpgradeFailureHandlingTest extends ResourceUpgradeTestBase 
             });
     }
 
+    @Test
+    public void testResourcesRevertedToOriginalStateAfterFailedUpgrade() throws Exception {
+        setCurrentServerSideInventory(new FakeServerInventory());
+
+        //let it all run in v1
+        executeTestWithPlugins(getAllDepsFor(TEST_V1_PLUGIN_NAME, PARENT_SIBLING_V1_PLUGIN_NAME),
+            new AbstractTestPayload(true, Collections.<ResType> emptyList()) {
+                public void test(Map<ResType, Set<Resource>> resourceUpgradeTestResources) {
+                }
+
+                public Expectations getExpectations(Mockery context) throws Exception {
+                    return new Expectations() {
+                        {
+                            defineDefaultExpectations(this);
+                        }
+                    };
+                }
+            });
+
+        getCurrentServerSideInventory().setFailUpgrade(true);
+        
+        //now let's run with v2 plugins and check the layout of the inventory
+        executeTestWithPlugins(getAllDepsFor(TEST_V2_PLUGIN_NAME, PARENT_SIBLING_V2_PLUGIN_NAME),
+            new AbstractTestPayload(false, ALL_TYPES) {
+
+                public void test(Map<ResType, Set<Resource>> resources) {
+                    checkPresenceOfResourceTypes(resources, getExpectedResourceTypes());
+
+                    checkNumberOfResources(resources, ROOT_TYPE, 1);
+                    checkNumberOfResources(resources, PARENT_DEP_TYPE, 1);
+
+                    //check that the resources are upgraded
+                    checkResourcesNotUpgraded(resources.get(PARENT_DEP_SIBLING_TYPE), 1);
+                    checkResourcesNotUpgraded(resources.get(PARENT_TYPE), 2);
+                    checkResourcesNotUpgraded(resources.get(SIBLING_TYPE), 20);
+                    checkResourcesNotUpgraded(resources.get(TEST_TYPE), 20);
+                }
+
+                public Expectations getExpectations(Mockery context) throws Exception {
+                    return new Expectations() {
+                        {
+                            defineDefaultExpectations(this);
+                        }
+                    };
+                }
+            });
+    }
+        
+    
     @SuppressWarnings("unchecked")
     @Override
     protected void defineDefaultExpectations(Expectations expectations) {
@@ -358,17 +407,17 @@ public class ResourceUpgradeFailureHandlingTest extends ResourceUpgradeTestBase 
         return deps;
     }
 
-    private static void checkPresenceOfResourceTypes(Map<ResType, Set<Resource>> resources, Set<ResType> expectedTypes) {
+    protected static void checkPresenceOfResourceTypes(Map<ResType, Set<Resource>> resources, Set<ResType> expectedTypes) {
         for (ResType resType : expectedTypes) {
             assertNotNull(resources.get(resType), "Expecting some resources of type " + resType);
         }
     }
 
-    private static void checkNumberOfResources(Map<ResType, Set<Resource>> resources, ResType type, int count) {
+    protected static void checkNumberOfResources(Map<ResType, Set<Resource>> resources, ResType type, int count) {
         assertEquals(resources.get(type).size(), count, "Unexpected number of " + type + " discovered.");
     }
 
-    private static void checkResourcesUpgraded(Set<Resource> resources, int expectedSize) {
+    protected static void checkResourcesUpgraded(Set<Resource> resources, int expectedSize) {
         assertEquals(resources.size(), expectedSize, "The set of resources has unexpected size.");
         for (Resource res : resources) {
             assertTrue(res.getResourceKey().startsWith(UPGRADED_RESOURCE_KEY_PREFIX), "Resource " + res
@@ -381,7 +430,7 @@ public class ResourceUpgradeFailureHandlingTest extends ResourceUpgradeTestBase 
         }
     }
 
-    private static void checkResourcesNotUpgraded(Set<Resource> resources, int expectedSize) {
+    protected static void checkResourcesNotUpgraded(Set<Resource> resources, int expectedSize) {
         assertEquals(resources.size(), expectedSize, "The set of resources has unexpected size.");
         for(Resource res : resources) {
             assertFalse(res.getResourceKey().startsWith(UPGRADED_RESOURCE_KEY_PREFIX), "Resource " + res
@@ -397,7 +446,7 @@ public class ResourceUpgradeFailureHandlingTest extends ResourceUpgradeTestBase 
         }
     }
     
-    private static void checkResourceFailedUpgrade(Resource resource) {
+    protected static void checkResourceFailedUpgrade(Resource resource) {
         assertFalse(resource.getResourceKey().startsWith(UPGRADED_RESOURCE_KEY_PREFIX), "Resource " + resource
             + " seems to be upgraded even though it shouldn't.");
         assertTrue(resource.getResourceErrors(ResourceErrorType.UPGRADE).size() == 1,
@@ -409,13 +458,13 @@ public class ResourceUpgradeFailureHandlingTest extends ResourceUpgradeTestBase 
             "A resource that failed to upgrade should be stopped.");
     }
 
-    private static void checkOthersUpgraded(Set<Resource> resources, Resource... failedResource) {
+    protected static void checkOthersUpgraded(Set<Resource> resources, Resource... failedResource) {
         Set<Resource> others = new HashSet<Resource>(resources);
         others.removeAll(Arrays.asList(failedResource));
         checkResourcesUpgraded(others, others.size());
     }
 
-    private void addChildrenToFail(Resource parent, ResType childResType, int... childrenOrdinals) {
+    protected void addChildrenToFail(Resource parent, ResType childResType, int... childrenOrdinals) {
         InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
         ResourceContainer parentContainer = inventoryManager.getResourceContainer(parent);
         BaseResourceComponentInterface parentComponent = (BaseResourceComponentInterface) parentContainer
@@ -441,7 +490,7 @@ public class ResourceUpgradeFailureHandlingTest extends ResourceUpgradeTestBase 
         }
     }
 
-    private Resource findResourceWithOrdinal(ResType resType, int ordinal) {
+    protected Resource findResourceWithOrdinal(ResType resType, int ordinal) {
         ResourceType resourceType = PluginContainer.getInstance().getPluginManager().getMetadataManager()
             .getType(resType.getResourceTypeName(), resType.getResourceTypePluginName());
 
@@ -451,7 +500,7 @@ public class ResourceUpgradeFailureHandlingTest extends ResourceUpgradeTestBase 
         return findResourceWithOrdinal(resources, ordinal);
     }
 
-    private Resource findResourceWithOrdinal(Set<Resource> resources, int ordinal) {
+    protected Resource findResourceWithOrdinal(Set<Resource> resources, int ordinal) {
         for (Resource r : resources) {
             Configuration pluginConfig = r.getPluginConfiguration();
             String ordinalString = pluginConfig.getSimpleValue("ordinal", null);
@@ -464,7 +513,7 @@ public class ResourceUpgradeFailureHandlingTest extends ResourceUpgradeTestBase 
         return null;
     }
 
-    private Set<Resource> filterResources(Set<Resource> resources, ResType resType) {
+    protected Set<Resource> filterResources(Set<Resource> resources, ResType resType) {
         Set<Resource> ret = new HashSet<Resource>(resources);
 
         Iterator<Resource> it = ret.iterator();

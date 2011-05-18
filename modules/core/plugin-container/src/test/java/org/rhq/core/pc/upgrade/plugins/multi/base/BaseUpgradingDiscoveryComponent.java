@@ -40,7 +40,7 @@ public class BaseUpgradingDiscoveryComponent<T extends BaseResourceComponent> ex
         int ordinal = pluginConfig.getSimple("ordinal").getIntegerValue();
         int parentOrdinal = parent == null ? 0 : parent.getOrdinal();
 
-        boolean fail = Boolean.getBoolean(pluginConfig.getSimpleValue("failUpgrade", "false"));
+        boolean fail = Boolean.parseBoolean(pluginConfig.getSimpleValue("failUpgrade", "false"));
 
         if (!fail && parent != null) {
             String typeName = inventoriedResource.getResourceType().getName();
@@ -52,7 +52,17 @@ public class BaseUpgradingDiscoveryComponent<T extends BaseResourceComponent> ex
         if (fail) {
             throw new RuntimeException("Failing the resource upgrade purposefully.");
         }
-
+        
+        boolean checkParentUpgraded = Boolean.parseBoolean(pluginConfig.getSimpleValue("checkParentUpgraded", "false"));
+        
+        if (checkParentUpgraded) {
+            if (!inventoriedResource.getParentResourceContext().getResourceKey().startsWith("UPGRADED")) {
+                throw new RuntimeException("The parent resource ["
+                    + inventoriedResource.getParentResourceContext().getResourceKey()
+                    + "] doesn't seem like it's upgraded but this resource expects it to be.");
+            }
+        }
+        
         String newKey = pluginConfig.getSimpleValue("upgradedKey", null);
 
         if (newKey == null) {

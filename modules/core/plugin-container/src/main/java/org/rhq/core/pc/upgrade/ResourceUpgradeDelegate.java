@@ -59,6 +59,7 @@ public class ResourceUpgradeDelegate {
     private boolean enabled = true;
 
     private Set<ResourceUpgradeRequest> requests = new HashSet<ResourceUpgradeRequest>();
+    private Set<ResourceUpgradeRequest> originalResourceData = new HashSet<ResourceUpgradeRequest>();    
     private InventoryManager inventoryManager;
     private Set<Resource> failedResources = new HashSet<Resource>();
     private Map<Resource, Set<ResourceType>> failedResourceTypesPerParent = new HashMap<Resource, Set<ResourceType>>();
@@ -85,6 +86,14 @@ public class ResourceUpgradeDelegate {
 
     /**
      * Asks the resource's discovery component to upgrade the resource.
+     * The resource will be updated with the data from the upgrade. I.e. when the resource
+     * is activated after it was queued for upgrade, it will actually start with the upgraded
+     * data.
+     * <p>
+     * If later on the upgrade fails to finish due to communication error with server or the
+     * server doesn't approve some upgrades for whatever reason, the resources will be restarted
+     * with the original data.
+     * 
      * @param resourceContainer
      * @return true if the resource was queued for upgrade with no problems,
      * false if there was some problem upgrading and the resource container was deactivated as
@@ -135,7 +144,74 @@ public class ResourceUpgradeDelegate {
     public void sendRequests() throws Throwable {
         if (enabled && requests.size() > 0) {
             try {
+                //check the validity of the upgrades now that we have a complete picture
+                //about the changes and the inventory looks like it was already upgraded.
+                for(ResourceUpgradeRequest request : requests) {
+                    ResourceContainer container = inventoryManager.getResourceContainer(request.getResourceId());
+                    if (container != null) {
+                        Resource resource = container.getResource();
+                        String upgradeErrors = null;
+                        if ((upgradeErrors = checkUpgradeValid(resource, request)) != null) {
+                            //the resource is in its upgraded state but it's going to get reverted back to the original state
+                            //in the code below. Let's use the original resource for the error message so that we don't confuse
+                            //the user.                            
+                            for(ResourceUpgradeRequest orig : originalResourceData) {
+                                if (orig.equals(request)) {
+                                    orig.updateResource(resource);
+                                    break;
+                                }
+                            }
+                            String errorString = "Upgrading the resource [" + resource + "] using these updates [" + request
+                                + "] would render the inventory invalid because of the following reasons: " + upgradeErrors;
+
+                            //now switch the resource back to the upgraded state for the rest of the code below again
+                            request.updateResource(resource);
+                            
+                            log.error(errorString);
+
+                            IllegalStateException ex = new IllegalStateException(errorString);
+                            ex.fillInStackTrace();
+
+                            //set the error and clear out everything else, so that we send the error
+                            //to the server and locally roll back to the previous state.
+                            request.setErrorProperties(ex);
+                            request.clearUpgradeData();
+                            
+                            if (request.getUpgradeErrorMessage() != null) {
+                                rememberFailure(resource);
+                                inventoryManager.deactivateResource(resource);
+                            }
+
+                        }
+                    }
+                }
+                
+                //now before we talk to server and sync up the upgraded data,
+                //reset the resources to their original values so that any changes
+                //the server makes to the upgrade data are applied to the "vanilla" state 
+                //of the resources. i.e we only want to make changes the server approves.
+                for (ResourceUpgradeRequest request : originalResourceData) {
+                    ResourceContainer container = inventoryManager.getResourceContainer(request.getResourceId());
+                    if (container != null) {
+                        Resource resource = container.getResource();
+                        request.updateResource(resource);
+                    }
+                }
+                
+                //merge the resources with the data as received from the server
+                //(this can differ from what the upgrade "wants" because the server is
+                //free to disallow some changes, e.g. resource name change)
                 inventoryManager.mergeResourcesFromUpgrade(requests);
+                
+                //and now restart all the "touched" resources with the true intended
+                //data
+                for (ResourceUpgradeRequest request : requests) {
+                    ResourceContainer container = inventoryManager.getResourceContainer(request.getResourceId());
+                    if (container != null) {
+                        Resource resource = container.getResource();
+                        inventoryManager.activateResource(resource, container, true);
+                    }
+                }
             } catch (Throwable t) {
                 mergeFailed = true;
 
@@ -168,7 +244,7 @@ public class ResourceUpgradeDelegate {
         ResourceContext<?> parentResourceContext = parentResourceContainer == null ? null : parentResourceContainer.getResourceContext();
         
         Resource resource = resourceContainer.getResource();
-
+        
         ResourceDiscoveryComponent<ResourceComponent<T>> discoveryComponent = PluginContainer.getInstance()
             .getPluginComponentFactory().getDiscoveryComponent(resource.getResourceType(), parentResourceContainer);
 
@@ -194,44 +270,32 @@ public class ResourceUpgradeDelegate {
         }
 
         if (upgradeReport != null && upgradeReport.hasSomethingToUpgrade()) {
-            String upgradeErrors = null;
-            if ((upgradeErrors = checkUpgradeValid(resource, upgradeReport)) != null) {
-                String errorString = "Upgrading the resource [" + resource + "] using these updates [" + upgradeReport
-                    + "] would render the inventory invalid because of the following reasons: " + upgradeErrors;
-
-                log.error(errorString);
-
-                IllegalStateException ex = new IllegalStateException(errorString);
-                ex.fillInStackTrace();
-
-                request.setErrorProperties(ex);
-            } else {
-                request.fillInFromReport(upgradeReport);
-            }
-
+            request.fillInFromReport(upgradeReport);
         }
 
-        //everything went ok, let's queue a upgrade request that will be sent to the server
         if (request.hasSomethingToUpgrade()) {
             requests.add(request);
         }
 
         if (request.getUpgradeErrorMessage() != null) {
-            failedResources.add(resource);
-
-            Set<ResourceType> failedResourceTypesInParent = failedResourceTypesPerParent.get(parentResource);
-            if (failedResourceTypesInParent == null) {
-                failedResourceTypesInParent = new HashSet<ResourceType>();
-                failedResourceTypesPerParent.put(parentResource, failedResourceTypesInParent);
-            }
-
-            failedResourceTypesInParent.add(resource.getResourceType());
-
-            inventoryManager.deactivateResource(resource);
-
+            rememberFailure(resource);
             return false;
         }
-
+        
+        //alright, everything went fine with the upgrade. Let's update the data of the resource
+        //right now so that it starts up as if it was already upgraded. This is to ensure that
+        //its children will use a parent component that behaves like the upgraded one.
+        //We are going to roll back the upgraded data if the upgrade fails to sync with the server
+        //later on.
+        
+        //remember the original values
+        ResourceUpgradeRequest original = new ResourceUpgradeRequest(resource.getId());
+        original.fillInFromResource(resource);
+        originalResourceData.add(original);
+        
+        //update the resource
+        request.updateResource(resource);
+        
         return true;
     }
 
@@ -239,7 +303,7 @@ public class ResourceUpgradeDelegate {
         StringBuilder s = new StringBuilder();
 
         if (!checkResourceKeyUniqueAmongSiblings(resource, upgradeReport)) {
-            s.append("\nAnother inventoried sibling resource of the same type already has the proposed resource key.");
+            s.append("\nAnother inventoried sibling resource of the same type already has the proposed resource key or would have it after the upgrade.");
         }
 
         return s.length() > 0 ? s.toString() : null;
@@ -248,6 +312,7 @@ public class ResourceUpgradeDelegate {
     private boolean checkResourceKeyUniqueAmongSiblings(Resource resource, ResourceUpgradeReport upgradeReport) {
         Resource parent = resource.getParentResource();
         if (parent == null) {
+            //there is only a single platform resource on an agent
             return true;
         }
 
@@ -266,5 +331,18 @@ public class ResourceUpgradeDelegate {
         }
 
         return true;
+    }
+    
+    private void rememberFailure(Resource resource) {
+        failedResources.add(resource);
+        Resource parentResource = resource.getParentResource();
+        
+        Set<ResourceType> failedResourceTypesInParent = failedResourceTypesPerParent.get(parentResource);
+        if (failedResourceTypesInParent == null) {
+            failedResourceTypesInParent = new HashSet<ResourceType>();
+            failedResourceTypesPerParent.put(parentResource, failedResourceTypesInParent);
+        }
+
+        failedResourceTypesInParent.add(resource.getResourceType());
     }
 }

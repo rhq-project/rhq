@@ -242,14 +242,14 @@ public class Domain2Descriptor {
         if (!((Map)operationMap.get("request-properties")).isEmpty()) {
             Map<String,Object> map = (Map<String, Object>) operationMap.get("request-properties");
             builder.append("  <parameters>\n");
-            generatePropertiesForMap(builder, map);
+            generatePropertiesForMap(builder, map, true);
             builder.append("  </parameters>\n");
 
         }
         if (!((Map)operationMap.get("reply-properties")).isEmpty()){
             Map<String,Object> map = (Map<String, Object>) operationMap.get("reply-properties");   // TODO not sure -- perhaps for the java code?
             builder.append("  <results>\n");
-            generatePropertiesForMap(builder, map);
+            generatePropertiesForMap(builder, map, true);
             builder.append("  </results>\n");
         }
 
@@ -258,7 +258,7 @@ public class Domain2Descriptor {
         System.out.println(builder.toString());
     }
 
-    private void generatePropertiesForMap(StringBuilder builder, Map<String, Object> map) {
+    private void generatePropertiesForMap(StringBuilder builder, Map<String, Object> map, boolean forceReadWrite) {
         for (Map.Entry<String,Object> entry : map.entrySet()) {
 
             Map<String, Object> entryValue = (Map<String, Object>) entry.getValue();
@@ -266,8 +266,7 @@ public class Domain2Descriptor {
 
             Type type = getTypeFromProps(entryValue);
             String typeString = getTypeStringForTypeAndName(type, entryKey);
-            builder.append(generateProperty(4, entryValue,typeString, entryKey,getAccessType(
-                    entryValue)));
+            builder.append(generateProperty(4, entryValue,typeString, entryKey, null));
             builder.append('\n');
         }
     }

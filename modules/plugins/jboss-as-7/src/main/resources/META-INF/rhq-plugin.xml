@@ -392,6 +392,7 @@
                 <c:simple-property name="path" readOnly="true" default="connector"/>
             </plugin-configuration>
         </service>
+<!-- this is no child resource
         <service name="HQueue"
                  discovery="SubsystemDiscovery"
                  class="BaseComponent"
@@ -406,11 +407,12 @@
             </resource-configuration>
 
         </service>
+-->
     </server>
 
     <server name="JMS"
             discovery="SubsystemDiscovery"
-            class="DomainComponent"
+            class="JmsComponent"
             description="The JMS messaging subsystem"
             singleton="true"
             >
@@ -425,23 +427,57 @@
 
         <service name="Queue"
             discovery="SubsystemDiscovery"
-            class="BaseComponent"
+            class="JmsComponent"
+            createDeletePolicy="both"
             >
             <plugin-configuration>
                 <c:simple-property name="path" readOnly="true" default="queue"/>
             </plugin-configuration>
+            <resource-configuration> <!-- See BZ 705713 TODO -->
+                <c:simple-property name="durable" required="false" type="boolean" readOnly="false" default="false"
+                                   description="Whether the queue is durable or not."/>
+                <c:list-property name="entries" required="false"  readOnly="false"
+                                 description="The jndi names the queue will be bound to.">
+                    <c:simple-property name="entries" type="string"/>
+                </c:list-property>
+                <c:simple-property name="selector" required="false" type="string" readOnly="false" description="The queue selector."/>
+                <c:template name="add" description="Properties when adding a new queue" >
+                    <c:simple-property name="durable" required="false" type="boolean" default="false"
+                                       description="Whether the queue is durable or not."/>
+                    <c:list-property name="entries" required="false"
+                                     description="The jndi names the queue will be bound to.">
+                        <c:simple-property name="entries" type="string"/>
+                    </c:list-property>
+                    <c:simple-property name="selector" required="false" type="string" description="The queue selector."/>
+                </c:template>
+            </resource-configuration>
         </service>
         <service name="Topic"
             discovery="SubsystemDiscovery"
-            class="BaseComponent"
+            class="JmsComponent"
+            createDeletePolicy="both"
             >
             <plugin-configuration>
                 <c:simple-property name="path" readOnly="true" default="topic"/>
             </plugin-configuration>
+            <resource-configuration> <!-- See BZ 705713 TODO -->
+                <c:list-property name="entries" required="false"  readOnly="false"
+                                 description="The jndi names the queue will be bound to.">
+                    <c:simple-property name="entries" type="string"/>
+                </c:list-property>
+                <c:template name="add" description="Template when adding a Topic">
+                    <!--<c:list-property name="entries" required="false"-->
+                                     <!--description="The jndi names the queue will be bound to.">-->
+                        <c:simple-property name="entries" type="string"/>
+                    <c:simple-property name="foobar" required="false" />
+                    <!--</c:list-property>-->
+                </c:template>
+            </resource-configuration>
         </service>
         <service name="Connection-Factory"
             discovery="SubsystemDiscovery"
-            class="BaseComponent"
+            class="JmsComponent"
+            createDeletePolicy="both"
             >
             <plugin-configuration>
                 <c:simple-property name="path" readOnly="true" default="connection-factory"/>
@@ -542,17 +578,30 @@
                 <c:simple-property name="default-web-module" type="string" readOnly="true" defaultValue="ROOT.war"
                          description="The web module deployment name that will be mapped as the root webapp."/>
                 <c:map-property name="access-log" description="The access log configuration for this virtual server." >
-                    <c:simple-property name="pattern" type="string" readOnly="true" defaultValue="common" description="The access log pattern."/>
-                    <c:simple-property name="resolve-hosts" type="boolean" readOnly="true" defaultValue="false" description="Host resolution."/>
-                    <c:simple-property name="extended" type="boolean" readOnly="true" defaultValue="false"
+                    <c:simple-property name="pattern" type="string" readOnly="true" defaultValue="common" required="false" description="The access log pattern."/>
+                    <c:simple-property name="resolve-hosts" type="boolean" readOnly="true" defaultValue="false" required="false" description="Host resolution."/>
+                    <c:simple-property name="extended" type="boolean" readOnly="true" defaultValue="false" required="false"
                          description="Enable extended pattern, with more options."/>
-                    <c:simple-property name="prefix" type="string" readOnly="true" description="Prefix for the log file name."/>
-                    <c:simple-property name="rotate" type="boolean" readOnly="true" defaultValue="true" description="Rotate the access log every day."/>
-                    <!--<c:simple-property name="directory" description="The location for the access logging." />-->
+                    <c:simple-property name="prefix" type="string" readOnly="true" required="false" description="Prefix for the log file name."/>
+                    <c:simple-property name="rotate" type="boolean" readOnly="true" defaultValue="true" required="false" description="Rotate the access log every day."/>
+                    <c:map-property name="directory" description="The location for the access logging." required="false" >
+                        <c:simple-property name="path" required="false" type="string" readOnly="true" description="The relative folder path."/>
+                        <c:simple-property name="relative-to" required="false" type="string" readOnly="true"
+                             description="The folder the path is relative to."/>
+                    </c:map-property>
                 </c:map-property>
-                <!--<c:list-property name="rewrite" >-->
-                  <!--<c:simple-property name="rewrite" />-->
-                <!--</c:list-property>-->
+                <c:list-property name="rewrite" description="A list of rewrite rules that will be processed in order on the URL or vhost specified in the request." >
+                    <c:map-property name="rewrite">
+
+                        <c:simple-property name="pattern" required="false" type="string" readOnly="true" description="The pattern that will be matched."/>
+                        <c:simple-property name="substitution" required="false" type="string" readOnly="true"
+                                           description="The string that will replace the original URL or vhost."/>
+                        <c:simple-property name="flags" required="false" type="string" readOnly="true" description="Option flags for this rewrite rule."/>
+                        <c:list-property name="condition" description="A list of conditions this rule needs to match for rewrite to occur." >
+                            <c:simple-property name="condition" />
+                        </c:list-property>
+                    </c:map-property>
+                </c:list-property>
             </resource-configuration>
         </service>
 
@@ -755,6 +804,60 @@
         </plugin-configuration>
     </server>
 
+
+    <server name="Logging"
+        discovery="SubsystemDiscovery"
+        class="BaseComponent"
+        singleton="true"
+        >
+
+        <runs-inside>
+            <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
+            <parent-resource-type name="JBossAS7-Standalone"  plugin="jboss-as-7"/>
+        </runs-inside>
+
+        <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="subsystem=logging"/>
+        </plugin-configuration>
+    </server>
+
+    <server name="Security"
+        discovery="SubsystemDiscovery"
+        class="BaseComponent"
+        singleton="true"
+        >
+
+        <runs-inside>
+            <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
+            <parent-resource-type name="JBossAS7-Standalone"  plugin="jboss-as-7"/>
+        </runs-inside>
+
+        <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="subsystem=security"/>
+        </plugin-configuration>
+
+
+
+        <resource-configuration>
+            <c:simple-property name="authentication-manager-class-name" required="false" type="string" readOnly="true" defaultValue="default"
+                               description="Specifies the AuthenticationManager implementation class name to use. To use the container default set the value to 'default'"/>
+            <c:simple-property name="deep-copy-subject-mode" required="false" type="boolean" readOnly="true" defaultValue="false"
+                               description="Sets the copy mode of subjects done by the security managers to be deep copies that makes copies of the subject principals and credentials if they are cloneable. It should be set to true if subject include mutable content that can be corrupted when multiple threads have the same identity and cache flushes/logout clearing the subject in one thread results in subject references affecting other threads."/>
+            <c:simple-property name="default-callback-handler-class-name" required="false" type="string" readOnly="true" defaultValue="default"
+                               description="A global class name for the CallbackHandler implementation to be used with login modules. To use the container default set the value to 'default'"/>
+            <c:simple-property name="subject-factory-class-name" required="false" type="string" readOnly="true" defaultValue="default"
+                               description="Sets the class name for the SubjectFactory implementation to be used. To use the container default set the value to 'default'."/>
+            <c:simple-property name="authorization-manager-class-name" required="false" type="string" readOnly="true" defaultValue="default"
+                               description="Specifies the AuthorizationManager implementation class name to use. To use the container default set the value to 'default'."/>
+            <c:simple-property name="audit-manager-class-name" required="false" type="string" readOnly="true" defaultValue="default"
+                               description="Specifies the AuditManager implementation class name to use. To use the container default set the value to 'default'."/>
+            <c:simple-property name="identity-trust-manager-class-name" required="false" type="string" readOnly="true" defaultValue="default"
+                               description="Specifies the IdentityTrustManager implementation class name to use. To use the container default set the value to 'default'."/>
+            <c:simple-property name="mapping-manager-class-name" required="false" type="string" readOnly="true" defaultValue="default"
+                               description="Specifies the MappingManager implementation class name to use. To use the container default set the value to 'default''."/>
+        </resource-configuration>
+
+    </server>
 
     <server name="Threads"
         discovery="SubsystemDiscovery"

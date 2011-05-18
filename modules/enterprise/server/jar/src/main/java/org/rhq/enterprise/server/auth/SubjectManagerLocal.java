@@ -48,16 +48,6 @@ public interface SubjectManagerLocal {
     Subject loadUserConfiguration(Integer subjectId);
 
     /**
-     * Given a set of subject Ids, this returns a list of all the subjects.
-     *
-     * @param  subjectIds
-     * @param  pageControl
-     *
-     * @return all the subjects with the given ID
-     */
-    PageList<Subject> findSubjectsById(Integer[] subjectIds, PageControl pageControl);
-
-    /**
      * This returns the system super user subject that can be used to authorize the caller for any other system call.
      * This must <b>not</b> be exposed to remote clients.
      *
@@ -66,27 +56,17 @@ public interface SubjectManagerLocal {
     Subject getOverlord();
 
     /**
-     * Returns a paged list of all Subjects.
-     *
-     * @param pageControl the page control that specifies which page of the result set to return and how sort it
-     */
-    PageList<Subject> findAllSubjects(PageControl pageControl);
-
-    /**
-     * Logs in a user without performing any authentication. This method should be used with care and not available to
+     * Logs in a user without performing any authentication. This method should be used with care and is not available to
      * remote clients. Because of the unauthenticated nature of this login, the new login session will have a session
-     * timeout of only a few seconds. However, if you pass in <code>true</code> for the "reattach", this method will
-     * re-attach to an existing session for the user, if one is active already. If one does not exist, this method will
-     * login and create a new session just as if that parameter was <code>false</code>.
+     * timeout of only two minutes.
      *
-     * @param  user     The user to authenticate and login
-     * @param  reattach If <code>true</code>, will re-attach to an existing login session, if one exists
+     * @param  username The user to login
      *
-     * @return the user's {@link Subject}
+     * @return A Subject with an active session for the the user
      *
      * @throws LoginException if failed to create a new session for the given user
      */
-    Subject loginUnauthenticated(String user, boolean reattach) throws LoginException;
+    Subject loginUnauthenticated(String username) throws LoginException;
 
     /**
      * Creates a new principal (username and password) in the internal database.
@@ -162,8 +142,6 @@ public interface SubjectManagerLocal {
 
     Subject getSubjectBySessionId(int sessionId) throws Exception;
 
-    boolean isLoggedIn(String username);
-
     /**
      * Creates a new subject, including their assigned roles, as well as an associated principal with the specified
      * password.
@@ -196,7 +174,7 @@ public interface SubjectManagerLocal {
      * @return the subject if the credentials are correct, null otherwise
      */
     Subject checkAuthentication(String username, String password);
-    
+
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //
     // The following are shared with the Remote Interface

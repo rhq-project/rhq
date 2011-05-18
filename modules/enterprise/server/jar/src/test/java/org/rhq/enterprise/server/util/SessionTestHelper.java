@@ -87,8 +87,8 @@ public class SessionTestHelper {
         em.persist(newSubject);
         em.flush();
 
-        SessionManager.getInstance().put(newSubject, 1000 * 300);
-
+        // return the copy, not the original
+        newSubject = SessionManager.getInstance().put(newSubject, 1000 * 300);
         return newSubject;
     }
 

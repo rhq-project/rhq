@@ -60,7 +60,7 @@ public class ResourceStorageTest extends AbstractEJB3Test {
             ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
             SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
             PageControl pc = new PageControl(1, 5, new OrderingField("res.name", PageOrdering.ASC));
-            Subject subject = subjectManager.loginUnauthenticated("ghinkle", true);
+            Subject subject = subjectManager.loginUnauthenticated("ghinkle");
 
             //Subject subject = subjectManager.getOverlord();
             createSession(subject);
@@ -187,7 +187,7 @@ public class ResourceStorageTest extends AbstractEJB3Test {
         try {
             DiscoveryBossLocal discoveryBoss = LookupUtil.getDiscoveryBoss();
             SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
-            Subject rhqadmin = subjectManager.loginUnauthenticated("rhqadmin", true);
+            Subject rhqadmin = subjectManager.loginUnauthenticated("rhqadmin");
             createSession(rhqadmin);
 
             Map<Resource, List<Resource>> queue = discoveryBoss.getQueuedPlatformsAndServers(rhqadmin, PageControl
@@ -200,11 +200,13 @@ public class ResourceStorageTest extends AbstractEJB3Test {
         }
     }
 
+    @SuppressWarnings("unused")
     @Test(groups = "integration.ejb3")
     public void resourceTest() throws Exception {
         // TODO GH: Implement actual tests
 
         System.out.println("foo");
+
         ResourceManagerLocal resourceManager = (ResourceManagerLocal) getInitialContext().lookup(
             ResourceManagerBean.class.getSimpleName() + "/local");
 
@@ -214,7 +216,7 @@ public class ResourceStorageTest extends AbstractEJB3Test {
         AuthorizationManagerLocal authorizationManager = (AuthorizationManagerLocal) getInitialContext().lookup(
             AuthorizationManagerBean.class.getSimpleName() + "/local");
 
-        Subject rhqadmin = subjectManager.loginUnauthenticated("rhqadmin", true);
+        Subject rhqadmin = subjectManager.loginUnauthenticated("rhqadmin");
         System.out.println(rhqadmin);
     }
 }

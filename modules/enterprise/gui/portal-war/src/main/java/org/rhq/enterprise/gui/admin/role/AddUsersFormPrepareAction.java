@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.admin.role;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
@@ -27,10 +28,13 @@ import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.tiles.ComponentContext;
 import org.apache.struts.tiles.actions.TilesAction;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Role;
+import org.rhq.core.domain.criteria.SubjectCriteria;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
@@ -75,15 +79,21 @@ public class AddUsersFormPrepareAction extends TilesAction {
         Integer[] pendingUserIds = SessionUtils.getList(request.getSession(), Constants.PENDING_USERS_SES_ATTR);
 
         log.trace("getting pending users for role [" + roleId + "]");
-        PageList<Subject> pendingUsers = subjectManager.findSubjectsById(pendingUserIds, pcp);
+        SubjectCriteria c = new SubjectCriteria();
+        c.addFilterIds(pendingUserIds);
+        c.addFilterFsystem(false);
+        c.addFilterFactive(true);
+        c.fetchRoles(true);
+        c.addSortName(PageOrdering.ASC);
+        PageList<Subject> pendingUsers = subjectManager.findSubjectsByCriteria(RequestUtils.getSubject(request), c);
         request.setAttribute(Constants.PENDING_USERS_ATTR, pendingUsers);
 
         /*
          * available users are all users in the system that are /not/ associated with the role and are not pending
          */
         log.trace("getting available users for role [" + roleId + "]");
-        PageList<Subject> availableUsers = subjectManager.findAvailableSubjectsForRole(RequestUtils.getSubject(request),
-            roleId, pendingUserIds, pca);
+        PageList<Subject> availableUsers = subjectManager.findAvailableSubjectsForRole(
+            RequestUtils.getSubject(request), roleId, pendingUserIds, pca);
         request.setAttribute(Constants.AVAIL_USERS_ATTR, availableUsers);
 
         return null;

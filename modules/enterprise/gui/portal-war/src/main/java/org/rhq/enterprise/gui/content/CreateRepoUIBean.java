@@ -19,7 +19,6 @@
 package org.rhq.enterprise.gui.content;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import javax.faces.application.FacesMessage;
 import javax.faces.model.SelectItem;
@@ -27,7 +26,9 @@ import javax.faces.model.SelectItem;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.content.Repo;
-import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.criteria.SubjectCriteria;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
@@ -41,7 +42,7 @@ public class CreateRepoUIBean {
     public CreateRepoUIBean() {
         initNewRepo();
     }
-    
+
     public Repo getRepo() {
         return newRepo;
     }
@@ -52,21 +53,25 @@ public class CreateRepoUIBean {
 
     public SelectItem[] getAvailableOwners() {
         SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
-        
-        List<Subject> subjects = subjectManager.findAllSubjects(PageControl.getUnlimitedInstance());
-        
+        Subject subject = EnterpriseFacesContextUtility.getSubject();
+
+        SubjectCriteria c = new SubjectCriteria();
+        c.addFilterFsystem(false);
+        c.addSortName(PageOrdering.ASC);
+        PageList<Subject> subjects = subjectManager.findSubjectsByCriteria(subject, c);
+
         ArrayList<SelectItem> items = new ArrayList<SelectItem>(subjects.size());
-        
+
         items.add(new SelectItem(null, "--None--"));
-        
-        for(Subject s : subjects) {
+
+        for (Subject s : subjects) {
             SelectItem item = new SelectItem(s.getName(), s.getName());
             items.add(item);
         }
-        
+
         return items.toArray(new SelectItem[items.size()]);
     }
-    
+
     public boolean isRepositoryManager() {
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         return LookupUtil.getAuthorizationManager().hasGlobalPermission(subject, Permission.MANAGE_REPOSITORIES);
@@ -90,12 +95,12 @@ public class CreateRepoUIBean {
         initNewRepo();
         return "save";
     }
-    
+
     public String cancel() {
         initNewRepo();
         return "cancel";
     }
-    
+
     private void updateRepoOwner(Subject loggedInSubject) {
         if (newRepo.getOwner().getName() == null) {
             newRepo.setOwner(null);
@@ -107,15 +112,15 @@ public class CreateRepoUIBean {
             newRepo.setOwner(s);
         }
     }
-    
+
     private void initNewRepo() {
         newRepo = new Repo();
-        
+
         SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
-        
+
         //use a copy so that we can modify it without invalidating the user in the session
         Subject currenUserCopy = subjectManager.getSubjectById(EnterpriseFacesContextUtility.getSubject().getId());
-        
+
         newRepo.setOwner(currenUserCopy);
     }
 }

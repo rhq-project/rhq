@@ -128,40 +128,6 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
     }
 
     /**
-     * @see org.rhq.enterprise.server.auth.SubjectManagerLocal#findSubjectsById(Integer[],PageControl)
-     */
-    @SuppressWarnings("unchecked")
-    public PageList<Subject> findSubjectsById(Integer[] subjectIds, PageControl pc) {
-        if ((subjectIds == null) || (subjectIds.length == 0)) {
-            return new PageList<Subject>(pc);
-        }
-
-        pc.initDefaultOrderingField("s.name");
-
-        String queryName = Subject.QUERY_FIND_BY_IDS;
-        Query queryCount = PersistenceUtility.createCountQuery(entityManager, queryName);
-        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, queryName, pc);
-
-        List<Integer> subjectIdsList = Arrays.asList(subjectIds);
-        queryCount.setParameter("ids", subjectIdsList);
-        query.setParameter("ids", subjectIdsList);
-
-        long count = (Long) queryCount.getSingleResult();
-        List<Subject> subjects = query.getResultList();
-
-        if (subjects != null) {
-            // eagerly load in the members - can't use left-join due to PersistenceUtility usage; perhaps use EAGER
-            for (Subject subject : subjects) {
-                subject.getRoles().size();
-            }
-        } else {
-            subjects = new ArrayList<Subject>();
-        }
-
-        return new PageList<Subject>(subjects, (int) count, pc);
-    }
-
-    /**
      * @see org.rhq.enterprise.server.auth.SubjectManagerLocal#updateSubject(Subject, Subject)
      */
     public Subject updateSubject(Subject whoami, Subject subjectToModify) {
@@ -289,17 +255,12 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
      * @see org.rhq.enterprise.server.auth.SubjectManagerRemote#getSubjectByName(String)
      */
     public Subject getSubjectByName(String username) {
-        Subject subject;
 
-        try {
-            Query query = entityManager.createNamedQuery(Subject.QUERY_FIND_BY_NAME);
-            query.setParameter("name", username);
-            subject = (Subject) query.getSingleResult();
-        } catch (NoResultException nre) {
-            subject = null;
-        }
+        SubjectCriteria c = new SubjectCriteria();
+        c.addFilterName(username);
+        PageList<Subject> result = findSubjectsByCriteria(getOverlord(), c);
 
-        return subject;
+        return result.isEmpty() ? null : result.get(0);
     }
 
     /**
@@ -329,24 +290,6 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
         entityManager.persist(subject);
 
         return subject;
-    }
-
-    /**
-     * @see org.rhq.enterprise.server.auth.SubjectManagerLocal#findAllSubjects(PageControl)
-     */
-    @SuppressWarnings("unchecked")
-    public PageList<Subject> findAllSubjects(PageControl pc) {
-        pc.initDefaultOrderingField("s.name");
-
-        String queryName = Subject.QUERY_FIND_ALL;
-        Query subjectQueryCount = PersistenceUtility.createCountQuery(entityManager, queryName);
-        Query subjectQuery = PersistenceUtility.createQueryWithOrderBy(entityManager, queryName, pc);
-
-        long totalCount = (Long) subjectQueryCount.getSingleResult();
-
-        List<Subject> subjects = subjectQuery.getResultList();
-
-        return new PageList<Subject>(subjects, (int) totalCount, pc);
     }
 
     /**
@@ -382,17 +325,6 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
             // fetch the roles
             subject.getRoles().size();
 
-            // let's see if this user was already logged in with a valid session
-            try {
-                int sessionId = sessionManager.getSessionIdFromUsername(username);
-                subject.setSessionId(sessionId);
-                //insert processing for LDAP users who have registered before and have jdbc credentials, but no principal.
-                log.debug("Processing subject '" + subject.getName() + "' for LDAP functionality.");
-                //as already logged in as regular JDBC 
-                subject = processSubjectForLdap(subject, password);
-            } catch (SessionException se) {
-                // nope, no session; continue on so we can create the session
-            }
         } else {
             // There is no subject in the database yet.
             // If LDAP authentication is enabled and we cannot find the subject,
@@ -554,42 +486,23 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
     }
 
     /**
-     * @see org.rhq.enterprise.server.auth.SubjectManagerLocal#logout(Subject)
+     * @see org.rhq.enterprise.server.auth.SubjectManagerRemote#logout(Subject)
      */
     public void logout(Subject subject) {
         try {
-            int sessionId = sessionManager.getSessionIdFromUsername(subject.getName());
-            sessionManager.invalidate(sessionId);
-        } catch (SessionTimeoutException ste) {
-            // it's ok, logout can be considered successful if the user's session already timed out
-        } catch (SessionNotFoundException snfe) {
-            // it's ok, logout can be considered successful if the user's never logged in to begin with
+            // make sure the Subject is valid by pairing the name and sessionId            
+            Subject s = getSubjectByNameAndSessionId(subject.getName(), subject.getSessionId());
+            sessionManager.invalidate(s.getSessionId());
+        } catch (Exception e) {
+            // ignore invalid logout request
         }
     }
 
     /**
-     * Logs out a user.
-     *
-     * @param sessionId The sessionId for the user to log out
-     */
+      * @see org.rhq.enterprise.server.auth.SubjectManagerLocal#logout(java.lang.int)
+      * */
     public void logout(int sessionId) {
         sessionManager.invalidate(sessionId);
-    }
-
-    /**
-     * @see org.rhq.enterprise.server.auth.SubjectManagerLocal#isLoggedIn(java.lang.String)
-     */
-    public boolean isLoggedIn(String username) {
-        boolean loggedIn = false;
-
-        try {
-            sessionManager.getSessionIdFromUsername(username);
-            loggedIn = true;
-        } catch (SessionException e) {
-            // safely ignore
-        }
-
-        return loggedIn;
     }
 
     /**
@@ -669,17 +582,9 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
     }
 
     /**
-     * @see org.rhq.enterprise.server.auth.SubjectManagerLocal#loginUnauthenticated(String, boolean)
+     * @see org.rhq.enterprise.server.auth.SubjectManagerLocal#loginUnauthenticated(String)
      */
-    public Subject loginUnauthenticated(String username, boolean reattach) throws LoginException {
-        if (reattach) {
-            try {
-                int sessionId = sessionManager.getSessionIdFromUsername(username);
-                return sessionManager.getSubject(sessionId);
-            } catch (SessionException e) {
-                // continue, we'll need to create a session
-            }
-        }
+    public Subject loginUnauthenticated(String username) throws LoginException {
 
         Subject subject = getSubjectByName(username);
 
@@ -691,8 +596,8 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
             throw new LoginException("User account has been disabled. [" + username + "]");
         }
 
-        sessionManager.put(subject, 1000L * 60 * 2); // 2mins only
-
+        // make sure we return the Subject returned from this call, which may differ from the one passed in 
+        subject = sessionManager.put(subject, 1000L * 60 * 2); // 2mins only
         return subject;
     }
 
@@ -869,7 +774,6 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
         return new PageList<Subject>(subjects, (int) count, pc);
     }
 
-    @SuppressWarnings("unchecked")
     public PageList<Subject> findSubjectsByCriteria(Subject subject, SubjectCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
 

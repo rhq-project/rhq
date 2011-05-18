@@ -391,7 +391,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         } else {
             Subject creator = this.subjectManager.getSubjectById(creatorSubjectId);
             try {
-                creator = this.subjectManager.loginUnauthenticated(creator.getName(), true);
+                creator = this.subjectManager.loginUnauthenticated(creator.getName());
             } catch (LoginException e) {
                 throw new IllegalStateException(
                     "Unable to temporarily login to provided resource creator user for resource creation", e);

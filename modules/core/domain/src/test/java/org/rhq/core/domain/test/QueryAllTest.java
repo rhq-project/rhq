@@ -214,11 +214,13 @@ public class QueryAllTest extends AbstractEJB3Test {
         tm.begin();
         EntityManager em = getEntityManager();
         try {
-            Query q = PersistenceUtility.createCountQuery(em, Subject.QUERY_FIND_ALL);
+            String queryString = "SELECT COUNT(*) FROM Subject s WHERE s.fsystem = false";
+
+            Query q = em.createQuery(queryString);
             long count = (Long) q.getSingleResult();
 
-            q = PersistenceUtility.createQueryWithOrderBy(em, Subject.QUERY_FIND_ALL, new OrderingField("firstName",
-                PageOrdering.ASC), new OrderingField("lastName", PageOrdering.DESC));
+            queryString = "SELECT s FROM Subject s WHERE s.fsystem = false ORDER BY s.firstName ASC, s.lastName DESC";
+            q = em.createQuery(queryString);
             long size = q.getResultList().size();
 
             assert count == size;

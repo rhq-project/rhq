@@ -54,10 +54,10 @@ public abstract class OperationJob implements Job {
      *
      * @throws Exception
      *
-     * @see    SubjectManagerLocal#loginUnauthenticated(String, boolean)
+     * @see    SubjectManagerLocal#loginUnauthenticated(String)
      */
-    protected Subject getUserWithSession(Subject user, boolean reattach) throws Exception {
-        return LookupUtil.getSubjectManager().loginUnauthenticated(user.getName(), reattach);
+    protected Subject getUserWithSession(Subject user) throws Exception {
+        return LookupUtil.getSubjectManager().loginUnauthenticated(user.getName());
     }
 
     protected void updateOperationScheduleEntity(JobDetail jobDetail, Date nextFireTime,

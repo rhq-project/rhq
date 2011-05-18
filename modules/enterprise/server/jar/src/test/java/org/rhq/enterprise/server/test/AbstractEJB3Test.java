@@ -145,7 +145,7 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
             }
         }
 
-        if (stats!=null)
+        if (stats != null)
             start = stats.getQueryExecutionCount();
         else
             start = 0;
@@ -205,9 +205,10 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
      * annotations by creating sessions for different users with different permissions.
      *
      * @param subject a JON subject
+     * @return the session activated subject, a copy of the subjected passed in. 
      */
-    public void createSession(Subject subject) {
-        SessionManager.getInstance().put(subject);
+    public Subject createSession(Subject subject) {
+        return SessionManager.getInstance().put(subject);
     }
 
     /**

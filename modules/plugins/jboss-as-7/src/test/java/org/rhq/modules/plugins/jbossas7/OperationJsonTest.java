@@ -23,7 +23,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.annotate.JsonAnyGetter;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.map.SerializationConfig;
 import org.testng.annotations.Test;
 
 import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
@@ -157,7 +160,7 @@ public class OperationJsonTest {
         assert result.getResult() == null;
         assert result.getCompensatingOperation() == null;
         assert result.getFailureDescription() != null;
-        assert result.getFailureDescription().size() == 1;
+//        assert result.getFailureDescription().size() == 1;
     }
 
     public void complexResult1() throws Exception {
@@ -213,6 +216,79 @@ public class OperationJsonTest {
         Operation op = result.getCompensatingOperation();
 
         assert op.getOperation().equals("remove");
+
+    }
+
+    public void complexResult2() throws Exception {
+
+
+        String resultString =
+                "{\n" +
+                        "  \"outcome\" : \"failed\",\n" +
+                        "  \"result\" : {\n" +
+                        "    \"server-groups\" : {\n" +
+                        "      \"main-server-group\" : {\n" +
+                        "        \"server-one\" : {\n" +
+                        "          \"host\" : \"local\",\n" +
+                        "          \"response\" : {\n" +
+                        "            \"outcome\" : \"success\",\n" +
+                        "            \"result\" : null,\n" +
+                        "            \"compensating-operation\" : {\n" +
+                        "              \"operation\" : \"add\",\n" +
+                        "              \"address\" : [ {\n" +
+                        "                \"subsystem\" : \"jms\"\n" +
+                        "              }, {\n" +
+                        "                \"queue\" : \"flubbr\"\n" +
+                        "              } ],\n" +
+                        "              \"durable\" : \"true\",\n" +
+                        "              \"entries\" : [ \"PropertySimple[id=0, name=entries, value=flubbr, override=null]\" ]\n" +
+                        "            }\n" +
+                        "          }\n" +
+                        "        },\n" +
+                        "        \"server-two\" : {\n" +
+                        "          \"host\" : \"local\",\n" +
+                        "          \"response\" : {\n" +
+                        "            \"outcome\" : \"success\",\n" +
+                        "            \"result\" : null,\n" +
+                        "            \"compensating-operation\" : {\n" +
+                        "              \"operation\" : \"add\",\n" +
+                        "              \"address\" : [ {\n" +
+                        "                \"subsystem\" : \"jms\"\n" +
+                        "              }, {\n" +
+                        "                \"queue\" : \"flubbr\"\n" +
+                        "              } ],\n" +
+                        "              \"durable\" : \"true\",\n" +
+                        "              \"entries\" : [ \"PropertySimple[id=0, name=entries, value=flubbr, override=null]\" ]\n" +
+                        "            }\n" +
+                        "          }\n" +
+                        "        },\n" +
+                        "        \"server-demo\" : {\n" +
+                        "          \"host\" : \"local\",\n" +
+                        "          \"response\" : {\n" +
+                        "            \"outcome\" : \"failed\",\n" +
+                        "            \"failure-description\" : \"No handler for add at address [\\n    (\\\"host\\\" => \\\"local\\\"),\\n    (\\\"server\\\" => \\\"server-demo\\\"),\\n    (\\\"subsystem\\\" => \\\"jms\\\"),\\n    (\\\"queue\\\" => \\\"flubbr\\\")\\n]\"\n" +
+                        "          }\n" +
+                        "        }\n" +
+                        "      }\n" +
+                        "    }\n" +
+                        "  },\n" +
+                        "  \"failure-description\" : \"Operation was not applied successfully to any servers\"\n" +
+                        "}";
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(SerializationConfig.Feature.INDENT_OUTPUT, true);
+
+        ComplexResult result = mapper.readValue(resultString,ComplexResult.class);
+        assert !result.isSuccess() : "Result should be 'failed', but was not";
+        assert result.getFailureDescription().equals("Operation was not applied successfully to any servers");
+
+        assert result.getResult().containsKey("server-groups");
+        Map<String,Object> sgs = (Map<String, Object>) result.getResult().get("server-groups");
+        assert sgs.containsKey("main-server-group");
+        Map<String,Object> mainSg = (Map<String, Object>) sgs.get("main-server-group");
+        assert mainSg.size()==3 : "Main server group does not have 3 servers, but " + mainSg.size();
+        Map<String,Object> s3 = (Map<String, Object>) mainSg.get("server-demo");
+        Map<String,Object> response = (Map<String, Object>) s3.get("response");
+        assert response!=null;
 
     }
 

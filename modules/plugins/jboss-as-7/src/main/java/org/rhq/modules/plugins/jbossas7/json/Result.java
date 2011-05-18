@@ -36,7 +36,7 @@ public class Result {
     @JsonProperty("compensating-operation")
     private Operation compensatingOperation;
     @JsonProperty("failure-description")
-    private List<Map<String, String>> failureDescription;
+    private /*List<Map<String, String>>*/Object failureDescription;
     @JsonIgnore
     private boolean success = false;
 
@@ -74,11 +74,11 @@ public class Result {
         this.compensatingOperation = compensatingOperation;
     }
 
-    public List<Map<String, String>> getFailureDescription() {
+    public Object getFailureDescription() {
         return failureDescription;
     }
 
-    public void setFailureDescription(List<Map<String, String>> failureDescription) {
+    public void setFailureDescription(/*List<Map<String, String>>*/Object failureDescription) {
         this.failureDescription = failureDescription;
     }
 

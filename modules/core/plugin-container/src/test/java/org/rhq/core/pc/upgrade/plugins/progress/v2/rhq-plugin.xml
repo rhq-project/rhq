@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<plugin name="test"
+        displayName="Resource Upgrade Multi Test"
+        description="Resource Upgrade Multi Test"
+        package="org.rhq.core.pc.upgrade.plugins.multi.base"
+        version="1.0.0"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+   <depends plugin="base" useClasses="true"/>
+   <depends plugin="parentdep"/>
+   
+   <server name="TestResource"
+           discovery="BaseUpgradingDiscoveryComponent"
+           class="BaseResourceComponent">
+
+       <runs-inside>
+           <parent-resource-type name="ParentDependency" plugin="parentdep"/> 
+       </runs-inside>
+       
+       <plugin-configuration>
+           <c:simple-property name="count" default="2" />
+           <c:simple-property name="key" default="UPGRADED-test-resource-%n,parent-%p" />
+       </plugin-configuration>       
+   </server>
+
+</plugin>
+        

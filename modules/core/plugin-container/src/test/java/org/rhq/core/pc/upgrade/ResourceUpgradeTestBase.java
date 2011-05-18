@@ -358,7 +358,9 @@ public abstract class ResourceUpgradeTestBase {
 
         try {
             //give the pc the time to finish resource upgrade
-            Thread.sleep(1000);
+            while (!PluginContainer.getInstance().isStarted()) {
+                Thread.sleep(500);
+            }
 
             //execute full discovery
             InventoryManager im = PluginContainer.getInstance().getInventoryManager();

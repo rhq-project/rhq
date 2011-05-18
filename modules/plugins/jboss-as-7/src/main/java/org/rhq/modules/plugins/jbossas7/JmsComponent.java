@@ -29,12 +29,15 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
+import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.domain.resource.CreateResourceStatus;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
 import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
-import org.rhq.modules.plugins.jbossas7.json.Result;
 
 /**
  * Component class for the JMS subsystem
@@ -48,42 +51,77 @@ public class JmsComponent extends DomainComponent {
     public CreateResourceReport createResource(CreateResourceReport report) {
 
 
-        Configuration resConf = report.getResourceConfiguration();
         Configuration pConf = report.getPluginConfiguration();
+        Configuration resConf = report.getResourceConfiguration();
+        ConfigurationDefinition resConfDef = report.getResourceType().getResourceConfigurationDefinition();
 
         String type = pConf.getSimpleValue("path", "");
 
         List<PROPERTY_VALUE> address = pathToAddress(getPath());
         address.add(new PROPERTY_VALUE(type,report.getUserSpecifiedResourceName()));
         Operation op = new Operation("add",address);
+
+        // Loop over the properties from the config and add them as properties to the op
         for (Map.Entry<String, Property> entry:  resConf.getAllProperties().entrySet()) {
             Property value = entry.getValue();
             if (value !=null) {
+                String name = entry.getKey();
+
 
                 if (value instanceof PropertySimple) {
+                    PropertyDefinitionSimple propDef = (PropertyDefinitionSimple) resConfDef.get(name);
                     PropertySimple ps = (PropertySimple) value;
-                    op.addAdditionalProperty(entry.getKey(), ps.getStringValue()); // TODO determine real type
+                    op.addAdditionalProperty(name, getObjectForProperty(ps,propDef));
                 } else if (value instanceof PropertyList) {
                     PropertyList propertyList = (PropertyList) value;
-                    List<String> list = new ArrayList<String>();
+                    List<Object> list = new ArrayList<Object>();
+                    PropertyDefinitionList pd = resConfDef.getPropertyDefinitionList(name);
+                    PropertyDefinitionSimple propDef = (PropertyDefinitionSimple) pd.getMemberDefinition();
                     for (Property p : propertyList.getList()) {
-                        list.add(p.toString()); // TODO
+
+                        Object o = getObjectForProperty((PropertySimple) p, propDef);
+                        list.add(o);
                     }
-                    op.addAdditionalProperty(entry.getKey(),list);
+                    op.addAdditionalProperty(name,list);
                 }
             }
         }
         ComplexResult res = (ComplexResult) getASConnection().execute(op,true);
 
+        // TODO Currently this reports a failure even if it succeeds for jms
+
         if (res == null || !res.isSuccess()) {
             report.setStatus(CreateResourceStatus.FAILURE);
         } else {
             report.setStatus(CreateResourceStatus.SUCCESS);
-            report.setResourceKey(address.toString()); // TODO ??
+            report.setResourceKey(address.toString());
             report.setResourceName(report.getUserSpecifiedResourceName());
         }
 
         System.out.println(report);
         return report;
+    }
+
+    Object getObjectForProperty(PropertySimple prop, PropertyDefinitionSimple propDef) {
+
+        PropertySimpleType type = propDef.getType();
+        switch (type) {
+            case STRING:
+                return prop.getStringValue();
+            case INTEGER:
+                return prop.getIntegerValue();
+            case BOOLEAN:
+                return prop.getBooleanValue();
+            case LONG:
+                return prop.getLongValue();
+            case FLOAT:
+                return prop.getFloatValue();
+            case DOUBLE:
+                return prop.getDoubleValue();
+            default:
+                return prop.getStringValue();
+        }
+
+
     }
 }

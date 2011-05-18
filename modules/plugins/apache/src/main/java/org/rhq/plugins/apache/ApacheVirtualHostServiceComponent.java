@@ -77,7 +77,6 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
 
     public static final String URL_CONFIG_PROP = "url";
     public static final String MAIN_SERVER_RESOURCE_KEY = "MainServer";
-    public static final String FAILED_UPGRADE_RESOURCE_KEY_PREFIX = "FailedUpgrade";
     
     public static final String RESPONSE_TIME_LOG_FILE_CONFIG_PROP = ResponseTimeConfiguration.RESPONSE_TIME_LOG_FILE_CONFIG_PROP;
     public static final String RESPONSE_TIME_URL_EXCLUDES_CONFIG_PROP = ResponseTimeConfiguration.RESPONSE_TIME_URL_EXCLUDES_CONFIG_PROP;
@@ -99,14 +98,6 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
     public static final String RESOURCE_TYPE_NAME = "Apache Virtual Host";
     
     public void start(ResourceContext<ApacheServerComponent> resourceContext) throws Exception {
-        if (resourceContext.getResourceKey().startsWith(FAILED_UPGRADE_RESOURCE_KEY_PREFIX)) {
-            throw new IllegalStateException(
-                "The apache plugin failed to upgrade this virtual host from a previous version. "
-                    + "A new virtual host resource will be (or has been) discovered that corresponds to this resource but it was not possible to "
-                    + "safely and deterministically find a match between these two (due to ambiguous identification of virtual hosts "
-                    + "in the previous version of the plugin). This resource is now defunct and you can uninventory it.");
-        }
-        
         this.resourceContext = resourceContext;
         Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
         String url = pluginConfig.getSimple(URL_CONFIG_PROP).getStringValue();
@@ -341,73 +332,47 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
     public AugeasNode getNode(AugeasTree tree) {
         String resourceKey = resourceContext.getResourceKey();
 
-        if (ApacheVirtualHostServiceComponent.MAIN_SERVER_RESOURCE_KEY.equals(resourceKey)) {
+        int snmpIdx = getWwwServiceIndex();
+
+        ApacheServerComponent server = resourceContext.getParentResourceComponent();
+
+        if (snmpIdx < 1) {
+            throw new IllegalStateException(
+                "Could not determine the index of the virtual host [" + resourceKey + "] in the runtime configuration. This is very strange.");
+        }
+
+        if (snmpIdx == 1) {
             return tree.getRootNode();
         }
 
-        String serverName = null;
-        int pipeIdx = resourceKey.indexOf('|');
-        //the resource key always contains the '|' so we're only checking for non-empty
-        //server names
-        if (pipeIdx > 0) {
-            serverName = resourceKey.substring(0, pipeIdx);
-        }
+        final List<AugeasNode> allVhosts = new ArrayList<AugeasNode>();
 
-        String[] addrs = resourceKey.substring(pipeIdx + 1).split(" ");
-        List<AugeasNode> nodes = tree.matchRelative(tree.getRootNode(), "<VirtualHost");
-        List<AugeasNode> virtualHosts = new ArrayList<AugeasNode>();
-
-        boolean matching = false;
-
-        for (AugeasNode node : nodes) {
-            matching = false;
-            List<AugeasNode> serverNameNodes = tree.matchRelative(node, "ServerName/param");
-            String tempServerName = null;
-
-            if (!(serverNameNodes.isEmpty())) {
-                tempServerName = serverNameNodes.get(0).getValue();
-            }
-            if (tempServerName == null & serverName == null) {
-                matching = true;
-            }
-            
-            if (tempServerName != null & serverName != null) {
-                if (tempServerName.equals(serverName)) {
-                    matching = true;
+        RuntimeApacheConfiguration.walkRuntimeConfig(new RuntimeApacheConfiguration.NodeVisitor<AugeasNode>() {
+            public void visitOrdinaryNode(AugeasNode node) {
+                if ("<VirtualHost".equalsIgnoreCase(node.getLabel())) {
+                    allVhosts.add(node);
                 }
             }
-            
-            if (matching) {
-                List<AugeasNode> params = node.getChildByLabel("param");
-                for (AugeasNode nd : params) {
-                    matching = false;
-                    for (String adr : addrs) {
-                        if (adr.equals(nd.getValue())) {
-                            matching = true;
-                        }
-                    }
-                    if (!matching) {
-                        break;
-                    }
-                }
 
-                if (matching) {
-                    virtualHosts.add(node);
-                }
+            public void visitConditionalNode(AugeasNode node, boolean isSatisfied) {
             }
-        }
-       
-        if (virtualHosts.size() == 0) {
-            throw new IllegalStateException("Could not find virtual host configuration in augeas for virtual host: "
-                + resourceKey);
-        }
+        }, tree, server.getCurrentProcessInfo(), server.getCurrentBinaryInfo(), server.getModuleNames(), false);
 
-        if (virtualHosts.size() > 1) {
-            throw new IllegalStateException("Found more than 1 virtual host configuration in augeas for virtual host: "
-                + resourceKey);
-        }
+        //transform the SNMP index into the index of the vhost
+        int idx = allVhosts.size() - snmpIdx + 1;
 
-        return virtualHosts.get(0);
+        AugeasNode vhost = allVhosts.get(idx);
+
+        //now check if there are any If* directives underneath this vhost.
+        //we don't support configuring such beasts.
+        if (vhost.getChildByLabel("<IfDefine").isEmpty() && vhost.getChildByLabel("<IfModule").isEmpty()
+            && vhost.getChildByLabel("<IfVersion").isEmpty()) {
+
+            return vhost;
+        } else {
+            throw new IllegalStateException("Configuration of the virtual host [" + resourceKey
+                + "] contains conditional blocks. This is not supported by this plugin.");
+        }
     }
 
     /**
@@ -510,7 +475,7 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
         //only look for the vhost entry if the vhost we're looking for isn't the main server
         if (!MAIN_SERVER_RESOURCE_KEY.equals(vhostAddressStrings[0])) {
             ApacheDirectiveTree tree = parent.loadParser(); 
-            tree = RuntimeApacheConfiguration.extract(tree, parent.getCurrentProcessInfo(), parent.getCurrentBinaryInfo(), parent.getModuleNames());            
+            tree = RuntimeApacheConfiguration.extract(tree, parent.getCurrentProcessInfo(), parent.getCurrentBinaryInfo(), parent.getModuleNames(), false);            
             
             //find the vhost entry the resource key represents
             List<ApacheDirective> vhosts = tree.search("/<VirtualHost");

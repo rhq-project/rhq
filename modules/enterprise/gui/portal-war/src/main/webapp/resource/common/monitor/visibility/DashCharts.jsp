@@ -25,7 +25,7 @@
 <META Http-Equiv="Pragma" Content="no-cache">
 <META Http-Equiv="Expires" Content="0">
 <c:if test="${not empty refreshPeriod}">
-   <meta http-equiv="refresh" content="<c:out value='${refreshPeriod}' />">
+   <meta http-equiv="Refresh" content="<c:out value='${refreshPeriod}' />">
 </c:if>
 
 <script src="<html:rewrite page="/js/functions.js"/>" type="text/javascript"></script>

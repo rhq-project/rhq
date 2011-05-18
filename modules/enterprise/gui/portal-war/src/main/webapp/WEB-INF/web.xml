@@ -532,4 +532,19 @@
       <location>/common/GenericError.jsp</location>
    </error-page>
 
+   <!-- Uncomment the below to automatically redirect all HTTP requests to the 
+        corresponding HTTPS URLs. -->
+   <!--
+   <security-constraint>
+      <display-name>Redirect HTTP to HTTPS</display-name>
+      <web-resource-collection>
+         <web-resource-name>Entire Application</web-resource-name>
+         <url-pattern>/*</url-pattern>
+      </web-resource-collection>
+      <user-data-constraint>
+         <transport-guarantee>CONFIDENTIAL</transport-guarantee>
+      </user-data-constraint>
+   </security-constraint>
+   -->
+
 </web-app>

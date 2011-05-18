@@ -300,16 +300,15 @@ public abstract class AbstractRecentAlertsPortlet extends AlertHistoryView imple
         }
 
         /* (non-Javadoc)
-         * This override allows us to set the total rows to the number of recent alerts configured for
+         * This override allows us to set the total rows to the number of recent op history configured for
          * the portlet. This sets the counter appropriately and stops further queries to the server.
          * 
-         * @see org.rhq.enterprise.gui.coregui.client.alert.AlertDataSource#dataRetrieved(org.rhq.core.domain.util.PageList, com.smartgwt.client.data.DSResponse, com.smartgwt.client.data.DSRequest)
+         * @see org.rhq.enterprise.gui.coregui.client.operation.OperationHistoryDataSource#getTotalRows(org.rhq.core.domain.util.PageList, com.smartgwt.client.data.DSResponse, com.smartgwt.client.data.DSRequest)
          */
         @Override
-        protected void dataRetrieved(PageList<Alert> result, DSResponse response, DSRequest request) {
-            super.dataRetrieved(result, response, request);
+        protected int getTotalRows(final PageList<Alert> result, final DSResponse response, final DSRequest request) {
 
-            response.setTotalRows(result.size());
+            return result.size();
         }
 
         @Override

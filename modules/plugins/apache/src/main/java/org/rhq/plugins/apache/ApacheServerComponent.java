@@ -22,12 +22,12 @@ import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -38,6 +38,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
 import org.rhq.augeas.AugeasProxy;
 import org.rhq.augeas.config.AugeasModuleConfig;
 import org.rhq.augeas.node.AugeasNode;
@@ -45,7 +46,6 @@ import org.rhq.augeas.tree.AugeasTree;
 import org.rhq.augeas.util.Glob;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
-import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
@@ -438,7 +438,12 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
                 ApacheParser parser = new ApacheParserImpl(parserTree,getServerRoot().getAbsolutePath());
          
                 ApacheConfigReader.buildTree(getHttpdConfFile().getAbsolutePath(), parser);
-                addr = getAddressUtility().getVirtualHostSampleAddress(parserTree, vhostDefs[0], serverName);
+                Pattern virtualHostPattern = Pattern.compile(".+:([\\d]+|\\*)");
+                Matcher matcher = virtualHostPattern.matcher(vhostDefs[0]);
+                if (!matcher.matches())
+                     throw new Exception("Wrong format of virtual host resource name. The right format is Address:Port.");
+                
+                addr = getAddressUtility().getVirtualHostSampleAddress(parserTree, vhostDefs[0], serverName, false);
             } catch (Exception e) {
               report.setStatus(CreateResourceStatus.FAILURE);
               report.setErrorMessage("Wrong format of virtual host resource name.");

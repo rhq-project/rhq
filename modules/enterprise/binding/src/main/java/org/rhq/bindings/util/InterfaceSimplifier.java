@@ -16,7 +16,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-
 package org.rhq.bindings.util;
 
 import javassist.CannotCompileException;
@@ -50,21 +49,22 @@ public class InterfaceSimplifier {
         try {
             ClassPool cp = ClassPool.getDefault();
 
-            String simpleName = intf.getName() + "Simple";
+            String simplifiedName = getSimplifiedName(intf);
+            LOG.debug("Simplifying " + intf + " (simplified interface name: " + simplifiedName + ")...");
 
             try {
-                CtClass cached = cp.get(simpleName);
-                return Class.forName(simpleName, false, cp.getClassLoader());
+                CtClass cached = cp.get(simplifiedName);
+                return Class.forName(simplifiedName, false, cp.getClassLoader());
 
             } catch (NotFoundException e) {
                 // ok... load it
             } catch (ClassNotFoundException e) {
-                LOG.debug("Class [" + simpleName + "] not found - cause: " + e);
+                LOG.debug("Class [" + simplifiedName + "] not found - cause: " + e);
             }
 
             CtClass cc = cp.get(intf.getName());
 
-            CtClass cz = cp.getAndRename(intf.getName(), simpleName);
+            CtClass cz = cp.getAndRename(intf.getName(), simplifiedName);
             //            CtClass cz = cp.makeInterface(simpleName, cc);
 
             cz.defrost();
@@ -123,6 +123,15 @@ public class InterfaceSimplifier {
             LOG.error("Failed to simplify " + intf + ".", e);
         }
         return intf;
+    }
+
+    private static String getSimplifiedName(Class<?> interfaceClass) {
+        String fullName = interfaceClass.getName();
+        String simpleName = interfaceClass.getSimpleName();
+        Package pkg = interfaceClass.getPackage();
+        String packageName = (pkg != null) ? pkg.getName() :
+                fullName.substring(0, fullName.length() - (simpleName.length() + 1));
+        return packageName + ".wrapped." + simpleName + "Simple";
     }
 
 }

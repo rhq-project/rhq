@@ -7,10 +7,10 @@
 <%@ taglib uri="http://richfaces.org/a4j" prefix="a4j" %>
 <html:html>
    <head>
-      <meta http-equiv="EXPIRES" content="-1">
-      <meta http-equiv="PRAGMA" content="NO-CACHE">
-      <meta http-equiv="MAX-AGE" content="0">
-      <meta http-equiv="CACHE-CONTROL" content="NO-CACHE">
+      <meta http-equiv="Expires" content="-1">
+      <meta http-equiv="Pragma" content="no-cache">
+      <meta http-equiv="Max-Age" content="0">
+      <meta http-equiv="Cache-Control" content="no-cache">
 
       <link rel="stylesheet" type="text/css" media="screen" href="/css/win.css"/>
       <link rel="stylesheet" type="text/css" media="screen" href="/css/layout.css"/>

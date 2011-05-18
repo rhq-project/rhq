@@ -8,6 +8,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
@@ -23,7 +24,9 @@ public class PatternComponent implements ResourceComponent, MeasurementFacet
     private final Log log = LogFactory.getLog(this.getClass());
 
     int count = 0;
+    int traitCount = 0;
     int number = 0; // We start with returning zeros
+    int numerForTrait = 0;
     int[] wanted = new int[2];
 
     /**
@@ -79,9 +82,6 @@ public class PatternComponent implements ResourceComponent, MeasurementFacet
 
                 val = (double) number;
 
-                if (number==1)
-                    System.out.println("XX 1 _ " + new Date());
-
                 count++;
                 // enough of this? Flip over to the other number and reset the series.
                 if (count>=wanted[number]) {
@@ -90,6 +90,19 @@ public class PatternComponent implements ResourceComponent, MeasurementFacet
                 }
 
                 MeasurementDataNumeric res = new MeasurementDataNumeric(req, val);
+                report.addData(res);
+            }
+             else if (req.getName().equals("text1")) {
+
+                String trait = "Trait_" + number;
+                traitCount++;
+                // enough of this? Flip over to the other number and reset the series.
+                if (traitCount>=wanted[number]) {
+                    number = 1-number;
+                    traitCount=0;
+                }
+
+                MeasurementDataTrait res = new MeasurementDataTrait(req,trait);
                 report.addData(res);
             }
          }

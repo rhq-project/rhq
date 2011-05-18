@@ -462,6 +462,8 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
             + "   event.detail," //
             + "   event.source.resource.id," //
             + "   event.source.resource.name," //
+            + "   event.source.resource.ancestry," //            
+            + "   event.source.resource.resourceType.id," //            
             + "   event.id," //
             + "   event.severity," //
             + "   event.source.location," //

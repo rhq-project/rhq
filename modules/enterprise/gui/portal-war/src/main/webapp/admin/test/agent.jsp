@@ -16,7 +16,7 @@
 <%@page import="org.rhq.enterprise.communications.Ping"%>
 <html>
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<meta http-equiv="Content-Type" content="text/html;charset=ISO-8859-1">
 <title>Test Agent Communications</title>
 </head>
 <body>

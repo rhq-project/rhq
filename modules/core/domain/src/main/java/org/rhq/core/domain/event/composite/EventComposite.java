@@ -38,24 +38,28 @@ public class EventComposite implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    String eventDetail;
-    int resourceId;
-    String resourceName;
-    int eventId;
-    String sourceLocation;
-    EventSeverity severity;
-    long timestamp = -1;
+    private String eventDetail;
+    private int resourceId;
+    private String resourceName;
+    private String resourceAncestry;
+    private int resourceTypeId;
+    private int eventId;
+    private String sourceLocation;
+    private EventSeverity severity;
+    private long timestamp = -1;
 
     public EventComposite() {
         // needed by JSON-based UI pages
     }
 
-    public EventComposite(String eventDetail, int resourceId, String resourceName, int eventId, EventSeverity severity,
-        String sourceLocation, Long timestamp) {
+    public EventComposite(String eventDetail, int resourceId, String resourceName, String resourceAncestry,
+        int resourceTypeId, int eventId, EventSeverity severity, String sourceLocation, Long timestamp) {
         super();
         this.eventDetail = eventDetail;
         this.resourceId = resourceId;
         this.resourceName = resourceName;
+        this.resourceAncestry = resourceAncestry;
+        this.resourceTypeId = resourceTypeId;
         this.eventId = eventId;
         this.severity = severity;
         this.sourceLocation = sourceLocation;
@@ -118,6 +122,22 @@ public class EventComposite implements Serializable {
 
     public void setTimestamp(Date timestamp) {
         this.timestamp = timestamp.getTime();
+    }
+
+    public String getResourceAncestry() {
+        return resourceAncestry;
+    }
+
+    public void setResourceAncestry(String resourceAncestry) {
+        this.resourceAncestry = resourceAncestry;
+    }
+
+    public int getResourceTypeId() {
+        return resourceTypeId;
+    }
+
+    public void setResourceTypeId(int resourceTypeId) {
+        this.resourceTypeId = resourceTypeId;
     }
 
 }

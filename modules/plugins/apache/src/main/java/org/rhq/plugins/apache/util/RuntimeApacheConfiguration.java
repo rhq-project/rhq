@@ -365,7 +365,7 @@ public class RuntimeApacheConfiguration {
             boolean recurseFurther = true;
             
             if (walker.getName(node).equalsIgnoreCase("LoadModule")) {
-                state.loadedModules.add(walker.getValue(node));
+                state.loadedModules.add(walker.getValues(node).get(0));
                 walker.visitOrdinaryNode(node);
             } else if (walker.getName(node).equalsIgnoreCase("<IfModule")) {
                 String moduleFile = walker.getValue(node);

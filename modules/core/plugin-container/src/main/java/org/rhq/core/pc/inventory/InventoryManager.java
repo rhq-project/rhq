@@ -1236,7 +1236,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         return resourceContainer.updateAvailability(availabilityType);
     }
 
-    public void mergeResourcesFromUpgrade(Set<ResourceUpgradeRequest> upgradeRequests) throws PluginContainerException {
+    public void mergeResourcesFromUpgrade(Set<ResourceUpgradeRequest> upgradeRequests) throws Exception {
         Set<ResourceUpgradeResponse> serverUpdates = null;
         try {
             ServerServices serverServices = this.configuration.getServerServices();
@@ -1247,6 +1247,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             }
         } catch (Exception e) {
             log.error("Failed to process resource upgrades on the server.", e);
+            throw e;
         }
 
         if (serverUpdates != null) {

@@ -152,9 +152,21 @@ public class ResourceUpgradeDelegate {
                         Resource resource = container.getResource();
                         String upgradeErrors = null;
                         if ((upgradeErrors = checkUpgradeValid(resource, request)) != null) {
+                            //the resource is in its upgraded state but it's going to get reverted back to the original state
+                            //in the code below. Let's use the original resource for the error message so that we don't confuse
+                            //the user.                            
+                            for(ResourceUpgradeRequest orig : originalResourceData) {
+                                if (orig.equals(request)) {
+                                    orig.updateResource(resource);
+                                    break;
+                                }
+                            }
                             String errorString = "Upgrading the resource [" + resource + "] using these updates [" + request
                                 + "] would render the inventory invalid because of the following reasons: " + upgradeErrors;
 
+                            //now switch the resource back to the upgraded state for the rest of the code below again
+                            request.updateResource(resource);
+                            
                             log.error(errorString);
 
                             IllegalStateException ex = new IllegalStateException(errorString);
@@ -291,7 +303,7 @@ public class ResourceUpgradeDelegate {
         StringBuilder s = new StringBuilder();
 
         if (!checkResourceKeyUniqueAmongSiblings(resource, upgradeReport)) {
-            s.append("\nAnother inventoried sibling resource of the same type already has the proposed resource key.");
+            s.append("\nAnother inventoried sibling resource of the same type already has the proposed resource key or would have it after the upgrade.");
         }
 
         return s.length() > 0 ? s.toString() : null;

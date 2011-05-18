@@ -252,11 +252,10 @@ public class AuthorizationManagerBean implements AuthorizationManagerLocal {
         Query query = entityManager.createNamedQuery(Subject.QUERY_CAN_VIEW_AUTO_GROUP);
         query.setParameter("parentResourceId", parentResourceId);
         query.setParameter("resourceTypeId", resourceTypeId);
-
-        query.setParameter("subject", -SUBJECT_ID_OVERLORD);
+        query.setParameter("subjectId", -1);
         long baseCount = (Long) query.getSingleResult();
 
-        query.setParameter("subject", subject);
+        query.setParameter("subjectId", subject.getId());
         long subjectCount = (Long) query.getSingleResult();
 
         /* 

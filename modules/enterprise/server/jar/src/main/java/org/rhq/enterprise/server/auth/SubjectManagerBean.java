@@ -347,8 +347,8 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
             }
         }
 
-        sessionManager.put(subject);
-
+        // make sure to return the session-activated subject
+        subject = sessionManager.put(subject);
         return subject;
     }
 

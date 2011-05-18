@@ -20,6 +20,7 @@
 package org.rhq.core.pc.upgrade;
 
 import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertEquals;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -50,6 +51,8 @@ public class ResourceUpgradeProgressHandlingTest extends ResourceUpgradeFailureH
     private static final String ROOT_PLUGIN_NAME = "/resource-upgrade-test-plugin-multi-root-1.0.0.jar";
     private static final String UPGRADE_PROGRESS_PLUGIN_V1_FILENAME = "/resource-upgrade-test-plugin-progress-test-1.0.0.jar";
     private static final String UPGRADE_PROGRESS_PLUGIN_V2_FILENAME = "/resource-upgrade-test-plugin-progress-test-2.0.0.jar";
+    private static final String UPGRADE_DUPLICATE_PLUGIN_V1_FILENAME = "/resource-upgrade-test-plugin-duplicate-test-1.0.0.jar";
+    private static final String UPGRADE_DUPLICATE_PLUGIN_V2_FILENAME = "/resource-upgrade-test-plugin-duplicate-test-2.0.0.jar";
         
     private static final ResType TEST_TYPE = new ResType("TestResource", "test");
     private static final ResType PARENT_DEP_TYPE = new ResType("ParentDependency", "parentdep");
@@ -66,6 +69,8 @@ public class ResourceUpgradeProgressHandlingTest extends ResourceUpgradeFailureH
         DEPS.put(ROOT_PLUGIN_NAME, Arrays.asList(BASE_PLUGIN_NAME));
         DEPS.put(UPGRADE_PROGRESS_PLUGIN_V1_FILENAME, Arrays.asList(BASE_PLUGIN_NAME, ROOT_PLUGIN_NAME, PARENT_DEP_V1_PLUGIN_NAME));
         DEPS.put(UPGRADE_PROGRESS_PLUGIN_V2_FILENAME, Arrays.asList(BASE_PLUGIN_NAME, ROOT_PLUGIN_NAME, PARENT_DEP_V2_PLUGIN_NAME));        
+        DEPS.put(UPGRADE_DUPLICATE_PLUGIN_V1_FILENAME, Arrays.asList(BASE_PLUGIN_NAME, ROOT_PLUGIN_NAME, PARENT_DEP_V1_PLUGIN_NAME));
+        DEPS.put(UPGRADE_DUPLICATE_PLUGIN_V2_FILENAME, Arrays.asList(BASE_PLUGIN_NAME, ROOT_PLUGIN_NAME, PARENT_DEP_V2_PLUGIN_NAME));        
     }
 
     private Set<String> getAllDepsFor(String... plugins) {
@@ -81,13 +86,14 @@ public class ResourceUpgradeProgressHandlingTest extends ResourceUpgradeFailureH
     @Override
     protected Collection<String> getRequiredPlugins() {
         return Arrays.asList(BASE_PLUGIN_NAME, ROOT_PLUGIN_NAME, PARENT_DEP_V1_PLUGIN_NAME, PARENT_DEP_V2_PLUGIN_NAME,
-            UPGRADE_PROGRESS_PLUGIN_V1_FILENAME, UPGRADE_PROGRESS_PLUGIN_V2_FILENAME);
+            UPGRADE_PROGRESS_PLUGIN_V1_FILENAME, UPGRADE_PROGRESS_PLUGIN_V2_FILENAME, UPGRADE_DUPLICATE_PLUGIN_V1_FILENAME,
+            UPGRADE_DUPLICATE_PLUGIN_V2_FILENAME);
     }
 
     @Test
     public void testParentResourceStartedUpgradedWhenChildResourceBeingUpgraded() throws Exception {
         setCurrentServerSideInventory(new FakeServerInventory());
-        
+                
         executeTestWithPlugins(getAllDepsFor(UPGRADE_PROGRESS_PLUGIN_V1_FILENAME),
             new AbstractTestPayload(true, Collections.<ResType> emptyList()) {
                 public void test(Map<ResType, Set<Resource>> resourceUpgradeTestResources) {
@@ -107,6 +113,10 @@ public class ResourceUpgradeProgressHandlingTest extends ResourceUpgradeFailureH
                 }
             });
         
+        //the upgrade progress plugin is set to check that the parent resource key
+        //has been upgraded during its upgrade method, so we just need to check here
+        //that everything got upgraded. If it was not, it'd mean that the the progress
+        //plugin failed the upgrade because it didn't see its parent upgraded.
         executeTestWithPlugins(getAllDepsFor(UPGRADE_PROGRESS_PLUGIN_V2_FILENAME), 
             new AbstractTestPayload(false, Arrays.asList(TEST_TYPE, PARENT_DEP_TYPE)) {
                 public void test(Map<ResType, Set<Resource>> resourceUpgradeTestResources) {
@@ -125,13 +135,49 @@ public class ResourceUpgradeProgressHandlingTest extends ResourceUpgradeFailureH
     }
     
     @Test
-    public void testDuplicitResourceKeysHandledCorrectly() {
-        //TODO implement
-    }
-    
-    @Test
-    public void testResourcesRevertedToOriginalStateAfterFailedUpgrade() {
-        //TODO implement
-    }
+    public void testDuplicitResourceKeysHandledCorrectly() throws Exception {
+        setCurrentServerSideInventory(new FakeServerInventory());
         
+        executeTestWithPlugins(getAllDepsFor(UPGRADE_DUPLICATE_PLUGIN_V1_FILENAME),
+            new AbstractTestPayload(true, Arrays.asList(PARENT_DEP_TYPE, TEST_TYPE)) {
+                
+                public void test(Map<ResType, Set<Resource>> resourceUpgradeTestResources) {
+                    //there's not much to check with the v1 plugins. let's just check all the 
+                    //resources have been discovered
+                    assertEquals(resourceUpgradeTestResources.get(PARENT_DEP_TYPE).size(), 1, "The V1 inventory should have 1 parent.");                                       
+                    assertEquals(resourceUpgradeTestResources.get(TEST_TYPE).size(), 2, "The V1 inventory should have 2 test resources.");                                       
+                }
+                
+                public Expectations getExpectations(Mockery context) throws Exception {
+                    return new Expectations() {
+                        {
+                            defineDefaultExpectations(this);
+                        }
+                    };
+                }
+            });
+        
+        //now the V2 test resource is set to create 2 resources with the same resource keys.
+        //the upgrade should therefore fail.
+        executeTestWithPlugins(getAllDepsFor(UPGRADE_DUPLICATE_PLUGIN_V2_FILENAME), 
+            new AbstractTestPayload(false, Arrays.asList(PARENT_DEP_TYPE, TEST_TYPE)) {
+                public void test(Map<ResType, Set<Resource>> resourceUpgradeTestResources) {
+                    checkResourcesUpgraded(resourceUpgradeTestResources.get(PARENT_DEP_TYPE), 1);
+                    
+                    checkResourcesNotUpgraded(resourceUpgradeTestResources.get(TEST_TYPE), 2);
+                    
+                    for(Resource r : resourceUpgradeTestResources.get(TEST_TYPE)) {
+                        checkResourceFailedUpgrade(r);
+                    }
+                }
+                
+                public Expectations getExpectations(Mockery context) throws Exception {
+                    return new Expectations() {
+                        {
+                            defineDefaultExpectations(this);
+                        }
+                    };
+                }
+            });
+    }    
 }

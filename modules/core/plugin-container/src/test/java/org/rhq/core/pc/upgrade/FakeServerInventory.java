@@ -59,7 +59,8 @@ public class FakeServerInventory {
     private Map<String, Resource> resourceStore = new HashMap<String, Resource>();
     private int counter;
     private boolean failing;
-
+    private boolean failUpgrade;
+    
     private static final Comparator<Resource> ID_COMPARATOR = new Comparator<Resource>() {
         public int compare(Resource o1, Resource o2) {
             return o1.getId() - o2.getId();
@@ -122,6 +123,10 @@ public class FakeServerInventory {
                 synchronized(FakeServerInventory.this) {
                     throwIfFailing();
     
+                    if (failUpgrade) {
+                        throw new RuntimeException("Failing the upgrade purposefully.");                        
+                    }
+                    
                     Set<ResourceUpgradeRequest> requests = (Set<ResourceUpgradeRequest>) invocation.getParameter(0);
                     Set<ResourceUpgradeResponse> responses = new HashSet<ResourceUpgradeResponse>();
     
@@ -188,6 +193,14 @@ public class FakeServerInventory {
         this.failing = failing;
     }
 
+    public synchronized boolean isFailUpgrade() {
+        return failUpgrade;
+    }
+    
+    public synchronized void setFailUpgrade(boolean failUpgrade) {
+        this.failUpgrade = failUpgrade;
+    }
+    
     @SuppressWarnings("serial")
     public synchronized Set<Resource> findResourcesByType(final ResourceType type) {
         Set<Resource> result = new HashSet<Resource>();

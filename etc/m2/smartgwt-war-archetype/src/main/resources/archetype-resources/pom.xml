@@ -6,10 +6,10 @@
     
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>${groupId}</groupId>
+    <groupId>${project.groupId}</groupId>
     <artifactId>${artifactId}</artifactId>
     <packaging>war</packaging>
-    <version>${version}</version>
+    <version>${project.version}</version>
 
     <name>SmartGWT WAR</name>
 
@@ -60,7 +60,7 @@
 
     <build>
         <!-- This will produce a war file named ${artifactId}.war, rather than
-             ${artifactId}-${version}.war. -->
+             ${artifactId}-${project.version}.war. -->
         <finalName>${artifactId}</finalName>
 
         <!-- Make sure lasses output dir matches hosted webapp WEB-INF/classes 

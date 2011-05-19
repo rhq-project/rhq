@@ -87,8 +87,10 @@ public class SessionTestHelper {
         em.persist(newSubject);
         em.flush();
 
-        // return the copy, not the original
-        newSubject = SessionManager.getInstance().put(newSubject, 1000 * 300);
+        // We want to return the attached object but sessionmanager.put will return a detached copy of newSubject.
+        // Copy over the sessionId and pass back the attached Subject.
+        Subject sessionSubject = SessionManager.getInstance().put(newSubject, 1000 * 300);
+        newSubject.setSessionId(sessionSubject.getId());
         return newSubject;
     }
 

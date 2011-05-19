@@ -980,8 +980,8 @@
             <c:simple-property name="default-interface" readOnly="true" displayName="Default Interface" description="Default Interface for these bindings. See NetworkInterfaces for its definition" required="false"/>
             <!-- note: at domain level there is no port-offset -->
             <c:simple-property name="port-offset" readOnly="true" displayName="Port Offset" description="Offset from standard ports for this group" required="false"/>
-            <c:list-property name="include">
-                <c:simple-property name="binding" displayName="Included bindings" description="Other bindings that are included in this one"/>
+            <c:list-property name="includes">
+                <c:simple-property name="includes" displayName="Included bindings" description="Other bindings that are included in this one"/>
             </c:list-property>
             <c:list-property name="socket-binding">
                 <c:map-property name="binding">

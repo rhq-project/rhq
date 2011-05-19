@@ -70,12 +70,10 @@ public class ConfigurationServerServiceImpl implements ConfigurationServerServic
         ResourceConfigurationUpdate update = configurationManager.persistNewResourceConfigurationUpdateHistory(
             overlord, resourceId, resourceConfiguration, ConfigurationUpdateStatus.SUCCESS, null, false);
 
-        if (LOG.isDebugEnabled()) {
-            if (update == null) {
-                LOG.debug("Not persisting Configuration " + resourceConfiguration
-                    + ", since it is identical to the current revision.");
-                return;
-            }
+        if (update == null) {
+            LOG.debug("Not persisting Configuration " + resourceConfiguration
+                + ", since it is identical to the current revision.");
+            return;
         }
 
         Configuration configuration = update.getConfiguration().deepCopy(false);  // clone the config, zeroing out ids

@@ -195,6 +195,10 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
         for (Map.Entry<String,PropertyDefinition> propDefEntry: entrySet) {
             PropertyDefinition propDef = propDefEntry.getValue();
             JsonNode sub = json.findValue(propDef.getName());
+            if (sub==null) {
+                log.error("No value for property [" + propDef.getName() + "] found - check the descriptor");
+                continue;
+            }
             if (propDef instanceof PropertyDefinitionSimple) {
                 PropertySimple propertySimple;
 

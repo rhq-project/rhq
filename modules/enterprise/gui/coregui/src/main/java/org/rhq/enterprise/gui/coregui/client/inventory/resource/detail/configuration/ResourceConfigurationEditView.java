@@ -173,7 +173,7 @@ public class ResourceConfigurationEditView extends LocatableVLayout implements P
                     }
                     String configHistoryUrl = LinkManager.getResourceTabLink(resource.getId(),
                         ResourceDetailView.Tab.CONFIGURATION, ResourceDetailView.ConfigurationSubTab.HISTORY);
-                    String configHistoryView = configHistoryUrl.substring(1);
+                    String configHistoryView = configHistoryUrl.substring(1);  // chop off the leading '#'
                     CoreGUI.goToView(configHistoryView, message);
                 }
             });

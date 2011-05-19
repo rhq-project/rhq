@@ -39,6 +39,7 @@ import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.GroupConfigurationEditor;
@@ -47,6 +48,7 @@ import org.rhq.enterprise.gui.coregui.client.components.configuration.PropertyVa
 import org.rhq.enterprise.gui.coregui.client.components.configuration.PropertyValueChangeListener;
 import org.rhq.enterprise.gui.coregui.client.gwt.ConfigurationGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceDetailView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenter;
@@ -209,11 +211,13 @@ public class GroupResourceConfigurationEditView extends LocatableVLayout impleme
                 }
 
                 public void onSuccess(Void result) {
-                    CoreGUI.getMessageCenter().notify(
-                        new Message(MSG.view_group_resConfig_edit_saveInitiated_concise(), MSG
+                    String configHistoryUrl = LinkManager.getResourceGroupTabLink(group.getId(),
+                            ResourceDetailView.Tab.CONFIGURATION, ResourceDetailView.ConfigurationSubTab.HISTORY);
+                    String configHistoryView = configHistoryUrl.substring(1); // chop off the leading '#'
+                    Message message = new Message(MSG.view_group_resConfig_edit_saveInitiated_concise(), MSG
                             .view_group_resConfig_edit_saveInitiated_full(group.getResourceType().getName(), group
-                                .getName()), Message.Severity.Info));
-                    refresh();
+                                .getName()), Message.Severity.Info);
+                    CoreGUI.goToView(configHistoryView, message);
                 }
             });
     }

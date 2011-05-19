@@ -1071,7 +1071,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
         ResourceConfigurationUpdate newUpdate = configurationManager.persistNewResourceConfigurationUpdateHistory(
             subject, resourceId, configToUpdate, ConfigurationUpdateStatus.INPROGRESS, subject.getName(), false);
-        executeResourceConfigurationUpdate(newUpdate, fromStructured);
+        executeResourceConfigurationUpdate(newUpdate);
         return newUpdate;
     }
 
@@ -1132,7 +1132,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         newUpdate = configurationManager.persistNewResourceConfigurationUpdateHistory(subject, resourceId,
             newConfiguration, ConfigurationUpdateStatus.INPROGRESS, subject.getName(), false);
 
-        executeResourceConfigurationUpdate(newUpdate, true);
+        executeResourceConfigurationUpdate(newUpdate);
 
         return newUpdate;
     }
@@ -1141,14 +1141,14 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         ResourceConfigurationUpdate update = getResourceConfigurationUpdate(subjectManager.getOverlord(), updateId);
         Configuration originalConfig = update.getConfiguration();
         update.setConfiguration(originalConfig.deepCopy(false));
-        executeResourceConfigurationUpdate(update, true);
+        executeResourceConfigurationUpdate(update);
     }
 
     /**
-     * Tells the Agent to asynchonously update a managed resource's configuration as per the specified
+     * Tells the Agent to asynchronously update a managed resource's configuration as per the specified
      * <code>ResourceConfigurationUpdate</code>.
      */
-    private void executeResourceConfigurationUpdate(ResourceConfigurationUpdate update, boolean fromStructured) {
+    private void executeResourceConfigurationUpdate(ResourceConfigurationUpdate update) {
         try {
             AgentClient agentClient = agentManager.getAgentClient(update.getResource().getAgent());
             ConfigurationUpdateRequest request = new ConfigurationUpdateRequest(update.getId(), update
@@ -1161,8 +1161,9 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                 update.setStatus(ConfigurationUpdateStatus.FAILURE);
                 update.setErrorMessage(ThrowableUtil.getStackAsString(e));
 
-                // here we call ourself, but we do so via the EJB interface so we pick up the REQUIRES_NEW semantics
+                // Here we call ourselves, but we do so via the EJB interface so we pick up the REQUIRES_NEW semantics.
                 this.configurationManager.mergeConfigurationUpdate(update);
+                checkForCompletedGroupResourceConfigurationUpdate(update.getId());
             }
         }
     }
@@ -1334,14 +1335,16 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     public void checkForCompletedGroupResourceConfigurationUpdate(int resourceConfigUpdateId) {
         ResourceConfigurationUpdate resourceConfigUpdate = entityManager.find(ResourceConfigurationUpdate.class,
             resourceConfigUpdateId);
-        if (resourceConfigUpdate.getStatus() == ConfigurationUpdateStatus.INPROGRESS)
+        if (resourceConfigUpdate.getStatus() == ConfigurationUpdateStatus.INPROGRESS) {
             // If this update isn't done, then, by definition, the group update isn't done either.
             return;
+        }
 
         GroupResourceConfigurationUpdate groupConfigUpdate = resourceConfigUpdate.getGroupConfigurationUpdate();
-        if (groupConfigUpdate == null)
-            // The update's not part of a group update - nothing we need to do.
+        if (groupConfigUpdate == null) {
+            // The update isn't part of a group update - nothing we need to do.
             return;
+        }
 
         Query inProgressResourcesCountQuery = PersistenceUtility.createCountQuery(this.entityManager,
             ResourceConfigurationUpdate.QUERY_FIND_BY_PARENT_UPDATE_ID_AND_STATUS);

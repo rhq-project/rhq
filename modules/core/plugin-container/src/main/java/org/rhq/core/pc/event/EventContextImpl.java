@@ -103,7 +103,7 @@ public class EventContextImpl implements EventContext {
     public SigarProxy getSigar() {
         return getEventManager().getSigar();
     }
-    
+
     private void registerEventPollerInternal(final EventPoller poller, int pollingInterval,
         final String sourceLocation) {
         EventDefinition eventDefinition = EventUtility.getEventDefinition(poller.getEventType(), this.resource.getResourceType());
@@ -124,6 +124,8 @@ public class EventContextImpl implements EventContext {
         EventDefinition eventDefinition = EventUtility.getEventDefinition(eventType, this.resource.getResourceType());
         if (eventDefinition == null)
             throw new IllegalArgumentException("Unknown event type - no EventDefinition exists with name '" + eventType + "'.");
-        getEventManager().unregisterEventPoller(this.resource, eventType, sourceLocation);
+        EventManager eventManager = getEventManager();
+        if (eventManager!=null)
+            eventManager.unregisterEventPoller(this.resource, eventType, sourceLocation);
     }
 }

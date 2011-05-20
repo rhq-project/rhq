@@ -366,6 +366,9 @@ public class ConfigurationManagerBeanUnitTest extends JMockTest {
         context.checking(new Expectations() {{
             allowing(entityMgr).find(Resource.class, fixture.resourceId); will(returnValue(fixture.resource));
 
+            allowing(entityMgr).find(ResourceConfigurationUpdate.class, expectedUpdate.getId());
+            will(returnValue(expectedUpdate));
+
             oneOf(authorizationMgr).hasResourcePermission(fixture.subject, CONFIGURE_WRITE, fixture.resourceId);
             will(returnValue(true));
             

@@ -1,50 +1,35 @@
 package org.rhq.enterprise.server.drift;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.InputStream;
 
-import javax.ejb.EJB;
+import javax.annotation.Resource;
 import javax.ejb.Stateless;
-
-import org.rhq.core.util.stream.StreamUtil;
-import org.rhq.enterprise.server.auth.SubjectManagerLocal;
-import org.rhq.enterprise.server.core.AgentManagerLocal;
-
-import static org.rhq.enterprise.server.util.LookupUtil.getCoreServer;
+import javax.jms.Connection;
+import javax.jms.ConnectionFactory;
+import javax.jms.MessageProducer;
+import javax.jms.ObjectMessage;
+import javax.jms.Queue;
+import javax.jms.Session;
 
 @Stateless
 public class DriftManagerBean implements DriftManagerLocal {
-    @EJB
-    private AgentManagerLocal agentMgr;
 
-    @EJB
-    private SubjectManagerLocal subjectMgr;
+    @Resource(mappedName = "java:/JmsXA")
+    private ConnectionFactory factory;
+
+    @Resource(mappedName = "queue/DriftSnapshotsQueue")
+    private Queue snapshotsQueue;
 
     @Override
     public void uploadSnapshot(int resourceId, long metadataSize, InputStream metadataStream, long dataSize,
         InputStream dataStream) throws Exception {
-        File snapshotsDir = getSnapshotsDir();
-        File destDir = new File(snapshotsDir, Integer.toString(resourceId));
-        destDir.mkdir();
-
-        StreamUtil.copy(metadataStream, new BufferedOutputStream(new FileOutputStream(
-            new File(destDir, "metadata.txt"))), false);
-        StreamUtil.copy(dataStream, new BufferedOutputStream(new FileOutputStream(
-            new File(destDir, "data.zip"))), false);
+        Connection connection = factory.createConnection();
+        Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+        MessageProducer producer = session.createProducer(snapshotsQueue);
+        ObjectMessage msg = session.createObjectMessage(new UploadRequest(resourceId, metadataSize, metadataStream,
+            dataSize, dataStream));
+        producer.send(msg);
+        connection.close();
     }
 
-    private File getSnapshotsDir() throws Exception {
-        File serverHomeDir = getCoreServer().getJBossServerHomeDir();
-        File snapshotsDir = new File(serverHomeDir, "deploy/rhq.ear/rhq-downloads/snapshots");
-        if (!snapshotsDir.isDirectory()) {
-            snapshotsDir.mkdirs();
-            if (!snapshotsDir.isDirectory()) {
-                throw new FileNotFoundException("Missing snapshots directory at [" + snapshotsDir + "]");
-            }
-        }
-        return snapshotsDir;
-    }
 }

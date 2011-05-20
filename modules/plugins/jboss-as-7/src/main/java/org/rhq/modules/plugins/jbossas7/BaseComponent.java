@@ -464,14 +464,40 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
         return result;
     }
 
+    public String addressToPath(List<PROPERTY_VALUE> address)
+    {
+        StringBuilder builder = new StringBuilder();
+        Iterator<PROPERTY_VALUE> iter = address.iterator();
+        while (iter.hasNext()) {
+            PROPERTY_VALUE val = iter.next();
+            builder.append(val.getKey()).append('=').append(val.getValue());
+            if (iter.hasNext())
+                builder.append(',');
+        }
+        return builder.toString();
+    }
+
     @Override
     public void deleteResource() throws Exception {
 
-        System.out.println("delete resource: " + path);
-        Operation op = new Operation("remove",pathToAddress(path));
-        ComplexResult res = (ComplexResult) connection.execute(op, true);
+        log.info("delete resource: " + path + " ...");
+        List<PROPERTY_VALUE> address = pathToAddress(path);
+        Operation op = new Operation("remove", address);
+        ComplexResult res = connection.executeComplex(op);
         if (!res.isSuccess())
             throw new IllegalArgumentException("Delete for [" + path + "] failed: " + res.getFailureDescription());
+        if (path.contains("server-group")) {
+            // This was a server group level deployment - we also need to remove the entry in /deployments
+            for (PROPERTY_VALUE val : address) {
+                if (val.getKey().equals("deployment")) {
+                    ComplexResult res2 = connection.executeComplex(new Operation("remove",val.getKey(),val.getValue()));
+                    if (!res2.isSuccess())
+                        throw new IllegalArgumentException("Removal of [" + path + "] falied : " + res2.getFailureDescription());
+                }
+            }
+        }
+        log.info("   ... done");
+
     }
 
 
@@ -499,6 +525,13 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
         }
 
         String fileName = details.getFileName();
+
+        if (fileName.startsWith("C:\\fakepath\\")) {   // TODO this is a hack as the server adds the fake path somehow
+            fileName=fileName.substring("C:\\fakepath\\".length());
+        }
+
+        log.info("Deploying [" + fileName + "] ...");
+
         String tmpName = fileName; // TODO figure out the tmp-name biz with the AS guys
 
         JsonNode resultNode = uploadResult.get("result");
@@ -506,12 +539,19 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
         ASConnection connection = getASConnection();
 
         Operation step1 = new Operation("add","deployment",tmpName);
-        step1.addAdditionalProperty("hash", new PROPERTY_VALUE("BYTES_VALUE", hash));
+//        step1.addAdditionalProperty("hash", new PROPERTY_VALUE("BYTES_VALUE", hash));
+        List<Object> content = new ArrayList<Object>(1);
+        Map<String,Object> contentValues = new HashMap<String,Object>();
+        contentValues.put("hash",new PROPERTY_VALUE("BYTES_VALUE",hash));
+        content.add(contentValues);
+        step1.addAdditionalProperty("content",content);
+
         step1.addAdditionalProperty("name", tmpName);
         step1.addAdditionalProperty("runtime-name", fileName);
 
         CompositeOperation cop = new CompositeOperation();
         cop.addStep(step1);
+        String resourceKey;
 
         /*
          * We need to check here if this is an upload to /deployment only
@@ -519,21 +559,34 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
          */
         if (context.getResourceKey().contains("server-group=")) {
 
-            List<PROPERTY_VALUE> serverGroupAddress = new ArrayList<PROPERTY_VALUE>(1);
+            List<PROPERTY_VALUE> serverGroupAddress = new ArrayList<PROPERTY_VALUE>();
             serverGroupAddress.addAll(pathToAddress(context.getResourceKey()));
             serverGroupAddress.add(new PROPERTY_VALUE("deployment", tmpName));
-            Operation step2 = new Operation("add",serverGroupAddress,"enabled","true");
+            Operation step2 = new Operation("add",serverGroupAddress);
 
             cop.addStep(step2);
+
+            Operation step3 = new Operation("deploy",serverGroupAddress);
+            cop.addStep(step3);
+
+            resourceKey = addressToPath(serverGroupAddress);
+        }
+        else {
+            resourceKey = addressToPath(step1.getAddress());
         }
 
         JsonNode result = connection.executeRaw(cop);
         if (ASConnection.isErrorReply(result)) {
-            report.setErrorMessage(ASConnection.getFailureDescription(resultNode));
+            String failureDescription = ASConnection.getFailureDescription(result);
+            report.setErrorMessage(failureDescription);
             report.setStatus(CreateResourceStatus.FAILURE);
+            log.warn(" ... done with failure: " + failureDescription);
         }
         else {
             report.setStatus(CreateResourceStatus.SUCCESS);
+            report.setResourceName(fileName);
+            report.setResourceKey(resourceKey);
+            log.info(" ... with success and key [" + resourceKey + "]" );
         }
 
         return report;

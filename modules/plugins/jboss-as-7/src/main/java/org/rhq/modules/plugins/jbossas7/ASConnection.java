@@ -157,6 +157,16 @@ public class ASConnection {
         return null;
     }
 
+
+
+    public Result execute(Operation op) {
+        return execute(op,false);
+    }
+
+    public ComplexResult executeComplex(Operation op) {
+        return (ComplexResult) execute(op,true);
+    }
+
     public Result execute(Operation op, boolean isComplex){
         JsonNode node = executeRaw(op);
 

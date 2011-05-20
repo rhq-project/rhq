@@ -92,4 +92,15 @@ public class PathHandlingTest {
         }
         assert found == 2 : "did not find both keys, but " + found;
     }
+
+    public void addr2path() throws Exception {
+
+        String path = "subsystem=jms,profile=default,queue=java:/foo";
+
+        BaseComponent bc = new BaseComponent();
+        List<PROPERTY_VALUE> list = bc.pathToAddress(path);
+
+        String path2 = bc.addressToPath(list);
+        assert path.equals(path2);
+    }
 }

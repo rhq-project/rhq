@@ -22,7 +22,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.codehaus.jackson.JsonNode;
 import org.testng.annotations.Test;
@@ -54,7 +56,21 @@ public class UploadAndDeployTest {
         assert bytes_value != null;
 
         System.out.println("sha: " + bytes_value);
+        assert bytes_value.equals("7jgpMVmynfxpqp8UDleKLmtgbrA=");
 
+    }
+
+    @Test(timeOut = 60*1000L, enabled = true)
+    public void testDoubleUploadOnly() throws Exception {
+
+        String bytes_value = prepare();
+        String bytes_value2 = prepare();
+
+        assert bytes_value != null;
+        assert bytes_value2 != null;
+        assert bytes_value.equals(bytes_value2);
+
+        assert bytes_value.equals("7jgpMVmynfxpqp8UDleKLmtgbrA=");
     }
 
     @Test(timeOut = 60*1000L, enabled = true)
@@ -70,11 +86,16 @@ public class UploadAndDeployTest {
         List<PROPERTY_VALUE> deploymentsAddress = new ArrayList<PROPERTY_VALUE>(1);
         deploymentsAddress.add(new PROPERTY_VALUE("deployment", TEST_WAR));
         Operation op = new Operation("add",deploymentsAddress);
-        op.addAdditionalProperty("hash",new PROPERTY_VALUE("BYTES_VALUE",bytes_value));
-        op.addAdditionalProperty("name", TEST_WAR); // this needs to be separate per upload
+        List<Object> content = new ArrayList<Object>(1);
+        Map<String,Object> contentValues = new HashMap<String,Object>();
+        contentValues.put("hash",new PROPERTY_VALUE("BYTES_VALUE",bytes_value));
+        content.add(contentValues);
+        op.addAdditionalProperty("content",content);
+        op.addAdditionalProperty("name", TEST_WAR); // this needs to be unique per upload
         op.addAdditionalProperty("runtime-name", TEST_WAR);
         System.out.flush();
         JsonNode ret = connection.executeRaw(op);
+        op = null;
         System.out.println("Add to /deploy done " + ret);
         System.out.flush();
 
@@ -82,12 +103,13 @@ public class UploadAndDeployTest {
 
 
         List<PROPERTY_VALUE> serverGroupAddress = new ArrayList<PROPERTY_VALUE>(1);
-        serverGroupAddress.add(new PROPERTY_VALUE("server-group","main-server-group"));
+        serverGroupAddress.add(new PROPERTY_VALUE("server-group", "main-server-group"));
         serverGroupAddress.add(new PROPERTY_VALUE("deployment", TEST_WAR));
-        op.addAdditionalProperty("runtime-name", TEST_WAR);
-        Operation deploy = new Operation("add",serverGroupAddress,"enabled","true");
+
+        Operation attach = new Operation("add",serverGroupAddress);//,"enabled","true");
+//        deploy.addAdditionalProperty("runtime-name", TEST_WAR);
         System.out.flush();
-        ret = connection.executeRaw(deploy);
+        ret = connection.executeRaw(attach);
         System.out.println("Add to server group done: " + ret);
         System.out.flush();
 
@@ -95,10 +117,24 @@ public class UploadAndDeployTest {
         assert ret.get("outcome").getTextValue().equals("success") : "add to sg was no success " + ret.getTextValue();
 
 
+        Operation deploy = new Operation("deploy",serverGroupAddress);
+        Result depRes = connection.execute(deploy);
+
+        assert depRes.isSuccess() : "Deploy went wrong: " + depRes.getFailureDescription();
+
+
+        Thread.sleep(500);
+
+        Operation undeploy = new Operation("undeploy",serverGroupAddress);
+        depRes = connection.execute(undeploy);
+
+        assert depRes.isSuccess() : "Undeploy went wrong: " + depRes.getFailureDescription();
+        undeploy = null;
+
         // Now tear down stuff again
 
-        Operation undeploy = new Operation("remove",serverGroupAddress);
-        ret = connection.executeRaw(undeploy);
+        Operation unattach = new Operation("remove",serverGroupAddress);
+        ret = connection.executeRaw(unattach);
 
         assert ret.has("outcome") : "Ret not valid " + ret.toString();
         assert ret.get("outcome").getTextValue().equals("success") : "remove from sg was no success " + ret.getTextValue();
@@ -121,26 +157,36 @@ public class UploadAndDeployTest {
 
         String bytes_value = prepare();
 
+        System.out.println("Prepare done");
+        System.out.flush();
 
         List<PROPERTY_VALUE> deploymentsAddress = new ArrayList<PROPERTY_VALUE>(1);
         deploymentsAddress.add(new PROPERTY_VALUE("deployment", TEST_WAR));
         Operation step1 = new Operation("add",deploymentsAddress);
-        step1.addAdditionalProperty("hash", new PROPERTY_VALUE("BYTES_VALUE", bytes_value));
-        step1.addAdditionalProperty("name", TEST_WAR);
+        List<Object> content = new ArrayList<Object>(1);
+        Map<String,Object> contentValues = new HashMap<String,Object>();
+        contentValues.put("hash",new PROPERTY_VALUE("BYTES_VALUE",bytes_value));
+        content.add(contentValues);
+        step1.addAdditionalProperty("content", content);
+        step1.addAdditionalProperty("name", TEST_WAR); // this needs to be unique per upload
+
 
         List<PROPERTY_VALUE> serverGroupAddress = new ArrayList<PROPERTY_VALUE>(1);
         serverGroupAddress.add(new PROPERTY_VALUE("server-group","main-server-group"));
         serverGroupAddress.add(new PROPERTY_VALUE("deployment", TEST_WAR));
-        Operation step2 = new Operation("add",serverGroupAddress,"enabled","true");
+        Operation step2 = new Operation("add",serverGroupAddress);// ,"enabled","true");
+        Operation step2a = new Operation("deploy",serverGroupAddress);
 
 
-        Operation step3 = new Operation("remove",serverGroupAddress);
+        Operation step3 = new Operation("undeploy",serverGroupAddress);
+        Operation step3a = new Operation("remove",serverGroupAddress);
 
         Operation step4 = new Operation("remove",deploymentsAddress);
 
         CompositeOperation cop = new CompositeOperation();
         cop.addStep(step1);
         cop.addStep(step2);
+        cop.addStep(step2a);
 
 
         ASConnection connection = new ASConnection(DC_HOST, DC_HTTP_PORT);
@@ -148,15 +194,22 @@ public class UploadAndDeployTest {
         System.out.println(ret);
         System.out.flush();
 
+        assert ret.has("outcome") : "Ret not valid " + ret.toString();
+        assert ret.get("outcome").getTextValue().equals("success") : "Composite deploy was no success " + ret.getTextValue();
+
         Thread.sleep(1000);
 
         cop = new CompositeOperation();
         cop.addStep(step3);
+        cop.addStep(step3a);
         cop.addStep(step4);
         ret = connection.executeRaw(cop);
 
         System.out.println(ret);
         System.out.flush();
+
+        assert ret.has("outcome") : "Ret not valid " + ret.toString();
+        assert ret.get("outcome").getTextValue().equals("success") : "Composite remove was no success " + ret.getTextValue();
 
 
     }

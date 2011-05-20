@@ -21,9 +21,11 @@ package org.rhq.modules.plugins.jbossas7;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.codehaus.jackson.JsonNode;
@@ -62,6 +64,7 @@ public class ServerGroupComponent extends DomainComponent implements ContentFace
         return null;  // TODO: Customise this generated block
     }
 
+    // TODO I think this package code is not used.
     @Override
     public DeployPackagesResponse deployPackages(Set<ResourcePackageDetails> packages,
                                                  ContentServices contentServices) {
@@ -87,23 +90,35 @@ public class ServerGroupComponent extends DomainComponent implements ContentFace
                     List<PROPERTY_VALUE> deploymentsAddress = new ArrayList<PROPERTY_VALUE>(1);
                     deploymentsAddress.add(new PROPERTY_VALUE("deployment", fileName));
                     Operation step1 = new Operation("add",deploymentsAddress);
-                    step1.addAdditionalProperty("hash", new PROPERTY_VALUE("BYTES_VALUE", hash));
+//                    step1.addAdditionalProperty("hash", new PROPERTY_VALUE("BYTES_VALUE", hash));
+                    List<Object> content = new ArrayList<Object>(1);
+                    Map<String,Object> contentValues = new HashMap<String,Object>();
+                    contentValues.put("hash",new PROPERTY_VALUE("BYTES_VALUE",hash));
+                    content.add(contentValues);
+                    step1.addAdditionalProperty("content",content);
+
                     step1.addAdditionalProperty("name", fileName);
 
                     List<PROPERTY_VALUE> serverGroupAddress = new ArrayList<PROPERTY_VALUE>(1);
                     serverGroupAddress.addAll(pathToAddress(context.getResourceKey()));
                     serverGroupAddress.add(new PROPERTY_VALUE("deployment", fileName));
-                    Operation step2 = new Operation("add",serverGroupAddress,"enabled","true");
+                    Operation step2 = new Operation("add",serverGroupAddress);
+                    Operation step3 = new Operation("deploy",serverGroupAddress);
 
                     CompositeOperation cop = new CompositeOperation();
                     cop.addStep(step1);
                     cop.addStep(step2);
+                    cop.addStep(step3);
 
                     JsonNode result = connection.executeRaw(cop);
                     if (ASConnection.isErrorReply(result)) // TODO get failure message into response
                         response.addPackageResponse(new DeployIndividualPackageResponse(details.getKey(),ContentResponseResult.FAILURE));
-                    else
-                        response.addPackageResponse(new DeployIndividualPackageResponse(details.getKey(),ContentResponseResult.SUCCESS));
+                    else {
+                        DeployIndividualPackageResponse individualPackageResponse = new DeployIndividualPackageResponse(
+                                details.getKey(), ContentResponseResult.SUCCESS);
+                        response.addPackageResponse(individualPackageResponse);
+                        response.setOverallRequestResult(ContentResponseResult.SUCCESS);
+                    }
                 }
                 else
                     response.addPackageResponse(new DeployIndividualPackageResponse(details.getKey(),ContentResponseResult.FAILURE));

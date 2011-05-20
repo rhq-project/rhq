@@ -857,6 +857,29 @@
                                description="Specifies the MappingManager implementation class name to use. To use the container default set the value to 'default''."/>
         </resource-configuration>
 
+        <service name="SecurtityDomain"
+                 discovery="SubsystemDiscovery"
+                 class="BaseComponent"
+                >
+
+            <runs-inside>
+                <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
+                <parent-resource-type name="JBossAS7-Standalone"  plugin="jboss-as-7"/>
+            </runs-inside>
+
+            <plugin-configuration>
+                <c:simple-property name="path" readOnly="true" default="security-domain"/>
+            </plugin-configuration>
+
+
+
+            <resource-configuration>
+                <c:simple-property name="extends" required="false" type="string" readOnly="true" description="The parent security domain"/>
+                <c:simple-property name="cache-type" required="false" type="string" readOnly="true"
+                                   description="Adds a cache to speed up authentication checks. Allowed values are 'default' to use simple map as the cache and 'infinispan' to use an Infinispan cache."/>
+            </resource-configuration>
+        </service>
+
     </server>
 
     <server name="Threads"
@@ -913,8 +936,6 @@
                 <c:simple-property name="path" readOnly="true" default="bounded-queue-thread-pool|queueless-thread-pool|scheduled-thread-pool|unbounded-queue-thread-pool"/>
             </plugin-configuration>
         </service>
-
-
 
 
     </server>

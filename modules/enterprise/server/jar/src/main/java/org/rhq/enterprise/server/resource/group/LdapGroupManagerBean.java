@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2009 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -19,6 +19,7 @@
 
 package org.rhq.enterprise.server.resource.group;
 
+import java.io.UnsupportedEncodingException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -93,21 +94,28 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
     }
 
     public Set<String> findAvailableGroupsFor(String userName) {
+        Set<String> ldapSet = new HashSet<String>();
+
         Properties options = systemManager.getSystemConfiguration();
         String groupFilter = (String) options.getProperty(RHQConstants.LDAPGroupFilter, "");
         String groupMember = (String) options.getProperty(RHQConstants.LDAPGroupMember, "");
         String userDN = getUserDN(options, userName);
-        //TODO: spinder 4/21/10 put in error/debug logging messages for badly formatted filter combinations
-        String filter = "";
-        //form assumes examples where groupFilter is like 'objecclass=groupOfNames' and groupMember is 'member'
-        // to produce ldaf filter like (&(objecclass=groupOfNames)(member=cn=Administrator,ou=People,dc=test,dc=com))
-        filter = String.format("(&(%s)(%s=%s))", groupFilter, groupMember, userDN);
+        // Bug 700121 - No need to perform a search for groups if no userDN could be obtained
+        if (userDN != null && userDN.length() > 0) {
+            //TODO: spinder 4/21/10 put in error/debug logging messages for badly formatted filter combinations
+            String filter = "";
+            //form assumes examples where groupFilter is like 'objecclass=groupOfNames' and groupMember is 'member'
+            // to produce ldaf filter like (&(objecclass=groupOfNames)(member=cn=Administrator,ou=People,dc=test,dc=com))
+            // Bug 700121 - userDN must be encoded because it is going into a filter
+            filter = String.format("(&(%s)(%s=%s))", groupFilter, groupMember, encodeForFilter(userDN));
 
-        Set<Map<String, String>> matched = buildGroup(options, filter);
+            Set<Map<String, String>> matched = buildGroup(options, filter);
 
-        Set<String> ldapSet = new HashSet<String>();
-        for (Map<String, String> match : matched) {
-            ldapSet.add(match.get("id"));
+            for (Map<String, String> match : matched) {
+                ldapSet.add(match.get("id"));
+            }
+        } else {
+            log.debug("Group lookup will not be performed due to no UserDN found for user " + userName);
         }
         return ldapSet;
     }
@@ -249,7 +257,7 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
                 filter = "(" + loginProperty + "=" + userName + ")";
             }
 
-            log.debug("Using LDAP filter=" + filter);
+            log.debug("Looking up UserDN using LDAP filter: " + filter);
 
             // Loop through each configured base DN.  It may be useful
             // in the future to allow for a filter to be configured for
@@ -267,11 +275,24 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
                 SearchResult si = (SearchResult) answer.next();
 
                 // Construct the UserDN
-                String userDN = si.getName() + "," + baseDNs[x];
+                // Bug 700121 - We need to make sure the userDN stays intact as a DN and not a single entry from a CompundName
+                String userDN = si.getName();
+
+                // Bug 700121 - JNDI will enclose single entry names in quotes if they have certain characters, we don't want that  
+                if (userDN.startsWith("\"")) {
+                    userDN = userDN.substring(1, userDN.length());
+                }
+                if (userDN.endsWith("\"")) {
+                    userDN = userDN.substring(0, userDN.length() - 1);
+                }
+                userDN = userDN + "," + baseDNs[x];
+
+                log.debug("Found UserDN " + userDN + " for user " + userName);
                 return userDN;
             }
 
             // If we try all the BaseDN's and have not found a match, return false
+            log.debug("No UserDN found for user " + userName);
             return "";
         } catch (NamingException e) {
             throw new RuntimeException(e);
@@ -316,6 +337,7 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
             String[] baseDNs = baseDN.split(BASEDN_DELIMITER);
 
             for (int x = 0; x < baseDNs.length; x++) {
+                log.debug("Getting group list using filter: " + filter);
                 NamingEnumeration answer = ctx.search(baseDNs[x], filter, searchControls);
                 boolean ldapApiEnumerationBugEncountered = false;
                 while ((!ldapApiEnumerationBugEncountered) && answer.hasMoreElements()) {//BZ:582471- ldap api bug change
@@ -336,6 +358,8 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
                     entry.put("id", name);
                     entry.put("name", name);
                     entry.put("description", description);
+                    log.debug("Retrieved group name " + name + " with description [" + description + "] using filter "
+                        + filter);
                     ret.add(entry);
                 }
             }
@@ -352,7 +376,9 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
                 throw new LdapCommunicationException(e);
             }
         }
-
+        if (ret.size() < 1) {
+            log.debug("No groups found using filter: " + filter);
+        }
         return ret;
     }
 
@@ -422,4 +448,86 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
             deference);
         return constraints;
     }
+
+    /*
+     * [Bug 700121] LDAP Group Member search doesn't escape special characters
+     * Added method encodeForFilter to LdapGroupManagerBean. This allows filter 
+     * criteria to be properly encoded when the search filter is constructed.
+     * 
+     * This method is now used when adding the userDN to the search filter.
+     * 
+     * Cleaned up some log messages to be easier to identify what was actually 
+     * occurring at the time the message was logged.
+     * 
+     * Added additional debug log messages to help identify what criteria is 
+     * being used to perform LDAP searches.
+     * 
+     */
+    /**
+     * <p>Encode a string so that it can be used in an LDAP search filter.</p> 
+     *
+     * <p>The following table shows the characters that are encoded and their 
+     * encoded version.</p>
+     * 
+     * <table>
+     * <tr><th align="center">Character</th><th>Encoded As</th></tr>
+     * <tr><td align="center">*</td><td>\2a</td></tr>
+     * <tr><td align="center">(</td><td>\28</td></tr>
+     * <tr><td align="center">)</td><td>\29</td></tr>
+     * <tr><td align="center">\</td><td>\5c</td></tr>
+     * <tr><td align="center"><code>null</code></td><td>\00</td></tr>
+     * </table>
+     * 
+     * <p>In addition to encoding the above characters, any non 7-bit ASCII 
+     * character (any character with a hex value greater then <code>0x7f</code>) 
+     * is also encoded and rewritten as a UTF-8 character or sequence of 
+     * characters in hex notation.</p>
+     *  
+     * @param  filterString a string that is to be encoded
+     * @return the encoded version of <code>filterString</code> suitable for use
+     *         in a LDAP search filter or <code>filterString</code> if no 
+     *         encoding was necessary
+     * @see <a href="http://tools.ietf.org/html/rfc4515">RFC 4515</a>
+     */
+    public static String encodeForFilter(final String filterString) {
+        if (filterString != null && filterString.length() > 0) {
+            StringBuilder encString = new StringBuilder(filterString.length());
+            for (int i = 0; i < filterString.length(); i++) {
+                char ch = filterString.charAt(i);
+                switch (ch) {
+                case '*': // encode a wildcard * character
+                    encString.append("\\2a");
+                    break;
+                case '(': // encode a open parenthesis ( character
+                    encString.append("\\28");
+                    break;
+                case ')': // encode a close parenthesis ) character
+                    encString.append("\\29");
+                    break;
+                case '\\': // encode a backslash \ character
+                    encString.append("\\5c");
+                    break;
+                case '\u0000': // encode a null character
+                    encString.append("\\00");
+                    break;
+                default:
+                    if (ch <= 0x7f) { // an ASCII character
+                        encString.append(ch);
+                    } else if (ch >= 0x80) { // encode to UTF-8
+                        try {
+                            byte[] utf8bytes = String.valueOf(ch).getBytes("UTF8");
+                            for (byte b : utf8bytes) {
+                                encString.append(String.format("\\%02x", b));
+                            }
+                        } catch (UnsupportedEncodingException e) {
+                            // ignore
+                        }
+                    }
+                }
+            }
+            return encString.toString();
+        }
+        return filterString;
+    }
+
 }

@@ -205,7 +205,7 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
      * annotations by creating sessions for different users with different permissions.
      *
      * @param subject a JON subject
-     * @return the session activated subject, a copy of the subjected passed in. 
+     * @return the session activated subject, a copy of the subject passed in. 
      */
     public Subject createSession(Subject subject) {
         return SessionManager.getInstance().put(subject);

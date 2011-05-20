@@ -63,7 +63,7 @@ public class ResourceStorageTest extends AbstractEJB3Test {
             Subject subject = subjectManager.loginUnauthenticated("ghinkle");
 
             //Subject subject = subjectManager.getOverlord();
-            createSession(subject);
+            subject = createSession(subject);
             ResourceType t = em.getReference(ResourceType.class, new Integer(501064));
             String typeNameFilter = t == null ? null : t.getName();
             PageList<ResourceComposite> resources = resourceManager.findResourceComposites(subject,
@@ -106,7 +106,7 @@ public class ResourceStorageTest extends AbstractEJB3Test {
 
             //Subject subject = subjectManager.loginUnauthenticated("ghinkle");
             Subject subject = subjectManager.getOverlord();
-            createSession(subject);
+            subject = createSession(subject);
             List<ResourceGroupComposite> groups = groupManager.findResourceGroupComposites(subject,
                 GroupCategory.MIXED, null, null, null, null, null, null, pc);
             System.out.println("Found mixed groups: " + groups.size());
@@ -188,7 +188,7 @@ public class ResourceStorageTest extends AbstractEJB3Test {
             DiscoveryBossLocal discoveryBoss = LookupUtil.getDiscoveryBoss();
             SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
             Subject rhqadmin = subjectManager.loginUnauthenticated("rhqadmin");
-            createSession(rhqadmin);
+            rhqadmin = createSession(rhqadmin);
 
             Map<Resource, List<Resource>> queue = discoveryBoss.getQueuedPlatformsAndServers(rhqadmin, PageControl
                 .getUnlimitedInstance());

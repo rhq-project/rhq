@@ -90,7 +90,7 @@ public class SessionTestHelper {
         // We want to return the attached object but sessionmanager.put will return a detached copy of newSubject.
         // Copy over the sessionId and pass back the attached Subject.
         Subject sessionSubject = SessionManager.getInstance().put(newSubject, 1000 * 300);
-        newSubject.setSessionId(sessionSubject.getId());
+        newSubject.setSessionId(sessionSubject.getSessionId());
         return newSubject;
     }
 

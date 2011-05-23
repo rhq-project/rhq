@@ -72,8 +72,8 @@ public class ResourceSyncInfo implements Serializable {
     @Enumerated(EnumType.STRING)
     private InventoryStatus inventoryStatus;
 
-    @JoinColumn(name = "PARENT_RESOURCE_ID")
-    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "PARENT_RESOURCE_ID", nullable = true)
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
     private ResourceSyncInfo parent;
 
     @OneToMany(mappedBy = "parent", fetch = FetchType.EAGER)

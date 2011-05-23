@@ -41,9 +41,9 @@
       </dependency>
       
       <dependency>
-          <groupId>${groupId}</groupId>
+          <groupId>${project.groupId}</groupId>
           <artifactId>rhq-core-domain</artifactId>
-          <version>${version}</version>
+          <version>${project.version}</version>
           <type>test-jar</type>
           <scope>test</scope>
       </dependency>

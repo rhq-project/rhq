@@ -1,6 +1,6 @@
  /*
   * Jopr Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
+  * Copyright (C) 2005-2011 Red Hat, Inc.
   * All rights reserved.
   *
   * This program is free software; you can redistribute it and/or modify
@@ -32,10 +32,14 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.resource.ResourceUpgradeReport;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
+import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
+import org.rhq.core.pluginapi.upgrade.ResourceUpgradeContext;
+import org.rhq.core.pluginapi.upgrade.ResourceUpgradeFacet;
 import org.rhq.core.system.ProcessInfo;
 import org.rhq.plugins.jbossas.JBossASServerComponent;
 
@@ -44,13 +48,16 @@ import org.rhq.plugins.jbossas.JBossASServerComponent;
  *
  * @author Ian Springer
  */
-public class ScriptDiscoveryComponent implements ResourceDiscoveryComponent<JBossASServerComponent> {
+public class ScriptDiscoveryComponent implements ResourceDiscoveryComponent<JBossASServerComponent>,
+        ResourceUpgradeFacet<JBossASServerComponent> {
+
     private final Log log = LogFactory.getLog(this.getClass());
 
     public Set<DiscoveredResourceDetails> discoverResources(
             ResourceDiscoveryContext<JBossASServerComponent> discoveryContext)
             throws InvalidPluginConfigurationException {
-        HashSet<DiscoveredResourceDetails> resources = new HashSet<DiscoveredResourceDetails>();
+        Set<DiscoveredResourceDetails> resources = new HashSet<DiscoveredResourceDetails>();
+        // TODO: Upgrade to new manual discovery API.
         List<Configuration> pluginConfigs = discoveryContext.getPluginConfigurations();
         if (pluginConfigs.isEmpty()) {
             processAutoDiscoveredResources(discoveryContext, resources);
@@ -60,12 +67,44 @@ public class ScriptDiscoveryComponent implements ResourceDiscoveryComponent<JBos
         return resources;
     }
 
-    private void processAutoDiscoveredResources(ResourceDiscoveryContext<JBossASServerComponent> discoveryContext, HashSet<DiscoveredResourceDetails> resources) {
-        JBossASServerComponent parentComponent = discoveryContext.getParentResourceComponent();
-        Configuration parentPluginConfig = parentComponent.getPluginConfiguration();
-        String homeDir = parentPluginConfig.getSimple(JBossASServerComponent.JBOSS_HOME_DIR_CONFIG_PROP)
-            .getStringValue();
-        File binDir = new File(homeDir, "bin");
+    @Override
+    public ResourceUpgradeReport upgrade(ResourceUpgradeContext<JBossASServerComponent> upgradeContext) {
+        String inventoriedResourceKey = upgradeContext.getResourceKey();
+
+        ResourceContext parentResourceContext = upgradeContext.getParentResourceContext();
+        File binDir = getServerBinDirectory(parentResourceContext);
+
+        // The new format is to use paths relative to the server bin dir for scripts in that dir and to otherwise
+        // use absolute paths, so we only need to upgrade existing keys that start with the bin dir path.
+        if (!inventoriedResourceKey.startsWith(binDir.getPath())) {
+            // key is already in the new format
+            return null;
+        }
+
+        // key is in the old format - build a key in the new format
+        String resourceKey = buildResourceKey(inventoriedResourceKey, binDir);
+
+        ResourceUpgradeReport upgradeReport = new ResourceUpgradeReport();
+        upgradeReport.setNewResourceKey(resourceKey);
+
+        return upgradeReport;
+    }
+
+    private File getServerBinDirectory(ResourceContext parentResourceContext) {
+        Configuration parentPluginConfig = parentResourceContext.getPluginConfiguration();
+        String homeDir = parentPluginConfig.getSimple(JBossASServerComponent.JBOSS_HOME_DIR_CONFIG_PROP).getStringValue();
+        return new File(homeDir, "bin");
+    }
+
+    private static String buildResourceKey(String scriptPath, File binDir) {
+        return (scriptPath.startsWith(binDir.getPath())) ? scriptPath.substring(binDir.getPath().length() + 1) :
+                scriptPath;
+    }
+
+    private void processAutoDiscoveredResources(ResourceDiscoveryContext<JBossASServerComponent> discoveryContext,
+                                                Set<DiscoveredResourceDetails> resources) {
+        ResourceContext parentResourceContext = discoveryContext.getParentResourceContext();
+        File binDir = getServerBinDirectory(parentResourceContext);
         log.debug("Searching for scripts beneath JBossAS server bin directory (" + binDir + ")...");
         ScriptFileFinder scriptFileFinder = new ScriptFileFinder(discoveryContext.getSystemInformation(), binDir);
         List<File> scriptFiles = scriptFileFinder.findScriptFiles();
@@ -75,17 +114,20 @@ public class ScriptDiscoveryComponent implements ResourceDiscoveryComponent<JBos
             Map<String, String> defaultScriptEnvironment = getDefaultScriptEnvironment();
             pluginConfig.put(new PropertySimple(ScriptComponent.ENVIRONMENT_VARIABLES_CONFIG_PROP,
                 toString(defaultScriptEnvironment)));
-            DiscoveredResourceDetails resource = createResourceDetails(discoveryContext, pluginConfig);
+            DiscoveredResourceDetails resource = createResourceDetails(discoveryContext, pluginConfig, binDir);
             log.debug("Auto-discovered script service: " + resource);
             resources.add(resource);
         }
     }
 
-    private void processManuallyAddedResources(ResourceDiscoveryContext<JBossASServerComponent> discoveryContext, HashSet<DiscoveredResourceDetails> resources, List<Configuration> pluginConfigs) {
+    private void processManuallyAddedResources(ResourceDiscoveryContext<JBossASServerComponent> discoveryContext,
+                                               Set<DiscoveredResourceDetails> resources, List<Configuration> pluginConfigs) {
+        ResourceContext parentResourceContext = discoveryContext.getParentResourceContext();
+        File binDir = getServerBinDirectory(parentResourceContext);
         for (Configuration pluginConfig : pluginConfigs) {
             File path = new File(pluginConfig.getSimple(ScriptComponent.PATH_CONFIG_PROP).getStringValue());
             validatePath(path);
-            DiscoveredResourceDetails resource = createResourceDetails(discoveryContext, pluginConfig);
+            DiscoveredResourceDetails resource = createResourceDetails(discoveryContext, pluginConfig, binDir);
             log.debug("Manually added script service: " + resource);
             resources.add(resource);
         }
@@ -104,7 +146,7 @@ public class ScriptDiscoveryComponent implements ResourceDiscoveryComponent<JBos
     }
 
     private Map<String, String> getDefaultScriptEnvironment() {
-        Map<String, String> defaultScriptEnvironment = new HashMap();
+        Map<String, String> defaultScriptEnvironment = new HashMap<String, String>();
 
         // Name the environment variables after the standard JBossAS properties to make things more intuitive for users.
         // Don't use any "."'s in the environment variable names, as they confuse UNIX shells (see JBNADM-2762).
@@ -125,9 +167,10 @@ public class ScriptDiscoveryComponent implements ResourceDiscoveryComponent<JBos
     }
 
     private DiscoveredResourceDetails createResourceDetails(
-        ResourceDiscoveryContext<JBossASServerComponent> discoveryContext, Configuration pluginConfig) {
-        String key = pluginConfig.getSimple(ScriptComponent.PATH_CONFIG_PROP).getStringValue();
-        String name = new File(key).getName();
+        ResourceDiscoveryContext<JBossASServerComponent> discoveryContext, Configuration pluginConfig, File homeDir) {
+        String path = pluginConfig.getSimple(ScriptComponent.PATH_CONFIG_PROP).getStringValue();
+        String key = buildResourceKey(path, homeDir);
+        String name = new File(path).getName();
         String version = null;
         String description = null;
         ProcessInfo processInfo = null;
@@ -135,4 +178,5 @@ public class ScriptDiscoveryComponent implements ResourceDiscoveryComponent<JBos
         return new DiscoveredResourceDetails(discoveryContext.getResourceType(), key, name, version, description,
             pluginConfig, processInfo);
     }
+
 }

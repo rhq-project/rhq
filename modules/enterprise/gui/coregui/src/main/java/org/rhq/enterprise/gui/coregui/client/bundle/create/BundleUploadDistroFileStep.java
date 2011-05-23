@@ -78,9 +78,9 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
             radioItems.put(RECIPE_OPTION, createRecipeForm());
 
             if (parent != null) {
-                mainCanvasForm = new LocatableDynamicForm(parent.extendLocatorId("mainCanvasForm"));
+                mainCanvasForm = new RadioDynamicForm(parent.extendLocatorId("mainCanvasForm"));
             } else {
-                mainCanvasForm = new LocatableDynamicForm("mainCanvasForm");
+                mainCanvasForm = new RadioDynamicForm("mainCanvasForm");
             }
 
             radioGroup = new RadioGroupWithComponentsItem("bundleDistRadioGroup", MSG
@@ -323,5 +323,19 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
             CoreGUI.getMessageCenter().notify(
                 new Message(MSG.view_bundle_createWizard_failedToUploadDistroFile(), errorMessage, Severity.Error));
         }
+    }
+
+    private class RadioDynamicForm extends LocatableDynamicForm {
+
+        public RadioDynamicForm(String locatorId) {
+            super(locatorId);
+        }
+
+        @Override
+        public void destroy() {
+            radioGroup.destroyComponents();
+            super.destroy();
+        }
+
     }
 }

@@ -54,7 +54,7 @@ import org.rhq.core.domain.resource.Resource;
  * @author Jason Dobies
  */
 @Entity
-@NamedQueries({
+@NamedQueries( {
     @NamedQuery(name = InstalledPackageHistory.QUERY_FIND_CONFIG_BY_PACKAGE_VERSION_AND_REQ, query = "SELECT dcv FROM InstalledPackageHistory iph JOIN iph.deploymentConfigurationValues dcv "
         + "WHERE iph.packageVersion = :packageVersion "
         + "AND iph.contentServiceRequest = :contentServiceRequest "
@@ -92,7 +92,7 @@ public class InstalledPackageHistory implements Serializable {
     private int id;
 
     @JoinColumn(name = "PACKAGE_VERSION_ID", referencedColumnName = "ID", nullable = false)
-    @ManyToOne
+    @ManyToOne(optional = false)
     private PackageVersion packageVersion;
 
     @Column(name = "STATUS", nullable = false)
@@ -115,7 +115,7 @@ public class InstalledPackageHistory implements Serializable {
      * case that the package type does not define any deploy time properties.
      */
     @JoinColumn(name = "DEPLOYMENT_CONFIG_ID", referencedColumnName = "ID", nullable = true)
-    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY, optional = true)
     private Configuration deploymentConfigurationValues;
 
     /**
@@ -132,11 +132,11 @@ public class InstalledPackageHistory implements Serializable {
      * This history item described a package that was on this resource.
      */
     @JoinColumn(name = "RESOURCE_ID", referencedColumnName = "ID", nullable = false)
-    @ManyToOne
+    @ManyToOne(optional = false)
     private Resource resource;
 
     @JoinColumn(name = "CONTENT_SERVICE_REQUEST_ID", referencedColumnName = "ID", nullable = true)
-    @ManyToOne
+    @ManyToOne(optional = true)
     private ContentServiceRequest contentServiceRequest;
 
     public int getId() {

@@ -56,12 +56,12 @@ public class RadioGroupWithComponentsItem extends CanvasItem {
         DynamicForm form) {
 
         super(name, title);
-        
+
         this.valueMap = new LinkedHashMap<NameAndTitle, Canvas>();
-        for(Map.Entry<String, ? extends Canvas> entry : valueMap.entrySet()) {
+        for (Map.Entry<String, ? extends Canvas> entry : valueMap.entrySet()) {
             this.valueMap.put(new NameAndTitle(entry.getKey()), entry.getValue());
         }
-        
+
         this.form = form;
         // since the name is an internal identifier I think it can be used as the locatorId
         this.canvas = new RGWCCanvas(name);
@@ -77,18 +77,18 @@ public class RadioGroupWithComponentsItem extends CanvasItem {
         if (selected == null) {
             return -1;
         }
-        
+
         int idx = 0;
-        for(NameAndTitle t : valueMap.keySet()) {
+        for (NameAndTitle t : valueMap.keySet()) {
             if (selected.equals(t.getTitle())) {
                 break;
             }
             ++idx;
         }
-        
+
         return idx;
     }
-    
+
     public void setSelected(String selected) {
         RadioGroupItem radio = (RadioGroupItem) canvas.getItem(SeleniumUtility.getSafeId(selected));
         if (radio != null) {
@@ -98,7 +98,7 @@ public class RadioGroupWithComponentsItem extends CanvasItem {
             form.markForRedraw();
         }
     }
-    
+
     public Canvas getSelectedComponent() {
         if (null == this.selected) {
             return null;
@@ -110,41 +110,41 @@ public class RadioGroupWithComponentsItem extends CanvasItem {
     private static class NameAndTitle {
         private String name;
         private String title;
-        
+
         public NameAndTitle(String title) {
             name = SeleniumUtility.getSafeId(title);
             this.title = title;
         }
-        
-        public String getName() { 
+
+        public String getName() {
             return name;
         }
-        
+
         public String getTitle() {
             return title;
         }
-        
+
         @Override
         public int hashCode() {
             return name.hashCode();
         }
-        
+
         @Override
         public boolean equals(Object other) {
             if (other == this) {
                 return true;
             }
-            
+
             if (!(other instanceof NameAndTitle)) {
                 return false;
             }
-            
+
             NameAndTitle o = (NameAndTitle) other;
-            
+
             return name.equals(o.name);
         }
     }
-    
+
     public class RGWCCanvas extends LocatableDynamicForm {
 
         public RGWCCanvas(String locatorId) {
@@ -220,6 +220,16 @@ public class RadioGroupWithComponentsItem extends CanvasItem {
                 }
                 value.setDisabled(disabled);
                 value.markForRedraw();
+            }
+        }
+    }
+
+    public void destroyComponents() {
+        for (Canvas canvas : valueMap.values()) {
+            try {
+                canvas.destroy();
+            } catch (Throwable t) {
+                int i = 0;
             }
         }
     }

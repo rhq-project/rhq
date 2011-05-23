@@ -72,7 +72,7 @@ import org.rhq.core.domain.resource.Resource;
         + " JOIN ev.source evs JOIN evs.resource res WHERE res.id = :resourceId AND ev.severity = :severity "
         + " AND ev.timestamp BETWEEN :start AND :end "),
     @NamedQuery(name = Event.GET_DETAILS_FOR_EVENT_IDS, query = "SELECT "
-        + " new org.rhq.core.domain.event.composite.EventComposite(ev.detail, res.id, res.name, ev.id, ev.severity, evs.location, ev.timestamp) "
+        + " new org.rhq.core.domain.event.composite.EventComposite(ev.detail, res.id, res.name, res.ancestry, res.resourceType.id, ev.id, ev.severity, evs.location, ev.timestamp) "
         + " FROM Event ev JOIN ev.source evs JOIN evs.resource res WHERE ev.id IN (:eventIds) AND evs.id = ev.source"
         + "  AND res.id = evs.resource "), //
     @NamedQuery(name = Event.QUERY_EVENT_COUNTS_BY_SEVERITY, query = "" //
@@ -112,7 +112,7 @@ public class Event implements Serializable {
     private int id;
 
     @JoinColumn(name = "EVENT_SOURCE_ID", referencedColumnName = "ID", nullable = false)
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     private EventSource source;
 
     @Column(name = "TIMESTAMP", nullable = false)

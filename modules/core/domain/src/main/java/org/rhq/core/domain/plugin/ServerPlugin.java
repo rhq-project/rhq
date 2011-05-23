@@ -262,12 +262,12 @@ public class ServerPlugin extends AbstractPlugin {
     public static final String QUERY_GET_CONFIG_MTIMES = "ServerPlugin.getConfigMTimes";
     public static final String UPDATE_PLUGIN_ENABLED_BY_ID = "ServerPlugin.updatePluginEnabledById";
 
-    @JoinColumn(name = "JOBS_CONFIG_ID", referencedColumnName = "ID")
-    @OneToOne(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
+    @JoinColumn(name = "JOBS_CONFIG_ID", referencedColumnName = "ID", nullable = true)
+    @OneToOne(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY, optional = true)
     private Configuration scheduledJobsConfiguration;
 
-    @JoinColumn(name = "PLUGIN_CONFIG_ID", referencedColumnName = "ID")
-    @OneToOne(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
+    @JoinColumn(name = "PLUGIN_CONFIG_ID", referencedColumnName = "ID", nullable = true)
+    @OneToOne(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY, optional = true)
     private Configuration pluginConfiguration;
 
     @Column(name = "PTYPE")

@@ -20,6 +20,7 @@
         </plugin-configuration>
 
         <metric property="pattern1" displayName="Pattern 1 metric" defaultInterval="60000" displayType="summary" defaultOn="true"/>
+        <metric property="text1" displayName="Pattern 1 trait" defaultInterval="60000" displayType="summary" defaultOn="true" dataType="trait"/>
 
     </server>
 

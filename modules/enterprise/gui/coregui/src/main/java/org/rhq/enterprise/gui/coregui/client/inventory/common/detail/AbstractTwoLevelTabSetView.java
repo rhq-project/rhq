@@ -253,7 +253,8 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
             // select the tab and subTab (no event fired, we're already dealing with the correct path)
             this.tabSet.selectTab(tab);
             // this call adds the subtab canvas as a member of the subtablayout
-            tab.getLayout().selectSubTab(subtab);
+            // don't show the subtab canvas until after we perform any necessay rendering.
+            tab.getLayout().selectSubTab(subtab, false);
 
             // get the target canvas
             Canvas subView = subtab.getCanvas();
@@ -264,12 +265,16 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
             // refresh.
             if (subView instanceof BookmarkableView) {
                 ((BookmarkableView) subView).renderView(viewPath);
+                subView.setVisible(true);
 
             } else if (subView instanceof RefreshableView && subView.isDrawn()) {
                 // Refresh the data on the subtab, so it's not stale.
                 Log.debug("Refreshing data for [" + subView.getClass().getName() + "]...");
                 ((RefreshableView) subView).refresh();
+                subView.setVisible(true);
 
+            } else {
+                subView.setVisible(true);
             }
 
             // ensure the tabset is enabled (disabled in onTabSelected), and redraw
@@ -300,7 +305,7 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
             subTab = tab.getLayout().getDefaultSubTab();
         }
 
-        tab.getLayout().selectSubTab(subTab);
+        tab.getLayout().selectSubTab(subTab, true);
 
         // Now that the subtab has been selected, select the tab (this will cause a tab selected event to fire).
         this.tabSet.selectTab(tab);

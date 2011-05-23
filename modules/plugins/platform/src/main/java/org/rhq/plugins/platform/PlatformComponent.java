@@ -82,10 +82,10 @@ public class PlatformComponent implements ResourceComponent, ConfigurationFacet,
     private static final String TRAIT_INDICATOR = "Trait.";
 
     // these are the "property" names for all trait metrics
-    private static final String TRAIT_HOSTNAME = TRAIT_INDICATOR + "hostname";
-    private static final String TRAIT_OSNAME = TRAIT_INDICATOR + "osname";
-    private static final String TRAIT_OSVERSION = TRAIT_INDICATOR + "osversion";
-    private static final String TRAIT_ARCH = TRAIT_INDICATOR + "sysarch";
+    protected static final String TRAIT_HOSTNAME = TRAIT_INDICATOR + "hostname";
+    protected static final String TRAIT_OSNAME = TRAIT_INDICATOR + "osname";
+    protected static final String TRAIT_OSVERSION = TRAIT_INDICATOR + "osversion";
+    protected static final String TRAIT_ARCH = TRAIT_INDICATOR + "sysarch";
 
     protected ResourceContext resourceContext;
     private SystemInfo sysinfo;
@@ -188,7 +188,7 @@ public class PlatformComponent implements ResourceComponent, ConfigurationFacet,
         return Double.NaN;
     }
 
-    private MeasurementDataTrait getMeasurementDataTrait(MeasurementScheduleRequest request) {
+    protected MeasurementDataTrait getMeasurementDataTrait(MeasurementScheduleRequest request) {
         String name = request.getName();
 
         MeasurementDataTrait trait = new MeasurementDataTrait(request, "?");
@@ -242,4 +242,9 @@ public class PlatformComponent implements ResourceComponent, ConfigurationFacet,
         throw new UnsupportedOperationException("Operation [" + name + "] not supported on "
             + resourceContext.getResourceType() + ".");
     }
+
+    public SystemInfo getSysinfo() {
+        return sysinfo;
+    }
+
 }

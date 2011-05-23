@@ -17,14 +17,11 @@ import org.rhq.core.domain.criteria.GroupResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.PluginConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.gwt.ConfigurationGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
-import org.rhq.enterprise.server.resource.ResourceManagerLocal;
-import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -35,8 +32,6 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
     private static final long serialVersionUID = 1L;
 
     private ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
-    private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
-    private ResourceGroupManagerLocal groupManager = LookupUtil.getResourceGroupManager();
 
     @Override
     public void purgePluginConfigurationUpdates(int[] configUpdateIds, boolean purgeInProgress) throws RuntimeException {
@@ -263,10 +258,8 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
     @Override
     public Map<Integer, Configuration> findResourceConfigurationsForGroup(int groupId) throws RuntimeException {
         try {
-            ResourceGroup group = this.groupManager.getResourceGroup(getSessionSubject(), groupId);
             Map<Integer, Configuration> configurations = this.configurationManager
-                .getResourceConfigurationMapForCompatibleGroup(group);
-
+                .getResourceConfigurationsForCompatibleGroup(getSessionSubject(), groupId);
             return SerialUtility.prepare(configurations, "ConfigurationService.findResourceConfigurationsForGroup");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
@@ -358,23 +351,6 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
         }
     }
 
-    private List<ResourceConfigurationComposite> convertToCompositesList(Map<Integer, Configuration> configurations)
-        throws RuntimeException {
-        try {
-            List<ResourceConfigurationComposite> configurationComposites = new ArrayList<ResourceConfigurationComposite>(
-                configurations.size());
-            for (Integer resourceId : configurations.keySet()) {
-                Configuration configuration = configurations.get(resourceId);
-                ResourceConfigurationComposite configurationComposite = new ResourceConfigurationComposite(resourceId,
-                    configuration);
-                configurationComposites.add(configurationComposite);
-            }
-            return configurationComposites;
-        } catch (Throwable t) {
-            throw getExceptionToThrowToClient(t);
-        }
-    }
-
     private Map<Integer, Configuration> convertToMap(List<ResourceConfigurationComposite> resourceConfigurations)
         throws RuntimeException {
         try {
@@ -388,4 +364,5 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
             throw getExceptionToThrowToClient(t);
         }
     }
+
 }

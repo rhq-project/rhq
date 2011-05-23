@@ -406,7 +406,8 @@
                        displayName="Query Timeout"
                        type="integer"
                        units="seconds"
-                       required="false">
+                       required="false"
+                       defaultValue="0">
         <c:description>
             Any configured query timeout in seconds. A value of 0 means no timeout. The default is 0.
         </c:description>

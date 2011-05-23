@@ -67,7 +67,7 @@ public class ContentSourceSyncResults implements ContentSyncResults, Serializabl
     private int id;
 
     @JoinColumn(name = "CONTENT_SRC_ID", referencedColumnName = "ID", nullable = false)
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     private ContentSource contentSource;
 
     @Column(name = "STATUS", nullable = false)

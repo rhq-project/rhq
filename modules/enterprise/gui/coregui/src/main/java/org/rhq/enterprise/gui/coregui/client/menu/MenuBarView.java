@@ -124,7 +124,8 @@ public class MenuBarView extends LocatableVLayout {
         lineLabel.setWidth("12px");
         lineLabel.setAlign(Alignment.CENTER);
 
-        String contents = "<a href='#" + LOGOUT_VIEW_ID.getName() + "'>" + LOGOUT_VIEW_ID.getTitle() + "</a>";
+        String contents = "<a href='#" + LOGOUT_VIEW_ID.getName() + "' style='white-space: nowrap'>"
+                + LOGOUT_VIEW_ID.getTitle() + "</a>";
         LocatableLabel logoutLink = new LocatableLabel(this.extendLocatorId("LogoutLink"), contents);
         logoutLink.setAutoWidth();
 

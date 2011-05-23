@@ -941,12 +941,11 @@ public class Resource implements Comparable<Resource>, Serializable {
     private String location;
 
     @JoinColumn(name = "RESOURCE_TYPE_ID", referencedColumnName = "ID", nullable = false)
-    @ManyToOne
+    @ManyToOne(optional = false)
     // TODO GH: It would be preferable for this to be lazy, but will need cleanup throughout the app (fetch = FetchType.LAZY)
     @Summary(index = 4)
     private ResourceType resourceType;
 
-    // LAZY fetch otherwise this will recursively call all parents until null is found
     // do not cascade remove - would take forever to delete a full platform hierarchy
     // we will manually delete the children ourselves
     @OneToMany(mappedBy = "parentResource", fetch = FetchType.LAZY, cascade = { CascadeType.PERSIST })
@@ -954,21 +953,22 @@ public class Resource implements Comparable<Resource>, Serializable {
     // primary key
     private Set<Resource> childResources = new LinkedHashSet<Resource>();
 
-    @JoinColumn(name = "PARENT_RESOURCE_ID")
-    @ManyToOne(fetch = FetchType.LAZY)
+    // LAZY fetch otherwise this will recursively call all parents until null is found
+    @JoinColumn(name = "PARENT_RESOURCE_ID", nullable = true)
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
     @XmlTransient
     private Resource parentResource;
 
-    @JoinColumn(name = "RES_CONFIGURATION_ID", referencedColumnName = "ID")
-    @OneToOne(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
+    @JoinColumn(name = "RES_CONFIGURATION_ID", referencedColumnName = "ID", nullable = true)
+    @OneToOne(cascade = { CascadeType.ALL }, optional = true)
     private Configuration resourceConfiguration = new Configuration();
 
-    @JoinColumn(name = "PLUGIN_CONFIGURATION_ID", referencedColumnName = "ID")
-    @OneToOne(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
+    @JoinColumn(name = "PLUGIN_CONFIGURATION_ID", referencedColumnName = "ID", nullable = true)
+    @OneToOne(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY, optional = true)
     private Configuration pluginConfiguration = new Configuration();
 
-    @JoinColumn(name = "AGENT_ID", referencedColumnName = "ID")
-    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "AGENT_ID", referencedColumnName = "ID", nullable = true)
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
     private Agent agent;
 
     // bulk delete @OneToMany(mappedBy = "resource", cascade = { CascadeType.ALL })
@@ -1050,8 +1050,8 @@ public class Resource implements Comparable<Resource>, Serializable {
     @OneToMany(mappedBy = "resource", fetch = FetchType.LAZY)
     private Set<EventSource> eventSources = new HashSet<EventSource>();
 
-    @JoinColumn(name = "PRODUCT_VERSION_ID", referencedColumnName = "ID")
-    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "PRODUCT_VERSION_ID", referencedColumnName = "ID", nullable = true)
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
     private ProductVersion productVersion;
 
     // not currently needed, but could be added if we find a need to get deployment info via the resource

@@ -146,7 +146,7 @@ public interface SubjectManagerRemote {
     /**
      * Logs out a user.
      *
-     * @param username The username for the current user
+     * @param subject The Subject to log out. The sessionId must be valid.
      */
     @WebMethod
     void logout( //

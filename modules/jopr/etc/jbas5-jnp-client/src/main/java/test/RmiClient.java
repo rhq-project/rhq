@@ -47,17 +47,27 @@ public class RmiClient
 
       ComponentType localTxDataSourceType = new ComponentType("DataSource", "LocalTx");
       ManagedComponent defaultDSComponent = managementView.getComponent("DefaultDS", localTxDataSourceType);      
-      ManagedProperty maxPoolSizeProp = defaultDSComponent.getProperty("max-pool-size");
+      ManagedProperty maxPoolSizeProp = defaultDSComponent.getProperty("query-timeout");
       SimpleValueSupport maxPoolSizeValue = (SimpleValueSupport)maxPoolSizeProp.getValue();
-      System.err.println("original value: " + maxPoolSizeValue.getValue());            
-      maxPoolSizeValue.setValue(null);
+      System.err.println("getValue(): " + maxPoolSizeValue.getValue());            
+
+      System.err.println("setValue(33)");                  
+      maxPoolSizeValue.setValue(33);      
       managementView.updateComponent(defaultDSComponent);
-      
       managementView.load();
       defaultDSComponent = managementView.getComponent("DefaultDS", localTxDataSourceType);      
-      maxPoolSizeProp = defaultDSComponent.getProperty("max-pool-size");
+      maxPoolSizeProp = defaultDSComponent.getProperty("query-timeout");
       maxPoolSizeValue = ((SimpleValueSupport)maxPoolSizeProp.getValue());
-      System.err.println("new value: " + maxPoolSizeValue.getValue());      
+      System.err.println("getValue(): " + maxPoolSizeValue.getValue());            
+
+      System.err.println("setValue(null)");                  
+      maxPoolSizeValue.setValue(null);
+      managementView.updateComponent(defaultDSComponent);
+      managementView.load();
+      defaultDSComponent = managementView.getComponent("DefaultDS", localTxDataSourceType);      
+      maxPoolSizeProp = defaultDSComponent.getProperty("query-timeout");
+      maxPoolSizeValue = ((SimpleValueSupport)maxPoolSizeProp.getValue());
+      System.err.println("getValue(): " + maxPoolSizeValue.getValue());
    }
 }
 

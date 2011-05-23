@@ -168,8 +168,8 @@ public abstract class OperationHistory implements Serializable {
     @ManyToOne(fetch = FetchType.EAGER)
     private OperationDefinition operationDefinition;
 
-    @JoinColumn(name = "PARAMETERS_CONFIG_ID", referencedColumnName = "ID")
-    @OneToOne(cascade = { CascadeType.REMOVE }, fetch = FetchType.LAZY)
+    @JoinColumn(name = "PARAMETERS_CONFIG_ID", referencedColumnName = "ID", nullable = true)
+    @OneToOne(cascade = { CascadeType.REMOVE }, fetch = FetchType.LAZY, optional = true)
     private Configuration parameters;
 
     protected OperationHistory() {

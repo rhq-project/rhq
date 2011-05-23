@@ -29,12 +29,10 @@ import java.util.List;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.SortSpecifier;
-import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.grid.CellFormatter;
-import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
@@ -130,78 +128,8 @@ public class EventCompositeHistoryView extends TableSection<EventCompositeDataso
 
     @Override
     protected void configureTable() {
-        ListGridField timestampField = new ListGridField("timestamp", MSG.view_inventory_eventHistory_timestamp());
-        TimestampCellFormatter.prepareDateField(timestampField);
-
-        ListGridField severityField = new ListGridField("severity", MSG.view_inventory_eventHistory_severity());
-        severityField.setAlign(Alignment.CENTER);
-        severityField.setCellFormatter(new CellFormatter() {
-            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                String icon = ImageManager.getEventSeverityBadge(EventSeverity.valueOf(o.toString()));
-                return Canvas.imgHTML(icon);
-            }
-        });
-        severityField.setShowHover(true);
-        severityField.setHoverCustomizer(new HoverCustomizer() {
-            @Override
-            public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
-                EventSeverity severity = EventSeverity.valueOf(record.getAttribute("severity"));
-                switch (severity) {
-                case DEBUG:
-                    return MSG.common_severity_debug();
-                case INFO:
-                    return MSG.common_severity_info();
-                case WARN:
-                    return MSG.common_severity_warn();
-                case ERROR:
-                    return MSG.common_severity_error();
-                case FATAL:
-                    return MSG.common_severity_fatal();
-                }
-                return null;
-            }
-        });
-
-        ListGridField detailField = new ListGridField("detail", MSG.view_inventory_eventHistory_details());
-        detailField.setCellFormatter(new CellFormatter() {
-            @Override
-            public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
-                if (null == value) {
-                    return "";
-                } else if (((String) value).length() <= 200) {
-                    return (String) value;
-                } else {
-                    return ((String) value).substring(0, 200); // first 200 chars
-                }
-            }
-        });
-
-        ListGridField sourceField = new ListGridField("source", MSG.view_inventory_eventHistory_sourceLocation());
-        sourceField.setCellFormatter(new CellFormatter() {
-            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                String sourceLocation = listGridRecord.getAttribute("source");
-                int length = sourceLocation.length();
-                if (length > 40) {
-                    return "..." + sourceLocation.substring(length - 40); // the last 40 chars
-                }
-                return sourceLocation;
-            }
-        });
-        sourceField.setShowHover(true);
-        sourceField.setHoverCustomizer(new HoverCustomizer() {
-            @Override
-            public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
-                String sourceLocation = record.getAttribute("source");
-                return (sourceLocation.length() > 40) ? sourceLocation : null;
-            }
-        });
-
-        timestampField.setWidth(155);
-        severityField.setWidth(55);
-        detailField.setWidth("*");
-        sourceField.setWidth(220);
-
-        setListGridFields(timestampField, severityField, detailField, sourceField);
+        ArrayList<ListGridField> dataSourceFields = getDataSource().getListGridFields();
+        getListGrid().setFields(dataSourceFields.toArray(new ListGridField[dataSourceFields.size()]));
 
         setupTableInteractions();
 

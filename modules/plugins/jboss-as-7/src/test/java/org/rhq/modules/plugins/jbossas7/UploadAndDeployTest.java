@@ -36,7 +36,8 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
 
 /**
  * Test uploading and deploying to the domain
- * To use it, domain server must be up and running locally and
+ * To use it, a server in <b>domain mode</b> must be up and have it's
+ * <b>DomainController</b> running <b>locally</b> and
  * the UPLOAD_FILE must point to a valid archive in the resources directory.
  * @author Heiko W. Rupp
  */

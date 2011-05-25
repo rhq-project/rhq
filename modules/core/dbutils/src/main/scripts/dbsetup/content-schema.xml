@@ -645,6 +645,13 @@
             </primaryKey>
         </constraint>
     </table>
-    
+
+    <table name="RHQ_SNAPSHOT">
+        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+        <column name="DATA" type="LARGEOBJECT" required="false"/>
+        <column name="DATA_SIZE" type="LONG"/>
+        <column name="CTIME" type="LONG" required="true"/>
+    </table>
+
 </dbsetup>
 

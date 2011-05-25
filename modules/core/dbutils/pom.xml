@@ -99,19 +99,17 @@
                   server = project.properties['rhq.dev.ds.server-name'] ?: '127.0.0.1'
                   rhqUser = project.properties['rhq.dev.ds.user-name'] ?: 'rhqadmin'
 		}
-		  // This is a bit of a temporary hack to work around
-		  // https://cvs.codehaus.org/browse/GMAVEN-46 which results in
-		  // groovy scripts not being able to get the correct values of
-		  // build properties that are overridden on the command line.
-		  // This is being done in support of the hudson job which is
-		  // trying to use a database named rhqupgrade.
-		else if (project.properties['upgrade.db']) {
-                  database = 'rhqupgrade'
-		}
 		else {
                   database = project.properties['rhq.test.ds.db-name']
                   server = project.properties['rhq.test.ds.server-name'] ?: '127.0.0.1'
                   rhqUser = project.properties['rhq.test.ds.user-name'] ?: 'rhqadmin'
+                }
+
+                // The upgrade.db property should be set for local builds when you
+                // need to test upgrade changes. Hudson builds will specify the
+                // database to use in settings.xml
+                if (project.properties['upgrade.db']) {
+                  database = 'rhqupgrade'
                 }
 
                 adminUsername = project.properties['rhq.db.admin.username'] ?: 'postgres'

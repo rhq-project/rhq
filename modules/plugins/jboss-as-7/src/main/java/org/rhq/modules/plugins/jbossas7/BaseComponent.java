@@ -93,8 +93,11 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
      *  @see org.rhq.core.pluginapi.inventory.ResourceComponent#getAvailability()
      */
     public AvailabilityType getAvailability() {
-        // TODO supply real implementation
-        return AvailabilityType.UP;
+
+        ReadResource op = new ReadResource(pathToAddress(path));
+        Result res = connection.execute(op);
+
+        return res.isSuccess()? AvailabilityType.UP: AvailabilityType.DOWN;
     }
 
 
@@ -179,6 +182,7 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
 
     protected String getPath() { return path; }
 
+    // TODO this needs completeion and a big fat refactoring
     public Configuration loadResourceConfiguration() throws Exception {
         ConfigurationDefinition configDef = context.getResourceType().getResourceConfigurationDefinition();
 //        String myPath = getResultingPath();

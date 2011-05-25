@@ -5,18 +5,18 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileWriter;
-import java.io.InputStream;
 import java.io.PrintWriter;
 import java.net.URISyntaxException;
-import java.sql.Connection;
+import java.sql.Blob;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.print.URIException;
+import javax.transaction.SystemException;
 
 import org.apache.commons.io.IOUtils;
 import org.hibernate.Hibernate;
-import org.hibernate.Session;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeGroups;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.test.AbstractEJB3Test;
@@ -25,48 +25,117 @@ import static org.apache.commons.io.IOUtils.toInputStream;
 
 public class SnapshotTest extends AbstractEJB3Test {
 
-    @Test(groups = "integration.ejb3")
-    public void loadSnapshotWithoutData() throws Exception {
-        String content = "This is a test";
-
-        getTransactionManager().begin();
-        Snapshot snapshot = new Snapshot();
-        snapshot.setDataSize(content.length());
-        snapshot.setData(Hibernate.createBlob(toInputStream(content), content.length()));
-
-        getEntityManager().persist(snapshot);
-        getTransactionManager().commit();
-
-        getTransactionManager().begin();
-        snapshot = getEntityManager().find(Snapshot.class, snapshot.getId());
-        getTransactionManager().commit();
-
-        System.out.println("data size = " + snapshot.getDataSize());
+    static interface TransactionCallback {
+        void execute() throws Exception;
     }
 
-    @Test(groups = "integration.ejb3")
+    @BeforeGroups(groups = {"snapshot"})
+    public void resetDB() throws Exception {
+        executeInTransaction(new TransactionCallback() {
+            @Override
+            public void execute() throws Exception {
+                getEntityManager().createQuery("delete from Snapshot").executeUpdate();
+            }
+        });
+    }
+
+    @Test(groups = {"integration.ejb3", "snapshot"})
+    public void updateSnapshotData() throws Exception {
+        String content = "snapshot data";
+
+        // Create the initial snapshot
+        final Snapshot s1 = new Snapshot();
+        s1.setDataSize(content.length());
+        s1.setData(Hibernate.createBlob(toInputStream(content), content.length()));
+
+        executeInTransaction(new TransactionCallback() {
+            @Override
+            public void execute() {
+                getEntityManager().persist(s1);
+            }
+        });
+
+        // Make the update
+        final String newContent = "snapshot data updated...";
+        executeInTransaction(new TransactionCallback() {
+            @Override
+            public void execute() {
+                Snapshot s2 = getEntityManager().find(Snapshot.class, s1.getId());
+                s2.setData(Hibernate.createBlob(toInputStream(newContent), newContent.length()));
+                getEntityManager().merge(s2);
+            }
+        });
+
+        // Fetch the snapshot to verify that the update was persisted
+        executeInTransaction(new TransactionCallback() {
+            @Override
+            public void execute() {
+                try {
+                    Snapshot s3 = getEntityManager().find(Snapshot.class, s1.getId());
+                    String expected = newContent;
+                    String actual = IOUtils.toString(s3.getData());
+
+                    assertEquals("Failed to update snapshot data", expected, actual);
+                } catch (Exception e) {
+                    fail("Failed to load snapshot data: " + e.getMessage());
+                }
+            }
+        });
+    }
+
+    // The purpose of this test is to store a large amount of data and then
+    // load the snapshots to verify that the snapshot data is not also loaded.
+    // Because of the amount data involved is very large the test is long
+    // running and should be moved to an integration test suite.
+    @Test(groups = {"integration.ejb3", "snapshot"})
     public void loadMultipleSnapshotsWithoutLoadingData() throws Exception {
         File dataFile = createDataFile("test_data.txt", 100);
         int numSnapshots = 25;
-        List<Integer> snapshotIds = new ArrayList<Integer>();
+        final List<Integer> snapshotIds = new ArrayList<Integer>();
 
-        getTransactionManager().begin();
-        for (int i = 0; i < numSnapshots; ++i) {
-            Snapshot snapshot = new Snapshot();
+        for (int i = 0; i <numSnapshots; ++i) {
+            final Snapshot snapshot = new Snapshot();
             snapshot.setDataSize(dataFile.length());
             snapshot.setData(Hibernate.createBlob(new BufferedInputStream(new FileInputStream(dataFile))));
 
-            getEntityManager().persist(snapshot);
-            snapshotIds.add(snapshot.getId());
+            executeInTransaction(new TransactionCallback() {
+                @Override
+                public void execute() {
+                    getEntityManager().persist(snapshot);
+                    snapshotIds.add(snapshot.getId());
+                }
+            });
         }
-        getTransactionManager().commit();
 
-        getTransactionManager().begin();
-        List<Snapshot> snapshots = new ArrayList<Snapshot>();
-        for (Integer id : snapshotIds) {
-            snapshots.add(getEntityManager().find(Snapshot.class, id));
+        final List<Blob> blobs = new ArrayList<Blob>();
+        final List<Snapshot> snapshots = new ArrayList<Snapshot>();
+        for (final Integer id : snapshotIds) {
+            executeInTransaction(new TransactionCallback() {
+                @Override
+                public void execute() {
+                    Snapshot snapshot = getEntityManager().find(Snapshot.class, id);
+                    blobs.add(snapshot.getBlob());
+                    snapshots.add(snapshot);
+                }
+            });
         }
-        getTransactionManager().commit();
+
+        assertEquals("Failed to save or load " + numSnapshots + " snapshots", numSnapshots, snapshots.size());
+    }
+
+    void executeInTransaction(TransactionCallback callback) {
+        try {
+            getTransactionManager().begin();
+            callback.execute();
+            getTransactionManager().commit();
+        } catch (Throwable t) {
+            try {
+                getTransactionManager().rollback();
+            } catch (SystemException e) {
+                throw new RuntimeException("Failed to rollback transaction", e);
+            }
+            throw new RuntimeException(t.getCause());
+        }
     }
 
     File snapshotDir() throws URISyntaxException {

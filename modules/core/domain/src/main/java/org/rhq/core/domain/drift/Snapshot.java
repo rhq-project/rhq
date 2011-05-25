@@ -57,6 +57,10 @@ public class Snapshot implements Serializable {
 //        this.data = data;
 //    }
 
+    public Blob getBlob() {
+        return data;
+    }
+
     public InputStream getData() throws SQLException {
         return data.getBinaryStream();
     }

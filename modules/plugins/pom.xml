@@ -55,6 +55,21 @@
          <scope>test</scope>
       </dependency>
 
+      <dependency>
+         <groupId>${rhq.groupId}</groupId>
+         <artifactId>rhq-core-plugin-container</artifactId>
+         <version>${project.version}</version>
+         <type>test-jar</type>
+         <scope>test</scope>
+      </dependency>
+      
+      <dependency>
+         <groupId>${rhq.groupId}</groupId>
+         <artifactId>test-utils</artifactId>
+         <version>${project.version}</version>
+         <scope>test</scope>
+      </dependency>
+      
       <!--
          TODO: This is a fix for the Javac bug requiring annotations to be available when compiling dependent classes.
          It is fixed in JDK 6.

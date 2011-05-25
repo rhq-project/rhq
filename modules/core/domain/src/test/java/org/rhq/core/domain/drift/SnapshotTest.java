@@ -46,8 +46,8 @@ public class SnapshotTest extends AbstractEJB3Test {
 
     @Test(groups = "integration.ejb3")
     public void loadMultipleSnapshotsWithoutLoadingData() throws Exception {
-        File dataFile = createDataFile("test_data.txt", 50);
-        int numSnapshots = 10;
+        File dataFile = createDataFile("test_data.txt", 100);
+        int numSnapshots = 25;
         List<Integer> snapshotIds = new ArrayList<Integer>();
 
         getTransactionManager().begin();

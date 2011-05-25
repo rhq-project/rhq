@@ -153,6 +153,81 @@ public class UploadAndDeployTest {
 
     }
 
+    // Test for AS7-853
+    @Test(timeOut = 60*1000L, enabled = true)
+    public void testUploadIndividualSteps2() throws Exception {
+
+        String bytes_value = prepare();
+
+        System.out.println("sha: " + bytes_value);
+
+        System.out.println();
+        ASConnection connection = new ASConnection(DC_HOST, DC_HTTP_PORT);
+
+        List<PROPERTY_VALUE> deploymentsAddress = new ArrayList<PROPERTY_VALUE>(1);
+        deploymentsAddress.add(new PROPERTY_VALUE("deployment", TEST_WAR));
+        Operation op = new Operation("add",deploymentsAddress);
+        List<Object> content = new ArrayList<Object>(1);
+        Map<String,Object> contentValues = new HashMap<String,Object>();
+        contentValues.put("hash",new PROPERTY_VALUE("BYTES_VALUE",bytes_value));
+        content.add(contentValues);
+        op.addAdditionalProperty("content",content);
+        op.addAdditionalProperty("name", TEST_WAR); // this needs to be unique per upload
+        op.addAdditionalProperty("runtime-name", TEST_WAR);
+        System.out.flush();
+        JsonNode ret = connection.executeRaw(op);
+        op = null;
+        System.out.println("Add to /deploy done " + ret);
+        System.out.flush();
+
+        assert ret.toString().contains("success") : ret;
+
+
+        List<PROPERTY_VALUE> serverGroupAddress = new ArrayList<PROPERTY_VALUE>(1);
+        serverGroupAddress.add(new PROPERTY_VALUE("server-group", "main-server-group"));
+        serverGroupAddress.add(new PROPERTY_VALUE("deployment", TEST_WAR));
+
+        Operation attach = new Operation("add",serverGroupAddress,"enabled",true);
+        System.out.flush();
+        ret = connection.executeRaw(attach);
+        System.out.println("Add to server group done: " + ret);
+        System.out.flush();
+
+        assert ret.has("outcome") : "Ret not valid " + ret.toString();
+        assert ret.get("outcome").getTextValue().equals("success") : "add to sg was no success " + ret.getTextValue();
+
+
+        Result depRes;// = connection.execute(deploy);
+
+        Thread.sleep(500);
+
+        Operation undeploy = new Operation("undeploy",serverGroupAddress);
+        depRes = connection.execute(undeploy);
+
+        assert depRes.isSuccess() : "Undeploy went wrong: " + depRes.getFailureDescription();
+        undeploy = null;
+
+        // Now tear down stuff again
+
+        Operation unattach = new Operation("remove",serverGroupAddress);
+        ret = connection.executeRaw(unattach);
+
+        assert ret.has("outcome") : "Ret not valid " + ret.toString();
+        assert ret.get("outcome").getTextValue().equals("success") : "remove from sg was no success " + ret.getTextValue();
+
+
+        // remove from domain
+
+        Operation remove = new Operation("remove",deploymentsAddress);
+        ret = connection.executeRaw(remove);
+
+        assert ret.has("outcome") : "Ret not valid " + ret.toString();
+        assert ret.get("outcome").getTextValue().equals("success") : "remove from domain was no success " + ret.getTextValue();
+
+        System.out.flush();
+
+    }
+
     @Test(timeOut = 60*1000L, enabled = true)
     public void testUploadComposite() throws Exception {
 

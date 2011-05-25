@@ -134,8 +134,11 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
 
                             if (path==null||path.isEmpty())
                                 resKey = newPath;
-                            else
+                            else {
+                                if (path.startsWith(","))
+                                    path = path.substring(1);
                                 resKey = path + "," +childType + "=" + val;
+                            }
 
                             PropertySimple pathProp = new PropertySimple("path",resKey);
                             config2.put(pathProp);

@@ -135,7 +135,7 @@ public class ASConnection {
             else {
                 outcome="- no response from server -";
             }
-            System.out.println("==> " + outcome);
+//            System.out.println("==> " + outcome);
             return operationResult;
             }
             else {

@@ -281,8 +281,11 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
 
                                     }
                                     else {
-                                        propertySimple = new PropertySimple(key,entry.findValue(key).getValueAsText());
-                                        map.put(propertySimple);
+                                        JsonNode value = entry.findValue(key);
+                                        if (value!=null){
+                                            propertySimple = new PropertySimple(key, value.getValueAsText());
+                                            map.put(propertySimple);
+                                        }
 
                                     }
                                 }
@@ -367,9 +370,9 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
         return ret;
     }
 
+
     PropertySimple putProperty(JsonNode value, PropertyDefinition def) {
         String name = def.getName();
-        PropertySimpleType type = ((PropertyDefinitionSimple) def).getType();
         PropertySimple ps;
 
         if (value==null) {
@@ -380,6 +383,7 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
             else
                 return new PropertySimple(name,null);
         }
+        PropertySimpleType type = ((PropertyDefinitionSimple) def).getType();
 
         switch (type) {
         case BOOLEAN:
@@ -572,7 +576,12 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
             resourceKey = addressToPath(serverGroupAddress);
         }
         else {
-            resourceKey = addressToPath(step1.getAddress());
+
+            List<PROPERTY_VALUE> address = step1.getAddress();
+            Operation step3 = new Operation("deploy",address);
+            cop.addStep(step3);
+
+            resourceKey = addressToPath(address);
         }
 
         JsonNode result = connection.executeRaw(cop);

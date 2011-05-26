@@ -650,8 +650,10 @@
         <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
         <column name="DATA" type="LARGEOBJECT" required="false"/>
         <column name="DATA_SIZE" type="LONG"/>
+        <column name="BASEDIR" type="VARCHAR2" size="512" required="true"/>
         <column name="CTIME" type="LONG" required="true"/>
     </table>
+
 
 </dbsetup>
 

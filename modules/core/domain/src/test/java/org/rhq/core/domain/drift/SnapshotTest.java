@@ -47,6 +47,7 @@ public class SnapshotTest extends AbstractEJB3Test {
         final Snapshot s1 = new Snapshot();
         s1.setDataSize(content.length());
         s1.setData(Hibernate.createBlob(toInputStream(content), content.length()));
+        s1.setBasedir("snapshot/test/s1");
 
         executeInTransaction(new TransactionCallback() {
             @Override
@@ -89,13 +90,14 @@ public class SnapshotTest extends AbstractEJB3Test {
     // running and should be moved to an integration test suite.
     @Test(groups = {"integration.ejb3", "snapshot"})
     public void loadMultipleSnapshotsWithoutLoadingData() throws Exception {
-        File dataFile = createDataFile("test_data.txt", 100);
-        int numSnapshots = 25;
+        File dataFile = createDataFile("test_data.txt", 10);
+        int numSnapshots = 10;
         final List<Integer> snapshotIds = new ArrayList<Integer>();
 
         for (int i = 0; i <numSnapshots; ++i) {
             final Snapshot snapshot = new Snapshot();
             snapshot.setDataSize(dataFile.length());
+            snapshot.setBasedir("snapshot/" + i);
             snapshot.setData(Hibernate.createBlob(new BufferedInputStream(new FileInputStream(dataFile))));
 
             executeInTransaction(new TransactionCallback() {

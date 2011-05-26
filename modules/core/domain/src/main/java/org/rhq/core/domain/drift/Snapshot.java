@@ -31,6 +31,9 @@ public class Snapshot implements Serializable {
 
     //private SnapshotMetadata metadata = new SnapshotMetadata();
 
+    @Column(name = "BASEDIR", nullable = false, length = 512)
+    private String basedir;
+
     @Lob
     @Column(name = "DATA")
     private Blob data;
@@ -75,6 +78,14 @@ public class Snapshot implements Serializable {
 
     public void setDataSize(long size) {
         dataSize = size;
+    }
+
+    public String getBasedir() {
+        return basedir;
+    }
+
+    public void setBasedir(String dir) {
+        basedir = dir;
     }
 
     public long getCtime() {

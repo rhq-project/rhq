@@ -3389,6 +3389,21 @@
             <schemaSpec version="2.107">
                 <schema-createSequence name="RHQ_OPERATION_SCHEDULE_ID_SEQ" initial="10001"/>
             </schemaSpec>
+
+            <schemaSpec version="2.108">
+                <schema-createSequence name="RHQ_SNAPSHOT_ID_SEQ" initial="10001" />
+                <schema-directSQL>
+                    <statement desc="Creating table RHQ_SNAPSHOT">
+                        CREATE TABLE RHQ_SNAPSHOT (ID INTEGER PRIMARY KEY)
+                    </statement>
+                </schema-directSQL>
+                <schema-alterColumn table="RHQ_SNAPSHOT" column="ID" columnType="INTEGER" nullable="FALSE" />
+                <schema-addColumn   table="RHQ_SNAPSHOT" column="BASEDIR" columnType="VARCHAR2" />
+                <schema-alterColumn table="RHQ_SNAPSHOT" column="BASEDIR" nullable="false" precision="512"/>
+                <schema-addColumn   table="RHQ_SNAPSHOT" column="DATA" columnType="LARGEOBJECT"/>
+                <schema-addColumn   table="RHQ_SNAPSHOT" column="DATA_SIZE" columnType="LONG"/>
+                <schema-addColumn   table="RHQ_SNAPSHOT" column="CTIME" columnType="LONG" />
+            </schemaSpec>
         </dbupgrade>
     </target>
 </project>

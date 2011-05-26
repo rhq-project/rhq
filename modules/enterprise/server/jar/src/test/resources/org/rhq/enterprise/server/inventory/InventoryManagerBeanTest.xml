@@ -102,6 +102,7 @@
     <rhq_alert_notif_log/>
     <rhq_availability/>
     <rhq_measurement_sched/>
+    <rhq_content_source/>
     <rhq_package/>
     <rhq_bundle/>
     <rhq_plugin/>

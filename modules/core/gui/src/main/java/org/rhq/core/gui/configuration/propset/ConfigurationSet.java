@@ -33,7 +33,6 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
-import org.rhq.core.gui.configuration.ConfigurationMaskingUtility;
 
 /**
  * @author Ian Springer
@@ -60,7 +59,7 @@ public class ConfigurationSet {
             return;
         Map<String, PropertyDefinition> childPropertyDefinitions = this.configurationDefinition
             .getPropertyDefinitions();
-        List<AbstractPropertyMap> sourceParentPropertyMaps = new ArrayList();
+        List<AbstractPropertyMap> sourceParentPropertyMaps = new ArrayList<AbstractPropertyMap>();
         for (ConfigurationSetMember member : this.members)
             sourceParentPropertyMaps.add(member.getConfiguration());
         for (PropertyDefinition childPropertyDefinition : childPropertyDefinitions.values())
@@ -72,7 +71,7 @@ public class ConfigurationSet {
             return;
         Map<String, PropertyDefinition> childPropertyDefinitions = this.configurationDefinition
             .getPropertyDefinitions();
-        List<AbstractPropertyMap> sourceParentPropertyMaps = new ArrayList();
+        List<AbstractPropertyMap> sourceParentPropertyMaps = new ArrayList<AbstractPropertyMap>();
         for (ConfigurationSetMember member : this.members)
             sourceParentPropertyMaps.add(member.getConfiguration());
         for (PropertyDefinition childPropertyDefinition : childPropertyDefinitions.values())
@@ -89,20 +88,6 @@ public class ConfigurationSet {
 
     public Configuration getGroupConfiguration() {
         return groupConfiguration;
-    }
-
-    public void mask() {
-        for (ConfigurationSetMember member : this.members) {
-            ConfigurationMaskingUtility.maskConfiguration(member.getConfiguration(), this.configurationDefinition);
-        }
-        ConfigurationMaskingUtility.maskConfiguration(this.groupConfiguration, this.configurationDefinition);
-    }
-
-    public void unmask() {
-        for (ConfigurationSetMember member : this.members) {
-            ConfigurationMaskingUtility.unmaskConfiguration(member.getConfiguration(), this.configurationDefinition);
-        }
-        ConfigurationMaskingUtility.unmaskConfiguration(this.groupConfiguration, this.configurationDefinition);
     }
 
     private static void calculateGroupProperty(PropertyDefinition propertyDefinition,
@@ -126,7 +111,7 @@ public class ConfigurationSet {
         }
         // If the property is a Map, recurse into it and group together its child properties.
         else if (propertyDefinition instanceof PropertyDefinitionMap) {
-            List<AbstractPropertyMap> nestedSourceParentPropertyMaps = new ArrayList();
+            List<AbstractPropertyMap> nestedSourceParentPropertyMaps = new ArrayList<AbstractPropertyMap>();
             for (AbstractPropertyMap sourceParentPropertyMap : sourceParentPropertyMaps) {
                 PropertyMap nestedSourceParentPropertyMap = sourceParentPropertyMap
                     .getMap(propertyDefinition.getName());
@@ -206,7 +191,7 @@ public class ConfigurationSet {
         }
         // If the property is a Map, recurse into it and merge its child properties.
         else if (propertyDefinition instanceof PropertyDefinitionMap) {
-            List<AbstractPropertyMap> nestedSourceParentPropertyMaps = new ArrayList();
+            List<AbstractPropertyMap> nestedSourceParentPropertyMaps = new ArrayList<AbstractPropertyMap>();
             for (AbstractPropertyMap sourceParentPropertyMap : memberParentPropertyMaps)
                 nestedSourceParentPropertyMaps.add(sourceParentPropertyMap.getMap(propertyDefinition.getName()));
             PropertyMap groupPropertyMap = groupParentPropertyMap.getMap(propertyDefinition.getName());
@@ -257,14 +242,14 @@ public class ConfigurationSet {
 
     private static Map<String, Map<String, Integer>> createMemberNameValueFrequenciesMap(
         List<AbstractPropertyMap> sourceParentPropertyMaps) {
-        Map<String, Map<String, Integer>> nameValueFrequenciesMap = new HashMap();
+        Map<String, Map<String, Integer>> nameValueFrequenciesMap = new HashMap<String, Map<String, Integer>>();
         for (AbstractPropertyMap map : sourceParentPropertyMaps) {
             for (String propertyName : map.getMap().keySet()) {
                 PropertySimple propertySimple = map.getSimple(propertyName);
                 String propertyValue = (propertySimple != null) ? propertySimple.getStringValue() : null;
                 Map<String, Integer> valueFrequencies = nameValueFrequenciesMap.get(propertyName);
                 if (valueFrequencies == null) {
-                    valueFrequencies = new HashMap();
+                    valueFrequencies = new HashMap<String, Integer>();
                     nameValueFrequenciesMap.put(propertyName, valueFrequencies);
                 }
                 Integer valueFrequency = (valueFrequencies.containsKey(propertyValue)) ? (valueFrequencies

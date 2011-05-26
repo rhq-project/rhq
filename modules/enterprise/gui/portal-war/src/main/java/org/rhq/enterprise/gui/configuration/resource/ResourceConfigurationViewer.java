@@ -47,7 +47,6 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationFormat;
-import org.rhq.core.gui.configuration.ConfigurationMaskingUtility;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
@@ -146,11 +145,6 @@ public class ResourceConfigurationViewer {
         AbstractResourceConfigurationUpdate configurationUpdate = configurationManager
             .getLatestResourceConfigurationUpdate(subject, resourceId);
         resourceConfiguration = (configurationUpdate != null) ? configurationUpdate.getConfiguration() : null;
-
-        if (resourceConfiguration != null) {
-            ConfigurationMaskingUtility.maskConfiguration(resourceConfiguration, resourceConfigurationDefinition);
-        }
-
     }
 
     protected void initRawConfigDirectories() {

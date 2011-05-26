@@ -95,7 +95,9 @@ public class ASConnection {
 
         InputStream inputStream = null;
         BufferedReader br=null;
+        long t1 = System.currentTimeMillis();
         try {
+
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setDoOutput(true);
             conn.setRequestMethod("POST");
@@ -135,11 +137,10 @@ public class ASConnection {
             else {
                 outcome="- no response from server -";
             }
-//            System.out.println("==> " + outcome);
             return operationResult;
             }
             else {
-                System.err.println("IS was null and code was " + responseCode);
+                log.error("IS was null and code was " + responseCode);
             }
 
 
@@ -152,6 +153,10 @@ public class ASConnection {
                 } catch (IOException e) {
                     e.printStackTrace();  // TODO: Customise this generated block
                 }
+            long t2 = System.currentTimeMillis();
+            PluginStats stats = PluginStats.getInstance();
+            stats.incrementRequestCount();
+            stats.addRequestTime(t2-t1);
         }
 
         return null;

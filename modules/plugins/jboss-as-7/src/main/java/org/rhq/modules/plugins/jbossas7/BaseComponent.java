@@ -77,6 +77,8 @@ import java.util.Set;
 public class BaseComponent implements ResourceComponent, MeasurementFacet, ConfigurationFacet, DeleteResourceFacet,
         CreateChildResourceFacet, OperationFacet
 {
+    private static final String INTERNAL = "_internal:";
+    private static final int INTERNAL_SIZE = INTERNAL.length();
     final Log log = LogFactory.getLog(this.getClass());
 
     ResourceContext context;
@@ -149,31 +151,68 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
         for (MeasurementScheduleRequest req : metrics) {
 
 
-            Operation op = new ReadAttribute(pathToAddress(path),req.getName()); // TODO batching
-            //JsonNode obj = connection.executeRaw(op);
-            Result res = connection.execute(op, false);
-            if (!res.isSuccess())
-                continue;
+            if (req.getName().startsWith(INTERNAL))
+                processPluginStats(req,report);
+            else {
+                // Metrics from the application server
 
-             String val = (String) res.getResult();
+                Operation op = new ReadAttribute(pathToAddress(path),req.getName()); // TODO batching
+                //JsonNode obj = connection.executeRaw(op);
+                Result res = connection.execute(op, false);
+                if (!res.isSuccess())
+                    continue;
 
-            if (req.getDataType()== DataType.MEASUREMENT) {
-                if (!val.equals("no metrics available")) { // AS 7 returns this
-                    try {
-                        Double d = Double.parseDouble(val);
-                        MeasurementDataNumeric data = new MeasurementDataNumeric(req,d);
-                        report.addData(data);
-                    } catch (NumberFormatException e) {
-                        log.warn("Non numeric input for [" + req.getName() + "] : [" + val + "]");
+                 String val = (String) res.getResult();
+
+                if (req.getDataType()== DataType.MEASUREMENT) {
+                    if (!val.equals("no metrics available")) { // AS 7 returns this
+                        try {
+                            Double d = Double.parseDouble(val);
+                            MeasurementDataNumeric data = new MeasurementDataNumeric(req,d);
+                            report.addData(data);
+                        } catch (NumberFormatException e) {
+                            log.warn("Non numeric input for [" + req.getName() + "] : [" + val + "]");
+                        }
                     }
+                } else if (req.getDataType()== DataType.TRAIT) {
+                    MeasurementDataTrait data = new MeasurementDataTrait(req,val);
+                    report.addData(data);
                 }
-            } else if (req.getDataType()== DataType.TRAIT) {
-                MeasurementDataTrait data = new MeasurementDataTrait(req,val);
-                report.addData(data);
             }
         }
     }
 
+    /**
+     * Return internal statistics data
+     * @param req Schedule for the requested data
+     * @param report report to add th data to.
+     */
+    private void processPluginStats(MeasurementScheduleRequest req, MeasurementReport report) {
+
+        String name = req.getName();
+        if (!name.startsWith(INTERNAL))
+            return;
+
+        name = name.substring(INTERNAL_SIZE);
+
+        PluginStats stats = PluginStats.getInstance();
+        MeasurementDataNumeric data;
+        Double val;
+        if (name.equals("mgmtRequests")) {
+             val= (double) stats.getRequestCount();
+        }
+        else if (name.equals("requestTime")) {
+            val =(double) stats.getRequestTime();
+        }
+        else if (name.equals("maxTime")) {
+            val = (double) stats.getMaxTime();
+        }
+        else
+            val = Double.NaN;
+
+        data = new MeasurementDataNumeric(req,val);
+        report.addData(data);
+    }
 
     protected ASConnection getASConnection() {
         return connection;

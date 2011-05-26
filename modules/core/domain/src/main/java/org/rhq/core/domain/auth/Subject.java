@@ -59,22 +59,6 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
  */
 @Entity
 @NamedQueries( {
-    @NamedQuery(name = Subject.QUERY_FIND_BY_IDS, query = "" //
-        + "SELECT s " //
-        + "  FROM Subject s " //
-        + " WHERE s.id IN ( :ids ) " //
-        + "   AND s.fsystem = FALSE " //
-        + "   AND s.factive = TRUE"),
-
-    @NamedQuery(name = Subject.QUERY_FIND_ALL, query = "" //
-        + "SELECT s " //
-        + "  FROM Subject s " //
-        + " WHERE s.fsystem = false"),
-
-    @NamedQuery(name = Subject.QUERY_FIND_BY_NAME, query = "" //
-        + "SELECT s " //
-        + "  FROM Subject s " //
-        + " WHERE s.name = :name"),
 
     @NamedQuery(name = Subject.QUERY_GET_SUBJECTS_ASSIGNED_TO_ROLE, query = "" //
         + "SELECT s " //
@@ -230,9 +214,6 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 @Table(name = "RHQ_SUBJECT")
 /*@Cache(usage= CacheConcurrencyStrategy.TRANSACTIONAL)*/
 public class Subject implements Serializable {
-    public static final String QUERY_FIND_ALL = "Subject.findAll";
-    public static final String QUERY_FIND_BY_IDS = "Subject.findByIds";
-    public static final String QUERY_FIND_BY_NAME = "Subject.findByName";
 
     public static final String QUERY_GET_SUBJECTS_ASSIGNED_TO_ROLE = "Subject.getSubjectsAssignedToRole";
 
@@ -313,7 +294,7 @@ public class Subject implements Serializable {
 
     @OneToMany(mappedBy = "owner", fetch = FetchType.LAZY)
     private Set<Repo> ownedRepos;
-    
+
     // When a subject is removed any owned dashboards are removed automatically
     @OneToMany(mappedBy = "owner", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     private List<Dashboard> ownedDashboards = null;
@@ -512,14 +493,14 @@ public class Subject implements Serializable {
         this.ownedGroups = ownedGroups;
     }
 
-    protected Set<Repo> getOwnedrepos(){
+    protected Set<Repo> getOwnedrepos() {
         return ownedRepos;
     }
-    
+
     protected void setOwnedRepos(Set<Repo> repos) {
         ownedRepos = repos;
     }
-    
+
     protected List<Dashboard> getOwnedDashboards() {
         return ownedDashboards;
     }

@@ -85,7 +85,7 @@ public class SubTabLayout extends LocatableVLayout {
             }
         }
         if (null != currentlySelected) {
-            selectSubTabByLocatorId(currentlySelected);
+            selectSubTabByLocatorId(currentlySelected, true);
         }
     }
 
@@ -186,14 +186,24 @@ public class SubTabLayout extends LocatableVLayout {
         return null;
     }
 
-    public boolean selectSubTab(SubTab subTab) {
+    /**
+     * @param subtab the subtab to select
+     * @param showCanvas if true then ensure the subtab canvas is shown. Otherwise the state is unchanged.
+     * @return true if selected successfully, otherwise false
+     */
+    public boolean selectSubTab(SubTab subTab, boolean showCanvas) {
         if (subTab == null) {
             throw new IllegalArgumentException("subTab is null.");
         }
-        return selectSubTabByLocatorId(subTab.getLocatorId());
+        return selectSubTabByLocatorId(subTab.getLocatorId(), showCanvas);
     }
 
-    public boolean selectSubTabByLocatorId(String locatorId) {
+    /**
+     * @param name locatorId the subtab locatorId
+     * @param showCanvas if true then ensure the subtab canvas is shown. Otherwise the state is unchanged.
+     * @return true if selected successfully, otherwise false
+     */
+    public boolean selectSubTabByLocatorId(String locatorId, boolean showCanvas) {
         boolean foundTab = false;
         for (String subTabLocatorId : this.subTabs.keySet()) {
             if (subTabLocatorId.equals(locatorId)) {
@@ -210,7 +220,7 @@ public class SubTabLayout extends LocatableVLayout {
         }
 
         if (foundTab) {
-            setCurrentlySelected();
+            setCurrentlySelected(showCanvas);
         }
 
         return foundTab;
@@ -237,7 +247,12 @@ public class SubTabLayout extends LocatableVLayout {
         return null;
     }
 
-    public boolean selectSubTabByName(String name) {
+    /**
+     * @param name subtab name
+     * @param showCanvas if true then ensure the subtab canvas is shown. Otherwise the state is unchanged.
+     * @return true if selected successfully, otherwise false
+     */
+    public boolean selectSubTabByName(String name, boolean showCanvas) {
         SubTab subTab = getSubTabByName(name);
         if (subTab == null) {
             return false;
@@ -248,7 +263,7 @@ public class SubTabLayout extends LocatableVLayout {
                 return false;
             }
             this.currentlySelected = subTab.getLocatorId();
-            setCurrentlySelected();
+            setCurrentlySelected(showCanvas);
             return true;
         }
     }
@@ -293,7 +308,7 @@ public class SubTabLayout extends LocatableVLayout {
         }
     }
 
-    private void setCurrentlySelected() {
+    private void setCurrentlySelected(boolean showCanvas) {
         if (null != this.currentlySelected) {
             Button button = this.subTabs.get(this.currentlySelected).getButton();
             button.select();
@@ -311,7 +326,7 @@ public class SubTabLayout extends LocatableVLayout {
             Canvas canvas = currentSubTab.getCanvas();
             if (canvas != null) {
                 if (hasMember(canvas)) {
-                    if (!canvas.isVisible()) {
+                    if (!canvas.isVisible() && showCanvas) {
                         canvas.show();
                     }
                 } else {
@@ -319,7 +334,7 @@ public class SubTabLayout extends LocatableVLayout {
                         canvas.setOverflow(Overflow.SCROLL);
                     }
                     addMember(canvas);
-                    if (!canvas.isVisible()) {
+                    if (!canvas.isVisible() && showCanvas) {
                         canvas.show();
                     }
                 }

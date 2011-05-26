@@ -28,7 +28,6 @@ import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.operation.OperationHistory;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.rhq.core.domain.resource.InventoryStatus;
@@ -85,7 +84,7 @@ public class ResourceOperationJob extends OperationJob {
 
             // Login the schedule's subject so its assigned a session, so our security tests pass.
             // Create a new session even if user is logged in elsewhere, we don't want to attach to that user's session
-            schedule.setSubject(getUserWithSession(schedule.getSubject(), false));
+            schedule.setSubject(getUserWithSession(schedule.getSubject()));
 
             // for the security check, can the user who scheduled the operation in the first 
             // place still have the authority to execute it against the resource in question
@@ -161,12 +160,12 @@ public class ResourceOperationJob extends OperationJob {
      */
     void invokeOperationOnResource(ResourceOperationSchedule schedule, ResourceOperationHistory resourceHistory,
         OperationManagerLocal operationManager) throws Exception {
-        // make sure the session is still valid
-        schedule.setSubject(getUserWithSession(schedule.getSubject(), true));
+        // make sure we have a valid session
+        Subject s = getUserWithSession(schedule.getSubject());
+        schedule.setSubject(s);
 
         resourceHistory.setStartedTime();
-        resourceHistory = (ResourceOperationHistory) operationManager.updateOperationHistory(
-                getUserWithSession(schedule.getSubject(), true), resourceHistory);
+        resourceHistory = (ResourceOperationHistory) operationManager.updateOperationHistory(s, resourceHistory);
 
         // now tell the agent to invoke it!
         try {
@@ -187,7 +186,7 @@ public class ResourceOperationJob extends OperationJob {
         } catch (Exception e) {
             // failed to even send to the agent, immediately mark the job as failed
             resourceHistory.setErrorMessage(ThrowableUtil.getStackAsString(e));
-            operationManager.updateOperationHistory(getUserWithSession(schedule.getSubject(), true), resourceHistory);
+            operationManager.updateOperationHistory(s, resourceHistory);
             operationManager.checkForCompletedGroupOperation(resourceHistory.getId());
             throw e;
         }

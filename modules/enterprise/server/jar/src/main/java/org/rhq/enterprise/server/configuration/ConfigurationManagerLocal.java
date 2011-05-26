@@ -400,8 +400,6 @@ public interface ConfigurationManagerLocal {
     Map<Integer, Configuration> getResourceConfigurationMapForGroupUpdate(Subject subject,
         Integer groupResourceConfigurationUpdateId);
 
-    Map<Integer, Configuration> getResourceConfigurationMapForCompatibleGroup(ResourceGroup compatibleGroup);
-
     /**
      * Returns the current Resource configurations for the members in the specified compatible group.
      *

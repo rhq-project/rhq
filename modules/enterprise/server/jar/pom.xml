@@ -100,6 +100,98 @@
          <scope>test</scope>
       </dependency>
 
+      <!--================ Test Deps ================-->
+
+      <!-- Note, the test deps are intentionally placed above the other scoped deps because of classpath
+           reasons.  Maven orders the [test] classpath in the order listed in the pom.  We specifically
+           need the embeddable-ejb3 jar above the standard ejb3 jars because we need the embeddble packages
+           loaded when testing.  -->
+           
+      <dependency>
+         <groupId>jboss.jboss-embeddable-ejb3</groupId>
+         <artifactId>jboss-ejb3-all</artifactId>
+         <version>${jboss-embeddable-ejb3.version}</version>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+          <groupId>${project.groupId}</groupId>
+          <artifactId>rhq-core-client-api</artifactId>
+          <version>${project.version}</version>
+          <type>test-jar</type>
+          <scope>test</scope>
+      </dependency>
+
+
+      <!-- NOTE: The remaining test deps correspond to the classes contained in hibernate-all.jar and thirdparty-all.jar. -->
+
+      <dependency>
+         <groupId>antlr</groupId>
+         <artifactId>antlr</artifactId>
+         <version>2.7.7</version>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>hibernate-entitymanager</groupId>
+         <artifactId>hibernate-entitymanager</artifactId>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>jboss</groupId>
+         <artifactId>javassist</artifactId>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>trove</groupId>
+         <artifactId>trove</artifactId>
+         <version>1.0.2</version>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>xerces</groupId>
+         <artifactId>xercesImpl</artifactId>
+         <version>2.8.1</version>
+         <scope>test</scope>
+      </dependency>
+
+       <dependency>
+           <groupId>net.sf.opencsv</groupId>
+           <artifactId>opencsv</artifactId>
+           <version>1.8</version>
+           <scope>test</scope>
+       </dependency>
+
+       <dependency>
+        <groupId>org.rhq.helpers</groupId>
+        <artifactId>perftest-support</artifactId>
+        <version>${project.version}</version>
+        <scope>test</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>ant</groupId>
+            <artifactId>ant</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>ant</groupId>
+            <artifactId>ant-launcher</artifactId>
+          </exclusion>
+        </exclusions>
+       </dependency>
+
+       <dependency>
+           <groupId>commons-jxpath</groupId>
+           <artifactId>commons-jxpath</artifactId>
+           <version>1.3</version>
+           <scope>test</scope>
+       </dependency>
+
+
       <!-- 3rd Party Deps -->
 
       <dependency>
@@ -368,97 +460,6 @@
            <version>0.1.29</version>
        </dependency>
 
-      <!--================ Test Deps ================-->
-
-      <dependency>
-          <groupId>${groupId}</groupId>
-          <artifactId>rhq-core-client-api</artifactId>
-          <version>${version}</version>
-          <type>test-jar</type>
-          <scope>test</scope>
-      </dependency>
-
-      <dependency>
-         <groupId>jboss.jboss-embeddable-ejb3</groupId>
-         <artifactId>jboss-ejb3-all</artifactId>
-         <version>${jboss-embeddable-ejb3.version}</version>
-         <scope>test</scope>
-      </dependency>
-
-      <!-- NOTE: The remaining test deps correspond to the classes contained in hibernate-all.jar and thirdparty-all.jar. -->
-
-      <dependency>
-         <groupId>antlr</groupId>
-         <artifactId>antlr</artifactId>
-         <version>2.7.7</version>
-         <scope>test</scope>
-      </dependency>
-
-      <dependency>
-         <groupId>hibernate-entitymanager</groupId>
-         <artifactId>hibernate-entitymanager</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-         <scope>test</scope>
-      </dependency>
-
-      <dependency>
-         <groupId>jboss</groupId>
-         <artifactId>javassist</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-         <scope>test</scope>
-      </dependency>
-
-      <dependency>
-         <groupId>trove</groupId>
-         <artifactId>trove</artifactId>
-         <version>1.0.2</version>
-         <scope>test</scope>
-      </dependency>
-
-      <dependency>
-         <groupId>xerces</groupId>
-         <artifactId>xercesImpl</artifactId>
-         <version>2.8.1</version>
-         <scope>test</scope>
-      </dependency>
-
-       <dependency>
-           <groupId>net.sf.opencsv</groupId>
-           <artifactId>opencsv</artifactId>
-           <version>1.8</version>
-           <scope>test</scope>
-       </dependency>
-
-       <dependency>
-       	<groupId>org.rhq.helpers</groupId>
-       	<artifactId>perftest-support</artifactId>
-       	<version>${project.version}</version>
-       	<scope>test</scope>
-       	<exclusions>
-       	  <exclusion>
-       	    <groupId>ant</groupId>
-       	    <artifactId>ant</artifactId>
-       	  </exclusion>
-       	  <exclusion>
-       	    <groupId>ant</groupId>
-       	    <artifactId>ant-launcher</artifactId>
-       	  </exclusion>
-       	</exclusions>
-       </dependency>
-
-       <dependency>
-           <groupId>commons-jxpath</groupId>
-           <artifactId>commons-jxpath</artifactId>
-           <version>1.3</version>
-           <scope>test</scope>
-       </dependency>
-
-       <dependency>
-           <groupId>commons-lang</groupId>
-           <artifactId>commons-lang</artifactId>
-           <version>2.4</version>
-           <scope>test</scope>
-       </dependency>
    </dependencies>
 
    <build>

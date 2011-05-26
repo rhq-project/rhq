@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
@@ -44,7 +45,15 @@ import org.hibernate.Hibernate;
 import org.hibernate.proxy.HibernateProxy;
 
 /**
+ * This is a single static utility that is used to process any object just prior to sending it over the wire
+ * to remote clients (like GWT clients or remote web service clients).
+ * 
+ * Essentially this utility scrubs the object of all Hibernate proxies, cleaning it such that it
+ * can be serialized over the wire successfully.
+ *  
  * @author Greg Hinkle
+ * @author Jay Shaughnessy
+ * @author John Mazzitelli
  */
 @SuppressWarnings("unchecked")
 public class HibernateDetachUtility {
@@ -122,9 +131,13 @@ public class HibernateDetachUtility {
         if (value instanceof Object[]) {
             Object[] objArray = (Object[]) value;
             for (int i = 0; i < objArray.length; i++) {
+                Object listEntry = objArray[i];
+                Object replaceEntry = replaceObject(listEntry);
+                if (replaceEntry != null) {
+                    objArray[i] = replaceEntry;
+                }
                 nullOutUninitializedFields(objArray[i], checkedObjects, depth + 1, serializationType);
             }
-
         } else if (value instanceof List) {
             // Null out any entries in initialized collections
             ListIterator i = ((List) value).listIterator();
@@ -154,8 +167,34 @@ public class HibernateDetachUtility {
             collection.removeAll(itemsToBeReplaced);
             collection.addAll(replacementItems); // watch out! if this collection is a Set, HashMap$MapSet doesn't support addAll. See BZ 688000
         } else if (value instanceof Map) {
-            for (Object key : ((Map) value).keySet()) {
-                nullOutUninitializedFields(((Map) value).get(key), checkedObjects, depth + 1, serializationType);
+            Map originalMap = (Map) value;
+            HashMap<Object, Object> replaceMap = new HashMap<Object, Object>();
+            for (Iterator i = originalMap.keySet().iterator(); i.hasNext();) {
+                // get original key and value - these might be hibernate proxies
+                Object originalKey = i.next();
+                Object originalKeyValue = originalMap.get(originalKey);
+
+                // replace with non-hibernate classes, if appropriate (will be null otherwise)
+                Object replaceKey = replaceObject(originalKey);
+                Object replaceValue = replaceObject(originalKeyValue);
+
+                // if either original key or original value was a hibernate proxy object, we have to 
+                // remove it from the original map, and remember the replacement objects for later
+                if (replaceKey != null || replaceValue != null) {
+                    Object newKey = (replaceKey != null) ? replaceKey : originalKey;
+                    Object newValue = (replaceValue != null) ? replaceValue : originalKeyValue;
+                    replaceMap.put(newKey, newValue);
+                    i.remove();
+                }
+            }
+
+            // all hibernate proxies have been removed, we need to replace them with their
+            // non-proxy object representations that we got from replaceObject() calls
+            originalMap.putAll(replaceMap);
+
+            // now go through each item in the map and null out their internal fields
+            for (Object key : originalMap.keySet()) {
+                nullOutUninitializedFields(originalMap.get(key), checkedObjects, depth + 1, serializationType);
                 nullOutUninitializedFields(key, checkedObjects, depth + 1, serializationType);
             }
         } else if (value instanceof Enum) {

@@ -73,31 +73,31 @@ public class CliSender extends AlertSender<CliComponent> {
     private static final String ENGINE_NAME = "JavaScript";
 
     private static final int MAX_RESULT_SIZE = 4000;
-    
+
     public static final String PROP_PACKAGE_ID = "packageId";
     public static final String PROP_REPO_ID = "repoId";
     public static final String PROP_USER_ID = "userId";
     public static final String PROP_USER_NAME = "userName";
     public static final String PROP_USER_PASSWORD = "userPassword";
-    
+
     private static final Log LOG = LogFactory.getLog(CliSender.class);
 
     private static final String SUMMARY_TEMPLATE = "Ran script $packageName in version $packageVersion from repo $repoName as user $userName.";
     private static final String PREVIEW_TEMPLATE = "Run script $packageName from repo $repoName as user $userName.";
 
     private static final String VALIDATION_ERROR_MESSAGE = "The provided user failed to authenticate.";
-    
+
     //no more than 10 concurrently running CLI notifications..
     //is that enough?
     private static final int MAX_SCRIPT_ENGINES = 10;
     private static Queue<ScriptEngine> SCRIPT_ENGINES = new ArrayDeque<ScriptEngine>(MAX_SCRIPT_ENGINES);
     private static int ENGINES_IN_USE = 0;
-    
+
     /**
      * Simple strongly typed representation of the alert configuration
      */
     private static class Config {
-        Subject subject;        
+        Subject subject;
         int packageId;
         int repoId;
     }
@@ -105,36 +105,37 @@ public class CliSender extends AlertSender<CliComponent> {
     private static class ExceptionHolder {
         public ScriptException scriptException;
     }
-    
+
     public SenderResult send(Alert alert) {
         SenderResult result = new SenderResult();
         BufferedReader reader = null;
         ScriptEngine engine = null;
         try {
             final Config config = getConfig();
-                       
+
             result.setSummary(createSummary(config, SUMMARY_TEMPLATE));
 
             ByteArrayOutputStream scriptOutputStream = new ByteArrayOutputStream();
             PrintWriter scriptOut = new PrintWriter(scriptOutputStream);
 
             engine = getScriptEngine(alert, scriptOut, config);
-            
+
             final SandboxedScriptEngine sandbox = new SandboxedScriptEngine(engine, new StandardScriptPermissions());
-            
+
             InputStream packageBits = getPackageBits(config.packageId, config.repoId);
 
             reader = new BufferedReader(new InputStreamReader(packageBits));
 
             final BufferedReader rdr = reader;
-            
+
             final ExceptionHolder exceptionHolder = new ExceptionHolder();
-            
+
             Thread scriptRunner = new Thread(new Runnable() {
                 public void run() {
                     try {
                         //fake the login
-                        SessionManager.getInstance().put(config.subject, pluginComponent.getScriptTimeout() * 1000);                        
+                        config.subject = SessionManager.getInstance().put(config.subject,
+                            pluginComponent.getScriptTimeout() * 1000);
                         sandbox.eval(rdr);
                         SessionManager.getInstance().invalidate(config.subject.getSessionId());
                     } catch (ScriptException e) {
@@ -142,20 +143,21 @@ public class CliSender extends AlertSender<CliComponent> {
                     }
                 }
             }, "Script Runner for alert " + alert);
-            scriptRunner.setDaemon(true);            
+            scriptRunner.setDaemon(true);
             scriptRunner.start();
-            
+
             if (pluginComponent.getScriptTimeout() <= 0) {
                 scriptRunner.join();
             } else {
                 scriptRunner.join(pluginComponent.getScriptTimeout() * 1000);
             }
-            
+
             scriptRunner.interrupt();
 
             if (exceptionHolder.scriptException != null) {
-                LOG.info("The script execution for CLI notification of alert [" + alert + "] failed.", exceptionHolder.scriptException);
-                
+                LOG.info("The script execution for CLI notification of alert [" + alert + "] failed.",
+                    exceptionHolder.scriptException);
+
                 //make things pretty for the UI
                 ScriptEngineInitializer initializer = ScriptEngineFactory.getInitializer(ENGINE_NAME);
                 String message = initializer.extractUserFriendlyErrorMessage(exceptionHolder.scriptException);
@@ -164,18 +166,18 @@ public class CliSender extends AlertSender<CliComponent> {
                 String scriptName = createSummary(config, "script $packageName ($packageVersion) in repo $repoName");
                 throw new ScriptException(message, scriptName, line, col);
             }
-            
+
             scriptOut.flush();
             String scriptOutput = scriptOutputStream.toString(Charset.defaultCharset().name());
 
             if (scriptOutput.length() == 0) {
                 scriptOutput = "Script generated no output.";
             }
-            
+
             if (scriptOutput.length() > remainingResultSize(result)) {
                 scriptOutput = scriptOutput.substring(0, remainingResultSize(result));
             }
-            
+
             result.addSuccessMessage(scriptOutput);
 
             return result;
@@ -188,7 +190,7 @@ public class CliSender extends AlertSender<CliComponent> {
             if (engine != null) {
                 returnEngine(engine);
             }
-            
+
             if (reader != null) {
                 try {
                     reader.close();
@@ -213,18 +215,18 @@ public class CliSender extends AlertSender<CliComponent> {
     @Override
     public AlertSenderValidationResults validateAndFinalizeConfiguration(Subject subject) {
         AlertSenderValidationResults results = new AlertSenderValidationResults(alertParameters, extraParameters);
-        
+
         String userIdString = alertParameters.getSimpleValue(PROP_USER_ID, null);
         String userName = alertParameters.getSimpleValue(PROP_USER_NAME, null);
         String userPassword = alertParameters.getSimpleValue(PROP_USER_PASSWORD, null);
-        
+
         Integer userId = userIdString == null ? null : Integer.valueOf(userIdString);
-        
+
         if (userId == null || userId != subject.getId()) {
             SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
-            
+
             Subject authSubject = subjectManager.checkAuthentication(userName, userPassword);
-            
+
             if (authSubject == null) {
                 PropertySimple userNameProp = new PropertySimple(PROP_USER_NAME, userName);
                 userNameProp.setErrorMessage(VALIDATION_ERROR_MESSAGE);
@@ -243,10 +245,10 @@ public class CliSender extends AlertSender<CliComponent> {
 
         //do not store the password in the database ever
         alertParameters.put(new PropertySimple(PROP_USER_PASSWORD, null));
-        
+
         return results;
     }
-    
+
     private static ScriptEngine getScriptEngine(Alert alert, PrintWriter output, Config config) throws ScriptException,
         IOException, InterruptedException {
         Subject user = config.subject;
@@ -257,19 +259,23 @@ public class CliSender extends AlertSender<CliComponent> {
         bindings.put("alert", alert);
 
         ScriptEngine engine = takeEngine(bindings);
-        
+
         return engine;
     }
 
     private static InputStream getPackageBits(int packageId, int repoId) throws IOException {
         final ContentSourceManagerLocal csm = LookupUtil.getContentSourceManager();
         RepoManagerLocal rm = LookupUtil.getRepoManagerLocal();
-        final PackageVersion versionToUse = rm.getLatestPackageVersion(LookupUtil.getSubjectManager().getOverlord(), packageId, repoId);
+        final PackageVersion versionToUse = rm.getLatestPackageVersion(LookupUtil.getSubjectManager().getOverlord(),
+            packageId, repoId);
 
         if (versionToUse == null) {
-            throw new IllegalArgumentException("The package with id " + packageId + " either doesn't exist at all or doesn't have any version. Can't execute a CLI script without a script to run.");
+            throw new IllegalArgumentException(
+                "The package with id "
+                    + packageId
+                    + " either doesn't exist at all or doesn't have any version. Can't execute a CLI script without a script to run.");
         }
-        
+
         PipedInputStream ret = new PipedInputStream();
         final PipedOutputStream out = new PipedOutputStream(ret);
 
@@ -322,31 +328,31 @@ public class CliSender extends AlertSender<CliComponent> {
             Subject overlord = LookupUtil.getSubjectManager().getOverlord();
             RepoManagerLocal rm = LookupUtil.getRepoManagerLocal();
             PackageVersion versionToUse = rm.getLatestPackageVersion(overlord, config.packageId, config.repoId);
-            
+
             if (versionToUse != null) {
                 ret = ret.replace("$packageName", versionToUse.getDisplayName());
-                ret = ret.replace("$packageVersion", versionToUse.getDisplayVersion() == null ? versionToUse.getVersion()
-                    : versionToUse.getDisplayVersion());
+                ret = ret.replace("$packageVersion", versionToUse.getDisplayVersion() == null ? versionToUse
+                    .getVersion() : versionToUse.getDisplayVersion());
             } else {
                 ret = ret.replace("$packageName", "unknown script with package id " + config.packageId);
                 ret = ret.replace("$packageVersion", "no version");
             }
-            
+
             RepoCriteria criteria = new RepoCriteria();
             criteria.addFilterId(config.repoId);
-            
+
             List<Repo> repos = rm.findReposByCriteria(overlord, criteria);
-            
+
             String repoName;
-            
+
             if (repos.size() > 0) {
                 repoName = repos.get(0).getName();
             } else {
                 repoName = "unknown repo with id " + config.repoId;
             }
-            
+
             ret = ret.replace("$repoName", repoName);
-            
+
             return ret;
         } catch (Exception e) {
             LOG.info("Failed to create alert sender summary.", e);
@@ -357,10 +363,13 @@ public class CliSender extends AlertSender<CliComponent> {
     private Config getConfig() throws IllegalArgumentException {
         Config ret = new Config();
 
-        int subjectId = getIntFromConfiguration(PROP_USER_ID, "User id not specified.", "Failed to read subject id property: ");
-        int packageId = getIntFromConfiguration(PROP_PACKAGE_ID, "Package id of the script not specified.", "Failed to read the package id property: ");
-        int repoId = getIntFromConfiguration(PROP_REPO_ID, "Repo to download the script package from not specified.", "Failed to read the repo id property: ");
-        
+        int subjectId = getIntFromConfiguration(PROP_USER_ID, "User id not specified.",
+            "Failed to read subject id property: ");
+        int packageId = getIntFromConfiguration(PROP_PACKAGE_ID, "Package id of the script not specified.",
+            "Failed to read the package id property: ");
+        int repoId = getIntFromConfiguration(PROP_REPO_ID, "Repo to download the script package from not specified.",
+            "Failed to read the repo id property: ");
+
         Subject subject = LookupUtil.getSubjectManager().getSubjectById(subjectId);
 
         if (subject == null) {
@@ -370,24 +379,25 @@ public class CliSender extends AlertSender<CliComponent> {
         ret.subject = subject;
         ret.packageId = packageId;
         ret.repoId = repoId;
-        
+
         return ret;
     }
-    
-    private int getIntFromConfiguration(String propName, String errorMessage, String convertErrorMessage) throws IllegalArgumentException {
+
+    private int getIntFromConfiguration(String propName, String errorMessage, String convertErrorMessage)
+        throws IllegalArgumentException {
         PropertySimple prop = alertParameters.getSimple(propName);
-        
+
         if (prop == null) {
-            throw new IllegalArgumentException(errorMessage);                       
+            throw new IllegalArgumentException(errorMessage);
         }
-        
+
         try {
             return prop.getIntegerValue();
         } catch (Exception e) {
             throw new IllegalArgumentException(convertErrorMessage + e.getMessage(), e);
         }
     }
-    
+
     private static ScriptEngine takeEngine(StandardBindings bindings) throws InterruptedException, ScriptException,
         IOException {
         synchronized (SCRIPT_ENGINES) {
@@ -398,14 +408,14 @@ public class CliSender extends AlertSender<CliComponent> {
             ScriptEngine engine = SCRIPT_ENGINES.poll();
 
             if (engine == null) {
-                engine = ScriptEngineFactory.getScriptEngine(ENGINE_NAME,
-                    new PackageFinder(Collections.<File> emptyList()), bindings);                
+                engine = ScriptEngineFactory.getScriptEngine(ENGINE_NAME, new PackageFinder(Collections
+                    .<File> emptyList()), bindings);
             } else {
                 ScriptEngineFactory.injectStandardBindings(engine, bindings, true);
             }
-            
+
             ++ENGINES_IN_USE;
-            
+
             return engine;
         }
     }
@@ -417,20 +427,20 @@ public class CliSender extends AlertSender<CliComponent> {
             SCRIPT_ENGINES.notify();
         }
     }
-    
+
     private static int remainingResultSize(SenderResult r) {
         //the "10" is a ballpark to allow for some formatting
         //done by the receivers of the SenderResult.
         int ret = MAX_RESULT_SIZE - r.getSummary().length() - 10;
-        
-        for(String m : r.getSuccessMessages()) {
+
+        for (String m : r.getSuccessMessages()) {
             ret -= m.length() + 10;
         }
-        
-        for(String m : r.getFailureMessages()) {
+
+        for (String m : r.getFailureMessages()) {
             ret -= m.length() + 10;
         }
-        
+
         return ret;
     }
 }

@@ -75,7 +75,13 @@
      <dependency>
        <groupId>org.unitils</groupId>
        <artifactId>unitils-testng</artifactId>
-       <version>3.1</version>
+       <version>3.1</version>       
+       <exclusions>
+           <exclusion>
+              <groupId>org.testng</groupId>
+              <artifactId>testng</artifactId>
+           </exclusion>
+       </exclusions>
      </dependency>
      <dependency>
        <groupId>org.unitils</groupId>

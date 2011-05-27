@@ -180,21 +180,44 @@ public interface ResourceFactoryManagerLocal {
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     /**
-     * @see {@link ResourceFactoryManagerRemote.createResource(Subject,int,int,String,Configuration,Configuration) 
+     * @see {@link ResourceFactoryManagerRemote#createResource(Subject,int,int,String,Configuration,Configuration) 
      */
     CreateResourceHistory createResource(Subject subject, int parentResourceId, int resourceTypeId,
         String resourceName, Configuration pluginConfiguration, Configuration resourceConfiguration);
 
     /**
-     * @see {@link ResourceFactoryManagerRemote.createPackageBackedResource(Subject,int,int,String,Configuration,String,String,Integer,Configuration,byte[]) 
+     * @see {@link ResourceFactoryManagerRemote#createPackageBackedResource(Subject,int,int,String,Configuration,String,String,Integer,Configuration,byte[]) 
      */
     CreateResourceHistory createPackageBackedResource(Subject subject, int parentResourceId, int newResourceTypeId,
         String newResourceName, Configuration pluginConfiguration, String packageName, String packageVersion,
         Integer architectureId, Configuration deploymentTimeConfiguration, byte[] packageBits);
 
+    /**
+     * @see {@link ResourceFactoryManagerRemote#createPackageBackedResourceViaPackageVersion(Subject, int, int, String, Configuration, Configuration, int) 
+     */
     public CreateResourceHistory createPackageBackedResourceViaPackageVersion(Subject subject, int parentResourceId,
         int newResourceTypeId, String newResourceName, Configuration pluginConfiguration,
         Configuration deploymentTimeConfiguration, int packageVersionId);
+
+    /**
+     * @see {@link ResourceFactoryManagerRemote#createResource(Subject,int,int,String,Configuration,Configuration,Integer) 
+     */
+    CreateResourceHistory createResource(Subject subject, int parentResourceId, int resourceTypeId,
+        String resourceName, Configuration pluginConfiguration, Configuration resourceConfiguration, Integer timeout);
+
+    /**
+     * @see {@link ResourceFactoryManagerRemote#createPackageBackedResource(Subject,int,int,String,Configuration,String,String,Integer,Configuration,byte[],Integer) 
+     */
+    CreateResourceHistory createPackageBackedResource(Subject subject, int parentResourceId, int newResourceTypeId,
+        String newResourceName, Configuration pluginConfiguration, String packageName, String packageVersion,
+        Integer architectureId, Configuration deploymentTimeConfiguration, byte[] packageBits, Integer timeout);
+
+    /**
+     * @see {@link ResourceFactoryManagerRemote#createPackageBackedResourceViaPackageVersion(Subject, int, int, String, Configuration, Configuration, int, Integer) 
+     */
+    public CreateResourceHistory createPackageBackedResourceViaPackageVersion(Subject subject, int parentResourceId,
+        int newResourceTypeId, String newResourceName, Configuration pluginConfiguration,
+        Configuration deploymentTimeConfiguration, int packageVersionId, Integer timeout);
 
     /**
      * @see {@link ResourceFactoryManagerRemote.deleteResource(Subject,int) 

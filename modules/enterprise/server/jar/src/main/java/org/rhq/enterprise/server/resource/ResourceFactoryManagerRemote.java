@@ -47,6 +47,64 @@ import org.rhq.enterprise.server.system.ServerVersion;
 public interface ResourceFactoryManagerRemote {
 
     /**
+     * @Deprecated
+     * 
+     * Use new signature with timeout parameter:
+     * @{link {@link #createPackageBackedResource(Subject, int, int, String, Configuration, String, String, Integer, Configuration, byte[], Integer)}
+     */
+    @WebMethod
+    CreateResourceHistory createResource( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "parentResourceId") int parentResourceId, //
+        @WebParam(name = "resourceTypeId") int resourceTypeId, //
+        @WebParam(name = "resourceName") String resourceName, //        
+        @WebParam(name = "pluginConfiguration") Configuration pluginConfiguration, //
+        @WebParam(name = "resourceConfiguration") Configuration resourceConfiguration);
+
+    /**
+     * @Deprecated
+     * 
+     * Use new signature with timeout parameter:
+     * @{link {@link #createPackageBackedResource(Subject, int, int, String, Configuration, String, String, Integer, Configuration, byte[], Integer)}
+     */
+    @WebMethod
+    CreateResourceHistory createPackageBackedResource(//
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "parentResourceId") int parentResourceId, //
+        @WebParam(name = "newResourceTypeId") int newResourceTypeId, //
+        @WebParam(name = "newResourceName") String newResourceName, //
+        @WebParam(name = "pluginConfiguration")//
+        @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
+        Configuration pluginConfiguration, //
+        @WebParam(name = "packageName") String packageName, //
+        @WebParam(name = "packageVersion") String packageVersion, //
+        @WebParam(name = "architectureId") Integer architectureId, //
+        @WebParam(name = "deploymentTimeConfiguration")//
+        @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
+        Configuration deploymentTimeConfiguration, //
+        @WebParam(name = "packageBits") byte[] packageBits);
+
+    /**
+     * @Deprecated
+     * 
+     * Use new signature with timeout parameter:
+     * @{link {@link #createPackageBackedResourceViaPackageVersion(Subject, int, int, String, Configuration, Configuration, int, Integer)
+     */
+    @WebMethod
+    public CreateResourceHistory createPackageBackedResourceViaPackageVersion(//
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "parentResourceId") int parentResourceId, //
+        @WebParam(name = "newResourceTypeId") int newResourceTypeId, //
+        @WebParam(name = "newResourceName") String newResourceName, //
+        @WebParam(name = "pluginConfiguration")//
+        @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
+        Configuration pluginConfiguration, //
+        @WebParam(name = "deploymentTimeConfiguration")//
+        @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
+        Configuration deploymentTimeConfiguration, //
+        @WebParam(name = "packageVersionId") int packageVersionId);
+
+    /**
      * Creates a new physical resource. The resource will be created as a child of the specified parent. In other words,
      * the resource component of the indicated parent will be used to create the new resource. This call should only be
      * made for resource types that are defined with a create/delete policy of {@link CreateDeletePolicy#BOTH} or
@@ -61,6 +119,7 @@ public interface ResourceFactoryManagerRemote {
      * @param resourceName          name of the resource being created
      * @param pluginConfiguration   optional plugin configuration that may be needed in order to create the new resource
      * @param resourceConfiguration resource configuration for the new resource
+     * @param timeout               number of milliseconds before the agent suffers a timeout when creating the resource. If null uses default.  
      */
     @WebMethod
     CreateResourceHistory createResource( //
@@ -69,7 +128,8 @@ public interface ResourceFactoryManagerRemote {
         @WebParam(name = "resourceTypeId") int resourceTypeId, //
         @WebParam(name = "resourceName") String resourceName, //        
         @WebParam(name = "pluginConfiguration") Configuration pluginConfiguration, //
-        @WebParam(name = "resourceConfiguration") Configuration resourceConfiguration);
+        @WebParam(name = "resourceConfiguration") Configuration resourceConfiguration, //
+        @WebParam(name = "timeout") Integer timeout);
 
     /**
      * Creates a new physical resource. The resource will be created as a child of the specified parent. In other words,
@@ -91,6 +151,7 @@ public interface ResourceFactoryManagerRemote {
      * @param architectureId              Id of the target architecture of the package, null indicates NoArch (any). 
      * @param deploymentTimeConfiguration dictates how the package will be deployed
      * @param packageBits                 content of the package to create
+     * @param timeout                     number of milliseconds before the agent suffers a timeout when creating the resource. If null uses default. 
      */
     @WebMethod
     CreateResourceHistory createPackageBackedResource(//
@@ -107,7 +168,8 @@ public interface ResourceFactoryManagerRemote {
         @WebParam(name = "deploymentTimeConfiguration")//
         @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
         Configuration deploymentTimeConfiguration, //
-        @WebParam(name = "packageBits") byte[] packageBits);
+        @WebParam(name = "packageBits") byte[] packageBits, //
+        @WebParam(name = "timeout") Integer timeout);
 
     /**
      * Creates a new physical resource. The resource will be created as a child of the specified parent. In other words,
@@ -126,6 +188,7 @@ public interface ResourceFactoryManagerRemote {
      *                                    resource
      * @param deploymentTimeConfiguration dictates how the package will be deployed
      * @param packageVersionId            An existing package version to back this resource
+     * @param timeout                     number of milliseconds before the agent suffers a timeout when creating the resource. If null uses default. 
      */
     @WebMethod
     public CreateResourceHistory createPackageBackedResourceViaPackageVersion(//
@@ -139,7 +202,8 @@ public interface ResourceFactoryManagerRemote {
         @WebParam(name = "deploymentTimeConfiguration")//
         @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
         Configuration deploymentTimeConfiguration, //
-        @WebParam(name = "packageVersionId") int packageVersionId);
+        @WebParam(name = "packageVersionId") int packageVersionId, //
+        @WebParam(name = "timeout") Integer timeout);
 
     /**
      * Deletes a physical resource from the agent machine. After this call, the resource will no longer be accessible

@@ -22,6 +22,11 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components.form;
 
+import java.util.EnumSet;
+import java.util.LinkedHashMap;
+import java.util.Set;
+import java.util.TreeSet;
+
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.ComboBoxItem;
@@ -31,16 +36,12 @@ import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 import com.smartgwt.client.widgets.form.validator.IntegerRangeValidator;
+
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.util.FormUtility;
 import org.rhq.enterprise.gui.coregui.client.util.TypeConversionUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
-
-import java.util.EnumSet;
-import java.util.LinkedHashMap;
-import java.util.Set;
-import java.util.TreeSet;
 
 /**
  * A form item for entering a duration - consists of an IntegerItem for entering the amount of time and a
@@ -62,14 +63,42 @@ public class DurationItem extends CanvasItem {
     private boolean isReadOnly;
     private UnitType unitType;
 
+    /**
+     * @param name
+     * @param title
+     * @param supportedUnits when specified, the Set's most granular TimeUnit will be the valueUnit (@{link {@link #getValueUnit()})
+     * @param supportsIterations
+     * @param isReadOnly
+     * @param parentWidget
+     */
     public DurationItem(String name, String title, TreeSet<TimeUnit> supportedUnits, boolean supportsIterations,
-                        boolean isReadOnly, Locatable parentWidget) {
+        boolean isReadOnly, Locatable parentWidget) {
+
+        this(name, title, (null != supportedUnits && !supportedUnits.isEmpty()) ? supportedUnits.iterator().next()
+            : null, supportedUnits, supportsIterations, isReadOnly, parentWidget);
+    }
+
+    /**
+     * @param name
+     * @param title
+     * @param valueUnit the TimeUnit for to the item value (@{link {@link #getValueUnit()}). If null the default is used.
+     * If provided will override the default.  The default is the supportedUnit Set's  most granular TimeUnit (@{link {@link #getValueUnit()}).
+     * @param supportedUnits
+     * @param supportsIterations
+     * @param isReadOnly
+     * @param parentWidget
+     */
+    public DurationItem(String name, String title, TimeUnit valueUnit, TreeSet<TimeUnit> supportedUnits,
+        boolean supportsIterations, boolean isReadOnly, Locatable parentWidget) {
         super(name, title);
 
+        this.valueUnit = valueUnit;
         this.supportedUnitTypes = EnumSet.noneOf(UnitType.class);
         if (supportedUnits != null && !supportedUnits.isEmpty()) {
             this.supportedUnitTypes.add(UnitType.TIME);
-            this.valueUnit = supportedUnits.iterator().next();
+            if (null == this.valueUnit) {
+                this.valueUnit = supportedUnits.iterator().next();
+            }
         }
         if (supportsIterations) {
             this.supportedUnitTypes.add(UnitType.ITERATIONS);
@@ -148,11 +177,11 @@ public class DurationItem extends CanvasItem {
 
         String unitString = null;
         switch (unitType) {
-            case TIME:
-                unitString = this.valueUnit.getDisplayName();
-                break;
-            case ITERATIONS:
-                unitString = MSG.common_unit_times();
+        case TIME:
+            unitString = this.valueUnit.getDisplayName();
+            break;
+        case ITERATIONS:
+            unitString = MSG.common_unit_times();
         }
 
         if (this.isReadOnly) {
@@ -167,7 +196,7 @@ public class DurationItem extends CanvasItem {
             if (value != null) {
                 this.form.setValue(FIELD_VALUE, value);
             } else {
-                this.form.setValue(FIELD_VALUE, (String)null);
+                this.form.setValue(FIELD_VALUE, (String) null);
             }
             this.form.setValue(FIELD_UNITS, unitString);
         }
@@ -196,146 +225,146 @@ public class DurationItem extends CanvasItem {
                     throw new IllegalStateException(MSG.widget_durationItem_inputUnitLessThanTargetUnit());
                 }
                 switch (unit) {
+                case MILLISECONDS:
+                    switch (this.valueUnit) {
                     case MILLISECONDS:
-                        switch (this.valueUnit) {
-                            case MILLISECONDS:
-                                convertedValue = integerValue;
-                                break;
-                        }
+                        convertedValue = integerValue;
+                        break;
+                    }
+                    break;
+                case SECONDS:
+                    switch (this.valueUnit) {
+                    case SECONDS:
+                        convertedValue = integerValue;
+                        break;
+                    case MILLISECONDS:
+                        convertedValue = integerValue * 1000;
+                        break;
+                    }
+                    break;
+                case MINUTES:
+                    switch (this.valueUnit) {
+                    case MINUTES:
+                        convertedValue = integerValue;
                         break;
                     case SECONDS:
-                        switch (this.valueUnit) {
-                            case SECONDS:
-                                convertedValue = integerValue;
-                                break;
-                            case MILLISECONDS:
-                                convertedValue = integerValue * 1000;
-                                break;
-                        }
+                        convertedValue = integerValue * 60;
+                        break;
+                    case MILLISECONDS:
+                        convertedValue = integerValue * 60 * 1000;
+                        break;
+                    }
+                    break;
+                case HOURS:
+                    switch (this.valueUnit) {
+                    case HOURS:
+                        convertedValue = integerValue;
                         break;
                     case MINUTES:
-                        switch (this.valueUnit) {
-                            case MINUTES:
-                                convertedValue = integerValue;
-                                break;
-                            case SECONDS:
-                                convertedValue = integerValue * 60;
-                                break;
-                            case MILLISECONDS:
-                                convertedValue = integerValue * 60 * 1000;
-                                break;
-                        }
+                        convertedValue = integerValue * 60;
+                        break;
+                    case SECONDS:
+                        convertedValue = integerValue * 60 * 60;
+                        break;
+                    case MILLISECONDS:
+                        convertedValue = integerValue * 60 * 60 * 1000;
+                        break;
+                    }
+                    break;
+                case DAYS:
+                    switch (this.valueUnit) {
+                    case DAYS:
+                        convertedValue = integerValue;
                         break;
                     case HOURS:
-                        switch (this.valueUnit) {
-                            case HOURS:
-                                convertedValue = integerValue;
-                                break;
-                            case MINUTES:
-                                convertedValue = integerValue * 60;
-                                break;
-                            case SECONDS:
-                                convertedValue = integerValue * 60 * 60;
-                                break;
-                            case MILLISECONDS:
-                                convertedValue = integerValue * 60 * 60 * 1000;
-                                break;
-                        }
+                        convertedValue = integerValue * 24;
+                        break;
+                    case MINUTES:
+                        convertedValue = integerValue * 24 * 60;
+                        break;
+                    case SECONDS:
+                        convertedValue = integerValue * 24 * 60 * 60;
+                        break;
+                    case MILLISECONDS:
+                        convertedValue = integerValue * 24 * 60 * 60 * 1000;
+                        break;
+                    }
+                    break;
+                case WEEKS:
+                    switch (this.valueUnit) {
+                    case WEEKS:
+                        convertedValue = integerValue;
                         break;
                     case DAYS:
-                        switch (this.valueUnit) {
-                            case DAYS:
-                                convertedValue = integerValue;
-                                break;
-                            case HOURS:
-                                convertedValue = integerValue * 24;
-                                break;
-                            case MINUTES:
-                                convertedValue = integerValue * 24 * 60;
-                                break;
-                            case SECONDS:
-                                convertedValue = integerValue * 24 * 60 * 60;
-                                break;
-                            case MILLISECONDS:
-                                convertedValue = integerValue * 24 * 60 * 60 * 1000;
-                                break;
-                        }
+                        convertedValue = integerValue * 7;
+                        break;
+                    case HOURS:
+                        convertedValue = integerValue * 7 * 24;
+                        break;
+                    case MINUTES:
+                        convertedValue = integerValue * 7 * 24 * 60;
+                        break;
+                    case SECONDS:
+                        convertedValue = integerValue * 7 * 24 * 60 * 60;
+                        break;
+                    case MILLISECONDS:
+                        convertedValue = integerValue * 7 * 24 * 60 * 60 * 1000;
+                        break;
+                    }
+                    break;
+                case MONTHS:
+                    switch (this.valueUnit) {
+                    case MONTHS:
+                        convertedValue = integerValue;
                         break;
                     case WEEKS:
-                        switch (this.valueUnit) {
-                            case WEEKS:
-                                convertedValue = integerValue;
-                                break;
-                            case DAYS:
-                                convertedValue = integerValue * 7;
-                                break;
-                            case HOURS:
-                                convertedValue = integerValue * 7 * 24;
-                                break;
-                            case MINUTES:
-                                convertedValue = integerValue * 7 * 24 * 60;
-                                break;
-                            case SECONDS:
-                                convertedValue = integerValue * 7 * 24 * 60 * 60;
-                                break;
-                            case MILLISECONDS:
-                                convertedValue = integerValue * 7 * 24 * 60 * 60 * 1000;
-                                break;
-                        }
+                        convertedValue = integerValue * 4;
+                        break;
+                    case DAYS:
+                        convertedValue = integerValue * 30;
+                        break;
+                    case HOURS:
+                        convertedValue = integerValue * 30 * 24;
+                        break;
+                    case MINUTES:
+                        convertedValue = integerValue * 30 * 24 * 60;
+                        break;
+                    case SECONDS:
+                        convertedValue = integerValue * 30 * 24 * 60 * 60;
+                        break;
+                    case MILLISECONDS:
+                        convertedValue = integerValue * 30 * 24 * 60 * 60 * 1000;
+                        break;
+                    }
+                    break;
+                case YEARS:
+                    switch (this.valueUnit) {
+                    case YEARS:
+                        convertedValue = integerValue;
                         break;
                     case MONTHS:
-                        switch (this.valueUnit) {
-                            case MONTHS:
-                                convertedValue = integerValue;
-                                break;
-                            case WEEKS:
-                                convertedValue = integerValue * 4;
-                                break;
-                            case DAYS:
-                                convertedValue = integerValue * 30;
-                                break;
-                            case HOURS:
-                                convertedValue = integerValue * 30 * 24;
-                                break;
-                            case MINUTES:
-                                convertedValue = integerValue * 30 * 24 * 60;
-                                break;
-                            case SECONDS:
-                                convertedValue = integerValue * 30 * 24 * 60 * 60;
-                                break;
-                            case MILLISECONDS:
-                                convertedValue = integerValue * 30 * 24 * 60 * 60 * 1000;
-                                break;
-                        }
+                        convertedValue = integerValue * 12;
                         break;
-                    case YEARS:
-                        switch (this.valueUnit) {
-                            case YEARS:
-                                convertedValue = integerValue;
-                                break;
-                            case MONTHS:
-                                convertedValue = integerValue * 12;
-                                break;
-                            case WEEKS:
-                                convertedValue = integerValue * 52;
-                                break;
-                            case DAYS:
-                                convertedValue = integerValue * 365;
-                                break;
-                            case HOURS:
-                                convertedValue = integerValue * 365 * 24;
-                                break;
-                            case MINUTES:
-                                convertedValue = integerValue * 365 * 24 * 60;
-                                break;
-                            case SECONDS:
-                                convertedValue = integerValue * 365 * 24 * 60 * 60;
-                                break;
-                            case MILLISECONDS:
-                                convertedValue = integerValue * 365 * 24 * 60 * 60 * 1000;
-                                break;
-                        }
+                    case WEEKS:
+                        convertedValue = integerValue * 52;
                         break;
+                    case DAYS:
+                        convertedValue = integerValue * 365;
+                        break;
+                    case HOURS:
+                        convertedValue = integerValue * 365 * 24;
+                        break;
+                    case MINUTES:
+                        convertedValue = integerValue * 365 * 24 * 60;
+                        break;
+                    case SECONDS:
+                        convertedValue = integerValue * 365 * 24 * 60 * 60;
+                        break;
+                    case MILLISECONDS:
+                        convertedValue = integerValue * 365 * 24 * 60 * 60 * 1000;
+                        break;
+                    }
+                    break;
                 }
             }
         }

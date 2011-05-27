@@ -147,6 +147,19 @@
                 displayName="Maximum request time"/>
 
 
+        <resource-configuration>
+            <c:list-property name="schema-locations" displayName="Schema locations">
+                <c:map-property name="location">
+                    <c:simple-property name="urn" readOnly="true"/>
+                    <c:simple-property name="location" readOnly="true"/>
+                </c:map-property>
+            </c:list-property>
+            <c:list-property name="extension" displayName="Installed extensions">
+                <c:simple-property name="name" readOnly="true"/>
+            </c:list-property>
+        </resource-configuration>
+
+
         <server name="Profile"
                 description="One profile in a domain"
                 discovery="SubsystemDiscovery"
@@ -1334,7 +1347,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
         <resource-configuration>
             <c:simple-property name="default-interface" readOnly="true" displayName="Default Interface" description="Default Interface for these bindings. See NetworkInterfaces for its definition" required="false"/>
             <!-- note: at domain level there is no port-offset -->
-            <c:simple-property name="port-offset" readOnly="true" displayName="Port Offset" description="Offset from standard ports for this group" required="false"/>
+            <c:simple-property name="port-offset" readOnly="true" displayName="Port Offset" description="Offset from standard ports for this group (Only relevant in standalone mode)" required="false"/>
             <c:list-property name="includes">
                 <c:simple-property name="includes" displayName="Included bindings" description="Other bindings that are included in this one"/>
             </c:list-property>

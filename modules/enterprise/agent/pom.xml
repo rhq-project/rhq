@@ -187,6 +187,8 @@ Build-Number=${buildNumber}
                    <property name="jaxb-api.version" value="${jaxb-api.version}" />
                    <property name="jaxb-impl.version" value="${jaxb-impl.version}" />
                    <property name="jline.version" value="${jline.version}" />
+                   <property name="augeas.version" values="${augeas.version}" />
+                   <property name="augeas.zip.version" values="${augeas.zip.version}" />
                 </ant>
               </tasks>
             </configuration>

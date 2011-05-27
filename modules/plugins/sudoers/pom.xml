@@ -53,6 +53,7 @@
                         <phase>pre-integration-test</phase>
                         <configuration>
                            <tasks>
+                              <taskdef resource="net/sf/antcontrib/antcontrib.properties" />
                               <echo>Setting up integration test plugin container environment under target/itest/...</echo>
 
                               <property name="settings.localRepository" location="${user.home}/.m2/repository" />
@@ -82,11 +83,42 @@
                                  </patternset>
                               </unzip>
                               <move todir="target/itest/lib" flatten="true">
-                                 <fileset dir="target/itest/lib">
+                                 <fileset dir="target/itest/lib/hyperic-sigar-${sigar.zip.version}">
                                     <include name="**/lib/*" />
                                  </fileset>
                               </move>
-                              <delete dir="target/itest/lib/hyperic-sigar-${sigar.version}" />
+                              <delete dir="target/itest/lib/hyperic-sigar-${sigar.zip.version}" />
+
+                              <unzip dest="target/itest/lib">
+                                 <fileset dir="${settings.localRepository}/net/augeas/augeas-native/${augeas.version}" includes="*.zip" />
+                                 <patternset>
+                                    <include name="**/lib*/*.so" />
+                                    <include name="**/lib*/*.so.*" />
+                                 </patternset>
+                              </unzip>                              
+                              <!-- by default deploy the 32bit augeas libs -->
+                              <move todir="target/itest/lib/">
+                                <fileset dir="target/itest/lib/augeas-native-${augeas.zip.version}/lib">
+                                    <include name="**/*.so"/>
+                                    <include name="**/*.so.*"/>
+                                </fileset>
+                              </move>
+                              <if>
+                                  <or>
+                                      <os family="unix" arch="x86_64" />
+                                      <os family="unix" arch="amd64" />
+                                   </or>   
+                                  <then>
+                                      <!-- overwrite with 64bits if needed -->
+                                      <move todir="target/itest/lib/">
+                                        <fileset dir="target/itest/lib/augeas-native-${augeas.zip.version}/lib64">
+                                            <include name="**/*.so"/>
+                                            <include name="**/*.so.*"/>
+                                        </fileset>
+                                      </move>
+                                  </then>
+                              </if> 
+                              <delete dir="target/itest/lib/augeas-native-${augeas.zip.version}" />                                                            
                            </tasks>
                         </configuration>
                         <goals>
@@ -113,18 +145,15 @@
                            <skip>${maven.test.skip}</skip>
                            <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
                            <useSystemClassLoader>false</useSystemClassLoader>
-                           <argLine>-Dorg.hyperic.sigar.path=${basedir}/target/itest/lib</argLine>
                            <!--<argLine>-Dorg.hyperic.sigar.path=${basedir}/target/itest/lib -Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y</argLine>-->
-                           <systemProperties>
-                              <property>
-                                 <name>project.artifactId</name>
-                                 <value>${project.artifactId}</value>
-                              </property>
-                              <property>
-                                 <name>project.version</name>
-                                 <value>${project.version}</value>
-                              </property>
-                           </systemProperties>
+                           <environmentVariables>
+                              <LD_LIBRARY_PATH>${basedir}/target/itest/lib:${env.LD_LIBRARY_PATH}</LD_LIBRARY_PATH>
+                           </environmentVariables>
+                           <systemPropertyVariables>
+                              <org.hyperic.sigar.path>${basedir}/target/itest/lib</org.hyperic.sigar.path>
+                              <project.artifactId>${project.artifactId}</project.artifactId>
+                              <project.version>${project.version}</project.version>
+                           </systemPropertyVariables>
                         </configuration>
                      </execution>
                   </executions>

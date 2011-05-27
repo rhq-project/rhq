@@ -87,7 +87,8 @@ public class ASConnection {
     }
 
     /**
-     * Execute an operation against the domain api
+     * Execute an operation against the domain api. This method is doing the
+     * real work by talking to the remote server.
      * @return JsonNode that describes the result
      * @param operation an Operation that should be run on the domain controller
      */
@@ -136,6 +137,10 @@ public class ASConnection {
             }
             else {
                 outcome="- no response from server -";
+                Result noResult = new Result();
+                noResult.setFailureDescription(outcome);
+                noResult.setOutcome("failure");
+                operationResult = mapper.valueToTree(noResult);
             }
             return operationResult;
             }
@@ -146,6 +151,14 @@ public class ASConnection {
 
         } catch (IOException e) {
             log.error("Failed to get data: " + e.getMessage()  );
+
+            Result failure = new Result();
+            failure.setFailureDescription(e.getMessage());
+            failure.setOutcome("failure");
+
+            JsonNode ret = mapper.valueToTree(failure);
+            return ret;
+
         } finally {
             if (br!=null)
                 try {
@@ -188,29 +201,6 @@ public class ASConnection {
         }
     }
 
-
-    private URL getBaseUrl(String base, String ops) throws MalformedURLException {
-        String spec;
-        URL url2;
-        if (base!=null && !base.isEmpty()) {
-            if (!base.startsWith("/")) {
-                spec = urlString + "/" + base;
-            }
-            else {
-                spec = urlString + base;
-            }
-            if (ops!=null) {
-                if (!ops.startsWith("?"))
-                    ops = "?" + ops;
-                spec += ops;
-            }
-
-            url2 = new URL(spec);
-        }
-        else
-            url2 = url;
-        return url2;
-    }
 
     public static String getFailureDescription(JsonNode jsonNode) {
         if (jsonNode==null)

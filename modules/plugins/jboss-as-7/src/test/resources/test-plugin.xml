@@ -1,0 +1,33 @@
+<plugin name="jboss-as-7"
+        displayName="JBoss-AS-7-Plugin"
+        description="Management of JBossAS 7"
+        package="org.rhq.modules.plugins.jbossas7"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration"
+        version="4.0.0-SNAPSHOT"
+        >
+
+    <server class="foo" discovery="foo" name="socketBinding">
+        <resource-configuration>
+            <c:simple-property name="default-interface" readOnly="true" displayName="Default Interface" />
+            <!-- note: at domain level there is no port-offset -->
+            <c:simple-property name="port-offset" readOnly="true" displayName="Port Offset" required="false"/>
+            <c:list-property name="includes">
+                <c:simple-property name="includes" displayName="Included bindings" />
+            </c:list-property>
+            <c:list-property name="socket-binding">
+                <c:map-property name="binding">
+                    <c:simple-property name="name" />
+                    <c:simple-property name="interface"  required="false"/>
+                    <c:simple-property name="port"  type="integer"/>
+                    <c:simple-property name="fixed-port"  type="boolean"/>
+                    <c:simple-property name="multicast-address"  />
+                    <c:simple-property name="multicast-port" type="integer"/>
+                </c:map-property>
+            </c:list-property>
+        </resource-configuration>
+
+    </server>
+
+</plugin>

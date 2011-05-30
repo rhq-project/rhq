@@ -31,6 +31,7 @@ import org.codehaus.jackson.annotate.JsonProperty;
  */
 public class Result {
 
+    public static final String SUCCESS = "success";
     private String outcome;
     private Object result;
     @JsonProperty("compensating-operation")
@@ -50,7 +51,7 @@ public class Result {
 
     public void setOutcome(String outcome) {
         this.outcome = outcome;
-        if (outcome.equalsIgnoreCase("success"))
+        if (outcome.equalsIgnoreCase(SUCCESS))
             success = true;
     }
 

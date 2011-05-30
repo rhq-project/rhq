@@ -42,7 +42,6 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
-import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.modules.plugins.jbossas7.json.NameValuePair;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
@@ -51,18 +50,17 @@ import org.rhq.modules.plugins.jbossas7.json.ReadResource;
 public class ConfigurationDelegate implements ConfigurationFacet {
 
     final Log log = LogFactory.getLog(this.getClass());
-    ResourceContext context;
     private List<PROPERTY_VALUE> address;
     private ASConnection connection;
+    private ConfigurationDefinition configurationDefinition;
 
-    public ConfigurationDelegate(ResourceContext context,ASConnection connection, List<PROPERTY_VALUE> address) {
-        this.context = context;
+    public ConfigurationDelegate(ConfigurationDefinition configDef,ASConnection connection, List<PROPERTY_VALUE> address) {
+        this.configurationDefinition = configDef;
         this.connection = connection;
         this.address = address;
     }
 
     public Configuration loadResourceConfiguration() throws Exception {
-        ConfigurationDefinition configDef = context.getResourceType().getResourceConfigurationDefinition();
 
 
         Operation op = new ReadResource(address); // TODO set recursive flag?  --> try to narrow it down
@@ -72,13 +70,14 @@ public class ConfigurationDelegate implements ConfigurationFacet {
         Configuration ret = new Configuration();
         ObjectMapper mapper = new ObjectMapper();
 
-        Set<Map.Entry<String, PropertyDefinition>> entrySet = configDef.getPropertyDefinitions().entrySet();
+        Set<Map.Entry<String, PropertyDefinition>> entrySet = configurationDefinition.getPropertyDefinitions().entrySet();
         for (Map.Entry<String, PropertyDefinition> propDefEntry : entrySet) {
             PropertyDefinition propDef = propDefEntry.getValue();
             JsonNode sub = json.findValue(propDef.getName());
             if (sub == null) {
-                log.error(
-                        "No value for property [" + propDef.getName() + "] found - check the descriptor");
+                log.warn(
+                        "No value for property [" + propDef.getName() + "] found - check the descriptor (may be valid, \n"+
+                                "as some attributes are different in domain vs standalone mode");
                 continue;
             }
             if (propDef instanceof PropertyDefinitionSimple) {

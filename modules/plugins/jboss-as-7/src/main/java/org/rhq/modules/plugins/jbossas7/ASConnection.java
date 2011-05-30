@@ -31,6 +31,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.map.SerializationConfig;
 
 import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
@@ -46,6 +47,7 @@ public class ASConnection {
     URL url;
     String urlString;
     private ObjectMapper mapper;
+    boolean verbose = true; // This is a variable on purpose, so devs can switch it on in the debugger
 
     public ASConnection(String host, int port) {
 
@@ -74,7 +76,6 @@ public class ASConnection {
                     JsonNode reasonNode = in.findValue("failure-description");
 
                     String reason = reasonNode.getTextValue();
-//                    log.info(reason);
                     return true;
                 }
 
@@ -105,8 +106,10 @@ public class ASConnection {
             OutputStream out = conn.getOutputStream();
 
             String result = mapper.writeValueAsString(operation);
-            System.out.println("Json to send: " + result);
-            System.out.flush();
+            if (verbose) {
+                System.out.println("Json to send: " + result);
+                System.out.flush();
+            }
             mapper.writeValue(out, operation);
 
             out.flush();
@@ -134,6 +137,13 @@ public class ASConnection {
             if (builder !=null) {
                 outcome= builder.toString();
                 operationResult = mapper.readTree(outcome);
+                if (verbose) {
+                    ObjectMapper om2 = new ObjectMapper();
+                    om2.configure(SerializationConfig.Feature.INDENT_OUTPUT, true);
+                    String tmp = om2.writeValueAsString(operationResult);
+                    System.out.println(tmp);
+                    System.out.flush();
+                }
             }
             else {
                 outcome="- no response from server -";
@@ -146,6 +156,8 @@ public class ASConnection {
             }
             else {
                 log.error("IS was null and code was " + responseCode);
+                if (verbose)
+                    System.err.println("IS was null and code was " + responseCode);
             }
 
 

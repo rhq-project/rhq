@@ -23,6 +23,7 @@ import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonNode;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.DataType;
@@ -209,7 +210,8 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
     public Configuration loadResourceConfiguration() throws Exception {
 
         List<PROPERTY_VALUE> address = pathToAddress(path);
-        ConfigurationDelegate delegate = new ConfigurationDelegate(context,connection,address);
+        ConfigurationDefinition configDef = context.getResourceType().getResourceConfigurationDefinition();
+        ConfigurationDelegate delegate = new ConfigurationDelegate(configDef,connection,address);
         return delegate.loadResourceConfiguration();
     }
 
@@ -217,7 +219,8 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
 
         List<PROPERTY_VALUE> address = pathToAddress(path);
-        ConfigurationDelegate delegate = new ConfigurationDelegate(context,connection,address);
+        ConfigurationDefinition configDef = context.getResourceType().getResourceConfigurationDefinition();
+        ConfigurationDelegate delegate = new ConfigurationDelegate(configDef,connection,address);
         delegate.updateResourceConfiguration(report);
     }
 

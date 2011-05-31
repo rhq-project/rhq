@@ -115,4 +115,10 @@ public interface ResourceFactoryManagerRemote {
     void deleteResource( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "resourceId") int resourceId);
+
+    @WebMethod
+    void updateResourceName( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "resourceId") int resourceId, //
+        @WebParam(name = "name") String name);
 }

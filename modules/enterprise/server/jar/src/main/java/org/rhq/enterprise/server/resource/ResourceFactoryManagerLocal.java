@@ -240,4 +240,6 @@ public interface ResourceFactoryManagerLocal {
      */
     void deleteResource(Subject subject, int resourceId);
 
+    void updateResourceName(Subject subject, int resourceId, String name);
+
 }

@@ -154,9 +154,7 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
 
         // There is some inconsistency if we're completing a request that was not in the database
         if (history == null) {
-            log
-                .error("Attempting to complete a request that was not found in the database: "
-                    + response.getRequestId());
+            log.error("Attempting to complete a request that was not found in the database: " + response.getRequestId());
             return;
         }
 
@@ -595,4 +593,26 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
         }
     }
 
+    public void updateResourceName(Subject subject, int resourceId, String name) {
+        if (name == null) {
+            throw new IllegalArgumentException("Resource name cannot be null.");
+        }
+        Resource resource = getResourceToBeModified(subject, resourceId);
+        resource.setName(name);
+        resource.setMtime(System.currentTimeMillis());
+    }
+
+    private Resource getResourceToBeModified(Subject subject, int resourceId) {
+        Resource resource = entityManager.find(Resource.class, resourceId);
+
+        if (resource == null) {
+            throw new ResourceNotFoundException(resourceId);
+        }
+
+        if (!authorizationManager.hasResourcePermission(subject, Permission.MODIFY_RESOURCE, resourceId)) {
+            throw new PermissionException("User [" + subject
+                + "] does not have permission to modify Resource with id [" + resourceId + "].");
+        }
+        return resource;
+    }
 }

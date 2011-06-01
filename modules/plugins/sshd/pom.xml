@@ -22,9 +22,18 @@
 
    <properties>
       <scm.module.path>modules/plugins/sshd/</scm.module.path>
+      <ant.contrib.version>1.0b3</ant.contrib.version>
    </properties>
 
    <dependencies>
+
+      <dependency>
+         <groupId>ant-contrib</groupId>
+         <artifactId>ant-contrib</artifactId>
+         <version>${ant.contrib.version}</version>
+         <scope>provided</scope>
+      </dependency>
+
       <dependency>
          <groupId>net.augeas</groupId>
          <artifactId>augeas</artifactId>
@@ -59,9 +68,12 @@
                         <phase>pre-integration-test</phase>
                         <configuration>
                            <tasks>
-                              <taskdef resource="net/sf/antcontrib/antcontrib.properties" />
-                              <echo>Setting up plugin dependencies for ${project.artifactId}-${project.version}.jar...
-                              </echo>
+                              <taskdef resource="net/sf/antcontrib/antcontrib.properties">
+                                 <classpath>
+                                    <pathelement location="${settings.localRepository}/ant-contrib/ant-contrib/${ant.contrib.version}/ant-contrib-${ant.contrib.version}.jar" />
+                                 </classpath>
+                              </taskdef>
+                              <echo>Setting up plugin dependencies for ${project.artifactId}-${project.version}.jar...</echo>
                               <property name="settings.localRepository" location="${user.home}/.m2/repository" />
                               <mkdir dir="target/itest" />
                               <mkdir dir="target/itest/plugins" />

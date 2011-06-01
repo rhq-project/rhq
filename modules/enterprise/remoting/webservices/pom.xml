@@ -20,7 +20,6 @@
    <properties>
       <scm.module.path>modules/enterprise/remoting/</scm.module.path>
       <persistence-api.version>1.0</persistence-api.version>
-      <ant.contrib.version>1.0b3</ant.contrib.version>
    </properties>
 
    <dependencies>
@@ -50,13 +49,6 @@
          <version>${project.version}</version>
          <type>ejb</type>
          <scope>compile</scope>
-      </dependency>
-
-      <dependency>
-         <groupId>ant-contrib</groupId>
-         <artifactId>ant-contrib</artifactId>
-         <version>${ant.contrib.version}</version>
-         <scope>provided</scope>
       </dependency>
 
       <dependency>

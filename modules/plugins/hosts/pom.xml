@@ -24,9 +24,17 @@
 
    <properties>
       <scm.module.path>modules/plugins/hosts/</scm.module.path>
+      <ant.contrib.version>1.0b3</ant.contrib.version>
    </properties>
 
    <dependencies>
+
+      <dependency>
+         <groupId>ant-contrib</groupId>
+         <artifactId>ant-contrib</artifactId>
+         <version>${ant.contrib.version}</version>
+         <scope>provided</scope>
+      </dependency>
 
        <dependency>
           <groupId>${rhq.groupId}</groupId>
@@ -66,7 +74,11 @@
                         <phase>pre-integration-test</phase>
                         <configuration>
                            <tasks>
-                              <taskdef resource="net/sf/antcontrib/antcontrib.properties" />
+                              <taskdef resource="net/sf/antcontrib/antcontrib.properties">
+                                 <classpath>
+                                    <pathelement location="${settings.localRepository}/ant-contrib/ant-contrib/${ant.contrib.version}/ant-contrib-${ant.contrib.version}.jar" />
+                                 </classpath>
+                              </taskdef>
                               <echo>Setting up integration test plugin container environment under target/itest/...</echo>
 
                               <property name="settings.localRepository" location="${user.home}/.m2/repository" />

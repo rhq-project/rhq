@@ -274,15 +274,24 @@
 
 
         <resource-configuration>
-            <c:list-property name="schema-locations" displayName="Schema locations">
-                <c:map-property name="location">
-                    <c:simple-property name="urn" readOnly="true"/>
-                    <c:simple-property name="location" readOnly="true"/>
-                </c:map-property>
-            </c:list-property>
-            <c:list-property name="extension" displayName="Installed extensions">
-                <c:simple-property name="name" readOnly="true"/>
-            </c:list-property>
+
+            <c:group name="attribute:schema-locations">
+
+                <c:list-property name="schema-locations" displayName="Schema locations">
+                    <c:map-property name="*">
+                        <c:simple-property name="*" readOnly="true" displayName="Schema name"/>
+                    </c:map-property>
+                </c:list-property>
+            </c:group>
+
+            <c:group name="children:extension" displayName="Installed extensions">
+
+                <c:list-property name="extension" displayName="Installed extensions">
+                    <c:map-property name="*" displayName="Name">
+                        <c:simple-property name="module" displayName="Module name"/>
+                    </c:map-property>
+                </c:list-property>
+            </c:group>
         </resource-configuration>
 
 
@@ -649,13 +658,13 @@
             <c:simple-property name="bean-validation-enabled" required="true" type="boolean" readOnly="true"
                                description="Specify whether bean validation is enabled"/>
             <c:simple-property name="archive-validation-enabled" type="boolean" readOnly="true" description="Enabling the validation"/>
-            <c:simple-property name="archive-validation-fail-on-error" type="boolean" readOnly="true" default="true"
+            <c:simple-property name="archive-validation-fail-on-error" type="boolean" readOnly="true" defaultValue="true"
                                description="Should an archive validation error report fail the deployment. Default: true"/>
-            <c:simple-property name="archive-validation-fail-on-warn" type="boolean" readOnly="true" default="false"
+            <c:simple-property name="archive-validation-fail-on-warn" type="boolean" readOnly="true" defaultValue="false"
                                description="Should an archive validation warning report fail the deployment. Default: false"/>
-            <c:simple-property name="cached-connection-manager-debug" type="boolean" readOnly="true" default="false"
+            <c:simple-property name="cached-connection-manager-debug" type="boolean" readOnly="true" defaultValue="false"
                                description="enable/disable debug information logging for cached connection manager"/>
-            <c:simple-property name="cached-connection-manager-error" type="boolean" readOnly="true" default="false"
+            <c:simple-property name="cached-connection-manager-error" type="boolean" readOnly="true" defaultValue="false"
                                description="enable/disable error information logging for cached connection manager"/>
         </resource-configuration>
 

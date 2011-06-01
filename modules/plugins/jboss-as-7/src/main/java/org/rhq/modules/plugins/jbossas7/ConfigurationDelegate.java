@@ -18,6 +18,8 @@
  */
 package org.rhq.modules.plugins.jbossas7;
 
+import java.io.IOException;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +29,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.omg.CORBA.portable.ValueInputStream;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
@@ -39,246 +42,264 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
+import org.rhq.core.domain.configuration.definition.PropertyGroupDefinition;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
+import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
 import org.rhq.modules.plugins.jbossas7.json.NameValuePair;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
+import org.rhq.modules.plugins.jbossas7.json.ReadAttribute;
+import org.rhq.modules.plugins.jbossas7.json.ReadChildrenResources;
 import org.rhq.modules.plugins.jbossas7.json.ReadResource;
+import org.rhq.modules.plugins.jbossas7.json.Result;
 
 public class ConfigurationDelegate implements ConfigurationFacet {
 
+    private static final String SUB_PATH = "_subPath";
+
     final Log log = LogFactory.getLog(this.getClass());
+
     private List<PROPERTY_VALUE> address;
     private ASConnection connection;
     private ConfigurationDefinition configurationDefinition;
 
+    /**
+     * Create a new configuration delegate, that reads the attributes for the resource at address.
+     * @param configDef Configuration definition for the configuration
+     * @param connection asConnection to use
+     * @param address address of the resource.
+     */
     public ConfigurationDelegate(ConfigurationDefinition configDef,ASConnection connection, List<PROPERTY_VALUE> address) {
         this.configurationDefinition = configDef;
         this.connection = connection;
         this.address = address;
     }
 
+    /**
+     * Trigger loading of a configuration by talking to the remote resource.
+     * @return The initialized configuration
+     * @throws Exception If anything goes wrong.
+     */
     public Configuration loadResourceConfiguration() throws Exception {
 
+        Configuration config = new Configuration();
 
-        Operation op = new ReadResource(address); // TODO set recursive flag?  --> try to narrow it down
+        /*
+         * Grouped definitions get a special treatment, as they may have a special property
+         * that will be evaluated to look at a child resource or a special attribute or such
+         */
+        List<PropertyGroupDefinition> gdef = configurationDefinition.getGroupDefinitions();
+        for (PropertyGroupDefinition pgDef : gdef) {
+            handleGroup(config,pgDef);
+        }
+        /*
+         * Now handle the non-grouped properties
+         */
+        List<PropertyDefinition> nonGroupdedDefs = configurationDefinition.getNonGroupedProperties();
+        Operation op = new ReadResource(address);
         op.addAdditionalProperty("recursive", "true");
-        JsonNode json = connection.executeRaw(op);
+        handleProperties(config,nonGroupdedDefs,op);
 
-        Configuration ret = new Configuration();
-        ObjectMapper mapper = new ObjectMapper();
+        return config;
+    }
 
-        Set<Map.Entry<String, PropertyDefinition>> entrySet = configurationDefinition.getPropertyDefinitions().entrySet();
-        for (Map.Entry<String, PropertyDefinition> propDefEntry : entrySet) {
-            PropertyDefinition propDef = propDefEntry.getValue();
-            JsonNode sub = json.findValue(propDef.getName());
-            if (sub == null) {
+    /**
+     * Handle a set of grouped properties. The name of the group tells us how to deal with it:
+     * <ul>
+     *     <li>attribute: read the passed attribute of the resource</li>
+     *     <li>children:  read the children of the given child-type</li>
+     * </ul>
+     * @param config Configuration to return
+     * @param groupDefinition Definition of this group
+     * @throws Exception If anything goes wrong
+     */
+    private void handleGroup(Configuration config, PropertyGroupDefinition groupDefinition) throws Exception{
+        Operation operation = null;
+        String groupName = groupDefinition.getName();
+        if (groupName.startsWith("attribute:")) {
+            String attr = groupName.substring("attribute:".length());
+            operation = new ReadAttribute(address,attr);
+        }
+        else if (groupName.startsWith("children:")) {
+            String type = groupName.substring("children:".length());
+            operation = new ReadChildrenResources(address,type);
+            operation.addAdditionalProperty("recursive", "true");
+        }
+        else {
+            throw new IllegalArgumentException("Unknown operation in group name [" + groupName + "]");
+        }
+        List<PropertyDefinition> listedDefs = configurationDefinition.getPropertiesInGroup(groupName);
+        handleProperties(config,listedDefs,operation);
+
+    }
+
+
+    private void handleProperties(Configuration config, List<PropertyDefinition> definitions, Operation op) throws Exception {
+        if (definitions.size()==0)
+            return;
+
+        Result operationResult = connection.execute(op);
+        if (!operationResult.isSuccess()) {
+            throw new IOException("Operation " + op + " failed: " + operationResult.getFailureDescription());
+        }
+
+
+        if (operationResult.getResult() instanceof List) {
+            PropertyList propertyList = handlePropertyList((PropertyDefinitionList) definitions.get(0),operationResult.getResult());
+
+                if (propertyList!=null)
+                    config.put(propertyList);
+            return;
+        }
+
+        Map<String,Object> results = (Map<String, Object>) operationResult.getResult();
+
+
+        for (PropertyDefinition propDef :definitions ) {
+            String propertyName = propDef.getName();
+/*
+            if (!results.containsKey(propertyName)) {
                 log.warn(
-                        "No value for property [" + propDef.getName() + "] found - check the descriptor (may be valid, \n"+
+                        "No value for property [" + propertyName + "] found - check the descriptor (may be valid, \n"+
                                 "as some attributes are different in domain vs standalone mode");
                 continue;
             }
+*/
+            Object valueObject = results.get(propertyName);
+
             if (propDef instanceof PropertyDefinitionSimple) {
-                PropertySimple propertySimple;
 
-                if (sub != null) {
-                    // Property is non-null -> return it.
-                    propertySimple = new PropertySimple(propDef.getName(), sub.getValueAsText());
-                    ret.put(propertySimple);
-                } else {
-                    // property is null? Check if it is required
-                    if (propDef.isRequired()) {
-                        String defaultValue = ((PropertyDefinitionSimple) propDef).getDefaultValue();
-                        propertySimple = new PropertySimple(propDef.getName(), defaultValue);
-                        ret.put(propertySimple);
-                    }
-                }
-            } else if (propDef instanceof PropertyDefinitionList) {
-                PropertyList propertyList = new PropertyList(propDef.getName());
-                PropertyDefinition memberDefinition = ((PropertyDefinitionList) propDef).getMemberDefinition();
-                if (memberDefinition == null) {
-                    if (sub.isObject()) {
-                        Iterator<String> fields = sub.getFieldNames();
-                        while (fields.hasNext()) {
-                            String fieldName = fields.next();
-                            JsonNode subNode = sub.get(fieldName);
-                            PropertySimple propertySimple = new PropertySimple(propDef.getName(), fieldName);
-                            propertyList.add(propertySimple);
-                        }
-                    } else {
-                        System.out.println("===Sub not object==="); // TODO evaluate this branch again
-                        Iterator<JsonNode> values = sub.getElements();
-                        while (values.hasNext()) {
-                            JsonNode node = values.next();
-                            String value = node.getTextValue();
-                            PropertySimple propertySimple = new PropertySimple(propDef.getName(), value);
-                            propertyList.add(propertySimple);
-                        }
-                    }
-                } else if (memberDefinition instanceof PropertyDefinitionMap) {
-                    PropertySimple propertySimple;
+                PropertySimple value = handlePropertySimple((PropertyDefinitionSimple) propDef, valueObject);
+                if (value!=null)
+                    config.put(value);
+            }
 
-                    if (sub.isArray()) {
-                        Iterator<JsonNode> entries = sub.getElements();
-                        while (entries.hasNext()) {
-                            JsonNode entry = entries.next(); // -> one row in the list i.e. one map
+            else if (propDef instanceof PropertyDefinitionList) {
+                PropertyList propertyList = handlePropertyList((PropertyDefinitionList) propDef,valueObject);
 
-                            // Distinguish here?
-
-                            PropertyMap map = new PropertyMap(
-                                    memberDefinition.getName()); // TODO : name from def or 'entryKey' ?
-                            Iterator<JsonNode> fields = entry.getElements(); // TODO loop over fields from map and not from json
-                            while (fields.hasNext()) {
-                                JsonNode field = fields.next();
-                                if (field.isObject()) {
-                                    // TODO only works for tuples at the moment - migrate to some different kind of parsing!
-                                    PROPERTY_VALUE prop = mapper.readValue(field, PROPERTY_VALUE.class);
-                                    // now need to find the names of the properties
-                                    List<PropertyDefinition> defList = ((PropertyDefinitionMap) memberDefinition).getSummaryPropertyDefinitions();
-                                    if (defList.isEmpty())
-                                        throw new IllegalArgumentException(
-                                                "Map " + memberDefinition.getName() + " has no members");
-                                    String key = defList.get(0).getName();
-                                    String value = prop.getKey();
-                                    propertySimple = new PropertySimple(key, value);
-                                    map.put(propertySimple);
-                                    if (defList.size() > 1) {
-                                        key = defList.get(1).getName();
-                                        value = prop.getValue();
-                                        propertySimple = new PropertySimple(key, value);
-                                        map.put(propertySimple);
-
-                                    }
-                                } else { // TODO reached?
-                                    String key = field.getValueAsText();
-                                    if (key.equals(
-                                            "PROPERTY_VALUE")) { // TODO this may change in the future in the AS implementation
-                                        JsonNode pv = entry.findValue(key);
-                                        String k = pv.toString();
-                                        String v = pv.getValueAsText();
-                                        propertySimple = new PropertySimple(k, v);
-                                        map.put(propertySimple);
-
-                                    } else {
-                                        JsonNode value = entry.findValue(key);
-                                        if (value != null) {
-                                            propertySimple = new PropertySimple(key, value.getValueAsText());
-                                            map.put(propertySimple);
-                                        }
-
-                                    }
-                                }
-                            }
-                            propertyList.add(map);
-                        }
-                    } else if (sub.isObject()) {
-                        Iterator<String> keys = sub.getFieldNames();
-                        while (keys.hasNext()) {
-                            String entryKey = keys.next();
-
-                            JsonNode node = sub.findPath(entryKey);
-                            PropertyMap map = new PropertyMap(
-                                    memberDefinition.getName()); // TODO : name from def or 'entryKey' ?
-                            if (node.isObject()) {
-                                Iterator<String> fields = node.getFieldNames(); // TODO loop over fields from map and not from json
-                                while (fields.hasNext()) {
-                                    String key = fields.next();
-
-                                    propertySimple = new PropertySimple(key, node.findValue(key).getValueAsText());
-                                    map.put(propertySimple);
-                                }
-                                propertyList.add(map);
-                            } else if (sub.isNull()) {
-                                List<PropertyDefinition> defList = ((PropertyDefinitionMap) memberDefinition).getSummaryPropertyDefinitions();
-                                String key = defList.get(0).getName();
-                                propertySimple = new PropertySimple(key, entryKey);
-                                map.put(propertySimple);
-                            }
-                        }
-
-                    }
-                } else if (memberDefinition instanceof PropertyDefinitionSimple) {
-                    String name = memberDefinition.getName();
-                    Iterator<JsonNode> keys = sub.getElements();
-                    while (keys.hasNext()) {
-                        JsonNode entry = keys.next();
-
-                        PropertySimple propertySimple = new PropertySimple(name, entry.getTextValue());
-                        propertyList.add(propertySimple);
-                    }
-                }
-                ret.put(propertyList);
-            } // end List of ..
+                if (propertyList!=null)
+                    config.put(propertyList);
+            }
             else if (propDef instanceof PropertyDefinitionMap) {
-                PropertyDefinitionMap mapDef = (PropertyDefinitionMap) propDef;
-                PropertyMap pm = new PropertyMap(mapDef.getName());
+                PropertyMap propertyMap = handlePropertyMap((PropertyDefinitionMap) propDef,valueObject);
 
-                Map<String, PropertyDefinition> memberDefMap = mapDef.getPropertyDefinitions();
-                for (Map.Entry<String, PropertyDefinition> maEntry : memberDefMap.entrySet()) {
-                    JsonNode valueNode = json.findValue(maEntry.getKey());
-                    Property p;
-                    if (maEntry.getValue() instanceof PropertyDefinitionSimple) {
-                        p = putProperty(valueNode, maEntry.getValue());
-                        pm.put(p);
-                    } else if (maEntry.getValue() instanceof PropertyDefinitionMap) { // TODO make this recursive?
-
-                        PropertyDefinitionMap pdm = (PropertyDefinitionMap) maEntry.getValue();
-                        Map<String, PropertyDefinition> mmDefMap = pdm.getPropertyDefinitions();
-                        for (Map.Entry<String, PropertyDefinition> mmDefEntry : mmDefMap.entrySet()) {
-                            if (valueNode != null) {
-                                JsonNode node2 = valueNode.findValue(mmDefEntry.getKey());
-                                System.err.println("Map not yet implemented " + node2.toString());
-                            } else
-                                System.err.println("Value node was null ");
-                        }
-                    } else { // PropDefList
-                        System.err.println("List not yet implemented");
-                    }
-
-//                    pm.put(p);
-                }
-                ret.put(pm);
+                if (propertyMap!=null)
+                    config.put(propertyMap);
             }
         }
-
-        return ret;
     }
 
-    PropertySimple putProperty(JsonNode value, PropertyDefinition def) {
-        String name = def.getName();
-        PropertySimple ps;
+    PropertySimple handlePropertySimple(PropertyDefinitionSimple propDef, Object valueObject) {
+        PropertySimple propertySimple;
 
-        if (value == null) {
-            if (def instanceof PropertyDefinitionSimple) {
-                PropertyDefinitionSimple pds = (PropertyDefinitionSimple) def;
-                return new PropertySimple(name, pds.getDefaultValue());
-            } else
-                return new PropertySimple(name, null);
+        String name = propDef.getName();
+        if (valueObject != null) {
+            // Property is non-null -> return it.
+            propertySimple = new PropertySimple(name, valueObject);
+        } else {
+            // property is null? Check if it is required
+            if (propDef.isRequired()) {
+                String defaultValue = ((PropertyDefinitionSimple) propDef).getDefaultValue();
+                propertySimple = new PropertySimple(name, defaultValue);
+            }
+            else { // Not required and null -> return null
+                propertySimple = new PropertySimple(name,null);
+            }
         }
-        PropertySimpleType type = ((PropertyDefinitionSimple) def).getType();
+        return propertySimple;
 
-        switch (type) {
-        case BOOLEAN:
-            ps = new PropertySimple(name, value.getBooleanValue());
-            break;
-        case FLOAT:
-        case DOUBLE:
-            ps = new PropertySimple(name, value.getDoubleValue());
-            break;
-        case INTEGER:
-            ps = new PropertySimple(name, value.getIntValue());
-            break;
-        case LONG:
-            ps = new PropertySimple(name, value.getLongValue());
-            break;
-        default:
-            ps = new PropertySimple(name, value.getTextValue());
-        }
-
-        return ps;
     }
+
+    /**
+     * Handle a Map of ...
+     * @param propDef Definition of the map
+     * @param valueObject the objects to put into the map
+     * @return the populated map
+     */
+    PropertyMap handlePropertyMap(PropertyDefinitionMap propDef, Object valueObject) {
+        PropertyMap propertyMap = new PropertyMap(propDef.getName());
+
+        Map<String, PropertyDefinition> memberDefMap = propDef.getPropertyDefinitions();
+        Map<String,Object> objects = (Map<String, Object>) valueObject;
+        for (Map.Entry<String, PropertyDefinition> maEntry : memberDefMap.entrySet()) {
+            String key = maEntry.getKey();
+            // special case: if the key is "*", we just pick the first element
+            Object o ;
+            if (key.equals("*"))
+                o = objects.entrySet().iterator().next().getValue();
+            else
+                o = objects.get(key);
+            Property property;
+            PropertyDefinition value = maEntry.getValue();
+            if (value instanceof PropertyDefinitionSimple)
+                property = handlePropertySimple((PropertyDefinitionSimple) value,o);
+            else if (value instanceof PropertyDefinitionList)
+                property = handlePropertyList((PropertyDefinitionList) value,o);
+            else if (value instanceof PropertyDefinitionMap)
+                property = handlePropertyMap((PropertyDefinitionMap) value,o);
+            else
+                throw new IllegalArgumentException("Unknown property type in map property [" + propDef.getName() +"]");
+
+            if (property!=null)
+                propertyMap.put(property);
+            else
+                System.out.println("Property " + key + " was null");
+
+        }
+
+        return propertyMap;
+    }
+
+    /**
+     * Handle a List of ...
+     * @param propDef Definition of this list
+     * @param valueObject The objects to put into the list
+     * @return the property that describes the list.
+     */
+    PropertyList handlePropertyList(PropertyDefinitionList propDef,Object valueObject) {
+        String propertyName = propDef.getName();
+        PropertyList propertyList = new PropertyList(propertyName);
+        PropertyDefinition memberDefinition = propDef.getMemberDefinition();
+        if (memberDefinition==null)
+            throw new IllegalArgumentException("Member definition for property [" + propertyName + "] was null");
+
+        if (valueObject==null) {
+//            System.out.println("vo null");
+            return null;
+        }
+
+        Collection<Object> objects;
+        if (valueObject instanceof List)
+            objects = (List<Object>) valueObject;
+        else /*if (valueObject instanceof Map)*/ {
+            objects = ((Map)valueObject).values();
+        }
+
+        if (memberDefinition instanceof PropertyDefinitionSimple) {
+            for (Object obj : objects) {
+                PropertySimple property = handlePropertySimple((PropertyDefinitionSimple) memberDefinition,
+                        obj);
+                if (property!=null)
+                    propertyList.add(property);
+            }
+        }
+        else if (memberDefinition instanceof PropertyDefinitionMap) {
+            for (Object obj : objects) {
+                Map<String,Object>  map = (Map<String, Object>) obj;
+
+                PropertyMap propertyMap = handlePropertyMap(
+                        (PropertyDefinitionMap) propDef.getMemberDefinition(),map);
+                if (propertyMap!=null)
+                    propertyList.add(propertyMap);
+            }
+        }
+        // TODO List of lists ?
+        return propertyList;
+    }
+
+
 
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
 

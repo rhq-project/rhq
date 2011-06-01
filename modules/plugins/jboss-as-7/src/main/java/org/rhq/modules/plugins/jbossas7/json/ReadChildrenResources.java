@@ -21,17 +21,17 @@ package org.rhq.modules.plugins.jbossas7.json;
 import java.util.List;
 
 /**
- * Operation that reads names of children of a given type from an address
+ * Operation that reads children of a given type from an address
  * @author Heiko W. Rupp
  */
-public class ReadChildrenNames extends Operation {
+public class ReadChildrenResources extends Operation {
 
     /**
      * Read children names of a given type below a given address
      * @param address Address to look at e.g. /profile/default/subsystem/messaging
      * @param childType e.g. queue
      */
-    public ReadChildrenNames(List<PROPERTY_VALUE> address, String childType) {
-        super("read-children-names",address,"child-type",childType);
+    public ReadChildrenResources(List<PROPERTY_VALUE> address, String childType) {
+        super("read-children-resources",address,"child-type",childType);
     }
 }

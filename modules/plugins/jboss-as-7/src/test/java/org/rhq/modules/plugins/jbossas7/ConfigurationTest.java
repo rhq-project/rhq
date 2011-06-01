@@ -18,6 +18,9 @@
  */
 package org.rhq.modules.plugins.jbossas7;
 
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
@@ -51,6 +54,7 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
+import org.rhq.modules.plugins.jbossas7.json.Result;
 
 /**
  * Tests loading and writing configurations
@@ -76,7 +80,7 @@ public class ConfigurationTest {
         definition.put(new PropertyDefinitionSimple("access-log", "Access-Log", false,
                 PropertySimpleType.STRING));
         definition.put(new PropertyDefinitionSimple("rewrite", "Rewrite", false,
-            PropertySimpleType.STRING));
+            PropertySimpleType.BOOLEAN));
         definition.put(new PropertyDefinitionSimple("notThere", "NotThere", false,
             PropertySimpleType.STRING));
 
@@ -86,7 +90,7 @@ public class ConfigurationTest {
 
 
         String resultString = " {\"outcome\" : \"success\", \"result\" : {\"alias\" : [\"example.com\",\"example2.com\"],"+
-                " \"access-log\" : null, \"rewrite\" : null}, \"compensating-operation\" : null}";
+                " \"access-log\" : \"my.log\", \"rewrite\" : true}, \"compensating-operation\" : null}";
 
         ObjectMapper mapper = new ObjectMapper();
         ComplexResult result = mapper.readValue(resultString,ComplexResult.class);
@@ -102,7 +106,27 @@ public class ConfigurationTest {
         PropertyList aliases = (PropertyList) config.get("alias");
         List<Property> list = aliases.getList();
         assert list.size()==2;
-        assert config.get("notThere")==null;
+        int count=2;
+        for (Property p: list) {
+            PropertySimple ps = (PropertySimple) p;
+            if (ps.getStringValue().equals("example.com"))
+                count--;
+            if (ps.getStringValue().equals("example2.com"))
+                count--;
+        }
+        assert count==0 : "Did not find all needed aliases";
+
+        Property notThere = config.get("notThere");
+        assert notThere !=null;
+        assert ((PropertySimple)notThere).getStringValue()==null;
+
+        PropertySimple property = (PropertySimple) config.get("rewrite");
+        assert property!=null;
+        assert property.getBooleanValue();
+
+        property = (PropertySimple) config.get("access-log");
+        assert property!=null && property.getStringValue()!=null;
+        assert property.getStringValue().equals("my.log");
     }
 
     public void test2() throws Exception {
@@ -247,10 +271,165 @@ public class ConfigurationTest {
                 assert ((PropertySimple)map2.get("multicast-port")).getIntegerValue()==18447;
             }
         }
-
     }
 
 
+    public void test4() throws Exception {
+
+        String resultString = loadJsonFromFile("extensions.json");
+
+        ConfigurationDefinition definition = loadDescriptor("test4");
+
+        ObjectMapper mapper = new ObjectMapper();
+        Result result = mapper.readValue(resultString,Result.class);
+        JsonNode json = mapper.valueToTree(result);
+
+        FakeConnection connection = new FakeConnection();
+        connection.setContent(json);
+
+        ConfigurationDelegate delegate = new ConfigurationDelegate(definition,connection,null);
+        Configuration config = delegate.loadResourceConfiguration();
+
+        assert config != null;
+        PropertyList extensions = (PropertyList) config.get("extension");
+        assert  extensions !=null;
+        List<Property> extensionList = extensions.getList();
+        assert  extensionList.size()==22 : "Expected 22 extensions, got " + extensionList.size();
+        PropertyMap propertyMap = (PropertyMap) extensionList.get(0);
+        assert propertyMap != null;
+        PropertyMap starMap = (PropertyMap) propertyMap.get("*");
+        assert starMap!=null;
+        PropertySimple module = (PropertySimple) starMap.get("module");
+        assert module!=null : "Module was null, but should not";
+        String stringValue = module.getStringValue();
+        assert stringValue!=null : "module property has no value";
+        assert stringValue.equals("org.jboss.as.arquillian.service");
+
+
+    }
+
+    public void test5() throws Exception {
+
+        String resultString = loadJsonFromFile("schema-locations.json");
+
+        ConfigurationDefinition definition = loadDescriptor("test5");
+
+        ObjectMapper mapper = new ObjectMapper();
+        ComplexResult result = mapper.readValue(resultString,ComplexResult.class);
+        JsonNode json = mapper.valueToTree(result);
+
+        FakeConnection connection = new FakeConnection();
+        connection.setContent(json);
+
+        ConfigurationDelegate delegate = new ConfigurationDelegate(definition,connection,null);
+        Configuration config = delegate.loadResourceConfiguration();
+
+        assert config != null;
+        PropertyList locations = (PropertyList) config.get("schema-locations");
+        assert locations!=null;
+        List<Property> list = locations.getList();
+        assert list.size()==21 : "List does not contain 21 entries, but " + list.size();
+        PropertyMap propertyMap = (PropertyMap) list.get(0);
+        assert propertyMap !=null;
+        Map<String,Property> map = propertyMap.getMap();
+        assert map.size()==1;
+        PropertySimple urnProp = (PropertySimple) map.get("*");
+        String stringValue = urnProp.getStringValue();
+        assert stringValue!=null : "Location property has no value";
+        assert stringValue.endsWith(".xsd");
+
+    }
+
+    public void test6() throws Exception {
+
+        String resultString = loadJsonFromFile("loopback.json");
+
+        ConfigurationDefinition definition = loadDescriptor("test6and7");
+
+        ObjectMapper mapper = new ObjectMapper();
+        ComplexResult result = mapper.readValue(resultString,ComplexResult.class);
+        JsonNode json = mapper.valueToTree(result);
+
+        FakeConnection connection = new FakeConnection();
+        connection.setContent(json);
+
+        ConfigurationDelegate delegate = new ConfigurationDelegate(definition,connection,null);
+        Configuration config = delegate.loadResourceConfiguration();
+
+        assert config != null;
+        PropertySimple nameProperty = (PropertySimple) config.get("name");
+        assert nameProperty !=null;
+        String stringValue = nameProperty.getStringValue();
+        assert stringValue!=null;
+        assert stringValue.equals("default");
+
+        Property criteria = config.get("criteria");
+        assert  criteria !=null;
+        PropertySimple critProp = (PropertySimple) criteria;
+        stringValue = critProp.getStringValue();
+        assert stringValue!=null;
+
+    }
+
+    public void test7() throws Exception {
+
+        String resultString = loadJsonFromFile("interfaces.json");
+
+        ConfigurationDefinition definition = loadDescriptor("test6and7");
+
+        ObjectMapper mapper = new ObjectMapper();
+        ComplexResult result = mapper.readValue(resultString,ComplexResult.class);
+        JsonNode json = mapper.valueToTree(result);
+
+        FakeConnection connection = new FakeConnection();
+        connection.setContent(json);
+
+        ConfigurationDelegate delegate = new ConfigurationDelegate(definition,connection,null);
+        Configuration config = delegate.loadResourceConfiguration();
+
+        assert config != null;
+        PropertySimple nameProperty = (PropertySimple) config.get("name");
+        assert nameProperty !=null;
+        String stringValue = nameProperty.getStringValue();
+        assert stringValue!=null;
+        assert stringValue.equals("public");
+
+        Property criteria = config.get("criteria");
+        assert  criteria !=null;
+        PropertySimple critProp = (PropertySimple) criteria;
+        stringValue = critProp.getStringValue();
+        assert stringValue!=null;
+        assert stringValue.equals("any-ipv4-address");
+
+    }
+
+    public void test8() throws Exception {
+
+        String resultString = loadJsonFromFile("connector.json");
+
+        ConfigurationDefinition definition = loadDescriptor("test8");
+
+        ObjectMapper mapper = new ObjectMapper();
+        ComplexResult result = mapper.readValue(resultString,ComplexResult.class);
+        JsonNode json = mapper.valueToTree(result);
+
+        FakeConnection connection = new FakeConnection();
+        connection.setContent(json);
+
+        ConfigurationDelegate delegate = new ConfigurationDelegate(definition,connection,null);
+        Configuration config = delegate.loadResourceConfiguration();
+        assert config!=null;
+        assert config.getAllProperties().size()==8 : "Did not find 8 properties, but " + config.getAllProperties().size();
+        Property prop = config.get("bean-validation-enabled");
+        assert prop != null;
+        PropertySimple ps = (PropertySimple) prop;
+        assert ps.getBooleanValue();
+        prop = config.get("cached-connection-manager-error");
+        assert prop!=null;
+        ps = (PropertySimple) prop;
+        assert ps.getBooleanValue()==false;
+
+    }
 
     @BeforeSuite
     private void loadPluginDescriptor() throws Exception {
@@ -289,6 +468,22 @@ public class ConfigurationTest {
         }
 
         return null;
+    }
+
+    private String loadJsonFromFile(String fileName) throws Exception {
+        InputStream inputStream = this.getClass().getClassLoader().getResourceAsStream(fileName);
+        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+        try {
+            StringBuilder builder = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                builder.append(line);
+            }
+            return builder.toString();
+        }
+        finally {
+            reader.close();
+        }
     }
 
 

@@ -513,10 +513,11 @@
       <service name="Apache Virtual Host" discovery="ApacheVirtualHostServiceDiscoveryComponent" class="ApacheVirtualHostServiceComponent" createDeletePolicy="both">
 
          <plugin-configuration>
-            <c:simple-property name="url" displayName="URL"
+            <c:simple-property name="url" displayName="URL" required="false"
                                description="The http or https URL that will be used to check availability for this
                                 virtual host. Note that SSL certificate validation is disabled during availability
-                                checks if this is an HTTPS URL."/>
+                                checks if this is an HTTPS URL. If the URL is not set, the availability is determined 
+                                by pinging the configured SNMP location."/>
             <c:group name="ResponseTime">
                <c:simple-property name="responseTimeLogFile" required="false"
                                   description="the full path to the log file containing response-time stats for this virtual host"/>

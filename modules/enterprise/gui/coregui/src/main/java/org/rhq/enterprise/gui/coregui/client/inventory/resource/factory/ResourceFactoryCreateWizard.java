@@ -129,7 +129,8 @@ public class ResourceFactoryCreateWizard extends AbstractResourceFactoryWizard {
             }
 
             GWTServiceLookup.getResourceService().createResource(parentResourceId, createTypeId, (String) null,
-                deployTimeConfiguration, packageVersionId, new AsyncCallback<Void>() {
+                deployTimeConfiguration, packageVersionId, this.getNewResourceCreateTimeout(),
+                new AsyncCallback<Void>() {
                     public void onFailure(Throwable caught) {
                         CoreGUI.getErrorHandler().handleError(MSG.widget_resourceFactoryWizard_execute2(), caught);
                         getView().closeDialog();
@@ -151,7 +152,7 @@ public class ResourceFactoryCreateWizard extends AbstractResourceFactoryWizard {
             Configuration resourceConfiguration = this.getNewResourceConfiguration();
 
             GWTServiceLookup.getResourceService().createResource(parentResourceId, createTypeId, newResourceName,
-                resourceConfiguration, new AsyncCallback<Void>() {
+                resourceConfiguration, this.getNewResourceCreateTimeout(), new AsyncCallback<Void>() {
                     public void onFailure(Throwable caught) {
                         CoreGUI.getErrorHandler().handleError(MSG.widget_resourceFactoryWizard_execute2(), caught);
                         getView().closeDialog();

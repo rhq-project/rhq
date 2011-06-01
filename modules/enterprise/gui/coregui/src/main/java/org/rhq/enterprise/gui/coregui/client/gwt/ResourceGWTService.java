@@ -46,10 +46,10 @@ import org.rhq.core.domain.util.PageList;
 public interface ResourceGWTService extends RemoteService {
 
     void createResource(int parentResourceId, int newResourceTypeId, String newResourceName,
-        Configuration newResourceConfiguration) throws RuntimeException;
+        Configuration newResourceConfiguration, Integer timeout) throws RuntimeException;
 
     void createResource(int parentResourceId, int newResourceTypeId, String newResourceName,
-        Configuration deploymentTimeConfiguration, int packageVersionId) throws RuntimeException;
+        Configuration deploymentTimeConfiguration, int packageVersionId, Integer timeout) throws RuntimeException;
 
     List<DeleteResourceHistory> deleteResources(int[] resourceIds) throws RuntimeException;
 

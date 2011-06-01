@@ -84,7 +84,6 @@ public abstract class AbstractGroupResourceConfigurationUIBean {
         } else {
             this.configurationSet = GroupResourceConfigurationUtility.buildConfigurationSet(
                 EnterpriseFacesContextUtility.getSubject(), this.group, this.resourceConfigurations);
-            this.configurationSet.mask();
         }
         return;
     }

@@ -855,6 +855,12 @@ public class WebservicesManagerBean implements WebservicesRemote {
             pluginConfiguration, resourceConfiguration);
     }
 
+    public CreateResourceHistory createResource(Subject subject, int parentResourceId, int resourceTypeId,
+        String resourceName, Configuration pluginConfiguration, Configuration resourceConfiguration, Integer timeout) {
+        return resourceFactoryManager.createResource(subject, parentResourceId, resourceTypeId, resourceName,
+            pluginConfiguration, resourceConfiguration, timeout);
+    }
+
     public CreateResourceHistory createPackageBackedResource(Subject subject, int parentResourceId,
         int newResourceTypeId, String newResourceName,//
         @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
@@ -866,6 +872,17 @@ public class WebservicesManagerBean implements WebservicesRemote {
             deploymentTimeConfiguration, packageBits);
     }
 
+    public CreateResourceHistory createPackageBackedResource(Subject subject, int parentResourceId,
+        int newResourceTypeId, String newResourceName,//
+        @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
+        Configuration pluginConfiguration, String packageName, String packageVersion, Integer architectureId,//
+        @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
+        Configuration deploymentTimeConfiguration, byte[] packageBits, Integer timeout) {
+        return resourceFactoryManager.createPackageBackedResource(subject, parentResourceId, newResourceTypeId,
+            newResourceName, pluginConfiguration, packageName, packageVersion, architectureId,
+            deploymentTimeConfiguration, packageBits, timeout);
+    }
+
     public CreateResourceHistory createPackageBackedResourceViaPackageVersion(Subject subject, int parentResourceId,
         int newResourceTypeId, String newResourceName,//        
         @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
@@ -874,6 +891,17 @@ public class WebservicesManagerBean implements WebservicesRemote {
         Configuration deploymentTimeConfiguration, int packageVersionId) {
         return resourceFactoryManager.createPackageBackedResourceViaPackageVersion(subject, parentResourceId,
             newResourceTypeId, newResourceName, pluginConfiguration, deploymentTimeConfiguration, packageVersionId);
+    }
+
+    public CreateResourceHistory createPackageBackedResourceViaPackageVersion(Subject subject, int parentResourceId,
+        int newResourceTypeId, String newResourceName,//        
+        @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
+        Configuration pluginConfiguration, //
+        @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
+        Configuration deploymentTimeConfiguration, int packageVersionId, Integer timeout) {
+        return resourceFactoryManager.createPackageBackedResourceViaPackageVersion(subject, parentResourceId,
+            newResourceTypeId, newResourceName, pluginConfiguration, deploymentTimeConfiguration, packageVersionId,
+            timeout);
     }
 
     public DeleteResourceHistory deleteResource(Subject subject, int resourceId) {

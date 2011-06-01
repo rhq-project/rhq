@@ -148,6 +148,7 @@
         <configuration>
           <systemPropertyVariables>
             <rhq.test.ds.server-name>${rhq.test.ds.server-name}</rhq.test.ds.server-name>
+            <rhq.test.ds.db-name>${rhq.test.ds.db-name}</rhq.test.ds.db-name>
             <rhq.test.ds.connection-url>${rhq.test.ds.connection-url}</rhq.test.ds.connection-url>
             <rhq.db.admin.username>${rhq.db.admin.username}</rhq.db.admin.username>
             <rhq.db.admin.password>${rhq.db.admin.password}</rhq.db.admin.password>
@@ -210,7 +211,6 @@
           </execution>
         </executions>
       </plugin>
-
       <plugin>
         <artifactId>maven-resources-plugin</artifactId>
         <executions>
@@ -319,7 +319,6 @@
 
          <build>
             <plugins>
-
                <plugin>
                   <!-- See http://jetty.mortbay.org/jspc-maven-plugin/ -->
                   <groupId>org.mortbay.jetty</groupId>
@@ -338,7 +337,22 @@
             </plugins>
          </build>
       </profile>
-  </profiles>
 
+      <profile>
+         <id>oracle</id>
+         <build>
+            <plugins>
+               <plugin>
+                  <artifactId>maven-surefire-plugin</artifactId>
+                     <configuration>
+                        <excludes>
+                           <exclude>**/DBInstallatonTest.java</exclude>
+                        </excludes>
+                     </configuration>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
+   </profiles>
 </project>
 

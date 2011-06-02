@@ -47,7 +47,6 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.core.gui.configuration.ConfigurationMaskingUtility;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.exception.ThrowableUtil;
@@ -174,7 +173,6 @@ public class CreateNewPackageChildResourceUIBean {
             // Collect data for create call
             Resource parentResource = EnterpriseFacesContextUtility.getResource();
             Configuration deployTimeConfiguration = getConfiguration();
-            ConfigurationMaskingUtility.unmaskConfiguration(deployTimeConfiguration, getConfigurationDefinition());
             String packageName = fileItem.getFileName();
 
             // some browsers (IE in particular) passes an absolute filename, we just want the name of the file, no paths
@@ -302,9 +300,6 @@ public class CreateNewPackageChildResourceUIBean {
         Configuration deployTimeConfiguration = (deployTimeConfigurationTemplates != null) ? deployTimeConfigurationTemplates
             .createConfiguration()
             : new Configuration();
-        if (deployTimeConfiguration != null) {
-            ConfigurationMaskingUtility.maskConfiguration(deployTimeConfiguration, configDef);
-        }
 
         return deployTimeConfiguration;
     }

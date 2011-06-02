@@ -230,7 +230,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
     }
 
     public void createResource(int parentResourceId, int newResourceTypeId, String newResourceName,
-        Configuration newResourceConfiguration) throws RuntimeException {
+        Configuration newResourceConfiguration, Integer timeout) throws RuntimeException {
         try {
             ConfigurationDefinition pluginConfigDefinition = LookupUtil.getConfigurationManager()
                 .getPluginConfigurationDefinitionForResourceType(getSessionSubject(), newResourceTypeId);
@@ -245,14 +245,14 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
             }
 
             resourceFactoryManager.createResource(getSessionSubject(), parentResourceId, newResourceTypeId,
-                newResourceName, pluginConfig, newResourceConfiguration);
+                newResourceName, pluginConfig, newResourceConfiguration, timeout);
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
     }
 
     public void createResource(int parentResourceId, int newResourceTypeId, String newResourceName,
-        Configuration deploymentTimeConfiguration, int packageVersionId) throws RuntimeException {
+        Configuration deploymentTimeConfiguration, int packageVersionId, Integer timeout) throws RuntimeException {
         try {
             ConfigurationDefinition pluginConfigDefinition = LookupUtil.getConfigurationManager()
                 .getPluginConfigurationDefinitionForResourceType(getSessionSubject(), newResourceTypeId);
@@ -267,7 +267,8 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
             }
 
             resourceFactoryManager.createPackageBackedResourceViaPackageVersion(getSessionSubject(), parentResourceId,
-                newResourceTypeId, newResourceName, pluginConfig, deploymentTimeConfiguration, packageVersionId);
+                newResourceTypeId, newResourceName, pluginConfig, deploymentTimeConfiguration, packageVersionId,
+                timeout);
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

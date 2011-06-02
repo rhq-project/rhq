@@ -40,6 +40,7 @@ public abstract class AbstractResourceFactoryWizard extends AbstractWizard {
     private ConfigurationDefinition newResourceConfigurationDefinition;
     private Configuration newResourceStartingConfiguration;
     private Configuration newResourceConfiguration;
+    private Integer newResourceCreateTimeout = null;
 
     private WizardView view;
 
@@ -123,6 +124,14 @@ public abstract class AbstractResourceFactoryWizard extends AbstractWizard {
 
     public void setNewResourceConfiguration(Configuration newResourceConfiguration) {
         this.newResourceConfiguration = newResourceConfiguration;
+    }
+
+    public Integer getNewResourceCreateTimeout() {
+        return newResourceCreateTimeout;
+    }
+
+    public void setNewResourceCreateTimeout(Integer newResourceCreateTimeout) {
+        this.newResourceCreateTimeout = newResourceCreateTimeout;
     }
 
     public void cancel() {

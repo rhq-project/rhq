@@ -41,7 +41,6 @@ public class PropertySimpleTest {
         assertEquals(copy.getName(), original.getName(), "Failed to copy the name property");
         assertEquals(copy.getErrorMessage(), original.getErrorMessage(), "Failed to copy the errorMessage property");
         assertEquals(copy.getOverride(), original.getOverride(), "Failed to copy the override property");
-        assertEquals(copy.getUnmaskedStringValue(), original.getUnmaskedStringValue(), "Failed to copy the unmaskedStringValue property");
         assertEquals(copy.getStringValue(), original.getStringValue(), "Failed to copy the stringValue property");
     }
 
@@ -55,7 +54,6 @@ public class PropertySimpleTest {
         assertEquals(copy.getName(), original.getName(), "Failed to copy the name property");
         assertEquals(copy.getErrorMessage(), original.getErrorMessage(), "Failed to copy the errorMessage property");
         assertEquals(copy.getOverride(), original.getOverride(), "Failed to copy the override property");
-        assertEquals(copy.getUnmaskedStringValue(), original.getUnmaskedStringValue(), "Failed to copy the unmaskedStringValue property");
         assertEquals(copy.getStringValue(), original.getStringValue(), "Failed to copy the stringValue property");
     }
 
@@ -63,7 +61,6 @@ public class PropertySimpleTest {
         PropertySimple original = new PropertySimple("simpleProperty", "Simple Property");
         original.setId(1);
         original.setErrorMessage("error message");
-        original.setUnmaskedStringValue("Unmasked Simple Property");
         return original;
     }
 

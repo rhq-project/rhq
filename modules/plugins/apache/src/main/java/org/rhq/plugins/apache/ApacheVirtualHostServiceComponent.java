@@ -19,18 +19,16 @@
 package org.rhq.plugins.apache;
 
 import java.io.File;
-import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.augeas.node.AugeasNode;
 import org.rhq.augeas.tree.AugeasTree;
 import org.rhq.core.domain.configuration.Configuration;
@@ -60,7 +58,6 @@ import org.rhq.plugins.apache.parser.ApacheDirectiveTree;
 import org.rhq.plugins.apache.util.AugeasNodeSearch;
 import org.rhq.plugins.apache.util.AugeasNodeValueUtil;
 import org.rhq.plugins.apache.util.ConfigurationTimestamp;
-import org.rhq.plugins.apache.util.HttpdAddressUtility;
 import org.rhq.plugins.apache.util.RuntimeApacheConfiguration;
 import org.rhq.plugins.www.snmp.SNMPException;
 import org.rhq.plugins.www.snmp.SNMPSession;
@@ -132,7 +129,27 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
     }
 
     public AvailabilityType getAvailability() {
-        return (this.url != null && WWWUtils.isAvailable(this.url)) ? AvailabilityType.UP : AvailabilityType.DOWN;
+        if (url != null) {
+            return WWWUtils.isAvailable(url) ? AvailabilityType.UP : AvailabilityType.DOWN;
+        } else {
+            try {
+                //we don't need the SNMP connection to figure out the index on which the SNMP
+                //module would report this vhost. So first, let's check if that index is valid
+                //(i.e. check that the vhost is actually still present in the apache configuration)                                
+                if (getWwwServiceIndex() < 1) {
+                    return AvailabilityType.DOWN;
+                }
+                
+                //ok, so the vhost is present. Now let's just ping the SNMP module to see
+                //if it is reachable and base our availability on that...
+                SNMPSession snmpSession = resourceContext.getParentResourceComponent().getSNMPSession();
+                
+                return snmpSession.ping() ? AvailabilityType.UP : AvailabilityType.DOWN;
+            } catch (Exception e) {
+                log.debug("Determining the availability of the vhost [" + resourceContext.getResourceKey() + "] using SNMP failed.", e);
+                return AvailabilityType.DOWN;
+            }
+        }
     }
 
     public Configuration loadResourceConfiguration() throws Exception {

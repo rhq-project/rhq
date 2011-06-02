@@ -45,7 +45,15 @@ import org.hibernate.Hibernate;
 import org.hibernate.proxy.HibernateProxy;
 
 /**
+ * This is a single static utility that is used to process any object just prior to sending it over the wire
+ * to remote clients (like GWT clients or remote web service clients).
+ * 
+ * Essentially this utility scrubs the object of all Hibernate proxies, cleaning it such that it
+ * can be serialized over the wire successfully.
+ *  
  * @author Greg Hinkle
+ * @author Jay Shaughnessy
+ * @author John Mazzitelli
  */
 @SuppressWarnings("unchecked")
 public class HibernateDetachUtility {

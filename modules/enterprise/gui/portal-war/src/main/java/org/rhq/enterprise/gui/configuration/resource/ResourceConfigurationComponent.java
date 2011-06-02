@@ -18,14 +18,10 @@
  */
 package org.rhq.enterprise.gui.configuration.resource;
 
-import org.jboss.seam.ScopeType;
-import org.jboss.seam.annotations.*;
-import org.jboss.seam.annotations.web.RequestParameter;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
-import org.rhq.core.gui.configuration.ConfigurationMaskingUtility;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -52,10 +48,6 @@ public class ResourceConfigurationComponent {
         AbstractResourceConfigurationUpdate configurationUpdate =
                 configurationManager.getLatestResourceConfigurationUpdate(subject, resourceId);
         Configuration configuration = (configurationUpdate != null) ? configurationUpdate.getConfiguration() : null;
-
-        if (configuration != null) {
-            ConfigurationMaskingUtility.maskConfiguration(configuration, resourceConfigurationDefinition);
-        }
     }
 
 
@@ -69,10 +61,6 @@ public class ResourceConfigurationComponent {
         AbstractResourceConfigurationUpdate configurationUpdate =
                 configurationManager.getLatestResourceConfigurationUpdate(subject, resourceId);
         Configuration configuration = (configurationUpdate != null) ? configurationUpdate.getConfiguration() : null;
-
-        if (configuration != null) {
-            ConfigurationMaskingUtility.maskConfiguration(configuration, resourceConfigurationDefinition);
-        }
 
         return configuration;
     }

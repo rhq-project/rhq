@@ -440,7 +440,6 @@
       </xs:restriction>
    </xs:simpleType>
 
-
    <!-- == Operation ================================================== -->
 
    <xs:element name="operation">
@@ -488,6 +487,60 @@
       </xs:complexType>
    </xs:element>
 
+   <!-- == Bundle Target ================================================== -->
+
+   <xs:element name="bundle-target">
+        <xs:annotation>
+           <xs:appinfo>
+              <jaxb:class name="BundleTargetDescriptor"/>
+           </xs:appinfo>
+           <xs:documentation>
+              If defined, the resource can be used as a target for bundle deployment.
+              The child elements describe where, under the resource, bundles can be deployed.
+           </xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+           <xs:sequence>
+              <xs:element name="destination-base-dir" maxOccurs="unbounded" minOccurs="1">
+                  <xs:complexType>
+                       <xs:annotation>
+                           <xs:documentation>
+                              Defines where a bundle can be deployed under the resource.
+                              You must define one destination base directory, but may define more.
+                              Each destination base directory's value is obtained from a particular context
+                              (e.g. in the resource's plugin configuration or its resource configuration).
+                              Within that context, the base directory value is obtained by looking up the named value in the given context.
+                              For example, if the value-name is "install.dir" and the value-context is "pluginConfiguration",
+                              then the destination base directory value is obtained by getting the "install.dir" property value
+                              found in the resource's plugin configuration.
+                           </xs:documentation>
+                       </xs:annotation>
+                       <xs:sequence>
+                          <xs:element name="value-context">
+                              <xs:simpleType>
+                                  <xs:restriction base="xs:string">
+                                      <xs:enumeration value="pluginConfiguration"></xs:enumeration>
+                                      <xs:enumeration value="resourceConfiguration"></xs:enumeration>
+                                      <xs:enumeration value="measurementTrait"></xs:enumeration>
+                                      <xs:enumeration value="fileSystem"></xs:enumeration>
+                                  </xs:restriction>
+                              </xs:simpleType>
+                          </xs:element>
+                          <xs:element name="value-name" type="xs:string"></xs:element>
+                      </xs:sequence>
+                      <xs:attribute name="name" type="xs:string" use="required">
+                          <xs:annotation>
+                             <xs:documentation>
+                                The name given to identify this particular destination base directory.
+                             </xs:documentation>
+                       </xs:annotation>
+                      </xs:attribute>
+                  </xs:complexType>
+              </xs:element>
+          </xs:sequence>
+       </xs:complexType>
+   </xs:element>
+
    <!-- BASE RESOURCE -->
    
    <xs:element name="resource" type="rhq:resource">
@@ -499,7 +552,6 @@
          <xs:field xpath="@subcategory"/>
       </xs:keyref>
    </xs:element>
-
 
    <xs:complexType name="resource" abstract="true">
       <xs:annotation>
@@ -561,6 +613,7 @@
          <xs:element ref="rhq:event" minOccurs="0" maxOccurs="unbounded"/>
          <xs:element ref="rhq:content" minOccurs="0" maxOccurs="unbounded"/>
          <xs:element name="resource-configuration" type="config:configuration" minOccurs="0"/>
+         <xs:element ref="rhq:bundle-target" minOccurs="0" maxOccurs="1"/>
          <xs:element ref="rhq:help" minOccurs="0" maxOccurs="1" />
       </xs:sequence>
       <xs:attribute name="name" use="required" type="xs:string"/>
@@ -642,7 +695,6 @@
    <xs:complexType name="bundle">
       <xs:attribute name="type" type="xs:string"/>
    </xs:complexType>
-
 
    <!-- PLATFORM -->
 
@@ -835,7 +887,6 @@
       <xs:attribute name="description" type="xs:string"/>
    </xs:complexType>
 
-
    <xs:element name="help">
      <xs:complexType mixed="true">
        <xs:sequence>
@@ -843,7 +894,6 @@
        </xs:sequence>
      </xs:complexType>
    </xs:element>
-
 
    <xs:element name="version">
       <xs:annotation>
@@ -862,7 +912,6 @@
          <xs:attribute name="match" type="xs:string" use="required"/>
       </xs:complexType>
    </xs:element>
-
 
    <xs:complexType name="processScan">
       <xs:annotation>
@@ -889,7 +938,6 @@
       </xs:attribute>
    </xs:complexType>
 
-
    <xs:simpleType name="classNameType">
       <xs:restriction base="xs:string">
          <xs:whiteSpace value="collapse"/>
@@ -900,15 +948,12 @@
       </xs:restriction>
    </xs:simpleType>
 
-
-
    <xs:complexType name="runsInsideType">
       <xs:sequence>
          <xs:element name="parent-resource-type" type="rhq:parentResourceType" minOccurs="1" maxOccurs="unbounded">
          </xs:element>
       </xs:sequence>
    </xs:complexType>
-
 
    <xs:complexType name="parentResourceType">
       <xs:attribute name="name" type="xs:string" use="required"/>
@@ -960,5 +1005,5 @@
          </xs:annotation>
       </xs:attribute>
    </xs:attributeGroup>
-   
+
 </xs:schema>

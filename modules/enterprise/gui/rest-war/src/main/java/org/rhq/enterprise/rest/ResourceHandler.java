@@ -5,10 +5,10 @@ import java.util.List;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.Availability;
-import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
@@ -21,6 +21,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * Class that deals with getting data about resources
  * @author Heiko W. Rupp
  */
+@Produces({"application/json","application/xml","text/plain"})
 @Path("/resource")
 public class ResourceHandler {
 

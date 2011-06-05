@@ -102,6 +102,7 @@
     <augeas.version>0.7.1.1</augeas.version>
     <augeas.zip.version>0.7.1</augeas.zip.version>
     <ant.contrib.version>1.0b3</ant.contrib.version>
+    <resteasy.version>2.2.0.GA</resteasy.version>
 
     <!--
        defaults for datasource used by integration tests -
@@ -158,7 +159,7 @@
       host name changes are/should be uncommon in a typical deployment, they
       are more common in a cloud deployment such as EC2. And in a cloud
       deployment like EC2, we want to turn this behavior on to ensure that
-      the server endpoint accurately reflects the current machine address. 
+      the server endpoint accurately reflects the current machine address.
     -->
     <rhq.sync.endpoint-address>false</rhq.sync.endpoint-address>
 
@@ -1157,7 +1158,7 @@
           </build>
       </profile>
 
-      <!-- This profile should be enabled when a release is being published. 
+      <!-- This profile should be enabled when a release is being published.
            It will ensure that sources and javadoc jars are built and published
            for each source module. -->
       <profile>

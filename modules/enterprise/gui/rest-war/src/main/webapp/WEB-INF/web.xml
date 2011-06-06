@@ -7,7 +7,7 @@
 
     <context-param>
         <param-name>resteasy.jndi.resources</param-name>
-        <param-value>rhq/ResourceHandlerBean/local</param-value>
+        <param-value>rhq/ResourceHandlerBean/local,rhq/MetricHandlerBean/local</param-value>
         <description>List of jndi names of EJBs local interfaces that define REST stuff</description>
     </context-param>
 

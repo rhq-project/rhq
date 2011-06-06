@@ -72,6 +72,13 @@
          <type>war</type>
       </dependency>
 
+       <dependency>
+          <groupId>org.rhq</groupId>
+          <artifactId>rhq-rest</artifactId>
+          <version>${project.version}</version>
+          <type>war</type>
+       </dependency>
+
       <!-- ** SARs -->
       <!--
          <dependency> <groupId>org.rhq</groupId> <artifactId>rhq-enterprise-server-agent-sar</artifactId>
@@ -79,19 +86,19 @@
       -->
 
       <!-- ** JARs -->
-      
+
       <dependency>
          <groupId>org.rhq</groupId>
          <artifactId>rhq-script-bindings</artifactId>
          <version>${project.version}</version>
       </dependency>
-      
+
       <dependency>
         <groupId>org.rhq</groupId>
         <artifactId>rhq-server-client-api</artifactId>
         <version>${project.version}</version>
       </dependency>
-      
+
       <!-- 3rd Party Deps -->
 
       <!-- ** WARs -->
@@ -141,7 +148,7 @@
                <resourcesDir>${basedir}/target/classes</resourcesDir>
                <defaultJavaBundleDir>lib</defaultJavaBundleDir>
                <unpackTypes>war,ejb,sar</unpackTypes>
-  
+
                <modules>
 
                   <!-- ** WARs -->
@@ -169,6 +176,12 @@
                      <contextRoot>/content</contextRoot>
                   </webModule>
 
+                   <webModule>
+                      <groupId>${project.groupId}</groupId>
+                      <artifactId>rhq-rest</artifactId>
+                      <bundleFileName>rhq-rest.war</bundleFileName>
+                      <contextRoot>/rest</contextRoot>
+                   </webModule>
                   <!-- ** EJB-JARs -->
 
                   <ejbModule>
@@ -199,7 +212,7 @@
                </modules>
             </configuration>
          </plugin>
-      
+
          <plugin>
             <artifactId>maven-dependency-plugin</artifactId>
             <executions>
@@ -321,13 +334,13 @@
                             <artifactId>alert-subject</artifactId>
                             <version>${project.version}</version>
                         </artifactItem>
-                        
+
                         <artifactItem>
                           <groupId>org.rhq</groupId>
                           <artifactId>alert-cli</artifactId>
                           <version>${project.version}</version>
                         </artifactItem>
-                        
+
                         <artifactItem>
                           <groupId>org.rhq</groupId>
                           <artifactId>packagetype-cli</artifactId>

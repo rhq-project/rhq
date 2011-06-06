@@ -59,6 +59,8 @@ import javax.persistence.Transient;
 import javax.xml.bind.annotation.XmlTransient;
 
 import org.rhq.core.domain.bundle.BundleType;
+import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration;
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.event.EventDefinition;
@@ -391,6 +393,13 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
     @OneToOne(mappedBy = "resourceType", fetch = FetchType.LAZY, cascade = CascadeType.ALL, optional = true)
     private BundleType bundleType;
 
+    // note that this is mapped to a Configuration entity, which is what it really is. However, our getter/setter
+    // only provides access to this via ResourceTypeBundleConfiguration to encapsulate the innards of this implementation
+    // detail, exposing only the more strongly typed methods to obtain bundle-related config properties
+    @JoinColumn(name = "BUNDLE_CONFIG_ID", nullable = true)
+    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY, optional = true)
+    private Configuration bundleConfiguration;
+
     @Transient
     private transient String helpText;
 
@@ -648,6 +657,22 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
 
     public void setResourceConfigurationDefinition(ConfigurationDefinition resourceConfigurationDefinition) {
         this.resourceConfigurationDefinition = resourceConfigurationDefinition;
+    }
+
+    public ResourceTypeBundleConfiguration getResourceTypeBundleConfiguration() {
+        if (this.bundleConfiguration == null) {
+            return null;
+        } else {
+            return new ResourceTypeBundleConfiguration(bundleConfiguration);
+        }
+    }
+
+    public void setResourceTypeBundleConfiguration(ResourceTypeBundleConfiguration rtbc) {
+        if (rtbc == null) {
+            this.bundleConfiguration = null;
+        } else {
+            this.bundleConfiguration = rtbc.getBundleConfiguration();
+        }
     }
 
     @XmlTransient

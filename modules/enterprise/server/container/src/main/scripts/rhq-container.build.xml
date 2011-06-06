@@ -193,8 +193,8 @@
       <available file="${jboss.home}/lib/jboss-system.jar" type="file" property="jboss.home.is.valid" />
       <fail unless="jboss.home.is.valid" message="${jboss.home} does not contain a valid JBoss 4.x installation - aborting..." />
 
-    <!-- Run JBossWS 3.1.1 upgrade script on the JBossAS: 
-         i) pull upgrade bundle ii) unzip iii) run it on JBossAS instance 
+    <!-- Run JBossWS 3.1.1 upgrade script on the JBossAS:
+         i) pull upgrade bundle ii) unzip iii) run it on JBossAS instance
         (4.2.3) to 3.1.1. These upgrade steps should be revisited when moving JBossAS version beyond 4.2.3 -->
     <echo>...Upgrading JBossWS version from bundled version...</echo>
 
@@ -227,7 +227,7 @@
     <copy file="${settings.localRepository}/org/rhq/safe-invoker/${rhq.version}/safe-invoker-${rhq.version}.jar"
            toDir="${jboss.deploy.dir}/jbossws.sar" verbose="true" />
     <copy file="${basedir}/src/main/resources/jbossas/server/default/deploy/jbossws.sar/jbossws.beans/META-INF/jboss-beans.xml"
-          toDir="${jboss.deploy.dir}/jbossws.sar/jbossws.beans/META-INF" verbose="true" /> 
+          toDir="${jboss.deploy.dir}/jbossws.sar/jbossws.beans/META-INF" verbose="true" />
 
 
       <echo>Installing patched hibernate jar ...</echo>
@@ -393,11 +393,11 @@
          </fileset>
       </move>
 
-      <!-- Having xalan.jar in lib/endorsed/ causes issues with some version of Sun Java, 
+      <!-- Having xalan.jar in lib/endorsed/ causes issues with some version of Sun Java,
            so remove it by default, but hold onto it, since we'll need to put it back
-           when using IBM Java. -->      
+           when using IBM Java. -->
       <mkdir dir="${project.build.outputDirectory}/etc/ibm" />
-      <move file="${jboss.home}/lib/endorsed/xalan.jar" 
+      <move file="${jboss.home}/lib/endorsed/xalan.jar"
             todir="${project.build.outputDirectory}/etc/ibm"
             failonerror="false" />
 
@@ -407,7 +407,26 @@
             <include name="jaxb-impl.jar" />
          </fileset>
       </move>
-      
+
+      <echo>Adding REST support ...</echo>
+      <copy file="${settings.localRepository}/org/jboss/resteasy/resteasy-jaxrs/${resteasy.version}/resteasy-jaxrs-${resteasy-version}.jar"
+            todir="${jboss.home}/server/default/lib" verbose="true" failonerror="true"/>
+      <copy file="${settings.localRepository}/org/jboss/resteasy/resteasy-jettison-provider/${resteasy.version}/resteasy-jettison-provider-${resteasy-version}.jar"
+            todir="${jboss.home}/server/default/lib" verbose="true" failonerror="true"/>
+      <copy file="${settings.localRepository}/org/jboss/resteasy/resteasy-jaxb-provider/${resteasy.version}/resteasy-jaxb-provider-${resteasy-version}.jar"
+            todir="${jboss.home}/server/default/lib" verbose="true" failonerror="true"/>
+      <copy file="${settings.localRepository}/org/jboss/resteasy/jaxrs-api/${resteasy.version}/jaxrs-api-${resteasy-version}.jar"
+            todir="${jboss.home}/server/default/lib" verbose="true" failonerror="true"/>
+
+      <!-- TODO define versions of the following in the root pom -->
+      <copy file="${settings.localRepository}/org/scannotationsteasy/scannotation/1.0.3/scannotation-1.0.3.jar"
+            todir="${jboss.home}/server/default/lib" verbose="true" failonerror="true"/>
+      <copy file="${settings.localRepository}/net/jcip/jcip-annotations/1.0/jcip-annotations-1.0.jar"
+            todir="${jboss.home}/server/default/lib" verbose="true" failonerror="true"/>
+      <copy file="${settings.localRepository}/org/codehaus/jettison/1.2/jessison-1.2.jar"
+            todir="${jboss.home}/server/default/lib" verbose="true" failonerror="true"/>
+
+
    </target>
 
    <target name="package-connectors">
@@ -474,7 +493,7 @@ rhq.server.startup.pooledinvoker.rmiport=7445
 rhq.server.startup.ajp.port=9009
 rhq.server.startup.unifiedinvoker.port=5446
 rhq.server.startup.aspectdeployer.bind-port=4873
-          
+
 # The number of concurrent threads used to deploy plugins.
 # Currently, it is not recommended to increase this value.
 rhq.server.plugin-deployer-threads=1

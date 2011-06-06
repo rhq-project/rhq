@@ -45,7 +45,7 @@
       <artifactId>rhq-container-lib</artifactId>
       <version>${project.version}</version>
     </dependency>
-    
+
     <!-- 3rd Party Deps -->
 
     <dependency>
@@ -63,7 +63,7 @@
     <dependency>
       <groupId>org.jboss.jbossas</groupId>
       <artifactId>jboss-as-dist</artifactId>
-      <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->      
+      <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
       <type>zip</type>
     </dependency>
 
@@ -78,7 +78,7 @@
       <artifactId>quartz</artifactId>
       <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
     </dependency>
-    
+
      <dependency>
        <groupId>org.opensymphony.quartz</groupId>
        <artifactId>quartz-oracle</artifactId>
@@ -97,7 +97,7 @@
       <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
       <scope>test</scope>
     </dependency>
-    
+
     <dependency>
       <groupId>net.sourceforge.jtds</groupId>
       <artifactId>jtds</artifactId>
@@ -116,6 +116,16 @@
             <artifactId>groovy-all</artifactId>
             <version>1.7.3</version>
      </dependency>
+
+      <dependency>
+          <groupId>org.jboss.resteasy</groupId>
+          <artifactId>resteasy-jaxrs-all</artifactId>
+      </dependency>
+      <dependency>
+          <groupId>org.jboss.resteasy</groupId>
+          <artifactId>resteasy-jettison-provider</artifactId>
+      </dependency>
+
   </dependencies>
 
   <build>
@@ -178,7 +188,7 @@
                   <property name="h2.version" value="${h2.version}" />
                   <property name="jtds.version" value="${jtds.version}" />
                   <property name="jsf-api.version" value="${jsf-api.version}" />
-                  <property name="jsf-impl.version" value="${jsf-impl.version}" />                  
+                  <property name="jsf-impl.version" value="${jsf-impl.version}" />
                   <property name="hibernate3.version" value="${hibernate3.version}" />
                   <property name="quartz.version" value="${quartz.version}" />
 
@@ -331,7 +341,7 @@
           </plugins>
        </build>
     </profile>
-    
+
     <profile>
       <id>cobertura</id>
       <activation>
@@ -340,26 +350,26 @@
         <build>
          <plugins>
            <plugin>
-             <artifactId>maven-antrun-plugin</artifactId>               
+             <artifactId>maven-antrun-plugin</artifactId>
               <dependencies>
                <dependency>
                  <groupId>net.sourceforge.cobertura</groupId>
                  <artifactId>cobertura</artifactId>
-                 <version>1.9.4.1</version>       
+                 <version>1.9.4.1</version>
                </dependency>
              </dependencies>
-             <executions>                         
-              <execution>              
+             <executions>
+              <execution>
                <id>cobertura-merge</id>
                <phase>pre-integration-test</phase>
-                 <configuration>                  
-                   <tasks> 
+                 <configuration>
+                   <tasks>
                    <!-- prepare directory structure for cobertura-->
-                   <mkdir dir="target/cobertura" /> 
+                   <mkdir dir="target/cobertura" />
                    <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties" />
                    <!-- instrument all classes in target/classes directory -->
                    <cobertura-merge datafile="${project.build.directory}/cobertura/cobertura.ser">
-                     <fileset dir="../../../../">                     
+                     <fileset dir="../../../../">
                         <include name="**/cobertura.ser" />
                       </fileset>
                     </cobertura-merge>
@@ -368,8 +378,8 @@
                <goals>
                  <goal>run</goal>
                </goals>
-              </execution>                                                       
-            </executions>   
+              </execution>
+            </executions>
            </plugin>
            <plugin>
            <groupId>org.codehaus.groovy.maven</groupId>
@@ -384,45 +394,45 @@
                 <source>
                 import java.util.regex.Pattern
                 import java.util.regex.Matcher
-                             
-                def repClos 
+
+                def repClos
                 def list = new ArrayList()
-                
+
                 Pattern sourceCodeFolder = Pattern.compile(".*/src/main/java")
                 Pattern sourceCodeFile = Pattern.compile('.*/src/main/java/(.*.java)')
-                
+
                 list.add("--format")
                 list.add("xml")
                 list.add("--datafile")
-                list.add("${project.build.directory}/cobertura/cobertura.ser") 
-                list.add("--destination")    
-                list.add("${project.build.directory}/site/cobertura")               
-                
-                repClosFile = {                         
+                list.add("${project.build.directory}/cobertura/cobertura.ser")
+                list.add("--destination")
+                list.add("${project.build.directory}/site/cobertura")
+
+                repClosFile = {
                   Matcher matcher = sourceCodeFile.matcher(it.canonicalPath)
-                   if (matcher.matches()){                                                                         
+                   if (matcher.matches()){
                       list.add(matcher[0][1])
                       }
-                      
+
                     if (it.isDirectory()){
                       it.eachFile(repClosFile)
-                    }                                            
+                    }
                  }
-                 
-                repClosDir = {                 
+
+                repClosDir = {
                    Matcher matcher = sourceCodeFolder.matcher(it.canonicalPath)
                    if (matcher.matches()){
-                      list.add("--basedir")          
+                      list.add("--basedir")
                       list.add(it.canonicalPath)
                       it.eachFile(repClosFile)
-                      }        
-                   it.eachDir(repClosDir);                   
+                      }
+                   it.eachDir(repClosDir);
                  }
-                                  
+
                 def ear = new File("${project.build.directory}/../../../../")
                 repClosDir(ear)
 
-                net.sourceforge.cobertura.reporting.Main.main((String[]) list)                
+                net.sourceforge.cobertura.reporting.Main.main((String[]) list)
                 </source>
                </configuration>
               </execution>
@@ -430,7 +440,7 @@
            </plugin>
           </plugins>
        </build>
-     </profile>  
+     </profile>
   </profiles>
 
 </project>

@@ -20,3 +20,6 @@ dev-container
 dev-agent
 antlr-generated/
 *.tokens
+modules/enterprise/gui/portal-war/build/classes/*
+modules/enterprise/gui/coregui/build/classes/*
+modules/enterprise/gui/content_http-war/build/classes/*

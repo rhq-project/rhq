@@ -3,22 +3,29 @@
  "http://java.sun.com/dtd/web-app_2_3.dtd" >
 
 <web-app>
-  <display-name>RHQ Rest interface</display-name>
+    <display-name>RHQ Rest interface</display-name>
+
+    <context-param>
+        <param-name>resteasy.jndi.resources</param-name>
+        <param-value>rhq/ResourceHandlerBean/local</param-value>
+        <description>List of jndi names of EJBs local interfaces that define REST stuff</description>
+    </context-param>
+
 
     <servlet>
         <servlet-name>Resteasy</servlet-name>
         <servlet-class>
             org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher
         </servlet-class>
-<!--
-        <init-param>
-            <param-name>javax.ws.rs.Application</param-name>
-            <param-value>org.rhq.enterprise.rest.RHQApplication</param-value>
-        </init-param>
--->
+
         <init-param>
             <param-name>resteasy.scan</param-name>
-            <param-value>true</param-value>
+            <param-value>false</param-value>
+        </init-param>
+
+        <init-param>
+            <param-name>javax.ws.rs.Application</param-name>
+            <param-value>org.rhq.enterprise.server.rest.RHQApplication</param-value>
         </init-param>
     </servlet>
 

@@ -106,7 +106,7 @@
            reasons.  Maven orders the [test] classpath in the order listed in the pom.  We specifically
            need the embeddable-ejb3 jar above the standard ejb3 jars because we need the embeddble packages
            loaded when testing.  -->
-           
+
       <dependency>
          <groupId>jboss.jboss-embeddable-ejb3</groupId>
          <artifactId>jboss-ejb3-all</artifactId>
@@ -459,6 +459,18 @@
            <artifactId>jsch</artifactId>
            <version>0.1.29</version>
        </dependency>
+
+       <dependency>
+           <groupId>org.jboss.resteasy</groupId>
+           <artifactId>resteasy-jaxrs</artifactId>
+           <version>${resteasy.version}</version>
+       </dependency>
+       <dependency>
+           <groupId>org.jboss.resteasy</groupId>
+           <artifactId>resteasy-jettison-provider</artifactId>
+           <version>${resteasy.version}</version>
+       </dependency>
+
 
    </dependencies>
 

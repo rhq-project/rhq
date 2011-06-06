@@ -29,30 +29,9 @@
 
        <!-- Note: The product info properties now live in the RHQ root pom. -->
     </properties>
+
     <dependencies>
-        <!-- Internal Deps -->
 
-       <dependency>
-          <groupId>org.rhq</groupId>
-          <artifactId>rhq-core-domain</artifactId>
-          <version>${project.version}</version>
-          <scope>provided</scope> <!-- by rhq.ear (as ejb-jar) -->
-       </dependency>
-
-
-       <dependency>
-          <groupId>org.rhq</groupId>
-          <artifactId>rhq-enterprise-server</artifactId>
-          <version>${project.version}</version>
-          <scope>provided</scope> <!-- by rhq.ear (as ejb-jar) -->
-       </dependency>
-
-       <dependency>
-          <groupId>org.rhq</groupId>
-          <artifactId>rhq-core-util</artifactId>
-          <version>${project.version}</version>
-          <scope>provided</scope> <!-- by rhq.ear -->
-       </dependency>
 
        <!-- 3rd Party Deps -->
 
@@ -61,41 +40,7 @@
             <groupId>org.jboss.resteasy</groupId>
             <artifactId>resteasy-jaxrs</artifactId>
             <version>${resteasy.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.jboss.resteasy</groupId>
-            <artifactId>resteasy-jettison-provider</artifactId>
-            <version>${resteasy.version}</version>
-        </dependency>
-        <dependency>
-           <groupId>commons-logging</groupId>
-           <artifactId>commons-logging</artifactId>
-           <version>1.0.4</version>
-           <scope>provided</scope> <!-- by JBossAS -->
-        </dependency>
-
-        <!-- needed for referenced domain entities that use JPA annotations (due to JDK5 bug) -->
-        <dependency>
-           <groupId>javax.persistence</groupId>
-           <artifactId>persistence-api</artifactId>
-           <version>1.0</version>
-           <scope>provided</scope> <!-- by JBossAS -->
-        </dependency>
-
-        <!-- needed for EJB3 annotations (e.g. ApplicationException) -->
-        <dependency>
-           <groupId>jboss</groupId>
-           <artifactId>jboss-ejb3x</artifactId>
-           <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-           <scope>provided</scope> <!-- by JBossAS -->
-        </dependency>
-
-        <!-- Needed due to JDK 1.5 bug. -->
-        <dependency>
-           <groupId>jboss</groupId>
-           <artifactId>jboss-annotations-ejb3</artifactId>
-           <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-           <scope>provided</scope> <!-- by JBossAS -->
+            <scope>provided</scope>
         </dependency>
 
     </dependencies>
@@ -140,7 +85,7 @@
              <rhq.rootDir>../../../..</rhq.rootDir>
              <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
              <rhq.deploymentName>${project.build.finalName}.war</rhq.deploymentName>
-             <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/deploy/${rhq.deploymentName}</rhq.deploymentDir>
+             <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/deploy/${rhq.earName}/${rhq.deploymentName}</rhq.deploymentDir>
           </properties>
 
           <build>

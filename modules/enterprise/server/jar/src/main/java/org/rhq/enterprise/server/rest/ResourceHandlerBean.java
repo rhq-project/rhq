@@ -1,11 +1,9 @@
-package org.rhq.enterprise.rest;
+package org.rhq.enterprise.server.rest;
 
 import java.util.List;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
+import javax.ejb.EJB;
+import javax.ejb.Stateless;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.Availability;
@@ -21,28 +19,27 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * Class that deals with getting data about resources
  * @author Heiko W. Rupp
  */
-@Produces({"application/json","application/xml","text/plain"})
-@Path("/resource")
-public class ResourceHandler {
+@Stateless
+public class ResourceHandlerBean implements ResourceHandlerLocal {
 
+    @EJB
+    ResourceManagerLocal resMgr;
+    @EJB
+    AvailabilityManagerLocal availMgr;
 
-    @GET
-    @Path("/r/{id}")
-    public Resource getResource(@PathParam("id") int id) {
+    @Override
+    public Resource getResource( int id) {
 
-        ResourceManagerLocal resMgr = LookupUtil.getResourceManager();
 
         Subject subject = LookupUtil.getSubjectManager().getOverlord(); // TODO
 
-        Resource res = resMgr.getResource(subject,id);
-
+        Resource res = resMgr.getResource(subject, id);
+        // TODO we need to figure out what to do with lazy load fields, as marshalling into application/{xml,json} fails otherwise
         return res;
     }
 
-    @GET
-    @Path("/p")
+    @Override
     public List<Resource> getPlatforms() {
-        ResourceManagerLocal resMgr = LookupUtil.getResourceManager();
 
         Subject subject = LookupUtil.getSubjectManager().getOverlord(); // TODO
 
@@ -52,10 +49,8 @@ public class ResourceHandler {
         return ret;
     }
 
-    @GET
-    @Path("/p/{id}/s")
-    public List<Resource> getServersForPlatform(@PathParam("id") int id) {
-        ResourceManagerLocal resMgr = LookupUtil.getResourceManager();
+    @Override
+    public List<Resource> getServersForPlatform(int id) {
 
         Subject subject = LookupUtil.getSubjectManager().getOverlord(); // TODO
 
@@ -66,10 +61,8 @@ public class ResourceHandler {
         return ret;
     }
 
-    @GET
-    @Path("/a/{id}")
-    public Availability getAvailability(@PathParam("id")int resourceId) {
-        AvailabilityManagerLocal availMgr = LookupUtil.getAvailabilityManager();
+    @Override
+    public Availability getAvailability(int resourceId) {
 
         Subject subject = LookupUtil.getSubjectManager().getOverlord(); // TODO
 

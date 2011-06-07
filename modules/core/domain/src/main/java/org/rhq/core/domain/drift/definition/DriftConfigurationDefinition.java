@@ -9,4 +9,17 @@ public class DriftConfigurationDefinition {
         configurationDefinition = configDef;
     }
 
+    public String getName() {
+        return configurationDefinition.getName();
+    }
+
+    public String getBasedir() {
+        return configurationDefinition.getDefaultTemplate().getConfiguration().getSimpleValue("basedir", null);
+    }
+
+    public long getInterval() {
+        return Long.parseLong(configurationDefinition.getDefaultTemplate().getConfiguration()
+            .getSimpleValue("interval", null));
+    }
+
 }

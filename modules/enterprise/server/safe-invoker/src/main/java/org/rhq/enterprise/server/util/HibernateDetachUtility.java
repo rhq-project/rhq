@@ -275,7 +275,11 @@ public class HibernateDetachUtility {
                 if (replacement == null) {
 
                     String className = ((HibernateProxy) fieldValue).getHibernateLazyInitializer().getEntityName();
-                    Class clazz = Class.forName(className);
+                    
+                    //see if there is a context classloader we should use instead of the current one.
+                    ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
+                    
+                    Class clazz = contextClassLoader == null ? Class.forName(className) : Class.forName(className, true, contextClassLoader);
                     Class[] constArgs = { Integer.class };
                     Constructor construct = null;
 

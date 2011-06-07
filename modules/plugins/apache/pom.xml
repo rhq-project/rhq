@@ -153,6 +153,12 @@
                                     <include name="${project.artifactId}-${project.version}.jar" />
                                  </fileset>
                               </copy>
+                              <!-- We need deterministic names (i.e. that would not change with the project version)
+                                  so that we can statically reference them in the test classes -->
+                              <move todir="target/itest/plugins">
+                                 <fileset dir="target/itest/plugins" />
+                                 <mapper type="regexp" from="^(.*)-${project.version}\.jar$$" to="\1-for-apache-test.jar" />
+                              </move>    
                               <unzip dest="target/itest/lib">
                                  <fileset dir="${settings.localRepository}/org/hyperic/sigar-dist/${sigar.version}" includes="*.zip" />
                                  <patternset>
@@ -229,11 +235,39 @@
                            <!--<argLine>-Dorg.hyperic.sigar.path=${basedir}/target/itest/lib -Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y</argLine>-->
                            <environmentVariables>
                               <LD_LIBRARY_PATH>${basedir}/target/itest/lib:${env.LD_LIBRARY_PATH}</LD_LIBRARY_PATH>
-                           </environmentVariables>
+                           </environmentVariables>                           
                            <systemPropertyVariables>
                               <org.hyperic.sigar.path>${basedir}/target/itest/lib</org.hyperic.sigar.path>
                               <project.artifactId>${project.artifactId}</project.artifactId>
                               <project.version>${project.version}</project.version>
+                              
+                              <apache2.install.dir>PASS THIS IN FROM THE COMMAND LINE</apache2.install.dir>
+                              <apache2.exe.path>bin/httpd</apache2.exe.path>
+                              <apache1.install.dir>PASS THIS IN FROM THE COMMAND LINE</apache1.install.dir>
+                              <apache1.exe.path>bin/httpd</apache1.exe.path>
+                              
+                              <!-- configuration of individual upgrade tests -->
+                              <simpleWithResolvableServerNames.server.root>${apache2.install.dir}</simpleWithResolvableServerNames.server.root>
+                              <!-- this is defaulted to "htdocs" -->
+                              <simpleWithResolvableServerNames.document.root></simpleWithResolvableServerNames.document.root>
+                              <simpleWithResolvableServerNames.listen1>11675</simpleWithResolvableServerNames.listen1>
+                              <simpleWithResolvableServerNames.listen2>11676</simpleWithResolvableServerNames.listen2>
+                              <simpleWithResolvableServerNames.listen3>11677</simpleWithResolvableServerNames.listen3>
+                              <simpleWithResolvableServerNames.listen4>11678</simpleWithResolvableServerNames.listen4>
+                              <simpleWithResolvableServerNames.servername.directive></simpleWithResolvableServerNames.servername.directive>
+                              <simpleWithResolvableServerNames.additional.directives></simpleWithResolvableServerNames.additional.directives>
+                              <simpleWithResolvableServerNames.vhost1.urls>127.0.0.1:11675</simpleWithResolvableServerNames.vhost1.urls>
+                              <simpleWithResolvableServerNames.vhost1.servername.directive>ServerName 127.0.0.1:11675</simpleWithResolvableServerNames.vhost1.servername.directive>
+                              <simpleWithResolvableServerNames.vhost1.additional.directives></simpleWithResolvableServerNames.vhost1.additional.directives>
+                              <simpleWithResolvableServerNames.vhost2.urls>127.0.0.1:11676</simpleWithResolvableServerNames.vhost2.urls>
+                              <simpleWithResolvableServerNames.vhost2.servername.directive>ServerName 127.0.0.1:11676</simpleWithResolvableServerNames.vhost2.servername.directive>
+                              <simpleWithResolvableServerNames.vhost2.additional.directives></simpleWithResolvableServerNames.vhost2.additional.directives>
+                              <simpleWithResolvableServerNames.vhost3.urls>127.0.0.1:11677</simpleWithResolvableServerNames.vhost3.urls>
+                              <simpleWithResolvableServerNames.vhost3.servername.directive>ServerName 127.0.0.1:11677</simpleWithResolvableServerNames.vhost3.servername.directive>
+                              <simpleWithResolvableServerNames.vhost3.additional.directives></simpleWithResolvableServerNames.vhost3.additional.directives>
+                              <simpleWithResolvableServerNames.vhost4.urls>127.0.0.1:11678</simpleWithResolvableServerNames.vhost4.urls>
+                              <simpleWithResolvableServerNames.vhost4.servername.directive>ServerName 127.0.0.1:11678</simpleWithResolvableServerNames.vhost4.servername.directive>
+                              <simpleWithResolvableServerNames.vhost4.additional.directives></simpleWithResolvableServerNames.vhost4.additional.directives>
                            </systemPropertyVariables>
                         </configuration>
                      </execution>

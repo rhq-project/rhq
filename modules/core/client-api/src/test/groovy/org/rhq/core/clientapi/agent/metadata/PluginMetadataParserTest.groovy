@@ -368,19 +368,45 @@ class PluginMetadataParserTest {
     
   }
 
-//  static PluginDescriptor toPluginDescriptor(String string) {
-//    JAXBContext jaxbContext = JAXBContext.newInstance(DescriptorPackages.PC_PLUGIN)
-//    URL pluginSchemaURL = PluginMetadataParser.class.getClassLoader().getResource("rhq-plugin.xsd")
-//    Schema pluginSchema = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI).newSchema(pluginSchemaURL)
-//
-//    Unmarshaller unmarshaller = jaxbContext.createUnmarshaller()
-//    ValidationEventCollector vec = new ValidationEventCollector()
-//    unmarshaller.setEventHandler(vec)
-//    unmarshaller.setSchema(pluginSchema)
-//
-//    StringReader reader = new StringReader(string)
-//
-//    return (PluginDescriptor) unmarshaller.unmarshal(reader);
-//  }
+  @Test
+  void parseMinimalDriftConfigurations() {
+    def descriptor = toPluginDescriptor(
+    """
+    <plugin name="drift-test-plugin" displayName="Test Server" package="org.rhq.plugins.test"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:d="urn:xmlns:rhq-drift">
+      <server name="TestServer"
+              class="TestServer">
+        <drift-configuration name="test1">
+          <d:basedir>/var/lib/test1</d:basedir>
+        </drift-configuration>
+        <drift-configuration name="test2">
+          <d:basedir>/var/lib/test2</d:basedir>
+        </drift-configuration>
+      </server>
+    </plugin>
+    """
+    )
 
+    def parser = new PluginMetadataParser(descriptor, [:])
+    def resourceType = parser.allTypes.find { it.name == 'TestServer' }
+
+    assertEquals(resourceType.getDriftConfigurationDefinitions().size(), 2, "Expected to find two drift configurations")
+
+    assertNotNull(
+        resourceType.driftConfigurationDefinitions.find { it.name == 'test1'},
+        "Failed to find drift configuration <test1>"
+    )
+
+    assertNotNull(
+        resourceType.driftConfigurationDefinitions.find { it.name == 'test2'},
+        "Failed to find drift configuration <test2>"
+    )
+  }
+
+//  @Test
+//  parseDriftConfigurationWith
+
+//  void assertDriftConfDefEquals(DrifConfigurationDefinition expected, Dri)
 }

@@ -2,6 +2,7 @@
 
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
            xmlns:config="urn:xmlns:rhq-configuration"
+           xmlns:drift="urn:xmlns:rhq-drift"
            xmlns:rhq="urn:xmlns:rhq-plugin"
            targetNamespace="urn:xmlns:rhq-plugin"
            elementFormDefault="qualified"
@@ -9,6 +10,7 @@
            xmlns:jaxb="http://java.sun.com/xml/ns/jaxb" blockDefault="">
 
    <xs:import namespace="urn:xmlns:rhq-configuration" schemaLocation="rhq-configuration.xsd"/>
+   <xs:import namespace="urn:xmlns:rhq-drift" schemaLocation="rhq-drift.xsd"/>
 
    <xs:annotation>
       <xs:documentation>Schema for the definition of an AMPS plugin. AMPS plugins provide the metadata for new
@@ -561,6 +563,7 @@
          <xs:element ref="rhq:event" minOccurs="0" maxOccurs="unbounded"/>
          <xs:element ref="rhq:content" minOccurs="0" maxOccurs="unbounded"/>
          <xs:element name="resource-configuration" type="config:configuration" minOccurs="0"/>
+         <xs:element name="drift-configuration" type="drift:Drift" minOccurs="0" maxOccurs="unbounded"/>
          <xs:element ref="rhq:help" minOccurs="0" maxOccurs="1" />
       </xs:sequence>
       <xs:attribute name="name" use="required" type="xs:string"/>

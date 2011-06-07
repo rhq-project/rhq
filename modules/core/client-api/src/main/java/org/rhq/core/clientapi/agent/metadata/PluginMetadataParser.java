@@ -33,6 +33,7 @@ import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.clientapi.descriptor.drift.DriftDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.Bundle;
 import org.rhq.core.clientapi.descriptor.plugin.ContentDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.EventDescriptor;
@@ -50,6 +51,7 @@ import org.rhq.core.clientapi.descriptor.plugin.ServerDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.ServiceDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.SubCategoryDescriptor;
 import org.rhq.core.domain.bundle.BundleType;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.event.EventDefinition;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.resource.ClassLoaderType;
@@ -436,12 +438,13 @@ public class PluginMetadataParser {
         // 2) Classes
         // 3) Plugin config
         // 4) Resource config
-        // 5) Metrics
-        // 6) Control operations
-        // 7) Process matches (for process scan auto-discovery)
-        // 8) Artifacts
-        // 9) Child subcategories
-        // 10) Bundle Type
+        // 5) Drift config
+        // 6) Metrics
+        // 7) Control operations
+        // 8) Process matches (for process scan auto-discovery)
+        // 9) Artifacts
+        // 10) Child subcategories
+        // 11) Bundle Type
 
         String classLoaderTypeString = resourceDescriptor.getClassLoader();
         if (classLoaderTypeString == null) {
@@ -481,6 +484,12 @@ public class PluginMetadataParser {
             if (resourceDescriptor.getResourceConfiguration() != null) {
                 resourceType.setResourceConfigurationDefinition(ConfigurationMetadataParser.parse(resourceType
                     .getName(), resourceDescriptor.getResourceConfiguration()));
+            }
+
+            for (DriftDescriptor descriptor : resourceDescriptor.getDriftConfiguration()) {
+                ConfigurationDefinition def = new ConfigurationDefinition(descriptor.getName(),
+                    "Drift Configuration Definition: " + descriptor.getName());
+                resourceType.addDriftConfigurationDefinition(def);
             }
 
             int displayPosition = 1;

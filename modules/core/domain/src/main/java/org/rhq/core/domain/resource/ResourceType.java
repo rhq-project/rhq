@@ -61,6 +61,7 @@ import javax.xml.bind.annotation.XmlTransient;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.content.PackageType;
+import org.rhq.core.domain.drift.definition.DriftConfigurationDefinition;
 import org.rhq.core.domain.event.EventDefinition;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.operation.OperationDefinition;
@@ -390,6 +391,9 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
 
     @OneToOne(mappedBy = "resourceType", fetch = FetchType.LAZY, cascade = CascadeType.ALL, optional = true)
     private BundleType bundleType;
+
+    @Transient  // Will handle JPA/dbsetup/dbupgrade after plugin descriptor parsing changes complete
+    private Set<ConfigurationDefinition> driftConfigurationDefinitions = new HashSet<ConfigurationDefinition>();
 
     @Transient
     private transient String helpText;
@@ -792,6 +796,18 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
 
     public void setBundleType(BundleType bundleType) {
         this.bundleType = bundleType;
+    }
+
+    public Set<DriftConfigurationDefinition> getDriftConfigurationDefinitions() {
+        Set<DriftConfigurationDefinition> defs = new HashSet<DriftConfigurationDefinition>();
+        for (ConfigurationDefinition configDef : driftConfigurationDefinitions) {
+            defs.add(new DriftConfigurationDefinition(configDef));
+        }
+        return defs;
+    }
+
+    public void addDriftConfigurationDefinition(ConfigurationDefinition def) {
+        driftConfigurationDefinitions.add(def);
     }
 
     @Override

@@ -368,6 +368,30 @@ class PluginMetadataParserTest {
     
   }
 
+  @Test
+  void parseMinimalDriftConfigurations() {
+    def descriptor = toPluginDescriptor(
+    """
+    <plugin name="drift-test-plugin" displayName="Test Server" package="org.rhq.plugins.test"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:d="urn:xmlns:rhq-drift">
+      <server name="TestServer"
+              class="TestServer">
+        <drift-configuration name="test1">
+          <d:basedir>/var/lib/eap-5.0</d:basedir>
+        </drift-configuration>
+      </server>
+    </plugin>
+    """
+    )
+
+    def parser = new PluginMetadataParser(descriptor, [:])
+    def resourceType = parser.allTypes.find { it.name == 'TestServer' }
+
+    assertEquals(resourceType.getDriftConfigurationDefinitions().size(), 1, "Expected to find one drift configuration")
+  }
+
 //  static PluginDescriptor toPluginDescriptor(String string) {
 //    JAXBContext jaxbContext = JAXBContext.newInstance(DescriptorPackages.PC_PLUGIN)
 //    URL pluginSchemaURL = PluginMetadataParser.class.getClassLoader().getResource("rhq-plugin.xsd")

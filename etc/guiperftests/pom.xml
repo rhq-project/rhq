@@ -1,0 +1,204 @@
+<?xml version="1.0"?>
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" 
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>org.rhq.guiperftest</groupId>
+  <artifactId>rhq-guiperftest</artifactId>
+  <version>1.0.0-SNAPSHOT</version>
+  <packaging>jar</packaging>
+
+  <name>RHQ GUI Performance Tests</name>
+  <description>JunitPerf-based performance tests for the RHQ GUI, which test 
+               that load times for various pages are acceptable (less than 10 
+               seconds); the tests currently assume an RHQ Server with
+               inventoried Resources is running on localhost:7080</description>
+
+  <properties>
+    <!-- explictly specify a default encoding to avoid relying on the LANG env var being set correctly -->
+    <project.build.sourceEncoding>ISO-8859-1</project.build.sourceEncoding>
+  </properties>
+
+  <dependencies>
+
+    <dependency>
+      <groupId>commons-logging</groupId>
+      <artifactId>commons-logging</artifactId>
+      <version>1.1.1</version>
+    </dependency>
+
+    <dependency>
+      <groupId>log4j</groupId>
+      <artifactId>log4j</artifactId>
+      <version>1.2.16</version>
+    </dependency>
+
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>3.8.2</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>junitperf</groupId>
+      <artifactId>junitperf</artifactId>
+      <version>1.9.1</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>net.sf</groupId>
+      <artifactId>sahi</artifactId>
+      <version>3.5</version>
+      <scope>test</scope>
+    </dependency>
+
+  </dependencies>
+
+
+  <build>
+
+    <defaultGoal>test</defaultGoal>
+
+    <pluginManagement>
+       <plugins>
+         <plugin>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <version>2.6</version>
+            <configuration>
+               <argLine>-Xms16M -Xmx256M</argLine>
+            </configuration>
+         </plugin>
+       </plugins>
+    </pluginManagement>
+
+    <plugins>
+
+      <!-- Set the 'maven.version' property to the version of Maven being used,
+           so we can include the Maven version in the jar's MANIFEST.MF file. -->
+      <plugin>
+         <groupId>org.codehaus.mojo</groupId>
+         <artifactId>build-helper-maven-plugin</artifactId>
+         <version>1.5</version>
+         <executions>
+           <execution>
+             <phase>initialize</phase>
+             <goals>
+               <goal>maven-version</goal>
+             </goals>
+           </execution>
+         </executions>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-resources-plugin</artifactId>
+        <version>2.4.3</version>
+        <configuration>
+            <!-- As of v2.4 of this plugin, the default delimiters are @*@ -
+                 we want the old default of ${*} instead. -->
+            <useDefaultDelimiters>false</useDefaultDelimiters>
+            <delimiters>
+                <delimiter>${*}</delimiter>
+            </delimiters>
+        </configuration>
+      </plugin>
+
+      <!-- Ensure all code compiles and runs on Java 6 or later. -->
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>2.3.2</version>
+        <configuration>
+          <!-- invocation options -->
+          <fork>true</fork>
+          <meminitial>64M</meminitial>
+          <maxmem>512M</maxmem>
+
+          <!-- compiler options -->
+          <source>1.6</source>
+          <target>1.6</target>
+          <optimize>false</optimize>
+          <verbose>true</verbose>
+          <compilerArgument>-Xlint</compilerArgument>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>2.3.1</version>
+        <configuration>
+          <archive>
+            <manifest>
+               <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+               <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+            </manifest>
+            <manifestEntries>
+               <Maven-Version>${maven.version}</Maven-Version>
+               <Java-Version>${java.version}</Java-Version>
+               <Java-Vendor>${java.vendor}</Java-Vendor>
+               <Os-Name>${os.name}</Os-Name>
+               <Os-Arch>${os.arch}</Os-Arch>
+               <Os-Version>${os.version}</Os-Version>
+            </manifestEntries>
+          </archive>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <version>1.0</version>
+        <executions>
+          <execution>
+            <id>enforce-versions</id>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <requireMavenVersion>
+                  <version>2.0.10</version>
+                </requireMavenVersion>
+                <requireJavaVersion>
+                  <version>[1.6,1.8)</version> <!-- 1.6.x, 1.7.x -->
+                </requireJavaVersion>
+              </rules>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>2.6</version>
+        <configuration>
+          <trimStackTrace>false</trimStackTrace>
+        </configuration>
+      </plugin>
+
+    </plugins>
+
+  </build>
+
+  <profiles>
+
+      <profile>
+         <id>test.debug</id>
+         <activation>
+            <property>
+               <name>test.debug</name>
+            </property>
+         </activation>
+
+         <properties>
+            <!-- See: http://maven.apache.org/plugins/maven-surefire-plugin/test-mojo.html#debugForkedProcess -->
+            <maven.surefire.debug>-Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,address=8797,server=y,suspend=y</maven.surefire.debug>
+         </properties>
+      </profile>
+
+  </profiles>
+
+</project>
+

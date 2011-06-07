@@ -9,6 +9,10 @@ public class DriftConfigurationDefinition {
         configurationDefinition = configDef;
     }
 
+    public ConfigurationDefinition getConfigurationDefinition() {
+        return configurationDefinition;
+    }
+
     public String getName() {
         return configurationDefinition.getName();
     }

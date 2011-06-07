@@ -37,8 +37,6 @@
       </xs:appinfo>
    </xs:annotation>
 
-    <!--<xs:element name="drift" type="Drift"/>-->
-
     <xs:complexType name="Drift">
         <xs:annotation>
             <xs:appinfo>
@@ -58,20 +56,35 @@
                     minutes.</xs:documentation>
                 </xs:annotation>
             </xs:element>
-            <xs:element name="filters" type="drift:DriftFilters" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="includes" type="drift:Includes" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="excludes" type="drift:Excludes" minOccurs="0" maxOccurs="1"/>
         </xs:sequence>
         <xs:attribute name="name" type="xs:string" use="required"/>
     </xs:complexType>
 
-    <xs:complexType name="DriftFilters">
+    <xs:complexType name="Includes">
+        <xs:annotation>
+            <xs:appinfo>
+                <jaxb:class name="IncludesDescriptor"/>
+            </xs:appinfo>
+        </xs:annotation>
         <xs:sequence>
-            <xs:element ref="drift:driftFilter" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="include" type="drift:DriftFilter" minOccurs="0" maxOccurs="unbounded"/>
         </xs:sequence>
     </xs:complexType>
 
-    <xs:element name="driftFilter" abstract="true" type="drift:DriftFilterType"/>
+    <xs:complexType name="Excludes">
+        <xs:annotation>
+            <xs:appinfo>
+                <jaxb:class name="ExcludesDescriptor"/>
+            </xs:appinfo>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="exclude" type="drift:DriftFilter" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
 
-    <xs:complexType name="DriftFilterType">
+    <xs:complexType name="DriftFilter">
         <xs:annotation>
             <xs:appinfo>
                 <jaxb:class name="DriftFilterDescriptor"/>
@@ -90,32 +103,5 @@
         </xs:attribute>
     </xs:complexType>
 
-    <xs:element name="include" type="drift:driftFilterInclude" substitutionGroup="drift:driftFilter"/>
-
-    <xs:complexType name="driftFilterInclude">
-        <xs:annotation>
-            <xs:appinfo>
-                <jaxb:class name="DriftFilterIncludeDescriptor"/>
-            </xs:appinfo>
-            <xs:documentation>A filter that specifies a file or directory to include.</xs:documentation>
-        </xs:annotation>
-        <xs:complexContent>
-            <xs:extension base="drift:DriftFilterType"/>
-        </xs:complexContent>
-    </xs:complexType>
-
-    <xs:element name="exclude" type="drift:driftFilterExclude" substitutionGroup="drift:driftFilter"/>
-
-    <xs:complexType name="driftFilterExclude">
-        <xs:annotation>
-            <xs:appinfo>
-                <jaxb:class name="DriftFilterExcludeDescriptor"/>
-            </xs:appinfo>
-            <xs:documentation>A filter that specifies a file or directory to exclude.</xs:documentation>
-        </xs:annotation>
-        <xs:complexContent>
-            <xs:extension base="drift:DriftFilterType"/>
-        </xs:complexContent>
-    </xs:complexType>
 
 </xs:schema>

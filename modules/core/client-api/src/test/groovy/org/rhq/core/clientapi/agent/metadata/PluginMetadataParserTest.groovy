@@ -24,6 +24,10 @@ import org.testng.annotations.Test
 import org.rhq.core.domain.configuration.definition.ConfigurationFormat
 
 import static org.rhq.core.clientapi.shared.PluginDescriptorUtil.toPluginDescriptor
+import org.rhq.core.domain.drift.definition.DriftConfigurationDefinition
+import org.rhq.core.domain.resource.ResourceType
+import org.rhq.core.domain.configuration.definition.PropertySimpleType
+import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor
 
 class PluginMetadataParserTest {
 
@@ -369,44 +373,161 @@ class PluginMetadataParserTest {
   }
 
   @Test
-  void parseMinimalDriftConfigurations() {
+  void createDriftConfigurationBasedirDefinition() {
     def descriptor = toPluginDescriptor(
     """
-    <plugin name="drift-test-plugin" displayName="Test Server" package="org.rhq.plugins.test"
+    <plugin name="drift-test-plugin" displayName="Drift Test" package="org.rhq.plugins.test"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:d="urn:xmlns:rhq-drift">
-      <server name="TestServer"
-              class="TestServer">
+      <server name="TestServer">
         <drift-configuration name="test1">
           <d:basedir>/var/lib/test1</d:basedir>
-        </drift-configuration>
-        <drift-configuration name="test2">
-          <d:basedir>/var/lib/test2</d:basedir>
         </drift-configuration>
       </server>
     </plugin>
     """
     )
 
-    def parser = new PluginMetadataParser(descriptor, [:])
-    def resourceType = parser.allTypes.find { it.name == 'TestServer' }
+    verifyDriftConfiguration(descriptor, 'TestServer', 'test1') { driftConfigDef ->
+      def configDef = driftConfigDef.configurationDefinition
+      def basedirDef = configDef.getPropertyDefinitionSimple("basedir")
 
-    assertEquals(resourceType.getDriftConfigurationDefinitions().size(), 2, "Expected to find two drift configurations")
-
-    assertNotNull(
-        resourceType.driftConfigurationDefinitions.find { it.name == 'test1'},
-        "Failed to find drift configuration <test1>"
-    )
-
-    assertNotNull(
-        resourceType.driftConfigurationDefinitions.find { it.name == 'test2'},
-        "Failed to find drift configuration <test2>"
-    )
+      assertNotNull(basedirDef, "Expected to find property definition <basedir>")
+      assertEquals(basedirDef.displayName, "Base Directory", "The displayName property is not set correctly")
+      assertTrue(basedirDef.required, "The required property should be set to true")
+      assertEquals(
+          basedirDef.description,
+          "The root directory from which snapshots will be generated during drift monitoring",
+          "The description property is not set correctly"
+      )
+      assertEquals(basedirDef.type, PropertySimpleType.STRING, "The type property is not set correctly")
+    }
   }
 
-//  @Test
-//  parseDriftConfigurationWith
+  @Test
+  void createDriftConfigurationBasedirDefault() {
+    def descriptor = toPluginDescriptor(
+    """
+    <plugin name="drift-test-plugin" displayName="Drift Test" package="org.rhq.plugins.test"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:d="urn:xmlns:rhq-drift">
+      <server name="TestServer">
+        <drift-configuration name="test1">
+          <d:basedir>/var/lib/test1</d:basedir>
+        </drift-configuration>
+      </server>
+    </plugin>
+    """
+    )
 
-//  void assertDriftConfDefEquals(DrifConfigurationDefinition expected, Dri)
+    verifyDriftConfiguration(descriptor, 'TestServer', 'test1') { driftConfigDef ->
+      def configDef = driftConfigDef.configurationDefinition
+      def defaultConfig = configDef.defaultTemplate.configuration
+
+      assertEquals(defaultConfig.getSimpleValue("basedir", null),
+          "/var/lib/test1", "Expected to find default property set for basedir")
+    }
+  }
+
+  @Test
+  void createDriftConfigurationIntervalDefinition() {
+    def descriptor = toPluginDescriptor(
+    """
+    <plugin name="drift-test-plugin" displayName="Drift Test" package="org.rhq.plugins.test"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:d="urn:xmlns:rhq-drift">
+      <server name="TestServer">
+        <drift-configuration name="test1">
+          <d:basedir>/var/lib/test1</d:basedir>
+        </drift-configuration>
+      </server>
+    </plugin>
+    """
+    )
+
+    verifyDriftConfiguration(descriptor, 'TestServer', 'test1') { driftConfigDef ->
+      def intervalDef = driftConfigDef.configurationDefinition.get("interval")
+
+      assertNotNull(intervalDef, "Expected to find property definition <interval>")
+      assertEquals(intervalDef.displayName, "Drift Monitoring Interval",
+          "The displayName property is not set correctly")
+      assertFalse(intervalDef.required, "The required property should be set to true")
+      assertEquals(
+        intervalDef.description,
+        "The frequency in seconds in which drift monitoring should run. Defaults to thirty minutes.",
+        "The description property is not set correctly"
+      )
+      assertEquals(intervalDef.type, PropertySimpleType.LONG, "The type property is not set correctly")
+    }
+  }
+
+  @Test
+  void createDriftConfigurationIntervalDefault() {
+    def descriptor = toPluginDescriptor(
+    """
+    <plugin name="drift-test-plugin" displayName="Drift Test" package="org.rhq.plugins.test"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:d="urn:xmlns:rhq-drift">
+      <server name="TestServer">
+        <drift-configuration name="test1">
+          <d:basedir>/var/lib/test1</d:basedir>
+        </drift-configuration>
+      </server>
+    </plugin>
+    """
+    )
+
+    verifyDriftConfiguration(descriptor, 'TestServer', 'test1') { driftConfigDef ->
+      def configDef = driftConfigDef.configurationDefinition
+      def defaultConfig = configDef.defaultTemplate.configuration
+
+      assertEquals(defaultConfig.getSimpleValue("interval", null), "1800",
+          "Expected to find default property set for interval")
+    }
+  }
+
+  @Test
+  void createDriftConfigurationIntervalDefaultWithSpecifiedValue() {
+    def descriptor = toPluginDescriptor(
+    """
+    <plugin name="drift-test-plugin" displayName="Drift Test" package="org.rhq.plugins.test"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:d="urn:xmlns:rhq-drift">
+      <server name="TestServer">
+        <drift-configuration name="test1">
+          <d:basedir>/var/lib/test1</d:basedir>
+          <d:interval>3600</d:interval>
+        </drift-configuration>
+      </server>
+    </plugin>
+    """
+    )
+
+    verifyDriftConfiguration(descriptor, 'TestServer', 'test1') { driftConfigDef ->
+      def configDef = driftConfigDef.configurationDefinition
+      def defaultConfig = configDef.defaultTemplate.configuration
+
+      assertEquals(defaultConfig.getSimpleValue("interval", null), "3600",
+          "Expected to find default property set for interval")
+    }
+  }
+
+  def verifyDriftConfiguration(PluginDescriptor descriptor, String resourceTypeName, String driftConfigName,
+      Closure test) {
+    def parser = new PluginMetadataParser(descriptor, [:])
+    def resourceType = parser.allTypes.find { it.name == resourceTypeName }
+    def driftConfigDef = resourceType.driftConfigurationDefinitions.find { it.name == 'test1' }
+
+    assertNotNull(
+        resourceType.driftConfigurationDefinitions.find { it.name == driftConfigName},
+        "Failed to find drift configuration <$driftConfigName>. The name attribute may not have been parsed correctly."
+    )
+
+    test(driftConfigDef)
+  }
 }

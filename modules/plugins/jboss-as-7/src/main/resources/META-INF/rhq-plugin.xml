@@ -239,7 +239,7 @@
             <content name="file" category="deployable" isCreationType="true" description="Deployments on this domain">
                 <configuration>
                    <c:group name="deployment" displayName="Deployment Options">
-                       <c:simple-property name="runtimeName" required="true"/>
+                       <c:simple-property name="runtimeName" required="false"/>
                    </c:group>
                 </configuration>
             </content>

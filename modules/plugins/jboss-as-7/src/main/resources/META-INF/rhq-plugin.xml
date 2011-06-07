@@ -226,6 +226,16 @@
                 <c:simple-property name="path" default="deployment" readOnly="true"/>
             </plugin-configuration>
 
+            <operation name="domain-deployment:promote" displayName="Deploy to Server-Group" description="Deploy this deployment to a server group">
+                <parameters>
+                    <c:simple-property name="server-group" required="true" description="Server group to deploy to" type="string"/>
+                    <c:simple-property name="enabled" required="true" default="true" description="Should the deployment be enabled on the server group?" type="boolean"/>
+                </parameters>
+                <results>
+                    <c:simple-property name="result" description="Outcome of the delete server operation"/>
+                </results>
+            </operation>
+
             <content name="file" category="deployable" isCreationType="true" description="Deployments on this domain">
                 <configuration>
                    <c:group name="deployment" displayName="Deployment Options">

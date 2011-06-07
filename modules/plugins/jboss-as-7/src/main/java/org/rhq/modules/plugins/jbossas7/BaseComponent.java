@@ -23,6 +23,7 @@ import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonNode;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.measurement.AvailabilityType;
@@ -361,11 +362,13 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
         }
         else {
 
+/*
             List<PROPERTY_VALUE> address = step1.getAddress();
             Operation step3 = new Operation("deploy",address);
             cop.addStep(step3);
+*/
 
-            resourceKey = addressToPath(address);
+            resourceKey = addressToPath(step1.getAddress());
         }
 
         JsonNode result = connection.executeRaw(cop);
@@ -465,6 +468,20 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
             operation = new Operation(op,address,props);
         } else if (what.equals("domain")) {
             operation = new Operation(op,Collections.<PROPERTY_VALUE>emptyList());
+        } else if (what.equals("domain-deployment")) {
+            if (op.equals("promote")) {
+                String serverGroup = parameters.getSimpleValue("server-group","-not set-");
+                PropertySimple simple = parameters.getSimple("enabled");
+                Boolean enabled = false;
+                if (simple!=null && simple.getBooleanValue()!=null)
+                    enabled= simple.getBooleanValue();
+                address.add(new PROPERTY_VALUE("server-group",serverGroup));
+                String resourceKey = context.getResourceKey();
+                resourceKey = resourceKey.substring(resourceKey.indexOf("=")+1);
+                address.add(new PROPERTY_VALUE("deployment", resourceKey));
+                operation = new Operation("add",address,"enabled",enabled);
+
+            }
         }
 
         OperationResult operationResult = new OperationResult();
@@ -479,7 +496,7 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
             }
         }
         else {
-            operationResult.setErrorMessage("No valid operation was given");
+            operationResult.setErrorMessage("No valid operation was given for input [" + name + "]");
         }
         // TODO throw an exception if the operation failed?
         return operationResult;

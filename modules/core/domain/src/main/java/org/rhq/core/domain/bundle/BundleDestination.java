@@ -79,8 +79,11 @@ public class BundleDestination implements Serializable {
     @Column(name = "DESCRIPTION", nullable = true)
     private String description;
 
-    @Column(name = "DEPLOY_DIR", nullable = true)
+    @Column(name = "DEPLOY_DIR", nullable = false)
     private String deployDir;
+
+    @Column(name = "DEST_BASE_DIR_NAME", nullable = false)
+    private String destinationBaseDirectoryName;
 
     @Column(name = "CTIME")
     private Long ctime = System.currentTimeMillis();
@@ -143,6 +146,26 @@ public class BundleDestination implements Serializable {
 
     public void setDeployDir(String deployDir) {
         this.deployDir = deployDir;
+    }
+
+    /**
+     * All resource types that can be targets for bundle deployments define one or more
+     * destination base directories. These are given names in the type's plugin descriptor.
+     * This method returns the name of the destination base directory where all bundles
+     * will be destined to be deployed on all resources found in the destination group.
+     * 
+     * @return name of the destination base directory - this isn't an actual directory location
+     *         (it can't be because it will be different on all individual machines where the bundles
+     *         will be deployed), it is the name of the destination location as defined in 
+     *         the plugin descriptor for the type of resources where the bundle is to be deployed
+     *         (i.e. it is the type of the compatible group associated with this destination).
+     */
+    public String getDestinationBaseDirectoryName() {
+        return destinationBaseDirectoryName;
+    }
+
+    public void setDestinationBaseDirectoryName(String destinationBaseDirectoryName) {
+        this.destinationBaseDirectoryName = destinationBaseDirectoryName;
     }
 
     public long getCtime() {

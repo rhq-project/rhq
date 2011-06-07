@@ -140,13 +140,16 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
         destinationGroup.setLinkTitle(StringUtility.escapeHtml(destination.getGroup().getName()));
         destinationGroup.setTarget("_self");
 
+        StaticTextItem baseDirName = new StaticTextItem("baseDir", MSG.view_bundle_dest_baseDirName());
+        baseDirName.setValue(destination.getDestinationBaseDirectoryName());
+
         StaticTextItem path = new StaticTextItem("path", MSG.view_bundle_dest_deployDir());
         path.setValue(destination.getDeployDir());
 
         StaticTextItem description = new StaticTextItem("description", MSG.common_title_description());
         description.setValue(StringUtility.escapeHtml(destination.getDescription()));
 
-        form.setFields(bundleName, actionItem, created, destinationGroup, path, description);
+        form.setFields(bundleName, actionItem, created, destinationGroup, baseDirName, path, description);
         return form;
     }
 

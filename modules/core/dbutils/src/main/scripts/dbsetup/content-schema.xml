@@ -650,11 +650,11 @@
     
     <!--  Content of a file being managed for drift. Used for diff and/or remediation -->    
     <table name="RHQ_DRIFT_FILE">
-        <!-- <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/> -->
         <column name="SHA256" type="VARCHAR2" size="64" primarykey="true" required="true"/>
         <column name="CTIME" type="LONG" required="true"/>
         <column name="DATA" type="LARGEOBJECT" required="false"/>
-        <column name="DATA_SIZE" type="LONG" required="/>
+        <column name="DATA_SIZE" type="LONG" required="false"/>
+        <column name="STATUS" type="VARCHAR2" size="20" required="true"/>
     </table>
 
     <!--  A drift change-set report for a resource -->
@@ -664,7 +664,7 @@
         <!-- Version 0 is initial change-set -->
         <column name="VERSION" type="INTEGER" required="true"/>                 
         <column name="DATA" type="LARGEOBJECT" required="false"/>
-        <column name="DATA_SIZE" type="LONG"/>
+        <column name="DATA_SIZE" type="LONG" required="false"/>
         <column name="RESOURCE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE"/>        
     </table>
     
@@ -672,9 +672,10 @@
     <table name="RHQ_DRIFT">
         <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
         <column name="CTIME" type="LONG" required="true"/>
+        <column name="CATEGORY" type="VARCHAR2" size="20" required="true"/>        
         <column name="RESOURCE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE"/>        
-        <column name="OLD_SHA256" type="VARCHAR2" size="64" required="true" references="RHQ_DRIFT_FILE"/>        
-        <column name="NEW_SHA256" type="VARCHAR2" size="64" required="true" references="RHQ_DRIFT_FILE"/>        
+        <column name="OLD_DRIFT_FILE" type="VARCHAR2" size="64" required="false" references="RHQ_DRIFT_FILE"/>        
+        <column name="NEW_DRIFT_FILE" type="VARCHAR2" size="64" required="false" references="RHQ_DRIFT_FILE"/>        
     </table>
 
 </dbsetup>

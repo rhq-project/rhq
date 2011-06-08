@@ -92,13 +92,16 @@
     <richfaces.version>3.3.3.Final</richfaces.version>
     <jline.version>0.9.94</jline.version>
     <sigar.version>1.6.5.132</sigar.version>
+    <sigar.zip.version>1.6.5</sigar.zip.version>
     <quartz.version>1.6.5</quartz.version>
     <jna.version>3.2.5</jna.version>
     <twitter4j.version>2.1.2</twitter4j.version>
     <commons-codec.version>1.4</commons-codec.version>
     <testng.version>5.13.1</testng.version>
     <cobertura.version>1.9.4.1</cobertura.version>
-
+    <augeas.version>0.7.1.1</augeas.version>
+    <augeas.zip.version>0.7.1</augeas.zip.version>
+    <ant.contrib.version>1.0b3</ant.contrib.version>
 
     <!--
        defaults for datasource used by integration tests -
@@ -427,6 +430,14 @@
          <artifactId>jna</artifactId>
          <version>${jna.version}</version>
       </dependency>
+
+      <dependency>
+         <groupId>ant-contrib</groupId>
+         <artifactId>ant-contrib</artifactId>
+         <version>${ant.contrib.version}</version>
+         <scope>provided</scope>
+      </dependency>
+
     </dependencies>
 
   </dependencyManagement>

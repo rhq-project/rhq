@@ -21,7 +21,6 @@ package org.rhq.enterprise.gui.inventory.resource.history;
 import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
-import org.rhq.core.gui.configuration.ConfigurationMaskingUtility;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.configuration.resource.ExistingResourceConfigurationUIBean;
 import org.rhq.enterprise.gui.legacy.ParamConstants;
@@ -44,9 +43,6 @@ public class ViewPluginConfigurationUpdateUIBean extends ExistingResourceConfigu
         AbstractResourceConfigurationUpdate configurationUpdate = this.configurationManager
             .getPluginConfigurationUpdate(EnterpriseFacesContextUtility.getSubject(), configId);
         Configuration configuration = (configurationUpdate != null) ? configurationUpdate.getConfiguration() : null;
-        if (configuration != null) {
-            ConfigurationMaskingUtility.maskConfiguration(configuration, getConfigurationDefinition());
-        }
 
         return configuration;
     }

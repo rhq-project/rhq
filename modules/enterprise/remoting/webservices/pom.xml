@@ -20,10 +20,10 @@
    <properties>
       <scm.module.path>modules/enterprise/remoting/</scm.module.path>
       <persistence-api.version>1.0</persistence-api.version>
-      <ant.contrib.version>1.0b3</ant.contrib.version>
    </properties>
 
    <dependencies>
+
       <dependency>
          <groupId>org.jboss.jbossas</groupId>
          <artifactId>jboss-as-dist</artifactId>
@@ -53,13 +53,6 @@
       </dependency>
 
       <dependency>
-         <groupId>ant-contrib</groupId>
-         <artifactId>ant-contrib</artifactId>
-         <version>${ant.contrib.version}</version>
-         <scope>provided</scope>
-      </dependency>
-
-      <dependency>
          <groupId>javax.persistence</groupId>
          <artifactId>persistence-api</artifactId>
          <version>1.0</version>
@@ -85,6 +78,29 @@
       <outputDirectory>target/${project.build.finalName}</outputDirectory>
 
       <plugins>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <configuration>
+               <source>1.6</source>
+               <target>1.6</target>
+            </configuration>
+            <executions>
+               <execution>
+                  <id>default-testCompile</id>
+                  <phase>test-compile</phase>
+                  <configuration>
+                     <testExcludes>
+                        <exclude>**/Ws*.java</exclude>
+                        <exclude>**/ws/JaxbUtilities.java</exclude>
+                     </testExcludes>
+                  </configuration>
+                  <goals>
+                     <goal>testCompile</goal>
+                  </goals>
+               </execution>
+            </executions>
+         </plugin>
 
          <plugin>
             <artifactId>maven-antrun-plugin</artifactId>

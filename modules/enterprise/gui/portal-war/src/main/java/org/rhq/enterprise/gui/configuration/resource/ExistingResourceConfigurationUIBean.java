@@ -47,7 +47,6 @@ import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationFormat;
-import org.rhq.core.gui.configuration.ConfigurationMaskingUtility;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.enterprise.gui.common.upload.FileUploadUIBean;
@@ -90,7 +89,7 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
         if (isRawSupported() || isStructuredAndRawSupported()) {
             initConfigDirectories();
         } else {
-            rawConfigDirectories = Collections.EMPTY_LIST;
+            rawConfigDirectories = Collections.emptyList();
         }
     }
 
@@ -181,7 +180,7 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
         setConfiguration(configuration);
 
         for (RawConfiguration raw : configuration.getRawConfigurations()) {
-            System.out.println(raw.getPath() + " -\n" + (new String(raw.getContents())) + "\n");
+            System.out.println(raw.getPath() + " -\n" + raw.getContents() + "\n");
         }
 
         updateModifiedCache();
@@ -205,11 +204,9 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
     }
 
     public String updateConfiguration(boolean fromStructured) {
-        Configuration mergedConfiguration = null;
-        ConfigurationMaskingUtility.unmaskConfiguration(getConfiguration(), getConfigurationDefinition());
         int resourceId = EnterpriseFacesContextUtility.getResource().getId();
+        Configuration mergedConfiguration = getMergedConfiguration();
 
-        mergedConfiguration = getMergedConfiguration();
         AbstractResourceConfigurationUpdate updateRequest = this.configurationManager
             .updateStructuredOrRawConfiguration(EnterpriseFacesContextUtility.getSubject(), resourceId,
                 mergedConfiguration, fromStructured);
@@ -282,9 +279,6 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
         AbstractResourceConfigurationUpdate configurationUpdate = this.configurationManager
             .getLatestResourceConfigurationUpdate(subject, resourceId);
         Configuration configuration = (configurationUpdate != null) ? configurationUpdate.getConfiguration() : null;
-        if (configuration != null) {
-            ConfigurationMaskingUtility.maskConfiguration(configuration, getConfigurationDefinition());
-        }
 
         return configuration;
     }

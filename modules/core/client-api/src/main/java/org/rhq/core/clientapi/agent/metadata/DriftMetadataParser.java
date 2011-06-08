@@ -27,9 +27,12 @@ public class DriftMetadataParser {
         initBasedir(descriptor, configDef);
         initInterval(descriptor, configDef);
         initIncludes(descriptor, configDef);
+        initExcludes(descriptor, configDef);
 
         return configDef;
     }
+
+    // TODO need to set the order property on the property definitions
 
     private ConfigurationTemplate createDefaultTemplate() {
         ConfigurationTemplate template = new ConfigurationTemplate(DEFAULT_TEMPLATE_NAME,
@@ -77,9 +80,11 @@ public class DriftMetadataParser {
         String pathDescription = "A file system path that can be a directory or a file. The path is assumed to be " +
             "relative to the base directory of the drift configuration.";
         PropertyDefinitionSimple pathDef = new PropertyDefinitionSimple("path", pathDescription, false, STRING);
+        pathDef.setDisplayName("Path");
 
         // TODO Need to decide on verbage for the pattern description
         PropertyDefinitionSimple patternDef = new PropertyDefinitionSimple("pattern", null, false, STRING);
+        patternDef.setDisplayName("Pattern");
 
         includesMapDef.put(pathDef);
         includesMapDef.put(patternDef);
@@ -98,6 +103,45 @@ public class DriftMetadataParser {
                 includes.add(includeMap);
             }
             defaultConfig.put(includes);
+        }
+    }
+
+    private void initExcludes(DriftDescriptor descriptor, ConfigurationDefinition configDef) {
+        String description = "A set of patterns that specify files and/or directories to exclude.";
+        PropertyDefinitionList excludesDef = new PropertyDefinitionList();
+        excludesDef.setName("excludes");
+        excludesDef.setDisplayName("Excludes");
+        excludesDef.setDescription(description);
+        excludesDef.setRequired(false);
+
+        PropertyDefinitionMap excludesMapDef = new PropertyDefinitionMap("exclude", null, false, null);
+
+        String pathDescription = "A file system path that can be a directory or a file. The path is assumed to be " +
+            "relative to the base directory of the drift configuration.";
+        PropertyDefinitionSimple pathDef = new PropertyDefinitionSimple("path", pathDescription, false, STRING);
+        pathDef.setDisplayName("Path");
+
+        // TODO Need to decide on verbage for the pattern description
+        PropertyDefinitionSimple patternDef = new PropertyDefinitionSimple("pattern", null, false, STRING);
+        patternDef.setDisplayName("Pattern");
+
+        excludesMapDef.put(pathDef);
+        excludesMapDef.put(patternDef);
+        excludesDef.setMemberDefinition(excludesMapDef);
+        configDef.put(excludesDef);
+
+        if (descriptor.getExcludes() != null && descriptor.getExcludes().getExclude().size() > 0) {
+            Configuration defaultConfig = configDef.getDefaultTemplate().getConfiguration();
+            PropertyList excludes = new PropertyList("excludes");
+
+            for (DriftFilterDescriptor exclude : descriptor.getExcludes().getExclude()) {
+                PropertyMap excludeMap = new PropertyMap("exclude");
+                excludeMap.put(new PropertySimple("path", exclude.getPath()));
+                excludeMap.put(new PropertySimple("pattern", exclude.getPattern()));
+
+                excludes.add(excludeMap);
+            }
+            defaultConfig.put(excludes);
         }
     }
 

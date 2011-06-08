@@ -519,7 +519,7 @@ class PluginMetadataParserTest {
   }
 
   @Test
-  createDriftConfigurationIncludesDefinition() {
+  void createDriftConfigurationIncludesDefinition() {
     def descriptor = toPluginDescriptor(
     """
     <plugin name="drift-test-plugin" displayName="Drift Test" package="org.rhq.plugins.test"
@@ -529,7 +529,6 @@ class PluginMetadataParserTest {
       <server name="TestServer">
         <drift-configuration name="test1">
           <d:basedir>/var/lib/test1</d:basedir>
-          <d:interval>3600</d:interval>
         </drift-configuration>
       </server>
     </plugin>
@@ -560,9 +559,9 @@ class PluginMetadataParserTest {
 
       def patternDef = includesDef.memberDefinition.getPropertyDefinitionSimple("pattern")
       assertNotNull(patternDef, "Expected to find a simple property definition named pattern")
-      assertEquals(pathDef.description, null, "The description property should be null until the verbage is determined")
-      assertEquals(pathDef.displayName, "Pattern", "The displayName property is not set correctly")
-      assertFalse(pathDef.required, "The required property should be set to false")
+      assertEquals(patternDef.description, null, "The description property should be null until the verbage is determined")
+      assertEquals(patternDef.displayName, "Pattern", "The displayName property is not set correctly")
+      assertFalse(patternDef.required, "The required property should be set to false")
     }
   }
 
@@ -577,7 +576,6 @@ class PluginMetadataParserTest {
       <server name="TestServer">
         <drift-configuration name="test1">
           <d:basedir>/var/lib/test1</d:basedir>
-          <d:interval>3600</d:interval>
           <d:includes>
             <d:include path="lib" pattern="*.jar"/>
             <d:include path="conf" pattern="*.xml"/>
@@ -615,6 +613,105 @@ class PluginMetadataParserTest {
 
       assertNotNull(pattern1, "Expected to find a simple property for the pattern of the second <include>")
       assertEquals(pattern1.stringValue, '*.jar', 'The value is wrong for the pattern of the second <include>')
+    }
+  }
+
+  @Test
+  void createDriftConfigurationExcludesDefinition() {
+    def descriptor = toPluginDescriptor(
+    """
+    <plugin name="drift-test-plugin" displayName="Drift Test" package="org.rhq.plugins.test"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:d="urn:xmlns:rhq-drift">
+      <server name="TestServer">
+        <drift-configuration name="test1">
+          <d:basedir>/var/lib/test1</d:basedir>
+        </drift-configuration>
+      </server>
+    </plugin>
+    """
+    )
+
+    verifyDriftConfiguration(descriptor, 'TestServer', 'test1') { driftConfigDef ->
+      def excludesDef = driftConfigDef.configurationDefinition.getPropertyDefinitionList("excludes")
+
+      assertNotNull(excludesDef, "Expected to find property definition <excludes>")
+      assertEquals(excludesDef.displayName, "Excludes", "The displayName property is not set correctly")
+      assertFalse(excludesDef.required, "The required property should be set to false")
+      assertEquals(excludesDef.description, "A set of patterns that specify files and/or directories to exclude.",
+          "The description property is not set correctly.")
+
+      assertTrue((excludesDef.memberDefinition instanceof PropertyDefinitionMap),
+          "excludes member should be an instance of ${PropertyDefinitionMap.class.name}")
+      assertEquals(excludesDef.memberDefinition.propertyDefinitions.values().size(), 2,
+          "There should be two properties in the property definition property contained in <excludes>")
+
+      def pathDescription = "A file system path that can be a directory or a file. The path is assumed to be " +
+            "relative to the base directory of the drift configuration."
+      def pathDef = excludesDef.memberDefinition.getPropertyDefinitionSimple("path")
+      assertNotNull(pathDef, "Expected to find a simple property definition named path")
+      assertEquals(pathDef.displayName, "Path", "The displayName property is not set correctly")
+      assertEquals(pathDef.description, pathDescription, "The description property is not set correctly.")
+      assertFalse(pathDef.required, "The required property should be set to false")
+
+      def patternDef = excludesDef.memberDefinition.getPropertyDefinitionSimple("pattern")
+      assertNotNull(patternDef, "Expected to find a simple property definition named pattern")
+      assertEquals(patternDef.description, null, "The description property should be null until the verbage is determined")
+      assertEquals(patternDef.displayName, "Pattern", "The displayName property is not set correctly")
+      assertFalse(patternDef.required, "The required property should be set to false")
+    }
+  }
+
+  @Test
+  void createDriftConfigurationExcludesDefaultWithSpecifiedValue() {
+    def descriptor = toPluginDescriptor(
+    """
+    <plugin name="drift-test-plugin" displayName="Drift Test" package="org.rhq.plugins.test"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:d="urn:xmlns:rhq-drift">
+      <server name="TestServer">
+        <drift-configuration name="test1">
+          <d:basedir>/var/lib/test1</d:basedir>
+          <d:interval>3600</d:interval>
+          <d:excludes>
+            <d:exclude path="lib" pattern="*.jar"/>
+            <d:exclude path="conf" pattern="*.xml"/>
+          </d:excludes>
+        </drift-configuration>
+      </server>
+    </plugin>
+    """
+    )
+
+    verifyDriftConfiguration(descriptor, 'TestServer', 'test1') { driftConfigDef ->
+      def configDef = driftConfigDef.configurationDefinition
+      def defaultConfig = configDef.defaultTemplate.configuration
+      def excludes = defaultConfig.getList('excludes')
+
+      assertNotNull(excludes, "Expected to find default property set for <excludes>")
+      assertEquals(excludes.list.size(), 2, "Expected <excludes> property list to have two property elements.")
+
+      def exclude1 = excludes.list[0]
+      def path1 = exclude1.getSimple('path')
+      def pattern1 = exclude1.getSimple('pattern')
+
+      assertNotNull(path1, "Expected to find a simple property for the path of the first <exclude>")
+      assertEquals(path1.stringValue, "lib", "The value is wrong for the path of the first <exclude>")
+
+      assertNotNull(pattern1, "Expected to find a simple property for the pattern of the first <exclude>")
+      assertEquals(pattern1.stringValue, '*.jar', 'The value is wrong for the pattern of the first <exclude>')
+
+      def exclude2 = excludes.list[1]
+      def path2 = exclude2.getSimple('path')
+      def pattern2 = exclude2.getSimple('pattern')
+
+      assertNotNull(path1, "Expected to find a simple property for the path of the second <exclude>")
+      assertEquals(path1.stringValue, "lib", "The value is wrong for the path of the second <exclude>")
+
+      assertNotNull(pattern1, "Expected to find a simple property for the pattern of the second <exclude>")
+      assertEquals(pattern1.stringValue, '*.jar', 'The value is wrong for the pattern of the second <exclude>')
     }
   }
 

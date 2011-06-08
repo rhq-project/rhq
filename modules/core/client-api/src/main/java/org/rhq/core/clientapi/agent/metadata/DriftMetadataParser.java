@@ -32,8 +32,6 @@ public class DriftMetadataParser {
         return configDef;
     }
 
-    // TODO need to set the order property on the property definitions
-
     private ConfigurationTemplate createDefaultTemplate() {
         ConfigurationTemplate template = new ConfigurationTemplate(DEFAULT_TEMPLATE_NAME,
             "drift configuration default template");
@@ -46,6 +44,7 @@ public class DriftMetadataParser {
         String description = "The root directory from which snapshots will be generated during drift monitoring";
         PropertyDefinitionSimple basedir = new PropertyDefinitionSimple("basedir",description, true, STRING);
         basedir.setDisplayName("Base Directory");
+        basedir.setOrder(0);
         configDef.put(basedir);
 
         Configuration defaultConfig = configDef.getDefaultTemplate().getConfiguration();
@@ -57,6 +56,7 @@ public class DriftMetadataParser {
             "minutes.";
         PropertyDefinitionSimple intervalDef = new PropertyDefinitionSimple("interval", description, false, LONG);
         intervalDef.setDisplayName("Drift Monitoring Interval");
+        intervalDef.setOrder(1);
         configDef.put(intervalDef);
 
         Configuration defaultConfig = configDef.getDefaultTemplate().getConfiguration();
@@ -74,6 +74,7 @@ public class DriftMetadataParser {
         includesDef.setDisplayName("Includes");
         includesDef.setDescription(description);
         includesDef.setRequired(false);
+        includesDef.setOrder(2);
 
         PropertyDefinitionMap includesMapDef = new PropertyDefinitionMap("include", null, false, null);
 
@@ -113,6 +114,7 @@ public class DriftMetadataParser {
         excludesDef.setDisplayName("Excludes");
         excludesDef.setDescription(description);
         excludesDef.setRequired(false);
+        excludesDef.setOrder(3);
 
         PropertyDefinitionMap excludesMapDef = new PropertyDefinitionMap("exclude", null, false, null);
 

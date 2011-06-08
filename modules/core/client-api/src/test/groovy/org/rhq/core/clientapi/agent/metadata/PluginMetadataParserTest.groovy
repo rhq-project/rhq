@@ -397,6 +397,7 @@ class PluginMetadataParserTest {
       assertNotNull(basedirDef, "Expected to find property definition <basedir>")
       assertEquals(basedirDef.displayName, "Base Directory", "The displayName property is not set correctly")
       assertTrue(basedirDef.required, "The required property should be set to true")
+      assertEquals(basedirDef.order, 0, "The order property is not set correctly")
       assertEquals(
           basedirDef.description,
           "The root directory from which snapshots will be generated during drift monitoring",
@@ -407,7 +408,7 @@ class PluginMetadataParserTest {
   }
 
   @Test
-  void createDriftConfigurationBasedirDefault() {
+  void createDriftConfigurationBasedirDefaultWithSpecifiedValue() {
     def descriptor = toPluginDescriptor(
     """
     <plugin name="drift-test-plugin" displayName="Drift Test" package="org.rhq.plugins.test"
@@ -456,6 +457,7 @@ class PluginMetadataParserTest {
       assertEquals(intervalDef.displayName, "Drift Monitoring Interval",
           "The displayName property is not set correctly")
       assertFalse(intervalDef.required, "The required property should be set to false")
+      assertEquals(intervalDef.order, 1, "The order property is not set correctly")
       assertEquals(
         intervalDef.description,
         "The frequency in seconds in which drift monitoring should run. Defaults to thirty minutes.",
@@ -541,6 +543,7 @@ class PluginMetadataParserTest {
       assertNotNull(includesDef, "Expected to find property definition <includes>")
       assertEquals(includesDef.displayName, "Includes", "The displayName property is not set correctly")
       assertFalse(includesDef.required, "The required property should be set to false")
+      assertEquals(includesDef.order, 2, "The order propert is not set correctly")
       assertEquals(includesDef.description, "A set of patterns that specify files and/or directories to include.",
           "The description property is not set correctly.")
 
@@ -641,7 +644,7 @@ class PluginMetadataParserTest {
       assertFalse(excludesDef.required, "The required property should be set to false")
       assertEquals(excludesDef.description, "A set of patterns that specify files and/or directories to exclude.",
           "The description property is not set correctly.")
-
+      assertEquals(excludesDef.order, 3, "The order property is not set correctly")
       assertTrue((excludesDef.memberDefinition instanceof PropertyDefinitionMap),
           "excludes member should be an instance of ${PropertyDefinitionMap.class.name}")
       assertEquals(excludesDef.memberDefinition.propertyDefinitions.values().size(), 2,

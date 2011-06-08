@@ -12,6 +12,7 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
+import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 
 import static org.rhq.core.domain.configuration.definition.ConfigurationTemplate.DEFAULT_TEMPLATE_NAME;
 import static org.rhq.core.domain.configuration.definition.PropertySimpleType.LONG;
@@ -24,6 +25,7 @@ public class DriftMetadataParser {
             "drift configuration definition");
         configDef.putTemplate(createDefaultTemplate());
 
+        initName(descriptor, configDef);
         initBasedir(descriptor, configDef);
         initInterval(descriptor, configDef);
         initIncludes(descriptor, configDef);
@@ -40,11 +42,23 @@ public class DriftMetadataParser {
         return template;
     }
 
+    private void initName(DriftDescriptor descriptor, ConfigurationDefinition configDef) {
+        String description = "The drift configuration name";
+        PropertyDefinitionSimple nameDef = new PropertyDefinitionSimple("name", description, true,
+            PropertySimpleType.STRING);
+        nameDef.setDisplayName("Drift Configuration");
+        nameDef.setOrder(0);
+        configDef.put(nameDef);
+
+        Configuration defaultConfig = configDef.getDefaultTemplate().getConfiguration();
+        defaultConfig.put(new PropertySimple("name", descriptor.getName()));
+    }
+
     private void initBasedir(DriftDescriptor descriptor, ConfigurationDefinition configDef) {
         String description = "The root directory from which snapshots will be generated during drift monitoring";
         PropertyDefinitionSimple basedir = new PropertyDefinitionSimple("basedir",description, true, STRING);
         basedir.setDisplayName("Base Directory");
-        basedir.setOrder(0);
+        basedir.setOrder(1);
         configDef.put(basedir);
 
         Configuration defaultConfig = configDef.getDefaultTemplate().getConfiguration();
@@ -56,7 +70,7 @@ public class DriftMetadataParser {
             "minutes.";
         PropertyDefinitionSimple intervalDef = new PropertyDefinitionSimple("interval", description, false, LONG);
         intervalDef.setDisplayName("Drift Monitoring Interval");
-        intervalDef.setOrder(1);
+        intervalDef.setOrder(2);
         configDef.put(intervalDef);
 
         Configuration defaultConfig = configDef.getDefaultTemplate().getConfiguration();
@@ -74,7 +88,7 @@ public class DriftMetadataParser {
         includesDef.setDisplayName("Includes");
         includesDef.setDescription(description);
         includesDef.setRequired(false);
-        includesDef.setOrder(2);
+        includesDef.setOrder(3);
 
         PropertyDefinitionMap includesMapDef = new PropertyDefinitionMap("include", null, false, null);
 
@@ -114,7 +128,7 @@ public class DriftMetadataParser {
         excludesDef.setDisplayName("Excludes");
         excludesDef.setDescription(description);
         excludesDef.setRequired(false);
-        excludesDef.setOrder(3);
+        excludesDef.setOrder(4);
 
         PropertyDefinitionMap excludesMapDef = new PropertyDefinitionMap("exclude", null, false, null);
 

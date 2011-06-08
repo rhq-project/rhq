@@ -397,7 +397,7 @@ class PluginMetadataParserTest {
       assertNotNull(basedirDef, "Expected to find property definition <basedir>")
       assertEquals(basedirDef.displayName, "Base Directory", "The displayName property is not set correctly")
       assertTrue(basedirDef.required, "The required property should be set to true")
-      assertEquals(basedirDef.order, 0, "The order property is not set correctly")
+      assertEquals(basedirDef.order, 1, "The order property is not set correctly")
       assertEquals(
           basedirDef.description,
           "The root directory from which snapshots will be generated during drift monitoring",
@@ -457,7 +457,7 @@ class PluginMetadataParserTest {
       assertEquals(intervalDef.displayName, "Drift Monitoring Interval",
           "The displayName property is not set correctly")
       assertFalse(intervalDef.required, "The required property should be set to false")
-      assertEquals(intervalDef.order, 1, "The order property is not set correctly")
+      assertEquals(intervalDef.order, 2, "The order property is not set correctly")
       assertEquals(
         intervalDef.description,
         "The frequency in seconds in which drift monitoring should run. Defaults to thirty minutes.",
@@ -543,7 +543,7 @@ class PluginMetadataParserTest {
       assertNotNull(includesDef, "Expected to find property definition <includes>")
       assertEquals(includesDef.displayName, "Includes", "The displayName property is not set correctly")
       assertFalse(includesDef.required, "The required property should be set to false")
-      assertEquals(includesDef.order, 2, "The order propert is not set correctly")
+      assertEquals(includesDef.order, 3, "The order propert is not set correctly")
       assertEquals(includesDef.description, "A set of patterns that specify files and/or directories to include.",
           "The description property is not set correctly.")
 
@@ -644,7 +644,7 @@ class PluginMetadataParserTest {
       assertFalse(excludesDef.required, "The required property should be set to false")
       assertEquals(excludesDef.description, "A set of patterns that specify files and/or directories to exclude.",
           "The description property is not set correctly.")
-      assertEquals(excludesDef.order, 3, "The order property is not set correctly")
+      assertEquals(excludesDef.order, 4, "The order property is not set correctly")
       assertTrue((excludesDef.memberDefinition instanceof PropertyDefinitionMap),
           "excludes member should be an instance of ${PropertyDefinitionMap.class.name}")
       assertEquals(excludesDef.memberDefinition.propertyDefinitions.values().size(), 2,
@@ -722,12 +722,27 @@ class PluginMetadataParserTest {
       Closure test) {
     def parser = new PluginMetadataParser(descriptor, [:])
     def resourceType = parser.allTypes.find { it.name == resourceTypeName }
-    def driftConfigDef = resourceType.driftConfigurationDefinitions.find { it.name == 'test1' }
+    def driftConfigDef = resourceType.driftConfigurationDefinitions.find { it.name == driftConfigName }
 
     assertNotNull(
         resourceType.driftConfigurationDefinitions.find { it.name == driftConfigName},
         "Failed to find drift configuration <$driftConfigName>. The name attribute may not have been parsed correctly."
     )
+
+    def nameDef = driftConfigDef.configurationDefinition.getPropertyDefinitionSimple('name')
+
+    assertNotNull(nameDef, 'Expected to find property definition <name>')
+    assertEquals(nameDef.displayName, 'Drift Configuration', 'The displayName property is not set correctly')
+    assertTrue(nameDef.required, "The required property should be set to true")
+    assertEquals(nameDef.description, "The drift configuration name", "The description property is not set correctly")
+    assertEquals(nameDef.order, 0, "The order property is not set correctly")
+
+    def defaultConfig = driftConfigDef.configurationDefinition.defaultTemplate.configuration
+    def name = defaultConfig.getSimple('name')
+
+    assertNotNull(name, "Expected to find a simple property <name> for the drift configuration name")
+    assertEquals(name.stringValue, driftConfigName,
+        "The value is wrong for the <name> property that represents the drift configuration name")
 
     test(driftConfigDef)
   }

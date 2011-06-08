@@ -1,10 +1,16 @@
 package org.rhq.core.clientapi.agent.metadata;
 
 import org.rhq.core.clientapi.descriptor.drift.DriftDescriptor;
+import org.rhq.core.clientapi.descriptor.drift.DriftFilterDescriptor;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertyList;
+import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
+import org.rhq.core.domain.configuration.definition.PropertyDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 
 import static org.rhq.core.domain.configuration.definition.ConfigurationTemplate.DEFAULT_TEMPLATE_NAME;
@@ -20,6 +26,7 @@ public class DriftMetadataParser {
 
         initBasedir(descriptor, configDef);
         initInterval(descriptor, configDef);
+        initIncludes(descriptor, configDef);
 
         return configDef;
     }
@@ -54,6 +61,43 @@ public class DriftMetadataParser {
             defaultConfig.put(new PropertySimple("interval", "1800"));
         } else {
             defaultConfig.put(new PropertySimple("interval", descriptor.getInterval()));
+        }
+    }
+
+    private void initIncludes(DriftDescriptor descriptor, ConfigurationDefinition configDef) {
+        String description = "A set of patterns that specify files and/or directories to include.";
+        PropertyDefinitionList includesDef = new PropertyDefinitionList();
+        includesDef.setName("includes");
+        includesDef.setDisplayName("Includes");
+        includesDef.setDescription(description);
+        includesDef.setRequired(false);
+
+        PropertyDefinitionMap includesMapDef = new PropertyDefinitionMap("include", null, false, null);
+
+        String pathDescription = "A file system path that can be a directory or a file. The path is assumed to be " +
+            "relative to the base directory of the drift configuration.";
+        PropertyDefinitionSimple pathDef = new PropertyDefinitionSimple("path", pathDescription, false, STRING);
+
+        // TODO Need to decide on verbage for the pattern description
+        PropertyDefinitionSimple patternDef = new PropertyDefinitionSimple("pattern", null, false, STRING);
+
+        includesMapDef.put(pathDef);
+        includesMapDef.put(patternDef);
+        includesDef.setMemberDefinition(includesMapDef);
+        configDef.put(includesDef);
+
+        if (descriptor.getIncludes() != null && descriptor.getIncludes().getInclude().size() > 0) {
+            Configuration defaultConfig = configDef.getDefaultTemplate().getConfiguration();
+            PropertyList includes = new PropertyList("includes");
+
+            for (DriftFilterDescriptor include : descriptor.getIncludes().getInclude()) {
+                PropertyMap includeMap = new PropertyMap("include");
+                includeMap.put(new PropertySimple("path", include.getPath()));
+                includeMap.put(new PropertySimple("pattern", include.getPattern()));
+
+                includes.add(includeMap);
+            }
+            defaultConfig.put(includes);
         }
     }
 

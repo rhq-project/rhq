@@ -28,6 +28,7 @@ import org.rhq.core.domain.drift.definition.DriftConfigurationDefinition
 import org.rhq.core.domain.resource.ResourceType
 import org.rhq.core.domain.configuration.definition.PropertySimpleType
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap
 
 class PluginMetadataParserTest {
 
@@ -454,7 +455,7 @@ class PluginMetadataParserTest {
       assertNotNull(intervalDef, "Expected to find property definition <interval>")
       assertEquals(intervalDef.displayName, "Drift Monitoring Interval",
           "The displayName property is not set correctly")
-      assertFalse(intervalDef.required, "The required property should be set to true")
+      assertFalse(intervalDef.required, "The required property should be set to false")
       assertEquals(
         intervalDef.description,
         "The frequency in seconds in which drift monitoring should run. Defaults to thirty minutes.",
@@ -513,7 +514,107 @@ class PluginMetadataParserTest {
       def defaultConfig = configDef.defaultTemplate.configuration
 
       assertEquals(defaultConfig.getSimpleValue("interval", null), "3600",
-          "Expected to find default property set for interval")
+          "Expected to find default property set for <interval>")
+    }
+  }
+
+  @Test
+  createDriftConfigurationIncludesDefinition() {
+    def descriptor = toPluginDescriptor(
+    """
+    <plugin name="drift-test-plugin" displayName="Drift Test" package="org.rhq.plugins.test"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:d="urn:xmlns:rhq-drift">
+      <server name="TestServer">
+        <drift-configuration name="test1">
+          <d:basedir>/var/lib/test1</d:basedir>
+          <d:interval>3600</d:interval>
+        </drift-configuration>
+      </server>
+    </plugin>
+    """
+    )
+
+    verifyDriftConfiguration(descriptor, 'TestServer', 'test1') { driftConfigDef ->
+      def includesDef = driftConfigDef.configurationDefinition.getPropertyDefinitionList("includes")
+
+      assertNotNull(includesDef, "Expected to find property definition <includes>")
+      assertEquals(includesDef.displayName, "Includes", "The displayName property is not set correctly")
+      assertFalse(includesDef.required, "The required property should be set to false")
+      assertEquals(includesDef.description, "A set of patterns that specify files and/or directories to include.",
+          "The description property is not set correctly.")
+
+      assertTrue((includesDef.memberDefinition instanceof PropertyDefinitionMap),
+          "includes member should be an instance of ${PropertyDefinitionMap.class.name}")
+      assertEquals(includesDef.memberDefinition.propertyDefinitions.values().size(), 2,
+          "There should be two properties in the property definition property contained in <includes>")
+
+      def pathDescription = "A file system path that can be a directory or a file. The path is assumed to be " +
+            "relative to the base directory of the drift configuration."
+      def pathDef = includesDef.memberDefinition.getPropertyDefinitionSimple("path")
+      assertNotNull(pathDef, "Expected to find a simple property definition named path")
+      assertEquals(pathDef.displayName, "Path", "The displayName property is not set correctly")
+      assertEquals(pathDef.description, pathDescription, "The description property is not set correctly.")
+      assertFalse(pathDef.required, "The required property should be set to false")
+
+      def patternDef = includesDef.memberDefinition.getPropertyDefinitionSimple("pattern")
+      assertNotNull(patternDef, "Expected to find a simple property definition named pattern")
+      assertEquals(pathDef.description, null, "The description property should be null until the verbage is determined")
+      assertEquals(pathDef.displayName, "Pattern", "The displayName property is not set correctly")
+      assertFalse(pathDef.required, "The required property should be set to false")
+    }
+  }
+
+  @Test
+  void createDriftConfigurationIncludesDefaultWithSpecifiedValue() {
+    def descriptor = toPluginDescriptor(
+    """
+    <plugin name="drift-test-plugin" displayName="Drift Test" package="org.rhq.plugins.test"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:d="urn:xmlns:rhq-drift">
+      <server name="TestServer">
+        <drift-configuration name="test1">
+          <d:basedir>/var/lib/test1</d:basedir>
+          <d:interval>3600</d:interval>
+          <d:includes>
+            <d:include path="lib" pattern="*.jar"/>
+            <d:include path="conf" pattern="*.xml"/>
+          </d:includes>
+        </drift-configuration>
+      </server>
+    </plugin>
+    """
+    )
+
+    verifyDriftConfiguration(descriptor, 'TestServer', 'test1') { driftConfigDef ->
+      def configDef = driftConfigDef.configurationDefinition
+      def defaultConfig = configDef.defaultTemplate.configuration
+      def includes = defaultConfig.getList('includes')
+
+      assertNotNull(includes, "Expected to find default property set for <includes>")
+      assertEquals(includes.list.size(), 2, "Expected <includes> property list to have two property elements.")
+
+      def include1 = includes.list[0]
+      def path1 = include1.getSimple('path')
+      def pattern1 = include1.getSimple('pattern')
+
+      assertNotNull(path1, "Expected to find a simple property for the path of the first <include>")
+      assertEquals(path1.stringValue, "lib", "The value is wrong for the path of the first <include>")
+
+      assertNotNull(pattern1, "Expected to find a simple property for the pattern of the first <include>")
+      assertEquals(pattern1.stringValue, '*.jar', 'The value is wrong for the pattern of the first <include>')
+
+      def include2 = includes.list[1]
+      def path2 = include2.getSimple('path')
+      def pattern2 = include2.getSimple('pattern')
+
+      assertNotNull(path1, "Expected to find a simple property for the path of the second <include>")
+      assertEquals(path1.stringValue, "lib", "The value is wrong for the path of the second <include>")
+
+      assertNotNull(pattern1, "Expected to find a simple property for the pattern of the second <include>")
+      assertEquals(pattern1.stringValue, '*.jar', 'The value is wrong for the pattern of the second <include>')
     }
   }
 

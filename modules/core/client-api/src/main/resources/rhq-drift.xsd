@@ -56,8 +56,16 @@
                     minutes.</xs:documentation>
                 </xs:annotation>
             </xs:element>
-            <xs:element name="includes" type="drift:Includes" minOccurs="0" maxOccurs="1"/>
-            <xs:element name="excludes" type="drift:Excludes" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="includes" type="drift:Includes" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation>A set of patterns that specify files and/or directories to include.</xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="excludes" type="drift:Excludes" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation>A set of patterns that specify files and/or directories to exclude.</xs:documentation>
+                </xs:annotation>
+            </xs:element>
         </xs:sequence>
         <xs:attribute name="name" type="xs:string" use="required"/>
     </xs:complexType>

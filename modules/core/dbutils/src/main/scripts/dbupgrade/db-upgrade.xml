@@ -3391,18 +3391,72 @@
             </schemaSpec>
 
             <schemaSpec version="2.108">
-                <schema-createSequence name="RHQ_SNAPSHOT_ID_SEQ" initial="10001" />
                 <schema-directSQL>
-                    <statement desc="Creating table RHQ_SNAPSHOT">
-                        CREATE TABLE RHQ_SNAPSHOT (ID INTEGER PRIMARY KEY)
+                    <statement desc="Creating global drift configuration definition">
+                        INSERT INTO rhq_config_def (id, name, description)
+                        VALUES (1, 'GLOBAL_DRIFT_CONFIG_DEF', 'The drift configuration definition')
+                    </statement>
+                    <statement>
+                        INSERT INTO rhq_config_prop_def (id, name, display_name, description, required, simple_type,
+                            order_index, dtype, config_def_id)
+                        VALUES (1, 'name', 'Drift Configuration Name', 'The drift configuration name', true, 'string',
+                            0, 'property', 1)
+                    </statement>
+                    <statement>
+                        INSERT INTO rhq_config_prop_def (id, name, display_name, description, required, simple_type,
+                            order_index, dtype, config_def_id)
+                        VALUES (2, 'basedir', 'Base Directory', 'The root directory from which snapshots will be generated during drift monitoring.',
+                            true, 'string', 1, 'property', 1)
+                    </statement>
+                    <statement>
+                        INSERT INTO rhq_config_prop_def (id, name, display_name, description, required, simple_type,
+                            order_index, dtype, default_value, config_def_id)
+                        VALUES (3, 'interval', 'Interval', 'The frequency in seconds in which drift monitoring should run. Defaults to thirty minutes.',
+                            false, 'long', 2, 'property', 1800, 1)
+                    </statement>
+                    <statement>
+                        INSERT INTO rhq_config_prop_def (id, name, display_name, dtype, description, order_index,
+                            config_def_id)
+                        VALUES (4, 'includes', 'Includes', 'list', 'A set of patterns that specify files and/or directories to include.',
+                            3, 1)
+                    </statement>
+                    <statement>
+                        INSERT INTO rhq_config_prop_def (id, name, display_name, dtype, parent_list_definition_id)
+                        VALUES (5, 'include', 'Include', 'map', 4)
+                    </statement>
+                    <statement>
+                        INSERT INTO rhq_config_prop_def (id, name, display_name, description, simple_type,
+                            order_index, dtype, parent_map_definition_id)
+                        VALUES (6, 'path', 'Path', 'A file system path that can be a directory or a file. The path is assumed to be relative to the base directory of the drift configuration.',
+                            'string', 0, 'property', 5)
+                    </statement>
+                    <statement>
+                        INSERT INTO rhq_config_prop_def (id, name, display_name, description, simple_type,
+                            order_index, dtype, parent_map_definition_id)
+                        VALUES (7, 'pattern', 'Pattern', 'TBD', 'string', 1, 'property', 5)
+                    </statement>
+                    <statement>
+                        INSERT INTO rhq_config_prop_def (id, name, display_name, dtype, description, order_index,
+                            config_def_id)
+                        VALUES (8, 'excludes', 'Excludes', 'list', 'A set of patterns that specify files and/or directories to exclude.',
+                            4, 1)
+                    </statement>
+                    <statement>
+                        INSERT INTO rhq_config_prop_def (id, name, display_name, dtype, parent_list_definition_id)
+                        VALUES (9, 'exclude', 'Exclude', 'map', 8)
+                    </statement>
+                    <statement>
+                        INSERT INTO rhq_config_prop_def (id, name, display_name, description, simple_type,
+                            order_index, dtype, parent_map_definition_id)
+                        VALUES (10, 'path', 'Path', 'A file system path that can be a directory or a file. The path is assumed to be relative to the base directory of the drift configuration.',
+                            'string', 0, 'property', 9)
+                    </statement>
+                    <statement>
+                        INSERT INTO rhq_config_prop_def (id, name, display_name, description, simple_type,
+                            order_index, dtype, parent_map_definition_id)
+                        VALUES (11, 'pattern', 'Pattern', 'TBD', 'string', 1, 'property', 9)
                     </statement>
                 </schema-directSQL>
-                <schema-alterColumn table="RHQ_SNAPSHOT" column="ID" columnType="INTEGER" nullable="FALSE" />
-                <schema-addColumn   table="RHQ_SNAPSHOT" column="BASEDIR" columnType="VARCHAR2" />
-                <schema-alterColumn table="RHQ_SNAPSHOT" column="BASEDIR" nullable="false" precision="512"/>
-                <schema-addColumn   table="RHQ_SNAPSHOT" column="DATA" columnType="LARGEOBJECT"/>
-                <schema-addColumn   table="RHQ_SNAPSHOT" column="DATA_SIZE" columnType="LONG"/>
-                <schema-addColumn   table="RHQ_SNAPSHOT" column="CTIME" columnType="LONG" />
             </schemaSpec>
         </dbupgrade>
     </target>

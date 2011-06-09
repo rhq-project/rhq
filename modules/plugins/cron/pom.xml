@@ -115,7 +115,7 @@
                                  </patternset>
                               </unzip>                              
                               <!-- by default deploy the 32bit augeas libs -->
-                              <move todir="target/itest/lib/">
+                              <move todir="target/itest/lib">
                                 <fileset dir="target/itest/lib/augeas-native-${augeas.zip.version}/lib">
                                     <include name="**/*.so"/>
                                     <include name="**/*.so.*"/>
@@ -128,7 +128,7 @@
                                    </or>   
                                   <then>
                                       <!-- overwrite with 64bits if needed -->
-                                      <move todir="target/itest/lib/">
+                                      <move todir="target/itest/lib">
                                         <fileset dir="target/itest/lib/augeas-native-${augeas.zip.version}/lib64">
                                             <include name="**/*.so"/>
                                             <include name="**/*.so.*"/>

@@ -4,6 +4,7 @@
         displayName="Sudo Access"
         description="Support for *nix hosts service"
         package="org.rhq.plugins.sudoers"
+        pluginLifecycleListener="org.rhq.plugins.augeas.AugeasPluginLifecycleListener"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">

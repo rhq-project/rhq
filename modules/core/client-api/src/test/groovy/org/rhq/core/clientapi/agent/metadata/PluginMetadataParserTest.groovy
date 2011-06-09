@@ -18,17 +18,12 @@
  */
 package org.rhq.core.clientapi.agent.metadata
 
-import static org.testng.Assert.*
-
-import org.testng.annotations.Test
-import org.rhq.core.domain.configuration.definition.ConfigurationFormat
-
-import static org.rhq.core.clientapi.shared.PluginDescriptorUtil.toPluginDescriptor
-import org.rhq.core.domain.drift.definition.DriftConfigurationDefinition
-import org.rhq.core.domain.resource.ResourceType
-import org.rhq.core.domain.configuration.definition.PropertySimpleType
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor
-import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap
+import org.rhq.core.domain.configuration.definition.ConfigurationFormat
+import org.testng.annotations.Test
+import static org.rhq.core.clientapi.shared.PluginDescriptorUtil.toPluginDescriptor
+import static org.testng.Assert.assertEquals
+import static org.testng.Assert.assertNotNull
 
 class PluginMetadataParserTest {
 

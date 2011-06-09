@@ -392,7 +392,10 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
     @OneToOne(mappedBy = "resourceType", fetch = FetchType.LAZY, cascade = CascadeType.ALL, optional = true)
     private BundleType bundleType;
 
-    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = "resourceType")
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JoinTable(name = "RHQ_DRIFT_TEMPLATE",
+        joinColumns = @JoinColumn(name = "RESOURCE_TYPE_ID", nullable = false),
+        inverseJoinColumns = @JoinColumn(name = "CONFIG_TEMPLATE_ID", nullable = false))
     private Set<ConfigurationTemplate> driftConfigurationTemplates = new HashSet<ConfigurationTemplate>();
 
     @Transient

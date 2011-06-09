@@ -37,6 +37,7 @@ import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
+import javax.persistence.EntityNotFoundException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
@@ -61,6 +62,7 @@ import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
+import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration;
 import org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
@@ -145,6 +147,34 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
     @EJB
     private ResourceGroupManagerLocal resourceGroupManager;
+
+    @Override
+    public ResourceTypeBundleConfiguration getResourceTypeBundleConfiguration(Subject subject, int compatGroupId)
+        throws Exception {
+
+        // Even though its harmless to return metadata (bundle config) about a resource type, we are getting that through
+        // a relationship from a resource group. To prevent someone from probing the inventory to see which groups
+        // are types that support bundles, we only allow someone to traverse the relationship from group to type
+        // if that someone has access to the group.
+        if (authorizationManager.canViewGroup(subject, compatGroupId)) {
+            Query q = entityManager.createNamedQuery(ResourceType.QUERY_GET_BUNDLE_CONFIG_BY_GROUP_ID);
+            q.setParameter("groupId", compatGroupId);
+            ResourceTypeBundleConfiguration bundleConfig = null;
+            try {
+                Configuration config = (Configuration) q.getSingleResult();
+                if (config != null) {
+                    bundleConfig = new ResourceTypeBundleConfiguration(config);
+                }
+            } catch (EntityNotFoundException enfe) {
+                // ignore this - this is just a group that isn't a compatible group
+                // or it is, but its type cannot be a target for bundle deployments
+            }
+
+            return bundleConfig;
+        } else {
+            throw new Exception("[" + subject.getName() + "] is not authorized to access the group");
+        }
+    }
 
     @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
@@ -1326,7 +1356,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         BundleResourceDeploymentCriteria criteria) {
 
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
-        ;
+
         if (!authorizationManager.isInventoryManager(subject)) {
             if (criteria.isInventoryManagerRequired()) {
                 // TODO: MANAGE_INVENTORY was too restrictive as a bundle manager could not then

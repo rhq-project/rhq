@@ -30,6 +30,7 @@ import org.rhq.core.domain.bundle.BundleFile;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
+import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration;
 import org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.BundleCriteria;
@@ -41,6 +42,8 @@ import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.util.PageList;
 
 public interface BundleGWTService extends RemoteService {
+
+    ResourceTypeBundleConfiguration getResourceTypeBundleConfiguration(int compatGroupId) throws RuntimeException;
 
     BundleVersion createBundleVersion(int bundleId, String name, String version, String recipe) throws RuntimeException;
 

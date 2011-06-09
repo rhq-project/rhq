@@ -18,10 +18,14 @@
  */
 package org.rhq.enterprise.gui.coregui.client.bundle.deploy;
 
+import java.util.Arrays;
+import java.util.Set;
+
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
+import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.TextAreaItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
@@ -31,8 +35,10 @@ import com.smartgwt.client.widgets.form.validator.Validator;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.bundle.BundleDestination;
+import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration;
+import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration.BundleDestinationBaseDirectory;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.bundle.deploy.selection.SinglePlatformResourceGroupSelector;
+import org.rhq.enterprise.gui.coregui.client.bundle.deploy.selection.SingleCompatibleResourceGroupSelector;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -48,7 +54,7 @@ public class GetDestinationStep extends AbstractWizardStep {
     private final BundleDeployWizard wizard;
     private VLayout form;
     DynamicForm valForm = new LocatableDynamicForm("GetDestinationStepValForm");
-    private SinglePlatformResourceGroupSelector selector;
+    private SingleCompatibleResourceGroupSelector selector;
     private BundleDestination dest = new BundleDestination();
     private boolean createInProgress = false;
 
@@ -113,14 +119,83 @@ public class GetDestinationStep extends AbstractWizardStep {
                 }
             });
 
-            this.selector = new SinglePlatformResourceGroupSelector("group", MSG.common_title_resource_group());
+            final SelectItem destBaseDirItem = new SelectItem("destBaseDir", MSG
+                .view_bundle_deployWizard_getDest_destBaseDirName());
+            destBaseDirItem.setWidth(300);
+            destBaseDirItem.setRequired(true);
+            destBaseDirItem.setAllowEmptyValue(false);
+            destBaseDirItem.setDisabled(true);
+            destBaseDirItem.addChangedHandler(new ChangedHandler() {
+                public void onChanged(ChangedEvent event) {
+                    Object value = event.getValue();
+                    if (value != null && value.toString().length() > 0) {
+                        dest.setDestinationBaseDirectoryName(value.toString());
+                    } else {
+                        dest.setDestinationBaseDirectoryName(null);
+                    }
+                }
+            });
+
+            this.selector = new SingleCompatibleResourceGroupSelector("group", MSG.common_title_resource_group());
             this.selector.setWidth(300);
             this.selector.setRequired(true);
             Validator validator = new IsIntegerValidator();
             validator.setErrorMessage(MSG.view_bundle_deployWizard_error_8());
             this.selector.setValidators(validator);
+            this.selector.addChangedHandler(new ChangedHandler() {
+                @Override
+                public void onChanged(ChangedEvent event) {
+                    Integer selectedGroupId = null;
 
-            this.valForm.setItems(nameTextItem, descriptionTextAreaItem, deployDirTextItem, selector);
+                    // if the user is typing in the name of the group, and is only partially
+                    // done, the event value will be the String of the partial group name.
+                    // If the selection is an actual group name, the event value will be
+                    // an integer (the group ID) and that is our indication that the selection
+                    // of an actual group has been made
+                    if (event.getValue() instanceof Integer) {
+                        selectedGroupId = (Integer) event.getValue();
+                    }
+
+                    if (selectedGroupId != null) {
+                        bundleServer.getResourceTypeBundleConfiguration(selectedGroupId.intValue(),
+                            new AsyncCallback<ResourceTypeBundleConfiguration>() {
+                                public void onSuccess(ResourceTypeBundleConfiguration result) {
+                                    // new group selected, forget what the base location was before
+                                    dest.setDestinationBaseDirectoryName(null);
+                                    destBaseDirItem.clearValue();
+
+                                    // populate the base location drop down with all the possible dest base directories
+                                    String[] menuItems = null;
+                                    if (result != null) {
+                                        Set<BundleDestinationBaseDirectory> baseDirs;
+                                        baseDirs = result.getBundleDestinationBaseDirectory();
+                                        if (baseDirs != null && baseDirs.size() > 0) {
+                                            menuItems = new String[baseDirs.size()];
+                                            int i = 0;
+                                            for (BundleDestinationBaseDirectory baseDir : baseDirs) {
+                                                menuItems[i++] = baseDir.getName();
+                                            }
+                                            Arrays.sort(menuItems); // just so they are ordered in the drop down list
+                                            destBaseDirItem.setValues(menuItems);
+                                            dest.setDestinationBaseDirectoryName(menuItems[0]);
+                                        }
+                                    }
+
+                                    destBaseDirItem.setDisabled(menuItems == null);
+                                }
+
+                                public void onFailure(Throwable caught) {
+                                    dest.setDestinationBaseDirectoryName(null);
+                                    CoreGUI.getErrorHandler().handleError(
+                                        MSG.view_bundle_deployWizard_error_noBundleConfig(), caught);
+                                }
+                            });
+                    }
+                }
+            });
+
+            this.valForm.setItems(nameTextItem, descriptionTextAreaItem, this.selector, destBaseDirItem,
+                deployDirTextItem);
             CanvasItem ci1 = new CanvasItem();
             ci1.setShowTitle(false);
             ci1.setCanvas(valForm);

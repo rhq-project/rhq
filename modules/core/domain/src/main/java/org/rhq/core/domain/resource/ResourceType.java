@@ -81,6 +81,7 @@ import org.rhq.core.domain.util.Summary;
 @Table(name = ResourceType.TABLE_NAME)
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_RESOURCE_TYPE_ID_SEQ")
 @NamedQueries( {
+    @NamedQuery(name = ResourceType.QUERY_GET_BUNDLE_CONFIG_BY_GROUP_ID, query = "SELECT rg.resourceType.bundleConfiguration FROM ResourceGroup rg WHERE rg.id = :groupId"),
     @NamedQuery(name = ResourceType.QUERY_FIND_BY_PLUGIN, query = "SELECT rt FROM ResourceType AS rt "
         + "WHERE rt.plugin = :plugin AND rt.deleted = false"),
     @NamedQuery(name = ResourceType.QUERY_FIND_BY_NAME_AND_PLUGIN, // TODO: QUERY: names are case-sensitive
@@ -248,6 +249,7 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
 
     public static final ResourceType ANY_PLATFORM_TYPE = null;
 
+    public static final String QUERY_GET_BUNDLE_CONFIG_BY_GROUP_ID = "ResourceType.getBundleConfigByGroupResourceType";
     public static final String QUERY_GET_EXPLICIT_RESOURCE_TYPE_COUNTS_BY_GROUP = "ResourceType.getExplicitResourceTypeCountsByGroup";
     public static final String QUERY_GET_IMPLICIT_RESOURCE_TYPE_COUNTS_BY_GROUP = "ResourceType.getImplicitResourceTypeCountsByGroup";
     public static final String QUERY_FIND_BY_NAME_AND_PLUGIN = "ResourceType.findByNameAndPlugin";

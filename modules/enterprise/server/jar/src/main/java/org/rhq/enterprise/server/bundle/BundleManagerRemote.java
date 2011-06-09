@@ -37,6 +37,7 @@ import org.rhq.core.domain.bundle.BundleFile;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
+import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration;
 import org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.content.Architecture;
@@ -61,6 +62,21 @@ import org.rhq.enterprise.server.system.ServerVersion;
 public interface BundleManagerRemote {
 
     /**
+     * Given the ID for a compatible group, this will return the bundle configuration metadata for that group's resource type.
+     * User interfaces will need to use this method in order to find out if a) the group can be a target for a bundle deployment
+     * and/or b) what different destination base locations are supported by the group.
+     * 
+     * @param subject the user making the request
+     * @param compatGroupId the ID for a compatible group whose type's bundle config is to be returned
+     * @return the bundle configuration for the group's resource type
+     * @throws Exception
+     */
+    @WebMethod
+    ResourceTypeBundleConfiguration getResourceTypeBundleConfiguration( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "compatGroupId") int compatGroupId) throws Exception;
+
+    /**
      * Adds a BundleFile to the BundleVersion and implicitly creates the backing PackageVersion. If the PackageVersion
      * already exists use {@link addBundleFile(Subject, int, String, int, boolean)} 
      *   
@@ -73,6 +89,7 @@ public interface BundleManagerRemote {
      * @return the new BundleFile
      * @throws Exception
      */
+
     @WebMethod
     BundleFile addBundleFile( //
         @WebParam(name = "subject") Subject subject, //

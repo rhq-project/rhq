@@ -47,6 +47,7 @@ import org.rhq.core.domain.bundle.BundleFile;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
+import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration;
 import org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.common.ProductInfo;
@@ -268,6 +269,12 @@ public class WebservicesManagerBean implements WebservicesRemote {
     //AVAILABILITYMANAGER: END ----------------------------------
 
     //BUNDLEMANAGER: BEGIN ------------------------------------------
+
+    @Override
+    public ResourceTypeBundleConfiguration getResourceTypeBundleConfiguration(Subject subject, int compatGroupId)
+        throws Exception {
+        return bundleManager.getResourceTypeBundleConfiguration(subject, compatGroupId);
+    }
 
     public BundleFile addBundleFile(Subject subject, int bundleVersionId, String name, String version,
         Architecture architecture, InputStream fileStream) throws Exception {

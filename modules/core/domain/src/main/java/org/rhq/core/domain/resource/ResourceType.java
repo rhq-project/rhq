@@ -62,7 +62,6 @@ import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.content.PackageType;
-import org.rhq.core.domain.drift.definition.DriftConfigurationDefinition;
 import org.rhq.core.domain.event.EventDefinition;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.operation.OperationDefinition;

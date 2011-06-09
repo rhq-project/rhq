@@ -132,6 +132,54 @@ public class DriftFileTest extends AbstractEJB3Test {
         assertEquals("Failed to save or load " + numDriftFiles + " driftFiles", numDriftFiles, driftFiles.size());
     }
 
+    // The purpose of this test is to ensure we won't store two drift files for
+    // the same content.
+    @Test(groups = { "integration.ejb3", "driftFile" })
+    public void loadSameFile() throws Exception {
+        int numDriftFiles = 2;
+        final List<String> driftFileShas = new ArrayList<String>();
+
+        for (int i = 0; i < numDriftFiles; ++i) {
+            File dataFile = createDataFile("test_data.txt", 10, 'X');
+            final DriftFile driftFile = new DriftFile();
+            final int driftFileNum = i;
+            driftFile.setDataSize(dataFile.length());
+            driftFile.setSha256(digestGen.calcDigestString(dataFile));
+            driftFile.setData(Hibernate.createBlob(new BufferedInputStream(new FileInputStream(dataFile))));
+            dataFile.delete();
+
+            try {
+                executeInTransaction(new TransactionCallback() {
+                    @Override
+                    public void execute() {
+                        getEntityManager().persist(driftFile);
+                        driftFileShas.add(driftFile.getSha256());
+                    }
+                });
+            } catch (Exception e) {
+                // expected for file 2 or higher
+                if (driftFileNum == 0) {
+                    fail("Should not be able to store DriftFile with same sha256 more than once.");
+                }
+            }
+        }
+
+        final List<Blob> blobs = new ArrayList<Blob>();
+        final List<DriftFile> driftFiles = new ArrayList<DriftFile>();
+        for (final String sha256 : driftFileShas) {
+            executeInTransaction(new TransactionCallback() {
+                @Override
+                public void execute() {
+                    DriftFile driftFile = getEntityManager().find(DriftFile.class, sha256);
+                    blobs.add(driftFile.getBlob());
+                    driftFiles.add(driftFile);
+                }
+            });
+        }
+
+        assertEquals("Failed to save or load " + numDriftFiles + " driftFiles", numDriftFiles, driftFiles.size());
+    }
+
     void executeInTransaction(TransactionCallback callback) {
         try {
             getTransactionManager().begin();

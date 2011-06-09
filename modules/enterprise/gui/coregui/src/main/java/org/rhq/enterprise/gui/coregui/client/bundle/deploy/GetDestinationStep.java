@@ -124,6 +124,7 @@ public class GetDestinationStep extends AbstractWizardStep {
             destBaseDirItem.setWidth(300);
             destBaseDirItem.setRequired(true);
             destBaseDirItem.setAllowEmptyValue(false);
+            destBaseDirItem.setMultiple(false);
             destBaseDirItem.setDisabled(true);
             destBaseDirItem.addChangedHandler(new ChangedHandler() {
                 public void onChanged(ChangedEvent event) {
@@ -156,14 +157,14 @@ public class GetDestinationStep extends AbstractWizardStep {
                         selectedGroupId = (Integer) event.getValue();
                     }
 
+                    // new group is, or is in the process of being, selected so forget what the base location was before
+                    dest.setDestinationBaseDirectoryName(null);
+                    destBaseDirItem.clearValue();
+
                     if (selectedGroupId != null) {
                         bundleServer.getResourceTypeBundleConfiguration(selectedGroupId.intValue(),
                             new AsyncCallback<ResourceTypeBundleConfiguration>() {
                                 public void onSuccess(ResourceTypeBundleConfiguration result) {
-                                    // new group selected, forget what the base location was before
-                                    dest.setDestinationBaseDirectoryName(null);
-                                    destBaseDirItem.clearValue();
-
                                     // populate the base location drop down with all the possible dest base directories
                                     String[] menuItems = null;
                                     if (result != null) {
@@ -176,7 +177,8 @@ public class GetDestinationStep extends AbstractWizardStep {
                                                 menuItems[i++] = baseDir.getName();
                                             }
                                             Arrays.sort(menuItems); // just so they are ordered in the drop down list
-                                            destBaseDirItem.setValues(menuItems);
+                                            destBaseDirItem.setValueMap(menuItems);
+                                            destBaseDirItem.setValue(menuItems[0]);
                                             dest.setDestinationBaseDirectoryName(menuItems[0]);
                                         }
                                     }
@@ -185,11 +187,13 @@ public class GetDestinationStep extends AbstractWizardStep {
                                 }
 
                                 public void onFailure(Throwable caught) {
-                                    dest.setDestinationBaseDirectoryName(null);
+                                    destBaseDirItem.setDisabled(true);
                                     CoreGUI.getErrorHandler().handleError(
                                         MSG.view_bundle_deployWizard_error_noBundleConfig(), caught);
                                 }
                             });
+                    } else {
+                        destBaseDirItem.setDisabled(true);
                     }
                 }
             });

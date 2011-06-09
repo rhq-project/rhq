@@ -31,6 +31,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
 import javax.persistence.SequenceGenerator;
@@ -43,6 +44,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.resource.ResourceType;
 
 /**
  * This object represents a single template of configuration values for a given definition. Definitions may have many
@@ -78,6 +80,16 @@ public class ConfigurationTemplate implements Serializable {
     @ManyToOne
     @XmlTransient
     private ConfigurationDefinition configurationDefinition;
+
+    // This mapping for resourceType is here only to support the one-to-many association
+    // between ResourceType and ConfigurationTemplate that is implemented with a mapping
+    // table. A config template is associated with a resource type when it represents a
+    // drift configuration template for that resource type.
+    @ManyToOne
+    @JoinTable(name = "RHQ_DRIFT_TEMPLATE",
+        joinColumns = @JoinColumn(name = "CONFIG_TEMPLATE_ID", nullable = false),
+        inverseJoinColumns = @JoinColumn(name = "RESOURCE_TYPE_ID", nullable = false))
+    private ResourceType resourceType;
 
     @Column(name = "is_default")
     private boolean isDefault;

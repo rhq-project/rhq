@@ -393,7 +393,7 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
     @OneToOne(mappedBy = "resourceType", fetch = FetchType.LAZY, cascade = CascadeType.ALL, optional = true)
     private BundleType bundleType;
 
-    @Transient  // Will handle JPA/dbsetup/dbupgrade after plugin descriptor parsing changes complete
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = "resourceType")
     private Set<ConfigurationTemplate> driftConfigurationTemplates = new HashSet<ConfigurationTemplate>();
 
     @Transient

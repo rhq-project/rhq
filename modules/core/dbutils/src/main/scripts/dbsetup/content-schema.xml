@@ -678,5 +678,16 @@
         <column name="NEW_DRIFT_FILE" type="VARCHAR2" size="64" required="false" references="RHQ_DRIFT_FILE"/>        
     </table>
 
+    <!--
+        A resource type can have zero or more drift templates which correspond to <drift>
+        elements declared in the plugin descriptor. A drift template is represented as a
+        config template.
+    -->
+    <table name="RHQ_DRIFT_TEMPLATE">
+        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+        <column name="RESOURCE_TYPE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE_TYPE"/>
+        <column name="CONFIG_TEMPLATE_ID" type="INTEGER" required="true" references="RHQ_CONFIG_TEMPLATE"/>
+    </table>
+
 </dbsetup>
 

@@ -488,7 +488,7 @@ public class PluginMetadataParser {
 
             DriftMetadataParser driftMetadataParser = new DriftMetadataParser();
             for (DriftDescriptor descriptor : resourceDescriptor.getDriftConfiguration()) {
-                resourceType.addDriftConfigurationDefinition(driftMetadataParser.parseDriftMetadata(descriptor));
+                resourceType.addDriftConfigurationTemplate(driftMetadataParser.parseDriftMetadata(descriptor));
             }
 
             int displayPosition = 1;

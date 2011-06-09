@@ -374,40 +374,6 @@ class PluginMetadataParserTest {
   }
 
   @Test
-  void createDriftConfigurationBasedirDefinition() {
-    def descriptor = toPluginDescriptor(
-    """
-    <plugin name="drift-test-plugin" displayName="Drift Test" package="org.rhq.plugins.test"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xmlns="urn:xmlns:rhq-plugin"
-        xmlns:d="urn:xmlns:rhq-drift">
-      <server name="TestServer">
-        <drift-configuration name="test1">
-          <d:basedir>/var/lib/test1</d:basedir>
-        </drift-configuration>
-      </server>
-    </plugin>
-    """
-    )
-
-    verifyDriftConfiguration(descriptor, 'TestServer', 'test1') { driftConfigDef ->
-      def configDef = driftConfigDef.configurationDefinition
-      def basedirDef = configDef.getPropertyDefinitionSimple("basedir")
-
-      assertNotNull(basedirDef, "Expected to find property definition <basedir>")
-      assertEquals(basedirDef.displayName, "Base Directory", "The displayName property is not set correctly")
-      assertTrue(basedirDef.required, "The required property should be set to true")
-      assertEquals(basedirDef.order, 1, "The order property is not set correctly")
-      assertEquals(
-          basedirDef.description,
-          "The root directory from which snapshots will be generated during drift monitoring",
-          "The description property is not set correctly"
-      )
-      assertEquals(basedirDef.type, PropertySimpleType.STRING, "The type property is not set correctly")
-    }
-  }
-
-  @Test
   void createDriftConfigurationBasedirDefaultWithSpecifiedValue() {
     def descriptor = toPluginDescriptor(
     """
@@ -424,46 +390,9 @@ class PluginMetadataParserTest {
     """
     )
 
-    verifyDriftConfiguration(descriptor, 'TestServer', 'test1') { driftConfigDef ->
-      def configDef = driftConfigDef.configurationDefinition
-      def defaultConfig = configDef.defaultTemplate.configuration
-
-      assertEquals(defaultConfig.getSimpleValue("basedir", null),
+    verifyDriftConfiguration(descriptor, 'TestServer', 'test1') { driftTemplate ->
+      assertEquals(driftTemplate.configuration.getSimpleValue("basedir", null),
           "/var/lib/test1", "Expected to find default property set for basedir")
-    }
-  }
-
-  @Test
-  void createDriftConfigurationIntervalDefinition() {
-    def descriptor = toPluginDescriptor(
-    """
-    <plugin name="drift-test-plugin" displayName="Drift Test" package="org.rhq.plugins.test"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xmlns="urn:xmlns:rhq-plugin"
-        xmlns:d="urn:xmlns:rhq-drift">
-      <server name="TestServer">
-        <drift-configuration name="test1">
-          <d:basedir>/var/lib/test1</d:basedir>
-        </drift-configuration>
-      </server>
-    </plugin>
-    """
-    )
-
-    verifyDriftConfiguration(descriptor, 'TestServer', 'test1') { driftConfigDef ->
-      def intervalDef = driftConfigDef.configurationDefinition.get("interval")
-
-      assertNotNull(intervalDef, "Expected to find property definition <interval>")
-      assertEquals(intervalDef.displayName, "Drift Monitoring Interval",
-          "The displayName property is not set correctly")
-      assertFalse(intervalDef.required, "The required property should be set to false")
-      assertEquals(intervalDef.order, 2, "The order property is not set correctly")
-      assertEquals(
-        intervalDef.description,
-        "The frequency in seconds in which drift monitoring should run. Defaults to thirty minutes.",
-        "The description property is not set correctly"
-      )
-      assertEquals(intervalDef.type, PropertySimpleType.LONG, "The type property is not set correctly")
     }
   }
 
@@ -484,11 +413,8 @@ class PluginMetadataParserTest {
     """
     )
 
-    verifyDriftConfiguration(descriptor, 'TestServer', 'test1') { driftConfigDef ->
-      def configDef = driftConfigDef.configurationDefinition
-      def defaultConfig = configDef.defaultTemplate.configuration
-
-      assertEquals(defaultConfig.getSimpleValue("interval", null), "1800",
+    verifyDriftConfiguration(descriptor, 'TestServer', 'test1') { driftTemplate ->
+      assertEquals(driftTemplate.configuration.getSimpleValue("interval", null), "1800",
           "Expected to find default property set for interval")
     }
   }
@@ -511,60 +437,9 @@ class PluginMetadataParserTest {
     """
     )
 
-    verifyDriftConfiguration(descriptor, 'TestServer', 'test1') { driftConfigDef ->
-      def configDef = driftConfigDef.configurationDefinition
-      def defaultConfig = configDef.defaultTemplate.configuration
-
-      assertEquals(defaultConfig.getSimpleValue("interval", null), "3600",
+    verifyDriftConfiguration(descriptor, 'TestServer', 'test1') { driftTemplate ->
+      assertEquals(driftTemplate.configuration.getSimpleValue("interval", null), "3600",
           "Expected to find default property set for <interval>")
-    }
-  }
-
-  @Test
-  void createDriftConfigurationIncludesDefinition() {
-    def descriptor = toPluginDescriptor(
-    """
-    <plugin name="drift-test-plugin" displayName="Drift Test" package="org.rhq.plugins.test"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xmlns="urn:xmlns:rhq-plugin"
-        xmlns:d="urn:xmlns:rhq-drift">
-      <server name="TestServer">
-        <drift-configuration name="test1">
-          <d:basedir>/var/lib/test1</d:basedir>
-        </drift-configuration>
-      </server>
-    </plugin>
-    """
-    )
-
-    verifyDriftConfiguration(descriptor, 'TestServer', 'test1') { driftConfigDef ->
-      def includesDef = driftConfigDef.configurationDefinition.getPropertyDefinitionList("includes")
-
-      assertNotNull(includesDef, "Expected to find property definition <includes>")
-      assertEquals(includesDef.displayName, "Includes", "The displayName property is not set correctly")
-      assertFalse(includesDef.required, "The required property should be set to false")
-      assertEquals(includesDef.order, 3, "The order propert is not set correctly")
-      assertEquals(includesDef.description, "A set of patterns that specify files and/or directories to include.",
-          "The description property is not set correctly.")
-
-      assertTrue((includesDef.memberDefinition instanceof PropertyDefinitionMap),
-          "includes member should be an instance of ${PropertyDefinitionMap.class.name}")
-      assertEquals(includesDef.memberDefinition.propertyDefinitions.values().size(), 2,
-          "There should be two properties in the property definition property contained in <includes>")
-
-      def pathDescription = "A file system path that can be a directory or a file. The path is assumed to be " +
-            "relative to the base directory of the drift configuration."
-      def pathDef = includesDef.memberDefinition.getPropertyDefinitionSimple("path")
-      assertNotNull(pathDef, "Expected to find a simple property definition named path")
-      assertEquals(pathDef.displayName, "Path", "The displayName property is not set correctly")
-      assertEquals(pathDef.description, pathDescription, "The description property is not set correctly.")
-      assertFalse(pathDef.required, "The required property should be set to false")
-
-      def patternDef = includesDef.memberDefinition.getPropertyDefinitionSimple("pattern")
-      assertNotNull(patternDef, "Expected to find a simple property definition named pattern")
-      assertEquals(patternDef.description, null, "The description property should be null until the verbage is determined")
-      assertEquals(patternDef.displayName, "Pattern", "The displayName property is not set correctly")
-      assertFalse(patternDef.required, "The required property should be set to false")
     }
   }
 
@@ -589,10 +464,9 @@ class PluginMetadataParserTest {
     """
     )
 
-    verifyDriftConfiguration(descriptor, 'TestServer', 'test1') { driftConfigDef ->
-      def configDef = driftConfigDef.configurationDefinition
-      def defaultConfig = configDef.defaultTemplate.configuration
-      def includes = defaultConfig.getList('includes')
+    verifyDriftConfiguration(descriptor, 'TestServer', 'test1') { driftTemplate ->
+      def config = driftTemplate.configuration
+      def includes = config.getList('includes')
 
       assertNotNull(includes, "Expected to find default property set for <includes>")
       assertEquals(includes.list.size(), 2, "Expected <includes> property list to have two property elements.")
@@ -620,53 +494,6 @@ class PluginMetadataParserTest {
   }
 
   @Test
-  void createDriftConfigurationExcludesDefinition() {
-    def descriptor = toPluginDescriptor(
-    """
-    <plugin name="drift-test-plugin" displayName="Drift Test" package="org.rhq.plugins.test"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xmlns="urn:xmlns:rhq-plugin"
-        xmlns:d="urn:xmlns:rhq-drift">
-      <server name="TestServer">
-        <drift-configuration name="test1">
-          <d:basedir>/var/lib/test1</d:basedir>
-        </drift-configuration>
-      </server>
-    </plugin>
-    """
-    )
-
-    verifyDriftConfiguration(descriptor, 'TestServer', 'test1') { driftConfigDef ->
-      def excludesDef = driftConfigDef.configurationDefinition.getPropertyDefinitionList("excludes")
-
-      assertNotNull(excludesDef, "Expected to find property definition <excludes>")
-      assertEquals(excludesDef.displayName, "Excludes", "The displayName property is not set correctly")
-      assertFalse(excludesDef.required, "The required property should be set to false")
-      assertEquals(excludesDef.description, "A set of patterns that specify files and/or directories to exclude.",
-          "The description property is not set correctly.")
-      assertEquals(excludesDef.order, 4, "The order property is not set correctly")
-      assertTrue((excludesDef.memberDefinition instanceof PropertyDefinitionMap),
-          "excludes member should be an instance of ${PropertyDefinitionMap.class.name}")
-      assertEquals(excludesDef.memberDefinition.propertyDefinitions.values().size(), 2,
-          "There should be two properties in the property definition property contained in <excludes>")
-
-      def pathDescription = "A file system path that can be a directory or a file. The path is assumed to be " +
-            "relative to the base directory of the drift configuration."
-      def pathDef = excludesDef.memberDefinition.getPropertyDefinitionSimple("path")
-      assertNotNull(pathDef, "Expected to find a simple property definition named path")
-      assertEquals(pathDef.displayName, "Path", "The displayName property is not set correctly")
-      assertEquals(pathDef.description, pathDescription, "The description property is not set correctly.")
-      assertFalse(pathDef.required, "The required property should be set to false")
-
-      def patternDef = excludesDef.memberDefinition.getPropertyDefinitionSimple("pattern")
-      assertNotNull(patternDef, "Expected to find a simple property definition named pattern")
-      assertEquals(patternDef.description, null, "The description property should be null until the verbage is determined")
-      assertEquals(patternDef.displayName, "Pattern", "The displayName property is not set correctly")
-      assertFalse(patternDef.required, "The required property should be set to false")
-    }
-  }
-
-  @Test
   void createDriftConfigurationExcludesDefaultWithSpecifiedValue() {
     def descriptor = toPluginDescriptor(
     """
@@ -688,10 +515,9 @@ class PluginMetadataParserTest {
     """
     )
 
-    verifyDriftConfiguration(descriptor, 'TestServer', 'test1') { driftConfigDef ->
-      def configDef = driftConfigDef.configurationDefinition
-      def defaultConfig = configDef.defaultTemplate.configuration
-      def excludes = defaultConfig.getList('excludes')
+    verifyDriftConfiguration(descriptor, 'TestServer', 'test1') { driftTemplate ->
+      def config = driftTemplate.configuration
+      def excludes = config.getList('excludes')
 
       assertNotNull(excludes, "Expected to find default property set for <excludes>")
       assertEquals(excludes.list.size(), 2, "Expected <excludes> property list to have two property elements.")
@@ -722,28 +548,19 @@ class PluginMetadataParserTest {
       Closure test) {
     def parser = new PluginMetadataParser(descriptor, [:])
     def resourceType = parser.allTypes.find { it.name == resourceTypeName }
-    def driftConfigDef = resourceType.driftConfigurationDefinitions.find { it.name == driftConfigName }
+    def driftTemplate = resourceType.driftConfigurationTemplates.find { it.name == driftConfigName }
 
     assertNotNull(
-        resourceType.driftConfigurationDefinitions.find { it.name == driftConfigName},
-        "Failed to find drift configuration <$driftConfigName>. The name attribute may not have been parsed correctly."
+        resourceType.driftConfigurationTemplates.find { it.name == driftConfigName},
+        "Failed to find drift configuration template <$driftConfigName>. The name attribute may not have been parsed correctly."
     )
 
-    def nameDef = driftConfigDef.configurationDefinition.getPropertyDefinitionSimple('name')
-
-    assertNotNull(nameDef, 'Expected to find property definition <name>')
-    assertEquals(nameDef.displayName, 'Drift Configuration', 'The displayName property is not set correctly')
-    assertTrue(nameDef.required, "The required property should be set to true")
-    assertEquals(nameDef.description, "The drift configuration name", "The description property is not set correctly")
-    assertEquals(nameDef.order, 0, "The order property is not set correctly")
-
-    def defaultConfig = driftConfigDef.configurationDefinition.defaultTemplate.configuration
-    def name = defaultConfig.getSimple('name')
+    def name = driftTemplate.configuration.getSimple('name')
 
     assertNotNull(name, "Expected to find a simple property <name> for the drift configuration name")
     assertEquals(name.stringValue, driftConfigName,
         "The value is wrong for the <name> property that represents the drift configuration name")
 
-    test(driftConfigDef)
+    test(driftTemplate)
   }
 }

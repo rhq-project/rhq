@@ -1,5 +1,6 @@
 package org.rhq.enterprise.server.rest;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.ejb.EJB;
@@ -10,6 +11,8 @@ import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.rest.ResourceWithType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
@@ -28,37 +31,50 @@ public class ResourceHandlerBean implements ResourceHandlerLocal {
     AvailabilityManagerLocal availMgr;
 
     @Override
-    public Resource getResource( int id) {
+    public ResourceWithType getResource(int id) {
 
 
         Subject subject = LookupUtil.getSubjectManager().getOverlord(); // TODO
 
         Resource res = resMgr.getResource(subject, id);
-        // TODO we need to figure out what to do with lazy load fields, as marshalling into application/{xml,json} fails otherwise
-        return res;
+
+        ResourceWithType rwt = fillRWT(res);
+
+        return rwt;
     }
 
+
     @Override
-    public List<Resource> getPlatforms() {
+    public List<ResourceWithType> getPlatforms() {
 
         Subject subject = LookupUtil.getSubjectManager().getOverlord(); // TODO
 
 
         PageControl pc = new PageControl();
         List<Resource> ret = resMgr.findResourcesByCategory(subject, ResourceCategory.PLATFORM, InventoryStatus.COMMITTED, pc) ;
-        return ret;
+        List<ResourceWithType> rwtList = new ArrayList<ResourceWithType>(ret.size());
+        for (Resource r: ret) {
+            ResourceWithType rwt = fillRWT(r);
+            rwtList.add(rwt);
+        }
+        return rwtList;
     }
 
     @Override
-    public List<Resource> getServersForPlatform(int id) {
+    public List<ResourceWithType> getServersForPlatform(int id) {
 
         Subject subject = LookupUtil.getSubjectManager().getOverlord(); // TODO
 
         PageControl pc = new PageControl();
         Resource parent = resMgr.getResource(subject,id);
         List<Resource> ret = resMgr.findResourceByParentAndInventoryStatus(subject,parent,InventoryStatus.COMMITTED,pc);
+        List<ResourceWithType> rwtList = new ArrayList<ResourceWithType>(ret.size());
+        for (Resource r: ret) {
+            ResourceWithType rwt = fillRWT(r);
+            rwtList.add(rwt);
+        }
 
-        return ret;
+        return rwtList;
     }
 
     @Override
@@ -69,4 +85,17 @@ public class ResourceHandlerBean implements ResourceHandlerLocal {
         Availability avail = availMgr.getCurrentAvailabilityForResource(subject, resourceId);
         return avail;
     }
+
+    private ResourceWithType fillRWT(Resource res) {
+        ResourceType resourceType = res.getResourceType();
+        ResourceWithType rwt = new ResourceWithType(res.getName(),res.getId(), resourceType.getName(),
+                resourceType.getId(), resourceType.getPlugin());
+        Resource parent = res.getParentResource();
+        if (parent!=null) {
+            rwt.setParentId(parent.getId());
+            rwt.setParentName(parent.getName());
+        }
+        return rwt;
+    }
+
 }

@@ -29,6 +29,7 @@ import javax.ws.rs.Produces;
 
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.rest.ResourceWithType;
 
 /**
  * Interface class that describes the REST interface
@@ -40,15 +41,15 @@ import org.rhq.core.domain.resource.Resource;
 public interface ResourceHandlerLocal {
     @GET
     @Path("/r/{id}")
-    Resource getResource(@PathParam("id") int id);
+    ResourceWithType getResource(@PathParam("id") int id);
 
     @GET
     @Path("/p")
-    List<Resource> getPlatforms();
+    List<ResourceWithType> getPlatforms();
 
     @GET
     @Path("/p/{id}/s")
-    List<Resource> getServersForPlatform(@PathParam("id") int id);
+    List<ResourceWithType> getServersForPlatform(@PathParam("id") int id);
 
     @GET
     @Path("/a/{id}")

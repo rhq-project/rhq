@@ -81,7 +81,7 @@ public class ResourceTypeBundleConfiguration implements Serializable {
      * 
      * @return the set of destination base directories that can be targets for bundle deployments
      */
-    public Set<BundleDestinationBaseDirectory> getBundleDestinationBaseDirectory() {
+    public Set<BundleDestinationBaseDirectory> getBundleDestinationBaseDirectories() {
         if (this.bundleConfiguration == null) {
             return null;
         }

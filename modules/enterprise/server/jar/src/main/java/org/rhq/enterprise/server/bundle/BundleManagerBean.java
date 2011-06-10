@@ -303,25 +303,25 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     @Override
     @RequiredPermission(Permission.MANAGE_BUNDLE)
     public BundleDestination createBundleDestination(Subject subject, int bundleId, String name, String description,
-        String deployDir, Integer groupId) throws Exception {
+        String destBaseDirName, String deployDir, Integer groupId) throws Exception {
 
         Bundle bundle = entityManager.find(Bundle.class, bundleId);
         if (null == bundle) {
             throw new IllegalArgumentException("Invalid bundleId [" + bundleId + "]");
         }
 
-        // validate that the group exists and is a platform group
+        // validate that the group exists and is a compatible group that can support bundle deployments
         ResourceGroupCriteria c = new ResourceGroupCriteria();
         c.addFilterId(groupId);
-        c.addFilterExplicitResourceCategory(ResourceCategory.PLATFORM);
+        c.addFilterBundleTargetableOnly(true);
         List<ResourceGroup> groups = resourceGroupManager.findResourceGroupsByCriteria(subject, c);
         if (null == groups || groups.isEmpty()) {
             throw new IllegalArgumentException("Invalid groupId [" + groupId
-                + "]. Must exist and contain only platform members.");
+                + "]. It must be an existing compatible group whose members must be able to support bundle deployments");
         }
         ResourceGroup group = entityManager.find(ResourceGroup.class, groups.get(0).getId());
 
-        BundleDestination dest = new BundleDestination(bundle, name, group, deployDir);
+        BundleDestination dest = new BundleDestination(bundle, name, group, destBaseDirName, deployDir);
         dest.setDescription(description);
         entityManager.persist(dest);
 

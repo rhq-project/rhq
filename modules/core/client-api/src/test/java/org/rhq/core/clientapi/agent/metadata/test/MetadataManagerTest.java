@@ -262,7 +262,7 @@ public class MetadataManagerTest {
         ResourceTypeBundleConfiguration bundleTargetConfig = serverType.getResourceTypeBundleConfiguration();
         assert bundleTargetConfig != null;
         Set<ResourceTypeBundleConfiguration.BundleDestinationBaseDirectory> set = bundleTargetConfig
-            .getBundleDestinationBaseDirectory();
+            .getBundleDestinationBaseDirectories();
         assert set.size() == 2;
         for (BundleDestinationBaseDirectory bdbd : set) {
             if (bdbd.getName().equals("basedir1")) {

@@ -304,8 +304,9 @@ public class WebservicesManagerBean implements WebservicesRemote {
     }
 
     public BundleDestination createBundleDestination(Subject subject, int bundleId, String name, String description,
-        String deployDir, Integer groupId) throws Exception {
-        return bundleManager.createBundleDestination(subject, bundleId, name, description, deployDir, groupId);
+        String destBaseDirName, String deployDir, Integer groupId) throws Exception {
+        return bundleManager.createBundleDestination(subject, bundleId, name, description, destBaseDirName, deployDir,
+            groupId);
     }
 
     public BundleVersion createBundleVersionViaRecipe(Subject subject, String recipe) throws Exception {

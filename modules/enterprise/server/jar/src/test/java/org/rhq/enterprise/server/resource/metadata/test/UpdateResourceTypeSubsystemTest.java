@@ -69,7 +69,7 @@ public class UpdateResourceTypeSubsystemTest extends UpdateSubsytemTestBase {
             ResourceTypeBundleConfiguration bundleConfig1 = server1.getResourceTypeBundleConfiguration();
             assert bundleConfig1 != null : "server should have been a bundle target";
 
-            Set<BundleDestinationBaseDirectory> baseDirs1 = bundleConfig1.getBundleDestinationBaseDirectory();
+            Set<BundleDestinationBaseDirectory> baseDirs1 = bundleConfig1.getBundleDestinationBaseDirectories();
             assert baseDirs1.size() == 2 : "should have been 2 bundle dest base dirs: " + baseDirs1;
 
             for (BundleDestinationBaseDirectory baseDir : baseDirs1) {
@@ -101,7 +101,7 @@ public class UpdateResourceTypeSubsystemTest extends UpdateSubsytemTestBase {
             ResourceTypeBundleConfiguration bundleConfig2 = server2.getResourceTypeBundleConfiguration();
             assert bundleConfig2 != null : "server should have been a bundle target";
 
-            Set<BundleDestinationBaseDirectory> baseDirs2 = bundleConfig2.getBundleDestinationBaseDirectory();
+            Set<BundleDestinationBaseDirectory> baseDirs2 = bundleConfig2.getBundleDestinationBaseDirectories();
             assert baseDirs2.size() == 1 : "should have been 1 bundle dest base dir: " + baseDirs2;
 
             BundleDestinationBaseDirectory baseDir = baseDirs2.iterator().next();

@@ -95,12 +95,12 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
     }
 
     @Override
-    public BundleDestination createBundleDestination(int bundleId, String name, String description, String deployDir,
-        int groupId) throws RuntimeException {
+    public BundleDestination createBundleDestination(int bundleId, String name, String description,
+        String destBaseDirName, String deployDir, int groupId) throws RuntimeException {
 
         try {
             BundleDestination result = bundleManager.createBundleDestination(getSessionSubject(), bundleId, name,
-                description, deployDir, groupId);
+                description, destBaseDirName, deployDir, groupId);
             return SerialUtility.prepare(result, "createBundleDestination");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);

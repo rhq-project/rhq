@@ -55,8 +55,8 @@ public interface BundleGWTService extends RemoteService {
         Configuration configuration, boolean enforcePolicy, int enforcementInterval, boolean pinToBundle)
         throws RuntimeException;
 
-    BundleDestination createBundleDestination(int bundleId, String name, String description, String deployDir,
-        int groupId) throws RuntimeException;
+    BundleDestination createBundleDestination(int bundleId, String name, String description, String destBaseDirName,
+        String deployDir, int groupId) throws RuntimeException;
 
     void deleteBundles(int[] bundleIds) throws RuntimeException;
 

@@ -158,10 +158,16 @@ public interface BundleManagerRemote {
         @WebParam(name = "configuration") Configuration configuration) throws Exception;
 
     /**
+     * Creates a bundle destination that describes a target for the bundle deployments.
+     * 
      * @param subject user must have MANAGE_INVENTORY permission
      * @param BundleId the Bundle to be deployed to this Destination
      * @param name a name for this destination. not null or empty
      * @param description an optional longer description describing this destination 
+     * @param destBaseDirName The name of the base directory location where the bundle will be deployed.
+     *                        <code>deployDir</code> is relative to the directory that this name refers to.
+     *                        This name isn't the directory itself, it refers to the named location as
+     *                        defined in the agent plugin's descriptor for the resource's type
      * @param deployDir the root dir for deployments to this destination
      * @param groupIf the target platforms for deployments to this destination 
      * @return the persisted destination
@@ -172,6 +178,7 @@ public interface BundleManagerRemote {
         @WebParam(name = "bundleId") int bundleId, //
         @WebParam(name = "name") String name, //
         @WebParam(name = "description") String description, //
+        @WebParam(name = "destBaseDirName") String destBaseDirName, //        
         @WebParam(name = "deployDir") String deployDir, //        
         @WebParam(name = "groupId") Integer groupId) throws Exception;
 

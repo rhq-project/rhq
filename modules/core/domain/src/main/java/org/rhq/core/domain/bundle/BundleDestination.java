@@ -109,10 +109,12 @@ public class BundleDestination implements Serializable {
         // for JPA use
     }
 
-    public BundleDestination(Bundle bundle, String name, ResourceGroup group, String deployDir) {
+    public BundleDestination(Bundle bundle, String name, ResourceGroup group, String destinationBaseDirectoryName,
+        String deployDir) {
         this.bundle = bundle;
         this.name = name;
         this.group = group;
+        this.destinationBaseDirectoryName = destinationBaseDirectoryName;
         this.deployDir = deployDir;
     }
 

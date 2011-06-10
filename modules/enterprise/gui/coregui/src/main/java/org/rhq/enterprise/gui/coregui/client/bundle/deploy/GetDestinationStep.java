@@ -169,7 +169,7 @@ public class GetDestinationStep extends AbstractWizardStep {
                                     String[] menuItems = null;
                                     if (result != null) {
                                         Set<BundleDestinationBaseDirectory> baseDirs;
-                                        baseDirs = result.getBundleDestinationBaseDirectory();
+                                        baseDirs = result.getBundleDestinationBaseDirectories();
                                         if (baseDirs != null && baseDirs.size() > 0) {
                                             menuItems = new String[baseDirs.size()];
                                             int i = 0;
@@ -247,7 +247,7 @@ public class GetDestinationStep extends AbstractWizardStep {
         int selectedGroup = (Integer) this.valForm.getValue("group");
 
         bundleServer.createBundleDestination(wizard.getBundleId(), dest.getName(), dest.getDescription(), dest
-            .getDeployDir(), selectedGroup, //
+            .getDestinationBaseDirectoryName(), dest.getDeployDir(), selectedGroup, //
             new AsyncCallback<BundleDestination>() {
                 public void onSuccess(BundleDestination result) {
                     wizard.setDestination(result);

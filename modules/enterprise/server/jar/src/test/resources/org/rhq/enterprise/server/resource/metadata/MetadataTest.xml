@@ -14,10 +14,11 @@
     <rhq_config/>
     <rhq_config_property/>
     <rhq_config_template/>
+    <rhq_resource_group_res_exp_map/>
     <rhq_resource_group_res_imp_map/>
-    <rhq_resource/>
     <rhq_resource_subcat/>
     <rhq_resource_group/>
+    <rhq_resource/>
     <rhq_prd_ver/>
     <rhq_alert_definition/>
     <rhq_alert_condition/>

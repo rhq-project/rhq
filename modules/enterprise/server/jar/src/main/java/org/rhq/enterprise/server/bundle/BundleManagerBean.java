@@ -81,7 +81,6 @@ import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
@@ -1007,18 +1006,18 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         ResourceGroup group = destination.getGroup();
 
         // Create and persist updates for each of the group members.
-        Set<Resource> platforms = group.getExplicitResources();
-        if (platforms.isEmpty()) {
+        Set<Resource> groupMembers = group.getExplicitResources();
+        if (groupMembers.isEmpty()) {
             throw new IllegalArgumentException("Destination [" + destination
-                + "] group has no platforms. Invalid deployment destination");
+                + "] group has no members. Invalid deployment destination");
         }
 
-        for (Resource platform : platforms) {
+        for (Resource groupMember : groupMembers) {
             try {
-                scheduleBundleResourceDeployment(subject, newDeployment, platform, isCleanDeployment, isRevert);
+                scheduleBundleResourceDeployment(subject, newDeployment, groupMember, isCleanDeployment, isRevert);
             } catch (Throwable t) {
-                log.error("Failed to complete scheduling of platform deployment to [" + platform
-                    + "]. Other platforms may have been scheduled. ", t);
+                log.error("Failed to complete scheduling of bundle deployment to [" + groupMember
+                    + "]. Other bundle deployments to other resources may have been scheduled. ", t);
             }
         }
 
@@ -1057,18 +1056,18 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     private BundleResourceDeployment scheduleBundleResourceDeployment(Subject subject, BundleDeployment deployment,
-        Resource platform, boolean isCleanDeployment, boolean isRevert) throws Exception {
+        Resource bundleTarget, boolean isCleanDeployment, boolean isRevert) throws Exception {
 
-        int platformId = platform.getId();
-        AgentClient agentClient = agentManager.getAgentClient(subjectManager.getOverlord(), platformId);
+        int bundleTargetResourceId = bundleTarget.getId();
+        AgentClient agentClient = agentManager.getAgentClient(subjectManager.getOverlord(), bundleTargetResourceId);
         BundleAgentService bundleAgentService = agentClient.getBundleAgentService();
 
         // The BundleResourceDeployment record must exist in the db before the agent request because the agent may try        
         // to add History to it during immediate deployments. So, create and persist it (requires a new trans).
         BundleResourceDeployment resourceDeployment = bundleManager.createBundleResourceDeployment(subject, deployment
-            .getId(), platformId);
+            .getId(), bundleTargetResourceId);
 
-        if (ResourceCategory.PLATFORM.equals(platform.getResourceType().getCategory())) {
+        if (null != bundleTarget.getResourceType().getResourceTypeBundleConfiguration()) {
 
             // Ask the agent to schedule the request. The agent should add history as needed.
             try {
@@ -1097,7 +1096,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
                 // fail the unlaunched resource deployment
                 BundleResourceDeploymentHistory failureHistory = new BundleResourceDeploymentHistory(subject.getName(),
                     this.AUDIT_ACTION_DEPLOYMENT, deployment.getName(), null,
-                    BundleResourceDeploymentHistory.Status.FAILURE, "Failed to schedule, agent on [" + platform
+                    BundleResourceDeploymentHistory.Status.FAILURE, "Failed to schedule, agent on [" + bundleTarget
                         + "] may be down: " + t, null);
                 bundleManager.addBundleResourceDeploymentHistory(subject, resourceDeployment.getId(), failureHistory);
                 bundleManager.setBundleResourceDeploymentStatus(subject, resourceDeployment.getId(),
@@ -1109,7 +1108,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
                 BundleDeploymentStatus.FAILURE);
             BundleResourceDeploymentHistory history = new BundleResourceDeploymentHistory(subject.getName(),
                 AUDIT_ACTION_DEPLOYMENT, deployment.getName(), null, BundleResourceDeploymentHistory.Status.FAILURE,
-                "Target resource is not a platform [id=" + platform.getId() + "]. Fix target group for destination ["
+                "Target resource is not of a type that can have bundles deployed to it [resource="
+                    + bundleTarget.getName() + "; id=" + bundleTarget.getId() + "]. Fix target group for destination ["
                     + deployment.getDestination().getName() + "]", null);
             bundleManager.addBundleResourceDeploymentHistory(subject, resourceDeployment.getId(), history);
         }
@@ -1362,7 +1362,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
                 // TODO: MANAGE_INVENTORY was too restrictive as a bundle manager could not then
                 // see his resource deployments. Until we can handle granular authorization checks on
                 // optionally fetched resource member data, allow a bundle manager to see
-                // resouce deployments to any platform.
+                // resource deployments to any resource.
                 if (!authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_BUNDLE)) {
                     throw new PermissionException("Subject [" + subject.getName()
                         + "] requires InventoryManager or BundleManager permission for requested query criteria.");

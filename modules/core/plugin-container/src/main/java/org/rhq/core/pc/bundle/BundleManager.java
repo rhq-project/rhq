@@ -44,11 +44,14 @@ import org.rhq.core.clientapi.agent.bundle.BundleScheduleResponse;
 import org.rhq.core.clientapi.server.bundle.BundleServerService;
 import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleDeploymentStatus;
+import org.rhq.core.domain.bundle.BundleDestination;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
+import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration;
 import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory.Status;
+import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration.BundleDestinationBaseDirectory;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
@@ -177,6 +180,8 @@ public class BundleManager extends AgentService implements BundleAgentService, B
                         auditDeployment(resourceDeployment, AUDIT_DEPLOYMENT_STARTED, bundleDeployment.getName(),
                             deploymentMessage);
 
+                        File absoluteDestDir = getAbsoluteDestinationDir(request.getBundleResourceDeployment());
+
                         BundleDeployRequest deployRequest = new BundleDeployRequest();
                         deployRequest.setBundleManagerProvider(BundleManager.this);
                         deployRequest.setResourceDeployment(resourceDeployment);
@@ -184,6 +189,7 @@ public class BundleManager extends AgentService implements BundleAgentService, B
                         deployRequest.setPackageVersionFiles(downloadedFiles);
                         deployRequest.setCleanDeployment(request.isCleanDeployment());
                         deployRequest.setRevert(request.isRevert());
+                        deployRequest.setAbsoluteDestinationDirectory(absoluteDestDir);
 
                         // get the bundle facet object that will process the bundle and call it to start the deployment
                         int facetMethodTimeout = 4 * 60 * 60 * 1000; // 4 hours is given to the bundle plugin to do its thing
@@ -244,9 +250,12 @@ public class BundleManager extends AgentService implements BundleAgentService, B
                 + resourceDeployment.getResource() + "]";
             auditDeployment(resourceDeployment, AUDIT_PURGE_STARTED, bundleDeployment.getName(), deploymentMessage);
 
+            File absoluteDestDir = getAbsoluteDestinationDir(request.getLiveBundleResourceDeployment());
+
             org.rhq.core.pluginapi.bundle.BundlePurgeRequest purgeRequest = new org.rhq.core.pluginapi.bundle.BundlePurgeRequest();
             purgeRequest.setBundleManagerProvider(this);
             purgeRequest.setLiveResourceDeployment(resourceDeployment);
+            purgeRequest.setAbsoluteDestinationDirectory(absoluteDestDir);
 
             // get the bundle facet object that will process the bundle and call it to start the purge
             int facetMethodTimeout = 30 * 60 * 1000; // 30 minutes should be enough time for the bundle plugin to purge everything
@@ -403,6 +412,93 @@ public class BundleManager extends AgentService implements BundleAgentService, B
         }
 
         return;
+    }
+
+    /**
+     * Given a deployment, this examines the destination and the resource to determine where exactly
+     * the bundle distribution should be written.
+     * 
+     * @param bundleResourceDeployment describes where the bundle should be or is deployed
+     * 
+     * @return absolute directory location where the bundle should be deployed
+     */
+    private File getAbsoluteDestinationDir(BundleResourceDeployment bundleResourceDeployment) {
+        BundleDestination dest = bundleResourceDeployment.getBundleDeployment().getDestination();
+        String destBaseDirName = dest.getDestinationBaseDirectoryName();
+        String relativeDeployDir = dest.getDeployDir();
+
+        // paranoia, if no deploy dir is given, as assume it will be directly under the base location
+        if (relativeDeployDir == null || relativeDeployDir.trim().length() == 0) {
+            relativeDeployDir = File.separator;
+        }
+
+        // get the resource entity stored in our local inventory
+        InventoryManager im = PluginContainer.getInstance().getInventoryManager();
+        Resource resource = bundleResourceDeployment.getResource();
+        ResourceContainer container = im.getResourceContainer(resource);
+        resource = container.getResource();
+
+        // find out the type of base location that is specified by the bundle destination
+        BundleDestinationBaseDirectory bundleDestBaseDir = null;
+        ResourceTypeBundleConfiguration rtbc = resource.getResourceType().getResourceTypeBundleConfiguration();
+        if (rtbc == null) {
+            throw new IllegalArgumentException("The resource type doesn't support bundle deployments: " + resource);
+        }
+        for (BundleDestinationBaseDirectory bdbd : rtbc.getBundleDestinationBaseDirectories()) {
+            if (bdbd.getName().equals(destBaseDirName)) {
+                bundleDestBaseDir = bdbd;
+                break;
+            }
+        }
+        if (bundleDestBaseDir == null) {
+            throw new IllegalArgumentException(
+                "The resource type doesn't support bundle destination base location named [" + destBaseDirName + "]");
+        }
+
+        // based on the type of destination base location, determine the root base directory
+        String destBaseDirValueName = bundleDestBaseDir.getValueName(); // the name we look up in the given context
+        String baseLocation;
+        switch (bundleDestBaseDir.getValueContext()) {
+        case fileSystem: {
+            if (!new File(relativeDeployDir).isAbsolute()) {
+                // the deploy dir is not absolute; since we need to pin it to something, we assume the top root directory
+                // unless the descriptor told us to go somewhere else differently
+                baseLocation = destBaseDirValueName; // ultimately this came from the plugin descriptor
+                if (baseLocation == null || baseLocation.trim().length() == 0) {
+                    baseLocation = File.separator; // paranoia, if the plugin descriptor didn't specify, assume the top root directory
+                }
+            } else {
+                baseLocation = null; // so the relativeDeployDir is processed as an absolute dir
+            }
+            break;
+        }
+        case pluginConfiguration: {
+            baseLocation = resource.getPluginConfiguration().getSimpleValue(destBaseDirValueName, null);
+            if (baseLocation == null) {
+                throw new IllegalArgumentException("Cannot determine the bundle base deployment location - "
+                    + "there is no plugin configuration setting for [" + destBaseDirValueName + "]");
+            }
+            break;
+        }
+        case resourceConfiguration: {
+            baseLocation = resource.getResourceConfiguration().getSimpleValue(destBaseDirValueName, null);
+            if (baseLocation == null) {
+                throw new IllegalArgumentException("Cannot determine the bundle base deployment location - "
+                    + "there is no resource configuration setting for [" + destBaseDirValueName + "]");
+            }
+            break;
+        }
+        case measurementTrait: {
+            // TODO: find out where we squirrel away traits
+            baseLocation = null;
+            break;
+        }
+        default: {
+            throw new IllegalArgumentException("Unknown bundle destination location context: " + bundleDestBaseDir);
+        }
+        }
+
+        return new File(baseLocation, relativeDeployDir);
     }
 
     /**

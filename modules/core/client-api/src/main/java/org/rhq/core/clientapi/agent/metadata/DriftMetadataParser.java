@@ -21,6 +21,7 @@ public class DriftMetadataParser {
     public ConfigurationTemplate parseDriftMetadata(DriftDescriptor descriptor) {
         ConfigurationTemplate template = createTemplate(descriptor.getName());
 
+        initEnabled(template);
         initName(descriptor, template);
         initBasedir(descriptor, template);
         initInterval(descriptor, template);
@@ -36,6 +37,10 @@ public class DriftMetadataParser {
         template.setConfiguration(new Configuration());
 
         return template;
+    }
+
+    private void initEnabled(ConfigurationTemplate template) {
+        template.getConfiguration().put(new PropertySimple("enabled", false));
     }
 
     private void initName(DriftDescriptor descriptor, ConfigurationTemplate template) {

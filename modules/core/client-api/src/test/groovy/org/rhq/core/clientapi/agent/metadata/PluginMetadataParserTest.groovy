@@ -24,9 +24,9 @@ import org.testng.annotations.Test
 import static org.rhq.core.clientapi.shared.PluginDescriptorUtil.toPluginDescriptor
 import static org.testng.Assert.assertEquals
 import static org.testng.Assert.assertNotNull
+import static org.testng.Assert.assertFalse
 
 class PluginMetadataParserTest {
-
 
   @Test
   void allTypesShouldHaveOneElementForDescriptorWithOnlyOneResourceType() {
@@ -551,10 +551,14 @@ class PluginMetadataParserTest {
     )
 
     def name = driftTemplate.configuration.getSimple('name')
+    def enabled = driftTemplate.configuration.getSimple('enabled')
 
     assertNotNull(name, "Expected to find a simple property <name> for the drift configuration name")
     assertEquals(name.stringValue, driftConfigName,
         "The value is wrong for the <name> property that represents the drift configuration name")
+
+    assertNotNull(enabled, "Expected to find simple property <enabled> for the drift configuration")
+    assertFalse(enabled.booleanValue, "The <enabled> property should be set to a default value of false")
 
     test(driftTemplate)
   }

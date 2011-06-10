@@ -35,6 +35,17 @@ public class GuiPerfTestCase extends TestCase {
         super(name);
     }
 
+    public void testLoadResourceTree() {
+        Browser browser = GuiPerfTestSuite.getBrowser();
+
+        browser.link("Inventory").click();
+        browser.cell("Platforms").click();
+        browser.div("Linux Operating System").under(browser.cell("Description")).doubleClick();
+        // check that tree has been drawn
+        assertTrue(browser.table("treeCellSelected").isVisible());
+    }
+
+/*
     public void testCreateCompatibleGroup() throws InterruptedException {
         Browser browser = GuiPerfTestSuite.getBrowser();
 
@@ -47,16 +58,24 @@ public class GuiPerfTestCase extends TestCase {
         browser.textarea("description").setValue("bleh");
         browser.cell("Next").click();
 
-        browser.textbox("search").setValue("RHQ Agent");
-        browser.textbox("search").click();
-        browser.waitFor(500);
+        //browser.textbox("search").setValue("RHQ Agent");
+        //browser.textbox("search").click();
+
+        browser.cell("Choose a value").click();
+        browser.xy(browser.cell("RHQAgent Plugin"), 3, 3).hover();
+        browser.xy(browser.cell("treeMenuSelected[2]", 3, 3)).click();
+        //browser.xy(browser.cell("RHQ Agent"), 3, 3).near(browser.cell("RHQAgent Plugin")).click();
+
+        browser.waitFor(1000);
         browser.div("RHQ Agent[1]").hover();
-        browser.waitFor(300);
+        browser.waitFor(1000);
         browser.div("RHQ Agent[1]").click();
         browser.image("right_Over.png").click();
         browser.cell("Finish").click();
     }
+*/
 
+/*
     public void testCreateRole() throws InterruptedException {
         Browser browser = GuiPerfTestSuite.getBrowser();
 
@@ -71,6 +90,7 @@ public class GuiPerfTestCase extends TestCase {
         browser.image("unchecked.png").near(browser.div("Manage Security")).click();
         browser.cell("Save").click();
     }
+*/
 
     public static Test suite() {
         return new GuiPerfTestSuite(GuiPerfTestCase.class);

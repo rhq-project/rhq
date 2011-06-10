@@ -18,7 +18,7 @@
                inventoried Resources is running on localhost:7080</description>
 
   <properties>
-    <!-- explictly specify a default encoding to avoid relying on the LANG env var being set correctly -->
+    <!-- explicitly specify a default encoding to avoid relying on the LANG env var being set correctly -->
     <project.build.sourceEncoding>ISO-8859-1</project.build.sourceEncoding>
   </properties>
 

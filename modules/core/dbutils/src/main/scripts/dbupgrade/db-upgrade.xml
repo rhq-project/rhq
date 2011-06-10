@@ -3468,7 +3468,7 @@
             <schemaSpec version="2.109">
                 <schema-createSequence name="RHQ_DRIFT_TEMPLATE_ID_SEQ" initial="10001"/>
                 <schema-directSQL>
-                    <statement desc="Creating table RHQ_DRIFT_CONFIG_TEMPLATE">
+                    <statement desc="Creating table RHQ_DRIFT_TEMPLATE">
                         CREATE TABLE RHQ_DRIFT_TEMPLATE (
                             ID INTEGER PRIMARY KEY,
                             RESOURCE_TYPE_ID INTEGER,
@@ -3488,9 +3488,36 @@
                         ALTER TABLE RHQ_DRIFT_TEMPLATE
                         ADD CONSTRAINT CONFIG_TEMPLATE_ID_FK
                         FOREIGN KEY (CONFIG_TEMPLATE_ID)
-                        REFERENCES RHQ_CONFIG_TEMPLATE
+                        REFERENCES RHQ_CONFIG_TEMPLATE (ID)
                     </statement>
                 </schema-directSQL>
+                
+                <schema-createSequence name="RHQ_DRIFT_CONFIG_ID_SEQ" initial="10001"/>
+                <schema-directSQL>
+                    <statement desc="Creating table RHQ_DRIFT_CONFIG">
+                        CREATE TABLE RHQ_DRIFT_CONFIG (
+                            ID INTEGER PRIMARY KEY,
+                            RESOURCE_ID INTEGER,
+                            CONFIG_ID INTEGER)
+                    </statement>
+                </schema-directSQL>
+                <schema-alterColumn table="RHQ_DRIFT_CONFIG" column="RESOURCE_ID" nullable="false"/>
+                <schema-alterColumn table="RHQ_DRIFT_CONFIG" column="CONFIG_ID" nullable="false"/>
+                <schema-directSQL>
+                    <statement desc="Creating RHQ_DRIFT_CONFIG foreign key to RHQ_RESOURCE">
+                        ALTER TABLE RHQ_DRIFT_CONFIG
+                        ADD CONSTRAINT RESOURCE_ID_FK
+                        FOREIGN KEY (RESOURCE_ID)
+                        REFERENCES RHQ_RESOURCE (ID)
+                    </statement>
+                    <statement desc="Creating RHQ_DRIFT_CONFIG foreign key to RHQ_CONFIG">
+                        ALTER TABLE RHQ_DRIFT_CONFIG
+                        ADD CONSTRAINT CONFIG_ID_FK
+                        FOREIGN KEY (CONFIG_ID)
+                        REFERENCES RHQ_CONFIG (ID)
+                    </statement>
+                </schema-directSQL>
+                
             </schemaSpec>
         </dbupgrade>
     </target>

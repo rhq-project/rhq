@@ -20,28 +20,32 @@
 package org.rhq.enterprise.server.drift;
 
 import java.io.InputStream;
+import java.io.Serializable;
 
-import javax.ejb.Local;
+public class DriftUploadRequest implements Serializable {
+    private static final long serialVersionUID = 1L;
 
-@Local
-public interface DriftManagerLocal {
+    private int resourceId;
 
-    /**
-     * Take a changeset zip from an agent and process it. 
-     * @param resourceId
-     * @param zipSize
-     * @param zipStream
-     * @throws Exception
-     */
-    void addChangeset(int resourceId, long zipSize, InputStream zipStream) throws Exception;
+    private long dataSize;
 
-    /**
-     * Take a files zip from an agent and process it. 
-     * @param resourceId
-     * @param zipSize
-     * @param zipStream
-     * @throws Exception
-     */
-    void addFiles(int resourceId, long zipSize, InputStream zipStream) throws Exception;
+    private InputStream dataStream;
 
+    public DriftUploadRequest(int resourceId, long dataSize, InputStream dataStream) {
+        this.resourceId = resourceId;
+        this.dataSize = dataSize;
+        this.dataStream = dataStream;
+    }
+
+    public int getResourceId() {
+        return resourceId;
+    }
+
+    public long getDataSize() {
+        return dataSize;
+    }
+
+    public InputStream getDataStream() {
+        return dataStream;
+    }
 }

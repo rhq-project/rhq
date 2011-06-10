@@ -17,31 +17,19 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.server.drift;
+package org.rhq.enterprise.server.plugin.pc.drift;
 
-import java.io.InputStream;
+import org.rhq.core.domain.drift.DriftFile;
 
-import javax.ejb.Local;
+/**
+ * All drift server plugins must implement this facet.
+ * 
+ * @author Jay Shaughnessy
+ * @author John Sanda
+ */
+public interface DriftServerPluginFacet {
 
-@Local
-public interface DriftManagerLocal {
+    public void storeDriftFile(DriftFile driftFile) throws Exception;
 
-    /**
-     * Take a changeset zip from an agent and process it. 
-     * @param resourceId
-     * @param zipSize
-     * @param zipStream
-     * @throws Exception
-     */
-    void addChangeset(int resourceId, long zipSize, InputStream zipStream) throws Exception;
-
-    /**
-     * Take a files zip from an agent and process it. 
-     * @param resourceId
-     * @param zipSize
-     * @param zipStream
-     * @throws Exception
-     */
-    void addFiles(int resourceId, long zipSize, InputStream zipStream) throws Exception;
-
+    public DriftFile fetchDriftFile(String sha256) throws Exception;
 }

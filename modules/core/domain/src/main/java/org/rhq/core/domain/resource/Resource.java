@@ -39,6 +39,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
@@ -1071,8 +1072,11 @@ public class Resource implements Comparable<Resource>, Serializable {
     @OneToMany(mappedBy = "resource", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     private Set<Dashboard> dashboards = null;
 
-    public Resource() {
+    @JoinTable(name = "RHQ_DRIFT_CONFIG", joinColumns = { @JoinColumn(name = "RESOURCE_ID") }, inverseJoinColumns = { @JoinColumn(name = "CONFIG_ID") })
+    @OneToMany(fetch = FetchType.LAZY, cascade = { CascadeType.ALL })
+    private Set<Configuration> driftConfigurations = null;
 
+    public Resource() {
     }
 
     /**
@@ -1739,6 +1743,14 @@ public class Resource implements Comparable<Resource>, Serializable {
 
     protected void setDashboards(Set<Dashboard> dashboards) {
         this.dashboards = dashboards;
+    }
+
+    public Set<Configuration> getDriftConfigurations() {
+        return driftConfigurations;
+    }
+
+    public void setDriftConfigurations(Set<Configuration> driftConfigurations) {
+        this.driftConfigurations = driftConfigurations;
     }
 
     public int compareTo(Resource that) {

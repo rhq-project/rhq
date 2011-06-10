@@ -33,7 +33,7 @@ public class DriftManager extends AgentService implements ContainerService {
     public void shutdown() {
     }
 
-    public SnapshotHandle generateSnapshot(int resourceId, File basedir) throws Exception{
+    public SnapshotHandle generateSnapshot(int resourceId, File basedir) throws Exception {
         SnapshotGenerator generator = new SnapshotGenerator();
         generator.setSnapshotDir(snapshotsDir);
         return generator.generateSnapshot(resourceId, basedir);
@@ -41,9 +41,8 @@ public class DriftManager extends AgentService implements ContainerService {
 
     public void sendSnapshotReport(int resourceId, SnapshotHandle handle) throws Exception {
         DriftServerService driftServer = pluginContainerConfiguration.getServerServices().getDriftServerService();
-        driftServer.uploadSnapshot(resourceId, handle.getMetadataFile().length(),
-            remoteInputStream(new BufferedInputStream(new FileInputStream(handle.getMetadataFile()))),
-            handle.getDataFile().length(), remoteInputStream(new BufferedInputStream(new FileInputStream(
-            handle.getDataFile()))));
+
+        driftServer.sendChangesetZip(resourceId, handle.getMetadataFile().length(),
+            remoteInputStream(new BufferedInputStream(new FileInputStream(handle.getMetadataFile()))));
     }
 }

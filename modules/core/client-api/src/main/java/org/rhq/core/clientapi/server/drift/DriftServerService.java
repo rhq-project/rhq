@@ -25,9 +25,13 @@ import org.rhq.core.communications.command.annotation.Asynchronous;
 
 public interface DriftServerService {
 
+    // note that this guaranteed delivery is weak because most likely the stream will be dead if it
+    // doesn't work the first time.
     @Asynchronous(guaranteedDelivery = true)
     void sendChangesetZip(int resourceId, long zipSize, InputStream zipStream);
 
+    // note that this guaranteed delivery is weak because most likely the stream will be dead if it
+    // doesn't work the first time.
     @Asynchronous(guaranteedDelivery = true)
     void sendFilesZip(int resourceId, long zipSize, InputStream zipStream);
 }

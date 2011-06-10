@@ -19,6 +19,7 @@
  */
 package org.rhq.enterprise.server.drift;
 
+import java.io.File;
 import java.io.InputStream;
 
 import javax.ejb.Local;
@@ -27,21 +28,38 @@ import javax.ejb.Local;
 public interface DriftManagerLocal {
 
     /**
-     * Take a changeset zip from an agent and process it. 
-     * @param resourceId
-     * @param zipSize
-     * @param zipStream
+     * This method initiates an out-of-band (JMS-Based) server-side pull of the change-set file. Upon successful
+     * upload of the change-set, it is processed. This may in turn generated requests for drift files to
+     * be persisted.
+     *  
+     * @param resourceId The resource for which the change-set is being reported.
+     * @param zipSize The size of the zip waiting to be streamed.
+     * @param zipStream The change-set zip file stream
      * @throws Exception
      */
     void addChangeset(int resourceId, long zipSize, InputStream zipStream) throws Exception;
 
     /**
-     * Take a files zip from an agent and process it. 
-     * @param resourceId
-     * @param zipSize
-     * @param zipStream
+     * This method initiates an out-of-band (JMS-Based) server-side pull of the drift file zip. Upon successful
+     * upload of the zip, the files are stored.
+     *  
+     * @param resourceId The resource from which the drift file is being supplied.
+     * @param zipSize The size of the zip waiting to be streamed.
+     * @param zipStream The drift files zip file stream
      * @throws Exception
      */
     void addFiles(int resourceId, long zipSize, InputStream zipStream) throws Exception;
+
+    /**
+     * This method stores the provided change-set file for the resource. The version will be incremented based
+     * on the max version of existing change-sets for the resource. The change-set will be processed generating
+     * requests for drift file content and/or drift instances as required.
+     *  
+     * @param resourceId The resource for which the change-set is being reported.
+     * @param zipSize The size of the zip waiting to be streamed.
+     * @param zipStream The change-set zip file stream
+     * @throws Exception
+     */
+    void storeChangeset(int resourceId, File changeset) throws Exception;
 
 }

@@ -19,6 +19,7 @@
  */
 package org.rhq.enterprise.server.drift;
 
+import java.io.File;
 import java.io.InputStream;
 
 import javax.annotation.Resource;
@@ -62,6 +63,12 @@ public class DriftManagerBean implements DriftManagerLocal {
         ObjectMessage msg = session.createObjectMessage(new DriftUploadRequest(resourceId, zipSize, zipStream));
         producer.send(msg);
         connection.close();
+    }
+
+    @Override
+    public void storeChangeset(int resourceId, File changeset) throws Exception {
+        // TODO Auto-generated method stub
+
     }
 
 }

@@ -23,11 +23,12 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 
 import javax.ejb.ActivationConfigProperty;
+import javax.ejb.EJB;
 import javax.ejb.MessageDriven;
-import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageListener;
 import javax.jms.ObjectMessage;
@@ -45,6 +46,9 @@ public class DriftChangesetBean implements MessageListener {
 
     private final Log log = LogFactory.getLog(DriftChangesetBean.class);
 
+    @EJB
+    private DriftManagerLocal driftManager;
+
     @Override
     public void onMessage(Message message) {
         try {
@@ -53,28 +57,37 @@ public class DriftChangesetBean implements MessageListener {
 
             File tempFile = null;
             OutputStream os = null;
+            InputStream is = null;
             try {
                 tempFile = File.createTempFile("drift-changeset", ".zip");
                 os = new BufferedOutputStream(new FileOutputStream(tempFile));
+                is = DriftUtil.remoteStream(request.getDataStream());
 
-                StreamUtil.copy(DriftUtil.remoteStream(request.getDataStream()), os, false);
-
+                StreamUtil.copy(is, os);
+                is = null;
                 os = null;
+
                 if (log.isDebugEnabled()) {
                     log.debug("Copied [" + request.getDataSize() + "] bytes from agent into [" + tempFile.getPath()
                         + "]");
                 }
 
+                driftManager.storeChangeset(request.getResourceId(), tempFile);
+
             } catch (IOException e) {
                 log.error(e);
+
             } finally {
                 if (null != tempFile) {
                     tempFile.delete();
                 }
                 DriftUtil.safeClose(os);
+                DriftUtil.safeClose(is);
             }
-        } catch (JMSException e) {
-            log.error(e);
+        } catch (Throwable t) {
+            // catch Throwable here, don't let anything escape as bad things can happen wrt XA/2PhaseCommit  
+
+            log.error(t);
         }
     }
 

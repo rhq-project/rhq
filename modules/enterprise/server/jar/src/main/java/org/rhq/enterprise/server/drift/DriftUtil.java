@@ -58,4 +58,14 @@ public class DriftUtil {
         }
     }
 
+    static void safeClose(InputStream is) {
+        if (null != is) {
+            try {
+                is.close();
+            } catch (Exception e) {
+                LogFactory.getLog(DriftUtil.class).warn("Failed to close InputStream", e);
+            }
+        }
+    }
+
 }

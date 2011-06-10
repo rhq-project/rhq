@@ -177,6 +177,9 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
         destinationGroup.setLinkTitle(StringUtility.escapeHtml((deployment.getDestination().getGroup().getName())));
         destinationGroup.setTarget("_self");
 
+        StaticTextItem destBaseDir = new StaticTextItem("destBaseDir", MSG.view_bundle_dest_baseDirName());
+        destBaseDir.setValue(deployment.getDestination().getDestinationBaseDirectoryName());
+
         StaticTextItem path = new StaticTextItem("path", MSG.view_bundle_deployDir());
         path.setValue(deployment.getDestination().getDeployDir());
 
@@ -201,8 +204,8 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
             });
         }
 
-        form.setFields(bundleName, deployed, actionItem, bundleVersionName, deployedBy, destinationGroup, path,
-            description, status);
+        form.setFields(bundleName, bundleVersionName, actionItem, deployed, deployedBy, destinationGroup, destBaseDir,
+            description, path, status);
 
         return form;
     }

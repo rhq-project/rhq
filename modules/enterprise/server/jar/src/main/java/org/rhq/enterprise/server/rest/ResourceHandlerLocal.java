@@ -29,6 +29,7 @@ import javax.ws.rs.Produces;
 
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.rest.MetricSchedule;
 import org.rhq.core.domain.rest.ResourceWithType;
 
 /**
@@ -54,4 +55,8 @@ public interface ResourceHandlerLocal {
     @GET
     @Path("/a/{id}")
     Availability getAvailability(@PathParam("id") int resourceId);
+
+    @GET
+    @Path("/r/{id}/s")
+    List<MetricSchedule> getSchedules(@PathParam("id") int resourceId);
 }

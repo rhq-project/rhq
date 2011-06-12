@@ -1,17 +1,43 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2011 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.enterprise.server.rest;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.Availability;
+import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.rest.MetricSchedule;
 import org.rhq.core.domain.rest.ResourceWithType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
@@ -98,4 +124,23 @@ public class ResourceHandlerBean implements ResourceHandlerLocal {
         return rwt;
     }
 
+    public List<MetricSchedule> getSchedules(int resourceId) {
+
+        Subject subject = LookupUtil.getSubjectManager().getOverlord(); // TODO
+        Resource res = resMgr.getResource(subject,resourceId);
+
+        ResourceType rt = res.getResourceType();
+
+        Set<MeasurementSchedule> schedules = res.getSchedules();
+        List<MetricSchedule> ret = new ArrayList<MetricSchedule>(schedules.size());
+        for (MeasurementSchedule schedule : schedules) {
+            MeasurementDefinition definition = schedule.getDefinition();
+            MetricSchedule ms = new MetricSchedule(schedule.getId(), definition.getName(), definition.getDisplayName(),
+                    schedule.isEnabled(),schedule.getInterval(), definition.getUnits().toString(),
+                    definition.getDataType().toString());
+            ret.add(ms);
+        }
+
+        return ret;
+    }
 }

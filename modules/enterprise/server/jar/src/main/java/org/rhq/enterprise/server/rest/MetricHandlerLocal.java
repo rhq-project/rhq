@@ -23,6 +23,9 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+
+import org.rhq.core.domain.rest.MetricAggregate;
 
 /**
  * Deal with metrics
@@ -33,7 +36,11 @@ import javax.ws.rs.Produces;
 @Local
 public interface MetricHandlerLocal {
 
+
     @GET
-    @Path("/echo")
-    String echo(); // TODO Dummy - will go away
+    @Path("data/{scheduleId}")
+    MetricAggregate getMetricData(@PathParam("scheduleId") int scheduleId,
+                                  @QueryParam("startTime")  long startTime,
+                                  @QueryParam("endTime") long endTime,
+                                  @QueryParam("dataPoints") int dataPoints);
 }

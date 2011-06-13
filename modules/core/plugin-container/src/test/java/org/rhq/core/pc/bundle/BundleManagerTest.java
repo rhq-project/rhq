@@ -53,6 +53,13 @@ import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration.BundleDestinat
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.content.PackageVersion;
+import org.rhq.core.domain.measurement.DataType;
+import org.rhq.core.domain.measurement.MeasurementData;
+import org.rhq.core.domain.measurement.MeasurementDataRequest;
+import org.rhq.core.domain.measurement.MeasurementDataTrait;
+import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.measurement.MeasurementSchedule;
+import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
@@ -175,8 +182,6 @@ public class BundleManagerTest {
 
     }
 
-    // TODO
-    @Test(enabled = false)
     public void testNonPlatformBundleDeploy_Trait() throws Exception {
         MockInventoryManager im = (MockInventoryManager) mockBundleManager.getInventoryManager();
 
@@ -418,10 +423,21 @@ public class BundleManagerTest {
             // using the different contexts that are supported.
             Configuration pluginConfiguration = new Configuration();
             pluginConfiguration.put(new PropertySimple(BUNDLE_CONFIG_CONTEXT_VALUE_PC, BUNDLE_CONFIG_LOCATION_PC));
+            serverPC.setPluginConfiguration(pluginConfiguration);
+
             Configuration resourceConfiguration = new Configuration();
             resourceConfiguration.put(new PropertySimple(BUNDLE_CONFIG_CONTEXT_VALUE_RC, BUNDLE_CONFIG_LOCATION_RC));
-            serverPC.setPluginConfiguration(pluginConfiguration);
             serverRC.setResourceConfiguration(resourceConfiguration);
+
+            MeasurementDefinition definition = new MeasurementDefinition(serverTypeMT, BUNDLE_CONFIG_CONTEXT_VALUE_MT);
+            definition.setDataType(DataType.TRAIT);
+            definition.setId(123);
+            MeasurementSchedule schedule = new MeasurementSchedule(definition, serverMT);
+            schedule.setId(123123);
+            MeasurementScheduleRequest scheduleRequest = new MeasurementScheduleRequest(schedule);
+            Set<MeasurementScheduleRequest> schedules = new HashSet<MeasurementScheduleRequest>(1);
+            schedules.add(scheduleRequest);
+            serverContainerMT.setMeasurementSchedule(schedules);
         }
 
         @Override
@@ -443,7 +459,19 @@ public class BundleManagerTest {
     }
 
     private class MockMeasurementManager extends MeasurementManager {
-
+        @Override
+        public Set<MeasurementData> getRealTimeMeasurementValue(int resourceId, List<MeasurementDataRequest> requests) {
+            // anytime this method gets called, it means our tests are asking for the test trait value. It will
+            // always be the same value for all tests.
+            MeasurementDataRequest dataRequest = requests.iterator().next();
+            MeasurementScheduleRequest request = new MeasurementScheduleRequest(0, dataRequest.getName(), 0, true,
+                DataType.TRAIT);
+            MeasurementDataTrait data = new MeasurementDataTrait(request,
+                MockInventoryManager.BUNDLE_CONFIG_LOCATION_MT);
+            Set<MeasurementData> values = new HashSet<MeasurementData>();
+            values.add(data);
+            return values;
+        }
     }
 
     @SuppressWarnings("unchecked")

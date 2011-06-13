@@ -1,4 +1,6 @@
 <dataset>
+    <rhq_repo_content_src_map/>
+    <rhq_repo/>
     <rhq_config_def/>
     <rhq_config_prop_def/>
     <rhq_conf_prop_def_enum/>
@@ -28,8 +30,6 @@
     <rhq_availability/>
     <rhq_measurement_sched/>
     <rhq_package/>
-    <rhq_repo_content_src_map/>
-    <rhq_repo/>
     <rhq_bundle/>
     <rhq_plugin/>
 </dataset>

@@ -117,6 +117,8 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/unitils/unitils-testng/3.1/unitils-testng-3.1.jar"/>
 	<classpathentry exported="true" kind="lib" path="modules/enterprise/remoting/webservices/target/rhq-remoting-webservices-4.1.0-SNAPSHOT/wsconsume-output"/>
 	<classpathentry kind="src" path="modules/common/ant-bundle/src/main/java"/>
+	<classpathentry kind="src" path="modules/common/drift/src/main/java"/>
+	<classpathentry kind="src" path="modules/common/drift/src/test/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/drift-rhq/src/main/java"/>
 	<classpathentry kind="src" path="modules/common/ant-bundle/src/test/java"/>
 	<classpathentry kind="src" path="modules/common/filetemplate-bundle/src/main/java"/>

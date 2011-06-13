@@ -63,5 +63,6 @@
       <module>jboss-as</module>
       <module>filetemplate-bundle</module>
       <module>ant-bundle</module>
+      <module>drift</module>      
    </modules>
 </project>

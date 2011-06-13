@@ -1,4 +1,5 @@
 <dataset>
+    <rhq_content_source/>
     <rhq_repo_content_src_map/>
     <rhq_repo/>
     <rhq_config_def/>

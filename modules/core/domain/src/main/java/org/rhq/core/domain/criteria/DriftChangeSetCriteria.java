@@ -36,14 +36,16 @@ public class DriftChangeSetCriteria extends Criteria {
     private static final long serialVersionUID = 1L;
 
     private Integer filterId;
-    private String filterVersion;
+    private Integer filterInitial; // needs override
     private Integer filterResourceId; // needs override        
+    private String filterVersion;
 
     private boolean fetchResource;
 
     private PageOrdering sortVersion;
 
     public DriftChangeSetCriteria() {
+        filterOverrides.put("initial", "version = 0");
         filterOverrides.put("resourceId", "resource.id = ?");
     }
 

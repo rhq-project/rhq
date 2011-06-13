@@ -60,6 +60,7 @@ public class DriftChangeSet implements Serializable {
     @Column(name = "CTIME", nullable = false)
     private Long ctime = -1L;
 
+    // 0..N
     @Column(name = "VERSION", nullable = false)
     private int version;
 
@@ -107,6 +108,10 @@ public class DriftChangeSet implements Serializable {
         this.version = version;
     }
 
+    public boolean isInitialVersion() {
+        return 0 == version;
+    }
+
     public void setDataSize(Long dataSize) {
         this.dataSize = dataSize;
     }
@@ -137,6 +142,11 @@ public class DriftChangeSet implements Serializable {
 
     public void setResource(Resource resource) {
         this.resource = resource;
+    }
+
+    @Override
+    public String toString() {
+        return "DriftChangeSet [id=" + id + ", resource=" + resource + ", version=" + version + "]";
     }
 
 }

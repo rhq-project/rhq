@@ -26,25 +26,21 @@ import org.rhq.core.domain.drift.DriftCategory;
  */
 public class DriftChangeSetEntry {
 
-    private String sha256;
     private String path;
     private Integer size = 0;
     private DriftCategory category;
+    // required for FILE_CHANGED and FILE_REMOVED, null for FILE_ADDED
+    private String oldSha256;
+    // required for FILE_CHANGED and FILE_ADDED, null for FILE_REMOVED    
+    private String newSha256;
 
-    public DriftChangeSetEntry(Integer size, String path, DriftCategory category, String sha256) {
+    public DriftChangeSetEntry(Integer size, String path, DriftCategory category, String oldSha256, String newSha256) {
         super();
         this.size = size;
         this.path = path;
         this.category = category;
-        this.sha256 = sha256;
-    }
-
-    public String getSha256() {
-        return sha256;
-    }
-
-    public void setSha256(String sha256) {
-        this.sha256 = sha256;
+        this.oldSha256 = oldSha256;
+        this.newSha256 = newSha256;
     }
 
     public String getPath() {
@@ -71,9 +67,26 @@ public class DriftChangeSetEntry {
         this.category = category;
     }
 
+    public String getOldSha256() {
+        return oldSha256;
+    }
+
+    public void setOldSha256(String oldSha256) {
+        this.oldSha256 = oldSha256;
+    }
+
+    public String getNewSha256() {
+        return newSha256;
+    }
+
+    public void setNewSha256(String newSha256) {
+        this.newSha256 = newSha256;
+    }
+
     @Override
     public String toString() {
-        return "DriftChangeSetEntry [category=" + category + ", path=" + path + ", sha256=" + sha256 + "]";
+        return "DriftChangeSetEntry [category=" + category + ", newSha256=" + newSha256 + ", oldSha256=" + oldSha256
+            + ", path=" + path + "]";
     }
 
 }

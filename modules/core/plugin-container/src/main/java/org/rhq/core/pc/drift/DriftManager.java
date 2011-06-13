@@ -3,13 +3,16 @@ package org.rhq.core.pc.drift;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.util.List;
 
+import org.rhq.core.clientapi.agent.drift.DriftAgentService;
 import org.rhq.core.clientapi.server.drift.DriftServerService;
+import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.pc.ContainerService;
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.agent.AgentService;
 
-public class DriftManager extends AgentService implements ContainerService {
+public class DriftManager extends AgentService implements ContainerService, DriftAgentService {
     private PluginContainerConfiguration pluginContainerConfiguration;
 
     private File snapshotsDir;
@@ -44,5 +47,11 @@ public class DriftManager extends AgentService implements ContainerService {
 
         driftServer.sendChangesetZip(resourceId, handle.getMetadataFile().length(),
             remoteInputStream(new BufferedInputStream(new FileInputStream(handle.getMetadataFile()))));
+    }
+
+    @Override
+    public boolean requestDriftFiles(List<DriftFile> driftFiles) {
+        // TODO Auto-generated method stub
+        return false;
     }
 }

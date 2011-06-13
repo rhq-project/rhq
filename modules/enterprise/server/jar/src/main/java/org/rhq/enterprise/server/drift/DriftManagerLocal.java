@@ -24,6 +24,12 @@ import java.io.InputStream;
 
 import javax.ejb.Local;
 
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
+import org.rhq.core.domain.drift.DriftChangeSet;
+import org.rhq.core.domain.drift.DriftFile;
+import org.rhq.core.domain.util.PageList;
+
 @Local
 public interface DriftManagerLocal {
 
@@ -50,16 +56,43 @@ public interface DriftManagerLocal {
      */
     void addFiles(int resourceId, long zipSize, InputStream zipStream) throws Exception;
 
+    public PageList<DriftChangeSet> findDriftChangeSetsByCriteria(Subject subject, DriftChangeSetCriteria criteria);
+
     /**
      * This method stores the provided change-set file for the resource. The version will be incremented based
      * on the max version of existing change-sets for the resource. The change-set will be processed generating
      * requests for drift file content and/or drift instances as required.
      *  
      * @param resourceId The resource for which the change-set is being reported.
-     * @param zipSize The size of the zip waiting to be streamed.
-     * @param zipStream The change-set zip file stream
+     * @param changeSetZip The change-set zip file
      * @throws Exception
      */
-    void storeChangeset(int resourceId, File changeset) throws Exception;
+    void storeChangeSet(int resourceId, File changeSetZip) throws Exception;
+
+    /**
+     * This method stores the provided drift files. The files should correspond to requested drift files.
+     * The unzipped files will have their sha256 generated. Those not corresponding to needed content will
+     * be logged and ignored.
+     *  
+     * @param filesZip The change-set zip file
+     * @throws Exception
+     */
+    void storeFiles(File filesZip) throws Exception;
+
+    /**
+     * SUPPORTS DRIFT RHQ SERVER PLUGIN 
+     * @param driftFile
+     * @return
+     * @throws Exception
+     */
+    public DriftFile persistDriftFile(DriftFile driftFile) throws Exception;
+
+    /**
+     * SUPPORTS DRIFT RHQ SERVER PLUGIN
+     * @param driftFile
+     * @param data
+     * @throws Exception
+     */
+    public void persistDriftFileData(DriftFile driftFile, InputStream data) throws Exception;
 
 }

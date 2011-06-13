@@ -72,7 +72,7 @@ public class DriftChangesetBean implements MessageListener {
                         + "]");
                 }
 
-                driftManager.storeChangeset(request.getResourceId(), tempFile);
+                driftManager.storeChangeSet(request.getResourceId(), tempFile);
 
             } catch (IOException e) {
                 log.error(e);

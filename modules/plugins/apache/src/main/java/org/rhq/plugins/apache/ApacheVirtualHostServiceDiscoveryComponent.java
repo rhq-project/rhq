@@ -21,19 +21,16 @@ package org.rhq.plugins.apache;
 import java.io.File;
 import java.net.InetAddress;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.rhq.augeas.node.AugeasNode;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.resource.ResourceType;
@@ -41,17 +38,10 @@ import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
-import org.rhq.core.system.ProcessInfo;
-import org.rhq.core.system.SystemInfoFactory;
-import org.rhq.plugins.apache.parser.ApacheConfigReader;
 import org.rhq.plugins.apache.parser.ApacheDirective;
 import org.rhq.plugins.apache.parser.ApacheDirectiveTree;
-import org.rhq.plugins.apache.parser.ApacheParser;
-import org.rhq.plugins.apache.parser.ApacheParserImpl;
 import org.rhq.plugins.apache.util.HttpdAddressUtility;
 import org.rhq.plugins.apache.util.HttpdAddressUtility.Address;
-import org.rhq.plugins.apache.util.ApacheBinaryInfo;
-import org.rhq.plugins.apache.util.OsProcessUtility;
 import org.rhq.plugins.apache.util.RuntimeApacheConfiguration;
 import org.rhq.plugins.www.snmp.SNMPException;
 import org.rhq.plugins.www.snmp.SNMPSession;
@@ -187,25 +177,28 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
         
         String key = createMainServerResourceKey(context.getParentResourceComponent(), runtimeConfig, snmpDiscoveries);
         
-        if (mainServerUrl != null && !"null".equals(mainServerUrl)) {
-            PropertySimple mainServerUrlProp = new PropertySimple(ApacheVirtualHostServiceComponent.URL_CONFIG_PROP,
-                mainServerUrl);
-
-            mainServerPluginConfig.put(mainServerUrlProp);
-
-            URI mainServerUri = new URI(mainServerUrl);
-            String host = mainServerUri.getHost();
-            int port = mainServerUri.getPort();
-            if (port == -1) {
-                port = 80;
-            }
-
-            File rtLogFile = new File(logsDir, host + port + RT_LOG_FILE_NAME_SUFFIX);
-
-            PropertySimple rtLogProp = new PropertySimple(
-                ApacheVirtualHostServiceComponent.RESPONSE_TIME_LOG_FILE_CONFIG_PROP, rtLogFile.toString());
-            mainServerPluginConfig.put(rtLogProp);
+        if (mainServerUrl == null || mainServerUrl.trim().isEmpty()) {
+            HttpdAddressUtility.Address addr = context.getParentResourceComponent().getAddressUtility().getMainServerSampleAddress(runtimeConfig, null, 0);
+            mainServerUrl = addr.toString();
         }
+        
+        PropertySimple mainServerUrlProp = new PropertySimple(ApacheVirtualHostServiceComponent.URL_CONFIG_PROP,
+            mainServerUrl);
+
+        mainServerPluginConfig.put(mainServerUrlProp);
+
+        URI mainServerUri = new URI(mainServerUrl);
+        String host = mainServerUri.getHost();
+        int port = mainServerUri.getPort();
+        if (port == -1) {
+            port = 80;
+        }
+
+        File rtLogFile = new File(logsDir, host + port + RT_LOG_FILE_NAME_SUFFIX);
+
+        PropertySimple rtLogProp = new PropertySimple(
+            ApacheVirtualHostServiceComponent.RESPONSE_TIME_LOG_FILE_CONFIG_PROP, rtLogFile.toString());
+        mainServerPluginConfig.put(rtLogProp);
         
         //the SNMP WWW service index of the main server is always 1
         mainServerPluginConfig.put(new PropertySimple(
@@ -243,30 +236,33 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
     }
     
     public static String createMainServerResourceKey(ApacheServerComponent serverComponent, ApacheDirectiveTree runtimeConfig, SnmpWwwServiceIndexes snmpDiscoveries) throws Exception {
-        String mainServerUrl = serverComponent.getServerUrl();
-    
-        String key = null;
-        
-        if (mainServerUrl != null && !"null".equals(mainServerUrl)) {
-            URI mainServerUri = new URI(mainServerUrl);
-            String host = mainServerUri.getHost();
-            int port = mainServerUri.getPort();
-            if (port == -1) {
-                port = 80;
-            }
+        return serverComponent.getAddressUtility().getHttpdInternalMainServerAddressRepresentation(runtimeConfig).toString(false, false);
 
-            key = host + ":" + port;
-        } else {
-            key = ApacheVirtualHostServiceComponent.MAIN_SERVER_RESOURCE_KEY;
-        }
-        
-        //BZ 612189 - remove this once we have resource upgrade
-        if (snmpDiscoveries != null) {
-            String legacyKey = getLegacyResourceKey(serverComponent, key, snmpDiscoveries);
-            key = legacyKey != null ? legacyKey : key;
-        }
-        
-        return key;
+// The below is replaced by the "always-SNMP-like" resource key as a response to the BZ 690435        
+//        String mainServerUrl = serverComponent.getServerUrl();
+//    
+//        String key = null;
+//        
+//        if (mainServerUrl != null && !"null".equals(mainServerUrl)) {
+//            URI mainServerUri = new URI(mainServerUrl);
+//            String host = mainServerUri.getHost();
+//            int port = mainServerUri.getPort();
+//            if (port == -1) {
+//                port = 80;
+//            }
+//
+//            key = host + ":" + port;
+//        } else {
+//            key = ApacheVirtualHostServiceComponent.MAIN_SERVER_RESOURCE_KEY;
+//        }
+//        
+//        //BZ 612189 - remove this once we have resource upgrade
+//        if (snmpDiscoveries != null) {
+//            String legacyKey = getLegacyResourceKey(serverComponent, key, snmpDiscoveries);
+//            key = legacyKey != null ? legacyKey : key;
+//        }
+//        
+//        return key;
     }
     
     public static String createResourceKey(String serverName, List<String> hosts, ApacheDirectiveTree runtimeConfig, ApacheServerComponent serverComponent, SnmpWwwServiceIndexes snmpDiscoveries) {

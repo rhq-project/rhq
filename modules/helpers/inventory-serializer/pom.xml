@@ -84,13 +84,17 @@
             <artifactId>postgresql</artifactId>
             <version>9.0-801.jdbc4</version>
             <scope>runtime</scope>
-        </dependency>
-        
+        </dependency>        
         <dependency>
             <groupId>org.rhq</groupId>
             <artifactId>safe-invoker</artifactId>
             <version>${project.version}</version>
-        </dependency>
+        </dependency>   
+        <dependency>
+            <groupId>org.rhq</groupId>
+            <artifactId>test-utils</artifactId>
+            <version>${project.version}</version>
+        </dependency>     
     </dependencies>
     <build>
         <plugins>

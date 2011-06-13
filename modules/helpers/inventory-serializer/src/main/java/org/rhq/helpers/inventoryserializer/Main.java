@@ -23,27 +23,23 @@ import gnu.getopt.Getopt;
 import gnu.getopt.LongOpt;
 
 import java.io.File;
-import java.io.PrintStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
 import javax.persistence.Query;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.Marshaller;
 
 import org.apache.log4j.Logger;
 
 import org.rhq.enterprise.server.util.HibernateDetachUtility;
 import org.rhq.helpers.inventoryserializer.util.ChildFirstClassLoader;
+import org.rhq.test.ObjectCollectionSerializer;
 
 /**
  * 
@@ -77,6 +73,8 @@ public class Main {
      * @throws Exception 
      */
     public static void main(String[] args) throws Exception {
+        
+        
         LongOpt[] longOptions = new LongOpt[7];
 
         longOptions[0] = new LongOpt("driver-class", LongOpt.OPTIONAL_ARGUMENT, null, 'd');
@@ -133,22 +131,22 @@ public class Main {
             System.exit(1);
         }
 
-        ClassLoader classLoaderToUse = Main.class.getClassLoader();
+         ClassLoader classLoaderToUse = Main.class.getClassLoader();
 
         if (jars.size() > 0) {
             URL[] jarUrls = getUrls(jars);
             classLoaderToUse = new ChildFirstClassLoader(jarUrls, Main.class.getClassLoader());
         }
 
-        //these will collect the results and classes of the results
-        List<Object> allResults = new ArrayList<Object>();
-        Set<Class<?>> classes = new HashSet<Class<?>>();
+        ObjectCollectionSerializer serializer = new ObjectCollectionSerializer();
 
         EntityManager em = null;
         ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
         try {
             Thread.currentThread().setContextClassLoader(classLoaderToUse);
             em = getEntityManager(driverClass, dialect, connectionUrl, username, password, persistenceUnit);
+            
+            em.getTransaction().begin();
             
             for (String query : queries) {
                 log.info("Executing query: " + query);
@@ -158,50 +156,19 @@ public class Main {
                 @SuppressWarnings("unchecked")
                 List<Object> results = q.getResultList();
 
-                allResults.addAll(results);
+                for(Object result : results) {
+                    HibernateDetachUtility.nullOutUninitializedFields(result, HibernateDetachUtility.SerializationType.SERIALIZATION);
+                }
+                
+                serializer.addObjects(results);
             }
-
-            em.clear();
-
-            for (Object result : allResults) {
-                classes.add(result.getClass());
-                HibernateDetachUtility.nullOutUninitializedFields(result, HibernateDetachUtility.SerializationType.JAXB);
-            }
+                        
+            em.close();            
         } finally {
             Thread.currentThread().setContextClassLoader(contextClassLoader);
         }
 
-        PrintStream out = System.out;
-        out = new PrintStream(out, true, "UTF-8");
-
-        out.append("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n");
-        out.append("<inventory-dump>\n");
-
-        out.append("<classes-used>\n");
-
-        for (Class<?> cls : classes) {
-            out.append("<class>").append(cls.getName()).append("</class>\n");
-        }
-
-        out.append("</classes-used>\n");
-
-        out.append("<objects>\n");
-
-        JAXBContext context = JAXBContext.newInstance(classes.toArray(new Class<?>[classes.size()]));
-
-        Marshaller marshaller = context.createMarshaller();
-
-        marshaller.setProperty(Marshaller.JAXB_FRAGMENT, true);
-        marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
-        marshaller.setProperty(Marshaller.JAXB_ENCODING, "UTF-8");
-
-        for (Object r : allResults) {
-            marshaller.marshal(r, out);
-        }
-
-        out.append("</objects>\n");
-
-        out.append("</inventory-dump>\n");
+        serializer.serialize(System.out);        
     }
 
     /**

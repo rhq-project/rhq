@@ -25,6 +25,7 @@ package org.rhq.core.pc.bundle;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,6 +54,10 @@ import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration;
 import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory.Status;
 import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration.BundleDestinationBaseDirectory;
 import org.rhq.core.domain.content.PackageVersion;
+import org.rhq.core.domain.measurement.DataType;
+import org.rhq.core.domain.measurement.MeasurementData;
+import org.rhq.core.domain.measurement.MeasurementDataRequest;
+import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.ContainerService;
@@ -61,6 +66,7 @@ import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.agent.AgentService;
 import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.inventory.ResourceContainer;
+import org.rhq.core.pc.measurement.MeasurementManager;
 import org.rhq.core.pc.util.ComponentUtil;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pc.util.LoggingThreadFactory;
@@ -145,7 +151,7 @@ public class BundleManager extends AgentService implements BundleAgentService, B
             final BundleDeployment bundleDeployment = resourceDeployment.getBundleDeployment();
 
             // find the resource that will handle the bundle processing
-            InventoryManager im = PluginContainer.getInstance().getInventoryManager();
+            InventoryManager im = getInventoryManager();
             BundleType bundleType = bundleDeployment.getBundleVersion().getBundle().getBundleType();
             ResourceType resourceType = bundleType.getResourceType();
             Set<Resource> resources = im.getResourcesWithType(resourceType);
@@ -230,7 +236,7 @@ public class BundleManager extends AgentService implements BundleAgentService, B
             final BundleDeployment bundleDeployment = resourceDeployment.getBundleDeployment();
 
             // find the resource that will purge the bundle
-            InventoryManager im = PluginContainer.getInstance().getInventoryManager();
+            InventoryManager im = getInventoryManager();
             BundleType bundleType = bundleDeployment.getBundleVersion().getBundle().getBundleType();
             ResourceType resourceType = bundleType.getResourceType();
             Set<Resource> resources = im.getResourcesWithType(resourceType);
@@ -433,7 +439,7 @@ public class BundleManager extends AgentService implements BundleAgentService, B
         }
 
         // get the resource entity stored in our local inventory
-        InventoryManager im = PluginContainer.getInstance().getInventoryManager();
+        InventoryManager im = getInventoryManager();
         Resource resource = bundleResourceDeployment.getResource();
         ResourceContainer container = im.getResourceContainer(resource);
         resource = container.getResource();
@@ -489,8 +495,11 @@ public class BundleManager extends AgentService implements BundleAgentService, B
             break;
         }
         case measurementTrait: {
-            // TODO: find out where we squirrel away traits
-            baseLocation = null;
+            baseLocation = getTraitValue(container, destBaseDirValueName);
+            if (baseLocation == null) {
+                throw new IllegalArgumentException("Cannot obtain trait [" + destBaseDirName + "] for resource ["
+                    + resource.getName() + "]");
+            }
             break;
         }
         default: {
@@ -499,6 +508,50 @@ public class BundleManager extends AgentService implements BundleAgentService, B
         }
 
         return new File(baseLocation, relativeDeployDir);
+    }
+
+    /**
+     * Given the name of a trait, this will find the value of that trait for the given resource.
+     * 
+     * @param resource the resource whose trait value is to be obtained
+     * @param traitName the name of the trait whose value is to be obtained
+     *
+     * @return the value of the trait, or <code>null</code> if unknown
+     */
+    private String getTraitValue(ResourceContainer container, String traitName) {
+        Integer traitScheduleId = null;
+        Set<MeasurementScheduleRequest> schedules = container.getMeasurementSchedule();
+        for (MeasurementScheduleRequest schedule : schedules) {
+            if (schedule.getName().equals(traitName)) {
+                if (schedule.getDataType() != DataType.TRAIT) {
+                    throw new IllegalArgumentException("Measurement named [" + traitName + "] for resource ["
+                        + container.getResource().getName() + "] is not a trait, it is of type ["
+                        + schedule.getDataType() + "]");
+                }
+                traitScheduleId = Integer.valueOf(schedule.getScheduleId());
+            }
+        }
+        if (traitScheduleId == null) {
+            throw new IllegalArgumentException("There is no trait [" + traitName + "] for resource ["
+                + container.getResource().getName() + "]");
+        }
+
+        MeasurementManager mm = getMeasurementManager();
+        String traitValue = mm.getCachedTraitValue(traitScheduleId.intValue());
+        if (traitValue == null) {
+            // the trait hasn't been collected yet, so it isn't cached. We need to get its live value
+            List<MeasurementDataRequest> requests = new ArrayList<MeasurementDataRequest>();
+            requests.add(new MeasurementDataRequest(traitName, DataType.TRAIT));
+            Set<MeasurementData> dataset = mm.getRealTimeMeasurementValue(container.getResource().getId(), requests);
+            if (dataset != null && dataset.size() == 1) {
+                Object value = dataset.iterator().next().getValue();
+                if (value != null) {
+                    traitValue = value.toString();
+                }
+            }
+        }
+
+        return traitValue;
     }
 
     /**
@@ -527,7 +580,27 @@ public class BundleManager extends AgentService implements BundleAgentService, B
      *
      * @throws PluginContainerException on error
      */
-    private BundleFacet getBundleFacet(int resourceId, long timeout) throws PluginContainerException {
+    protected BundleFacet getBundleFacet(int resourceId, long timeout) throws PluginContainerException {
         return ComponentUtil.getComponent(resourceId, BundleFacet.class, FacetLockType.READ, timeout, false, true);
+    }
+
+    /**
+     * Returns the manager that can provide data on the inventory. This is a separate protected method
+     * so we can extend our manger class to have a mock manager for testing.
+     * 
+     * @return the inventory manager
+     */
+    protected InventoryManager getInventoryManager() {
+        return PluginContainer.getInstance().getInventoryManager();
+    }
+
+    /**
+     * Returns the manager that can provide data on the measurements/metrics. This is a separate protected method
+     * so we can extend our manger class to have a mock manager for testing.
+     * 
+     * @return the inventory manager
+     */
+    protected MeasurementManager getMeasurementManager() {
+        return PluginContainer.getInstance().getMeasurementManager();
     }
 }

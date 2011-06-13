@@ -85,7 +85,7 @@ import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.core.util.updater.DeploymentProperties;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
-import org.rhq.enterprise.server.resource.metadata.test.UpdateSubsytemTestBase;
+import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TestAgentClient;
 import org.rhq.enterprise.server.test.TestServerCommunicationsService;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -96,7 +96,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 @SuppressWarnings( { "unused" })
 @Test
-public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
+public class BundleManagerBeanTest extends AbstractEJB3Test {
 
     private static final boolean TESTS_ENABLED = true;
 
@@ -115,12 +115,10 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
     private Subject overlord;
     TestServerCommunicationsService agentServiceContainer;
 
-    @Override
     @BeforeClass
     public void beforeClass() {
-        super.beforeClass();
         agentServiceContainer = prepareForTestAgents();
-        agentServiceContainer.bundleService = new TestAgentClient(null, new TestServerCommunicationsService());
+        agentServiceContainer.bundleService = new TestAgentClient(null, agentServiceContainer);
     }
 
     @AfterClass
@@ -863,7 +861,7 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
     }
 
     @Test(enabled = TESTS_ENABLED)
-    public void testfindBundlesByCriteria() throws Exception {
+    public void testFindBundlesByCriteria() throws Exception {
         Bundle b1 = createBundle("one");
         Bundle b2 = createBundle("two");
         BundleVersion bv1 = createBundleVersion(b1.getName(), "1.0", b1);
@@ -921,7 +919,7 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
     }
 
     @Test(enabled = TESTS_ENABLED)
-    public void testfindBundleVersionsByCriteria() throws Exception {
+    public void testFindBundleVersionsByCriteria() throws Exception {
         Bundle b1 = createBundle("one");
         BundleVersion bv1 = createBundleVersion(b1.getName(), "1.0", b1);
         BundleVersion bv2 = createBundleVersion(b1.getName(), "2.0", b1);

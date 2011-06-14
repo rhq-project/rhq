@@ -28,6 +28,9 @@ import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.Availability;
@@ -41,6 +44,7 @@ import org.rhq.core.domain.rest.MetricSchedule;
 import org.rhq.core.domain.rest.ResourceWithType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
+import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -55,6 +59,8 @@ public class ResourceHandlerBean implements ResourceHandlerLocal {
     ResourceManagerLocal resMgr;
     @EJB
     AvailabilityManagerLocal availMgr;
+    @EJB
+    MeasurementScheduleManagerLocal scheduleManager;
 
     @Override
     public ResourceWithType getResource(int id) {
@@ -142,5 +148,18 @@ public class ResourceHandlerBean implements ResourceHandlerLocal {
         }
 
         return ret;
+    }
+
+    public MetricSchedule getSchedule(int scheduleId) {
+
+        Subject subject = LookupUtil.getSubjectManager().getOverlord(); // TODO
+
+        MeasurementSchedule schedule = scheduleManager.getScheduleById(subject,scheduleId);
+        MeasurementDefinition definition = schedule.getDefinition();
+        MetricSchedule ms = new MetricSchedule(schedule.getId(), definition.getName(), definition.getDisplayName(),
+                schedule.isEnabled(),schedule.getInterval(), definition.getUnits().toString(),
+                definition.getDataType().toString());
+
+        return ms;
     }
 }

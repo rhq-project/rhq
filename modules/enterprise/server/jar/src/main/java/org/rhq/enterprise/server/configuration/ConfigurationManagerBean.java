@@ -410,14 +410,15 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                 + "]; will assume latest resource configuration update is the current resource configuration.");
         }
 
-        // Mask the configuration before returning the update.
-        Configuration configuration = current.getConfiguration();
-        ConfigurationDefinition configurationDefinition = getResourceConfigurationDefinitionForResourceType(
-                subjectManager.getOverlord(), resource.getResourceType().getId());
-        // We do not want the masked configuration persisted, so detach all entities before masking the configuration.
-        entityManager.clear();
-        ConfigurationMaskingUtility.maskConfiguration(configuration, configurationDefinition);
-
+        if (current!=null) {
+            // Mask the configuration before returning the update.
+            Configuration configuration = current.getConfiguration();
+            ConfigurationDefinition configurationDefinition = getResourceConfigurationDefinitionForResourceType(
+                    subjectManager.getOverlord(), resource.getResourceType().getId());
+            // We do not want the masked configuration persisted, so detach all entities before masking the configuration.
+            entityManager.clear();
+            ConfigurationMaskingUtility.maskConfiguration(configuration, configurationDefinition);
+        }
         return current;
     }
 

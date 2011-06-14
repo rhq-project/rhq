@@ -64,6 +64,10 @@ public class Drift implements Serializable {
     @Enumerated(EnumType.STRING)
     private DriftCategory category;
 
+    @Column(name = "PATH", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private String path;
+
     @JoinColumn(name = "RESOURCE_ID", referencedColumnName = "ID", nullable = false)
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     private Resource resource;
@@ -85,8 +89,9 @@ public class Drift implements Serializable {
      * @param oldDriftFile required for FILE_CHANGED and FILE_REMOVED, null for FILE_ADDED
      * @param newDriftFile required for FILE_CHANGED and FILE_ADDED, null for FILE_REMOVED
      */
-    public Drift(Resource resource, DriftCategory category, DriftFile oldDriftFile, DriftFile newDriftFile) {
+    public Drift(Resource resource, String path, DriftCategory category, DriftFile oldDriftFile, DriftFile newDriftFile) {
         this.resource = resource;
+        this.path = path;
         this.category = category;
         this.oldDriftFile = oldDriftFile;
         this.newDriftFile = newDriftFile;
@@ -125,6 +130,14 @@ public class Drift implements Serializable {
         this.category = category;
     }
 
+    public String getPath() {
+        return path;
+    }
+
+    public void setPath(String path) {
+        this.path = path;
+    }
+
     public DriftFile getOldDriftFile() {
         return oldDriftFile;
     }
@@ -139,6 +152,11 @@ public class Drift implements Serializable {
 
     public void setNewDriftFile(DriftFile newDriftFile) {
         this.newDriftFile = newDriftFile;
+    }
+
+    @Override
+    public String toString() {
+        return "Drift [ id=" + id + ", category=" + category + ", path=" + path + ", resource=" + resource + "]";
     }
 
 }

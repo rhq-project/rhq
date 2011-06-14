@@ -134,7 +134,7 @@ public class DriftManagerBean implements DriftManagerLocal {
                 // We don't generate Drift occurrences off of the initial change set. It is used only
                 // to give us a starting point and to tell us what files we need to pull down. 
                 if (!isInitialChangeSet) {
-                    Drift drift = new Drift(resource, entry.getCategory(), oldDriftFile, newDriftFile);
+                    Drift drift = new Drift(resource, entry.getPath(), entry.getCategory(), oldDriftFile, newDriftFile);
                     entityManager.persist(drift);
                 }
             }

@@ -1,10 +1,8 @@
-package org.rhq.core.clientapi.agent.drift;
+package org.rhq.common.drift;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 
 public class DirectoryEntry implements Iterable<String> {
 

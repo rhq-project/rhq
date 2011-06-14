@@ -1,4 +1,4 @@
-package org.rhq.core.clientapi.agent.drift;
+package org.rhq.common.drift;
 
 import java.io.File;
 import java.io.FileInputStream;

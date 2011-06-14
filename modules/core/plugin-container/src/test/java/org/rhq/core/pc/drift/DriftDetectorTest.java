@@ -9,7 +9,7 @@ import org.rhq.test.JMockTest;
 
 public class DriftDetectorTest extends JMockTest {
 
-    @Test
+    @Test(enabled = false)
     public void generateInitialChangeset() {
         // Note that absence of meta data is not sufficient for determining that
         // no change sets have previously been generated. The user could have just

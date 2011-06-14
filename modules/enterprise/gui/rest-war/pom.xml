@@ -31,9 +31,29 @@
     </properties>
 
     <dependencies>
+        <dependency>
+           <groupId>org.rhq</groupId>
+           <artifactId>rhq-core-domain</artifactId>
+           <version>${project.version}</version>
+           <scope>provided</scope> <!-- by rhq.ear (as ejb-jar) -->
+        </dependency>
 
+        <dependency>
+           <groupId>org.rhq</groupId>
+           <artifactId>rhq-enterprise-server</artifactId>
+           <version>${project.version}</version>
+           <scope>provided</scope> <!-- by rhq.ear (as ejb-jar) -->
+        </dependency>
 
-       <!-- 3rd Party Deps -->
+        <!-- 3rd Party Deps -->
+
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>servlet-api</artifactId>
+            <version>2.4</version>
+            <scope>provided</scope> <!-- by JBossAS -->
+        </dependency>
+
 
 
         <dependency>
@@ -42,6 +62,40 @@
             <version>${resteasy.version}</version>
             <scope>provided</scope>
         </dependency>
+
+        <!-- needed for EJB3 annotations (e.g. ApplicationException) -->
+        <dependency>
+           <groupId>jboss</groupId>
+           <artifactId>jboss-ejb3x</artifactId>
+           <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+           <scope>provided</scope> <!-- by JBossAS -->
+        </dependency>
+
+        <!-- needed for referenced domain entities that use JPA annotations (due to JDK5 bug) -->
+        <dependency>
+           <groupId>javax.persistence</groupId>
+           <artifactId>persistence-api</artifactId>
+           <version>1.0</version>
+           <scope>provided</scope> <!-- by JBossAS -->
+        </dependency>
+
+
+        <!-- needed for referenced domain entities that use Hibernate annotations (due to JDK5 bug) -->
+        <dependency>
+           <groupId>hibernate-annotations</groupId>
+           <artifactId>hibernate-annotations</artifactId>
+           <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+           <scope>provided</scope> <!-- by JBossAS -->
+        </dependency>
+
+        <!-- Needed due to JDK 1.5 bug. -->
+        <dependency>
+           <groupId>jboss</groupId>
+           <artifactId>jboss-annotations-ejb3</artifactId>
+           <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+           <scope>provided</scope> <!-- by JBossAS -->
+        </dependency>
+
 
     </dependencies>
     <build>

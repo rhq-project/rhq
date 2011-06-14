@@ -33,6 +33,7 @@ import org.testng.annotations.Test;
 import org.rhq.core.clientapi.agent.drift.DriftAgentService;
 import org.rhq.core.clientapi.server.drift.DriftServerService;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
@@ -194,6 +195,11 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
         public boolean requestDriftFiles(List<DriftFile> driftFiles) {
             // TODO Auto-generated method stub
             return false;
+        }
+
+        @Override
+        public void scheduleDriftDetection(int resourceId, DriftConfiguration driftConfiguration) {
+
         }
     }
 }

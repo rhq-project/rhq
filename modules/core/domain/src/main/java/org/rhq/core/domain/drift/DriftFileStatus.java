@@ -28,7 +28,7 @@ package org.rhq.core.domain.drift;
  * @author Jay Shaughnesssy
  */
 public enum DriftFileStatus {
-    EMPTY, REQUESTED, LOADING, LOADED;
+    EMPTY, REQUESTED, LOADED;
 
     DriftFileStatus() {
     }

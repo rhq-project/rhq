@@ -27,6 +27,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import javax.ejb.ActivationConfigProperty;
+import javax.ejb.EJB;
 import javax.ejb.MessageDriven;
 import javax.jms.Message;
 import javax.jms.MessageListener;
@@ -42,8 +43,10 @@ import org.rhq.core.util.stream.StreamUtil;
     @ActivationConfigProperty(propertyName = "destination", propertyValue = "queue/DriftFileQueue"),
     @ActivationConfigProperty(propertyName = "acknowledgeMode", propertyValue = "Auto-acknowledge") })
 public class DriftFileBean implements MessageListener {
-
     private final Log log = LogFactory.getLog(DriftFileBean.class);
+
+    @EJB
+    private DriftManagerLocal driftManager;
 
     @Override
     public void onMessage(Message message) {
@@ -68,6 +71,8 @@ public class DriftFileBean implements MessageListener {
                     log.debug("Copied [" + request.getDataSize() + "] bytes from agent into [" + tempFile.getPath()
                         + "]");
                 }
+
+                driftManager.storeFiles(tempFile);
 
             } catch (IOException e) {
                 log.error(e);

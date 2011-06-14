@@ -50,6 +50,7 @@ import org.rhq.core.clientapi.agent.drift.DriftAgentService;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
 import org.rhq.core.domain.drift.Drift;
+import org.rhq.core.domain.drift.DriftCategory;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.DriftFileStatus;
@@ -125,8 +126,11 @@ public class DriftManagerBean implements DriftManagerLocal {
             int version = changeSets.size();
             List<DriftFile> emptyDriftFiles = new ArrayList<DriftFile>();
 
-            // TODO whole thing  will change to use the parser utility when it's available
+            // TODO whole thing  will change to use the parser utility when it's available, just use a dummy entry for now
             List<DriftChangeSetEntry> entries = new ArrayList<DriftChangeSetEntry>();
+            entries
+                .add(new DriftChangeSetEntry(0, "/foo/bar", DriftCategory.FILE_ADDED, null, String.valueOf(version)));
+
             for (DriftChangeSetEntry entry : entries) {
                 DriftFile oldDriftFile = getDriftFile(entry.getOldSha256(), emptyDriftFiles);
                 DriftFile newDriftFile = getDriftFile(entry.getNewSha256(), emptyDriftFiles);

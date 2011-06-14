@@ -5,13 +5,13 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public class DirectoryEntry implements Iterable<String>, Serializable {
+public class DirectoryEntry implements Iterable<FileEntry>, Serializable {
 
     private static final long serialVersionUID = 1L;
 
     private String directory;
 
-    private List<String> files = new ArrayList<String>();
+    private List<FileEntry> files = new ArrayList<FileEntry>();
 
     public DirectoryEntry(String directory) {
         this.directory = directory;
@@ -21,8 +21,8 @@ public class DirectoryEntry implements Iterable<String>, Serializable {
         return directory;
     }
 
-    public DirectoryEntry add(String file) {
-        files.add(file);
+    public DirectoryEntry add(FileEntry entry) {
+        files.add(entry);
         return this;
     }
 
@@ -30,7 +30,7 @@ public class DirectoryEntry implements Iterable<String>, Serializable {
         return files.size();
     }
 
-    public Iterator<String> iterator() {
+    public Iterator<FileEntry> iterator() {
         return files.iterator();
     }
 }

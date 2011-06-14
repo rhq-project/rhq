@@ -40,7 +40,7 @@ public enum DriftCategory {
         this.code = code;
     }
 
-    String code() {
+    public String code() {
         return code;
     }
 

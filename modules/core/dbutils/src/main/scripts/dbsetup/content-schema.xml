@@ -673,7 +673,7 @@
         <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
         <column name="CTIME" type="LONG" required="true"/>
         <column name="CATEGORY" type="VARCHAR2" size="20" required="true"/>        
-        <column name="RESOURCE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE"/>
+        <column name="DRIFT_CHANGE_SET_ID" type="INTEGER" required="true" references="RHQ_DRIFT_CHANGE_SET"/>
         <column name="PATH" type="VARCHAR2" size="512" required="true"/>        
         <column name="OLD_DRIFT_FILE" type="VARCHAR2" size="64" required="false" references="RHQ_DRIFT_FILE"/>        
         <column name="NEW_DRIFT_FILE" type="VARCHAR2" size="64" required="false" references="RHQ_DRIFT_FILE"/>        

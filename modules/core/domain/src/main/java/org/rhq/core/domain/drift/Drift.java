@@ -34,11 +34,11 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 import javax.persistence.PrePersist;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-
-import org.rhq.core.domain.resource.Resource;
 
 /**
  * An occurrence of drifty to be reported and managed by the user.
@@ -47,10 +47,15 @@ import org.rhq.core.domain.resource.Resource;
  * @author John Sanda 
  */
 @Entity
+@NamedQueries( { @NamedQuery(name = Drift.QUERY_DELETE_BY_RESOURCES, query = "" //
+    + "DELETE FROM Drift d " //
+    + " WHERE d.changeSet IN ( SELECT dcs FROM DriftChangeSet dcs WHERE dcs.resource.id IN ( :resourceIds ) ) )") })
 @Table(name = "RHQ_DRIFT")
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_DRIFT_ID_SEQ")
 public class Drift implements Serializable {
     private static final long serialVersionUID = 1L;
+
+    public static final String QUERY_DELETE_BY_RESOURCES = "Drift.deleteByResources";
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
@@ -68,9 +73,9 @@ public class Drift implements Serializable {
     @Enumerated(EnumType.STRING)
     private String path;
 
-    @JoinColumn(name = "RESOURCE_ID", referencedColumnName = "ID", nullable = false)
+    @JoinColumn(name = "DRIFT_CHANGE_SET_ID", referencedColumnName = "ID", nullable = false)
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    private Resource resource;
+    private DriftChangeSet changeSet;
 
     @JoinColumn(name = "OLD_DRIFT_FILE", referencedColumnName = "SHA256", nullable = true)
     @ManyToOne(fetch = FetchType.LAZY, optional = true)
@@ -89,8 +94,9 @@ public class Drift implements Serializable {
      * @param oldDriftFile required for FILE_CHANGED and FILE_REMOVED, null for FILE_ADDED
      * @param newDriftFile required for FILE_CHANGED and FILE_ADDED, null for FILE_REMOVED
      */
-    public Drift(Resource resource, String path, DriftCategory category, DriftFile oldDriftFile, DriftFile newDriftFile) {
-        this.resource = resource;
+    public Drift(DriftChangeSet changeSet, String path, DriftCategory category, DriftFile oldDriftFile,
+        DriftFile newDriftFile) {
+        this.changeSet = changeSet;
         this.path = path;
         this.category = category;
         this.oldDriftFile = oldDriftFile;
@@ -114,12 +120,12 @@ public class Drift implements Serializable {
         this.ctime = System.currentTimeMillis();
     }
 
-    public Resource getResource() {
-        return resource;
+    public DriftChangeSet getChangeSet() {
+        return changeSet;
     }
 
-    public void setResource(Resource resource) {
-        this.resource = resource;
+    public void setChangeSet(DriftChangeSet changeSet) {
+        this.changeSet = changeSet;
     }
 
     public DriftCategory getCategory() {
@@ -156,7 +162,7 @@ public class Drift implements Serializable {
 
     @Override
     public String toString() {
-        return "Drift [ id=" + id + ", category=" + category + ", path=" + path + ", resource=" + resource + "]";
+        return "Drift [ id=" + id + ", category=" + category + ", path=" + path + ", changeSet=" + changeSet + "]";
     }
 
 }

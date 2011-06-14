@@ -21,7 +21,6 @@ package org.rhq.enterprise.server.drift;
 
 import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -126,6 +125,11 @@ public class DriftManagerBean implements DriftManagerLocal {
             int version = changeSets.size();
             List<DriftFile> emptyDriftFiles = new ArrayList<DriftFile>();
 
+            // store the new change set info (not the actual blob)
+            driftChangeSet = new DriftChangeSet(resource, version);
+            //driftChangeSet.setData(Hibernate.createBlob(new BufferedInputStream(new FileInputStream(changeSetZip))));
+            entityManager.persist(driftChangeSet);
+
             // TODO whole thing  will change to use the parser utility when it's available, just use a dummy entry for now
             List<DriftChangeSetEntry> entries = new ArrayList<DriftChangeSetEntry>();
             entries
@@ -138,15 +142,11 @@ public class DriftManagerBean implements DriftManagerLocal {
                 // We don't generate Drift occurrences off of the initial change set. It is used only
                 // to give us a starting point and to tell us what files we need to pull down. 
                 if (!isInitialChangeSet) {
-                    Drift drift = new Drift(resource, entry.getPath(), entry.getCategory(), oldDriftFile, newDriftFile);
+                    Drift drift = new Drift(driftChangeSet, entry.getPath(), entry.getCategory(), oldDriftFile,
+                        newDriftFile);
                     entityManager.persist(drift);
                 }
             }
-
-            // store the actual change set
-            driftChangeSet = new DriftChangeSet(resource, version);
-            driftChangeSet.setData(Hibernate.createBlob(new BufferedInputStream(new FileInputStream(changeSetZip))));
-            entityManager.persist(driftChangeSet);
 
             // send a message to the agent requesting the empty DriftFile content
             AgentClient agentClient = agentManager.getAgentClient(subjectManager.getOverlord(), resourceId);

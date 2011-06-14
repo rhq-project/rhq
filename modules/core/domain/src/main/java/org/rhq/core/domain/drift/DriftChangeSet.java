@@ -36,6 +36,8 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.Lob;
 import javax.persistence.ManyToOne;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 import javax.persistence.PrePersist;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
@@ -47,10 +49,15 @@ import org.rhq.core.domain.resource.Resource;
  * @author John Sanda 
  */
 @Entity
-@Table(name = "RHQ_DRIFT_FILE")
+@NamedQueries( { @NamedQuery(name = DriftChangeSet.QUERY_DELETE_BY_RESOURCES, query = "" //
+    + "DELETE FROM DriftChangeSet dcs " //
+    + " WHERE dcs.resource.id IN ( :resourceIds )") })
+@Table(name = "RHQ_DRIFT_CHANGE_SET")
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_DRIFT_CHANGE_SET_ID_SEQ")
 public class DriftChangeSet implements Serializable {
     private static final long serialVersionUID = 1L;
+
+    public static final String QUERY_DELETE_BY_RESOURCES = "DriftChangeSet.deleteByResources";
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")

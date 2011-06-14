@@ -28,8 +28,28 @@ package org.rhq.core.domain.drift;
  * @author Jay Shaughnesssy
  */
 public enum DriftCategory {
-    FILE_ADDED, FILE_CHANGED, FILE_REMOVED;
+    FILE_ADDED("A"),
 
-    DriftCategory() {
+    FILE_CHANGED("C"),
+
+    FILE_REMOVED("R");
+
+    private final String code;
+
+    DriftCategory(String code) {
+        this.code = code;
+    }
+
+    String code() {
+        return code;
+    }
+
+    public static DriftCategory fromCode(String code) {
+        for (DriftCategory category : DriftCategory.values()) {
+            if (category.code.equals(code)) {
+                return category;
+            }
+        }
+        throw new IllegalArgumentException(code + " is not a DriftCategory code");
     }
 }

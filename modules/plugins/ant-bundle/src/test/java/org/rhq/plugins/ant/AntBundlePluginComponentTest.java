@@ -161,6 +161,7 @@ public class AntBundlePluginComponentTest {
         request.setBundleFilesLocation(this.bundleFilesDir);
         request.setResourceDeployment(new BundleResourceDeployment(deployment, null));
         request.setBundleManagerProvider(new MockBundleManagerProvider());
+        request.setAbsoluteDestinationDirectory(this.destDir);
         request.setRevert(true);
 
         BundleDeployResult results = plugin.deployBundle(request);
@@ -276,6 +277,7 @@ public class AntBundlePluginComponentTest {
         request.setBundleFilesLocation(this.bundleFilesDir);
         request.setResourceDeployment(new BundleResourceDeployment(deployment, null));
         request.setBundleManagerProvider(new MockBundleManagerProvider());
+        request.setAbsoluteDestinationDirectory(this.destDir);
 
         BundleDeployResult results = plugin.deployBundle(request);
 
@@ -361,6 +363,7 @@ public class AntBundlePluginComponentTest {
         request.setBundleFilesLocation(this.bundleFilesDir);
         request.setResourceDeployment(new BundleResourceDeployment(deployment, null));
         request.setBundleManagerProvider(new MockBundleManagerProvider());
+        request.setAbsoluteDestinationDirectory(this.destDir);
 
         BundleDeployResult results = plugin.deployBundle(request);
 
@@ -444,6 +447,7 @@ public class AntBundlePluginComponentTest {
         request.setBundleFilesLocation(this.bundleFilesDir);
         request.setResourceDeployment(new BundleResourceDeployment(deployment, null));
         request.setBundleManagerProvider(new MockBundleManagerProvider());
+        request.setAbsoluteDestinationDirectory(this.destDir);
 
         BundleDeployResult results = plugin.deployBundle(request);
 
@@ -473,6 +477,7 @@ public class AntBundlePluginComponentTest {
         BundlePurgeRequest purgeRequest = new BundlePurgeRequest();
         purgeRequest.setLiveResourceDeployment(new BundleResourceDeployment(deployment, null));
         purgeRequest.setBundleManagerProvider(new MockBundleManagerProvider());
+        purgeRequest.setAbsoluteDestinationDirectory(this.destDir);
 
         BundlePurgeResult purgeResults = plugin.purgeBundle(purgeRequest);
         assertResultsSuccess(purgeResults);
@@ -556,6 +561,7 @@ public class AntBundlePluginComponentTest {
         request.setBundleFilesLocation(this.bundleFilesDir);
         request.setResourceDeployment(new BundleResourceDeployment(deployment, null));
         request.setBundleManagerProvider(new MockBundleManagerProvider());
+        request.setAbsoluteDestinationDirectory(this.destDir);
         request.setCleanDeployment(clean);
 
         BundleDeployResult results = plugin.deployBundle(request);

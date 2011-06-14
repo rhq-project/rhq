@@ -21,14 +21,14 @@
         NAME="admin"
         FIRST_NAME="Super"
         LAST_NAME="User"
-        FSYSTEM="TRUE"/>
+        FSYSTEM="1"/>
    <rhq_subject
         ID="2"
         NAME="rhqadmin"
         FIRST_NAME="RHQ"
         LAST_NAME="Administrator"
         EMAIL_ADDRESS="nobody@localhost"
-        FSYSTEM="FALSE"/>
+        FSYSTEM="0"/>
    <rhq_resource_type/>
    <rhq_resource_subcat/>
    <rhq_resource_type_parents/>
@@ -48,12 +48,12 @@
    <rhq_role
          ID="1"
          NAME="Super User Role"
-         FSYSTEM="TRUE"
+         FSYSTEM="1"
          DESCRIPTION="System superuser role that provides full access to everything. This role cannot be modified."/>
    <rhq_role
          ID="2"
          NAME="All Resources Role"
-         FSYSTEM="FALSE"
+         FSYSTEM="0"
          DESCRIPTION="Provides full access to all resources in inventory. Cannot modify users, roles or server settings."/>
    <rhq_role_resource_group_map/>
    <rhq_role_ldap_group/>
@@ -108,37 +108,37 @@
    <rhq_alert_condition_log/>
    <rhq_alert_notification/>
    <rhq_system_config ID="1" PROPERTY_KEY="SERVER_VERSION" PROPERTY_VALUE="4.1.0-SNAPSHOT"
-         DEFAULT_PROPERTY_VALUE="4.1.0-SNAPSHOT" FREAD_ONLY="TRUE"/>
+         DEFAULT_PROPERTY_VALUE="4.1.0-SNAPSHOT" FREAD_ONLY="1"/>
       <rhq_system_config ID="2" PROPERTY_KEY="DB_SCHEMA_VERSION" PROPERTY_VALUE="2.107"
-           DEFAULT_PROPERTY_VALUE="2.107" FREAD_ONLY="TRUE"/>
+           DEFAULT_PROPERTY_VALUE="2.107" FREAD_ONLY="1"/>
       <rhq_system_config ID="3" PROPERTY_KEY="CAM_JAAS_PROVIDER" PROPERTY_VALUE="JDBC"
-           DEFAULT_PROPERTY_VALUE="JDBC" FREAD_ONLY="FALSE"/>
+           DEFAULT_PROPERTY_VALUE="JDBC" FREAD_ONLY="0"/>
       <rhq_system_config ID="4" PROPERTY_KEY="CAM_BASE_URL" PROPERTY_VALUE="http://localhost:7080/"
-           DEFAULT_PROPERTY_VALUE="http://localhost:7080/" FREAD_ONLY="FALSE"/>
+           DEFAULT_PROPERTY_VALUE="http://localhost:7080/" FREAD_ONLY="0"/>
       <rhq_system_config ID="9" PROPERTY_KEY="CAM_HELP_USER" PROPERTY_VALUE="web"
-           DEFAULT_PROPERTY_VALUE="web" FREAD_ONLY="FALSE"/>
+           DEFAULT_PROPERTY_VALUE="web" FREAD_ONLY="0"/>
       <rhq_system_config ID="10" PROPERTY_KEY="CAM_HELP_PASSWORD" PROPERTY_VALUE="user"
-           DEFAULT_PROPERTY_VALUE="user" FREAD_ONLY="FALSE"/>
+           DEFAULT_PROPERTY_VALUE="user" FREAD_ONLY="0"/>
      <rhq_system_config ID="32" PROPERTY_KEY="CAM_DATA_MAINTENANCE"
-           PROPERTY_VALUE="3600000" DEFAULT_PROPERTY_VALUE="3600000" FREAD_ONLY="FALSE"/>
+           PROPERTY_VALUE="3600000" DEFAULT_PROPERTY_VALUE="3600000" FREAD_ONLY="0"/>
      <rhq_system_config ID="34" PROPERTY_KEY="RT_DATA_PURGE" PROPERTY_VALUE="2678400000"
-           DEFAULT_PROPERTY_VALUE="2678400000" FREAD_ONLY="FALSE"/>
-     <rhq_system_config ID="35" PROPERTY_KEY="DATA_REINDEX_NIGHTLY" PROPERTY_VALUE="true"
-           DEFAULT_PROPERTY_VALUE="true" FREAD_ONLY="FALSE"/>
+           DEFAULT_PROPERTY_VALUE="2678400000" FREAD_ONLY="0"/>
+     <rhq_system_config ID="35" PROPERTY_KEY="DATA_REINDEX_NIGHTLY" PROPERTY_VALUE="1"
+           DEFAULT_PROPERTY_VALUE="1" FREAD_ONLY="0"/>
      <rhq_system_config ID="36" PROPERTY_KEY="ALERT_PURGE" PROPERTY_VALUE="2678400000"
-           DEFAULT_PROPERTY_VALUE="2678400000" FREAD_ONLY="FALSE"/>
+           DEFAULT_PROPERTY_VALUE="2678400000" FREAD_ONLY="0"/>
      <rhq_system_config ID="51" PROPERTY_KEY="EVENT_PURGE" PROPERTY_VALUE="1209600000"
-           DEFAULT_PROPERTY_VALUE="1209600000" FREAD_ONLY="FALSE"/>
+           DEFAULT_PROPERTY_VALUE="1209600000" FREAD_ONLY="0"/>
      <rhq_system_config ID="52" PROPERTY_KEY="AGENT_MAX_QUIET_TIME_ALLOWED" PROPERTY_VALUE="900000"
-           DEFAULT_PROPERTY_VALUE="900000" FREAD_ONLY="FALSE"/>
-     <rhq_system_config ID="53" PROPERTY_KEY="ENABLE_AGENT_AUTO_UPDATE" PROPERTY_VALUE="true"
-           DEFAULT_PROPERTY_VALUE="true" FREAD_ONLY="FALSE"/>
+           DEFAULT_PROPERTY_VALUE="900000" FREAD_ONLY="0"/>
+     <rhq_system_config ID="53" PROPERTY_KEY="ENABLE_AGENT_AUTO_UPDATE" PROPERTY_VALUE="1"
+           DEFAULT_PROPERTY_VALUE="1" FREAD_ONLY="0"/>
      <rhq_system_config ID="54" PROPERTY_KEY="TRAIT_PURGE" PROPERTY_VALUE="31536000000"
-           DEFAULT_PROPERTY_VALUE="31536000000" FREAD_ONLY="FALSE"/>
+           DEFAULT_PROPERTY_VALUE="31536000000" FREAD_ONLY="0"/>
      <rhq_system_config ID="55" PROPERTY_KEY="AVAILABILITY_PURGE" PROPERTY_VALUE="31536000000"
-           DEFAULT_PROPERTY_VALUE="31536000000" FREAD_ONLY="FALSE"/>
-     <rhq_system_config ID="56" PROPERTY_KEY="RESOURCE_GENERIC_PROPERTIES_UPGRADE" PROPERTY_VALUE="false"
-           DEFAULT_PROPERTY_VALUE="false" FREAD_ONLY="FALSE"/>
+           DEFAULT_PROPERTY_VALUE="31536000000" FREAD_ONLY="0"/>
+     <rhq_system_config ID="56" PROPERTY_KEY="RESOURCE_GENERIC_PROPERTIES_UPGRADE" PROPERTY_VALUE="0"
+           DEFAULT_PROPERTY_VALUE="0" FREAD_ONLY="0"/>
    <rhq_plugin/>
    <rhq_measurement_def/>
    <rhq_measurement_sched/>

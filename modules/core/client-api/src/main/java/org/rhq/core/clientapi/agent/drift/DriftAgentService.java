@@ -21,6 +21,7 @@ package org.rhq.core.clientapi.agent.drift;
 
 import java.util.List;
 
+import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.domain.drift.DriftFile;
 
 /**
@@ -39,5 +40,16 @@ public interface DriftAgentService {
      * @return the results of the immediate scheduling
      */
     boolean requestDriftFiles(List<DriftFile> driftFiles);
+
+    /**
+     * Requests that the agent start performing drift detection for a resource with the
+     * specified drift configuration. The interval at which the drift detection occurs is
+     * specified by the drift configuration.
+     *
+     * @param resourceId The id of the resource for which the request is being made
+     * @param driftConfiguration Specifies how and when the detection should be carried out
+     * @see DriftConfiguration
+     */
+    void scheduleDriftDetection(int resourceId, DriftConfiguration driftConfiguration);
 
 }

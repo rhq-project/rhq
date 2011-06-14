@@ -3,6 +3,7 @@ package org.rhq.core.pc.drift;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.util.List;
 import java.util.PriorityQueue;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -12,8 +13,10 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.clientapi.agent.drift.DriftAgentService;
 import org.rhq.core.clientapi.server.drift.DriftServerService;
 import org.rhq.core.domain.drift.DriftConfiguration;
+import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.pc.ContainerService;
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.agent.AgentService;

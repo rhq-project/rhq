@@ -19,11 +19,9 @@
  */
 package org.rhq.core.clientapi.agent.drift;
 
-import java.io.InputStream;
 import java.util.List;
 
 import org.rhq.core.domain.drift.DriftFile;
-import org.rhq.enterprise.server.drift.DriftManagerLocal;
 
 /**
  * The interface to agent's drift subsystem which allows the server to request
@@ -36,7 +34,6 @@ public interface DriftAgentService {
 
     /**
      * Ask the agent to send down the requested drift file content as a zip of all requested files.
-     * See {@link DriftManagerLocal#addFiles(int, long, InputStream)}.
      * 
      * @param driftFiles
      * @return the results of the immediate scheduling

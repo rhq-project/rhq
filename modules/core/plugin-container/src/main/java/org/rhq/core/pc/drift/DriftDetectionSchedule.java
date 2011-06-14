@@ -1,0 +1,62 @@
+package org.rhq.core.pc.drift;
+
+import org.rhq.core.domain.drift.DriftConfiguration;
+
+public class DriftDetectionSchedule implements Comparable<DriftDetectionSchedule> {
+
+    private int resourceId;
+
+    private DriftConfiguration driftConfig;
+
+    private long nextScan;
+
+    public DriftDetectionSchedule(int resourceId, DriftConfiguration configuration) {
+        this.resourceId = resourceId;
+        driftConfig = configuration;
+        nextScan = System.currentTimeMillis();
+    }
+
+    public int getResourceId() {
+        return resourceId;
+    }
+
+    public void updateShedule() {
+        nextScan = System.currentTimeMillis() + (driftConfig.getInterval() * 60 * 1000);
+    }
+
+    @Override
+    public int compareTo(DriftDetectionSchedule other) {
+        if (this.nextScan < other.nextScan) {
+            return -1;
+        }
+
+        if (this.nextScan > other.nextScan) {
+            return 1;
+        }
+
+        return 0;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) {
+            return true;
+        }
+
+        if (obj == null) {
+            return false;
+        }
+
+        if (obj instanceof DriftDetectionSchedule) {
+            DriftDetectionSchedule that = (DriftDetectionSchedule) obj;
+            return this.nextScan == that.nextScan;
+        }
+
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return Long.valueOf(nextScan).hashCode();
+    }
+}

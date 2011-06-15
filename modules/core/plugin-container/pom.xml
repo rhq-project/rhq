@@ -58,6 +58,12 @@
          <version>${project.version}</version>
       </dependency>
 
+      <dependency>
+          <groupId>${rhq.groupId}</groupId>
+          <artifactId>rhq-common-drift</artifactId>
+          <version>${project.version}</version>
+      </dependency>
+
       <!-- 3rd Party Deps -->
 
       <dependency>

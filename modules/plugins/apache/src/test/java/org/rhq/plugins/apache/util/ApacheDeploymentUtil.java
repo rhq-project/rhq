@@ -19,16 +19,16 @@
 
 package org.rhq.plugins.apache.util;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.Writer;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -45,6 +45,19 @@ public class ApacheDeploymentUtil {
 
     private static final Log LOG = LogFactory.getLog(ApacheDeploymentUtil.class);
     
+    private static final String VHOST = "vhost";
+    private static final String SERVER_ROOT = "server.root";
+    private static final String ADDITIONAL_DIRECTIVES = "additional.directives";
+    private static final String SERVERNAME_DIRECTIVE = "servername.directive";
+    private static final String LISTEN4 = "listen4";
+    private static final String LISTEN3 = "listen3";
+    private static final String LISTEN2 = "listen2";
+    private static final String LISTEN1 = "listen1";
+    private static final String SNMP_PORT = "snmp.port";
+    private static final String SNMP_HOST = "snmp.host";
+    private static final String DOCUMENT_ROOT = "document.root";
+    private static final String URLS = "urls";
+    
     private ApacheDeploymentUtil() {
         
     }
@@ -57,6 +70,48 @@ public class ApacheDeploymentUtil {
             public Address address4 = null;
             public String serverNameDirective = null;
             public final List<String> additionalDirectives = new ArrayList<String>();
+            
+            private void addToTokenReplacements(int ordinal, Map<String, String> tokenReplacements) {
+                String prefix = null;
+                
+                if (ordinal == 0) {
+                    prefix = "";  
+                } else {
+                   prefix = VHOST + ordinal + "."; 
+                }
+                
+                tokenReplacements.put(prefix + SERVERNAME_DIRECTIVE, serverNameDirective == null ? "" : serverNameDirective);
+                
+                String dirs = "";
+                if (!additionalDirectives.isEmpty()) {
+                    String newline = System.getProperty("line.separator");
+                    for(String dir : additionalDirectives) {
+                        dirs += dir + newline;
+                    }            
+                }
+
+                tokenReplacements.put(prefix + ADDITIONAL_DIRECTIVES, dirs);
+                
+                if (ordinal != 0) {
+                    String urls = address1.toString(false, false);
+                    if (address2 != null) {
+                        urls += " " + address2.toString(false, false);
+                    }
+                    if (address3 != null) {
+                        urls += " " + address3.toString(false, false);
+                    }
+                    if (address4 != null) {
+                        urls += " " + address4.toString(false, false);
+                    }
+                    
+                    tokenReplacements.put(prefix + URLS, urls);
+                } else {
+                    tokenReplacements.put(LISTEN1, address1 == null ? "" : address1.toString(false, false));
+                    tokenReplacements.put(LISTEN2, address2 == null ? "" : address2.toString(false, false));
+                    tokenReplacements.put(LISTEN3, address3 == null ? "" : address3.toString(false, false));
+                    tokenReplacements.put(LISTEN4, address4 == null ? "" : address4.toString(false, false));
+                }
+            }
         }
         
         public String serverRoot = null;
@@ -74,33 +129,51 @@ public class ApacheDeploymentUtil {
             mainServer.address3 = new Address(null, null, Address.NO_PORT_SPECIFIED_VALUE);
             mainServer.address4 = new Address(null, null, Address.NO_PORT_SPECIFIED_VALUE);
         }
+        
+        public Map<String, String> getTokenReplacements() {
+            HashMap<String, String> ret = new HashMap<String, String>();
+            
+            ret.put(SERVER_ROOT, serverRoot == null ? "" : serverRoot);
+            ret.put(DOCUMENT_ROOT, documentRoot == null ? "" : documentRoot);
+            ret.put(SNMP_HOST, snmpHost == null ? "" : snmpHost);
+            ret.put(SNMP_PORT, Integer.toString(snmpPort));
+            mainServer.addToTokenReplacements(0, ret);
+            vhost1.addToTokenReplacements(1, ret);
+            vhost2.addToTokenReplacements(2, ret);
+            vhost3.addToTokenReplacements(3, ret);
+            vhost4.addToTokenReplacements(4, ret);  
+            
+            return ret;
+        }
     }
     
     public static DeploymentConfig getDeploymentConfigurationFromSystemProperties(String variablesPrefix) {
         DeploymentConfig ret = new DeploymentConfig();
         
-        ret.serverRoot = System.getProperty(variablesPrefix + ".server.root");
-        ret.documentRoot = System.getProperty(variablesPrefix + ".document.root", "htdocs");
-        ret.snmpHost = System.getProperty(variablesPrefix + ".snmp.host", "localhost");
-        ret.snmpPort = Integer.parseInt(System.getProperty(variablesPrefix + ".snmp.port", "1610"));
-        ret.mainServer.address1 = HttpdAddressUtility.parseListen(System.getProperty(variablesPrefix + ".listen1"));
-        ret.mainServer.address2 = HttpdAddressUtility.parseListen(System.getProperty(variablesPrefix + ".listen2"));
-        ret.mainServer.address3 = HttpdAddressUtility.parseListen(System.getProperty(variablesPrefix + ".listen3"));
-        ret.mainServer.address4 = HttpdAddressUtility.parseListen(System.getProperty(variablesPrefix + ".listen4"));
-        ret.mainServer.serverNameDirective = System.getProperty(variablesPrefix + ".servername.directive");
+        variablesPrefix += ".";
         
-        String additionalDirectives = System.getProperty(variablesPrefix + ".additional.directives");
+        ret.serverRoot = System.getProperty(variablesPrefix + SERVER_ROOT);
+        ret.documentRoot = System.getProperty(variablesPrefix + DOCUMENT_ROOT, "htdocs");
+        ret.snmpHost = System.getProperty(variablesPrefix + SNMP_HOST, "localhost");
+        ret.snmpPort = Integer.parseInt(System.getProperty(variablesPrefix + SNMP_PORT, "1610"));
+        ret.mainServer.address1 = HttpdAddressUtility.parseListen(System.getProperty(variablesPrefix + LISTEN1));
+        ret.mainServer.address2 = HttpdAddressUtility.parseListen(System.getProperty(variablesPrefix + LISTEN2));
+        ret.mainServer.address3 = HttpdAddressUtility.parseListen(System.getProperty(variablesPrefix + LISTEN3));
+        ret.mainServer.address4 = HttpdAddressUtility.parseListen(System.getProperty(variablesPrefix + LISTEN4));
+        ret.mainServer.serverNameDirective = System.getProperty(variablesPrefix + SERVERNAME_DIRECTIVE);
+        
+        String additionalDirectives = System.getProperty(variablesPrefix + ADDITIONAL_DIRECTIVES);
         fillAdditionalDirectives(additionalDirectives, ret.mainServer.additionalDirectives);
         
-        readVHostConfigFromSystemProperties(ret.vhost1, variablesPrefix + ".vhost1");
-        readVHostConfigFromSystemProperties(ret.vhost2, variablesPrefix + ".vhost2");
-        readVHostConfigFromSystemProperties(ret.vhost3, variablesPrefix + ".vhost3");
-        readVHostConfigFromSystemProperties(ret.vhost4, variablesPrefix + ".vhost4");
+        readVHostConfigFromSystemProperties(ret.vhost1, variablesPrefix + VHOST + 1);
+        readVHostConfigFromSystemProperties(ret.vhost2, variablesPrefix + VHOST + 2);
+        readVHostConfigFromSystemProperties(ret.vhost3, variablesPrefix + VHOST + 3);
+        readVHostConfigFromSystemProperties(ret.vhost4, variablesPrefix + VHOST + 4);
 
         return ret;
     }
     
-    public static void deployConfiguration(File targetConfDirectory, List<String> configFilesOnClasspath, DeploymentConfig config) throws IOException {
+    public static void deployConfiguration(File targetConfDirectory, Collection<String> configFilesOnClasspath, DeploymentConfig config) throws IOException {
         List<File> targetFiles = new ArrayList<File>();
         for(String fileOnClassPath : configFilesOnClasspath) {
             String fileName = new File(fileOnClassPath).getName();
@@ -119,123 +192,42 @@ public class ApacheDeploymentUtil {
     
     private static void replaceTokensInConfigFiles(List<File> configFiles, DeploymentConfig config) {
         char[] buffer = new char[8192];
-        StringBuilder wholeFile = new StringBuilder();
+        
+        Map<String, String> replacements = config.getTokenReplacements();
+        
         for(File file : configFiles) {
-            BufferedReader rdr = null;
-            boolean errorOccured = false;
+            TokenReplacingReader rdr = null;
+            FileWriter wrt = null;
+            
             try {
-                rdr = new BufferedReader(new FileReader(file));
-                
-                int cnt = -1;
-              
-                while ((cnt = rdr.read(buffer)) != -1) {
-                    wholeFile.append(buffer, 0, cnt);
-                }                
-            } catch (FileNotFoundException e) {
-                LOG.error("File '" + file + "' not found.", e); 
-                errorOccured = true;
+            rdr = new TokenReplacingReader(new FileReader(file), replacements);
+            
+            File tmp = File.createTempFile("apache-deployment-util", null);
+            
+            wrt = new FileWriter(tmp);
+            
+            int cnt = -1;
+            
+            while ((cnt = rdr.read(buffer)) != -1) {
+                wrt.write(buffer, 0, cnt);
+            }
+            
+            wrt.close();
+            
+            tmp.renameTo(file);
             } catch (IOException e) {
-                LOG.error("Error while reading file '" + file + "'.", e);
-                errorOccured = true;
-            }
-
-            if (rdr != null) {
-                try {
-                    rdr.close();
-                } catch (IOException e) {
-                    LOG.error("Failed to close the file '" + file + "'.");
-                }
-            }
-
-            if (errorOccured) {
-                continue;
-            }
-            
-            String newFileContents = replaceTokens(wholeFile, config);
-            
-            Writer wrt = null;
-            try {
-                wrt = new FileWriter(file);
-                
-                wrt.write(newFileContents);
-            } catch (IOException e) {
-                LOG.error("Error while writing to the configuration file '" + file + "'.", e);
-            } finally {
-                try {
-                    wrt.close();
-                } catch (IOException e) {
-                    LOG.error("Failed to close the file '" + file + "'.", e);
-                }
+                LOG.error("Error while replacing the tokens in file '" + file + "'.", e);
             }
         }
     }
 
-    private static String replaceTokens(CharSequence input, DeploymentConfig config) {
-        String s = input.toString();
-             
-        s = s.replaceAll("\\$SERVER_ROOT", config.serverRoot);
-        s = s.replaceAll("\\$DOCUMENT_ROOT", config.documentRoot);
-        s = s.replaceAll("\\$SNMP_HOST", config.snmpHost);
-        s = s.replaceAll("\\$SNMP_PORT", Integer.toString(config.snmpPort));
-        s = s.replaceAll("\\$LISTEN_1", config.mainServer.address1.toString());
-        s = s.replaceAll("\\$LISTEN_2", config.mainServer.address2.toString());
-        s = s.replaceAll("\\$LISTEN_3", config.mainServer.address3.toString());
-        s = s.replaceAll("\\$LISTEN_4", config.mainServer.address4.toString());
-        s = s.replaceAll("\\$SNMP_HOST", config.snmpHost);
-        
-        s = replaceVHostTokens(s, 0, config.mainServer);
-        s = replaceVHostTokens(s, 1, config.vhost1);
-        s = replaceVHostTokens(s, 2, config.vhost2);
-        s = replaceVHostTokens(s, 3, config.vhost3);
-        s = replaceVHostTokens(s, 4, config.vhost4);
-        
-        return s;
-    }
-    
-    private static String replaceVHostTokens(String input, int vhostNumber, DeploymentConfig.VHost vhost) {
-        String serverNameToken = getVhostOrMainServerToken(vhostNumber, "SERVER_NAME_DIRECTIVE");
-        String urlsToken = getVhostOrMainServerToken(vhostNumber, "URLS");
-        String additionalDirectivesToken = getVhostOrMainServerToken(vhostNumber, "ADDITIONAL_DIRECTIVES");
-        
-        input = input.replaceAll(serverNameToken, vhost.serverNameDirective == null ? "" : vhost.serverNameDirective);
-        
-        if (vhostNumber > 0) {
-            String urls = vhost.address1.toString(false, false);
-            if (vhost.address2 != null) {
-                urls += " " + vhost.address2.toString(false, false);
-            }
-            if (vhost.address3 != null) {
-                urls += " " + vhost.address3.toString(false, false);
-            }
-            if (vhost.address4 != null) {
-                urls += " " + vhost.address4.toString(false, false);
-            }
-            
-            input = input.replaceAll(urlsToken, urls);
-        }
-        
-        String additionalDirectives = "";
-        if (!vhost.additionalDirectives.isEmpty()) {
-            String newline = System.getProperty("line.separator");
-            for(String dir : vhost.additionalDirectives) {
-                additionalDirectives += dir + newline;
-            }            
-        }
-
-        input = input.replaceAll(additionalDirectivesToken, additionalDirectives);
-
-        return input;
-    }
-    
-    private static String getVhostOrMainServerToken(int vhostNumber, String tokenBody) {
-        return "\\$" + (vhostNumber == 0 ? "" : ("VHOST" + vhostNumber + "_")) + tokenBody;
-    }
-    
     private static void readVHostConfigFromSystemProperties(DeploymentConfig.VHost vhost, String prefix) {
-        String addrsString = System.getProperty(prefix + ".urls");
+        prefix += ".";
+        
+        String addrsString = System.getProperty(prefix + URLS);
         
         if (addrsString == null) {
-            throw new IllegalStateException("The system property '" + prefix + ".urls' doesn't exist. It is needed to define the vhost.");
+            throw new IllegalStateException("The system property '" + prefix + "urls' doesn't exist. It is needed to define the vhost.");
         }
         
         String[] addrs = addrsString.split("[ \t]+");
@@ -252,12 +244,12 @@ public class ApacheDeploymentUtil {
             vhost.address1 = Address.parse(addrs[0], null);
             break;
         default:
-            throw new IllegalStateException("The system property '" + prefix + ".urls' specified " + addrs.length + " addresses. Only 1-4 addresses are supported.");
+            throw new IllegalStateException("The system property '" + prefix + "urls' specified " + addrs.length + " addresses. Only 1-4 addresses are supported.");
         }
         
-        vhost.serverNameDirective = System.getProperty(prefix + ".servername.directive");
+        vhost.serverNameDirective = System.getProperty(prefix + SERVERNAME_DIRECTIVE);
         
-        String additionalDirectives = System.getProperty(prefix + ".additional.directives");
+        String additionalDirectives = System.getProperty(prefix + ADDITIONAL_DIRECTIVES);
         fillAdditionalDirectives(additionalDirectives, vhost.additionalDirectives);
     }
     

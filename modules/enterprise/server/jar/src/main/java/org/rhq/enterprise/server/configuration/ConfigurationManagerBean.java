@@ -64,6 +64,9 @@ import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.composite.ConfigurationUpdateComposite;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationFormat;
+import org.rhq.core.domain.configuration.definition.PropertyDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionEnumeration;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.group.AbstractGroupConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.GroupPluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.GroupResourceConfigurationUpdate;
@@ -678,7 +681,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         }
 
         Query countQuery = PersistenceUtility.createCountQuery(entityManager,
-            ResourceConfigurationUpdate.QUERY_FIND_BY_GROUP_ID_AND_STATUS);
+                ResourceConfigurationUpdate.QUERY_FIND_BY_GROUP_ID_AND_STATUS);
         countQuery.setParameter("groupId", compatibleGroup.getId());
         countQuery.setParameter("status", ConfigurationUpdateStatus.INPROGRESS);
         long count = (Long) countQuery.getSingleResult();
@@ -1620,7 +1623,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
     public Configuration getConfigurationFromDefaultTemplate(ConfigurationDefinition definition) {
         ConfigurationDefinition managedDefinition = entityManager.find(ConfigurationDefinition.class, definition
-            .getId());
+                .getId());
         Configuration configuration = managedDefinition.getDefaultTemplate().getConfiguration();
         ConfigurationMaskingUtility.maskConfiguration(configuration, managedDefinition);
         return configuration;
@@ -1992,7 +1995,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         pc.initDefaultOrderingField("modifiedTime", PageOrdering.DESC);
 
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
-            GroupPluginConfigurationUpdate.QUERY_FIND_BY_GROUP_ID, pc);
+                GroupPluginConfigurationUpdate.QUERY_FIND_BY_GROUP_ID, pc);
         Query countQuery = PersistenceUtility.createCountQuery(entityManager,
             GroupPluginConfigurationUpdate.QUERY_FIND_BY_GROUP_ID);
         query.setParameter("groupId", groupId);
@@ -2373,6 +2376,34 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         }
 
         return updates;
+    }
+
+    public ConfigurationDefinition getOptionsForConfigurationDefinition(ConfigurationDefinition def) {
+
+
+        for (Map.Entry<String,PropertyDefinition> entry :  def.getPropertyDefinitions().entrySet()) {
+            PropertyDefinition pd = entry.getValue();
+
+            if (pd instanceof PropertyDefinitionSimple) {
+                PropertyDefinitionSimple pds = (PropertyDefinitionSimple) pd;
+                handlePDS(pds);
+
+            }
+            // TODO consider more cases
+        }
+
+        return def;
+    }
+
+    private void handlePDS(PropertyDefinitionSimple pds) {
+
+        if (pds.getOptionsSource()!=null) {
+            // TODO evaluate the source parameters
+        }
+        // TODO next is a dummy.
+        PropertyDefinitionEnumeration foo = new PropertyDefinitionEnumeration("main-server-group","main-server-group");
+        pds.getEnumeratedValues().add(foo);
+
     }
 
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

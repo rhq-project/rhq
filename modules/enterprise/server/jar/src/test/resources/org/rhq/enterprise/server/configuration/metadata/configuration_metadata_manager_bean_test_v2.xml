@@ -67,7 +67,7 @@
                     <c:simple-property name="myListMember"
                                        type="double"
                                        default="3.14"
-                                       description="PI"/>                    
+                                       description="PI"/>
                 </c:map-property>
             </c:list-property>
         </plugin-configuration>
@@ -89,4 +89,16 @@
             </c:map-property>
         </plugin-configuration>
     </server>
+    <server name="OptionSourceTest">
+            <plugin-configuration>
+                <c:simple-property name="prop1">
+                    <c:option-source target="resource" expression="resourceType=DomainDeployment,plugin=as7"
+                                  linkToTarget="false"/>
+                </c:simple-property>
+                <c:simple-property name="prop2">
+                    <c:option-source target="resource" expression="*"/>
+                </c:simple-property>
+            </plugin-configuration>
+    </server>
+
 </plugin>

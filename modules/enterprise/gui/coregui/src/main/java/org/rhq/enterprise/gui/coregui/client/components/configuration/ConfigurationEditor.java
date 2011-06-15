@@ -350,9 +350,25 @@ public class ConfigurationEditor extends LocatableVLayout {
                         }
                     });
             }
-        } else {
-            reload();
         }
+
+        if (configurationDefinition!=null ) {
+            configurationService.getOptionValuesForConfigDefinition(configurationDefinition,new AsyncCallback<ConfigurationDefinition>() {
+                @Override
+                public void onFailure(Throwable throwable) {
+                    showError(throwable);
+                }
+
+                @Override
+                public void onSuccess(ConfigurationDefinition result) {
+                    if (loadHandler!=null)
+                        loadHandler.loadedConfigurationDefinition(result);
+                }
+            });
+        }
+
+
+        reload();
     }
 
     public void reload() {

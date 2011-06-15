@@ -11,6 +11,8 @@ import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.composite.ResourceConfigurationComposite;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionEnumeration;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.group.GroupPluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.GroupResourceConfigurationUpdate;
 import org.rhq.core.domain.criteria.GroupPluginConfigurationUpdateCriteria;
@@ -86,4 +88,10 @@ public interface ConfigurationGWTService extends RemoteService {
 
     void deleteGroupResourceConfigurationUpdate(Integer groupId, Integer[] groupResourceConfigUpdateIds)
         throws RuntimeException;
+
+    /**
+     * GWT-RPC service  asynchronous (client-side) interface
+     * @see ConfigurationGWTService
+     */
+    ConfigurationDefinition getOptionValuesForConfigDefinition(ConfigurationDefinition definition);
 }

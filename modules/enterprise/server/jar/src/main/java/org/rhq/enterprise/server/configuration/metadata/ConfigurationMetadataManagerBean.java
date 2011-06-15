@@ -420,6 +420,9 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
 
                 // handle <defaultValue> [0..1]
                 existingPDS.setDefaultValue(newPDS.getDefaultValue());
+
+                // handle <c:source>
+                existingPDS.setOptionsSource(newPDS.getOptionsSource());
             } else {
                 // other type
                 replaceProperty(existingProperty, newProperty);

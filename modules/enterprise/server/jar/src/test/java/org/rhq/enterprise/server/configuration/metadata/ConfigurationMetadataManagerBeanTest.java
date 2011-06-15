@@ -39,6 +39,7 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertyGroupDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyOptionsSource;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.test.AssertUtils;
@@ -53,7 +54,7 @@ import static java.util.Arrays.asList;
  * is the original version and the other is the upgraded version. In order to avoid inter-dependencies between test
  * methods, a separate plugin configuration should be used for each test method. A separate resource type is declared
  * for each test, further documenting and delinating where each configuration is used. In the test methods, the
- * original and updated coniguration definitions are initialized with an xpath expression that specifies the owning
+ * original and updated configuration definitions are initialized with an xpath expression that specifies the owning
  * resource type.
  */
 public class ConfigurationMetadataManagerBeanTest extends AbstractEJB3Test {
@@ -174,6 +175,39 @@ public class ConfigurationMetadataManagerBeanTest extends AbstractEJB3Test {
 
         assertPropertyDefinitionMatches("Expected property who is a child of map to get updated and remain in the map",
             expected, actual, ignoredProperties);
+    }
+
+    @Test
+    public void updatePropertyDefinitionOptionSource() {
+        initConfigDefs("servers[name='OptionSourceTest']", "OptionSourceTest");
+
+        // check initial entry
+        PropertyDefinitionSimple prop1 = (PropertyDefinitionSimple) originalConfigDef.get("prop1");
+        assert prop1 !=null;
+//        assert prop1.getEnumeratedValues().size()==1 : "Did not find my one option";  TODO
+        PropertyOptionsSource source = prop1.getOptionsSource();
+        assert source !=null : "PropertyOptionSource was not persisted";
+        assert source.getFilter().equals("*.jdbc");
+
+        PropertyDefinitionSimple prop2 = (PropertyDefinitionSimple) originalConfigDef.get("prop2");
+        assert prop2 !=null;
+        assert prop2.getEnumeratedValues().size()==0;
+        assert prop2.getOptionsSource()==null;
+        // now check the upgrades
+        prop1 = (PropertyDefinitionSimple) updatedConfigDef.get("prop1");
+        assert prop1 !=null;
+        assert prop1.getEnumeratedValues().size()==0 : "Found an option value. ";
+        source = prop1.getOptionsSource();
+        assert source !=null : "PropertyOptionSource was not persisted";
+        assert source.getFilter()==null : "Assumed filter to be null, but was " + source.getFilter();
+
+        prop2 = (PropertyDefinitionSimple) updatedConfigDef.get("prop2");
+        assert prop2 !=null;
+        assert prop2.getEnumeratedValues().size()==0;
+        assert prop2.getOptionsSource()!=null;
+        assert prop2.getOptionsSource().getExpression().equals("*");
+
+
     }
 
     private void initConfigDefs(String path, String configName) {

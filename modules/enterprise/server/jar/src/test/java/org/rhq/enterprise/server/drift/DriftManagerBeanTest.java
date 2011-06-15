@@ -33,13 +33,19 @@ import org.testng.annotations.Test;
 import org.rhq.core.clientapi.agent.drift.DriftAgentService;
 import org.rhq.core.clientapi.server.drift.DriftServerService;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
+import org.rhq.core.domain.drift.Drift;
+import org.rhq.core.domain.drift.DriftCategory;
+import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.domain.drift.DriftFile;
+import org.rhq.core.domain.drift.DriftFileStatus;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TestServerCommunicationsService;
@@ -82,6 +88,8 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
     public void beforeMethod() throws Exception {
         prepareScheduler();
 
+        deleteDriftFiles();
+
         newResource = createNewResource();
     }
 
@@ -96,7 +104,65 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
 
     @Test(enabled = ENABLE_TESTS)
     public void testStoreChangeSet() throws Exception {
-        driftManager.storeChangeSet(newResource.getId(), File.createTempFile("drift-file", ".test"));
+        // the initial changeset should not create any drift, just should request a drift file "0"
+        driftManager.storeChangeSet(newResource.getId(), File.createTempFile("drift-cs-1", ".test"));
+
+        DriftChangeSetCriteria c = new DriftChangeSetCriteria();
+        c.addFilterResourceId(newResource.getId());
+        c.fetchDrifts(true);
+        List<DriftChangeSet> changeSets = driftManager.findDriftChangeSetsByCriteria(overlord, c);
+        assertEquals(1, changeSets.size());
+        DriftChangeSet changeSet = changeSets.get(0);
+        assertEquals(0, changeSet.getVersion());
+        assertEquals(0, changeSet.getDrifts().size());
+
+        DriftFile driftFile = driftManager.getDriftFile(overlord, "0");
+        assertNotNull(driftFile);
+        assertEquals(DriftFileStatus.REQUESTED, driftFile.getStatus());
+
+        // the second change set should report drift
+        driftManager.storeChangeSet(newResource.getId(), File.createTempFile("drift-cs-2", ".test"));
+        c.addSortVersion(PageOrdering.ASC);
+        changeSets = driftManager.findDriftChangeSetsByCriteria(overlord, c);
+        assertEquals(2, changeSets.size());
+        changeSet = changeSets.get(0);
+        assertEquals(0, changeSet.getVersion());
+        assertEquals(0, changeSet.getDrifts().size());
+        changeSet = changeSets.get(1);
+        assertEquals(1, changeSet.getVersion());
+        assertEquals(1, changeSet.getDrifts().size());
+        Drift drift = changeSet.getDrifts().iterator().next();
+        assertEquals("0", drift.getOldDriftFile().getSha256());
+        assertEquals("1", drift.getNewDriftFile().getSha256());
+        assertEquals(DriftCategory.FILE_CHANGED, drift.getCategory());
+
+        driftFile = driftManager.getDriftFile(overlord, "1");
+        assertNotNull(driftFile);
+        assertEquals(DriftFileStatus.REQUESTED, driftFile.getStatus());
+    }
+
+    private void deleteDriftFiles() throws Exception {
+        getTransactionManager().begin();
+        EntityManager em = getEntityManager();
+
+        try {
+            try {
+                // wipe out any test DriftFiles (the test files have sha256 0,1,...)
+                for (int i = 0, numDeleted = 1; (numDeleted > 0); ++i) {
+                    numDeleted = getEntityManager().createQuery("delete from DriftFile where sha256 = '" + i + "'")
+                        .executeUpdate();
+                }
+            } catch (Exception e) {
+                System.out.println("CANNOT PREPARE TEST: " + e);
+                getTransactionManager().rollback();
+                throw e;
+            }
+
+            em.flush();
+            getTransactionManager().commit();
+        } finally {
+            em.close();
+        }
     }
 
     private Resource createNewResource() throws Exception {
@@ -193,8 +259,8 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
 
         @Override
         public boolean requestDriftFiles(List<DriftFile> driftFiles) {
-            // TODO Auto-generated method stub
-            return false;
+            // pretend we actually processed the request
+            return true;
         }
 
         @Override

@@ -26,7 +26,10 @@ import java.io.InputStream;
 import java.io.Serializable;
 import java.sql.Blob;
 import java.sql.SQLException;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -38,6 +41,7 @@ import javax.persistence.Lob;
 import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
+import javax.persistence.OneToMany;
 import javax.persistence.PrePersist;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
@@ -81,6 +85,9 @@ public class DriftChangeSet implements Serializable {
     @JoinColumn(name = "RESOURCE_ID", referencedColumnName = "ID", nullable = false)
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     private Resource resource;
+
+    @OneToMany(mappedBy = "changeSet", cascade = { CascadeType.ALL })
+    private Set<Drift> drifts = new LinkedHashSet<Drift>();
 
     protected DriftChangeSet() {
     }
@@ -149,6 +156,14 @@ public class DriftChangeSet implements Serializable {
 
     public void setResource(Resource resource) {
         this.resource = resource;
+    }
+
+    public Set<Drift> getDrifts() {
+        return drifts;
+    }
+
+    public void setDrifts(Set<Drift> drifts) {
+        this.drifts = drifts;
     }
 
     @Override

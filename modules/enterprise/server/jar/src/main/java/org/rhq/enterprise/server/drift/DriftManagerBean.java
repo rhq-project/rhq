@@ -113,11 +113,12 @@ public class DriftManagerBean implements DriftManagerLocal {
     @Override
     public void storeChangeSet(int resourceId, File changeSetZip) throws Exception {
         DriftChangeSet driftChangeSet = null;
-        Resource resource = null;
+        Resource resource = entityManager.find(Resource.class, resourceId);
+        if (null == resource) {
+            throw new IllegalArgumentException("Resource not found: " + resourceId);
+        }
 
         try {
-            resource = entityManager.find(Resource.class, resourceId);
-
             DriftChangeSetCriteria c = new DriftChangeSetCriteria();
             c.addFilterResourceId(resourceId);
             List<DriftChangeSet> changeSets = findDriftChangeSetsByCriteria(subjectManager.getOverlord(), c);
@@ -132,8 +133,13 @@ public class DriftManagerBean implements DriftManagerLocal {
 
             // TODO whole thing  will change to use the parser utility when it's available, just use a dummy entry for now
             List<DriftChangeSetEntry> entries = new ArrayList<DriftChangeSetEntry>();
-            entries
-                .add(new DriftChangeSetEntry(0, "/foo/bar", DriftCategory.FILE_ADDED, null, String.valueOf(version)));
+            if (0 == version) {
+                entries.add(new DriftChangeSetEntry(0, "/foo/bar", DriftCategory.FILE_ADDED, null, String
+                    .valueOf(version)));
+            } else {
+                entries.add(new DriftChangeSetEntry(0, "/foo/bar", DriftCategory.FILE_CHANGED, String
+                    .valueOf(version - 1), String.valueOf(version)));
+            }
 
             for (DriftChangeSetEntry entry : entries) {
                 DriftFile oldDriftFile = getDriftFile(entry.getOldSha256(), emptyDriftFiles);
@@ -149,11 +155,15 @@ public class DriftManagerBean implements DriftManagerLocal {
             }
 
             // send a message to the agent requesting the empty DriftFile content
-            AgentClient agentClient = agentManager.getAgentClient(subjectManager.getOverlord(), resourceId);
-            DriftAgentService service = agentClient.getDriftAgentService();
-            if (service.requestDriftFiles(emptyDriftFiles)) {
-                for (DriftFile driftFile : emptyDriftFiles) {
-                    driftFile.setStatus(DriftFileStatus.REQUESTED);
+            if (!emptyDriftFiles.isEmpty()) {
+
+                AgentClient agentClient = agentManager.getAgentClient(subjectManager.getOverlord(), resourceId);
+                DriftAgentService service = agentClient.getDriftAgentService();
+                if (service.requestDriftFiles(emptyDriftFiles)) {
+
+                    for (DriftFile driftFile : emptyDriftFiles) {
+                        driftFile.setStatus(DriftFileStatus.REQUESTED);
+                    }
                 }
             }
 
@@ -180,10 +190,9 @@ public class DriftManagerBean implements DriftManagerLocal {
             return result;
         }
 
-        try {
-            result = entityManager.find(DriftFile.class, sha256);
-        } catch (Exception e) {
-            // if the DriftFile content is not yet in the db, then it needs to be fetched from the agent
+        result = entityManager.find(DriftFile.class, sha256);
+        // if the DriftFile is not yet in the db, then it needs to be fetched from the agent
+        if (null == result) {
             result = persistDriftFile(new DriftFile(sha256));
             emptyDriftFiles.add(result);
         }
@@ -195,8 +204,7 @@ public class DriftManagerBean implements DriftManagerLocal {
     public DriftFile persistDriftFile(DriftFile driftFile) {
 
         entityManager.persist(driftFile);
-        DriftFile result = entityManager.find(DriftFile.class, driftFile.getSha256());
-        return result;
+        return driftFile;
     }
 
     @Override
@@ -204,6 +212,9 @@ public class DriftManagerBean implements DriftManagerLocal {
     public void persistDriftFileData(DriftFile driftFile, InputStream data) throws Exception {
 
         DriftFile df = entityManager.find(DriftFile.class, driftFile.getSha256());
+        if (null == df) {
+            throw new IllegalArgumentException("DriftFile not found: " + driftFile.getSha256());
+        }
         df.setData(Hibernate.createBlob(new BufferedInputStream(data)));
         df.setStatus(DriftFileStatus.LOADED);
     }
@@ -246,6 +257,12 @@ public class DriftManagerBean implements DriftManagerLocal {
         CriteriaQueryRunner<DriftChangeSet> queryRunner = new CriteriaQueryRunner<DriftChangeSet>(criteria, generator,
             entityManager);
         PageList<DriftChangeSet> result = queryRunner.execute();
+        return result;
+    }
+
+    @Override
+    public DriftFile getDriftFile(Subject subject, String sha256) {
+        DriftFile result = entityManager.find(DriftFile.class, sha256);
         return result;
     }
 

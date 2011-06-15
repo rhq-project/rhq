@@ -56,7 +56,9 @@ public interface DriftManagerLocal {
      */
     void addFiles(int resourceId, long zipSize, InputStream zipStream) throws Exception;
 
-    public PageList<DriftChangeSet> findDriftChangeSetsByCriteria(Subject subject, DriftChangeSetCriteria criteria);
+    DriftFile getDriftFile(Subject subject, String sha256);
+
+    PageList<DriftChangeSet> findDriftChangeSetsByCriteria(Subject subject, DriftChangeSetCriteria criteria);
 
     /**
      * This method stores the provided change-set file for the resource. The version will be incremented based

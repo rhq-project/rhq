@@ -40,6 +40,7 @@ public class DriftChangeSetCriteria extends Criteria {
     private Integer filterResourceId; // needs override        
     private String filterVersion;
 
+    private boolean fetchDrifts;
     private boolean fetchResource;
 
     private PageOrdering sortVersion;
@@ -64,6 +65,10 @@ public class DriftChangeSetCriteria extends Criteria {
 
     public void addFilterResourceId(Integer filterResourceId) {
         this.filterResourceId = filterResourceId;
+    }
+
+    public void fetchDrifts(boolean fetchDrifts) {
+        this.fetchDrifts = fetchDrifts;
     }
 
     public void fetchResource(boolean fetchResource) {

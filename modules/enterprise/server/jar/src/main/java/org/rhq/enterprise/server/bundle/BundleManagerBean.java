@@ -304,6 +304,14 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     public BundleDestination createBundleDestination(Subject subject, int bundleId, String name, String description,
         String destBaseDirName, String deployDir, Integer groupId) throws Exception {
 
+        // if there is a .. in the path that looks suspicious, reject it. (note the : is to reject things like C:..\..\dir on windows)
+        // this won't allow everything (such as directories that start with ".." like "..abc" or "/abc/..def") but if you are naming
+        // your directories in those strange ways, you deserve what you get
+        if (deployDir.startsWith("..") || deployDir.matches(".*[/:\\\\]\\.\\..*")) {
+            throw new IllegalArgumentException(
+                "Destination directories are not allowed to have '..' parent directory path elements");
+        }
+
         Bundle bundle = entityManager.find(Bundle.class, bundleId);
         if (null == bundle) {
             throw new IllegalArgumentException("Invalid bundleId [" + bundleId + "]");

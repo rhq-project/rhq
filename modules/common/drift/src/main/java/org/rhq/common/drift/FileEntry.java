@@ -53,6 +53,13 @@ public class FileEntry implements Serializable {
     private FileEntry() {
     }
 
+    public FileEntry(String newSHA, String oldSHA, String file, String type) {
+        this.newSHA = newSHA;
+        this.oldSHA = oldSHA;
+        this.file = file;
+        this.type = DriftCategory.fromCode(type);
+    }
+
     public String getFile() {
         return file;
     }

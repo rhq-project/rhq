@@ -96,6 +96,9 @@
                                   linkToTarget="false"/>
                 </c:simple-property>
                 <c:simple-property name="prop2">
+                    <c:property-options>
+                        <c:option value="value2"/>
+                    </c:property-options>
                     <c:option-source target="resource" expression="*"/>
                 </c:simple-property>
             </plugin-configuration>

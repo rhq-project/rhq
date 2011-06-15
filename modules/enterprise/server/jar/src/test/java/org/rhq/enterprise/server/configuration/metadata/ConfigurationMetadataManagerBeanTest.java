@@ -181,29 +181,17 @@ public class ConfigurationMetadataManagerBeanTest extends AbstractEJB3Test {
     public void updatePropertyDefinitionOptionSource() {
         initConfigDefs("servers[name='OptionSourceTest']", "OptionSourceTest");
 
-        // check initial entry
-        PropertyDefinitionSimple prop1 = (PropertyDefinitionSimple) originalConfigDef.get("prop1");
-        assert prop1 !=null;
-//        assert prop1.getEnumeratedValues().size()==1 : "Did not find my one option";  TODO
-        PropertyOptionsSource source = prop1.getOptionsSource();
-        assert source !=null : "PropertyOptionSource was not persisted";
-        assert source.getFilter().equals("*.jdbc");
-
-        PropertyDefinitionSimple prop2 = (PropertyDefinitionSimple) originalConfigDef.get("prop2");
-        assert prop2 !=null;
-        assert prop2.getEnumeratedValues().size()==0;
-        assert prop2.getOptionsSource()==null;
         // now check the upgrades
-        prop1 = (PropertyDefinitionSimple) updatedConfigDef.get("prop1");
+        PropertyDefinitionSimple prop1 = (PropertyDefinitionSimple) updatedConfigDef.get("prop1");
         assert prop1 !=null;
         assert prop1.getEnumeratedValues().size()==0 : "Found an option value. ";
-        source = prop1.getOptionsSource();
+        PropertyOptionsSource source = prop1.getOptionsSource();
         assert source !=null : "PropertyOptionSource was not persisted";
         assert source.getFilter()==null : "Assumed filter to be null, but was " + source.getFilter();
 
-        prop2 = (PropertyDefinitionSimple) updatedConfigDef.get("prop2");
+        PropertyDefinitionSimple prop2 = (PropertyDefinitionSimple) updatedConfigDef.get("prop2");
         assert prop2 !=null;
-        assert prop2.getEnumeratedValues().size()==0;
+        assert prop2.getEnumeratedValues().size()==1;
         assert prop2.getOptionsSource()!=null;
         assert prop2.getOptionsSource().getExpression().equals("*");
 
@@ -239,6 +227,7 @@ public class ConfigurationMetadataManagerBeanTest extends AbstractEJB3Test {
 
     private void updateConfigDef() {
         ConfigurationMetadataManagerLocal configMetadataMgr = LookupUtil.getConfigurationMetadataManager();
+        // The next line updates originalConfigDef with the content of updatedConfigDef
         configMetadataMgr.updateConfigurationDefinition(updatedConfigDef, originalConfigDef);
     }
 

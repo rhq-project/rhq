@@ -39,4 +39,9 @@ public class ChangeSetReaderImpl implements ChangeSetReader {
 
         return dirEntry;
     }
+
+    @Override
+    public void close() throws IOException {
+        reader.close();
+    }
 }

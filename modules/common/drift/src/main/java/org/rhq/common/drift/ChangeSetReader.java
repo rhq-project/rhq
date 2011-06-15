@@ -6,4 +6,6 @@ public interface ChangeSetReader {
 
     DirectoryEntry readDirectoryEntry() throws IOException;
 
+    void close() throws IOException;
+
 }

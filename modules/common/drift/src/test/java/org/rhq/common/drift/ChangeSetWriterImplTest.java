@@ -11,6 +11,8 @@ import static org.apache.commons.io.FileUtils.deleteDirectory;
 import static org.apache.commons.io.IOUtils.lineIterator;
 import static org.apache.commons.io.IOUtils.readLines;
 import static org.rhq.common.drift.FileEntry.addedFileEntry;
+import static org.rhq.common.drift.FileEntry.changedFileEntry;
+import static org.rhq.common.drift.FileEntry.removedFileEntry;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
@@ -36,11 +38,45 @@ public class ChangeSetWriterImplTest {
         File metaDataFile = writer.getMetaDataFile();
         List<String> lines = readLines(new FileInputStream(metaDataFile));
 
-        assertEquals(lines.size(), 3, "Expected to find two lines in " + metaDataFile.getPath());
+        assertEquals(lines.size(), 3, "Expected to find three lines in " + metaDataFile.getPath());
         assertEquals(lines.get(0), "myresource/conf 1", "The first line for a directory entry should specify the " +
             "directory path followed by the number of lines in the entry.");
 
         assertFileEntryEquals(lines.get(1), "a34ef6 0 myconf.conf A");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void writeDirectoryEntryWithRemovedFile() throws Exception {
+        ChangeSetWriterImpl writer = new ChangeSetWriterImpl(changesetsDir, "removed-file-test");
+
+        writer.writeDirectoryEntry(new DirectoryEntry("myresource/conf").add(
+            removedFileEntry("myconf.conf", "a34ef6")));
+        writer.close();
+
+        File metaDataFile = writer.getMetaDataFile();
+        List<String> lines = readLines(new FileInputStream(metaDataFile));
+
+        assertEquals(lines.size(), 3, "Expected to find three lines in" + metaDataFile.getPath());
+        assertEquals(lines.get(0), "myresource/conf 1", "The first line for a directory entry should specify the " +
+            "directory path followed by the number of lines in the entry.");
+
+        assertFileEntryEquals(lines.get(1), "0 a34ef6 myconf.conf R");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void writeDirectoryEntryWithChangedFile() throws Exception {
+        ChangeSetWriterImpl writer = new ChangeSetWriterImpl(changesetsDir, "changed-file-test");
+
+        writer.writeDirectoryEntry(new DirectoryEntry("myresource/conf").add(
+            changedFileEntry("myconf.conf", "a34ef6", "c2d55f")));
+        writer.close();
+
+        File metaDataFile = writer.getMetaDataFile();
+        List<String> lines = readLines(new FileInputStream(metaDataFile));
+
+        assertFileEntryEquals(lines.get(1), "c2d55f a34ef6 myconf.conf C");
     }
 
 //    @Test

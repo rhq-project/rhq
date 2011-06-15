@@ -6,10 +6,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
 
-import org.rhq.core.domain.drift.DriftCategory;
-
-import static org.rhq.core.domain.drift.DriftCategory.FILE_ADDED;
-
 public class ChangeSetWriterImpl implements ChangeSetWriter {
 
     private Writer metaDataWriter;
@@ -30,9 +26,13 @@ public class ChangeSetWriterImpl implements ChangeSetWriter {
                         "\n");
                     break;
                 case FILE_CHANGED:
+                    metaDataWriter.write(entry.getNewSHA() + " " + entry.getOldSHA() + " " + entry.getFile() + " " +
+                        entry.getType().code() + "\n");
                     break;
                 case FILE_REMOVED:
-
+                    metaDataWriter.write("0 " + entry.getOldSHA() + " " + entry.getFile() + " " +
+                        entry.getType().code() + "\n");
+                    break;
             }
         }
         metaDataWriter.write("\n");

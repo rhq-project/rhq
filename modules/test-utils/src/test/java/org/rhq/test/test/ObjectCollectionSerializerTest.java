@@ -174,7 +174,7 @@ public class ObjectCollectionSerializerTest {
 
         ByteArrayInputStream in = new ByteArrayInputStream(getSerializedTestObjectTree());
 
-        List<Object> objects = serializer.deserialize(in);
+        List<?> objects = serializer.deserialize(in);
 
         assert objects != null && objects.equals(getTestObjectTree()) : "The deserialized objects don't match the expected results";
     }

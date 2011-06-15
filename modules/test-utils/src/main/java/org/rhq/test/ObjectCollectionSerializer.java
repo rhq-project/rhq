@@ -24,6 +24,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -132,6 +133,16 @@ public class ObjectCollectionSerializer {
         out.append("</inventory-dump>\n");
     }
     
+    public List<?> deserialize(InputStream inputStream) throws IOException, XMLStreamException, ClassNotFoundException, JAXBException {
+        XMLStreamReader rdr = XMLInputFactory.newFactory().createXMLStreamReader(inputStream);
+        return deserialize(rdr);
+    }
+    
+    public List<?> deserialize(Reader inputReader) throws IOException, XMLStreamException, ClassNotFoundException, JAXBException {
+        XMLStreamReader rdr = XMLInputFactory.newFactory().createXMLStreamReader(inputReader);
+        return deserialize(rdr);
+    }
+
     /**
      * This deserializes given input stream into a list of objects.
      * <p>
@@ -145,33 +156,31 @@ public class ObjectCollectionSerializer {
      * @throws ClassNotFoundException 
      * @throws JAXBException 
      */
-    public List<Object> deserialize(InputStream inputStream) throws IOException, XMLStreamException, ClassNotFoundException, JAXBException {
-        XMLStreamReader rdr = XMLInputFactory.newFactory().createXMLStreamReader(inputStream);
-
+    public List<?> deserialize(XMLStreamReader reader) throws IOException, XMLStreamException, ClassNotFoundException, JAXBException {
         List<Object> ret = new ArrayList<Object>();
         
         boolean inObjects = false;
         
         Unmarshaller unmarshaller = null;
         
-        while (rdr.hasNext()) {
-            rdr.next();
+        while (reader.hasNext()) {
+            reader.next();
             
-            switch(rdr.getEventType()) {
+            switch(reader.getEventType()) {
             case XMLStreamReader.START_ELEMENT:
-                if ("classes-used".equals(rdr.getName().getLocalPart())) {
-                    Set<Class<?>> classesUsed = deserializedClassesToUse(rdr);
+                if ("classes-used".equals(reader.getName().getLocalPart())) {
+                    Set<Class<?>> classesUsed = deserializedClassesToUse(reader);
                     JAXBContext context = JAXBContext.newInstance(classesUsed.toArray(new Class<?>[classesUsed.size()]));
                     unmarshaller = context.createUnmarshaller();                    
-                } else if ("objects".equals(rdr.getName().getLocalPart())) {
+                } else if ("objects".equals(reader.getName().getLocalPart())) {
                     inObjects = true;
                 } else if (inObjects) {
-                    Object o = unmarshaller.unmarshal(rdr);
+                    Object o = unmarshaller.unmarshal(reader);
                     ret.add(o);
                 }
                 break;
             case XMLStreamReader.END_ELEMENT:
-                if ("objects".equals(rdr.getName().getLocalPart())) {
+                if ("objects".equals(reader.getName().getLocalPart())) {
                     inObjects = false;
                 }
                 break;

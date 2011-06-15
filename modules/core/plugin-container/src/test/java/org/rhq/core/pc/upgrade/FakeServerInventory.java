@@ -26,11 +26,13 @@ package org.rhq.core.pc.upgrade;
 import static org.testng.Assert.fail;
 
 import java.lang.reflect.Field;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -81,6 +83,13 @@ public class FakeServerInventory {
         this.failing = failing;
     }
 
+    public synchronized void prepopulateInventory(Resource platform, Collection<Resource> topLevelServers) {
+        this.platform = platform;
+        for (Resource res : topLevelServers) {
+            fakePersist(res, InventoryStatus.COMMITTED, new HashSet<String>());
+        }
+    }
+    
     public synchronized CustomAction mergeInventoryReport(final InventoryStatus requiredInventoryStatus) {
         return new CustomAction("updateServerSideInventory") {
             public Object invoke(Invocation invocation) throws Throwable {
@@ -248,6 +257,9 @@ public class FakeServerInventory {
         }
         if (persisted == null) {
             persisted = new Resource();
+            if (agentSideResource.getId() != 0 && counter < agentSideResource.getId()) {
+                counter = agentSideResource.getId() - 1;
+            }
             persisted.setId(++counter);
             persisted.setUuid(agentSideResource.getUuid());
             resourceStore.put(persisted.getUuid(), persisted);

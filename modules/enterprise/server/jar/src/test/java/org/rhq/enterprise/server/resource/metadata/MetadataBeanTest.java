@@ -1,7 +1,10 @@
 package org.rhq.enterprise.server.resource.metadata;
 
+import static org.rhq.core.clientapi.shared.PluginDescriptorUtil.loadPluginDescriptor;
+
 import java.io.File;
 import java.net.URL;
+import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -36,9 +39,6 @@ import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
 
-import static org.rhq.core.clientapi.shared.PluginDescriptorUtil.toPluginDescriptor;
-import static org.rhq.core.clientapi.shared.PluginDescriptorUtil.loadPluginDescriptor;
-
 public class MetadataBeanTest extends AbstractEJB3Test {
 
     private static List<String> plugins = new ArrayList<String>();
@@ -70,9 +70,18 @@ public class MetadataBeanTest extends AbstractEJB3Test {
     }
 
     protected void setupDB() throws Exception {
-        DatabaseConnection dbunitConnection = new DatabaseConnection(getConnection());
-        setDbType(dbunitConnection);
-        DatabaseOperation.CLEAN_INSERT.execute(dbunitConnection, getDataSet());
+        Connection connection = null;
+
+        try {
+            connection = getConnection();
+            DatabaseConnection dbunitConnection = new DatabaseConnection(connection);
+            setDbType(dbunitConnection);
+            DatabaseOperation.CLEAN_INSERT.execute(dbunitConnection, getDataSet());
+        } finally {
+            if (connection != null) {
+                connection.close();
+            }
+        }
     }
 
     private void setDbType(IDatabaseConnection connection) throws Exception {
@@ -106,7 +115,6 @@ public class MetadataBeanTest extends AbstractEJB3Test {
     }
 
     protected void createPlugin(String pluginFileName, String version, String descriptorFileName) throws Exception {
-//        URL descriptorURL = getClass().getResource(descriptorFileName);
         URL descriptorURL = getDescriptorURL(descriptorFileName);
         PluginDescriptor pluginDescriptor = loadPluginDescriptor(descriptorURL);
         String pluginFilePath = getCurrentWorkingDir() + "/" + pluginFileName + ".jar";
@@ -132,25 +140,6 @@ public class MetadataBeanTest extends AbstractEJB3Test {
         String dir = getClass().getSimpleName();
         return getClass().getResource(dir + "/" + descriptor);
     }
-    
-//    protected void createPlugin(String pluginFileName, String version, String descriptor) throws Exception {
-//        PluginDescriptor pluginDescriptor = toPluginDescriptor(descriptor);
-//        String pluginFilePath = getCurrentWorkingDir() + "/" + pluginFileName + ".jar";
-//        File pluginFile = new File(pluginFilePath);
-//
-//        Plugin plugin = new Plugin(pluginDescriptor.getName(), pluginFilePath);
-//        plugin.setDisplayName(pluginDescriptor.getName());
-//        plugin.setEnabled(true);
-//        plugin.setDescription(pluginDescriptor.getDescription());
-//        plugin.setAmpsVersion(getAmpsVersion(pluginDescriptor));
-//        plugin.setVersion(pluginDescriptor.getVersion());
-//        plugin.setMD5(MessageDigestGenerator.getDigestString(pluginFile));
-//
-//        SubjectManagerLocal subjectMgr = LookupUtil.getSubjectManager();
-//        PluginManagerLocal pluginMgr = LookupUtil.getPluginManager();
-//
-//        pluginMgr.registerPlugin(subjectMgr.getOverlord(), plugin, pluginDescriptor, null, true);
-//    }
 
     private String getPluginWorkDir() throws Exception {
         return getCurrentWorkingDir() + "/work";
@@ -212,13 +201,11 @@ public class MetadataBeanTest extends AbstractEJB3Test {
             errors = "Failed to find the following " + propertyName + "(s) for type " + resourceTypeName +
                 ": " + missing;
         }
-        
+
         if (unexpected.size() > 0) {
             errors += "\nFailed to find the following " + propertyName + "(s) for type " + resourceTypeName +
                 ": " + unexpected;
         }
-        
-        
     }
 
     private boolean contains(ResourceType type, String propertyName, String expected) throws Exception {
@@ -231,5 +218,4 @@ public class MetadataBeanTest extends AbstractEJB3Test {
         }
         return false;
     }
-        
 }

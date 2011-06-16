@@ -1,16 +1,14 @@
 package org.rhq.core.domain.drift;
 
+import static java.util.Collections.emptyList;
+
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
-import org.rhq.core.domain.configuration.PropertySimple;
-
-import static java.util.Collections.emptyList;
 
 public class DriftConfiguration {
 
@@ -76,6 +74,10 @@ public class DriftConfiguration {
 
     public DriftConfiguration(Configuration c) {
         configuration = c;
+    }
+
+    public Configuration getConfiguration() {
+        return configuration;
     }
 
     public String getName() {

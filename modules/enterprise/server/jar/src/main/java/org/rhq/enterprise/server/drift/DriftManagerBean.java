@@ -53,9 +53,12 @@ import org.rhq.common.drift.DirectoryEntry;
 import org.rhq.common.drift.FileEntry;
 import org.rhq.core.clientapi.agent.drift.DriftAgentService;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.common.EntityContext;
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
+import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.DriftFileStatus;
 import org.rhq.core.domain.resource.Resource;
@@ -95,7 +98,7 @@ public class DriftManagerBean implements DriftManagerLocal {
     private EntityManager entityManager;
 
     @Override
-    public void addChangeset(int resourceId, long zipSize, InputStream zipStream) throws Exception {
+    public void addChangeSet(int resourceId, long zipSize, InputStream zipStream) throws Exception {
 
         Connection connection = factory.createConnection();
         Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
@@ -171,11 +174,14 @@ public class DriftManagerBean implements DriftManagerLocal {
                             AgentClient agentClient = agentManager.getAgentClient(subjectManager.getOverlord(),
                                 resourceId);
                             DriftAgentService service = agentClient.getDriftAgentService();
-                            if (service.requestDriftFiles(emptyDriftFiles)) {
-
-                                for (DriftFile driftFile : emptyDriftFiles) {
-                                    driftFile.setStatus(DriftFileStatus.REQUESTED);
+                            try {
+                                if (service.requestDriftFiles(emptyDriftFiles)) {
+                                    for (DriftFile driftFile : emptyDriftFiles) {
+                                        driftFile.setStatus(DriftFileStatus.REQUESTED);
+                                    }
                                 }
+                            } catch (Exception e) {
+                                log.warn(" Unable to inform agent of drift file request  [" + emptyDriftFiles + "]", e);
                             }
                         }
                     } catch (Exception e) {
@@ -268,6 +274,69 @@ public class DriftManagerBean implements DriftManagerLocal {
             }
 
             return true;
+        }
+    }
+
+    @Override
+    public void deleteDriftConfiguration(Subject subject, EntityContext entityContext, String driftConfigName) {
+
+        switch (entityContext.getType()) {
+        case Resource:
+            int resourceId = entityContext.getResourceId();
+            Resource resource = entityManager.find(Resource.class, resourceId);
+            if (null == resource) {
+                throw new IllegalArgumentException("Resource not found: " + resourceId);
+            }
+
+            for (Iterator<Configuration> i = resource.getDriftConfigurations().iterator(); i.hasNext();) {
+                DriftConfiguration dc = new DriftConfiguration(i.next());
+                if (dc.getName().equals(driftConfigName)) {
+                    i.remove();
+                    // do I need to do this to let Hibernate know there was change?
+                    // resource.setDriftConfigurations(resource.getDriftConfigurations());
+
+                    AgentClient agentClient = agentManager.getAgentClient(subjectManager.getOverlord(), resourceId);
+                    DriftAgentService service = agentClient.getDriftAgentService();
+                    try {
+                        service.unscheduleDriftDetection(resourceId, dc);
+                    } catch (Exception e) {
+                        log.warn(" Unable to inform agent of unscheduled drift detection  [" + dc + "]", e);
+                    }
+
+                    break;
+                }
+            }
+        }
+    }
+
+    @Override
+    public void updateDriftConfiguration(Subject subject, EntityContext entityContext, DriftConfiguration driftConfig) {
+        switch (entityContext.getType()) {
+        case Resource:
+            int resourceId = entityContext.getResourceId();
+            Resource resource = entityManager.find(Resource.class, resourceId);
+            if (null == resource) {
+                throw new IllegalArgumentException("Resource not found: " + resourceId);
+            }
+
+            for (Iterator<Configuration> i = resource.getDriftConfigurations().iterator(); i.hasNext();) {
+                DriftConfiguration dc = new DriftConfiguration(i.next());
+                if (dc.getName().equals(driftConfig.getName())) {
+                    i.remove();
+                    break;
+                }
+            }
+
+            resource.getDriftConfigurations().add(driftConfig.getConfiguration());
+            resource.setDriftConfigurations(resource.getDriftConfigurations());
+
+            AgentClient agentClient = agentManager.getAgentClient(subjectManager.getOverlord(), resourceId);
+            DriftAgentService service = agentClient.getDriftAgentService();
+            try {
+                service.scheduleDriftDetection(resourceId, driftConfig);
+            } catch (Exception e) {
+                log.warn(" Unable to inform agent of unscheduled drift detection  [" + driftConfig + "]", e);
+            }
         }
     }
 

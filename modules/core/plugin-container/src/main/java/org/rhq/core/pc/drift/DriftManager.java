@@ -126,4 +126,16 @@ public class DriftManager extends AgentService implements DriftAgentService, Con
         return false;
     }
 
+    @Override
+    public void unscheduleDriftDetection(int resourceId, DriftConfiguration driftConfiguration) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void updateDriftDetection(int resourceId, DriftConfiguration driftConfiguration) {
+        // TODO Auto-generated method stub
+
+    }
+
 }

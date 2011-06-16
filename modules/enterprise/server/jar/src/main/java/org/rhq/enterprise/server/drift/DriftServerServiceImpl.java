@@ -30,7 +30,7 @@ public class DriftServerServiceImpl implements DriftServerService {
     public void sendChangesetZip(int resourceId, long zipSize, InputStream zipStream) {
         try {
             DriftManagerLocal driftManager = getDriftManager();
-            driftManager.addChangeset(resourceId, zipSize, zipStream);
+            driftManager.addChangeSet(resourceId, zipSize, zipStream);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

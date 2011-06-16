@@ -25,8 +25,10 @@ import java.io.InputStream;
 import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
 import org.rhq.core.domain.drift.DriftChangeSet;
+import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.util.PageList;
 
@@ -43,7 +45,7 @@ public interface DriftManagerLocal {
      * @param zipStream The change-set zip file stream
      * @throws Exception
      */
-    void addChangeset(int resourceId, long zipSize, InputStream zipStream) throws Exception;
+    void addChangeSet(int resourceId, long zipSize, InputStream zipStream) throws Exception;
 
     /**
      * This method initiates an out-of-band (JMS-Based) server-side pull of the drift file zip. Upon successful
@@ -56,8 +58,29 @@ public interface DriftManagerLocal {
      */
     void addFiles(int resourceId, long zipSize, InputStream zipStream) throws Exception;
 
+    /**
+     * Remove the provided driftConfig (identified by name) on the specified entityContext.
+     * Agents, if available, will be notified of the change. 
+     * @param subject
+     * @param entityContext
+     * @param driftConfig
+     */
+    void deleteDriftConfiguration(Subject subject, EntityContext entityContext, String driftConfigName);
+
+    /**
+     * Simple get method for a DriftFile. Does not return the content.
+     * @param subject
+     * @param sha256
+     * @return The DriftFile sans content.
+     */
     DriftFile getDriftFile(Subject subject, String sha256);
 
+    /**
+     * Standard criteria based fetch method
+     * @param subject
+     * @param criteria
+     * @return The DriftChangeSets matching the criteria
+     */
     PageList<DriftChangeSet> findDriftChangeSetsByCriteria(Subject subject, DriftChangeSetCriteria criteria);
 
     /**
@@ -80,6 +103,15 @@ public interface DriftManagerLocal {
      * @throws Exception
      */
     void storeFiles(File filesZip) throws Exception;
+
+    /**
+     * Update the provided driftConfig (identified by name) on the specified EntityContext.  If it exists it will be replaced. If not it will
+     * be added.  Agents, if available, will be notified of the change. 
+     * @param subject
+     * @param entityContext
+     * @param driftConfig
+     */
+    void updateDriftConfiguration(Subject subject, EntityContext entityContext, DriftConfiguration driftConfig);
 
     /**
      * SUPPORTS DRIFT RHQ SERVER PLUGIN 

@@ -65,4 +65,24 @@ public interface DriftAgentService {
      */
     void scheduleDriftDetection(int resourceId, DriftConfiguration driftConfiguration);
 
+    /**
+     * Requests that the agent stop performing the specified drift detection for the resource. (In
+     * effect, a remove operation).
+     *
+     * @param resourceId The id of the resource for which the request is being made
+     * @param driftConfiguration The doomed drift config
+     * @see DriftConfiguration
+     */
+    void unscheduleDriftDetection(int resourceId, DriftConfiguration driftConfiguration);
+
+    /**
+     * Requests that the agent update its processing of the specified driftConfiguration.  The filters
+     * are unchanged, but something else may have changed (enablement/interval, etc).
+     *
+     * @param resourceId The id of the resource for which the request is being made
+     * @param driftConfiguration The updated driftConfiguration.
+     * @see DriftConfiguration
+     */
+    void updateDriftDetection(int resourceId, DriftConfiguration driftConfiguration);
+
 }

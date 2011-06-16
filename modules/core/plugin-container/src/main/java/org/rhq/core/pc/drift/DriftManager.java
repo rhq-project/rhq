@@ -31,9 +31,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Con
 
     private ScheduledThreadPoolExecutor driftThreadPool;
 
-    private PriorityQueue<DriftDetectionSchedule> schedules;
-
-    private ReentrantReadWriteLock schedulesLock;
+    private ScheduleQueue schedulesQueue = new ScheduleQueueImpl();
 
     public DriftManager() {
         super(DriftAgentService.class);
@@ -48,26 +46,26 @@ public class DriftManager extends AgentService implements DriftAgentService, Con
 
     @Override
     public void initialize() {
-        schedules = new PriorityQueue<DriftDetectionSchedule>();
-        driftThreadPool = new ScheduledThreadPoolExecutor(5);
-        schedulesLock = new ReentrantReadWriteLock();
+        DriftDetector driftDetector = new DriftDetector();
+        driftDetector.setScheduleQueue(schedulesQueue);
+        //driftDetector.setChangeSetManager();
 
+        driftThreadPool = new ScheduledThreadPoolExecutor(5);
         driftThreadPool.scheduleAtFixedRate(new DriftDetector(), 30, 1800, TimeUnit.SECONDS);
     }
 
     @Override
     public void shutdown() {
+        driftThreadPool.shutdown();
+        driftThreadPool = null;
+
+        schedulesQueue.clear();
+        schedulesQueue = null;
     }
 
     @Override
     public void scheduleDriftDetection(int resourceId, DriftConfiguration driftConfiguration) {
-        Lock writeLock = schedulesLock.writeLock();
-        try {
-            schedulesLock.writeLock().lock();
-            schedules.offer(new DriftDetectionSchedule(resourceId, driftConfiguration));
-        } finally {
-            schedulesLock.writeLock().unlock();
-        }
+        schedulesQueue.enqueue(new DriftDetectionSchedule(resourceId, driftConfiguration));
     }
 
     public void sendSnapshotReport(int resourceId, SnapshotHandle handle) throws Exception {

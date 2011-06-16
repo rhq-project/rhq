@@ -2,7 +2,6 @@ package org.rhq.core.pc.drift;
 
 import java.io.File;
 
-import org.apache.commons.io.FileUtils;
 import org.jmock.Expectations;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
@@ -74,9 +73,9 @@ public class DriftDetectorTest extends JMockTest {
         final DriftDetectionSchedule schedule = new DriftDetectionSchedule(1, driftConfig);
 
         context.checking(new Expectations() {{
-            allowing(queue).nextSchedule(); will(returnValue(schedule));
+            allowing(queue).dequeue(); will(returnValue(schedule));
 
-            allowing(queue).offer(with(any(DriftDetectionSchedule.class)));
+            allowing(queue).enqueue(with(any(DriftDetectionSchedule.class)));
 
             allowing(changeSetMgr).getChangeSetReader(schedule.getResourceId(), schedule.getDriftConfiguration());
             will(returnValue(new DriftDetectionSchedule(1, driftConfig)));

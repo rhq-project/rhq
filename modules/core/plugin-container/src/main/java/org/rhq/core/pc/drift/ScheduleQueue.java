@@ -2,8 +2,10 @@ package org.rhq.core.pc.drift;
 
 public interface ScheduleQueue {
 
-    DriftDetectionSchedule nextSchedule();
+    DriftDetectionSchedule dequeue();
 
-    boolean offer(DriftDetectionSchedule schedule);
+    boolean enqueue(DriftDetectionSchedule schedule);
+
+    void clear();
 
 }

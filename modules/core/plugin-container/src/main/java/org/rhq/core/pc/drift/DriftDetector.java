@@ -2,10 +2,7 @@ package org.rhq.core.pc.drift;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 import java.util.Stack;
 
 import org.apache.commons.io.DirectoryWalker;
@@ -41,7 +38,7 @@ public class DriftDetector implements Runnable {
 
     @Override
     public void run() {
-        DriftDetectionSchedule schedule = scheduleQueue.nextSchedule();
+        DriftDetectionSchedule schedule = scheduleQueue.dequeue();
         ChangeSetWriter writer = changeSetMgr.getChangeSetWriter(schedule.getResourceId(),
             schedule.getDriftConfiguration());
 
@@ -54,7 +51,7 @@ public class DriftDetector implements Runnable {
         }
 
         schedule.updateShedule();
-        scheduleQueue.offer(schedule);
+        scheduleQueue.enqueue(schedule);
     }
 
     private String relativePath(File basedir, File file) {

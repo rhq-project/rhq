@@ -364,8 +364,7 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
             }
 
             public boolean add(Property e) {
-                properties.put(e.getName(), e);
-                e.setConfiguration(Configuration.this);
+                put(e);
                 return true; //we always allow adding an element even if it is already present
             }
 
@@ -374,7 +373,7 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
             }
 
             public boolean containsAll(Collection<?> c) {
-                return false;
+                return properties.values().containsAll(c);
             }
 
             public boolean addAll(Collection<? extends Property> c) {

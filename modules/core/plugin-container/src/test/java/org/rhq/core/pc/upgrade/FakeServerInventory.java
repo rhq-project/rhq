@@ -84,8 +84,9 @@ public class FakeServerInventory {
     }
 
     public synchronized void prepopulateInventory(Resource platform, Collection<Resource> topLevelServers) {
-        this.platform = platform;
+        this.platform = fakePersist(platform, InventoryStatus.COMMITTED, new HashSet<String>());
         for (Resource res : topLevelServers) {
+            res.setParentResource(this.platform);
             fakePersist(res, InventoryStatus.COMMITTED, new HashSet<String>());
         }
     }
@@ -277,8 +278,10 @@ public class FakeServerInventory {
 
         Resource parent = agentSideResource.getParentResource();
         if (parent != null && parent != Resource.ROOT) {
-            persisted.setParentResource(fakePersist(agentSideResource.getParentResource(), requiredInventoryStatus,
-                inProgressUUIds));
+            parent = fakePersist(agentSideResource.getParentResource(), requiredInventoryStatus,
+                inProgressUUIds);
+            persisted.setParentResource(parent);
+            parent.getChildResources().add(persisted);
         } else {
             persisted.setParentResource(parent);
         }

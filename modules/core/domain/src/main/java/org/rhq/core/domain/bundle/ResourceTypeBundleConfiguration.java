@@ -36,7 +36,7 @@ import org.rhq.core.domain.configuration.PropertySimple;
  * the bundle destination base directory definitions (the base locations where bundles can be deployed for resources that
  * are of the given type). Rather than expect users of this object to know the internal properties stored in the config, this
  * object has strongly-typed methods to extract the properties into more easily consumable POJOs, such as
- * {@link #getBundleDestinationBaseDirectory()} and {@link #addBundleDestinationBaseDirectory(String, String)}.
+ * {@link #getBundleDestinationBaseDirectory()} and {@link #addBundleDestinationBaseDirectory(String, String, String, String)}.
  * 
  * @author John Mazzitelli
  */
@@ -48,6 +48,7 @@ public class ResourceTypeBundleConfiguration implements Serializable {
     private static final String BUNDLE_DEST_BASE_DIR_NAME_NAME = "name";
     private static final String BUNDLE_DEST_BASE_DIR_VALUE_CONTEXT_NAME = "valueContext";
     private static final String BUNDLE_DEST_BASE_DIR_VALUE_NAME_NAME = "valueName";
+    private static final String BUNDLE_DEST_BASE_DIR_DESCRIPTION_NAME = "description";
 
     // this is the actual bundle configuration - see ResourceType.bundleConfiguration
     private Configuration bundleConfiguration;
@@ -102,7 +103,9 @@ public class ResourceTypeBundleConfiguration implements Serializable {
             String name = map.getSimpleValue(BUNDLE_DEST_BASE_DIR_NAME_NAME, null);
             String valueContext = map.getSimpleValue(BUNDLE_DEST_BASE_DIR_VALUE_CONTEXT_NAME, null);
             String valueName = map.getSimpleValue(BUNDLE_DEST_BASE_DIR_VALUE_NAME_NAME, null);
-            BundleDestinationBaseDirectory bdbd = new BundleDestinationBaseDirectory(name, valueContext, valueName);
+            String description = map.getSimpleValue(BUNDLE_DEST_BASE_DIR_DESCRIPTION_NAME, null);
+            BundleDestinationBaseDirectory bdbd = new BundleDestinationBaseDirectory(name, valueContext, valueName,
+                description);
             retVal.add(bdbd);
         }
 
@@ -118,14 +121,16 @@ public class ResourceTypeBundleConfiguration implements Serializable {
      *                     in {@link BundleDestinationBaseDirectory.Context}
      * @param valueName the name of the property found in the given context where the value
      *                  of the base directory is
+     * @param description optional explanation for what this destination location is 
      */
-    public void addBundleDestinationBaseDirectory(String name, String valueContext, String valueName) {
+    public void addBundleDestinationBaseDirectory(String name, String valueContext, String valueName, String description) {
         if (this.bundleConfiguration == null) {
             throw new NullPointerException("bundleConfiguration == null");
         }
 
         // we create this just to make sure the context and value are valid. An exception will be thrown if they are not.
-        BundleDestinationBaseDirectory destBaseDir = new BundleDestinationBaseDirectory(name, valueContext, valueName);
+        BundleDestinationBaseDirectory destBaseDir = new BundleDestinationBaseDirectory(name, valueContext, valueName,
+            description);
 
         PropertyList propertyList = this.bundleConfiguration.getList(BUNDLE_DEST_BASE_DIR_LIST_NAME);
         if (propertyList == null) {
@@ -138,10 +143,18 @@ public class ResourceTypeBundleConfiguration implements Serializable {
             .getValueContext().name());
         PropertySimple valueNameProp = new PropertySimple(BUNDLE_DEST_BASE_DIR_VALUE_NAME_NAME, destBaseDir
             .getValueName());
+
         PropertyMap map = new PropertyMap(BUNDLE_DEST_BASE_DIR_LIST_ITEM_NAME);
         map.put(nameProp);
         map.put(valueContextProp);
         map.put(valueNameProp);
+
+        if (destBaseDir.getDescription() != null) {
+            PropertySimple descriptionProp = new PropertySimple(BUNDLE_DEST_BASE_DIR_DESCRIPTION_NAME, destBaseDir
+                .getDescription());
+            map.put(descriptionProp);
+        }
+
         propertyList.add(map);
         return;
     }
@@ -200,14 +213,16 @@ public class ResourceTypeBundleConfiguration implements Serializable {
         private final String name;
         private final Context valueContext;
         private final String valueName;
+        private final String description;
 
-        public BundleDestinationBaseDirectory(String name, String valueContext, String valueName) {
+        public BundleDestinationBaseDirectory(String name, String valueContext, String valueName, String description) {
             if (name == null) {
                 throw new NullPointerException("name == null");
             }
             this.name = name;
             this.valueContext = Context.valueOf(valueContext); // will throw an exception if its not valid, which is what we want
             this.valueName = valueName;
+            this.description = description;
         }
 
         /**
@@ -233,11 +248,19 @@ public class ResourceTypeBundleConfiguration implements Serializable {
             return valueName;
         }
 
+        /**
+         * @return an explanation for what this directory location is
+         */
+        public String getDescription() {
+            return description;
+        }
+
         @Override
         public String toString() {
             StringBuilder builder = new StringBuilder();
             builder.append("BundleDestinationBaseDirectory [name=").append(name).append(", valueContext=").append(
-                valueContext).append(", valueName=").append(valueName).append("]");
+                valueContext).append(", valueName=").append(valueName).append(", description=").append(description)
+                .append("]");
             return builder.toString();
         }
 

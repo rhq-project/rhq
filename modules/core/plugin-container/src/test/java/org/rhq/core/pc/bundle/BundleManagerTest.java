@@ -401,22 +401,22 @@ public class BundleManagerTest {
             // measurement trait value, or strictly on the root file system (using no resource specific value)
             ResourceTypeBundleConfiguration rtbc = new ResourceTypeBundleConfiguration(new Configuration());
             rtbc.addBundleDestinationBaseDirectory(BUNDLE_CONFIG_NAME_FS, Context.fileSystem.name(),
-                BUNDLE_CONFIG_CONTEXT_VALUE_FS);
+                BUNDLE_CONFIG_CONTEXT_VALUE_FS, null);
             serverTypeFS.setResourceTypeBundleConfiguration(rtbc);
 
             rtbc = new ResourceTypeBundleConfiguration(new Configuration());
             rtbc.addBundleDestinationBaseDirectory(BUNDLE_CONFIG_NAME_PC, Context.pluginConfiguration.name(),
-                BUNDLE_CONFIG_CONTEXT_VALUE_PC);
+                BUNDLE_CONFIG_CONTEXT_VALUE_PC, null);
             serverTypePC.setResourceTypeBundleConfiguration(rtbc);
 
             rtbc = new ResourceTypeBundleConfiguration(new Configuration());
             rtbc.addBundleDestinationBaseDirectory(BUNDLE_CONFIG_NAME_RC, Context.resourceConfiguration.name(),
-                BUNDLE_CONFIG_CONTEXT_VALUE_RC);
+                BUNDLE_CONFIG_CONTEXT_VALUE_RC, null);
             serverTypeRC.setResourceTypeBundleConfiguration(rtbc);
 
             rtbc = new ResourceTypeBundleConfiguration(new Configuration());
             rtbc.addBundleDestinationBaseDirectory(BUNDLE_CONFIG_NAME_MT, Context.measurementTrait.name(),
-                BUNDLE_CONFIG_CONTEXT_VALUE_MT);
+                BUNDLE_CONFIG_CONTEXT_VALUE_MT, null);
             serverTypeMT.setResourceTypeBundleConfiguration(rtbc);
 
             // each different resource needs to specify where exactly it wants the bundles deployed

@@ -18,14 +18,14 @@
  */
 package org.rhq.enterprise.gui.coregui.client.bundle.deploy;
 
-import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
-import com.smartgwt.client.widgets.form.fields.SelectItem;
+import com.smartgwt.client.widgets.form.fields.RadioGroupItem;
 import com.smartgwt.client.widgets.form.fields.TextAreaItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
@@ -119,12 +119,10 @@ public class GetDestinationStep extends AbstractWizardStep {
                 }
             });
 
-            final SelectItem destBaseDirItem = new SelectItem("destBaseDir", MSG
+            final RadioGroupItem destBaseDirItem = new RadioGroupItem("destBaseDir", MSG
                 .view_bundle_deployWizard_getDest_destBaseDirName());
             destBaseDirItem.setWidth(300);
             destBaseDirItem.setRequired(true);
-            destBaseDirItem.setAllowEmptyValue(false);
-            destBaseDirItem.setMultiple(false);
             destBaseDirItem.setDisabled(true);
             destBaseDirItem.addChangedHandler(new ChangedHandler() {
                 public void onChanged(ChangedEvent event) {
@@ -166,20 +164,23 @@ public class GetDestinationStep extends AbstractWizardStep {
                             new AsyncCallback<ResourceTypeBundleConfiguration>() {
                                 public void onSuccess(ResourceTypeBundleConfiguration result) {
                                     // populate the base location drop down with all the possible dest base directories
-                                    String[] menuItems = null;
+                                    LinkedHashMap<String, String> menuItems = null;
                                     if (result != null) {
                                         Set<BundleDestinationBaseDirectory> baseDirs;
                                         baseDirs = result.getBundleDestinationBaseDirectories();
                                         if (baseDirs != null && baseDirs.size() > 0) {
-                                            menuItems = new String[baseDirs.size()];
-                                            int i = 0;
+                                            String defaultSelectedItem = null;
+                                            menuItems = new LinkedHashMap<String, String>(baseDirs.size());
                                             for (BundleDestinationBaseDirectory baseDir : baseDirs) {
-                                                menuItems[i++] = baseDir.getName();
+                                                menuItems.put(baseDir.getName(), "<b>" + baseDir.getName() + "</b>: "
+                                                    + baseDir.getDescription());
+                                                if (defaultSelectedItem == null) {
+                                                    defaultSelectedItem = baseDir.getName();
+                                                }
                                             }
-                                            Arrays.sort(menuItems); // just so they are ordered in the drop down list
                                             destBaseDirItem.setValueMap(menuItems);
-                                            destBaseDirItem.setValue(menuItems[0]);
-                                            dest.setDestinationBaseDirectoryName(menuItems[0]);
+                                            destBaseDirItem.setValue(defaultSelectedItem);
+                                            dest.setDestinationBaseDirectoryName(defaultSelectedItem);
                                         }
                                     }
 

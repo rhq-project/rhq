@@ -542,7 +542,9 @@ public class PluginMetadataParser {
                         String name = destBaseDir.getName();
                         String valueContext = destBaseDir.getValueContext();
                         String valueName = destBaseDir.getValueName();
-                        bundleConfiguration.addBundleDestinationBaseDirectory(name, valueContext, valueName);
+                        String description = destBaseDir.getDescription();
+                        bundleConfiguration.addBundleDestinationBaseDirectory(name, valueContext, valueName,
+                            description);
                     }
                     resourceType.setResourceTypeBundleConfiguration(bundleConfiguration);
                 }

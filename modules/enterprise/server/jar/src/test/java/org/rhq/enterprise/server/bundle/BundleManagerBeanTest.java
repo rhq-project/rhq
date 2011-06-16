@@ -1053,7 +1053,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
             ResourceTypeBundleConfiguration rtbc = new ResourceTypeBundleConfiguration(new Configuration());
             rtbc.addBundleDestinationBaseDirectory(TEST_DESTBASEDIR_NAME,
                 ResourceTypeBundleConfiguration.BundleDestinationBaseDirectory.Context.pluginConfiguration.name(),
-                TEST_BUNDLE_DESTBASEDIR_PROP);
+                TEST_BUNDLE_DESTBASEDIR_PROP, null);
             resourceType.setResourceTypeBundleConfiguration(rtbc);
             resourceType.setPluginConfigurationDefinition(pcDef);
 

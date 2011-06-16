@@ -33,7 +33,7 @@
 '>
  <!ENTITY bundleTarget '
       <bundle-target>
-         <destination-base-dir name="Root File System">
+         <destination-base-dir name="Root File System" description="The top root directory on the platform (/)" >
             <value-context>fileSystem</value-context>
             <value-name>/</value-name>
          </destination-base-dir>

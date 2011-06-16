@@ -258,11 +258,11 @@
       </content>
 
       <bundle-target>
-         <destination-base-dir name="Install Directory">
+         <destination-base-dir name="Install Directory" description="The top directory where the JBossAS Server is installed. (i.e. the value found in the 'JBoss Home Directory' connection property)">
             <value-context>pluginConfiguration</value-context>
             <value-name>jbossHomeDir</value-name>
          </destination-base-dir>
-         <destination-base-dir name="Configuration Set Directory">
+         <destination-base-dir name="Profile Directory" description="The profile configuration directory such as 'default', 'minimal', 'production' or similar location. (i.e. the value found in the 'Configuration Path' connection property)">
             <value-context>pluginConfiguration</value-context>
             <value-name>configurationPath</value-name>
          </destination-base-dir>

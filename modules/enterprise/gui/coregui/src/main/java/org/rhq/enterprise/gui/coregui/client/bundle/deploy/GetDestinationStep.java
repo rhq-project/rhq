@@ -175,8 +175,12 @@ public class GetDestinationStep extends AbstractWizardStep {
                                             String defaultSelectedItem = null;
                                             menuItems = new LinkedHashMap<String, String>(baseDirs.size());
                                             for (BundleDestinationBaseDirectory baseDir : baseDirs) {
-                                                menuItems.put(baseDir.getName(), "<b>" + baseDir.getName() + "</b>: "
-                                                    + baseDir.getDescription());
+                                                if (baseDir.getDescription() != null) {
+                                                    menuItems.put(baseDir.getName(), "<b>" + baseDir.getName()
+                                                        + "</b>: " + baseDir.getDescription());
+                                                } else {
+                                                    menuItems.put(baseDir.getName(), baseDir.getName());
+                                                }
                                                 if (defaultSelectedItem == null) {
                                                     defaultSelectedItem = baseDir.getName();
                                                 }

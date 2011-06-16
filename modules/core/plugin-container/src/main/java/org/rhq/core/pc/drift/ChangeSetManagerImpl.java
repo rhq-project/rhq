@@ -21,12 +21,23 @@ public class ChangeSetManagerImpl implements ChangeSetManager {
     }
 
     @Override
-    public ChangeSetReader getChangeSetReader(int resourceId, DriftConfiguration driftConfiguration)
-        throws IOException {
+    public File findChangeSet(int resourceId, DriftConfiguration driftConfiguration) throws IOException {
         File changeSetDir = findChangeSetDir(resourceId, driftConfiguration);
         File changeSetFile = new File(changeSetDir, "changeset.txt");
 
-        if (!changeSetFile.exists()) {
+        if (changeSetFile.exists()) {
+            return changeSetFile;
+        }
+
+        return null;
+    }
+
+    @Override
+    public ChangeSetReader getChangeSetReader(int resourceId, DriftConfiguration driftConfiguration)
+        throws IOException {
+        File changeSetFile = findChangeSet(resourceId, driftConfiguration);
+
+        if (changeSetFile == null) {
             return null;
         }
 

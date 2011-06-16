@@ -10,7 +10,17 @@ import org.rhq.core.domain.drift.DriftConfiguration;
 public interface ChangeSetManager {
 
     /**
-     * Locates the latest change set for the give resource and drift configuration and
+     * Locates the latest change set for the specified resource id and drift configuration.
+     *
+     * @param resourceId The id of the resource to which the change set belongs
+     * @param driftConfiguration The drift configuration for which the change set was generated
+     * @return The change set file or null if it is not found
+     * @throws IOException
+     */
+    File findChangeSet(int resourceId, DriftConfiguration driftConfiguration) throws IOException;
+
+    /**
+     * Locates the latest change set for the given resource and drift configuration and
      * returns a ChangeSetReader for that change set. Note that a resource can have
      * multiple drift configurations; so, both the resource id and the drift configuration
      * are required to uniquely identify a particular change set.

@@ -42,9 +42,22 @@ public interface DriftAgentService {
     boolean requestDriftFiles(List<DriftFile> driftFiles);
 
     /**
+     * Execute drift detection immediately. If any drift is found, the agent will send the
+     * change set back to the server in a separate request from agent to server.
+     *
+     * @param resourceId The id of the resource for which the request is being made
+     * @param driftConfiguration Specifies how the detection should be carried out. This
+     * includes any filtering rules that should be applied.
+     */
+    void detectDrift(int resourceId, DriftConfiguration driftConfiguration);
+
+    /**
      * Requests that the agent start performing drift detection for a resource with the
      * specified drift configuration. The interval at which the drift detection occurs is
      * specified by the drift configuration.
+     * <p/>
+     * Note that this method only schedules the drift detection and that it may return
+     * before drift detection actually starts executing.
      *
      * @param resourceId The id of the resource for which the request is being made
      * @param driftConfiguration Specifies how and when the detection should be carried out

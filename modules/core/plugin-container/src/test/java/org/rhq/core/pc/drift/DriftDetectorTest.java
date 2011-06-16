@@ -45,7 +45,7 @@ public class DriftDetectorTest extends JMockTest {
         changeSetMgr = context.mock(ChangeSetManager.class);
     }
 
-    @Test
+    @Test(enabled = false)
     public void generateInitialChangeSet() throws Exception {
         File server = new File(resourcesDir, "server");
         File lib = new File(server, "lib");

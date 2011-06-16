@@ -28,12 +28,18 @@ public class DriftDetector implements Runnable {
 
     private MessageDigestGenerator digestGenerator = new MessageDigestGenerator(MessageDigestGenerator.SHA_256);
 
+    private DriftManager driftMgr;
+
     public void setScheduleQueue(ScheduleQueue queue) {
         scheduleQueue = queue;
     }
 
     public void setChangeSetManager(ChangeSetManager changeSetManager) {
         changeSetMgr = changeSetManager;
+    }
+
+    public void setDriftManager(DriftManager driftManager) {
+        driftMgr = driftManager;
     }
 
     @Override
@@ -52,6 +58,7 @@ public class DriftDetector implements Runnable {
 
         schedule.updateShedule();
         scheduleQueue.enqueue(schedule);
+        driftMgr.sendChangeSetToServer(schedule.getResourceId(), schedule.getDriftConfiguration());
     }
 
     private String relativePath(File basedir, File file) {

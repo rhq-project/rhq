@@ -3,12 +3,10 @@ package org.rhq.core.pc.drift;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.List;
-import java.util.PriorityQueue;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -20,6 +18,9 @@ import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.pc.ContainerService;
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.agent.AgentService;
+import org.rhq.core.util.ZipUtil;
+
+import static org.rhq.core.util.ZipUtil.zipFileOrDirectory;
 
 public class DriftManager extends AgentService implements DriftAgentService, ContainerService {
 
@@ -27,11 +28,13 @@ public class DriftManager extends AgentService implements DriftAgentService, Con
 
     private PluginContainerConfiguration pluginContainerConfiguration;
 
-    private File snapshotsDir;
+    private File changeSetsDir;
 
     private ScheduledThreadPoolExecutor driftThreadPool;
 
     private ScheduleQueue schedulesQueue = new ScheduleQueueImpl();
+
+    private ChangeSetManager changeSetMgr;
 
     public DriftManager() {
         super(DriftAgentService.class);
@@ -40,15 +43,18 @@ public class DriftManager extends AgentService implements DriftAgentService, Con
     @Override
     public void setConfiguration(PluginContainerConfiguration configuration) {
         pluginContainerConfiguration = configuration;
-        snapshotsDir = new File(pluginContainerConfiguration.getDataDirectory(), "snapshots");
-        snapshotsDir.mkdir();
+        changeSetsDir = new File(pluginContainerConfiguration.getDataDirectory(), "changesets");
+        changeSetsDir.mkdir();
     }
 
     @Override
     public void initialize() {
+        changeSetMgr = new ChangeSetManagerImpl(changeSetsDir);
+
         DriftDetector driftDetector = new DriftDetector();
         driftDetector.setScheduleQueue(schedulesQueue);
-        //driftDetector.setChangeSetManager();
+        driftDetector.setChangeSetManager(changeSetMgr);
+        driftDetector.setDriftManager(this);
 
         driftThreadPool = new ScheduledThreadPoolExecutor(5);
         driftThreadPool.scheduleAtFixedRate(new DriftDetector(), 30, 1800, TimeUnit.SECONDS);
@@ -61,6 +67,45 @@ public class DriftManager extends AgentService implements DriftAgentService, Con
 
         schedulesQueue.clear();
         schedulesQueue = null;
+
+        changeSetMgr = null;
+    }
+
+    public void sendChangeSetToServer(int resourceId, DriftConfiguration driftConfiguration) {
+        try {
+            File changeSetFile = changeSetMgr.findChangeSet(resourceId, driftConfiguration);
+            if (changeSetFile == null) {
+                log.warn("changeset[resourceId: " + resourceId + ", driftConfiguration: " +
+                    driftConfiguration.getName() + "] was not found. Cancelling request to send change set to server");
+                return;
+            }
+
+            DriftServerService driftServer = pluginContainerConfiguration.getServerServices().getDriftServerService();
+
+            // TODO Include the version in the change set file name to ensure the file name is unique
+            File zipFile = new File(pluginContainerConfiguration.getTemporaryDirectory(), "changeset-" + resourceId +
+                driftConfiguration.getName() + ".zip");
+            zipFileOrDirectory(changeSetFile, zipFile);
+
+            driftServer.sendChangesetZip(resourceId, zipFile.length(),
+                remoteInputStream(new BufferedInputStream(new FileInputStream(zipFile))));
+        } catch (IOException e) {
+            log.error("An error occurred while trying to send changeset[resourceId: " + resourceId +
+                ", driftConfiguration: " + driftConfiguration.getName() + "]", e);
+        }
+    }
+
+    @Override
+    public void detectDrift(int resourceId, DriftConfiguration driftConfiguration) {
+        ScheduleQueue queue = new ScheduleQueueImpl();
+        queue.enqueue(new DriftDetectionSchedule(resourceId, driftConfiguration));
+
+        DriftDetector driftDetector = new DriftDetector();
+        driftDetector.setChangeSetManager(changeSetMgr);
+        driftDetector.setScheduleQueue(queue);
+        driftDetector.setDriftManager(this);
+
+        driftThreadPool.execute(driftDetector);
     }
 
     @Override

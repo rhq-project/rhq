@@ -1,15 +1,20 @@
 package org.rhq.common.drift;
 
+import static java.lang.Integer.parseInt;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-import static java.lang.Integer.parseInt;
+import org.apache.commons.logging.LogFactory;
 
 public class ChangeSetReaderImpl implements ChangeSetReader {
 
+    private Pattern DIRECTORY_PATTERN = Pattern.compile("^\\s*(.*?)\\s+(\\d+)\\s*$");
     private BufferedReader reader;
 
     private File metaDataFile;
@@ -19,15 +24,25 @@ public class ChangeSetReaderImpl implements ChangeSetReader {
         reader = new BufferedReader(new FileReader(this.metaDataFile));
     }
 
-    ChangeSetReaderImpl(Reader metaDataFile) throws Exception {
+    public ChangeSetReaderImpl(Reader metaDataFile) throws Exception {
         reader = new BufferedReader(metaDataFile);
     }
 
     @Override
     public DirectoryEntry readDirectoryEntry() throws IOException {
-        String[] fields = reader.readLine().split(" ");
-        DirectoryEntry dirEntry = new DirectoryEntry(fields[0]);
-        int numFiles = parseInt(fields[1]);
+        String line = reader.readLine();
+        if (null == line) {
+            return null;
+        }
+
+        Matcher m = DIRECTORY_PATTERN.matcher(line);
+        if (!m.matches() || 2 != m.groupCount()) {
+            LogFactory.getLog(ChangeSetReaderImpl.class).error("Unexpected directory line, returning null on: " + line);
+            return null;
+        }
+
+        DirectoryEntry dirEntry = new DirectoryEntry(m.group(1));
+        int numFiles = parseInt(m.group(2));
 
         for (int i = 0; i < numFiles; ++i) {
             String[] cols = reader.readLine().split(" ");

@@ -308,4 +308,15 @@ public class FileUtil {
         }
         return driveLetter;
     }
+
+    /**
+     * Ensure that the path uses only forward slash
+     * Like java.io.File(String,String) but just 
+     * @param dir
+     * @param fileName
+     * @return
+     */
+    public static String useForwardSlash(String path) {
+        return path.replace('\\', '/');
+    }
 }

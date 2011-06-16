@@ -23,15 +23,34 @@ import java.io.InputStream;
 
 import org.rhq.core.communications.command.annotation.Asynchronous;
 
+/**
+ * @author Jay Shaughnessy
+ * @author John Sanda
+ */
 public interface DriftServerService {
 
     // note that this guaranteed delivery is weak because most likely the stream will be dead if it
     // doesn't work the first time.
+    /**
+     * The ChangeSet file is of the format described in ChangeSetReader.
+     * 
+     * @param resourceId
+     * @param zipSize
+     * @param zipStream A RemoteStream
+     */
     @Asynchronous(guaranteedDelivery = true)
     void sendChangesetZip(int resourceId, long zipSize, InputStream zipStream);
 
     // note that this guaranteed delivery is weak because most likely the stream will be dead if it
     // doesn't work the first time.
+    /**
+     * The name of each zip entry should be the sha256. The filenames and paths are not relevant as this
+     * is only a store of content and the content is identified ony by the sha.
+     * 
+     * @param resourceId
+     * @param zipSize
+     * @param zipStream A RemoteStream
+     */
     @Asynchronous(guaranteedDelivery = true)
     void sendFilesZip(int resourceId, long zipSize, InputStream zipStream);
 }

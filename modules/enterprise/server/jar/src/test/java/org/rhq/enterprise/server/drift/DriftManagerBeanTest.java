@@ -105,7 +105,9 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
     @Test(enabled = ENABLE_TESTS)
     public void testStoreChangeSet() throws Exception {
         // the initial changeset should not create any drift, just should request a drift file "0"
-        driftManager.storeChangeSet(newResource.getId(), File.createTempFile("drift-cs-1", ".test"));
+        File changeset1 = new File("./src/test/resources/org/rhq/enterprise/server/drift/changeset-1.zip");
+        assertTrue(changeset1.exists());
+        driftManager.storeChangeSet(newResource.getId(), changeset1);
 
         DriftChangeSetCriteria c = new DriftChangeSetCriteria();
         c.addFilterResourceId(newResource.getId());
@@ -116,12 +118,14 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
         assertEquals(0, changeSet.getVersion());
         assertEquals(0, changeSet.getDrifts().size());
 
-        DriftFile driftFile = driftManager.getDriftFile(overlord, "0");
+        DriftFile driftFile = driftManager.getDriftFile(overlord, "aaaaa");
         assertNotNull(driftFile);
         assertEquals(DriftFileStatus.REQUESTED, driftFile.getStatus());
 
         // the second change set should report drift
-        driftManager.storeChangeSet(newResource.getId(), File.createTempFile("drift-cs-2", ".test"));
+        File changeset2 = new File("./src/test/resources/org/rhq/enterprise/server/drift/changeset-2.zip");
+        assertTrue(changeset2.exists());
+        driftManager.storeChangeSet(newResource.getId(), changeset2);
         c.addSortVersion(PageOrdering.ASC);
         changeSets = driftManager.findDriftChangeSetsByCriteria(overlord, c);
         assertEquals(2, changeSets.size());
@@ -132,11 +136,12 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
         assertEquals(1, changeSet.getVersion());
         assertEquals(1, changeSet.getDrifts().size());
         Drift drift = changeSet.getDrifts().iterator().next();
-        assertEquals("0", drift.getOldDriftFile().getSha256());
-        assertEquals("1", drift.getNewDriftFile().getSha256());
+        assertEquals("test/dir/filename.ext", drift.getPath());
+        assertEquals("aaaaa", drift.getOldDriftFile().getSha256());
+        assertEquals("bbbbb", drift.getNewDriftFile().getSha256());
         assertEquals(DriftCategory.FILE_CHANGED, drift.getCategory());
 
-        driftFile = driftManager.getDriftFile(overlord, "1");
+        driftFile = driftManager.getDriftFile(overlord, "bbbbb");
         assertNotNull(driftFile);
         assertEquals(DriftFileStatus.REQUESTED, driftFile.getStatus());
     }
@@ -210,17 +215,7 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
             try {
                 ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
 
-                // first, get entity for group removal
-                //getTransactionManager().begin();
-                //em = getEntityManager();
-
-                //Resource res = em.find(Resource.class, resource.getId());
-
-                //getTransactionManager().commit();
-                //em.close();
-                //em = null;
-
-                // then invoke bulk delete on the resource to remove any dependencies not defined in the hibernate entity model
+                // invoke bulk delete on the resource to remove any dependencies not defined in the hibernate entity model
                 // perform in-band and out-of-band work in quick succession
                 List<Integer> deletedIds = resourceManager.uninventoryResource(overlord, resource.getId());
                 for (Integer deletedResourceId : deletedIds) {

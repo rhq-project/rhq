@@ -20,9 +20,12 @@
 package org.rhq.enterprise.server.drift;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -44,18 +47,21 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hibernate.Hibernate;
 
-import org.rhq.common.drift.DriftChangeSetEntry;
+import org.rhq.common.drift.ChangeSetReader;
+import org.rhq.common.drift.ChangeSetReaderImpl;
+import org.rhq.common.drift.DirectoryEntry;
+import org.rhq.common.drift.FileEntry;
 import org.rhq.core.clientapi.agent.drift.DriftAgentService;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
 import org.rhq.core.domain.drift.Drift;
-import org.rhq.core.domain.drift.DriftCategory;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.DriftFileStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.ZipUtil;
+import org.rhq.core.util.file.FileUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
@@ -111,8 +117,7 @@ public class DriftManagerBean implements DriftManagerLocal {
     }
 
     @Override
-    public void storeChangeSet(int resourceId, File changeSetZip) throws Exception {
-        DriftChangeSet driftChangeSet = null;
+    public void storeChangeSet(final int resourceId, File changeSetZip) throws Exception {
         Resource resource = entityManager.find(Resource.class, resourceId);
         if (null == resource) {
             throw new IllegalArgumentException("Resource not found: " + resourceId);
@@ -122,56 +127,69 @@ public class DriftManagerBean implements DriftManagerLocal {
             DriftChangeSetCriteria c = new DriftChangeSetCriteria();
             c.addFilterResourceId(resourceId);
             List<DriftChangeSet> changeSets = findDriftChangeSetsByCriteria(subjectManager.getOverlord(), c);
-            boolean isInitialChangeSet = changeSets.isEmpty();
-            int version = changeSets.size();
-            List<DriftFile> emptyDriftFiles = new ArrayList<DriftFile>();
+            final boolean isInitialChangeSet = changeSets.isEmpty();
+            final int version = changeSets.size();
 
             // store the new change set info (not the actual blob)
-            driftChangeSet = new DriftChangeSet(resource, version);
+            final DriftChangeSet driftChangeSet = new DriftChangeSet(resource, version);
             //driftChangeSet.setData(Hibernate.createBlob(new BufferedInputStream(new FileInputStream(changeSetZip))));
             entityManager.persist(driftChangeSet);
 
-            // TODO whole thing  will change to use the parser utility when it's available, just use a dummy entry for now
-            List<DriftChangeSetEntry> entries = new ArrayList<DriftChangeSetEntry>();
-            if (0 == version) {
-                entries.add(new DriftChangeSetEntry(0, "/foo/bar", DriftCategory.FILE_ADDED, null, String
-                    .valueOf(version)));
-            } else {
-                entries.add(new DriftChangeSetEntry(0, "/foo/bar", DriftCategory.FILE_CHANGED, String
-                    .valueOf(version - 1), String.valueOf(version)));
-            }
+            ZipUtil.walkZipFile(changeSetZip, new ChangeSetFileVisitor() {
 
-            for (DriftChangeSetEntry entry : entries) {
-                DriftFile oldDriftFile = getDriftFile(entry.getOldSha256(), emptyDriftFiles);
-                DriftFile newDriftFile = getDriftFile(entry.getNewSha256(), emptyDriftFiles);
+                @Override
+                public boolean visit(ZipEntry zipEntry, ZipInputStream stream) throws Exception {
+                    List<DriftFile> emptyDriftFiles = new ArrayList<DriftFile>();
 
-                // We don't generate Drift occurrences off of the initial change set. It is used only
-                // to give us a starting point and to tell us what files we need to pull down. 
-                if (!isInitialChangeSet) {
-                    Drift drift = new Drift(driftChangeSet, entry.getPath(), entry.getCategory(), oldDriftFile,
-                        newDriftFile);
-                    entityManager.persist(drift);
-                }
-            }
+                    try {
+                        ChangeSetReader reader = new ChangeSetReaderImpl(new BufferedReader(new InputStreamReader(
+                            stream)));
 
-            // send a message to the agent requesting the empty DriftFile content
-            if (!emptyDriftFiles.isEmpty()) {
+                        for (DirectoryEntry dir = reader.readDirectoryEntry(); null != dir; dir = reader
+                            .readDirectoryEntry()) {
 
-                AgentClient agentClient = agentManager.getAgentClient(subjectManager.getOverlord(), resourceId);
-                DriftAgentService service = agentClient.getDriftAgentService();
-                if (service.requestDriftFiles(emptyDriftFiles)) {
+                            for (Iterator<FileEntry> i = dir.iterator(); i.hasNext();) {
+                                FileEntry entry = i.next();
+                                DriftFile oldDriftFile = getDriftFile(entry.getOldSHA(), emptyDriftFiles);
+                                DriftFile newDriftFile = getDriftFile(entry.getNewSHA(), emptyDriftFiles);
 
-                    for (DriftFile driftFile : emptyDriftFiles) {
-                        driftFile.setStatus(DriftFileStatus.REQUESTED);
+                                // We don't generate Drift occurrences off of the initial change set. It is used only
+                                // to give us a starting point and to tell us what files we need to pull down. 
+                                if (!isInitialChangeSet) {
+                                    // use a canonical path with only forward slashing to ensure consistent paths across reports
+                                    String path = new File(dir.getDirectory(), entry.getFile()).getPath();
+                                    path = FileUtil.useForwardSlash(path);
+                                    Drift drift = new Drift(driftChangeSet, path, entry.getType(), oldDriftFile,
+                                        newDriftFile);
+                                    entityManager.persist(drift);
+                                }
+                            }
+                        }
+                        // send a message to the agent requesting the empty DriftFile content
+                        if (!emptyDriftFiles.isEmpty()) {
+
+                            AgentClient agentClient = agentManager.getAgentClient(subjectManager.getOverlord(),
+                                resourceId);
+                            DriftAgentService service = agentClient.getDriftAgentService();
+                            if (service.requestDriftFiles(emptyDriftFiles)) {
+
+                                for (DriftFile driftFile : emptyDriftFiles) {
+                                    driftFile.setStatus(DriftFileStatus.REQUESTED);
+                                }
+                            }
+                        }
+                    } catch (Exception e) {
+                        String msg = "Failed to store drift changeset: " + driftChangeSet;
+                        log.error(msg, e);
+                        return false;
                     }
-                }
-            }
 
+                    return true;
+                }
+            });
         } catch (Exception e) {
             String msg = "Failed to store drift changeset for ";
-            if (null != driftChangeSet) {
-                msg += driftChangeSet;
-            } else if (null != resource) {
+            if (null != resource) {
                 msg += resource;
             } else {
                 msg += ("resourceId " + resourceId);
@@ -183,10 +201,13 @@ public class DriftManagerBean implements DriftManagerLocal {
         }
     }
 
+    private abstract class ChangeSetFileVisitor implements ZipUtil.ZipEntryVisitor {
+    }
+
     private DriftFile getDriftFile(String sha256, List<DriftFile> emptyDriftFiles) {
         DriftFile result = null;
 
-        if (null == sha256) {
+        if (null == sha256 || "0".equals(sha256)) {
             return result;
         }
 

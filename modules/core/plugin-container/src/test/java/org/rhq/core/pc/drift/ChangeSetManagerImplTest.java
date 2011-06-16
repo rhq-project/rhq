@@ -62,12 +62,7 @@ public class ChangeSetManagerImplTest {
         ChangeSetReader reader = changeSetMgr.getChangeSetReader(resourceId, drfitConfig);
 
         assertNotNull(reader, "Expected to get a change set reader when change set exists");
-
-        DirectoryEntry dirEntry = reader.readDirectoryEntry();
-        assertNotNull(dirEntry, "Expected reader to return a directory entry. Was the correct change set located?");
-
-        assertEquals(dirEntry.getDirectory(), "server/conf", "The directory entry path is wrong");
-        assertEquals(dirEntry.getNumberOfFiles(), 1, "The number of files for the directory entry is wrong");
+        assertReaderOpenedOnChangeSet(reader, asList("server/conf", "1"));
     }
 
     DriftConfiguration driftConfiguration(String name, String basedir) {
@@ -76,6 +71,32 @@ public class ChangeSetManagerImplTest {
         config.put(new PropertySimple("basedir", basedir));
 
         return new DriftConfiguration(config);
+    }
+
+    /**
+     * Verifies that a {@link ChangeSetReader} has been opened on the expected change set.
+     * This method first verifies that the reader is not null. It then reads the first
+     * {@link DirectoryEntry} from the reader and verifies that the directory and
+     * numberOfFiles properties match the expected values specified in dirEntry.
+     * <p/>
+     * This method does not rigorously check the entire contents of the change set file
+     * because that {@link ChangeSetReader} tests; rather, it aims to inspect just enough
+     * info to verify that the reader is opened on the correct change set.
+     *
+     * @param reader The ChangeSetReader returned from the ChangeSetManager under test
+     * @param dirEntry A list of strings representing the first line of a directory entry.
+     * The list should consist of two elements. The first being the directory path and the
+     * second being the number of files in the entry.
+     * @throws Exception
+     */
+    void assertReaderOpenedOnChangeSet(ChangeSetReader reader, List<String> dirEntry) throws Exception {
+        assertNotNull(reader, "The " + ChangeSetReader.class.getSimpleName() + " should not be null.");
+
+        DirectoryEntry actual = reader.readDirectoryEntry();
+        assertNotNull(actual, "Expected to find a directory entry");
+        assertEquals(actual.getDirectory(), dirEntry.get(0), "The directory entry path is wrong");
+        assertEquals(Integer.toString(actual.getNumberOfFiles()), dirEntry.get(1),
+            "The number of files for the directory entry is wrong");
     }
 
 }

@@ -191,7 +191,7 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
                     //yay, we can use the snmpService index to determine which vhost we're dealing with
                     if (snmpServiceIndex == 1) {
                         //k, looks the vhost was representing the main server. Let's do a cross-check.
-                        List<String> legacyResourceKeys = legacyResourceKeyUtil.getLegacyMainServerResourceKeys();
+                        Set<String> legacyResourceKeys = legacyResourceKeyUtil.getLegacyMainServerResourceKeys();
                         if (legacyResourceKeys.contains(resourceKey)) {
                             newResourceKey = ApacheVirtualHostServiceComponent.MAIN_SERVER_RESOURCE_KEY;
                         } else {
@@ -214,7 +214,7 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
                             
                             //right, let's do a cross-check before we actually create the resource key so
                             //that we catch user-generated errors.
-                            List<String> legacyResourceKeys = legacyResourceKeyUtil.getLegacyVirtualHostResourceKeys(vhost);
+                            Set<String> legacyResourceKeys = legacyResourceKeyUtil.getLegacyVirtualHostResourceKeys(vhost);
                             if (legacyResourceKeys.contains(resourceKey)) {
                                 newResourceKey = createResourceKey(vhost.serverName, vhost.hosts);
                             } else {
@@ -240,7 +240,7 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
         
         Map<String, Set<VHostSpec>> possibleMatchesPerRK = new HashMap<String, Set<VHostSpec>>();
         for (VHostSpec vhost : vhosts) {            
-            List<String> legacyResourceKeys = legacyResourceKeyUtil.getLegacyVirtualHostResourceKeys(vhost);
+            Set<String> legacyResourceKeys = legacyResourceKeyUtil.getLegacyVirtualHostResourceKeys(vhost);
 
             for(String legacyRK : legacyResourceKeys) {
                 addPossibleRKMatch(legacyRK, vhost, possibleMatchesPerRK);

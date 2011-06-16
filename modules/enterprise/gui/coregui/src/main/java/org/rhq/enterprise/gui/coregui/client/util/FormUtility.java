@@ -25,6 +25,8 @@ import com.smartgwt.client.widgets.form.fields.FormItemIcon;
 import com.smartgwt.client.widgets.form.fields.events.IconClickEvent;
 import com.smartgwt.client.widgets.form.fields.events.IconClickHandler;
 
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
+
 /**
  * A collection of utility methods for working with SmartGWT {@link DynamicForm}s.
  *
@@ -50,7 +52,7 @@ public class FormUtility {
 
     public static void addContextualHelp(FormItem item, final String helpText) {
         final FormItemIcon helpIcon = new FormItemIcon();
-        helpIcon.setSrc("[SKIN]/actions/help.png");
+        helpIcon.setSrc(ImageManager.getHelpIcon());
         item.setIcons(helpIcon);
         item.addIconClickHandler(new IconClickHandler() {
             public void onIconClick(IconClickEvent event) {

@@ -42,6 +42,7 @@ import org.rhq.enterprise.gui.coregui.client.bundle.deploy.selection.SingleCompa
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.FormUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
@@ -91,6 +92,7 @@ public class GetDestinationStep extends AbstractWizardStep {
                     dest.setName(value.toString());
                 }
             });
+            FormUtility.addContextualHelp(nameTextItem, MSG.view_bundle_deployWizard_getDest_name_help());
 
             final TextAreaItem descriptionTextAreaItem = new TextAreaItem("description", MSG
                 .view_bundle_deployWizard_getDest_desc());
@@ -118,6 +120,7 @@ public class GetDestinationStep extends AbstractWizardStep {
                     dest.setDeployDir(value.toString());
                 }
             });
+            FormUtility.addContextualHelp(deployDirTextItem, MSG.view_bundle_deployWizard_getDest_deployDir_help());
 
             final RadioGroupItem destBaseDirItem = new RadioGroupItem("destBaseDir", MSG
                 .view_bundle_deployWizard_getDest_destBaseDirName());
@@ -198,6 +201,7 @@ public class GetDestinationStep extends AbstractWizardStep {
                     }
                 }
             });
+            FormUtility.addContextualHelp(this.selector, MSG.view_bundle_deployWizard_getDest_group_help());
 
             this.valForm.setItems(nameTextItem, descriptionTextAreaItem, this.selector, destBaseDirItem,
                 deployDirTextItem);

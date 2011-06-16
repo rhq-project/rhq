@@ -1,5 +1,8 @@
 package org.rhq.core.pc.drift;
 
+import java.io.File;
+import java.io.IOException;
+
 import org.rhq.common.drift.ChangeSetReader;
 import org.rhq.common.drift.ChangeSetWriter;
 import org.rhq.core.domain.drift.DriftConfiguration;
@@ -18,8 +21,10 @@ public interface ChangeSetManager {
      * and driftConfiguration. Returns null if no change set has previously been generated.
      * @see ChangeSetReader
      */
-    ChangeSetReader getChangeSetReader(int resourceId, DriftConfiguration driftConfiguration);
+    ChangeSetReader getChangeSetReader(int resourceId, DriftConfiguration driftConfiguration) throws IOException;
 
     ChangeSetWriter getChangeSetWriter(int resourceId, DriftConfiguration driftConfiguration);
+
+    void addFileToChangeSet(int resourceId, DriftConfiguration driftConfiguration, File file);
 
 }

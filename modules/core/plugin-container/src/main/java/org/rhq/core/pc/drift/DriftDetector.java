@@ -92,6 +92,8 @@ public class DriftDetector implements Runnable {
         protected void handleDirectoryEnd(File directory, int depth, Collection results) throws IOException {
             DirectoryEntry dirEntry = stack.pop();
             writer.writeDirectoryEntry(dirEntry);
+
+
         }
 
         @Override

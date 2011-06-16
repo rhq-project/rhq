@@ -84,7 +84,7 @@
     </c:list-property>
 '>   
 <!ENTITY DocumentRoot '
-    <c:simple-property name="DocumentRoot">
+    <c:simple-property name="DocumentRoot" default="THIS IS AUTO-DISCOVERED">
         <c:description>
             This directive sets the directory from which httpd  will serve files. Unless matched by a directive like Alias, the server appends the path from the requested URL to the document root to make the path to the document.
             If the directory-path is not absolute then it is assumed to be relative to the ServerRoot.
@@ -264,14 +264,14 @@
                activationPolicy: immediate
          -->
          <c:simple-property name="serverRoot" required="true"
-                            description="the absolute path of the Apache server root directory"/>
+                            description="the absolute path of the Apache server root directory" default="THIS SHOULD BE AUTO-DISCOVERED"/>
          <c:simple-property name="executablePath" required="false"
                             description="the path to the Apache executable - if the path is not absolute, it will be resolved relative to the server root directory; if unset, default value is 'bin/httpd' on UNIX or 'bin\Apache.exe' on Windows"/>
          <c:simple-property name="controlScriptPath" required="false"
                             description="the path to the Apache control script - if the path is not absolute, it will be resolved relative to the server root directory; if unset, default will be 'bin/apachectl' on UNIX or the Apache executable on Windows"/>
          <!-- TODO need to add a comment about the file location on Win* -->
          <c:simple-property name="configFile" required="true" readOnly="true"
-                             description="the path to the httpd.conf file - if the path is not absolute, it will be resolved relative to the server root directory; if unset, default will be 'conf/httpd.conf' on UNIX"/>
+                             description="the path to the httpd.conf file - if the path is not absolute, it will be resolved relative to the server root directory; if unset, default will be 'conf/httpd.conf' on UNIX" default="THIS SHOULD BE AUTO-DISCOVERED"/>
          <c:simple-property name="url" displayName="URL" required="false"
                             description="The http or https URL that will be used to check availability for this Apache
                                 server; if not set, availablity will be determined based on whether plugin can connect
@@ -320,7 +320,7 @@
                    </c:property-options>
                 </c:simple-property>
 
-               <c:simple-property name="vhostFilesMask" displayName="Path To Contain Virtual Hosts Files">
+               <c:simple-property name="vhostFilesMask" displayName="Path To Contain Virtual Hosts Files" default="conf.d/*.conf">
                   <c:description>
                     If the new virtual hosts should be created in standalone files, this mask determines where
                     to create those files. The '*' in the path is replaced by the name of the virtual host.
@@ -718,7 +718,7 @@
          
          <service name="Directory" class="ApacheDirectoryComponent" discovery="ApacheDirectoryDiscoveryComponent" createDeletePolicy="both">
             <plugin-configuration>
-                <c:simple-property name="directiveIndex" readOnly="true" required="true" type="integer"/>
+                <c:simple-property name="directiveIndex" readOnly="true" required="true" type="integer" default="-1"/>
                 <c:simple-property name="regexp" displayName="Regular Expression" type="boolean" default="false" readOnly="true"
                                    description="Does the name of this directory denote a regular expression?"/>
             </plugin-configuration>

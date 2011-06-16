@@ -89,7 +89,6 @@ public interface BundleManagerRemote {
      * @return the new BundleFile
      * @throws Exception
      */
-
     @WebMethod
     BundleFile addBundleFile( //
         @WebParam(name = "subject") Subject subject, //
@@ -104,6 +103,7 @@ public interface BundleManagerRemote {
      * 
      * @see {@link addBundleFile(Subject, int, String, String, Architecture, InputStream, boolean)}     
      */
+    @WebMethod
     BundleFile addBundleFileViaByteArray( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "bundleVersionid") int bundleVersionId, //
@@ -117,6 +117,7 @@ public interface BundleManagerRemote {
      * 
      * @see {@link addBundleFile(Subject, int, String, String, Architecture, InputStream, boolean)}     
      */
+    @WebMethod
     BundleFile addBundleFileViaURL( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "bundleVersionid") int bundleVersionId, //
@@ -130,6 +131,7 @@ public interface BundleManagerRemote {
      * 
      * @see {@link addBundleFile(Subject, int, String, String, Architecture, InputStream, boolean)}     
      */
+    @WebMethod
     BundleFile addBundleFileViaPackageVersion( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "bundleVersionid") int bundleVersionId, //
@@ -150,6 +152,7 @@ public interface BundleManagerRemote {
      * @return the persisted deployment
      * @throws Exception
      */
+    @WebMethod
     BundleDeployment createBundleDeployment( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "bundleVersionId") int bundleVersionId, //
@@ -173,6 +176,7 @@ public interface BundleManagerRemote {
      * @return the persisted destination
      * @throws Exception
      */
+    @WebMethod
     BundleDestination createBundleDestination( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "bundleId") int bundleId, //
@@ -193,6 +197,7 @@ public interface BundleManagerRemote {
      * @return the persisted BundleVersion with alot of the internal relationships filled in to help the caller
      *         understand all that this method did.
      */
+    @WebMethod
     BundleVersion createBundleVersionViaRecipe( //
         @WebParam(name = "subject") Subject subject, //        
         @WebParam(name = "recipe") String recipe) throws Exception;
@@ -209,6 +214,7 @@ public interface BundleManagerRemote {
      * @return the persisted BundleVersion with alot of the internal relationships filled in to help the caller
      *         understand all that this method did. Bundle files specifically are returned.
      */
+    @WebMethod
     BundleVersion createBundleVersionViaFile( //
         @WebParam(name = "subject") Subject subject, //        
         @WebParam(name = "distributionFile") File distributionFile) throws Exception;
@@ -229,6 +235,7 @@ public interface BundleManagerRemote {
      * @return the persisted BundleVersion with alot of the internal relationships filled in to help the caller
      *         understand all that this method did. Bundle files specifically are returned.
      */
+    @WebMethod
     BundleVersion createBundleVersionViaURL( //
         @WebParam(name = "subject") Subject subject, //        
         @WebParam(name = "distributionFileUrl") String distributionFileUrl) throws Exception;
@@ -332,6 +339,7 @@ public interface BundleManagerRemote {
      * @return The List of filenames.
      * @throws Exception
      */
+    @WebMethod
     Set<String> getBundleVersionFilenames( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "bundleVersionId") int bundleVersionId, //

@@ -98,8 +98,8 @@
                   database = project.properties['rhq.dev.ds.db-name']
                   server = project.properties['rhq.dev.ds.server-name'] ?: '127.0.0.1'
                   rhqUser = project.properties['rhq.dev.ds.user-name'] ?: 'rhqadmin'
-		}
-		else {
+                }
+            	 else {
                   database = project.properties['rhq.test.ds.db-name']
                   server = project.properties['rhq.test.ds.server-name'] ?: '127.0.0.1'
                   rhqUser = project.properties['rhq.test.ds.user-name'] ?: 'rhqadmin'

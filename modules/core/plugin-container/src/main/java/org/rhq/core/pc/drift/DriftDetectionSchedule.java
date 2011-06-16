@@ -20,6 +20,10 @@ public class DriftDetectionSchedule implements Comparable<DriftDetectionSchedule
         return resourceId;
     }
 
+    public DriftConfiguration getDriftConfiguration() {
+        return driftConfig;
+    }
+
     public void updateShedule() {
         nextScan = System.currentTimeMillis() + (driftConfig.getInterval() * 60 * 1000);
     }

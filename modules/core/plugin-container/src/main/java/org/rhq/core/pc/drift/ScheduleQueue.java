@@ -4,4 +4,6 @@ public interface ScheduleQueue {
 
     DriftDetectionSchedule nextSchedule();
 
+    boolean offer(DriftDetectionSchedule schedule);
+
 }

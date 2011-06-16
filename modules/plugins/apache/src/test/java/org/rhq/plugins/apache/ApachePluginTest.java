@@ -25,7 +25,10 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterSuite;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
@@ -50,16 +53,19 @@ import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 public class ApachePluginTest {
     private static final String PLUGIN_NAME = "Apache";
 
-    @BeforeSuite
+    @BeforeClass
     public void start() {
         //System.out.println("java.class.path=" + System.getProperty("java.class.path"));
         //System.out.println("java.library.path=" + System.getProperty("java.library.path"));
         try {
             File pluginDir = new File("target/itest/plugins");
+            File dataDir = new File("target/itest/plugins-data");
+            dataDir.mkdir();
             PluginContainerConfiguration pcConfig = new PluginContainerConfiguration();
             pcConfig.setPluginFinder(new FileSystemPluginFinder(pluginDir));
             pcConfig.setPluginDirectory(pluginDir);
-
+            pcConfig.setDataDirectory(dataDir);
+            
             pcConfig.setInsideAgent(false);
             PluginContainer.getInstance().setConfiguration(pcConfig);
             PluginContainer container = PluginContainer.getInstance();
@@ -77,7 +83,7 @@ public class ApachePluginTest {
         }
     }
 
-    @AfterSuite
+    @AfterClass
     public void stop() {
         PluginContainer.getInstance().shutdown();
     }

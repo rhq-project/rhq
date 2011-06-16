@@ -262,5 +262,10 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
         public void scheduleDriftDetection(int resourceId, DriftConfiguration driftConfiguration) {
 
         }
+
+        @Override
+        public void detectDrift(int resourceId, DriftConfiguration driftConfiguration) {
+            //To change body of implemented methods use File | Settings | File Templates.
+        }
     }
 }

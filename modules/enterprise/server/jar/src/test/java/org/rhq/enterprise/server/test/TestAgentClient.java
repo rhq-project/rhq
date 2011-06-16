@@ -337,4 +337,8 @@ public class TestAgentClient implements AgentClient, BundleAgentService, DriftAg
     @Override
     public void scheduleDriftDetection(int resourceId, DriftConfiguration driftConfiguration) {
     }
+
+    @Override
+    public void detectDrift(int resourceId, DriftConfiguration driftConfiguration) {
+    }
 }

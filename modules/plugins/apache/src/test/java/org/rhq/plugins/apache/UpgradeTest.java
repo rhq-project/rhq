@@ -23,7 +23,6 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -35,9 +34,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import javax.xml.bind.JAXBException;
-import javax.xml.stream.XMLStreamException;
+import java.util.UUID;
 
 import org.jmock.Expectations;
 import org.testng.annotations.AfterClass;
@@ -48,10 +45,10 @@ import org.testng.annotations.Test;
 import org.rhq.core.clientapi.agent.metadata.PluginMetadataParser;
 import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
-import org.rhq.core.clientapi.server.discovery.InvalidInventoryReportException;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
@@ -78,7 +75,7 @@ import org.rhq.test.pc.PluginContainerTest;
  *
  * @author Lukas Krejci
  */
-@Test
+@Test(groups = "apache-integration-tests")
 public class UpgradeTest extends PluginContainerTest {
 
     private static final String PLATFORM_PLUGIN = "file:target/itest/plugins/rhq-platform-plugin-for-apache-test.jar";
@@ -211,21 +208,32 @@ public class UpgradeTest extends PluginContainerTest {
         }
 
         public TestSetup withDefaultExpectations() throws Exception {
-            final ServerServices ss = getCurrentPluginContainerConfiguration().getServerServices();
-
             context.checking(new Expectations() {
                 {
-                    allowing(ss.getDiscoveryServerService()).mergeInventoryReport(with(any(InventoryReport.class)));
-                    will(fakeInventory.mergeInventoryReport(InventoryStatus.COMMITTED));
-
-                    allowing(ss.getDiscoveryServerService()).upgradeResources(with(any(Set.class)));
-                    will(fakeInventory.upgradeResources());
+                    addDefaultExceptations(this);
                 }
             });
 
             return this;
         }
 
+        @SuppressWarnings("unchecked")
+        public void addDefaultExceptations(Expectations expectations) throws Exception {
+            ServerServices ss = getCurrentPluginContainerConfiguration().getServerServices();
+            
+            expectations.allowing(ss.getDiscoveryServerService()).mergeInventoryReport(expectations.with(Expectations.any(InventoryReport.class)));
+            expectations.will(fakeInventory.mergeInventoryReport(InventoryStatus.COMMITTED));
+
+            expectations.allowing(ss.getDiscoveryServerService()).upgradeResources(expectations.with(Expectations.any(Set.class)));
+            expectations.will(fakeInventory.upgradeResources());
+            
+            expectations.allowing(ss.getDiscoveryServerService()).getResources(expectations.with(Expectations.any(Set.class)), expectations.with(Expectations.any(boolean.class)));
+            expectations.will(fakeInventory.getResources());
+            
+            expectations.allowing(ss.getDiscoveryServerService()).mergeAvailabilityReport(expectations.with(Expectations.any(AvailabilityReport.class)));
+            expectations.allowing(ss.getDiscoveryServerService()).postProcessNewlyCommittedResources(expectations.with(Expectations.any(Set.class)));
+        }
+        
         public FakeServerInventory getFakeInventory() {
             return fakeInventory;
         }
@@ -241,13 +249,25 @@ public class UpgradeTest extends PluginContainerTest {
 
             @SuppressWarnings("unchecked")
             List<Resource> inventory = (List<Resource>) new ObjectCollectionSerializer().deserialize(rdr);
-
-            fakeInventory = new FakeServerInventory();
+            
+            //fix up the parent relationships, because they might not be reconstructed correctly by 
+            //JAXB - we're missing XmlID and XmlIDRef annotations in our model
+            fixupParent(null, inventory);
+            
             fakeInventory.prepopulateInventory(platform, inventory);
 
             apacheSetup.doSetup();
 
             return this;
+        }
+        
+        private void fixupParent(Resource parent, Collection<Resource> children) {
+            for (Resource child : children) {
+                child.setParentResource(parent);
+                if (child.getChildResources() != null) {
+                    fixupParent(child, child.getChildResources());
+                }
+            }
         }
     }
 
@@ -312,11 +332,11 @@ public class UpgradeTest extends PluginContainerTest {
 
         Resource server = servers.iterator().next();
 
-//        String expectedResourceKey = ApacheServerDiscoveryComponent.formatResourceKey(apacheInstallationDirectory,
-//            apacheInstallationDirectory + "/conf/httpd.conf");
-//
-//        assertEquals(server.getResourceKey(), expectedResourceKey,
-//            "The server resource key doesn't seem to be upgraded.");
+        String expectedResourceKey = ApacheServerDiscoveryComponent.formatResourceKey(apacheInstallationDirectory,
+            apacheInstallationDirectory + "/conf/httpd.conf");
+
+        assertEquals(server.getResourceKey(), expectedResourceKey,
+            "The server resource key doesn't seem to be upgraded.");
 
         //TODO test the vhosts
     }
@@ -369,7 +389,9 @@ public class UpgradeTest extends PluginContainerTest {
                 platform.setVersion(details.getResourceVersion());
                 platform.setPluginConfiguration(details.getPluginConfiguration());
                 platform.setResourceType(rt);
-
+                platform.setUuid(UUID.randomUUID().toString());
+                platform.setId(1);
+                
                 return platform;
             }
         }

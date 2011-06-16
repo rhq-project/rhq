@@ -1,0 +1,1 @@
+SELECT DISTINCT r FROM org.rhq.core.domain.resource.Resource r INNER JOIN FETCH r.pluginConfiguration INNER JOIN FETCH r.resourceConfiguration INNER JOIN FETCH r.childResources ch INNER JOIN FETCH ch.pluginConfiguration INNER JOIN FETCH ch.resourceConfiguration WHERE r.resourceType.name = 'Apache HTTP Server'

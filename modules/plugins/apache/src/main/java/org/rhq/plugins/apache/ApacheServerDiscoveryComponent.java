@@ -645,6 +645,14 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
     
     public static String formatResourceKey(String serverRoot, String httpdConf) {
         serverRoot = FileUtils.getCanonicalPath(serverRoot);
+        
+        //we could have inherited the configuration from
+        //RHQ 1.x times, when the httpdConf was relative.
+        File httpdConfF = new File(httpdConf);
+        if (!httpdConfF.isAbsolute()) {
+            httpdConfF = new File(serverRoot, httpdConf);
+            httpdConf = httpdConfF.getAbsolutePath();
+        }
         httpdConf = FileUtils.getCanonicalPath(httpdConf);
         
         return serverRoot + "||" + httpdConf;

@@ -685,7 +685,6 @@
         config template.
     -->
     <table name="RHQ_DRIFT_TEMPLATE">
-        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
         <column name="RESOURCE_TYPE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE_TYPE"/>
         <column name="CONFIG_TEMPLATE_ID" type="INTEGER" required="true" references="RHQ_CONFIG_TEMPLATE"/>
     </table>
@@ -695,7 +694,6 @@
         detection for the resource.
     -->
     <table name="RHQ_DRIFT_CONFIG">
-        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
         <column name="RESOURCE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE"/>
         <column name="CONFIG_ID" type="INTEGER" required="true" references="RHQ_CONFIG"/>
     </table>

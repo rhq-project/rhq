@@ -292,8 +292,7 @@ public class DriftManagerBean implements DriftManagerLocal {
                 DriftConfiguration dc = new DriftConfiguration(i.next());
                 if (dc.getName().equals(driftConfigName)) {
                     i.remove();
-                    // do I need to do this to let Hibernate know there was change?
-                    // resource.setDriftConfigurations(resource.getDriftConfigurations());
+                    entityManager.merge(resource);
 
                     AgentClient agentClient = agentManager.getAgentClient(subjectManager.getOverlord(), resourceId);
                     DriftAgentService service = agentClient.getDriftAgentService();
@@ -328,7 +327,7 @@ public class DriftManagerBean implements DriftManagerLocal {
             }
 
             resource.getDriftConfigurations().add(driftConfig.getConfiguration());
-            resource.setDriftConfigurations(resource.getDriftConfigurations());
+            entityManager.merge(resource);
 
             AgentClient agentClient = agentManager.getAgentClient(subjectManager.getOverlord(), resourceId);
             DriftAgentService service = agentClient.getDriftAgentService();

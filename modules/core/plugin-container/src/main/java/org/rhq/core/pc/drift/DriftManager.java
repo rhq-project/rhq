@@ -1,5 +1,7 @@
 package org.rhq.core.pc.drift;
 
+import static org.rhq.core.util.ZipUtil.zipFileOrDirectory;
+
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -18,9 +20,6 @@ import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.pc.ContainerService;
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.agent.AgentService;
-import org.rhq.core.util.ZipUtil;
-
-import static org.rhq.core.util.ZipUtil.zipFileOrDirectory;
 
 public class DriftManager extends AgentService implements DriftAgentService, ContainerService {
 
@@ -75,23 +74,25 @@ public class DriftManager extends AgentService implements DriftAgentService, Con
         try {
             File changeSetFile = changeSetMgr.findChangeSet(resourceId, driftConfiguration);
             if (changeSetFile == null) {
-                log.warn("changeset[resourceId: " + resourceId + ", driftConfiguration: " +
-                    driftConfiguration.getName() + "] was not found. Cancelling request to send change set to server");
+                log
+                    .warn("changeset[resourceId: " + resourceId + ", driftConfiguration: "
+                        + driftConfiguration.getName()
+                        + "] was not found. Cancelling request to send change set to server");
                 return;
             }
 
             DriftServerService driftServer = pluginContainerConfiguration.getServerServices().getDriftServerService();
 
             // TODO Include the version in the change set file name to ensure the file name is unique
-            File zipFile = new File(pluginContainerConfiguration.getTemporaryDirectory(), "changeset-" + resourceId +
-                driftConfiguration.getName() + ".zip");
+            File zipFile = new File(pluginContainerConfiguration.getTemporaryDirectory(), "changeset-" + resourceId
+                + driftConfiguration.getName() + ".zip");
             zipFileOrDirectory(changeSetFile, zipFile);
 
-            driftServer.sendChangesetZip(resourceId, zipFile.length(),
-                remoteInputStream(new BufferedInputStream(new FileInputStream(zipFile))));
+            driftServer.sendChangesetZip(resourceId, zipFile.length(), remoteInputStream(new BufferedInputStream(
+                new FileInputStream(zipFile))));
         } catch (IOException e) {
-            log.error("An error occurred while trying to send changeset[resourceId: " + resourceId +
-                ", driftConfiguration: " + driftConfiguration.getName() + "]", e);
+            log.error("An error occurred while trying to send changeset[resourceId: " + resourceId
+                + ", driftConfiguration: " + driftConfiguration.getName() + "]", e);
         }
     }
 

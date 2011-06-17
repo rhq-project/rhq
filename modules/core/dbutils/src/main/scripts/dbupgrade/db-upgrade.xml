@@ -3466,11 +3466,9 @@
             </schemaSpec>
 
             <schemaSpec version="2.109">
-                <schema-createSequence name="RHQ_DRIFT_TEMPLATE_ID_SEQ" initial="10001"/>
                 <schema-directSQL>
                     <statement desc="Creating table RHQ_DRIFT_TEMPLATE">
                         CREATE TABLE RHQ_DRIFT_TEMPLATE (
-                            ID INTEGER PRIMARY KEY,
                             RESOURCE_TYPE_ID INTEGER,
                             CONFIG_TEMPLATE_ID INTEGER)
                     </statement>
@@ -3492,11 +3490,9 @@
                     </statement>
                 </schema-directSQL>
                 
-                <schema-createSequence name="RHQ_DRIFT_CONFIG_ID_SEQ" initial="10001"/>
                 <schema-directSQL>
                     <statement desc="Creating table RHQ_DRIFT_CONFIG">
                         CREATE TABLE RHQ_DRIFT_CONFIG (
-                            ID INTEGER PRIMARY KEY,
                             RESOURCE_ID INTEGER,
                             CONFIG_ID INTEGER)
                     </statement>

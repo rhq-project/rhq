@@ -8,6 +8,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.rhq.common.drift.ChangeSetReader;
 import org.rhq.common.drift.ChangeSetReaderImpl;
 import org.rhq.common.drift.ChangeSetWriter;
+import org.rhq.common.drift.ChangeSetWriterImpl;
 import org.rhq.core.domain.drift.DriftConfiguration;
 
 import static java.io.File.separator;
@@ -45,8 +46,10 @@ public class ChangeSetManagerImpl implements ChangeSetManager {
     }
 
     @Override
-    public ChangeSetWriter getChangeSetWriter(int resourceId, DriftConfiguration driftConfiguration) {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    public ChangeSetWriter getChangeSetWriter(int resourceId, DriftConfiguration driftConfiguration)
+        throws IOException {
+        File changeSetDir = findChangeSetDir(resourceId, driftConfiguration);
+        return new ChangeSetWriterImpl(changeSetDir, "changeset.txt");
     }
 
     @Override

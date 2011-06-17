@@ -45,11 +45,15 @@ public class DriftDetector implements Runnable {
     @Override
     public void run() {
         DriftDetectionSchedule schedule = scheduleQueue.dequeue();
-        ChangeSetWriter writer = changeSetMgr.getChangeSetWriter(schedule.getResourceId(),
+        if (schedule == null) {
+            return;
+        }
+
+        try {
+            ChangeSetWriter writer = changeSetMgr.getChangeSetWriter(schedule.getResourceId(),
             schedule.getDriftConfiguration());
 
-        DirectoryScanner scanner = new DirectoryScanner(schedule.getDriftConfiguration(), writer);
-        try {
+            DirectoryScanner scanner = new DirectoryScanner(schedule.getDriftConfiguration(), writer);
             scanner.scan();
         } catch (IOException e) {
             // TODO Call ChangeSetManager here to rollback any thing that was written to disk.

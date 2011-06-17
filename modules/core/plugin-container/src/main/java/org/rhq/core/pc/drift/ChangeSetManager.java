@@ -33,7 +33,7 @@ public interface ChangeSetManager {
      */
     ChangeSetReader getChangeSetReader(int resourceId, DriftConfiguration driftConfiguration) throws IOException;
 
-    ChangeSetWriter getChangeSetWriter(int resourceId, DriftConfiguration driftConfiguration);
+    ChangeSetWriter getChangeSetWriter(int resourceId, DriftConfiguration driftConfiguration) throws IOException;
 
     void addFileToChangeSet(int resourceId, DriftConfiguration driftConfiguration, File file);
 

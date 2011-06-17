@@ -250,6 +250,7 @@ public class PropertyDefinitionSimple extends PropertyDefinition {
 
     public void setOptionsSource(PropertyOptionsSource source) {
         this.optionsSource.clear();
+        source.propertyDefinition = this;
         this.optionsSource.add(source);
     }
 

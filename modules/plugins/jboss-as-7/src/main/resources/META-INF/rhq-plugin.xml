@@ -107,7 +107,9 @@
         </operation>
         <operation name="server-group:remove" displayName="Remove ServerGroup" description="Remove a server group from the Domain.">
             <parameters>
-                <c:simple-property name="name" description="Name of Group to add"/>
+                <c:simple-property name="name" description="Name of Group to remove">
+                    <c:option-source target="resource" expression="type=server-group"/>
+                </c:simple-property>
             </parameters>
         </operation>
         <operation name="managed-server:add" displayName="Add managed server" description="Add a new managed server">
@@ -128,7 +130,9 @@
         <operation name="managed-server:remove" displayName="Remove managed server" description="Remove a managed server">
             <parameters>
                 <c:simple-property name="servername" displayName="Name of the server to remove" required="true"/>
-                <c:simple-property name="hostname" displayName="Name of the host where the server is on" required="true"/>
+                <c:simple-property name="hostname" displayName="Name of the host where the server is on" required="true">
+                        <c:option-source target="resource" expression="type=JBossAS-Managed"/>
+                </c:simple-property>
             </parameters>
             <results>
                 <c:simple-property name="result" description="Outcome of the remove server operation"/>

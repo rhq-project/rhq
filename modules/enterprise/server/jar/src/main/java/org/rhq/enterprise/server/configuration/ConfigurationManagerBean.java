@@ -2412,32 +2412,19 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         if (pds.getOptionsSource()!=null) {
             // evaluate the source parameters
             PropertyOptionsSource pos = pds.getOptionsSource();
-            SearchSubsystem subsystem;
-            if (pos.getTargetType()== PropertyOptionsSource.TargetType.GROUP)
-                subsystem=SearchSubsystem.GROUP;
-            else
-                subsystem=SearchSubsystem.RESOURCE;
-            SearchAssistManager searchAssistManager = new SearchAssistManager(subject, subsystem); // TODO do we need the suggestions at all?
-            List<SearchSuggestion> suggestions = searchAssistManager.getSuggestions(pos.getExpression(),
-                pos.getExpression().length());
-            if (suggestions.size()>1)
-                log.warn("Search expression for property [" + pds.getName() + "] returned more than one result, joining ...");
-            for (SearchSuggestion suggestion : suggestions) {
-                ResourceCriteria criteria = new ResourceCriteria();
-                criteria.setSearchExpression(suggestion.getValue());
-                // TODO for groups we need to talk to the group manager
-                List<ResourceComposite> composites = resourceManager.findResourceCompositesByCriteria(subject,criteria);
-                for (ResourceComposite composite : composites) {
+            ResourceCriteria criteria = new ResourceCriteria();
+            criteria.setSearchExpression(pos.getExpression());
+            // TODO for groups we need to talk to the group manager
+            List<ResourceComposite> composites = resourceManager.findResourceCompositesByCriteria(subject,criteria);
+            for (ResourceComposite composite : composites) {
 
-                    // TODO for configuration we need to drill down into the resource configuration
-                    PropertyDefinitionEnumeration pde = new PropertyDefinitionEnumeration(composite.getResource().getName(),""+composite.getResource().getId());
+                // TODO for configuration we need to drill down into the resource configuration
+                PropertyDefinitionEnumeration pde = new PropertyDefinitionEnumeration(composite.getResource().getName(),""+composite.getResource().getId());
 
-                    // TODO filter -- or leave up to search expression??
+                // TODO filter -- or leave up to search expression??
 
-                    pds.getEnumeratedValues().add(pde);
-                }
+                pds.getEnumeratedValues().add(pde);
             }
-
         }
 
     }

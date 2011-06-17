@@ -48,8 +48,14 @@ public class ChangeSetManagerImpl implements ChangeSetManager {
     @Override
     public ChangeSetWriter getChangeSetWriter(int resourceId, DriftConfiguration driftConfiguration)
         throws IOException {
-        File changeSetDir = findChangeSetDir(resourceId, driftConfiguration);
-        return new ChangeSetWriterImpl(changeSetDir, "changeset.txt");
+        File resourceDir = new File(changeSetsDir, Integer.toString(resourceId));
+        File changeSetDir = new File(resourceDir, driftConfiguration.getName());
+
+        if (!changeSetDir.exists()) {
+            changeSetDir.mkdirs();
+        }
+
+        return new ChangeSetWriterImpl(new File(changeSetDir, "changeset.txt"));
     }
 
     @Override

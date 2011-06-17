@@ -8,41 +8,46 @@ import java.io.Writer;
 
 public class ChangeSetWriterImpl implements ChangeSetWriter {
 
-    private Writer metaDataWriter;
+    private Writer writer;
 
-    private File metaDataFile;
+    private File changeSetFile;
 
     public ChangeSetWriterImpl(File changesetDir, String changesetName) throws IOException {
-        metaDataFile = new File(changesetDir, changesetName + "-metadata.txt");
-        metaDataWriter = new BufferedWriter(new FileWriter(metaDataFile));
+        changeSetFile = new File(changesetDir, changesetName + "-metadata.txt");
+        writer = new BufferedWriter(new FileWriter(changeSetFile));
+    }
+
+    public ChangeSetWriterImpl(File changeSetFile) throws IOException {
+        this.changeSetFile = changeSetFile;
+        writer = new BufferedWriter(new FileWriter(this.changeSetFile));
     }
 
     public void writeDirectoryEntry(DirectoryEntry dirEntry) throws IOException {
-        metaDataWriter.write(dirEntry.getDirectory() + " " + dirEntry.getNumberOfFiles() + "\n");
+        writer.write(dirEntry.getDirectory() + " " + dirEntry.getNumberOfFiles() + "\n");
         for (FileEntry entry : dirEntry) {
             switch (entry.getType()) {
                 case FILE_ADDED:
-                    metaDataWriter.write(entry.getNewSHA() + " 0 " + entry.getFile() + " " + entry.getType().code() +
+                    writer.write(entry.getNewSHA() + " 0 " + entry.getFile() + " " + entry.getType().code() +
                         "\n");
                     break;
                 case FILE_CHANGED:
-                    metaDataWriter.write(entry.getNewSHA() + " " + entry.getOldSHA() + " " + entry.getFile() + " " +
+                    writer.write(entry.getNewSHA() + " " + entry.getOldSHA() + " " + entry.getFile() + " " +
                         entry.getType().code() + "\n");
                     break;
                 case FILE_REMOVED:
-                    metaDataWriter.write("0 " + entry.getOldSHA() + " " + entry.getFile() + " " +
+                    writer.write("0 " + entry.getOldSHA() + " " + entry.getFile() + " " +
                         entry.getType().code() + "\n");
                     break;
             }
         }
-        metaDataWriter.write("\n");
+        writer.write("\n");
     }
 
-    File getMetaDataFile() {
-        return metaDataFile;
+    File getChangeSetFile() {
+        return changeSetFile;
     }
 
     public void close() throws IOException {
-        metaDataWriter.close();
+        writer.close();
     }
 }

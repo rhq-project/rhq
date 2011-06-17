@@ -108,16 +108,18 @@
         <operation name="server-group:remove" displayName="Remove ServerGroup" description="Remove a server group from the Domain.">
             <parameters>
                 <c:simple-property name="name" description="Name of Group to remove">
-                    <c:option-source target="resource" expression="type=server-group"/>
+                    <c:option-source target="resource" expression="type=ServerGroup"/>
                 </c:simple-property>
             </parameters>
         </operation>
         <operation name="managed-server:add" displayName="Add managed server" description="Add a new managed server">
             <parameters>
                 <c:simple-property name="servername" displayName="Name of the new server" required="true"/>
-                <c:simple-property name="hostname" displayName="Name of the host to put the server on" required="true"/>
+                <c:simple-property name="hostname" displayName="Name of the host to put the server on" required="true">
+                    <c:option-source target="resource" expression="type=Host plugin=jboss-as-7"/>
+                </c:simple-property>
                 <c:simple-property name="server-group" displayName="Server group to add to" required="true">
-                    <c:option-source target="resource" expression="type=server-group"/>
+                    <c:option-source target="resource" expression="type=ServerGroup"/>
                 </c:simple-property>
                 <c:simple-property name="socket-bindings" displayName="Socket bindings to base upon" default="standard-sockets" description="Socket bindings to base upon"/>
                 <c:simple-property name="port-offset" displayName="Port offset" default="0" type="integer" />

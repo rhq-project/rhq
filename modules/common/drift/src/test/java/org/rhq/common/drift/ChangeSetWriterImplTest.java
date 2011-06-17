@@ -35,7 +35,7 @@ public class ChangeSetWriterImplTest {
             addedFileEntry("myconf.conf", "a34ef6")));
         writer.close();
 
-        File metaDataFile = writer.getMetaDataFile();
+        File metaDataFile = writer.getChangeSetFile();
         List<String> lines = readLines(new FileInputStream(metaDataFile));
 
         assertEquals(lines.size(), 3, "Expected to find three lines in " + metaDataFile.getPath());
@@ -54,7 +54,7 @@ public class ChangeSetWriterImplTest {
             removedFileEntry("myconf.conf", "a34ef6")));
         writer.close();
 
-        File metaDataFile = writer.getMetaDataFile();
+        File metaDataFile = writer.getChangeSetFile();
         List<String> lines = readLines(new FileInputStream(metaDataFile));
 
         assertEquals(lines.size(), 3, "Expected to find three lines in " + metaDataFile.getPath());
@@ -73,7 +73,7 @@ public class ChangeSetWriterImplTest {
             changedFileEntry("myconf.conf", "a34ef6", "c2d55f")));
         writer.close();
 
-        File metaDataFile = writer.getMetaDataFile();
+        File metaDataFile = writer.getChangeSetFile();
         List<String> lines = readLines(new FileInputStream(metaDataFile));
 
         assertEquals(lines.size(), 3, "Expected to find three lines in " + metaDataFile.getPath());

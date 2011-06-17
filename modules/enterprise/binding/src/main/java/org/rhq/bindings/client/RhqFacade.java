@@ -31,6 +31,7 @@ import org.rhq.enterprise.server.configuration.ConfigurationManagerRemote;
 import org.rhq.enterprise.server.content.ContentManagerRemote;
 import org.rhq.enterprise.server.content.RepoManagerRemote;
 import org.rhq.enterprise.server.discovery.DiscoveryBossRemote;
+import org.rhq.enterprise.server.drift.DriftManagerRemote;
 import org.rhq.enterprise.server.event.EventManagerRemote;
 import org.rhq.enterprise.server.install.remote.RemoteInstallManagerRemote;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerRemote;
@@ -61,13 +62,13 @@ public interface RhqFacade {
      * @return the user the facade is authenticated as
      */
     Subject getSubject();
-    
+
     Subject login(String user, String password) throws Exception;
-    
+
     void logout();
-    
+
     boolean isLoggedIn();
-    
+
     AlertManagerRemote getAlertManager();
 
     AlertDefinitionManagerRemote getAlertDefinitionManager();
@@ -87,6 +88,8 @@ public interface RhqFacade {
     DataAccessManagerRemote getDataAccessManager();
 
     DiscoveryBossRemote getDiscoveryBoss();
+
+    DriftManagerRemote getDriftManager();
 
     EventManagerRemote getEventManager();
 

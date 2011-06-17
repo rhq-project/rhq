@@ -33,7 +33,7 @@ import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.util.PageList;
 
 @Local
-public interface DriftManagerLocal {
+public interface DriftManagerLocal extends DriftManagerRemote {
 
     /**
      * This method initiates an out-of-band (JMS-Based) server-side pull of the change-set file. Upon successful

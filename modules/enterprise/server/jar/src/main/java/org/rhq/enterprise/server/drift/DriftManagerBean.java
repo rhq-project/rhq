@@ -73,7 +73,7 @@ import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 
 @Stateless
-public class DriftManagerBean implements DriftManagerLocal {
+public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     private final Log log = LogFactory.getLog(this.getClass());
 
     @javax.annotation.Resource(mappedName = "java:/JmsXA")
@@ -353,6 +353,24 @@ public class DriftManagerBean implements DriftManagerLocal {
     public DriftFile getDriftFile(Subject subject, String sha256) {
         DriftFile result = entityManager.find(DriftFile.class, sha256);
         return result;
+    }
+
+    @Override
+    public void detectDrift(Subject subject, int resourceId, DriftConfiguration driftConfig) {
+
+        Resource resource = entityManager.find(Resource.class, resourceId);
+        if (null == resource) {
+            throw new IllegalArgumentException("Resource not found: " + resourceId);
+        }
+
+        AgentClient agentClient = agentManager.getAgentClient(subjectManager.getOverlord(), resourceId);
+        DriftAgentService service = agentClient.getDriftAgentService();
+        try {
+            service.detectDrift(resourceId, driftConfig);
+        } catch (Exception e) {
+            log.warn(" Unable to inform agent of drift detection request  [" + driftConfig + "]", e);
+        }
+
     }
 
 }

@@ -95,6 +95,7 @@ import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.criteria.RoleCriteria;
 import org.rhq.core.domain.criteria.SubjectCriteria;
+import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.measurement.Availability;
@@ -134,6 +135,7 @@ import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.content.RepoException;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.discovery.DiscoveryBossLocal;
+import org.rhq.enterprise.server.drift.DriftManagerLocal;
 import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.exception.LoginException;
 import org.rhq.enterprise.server.exception.ScheduleException;
@@ -186,6 +188,7 @@ public class WebservicesManagerBean implements WebservicesRemote {
     //removed as it is problematic for WS clients having XMLAny for Object.
     //    private DataAccessManagerLocal dataAccessManager = LookupUtil.getDataAccessManager();
     private DiscoveryBossLocal discoveryBoss = LookupUtil.getDiscoveryBoss();
+    private DriftManagerLocal driftManager = LookupUtil.getDriftManager();
     private EventManagerLocal eventManager = LookupUtil.getEventManager();
     private MeasurementBaselineManagerLocal measurementBaselineManager = LookupUtil.getMeasurementBaselineManager();
     private MeasurementDataManagerLocal measurementDataManager = LookupUtil.getMeasurementDataManager();
@@ -575,6 +578,15 @@ public class WebservicesManagerBean implements WebservicesRemote {
     }
 
     //DISCOVERYBOSS: END ------------------------------------
+
+    // DRIFTMANAGER: BEGIN ----------------------------------
+
+    @Override
+    public void detectDrift(Subject subject, int resourceId, DriftConfiguration driftConfiguration) throws Exception {
+        driftManager.detectDrift(subject, resourceId, driftConfiguration);
+    }
+
+    // DRIFTMANAGER: END ------------------------------------
 
     //EVENTMANAGER: BEGIN ----------------------------------
     public PageList<Event> findEventsByCriteria(Subject subject, EventCriteria criteria) {
@@ -1182,4 +1194,5 @@ public class WebservicesManagerBean implements WebservicesRemote {
             throw new IllegalArgumentException("Criteria cannot be null.");
         }
     }
+
 }

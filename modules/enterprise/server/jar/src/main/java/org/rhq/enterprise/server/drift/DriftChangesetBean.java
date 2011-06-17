@@ -41,7 +41,11 @@ import org.rhq.core.util.stream.StreamUtil;
 @MessageDriven(activationConfig = {
     @ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Queue"),
     @ActivationConfigProperty(propertyName = "destination", propertyValue = "queue/DriftChangesetQueue"),
-    @ActivationConfigProperty(propertyName = "acknowledgeMode", propertyValue = "Auto-acknowledge") })
+    @ActivationConfigProperty(propertyName = "acknowledgeMode", propertyValue = "Auto-acknowledge"),
+    // this is just declarative, I think it's unnecessary 
+    @ActivationConfigProperty(propertyName = "subscriptionDurability", propertyValue = "NonDurable"),
+    // don't redeliver messages on failure. It just causes more failures. just go straight to the dead messages
+    @ActivationConfigProperty(propertyName = "dLQMaxResent", propertyValue = "0") })
 public class DriftChangesetBean implements MessageListener {
 
     private final Log log = LogFactory.getLog(DriftChangesetBean.class);
@@ -84,9 +88,9 @@ public class DriftChangesetBean implements MessageListener {
                 DriftUtil.safeClose(os);
                 DriftUtil.safeClose(is);
             }
+
         } catch (Throwable t) {
             // catch Throwable here, don't let anything escape as bad things can happen wrt XA/2PhaseCommit  
-
             log.error(t);
         }
     }

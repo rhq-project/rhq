@@ -328,6 +328,9 @@ public enum HttpdAddressUtility {
         for (Address address : addressesToMatch) {
             if (isAddressConforming(address, limitToHost, limitToPort, false)) {
                 substituteWildcards(ag, address);
+                if (address.scheme == null) {
+                    address.scheme = "http";
+                }
                 return address;
             }
         }

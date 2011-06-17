@@ -67,6 +67,7 @@ import org.rhq.core.domain.configuration.definition.ConfigurationFormat;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionEnumeration;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
+import org.rhq.core.domain.configuration.definition.PropertyOptionsSource;
 import org.rhq.core.domain.configuration.group.AbstractGroupConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.GroupPluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.GroupResourceConfigurationUpdate;
@@ -75,15 +76,19 @@ import org.rhq.core.domain.criteria.GroupPluginConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.GroupResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.PluginConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
+import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.ResourceErrorType;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
+import org.rhq.core.domain.search.SearchSubsystem;
+import org.rhq.core.domain.search.SearchSuggestion;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
@@ -113,6 +118,7 @@ import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupNotFoundException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupUpdateException;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
+import org.rhq.enterprise.server.search.execution.SearchAssistManager;
 import org.rhq.enterprise.server.system.ServerVersion;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
@@ -2378,7 +2384,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return updates;
     }
 
-    public ConfigurationDefinition getOptionsForConfigurationDefinition(ConfigurationDefinition def) {
+
+    public ConfigurationDefinition getOptionsForConfigurationDefinition(Subject subject, ConfigurationDefinition def) {
 
 
         for (Map.Entry<String,PropertyDefinition> entry :  def.getPropertyDefinitions().entrySet()) {
@@ -2386,23 +2393,52 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
             if (pd instanceof PropertyDefinitionSimple) {
                 PropertyDefinitionSimple pds = (PropertyDefinitionSimple) pd;
-                handlePDS(pds);
+                handlePDS(subject, pds);
 
             }
             // TODO consider more cases
         }
 
-        return def;
+        return def; // TODO clone the incoming definition?
     }
 
-    private void handlePDS(PropertyDefinitionSimple pds) {
+    /**
+     * Determine the dynamic enumeration values for one PropertyDefinitionSimple
+     * @param subject Subject of the caller - may limit search results
+     * @param pds the PropertyDefinitionSimple to work on
+     */
+    private void handlePDS(Subject subject, PropertyDefinitionSimple pds) {
 
         if (pds.getOptionsSource()!=null) {
-            // TODO evaluate the source parameters
+            // evaluate the source parameters
+            PropertyOptionsSource pos = pds.getOptionsSource();
+            SearchSubsystem subsystem;
+            if (pos.getTargetType()== PropertyOptionsSource.TargetType.GROUP)
+                subsystem=SearchSubsystem.GROUP;
+            else
+                subsystem=SearchSubsystem.RESOURCE;
+            SearchAssistManager searchAssistManager = new SearchAssistManager(subject, subsystem); // TODO do we need the suggestions at all?
+            List<SearchSuggestion> suggestions = searchAssistManager.getSuggestions(pos.getExpression(),
+                pos.getExpression().length());
+            if (suggestions.size()>1)
+                log.warn("Search expression for property [" + pds.getName() + "] returned more than one result, joining ...");
+            for (SearchSuggestion suggestion : suggestions) {
+                ResourceCriteria criteria = new ResourceCriteria();
+                criteria.setSearchExpression(suggestion.getValue());
+                // TODO for groups we need to talk to the group manager
+                List<ResourceComposite> composites = resourceManager.findResourceCompositesByCriteria(subject,criteria);
+                for (ResourceComposite composite : composites) {
+
+                    // TODO for configuration we need to drill down into the resource configuration
+                    PropertyDefinitionEnumeration pde = new PropertyDefinitionEnumeration(composite.getResource().getName(),""+composite.getResource().getId());
+
+                    // TODO filter -- or leave up to search expression??
+
+                    pds.getEnumeratedValues().add(pde);
+                }
+            }
+
         }
-        // TODO next is a dummy.
-        PropertyDefinitionEnumeration foo = new PropertyDefinitionEnumeration("main-server-group","main-server-group");
-        pds.getEnumeratedValues().add(foo);
 
     }
 

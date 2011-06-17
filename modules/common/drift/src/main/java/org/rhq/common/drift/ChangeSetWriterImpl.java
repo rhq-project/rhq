@@ -12,11 +12,6 @@ public class ChangeSetWriterImpl implements ChangeSetWriter {
 
     private File changeSetFile;
 
-    public ChangeSetWriterImpl(File changesetDir, String changesetName) throws IOException {
-        changeSetFile = new File(changesetDir, changesetName + "-metadata.txt");
-        writer = new BufferedWriter(new FileWriter(changeSetFile));
-    }
-
     public ChangeSetWriterImpl(File changeSetFile) throws IOException {
         this.changeSetFile = changeSetFile;
         writer = new BufferedWriter(new FileWriter(this.changeSetFile));

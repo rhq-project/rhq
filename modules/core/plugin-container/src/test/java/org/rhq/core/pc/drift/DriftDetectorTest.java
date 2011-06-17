@@ -81,7 +81,7 @@ public class DriftDetectorTest extends JMockTest {
             will(returnValue(new DriftDetectionSchedule(1, driftConfig)));
 
             allowing(changeSetMgr).getChangeSetWriter(1, schedule.getDriftConfiguration());
-            will(returnValue(new ChangeSetWriterImpl(changeSetDir, "test")));
+            will(returnValue(new ChangeSetWriterImpl(new File(changeSetDir, "test"))));
         }});
 
         DriftDetector driftDetector = new DriftDetector();

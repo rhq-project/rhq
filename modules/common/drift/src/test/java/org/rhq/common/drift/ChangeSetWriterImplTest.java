@@ -29,7 +29,7 @@ public class ChangeSetWriterImplTest {
     @Test
     @SuppressWarnings("unchecked")
     public void writeDirectoryEntryWithAddedFile() throws Exception {
-        ChangeSetWriterImpl writer = new ChangeSetWriterImpl(changesetsDir, "added-file-test");
+        ChangeSetWriterImpl writer = new ChangeSetWriterImpl(new File(changesetsDir, "added-file-test"));
 
         writer.writeDirectoryEntry(new DirectoryEntry("myresource/conf").add(
             addedFileEntry("myconf.conf", "a34ef6")));
@@ -48,7 +48,7 @@ public class ChangeSetWriterImplTest {
     @Test
     @SuppressWarnings("unchecked")
     public void writeDirectoryEntryWithRemovedFile() throws Exception {
-        ChangeSetWriterImpl writer = new ChangeSetWriterImpl(changesetsDir, "removed-file-test");
+        ChangeSetWriterImpl writer = new ChangeSetWriterImpl(new File(changesetsDir, "removed-file-test"));
 
         writer.writeDirectoryEntry(new DirectoryEntry("myresource/conf").add(
             removedFileEntry("myconf.conf", "a34ef6")));
@@ -67,7 +67,7 @@ public class ChangeSetWriterImplTest {
     @Test
     @SuppressWarnings("unchecked")
     public void writeDirectoryEntryWithChangedFile() throws Exception {
-        ChangeSetWriterImpl writer = new ChangeSetWriterImpl(changesetsDir, "changed-file-test");
+        ChangeSetWriterImpl writer = new ChangeSetWriterImpl(new File(changesetsDir, "changed-file-test"));
 
         writer.writeDirectoryEntry(new DirectoryEntry("myresource/conf").add(
             changedFileEntry("myconf.conf", "a34ef6", "c2d55f")));

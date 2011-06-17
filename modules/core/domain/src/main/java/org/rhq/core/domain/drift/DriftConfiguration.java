@@ -2,6 +2,7 @@ package org.rhq.core.domain.drift;
 
 import static java.util.Collections.emptyList;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,9 +11,13 @@ import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 
-public class DriftConfiguration {
+public class DriftConfiguration implements Serializable {
 
-    public static class Filter {
+    private static final long serialVersionUID = 1L;
+
+    public static class Filter implements Serializable {
+        private static final long serialVersionUID = 1L;
+
         private String path;
         private String pattern;
 

@@ -50,10 +50,38 @@ public class FormUtility {
         }
     }
 
+    /**
+     * Adds a help icon to the given form item. When the help icon is clicked,
+     * the helpText is displayed to the user.
+     * 
+     * @param item item that will get a single help icon added to it
+     * @param helpText the help text to show the user when the help icon is clicked
+     */
     public static void addContextualHelp(FormItem item, final String helpText) {
+        addContextualHelp(item, helpText, (FormItemIcon[]) null);
+    }
+
+    /**
+     * Just like {@link #addContextualHelp(FormItem, String)} except this will also add
+     * the given icons to the form item, with the help icon being the last icon.
+     * 
+     * @param item item that will get the given icons plus a help icon added to it
+     * @param helpText the help text to show the user when the help icon is clicked
+     * @param icons other icons to add to the form item - these will appear before the help icon
+     */
+    public static void addContextualHelp(FormItem item, final String helpText, FormItemIcon... icons) {
         final FormItemIcon helpIcon = new FormItemIcon();
         helpIcon.setSrc(ImageManager.getHelpIcon());
-        item.setIcons(helpIcon);
+
+        if (icons == null) {
+            item.setIcons(helpIcon);
+        } else {
+            FormItemIcon[] allIcons = new FormItemIcon[icons.length + 1];
+            System.arraycopy(icons, 0, allIcons, 0, icons.length);
+            allIcons[icons.length] = helpIcon;
+            item.setIcons(allIcons);
+        }
+
         item.addIconClickHandler(new IconClickHandler() {
             public void onIconClick(IconClickEvent event) {
                 if (event.getIcon().equals(helpIcon)) {

@@ -25,11 +25,14 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
+import com.smartgwt.client.widgets.form.fields.FormItemIcon;
 import com.smartgwt.client.widgets.form.fields.RadioGroupItem;
 import com.smartgwt.client.widgets.form.fields.TextAreaItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
+import com.smartgwt.client.widgets.form.fields.events.IconClickEvent;
+import com.smartgwt.client.widgets.form.fields.events.IconClickHandler;
 import com.smartgwt.client.widgets.form.validator.IsIntegerValidator;
 import com.smartgwt.client.widgets.form.validator.Validator;
 import com.smartgwt.client.widgets.layout.VLayout;
@@ -37,11 +40,13 @@ import com.smartgwt.client.widgets.layout.VLayout;
 import org.rhq.core.domain.bundle.BundleDestination;
 import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration;
 import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration.BundleDestinationBaseDirectory;
+import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.bundle.deploy.selection.SingleCompatibleResourceGroupSelector;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.wizard.AbstractGroupCreateWizard;
 import org.rhq.enterprise.gui.coregui.client.util.FormUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
@@ -205,7 +210,18 @@ public class GetDestinationStep extends AbstractWizardStep {
                     }
                 }
             });
-            FormUtility.addContextualHelp(this.selector, MSG.view_bundle_deployWizard_getDest_group_help());
+            final FormItemIcon newGroupIcon = new FormItemIcon();
+            newGroupIcon.setSrc("[SKIN]/actions/add.png");
+            this.selector.addIconClickHandler(new IconClickHandler() {
+                public void onIconClick(IconClickEvent event) {
+                    if (event.getIcon().equals(newGroupIcon)) {
+                        new QuickGroupCreateWizard(selector).startWizard();
+                    }
+                }
+            });
+
+            FormUtility.addContextualHelp(this.selector, MSG.view_bundle_deployWizard_getDest_group_help(),
+                newGroupIcon);
 
             this.valForm.setItems(nameTextItem, descriptionTextAreaItem, this.selector, destBaseDirItem,
                 deployDirTextItem);
@@ -278,4 +294,18 @@ public class GetDestinationStep extends AbstractWizardStep {
                 }
             });
     }
+
+    private class QuickGroupCreateWizard extends AbstractGroupCreateWizard {
+        private SingleCompatibleResourceGroupSelector selector;
+
+        public QuickGroupCreateWizard(SingleCompatibleResourceGroupSelector selector) {
+            super();
+            this.selector = selector;
+        }
+
+        public void groupCreateCallback(ResourceGroup group) {
+            selector.fetchData();
+        }
+    }
+
 }

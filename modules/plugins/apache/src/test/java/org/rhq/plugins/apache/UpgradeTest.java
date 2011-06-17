@@ -23,10 +23,14 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.net.InetAddress;
 import java.net.URI;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -59,11 +63,16 @@ import org.rhq.core.pluginapi.inventory.PluginContainerDeployment;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.core.system.ProcessInfo;
 import org.rhq.core.system.SystemInfo;
 import org.rhq.core.system.SystemInfoFactory;
+import org.rhq.plugins.apache.parser.ApacheDirectiveTree;
 import org.rhq.plugins.apache.util.ApacheDeploymentUtil;
 import org.rhq.plugins.apache.util.ApacheDeploymentUtil.DeploymentConfig;
+import org.rhq.plugins.apache.util.ApacheExecutionUtil;
 import org.rhq.plugins.apache.util.HttpdAddressUtility;
+import org.rhq.plugins.apache.util.MockApacheBinaryInfo;
+import org.rhq.plugins.apache.util.MockProcessInfo;
 import org.rhq.plugins.apache.util.TokenReplacingReader;
 import org.rhq.plugins.platform.PlatformComponent;
 import org.rhq.test.ObjectCollectionSerializer;
@@ -88,26 +97,20 @@ public class UpgradeTest extends PluginContainerTest {
 
     private Resource platform;
 
-    private static class DiscoveryInput {
-        public String serverRootPath;
-        public String exePath;
-        public String httpdConfPath;
-        public String snmpHost;
-        public int snmpPort;
-        public String pingUrl;
-    }
-
     private class TestSetup {
         private String configurationName;
         private FakeServerInventory fakeInventory = new FakeServerInventory();
         private String inventoryFile;
         private Resource platform;
         private ApacheSetup apacheSetup = new ApacheSetup();
+        private DeploymentConfig deploymentConfig;
 
         public class ApacheSetup {
             private String serverRoot;
             private String exePath;
             private Collection<String> configurationFiles;
+            private ApacheExecutionUtil execution;
+            private boolean deploy = true;
 
             private ApacheSetup() {
 
@@ -132,65 +135,71 @@ public class UpgradeTest extends PluginContainerTest {
                 return this;
             }
 
+            public ApacheSetup withDeploymentOnSetup() {
+                this.deploy = true;
+                return this;
+            }
+
+            public ApacheSetup withNoDeploymentOnSetup() {
+                this.deploy = false;
+                return this;
+            }
+
+            public ApacheExecutionUtil getExecutionUtil() {
+                return execution;
+            }
+
+            public void init() throws Exception {
+                File serverRootDir = new File(serverRoot);
+
+                assertTrue(serverRootDir.exists(), "The configured server root denotes a non-existant directory: '"
+                    + serverRootDir + "'.");
+
+                File confDir = new File(serverRootDir, "conf");
+
+                assertTrue(confDir.exists(),
+                    "The configured server root denotes a directory that doesn't have a 'conf' subdirectory. This is unexpected.");
+
+                String snmpHost = null;
+                int snmpPort = 0;
+                String pingUrl = null;
+
+                if (configurationName != null) {
+                    if (deploy) {
+                        ApacheDeploymentUtil.deployConfiguration(confDir, configurationFiles, deploymentConfig);
+                    }
+
+                    HttpdAddressUtility.Address addr = deploymentConfig.mainServer.address1;
+                    HttpdAddressUtility.Address addrToUse = new HttpdAddressUtility.Address(null, null,
+                        HttpdAddressUtility.Address.NO_PORT_SPECIFIED_VALUE);
+                    addrToUse.scheme = addr.scheme == null ? "http" : addr.scheme;
+                    addrToUse.host = addr.host == null ? "localhost" : addr.host;
+                    addrToUse.port = addr.port;
+                    pingUrl = addrToUse.toString();
+
+                    snmpHost = deploymentConfig.snmpHost;
+                    snmpPort = deploymentConfig.snmpPort;
+                }
+
+                execution = new ApacheExecutionUtil(findApachePluginResourceTypeByName("Apache HTTP Server"),
+                    serverRoot, exePath, confDir.getAbsolutePath() + File.separatorChar + "httpd.conf", pingUrl,
+                    snmpHost, snmpPort);
+                execution.init();
+            }
+
             private void doSetup() throws Exception {
-                prepareApacheForTest(TestSetup.this.configurationName, serverRoot, exePath, configurationFiles);
+                init();
+                execution.invokeOperation("restart", "start");
             }
 
             public TestSetup setup() throws Exception {
                 return TestSetup.this.setup();
             }
-
-            private void prepareApacheForTest(String configurationName, String apacheInstallationDirectory,
-                String apacheExePath, Collection<String> configurationFiles) throws Exception {
-                File apacheInstallationDir = new File(apacheInstallationDirectory);
-
-                assertTrue(apacheInstallationDir.exists(),
-                    "The 'apache2.install.dir' system property denotes a non-existant directory: '"
-                        + apacheInstallationDirectory + "'.");
-
-                File confDir = new File(apacheInstallationDir, "conf");
-
-                assertTrue(
-                    confDir.exists(),
-                    "The 'apache2.install.dir' system property denotes a directory that doesn't have a 'conf' subdirectory. This is unexpected.");
-
-                DeploymentConfig deploymentConfig = ApacheDeploymentUtil
-                    .getDeploymentConfigurationFromSystemProperties(configurationName);
-
-                ApacheDeploymentUtil.deployConfiguration(confDir, configurationFiles, deploymentConfig);
-
-                DiscoveryInput discoveryInput = new DiscoveryInput();
-                discoveryInput.serverRootPath = apacheInstallationDirectory;
-                discoveryInput.exePath = apacheExePath;
-                discoveryInput.httpdConfPath = confDir.getAbsolutePath() + File.separatorChar + "httpd.conf";
-                discoveryInput.snmpHost = deploymentConfig.snmpHost;
-                discoveryInput.snmpPort = deploymentConfig.snmpPort;
-
-                HttpdAddressUtility.Address addr = deploymentConfig.mainServer.address1;
-                HttpdAddressUtility.Address addrToUse = new HttpdAddressUtility.Address(null, null,
-                    HttpdAddressUtility.Address.NO_PORT_SPECIFIED_VALUE);
-                addrToUse.scheme = addr.scheme == null ? "http" : addr.scheme;
-                addrToUse.host = addr.host == null ? "localhost" : addr.host;
-                addrToUse.port = addr.port;
-
-                discoveryInput.pingUrl = addrToUse.toString();
-
-                restartApache(discoveryInput);
-            }
-
-            private void restartApache(DiscoveryInput discoveryInput) throws Exception {
-                ApacheServerComponent serverComponent = findAndStartServerComponent(discoveryInput);
-
-                try {
-                    serverComponent.invokeOperation("restart", null);
-                } catch (Exception e) {
-                    serverComponent.invokeOperation("start", null);
-                }
-            }
         }
 
         public TestSetup(String configurationName) {
             this.configurationName = configurationName;
+            deploymentConfig = ApacheDeploymentUtil.getDeploymentConfigurationFromSystemProperties(configurationName);
         }
 
         public TestSetup withInventoryFrom(String classPathUri) {
@@ -220,28 +229,97 @@ public class UpgradeTest extends PluginContainerTest {
         @SuppressWarnings("unchecked")
         public void addDefaultExceptations(Expectations expectations) throws Exception {
             ServerServices ss = getCurrentPluginContainerConfiguration().getServerServices();
-            
-            expectations.allowing(ss.getDiscoveryServerService()).mergeInventoryReport(expectations.with(Expectations.any(InventoryReport.class)));
+
+            expectations.allowing(ss.getDiscoveryServerService()).mergeInventoryReport(
+                expectations.with(Expectations.any(InventoryReport.class)));
             expectations.will(fakeInventory.mergeInventoryReport(InventoryStatus.COMMITTED));
 
-            expectations.allowing(ss.getDiscoveryServerService()).upgradeResources(expectations.with(Expectations.any(Set.class)));
+            expectations.allowing(ss.getDiscoveryServerService()).upgradeResources(
+                expectations.with(Expectations.any(Set.class)));
             expectations.will(fakeInventory.upgradeResources());
-            
-            expectations.allowing(ss.getDiscoveryServerService()).getResources(expectations.with(Expectations.any(Set.class)), expectations.with(Expectations.any(boolean.class)));
+
+            expectations.allowing(ss.getDiscoveryServerService()).getResources(
+                expectations.with(Expectations.any(Set.class)), expectations.with(Expectations.any(boolean.class)));
             expectations.will(fakeInventory.getResources());
-            
-            expectations.allowing(ss.getDiscoveryServerService()).mergeAvailabilityReport(expectations.with(Expectations.any(AvailabilityReport.class)));
-            expectations.allowing(ss.getDiscoveryServerService()).postProcessNewlyCommittedResources(expectations.with(Expectations.any(Set.class)));
+
+            expectations.allowing(ss.getDiscoveryServerService()).mergeAvailabilityReport(
+                expectations.with(Expectations.any(AvailabilityReport.class)));
+
+            expectations.allowing(ss.getDiscoveryServerService()).postProcessNewlyCommittedResources(
+                expectations.with(Expectations.any(Set.class)));
+
+            expectations.allowing(ss.getDiscoveryServerService()).clearResourceConfigError(
+                expectations.with(Expectations.any(int.class)));
+
+            expectations.ignoring(ss.getBundleServerService());
+            expectations.ignoring(ss.getConfigurationServerService());
+            expectations.ignoring(ss.getContentServerService());
+            expectations.ignoring(ss.getCoreServerService());
+            expectations.ignoring(ss.getEventServerService());
+            expectations.ignoring(ss.getMeasurementServerService());
+            expectations.ignoring(ss.getOperationServerService());
+            expectations.ignoring(ss.getResourceFactoryServerService());
         }
-        
+
         public FakeServerInventory getFakeInventory() {
             return fakeInventory;
         }
 
+        public DeploymentConfig getDeploymentConfig() {
+            return deploymentConfig;
+        }
+        
         public TestSetup setup() throws Exception {
-            Map<String, String> replacements = new HashMap<String, String>();
+            apacheSetup.doSetup();
+
+            Map<String, String> replacements = deploymentConfig.getTokenReplacements();
             replacements.put("server.root", apacheSetup.serverRoot);
             replacements.put("exe.path", apacheSetup.exePath);
+            replacements.put("localhost", determineLocalhost());
+
+            HttpdAddressUtility addressUtility = apacheSetup.getExecutionUtil().getServerComponent()
+                .getAddressUtility();
+            ApacheDirectiveTree runtimeConfig = apacheSetup.getExecutionUtil().getRuntimeConfiguration();
+
+            replacements.put("snmp.identifier",
+                addressUtility.getHttpdInternalMainServerAddressRepresentation(runtimeConfig).toString(false, false));
+
+            String vhost1Address = deploymentConfig.vhost1 == null ? null : deploymentConfig.vhost1.address1.toString(
+                false, false);
+            String vhost2Address = deploymentConfig.vhost2 == null ? null : deploymentConfig.vhost2.address1.toString(
+                false, false);
+            String vhost3Address = deploymentConfig.vhost3 == null ? null : deploymentConfig.vhost3.address1.toString(
+                false, false);
+            String vhost4Address = deploymentConfig.vhost4 == null ? null : deploymentConfig.vhost4.address1.toString(
+                false, false);
+
+            if (vhost1Address != null) {
+                replacements.put(
+                    "vhost1.snmp.identifier",
+                    addressUtility.getHttpdInternalVirtualHostAddressRepresentation(runtimeConfig, vhost1Address,
+                        deploymentConfig.vhost1.getServerName()).toString(false, false));
+            }
+
+            if (vhost2Address != null) {
+                replacements.put(
+                    "vhost2.snmp.identifier",
+                    addressUtility.getHttpdInternalVirtualHostAddressRepresentation(runtimeConfig, vhost2Address,
+                        deploymentConfig.vhost2.getServerName()).toString(false, false));
+            }
+
+            if (vhost3Address != null) {
+                replacements.put(
+                    "vhost3.snmp.identifier",
+                    addressUtility.getHttpdInternalVirtualHostAddressRepresentation(runtimeConfig, vhost3Address,
+                        deploymentConfig.vhost3.getServerName()).toString(false, false));
+            }
+
+            if (vhost4Address != null) {
+                replacements.put(
+                    "vhost4.snmp.identifier",
+                    addressUtility.getHttpdInternalVirtualHostAddressRepresentation(runtimeConfig, vhost4Address,
+                        deploymentConfig.vhost4.getServerName()).toString(false, false));
+            }
 
             InputStream dataStream = getClass().getResourceAsStream(inventoryFile);
 
@@ -249,24 +327,30 @@ public class UpgradeTest extends PluginContainerTest {
 
             @SuppressWarnings("unchecked")
             List<Resource> inventory = (List<Resource>) new ObjectCollectionSerializer().deserialize(rdr);
-            
+
             //fix up the parent relationships, because they might not be reconstructed correctly by 
             //JAXB - we're missing XmlID and XmlIDRef annotations in our model
             fixupParent(null, inventory);
-            
-            fakeInventory.prepopulateInventory(platform, inventory);
 
-            apacheSetup.doSetup();
+            fakeInventory.prepopulateInventory(platform, inventory);
 
             return this;
         }
-        
+
         private void fixupParent(Resource parent, Collection<Resource> children) {
             for (Resource child : children) {
                 child.setParentResource(parent);
                 if (child.getChildResources() != null) {
                     fixupParent(child, child.getChildResources());
                 }
+            }
+        }
+
+        private String determineLocalhost() {
+            try {
+                return InetAddress.getLocalHost().getCanonicalHostName();
+            } catch (UnknownHostException e) {
+                return "127.0.0.1";
             }
         }
     }
@@ -281,32 +365,12 @@ public class UpgradeTest extends PluginContainerTest {
     @Parameters({ "apache2.install.dir", "apache2.exe.path" })
     public void shutdownApache(String apacheInstallationDirectory, String exePath) throws Exception {
 
-        File apacheInstallationDir = new File(apacheInstallationDirectory);
-        File confDir = new File(apacheInstallationDir, "conf");
-
         //it really doesn't matter which configuration i use here
-        DeploymentConfig deploymentConfig = ApacheDeploymentUtil
-            .getDeploymentConfigurationFromSystemProperties(DEPLOYMENT_SIMPLE_WITH_RESOLVABLE_SERVERNAMES);
-
-        DiscoveryInput discoveryInput = new DiscoveryInput();
-        discoveryInput.serverRootPath = apacheInstallationDirectory;
-        discoveryInput.exePath = exePath;
-        discoveryInput.httpdConfPath = confDir.getAbsolutePath() + File.separatorChar + "httpd.conf";
-        discoveryInput.snmpHost = deploymentConfig.snmpHost;
-        discoveryInput.snmpPort = deploymentConfig.snmpPort;
-
-        HttpdAddressUtility.Address addr = deploymentConfig.mainServer.address1;
-        HttpdAddressUtility.Address addrToUse = new HttpdAddressUtility.Address(null, null,
-            HttpdAddressUtility.Address.NO_PORT_SPECIFIED_VALUE);
-        addrToUse.scheme = addr.scheme == null ? "http" : addr.scheme;
-        addrToUse.host = addr.host == null ? "localhost" : addr.host;
-        addrToUse.port = addr.port;
-
-        discoveryInput.pingUrl = addrToUse.toString();
-
-        ApacheServerComponent serverComponent = findAndStartServerComponent(discoveryInput);
-
-        serverComponent.invokeOperation("stop", null);
+        TestSetup.ApacheSetup apacheSetup = new TestSetup(DEPLOYMENT_SIMPLE_WITH_RESOLVABLE_SERVERNAMES)
+            .withApacheSetup().withServerRoot(apacheInstallationDirectory).withExePath(exePath)
+            .withNoDeploymentOnSetup();
+        apacheSetup.init();
+        apacheSetup.getExecutionUtil().invokeOperation("stop");
     }
 
     @PluginContainerSetup(plugins = { PLATFORM_PLUGIN, AUGEAS_PLUGIN, APACHE_PLUGIN })
@@ -338,7 +402,23 @@ public class UpgradeTest extends PluginContainerTest {
         assertEquals(server.getResourceKey(), expectedResourceKey,
             "The server resource key doesn't seem to be upgraded.");
 
-        //TODO test the vhosts
+        Set<Resource> vhosts = setup.getFakeInventory().findResourcesByType(vhostResourceType);
+        
+        assertTrue(vhosts.size() == 5, "There should be 5 vhosts discovered but found " + vhosts.size());
+        
+        List<String> expectedResourceKeys = new ArrayList<String>(5);
+        
+        DeploymentConfig dc = setup.getDeploymentConfig();
+
+        expectedResourceKeys.add(ApacheVirtualHostServiceComponent.MAIN_SERVER_RESOURCE_KEY);
+        expectedResourceKeys.add(ApacheVirtualHostServiceDiscoveryComponent.createResourceKey(dc.vhost1.getServerName(), dc.vhost1.getAddresses()));
+        expectedResourceKeys.add(ApacheVirtualHostServiceDiscoveryComponent.createResourceKey(dc.vhost2.getServerName(), dc.vhost2.getAddresses()));
+        expectedResourceKeys.add(ApacheVirtualHostServiceDiscoveryComponent.createResourceKey(dc.vhost3.getServerName(), dc.vhost3.getAddresses()));
+        expectedResourceKeys.add(ApacheVirtualHostServiceDiscoveryComponent.createResourceKey(dc.vhost4.getServerName(), dc.vhost4.getAddresses()));
+        
+        for(Resource vhost : vhosts) {
+            assertTrue(expectedResourceKeys.contains(vhost.getResourceKey()), "Unexpected virtual host resource key: '" + vhost.getResourceKey() + "'.");
+        }
     }
 
     private ResourceType findApachePluginResourceTypeByName(String resourceTypeName) {
@@ -391,46 +471,11 @@ public class UpgradeTest extends PluginContainerTest {
                 platform.setResourceType(rt);
                 platform.setUuid(UUID.randomUUID().toString());
                 platform.setId(1);
-                
+
                 return platform;
             }
         }
 
         return null;
-    }
-
-    private ApacheServerComponent findAndStartServerComponent(DiscoveryInput discoveryInput) throws Exception {
-        ApacheServerDiscoveryComponent discoveryComponent = new ApacheServerDiscoveryComponent();
-
-        ResourceType resourceType = findApachePluginResourceTypeByName("Apache HTTP Server");
-        SystemInfo systemInfo = SystemInfoFactory.createSystemInfo();
-
-        ResourceDiscoveryContext<PlatformComponent> discoveryContext = new ResourceDiscoveryContext<PlatformComponent>(
-            resourceType, null, null, systemInfo, null, null, PluginContainerDeployment.AGENT);
-
-        Configuration config = discoveryContext.getDefaultPluginConfiguration();
-        config.put(new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_SERVER_ROOT,
-            discoveryInput.serverRootPath));
-        config
-            .put(new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_EXECUTABLE_PATH, discoveryInput.exePath));
-        config
-            .put(new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_HTTPD_CONF, discoveryInput.httpdConfPath));
-        config
-            .put(new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_SNMP_AGENT_HOST, discoveryInput.snmpHost));
-        config
-            .put(new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_SNMP_AGENT_PORT, discoveryInput.snmpPort));
-        config.put(new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_URL, discoveryInput.pingUrl));
-
-        DiscoveredResourceDetails result = discoveryComponent.discoverResource(config, discoveryContext);
-
-        ApacheServerComponent serverComponent = new ApacheServerComponent();
-
-        Resource resource = new Resource(result.getResourceKey(), null, resourceType);
-        resource.setPluginConfiguration(config);
-        ResourceContext<PlatformComponent> resourceContext = new ResourceContext<PlatformComponent>(resource, null,
-            null, systemInfo, null, null, null, null, null, null, null, null);
-
-        serverComponent.start(resourceContext);
-        return serverComponent;
     }
 }

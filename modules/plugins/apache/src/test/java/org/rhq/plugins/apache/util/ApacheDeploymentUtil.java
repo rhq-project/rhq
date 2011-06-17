@@ -49,6 +49,7 @@ public class ApacheDeploymentUtil {
     private static final String SERVER_ROOT = "server.root";
     private static final String ADDITIONAL_DIRECTIVES = "additional.directives";
     private static final String SERVERNAME_DIRECTIVE = "servername.directive";
+    private static final String SERVERNAME = "servername";
     private static final String LISTEN4 = "listen4";
     private static final String LISTEN3 = "listen3";
     private static final String LISTEN2 = "listen2";
@@ -71,6 +72,41 @@ public class ApacheDeploymentUtil {
             public String serverNameDirective = null;
             public final List<String> additionalDirectives = new ArrayList<String>();
             
+            public String getServerName() {
+                String serverName = null;
+                if (serverNameDirective != null) {
+                    int startIdx = serverNameDirective.indexOf(' ');
+                    if (startIdx >= 0) {
+                        while (serverNameDirective.charAt(startIdx) == ' ') {
+                            ++startIdx;
+                        }
+                        
+                        serverName = serverNameDirective.substring(startIdx);
+                        serverName = serverName.trim();
+                    }
+                }
+                
+                return serverName;
+            }
+            
+            public List<String> getAddresses() {
+                ArrayList<String> ret = new ArrayList<String>();
+                if (address1 != null) {
+                    ret.add(address1.toString());
+                }
+                if (address2 != null) {
+                    ret.add(address2.toString());
+                }
+                if (address3 != null) {
+                    ret.add(address3.toString());
+                }
+                if (address4 != null) {
+                    ret.add(address4.toString());
+                }
+                
+                return ret;
+            }
+            
             private void addToTokenReplacements(int ordinal, Map<String, String> tokenReplacements) {
                 String prefix = null;
                 
@@ -81,6 +117,11 @@ public class ApacheDeploymentUtil {
                 }
                 
                 tokenReplacements.put(prefix + SERVERNAME_DIRECTIVE, serverNameDirective == null ? "" : serverNameDirective);
+                
+                String serverName = getServerName();
+                if (serverName != null) {
+                    tokenReplacements.put(prefix + SERVERNAME, serverName);
+                }
                 
                 String dirs = "";
                 if (!additionalDirectives.isEmpty()) {

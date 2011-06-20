@@ -126,6 +126,27 @@ public class FakeServerInventory {
         };
     }
 
+    public synchronized CustomAction setResourceError() {
+        return new CustomAction("setResourceError") {
+            public Object invoke(Invocation invocation) throws Throwable {
+                synchronized(FakeServerInventory.this) {
+                    throwIfFailing();
+                    
+                    ResourceError error = (ResourceError) invocation.getParameter(0);
+                    
+                    Resource serverSideResource = resourceStore.get(error.getResource().getUuid());
+                    
+                    if (serverSideResource != null) {
+                        List<ResourceError> currentErrors = serverSideResource.getResourceErrors();
+                        currentErrors.add(error);
+                    }
+                    
+                    return null;
+                }
+            }
+        };
+    }
+    
     public synchronized CustomAction upgradeResources() {
         return new CustomAction("upgradeServerSideInventory") {
             @SuppressWarnings({ "serial", "unchecked" })

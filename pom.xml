@@ -1213,7 +1213,6 @@
                 <version>2.3.2</version>
                 <configuration>
                     <xmlOutput>true</xmlOutput>
-                    <onlyAnalyze>org.rhq.*,org.jboss.jopr.*</onlyAnalyze>
                     <effort>Max</effort>
                     <threshold>Default</threshold>
                 </configuration>

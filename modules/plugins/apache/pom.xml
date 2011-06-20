@@ -246,28 +246,38 @@
                               <apache1.install.dir>PASS THIS IN FROM THE COMMAND LINE</apache1.install.dir>
                               <apache1.exe.path>bin/httpd</apache1.exe.path>
                               
+                              <port1><!-- defaults to 11675--></port1>
+                              <port2><!-- defaults to 11676--></port2>
+                              <port3><!-- defaults to 11677--></port3>
+                              <port4><!-- defaults to 11678--></port4>
+                              <localhost><!-- defaults to the actual localhost hostname --></localhost>
+                              <unresolvable.host><!-- defaults to 'unreachable.host.com' --></unresolvable.host>
+                              
                               <!-- configuration of individual upgrade tests -->
+                              <!-- 
+                              <*.document.root>defaults to 'htdocs'</*.document.root>
+                              <*.listen1>defaults to ${port1}</*.listen1>
+                              <*.listen2>defaults to '${port2}'</*.listen2>
+                              <*.listen3>defaults to '${port3}'</*.listen3>
+                              <*.listen4>defaults to '${port4}'</*.listen4>
+                              <*.servername.directive>defaults to ''</*.servername.directive>
+                              <*.additional.directives>defaults to ''</*.additional.directives>
+                              <*.vhost1.urls>defaults to '${localhost}:${port1}'</*.vhost1.urls>
+                              <*.vhost1.servername.directive>defaults to 'ServerName ${localhost}:${port1}'</*.vhost1.servername.directive>
+                              <*.vhost1.additional.directives>defaults to ''</*.vhost1.additional.directives>
+                              <*.vhost2.urls>defaults to '${localhost}:${port2}'</*.vhost2.urls>
+                              <*.vhost2.servername.directive>defaults to 'ServerName ${localhost}:${port2}'</*.vhost2.servername.directive>
+                              <*.vhost2.additional.directives>defaults to ''</*.vhost2.additional.directives>
+                              <*.vhost3.urls>defaults to '${localhost}:${port3}'</*.vhost3.urls>
+                              <*.vhost3.servername.directive>defaults to 'ServerName ${localhost}:${port3}'</*.vhost3.servername.directive>
+                              <*.vhost3.additional.directives>defaults to ''</*.vhost3.additional.directives>
+                              <*.vhost4.urls>defaults to '${localhost}:${port4}'</*.vhost4.urls>
+                              <*.vhost4.servername.directive>defaults to 'ServerName ${localhost}:${port4}'</*.vhost4.servername.directive>
+                              <*.vhost4.additional.directives>defaults to ''</*.vhost4.additional.directives>
+                               -->
+
                               <simpleWithResolvableServerNames.server.root>${apache2.install.dir}</simpleWithResolvableServerNames.server.root>
-                              <!-- this is defaulted to "htdocs" -->
-                              <simpleWithResolvableServerNames.document.root></simpleWithResolvableServerNames.document.root>
-                              <simpleWithResolvableServerNames.listen1>11675</simpleWithResolvableServerNames.listen1>
-                              <simpleWithResolvableServerNames.listen2>11676</simpleWithResolvableServerNames.listen2>
-                              <simpleWithResolvableServerNames.listen3>11677</simpleWithResolvableServerNames.listen3>
-                              <simpleWithResolvableServerNames.listen4>11678</simpleWithResolvableServerNames.listen4>
-                              <simpleWithResolvableServerNames.servername.directive></simpleWithResolvableServerNames.servername.directive>
-                              <simpleWithResolvableServerNames.additional.directives></simpleWithResolvableServerNames.additional.directives>
-                              <simpleWithResolvableServerNames.vhost1.urls>127.0.0.1:11675</simpleWithResolvableServerNames.vhost1.urls>
-                              <simpleWithResolvableServerNames.vhost1.servername.directive>ServerName 127.0.0.1:11675</simpleWithResolvableServerNames.vhost1.servername.directive>
-                              <simpleWithResolvableServerNames.vhost1.additional.directives></simpleWithResolvableServerNames.vhost1.additional.directives>
-                              <simpleWithResolvableServerNames.vhost2.urls>127.0.0.1:11676</simpleWithResolvableServerNames.vhost2.urls>
-                              <simpleWithResolvableServerNames.vhost2.servername.directive>ServerName 127.0.0.1:11676</simpleWithResolvableServerNames.vhost2.servername.directive>
-                              <simpleWithResolvableServerNames.vhost2.additional.directives></simpleWithResolvableServerNames.vhost2.additional.directives>
-                              <simpleWithResolvableServerNames.vhost3.urls>127.0.0.1:11677</simpleWithResolvableServerNames.vhost3.urls>
-                              <simpleWithResolvableServerNames.vhost3.servername.directive>ServerName 127.0.0.1:11677</simpleWithResolvableServerNames.vhost3.servername.directive>
-                              <simpleWithResolvableServerNames.vhost3.additional.directives></simpleWithResolvableServerNames.vhost3.additional.directives>
-                              <simpleWithResolvableServerNames.vhost4.urls>127.0.0.1:11678</simpleWithResolvableServerNames.vhost4.urls>
-                              <simpleWithResolvableServerNames.vhost4.servername.directive>ServerName 127.0.0.1:11678</simpleWithResolvableServerNames.vhost4.servername.directive>
-                              <simpleWithResolvableServerNames.vhost4.additional.directives></simpleWithResolvableServerNames.vhost4.additional.directives>
+                              
                            </systemPropertyVariables>
                         </configuration>
                      </execution>

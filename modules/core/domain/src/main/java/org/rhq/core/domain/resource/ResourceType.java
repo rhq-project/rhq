@@ -59,6 +59,8 @@ import javax.persistence.Transient;
 import javax.xml.bind.annotation.XmlTransient;
 
 import org.rhq.core.domain.bundle.BundleType;
+import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration;
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.event.EventDefinition;
@@ -79,6 +81,7 @@ import org.rhq.core.domain.util.Summary;
 @Table(name = ResourceType.TABLE_NAME)
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_RESOURCE_TYPE_ID_SEQ")
 @NamedQueries( {
+    @NamedQuery(name = ResourceType.QUERY_GET_BUNDLE_CONFIG_BY_GROUP_ID, query = "SELECT rg.resourceType.bundleConfiguration FROM ResourceGroup rg WHERE rg.id = :groupId"),
     @NamedQuery(name = ResourceType.QUERY_FIND_BY_PLUGIN, query = "SELECT rt FROM ResourceType AS rt "
         + "WHERE rt.plugin = :plugin AND rt.deleted = false"),
     @NamedQuery(name = ResourceType.QUERY_FIND_BY_NAME_AND_PLUGIN, // TODO: QUERY: names are case-sensitive
@@ -246,6 +249,7 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
 
     public static final ResourceType ANY_PLATFORM_TYPE = null;
 
+    public static final String QUERY_GET_BUNDLE_CONFIG_BY_GROUP_ID = "ResourceType.getBundleConfigByGroupResourceType";
     public static final String QUERY_GET_EXPLICIT_RESOURCE_TYPE_COUNTS_BY_GROUP = "ResourceType.getExplicitResourceTypeCountsByGroup";
     public static final String QUERY_GET_IMPLICIT_RESOURCE_TYPE_COUNTS_BY_GROUP = "ResourceType.getImplicitResourceTypeCountsByGroup";
     public static final String QUERY_FIND_BY_NAME_AND_PLUGIN = "ResourceType.findByNameAndPlugin";
@@ -390,6 +394,13 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
 
     @OneToOne(mappedBy = "resourceType", fetch = FetchType.LAZY, cascade = CascadeType.ALL, optional = true)
     private BundleType bundleType;
+
+    // note that this is mapped to a Configuration entity, which is what it really is. However, our getter/setter
+    // only provides access to this via ResourceTypeBundleConfiguration to encapsulate the innards of this implementation
+    // detail, exposing only the more strongly typed methods to obtain bundle-related config properties
+    @JoinColumn(name = "BUNDLE_CONFIG_ID", nullable = true)
+    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY, optional = true)
+    private Configuration bundleConfiguration;
 
     @Transient
     private transient String helpText;
@@ -648,6 +659,22 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
 
     public void setResourceConfigurationDefinition(ConfigurationDefinition resourceConfigurationDefinition) {
         this.resourceConfigurationDefinition = resourceConfigurationDefinition;
+    }
+
+    public ResourceTypeBundleConfiguration getResourceTypeBundleConfiguration() {
+        if (this.bundleConfiguration == null) {
+            return null;
+        } else {
+            return new ResourceTypeBundleConfiguration(bundleConfiguration);
+        }
+    }
+
+    public void setResourceTypeBundleConfiguration(ResourceTypeBundleConfiguration rtbc) {
+        if (rtbc == null) {
+            this.bundleConfiguration = null;
+        } else {
+            this.bundleConfiguration = rtbc.getBundleConfiguration();
+        }
     }
 
     @XmlTransient

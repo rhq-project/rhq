@@ -44,7 +44,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.clientapi.agent.measurement.MeasurementAgentService;
-import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDataRequest;
@@ -239,6 +238,21 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
         }
     }
 
+    /**
+     * If you want to get a cached value of a trait, pass in its schedule ID.
+     * This is useful if you don't care to obtain the latest-n-greated value of the trait,
+     * and you want to avoid making a live call to the managed resource to obtain its value.
+     * Note that if the trait is not yet cached, this will return null, and the caller will
+     * be forced to make a live call to obtain the trait value, but at least this can help
+     * avoid unnecessarily calling the live resource.
+     * 
+     * @param scheduleId the schedule for the trait for a specific resource
+     * @return the trait's cached value, <code>null</code> if not available
+     */
+    public String getCachedTraitValue(int scheduleId) {
+        return traitCache.get(scheduleId);
+    }
+
     public void perMinuteItizeData(MeasurementReport report) {
         Iterator<MeasurementDataNumeric> iter = report.getNumericData().iterator();
         while (iter.hasNext()) {
@@ -428,8 +442,8 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
         MeasurementReport report = new MeasurementReport();
         Set<MeasurementScheduleRequest> allMeasurements = new HashSet<MeasurementScheduleRequest>();
         for (MeasurementDataRequest dataRequest : requests) {
-            allMeasurements.add(new MeasurementScheduleRequest(1, dataRequest.getName(), 0, true,
-                dataRequest.getType()));
+            allMeasurements
+                .add(new MeasurementScheduleRequest(1, dataRequest.getName(), 0, true, dataRequest.getType()));
         }
 
         try {

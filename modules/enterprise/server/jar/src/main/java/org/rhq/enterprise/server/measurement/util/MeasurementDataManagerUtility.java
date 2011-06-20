@@ -48,12 +48,12 @@ import org.rhq.enterprise.server.measurement.MeasurementNotFoundException;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
- * This is purposefully not TimeZone sensitive. It makes this easier to deal with in clusters with servers in different
+ * This is purposefully not TimeZone sensitive. It makes it easier for it to deal with clusters with servers in different
  * timezones, but it means that we can't rely on table maintenance in the middle of the night. That's ok, we're going to
- * do this like the rest of the maintenance on the hour. It does mean that even with 12 hour tables we may have data in
- * one from 10 am to 10 pm local instead of 12 to 12.
- *
- * <p/>Due to the leap seconds its possible some tables will technically span more than MILLISECONDS_PER_TABLE of real
+ * do this like the rest of the maintenance - on the hour. It does mean that even with 12 hour tables we may have data
+ * in one from 10 am to 10 pm local instead of 12 to 12.
+ * <p/>
+ * Due to the leap seconds, it's possible some tables will technically span more than MILLISECONDS_PER_TABLE of real
  * time. This is an irrelevant quirk.
  *
  * @author Greg Hinkle
@@ -79,7 +79,7 @@ public class MeasurementDataManagerUtility {
     private static NumberFormat nf = new DecimalFormat("00");
 
     private static final long MILLISECONDS_PER_DAY = 1000L * 60 * 60 * 24;
-    public static final long MILLESECONDS_PER_TABLE = MILLISECONDS_PER_DAY / TABLES_PER_DAY;
+    public static final long MILLISECONDS_PER_TABLE = MILLISECONDS_PER_DAY / TABLES_PER_DAY;
 
     public static final long RAW_PURGE = STORED_DAYS * MILLISECONDS_PER_DAY;
 
@@ -304,7 +304,6 @@ public class MeasurementDataManagerUtility {
             ResultSet rs = null;
             try {
                 connection = datasource.getConnection();
-                ;
                 String table = TABLE_PREFIX + nf.format(index);
                 String query = "SELECT d.time_stamp, d.value \n" + "FROM " + table + " d \n"
                     + "WHERE d.schedule_id = ? \n" + "AND d.time_stamp = ( SELECT MAX(dd.time_stamp) \n" + "FROM "
@@ -506,10 +505,10 @@ public class MeasurementDataManagerUtility {
         long day = now / MILLISECONDS_PER_DAY;
         long timeOfDay = now - (day * MILLISECONDS_PER_DAY);
 
-        long remaining = MILLESECONDS_PER_TABLE - timeOfDay;
+        long remaining = MILLISECONDS_PER_TABLE - timeOfDay;
         long nextRotation = now + remaining;
         if (nextRotation < now) {
-            nextRotation += MILLESECONDS_PER_TABLE;
+            nextRotation += MILLISECONDS_PER_TABLE;
         }
 
         return DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.FULL).format(new Date(nextRotation));
@@ -519,7 +518,7 @@ public class MeasurementDataManagerUtility {
         long day = time / MILLISECONDS_PER_DAY;
         long timeOfDay = time - (day * MILLISECONDS_PER_DAY);
 
-        long table = ((day * TABLES_PER_DAY) + (timeOfDay / MILLESECONDS_PER_TABLE));
+        long table = ((day * TABLES_PER_DAY) + (timeOfDay / MILLISECONDS_PER_TABLE));
         long tableIndex = (table % TABLE_COUNT);
 
         return (int) tableIndex;
@@ -530,7 +529,7 @@ public class MeasurementDataManagerUtility {
         int result;
 
         try {
-            result = Integer.valueOf(indexString).intValue();
+            result = Integer.valueOf(indexString);
         } catch (NumberFormatException e) {
             LOG.error("Invalid raw table name: " + tableName + ", returning table index 0.");
             result = 0;

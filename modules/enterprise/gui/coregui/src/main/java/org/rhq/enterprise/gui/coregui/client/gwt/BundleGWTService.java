@@ -30,6 +30,7 @@ import org.rhq.core.domain.bundle.BundleFile;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
+import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration;
 import org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.BundleCriteria;
@@ -42,6 +43,8 @@ import org.rhq.core.domain.util.PageList;
 
 public interface BundleGWTService extends RemoteService {
 
+    ResourceTypeBundleConfiguration getResourceTypeBundleConfiguration(int compatGroupId) throws RuntimeException;
+
     BundleVersion createBundleVersion(int bundleId, String name, String version, String recipe) throws RuntimeException;
 
     BundleVersion createBundleVersionViaURL(String url) throws RuntimeException;
@@ -52,8 +55,8 @@ public interface BundleGWTService extends RemoteService {
         Configuration configuration, boolean enforcePolicy, int enforcementInterval, boolean pinToBundle)
         throws RuntimeException;
 
-    BundleDestination createBundleDestination(int bundleId, String name, String description, String deployDir,
-        int groupId) throws RuntimeException;
+    BundleDestination createBundleDestination(int bundleId, String name, String description, String destBaseDirName,
+        String deployDir, int groupId) throws RuntimeException;
 
     void deleteBundles(int[] bundleIds) throws RuntimeException;
 

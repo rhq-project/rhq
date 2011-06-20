@@ -22,11 +22,11 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.sql.Connection;
 import java.util.Random;
 
 import javax.management.MBeanServer;
 import javax.management.MBeanServerFactory;
-import javax.persistence.EntityManager;
 
 import org.dbunit.database.DatabaseConfig;
 import org.dbunit.database.DatabaseConnection;
@@ -43,6 +43,7 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+import org.xml.sax.InputSource;
 
 import org.jboss.mx.util.MBeanServerLocator;
 
@@ -50,14 +51,11 @@ import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsService;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceMBean;
-import org.rhq.enterprise.server.discovery.DiscoveryBossLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
-import org.xml.sax.InputSource;
 
 public class DiscoveryBossBeanTest extends AbstractEJB3Test {
     private DiscoveryBossLocal discoveryBoss;
@@ -176,9 +174,18 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
     }
 
     public void initDB() throws Exception {
-        IDatabaseConnection conn = new DatabaseConnection(getConnection());
-        setDbType(conn);
-        DatabaseOperation.CLEAN_INSERT.execute(conn, getDataSet());
+        Connection connection = null;
+
+        try {
+            connection = getConnection();
+            IDatabaseConnection dbUnitConnection = new DatabaseConnection(connection);
+            setDbType(dbUnitConnection);
+            DatabaseOperation.CLEAN_INSERT.execute(dbUnitConnection, getDataSet());
+        } finally {
+            if (connection != null) {
+                connection.close();
+            }
+        }
     }
 
     void setDbType(IDatabaseConnection connection) throws Exception {

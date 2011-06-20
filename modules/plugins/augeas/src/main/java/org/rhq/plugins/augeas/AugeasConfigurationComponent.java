@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
 
@@ -77,8 +78,7 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
     public static final String AUGEAS_ROOT_PATH_PROP = "augeasRootPath";
 
     private static final boolean IS_WINDOWS = (File.separatorChar == '\\');
-    public static final String DEFAULT_AUGEAS_ROOT_PATH = (IS_WINDOWS) ? "C:/" : "/";
-    protected static final String AUGEAS_LOAD_PATH = "/usr/share/augeas/lenses";
+    public static final String DEFAULT_AUGEAS_ROOT_PATH = (IS_WINDOWS) ? "C:/" : "/";    
 
     private final Log log = LogFactory.getLog(this.getClass());
 
@@ -89,11 +89,20 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
     private Augeas augeas;
     private AugeasNode resourceConfigRootNode;
     private String augeasRootPath;
-
+    private String augeasLoadPath;
+    
     protected String getAugeasRootPath() {
         return augeasRootPath;
     }
 
+    /**
+     * Returns the path the augeas library loads the lenses from.
+     * @return
+     */
+    protected String getAugeasLoadPath() {
+        return augeasLoadPath;
+    }
+    
     public void start(ResourceContext<T> resourceContext) throws InvalidPluginConfigurationException, Exception {
         this.resourceContext = resourceContext;
         this.resourceDescription = this.resourceContext.getResourceType() + " Resource with key ["
@@ -103,7 +112,9 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
         Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
         this.augeasRootPath = pluginConfig.getSimpleValue(AUGEAS_ROOT_PATH_PROP, DEFAULT_AUGEAS_ROOT_PATH);
         log.debug("Augeas Root Path = \"" + this.augeasRootPath + "\"");
-
+        
+        augeasLoadPath = resourceContext.getDataDirectory().getAbsolutePath() + File.separator + AugeasPluginLifecycleListener.LENSES_SUBDIRECTORY_NAME;
+        
         if (isAugeasAvailable()) {
             initAugeas();
         } else {
@@ -341,9 +352,10 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
     protected Augeas createAugeas() {
         Augeas augeas;
         try {
-            augeas = new Augeas(this.augeasRootPath, AUGEAS_LOAD_PATH, Augeas.NO_MODL_AUTOLOAD);
+            augeas = new Augeas(this.augeasRootPath, augeasLoadPath, Augeas.NO_MODL_AUTOLOAD);
             setupAugeasModules(augeas);
             loadConfigurationFiles(augeas);
+            checkModuleErrors(augeas);
         } catch (RuntimeException e) {
             augeas = null;
             log.error("Failed to initialize Augeas Java API.", e);
@@ -716,6 +728,23 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
                 }
                 throw new Exception(message);
             }
+        }
+    }
+    
+    private void checkModuleErrors(Augeas augeas) {
+        List<String> errors = augeas.match("/augeas/load//error");
+        if (errors != null && errors.size() > 0) {
+            StringBuilder errorMessage = new StringBuilder();
+            for(String nodePath : errors) {
+                AugeasNode node = new AugeasNode(nodePath);
+                String moduleName = node.getParent().getName();
+                String errorText = augeas.get(nodePath);
+                
+                errorMessage.append("Module '").append(moduleName).append("' failed with the following errors:\n");
+                errorMessage.append(errorText);
+                errorMessage.append("\n\n");
+            }
+            throw new IllegalStateException("Augeas modules didn't load cleanly.\n" + errorMessage);
         }
     }
 }

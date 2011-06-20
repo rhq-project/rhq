@@ -25,6 +25,13 @@ public class ImageManager {
 
     public static final String IMAGES_DIR = "images/";
 
+    /**
+     * Returns a generic "help" icon. This will also have a peer "disabled" help icon.
+     */
+    public static String getHelpIcon() {
+        return "global/help.png";
+    }
+
     public static String getLoadingIcon() {
         return "ajax-loader.gif";
     }

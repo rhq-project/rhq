@@ -34,8 +34,8 @@ import org.rhq.plugins.perftest.resource.ResourceFactory;
 public class PerfTestRogueDiscoveryComponent implements ResourceDiscoveryComponent {
     private Log log = LogFactory.getLog(PerfTestRogueDiscoveryComponent.class);
 
-    private static final String SYSPROP_DISCOVERY = "on.perftest.server-rogue-discovery";
-    private static final String SYSPROP_DISCOVERY_INT = "on.perftest.server-rogue-discovery-interruptable";
+    private static final String SYSPROP_DISCOVERY = "rhq.perftest.server-rogue-discovery";
+    private static final String SYSPROP_DISCOVERY_INT = "rhq.perftest.server-rogue-discovery-interruptable";
 
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext context)
         throws InvalidPluginConfigurationException, Exception {

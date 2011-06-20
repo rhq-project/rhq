@@ -69,6 +69,7 @@
     <rhq_config_template/>
     <rhq_resource/>
     <rhq_resource_subcat/>
+    <rhq_resource_group_res_imp_map/>
     <rhq_resource_group/>
     <rhq_prd_ver/>
     <rhq_alert_definition/>
@@ -78,6 +79,7 @@
     <rhq_alert_notif_log/>
     <rhq_availability/>
     <rhq_measurement_sched/>
+    <rhq_content_source_type/>
     <rhq_content_source/>
     <rhq_repo_content_src_map/>
     <rhq_package/>

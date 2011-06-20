@@ -19,16 +19,24 @@
 
 package org.rhq.plugins.apache.util;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Reader;
+import java.io.StringReader;
+import java.net.InetAddress;
 import java.net.URL;
+import java.net.UnknownHostException;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -75,7 +83,7 @@ public class ApacheDeploymentUtil {
             
             public String getServerName() {
                 String serverName = null;
-                if (serverNameDirective != null) {
+                if (serverNameDirective != null && serverNameDirective.startsWith("ServerName")) {
                     int startIdx = serverNameDirective.indexOf(' ');
                     if (startIdx >= 0) {
                         while (serverNameDirective.charAt(startIdx) == ' ') {
@@ -189,28 +197,72 @@ public class ApacheDeploymentUtil {
         }
     }
     
+    public static void addDefaultVariables(Map<String, String> variables, String prefix) {
+        String localhost = determineLocalhost();
+        checkOrAddDefault(variables, "localhost", localhost);
+        checkOrAddDefault(variables, "unresolvable.host", "unreachable.host.com");
+        checkOrAddDefault(variables, "port1", "11675");
+        checkOrAddDefault(variables, "port2", "11676");
+        checkOrAddDefault(variables, "port3", "11677");
+        checkOrAddDefault(variables, "port4", "11678");
+        
+        checkOrAddDefault(variables, prefix + ".listen1", "${port1}");
+        checkOrAddDefault(variables, prefix + ".listen2", "${port2}");
+        checkOrAddDefault(variables, prefix + ".listen3", "${port3}");
+        checkOrAddDefault(variables, prefix + ".listen4", "${port4}");
+        
+        checkOrAddDefault(variables, prefix + ".vhost1.servername", "${localhost}:${port1}");
+        checkOrAddDefault(variables, prefix + ".vhost1.urls", "${" + prefix + ".vhost1.servername}");
+        checkOrAddDefault(variables, prefix + ".vhost1.servername.directive", "ServerName ${" + prefix + ".vhost1.servername}");
+                
+        checkOrAddDefault(variables, prefix + ".vhost2.servername", "${localhost}:${port2}");
+        checkOrAddDefault(variables, prefix + ".vhost2.urls", "${" + prefix + ".vhost2.servername}");
+        checkOrAddDefault(variables, prefix + ".vhost2.servername.directive", "ServerName ${" + prefix + ".vhost2.servername}");
+        
+        checkOrAddDefault(variables, prefix + ".vhost3.servername", "${localhost}:${port3}");
+        checkOrAddDefault(variables, prefix + ".vhost3.urls", "${" + prefix + ".vhost3.servername}");
+        checkOrAddDefault(variables, prefix + ".vhost3.servername.directive", "ServerName ${" + prefix + ".vhost3.servername}");
+        
+        checkOrAddDefault(variables, prefix + ".vhost4.servername", "${localhost}:${port4}");
+        checkOrAddDefault(variables, prefix + ".vhost4.urls", "${" + prefix + ".vhost4.servername}");
+        checkOrAddDefault(variables, prefix + ".vhost4.servername.directive", "ServerName ${" + prefix + ".vhost4.servername}");
+    }
+    
+    private static void checkOrAddDefault(Map<String, String> map, String key, String value) {
+        if (!map.containsKey(key)) {
+            map.put(key, value);
+        }
+    }
+    
     public static DeploymentConfig getDeploymentConfigurationFromSystemProperties(String variablesPrefix) {
         DeploymentConfig ret = new DeploymentConfig();
         
+        Map<String, String> properties = new TokenReplacingMap(System.getProperties());
+        addDefaultVariables(properties, variablesPrefix);
+        
         variablesPrefix += ".";
         
-        ret.serverRoot = System.getProperty(variablesPrefix + SERVER_ROOT);
-        ret.documentRoot = System.getProperty(variablesPrefix + DOCUMENT_ROOT, "htdocs");
-        ret.snmpHost = System.getProperty(variablesPrefix + SNMP_HOST, "localhost");
-        ret.snmpPort = Integer.parseInt(System.getProperty(variablesPrefix + SNMP_PORT, "1610"));
-        ret.mainServer.address1 = HttpdAddressUtility.parseListen(System.getProperty(variablesPrefix + LISTEN1));
-        ret.mainServer.address2 = HttpdAddressUtility.parseListen(System.getProperty(variablesPrefix + LISTEN2));
-        ret.mainServer.address3 = HttpdAddressUtility.parseListen(System.getProperty(variablesPrefix + LISTEN3));
-        ret.mainServer.address4 = HttpdAddressUtility.parseListen(System.getProperty(variablesPrefix + LISTEN4));
-        ret.mainServer.serverNameDirective = System.getProperty(variablesPrefix + SERVERNAME_DIRECTIVE);
+        ret.serverRoot = properties.get(variablesPrefix + SERVER_ROOT);
+        ret.documentRoot = properties.get(variablesPrefix + DOCUMENT_ROOT);
+        ret.documentRoot = ret.documentRoot == null ?  "htdocs" : ret.documentRoot; 
+        ret.snmpHost = properties.get(variablesPrefix + SNMP_HOST);
+        ret.snmpHost = ret.snmpHost == null ? "localhost" : ret.snmpHost;
+        String snmpPort = properties.get(variablesPrefix + SNMP_PORT);
+        snmpPort = snmpPort == null ? "1610" : snmpPort;
+        ret.snmpPort = Integer.parseInt(snmpPort);
+        ret.mainServer.address1 = HttpdAddressUtility.parseListen(properties.get(variablesPrefix + LISTEN1));
+        ret.mainServer.address2 = HttpdAddressUtility.parseListen(properties.get(variablesPrefix + LISTEN2));
+        ret.mainServer.address3 = HttpdAddressUtility.parseListen(properties.get(variablesPrefix + LISTEN3));
+        ret.mainServer.address4 = HttpdAddressUtility.parseListen(properties.get(variablesPrefix + LISTEN4));
+        ret.mainServer.serverNameDirective = properties.get(variablesPrefix + SERVERNAME_DIRECTIVE);
         
-        String additionalDirectives = System.getProperty(variablesPrefix + ADDITIONAL_DIRECTIVES);
+        String additionalDirectives = properties.get(variablesPrefix + ADDITIONAL_DIRECTIVES);
         fillAdditionalDirectives(additionalDirectives, ret.mainServer.additionalDirectives);
         
-        readVHostConfigFromSystemProperties(ret.vhost1, variablesPrefix + VHOST + 1);
-        readVHostConfigFromSystemProperties(ret.vhost2, variablesPrefix + VHOST + 2);
-        readVHostConfigFromSystemProperties(ret.vhost3, variablesPrefix + VHOST + 3);
-        readVHostConfigFromSystemProperties(ret.vhost4, variablesPrefix + VHOST + 4);
+        readVHostConfigFromProperties(ret.vhost1, variablesPrefix + VHOST + 1, properties);
+        readVHostConfigFromProperties(ret.vhost2, variablesPrefix + VHOST + 2, properties);
+        readVHostConfigFromProperties(ret.vhost3, variablesPrefix + VHOST + 3, properties);
+        readVHostConfigFromProperties(ret.vhost4, variablesPrefix + VHOST + 4, properties);
 
         return ret;
     }
@@ -263,10 +315,10 @@ public class ApacheDeploymentUtil {
         }
     }
 
-    private static void readVHostConfigFromSystemProperties(DeploymentConfig.VHost vhost, String prefix) {
+    private static void readVHostConfigFromProperties(DeploymentConfig.VHost vhost, String prefix, Map<String, String> properties) {
         prefix += ".";
         
-        String addrsString = System.getProperty(prefix + URLS);
+        String addrsString = properties.get(prefix + URLS);
         
         if (addrsString == null) {
             throw new IllegalStateException("The system property '" + prefix + "urls' doesn't exist. It is needed to define the vhost.");
@@ -289,9 +341,9 @@ public class ApacheDeploymentUtil {
             throw new IllegalStateException("The system property '" + prefix + "urls' specified " + addrs.length + " addresses. Only 1-4 addresses are supported.");
         }
         
-        vhost.serverNameDirective = System.getProperty(prefix + SERVERNAME_DIRECTIVE);
+        vhost.serverNameDirective = properties.get(prefix + SERVERNAME_DIRECTIVE);
         
-        String additionalDirectives = System.getProperty(prefix + ADDITIONAL_DIRECTIVES);
+        String additionalDirectives = properties.get(prefix + ADDITIONAL_DIRECTIVES);
         fillAdditionalDirectives(additionalDirectives, vhost.additionalDirectives);
     }
     
@@ -302,4 +354,122 @@ public class ApacheDeploymentUtil {
             }
         }
     }
+    
+    private static String determineLocalhost() {
+        try {
+            return InetAddress.getLocalHost().getCanonicalHostName();
+        } catch (UnknownHostException e) {
+            return "127.0.0.1";
+        }
+    }
+
+    private static class TokenReplacingMap extends HashMap<String, String> {
+        private static final long serialVersionUID = 1L;
+        
+        @SuppressWarnings("rawtypes")
+        private Map wrapped;
+        private Deque<String> currentResolutionStack = new ArrayDeque<String>();
+        private Map<Object, String> resolved = new HashMap<Object, String>();
+        
+        public TokenReplacingMap(Map<?, ?> wrapped) {
+            this.wrapped = wrapped;
+        }
+        
+        @Override
+        public String get(Object key) {
+            return get((String) key);          
+        }
+        
+        public String get(String key) {
+            if (resolved.containsKey(key)) {
+                return resolved.get(key);
+            }
+            
+            if (currentResolutionStack.contains(key)) {
+                throw new IllegalArgumentException("Property '" + key + "' indirectly references itself in its value.");
+            }
+            
+            Object rawValue = wrapped.get(key);
+            
+            if (rawValue == null) {
+                return null;
+            }
+            
+            currentResolutionStack.push(key);
+            
+            String ret = readAll(new TokenReplacingReader(new StringReader(rawValue.toString()), this));
+            
+            currentResolutionStack.pop();
+            
+            resolved.put(key, ret);
+            
+            return ret;
+        }
+        
+        @Override
+        public String put(String key, String value) {
+            return (String) wrapped.put(key, value);
+        }
+        
+        @Override
+        public void putAll(Map<? extends String, ? extends String> m) {
+            wrapped.putAll(m);
+        }
+        
+        @Override
+        public void clear() {
+            wrapped.clear();
+            resolved.clear();
+        }
+        
+        @Override
+        public boolean containsKey(Object key) {
+            return wrapped.containsKey(key);
+        }
+        
+        @Override
+        public Set<String> keySet() {
+            return (Set<String>) wrapped.keySet();
+        }
+        
+        @Override
+        public boolean containsValue(Object value) {
+            return wrapped.containsValue(value);
+        }
+        
+        @Override
+        public Set<Map.Entry<String, String>> entrySet() {
+            throw new UnsupportedOperationException();
+        }
+        
+        @Override
+        public String remove(Object key) {
+            resolved.remove(key);
+            return wrapped.remove(key).toString();
+        }
+        
+        @Override
+        public int size() {
+            return wrapped.size();
+        }
+        
+        @Override
+        public Collection<String> values() {
+            throw new UnsupportedOperationException();
+        }
+                
+        private String readAll(Reader rdr) {
+            int in = -1;
+            StringBuilder bld = new StringBuilder();
+            try {
+                while((in = rdr.read()) != -1) {
+                    bld.append((char) in);
+                }
+            } catch (IOException e) {
+                throw new IllegalStateException("Exception while reading a string.", e);
+            }
+            
+            return bld.toString();
+        }
+    };
 }

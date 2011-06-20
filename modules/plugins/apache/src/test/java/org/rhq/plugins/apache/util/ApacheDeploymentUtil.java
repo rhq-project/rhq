@@ -35,6 +35,7 @@ import org.apache.commons.logging.LogFactory;
 import org.unitils.thirdparty.org.apache.commons.io.FileUtils;
 
 import org.rhq.plugins.apache.util.HttpdAddressUtility.Address;
+import org.rhq.test.TokenReplacingReader;
 
 /**
  * 

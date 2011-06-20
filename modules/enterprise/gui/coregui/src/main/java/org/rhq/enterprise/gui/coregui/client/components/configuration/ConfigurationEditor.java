@@ -71,8 +71,6 @@ import com.smartgwt.client.widgets.form.fields.events.ChangeEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangeHandler;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
-import com.smartgwt.client.widgets.form.fields.events.TitleHoverEvent;
-import com.smartgwt.client.widgets.form.fields.events.TitleHoverHandler;
 import com.smartgwt.client.widgets.form.validator.CustomValidator;
 import com.smartgwt.client.widgets.form.validator.FloatRangeValidator;
 import com.smartgwt.client.widgets.form.validator.IntegerRangeValidator;
@@ -351,22 +349,6 @@ public class ConfigurationEditor extends LocatableVLayout {
                     });
             }
         }
-
-        if (configurationDefinition!=null ) {
-            configurationService.getOptionValuesForConfigDefinition(configurationDefinition,new AsyncCallback<ConfigurationDefinition>() {
-                @Override
-                public void onFailure(Throwable throwable) {
-                    showError(throwable);
-                }
-
-                @Override
-                public void onSuccess(ConfigurationDefinition result) {
-                    if (loadHandler!=null)
-                        loadHandler.loadedConfigurationDefinition(result);
-                }
-            });
-        }
-
 
         reload();
     }

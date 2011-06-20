@@ -286,8 +286,7 @@ public class FakeServerInventory {
             persisted.setParentResource(parent);
         }
 
-        Set<Resource> childResources = new HashSet<Resource>();
-        persisted.setChildResources(childResources);
+        Set<Resource> childResources = persisted.getChildResources();
         for (Resource child : agentSideResource.getChildResources()) {
             childResources.add(fakePersist(child, requiredInventoryStatus, inProgressUUIds));
         }

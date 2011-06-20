@@ -133,11 +133,17 @@ public class ObjectCollectionSerializer {
         out.append("</inventory-dump>\n");
     }
     
+    /**
+     * @see #deserialize(XMLStreamReader) 
+     */
     public List<?> deserialize(InputStream inputStream) throws IOException, XMLStreamException, ClassNotFoundException, JAXBException {
         XMLStreamReader rdr = XMLInputFactory.newFactory().createXMLStreamReader(inputStream);
         return deserialize(rdr);
     }
     
+    /**
+     * @see #deserialize(XMLStreamReader) 
+     */
     public List<?> deserialize(Reader inputReader) throws IOException, XMLStreamException, ClassNotFoundException, JAXBException {
         XMLStreamReader rdr = XMLInputFactory.newFactory().createXMLStreamReader(inputReader);
         return deserialize(rdr);

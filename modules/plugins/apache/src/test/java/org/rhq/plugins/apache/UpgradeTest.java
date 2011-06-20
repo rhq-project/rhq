@@ -74,9 +74,9 @@ import org.rhq.plugins.apache.util.ApacheExecutionUtil;
 import org.rhq.plugins.apache.util.HttpdAddressUtility;
 import org.rhq.plugins.apache.util.MockApacheBinaryInfo;
 import org.rhq.plugins.apache.util.MockProcessInfo;
-import org.rhq.plugins.apache.util.TokenReplacingReader;
 import org.rhq.plugins.platform.PlatformComponent;
 import org.rhq.test.ObjectCollectionSerializer;
+import org.rhq.test.TokenReplacingReader;
 import org.rhq.test.pc.PluginContainerSetup;
 import org.rhq.test.pc.PluginContainerTest;
 

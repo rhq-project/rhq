@@ -17,7 +17,7 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.plugins.apache.util;
+package org.rhq.test;
 
 import java.io.IOException;
 import java.io.PushbackReader;

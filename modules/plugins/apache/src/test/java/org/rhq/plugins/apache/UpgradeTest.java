@@ -55,6 +55,7 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.ServerServices;
 import org.rhq.core.pc.upgrade.FakeServerInventory;
@@ -242,6 +243,9 @@ public class UpgradeTest extends PluginContainerTest {
                 expectations.with(Expectations.any(Set.class)), expectations.with(Expectations.any(boolean.class)));
             expectations.will(fakeInventory.getResources());
 
+            expectations.allowing(ss.getDiscoveryServerService()).setResourceError(expectations.with(Expectations.any(ResourceError.class)));
+            expectations.will(fakeInventory.setResourceError());
+            
             expectations.allowing(ss.getDiscoveryServerService()).mergeAvailabilityReport(
                 expectations.with(Expectations.any(AvailabilityReport.class)));
 
@@ -250,7 +254,7 @@ public class UpgradeTest extends PluginContainerTest {
 
             expectations.allowing(ss.getDiscoveryServerService()).clearResourceConfigError(
                 expectations.with(Expectations.any(int.class)));
-
+            
             expectations.ignoring(ss.getBundleServerService());
             expectations.ignoring(ss.getConfigurationServerService());
             expectations.ignoring(ss.getContentServerService());

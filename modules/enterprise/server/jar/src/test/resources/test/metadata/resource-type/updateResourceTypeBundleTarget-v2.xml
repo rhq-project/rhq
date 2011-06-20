@@ -1,0 +1,23 @@
+<plugin name="ResourceMetaDataManagerBeanTest" displayName="Mock" package="org.rhq.plugins.mock.jboss"
+        version="1.0"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+   <platform name="myPlatform1">
+      <server name="myTestServer1">
+         <plugin-configuration>
+            <c:simple-property name="prop1" />
+         </plugin-configuration>
+         <resource-configuration>
+            <c:simple-property name="resourceProp1" />
+         </resource-configuration>
+         <bundle-target>
+            <destination-base-dir name="thirdDestBaseDir">
+               <value-context>resourceConfiguration</value-context>
+               <value-name>resourceProp1</value-name>
+            </destination-base-dir>
+         </bundle-target>
+      </server>
+   </platform>
+</plugin>

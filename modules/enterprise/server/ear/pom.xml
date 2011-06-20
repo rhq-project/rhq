@@ -692,6 +692,12 @@
 
                                 <artifactItem>
                                   <groupId>org.rhq</groupId>
+                                  <artifactId>rhq-perftest-plugin</artifactId>
+                                  <version>${project.version}</version>
+                                </artifactItem>
+
+                                <artifactItem>
+                                  <groupId>org.rhq</groupId>
                                   <artifactId>rhq-snmptrapd-plugin</artifactId>
                                   <version>${project.version}</version>
                                 </artifactItem>

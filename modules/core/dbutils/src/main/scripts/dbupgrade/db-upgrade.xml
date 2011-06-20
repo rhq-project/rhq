@@ -3390,7 +3390,32 @@
                 <schema-createSequence name="RHQ_OPERATION_SCHEDULE_ID_SEQ" initial="10001"/>
             </schemaSpec>
 
+
+            <!-- BZ 644328 -->
             <schemaSpec version="2.108">
+                <schema-addColumn table="RHQ_RESOURCE_TYPE" column="BUNDLE_CONFIG_ID" columnType="INTEGER" />
+                <schema-directSQL>
+                    <statement desc="Creating RHQ_RESOURCE_TYPE foreign key relation to RHQ_CONFIG for bundle config">
+                        ALTER TABLE RHQ_RESOURCE_TYPE
+                        ADD CONSTRAINT RHQ_RT_BUNDLE_CONFIG_ID_FK
+                        FOREIGN KEY (BUNDLE_CONFIG_ID)
+                        REFERENCES RHQ_CONFIG (ID)
+                    </statement>
+                </schema-directSQL>
+            </schemaSpec>
+
+            <!-- BZ 644328 -->
+            <schemaSpec version="2.109">
+                <schema-addColumn table="RHQ_BUNDLE_DESTINATION" column="DEST_BASE_DIR_NAME" columnType="VARCHAR2" precision="200" />
+                <schema-directSQL>
+                    <statement desc="Pointing all bundle destinations to the platform type's Root File System dest base dir">
+                        UPDATE RHQ_BUNDLE_DESTINATION SET DEST_BASE_DIR_NAME = 'Root File System'
+                    </statement>
+                </schema-directSQL>
+                <schema-alterColumn table="RHQ_BUNDLE_DESTINATION" column="DEST_BASE_DIR_NAME" nullable="FALSE"/>
+            </schemaSpec>
+
+            <schemaSpec version="2.110">
                 <schema-directSQL>
                     <statement desc="Creating table RHQ_PROP_DEF_OPT_SRC">
                         CREATE TABLE RHQ_PROP_DEF_OPT_SRC ( ID INTEGER PRIMARY KEY )

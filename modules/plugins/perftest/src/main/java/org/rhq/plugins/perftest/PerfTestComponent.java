@@ -62,7 +62,7 @@ import java.util.Set;
 import java.util.Arrays;
 
 /**
- * JON resource component for handling resources defined in the performance test scenario.
+ * RHQ resource component for handling resources defined in the performance test scenario.
  *
  * @author Jason Dobies
  */

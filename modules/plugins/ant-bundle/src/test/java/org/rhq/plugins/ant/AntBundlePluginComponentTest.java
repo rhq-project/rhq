@@ -66,6 +66,8 @@ import org.rhq.core.util.updater.DeploymentsMetadata;
 
 @Test
 public class AntBundlePluginComponentTest {
+    private static final String DEST_BASE_DIR_NAME = "Root File System"; // just mimics the real platform plugin types' name
+
     private AntBundlePluginComponent plugin;
     private File tmpDir;
     private File bundleFilesDir;
@@ -126,7 +128,7 @@ public class AntBundlePluginComponentTest {
         BundleVersion bundleVersion = new BundleVersion("test-bundle-two", "2.5", bundle,
             getRecipeFromFile("test-bundle-two.xml"));
         BundleDestination destination = new BundleDestination(bundle, "testSimpleBundle2Dest", new ResourceGroup(
-            "testSimpleBundle2Group"), this.destDir.getAbsolutePath());
+            "testSimpleBundle2Group"), DEST_BASE_DIR_NAME, this.destDir.getAbsolutePath());
 
         Configuration config = new Configuration();
         String customPropName = "custom.prop";
@@ -159,6 +161,7 @@ public class AntBundlePluginComponentTest {
         request.setBundleFilesLocation(this.bundleFilesDir);
         request.setResourceDeployment(new BundleResourceDeployment(deployment, null));
         request.setBundleManagerProvider(new MockBundleManagerProvider());
+        request.setAbsoluteDestinationDirectory(this.destDir);
         request.setRevert(true);
 
         BundleDeployResult results = plugin.deployBundle(request);
@@ -241,7 +244,7 @@ public class AntBundlePluginComponentTest {
         BundleVersion bundleVersion = new BundleVersion("test-bundle-two", "2.5", bundle,
             getRecipeFromFile("test-bundle-two.xml"));
         BundleDestination destination = new BundleDestination(bundle, "testSimpleBundle2Dest", new ResourceGroup(
-            "testSimpleBundle2Group"), this.destDir.getAbsolutePath());
+            "testSimpleBundle2Group"), DEST_BASE_DIR_NAME, this.destDir.getAbsolutePath());
 
         Configuration config = new Configuration();
         String customPropName = "custom.prop";
@@ -274,6 +277,7 @@ public class AntBundlePluginComponentTest {
         request.setBundleFilesLocation(this.bundleFilesDir);
         request.setResourceDeployment(new BundleResourceDeployment(deployment, null));
         request.setBundleManagerProvider(new MockBundleManagerProvider());
+        request.setAbsoluteDestinationDirectory(this.destDir);
 
         BundleDeployResult results = plugin.deployBundle(request);
 
@@ -323,7 +327,7 @@ public class AntBundlePluginComponentTest {
         BundleVersion bundleVersion = new BundleVersion("testSimpleBundle", "1.0", bundle,
             getRecipeFromFile("test-bundle.xml"));
         BundleDestination destination = new BundleDestination(bundle, "testSimpleBundle", new ResourceGroup(
-            "testSimpleBundle"), this.destDir.getAbsolutePath());
+            "testSimpleBundle"), DEST_BASE_DIR_NAME, this.destDir.getAbsolutePath());
 
         Configuration config = new Configuration();
         String realPropValue = "ABC123";
@@ -359,6 +363,7 @@ public class AntBundlePluginComponentTest {
         request.setBundleFilesLocation(this.bundleFilesDir);
         request.setResourceDeployment(new BundleResourceDeployment(deployment, null));
         request.setBundleManagerProvider(new MockBundleManagerProvider());
+        request.setAbsoluteDestinationDirectory(this.destDir);
 
         BundleDeployResult results = plugin.deployBundle(request);
 
@@ -389,7 +394,7 @@ public class AntBundlePluginComponentTest {
         BundleVersion bundleVersion = new BundleVersion("testNoManageRootDirBundle", "1.0", bundle,
             getRecipeFromFile("test-bundle-no-manage-root-dir.xml"));
         BundleDestination destination = new BundleDestination(bundle, "testNoManageRootDirBundle", new ResourceGroup(
-            "testNoManageRootDirBundle"), this.destDir.getAbsolutePath());
+            "testNoManageRootDirBundle"), DEST_BASE_DIR_NAME, this.destDir.getAbsolutePath());
         Configuration config = new Configuration();
 
         BundleDeployment deployment = new BundleDeployment();
@@ -442,6 +447,7 @@ public class AntBundlePluginComponentTest {
         request.setBundleFilesLocation(this.bundleFilesDir);
         request.setResourceDeployment(new BundleResourceDeployment(deployment, null));
         request.setBundleManagerProvider(new MockBundleManagerProvider());
+        request.setAbsoluteDestinationDirectory(this.destDir);
 
         BundleDeployResult results = plugin.deployBundle(request);
 
@@ -471,6 +477,7 @@ public class AntBundlePluginComponentTest {
         BundlePurgeRequest purgeRequest = new BundlePurgeRequest();
         purgeRequest.setLiveResourceDeployment(new BundleResourceDeployment(deployment, null));
         purgeRequest.setBundleManagerProvider(new MockBundleManagerProvider());
+        purgeRequest.setAbsoluteDestinationDirectory(this.destDir);
 
         BundlePurgeResult purgeResults = plugin.purgeBundle(purgeRequest);
         assertResultsSuccess(purgeResults);
@@ -508,7 +515,7 @@ public class AntBundlePluginComponentTest {
         BundleVersion bundleVersion = new BundleVersion("test-bundle-two", "3.0", bundle,
             getRecipeFromFile("test-bundle-three.xml"));
         BundleDestination destination = new BundleDestination(bundle, "testSimpleBundle2Dest", new ResourceGroup(
-            "testSimpleBundle2Group"), this.destDir.getAbsolutePath());
+            "testSimpleBundle2Group"), DEST_BASE_DIR_NAME, this.destDir.getAbsolutePath());
 
         Configuration config = new Configuration();
         String customPropName = "custom.prop";
@@ -554,6 +561,7 @@ public class AntBundlePluginComponentTest {
         request.setBundleFilesLocation(this.bundleFilesDir);
         request.setResourceDeployment(new BundleResourceDeployment(deployment, null));
         request.setBundleManagerProvider(new MockBundleManagerProvider());
+        request.setAbsoluteDestinationDirectory(this.destDir);
         request.setCleanDeployment(clean);
 
         BundleDeployResult results = plugin.deployBundle(request);

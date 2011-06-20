@@ -125,7 +125,7 @@ import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 import org.rhq.enterprise.server.util.QuartzUtil;
 
 /**
- * The manager responsible for working with resource and plugin configurations.
+ * The manager responsible for working with Resource and plugin configurations.
  *
  * @author John Mazzitelli
  * @author Ian Springer
@@ -938,7 +938,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         for (PluginConfigurationUpdate update : updates) {
             Configuration configuration = update.getConfiguration();
             ConfigurationDefinition configurationDefinition = getPluginConfigurationDefinitionForResourceType(
-                    subjectManager.getOverlord(), update.getResource().getId());
+                    subjectManager.getOverlord(), update.getResource().getResourceType().getId());
             ConfigurationMaskingUtility.maskConfiguration(configuration, configurationDefinition);
         }
 
@@ -1000,7 +1000,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         for (ResourceConfigurationUpdate update : updates) {
             Configuration configuration = update.getConfiguration();
             ConfigurationDefinition configurationDefinition = getResourceConfigurationDefinitionForResourceType(
-                    subjectManager.getOverlord(), update.getResource().getId());
+                    subjectManager.getOverlord(), update.getResource().getResourceType().getId());
             ConfigurationMaskingUtility.maskConfiguration(configuration, configurationDefinition);
         }
 
@@ -2282,7 +2282,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         for (ResourceConfigurationUpdate update : updates) {
             Configuration configuration = update.getConfiguration();
             ConfigurationDefinition configurationDefinition = getResourceConfigurationDefinitionForResourceType(
-                    subjectManager.getOverlord(), update.getResource().getId());
+                    subjectManager.getOverlord(), update.getResource().getResourceType().getId());
             ConfigurationMaskingUtility.maskConfiguration(configuration, configurationDefinition);
         }
 
@@ -2309,7 +2309,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         for (PluginConfigurationUpdate update : updates) {
             Configuration configuration = update.getConfiguration();
             ConfigurationDefinition configurationDefinition = getPluginConfigurationDefinitionForResourceType(
-                    subjectManager.getOverlord(), update.getResource().getId());
+                    subjectManager.getOverlord(), update.getResource().getResourceType().getId());
             ConfigurationMaskingUtility.maskConfiguration(configuration, configurationDefinition);
         }
 
@@ -2341,7 +2341,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                 for (ResourceConfigurationUpdate memberUpdate : memberUpdates) {
                     Configuration configuration = memberUpdate.getConfiguration();
                     ConfigurationDefinition configurationDefinition = getResourceConfigurationDefinitionForResourceType(
-                            subjectManager.getOverlord(), memberUpdate.getResource().getId());
+                            subjectManager.getOverlord(), memberUpdate.getResource().getResourceType().getId());
                     ConfigurationMaskingUtility.maskConfiguration(configuration, configurationDefinition);
                 }
             }
@@ -2375,7 +2375,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                 for (PluginConfigurationUpdate memberUpdate : memberUpdates) {
                     Configuration configuration = memberUpdate.getConfiguration();
                     ConfigurationDefinition configurationDefinition = getPluginConfigurationDefinitionForResourceType(
-                            subjectManager.getOverlord(), memberUpdate.getResource().getId());
+                            subjectManager.getOverlord(), memberUpdate.getResource().getResourceType().getId());
                     ConfigurationMaskingUtility.maskConfiguration(configuration, configurationDefinition);
                 }
             }

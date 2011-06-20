@@ -18,24 +18,36 @@
  */
 package org.rhq.enterprise.gui.coregui.client.bundle.deploy;
 
+import java.util.LinkedHashMap;
+import java.util.Set;
+
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
+import com.smartgwt.client.widgets.form.fields.FormItemIcon;
+import com.smartgwt.client.widgets.form.fields.RadioGroupItem;
 import com.smartgwt.client.widgets.form.fields.TextAreaItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
+import com.smartgwt.client.widgets.form.fields.events.IconClickEvent;
+import com.smartgwt.client.widgets.form.fields.events.IconClickHandler;
 import com.smartgwt.client.widgets.form.validator.IsIntegerValidator;
 import com.smartgwt.client.widgets.form.validator.Validator;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.bundle.BundleDestination;
+import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration;
+import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration.BundleDestinationBaseDirectory;
+import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.bundle.deploy.selection.SinglePlatformResourceGroupSelector;
+import org.rhq.enterprise.gui.coregui.client.bundle.deploy.selection.SingleCompatibleResourceGroupSelector;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.wizard.AbstractGroupCreateWizard;
+import org.rhq.enterprise.gui.coregui.client.util.FormUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
@@ -48,7 +60,7 @@ public class GetDestinationStep extends AbstractWizardStep {
     private final BundleDeployWizard wizard;
     private VLayout form;
     DynamicForm valForm = new LocatableDynamicForm("GetDestinationStepValForm");
-    private SinglePlatformResourceGroupSelector selector;
+    private SingleCompatibleResourceGroupSelector selector;
     private BundleDestination dest = new BundleDestination();
     private boolean createInProgress = false;
 
@@ -85,6 +97,7 @@ public class GetDestinationStep extends AbstractWizardStep {
                     dest.setName(value.toString());
                 }
             });
+            FormUtility.addContextualHelp(nameTextItem, MSG.view_bundle_deployWizard_getDest_name_help());
 
             final TextAreaItem descriptionTextAreaItem = new TextAreaItem("description", MSG
                 .view_bundle_deployWizard_getDest_desc());
@@ -112,15 +125,106 @@ public class GetDestinationStep extends AbstractWizardStep {
                     dest.setDeployDir(value.toString());
                 }
             });
+            FormUtility.addContextualHelp(deployDirTextItem, MSG.view_bundle_deployWizard_getDest_deployDir_help());
 
-            this.selector = new SinglePlatformResourceGroupSelector("group", MSG.common_title_resource_group());
+            final RadioGroupItem destBaseDirItem = new RadioGroupItem("destBaseDir", MSG
+                .view_bundle_deployWizard_getDest_destBaseDirName());
+            destBaseDirItem.setWidth(300);
+            destBaseDirItem.setRequired(true);
+            destBaseDirItem.setDisabled(true);
+            destBaseDirItem.addChangedHandler(new ChangedHandler() {
+                public void onChanged(ChangedEvent event) {
+                    Object value = event.getValue();
+                    if (value != null && value.toString().length() > 0) {
+                        dest.setDestinationBaseDirectoryName(value.toString());
+                    } else {
+                        dest.setDestinationBaseDirectoryName(null);
+                    }
+                }
+            });
+
+            this.selector = new SingleCompatibleResourceGroupSelector("group", MSG.common_title_resource_group());
             this.selector.setWidth(300);
             this.selector.setRequired(true);
             Validator validator = new IsIntegerValidator();
             validator.setErrorMessage(MSG.view_bundle_deployWizard_error_8());
             this.selector.setValidators(validator);
+            this.selector.addChangedHandler(new ChangedHandler() {
+                @Override
+                public void onChanged(ChangedEvent event) {
+                    Integer selectedGroupId = null;
 
-            this.valForm.setItems(nameTextItem, descriptionTextAreaItem, deployDirTextItem, selector);
+                    // if the user is typing in the name of the group, and is only partially
+                    // done, the event value will be the String of the partial group name.
+                    // If the selection is an actual group name, the event value will be
+                    // an integer (the group ID) and that is our indication that the selection
+                    // of an actual group has been made
+                    if (event.getValue() instanceof Integer) {
+                        selectedGroupId = (Integer) event.getValue();
+                    }
+
+                    // new group is, or is in the process of being, selected so forget what the base location was before
+                    dest.setDestinationBaseDirectoryName(null);
+                    destBaseDirItem.clearValue();
+
+                    if (selectedGroupId != null) {
+                        bundleServer.getResourceTypeBundleConfiguration(selectedGroupId.intValue(),
+                            new AsyncCallback<ResourceTypeBundleConfiguration>() {
+                                public void onSuccess(ResourceTypeBundleConfiguration result) {
+                                    // populate the base location drop down with all the possible dest base directories
+                                    LinkedHashMap<String, String> menuItems = null;
+                                    if (result != null) {
+                                        Set<BundleDestinationBaseDirectory> baseDirs;
+                                        baseDirs = result.getBundleDestinationBaseDirectories();
+                                        if (baseDirs != null && baseDirs.size() > 0) {
+                                            String defaultSelectedItem = null;
+                                            menuItems = new LinkedHashMap<String, String>(baseDirs.size());
+                                            for (BundleDestinationBaseDirectory baseDir : baseDirs) {
+                                                if (baseDir.getDescription() != null) {
+                                                    menuItems.put(baseDir.getName(), "<b>" + baseDir.getName()
+                                                        + "</b>: " + baseDir.getDescription());
+                                                } else {
+                                                    menuItems.put(baseDir.getName(), baseDir.getName());
+                                                }
+                                                if (defaultSelectedItem == null) {
+                                                    defaultSelectedItem = baseDir.getName();
+                                                }
+                                            }
+                                            destBaseDirItem.setValueMap(menuItems);
+                                            destBaseDirItem.setValue(defaultSelectedItem);
+                                            dest.setDestinationBaseDirectoryName(defaultSelectedItem);
+                                        }
+                                    }
+
+                                    destBaseDirItem.setDisabled(menuItems == null);
+                                }
+
+                                public void onFailure(Throwable caught) {
+                                    destBaseDirItem.setDisabled(true);
+                                    CoreGUI.getErrorHandler().handleError(
+                                        MSG.view_bundle_deployWizard_error_noBundleConfig(), caught);
+                                }
+                            });
+                    } else {
+                        destBaseDirItem.setDisabled(true);
+                    }
+                }
+            });
+            final FormItemIcon newGroupIcon = new FormItemIcon();
+            newGroupIcon.setSrc("[SKIN]/actions/add.png");
+            this.selector.addIconClickHandler(new IconClickHandler() {
+                public void onIconClick(IconClickEvent event) {
+                    if (event.getIcon().equals(newGroupIcon)) {
+                        new QuickGroupCreateWizard(selector).startWizard();
+                    }
+                }
+            });
+
+            FormUtility.addContextualHelp(this.selector, MSG.view_bundle_deployWizard_getDest_group_help(),
+                newGroupIcon);
+
+            this.valForm.setItems(nameTextItem, descriptionTextAreaItem, this.selector, destBaseDirItem,
+                deployDirTextItem);
             CanvasItem ci1 = new CanvasItem();
             ci1.setShowTitle(false);
             ci1.setCanvas(valForm);
@@ -168,7 +272,7 @@ public class GetDestinationStep extends AbstractWizardStep {
         int selectedGroup = (Integer) this.valForm.getValue("group");
 
         bundleServer.createBundleDestination(wizard.getBundleId(), dest.getName(), dest.getDescription(), dest
-            .getDeployDir(), selectedGroup, //
+            .getDestinationBaseDirectoryName(), dest.getDeployDir(), selectedGroup, //
             new AsyncCallback<BundleDestination>() {
                 public void onSuccess(BundleDestination result) {
                     wizard.setDestination(result);
@@ -190,4 +294,18 @@ public class GetDestinationStep extends AbstractWizardStep {
                 }
             });
     }
+
+    private class QuickGroupCreateWizard extends AbstractGroupCreateWizard {
+        private SingleCompatibleResourceGroupSelector selector;
+
+        public QuickGroupCreateWizard(SingleCompatibleResourceGroupSelector selector) {
+            super();
+            this.selector = selector;
+        }
+
+        public void groupCreateCallback(ResourceGroup group) {
+            selector.fetchData();
+        }
+    }
+
 }

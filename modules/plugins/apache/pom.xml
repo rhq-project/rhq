@@ -246,20 +246,25 @@
                               <apache1.install.dir>PASS THIS IN FROM THE COMMAND LINE</apache1.install.dir>
                               <apache1.exe.path>bin/httpd</apache1.exe.path>
                               
-                              <port1><!-- defaults to 11675--></port1>
-                              <port2><!-- defaults to 11676--></port2>
-                              <port3><!-- defaults to 11677--></port3>
-                              <port4><!-- defaults to 11678--></port4>
-                              <localhost><!-- defaults to the actual localhost hostname --></localhost>
-                              <unresolvable.host><!-- defaults to 'unreachable.host.com' --></unresolvable.host>
-                              
+                              <!-- generic configurations -->
+                              <!-- 
+                              <port1>defaults to 11675</port1>
+                              <port2>defaults to 11676</port2>
+                              <port3>defaults to 11677</port3>
+                              <port4>defaults to 11678</port4>
+                              <localhost>defaults to the actual localhost hostname</localhost>
+                              <localhost.ip>defaults to the actual localhost ip</localhost.ip>
+                              <unresolvable.host>defaults to 'unreachable.host.com'</unresolvable.host>
+                              -->
+                               
                               <!-- configuration of individual upgrade tests -->
                               <!-- 
+                              <*.server.root>defaults to whatever path is passed to the tests - i.e. either apache2.install.dir or apache1.install.dir</*.server.root>
                               <*.document.root>defaults to 'htdocs'</*.document.root>
                               <*.listen1>defaults to ${port1}</*.listen1>
-                              <*.listen2>defaults to '${port2}'</*.listen2>
-                              <*.listen3>defaults to '${port3}'</*.listen3>
-                              <*.listen4>defaults to '${port4}'</*.listen4>
+                              <*.listen2>defaults to ${port2}</*.listen2>
+                              <*.listen3>defaults to ${port3}</*.listen3>
+                              <*.listen4>defaults to ${port4}</*.listen4>
                               <*.servername.directive>defaults to ''</*.servername.directive>
                               <*.additional.directives>defaults to ''</*.additional.directives>
                               <*.vhost1.urls>defaults to '${localhost}:${port1}'</*.vhost1.urls>
@@ -274,9 +279,7 @@
                               <*.vhost4.urls>defaults to '${localhost}:${port4}'</*.vhost4.urls>
                               <*.vhost4.servername.directive>defaults to 'ServerName ${localhost}:${port4}'</*.vhost4.servername.directive>
                               <*.vhost4.additional.directives>defaults to ''</*.vhost4.additional.directives>
-                               -->
-
-                              <simpleWithResolvableServerNames.server.root>${apache2.install.dir}</simpleWithResolvableServerNames.server.root>
+                              -->
                               
                            </systemPropertyVariables>
                         </configuration>

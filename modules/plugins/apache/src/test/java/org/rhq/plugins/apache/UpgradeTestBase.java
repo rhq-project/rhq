@@ -88,13 +88,16 @@ public class UpgradeTestBase extends PluginContainerTest {
             private Collection<String> configurationFiles;
             private ApacheExecutionUtil execution;
             private boolean deploy = true;
-    
+            
             private ApacheSetup() {
     
             }
     
             public ApacheSetup withServerRoot(String serverRoot) {
                 this.serverRoot = serverRoot;
+                //auto-define the server root property as if it was passed on the commandline
+                System.getProperties().put(configurationName + ".server.root", serverRoot);
+                deploymentConfig = ApacheDeploymentUtil.getDeploymentConfigurationFromSystemProperties(configurationName);
                 return this;
             }
     
@@ -166,7 +169,7 @@ public class UpgradeTestBase extends PluginContainerTest {
     
             private void doSetup() throws Exception {
                 init();
-                execution.invokeOperation("restart", "start");
+                execution.invokeOperation("start");
             }
     
             public TestSetup setup() throws Exception {
@@ -252,7 +255,7 @@ public class UpgradeTestBase extends PluginContainerTest {
         public TestSetup setup() throws Exception {
             apacheSetup.doSetup();
     
-            Map<String, String> replacements = deploymentConfig.getTokenReplacements();
+            Map<String, String> replacements = deploymentConfig.getTokenReplacements();            
             replacements.put("server.root", apacheSetup.serverRoot);
             replacements.put("exe.path", apacheSetup.exePath);
             replacements.put("localhost", determineLocalhost());
@@ -349,18 +352,6 @@ public class UpgradeTestBase extends PluginContainerTest {
     public void parseResourceTypesFromApachePlugin() throws Exception {
         resourceTypesInApachePlugin = getResourceTypesInPlugin(APACHE_PLUGIN);
         platform = discoverPlatform();
-    }
-
-    @AfterClass
-    @Parameters({ "apache2.install.dir", "apache2.exe.path" })
-    public void shutdownApache(String apacheInstallationDirectory, String exePath) throws Exception {
-    
-        //it really doesn't matter which configuration i use here
-        TestSetup.ApacheSetup apacheSetup = new TestSetup(DEPLOYMENT_SIMPLE_WITH_RESOLVABLE_SERVERNAMES)
-            .withApacheSetup().withServerRoot(apacheInstallationDirectory).withExePath(exePath)
-            .withNoDeploymentOnSetup();
-        apacheSetup.init();
-        apacheSetup.getExecutionUtil().invokeOperation("stop");
     }
 
     protected ResourceType findApachePluginResourceTypeByName(String resourceTypeName) {

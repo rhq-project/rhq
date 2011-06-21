@@ -1,6 +1,6 @@
 /*
  * Jopr Management Platform
- * Copyright (C) 2005-2009 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -64,15 +64,16 @@ public class DeploymentUtils {
     /**
      * Deploys (i.e. distributes then starts) the specified archive file.
      *
+     *
      * @param deploymentManager
      * @param archiveFile
      * @param deployExploded
-     * 
+     *
      * @return
      *
      * @throws Exception if the deployment fails for any reason
      */
-    public static void deployArchive(DeploymentManager deploymentManager, File archiveFile, boolean deployExploded)
+    public static String[] deployArchive(DeploymentManager deploymentManager, File archiveFile, boolean deployExploded)
         throws Exception {
         String archiveFileName = archiveFile.getName();
         LOG.debug("Deploying '" + archiveFileName + "' (deployExploded=" + deployExploded + ")...");
@@ -107,7 +108,7 @@ public class DeploymentUtils {
                     + ThrowableUtil.getAllMessages(distributeFailure));
         }
 
-        // Now that we've successfully distributed the deployment, we need to start it.
+        // Now that we've successfully distributed the deployment, try to start it.
         String[] deploymentNames = progress.getDeploymentID().getRepositoryNames();
         DeploymentStatus startStatus;
         Exception startFailure = null;
@@ -123,32 +124,12 @@ public class DeploymentUtils {
             startFailure = e;
         }
         if (startFailure != null) {
-            LOG.error("Failed to start deployment " + Arrays.asList(deploymentNames)
-                + " during deployment of '" + archiveFileName + "'. Backing out the deployment...", startFailure);
-            // If start failed, the app is invalid, so back out the deployment.
-            DeploymentStatus removeStatus;
-            Exception removeFailure = null;
-            try {
-                progress = deploymentManager.remove(deploymentNames);
-                removeStatus = run(progress);
-                if (removeStatus.isFailed()) {
-                    removeFailure = (removeStatus.getFailure() != null) ? removeStatus.getFailure() :
-                        new Exception("Remove failed for unknown reason.");
-                }
-            }
-            catch (Exception e) {
-                removeFailure = e;
-            }
-            if (removeFailure != null) {
-                LOG.error("Failed to remove deployment " + Arrays.asList(deploymentNames)
-                    + " after start failure.", removeFailure);
-            }
-            throw new Exception("Failed to start deployment " + Arrays.asList(deploymentNames)
-                + " during deployment of '" + archiveFileName + "' - cause: " +
-                    ThrowableUtil.getAllMessages(startFailure));
+            // There are times when the user expects the app to fail to start, so just log a warning.
+            LOG.warn("Failed to start deployment " + Arrays.asList(deploymentNames) + " during deployment of '"
+                + archiveFileName + "'.", startFailure);
         }
-        // If we made it this far, the deployment (distribution+start) was successful.
-        return;
+
+        return deploymentNames;
     }
 
     public static DeploymentStatus run(DeploymentProgress progress) {

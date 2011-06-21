@@ -1,6 +1,6 @@
 /*
  * Jopr Management Platform
- * Copyright (C) 2005-2009 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -37,7 +37,9 @@ import org.apache.commons.logging.LogFactory;
 import org.jboss.deployers.spi.management.KnownDeploymentTypes;
 import org.jboss.deployers.spi.management.ManagementView;
 import org.jboss.deployers.spi.management.deploy.DeploymentManager;
+import org.jboss.managed.api.DeploymentState;
 import org.jboss.managed.api.ManagedDeployment;
+import org.jboss.profileservice.spi.NoSuchDeploymentException;
 import org.jboss.profileservice.spi.ProfileKey;
 
 import org.rhq.core.domain.configuration.Configuration;
@@ -58,6 +60,8 @@ import org.rhq.plugins.jbossas5.util.DeploymentUtils;
  * @author Lukas Krejci
  */
 public abstract class AbstractDeployer implements Deployer {
+    private static final Log LOG = LogFactory.getLog(AbstractDeployer.class);
+
     private static final ProfileKey FARM_PROFILE_KEY = new ProfileKey("farm");
     private static final ProfileKey APPLICATIONS_PROFILE_KEY = new ProfileKey("applications");
     public static final String DEPLOYMENT_NAME_PROPERTY = "deploymentName";
@@ -71,7 +75,9 @@ public abstract class AbstractDeployer implements Deployer {
     }
 
     public void deploy(CreateResourceReport createResourceReport, ResourceType resourceType) {
+        createResourceReport.setStatus(null);
         File archiveFile = null;
+
         try {
             ResourcePackageDetails details = createResourceReport.getPackageDetails();
             PackageDetailsKey key = details.getKey();
@@ -89,7 +95,7 @@ public abstract class AbstractDeployer implements Deployer {
             abortIfApplicationAlreadyDeployed(resourceType, archiveFile);
 
             Configuration deployTimeConfig = details.getDeploymentTimeConfiguration();
-            @SuppressWarnings( { "ConstantConditions" })
+            @SuppressWarnings({ "ConstantConditions" })
             boolean deployExploded = deployTimeConfig.getSimple("deployExploded").getBooleanValue();
 
             DeploymentManager deploymentManager = this.profileServiceConnection.getDeploymentManager();
@@ -115,8 +121,9 @@ public abstract class AbstractDeployer implements Deployer {
                 deploymentManager.loadProfile(FARM_PROFILE_KEY);
             }
 
+            String[] deployedArchives;
             try {
-                DeploymentUtils.deployArchive(deploymentManager, archiveFile, deployExploded);
+                deployedArchives = DeploymentUtils.deployArchive(deploymentManager, archiveFile, deployExploded);
             } finally {
                 // Make sure to switch back to the 'applications' profile if we switched to the 'farm' profile above.
                 if (deployFarmed) {
@@ -152,10 +159,35 @@ public abstract class AbstractDeployer implements Deployer {
                 }
             }
 
-            // Deployment was successful!
+            ManagementView managementView = this.profileServiceConnection.getManagementView();
+            managementView.load();
+            for (String deployedArchive : deployedArchives) {
+                ManagedDeployment managedDeployment;
+                try {
+                    managedDeployment = managementView.getDeployment(deployedArchive);
+                } catch (NoSuchDeploymentException e) {
+                    LOG.error("Failed to find managed deployment '" + deployedArchive + "' after deploying '"
+                        + archiveName + "'.");
+                    continue;
+                }
+                DeploymentState state = managedDeployment.getDeploymentState();
+                if (state != DeploymentState.STARTED) {
+                    // The app failed to start - do not consider this a FAILURE, since it was at least deployed
+                    // successfully. However, set the status to INVALID_ARTIFACT and set an error message, so
+                    // the user is informed of the condition.
+                    createResourceReport.setStatus(CreateResourceStatus.INVALID_ARTIFACT);
+                    createResourceReport.setErrorMessage("Failed to start application '" + deployedArchive
+                        + "' after deploying it.");
+                    break;
+                }
+            }
+
             createResourceReport.setResourceName(archiveName);
             createResourceReport.setResourceKey(archiveName);
-            createResourceReport.setStatus(CreateResourceStatus.SUCCESS);
+            if (createResourceReport.getStatus() == null) {
+                // Deployment was 100% successful, including starting the app.
+                createResourceReport.setStatus(CreateResourceStatus.SUCCESS);
+            }
 
         } catch (Throwable t) {
             log.error("Error deploying application for request [" + createResourceReport + "].", t);

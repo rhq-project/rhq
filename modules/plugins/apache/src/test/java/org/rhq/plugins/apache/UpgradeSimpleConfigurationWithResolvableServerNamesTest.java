@@ -215,7 +215,7 @@ public class UpgradeSimpleConfigurationWithResolvableServerNamesTest extends Upg
 
             for (Resource vhost : vhosts) {
                 assertTrue(expectedResourceKeys.contains(vhost.getResourceKey()),
-                    "Unexpected virtual host resource key: '" + vhost.getResourceKey() + "'.");
+                    "Unexpected virtual host resource key: '" + vhost.getResourceKey() + "'. Only expecting " + expectedResourceKeys);
             }
         } catch (Throwable t) {
             testFailed = true;

@@ -49,7 +49,7 @@ public class UploadAndDeployTest {
     private static final String DC_HOST = "localhost";
     private static final int DC_HTTP_PORT = 9990;
 
-    @Test(timeOut = 60*1000L)
+    @Test(timeOut = 60*1000L, enabled=false)
     public void testUploadOnly() throws Exception {
 
         String bytes_value = prepare();
@@ -61,7 +61,7 @@ public class UploadAndDeployTest {
 
     }
 
-    @Test(timeOut = 60*1000L)
+    @Test(timeOut = 60*1000L, enabled=false)
     public void testDoubleUploadOnly() throws Exception {
 
         String bytes_value = prepare();
@@ -74,7 +74,7 @@ public class UploadAndDeployTest {
         assert bytes_value.equals("7jgpMVmynfxpqp8UDleKLmtgbrA=");
     }
 
-    @Test(timeOut = 60*1000L)
+    @Test(timeOut = 60*1000L,enabled=false)
     public void testUploadIndividualSteps() throws Exception {
 
         String bytes_value = prepare();
@@ -154,7 +154,7 @@ public class UploadAndDeployTest {
     }
 
     // Test for AS7-853
-    @Test(timeOut = 60*1000L)
+    @Test(timeOut = 60*1000L,enabled = false)
     public void testUploadIndividualSteps2() throws Exception {
 
         String bytes_value = prepare();
@@ -228,7 +228,7 @@ public class UploadAndDeployTest {
 
     }
 
-    @Test(timeOut = 60*1000L)
+    @Test(timeOut = 60*1000L,enabled = false)
     public void testUploadComposite() throws Exception {
 
         String bytes_value = prepare();

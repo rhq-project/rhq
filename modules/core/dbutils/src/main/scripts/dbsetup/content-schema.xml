@@ -650,7 +650,8 @@
     
     <!--  Content of a file being managed for drift. Used for diff and/or remediation -->    
     <table name="RHQ_DRIFT_FILE">
-        <column name="SHA256" type="VARCHAR2" size="64" primarykey="true" required="true"/>
+        <column name="HASH_ID" type="VARCHAR2" size="64" primarykey="true" required="true"/>
+        <column name="DTYPE" type="VARCHAR2" required="true" size="10"/>        
         <column name="CTIME" type="LONG" required="true"/>
         <column name="DATA" type="LARGEOBJECT" required="false"/>
         <column name="DATA_SIZE" type="LONG" required="false"/>
@@ -662,9 +663,8 @@
         <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
         <column name="CTIME" type="LONG" required="true"/>
         <!-- Version 0 is initial change-set -->
-        <column name="VERSION" type="INTEGER" required="true"/>                 
-        <column name="DATA" type="LARGEOBJECT" required="false"/>
-        <column name="DATA_SIZE" type="LONG" required="false"/>
+        <column name="VERSION" type="INTEGER" required="true"/>
+        <column name="CATEGORY" type="VARCHAR2" size="20" required="true"/>                         
         <column name="RESOURCE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE"/>        
     </table>
     
@@ -684,7 +684,7 @@
         elements declared in the plugin descriptor. A drift template is represented as a
         config template.
     -->
-    <table name="RHQ_DRIFT_TEMPLATE">
+    <table name="RHQ_DRIFT_TEMPLATE_MAP">
         <column name="RESOURCE_TYPE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE_TYPE"/>
         <column name="CONFIG_TEMPLATE_ID" type="INTEGER" required="true" references="RHQ_CONFIG_TEMPLATE"/>
     </table>
@@ -693,7 +693,7 @@
         A resource can have zero or more drift configurations used for guiding drift
         detection for the resource.
     -->
-    <table name="RHQ_DRIFT_CONFIG">
+    <table name="RHQ_DRIFT_CONFIG_MAP">
         <column name="RESOURCE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE"/>
         <column name="CONFIG_ID" type="INTEGER" required="true" references="RHQ_CONFIG"/>
     </table>

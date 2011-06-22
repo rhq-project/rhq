@@ -22,22 +22,19 @@
  */
 package org.rhq.core.domain.drift;
 
-import java.io.InputStream;
 import java.io.Serializable;
-import java.sql.Blob;
-import java.sql.SQLException;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
-import javax.persistence.Lob;
 import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
@@ -75,15 +72,12 @@ public class DriftChangeSet implements Serializable {
     @Column(name = "VERSION", nullable = false)
     private int version;
 
-    @Lob
-    @Column(name = "DATA", nullable = true)
-    private Blob data;
-
-    @Column(name = "DATA_SIZE", nullable = true)
-    private Long dataSize;
+    @Column(name = "CATEGORY", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private DriftChangeSetCategory category;
 
     @JoinColumn(name = "RESOURCE_ID", referencedColumnName = "ID", nullable = false)
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(optional = false)
     private Resource resource;
 
     @OneToMany(mappedBy = "changeSet", cascade = { CascadeType.ALL })
@@ -92,9 +86,10 @@ public class DriftChangeSet implements Serializable {
     protected DriftChangeSet() {
     }
 
-    public DriftChangeSet(Resource resource, int version) {
+    public DriftChangeSet(Resource resource, int version, DriftChangeSetCategory category) {
         this.resource = resource;
         this.version = version;
+        this.category = category;
     }
 
     public int getId() {
@@ -122,32 +117,12 @@ public class DriftChangeSet implements Serializable {
         this.version = version;
     }
 
-    public boolean isInitialVersion() {
-        return 0 == version;
+    public DriftChangeSetCategory getCategory() {
+        return category;
     }
 
-    public void setDataSize(Long dataSize) {
-        this.dataSize = dataSize;
-    }
-
-    public Blob getBlob() {
-        return data;
-    }
-
-    public InputStream getData() throws SQLException {
-        return data.getBinaryStream();
-    }
-
-    public void setData(Blob blob) {
-        this.data = blob;
-    }
-
-    public long getDataSize() {
-        return dataSize;
-    }
-
-    public void setDataSize(long size) {
-        dataSize = size;
+    public void setCategory(DriftChangeSetCategory category) {
+        this.category = category;
     }
 
     public Resource getResource() {

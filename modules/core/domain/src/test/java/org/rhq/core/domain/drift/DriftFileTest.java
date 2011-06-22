@@ -46,11 +46,11 @@ public class DriftFileTest extends AbstractEJB3Test {
     @Test(groups = { "integration.ejb3", "driftFile" })
     public void updateDriftFileData() throws Exception {
         String content = "driftFile data";
-        String sha256 = digestGen.calcDigestString(content);
+        String hashId = digestGen.calcDigestString(content);
 
         // Create the initial driftFile
-        final DriftFile df1 = new DriftFile();
-        df1.setSha256(sha256);
+        final DriftFileContent df1 = new DriftFileContent();
+        df1.setHashId(hashId);
         df1.setDataSize(content.length());
         df1.setData(Hibernate.createBlob(toInputStream(content), content.length()));
 
@@ -66,7 +66,7 @@ public class DriftFileTest extends AbstractEJB3Test {
         executeInTransaction(new TransactionCallback() {
             @Override
             public void execute() {
-                DriftFile df2 = getEntityManager().find(DriftFile.class, df1.getSha256());
+                DriftFileContent df2 = getEntityManager().find(DriftFileContent.class, df1.getHashId());
                 df2.setData(Hibernate.createBlob(toInputStream(newContent), newContent.length()));
                 getEntityManager().merge(df2);
             }
@@ -77,7 +77,7 @@ public class DriftFileTest extends AbstractEJB3Test {
             @Override
             public void execute() {
                 try {
-                    DriftFile df3 = getEntityManager().find(DriftFile.class, df1.getSha256());
+                    DriftFileContent df3 = getEntityManager().find(DriftFileContent.class, df1.getHashId());
                     String expected = newContent;
                     String actual = IOUtils.toString(df3.getData());
 
@@ -97,13 +97,13 @@ public class DriftFileTest extends AbstractEJB3Test {
     @Test(groups = { "integration.ejb3", "driftFile" })
     public void loadMultipleDriftFilesWithoutLoadingData() throws Exception {
         int numDriftFiles = 10;
-        final List<String> driftFileShas = new ArrayList<String>();
+        final List<String> driftFileHashIds = new ArrayList<String>();
 
         for (int i = 0; i < numDriftFiles; ++i) {
             File dataFile = createDataFile("test_data.txt", 10, (char) ('a' + i));
-            final DriftFile driftFile = new DriftFile();
+            final DriftFileContent driftFile = new DriftFileContent();
             driftFile.setDataSize(dataFile.length());
-            driftFile.setSha256(digestGen.calcDigestString(dataFile));
+            driftFile.setHashId(digestGen.calcDigestString(dataFile));
             driftFile.setData(Hibernate.createBlob(new BufferedInputStream(new FileInputStream(dataFile))));
             dataFile.delete();
 
@@ -111,18 +111,18 @@ public class DriftFileTest extends AbstractEJB3Test {
                 @Override
                 public void execute() {
                     getEntityManager().persist(driftFile);
-                    driftFileShas.add(driftFile.getSha256());
+                    driftFileHashIds.add(driftFile.getHashId());
                 }
             });
         }
 
         final List<Blob> blobs = new ArrayList<Blob>();
         final List<DriftFile> driftFiles = new ArrayList<DriftFile>();
-        for (final String sha256 : driftFileShas) {
+        for (final String hashId : driftFileHashIds) {
             executeInTransaction(new TransactionCallback() {
                 @Override
                 public void execute() {
-                    DriftFile driftFile = getEntityManager().find(DriftFile.class, sha256);
+                    DriftFileContent driftFile = getEntityManager().find(DriftFileContent.class, hashId);
                     blobs.add(driftFile.getBlob());
                     driftFiles.add(driftFile);
                 }
@@ -137,14 +137,14 @@ public class DriftFileTest extends AbstractEJB3Test {
     @Test(groups = { "integration.ejb3", "driftFile" })
     public void loadSameFile() throws Exception {
         int numDriftFiles = 2;
-        final List<String> driftFileShas = new ArrayList<String>();
+        final List<String> driftFileHashIds = new ArrayList<String>();
 
         for (int i = 0; i < numDriftFiles; ++i) {
             File dataFile = createDataFile("test_data.txt", 10, 'X');
-            final DriftFile driftFile = new DriftFile();
+            final DriftFileContent driftFile = new DriftFileContent();
             final int driftFileNum = i;
             driftFile.setDataSize(dataFile.length());
-            driftFile.setSha256(digestGen.calcDigestString(dataFile));
+            driftFile.setHashId(digestGen.calcDigestString(dataFile));
             driftFile.setData(Hibernate.createBlob(new BufferedInputStream(new FileInputStream(dataFile))));
             dataFile.delete();
 
@@ -153,24 +153,24 @@ public class DriftFileTest extends AbstractEJB3Test {
                     @Override
                     public void execute() {
                         getEntityManager().persist(driftFile);
-                        driftFileShas.add(driftFile.getSha256());
+                        driftFileHashIds.add(driftFile.getHashId());
                     }
                 });
             } catch (Exception e) {
                 // expected for file 2 or higher
                 if (driftFileNum == 0) {
-                    fail("Should not be able to store DriftFile with same sha256 more than once.");
+                    fail("Should not be able to store DriftFile with same hashId more than once.");
                 }
             }
         }
 
         final List<Blob> blobs = new ArrayList<Blob>();
         final List<DriftFile> driftFiles = new ArrayList<DriftFile>();
-        for (final String sha256 : driftFileShas) {
+        for (final String hashId : driftFileHashIds) {
             executeInTransaction(new TransactionCallback() {
                 @Override
                 public void execute() {
-                    DriftFile driftFile = getEntityManager().find(DriftFile.class, sha256);
+                    DriftFileContent driftFile = getEntityManager().find(DriftFileContent.class, hashId);
                     blobs.add(driftFile.getBlob());
                     driftFiles.add(driftFile);
                 }

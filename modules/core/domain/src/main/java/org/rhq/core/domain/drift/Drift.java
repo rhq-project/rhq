@@ -77,11 +77,11 @@ public class Drift implements Serializable {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     private DriftChangeSet changeSet;
 
-    @JoinColumn(name = "OLD_DRIFT_FILE", referencedColumnName = "SHA256", nullable = true)
+    @JoinColumn(name = "OLD_DRIFT_FILE", referencedColumnName = "HASH_ID", nullable = true)
     @ManyToOne(fetch = FetchType.EAGER, optional = true)
     private DriftFile oldDriftFile;
 
-    @JoinColumn(name = "NEW_DRIFT_FILE", referencedColumnName = "SHA256", nullable = true)
+    @JoinColumn(name = "NEW_DRIFT_FILE", referencedColumnName = "HASH_ID", nullable = true)
     @ManyToOne(fetch = FetchType.EAGER, optional = true)
     private DriftFile newDriftFile;
 

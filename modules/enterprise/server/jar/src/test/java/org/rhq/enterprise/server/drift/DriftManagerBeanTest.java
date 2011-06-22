@@ -143,8 +143,8 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
         assertEquals(1, changeSet.getDrifts().size());
         Drift drift = changeSet.getDrifts().iterator().next();
         assertEquals("test/dir/filename.ext", drift.getPath());
-        assertEquals("aaaaa", drift.getOldDriftFile().getSha256());
-        assertEquals("bbbbb", drift.getNewDriftFile().getSha256());
+        assertEquals("aaaaa", drift.getOldDriftFile().getHashId());
+        assertEquals("bbbbb", drift.getNewDriftFile().getHashId());
         assertEquals(DriftCategory.FILE_CHANGED, drift.getCategory());
 
         driftFile = driftManager.getDriftFile(overlord, "bbbbb");

@@ -27,6 +27,8 @@ import javax.ejb.Local;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
+import org.rhq.core.domain.criteria.DriftCriteria;
+import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.domain.drift.DriftFile;
@@ -82,6 +84,14 @@ public interface DriftManagerLocal extends DriftManagerRemote {
      * @return The DriftChangeSets matching the criteria
      */
     PageList<DriftChangeSet> findDriftChangeSetsByCriteria(Subject subject, DriftChangeSetCriteria criteria);
+
+    /**
+     * Standard criteria based fetch method
+     * @param subject
+     * @param criteria
+     * @return The Drifts matching the criteria
+     */
+    PageList<Drift> findDriftsByCriteria(Subject subject, DriftCriteria criteria);
 
     /**
      * This method stores the provided change-set file for the resource. The version will be incremented based

@@ -1072,7 +1072,7 @@ public class Resource implements Comparable<Resource>, Serializable {
     @OneToMany(mappedBy = "resource", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     private Set<Dashboard> dashboards = null;
 
-    @JoinTable(name = "RHQ_DRIFT_CONFIG", joinColumns = { @JoinColumn(name = "RESOURCE_ID") }, inverseJoinColumns = { @JoinColumn(name = "CONFIG_ID") })
+    @JoinTable(name = "RHQ_DRIFT_CONFIG_MAP", joinColumns = { @JoinColumn(name = "RESOURCE_ID") }, inverseJoinColumns = { @JoinColumn(name = "CONFIG_ID") })
     @OneToMany(fetch = FetchType.LAZY, cascade = { CascadeType.ALL })
     private Set<Configuration> driftConfigurations = null;
 

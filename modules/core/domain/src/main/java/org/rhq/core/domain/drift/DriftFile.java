@@ -22,39 +22,40 @@
  */
 package org.rhq.core.domain.drift;
 
-import java.io.InputStream;
 import java.io.Serializable;
-import java.sql.Blob;
-import java.sql.SQLException;
 
 import javax.persistence.Column;
+import javax.persistence.DiscriminatorColumn;
+import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.Id;
-import javax.persistence.Lob;
 import javax.persistence.PrePersist;
 import javax.persistence.Table;
 
 /**
+ * A DriftFile represents one unique piece of content used for drift tracking.  Note that DriftFile does not
+ * include the actual bits, and therefore can be used freely client-side (gwt).  The bits are stored via the
+ * DriftFileContent sub-class, which adds only a Blob field. 
+ *  
  * @author Jay Shaughnessy
  * @author John Sanda 
  */
+@DiscriminatorColumn(name = "DTYPE")
+@DiscriminatorValue("no-content")
 @Entity
 @Table(name = "RHQ_DRIFT_FILE")
 public class DriftFile implements Serializable {
     private static final long serialVersionUID = 1L;
 
+    // this is a hash/digest that should uniquely identify the content
     @Id
-    @Column(name = "SHA256", nullable = false)
-    private String sha256;
+    @Column(name = "HASH_ID", nullable = false)
+    private String hashId;
 
     @Column(name = "CTIME", nullable = false)
     private Long ctime = -1L;
-
-    @Lob
-    @Column(name = "DATA", nullable = true)
-    private Blob data;
 
     @Column(name = "DATA_SIZE", nullable = true)
     private Long dataSize;
@@ -66,16 +67,16 @@ public class DriftFile implements Serializable {
     protected DriftFile() {
     }
 
-    public DriftFile(String sha256) {
-        this.sha256 = sha256;
+    public DriftFile(String hashId) {
+        this.hashId = hashId;
     }
 
-    public String getSha256() {
-        return sha256;
+    public String getHashId() {
+        return hashId;
     }
 
-    public void setSha256(String sha256) {
-        this.sha256 = sha256;
+    public void setHashId(String hashId) {
+        this.hashId = hashId;
     }
 
     public Long getCtime() {
@@ -89,18 +90,6 @@ public class DriftFile implements Serializable {
 
     public void setDataSize(Long dataSize) {
         this.dataSize = dataSize;
-    }
-
-    public Blob getBlob() {
-        return data;
-    }
-
-    public InputStream getData() throws SQLException {
-        return data.getBinaryStream();
-    }
-
-    public void setData(Blob blob) {
-        this.data = blob;
     }
 
     public long getDataSize() {
@@ -117,6 +106,11 @@ public class DriftFile implements Serializable {
 
     public void setStatus(DriftFileStatus status) {
         this.status = status;
+    }
+
+    @Override
+    public String toString() {
+        return "DriftFile [hashId=" + hashId + ", status=" + status + "]";
     }
 
 }

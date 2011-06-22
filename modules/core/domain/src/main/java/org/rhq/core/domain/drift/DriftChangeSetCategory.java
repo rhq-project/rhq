@@ -23,42 +23,14 @@
 package org.rhq.core.domain.drift;
 
 /**
- * The type of drift being reported. 
+ * Type of change set report. 
  *
  * @author Jay Shaughnesssy
  */
-public enum DriftCategory {
-    FILE_ADDED("A"),
+public enum DriftChangeSetCategory {
+    COVERAGE, // Reports only on files being covered by a drift configuration.
+    DRIFT; // Reports on actual drift.
 
-    FILE_CHANGED("C"),
-
-    FILE_REMOVED("R");
-
-    private final String code;
-
-    DriftCategory(String code) {
-        this.code = code;
-    }
-
-    public String code() {
-        return code;
-    }
-
-    public static DriftCategory fromCode(String code) {
-        for (DriftCategory category : DriftCategory.values()) {
-            if (category.code.equals(code)) {
-                return category;
-            }
-        }
-        throw new IllegalArgumentException(code + " is not a DriftCategory code");
-    }
-
-    public static String[] names() {
-        String[] names = new String[values().length];
-        int i = 0;
-        for (DriftCategory c : values()) {
-            names[i++] = c.name();
-        }
-        return names;
+    DriftChangeSetCategory() {
     }
 }

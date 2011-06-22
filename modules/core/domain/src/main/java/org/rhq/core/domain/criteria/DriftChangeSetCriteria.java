@@ -24,6 +24,7 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 
 import org.rhq.core.domain.drift.DriftChangeSet;
+import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.util.PageOrdering;
 
 /**
@@ -39,9 +40,9 @@ public class DriftChangeSetCriteria extends Criteria {
     private Integer filterInitial; // needs override
     private Integer filterResourceId; // needs override        
     private String filterVersion;
+    private DriftChangeSetCategory filterCategory;
 
     private boolean fetchDrifts;
-    private boolean fetchResource;
 
     private PageOrdering sortVersion;
 
@@ -67,12 +68,12 @@ public class DriftChangeSetCriteria extends Criteria {
         this.filterResourceId = filterResourceId;
     }
 
-    public void fetchDrifts(boolean fetchDrifts) {
-        this.fetchDrifts = fetchDrifts;
+    public void addFilterCategory(DriftChangeSetCategory filterCategory) {
+        this.filterCategory = filterCategory;
     }
 
-    public void fetchResource(boolean fetchResource) {
-        this.fetchResource = fetchResource;
+    public void fetchDrifts(boolean fetchDrifts) {
+        this.fetchDrifts = fetchDrifts;
     }
 
     public void addSortVersion(PageOrdering sortVersion) {

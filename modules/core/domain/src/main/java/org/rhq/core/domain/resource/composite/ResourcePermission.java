@@ -119,6 +119,12 @@ public class ResourcePermission implements Serializable {
         return this.permissions.contains(Permission.MANAGE_ALERTS);
     }
 
+    // TODO geta real resource perm
+    public boolean isDrift() {
+        return true;
+        //return this.permissions.contains(Permission.MANAGE_DRIFT);
+    }
+
     public boolean isEvent() {
         return this.permissions.contains(Permission.MANAGE_EVENTS);
     }

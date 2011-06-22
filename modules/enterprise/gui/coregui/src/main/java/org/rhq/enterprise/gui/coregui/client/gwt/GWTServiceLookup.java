@@ -58,6 +58,10 @@ public class GWTServiceLookup {
         return secure(ConfigurationGWTServiceAsync.Util.getInstance());
     }
 
+    public static DriftGWTServiceAsync getDriftService() {
+        return secure(DriftGWTServiceAsync.Util.getInstance());
+    }
+
     public static PluginGWTServiceAsync getPluginService() {
         return secure(PluginGWTServiceAsync.Util.getInstance());
     }

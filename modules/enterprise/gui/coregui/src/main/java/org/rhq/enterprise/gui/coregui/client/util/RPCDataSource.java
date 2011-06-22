@@ -49,6 +49,7 @@ import com.smartgwt.client.widgets.form.validator.LengthRangeValidator;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.alert.AlertPriority;
+import org.rhq.core.domain.drift.DriftCategory;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.resource.ResourceCategory;
@@ -535,6 +536,8 @@ public abstract class RPCDataSource<T, C extends org.rhq.core.domain.criteria.Cr
             return (S[]) new OperationRequestStatus[size];
         } else if (genericEnumType == ResourceCategory.class) {
             return (S[]) new ResourceCategory[size];
+        } else if (genericEnumType == DriftCategory.class) {
+            return (S[]) new DriftCategory[size];
         } else {
             throw new IllegalArgumentException(MSG.dataSource_rpc_error_unsupportedEnumType(genericEnumType.getName()));
         }

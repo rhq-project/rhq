@@ -56,10 +56,13 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
+import org.rhq.core.domain.criteria.DriftCriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
+import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.domain.drift.DriftFile;
+import org.rhq.core.domain.drift.DriftFileContent;
 import org.rhq.core.domain.drift.DriftFileStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
@@ -130,12 +133,13 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
             DriftChangeSetCriteria c = new DriftChangeSetCriteria();
             c.addFilterResourceId(resourceId);
             List<DriftChangeSet> changeSets = findDriftChangeSetsByCriteria(subjectManager.getOverlord(), c);
-            final boolean isInitialChangeSet = changeSets.isEmpty();
             final int version = changeSets.size();
+            // TODO: set caetgory based on changeset parsing
+            final DriftChangeSetCategory category = (0 == version) ? DriftChangeSetCategory.COVERAGE
+                : DriftChangeSetCategory.DRIFT;
 
             // store the new change set info (not the actual blob)
-            final DriftChangeSet driftChangeSet = new DriftChangeSet(resource, version);
-            //driftChangeSet.setData(Hibernate.createBlob(new BufferedInputStream(new FileInputStream(changeSetZip))));
+            final DriftChangeSet driftChangeSet = new DriftChangeSet(resource, version, category);
             entityManager.persist(driftChangeSet);
 
             ZipUtil.walkZipFile(changeSetZip, new ChangeSetFileVisitor() {
@@ -156,10 +160,10 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
                                 DriftFile oldDriftFile = getDriftFile(entry.getOldSHA(), emptyDriftFiles);
                                 DriftFile newDriftFile = getDriftFile(entry.getNewSHA(), emptyDriftFiles);
 
-                                // We don't generate Drift occurrences off of the initial change set. It is used only
+                                // We don't generate Drift occurrences off of a coverage changeset. It is used only
                                 // to give us a starting point and to tell us what files we need to pull down. 
-                                if (!isInitialChangeSet) {
-                                    // use a canonical path with only forward slashing to ensure consistent paths across reports
+                                if (DriftChangeSetCategory.DRIFT.equals(category)) {
+                                    // use a path with only forward slashing to ensure consistent paths across reports
                                     String path = new File(dir.getDirectory(), entry.getFile()).getPath();
                                     path = FileUtil.useForwardSlash(path);
                                     Drift drift = new Drift(driftChangeSet, path, entry.getType(), oldDriftFile,
@@ -238,9 +242,9 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void persistDriftFileData(DriftFile driftFile, InputStream data) throws Exception {
 
-        DriftFile df = entityManager.find(DriftFile.class, driftFile.getSha256());
+        DriftFileContent df = entityManager.find(DriftFileContent.class, driftFile.getHashId());
         if (null == df) {
-            throw new IllegalArgumentException("DriftFile not found: " + driftFile.getSha256());
+            throw new IllegalArgumentException("DriftFile not found: " + driftFile.getHashId());
         }
         df.setData(Hibernate.createBlob(new BufferedInputStream(data)));
         df.setStatus(DriftFileStatus.LOADED);
@@ -346,6 +350,15 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
         CriteriaQueryRunner<DriftChangeSet> queryRunner = new CriteriaQueryRunner<DriftChangeSet>(criteria, generator,
             entityManager);
         PageList<DriftChangeSet> result = queryRunner.execute();
+        return result;
+    }
+
+    @Override
+    public PageList<Drift> findDriftsByCriteria(Subject subject, DriftCriteria criteria) {
+
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        CriteriaQueryRunner<Drift> queryRunner = new CriteriaQueryRunner<Drift>(criteria, generator, entityManager);
+        PageList<Drift> result = queryRunner.execute();
         return result;
     }
 

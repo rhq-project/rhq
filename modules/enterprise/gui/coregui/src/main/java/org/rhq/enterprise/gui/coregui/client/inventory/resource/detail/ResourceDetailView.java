@@ -74,8 +74,9 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 /**
  * Right panel of the Resource view (#Resource/*).
  *
- * @author Greg Hinkle
  * @author Ian Springer
+ * @author Jay Shaughnessy
+ * @author Greg Hinkle
  */
 public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceComposite, ResourceTitleBar> {
 
@@ -109,6 +110,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
     private TwoLevelTab alertsTab;
     private TwoLevelTab configurationTab;
     private TwoLevelTab eventsTab;
+    private TwoLevelTab driftTab;
     private TwoLevelTab contentTab;
 
     private SubTab summaryActivity;
@@ -132,6 +134,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
     private SubTab configCurrent;
     private SubTab configHistory;
     private SubTab eventHistory;
+    private SubTab driftHistory;
     private SubTab contentDeployed;
     private SubTab contentNew;
     private SubTab contentSubscrip;
@@ -207,6 +210,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             .view_tabs_common_history()), null);
         eventsTab.registerSubTabs(eventHistory);
         tabs.add(eventsTab);
+
         operationsTab = new TwoLevelTab(getTabSet().extendLocatorId(Tab.OPERATIONS), new ViewName(Tab.OPERATIONS, MSG
             .view_tabs_common_operations()), "/images/icons/Operation_grey_16.png");
         this.operationsSchedules = new SubTab(operationsTab.extendLocatorId(OperationsSubTab.SCHEDULES), new ViewName(
@@ -224,6 +228,17 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             ConfigurationSubTab.HISTORY, MSG.view_tabs_common_history()), null);
         configurationTab.registerSubTabs(this.configCurrent, this.configHistory);
         tabs.add(configurationTab);
+
+        /*
+        driftTab = new TwoLevelTab(getTabSet().extendLocatorId("Drift"), new ViewName("Drift", MSG
+            .view_tabs_common_drift()), "/images/icons/Alert_grey_16.png");
+        this.alertHistory = new SubTab(driftTab.extendLocatorId("History"), new ViewName("History", MSG
+            .view_tabs_common_history()), null);
+        this.alertDef = new SubTab(driftTab.extendLocatorId("Definitions"), new ViewName("Definitions", MSG
+            .view_tabs_common_definitions()), null);
+        driftTab.registerSubTabs(alertHistory, alertDef);
+        tabs.add(driftTab);
+        */
 
         contentTab = new TwoLevelTab(getTabSet().extendLocatorId("Content"), new ViewName("Content", MSG
             .view_tabs_common_content()), "/images/icons/Content_grey_16.png");

@@ -218,6 +218,10 @@ public class LinkManager {
         return link;
     }
 
+    public static String getSubsystemDriftHistoryLink(int resourceId, int driftId) {
+        return "#Resource/" + resourceId + "/Drift/History/" + driftId;
+    }
+
     public static String getAutodiscoveryQueueLink() {
         if (GWT) {
             return "#Administration/Security/Auto%20Discovery%20Queue";

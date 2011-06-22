@@ -77,6 +77,10 @@ public class DriftConfiguration implements Serializable {
 
     private Configuration configuration;
 
+    // required for jaxb/web services stuff
+    protected DriftConfiguration() {
+    }
+
     public DriftConfiguration(Configuration c) {
         configuration = c;
     }

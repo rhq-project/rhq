@@ -50,6 +50,7 @@ import org.rhq.enterprise.gui.coregui.client.components.tab.SubTab;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTab;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewFactory;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
+import org.rhq.enterprise.gui.coregui.client.drift.ResourceDriftHistoryView;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.InventoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.AbstractTwoLevelTabSetView;
@@ -229,16 +230,14 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         configurationTab.registerSubTabs(this.configCurrent, this.configHistory);
         tabs.add(configurationTab);
 
-        /*
         driftTab = new TwoLevelTab(getTabSet().extendLocatorId("Drift"), new ViewName("Drift", MSG
-            .view_tabs_common_drift()), "/images/icons/Alert_grey_16.png");
-        this.alertHistory = new SubTab(driftTab.extendLocatorId("History"), new ViewName("History", MSG
+            .view_tabs_common_drift()), "/images/icons/Configure_grey_16.png");
+        this.driftHistory = new SubTab(driftTab.extendLocatorId("History"), new ViewName("History", MSG
             .view_tabs_common_history()), null);
-        this.alertDef = new SubTab(driftTab.extendLocatorId("Definitions"), new ViewName("Definitions", MSG
-            .view_tabs_common_definitions()), null);
-        driftTab.registerSubTabs(alertHistory, alertDef);
+        //this.alertDef = new SubTab(driftTab.extendLocatorId("Definitions"), new ViewName("Definitions", MSG
+        //    .view_tabs_common_definitions()), null);
+        driftTab.registerSubTabs(driftHistory);
         tabs.add(driftTab);
-        */
 
         contentTab = new TwoLevelTab(getTabSet().extendLocatorId("Content"), new ViewName("Content", MSG
             .view_tabs_common_content()), "/images/icons/Content_grey_16.png");
@@ -281,6 +280,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         updateEventsTabContent(resourceComposite, facets);
         updateOperationsTabContent(facets);
         updateConfigurationTabContent(resourceComposite, resource, resourcePermissions, facets);
+        updateDriftTabContent(resourceComposite, resource, resourcePermissions, facets);
         updateContentTabContent(resource, facets);
 
         this.show();
@@ -497,6 +497,26 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
                 public Canvas createView() {
                     return new ConfigurationHistoryView(configurationTab.extendLocatorId("ConfigHistView"),
                         resourceComposite.getResourcePermission().isConfigureWrite(), resource.getId());
+                }
+            });
+        }
+    }
+
+    private void updateDriftTabContent(final ResourceComposite resourceComposite, final Resource resource,
+        ResourcePermission resourcePermissions, Set<ResourceTypeFacet> facets) {
+        if (updateTab(this.driftTab, facets.contains(ResourceTypeFacet.DRIFT), resourcePermissions.isDrift())) {
+
+            updateSubTab(this.driftTab, this.driftHistory, true, true, new ViewFactory() {
+                @Override
+                public Canvas createView() {
+                    return ResourceDriftHistoryView.get(driftHistory.extendLocatorId("View"), resourceComposite);
+                }
+            });
+
+            updateSubTab(this.configurationTab, this.configHistory, true, true, new ViewFactory() {
+                @Override
+                public Canvas createView() {
+                    return ResourceDriftHistoryView.get(driftHistory.extendLocatorId("View"), resourceComposite);
                 }
             });
         }

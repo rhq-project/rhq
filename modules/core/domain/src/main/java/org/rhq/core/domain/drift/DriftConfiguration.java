@@ -4,12 +4,17 @@ import static java.util.Collections.emptyList;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
+import org.rhq.core.domain.resource.Resource;
 
 public class DriftConfiguration implements Serializable {
 
@@ -75,6 +80,8 @@ public class DriftConfiguration implements Serializable {
         }
     }
 
+    private Resource resource;
+
     private Configuration configuration;
 
     // required for jaxb/web services stuff
@@ -82,7 +89,12 @@ public class DriftConfiguration implements Serializable {
     }
 
     public DriftConfiguration(Configuration c) {
-        configuration = c;
+        this(null, c);
+    }
+
+    public DriftConfiguration(Resource resource, Configuration c) {
+        this.resource = resource;
+        this.configuration = c;
     }
 
     public Configuration getConfiguration() {
@@ -99,6 +111,10 @@ public class DriftConfiguration implements Serializable {
 
     public Long getInterval() {
         return Long.parseLong(configuration.getSimpleValue("interval", "0"));
+    }
+
+    public boolean getEnabled() {
+        return configuration.getSimpleValue("enabled", "false").equals("true");
     }
 
     public List<Filter> getIncludes() {
@@ -122,6 +138,47 @@ public class DriftConfiguration implements Serializable {
         }
 
         return filters;
+    }
+
+    public Resource getResource() {
+        return resource;
+    }
+
+    public void setResource(Resource resource) {
+        this.resource = resource;
+    }
+
+    public static Set<DriftConfiguration> valueOf(Resource resource) {
+        if (null == resource) {
+            return new HashSet<DriftConfiguration>(0);
+        }
+
+        Set<Configuration> configs = resource.getDriftConfigurations();
+        if (null == configs) {
+            return new HashSet<DriftConfiguration>(0);
+        }
+
+        Set<DriftConfiguration> result = new HashSet<DriftConfiguration>(configs.size());
+
+        for (Iterator<Configuration> i = configs.iterator(); i.hasNext();) {
+            result.add(new DriftConfiguration(resource, i.next()));
+        }
+
+        return result;
+    }
+
+    public static <T extends Collection<Configuration>> Set<DriftConfiguration> valueOf(T configs) {
+        if (null == configs) {
+            return new HashSet<DriftConfiguration>(0);
+        }
+
+        Set<DriftConfiguration> result = new HashSet<DriftConfiguration>(configs.size());
+
+        for (Iterator<Configuration> i = configs.iterator(); i.hasNext();) {
+            result.add(new DriftConfiguration(i.next()));
+        }
+
+        return result;
     }
 
 }

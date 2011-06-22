@@ -173,7 +173,8 @@ import org.rhq.core.domain.util.Summary;
         + "         (SELECT COUNT(operationDef) FROM rt.operationDefinitions operationDef)," // operation
         + "         (SELECT COUNT(packageType) FROM rt.packageTypes packageType)," // content
         + "         (SELECT COUNT(metricDef) FROM rt.metricDefinitions metricDef WHERE metricDef.dataType = 3)," // calltime
-        + "         (SELECT COUNT(propDef) FROM rt.pluginConfigurationDefinition pluginConfig JOIN pluginConfig.propertyDefinitions propDef WHERE propDef.name = 'snapshotLogEnabled')" // support 
+        + "         (SELECT COUNT(propDef) FROM rt.pluginConfigurationDefinition pluginConfig JOIN pluginConfig.propertyDefinitions propDef WHERE propDef.name = 'snapshotLogEnabled')," //
+        + "         (SELECT COUNT(driftConfig) FROM rt.driftConfigurationTemplates driftConfig)" // drift 
         + "       ) " //
         + "  FROM ResourceType rt " //
         + " WHERE rt.deleted = false AND ( rt.id = :resourceTypeId OR :resourceTypeId IS NULL )"),

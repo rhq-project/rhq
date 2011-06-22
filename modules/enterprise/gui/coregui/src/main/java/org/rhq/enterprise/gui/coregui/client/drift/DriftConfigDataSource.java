@@ -19,7 +19,6 @@
 package org.rhq.enterprise.gui.coregui.client.drift;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -37,18 +36,15 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.common.EntityContext;
-import org.rhq.core.domain.criteria.DriftCriteria;
-import org.rhq.core.domain.drift.Drift;
-import org.rhq.core.domain.drift.DriftCategory;
-import org.rhq.core.domain.drift.DriftChangeSet;
+import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
-import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
-import org.rhq.enterprise.gui.coregui.client.gwt.DriftGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.TypesLoadedCallback;
@@ -58,19 +54,19 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 /**
  * @author Jay Shaughnessy
  */
-public class DriftDataSource extends RPCDataSource<Drift, DriftCriteria> {
+public class DriftConfigDataSource extends RPCDataSource<DriftConfiguration, ResourceCriteria> {
 
     public static final String FILTER_CATEGORIES = "categories";
 
-    private DriftGWTServiceAsync driftService = GWTServiceLookup.getDriftService();
+    private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
 
     private EntityContext entityContext;
 
-    public DriftDataSource() {
+    public DriftConfigDataSource() {
         this(EntityContext.forSubsystemView());
     }
 
-    public DriftDataSource(EntityContext context) {
+    public DriftConfigDataSource(EntityContext context) {
         super();
         this.entityContext = context;
 
@@ -86,17 +82,14 @@ public class DriftDataSource extends RPCDataSource<Drift, DriftCriteria> {
     public ArrayList<ListGridField> getListGridFields() {
         ArrayList<ListGridField> fields = new ArrayList<ListGridField>(6);
 
-        ListGridField ctimeField = new ListGridField("ctime", MSG.common_title_createTime());
-        ctimeField.setCellFormatter(new TimestampCellFormatter());
-        ctimeField.setShowHover(true);
-        ctimeField.setHoverCustomizer(TimestampCellFormatter.getHoverCustomizer("ctime"));
-        fields.add(ctimeField);
+        ListGridField nameField = new ListGridField("name", MSG.common_title_name());
+        fields.add(nameField);
 
-        ListGridField categoryField = new ListGridField("category", MSG.common_title_category());
-        fields.add(categoryField);
+        ListGridField intervalField = new ListGridField("interval", MSG.common_title_interval());
+        fields.add(intervalField);
 
-        ListGridField pathField = new ListGridField("path", MSG.common_title_path());
-        fields.add(pathField);
+        ListGridField baseDirField = new ListGridField("baseDir", MSG.view_drift_table_baseDir());
+        fields.add(baseDirField);
 
         if (this.entityContext.type != EntityContext.Type.Resource) {
             ListGridField resourceNameField = new ListGridField(AncestryUtil.RESOURCE_NAME, MSG.common_title_resource());
@@ -119,43 +112,37 @@ public class DriftDataSource extends RPCDataSource<Drift, DriftCriteria> {
             ListGridField ancestryField = AncestryUtil.setupAncestryListGridField();
             fields.add(ancestryField);
 
-            ctimeField.setWidth(100);
-            categoryField.setWidth(100);
-            pathField.setWidth("35%");
+            nameField.setWidth("15%");
+            intervalField.setWidth(100);
+            baseDirField.setWidth("20%");
             resourceNameField.setWidth("25%");
             ancestryField.setWidth("40%");
         } else {
-            ctimeField.setWidth(200);
-            pathField.setWidth("*");
-            categoryField.setWidth(100);
+            nameField.setWidth("15%");
+            intervalField.setWidth(100);
+            baseDirField.setWidth("85%");
         }
 
         return fields;
     }
 
     @Override
-    protected void executeFetch(final DSRequest request, final DSResponse response, final DriftCriteria criteria) {
-        if (criteria == null) {
-            // the user selected no categories in the filter - it makes sense from the UI perspective to show 0 rows
-            response.setTotalRows(0);
-            processResponse(request.getRequestId(), response);
-            return;
-        }
+    protected void executeFetch(final DSRequest request, final DSResponse response, final ResourceCriteria criteria) {
 
         final long start = System.currentTimeMillis();
 
-        this.driftService.findDriftsByCriteria(criteria, new AsyncCallback<PageList<Drift>>() {
+        this.resourceService.findResourcesByCriteria(criteria, new AsyncCallback<PageList<Resource>>() {
 
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError(MSG.view_drift_failure_load(), caught);
+                CoreGUI.getErrorHandler().handleError(MSG.view_inventory_resources_loadFailed(), caught);
                 response.setStatus(RPCResponse.STATUS_FAILURE);
                 processResponse(request.getRequestId(), response);
             }
 
-            public void onSuccess(PageList<Drift> result) {
+            public void onSuccess(PageList<Resource> result) {
                 if (Log.isDebugEnabled()) {
                     long fetchTime = System.currentTimeMillis() - start;
-                    Log.debug(result.size() + " drifts fetched in: " + fetchTime + "ms");
+                    Log.debug(result.size() + " resources (with drift configs) fetched in: " + fetchTime + "ms");
                 }
 
                 dataRetrieved(result, response, request);
@@ -166,14 +153,15 @@ public class DriftDataSource extends RPCDataSource<Drift, DriftCriteria> {
     /**
      * Additional processing to support entity-specific or cross-resource views, and something that can be overidden.
      */
-    protected void dataRetrieved(final PageList<Drift> result, final DSResponse response, final DSRequest request) {
+    protected void dataRetrieved(final PageList<Resource> result, final DSResponse response, final DSRequest request) {
         switch (entityContext.type) {
 
-        // no need to disambiguate, the drifts are for a single resource
+        // no need to disambiguate, the dift configs are for a single resource
         case Resource:
-            response.setData(buildRecords(result));
+            Set<DriftConfiguration> driftConfigs = DriftConfiguration.valueOf(result.get(0));
+            response.setData(buildRecords(driftConfigs));
             // for paging to work we have to specify size of full result set
-            response.setTotalRows(getTotalRows(result, response, request));
+            response.setTotalRows(getTotalRows(driftConfigs, response, request));
             processResponse(request.getRequestId(), response);
             break;
 
@@ -181,8 +169,7 @@ public class DriftDataSource extends RPCDataSource<Drift, DriftCriteria> {
         default:
             Set<Integer> typesSet = new HashSet<Integer>();
             Set<String> ancestries = new HashSet<String>();
-            for (Drift drift : result) {
-                Resource resource = drift.getChangeSet().getResource();
+            for (Resource resource : result) {
                 typesSet.add(resource.getResourceType().getId());
                 ancestries.add(resource.getAncestry());
             }
@@ -197,7 +184,8 @@ public class DriftDataSource extends RPCDataSource<Drift, DriftCriteria> {
                     // Smartgwt has issues storing a Map as a ListGridRecord attribute. Wrap it in a pojo.                
                     AncestryUtil.MapWrapper typesWrapper = new AncestryUtil.MapWrapper(types);
 
-                    Record[] records = buildRecords(result);
+                    Set<DriftConfiguration> driftConfigs = getDriftConfigs(result);
+                    Record[] records = buildRecords(driftConfigs);
                     for (Record record : records) {
                         // To avoid a lot of unnecessary String construction, be lazy about building ancestry hover text.
                         // Store the types map off the records so we can build a detailed hover string as needed.                      
@@ -209,11 +197,19 @@ public class DriftDataSource extends RPCDataSource<Drift, DriftCriteria> {
                     }
                     response.setData(records);
                     // for paging to work we have to specify size of full result set
-                    response.setTotalRows(getTotalRows(result, response, request));
+                    response.setTotalRows(getTotalRows(driftConfigs, response, request));
                     processResponse(request.getRequestId(), response);
                 }
             });
         }
+    }
+
+    private Set<DriftConfiguration> getDriftConfigs(PageList<Resource> resources) {
+        Set<DriftConfiguration> result = new HashSet<DriftConfiguration>();
+        for (Resource resource : resources) {
+            result.addAll(DriftConfiguration.valueOf(resource.getDriftConfigurations()));
+        }
+        return result;
     }
 
     /**
@@ -224,24 +220,18 @@ public class DriftDataSource extends RPCDataSource<Drift, DriftCriteria> {
      * @param response
      * @param request
      * 
-     * @return should not exceed result.getTotalSize(). 
+     * @return should not exceed result.size(). 
      */
-    protected int getTotalRows(final PageList<Drift> result, final DSResponse response, final DSRequest request) {
+    protected int getTotalRows(final Set<DriftConfiguration> result, final DSResponse response, final DSRequest request) {
 
-        return result.getTotalSize();
+        return result.size();
     }
 
     @Override
-    protected DriftCriteria getFetchCriteria(DSRequest request) {
-        DriftCategory[] categoriesFilter = getArrayFilter(request, FILTER_CATEGORIES, DriftCategory.class);
+    protected ResourceCriteria getFetchCriteria(DSRequest request) {
 
-        if (categoriesFilter == null || categoriesFilter.length == 0) {
-            return null; // user didn't select any priorities - return null to indicate no data should be displayed
-        }
-
-        DriftCriteria criteria = new DriftCriteria();
-        criteria.addFilterCategories(categoriesFilter);
-        criteria.fetchChangeSet(true);
+        ResourceCriteria criteria = new ResourceCriteria();
+        criteria.fetchDriftConfigurations(true);
         criteria.setPageControl(getPageControl(request));
 
         return criteria;
@@ -250,31 +240,30 @@ public class DriftDataSource extends RPCDataSource<Drift, DriftCriteria> {
     @Override
     protected String getSortFieldForColumn(String columnName) {
         if (AncestryUtil.RESOURCE_ANCESTRY.equals(columnName)) {
-            return "changeSet.resource.ancestry";
+            return "ancestry";
         }
 
         return super.getSortFieldForColumn(columnName);
     }
 
     @Override
-    public Drift copyValues(Record from) {
+    public DriftConfiguration copyValues(Record from) {
         return null;
     }
 
     @Override
-    public ListGridRecord copyValues(Drift from) {
+    public ListGridRecord copyValues(DriftConfiguration from) {
         return convert(from);
     }
 
-    public static ListGridRecord convert(Drift from) {
+    public static ListGridRecord convert(DriftConfiguration from) {
         ListGridRecord record = new ListGridRecord();
-        record.setAttribute("id", from.getId());
-        record.setAttribute("ctime", new Date(from.getCtime()));
-        record.setAttribute("category", from.getCategory());
-        record.setAttribute("path", from.getPath());
+        record.setAttribute("name", from.getName());
+        record.setAttribute("interval", from.getInterval());
+        record.setAttribute("baseDir", from.getBasedir());
+        record.setAttribute("enabled", from.getEnabled());
 
-        DriftChangeSet changeSet = from.getChangeSet();
-        Resource resource = changeSet.getResource();
+        Resource resource = from.getResource();
 
         // for ancestry handling       
         record.setAttribute(AncestryUtil.RESOURCE_ID, resource.getId());
@@ -289,8 +278,8 @@ public class DriftDataSource extends RPCDataSource<Drift, DriftCriteria> {
         Window.alert(String.valueOf(recordToRemove.getAttributeAsInt("id")));
     }
 
-    public DriftGWTServiceAsync getDriftService() {
-        return driftService;
+    public ResourceGWTServiceAsync getResourceService() {
+        return resourceService;
     }
 
     protected EntityContext getEntityContext() {

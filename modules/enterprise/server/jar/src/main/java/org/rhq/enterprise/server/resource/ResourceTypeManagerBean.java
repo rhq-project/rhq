@@ -377,7 +377,7 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
         query.setParameter("resourceTypeId", resourceTypeId);
         List<ResourceFacets> facets = query.getResultList();
         if (facets.size() != 1) {
-            return new ResourceFacets(resourceTypeId, false, false, false, false, false, false, false, false);
+            return new ResourceFacets(resourceTypeId, false, false, false, false, false, false, false, false, false);
         }
         return facets.get(0);
     }
@@ -393,9 +393,10 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
 
     public Map<Integer, ResourceTypeTemplateCountComposite> getTemplateCountCompositeMap() {
         Query templateCountQuery = entityManager.createNamedQuery(ResourceType.FIND_ALL_TEMPLATE_COUNT_COMPOSITES);
-        
+
         @SuppressWarnings("unchecked")
-        List<ResourceTypeTemplateCountComposite> results = (List<ResourceTypeTemplateCountComposite>) templateCountQuery.getResultList();
+        List<ResourceTypeTemplateCountComposite> results = (List<ResourceTypeTemplateCountComposite>) templateCountQuery
+            .getResultList();
 
         for (ResourceTypeTemplateCountComposite result : results) {
             ResourceType type = result.getType();
@@ -455,16 +456,14 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
 
     @SuppressWarnings("unchecked")
     public List<Integer> getResourceTypeIdsByPlugin(String plugin) {
-        return entityManager.createNamedQuery(ResourceType.QUERY_FIND_IDS_BY_PLUGIN)
-            .setParameter("plugin", plugin)
+        return entityManager.createNamedQuery(ResourceType.QUERY_FIND_IDS_BY_PLUGIN).setParameter("plugin", plugin)
             .getResultList();
     }
 
     @Override
     public Integer getResourceTypeCountByPlugin(String plugin) {
-        return (Integer) entityManager.createNamedQuery(ResourceType.QUERY_FIND_COUNT_BY_PLUGIN)
-            .setParameter("plugin", plugin)
-            .getSingleResult();
+        return (Integer) entityManager.createNamedQuery(ResourceType.QUERY_FIND_COUNT_BY_PLUGIN).setParameter("plugin",
+            plugin).getSingleResult();
     }
 
     @SuppressWarnings("unchecked")

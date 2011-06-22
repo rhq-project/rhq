@@ -10,8 +10,12 @@ import java.util.List;
 
 import org.testng.annotations.Test;
 
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.search.SearchSubsystem;
 import org.rhq.core.domain.search.SearchSuggestion;
+import org.rhq.enterprise.server.search.execution.SearchAssistManager;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 public class GenericSearchAssistTest extends AbstractEJB3Test {
 
@@ -59,6 +63,19 @@ public class GenericSearchAssistTest extends AbstractEJB3Test {
                 reader.close();
             }
         }
+    }
+
+    @Test
+    public void test2() throws Exception {
+        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+        SearchAssistManager mgr = new SearchAssistManager(overlord, SearchSubsystem.RESOURCE);
+        List<SearchSuggestion> suggestions = mgr.getSuggestions("category=PLATFORM",0);
+        System.out.println("Number of suggestions: " + suggestions.size());
+        for (SearchSuggestion s : suggestions) {
+            System.out.println(s);
+        }
+
+
     }
 
     private void compare(List<SearchSuggestion> results, List<String> expected) {

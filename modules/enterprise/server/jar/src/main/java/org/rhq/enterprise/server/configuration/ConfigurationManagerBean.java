@@ -64,6 +64,10 @@ import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.composite.ConfigurationUpdateComposite;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationFormat;
+import org.rhq.core.domain.configuration.definition.PropertyDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionEnumeration;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
+import org.rhq.core.domain.configuration.definition.PropertyOptionsSource;
 import org.rhq.core.domain.configuration.group.AbstractGroupConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.GroupPluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.GroupResourceConfigurationUpdate;
@@ -72,15 +76,19 @@ import org.rhq.core.domain.criteria.GroupPluginConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.GroupResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.PluginConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
+import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.ResourceErrorType;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
+import org.rhq.core.domain.search.SearchSubsystem;
+import org.rhq.core.domain.search.SearchSuggestion;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
@@ -110,6 +118,7 @@ import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupNotFoundException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupUpdateException;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
+import org.rhq.enterprise.server.search.execution.SearchAssistManager;
 import org.rhq.enterprise.server.system.ServerVersion;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
@@ -678,7 +687,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         }
 
         Query countQuery = PersistenceUtility.createCountQuery(entityManager,
-            ResourceConfigurationUpdate.QUERY_FIND_BY_GROUP_ID_AND_STATUS);
+                ResourceConfigurationUpdate.QUERY_FIND_BY_GROUP_ID_AND_STATUS);
         countQuery.setParameter("groupId", compatibleGroup.getId());
         countQuery.setParameter("status", ConfigurationUpdateStatus.INPROGRESS);
         long count = (Long) countQuery.getSingleResult();
@@ -1620,7 +1629,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
     public Configuration getConfigurationFromDefaultTemplate(ConfigurationDefinition definition) {
         ConfigurationDefinition managedDefinition = entityManager.find(ConfigurationDefinition.class, definition
-            .getId());
+                .getId());
         Configuration configuration = managedDefinition.getDefaultTemplate().getConfiguration();
         ConfigurationMaskingUtility.maskConfiguration(configuration, managedDefinition);
         return configuration;
@@ -1992,7 +2001,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         pc.initDefaultOrderingField("modifiedTime", PageOrdering.DESC);
 
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
-            GroupPluginConfigurationUpdate.QUERY_FIND_BY_GROUP_ID, pc);
+                GroupPluginConfigurationUpdate.QUERY_FIND_BY_GROUP_ID, pc);
         Query countQuery = PersistenceUtility.createCountQuery(entityManager,
             GroupPluginConfigurationUpdate.QUERY_FIND_BY_GROUP_ID);
         query.setParameter("groupId", groupId);
@@ -2373,6 +2382,51 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         }
 
         return updates;
+    }
+
+
+    public ConfigurationDefinition getOptionsForConfigurationDefinition(Subject subject, ConfigurationDefinition def) {
+
+
+        for (Map.Entry<String,PropertyDefinition> entry :  def.getPropertyDefinitions().entrySet()) {
+            PropertyDefinition pd = entry.getValue();
+
+            if (pd instanceof PropertyDefinitionSimple) {
+                PropertyDefinitionSimple pds = (PropertyDefinitionSimple) pd;
+                handlePDS(subject, pds);
+
+            }
+            // TODO consider more cases
+        }
+
+        return def; // TODO clone the incoming definition?
+    }
+
+    /**
+     * Determine the dynamic enumeration values for one PropertyDefinitionSimple
+     * @param subject Subject of the caller - may limit search results
+     * @param pds the PropertyDefinitionSimple to work on
+     */
+    private void handlePDS(Subject subject, PropertyDefinitionSimple pds) {
+
+        if (pds.getOptionsSource()!=null) {
+            // evaluate the source parameters
+            PropertyOptionsSource pos = pds.getOptionsSource();
+            ResourceCriteria criteria = new ResourceCriteria();
+            criteria.setSearchExpression(pos.getExpression());
+            // TODO for groups we need to talk to the group manager
+            List<ResourceComposite> composites = resourceManager.findResourceCompositesByCriteria(subject,criteria);
+            for (ResourceComposite composite : composites) {
+
+                // TODO for configuration we need to drill down into the resource configuration
+                PropertyDefinitionEnumeration pde = new PropertyDefinitionEnumeration(composite.getResource().getName(),""+composite.getResource().getId());
+
+                // TODO filter -- or leave up to search expression??
+
+                pds.getEnumeratedValues().add(pde);
+            }
+        }
+
     }
 
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

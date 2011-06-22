@@ -136,8 +136,7 @@ public class TokenReplacingProperties extends HashMap<String, String> {
     @SuppressWarnings("unchecked")
     public TokenReplacingProperties(Properties properties) {
         @SuppressWarnings("rawtypes")
-        Map map = (Map<Object, Object>) properties;
-        
+        Map map = properties;        
         this.wrapped = (Map<String, String>) map;
     }
 
@@ -186,6 +185,12 @@ public class TokenReplacingProperties extends HashMap<String, String> {
         wrapped.putAll(m);
     }
 
+    public void putAll(Properties properties) {
+        for(String propName : properties.stringPropertyNames()) {
+            put(propName, properties.getProperty(propName));
+        }
+    }
+    
     @Override
     public void clear() {
         wrapped.clear();

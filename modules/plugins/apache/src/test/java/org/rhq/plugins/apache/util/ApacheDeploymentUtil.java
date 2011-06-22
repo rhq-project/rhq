@@ -203,30 +203,36 @@ public class ApacheDeploymentUtil {
         checkOrAddDefault(variables, "port3", "11677");
         checkOrAddDefault(variables, "port4", "11678");
 
-        checkOrAddDefault(variables, prefix + ".listen1", "${port1}");
-        checkOrAddDefault(variables, prefix + ".listen2", "${port2}");
-        checkOrAddDefault(variables, prefix + ".listen3", "${port3}");
-        checkOrAddDefault(variables, prefix + ".listen4", "${port4}");
+        if (prefix != null && !prefix.trim().isEmpty()) {
+            prefix += ".";
+        } else {
+            prefix = "";
+        }
+        
+        checkOrAddDefault(variables, prefix + "listen1", "${port1}");
+        checkOrAddDefault(variables, prefix + "listen2", "${port2}");
+        checkOrAddDefault(variables, prefix + "listen3", "${port3}");
+        checkOrAddDefault(variables, prefix + "listen4", "${port4}");
 
-        checkOrAddDefault(variables, prefix + ".vhost1.servername", "${localhost}:${port1}");
-        checkOrAddDefault(variables, prefix + ".vhost1.urls", "${" + prefix + ".vhost1.servername}");
-        checkOrAddDefault(variables, prefix + ".vhost1.servername.directive", "ServerName ${" + prefix
-            + ".vhost1.servername}");
+        checkOrAddDefault(variables, prefix + "vhost1.servername", "${localhost}:${port1}");
+        checkOrAddDefault(variables, prefix + "vhost1.urls", "${" + prefix + "vhost1.servername}");
+        checkOrAddDefault(variables, prefix + "vhost1.servername.directive", "ServerName ${" + prefix
+            + "vhost1.servername}");
 
-        checkOrAddDefault(variables, prefix + ".vhost2.servername", "${localhost}:${port2}");
-        checkOrAddDefault(variables, prefix + ".vhost2.urls", "${" + prefix + ".vhost2.servername}");
-        checkOrAddDefault(variables, prefix + ".vhost2.servername.directive", "ServerName ${" + prefix
-            + ".vhost2.servername}");
+        checkOrAddDefault(variables, prefix + "vhost2.servername", "${localhost}:${port2}");
+        checkOrAddDefault(variables, prefix + "vhost2.urls", "${" + prefix + "vhost2.servername}");
+        checkOrAddDefault(variables, prefix + "vhost2.servername.directive", "ServerName ${" + prefix
+            + "vhost2.servername}");
 
-        checkOrAddDefault(variables, prefix + ".vhost3.servername", "${localhost}:${port3}");
-        checkOrAddDefault(variables, prefix + ".vhost3.urls", "${" + prefix + ".vhost3.servername}");
-        checkOrAddDefault(variables, prefix + ".vhost3.servername.directive", "ServerName ${" + prefix
-            + ".vhost3.servername}");
+        checkOrAddDefault(variables, prefix + "vhost3.servername", "${localhost}:${port3}");
+        checkOrAddDefault(variables, prefix + "vhost3.urls", "${" + prefix + "vhost3.servername}");
+        checkOrAddDefault(variables, prefix + "vhost3.servername.directive", "ServerName ${" + prefix
+            + "vhost3.servername}");
 
-        checkOrAddDefault(variables, prefix + ".vhost4.servername", "${localhost}:${port4}");
-        checkOrAddDefault(variables, prefix + ".vhost4.urls", "${" + prefix + ".vhost4.servername}");
-        checkOrAddDefault(variables, prefix + ".vhost4.servername.directive", "ServerName ${" + prefix
-            + ".vhost4.servername}");
+        checkOrAddDefault(variables, prefix + "vhost4.servername", "${localhost}:${port4}");
+        checkOrAddDefault(variables, prefix + "vhost4.urls", "${" + prefix + "vhost4.servername}");
+        checkOrAddDefault(variables, prefix + "vhost4.servername.directive", "ServerName ${" + prefix
+            + "vhost4.servername}");
     }
 
     private static void checkOrAddDefault(Map<String, String> map, String key, String value) {
@@ -234,12 +240,13 @@ public class ApacheDeploymentUtil {
             map.put(key, value);
         }
     }
-
-    public static DeploymentConfig getDeploymentConfigurationFromSystemProperties(String variablesPrefix) {
+    
+    public static DeploymentConfig getDeploymentConfigurationFromSystemProperties(String variablesPrefix, Map<String, String> defaultOverrides) {
         DeploymentConfig ret = new DeploymentConfig();
 
-        Map<String, String> properties = new TokenReplacingProperties(System.getProperties());
+        TokenReplacingProperties properties = new TokenReplacingProperties(defaultOverrides);
         addDefaultVariables(properties, variablesPrefix);
+        properties.putAll(System.getProperties());
 
         variablesPrefix += ".";
 

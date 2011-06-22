@@ -31,15 +31,14 @@ import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
 import org.jmock.Expectations;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Parameters;
 
 import org.rhq.core.clientapi.agent.metadata.PluginMetadataParser;
 import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
@@ -81,7 +80,8 @@ public class UpgradeTestBase extends PluginContainerTest {
         private Resource platform;
         private ApacheSetup apacheSetup = new ApacheSetup();
         private DeploymentConfig deploymentConfig;
-    
+        private Map<String, String> defaultOverrides = new HashMap<String, String>();
+
         public class ApacheSetup {
             private String serverRoot;
             private String exePath;
@@ -97,7 +97,7 @@ public class UpgradeTestBase extends PluginContainerTest {
                 this.serverRoot = serverRoot;
                 //auto-define the server root property as if it was passed on the commandline
                 System.getProperties().put(configurationName + ".server.root", serverRoot);
-                deploymentConfig = ApacheDeploymentUtil.getDeploymentConfigurationFromSystemProperties(configurationName);
+                deploymentConfig = ApacheDeploymentUtil.getDeploymentConfigurationFromSystemProperties(configurationName, defaultOverrides);
                 return this;
             }
     
@@ -179,14 +179,20 @@ public class UpgradeTestBase extends PluginContainerTest {
     
         public TestSetup(String configurationName) {
             this.configurationName = configurationName;
-            deploymentConfig = ApacheDeploymentUtil.getDeploymentConfigurationFromSystemProperties(configurationName);
+            deploymentConfig = ApacheDeploymentUtil.getDeploymentConfigurationFromSystemProperties(configurationName, defaultOverrides);
         }
     
         public TestSetup withInventoryFrom(String classPathUri) {
             inventoryFile = classPathUri;
             return this;
         }
-    
+
+        public TestSetup withDefaultOverrides(Map<String, String> defaultOverrides) {            
+            this.defaultOverrides = defaultOverrides == null ? new HashMap<String, String>() : defaultOverrides;
+            deploymentConfig = ApacheDeploymentUtil.getDeploymentConfigurationFromSystemProperties(configurationName, this.defaultOverrides);
+            return this;
+        }
+        
         public TestSetup withPlatformResource(Resource platform) {
             this.platform = platform;
             return this;
@@ -255,7 +261,7 @@ public class UpgradeTestBase extends PluginContainerTest {
         public TestSetup setup() throws Exception {
             apacheSetup.doSetup();
     
-            Map<String, String> replacements = deploymentConfig.getTokenReplacements();            
+            Map<String, String> replacements = deploymentConfig.getTokenReplacements();                  
             replacements.put("server.root", apacheSetup.serverRoot);
             replacements.put("exe.path", apacheSetup.exePath);
             replacements.put("localhost", determineLocalhost());
@@ -412,4 +418,14 @@ public class UpgradeTestBase extends PluginContainerTest {
         return null;
     }
 
+    protected static String variableName(String prefix, String name) {
+        StringBuilder bld = new StringBuilder();
+        if (prefix != null && !prefix.isEmpty()) {
+            bld.append(prefix).append(".");
+        }
+        
+        bld.append(name);
+        
+        return bld.toString();
+    }
 }

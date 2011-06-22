@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!--
+   See the rhq-plugin.xsd file for detailed documentatoin on the schema. The notes in this file are to
+   facilitate using this file as a base plugin descriptor. 
+-->
+
+<!--
+   CHANGE: The name (and optional displayName) should be changed to reflect the plugin being developed. Keep in mind
+           the value for name must be unique across all other plugins that are deployed.
+
+           The package attribute should be changed to reflect the package in which all of the component classes
+           are built.
+-->
+<plugin name="SkeletonPlugin"
+        displayName="Skeleton Plugin"
+        version="1.0"
+        package="org.rhq.sample.skeletonplugin"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+
+   <!--
+      CHANGE: The following is a sample server resource type. This entry is here to serve as a model and should
+              be removed prior to deploying the plugin. Multiple resource types (either server or service) may be
+              defined at this level.
+   -->
+   <server name="Sample Plugin Server"
+           discovery="SamplePluginDiscoveryComponent"
+           class="SamplePluginServerComponent"
+           supportsManualAdd="true"
+           description="This is a sample resource type and should be removed.">
+
+      <!--       
+         CHANGE: Categories are optional; this entire section may be removed if there is no need to further group
+                 related child resources. Categories defined at this level can carry metadata on the category itself,
+                 such as a display name and description.
+      -->
+      <subcategories>
+         <subcategory name="Category1" displayName="Sample Category 1"
+                      description="This is a sample category that should be removed."/>
+         <subcategory name="Category2" >
+            <subcategory name="ChildCategory2a" />
+         </subcategory>
+      </subcategories>
+
+      <!--
+         CHANGE: The entire plugin configuration is optional. If there are properties specific to handling how the
+                 resource component will connect to the resource, they should be added here. If the plugin-configuration
+                 entity is specified, at least one property must be provided.
+      -->
+      <plugin-configuration>
+         <c:simple-property name="SamplePluginProperty" displayName="Sample Plugin Property" default="Value" />
+      </plugin-configuration>
+
+      <!--
+         CHANGE: The process-scan element requests the plugin container provide the discovery component for
+                 this resource type with the results of scanning the machine for running processes. If there is
+                 no use for this in a given resource type, this entry may be omitted.
+      -->
+      <process-scan name="ScanIdentifier" query="process|basename|match=^java.*,arg|org.jboss.Main|match=.*"/>
+
+      <!--
+         CHANGE: An operation element is added for each operation that may be executed against resources of this type.
+                 The parameters element is optional; properties defined within will be displayed to the user when
+                 invoking the operation. If the resource has no applicable operations, these elements may be omitted.
+
+         REQUIRED INTERFACE: The resource component for this resource type must implement the OperationFacet interface
+                             if any operations are specified.
+      -->
+      <operation name="testSimple"
+                 description="Test simple-property configuration element for a resource operation">
+         <parameters>
+            <c:group name="required" displayName="Required Parameters" hiddenByDefault="false">
+               <c:description>All of these properties are required</c:description>
+               <c:simple-property name="aNumber" type="integer" required="true" default="42" displayName="A Number" description="A number between 1 and 100, inclusive">
+                  <c:constraint>
+                     <c:integer-constraint minimum="1" maximum="100"/>
+                  </c:constraint>
+               </c:simple-property>
+            </c:group>
+         </parameters>
+         <results>
+             <c:simple-property name="results" />
+         </results>
+      </operation>
+
+      <!--
+         CHANGE: For each measurement that should be collected for resources of this type, a metric element is added.
+                 In addition to identifying the metric, a default collection interval and whether or not the
+                 metric is even collected by default are indicated. If the resource has no measurements to be
+                 collected, these elements may be omitted.
+
+         REQUIRED INTERFACE: The resource component for this resource type must implement the MeasurementFacet interface
+                             if any metrics are specified.
+      -->
+      <metric property="MeasurementName"
+              displayName="The Measurement Name"
+              description="Describes what this measurement is actually telling you"
+              defaultOn="true"
+              defaultInterval="300000"
+              category="performance" />
+
+      <!--
+         CHANGE: Resource configuration properties are used to configure resources themselves, as compared to the plugin
+                 configuration which refers to the connection to a resource. If the resource-configuration
+                 entity is specified, at least one property must be provided.
+
+         REQUIRED INTERFACE: The resource component for this resource type must implement the ConfigurationFacet
+                             interface if a resource-configuration element is supplied.
+      -->
+      <resource-configuration>
+         <c:simple-property name="port" type="integer" displayName="Port on which to listen" />
+      </resource-configuration>
+   </server>
+</plugin>

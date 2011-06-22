@@ -41,7 +41,7 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  * the UPLOAD_FILE must point to a valid archive in the resources directory.
  * @author Heiko W. Rupp
  */
-@Test
+@Test(enabled = false) // TODO add an "integration test profile" that is able to fire the server before running the test
 public class UploadAndDeployTest {
 
     static final String TEST_WAR = "test.war";
@@ -49,7 +49,7 @@ public class UploadAndDeployTest {
     private static final String DC_HOST = "localhost";
     private static final int DC_HTTP_PORT = 9990;
 
-    @Test(timeOut = 60*1000L, enabled = true)
+    @Test(timeOut = 60*1000L)
     public void testUploadOnly() throws Exception {
 
         String bytes_value = prepare();
@@ -61,7 +61,7 @@ public class UploadAndDeployTest {
 
     }
 
-    @Test(timeOut = 60*1000L, enabled = true)
+    @Test(timeOut = 60*1000L)
     public void testDoubleUploadOnly() throws Exception {
 
         String bytes_value = prepare();
@@ -74,7 +74,7 @@ public class UploadAndDeployTest {
         assert bytes_value.equals("7jgpMVmynfxpqp8UDleKLmtgbrA=");
     }
 
-    @Test(timeOut = 60*1000L, enabled = true)
+    @Test(timeOut = 60*1000L)
     public void testUploadIndividualSteps() throws Exception {
 
         String bytes_value = prepare();
@@ -154,7 +154,7 @@ public class UploadAndDeployTest {
     }
 
     // Test for AS7-853
-    @Test(timeOut = 60*1000L, enabled = true)
+    @Test(timeOut = 60*1000L)
     public void testUploadIndividualSteps2() throws Exception {
 
         String bytes_value = prepare();
@@ -228,7 +228,7 @@ public class UploadAndDeployTest {
 
     }
 
-    @Test(timeOut = 60*1000L, enabled = true)
+    @Test(timeOut = 60*1000L)
     public void testUploadComposite() throws Exception {
 
         String bytes_value = prepare();

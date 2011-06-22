@@ -40,8 +40,8 @@
     <childResources>
         <id>10022</id>
         <uuid>08290193-c716-4363-b841-8a1d9d83f580</uuid>
-        <resourceKey>${localhost}:0</resourceKey>
-        <name>Virtual Host ${localhost}:0</name>
+        <resourceKey>${snmp.identifier}</resourceKey>
+        <name>Virtual Host ${snmp.identifier}</name>
         <inventoryStatus>COMMITTED</inventoryStatus>
         <connected>false</connected>
         <version></version>

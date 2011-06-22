@@ -271,6 +271,14 @@ public class FakeServerInventory {
         return result;
     }
 
+    public void removeResource(Resource r) {
+        resourceStore.remove(r.getUuid());
+        Resource parent = r.getParentResource();
+        if (parent != null) {
+            parent.getChildResources().remove(r);
+        }
+    }
+    
     private Resource fakePersist(Resource agentSideResource, InventoryStatus requiredInventoryStatus,
         Set<String> inProgressUUIds) {
         Resource persisted = resourceStore.get(agentSideResource.getUuid());
@@ -307,11 +315,18 @@ public class FakeServerInventory {
             persisted.setParentResource(parent);
         }
 
-        Set<Resource> childResources = persisted.getChildResources();
+        //persist the children
+        Set<Resource> childResources = new LinkedHashSet<Resource>();
         for (Resource child : agentSideResource.getChildResources()) {
             childResources.add(fakePersist(child, requiredInventoryStatus, inProgressUUIds));
         }
-
+        //now update the list with whatever the persisted resource contained in the past
+        //i.e. we prefer the current results from the agent but keep the children we used to
+        //have in the past. This is the same behavior as the actual RHQ server has.
+        childResources.addAll(persisted.getChildResources());
+        
+        persisted.setChildResources(childResources);
+        
         inProgressUUIds.remove(agentSideResource.getUuid());
 
         return persisted;

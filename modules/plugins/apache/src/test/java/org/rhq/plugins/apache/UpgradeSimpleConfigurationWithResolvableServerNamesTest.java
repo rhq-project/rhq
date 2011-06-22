@@ -23,8 +23,12 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -44,54 +48,137 @@ import org.rhq.test.pc.PluginContainerSetup;
 @Test(groups = "apache-integration-tests")
 public class UpgradeSimpleConfigurationWithResolvableServerNamesTest extends UpgradeTestBase {
     private static final Log LOG = LogFactory.getLog(UpgradeSimpleConfigurationWithResolvableServerNamesTest.class);
-    
+
     private enum Apache {
-        V_1_3_x{
+        V_1_3_x {
             public String getConfigDirName() {
                 return "1.3.x";
             }
         },
-        
+
         V_2_2_x {
             public String getConfigDirName() {
                 return "2.2.x";
             }
         };
-        
+
         public abstract String getConfigDirName();
     }
+
+    private static class TestConfiguration {
+        public Apache version;
+        public String configurationName;
+        public String serverRoot;
+        public String binPath;
+        public Map<String, String> defaultOverrides;
+        
+        public void beforeTestSetup(TestSetup testSetup) {
+            
+        }
+        
+        public void beforePluginContainerStart(TestSetup setup) {
+            
+        }
+        
+        public void beforeTests() {
+            
+        }
+    }
+    
     @Test
     @PluginContainerSetup(plugins = { PLATFORM_PLUGIN, AUGEAS_PLUGIN, APACHE_PLUGIN })
     @Parameters({ "apache2.install.dir", "apache2.exe.path" })
-    public void testSimpleConfigurationWithResolvableServerNames_Apache2_upgradeFromRHQ1_3(
-        String apacheInstallationDirectory, String exePath) throws Throwable {
+    public void testWithResolvableServerNames_Apache2_upgradeFromRHQ1_3(final String installPath, final String exePath)
+        throws Throwable {
 
-        testUpgradeFromRHQ1_3(Apache.V_2_2_x, DEPLOYMENT_SIMPLE_WITH_RESOLVABLE_SERVERNAMES, apacheInstallationDirectory, exePath);
+        testUpgradeFromRHQ1_3(new TestConfiguration() {
+            {
+                serverRoot = installPath;
+                binPath = exePath;
+                configurationName = DEPLOYMENT_SIMPLE_WITH_RESOLVABLE_SERVERNAMES;
+                version = Apache.V_2_2_x;
+            }
+        });
     }
 
-    @Test(enabled = false) //ApacheServerOperationsDelegate doesn't work with apache 1.3
+    @Test(enabled = false)
+    //ApacheServerOperationsDelegate doesn't work with apache 1.3
     @PluginContainerSetup(plugins = { PLATFORM_PLUGIN, AUGEAS_PLUGIN, APACHE_PLUGIN })
     @Parameters({ "apache1.install.dir", "apache1.exe.path" })
-    public void testSimpleConfigurationWithResolvableServerNames_Apache1_upgradeFromRHQ1_3(
-        String apacheInstallationDirectory, String exePath) throws Throwable {
+    public void testWithResolvableServerNames_Apache1_upgradeFromRHQ1_3(final String installPath, final String exePath)
+        throws Throwable {
 
-        testUpgradeFromRHQ1_3(Apache.V_1_3_x, DEPLOYMENT_SIMPLE_WITH_RESOLVABLE_SERVERNAMES, apacheInstallationDirectory, exePath);
+        testUpgradeFromRHQ1_3(new TestConfiguration() {{
+            serverRoot = installPath;
+            binPath = exePath;
+            configurationName = DEPLOYMENT_SIMPLE_WITH_RESOLVABLE_SERVERNAMES;
+            version = Apache.V_1_3_x;
+        }});
     }
 
-    private void testUpgradeFromRHQ1_3(Apache version, String configurationName, String serverRoot, String binPath) throws Throwable {
-        final TestSetup setup = new TestSetup(configurationName);
+    @Test
+    @PluginContainerSetup(plugins = { PLATFORM_PLUGIN, AUGEAS_PLUGIN, APACHE_PLUGIN })
+    @Parameters({ "apache2.install.dir", "apache2.exe.path" })
+    public void testWithUnresolvableServerNames_Apache2_upgradeFromRHQ1_3(final String installPath, final String exePath) throws Throwable {
+        testUpgradeFromRHQ1_3(new TestConfiguration() {
+            {
+                configurationName = DEPLOYMENT_SIMPLE_WITH_UNRESOLVABLE_SERVER_NAMES;
+                serverRoot = installPath;
+                binPath = exePath;
+                version = Apache.V_2_2_x;            
+                
+                defaultOverrides = new HashMap<String, String>();
+                defaultOverrides.put(variableName(configurationName, "servername.directive"), "ServerName ${unresolvable.host}");
+                defaultOverrides.put(variableName(configurationName, "vhost1.servername.directive"), "ServerName ${unresolvable.host}");
+                defaultOverrides.put(variableName(configurationName, "vhost2.servername.directive"), "ServerName ${unresolvable.host}");
+                defaultOverrides.put(variableName(configurationName, "vhost3.servername.directive"), "ServerName ${unresolvable.host}");
+                defaultOverrides.put(variableName(configurationName, "vhost4.servername.directive"), "ServerName ${unresolvable.host}");                
+            }
+            
+            @Override
+            public void beforePluginContainerStart(TestSetup setup) {
+                //in this scenario, the RHQ 1.3 would only discover 1 vhost (and the main vhost), because they would have the same resource key
+                //due to the same ServerName. I need to process the default inventory to reflect that otherwise I would get upgrade
+                //failures.
+
+                Set<Resource> vhosts = setup.getFakeInventory().findResourcesByType(findApachePluginResourceTypeByName("Apache Virtual Host"));
+                Set<Resource> uniques = new TreeSet<Resource>(new Comparator<Resource>() {
+                   public int compare(Resource a, Resource b) {
+                       return a.getResourceKey().compareTo(b.getResourceKey());
+                   }
+                });
+                
+                for(Resource vhost : vhosts) {
+                    if (uniques.contains(vhost)) {
+                        //remove the vhost from the server's inventory
+                        setup.getFakeInventory().removeResource(vhost);
+                    } else {
+                       uniques.add(vhost);
+                    }
+                }
+            }
+        });        
+    }
+
+    private void testUpgradeFromRHQ1_3(TestConfiguration testConfiguration) throws Throwable {
+        final TestSetup setup = new TestSetup(testConfiguration.configurationName);
         boolean testFailed = false;
         try {
+            testConfiguration.beforeTestSetup(setup);
             
-            String configPath = "/full-configurations/" + version.getConfigDirName() + "/simple/httpd.conf";
-            
-            setup.withInventoryFrom("/mocked-inventories/rhq-1.3.x/includes/inventory.xml")
-                .withPlatformResource(platform).withDefaultExpectations().withApacheSetup()
-                .withConfigurationFiles(configPath, "/snmpd.conf", "/mime.types")
-                .withServerRoot(serverRoot).withExePath(binPath).setup();
+            String configPath = "/full-configurations/" + testConfiguration.version.getConfigDirName() + "/simple/httpd.conf";
 
+            setup.withInventoryFrom("/mocked-inventories/rhq-1.3.x/simple/inventory.xml")
+                .withPlatformResource(platform).withDefaultExpectations().withDefaultOverrides(testConfiguration.defaultOverrides)
+                .withApacheSetup().withConfigurationFiles(configPath, "/snmpd.conf", "/mime.types")
+                .withServerRoot(testConfiguration.serverRoot).withExePath(testConfiguration.binPath).setup();
+
+            testConfiguration.beforePluginContainerStart(setup);
+            
             startConfiguredPluginContainer();
 
+            testConfiguration.beforeTests();
+            
             //ok, now we should see the resources upgraded in the fake server inventory.
             ResourceType serverResourceType = findApachePluginResourceTypeByName("Apache HTTP Server");
             ResourceType vhostResourceType = findApachePluginResourceTypeByName("Apache Virtual Host");
@@ -102,7 +189,7 @@ public class UpgradeSimpleConfigurationWithResolvableServerNamesTest extends Upg
 
             Resource server = servers.iterator().next();
 
-            String expectedResourceKey = ApacheServerDiscoveryComponent.formatResourceKey(serverRoot, serverRoot
+            String expectedResourceKey = ApacheServerDiscoveryComponent.formatResourceKey(testConfiguration.serverRoot, testConfiguration.serverRoot
                 + "/conf/httpd.conf");
 
             assertEquals(server.getResourceKey(), expectedResourceKey,
@@ -110,7 +197,7 @@ public class UpgradeSimpleConfigurationWithResolvableServerNamesTest extends Upg
 
             Set<Resource> vhosts = setup.getFakeInventory().findResourcesByType(vhostResourceType);
 
-            assertEquals(vhosts.size(), 5, "There should be 5 vhosts discovered but found " + vhosts.size());
+            assertEquals(vhosts.size(), 5, "Unexpected number of vhosts discovered found");
 
             List<String> expectedResourceKeys = new ArrayList<String>(5);
 

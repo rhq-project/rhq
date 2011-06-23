@@ -54,7 +54,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 /**
  * @author Jay Shaughnessy
  */
-public class DriftConfigDataSource extends RPCDataSource<DriftConfiguration, ResourceCriteria> {
+public class DriftConfigurationDataSource extends RPCDataSource<DriftConfiguration, ResourceCriteria> {
 
     public static final String FILTER_CATEGORIES = "categories";
 
@@ -62,11 +62,11 @@ public class DriftConfigDataSource extends RPCDataSource<DriftConfiguration, Res
 
     private EntityContext entityContext;
 
-    public DriftConfigDataSource() {
+    public DriftConfigurationDataSource() {
         this(EntityContext.forSubsystemView());
     }
 
-    public DriftConfigDataSource(EntityContext context) {
+    public DriftConfigurationDataSource(EntityContext context) {
         super();
         this.entityContext = context;
 
@@ -91,6 +91,9 @@ public class DriftConfigDataSource extends RPCDataSource<DriftConfiguration, Res
         ListGridField baseDirField = new ListGridField("baseDir", MSG.view_drift_table_baseDir());
         fields.add(baseDirField);
 
+        ListGridField enabledField = new ListGridField("enabled", MSG.common_title_enabled());
+        fields.add(enabledField);
+
         if (this.entityContext.type != EntityContext.Type.Resource) {
             ListGridField resourceNameField = new ListGridField(AncestryUtil.RESOURCE_NAME, MSG.common_title_resource());
             resourceNameField.setCellFormatter(new CellFormatter() {
@@ -114,13 +117,15 @@ public class DriftConfigDataSource extends RPCDataSource<DriftConfiguration, Res
 
             nameField.setWidth("15%");
             intervalField.setWidth(100);
+            enabledField.setWidth("5%");
             baseDirField.setWidth("20%");
-            resourceNameField.setWidth("25%");
+            resourceNameField.setWidth("20%");
             ancestryField.setWidth("40%");
         } else {
             nameField.setWidth("15%");
             intervalField.setWidth(100);
-            baseDirField.setWidth("85%");
+            enabledField.setWidth("5%");
+            baseDirField.setWidth("80%");
         }
 
         return fields;
@@ -258,6 +263,7 @@ public class DriftConfigDataSource extends RPCDataSource<DriftConfiguration, Res
 
     public static ListGridRecord convert(DriftConfiguration from) {
         ListGridRecord record = new ListGridRecord();
+        record.setAttribute("id", from.getId());
         record.setAttribute("name", from.getName());
         record.setAttribute("interval", from.getInterval());
         record.setAttribute("baseDir", from.getBasedir());

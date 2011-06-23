@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright 2010, Red Hat Middleware LLC, and individual contributors
+ * Copyright 2011, Red Hat Middleware LLC, and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -39,7 +39,6 @@ import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.drift.DriftCategory;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
-import org.rhq.enterprise.gui.coregui.client.alert.AlertDetailsView;
 import org.rhq.enterprise.gui.coregui.client.components.form.EnumSelectItem;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
@@ -53,10 +52,10 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
- * A view that displays a paginated table of fired {@link org.rhq.core.domain.drift.Drift}s, along with the
+ * A view that displays a paginated table of {@link org.rhq.core.domain.drift.Drift}s, along with the
  * ability to filter those drifts, sort those drifts, double-click a row to view full details a drift, and perform
- * various operations on the the drifts: delete selected, delete all from source, etc.
- * This view full respects the user's authorization, and will not allow operations on the drifts unless the user is
+ * various actions on the the drifts: delete selected, delete all from source, etc.
+ * This view full respects the user's authorization, and will not allow acttions on the drifts unless the user is
  * either the inventory manager or has MANAGE_DRIFT permission on every resource corresponding to the drifts being
  * operated on.
  *
@@ -230,7 +229,7 @@ public class DriftHistoryView extends TableSection<DriftDataSource> {
     }
 
     void deleteAll() {
-        GWTServiceLookup.getAlertService().deleteAlertsByContext(context, new AsyncCallback<Integer>() {
+        GWTServiceLookup.getDriftService().deleteDriftsByContext(context, new AsyncCallback<Integer>() {
             public void onSuccess(Integer resultCount) {
                 CoreGUI.getMessageCenter().notify(
                     new Message(MSG.view_drift_success_delete(String.valueOf(resultCount)), Message.Severity.Info));
@@ -280,8 +279,8 @@ public class DriftHistoryView extends TableSection<DriftDataSource> {
     //    }
 
     @Override
-    public Canvas getDetailsView(int alertId) {
-        return AlertDetailsView.getInstance();
+    public Canvas getDetailsView(int driftId) {
+        return DriftDetailsView.getInstance();
     }
 
     public EntityContext getContext() {

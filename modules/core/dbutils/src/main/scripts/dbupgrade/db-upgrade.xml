@@ -3405,19 +3405,19 @@
                     <statement>
                         INSERT INTO rhq_config_prop_def (id, name, display_name, description, required, simple_type,
                             default_value, order_index, dtype, config_def_id)
-                        VALUES (2, 'enabled', 'Enabled', 'Enables or disables the drift configuration', true, 'boolean',
+                        VALUES (2, 'enabled', 'Enabled', 'Enables or disables drift detection for this configuration', true, 'boolean',
                             'false', 1, 'property', 1)
                     </statement>
                     <statement>
                         INSERT INTO rhq_config_prop_def (id, name, display_name, description, required, simple_type,
                             order_index, dtype, config_def_id)
-                        VALUES (3, 'basedir', 'Base Directory', 'The root directory from which snapshots will be generated during drift monitoring.',
+                        VALUES (3, 'basedir', 'Base Directory', 'The base directory from which files will be monitored for drift.',
                             true, 'string', 2, 'property', 1)
                     </statement>
                     <statement>
                         INSERT INTO rhq_config_prop_def (id, name, display_name, description, required, simple_type,
                             order_index, dtype, default_value, config_def_id)
-                        VALUES (4, 'interval', 'Interval', 'The frequency in seconds in which drift monitoring should run. Defaults to thirty minutes.',
+                        VALUES (4, 'interval', 'Interval', 'The interval, in seconds, between drift detection scans for this configuration. Default is thirty minutes.',
                             false, 'long', 3, 'property', '1800', 1)
                     </statement>
                     <statement>

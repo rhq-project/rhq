@@ -365,4 +365,14 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
         }
     }
 
+    @Override
+    public Configuration getConfiguration(int configurationId) throws RuntimeException {
+        try {
+            Configuration configuration = configurationManager.getConfiguration(getSessionSubject(), configurationId);
+            return SerialUtility.prepare(configuration, "ConfigurationService.getConfiguration");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
 }

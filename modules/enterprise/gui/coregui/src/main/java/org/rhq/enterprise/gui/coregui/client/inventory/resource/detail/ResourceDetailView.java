@@ -50,6 +50,7 @@ import org.rhq.enterprise.gui.coregui.client.components.tab.SubTab;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTab;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewFactory;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
+import org.rhq.enterprise.gui.coregui.client.drift.ResourceDriftConfigurationView;
 import org.rhq.enterprise.gui.coregui.client.drift.ResourceDriftHistoryView;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.InventoryView;
@@ -136,6 +137,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
     private SubTab configHistory;
     private SubTab eventHistory;
     private SubTab driftHistory;
+    private SubTab driftConfig;
     private SubTab contentDeployed;
     private SubTab contentNew;
     private SubTab contentSubscrip;
@@ -234,9 +236,9 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
             .view_tabs_common_drift()), "/images/icons/Configure_grey_16.png");
         this.driftHistory = new SubTab(driftTab.extendLocatorId("History"), new ViewName("History", MSG
             .view_tabs_common_history()), null);
-        //this.alertDef = new SubTab(driftTab.extendLocatorId("Definitions"), new ViewName("Definitions", MSG
-        //    .view_tabs_common_definitions()), null);
-        driftTab.registerSubTabs(driftHistory);
+        this.driftConfig = new SubTab(driftTab.extendLocatorId("Config"), new ViewName("Config", MSG
+            .view_tabs_common_configuration()), null);
+        driftTab.registerSubTabs(driftHistory, driftConfig);
         tabs.add(driftTab);
 
         contentTab = new TwoLevelTab(getTabSet().extendLocatorId("Content"), new ViewName("Content", MSG
@@ -513,10 +515,10 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
                 }
             });
 
-            updateSubTab(this.configurationTab, this.configHistory, true, true, new ViewFactory() {
+            updateSubTab(this.driftTab, this.driftConfig, true, true, new ViewFactory() {
                 @Override
                 public Canvas createView() {
-                    return ResourceDriftHistoryView.get(driftHistory.extendLocatorId("View"), resourceComposite);
+                    return ResourceDriftConfigurationView.get(driftConfig.extendLocatorId("View"), resourceComposite);
                 }
             });
         }

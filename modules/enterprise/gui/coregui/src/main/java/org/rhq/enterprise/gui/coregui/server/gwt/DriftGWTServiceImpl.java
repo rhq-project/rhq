@@ -18,10 +18,12 @@
  */
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
 import org.rhq.core.domain.criteria.DriftCriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
+import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.gwt.DriftGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
@@ -41,6 +43,39 @@ public class DriftGWTServiceImpl extends AbstractGWTServiceImpl implements Drift
         try {
             // TODO
             //return this.driftManager.deleteDrifts(getSessionSubject(), driftIds);
+            return 0;
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    @Override
+    public int deleteDriftsByContext(EntityContext entityContext) throws RuntimeException {
+        try {
+            // TODO
+            //return this.driftManager.deleteDriftsByContext(getSessionSubject(), entityContext);
+            return 0;
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    @Override
+    public int deleteDriftConfigurations(int[] driftConfigIds) throws RuntimeException {
+        try {
+            // TODO
+            //return this.driftManager.deleteDriftConfigurations(getSessionSubject(), driftConfigIds);
+            return 0;
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    @Override
+    public int deleteDriftConfigurationsByContext(EntityContext entityContext) throws RuntimeException {
+        try {
+            // TODO
+            //return this.driftManager.deleteDriftConfigurationsByContext(getSessionSubject(), entityContext);
             return 0;
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
@@ -69,4 +104,12 @@ public class DriftGWTServiceImpl extends AbstractGWTServiceImpl implements Drift
         }
     }
 
+    @Override
+    public void updateDriftConfiguration(EntityContext entityContext, DriftConfiguration driftConfig) {
+        try {
+            this.driftManager.updateDriftConfiguration(getSessionSubject(), entityContext, driftConfig);
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
 }

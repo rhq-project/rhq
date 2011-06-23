@@ -125,7 +125,7 @@ public class TokenReplacingReader extends Reader {
     }
 
     public long skip(long n) throws IOException {
-        throw new RuntimeException("Operation Not Supported");
+        throw new UnsupportedOperationException("skip() not supported on TokenReplacingReader.");
     }
 
     public boolean ready() throws IOException {
@@ -137,10 +137,10 @@ public class TokenReplacingReader extends Reader {
     }
 
     public void mark(int readAheadLimit) throws IOException {
-        throw new RuntimeException("Operation Not Supported");
+        throw new IOException("mark() not supported on TokenReplacingReader.");
     }
 
     public void reset() throws IOException {
-        throw new RuntimeException("Operation Not Supported");
+        throw new IOException("reset() not supported on TokenReplacingReader.");
     }
 }

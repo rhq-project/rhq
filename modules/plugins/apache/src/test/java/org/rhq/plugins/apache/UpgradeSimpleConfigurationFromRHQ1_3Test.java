@@ -46,8 +46,8 @@ import org.rhq.test.pc.PluginContainerSetup;
  * @author Lukas Krejci
  */
 @Test(groups = "apache-integration-tests")
-public class UpgradeSimpleConfigurationWithResolvableServerNamesTest extends UpgradeTestBase {
-    private static final Log LOG = LogFactory.getLog(UpgradeSimpleConfigurationWithResolvableServerNamesTest.class);
+public class UpgradeSimpleConfigurationFromRHQ1_3Test extends UpgradeTestBase {
+    private static final Log LOG = LogFactory.getLog(UpgradeSimpleConfigurationFromRHQ1_3Test.class);
 
     private enum Apache {
         V_1_3_x {
@@ -88,7 +88,7 @@ public class UpgradeSimpleConfigurationWithResolvableServerNamesTest extends Upg
     @Test
     @PluginContainerSetup(plugins = { PLATFORM_PLUGIN, AUGEAS_PLUGIN, APACHE_PLUGIN })
     @Parameters({ "apache2.install.dir", "apache2.exe.path" })
-    public void testWithResolvableServerNames_Apache2_upgradeFromRHQ1_3(final String installPath, final String exePath)
+    public void testWithResolvableServerNames_Apache2(final String installPath, final String exePath)
         throws Throwable {
 
         testUpgradeFromRHQ1_3(new TestConfiguration() {
@@ -105,7 +105,7 @@ public class UpgradeSimpleConfigurationWithResolvableServerNamesTest extends Upg
     //ApacheServerOperationsDelegate doesn't work with apache 1.3
     @PluginContainerSetup(plugins = { PLATFORM_PLUGIN, AUGEAS_PLUGIN, APACHE_PLUGIN })
     @Parameters({ "apache1.install.dir", "apache1.exe.path" })
-    public void testWithResolvableServerNames_Apache1_upgradeFromRHQ1_3(final String installPath, final String exePath)
+    public void testWithResolvableServerNames_Apache1(final String installPath, final String exePath)
         throws Throwable {
 
         testUpgradeFromRHQ1_3(new TestConfiguration() {{
@@ -119,7 +119,7 @@ public class UpgradeSimpleConfigurationWithResolvableServerNamesTest extends Upg
     @Test
     @PluginContainerSetup(plugins = { PLATFORM_PLUGIN, AUGEAS_PLUGIN, APACHE_PLUGIN })
     @Parameters({ "apache2.install.dir", "apache2.exe.path" })
-    public void testWithUnresolvableServerNames_Apache2_upgradeFromRHQ1_3(final String installPath, final String exePath) throws Throwable {
+    public void testWithNonUniqueServerNames_Apache2(final String installPath, final String exePath) throws Throwable {
         testUpgradeFromRHQ1_3(new TestConfiguration() {
             {
                 configurationName = DEPLOYMENT_SIMPLE_WITH_UNRESOLVABLE_SERVER_NAMES;
@@ -159,8 +159,8 @@ public class UpgradeSimpleConfigurationWithResolvableServerNamesTest extends Upg
             }
         });        
     }
-
-    private void testUpgradeFromRHQ1_3(TestConfiguration testConfiguration) throws Throwable {
+        
+    private void testUpgrade(TestConfiguration testConfiguration) throws Throwable {
         final TestSetup setup = new TestSetup(testConfiguration.configurationName);
         boolean testFailed = false;
         try {

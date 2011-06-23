@@ -277,6 +277,9 @@ public class FakeServerInventory {
         if (parent != null) {
             parent.getChildResources().remove(r);
         }
+        for(Resource child : r.getChildResources()) {
+            removeResource(child);
+        }
     }
     
     private Resource fakePersist(Resource agentSideResource, InventoryStatus requiredInventoryStatus,

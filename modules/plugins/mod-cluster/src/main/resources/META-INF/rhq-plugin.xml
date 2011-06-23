@@ -1,36 +1,25 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
-<!--
-   See the rhq-plugin.xsd file for detailed documentatoin on the schema. The notes in this file are to
-   facilitate using this file as a base plugin descriptor. 
--->
-
-<!--
-   CHANGE: The name (and optional displayName) should be changed to reflect the plugin being developed. Keep in mind
-           the value for name must be unique across all other plugins that are deployed.
-
-           The package attribute should be changed to reflect the package in which all of the component classes
-           are built.
--->
-<plugin name="SkeletonPlugin"
-        displayName="Skeleton Plugin"
+<plugin name="mod_cluster"
+        displayName="mod_cluster"
         version="1.0"
-        package="org.rhq.sample.skeletonplugin"
+        package="org.rhq.plugins.modcluster"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">
 
+   <depends plugin="JMX" />
 
-   <!--
+  <!--
       CHANGE: The following is a sample server resource type. This entry is here to serve as a model and should
               be removed prior to deploying the plugin. Multiple resource types (either server or service) may be
               defined at this level.
    -->
-   <server name="Sample Plugin Server"
+   <server name="mod_cluster"
            discovery="SamplePluginDiscoveryComponent"
            class="SamplePluginServerComponent"
            supportsManualAdd="true"
-           description="This is a sample resource type and should be removed.">
+           description="mod_cluster plugin">
 
       <!--       
          CHANGE: Categories are optional; this entire section may be removed if there is no need to further group

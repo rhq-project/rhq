@@ -1,24 +1,35 @@
 <?xml version="1.0"?>
 
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
    <modelVersion>4.0.0</modelVersion>
 
-   <groupId>org.rhq.sample.skeletonplugin</groupId>
-   <artifactId>skeleton-plugin</artifactId>
+   <parent>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-plugins-parent</artifactId>
+      <version>4.1.0-SNAPSHOT</version>
+   </parent>
+
+   <groupId>org.rhq.plugins.modcluster</groupId>
+   <artifactId>modcluster-plugin</artifactId>
    <version>1.0-SNAPSHOT</version>
    <packaging>jar</packaging>
 
-   <name>Skeleton RHQ Plugin Template</name>
-   <description>A template for building a custom RHQ Agent plugin</description>
+   <name>mod_cluster RHQ Plugin</name>
+   <description>mod_cluster RHQ Agent plugin</description>
 
-   <properties>
+   <!--properties>
       <rhq.version>4.1.0-SNAPSHOT</rhq.version>
-   </properties>
+   </properties-->
 
    <dependencies>
+
+      <dependency>
+         <groupId>${rhq.groupId}</groupId>
+         <artifactId>rhq-jmx-plugin</artifactId>
+         <version>${project.version}</version>
+         <scope>provided</scope>
+      </dependency>
 
       <!-- Below are the core modules that are required dependencies of all plugins -->
       <dependency>
@@ -77,15 +88,14 @@
          <scope>provided</scope>
       </dependency>
 
-      <!--
+      
       <dependency>
          <groupId>log4j</groupId>
          <artifactId>log4j</artifactId>
          <version>1.2.14</version>
          <scope>provided</scope>
       </dependency>
-      -->
-
+      
       <!--
       <dependency>
          <groupId>i18nlog</groupId>

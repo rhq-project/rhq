@@ -91,7 +91,7 @@ public class UpgradeSimpleConfigurationFromRHQ1_3Test extends UpgradeTestBase {
     public void testWithResolvableServerNames_Apache2(final String installPath, final String exePath)
         throws Throwable {
 
-        testUpgradeFromRHQ1_3(new TestConfiguration() {
+        testUpgrade(new TestConfiguration() {
             {
                 serverRoot = installPath;
                 binPath = exePath;
@@ -108,7 +108,7 @@ public class UpgradeSimpleConfigurationFromRHQ1_3Test extends UpgradeTestBase {
     public void testWithResolvableServerNames_Apache1(final String installPath, final String exePath)
         throws Throwable {
 
-        testUpgradeFromRHQ1_3(new TestConfiguration() {{
+        testUpgrade(new TestConfiguration() {{
             serverRoot = installPath;
             binPath = exePath;
             configurationName = DEPLOYMENT_SIMPLE_WITH_RESOLVABLE_SERVERNAMES;
@@ -120,7 +120,7 @@ public class UpgradeSimpleConfigurationFromRHQ1_3Test extends UpgradeTestBase {
     @PluginContainerSetup(plugins = { PLATFORM_PLUGIN, AUGEAS_PLUGIN, APACHE_PLUGIN })
     @Parameters({ "apache2.install.dir", "apache2.exe.path" })
     public void testWithNonUniqueServerNames_Apache2(final String installPath, final String exePath) throws Throwable {
-        testUpgradeFromRHQ1_3(new TestConfiguration() {
+        testUpgrade(new TestConfiguration() {
             {
                 configurationName = DEPLOYMENT_SIMPLE_WITH_UNRESOLVABLE_SERVER_NAMES;
                 serverRoot = installPath;

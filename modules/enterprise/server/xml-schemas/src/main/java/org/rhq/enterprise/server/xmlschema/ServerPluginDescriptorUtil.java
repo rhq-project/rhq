@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -39,6 +39,7 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.bind.ValidationEvent;
+import javax.xml.bind.ValidationEventLocator;
 import javax.xml.bind.util.ValidationEventCollector;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
@@ -55,6 +56,7 @@ import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDe
  * Utilities for server-side plugin descriptors.
  *
  * @author John Mazzitelli
+ * @author Ian Springer
  */
 public abstract class ServerPluginDescriptorUtil {
     private static final Log LOG = LogFactory.getLog(ServerPluginDescriptorUtil.class);
@@ -237,12 +239,9 @@ public abstract class ServerPluginDescriptorUtil {
                     pluginDescriptor = ((JAXBElement<? extends ServerPluginDescriptorType>) jaxbElement).getValue();
                 } finally {
                     if (unmarshaller != null) {
-                        for (ValidationEvent ev : ((ValidationEventCollector) unmarshaller.getEventHandler())
-                            .getEvents()) {
-                            logger.debug("Plugin [" + pluginJarFileUrl + "] descriptor event {Severity: "
-                                + ev.getSeverity() + ", Message: " + ev.getMessage() + ", Exception: "
-                                + ev.getLinkedException() + "}");
-                        }
+                        ValidationEventCollector validationEventCollector =
+                                (ValidationEventCollector)unmarshaller.getEventHandler();
+                        logValidationEvents(pluginJarFileUrl, validationEventCollector);
                     }
                 }
             }
@@ -317,6 +316,48 @@ public abstract class ServerPluginDescriptorUtil {
                     inputStream.close();
                 }
             } catch (IOException ignore) {
+            }
+        }
+    }
+
+    private static void logValidationEvents(URL pluginJarFileUrl, ValidationEventCollector validationEventCollector) {
+        for (ValidationEvent event : validationEventCollector.getEvents()) {
+            // First build the message to be logged. The message will look something like this:
+            //
+            //   Validation fatal error while parsing [jopr-jboss-as-plugin-4.1.0-SNAPSHOT.jar:META-INF/rhq-plugin.xml]
+            //   at line 221, column 94: cvc-minInclusive-valid: Value '20000' is not facet-valid with respect to
+            //   minInclusive '30000' for type '#AnonType_defaultIntervalmetric'.
+            //
+            StringBuilder message = new StringBuilder();
+            String severity = null;
+            switch(event.getSeverity()) {
+                case ValidationEvent.WARNING:
+                    severity = "warning";
+                    break;
+                case ValidationEvent.ERROR:
+                    severity = "error";
+                    break;
+                case ValidationEvent.FATAL_ERROR:
+                    severity = "fatal error";
+                    break;
+            }
+            message.append("Validation ").append(severity);
+            File pluginJarFile = new File(pluginJarFileUrl.getPath());
+            message.append(" while parsing [").append(pluginJarFile.getName()).append(":").append(PLUGIN_DESCRIPTOR_PATH).append("]");
+            ValidationEventLocator locator = event.getLocator();
+            message.append(" at line ").append(locator.getLineNumber());
+            message.append(", column ").append(locator.getColumnNumber());
+            message.append(": ").append(event.getMessage());
+
+            // Now write the message to the log at an appropriate level.
+            switch(event.getSeverity()) {
+                case ValidationEvent.WARNING:
+                case ValidationEvent.ERROR:
+                    LOG.warn(message);
+                    break;
+                case ValidationEvent.FATAL_ERROR:
+                    LOG.error(message);
+                    break;
             }
         }
     }

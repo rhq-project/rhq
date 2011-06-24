@@ -36,7 +36,7 @@ public enum Command {
     FIND("find", "r | t  | rt <name>", 2,
         "Searches a (r)esource, resource (t)ype or resources of (rt)ype. Use * as wildcard.\n"
             + " Will set $r for the last resource shown."), HELP("h", "", 0, "Shows this help"), //
-    INVOKE("i", "operation [params]", 1, "Triggers running an operation. If operation is '-list' it shows available operations"), //
+    INVOKE("i", "operation [params]", 1, "Triggers running an operation. If operation is '-list' it shows available operations.\n Parameters are given as key=value; key-value-pairs are separated by ||"), //
     MEASURE("m", "datatype property+", 1, "Triggers getting metric values. All need to be of the same data type. If datatype is '-list' it shows the defined metrics"), //
     NATIVE("n", "e | d | s", 1, "Enables/disables native system or shows native status"), //
     QUIT("quit", "", 0, "Terminates the application"), //

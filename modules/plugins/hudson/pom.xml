@@ -22,7 +22,7 @@
      <dependency>
        <groupId>org.json</groupId>
        <artifactId>json</artifactId>
-       <version>20080701</version>
+       <version>${project.json.version}</version>
        <scope>provided</scope>
      </dependency>
 
@@ -63,7 +63,7 @@
                  <artifactItem>
                    <groupId>org.json</groupId>
                    <artifactId>json</artifactId>
-                   <version>20080701</version>
+                   <version>${project.json.version}</version>
                  </artifactItem>
 
                </artifactItems>

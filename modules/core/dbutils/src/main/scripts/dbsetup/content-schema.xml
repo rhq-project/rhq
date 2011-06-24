@@ -548,6 +548,7 @@
         <column name="BUNDLE_ID" type="INTEGER" required="true" references="RHQ_BUNDLE"/>        
         <column name="GROUP_ID" type="INTEGER" required="true" references="RHQ_RESOURCE_GROUP"/>        
         <column name="DEPLOY_DIR" size="256" type="VARCHAR2" required="true"/>
+        <column name="DEST_BASE_DIR_NAME" size="200" type="VARCHAR2" required="true"/>
 
         <!--  This index is for constraint, not performance -->
         <index name="RHQ_BUNDLE_DESTINATION_UNIQUE" unique="true">

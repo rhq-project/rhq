@@ -35,10 +35,10 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
  */
 public class GroupMembersStep extends AbstractWizardStep {
 
-    private GroupCreateWizard wizard = null;
+    private AbstractGroupCreateWizard wizard = null;
     private ResourceSelector selector = null;
 
-    public GroupMembersStep(GroupCreateWizard wizard) {
+    public GroupMembersStep(AbstractGroupCreateWizard wizard) {
         this.wizard = wizard;
     }
 

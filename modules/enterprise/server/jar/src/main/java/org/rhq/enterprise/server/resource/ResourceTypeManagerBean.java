@@ -426,6 +426,7 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
     }
 
     private void scrubType(ResourceType type) {
+        type.setResourceTypeBundleConfiguration(null);
         type.setBundleType(null);
         type.setChildResourceTypes(null);
         type.setChildSubCategories(null);

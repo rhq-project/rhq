@@ -258,6 +258,8 @@
 
                <xs:element name="property-options" type="config:propertyOptions" minOccurs="0" maxOccurs="1"/>
 
+               <xs:element name="option-source" type="config:optionSource" minOccurs="0" maxOccurs="1"/>
+
                <xs:element name="constraint" type="config:constraintType" minOccurs="0" maxOccurs="unbounded"/>
 
                <xs:element name="defaultValueDescription" minOccurs="0" maxOccurs="1">
@@ -439,6 +441,46 @@
          </xs:annotation>
       </xs:attribute>
    </xs:complexType>
+
+    <xs:simpleType name="sourceType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="plugin"/>
+            <xs:enumeration value="resourceType"/>
+            <xs:enumeration value="resource"/>
+            <xs:enumeration value="configuration"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:complexType name="optionSource">
+        <xs:annotation>
+            <xs:documentation>
+                Defines a source for the options of the property options. Sources can e.g.
+                be Resources, ResourceTypes, Schedules, Configurations etc.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:attribute name="target" use="required" type="config:sourceType">
+            <xs:annotation>
+                <xs:documentation>Type of the link target</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="linkToTarget" use="optional" default="false" type="xs:boolean">
+            <xs:annotation>
+                <xs:documentation>Should the UI show a link to the target?</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="filter" use="optional" type="xs:string">
+            <xs:annotation>
+                <xs:documentation>A filter to narrow down search results. Example: *.jdbc</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="expression" use="required" type="xs:string">
+            <xs:annotation>
+                <xs:documentation>An expression that defines a path to the target item(s).
+                Expressions are written in the syntax of the search bar.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+
+    </xs:complexType>
 
    <xs:complexType name="option">
       <xs:annotation>

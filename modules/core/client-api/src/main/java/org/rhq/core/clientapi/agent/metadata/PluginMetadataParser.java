@@ -35,6 +35,7 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.clientapi.descriptor.drift.DriftDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.Bundle;
+import org.rhq.core.clientapi.descriptor.plugin.BundleTargetDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.ContentDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.EventDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.MetricDescriptor;
@@ -50,8 +51,10 @@ import org.rhq.core.clientapi.descriptor.plugin.RunsInsideType;
 import org.rhq.core.clientapi.descriptor.plugin.ServerDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.ServiceDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.SubCategoryDescriptor;
+import org.rhq.core.clientapi.descriptor.plugin.BundleTargetDescriptor.DestinationBaseDir;
 import org.rhq.core.domain.bundle.BundleType;
-import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration;
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.event.EventDefinition;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.resource.ClassLoaderType;
@@ -445,6 +448,7 @@ public class PluginMetadataParser {
         // 9) Artifacts
         // 10) Child subcategories
         // 11) Bundle Type
+        // 12) Bundle Configuration (for types that are targets for bundle deployments)
 
         String classLoaderTypeString = resourceDescriptor.getClassLoader();
         if (classLoaderTypeString == null) {
@@ -533,6 +537,24 @@ public class PluginMetadataParser {
             if (bundle != null) {
                 String typeName = bundle.getType();
                 resourceType.setBundleType(new BundleType(typeName, resourceType));
+            }
+
+            BundleTargetDescriptor bundleTarget = resourceDescriptor.getBundleTarget();
+            if (bundleTarget != null) {
+                List<DestinationBaseDir> destBaseDirs = bundleTarget.getDestinationBaseDir();
+                if (destBaseDirs != null && destBaseDirs.size() > 0) {
+                    Configuration c = new Configuration();
+                    ResourceTypeBundleConfiguration bundleConfiguration = new ResourceTypeBundleConfiguration(c);
+                    for (DestinationBaseDir destBaseDir : destBaseDirs) {
+                        String name = destBaseDir.getName();
+                        String valueContext = destBaseDir.getValueContext();
+                        String valueName = destBaseDir.getValueName();
+                        String description = destBaseDir.getDescription();
+                        bundleConfiguration.addBundleDestinationBaseDirectory(name, valueContext, valueName,
+                            description);
+                    }
+                    resourceType.setResourceTypeBundleConfiguration(bundleConfiguration);
+                }
             }
 
         } catch (InvalidPluginDescriptorException e) {

@@ -17,6 +17,7 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleType;
+import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.criteria.BundleCriteria;
@@ -69,6 +70,29 @@ public class ContentMetadataManagerBean implements ContentMetadataManagerLocal {
             existingType.setBundleType(null);
         }
 
+        // set the bundle configuration if the new type is a potential bundle deployment target
+        ResourceTypeBundleConfiguration newBundleConfiguration = newType.getResourceTypeBundleConfiguration();
+        if (newBundleConfiguration != null) {
+            ResourceTypeBundleConfiguration existingBundleConfiguration = existingType
+                .getResourceTypeBundleConfiguration();
+            if (existingBundleConfiguration == null) {
+                // the new type has now become a bundle target where the old type was not
+                existingType.setResourceTypeBundleConfiguration(newBundleConfiguration);
+            } else {
+                // the old type was already a bundle target, we need to merge the new bundle config with the existing old one
+                if (!existingBundleConfiguration.equals(newBundleConfiguration)) {
+                    entityMgr.remove(existingBundleConfiguration.getBundleConfiguration());
+                    entityMgr.persist(newBundleConfiguration.getBundleConfiguration());
+                    existingType.setResourceTypeBundleConfiguration(newBundleConfiguration);
+                }
+            }
+        } else {
+            if (log.isDebugEnabled()) {
+                log.debug("Removing bundle configuration");
+            }
+            existingType.setResourceTypeBundleConfiguration(null);
+        }
+
         // Easy case: If there are no package definitions in the new type, null out any in the existing and return
         if (newType.getPackageTypes().isEmpty()) {
             if (log.isDebugEnabled()) {
@@ -86,8 +110,8 @@ public class ContentMetadataManagerBean implements ContentMetadataManagerLocal {
         // Easy case: If the existing type did not have any package definitions, simply use the new type defs and return
         if (existingType.getPackageTypes().isEmpty()) {
             if (log.isDebugEnabled()) {
-                log.debug(existingType + " previously did not define any package types. Adding " +
-                        newType.getPackageTypes());
+                log.debug(existingType + " previously did not define any package types. Adding "
+                    + newType.getPackageTypes());
             }
             for (PackageType newPackageType : newType.getPackageTypes()) {
                 newPackageType.setResourceType(existingType);
@@ -123,8 +147,7 @@ public class ContentMetadataManagerBean implements ContentMetadataManagerLocal {
         }
 
         for (PackageType mergedPackageType : mergedPackageTypes) {
-            updatePackageConfigurations(mergedPackageType,
-                    newPackageTypeDefinitions.get(mergedPackageType.getName()));
+            updatePackageConfigurations(mergedPackageType, newPackageTypeDefinitions.get(mergedPackageType.getName()));
             mergedPackageType.update(newPackageTypeDefinitions.get(mergedPackageType.getName()));
             entityMgr.merge(mergedPackageType);
         }
@@ -154,8 +177,7 @@ public class ContentMetadataManagerBean implements ContentMetadataManagerLocal {
             } else {
                 // update existing
                 ConfigurationDefinition existingDefinition = existingType.getDeploymentConfigurationDefinition();
-                configurationMetadataMgr.updateConfigurationDefinition(newConfigurationDefinition,
-                    existingDefinition);
+                configurationMetadataMgr.updateConfigurationDefinition(newConfigurationDefinition, existingDefinition);
             }
         } else {
             // newDefinition == null
@@ -170,24 +192,24 @@ public class ContentMetadataManagerBean implements ContentMetadataManagerLocal {
         // altogether removed from the code base?
         //
         // jsanda - 11/3/2010
-//        newConfigurationDefinition = newType.getPackageExtraPropertiesDefinition();
-//        if (newConfigurationDefinition != null) {
-//            if (existingType.getPackageExtraPropertiesDefinition() == null) {
-//                // everything new
-//                entityMgr.persist(newConfigurationDefinition);
-//                existingType.setPackageExtraPropertiesDefinition(newConfigurationDefinition);
-//            } else {
-//                // update existing
-//                ConfigurationDefinition existingDefinition = existingType.getPackageExtraPropertiesDefinition();
-//                configurationMetadataMgr.updateConfigurationDefinition(newConfigurationDefinition,
-//                    existingDefinition);
-//            }
-//        } else {
-//            // newDefinition == null
-//            if (existingType.getPackageExtraPropertiesDefinition() != null) {
-//                existingType.setPackageExtraPropertiesDefinition(null);
-//            }
-//        }
+        //        newConfigurationDefinition = newType.getPackageExtraPropertiesDefinition();
+        //        if (newConfigurationDefinition != null) {
+        //            if (existingType.getPackageExtraPropertiesDefinition() == null) {
+        //                // everything new
+        //                entityMgr.persist(newConfigurationDefinition);
+        //                existingType.setPackageExtraPropertiesDefinition(newConfigurationDefinition);
+        //            } else {
+        //                // update existing
+        //                ConfigurationDefinition existingDefinition = existingType.getPackageExtraPropertiesDefinition();
+        //                configurationMetadataMgr.updateConfigurationDefinition(newConfigurationDefinition,
+        //                    existingDefinition);
+        //            }
+        //        } else {
+        //            // newDefinition == null
+        //            if (existingType.getPackageExtraPropertiesDefinition() != null) {
+        //                existingType.setPackageExtraPropertiesDefinition(null);
+        //            }
+        //        }
     }
 
     @Override

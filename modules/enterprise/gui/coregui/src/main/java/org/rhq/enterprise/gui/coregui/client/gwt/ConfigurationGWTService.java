@@ -89,4 +89,6 @@ public interface ConfigurationGWTService extends RemoteService {
         throws RuntimeException;
 
     Configuration getConfiguration(int configurationId);
+
+    ConfigurationDefinition getOptionValuesForConfigDefinition(ConfigurationDefinition definition);
 }

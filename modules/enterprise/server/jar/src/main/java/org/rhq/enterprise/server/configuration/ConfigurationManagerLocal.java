@@ -567,4 +567,6 @@ public interface ConfigurationManagerLocal {
 
     PageList<GroupPluginConfigurationUpdate> findGroupPluginConfigurationUpdatesByCriteria(Subject subject,
         GroupPluginConfigurationUpdateCriteria criteria);
+
+    ConfigurationDefinition getOptionsForConfigurationDefinition(Subject subject, ConfigurationDefinition def);
 }

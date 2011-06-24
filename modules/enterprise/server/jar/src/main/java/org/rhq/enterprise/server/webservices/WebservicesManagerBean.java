@@ -47,6 +47,7 @@ import org.rhq.core.domain.bundle.BundleFile;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
+import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration;
 import org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.common.ProductInfo;
@@ -272,6 +273,12 @@ public class WebservicesManagerBean implements WebservicesRemote {
 
     //BUNDLEMANAGER: BEGIN ------------------------------------------
 
+    @Override
+    public ResourceTypeBundleConfiguration getResourceTypeBundleConfiguration(Subject subject, int compatGroupId)
+        throws Exception {
+        return bundleManager.getResourceTypeBundleConfiguration(subject, compatGroupId);
+    }
+
     public BundleFile addBundleFile(Subject subject, int bundleVersionId, String name, String version,
         Architecture architecture, InputStream fileStream) throws Exception {
         return bundleManager.addBundleFile(subject, bundleVersionId, name, version, architecture, fileStream);
@@ -300,8 +307,9 @@ public class WebservicesManagerBean implements WebservicesRemote {
     }
 
     public BundleDestination createBundleDestination(Subject subject, int bundleId, String name, String description,
-        String deployDir, Integer groupId) throws Exception {
-        return bundleManager.createBundleDestination(subject, bundleId, name, description, deployDir, groupId);
+        String destBaseDirName, String deployDir, Integer groupId) throws Exception {
+        return bundleManager.createBundleDestination(subject, bundleId, name, description, destBaseDirName, deployDir,
+            groupId);
     }
 
     public BundleVersion createBundleVersionViaRecipe(Subject subject, String recipe) throws Exception {

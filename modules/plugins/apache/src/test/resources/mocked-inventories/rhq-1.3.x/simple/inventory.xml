@@ -486,7 +486,7 @@
             <id>10370</id>
             <name>snmpAgentHost</name>
             <override>false</override>
-            <stringValue>127.0.0.1</stringValue>
+            <stringValue>${snmp.host}</stringValue>
         </propertySimple>
         <propertySimple>
             <id>10713</id>
@@ -514,7 +514,7 @@
             <id>10712</id>
             <name>snmpAgentPort</name>
             <override>false</override>
-            <stringValue>1610</stringValue>
+            <stringValue>${snmp.port}</stringValue>
         </propertySimple>
         <propertySimple>
             <id>10715</id>

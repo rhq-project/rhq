@@ -93,6 +93,13 @@ public class ApacheDeploymentUtil {
                 return serverName;
             }
 
+            public VHostSpec getVHostSpec() {
+                VHostSpec ret = new VHostSpec();
+                ret.serverName = getServerName();
+                ret.hosts = getAddresses();
+                return ret;
+            }
+            
             public List<String> getAddresses() {
                 ArrayList<String> ret = new ArrayList<String>();
                 if (address1 != null) {

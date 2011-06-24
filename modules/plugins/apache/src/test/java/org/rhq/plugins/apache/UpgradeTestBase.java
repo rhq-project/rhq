@@ -19,6 +19,7 @@
 
 package org.rhq.plugins.apache;
 
+import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
 import java.io.File;
@@ -28,6 +29,7 @@ import java.io.Reader;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -37,6 +39,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.jmock.Expectations;
 import org.testng.annotations.BeforeClass;
 
@@ -73,6 +77,8 @@ import org.rhq.test.pc.PluginContainerTest;
  */
 public class UpgradeTestBase extends PluginContainerTest {
 
+    private static final Log LOG = LogFactory.getLog(UpgradeTestBase.class);
+    
     protected class TestSetup {
         private String configurationName;
         private FakeServerInventory fakeInventory = new FakeServerInventory();
@@ -310,6 +316,9 @@ public class UpgradeTestBase extends PluginContainerTest {
                         deploymentConfig.vhost4.getServerName()).toString(false, false));
             }
     
+            //let the user override everything we just did
+            replacements.putAll(defaultOverrides);
+            
             InputStream dataStream = getClass().getResourceAsStream(inventoryFile);
     
             Reader rdr = new TokenReplacingReader(new InputStreamReader(dataStream), replacements);
@@ -344,6 +353,28 @@ public class UpgradeTestBase extends PluginContainerTest {
         }
     }
 
+    protected static class TestConfiguration {
+        public String[] apacheConfigurationFiles;
+        public String inventoryFile;
+        public String configurationName;
+        public String serverRoot;
+        public String binPath;
+        public Map<String, String> defaultOverrides;
+        public boolean upgradeShouldSucceed = true;
+        
+        public void beforeTestSetup(TestSetup testSetup) throws Throwable {
+            
+        }
+        
+        public void beforePluginContainerStart(TestSetup setup) throws Throwable {
+            
+        }
+        
+        public void beforeTests(TestSetup setup) throws Throwable {
+            
+        }
+    }
+
     protected static final String PLATFORM_PLUGIN = "file:target/itest/plugins/rhq-platform-plugin-for-apache-test.jar";
     protected static final String AUGEAS_PLUGIN = "file:target/itest/plugins/rhq-augeas-plugin-for-apache-test.jar";
     protected static final String APACHE_PLUGIN = "file:target/itest/plugins/rhq-apache-plugin-for-apache-test.jar";
@@ -368,6 +399,89 @@ public class UpgradeTestBase extends PluginContainerTest {
         }
     
         return null;
+    }
+
+    protected void testUpgrade(TestConfiguration testConfiguration) throws Throwable {
+        final TestSetup setup = new TestSetup(testConfiguration.configurationName);
+        boolean testFailed = false;
+        try {
+            
+            String[] configFiles = Arrays.copyOf(testConfiguration.apacheConfigurationFiles, testConfiguration.apacheConfigurationFiles.length + 2);
+            configFiles[testConfiguration.apacheConfigurationFiles.length] = "/snmpd.conf";
+            configFiles[testConfiguration.apacheConfigurationFiles.length + 1] = "/mime.types";
+            
+            setup.withInventoryFrom(testConfiguration.inventoryFile)
+                .withPlatformResource(platform).withDefaultExpectations().withDefaultOverrides(testConfiguration.defaultOverrides)
+                .withApacheSetup().withConfigurationFiles(configFiles)
+                .withServerRoot(testConfiguration.serverRoot).withExePath(testConfiguration.binPath);
+            
+            testConfiguration.beforeTestSetup(setup);
+            
+            setup.setup();
+    
+            testConfiguration.beforePluginContainerStart(setup);
+            
+            startConfiguredPluginContainer();
+    
+            testConfiguration.beforeTests(setup);
+            
+            if (!testConfiguration.upgradeShouldSucceed) {
+                return;
+            }
+            
+            //ok, now we should see the resources upgraded in the fake server inventory.
+            ResourceType serverResourceType = findApachePluginResourceTypeByName("Apache HTTP Server");
+            ResourceType vhostResourceType = findApachePluginResourceTypeByName("Apache Virtual Host");
+    
+            Set<Resource> servers = setup.getFakeInventory().findResourcesByType(serverResourceType);
+
+            assertEquals(servers.size(), 1, "There should be exactly one apache server discovered.");
+    
+            Resource server = servers.iterator().next();
+    
+            String expectedResourceKey = ApacheServerDiscoveryComponent.formatResourceKey(testConfiguration.serverRoot, testConfiguration.serverRoot
+                + "/conf/httpd.conf");
+    
+            assertEquals(server.getResourceKey(), expectedResourceKey,
+                "The server resource key doesn't seem to be upgraded.");
+    
+            Set<Resource> vhosts = setup.getFakeInventory().findResourcesByType(vhostResourceType);
+    
+            assertEquals(vhosts.size(), 5, "Unexpected number of vhosts discovered found");
+    
+            List<String> expectedResourceKeys = new ArrayList<String>(5);
+    
+            DeploymentConfig dc = setup.getDeploymentConfig();
+    
+            expectedResourceKeys.add(ApacheVirtualHostServiceComponent.MAIN_SERVER_RESOURCE_KEY);
+            expectedResourceKeys.add(ApacheVirtualHostServiceDiscoveryComponent.createResourceKey(
+                dc.vhost1.getServerName(), dc.vhost1.getAddresses()));
+            expectedResourceKeys.add(ApacheVirtualHostServiceDiscoveryComponent.createResourceKey(
+                dc.vhost2.getServerName(), dc.vhost2.getAddresses()));
+            expectedResourceKeys.add(ApacheVirtualHostServiceDiscoveryComponent.createResourceKey(
+                dc.vhost3.getServerName(), dc.vhost3.getAddresses()));
+            expectedResourceKeys.add(ApacheVirtualHostServiceDiscoveryComponent.createResourceKey(
+                dc.vhost4.getServerName(), dc.vhost4.getAddresses()));
+    
+            for (Resource vhost : vhosts) {
+                assertTrue(expectedResourceKeys.contains(vhost.getResourceKey()),
+                    "Unexpected virtual host resource key: '" + vhost.getResourceKey() + "'. Only expecting " + expectedResourceKeys);
+            }
+        } catch (Throwable t) {
+            testFailed = true;
+            LOG.error("Error during test upgrade execution.", t);
+            throw t;
+        } finally {
+            try {
+                setup.withApacheSetup().getExecutionUtil().invokeOperation("stop");
+            } catch (Exception e) {
+                if (testFailed) {
+                    LOG.error("Failed to stop apache.", e);
+                } else {
+                    throw e;
+                }
+            }
+        }
     }
 
     private static List<ResourceType> getResourceTypesInPlugin(String pluginUri) throws Exception {

@@ -19,25 +19,15 @@
 
 package org.rhq.plugins.apache;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
-
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.plugins.apache.util.ApacheDeploymentUtil.DeploymentConfig;
 import org.rhq.test.pc.PluginContainerSetup;
 
 /**
@@ -47,44 +37,7 @@ import org.rhq.test.pc.PluginContainerSetup;
  */
 @Test(groups = "apache-integration-tests")
 public class UpgradeSimpleConfigurationFromRHQ1_3Test extends UpgradeTestBase {
-    private static final Log LOG = LogFactory.getLog(UpgradeSimpleConfigurationFromRHQ1_3Test.class);
 
-    private enum Apache {
-        V_1_3_x {
-            public String getConfigDirName() {
-                return "1.3.x";
-            }
-        },
-
-        V_2_2_x {
-            public String getConfigDirName() {
-                return "2.2.x";
-            }
-        };
-
-        public abstract String getConfigDirName();
-    }
-
-    private static class TestConfiguration {
-        public Apache version;
-        public String configurationName;
-        public String serverRoot;
-        public String binPath;
-        public Map<String, String> defaultOverrides;
-        
-        public void beforeTestSetup(TestSetup testSetup) {
-            
-        }
-        
-        public void beforePluginContainerStart(TestSetup setup) {
-            
-        }
-        
-        public void beforeTests() {
-            
-        }
-    }
-    
     @Test
     @PluginContainerSetup(plugins = { PLATFORM_PLUGIN, AUGEAS_PLUGIN, APACHE_PLUGIN })
     @Parameters({ "apache2.install.dir", "apache2.exe.path" })
@@ -96,7 +49,8 @@ public class UpgradeSimpleConfigurationFromRHQ1_3Test extends UpgradeTestBase {
                 serverRoot = installPath;
                 binPath = exePath;
                 configurationName = DEPLOYMENT_SIMPLE_WITH_RESOLVABLE_SERVERNAMES;
-                version = Apache.V_2_2_x;
+                apacheConfigurationFiles = new String[] { "/full-configurations/2.2.x/simple/httpd.conf" };
+                inventoryFile = "/mocked-inventories/rhq-1.3.x/simple/inventory.xml";
             }
         });
     }
@@ -112,7 +66,8 @@ public class UpgradeSimpleConfigurationFromRHQ1_3Test extends UpgradeTestBase {
             serverRoot = installPath;
             binPath = exePath;
             configurationName = DEPLOYMENT_SIMPLE_WITH_RESOLVABLE_SERVERNAMES;
-            version = Apache.V_1_3_x;
+            apacheConfigurationFiles = new String[] { "/full-configurations/1.3.x/simple/httpd.conf" };
+            inventoryFile = "/mocked-inventories/rhq-1.3.x/simple/inventory.xml";
         }});
     }
 
@@ -123,9 +78,11 @@ public class UpgradeSimpleConfigurationFromRHQ1_3Test extends UpgradeTestBase {
         testUpgrade(new TestConfiguration() {
             {
                 configurationName = DEPLOYMENT_SIMPLE_WITH_UNRESOLVABLE_SERVER_NAMES;
+                apacheConfigurationFiles = new String[] { "/full-configurations/2.2.x/simple/httpd.conf" };
+                inventoryFile = "/mocked-inventories/rhq-1.3.x/simple/inventory.xml";
                 serverRoot = installPath;
                 binPath = exePath;
-                version = Apache.V_2_2_x;            
+                            
                 
                 defaultOverrides = new HashMap<String, String>();
                 defaultOverrides.put(variableName(configurationName, "servername.directive"), "ServerName ${unresolvable.host}");
@@ -158,78 +115,5 @@ public class UpgradeSimpleConfigurationFromRHQ1_3Test extends UpgradeTestBase {
                 }
             }
         });        
-    }
-        
-    private void testUpgrade(TestConfiguration testConfiguration) throws Throwable {
-        final TestSetup setup = new TestSetup(testConfiguration.configurationName);
-        boolean testFailed = false;
-        try {
-            testConfiguration.beforeTestSetup(setup);
-            
-            String configPath = "/full-configurations/" + testConfiguration.version.getConfigDirName() + "/simple/httpd.conf";
-
-            setup.withInventoryFrom("/mocked-inventories/rhq-1.3.x/simple/inventory.xml")
-                .withPlatformResource(platform).withDefaultExpectations().withDefaultOverrides(testConfiguration.defaultOverrides)
-                .withApacheSetup().withConfigurationFiles(configPath, "/snmpd.conf", "/mime.types")
-                .withServerRoot(testConfiguration.serverRoot).withExePath(testConfiguration.binPath).setup();
-
-            testConfiguration.beforePluginContainerStart(setup);
-            
-            startConfiguredPluginContainer();
-
-            testConfiguration.beforeTests();
-            
-            //ok, now we should see the resources upgraded in the fake server inventory.
-            ResourceType serverResourceType = findApachePluginResourceTypeByName("Apache HTTP Server");
-            ResourceType vhostResourceType = findApachePluginResourceTypeByName("Apache Virtual Host");
-
-            Set<Resource> servers = setup.getFakeInventory().findResourcesByType(serverResourceType);
-
-            assertEquals(servers.size(), 1, "There should be exactly one apache server discovered.");
-
-            Resource server = servers.iterator().next();
-
-            String expectedResourceKey = ApacheServerDiscoveryComponent.formatResourceKey(testConfiguration.serverRoot, testConfiguration.serverRoot
-                + "/conf/httpd.conf");
-
-            assertEquals(server.getResourceKey(), expectedResourceKey,
-                "The server resource key doesn't seem to be upgraded.");
-
-            Set<Resource> vhosts = setup.getFakeInventory().findResourcesByType(vhostResourceType);
-
-            assertEquals(vhosts.size(), 5, "Unexpected number of vhosts discovered found");
-
-            List<String> expectedResourceKeys = new ArrayList<String>(5);
-
-            DeploymentConfig dc = setup.getDeploymentConfig();
-
-            expectedResourceKeys.add(ApacheVirtualHostServiceComponent.MAIN_SERVER_RESOURCE_KEY);
-            expectedResourceKeys.add(ApacheVirtualHostServiceDiscoveryComponent.createResourceKey(
-                dc.vhost1.getServerName(), dc.vhost1.getAddresses()));
-            expectedResourceKeys.add(ApacheVirtualHostServiceDiscoveryComponent.createResourceKey(
-                dc.vhost2.getServerName(), dc.vhost2.getAddresses()));
-            expectedResourceKeys.add(ApacheVirtualHostServiceDiscoveryComponent.createResourceKey(
-                dc.vhost3.getServerName(), dc.vhost3.getAddresses()));
-            expectedResourceKeys.add(ApacheVirtualHostServiceDiscoveryComponent.createResourceKey(
-                dc.vhost4.getServerName(), dc.vhost4.getAddresses()));
-
-            for (Resource vhost : vhosts) {
-                assertTrue(expectedResourceKeys.contains(vhost.getResourceKey()),
-                    "Unexpected virtual host resource key: '" + vhost.getResourceKey() + "'. Only expecting " + expectedResourceKeys);
-            }
-        } catch (Throwable t) {
-            testFailed = true;
-            throw t;
-        } finally {
-            try {
-                setup.withApacheSetup().getExecutionUtil().invokeOperation("stop");
-            } catch (Exception e) {
-                if (testFailed) {
-                    LOG.error("Failed to stop apache.", e);
-                } else {
-                    throw e;
-                }
-            }
-        }
-    }
+    }        
 }

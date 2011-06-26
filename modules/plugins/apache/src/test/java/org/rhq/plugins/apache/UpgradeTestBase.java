@@ -279,6 +279,8 @@ public class UpgradeTestBase extends PluginContainerTest {
             replacements.put("snmp.identifier",
                 addressUtility.getHttpdInternalMainServerAddressRepresentation(runtimeConfig).toString(false, false));
     
+            replacements.put("main.rhq4.resource.key", ApacheVirtualHostServiceComponent.MAIN_SERVER_RESOURCE_KEY);
+            
             String vhost1Address = deploymentConfig.vhost1 == null ? null : deploymentConfig.vhost1.address1.toString(
                 false, false);
             String vhost2Address = deploymentConfig.vhost2 == null ? null : deploymentConfig.vhost2.address1.toString(
@@ -293,6 +295,11 @@ public class UpgradeTestBase extends PluginContainerTest {
                     "vhost1.snmp.identifier",
                     addressUtility.getHttpdInternalVirtualHostAddressRepresentation(runtimeConfig, vhost1Address,
                         deploymentConfig.vhost1.getServerName()).toString(false, false));
+                
+                replacements.put(
+                    "vhost1.rhq4.resource.key",
+                    ApacheVirtualHostServiceDiscoveryComponent.createResourceKey(
+                        deploymentConfig.vhost1.getServerName(), deploymentConfig.vhost1.getAddresses()));
             }
     
             if (vhost2Address != null) {
@@ -300,6 +307,11 @@ public class UpgradeTestBase extends PluginContainerTest {
                     "vhost2.snmp.identifier",
                     addressUtility.getHttpdInternalVirtualHostAddressRepresentation(runtimeConfig, vhost2Address,
                         deploymentConfig.vhost2.getServerName()).toString(false, false));
+                
+                replacements.put(
+                    "vhost2.rhq4.resource.key",
+                    ApacheVirtualHostServiceDiscoveryComponent.createResourceKey(
+                        deploymentConfig.vhost2.getServerName(), deploymentConfig.vhost2.getAddresses()));
             }
     
             if (vhost3Address != null) {
@@ -307,6 +319,11 @@ public class UpgradeTestBase extends PluginContainerTest {
                     "vhost3.snmp.identifier",
                     addressUtility.getHttpdInternalVirtualHostAddressRepresentation(runtimeConfig, vhost3Address,
                         deploymentConfig.vhost3.getServerName()).toString(false, false));
+                
+                replacements.put(
+                    "vhost3.rhq4.resource.key",
+                    ApacheVirtualHostServiceDiscoveryComponent.createResourceKey(
+                        deploymentConfig.vhost3.getServerName(), deploymentConfig.vhost3.getAddresses()));
             }
     
             if (vhost4Address != null) {
@@ -314,6 +331,11 @@ public class UpgradeTestBase extends PluginContainerTest {
                     "vhost4.snmp.identifier",
                     addressUtility.getHttpdInternalVirtualHostAddressRepresentation(runtimeConfig, vhost4Address,
                         deploymentConfig.vhost4.getServerName()).toString(false, false));
+                
+                replacements.put(
+                    "vhost4.rhq4.resource.key",
+                    ApacheVirtualHostServiceDiscoveryComponent.createResourceKey(
+                        deploymentConfig.vhost4.getServerName(), deploymentConfig.vhost4.getAddresses()));
             }
     
             //let the user override everything we just did

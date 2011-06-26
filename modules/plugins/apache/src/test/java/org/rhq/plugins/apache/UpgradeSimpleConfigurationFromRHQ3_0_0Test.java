@@ -51,56 +51,17 @@ public class UpgradeSimpleConfigurationFromRHQ3_0_0Test extends UpgradeTestBase 
     //the resource key was discovered without SNMP, with SNMP, with Main Server URL set,
     //or not
     
-    //TODO the default inventory.xml uses discovery results without snmp active. with SNMP active, all 5 vhost
-    //would discovered in RHQ 3. This test should therefore use a different inventory file.
-    @Test(enabled = false) //this fails until the above todo is implemented
+    @Test
     @PluginContainerSetup(plugins = {PLATFORM_PLUGIN, AUGEAS_PLUGIN, APACHE_PLUGIN}, numberOfInitialDiscoveries = 2)
     @Parameters({"apache2.install.dir", "apache2.exe.path"})
-    public void testWithResolvableNamesWithSNMP(final String installDir, final String exePath) throws Throwable {
+    public void testWithResolvableNamesWithoutSNMP(final String installDir, final String exePath) throws Throwable {
         testUpgrade(new TestConfiguration() {
             {
                 apacheConfigurationFiles = new String[]{"/full-configurations/2.2.x/simple/httpd.conf"};
-                inventoryFile = "/mocked-inventories/rhq-3.0.0/simple/inventory.xml";
+                inventoryFile = "/mocked-inventories/rhq-3.0.0/simple/inventory-without-snmp.xml";
                 serverRoot = installDir;
                 binPath = exePath;
                 configurationName = DEPLOYMENT_SIMPLE_WITH_RESOLVABLE_SERVERNAMES;
-            }
-            
-            @Override
-            public void beforeTestSetup(TestSetup testSetup) throws Throwable {
-                testSetup.withApacheSetup().init();
-                ApacheServerComponent component = testSetup.withApacheSetup().getExecutionUtil().getServerComponent();
-                ApacheDirectiveTree config = component.loadParser();
-                config = RuntimeApacheConfiguration.extract(config, component.getCurrentProcessInfo(), component.getCurrentBinaryInfo(), component.getModuleNames(), false);
-
-                DeploymentConfig deployConfig = testSetup.getDeploymentConfig();
-                
-                VirtualHostLegacyResourceKeyUtil keyUtil = new VirtualHostLegacyResourceKeyUtil(component, config);
-                
-                defaultOverrides = new HashMap<String, String>();
-                defaultOverrides.put("main.rhq3.resource.key", keyUtil.getRHQ3SNMPLikeResourceKey(keyUtil.getRHQ3NonSNMPLegacyMainServerResourceKey()));
-                
-                if (deployConfig.vhost1 != null) {
-                    String rhq3Key = keyUtil.getRHQ3NonSNMPLegacyVirtualHostResourceKey(deployConfig.vhost1.getVHostSpec());
-                    defaultOverrides.put("vhost1.rhq3.resource.key", keyUtil.getRHQ3SNMPLikeResourceKey(rhq3Key));
-                }
-                
-                if (deployConfig.vhost2 != null) {
-                    String rhq3Key = keyUtil.getRHQ3NonSNMPLegacyVirtualHostResourceKey(deployConfig.vhost2.getVHostSpec());
-                    defaultOverrides.put("vhost2.rhq3.resource.key", keyUtil.getRHQ3SNMPLikeResourceKey(rhq3Key));
-                }
-                
-                if (deployConfig.vhost3 != null) {
-                    String rhq3Key = keyUtil.getRHQ3NonSNMPLegacyVirtualHostResourceKey(deployConfig.vhost3.getVHostSpec());
-                    defaultOverrides.put("vhost3.rhq3.resource.key", keyUtil.getRHQ3SNMPLikeResourceKey(rhq3Key));
-                }
-                
-                if (deployConfig.vhost4 != null) {
-                    String rhq3Key = keyUtil.getRHQ3NonSNMPLegacyVirtualHostResourceKey(deployConfig.vhost4.getVHostSpec());
-                    defaultOverrides.put("vhost4.rhq3.resource.key", keyUtil.getRHQ3SNMPLikeResourceKey(rhq3Key));
-                }
-                
-                testSetup.withDefaultOverrides(defaultOverrides);
             }
         });
     }
@@ -108,11 +69,11 @@ public class UpgradeSimpleConfigurationFromRHQ3_0_0Test extends UpgradeTestBase 
     @Test    
     @PluginContainerSetup(plugins = {PLATFORM_PLUGIN, AUGEAS_PLUGIN, APACHE_PLUGIN})
     @Parameters({"apache2.install.dir", "apache2.exe.path"})
-    public void testWithResolvableNamesWithoutSNMP(final String installDir, final String exePath) throws Throwable {
+    public void testWithResolvableNamesWithSNMP(final String installDir, final String exePath) throws Throwable {
         testUpgrade(new TestConfiguration() {
             {
                 apacheConfigurationFiles = new String[]{"/full-configurations/2.2.x/simple/httpd.conf"};
-                inventoryFile = "/mocked-inventories/rhq-3.0.0/simple/inventory.xml";
+                inventoryFile = "/mocked-inventories/rhq-3.0.0/simple/inventory-with-snmp.xml";
                 serverRoot = installDir;
                 binPath = exePath;
                 configurationName = DEPLOYMENT_SIMPLE_WITH_RESOLVABLE_SERVERNAMES;                     

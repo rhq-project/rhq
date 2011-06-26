@@ -46,8 +46,8 @@
     <childResources>
         <id>10036</id>
         <uuid>5eb8fa91-2a4e-4a6e-9cd7-7b1927ea1a3a</uuid>
-        <resourceKey>localhost.localdomain:11676</resourceKey>
-        <name>localhost.localdomain:11676</name>
+        <resourceKey>${vhost2.rhq3.resource.key}</resourceKey>
+        <name>${vhost2.snmp.identifier}</name>
         <inventoryStatus>COMMITTED</inventoryStatus>
         <connected>false</connected>
         <version></version>
@@ -103,7 +103,7 @@
             <propertySimple>
                 <id>10804</id>
                 <name>url</name>
-                <stringValue>http://localhost.localdomain:11676/</stringValue>
+                <stringValue>http://${vhost2.snmp.identifier}/</stringValue>
             </propertySimple>
             <propertySimple>
                 <id>10803</id>
@@ -179,7 +179,7 @@
             <propertySimple>
                 <id>10808</id>
                 <name>url</name>
-                <stringValue>http://${snmp.identifier}/</stringValue>
+                <stringValue>http://${localhost}:${listen1}/</stringValue>
             </propertySimple>
             <propertySimple>
                 <id>10807</id>

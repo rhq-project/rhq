@@ -3417,44 +3417,34 @@
 
             <schemaSpec version="2.110">
                 <schema-directSQL>
-                    <statement desc="Creating table RHQ_PROP_DEF_OPT_SRC">
-                        CREATE TABLE RHQ_PROP_DEF_OPT_SRC ( ID INTEGER PRIMARY KEY )
+                    <statement desc="Creating table RHQ_CONFIG_PD_OSRC">
+                        CREATE TABLE RHQ_CONFIG_PD_OSRC ( ID INTEGER PRIMARY KEY )
                     </statement>
                 </schema-directSQL>
-                <schema-addColumn table="RHQ_PROP_DEF_OPT_SRC" column="LINK_TO_TARGET" columnType="BOOLEAN"/>
-                <schema-alterColumn table="RHQ_PROP_DEF_OPT_SRC" column="LINK_TO_TARGET" nullable="TRUE"/>
+                <schema-addColumn table="RHQ_CONFIG_PD_OSRC" column="LINK_TO_TARGET" columnType="BOOLEAN"/>
+                <schema-alterColumn table="RHQ_CONFIG_PD_OSRC" column="LINK_TO_TARGET" nullable="TRUE"/>
 
-                <schema-addColumn table="RHQ_PROP_DEF_OPT_SRC" column="FILTER" columnType="VARCHAR2" precision="40"/>
-                <schema-alterColumn table="RHQ_PROP_DEF_OPT_SRC" column="FILTER" nullable="TRUE"/>
+                <schema-addColumn table="RHQ_CONFIG_PD_OSRC" column="FILTER" columnType="VARCHAR2" precision="40"/>
+                <schema-alterColumn table="RHQ_CONFIG_PD_OSRC" column="FILTER" nullable="TRUE"/>
 
-                <schema-addColumn table="RHQ_PROP_DEF_OPT_SRC" column="EXPRESSION" columnType="VARCHAR2" precision="400"/>
-                <schema-alterColumn table="RHQ_PROP_DEF_OPT_SRC" column="EXPRESSION" nullable="FALSE"/>
+                <schema-addColumn table="RHQ_CONFIG_PD_OSRC" column="EXPRESSION" columnType="VARCHAR2" precision="400"/>
+                <schema-alterColumn table="RHQ_CONFIG_PD_OSRC" column="EXPRESSION" nullable="FALSE"/>
 
-                <schema-addColumn table="RHQ_PROP_DEF_OPT_SRC" column="TARGET_TYPE" columnType="VARCHAR2" precision="20"/>
-                <schema-alterColumn table="RHQ_PROP_DEF_OPT_SRC" column="TARGET_TYPE" nullable="FALSE"/>
+                <schema-addColumn table="RHQ_CONFIG_PD_OSRC" column="TARGET_TYPE" columnType="VARCHAR2" precision="20"/>
+                <schema-alterColumn table="RHQ_CONFIG_PD_OSRC" column="TARGET_TYPE" nullable="FALSE"/>
 
-                <schema-addColumn table="RHQ_PROP_DEF_OPT_SRC" column="PROPERTY_DEF_ID" columnType="INTEGER"/>
+                <schema-addColumn table="RHQ_CONFIG_PD_OSRC" column="PROPERTY_DEF_ID" columnType="INTEGER"/>
                 <schema-directSQL>
-                    <statement desc="Adding a fk">
-                        ALTER TABLE RHQ_PROP_DEF_OPT_SRC
-                        ADD CONSTRAINT RHQ_PROP_DEF_OPT_SRC_ID_FK
+                    <statement desc="Adding a foreign key constraint to RHQ_CONFIG_PD_OSRC">
+                        ALTER TABLE RHQ_CONFIG_PD_OSRC
+                        ADD CONSTRAINT RHQ_CONFIG_PD_OSRC_ID_FK
                         FOREIGN KEY (PROPERTY_DEF_ID)
                         REFERENCES RHQ_CONFIG_PROP_DEF (ID)
                     </statement>
                 </schema-directSQL>
-                <schema-createSequence name="rhq_config_prop_def_opt_src_id_seq" initial="10001" />
+                <schema-createSequence name="rhq_config_pd_osrc_id_seq" initial="10001" />
             </schemaSpec>
-            <schemaSpec version="2.111">
-                <schema-directSQL>
-                    <statement desc="rename to correct name">
-                        ALTER TABLE RHQ_PROP_DEF_OPT_SRC
-                        RENAME TO RHQ_CONFIG_PD_OSRC
-                    </statement>
-                    <statement desc="rename sequence">
-                        ALTER TABLE rhq_config_prop_def_opt_src_id_seq  RENAME TO rhq_config_pd_osrc_id_seq
-                    </statement>
-                </schema-directSQL>
-            </schemaSpec>
+
         </dbupgrade>
     </target>
 </project>

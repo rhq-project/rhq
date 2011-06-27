@@ -219,6 +219,9 @@ public class ConfigurationDelegate implements ConfigurationFacet {
      * @return the populated map
      */
     PropertyMap handlePropertyMap(PropertyDefinitionMap propDef, Object valueObject) {
+        if (valueObject==null)
+            return null;
+
         PropertyMap propertyMap = new PropertyMap(propDef.getName());
 
         Map<String, PropertyDefinition> memberDefMap = propDef.getPropertyDefinitions();

@@ -22,7 +22,7 @@
 
   <properties>
     <scm.module.path>modules/core/dbutils/</scm.module.path>
-    <db.schema.version>2.113</db.schema.version>
+    <db.schema.version>2.112</db.schema.version>
   </properties>
 
   <dependencies>

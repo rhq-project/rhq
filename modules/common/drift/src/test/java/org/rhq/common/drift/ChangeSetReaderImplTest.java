@@ -10,67 +10,113 @@ public class ChangeSetReaderImplTest {
     @Test
     @SuppressWarnings("unchecked")
     public void readDirectoryEntryWithFileAdded() throws Exception {
-        String changeset = "myresource/conf 1\n" +
+        String changeset = "file-added-test\n" +
+                           "myresource\n" +
+                           "true\n" +
+                           "myresource/conf 1\n" +
                            "a34ef6 0 myconf.conf A";
 
         ChangeSetReaderImpl reader = new ChangeSetReaderImpl(new StringReader(changeset));
+
+        Headers actualHeaders = reader.getHeaders();
+        Headers expectedHeaders = new Headers("file-added-test", "myresource", true);
+
+        assertHeadersEquals(actualHeaders, expectedHeaders);
+
         DirectoryEntry dirEntry = reader.readDirectoryEntry();
         reader.close();
 
-        assertNotNull(dirEntry, "Expected reader to return a directory entry");
-        assertEquals(dirEntry.getDirectory(), "myresource/conf", "The directory name is wrong");
-        assertEquals(dirEntry.getNumberOfFiles(), 1, "The number of files for the directory entry is wrong");
+        assertDirectoryEntryEquals(dirEntry, "myresource/conf", 1);
 
-        FileEntry fileEntry = dirEntry.iterator().next();
+        FileEntry actualFileEntry = dirEntry.iterator().next();
+        FileEntry expectedFileEntry = new FileEntry("a34ef6", "0", "myconf.conf", "A");
 
-        assertEquals(fileEntry.getNewSHA(), "a34ef6", "The first column, the new SHA-256, is wrong");
-        assertEquals(fileEntry.getOldSHA(), "0", "The second column, the old SHA-256, is wrong");
-        assertEquals(fileEntry.getFile(), "myconf.conf", "The third column, the file name, is wrong");
-        assertEquals(fileEntry.getType().code(), "A", "The fourth column, the entry type, is wrong");
+        assertFileEntryEquals(actualFileEntry, expectedFileEntry);
     }
 
     @Test
     @SuppressWarnings("unchecked")
     public void readDirectoryEntryWithFileRemoved() throws Exception {
-        String changeset = "myresource/conf 1\n" +
+        String changeset = "file-removed-test\n" +
+                           "myresource\n" +
+                           "true\n" +
+                           "myresource/conf 1\n" +
                            "0 a34ef6 myconf.conf R";
 
         ChangeSetReaderImpl reader = new ChangeSetReaderImpl(new StringReader(changeset));
+
+        Headers actualHeaders = reader.getHeaders();
+        Headers expectedHeaders = new Headers("file-removed-test", "myresource", true);
+
+        assertHeadersEquals(actualHeaders, expectedHeaders);
+
         DirectoryEntry dirEntry = reader.readDirectoryEntry();
         reader.close();
 
-        assertNotNull(dirEntry, "Expected reader to return a directory entry");
-        assertEquals(dirEntry.getDirectory(), "myresource/conf", "The directory name is wrong");
-        assertEquals(dirEntry.getNumberOfFiles(), 1, "The number of files for the directory entry is wrong");
+        assertDirectoryEntryEquals(dirEntry, "myresource/conf", 1);
 
-        FileEntry fileEntry = dirEntry.iterator().next();
+        FileEntry actualFileEntry = dirEntry.iterator().next();
+        FileEntry expectedFileEntry = new FileEntry("0", "a34ef6", "myconf.conf", "R");
 
-        assertEquals(fileEntry.getNewSHA(), "0", "The first column, the new SHA-256, is wrong");
-        assertEquals(fileEntry.getOldSHA(), "a34ef6", "The second column, the old SHA-256, is wrong");
-        assertEquals(fileEntry.getFile(), "myconf.conf", "The third column, the file name, is wrong");
-        assertEquals(fileEntry.getType().code(), "R", "The fourth column, the entry type, is wrong");
+        assertFileEntryEquals(actualFileEntry, expectedFileEntry);
     }
 
     @Test
     @SuppressWarnings("unchecked")
     public void readDirectoryEntryWithFileChanged() throws Exception {
-        String changeset = "myresource/conf 1\n" +
+        String changeset = "file-changed-test\n" +
+                           "myresource\n" +
+                           "true\n" +
+                           "myresource/conf 1\n" +
                            "a34ef6 c41b8 myconf.conf C";
 
         ChangeSetReaderImpl reader = new ChangeSetReaderImpl(new StringReader(changeset));
+
+        Headers actualHeaders = reader.getHeaders();
+        Headers expectedHeaders = new Headers("file-changed-test", "myresource", true);
+
+        assertHeadersEquals(actualHeaders, expectedHeaders);
+
         DirectoryEntry dirEntry = reader.readDirectoryEntry();
         reader.close();
 
-        assertNotNull(dirEntry, "Expected reader to return a directory entry");
-        assertEquals(dirEntry.getDirectory(), "myresource/conf", "The directory name is wrong");
-        assertEquals(dirEntry.getNumberOfFiles(), 1, "The number of files for the directory entry is wrong");
+        assertDirectoryEntryEquals(dirEntry, "myresource/conf", 1);
 
-        FileEntry fileEntry = dirEntry.iterator().next();
+        FileEntry actualFileEntry = dirEntry.iterator().next();
+        FileEntry expectedFileEntry = new FileEntry("a34ef6", "c41b8", "myconf.conf", "C");
 
-        assertEquals(fileEntry.getNewSHA(), "a34ef6", "The first column, the new SHA-256, is wrong");
-        assertEquals(fileEntry.getOldSHA(), "c41b8", "The second column, the old SHA-256, is wrong");
-        assertEquals(fileEntry.getFile(), "myconf.conf", "The third column, the file name, is wrong");
-        assertEquals(fileEntry.getType().code(), "C", "The fourth column, the entry type, is wrong");
+        assertFileEntryEquals(actualFileEntry, expectedFileEntry);
+    }
+
+    void assertHeadersEquals(Headers actual, Headers expected) {
+        assertEquals(actual.getDriftConfigurationName(), expected.getDriftConfigurationName(),
+            "The drift configuration name, which should be the first header, is wrong.");
+        assertEquals(actual.getBasedir(), expected.getBasedir(), "The drift configuration base directory, which " +
+            "should be the second header, is wrong.");
+        assertEquals(actual.isCoverageChangeSet(), expected.isCoverageChangeSet(), "The coverage change set flag, " +
+            "which should be the third header, is wrong.");
+    }
+
+    /**
+     * Verifies that the directory entry name (i.e., path) and number of files match the
+     * specified values.
+     *
+     * @param dirEntry
+     * @param path
+     * @param numberOfFiles
+     */
+    void assertDirectoryEntryEquals(DirectoryEntry dirEntry, String path, int numberOfFiles) {
+        assertNotNull(dirEntry, "Expected non-null directory entry");
+        assertEquals(dirEntry.getDirectory(), path, "The directory name/path is wrong");
+        assertEquals(dirEntry.getNumberOfFiles(), numberOfFiles, "The number of files for the directory entry is " +
+            "wrong");
+    }
+
+    void assertFileEntryEquals(FileEntry actual, FileEntry expected) {
+        assertEquals(actual.getNewSHA(), expected.getNewSHA(), "The first column, the new SHA-256, is wrong");
+        assertEquals(actual.getOldSHA(), expected.getOldSHA(), "The second column, the old SHA-256, is wrong");
+        assertEquals(actual.getFile(), expected.getFile(), "The third column, the file name, is wrong");
+        assertEquals(actual.getType(), expected.getType(), "The fourth column, the entry type, is wrong");
     }
 
 }

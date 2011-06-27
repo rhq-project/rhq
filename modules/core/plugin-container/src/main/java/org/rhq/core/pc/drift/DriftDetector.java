@@ -50,8 +50,11 @@ public class DriftDetector implements Runnable {
         }
 
         try {
+            // TODO add logic to determine if there is an existing changeset
+            // if there is no previous changeset then we need to generate the initial
+            // coverage changeset
             ChangeSetWriter writer = changeSetMgr.getChangeSetWriter(schedule.getResourceId(),
-            schedule.getDriftConfiguration());
+            schedule.getDriftConfiguration(), true);
 
             DirectoryScanner scanner = new DirectoryScanner(schedule.getDriftConfiguration(), writer);
             scanner.scan();

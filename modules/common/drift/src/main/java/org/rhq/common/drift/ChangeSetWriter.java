@@ -13,11 +13,19 @@ import java.io.IOException;
  * <br/>
  * The current format of the change set file is:
  * <pre>
+ * HEADER
  * DRIFT_ENTRY
  *     FILE_ENTRY (1..N)
  * EMPTY_LINE
  * </pre>
- * where DRIFT_ENTRY has two field that are space delimited. The first is the directory path
+ * where HEADER has three fields that are terminated by newline characters. Those fields are:
+ * <ul>
+ *   <li>drift configuration name</li>
+ *   <li>drift configuration base directory</li>
+ *   <li>flag indicating whether or not this is a coverage changeset</li>
+ * </ul>
+ * <br/>
+ * and where DRIFT_ENTRY has two field that are space delimited. The first is the directory path
  * and the second is the number of files included in DRIFT_ENTRY. Note that the last FILE_ENTRY
  * in DRIFT_ENTRY is followed by a new line.
  * <br/>

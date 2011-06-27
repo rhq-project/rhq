@@ -19,13 +19,30 @@ public class ChangeSetReaderImpl implements ChangeSetReader {
 
     private File metaDataFile;
 
+    private Headers headers;
+
     public ChangeSetReaderImpl(File metaDataFile) throws IOException {
         this.metaDataFile = metaDataFile;
         reader = new BufferedReader(new FileReader(this.metaDataFile));
+        readHeaders();
     }
 
     public ChangeSetReaderImpl(Reader metaDataFile) throws Exception {
         reader = new BufferedReader(metaDataFile);
+        readHeaders();
+    }
+
+    private void readHeaders() throws IOException {
+        String name = reader.readLine();
+        String basedir = reader.readLine();
+        boolean coverageChangeSet = Boolean.valueOf(reader.readLine());
+
+        headers = new Headers(name, basedir, coverageChangeSet);
+    }
+
+    @Override
+    public Headers getHeaders() throws IOException {
+        return headers;
     }
 
     @Override

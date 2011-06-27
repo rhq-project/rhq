@@ -3569,6 +3569,17 @@
                 </schema-directSQL>
             </schemaSpec>
 
+            <schemaSpec version="2.113">
+                <schema-directSQL>
+                    <statement desc="rename to correct name">
+                        ALTER TABLE RHQ_PROP_DEF_OPT_SRC
+                        RENAME TO RHQ_CONFIG_PD_OSRC
+                    </statement>
+                    <statement desc="rename sequence">
+                        ALTER TABLE rhq_config_prop_def_opt_src_id_seq  RENAME TO rhq_config_pd_osrc_id_seq
+                    </statement>
+                </schema-directSQL>
+            </schemaSpec>
         </dbupgrade>
     </target>
 </project>

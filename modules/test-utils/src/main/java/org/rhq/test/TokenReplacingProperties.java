@@ -22,10 +22,8 @@ package org.rhq.test;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -65,7 +63,6 @@ public class TokenReplacingProperties extends HashMap<String, String> {
     private static final long serialVersionUID = 1L;
 
     private Map<String, String> wrapped;
-    private Deque<String> currentResolutionStack = new ArrayDeque<String>();
     private Map<Object, String> resolved = new HashMap<Object, String>();
 
     private class Entry implements Map.Entry<String, String> {
@@ -146,21 +143,13 @@ public class TokenReplacingProperties extends HashMap<String, String> {
             return resolved.get(key);
         }
 
-        if (currentResolutionStack.contains(key)) {
-            throw new IllegalArgumentException("Property '" + key + "' indirectly references itself in its value.");
-        }
-
         String rawValue = getRaw(key);
 
         if (rawValue == null) {
             return null;
         }
 
-        currentResolutionStack.push(key.toString());
-
         String ret = readAll(new TokenReplacingReader(new StringReader(rawValue.toString()), this));
-
-        currentResolutionStack.pop();
 
         resolved.put(key, ret);
 

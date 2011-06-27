@@ -19,23 +19,29 @@
 
 package org.rhq.plugins.apache.util;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.net.InetAddress;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.unitils.thirdparty.org.apache.commons.io.FileUtils;
 
+import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.plugins.apache.util.HttpdAddressUtility.Address;
 import org.rhq.test.TokenReplacingProperties;
 import org.rhq.test.TokenReplacingReader;
@@ -76,7 +82,7 @@ public class ApacheDeploymentUtil {
             public String serverNameDirective = null;
             public final List<String> additionalDirectives = new ArrayList<String>();
 
-            public String getServerName() {
+            private String getServerName() {
                 String serverName = null;
                 if (serverNameDirective != null && serverNameDirective.startsWith("ServerName")) {
                     int startIdx = serverNameDirective.indexOf(' ');
@@ -93,14 +99,21 @@ public class ApacheDeploymentUtil {
                 return serverName;
             }
 
-            public VHostSpec getVHostSpec() {
+            private String getServerName(Map<String, String> replacements) {
+                TokenReplacingReader rdr = new TokenReplacingReader(new StringReader(getServerName()), replacements);
+                StringWriter wrt = new StringWriter(); 
+                StreamUtil.copy(rdr, wrt);
+                return wrt.toString();
+            }
+            
+            public VHostSpec getVHostSpec(Map<String, String> replacements) {
                 VHostSpec ret = new VHostSpec();
-                ret.serverName = getServerName();
-                ret.hosts = getAddresses();
+                ret.serverName = getServerName(replacements);
+                ret.hosts = getAddresses(replacements);
                 return ret;
             }
             
-            public List<String> getAddresses() {
+            private List<String> getAddresses() {
                 ArrayList<String> ret = new ArrayList<String>();
                 if (address1 != null) {
                     ret.add(address1.toString());
@@ -118,6 +131,21 @@ public class ApacheDeploymentUtil {
                 return ret;
             }
 
+            public List<String> getAddresses(Map<String, String> replacements) {
+                List<String> addresses = getAddresses();
+                ListIterator<String> it = addresses.listIterator();
+                while(it.hasNext()) {
+                    String addr = it.next();
+                    
+                    TokenReplacingReader rdr = new TokenReplacingReader(new StringReader(addr), replacements);
+                    StringWriter wrt = new StringWriter();
+                    StreamUtil.copy(rdr, wrt);
+                    it.set(wrt.toString());
+                }
+                
+                return addresses;
+            }
+            
             private void addToTokenReplacements(int ordinal, Map<String, String> tokenReplacements) {
                 String prefix = null;
 
@@ -184,7 +212,7 @@ public class ApacheDeploymentUtil {
         }
 
         public Map<String, String> getTokenReplacements() {
-            HashMap<String, String> ret = new HashMap<String, String>();
+            Map<String, String> ret = new TokenReplacingProperties(new HashMap<String, String>());
 
             ret.put(SERVER_ROOT, serverRoot == null ? "" : serverRoot);
             ret.put(DOCUMENT_ROOT, documentRoot == null ? "" : documentRoot);

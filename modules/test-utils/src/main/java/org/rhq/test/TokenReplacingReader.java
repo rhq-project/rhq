@@ -22,7 +22,11 @@ package org.rhq.test;
 import java.io.IOException;
 import java.io.PushbackReader;
 import java.io.Reader;
+import java.io.StringReader;
 import java.nio.CharBuffer;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -39,12 +43,23 @@ public class TokenReplacingReader extends Reader {
     private String tokenValue = null;
     private int tokenValueIndex = 0;
     private boolean escaping = false;
+    private Deque<String> activeTokens;
+    private Map<String, String> resolvedTokens;
     
     public TokenReplacingReader(Reader source, Map<String, String> tokens) {
         this.pushbackReader = new PushbackReader(source, 2);
         this.tokens = tokens;
+        this.activeTokens = new ArrayDeque<String>();
+        this.resolvedTokens = new HashMap<String, String>();
     }
 
+    protected TokenReplacingReader(String source, Map<String, String> tokens, Deque<String> activeTokens, Map<String, String> resolvedTokens) {
+        pushbackReader = new PushbackReader(new StringReader(source));
+        this.tokens = tokens;
+        this.activeTokens = activeTokens;
+        this.resolvedTokens = resolvedTokens;
+    }
+    
     public int read(CharBuffer target) throws IOException {
         throw new RuntimeException("Operation Not Supported");
     }
@@ -88,11 +103,15 @@ public class TokenReplacingReader extends Reader {
             data = this.pushbackReader.read();
         }
 
-        this.tokenValue = tokens.get(this.tokenNameBuffer.toString());
-
-        if (this.tokenValue == null) {
-            this.tokenValue = "${" + this.tokenNameBuffer.toString() + "}";
+        String tokenName = tokenNameBuffer.toString();
+        
+        if (resolvedTokens.containsKey(tokenName)) {
+            tokenValue = resolvedTokens.get(tokenName);
+        } else {
+            tokenValue = resolveToken(tokenName);
         }
+        
+        tokenValueIndex = 0;
         
         if (!this.tokenValue.isEmpty()) {
             return this.tokenValue.charAt(this.tokenValueIndex++);
@@ -142,5 +161,41 @@ public class TokenReplacingReader extends Reader {
 
     public void reset() throws IOException {
         throw new IOException("reset() not supported on TokenReplacingReader.");
+    }
+    
+    private String readAll(Reader r) throws IOException {
+        int c;
+        StringBuilder bld = new StringBuilder();
+        while((c = r.read()) >= 0) {
+            bld.append((char)c);
+        }
+        
+        return bld.toString();
+    }
+    
+    private String resolveToken(String tokenName) throws IOException {
+        if (activeTokens.contains(tokenName)) {
+            throw new IllegalArgumentException("Token '" + tokenName + "' (indirectly) contains reference to itself in its value.");
+        }
+        
+        activeTokens.push(tokenName);
+        
+        String tokenValue = tokens.get(tokenName);
+        
+        if (tokenValue != null) {
+            if (tokenValue.contains("${")) {
+                TokenReplacingReader childReader = new TokenReplacingReader(tokenValue, tokens, activeTokens, resolvedTokens);
+        
+                tokenValue = readAll(childReader);
+            }
+        } else {
+            tokenValue = "${" + tokenName + "}";
+        }
+                
+        resolvedTokens.put(tokenName, tokenValue);
+        
+        activeTokens.pop();
+        
+        return tokenValue;
     }
 }

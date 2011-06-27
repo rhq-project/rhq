@@ -63,8 +63,10 @@ import org.rhq.core.system.SystemInfoFactory;
 import org.rhq.plugins.apache.parser.ApacheDirectiveTree;
 import org.rhq.plugins.apache.util.ApacheDeploymentUtil;
 import org.rhq.plugins.apache.util.ApacheDeploymentUtil.DeploymentConfig;
+import org.rhq.plugins.apache.util.ApacheDeploymentUtil.DeploymentConfig.VHost;
 import org.rhq.plugins.apache.util.ApacheExecutionUtil;
 import org.rhq.plugins.apache.util.HttpdAddressUtility;
+import org.rhq.plugins.apache.util.VHostSpec;
 import org.rhq.test.ObjectCollectionSerializer;
 import org.rhq.test.TokenReplacingReader;
 import org.rhq.test.pc.PluginContainerTest;
@@ -281,61 +283,57 @@ public class UpgradeTestBase extends PluginContainerTest {
     
             replacements.put("main.rhq4.resource.key", ApacheVirtualHostServiceComponent.MAIN_SERVER_RESOURCE_KEY);
             
-            String vhost1Address = deploymentConfig.vhost1 == null ? null : deploymentConfig.vhost1.address1.toString(
-                false, false);
-            String vhost2Address = deploymentConfig.vhost2 == null ? null : deploymentConfig.vhost2.address1.toString(
-                false, false);
-            String vhost3Address = deploymentConfig.vhost3 == null ? null : deploymentConfig.vhost3.address1.toString(
-                false, false);
-            String vhost4Address = deploymentConfig.vhost4 == null ? null : deploymentConfig.vhost4.address1.toString(
-                false, false);
-    
-            if (vhost1Address != null) {
+            VHostSpec vhost1 = deploymentConfig.vhost1 == null ? null : deploymentConfig.vhost1.getVHostSpec(replacements);
+            VHostSpec vhost2 = deploymentConfig.vhost2 == null ? null : deploymentConfig.vhost2.getVHostSpec(replacements);
+            VHostSpec vhost3 = deploymentConfig.vhost3 == null ? null : deploymentConfig.vhost3.getVHostSpec(replacements);
+            VHostSpec vhost4 = deploymentConfig.vhost4 == null ? null : deploymentConfig.vhost4.getVHostSpec(replacements);
+            
+            if (vhost1 != null) {
                 replacements.put(
                     "vhost1.snmp.identifier",
-                    addressUtility.getHttpdInternalVirtualHostAddressRepresentation(runtimeConfig, vhost1Address,
-                        deploymentConfig.vhost1.getServerName()).toString(false, false));
+                    addressUtility.getHttpdInternalVirtualHostAddressRepresentation(runtimeConfig, vhost1.hosts.get(0),
+                        vhost1.serverName).toString(false, false));
                 
                 replacements.put(
                     "vhost1.rhq4.resource.key",
                     ApacheVirtualHostServiceDiscoveryComponent.createResourceKey(
-                        deploymentConfig.vhost1.getServerName(), deploymentConfig.vhost1.getAddresses()));
+                        vhost1.serverName, vhost1.hosts));
             }
     
-            if (vhost2Address != null) {
+            if (vhost2 != null) {
                 replacements.put(
                     "vhost2.snmp.identifier",
-                    addressUtility.getHttpdInternalVirtualHostAddressRepresentation(runtimeConfig, vhost2Address,
-                        deploymentConfig.vhost2.getServerName()).toString(false, false));
+                    addressUtility.getHttpdInternalVirtualHostAddressRepresentation(runtimeConfig, vhost2.hosts.get(0),
+                        vhost2.serverName).toString(false, false));
                 
                 replacements.put(
                     "vhost2.rhq4.resource.key",
                     ApacheVirtualHostServiceDiscoveryComponent.createResourceKey(
-                        deploymentConfig.vhost2.getServerName(), deploymentConfig.vhost2.getAddresses()));
+                        vhost2.serverName, vhost2.hosts));
             }
     
-            if (vhost3Address != null) {
+            if (vhost3 != null) {
                 replacements.put(
                     "vhost3.snmp.identifier",
-                    addressUtility.getHttpdInternalVirtualHostAddressRepresentation(runtimeConfig, vhost3Address,
-                        deploymentConfig.vhost3.getServerName()).toString(false, false));
+                    addressUtility.getHttpdInternalVirtualHostAddressRepresentation(runtimeConfig, vhost3.hosts.get(0),
+                        vhost3.serverName).toString(false, false));
                 
                 replacements.put(
                     "vhost3.rhq4.resource.key",
                     ApacheVirtualHostServiceDiscoveryComponent.createResourceKey(
-                        deploymentConfig.vhost3.getServerName(), deploymentConfig.vhost3.getAddresses()));
+                        vhost3.serverName, vhost3.hosts));
             }
     
-            if (vhost4Address != null) {
+            if (vhost4 != null) {
                 replacements.put(
                     "vhost4.snmp.identifier",
-                    addressUtility.getHttpdInternalVirtualHostAddressRepresentation(runtimeConfig, vhost4Address,
-                        deploymentConfig.vhost4.getServerName()).toString(false, false));
+                    addressUtility.getHttpdInternalVirtualHostAddressRepresentation(runtimeConfig, vhost4.hosts.get(0),
+                        vhost4.serverName).toString(false, false));
                 
                 replacements.put(
                     "vhost4.rhq4.resource.key",
                     ApacheVirtualHostServiceDiscoveryComponent.createResourceKey(
-                        deploymentConfig.vhost4.getServerName(), deploymentConfig.vhost4.getAddresses()));
+                        vhost4.serverName, vhost4.hosts));
             }
     
             //let the user override everything we just did
@@ -474,16 +472,22 @@ public class UpgradeTestBase extends PluginContainerTest {
             List<String> expectedResourceKeys = new ArrayList<String>(5);
     
             DeploymentConfig dc = setup.getDeploymentConfig();
-    
+            Map<String, String> replacements = dc.getTokenReplacements();
+            
+            VHostSpec vh1 = dc.vhost1.getVHostSpec(replacements);
+            VHostSpec vh2 = dc.vhost2.getVHostSpec(replacements);
+            VHostSpec vh3 = dc.vhost3.getVHostSpec(replacements);
+            VHostSpec vh4 = dc.vhost4.getVHostSpec(replacements);
+            
             expectedResourceKeys.add(ApacheVirtualHostServiceComponent.MAIN_SERVER_RESOURCE_KEY);
             expectedResourceKeys.add(ApacheVirtualHostServiceDiscoveryComponent.createResourceKey(
-                dc.vhost1.getServerName(), dc.vhost1.getAddresses()));
+                vh1.serverName, vh1.hosts));
             expectedResourceKeys.add(ApacheVirtualHostServiceDiscoveryComponent.createResourceKey(
-                dc.vhost2.getServerName(), dc.vhost2.getAddresses()));
+                vh2.serverName, vh2.hosts));
             expectedResourceKeys.add(ApacheVirtualHostServiceDiscoveryComponent.createResourceKey(
-                dc.vhost3.getServerName(), dc.vhost3.getAddresses()));
+                vh3.serverName, vh3.hosts));
             expectedResourceKeys.add(ApacheVirtualHostServiceDiscoveryComponent.createResourceKey(
-                dc.vhost4.getServerName(), dc.vhost4.getAddresses()));
+                vh4.serverName, vh4.hosts));
     
             for (Resource vhost : vhosts) {
                 assertTrue(expectedResourceKeys.contains(vhost.getResourceKey()),

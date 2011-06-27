@@ -47,10 +47,11 @@ import org.rhq.test.pc.PluginContainerSetup;
  */
 public class UpgradeSimpleConfigurationFromRHQ3_0_0Test extends UpgradeTestBase {
     
-    //TODO override the *.rhq3.resource.key variables in each test to define whether
-    //the resource key was discovered without SNMP, with SNMP, with Main Server URL set,
-    //or not
-    
+    /**
+     * This tests the upgrade from RHQ 3.0.0 where the apache server was discovered without SNMP support.
+     * The Main Server URL must have been set in this case, otherwise the component would fail to start
+     * and therefore the vhost discovery wouldn't even take place.
+     */
     @Test
     @PluginContainerSetup(plugins = {PLATFORM_PLUGIN, AUGEAS_PLUGIN, APACHE_PLUGIN}, numberOfInitialDiscoveries = 2)
     @Parameters({"apache2.install.dir", "apache2.exe.path"})
@@ -65,7 +66,18 @@ public class UpgradeSimpleConfigurationFromRHQ3_0_0Test extends UpgradeTestBase 
             }
         });
     }
-        
+    
+    /**
+     * This tests the upgrade from RHQ 3.0.0 where the Apache server was discovered with the following:
+     * <p>
+     * <ol>
+     * <li> SNMP enabled
+     * <li> Main URL set or unset (it doesn't make a difference here)
+     * </ol>
+     * @param installDir
+     * @param exePath
+     * @throws Throwable
+     */
     @Test    
     @PluginContainerSetup(plugins = {PLATFORM_PLUGIN, AUGEAS_PLUGIN, APACHE_PLUGIN})
     @Parameters({"apache2.install.dir", "apache2.exe.path"})

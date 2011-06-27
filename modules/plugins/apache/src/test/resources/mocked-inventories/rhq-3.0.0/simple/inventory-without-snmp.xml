@@ -9,7 +9,7 @@
     <id>10041</id>
     <uuid>02f44194-9bb8-44ef-9866-ef7b69eedc0a</uuid>
     <resourceKey>${server.root}</resourceKey>
-    <name>${localhost}:{listen1}</name>
+    <name>${localhost}:${listen1}</name>
     <inventoryStatus>COMMITTED</inventoryStatus>
     <connected>true</connected>
     <version>2.2.17</version>

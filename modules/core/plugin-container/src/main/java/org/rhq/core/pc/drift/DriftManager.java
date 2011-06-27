@@ -142,10 +142,10 @@ public class DriftManager extends AgentService implements DriftAgentService, Con
     }
 
     @Override
-    public boolean requestDriftFiles(List<DriftFile> driftFiles) {
-        // TODO Auto-generated method stub
+    public boolean requestDriftFiles(int resourceId, String driftConfigurationName, List<DriftFile> driftFiles) {
         return false;
     }
+
 
     @Override
     public void unscheduleDriftDetection(int resourceId, DriftConfiguration driftConfiguration) {

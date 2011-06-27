@@ -342,9 +342,8 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
     private class TestConfigService implements DriftAgentService {
 
         @Override
-        public boolean requestDriftFiles(List<DriftFile> driftFiles) {
-            // pretend we actually processed the request
-            return true;
+        public boolean requestDriftFiles(int resourceId, String driftConfigurationName, List<DriftFile> driftFiles) {
+            return false;
         }
 
         @Override

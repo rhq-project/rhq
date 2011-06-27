@@ -330,7 +330,7 @@ public class TestAgentClient implements AgentClient, BundleAgentService, DriftAg
     }
 
     @Override
-    public boolean requestDriftFiles(List<DriftFile> driftFiles) {
+    public boolean requestDriftFiles(int resourceId, String driftConfigurationName, List<DriftFile> driftFiles) {
         return false;
     }
 

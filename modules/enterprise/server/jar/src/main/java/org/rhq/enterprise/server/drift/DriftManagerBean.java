@@ -43,6 +43,8 @@ import javax.jms.Session;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
+import com.sun.net.httpserver.Headers;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hibernate.Hibernate;
@@ -179,7 +181,8 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
                                 resourceId);
                             DriftAgentService service = agentClient.getDriftAgentService();
                             try {
-                                if (service.requestDriftFiles(emptyDriftFiles)) {
+                                if (service.requestDriftFiles(resourceId,
+                                    reader.getHeaders().getDriftConfigurationName(), emptyDriftFiles)) {
                                     for (DriftFile driftFile : emptyDriftFiles) {
                                         driftFile.setStatus(DriftFileStatus.REQUESTED);
                                     }

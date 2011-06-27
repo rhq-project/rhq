@@ -39,7 +39,7 @@ public interface DriftAgentService {
      * @param driftFiles
      * @return the results of the immediate scheduling
      */
-    boolean requestDriftFiles(List<DriftFile> driftFiles);
+    boolean requestDriftFiles(int resourceId, String driftConfigurationName, List<DriftFile> driftFiles);
 
     /**
      * Execute drift detection immediately. If any drift is found, the agent will send the

@@ -135,92 +135,183 @@ public class UpgradeSimpleConfigurationFromRHQ3_0_0Test extends UpgradeTestBase 
                 binPath = exePath;
                 configurationName = DEPLOYMENT_SIMPLE_WITH_RESOLVABLE_SERVERNAMES;                     
                 upgradeShouldSucceed = false;
+                
+                defaultOverrides = new HashMap<String, String>();
             }
             
             @Override
             public void beforeTestSetup(TestSetup testSetup) throws Throwable {
-                testSetup.withApacheSetup().init();
-                ApacheServerComponent component = testSetup.withApacheSetup().getExecutionUtil().getServerComponent();
-                ApacheDirectiveTree config = component.loadParser();
-                config = RuntimeApacheConfiguration.extract(config, component.getCurrentProcessInfo(), component.getCurrentBinaryInfo(), component.getModuleNames(), false);
-
-                DeploymentConfig deployConfig = testSetup.getDeploymentConfig();
-                
-                VirtualHostLegacyResourceKeyUtil keyUtil = new VirtualHostLegacyResourceKeyUtil(component, config);
-                
-                Map<String, String> replacements = deployConfig.getTokenReplacements();
-                
-                defaultOverrides = new HashMap<String, String>();
-                defaultOverrides.put("main.rhq3.resource.key", keyUtil.getRHQ3NonSNMPLegacyMainServerResourceKey());
-                
-                if (deployConfig.vhost1 != null) {                    
-                    defaultOverrides.put("vhost1.rhq3.resource.key", keyUtil.getRHQ3NonSNMPLegacyVirtualHostResourceKey(deployConfig.vhost1.getVHostSpec(replacements)));
-                }
-                
-                if (deployConfig.vhost2 != null) {
-                    defaultOverrides.put("vhost2.rhq3.resource.key", keyUtil.getRHQ3NonSNMPLegacyVirtualHostResourceKey(deployConfig.vhost2.getVHostSpec(replacements)));
-                }
-                
-                if (deployConfig.vhost3 != null) {
-                    defaultOverrides.put("vhost3.rhq3.resource.key", keyUtil.getRHQ3NonSNMPLegacyVirtualHostResourceKey(deployConfig.vhost3.getVHostSpec(replacements)));
-                }
-                
-                if (deployConfig.vhost4 != null) {
-                    defaultOverrides.put("vhost4.rhq3.resource.key", keyUtil.getRHQ3NonSNMPLegacyVirtualHostResourceKey(deployConfig.vhost4.getVHostSpec(replacements)));
-                }
-                
-                testSetup.withDefaultOverrides(defaultOverrides);
+                beforeTestSetupWithSNMP(this, testSetup);
             }
 
             /**
-             * Do our own tests here, because the test method won't do much, since
+             * Do our own tests here, because the generic test method won't do much, since
              * we told it that the upgrade won't succeed.
              */
             @Override
             public void beforeTests(TestSetup setup) throws Throwable {
-                //ok, now we should see the resources upgraded in the fake server inventory.
-                ResourceType serverResourceType = findApachePluginResourceTypeByName("Apache HTTP Server");
-                ResourceType vhostResourceType = findApachePluginResourceTypeByName("Apache Virtual Host");
-        
-                Set<Resource> servers = setup.getFakeInventory().findResourcesByType(serverResourceType);
-
-                assertEquals(servers.size(), 1, "There should be exactly one apache server discovered.");
-        
-                Resource server = servers.iterator().next();
-        
-                String expectedResourceKey = ApacheServerDiscoveryComponent.formatResourceKey(this.serverRoot, this.serverRoot
-                    + "/conf/httpd.conf");
-        
-                assertEquals(server.getResourceKey(), expectedResourceKey,
-                    "The server resource key doesn't seem to be upgraded.");
-        
-                Set<Resource> vhosts = setup.getFakeInventory().findResourcesByType(vhostResourceType);
-        
-                assertEquals(vhosts.size(), 4, "Unexpected number of vhosts discovered found");
-
-                //let's check that the main vhost has a an upgrade error attached to it
-                ApacheServerComponent component = setup.withApacheSetup().getExecutionUtil().getServerComponent();
-                ApacheDirectiveTree config = component.loadParser();
-                config = RuntimeApacheConfiguration.extract(config, component.getCurrentProcessInfo(), component.getCurrentBinaryInfo(), component.getModuleNames(), false);
-                VirtualHostLegacyResourceKeyUtil keyUtil = new VirtualHostLegacyResourceKeyUtil(component, config);
-
-                String mainVhostRK = keyUtil.getRHQ3NonSNMPLegacyMainServerResourceKey();
-                
-                Resource mainVhost = null;
-                for(Resource r : vhosts) {
-                    if (mainVhostRK.equals(r.getResourceKey())) {
-                        mainVhost = r;
-                        break;
-                    }
-                }
-                
-                assertNotNull(mainVhost, "Couldn't find the main vhost with the expected resource key '" + mainVhostRK + "'.");
-                
-                List<ResourceError> errors = mainVhost.getResourceErrors(ResourceErrorType.UPGRADE);
-                assertNotNull(errors, "The main vhost doesn't have any upgrade errors.");
-                assertEquals(errors.size(), 1, "There should be exactly one upgrade error on the main vhost.");
+                testWithSNMP(this, setup);
             }
         });
     }
     
+    @Test    
+    @PluginContainerSetup(plugins = {PLATFORM_PLUGIN, AUGEAS_PLUGIN, APACHE_PLUGIN})
+    @Parameters({"apache2.install.dir", "apache2.exe.path"})
+    public void testWithUnresolvableNamesWithSNMP(final String installDir, final String exePath) throws Throwable {
+        testUpgrade(new TestConfiguration() {
+            {
+                apacheConfigurationFiles = new String[]{"/full-configurations/2.2.x/simple/httpd.conf"};
+                inventoryFile = "/mocked-inventories/rhq-3.0.0/simple/inventory-with-snmp.xml";
+                serverRoot = installDir;
+                binPath = exePath;
+                configurationName = DEPLOYMENT_SIMPLE_WITH_RESOLVABLE_SERVERNAMES;                     
+                upgradeShouldSucceed = false;
+                
+                defaultOverrides = new HashMap<String, String>();
+                defaultOverrides.put(variableName(configurationName, "servername.directive"), "ServerName ${unresolvable.host}");
+                defaultOverrides.put(variableName(configurationName, "vhost1.servername.directive"), "ServerName ${unresolvable.host}:${listen1}");
+                defaultOverrides.put(variableName(configurationName, "vhost2.servername.directive"), "ServerName ${unresolvable.host}:${listen2}");
+                defaultOverrides.put(variableName(configurationName, "vhost3.servername.directive"), "ServerName ${unresolvable.host}:${listen3}");
+                defaultOverrides.put(variableName(configurationName, "vhost4.servername.directive"), "ServerName ${unresolvable.host}:${listen4}");                                
+            }
+            
+            @Override
+            public void beforeTestSetup(TestSetup testSetup) throws Throwable {
+                beforeTestSetupWithSNMP(this, testSetup);
+            }
+
+            /**
+             * Do our own tests here, because the generic test method won't do much, since
+             * we told it that the upgrade won't succeed.
+             */
+            @Override
+            public void beforeTests(TestSetup setup) throws Throwable {
+                testWithSNMP(this, setup);
+            }
+        });
+    }
+    
+    @Test    
+    @PluginContainerSetup(plugins = {PLATFORM_PLUGIN, AUGEAS_PLUGIN, APACHE_PLUGIN})
+    @Parameters({"apache2.install.dir", "apache2.exe.path"})
+    public void testWithNonUniqueNamesWithSNMP(final String installDir, final String exePath) throws Throwable {
+        testUpgrade(new TestConfiguration() {
+            {
+                apacheConfigurationFiles = new String[]{"/full-configurations/2.2.x/simple/httpd.conf"};
+                inventoryFile = "/mocked-inventories/rhq-3.0.0/simple/inventory-with-snmp.xml";
+                serverRoot = installDir;
+                binPath = exePath;
+                configurationName = DEPLOYMENT_SIMPLE_WITH_RESOLVABLE_SERVERNAMES;                     
+                upgradeShouldSucceed = false;
+                
+                defaultOverrides = new HashMap<String, String>();
+                defaultOverrides.put(variableName(configurationName, "servername.directive"), "ServerName ${unresolvable.host}");
+                defaultOverrides.put(variableName(configurationName, "vhost1.servername.directive"), "ServerName ${unresolvable.host}");
+                defaultOverrides.put(variableName(configurationName, "vhost2.servername.directive"), "ServerName ${unresolvable.host}");
+                defaultOverrides.put(variableName(configurationName, "vhost3.servername.directive"), "ServerName ${unresolvable.host}");
+                defaultOverrides.put(variableName(configurationName, "vhost4.servername.directive"), "ServerName ${unresolvable.host}");                                
+            }
+            
+            @Override
+            public void beforeTestSetup(TestSetup testSetup) throws Throwable {
+                beforeTestSetupWithSNMP(this, testSetup);
+            }
+
+            /**
+             * Do our own tests here, because the generic test method won't do much, since
+             * we told it that the upgrade won't succeed.
+             */
+            @Override
+            public void beforeTests(TestSetup setup) throws Throwable {
+                testWithSNMP(this, setup);
+            }
+        });
+    }
+    
+    private void beforeTestSetupWithSNMP(TestConfiguration testConfig, TestSetup setup) throws Exception {
+        setup.withApacheSetup().init();
+        ApacheServerComponent component = setup.withApacheSetup().getExecutionUtil().getServerComponent();
+        ApacheDirectiveTree config = component.loadParser();
+        config = RuntimeApacheConfiguration.extract(config, component.getCurrentProcessInfo(), component.getCurrentBinaryInfo(), component.getModuleNames(), false);
+
+        DeploymentConfig deployConfig = setup.getDeploymentConfig();
+        
+        VirtualHostLegacyResourceKeyUtil keyUtil = new VirtualHostLegacyResourceKeyUtil(component, config);
+        
+        Map<String, String> replacements = deployConfig.getTokenReplacements();
+        
+        testConfig.defaultOverrides.put("main.rhq3.resource.key", keyUtil.getRHQ3NonSNMPLegacyMainServerResourceKey());
+        
+        if (deployConfig.vhost1 != null) {                    
+            testConfig.defaultOverrides.put("vhost1.rhq3.resource.key", keyUtil.getRHQ3NonSNMPLegacyVirtualHostResourceKey(deployConfig.vhost1.getVHostSpec(replacements)));
+        }
+        
+        if (deployConfig.vhost2 != null) {
+            testConfig.defaultOverrides.put("vhost2.rhq3.resource.key", keyUtil.getRHQ3NonSNMPLegacyVirtualHostResourceKey(deployConfig.vhost2.getVHostSpec(replacements)));
+        }
+        
+        if (deployConfig.vhost3 != null) {
+            testConfig.defaultOverrides.put("vhost3.rhq3.resource.key", keyUtil.getRHQ3NonSNMPLegacyVirtualHostResourceKey(deployConfig.vhost3.getVHostSpec(replacements)));
+        }
+        
+        if (deployConfig.vhost4 != null) {
+            testConfig.defaultOverrides.put("vhost4.rhq3.resource.key", keyUtil.getRHQ3NonSNMPLegacyVirtualHostResourceKey(deployConfig.vhost4.getVHostSpec(replacements)));
+        }
+        
+        setup.withDefaultOverrides(testConfig.defaultOverrides);
+    }
+    
+    private void testWithSNMP(TestConfiguration testConfig, TestSetup setup) {
+        //ok, now we should see the resources upgraded in the fake server inventory.
+        ResourceType serverResourceType = findApachePluginResourceTypeByName("Apache HTTP Server");
+        ResourceType vhostResourceType = findApachePluginResourceTypeByName("Apache Virtual Host");
+
+        Set<Resource> servers = setup.getFakeInventory().findResourcesByType(serverResourceType);
+
+        assertEquals(servers.size(), 1, "There should be exactly one apache server discovered.");
+
+        Resource server = servers.iterator().next();
+
+        String expectedResourceKey = ApacheServerDiscoveryComponent.formatResourceKey(testConfig.serverRoot, testConfig.serverRoot
+            + "/conf/httpd.conf");
+
+        assertEquals(server.getResourceKey(), expectedResourceKey,
+            "The server resource key doesn't seem to be upgraded.");
+
+        Set<Resource> vhosts = setup.getFakeInventory().findResourcesByType(vhostResourceType);
+
+        assertEquals(vhosts.size(), 4, "Unexpected number of vhosts discovered found");
+
+        //let's check that the main vhost has a an upgrade error attached to it
+        ApacheServerComponent component = setup.withApacheSetup().getExecutionUtil().getServerComponent();
+        ApacheDirectiveTree config = component.loadParser();
+        config = RuntimeApacheConfiguration.extract(config, component.getCurrentProcessInfo(), component.getCurrentBinaryInfo(), component.getModuleNames(), false);
+        VirtualHostLegacyResourceKeyUtil keyUtil = new VirtualHostLegacyResourceKeyUtil(component, config);
+
+        String mainVhostRK = keyUtil.getRHQ3NonSNMPLegacyMainServerResourceKey();
+        
+        Resource mainVhost = null;
+        for(Resource r : vhosts) {
+            if (mainVhostRK.equals(r.getResourceKey())) {
+                mainVhost = r;
+                break;
+            }
+        }
+        
+        assertNotNull(mainVhost, "Couldn't find the main vhost with the expected resource key '" + mainVhostRK + "'.");
+        
+        List<ResourceError> errors = mainVhost.getResourceErrors(ResourceErrorType.UPGRADE);
+        assertNotNull(errors, "The main vhost doesn't have any upgrade errors.");
+        assertEquals(errors.size(), 1, "There should be exactly one upgrade error on the main vhost.");
+        
+        //check that all other vhosts were not upgraded but have no errors
+        for(Resource r : vhosts) {
+            if (r.equals(mainVhost)) {
+                continue;
+            }
+            
+            assertEquals(r.getResourceErrors(ResourceErrorType.UPGRADE).size(), 0, "Unexpected number of resource upgrade errors on non-main vhost " + r);
+        }
+    }
 }

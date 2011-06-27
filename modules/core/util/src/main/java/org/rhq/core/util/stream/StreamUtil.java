@@ -23,6 +23,8 @@
 package org.rhq.core.util.stream;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -30,7 +32,9 @@ import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
+import java.io.Reader;
 import java.io.Serializable;
+import java.io.Writer;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -86,6 +90,19 @@ public class StreamUtil {
     }
 
     /**
+     * Equivalent of {@link #copy(InputStream, OutputStream)} but using reader and writer instead
+     * of streams.
+     * 
+     * @param rdr
+     * @param wrt
+     * @return
+     * @throws RuntimeException
+     */
+    public static long copy(Reader rdr, Writer wrt) throws RuntimeException {
+        return copy(rdr, wrt, true);
+    }
+    
+    /**
      * Copies data from the input stream to the output stream. Upon completion or on an exception, the streams will be
      * closed but only if <code>closeStreams</code> is <code>true</code>. If <code>closeStreams</code> is <code>
      * false</code>, the streams are left open; the caller has the reponsibility to close them.
@@ -135,6 +152,47 @@ public class StreamUtil {
         return numBytesCopied;
     }
 
+    /**
+     * Equivalent of {@link #copy(InputStream, OutputStream, boolean)} only using reader and writer
+     * instead of input stream and output stream.
+     * 
+     * @param rdr
+     * @param wrt
+     * @param closeStreams
+     * @return
+     * @throws RuntimeException
+     */
+    public static long copy(Reader rdr, Writer wrt, boolean closeStreams) throws RuntimeException {
+        try {
+            long numCharsCopied = 0;
+            char[] buffer = new char[32768];
+            
+            int cnt;
+            while((cnt = rdr.read(buffer)) != -1) {
+                numCharsCopied += cnt;
+                wrt.write(buffer, 0, cnt);
+            }
+            
+            return numCharsCopied;            
+        } catch (IOException e) {
+            throw new RuntimeException("Reader could not have been copied to the writer.", e);
+        } finally {
+            if (closeStreams) {
+                try {
+                    rdr.close();
+                } catch (IOException ioe) {
+                    LOG.warn("Reader could not be closed.", ioe);
+                }
+                
+                try {
+                    wrt.close();                    
+                } catch (IOException ioe) {
+                    LOG.warn("Writer could not be closed.", ioe);
+                }
+            }
+        }
+    }
+    
     /**
      * Copies data from the input stream to the output stream. The caller has the reponsibility to close them. This
      * method allows you to copy a byte range from the input stream. The start byte is the index (where the first byte

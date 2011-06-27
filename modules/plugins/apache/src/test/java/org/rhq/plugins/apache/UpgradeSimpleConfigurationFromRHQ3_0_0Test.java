@@ -25,6 +25,7 @@ import static org.testng.Assert.assertNotNull;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.testng.annotations.Parameters;
@@ -67,6 +68,50 @@ public class UpgradeSimpleConfigurationFromRHQ3_0_0Test extends UpgradeTestBase 
         });
     }
     
+    @Test
+    @PluginContainerSetup(plugins = {PLATFORM_PLUGIN, AUGEAS_PLUGIN, APACHE_PLUGIN}, numberOfInitialDiscoveries = 2)
+    @Parameters({"apache2.install.dir", "apache2.exe.path"})
+    public void testWithUnresolvableNamesWithoutSNMP(final String installDir, final String exePath) throws Throwable {
+        testUpgrade(new TestConfiguration() {
+            {
+                apacheConfigurationFiles = new String[]{"/full-configurations/2.2.x/simple/httpd.conf"};
+                inventoryFile = "/mocked-inventories/rhq-3.0.0/simple/inventory-without-snmp.xml";
+                serverRoot = installDir;
+                binPath = exePath;
+                configurationName = DEPLOYMENT_SIMPLE_WITH_UNRESOLVABLE_SERVER_NAMES;
+                
+                defaultOverrides = new HashMap<String, String>();
+                defaultOverrides.put(variableName(configurationName, "servername.directive"), "ServerName ${unresolvable.host}");
+                defaultOverrides.put(variableName(configurationName, "vhost1.servername.directive"), "ServerName ${unresolvable.host}:${listen1}");
+                defaultOverrides.put(variableName(configurationName, "vhost2.servername.directive"), "ServerName ${unresolvable.host}:${listen2}");
+                defaultOverrides.put(variableName(configurationName, "vhost3.servername.directive"), "ServerName ${unresolvable.host}:${listen3}");
+                defaultOverrides.put(variableName(configurationName, "vhost4.servername.directive"), "ServerName ${unresolvable.host}:${listen4}");                                
+            }
+        });
+    }
+
+    @Test
+    @PluginContainerSetup(plugins = {PLATFORM_PLUGIN, AUGEAS_PLUGIN, APACHE_PLUGIN}, numberOfInitialDiscoveries = 2)
+    @Parameters({"apache2.install.dir", "apache2.exe.path"})
+    public void testWithNonUniqueNamesWithoutSNMP(final String installDir, final String exePath) throws Throwable {
+        testUpgrade(new TestConfiguration() {
+            {
+                apacheConfigurationFiles = new String[]{"/full-configurations/2.2.x/simple/httpd.conf"};
+                inventoryFile = "/mocked-inventories/rhq-3.0.0/simple/inventory-without-snmp.xml";
+                serverRoot = installDir;
+                binPath = exePath;
+                configurationName = DEPLOYMENT_SIMPLE_WITH_UNRESOLVABLE_SERVER_NAMES;
+                
+                defaultOverrides = new HashMap<String, String>();
+                defaultOverrides.put(variableName(configurationName, "servername.directive"), "ServerName ${unresolvable.host}");
+                defaultOverrides.put(variableName(configurationName, "vhost1.servername.directive"), "ServerName ${unresolvable.host}");
+                defaultOverrides.put(variableName(configurationName, "vhost2.servername.directive"), "ServerName ${unresolvable.host}");
+                defaultOverrides.put(variableName(configurationName, "vhost3.servername.directive"), "ServerName ${unresolvable.host}");
+                defaultOverrides.put(variableName(configurationName, "vhost4.servername.directive"), "ServerName ${unresolvable.host}");                                
+            }
+        });
+    }
+
     /**
      * This tests the upgrade from RHQ 3.0.0 where the Apache server was discovered with the following:
      * <p>
@@ -103,23 +148,25 @@ public class UpgradeSimpleConfigurationFromRHQ3_0_0Test extends UpgradeTestBase 
                 
                 VirtualHostLegacyResourceKeyUtil keyUtil = new VirtualHostLegacyResourceKeyUtil(component, config);
                 
+                Map<String, String> replacements = deployConfig.getTokenReplacements();
+                
                 defaultOverrides = new HashMap<String, String>();
                 defaultOverrides.put("main.rhq3.resource.key", keyUtil.getRHQ3NonSNMPLegacyMainServerResourceKey());
                 
                 if (deployConfig.vhost1 != null) {                    
-                    defaultOverrides.put("vhost1.rhq3.resource.key", keyUtil.getRHQ3NonSNMPLegacyVirtualHostResourceKey(deployConfig.vhost1.getVHostSpec()));
+                    defaultOverrides.put("vhost1.rhq3.resource.key", keyUtil.getRHQ3NonSNMPLegacyVirtualHostResourceKey(deployConfig.vhost1.getVHostSpec(replacements)));
                 }
                 
                 if (deployConfig.vhost2 != null) {
-                    defaultOverrides.put("vhost2.rhq3.resource.key", keyUtil.getRHQ3NonSNMPLegacyVirtualHostResourceKey(deployConfig.vhost2.getVHostSpec()));
+                    defaultOverrides.put("vhost2.rhq3.resource.key", keyUtil.getRHQ3NonSNMPLegacyVirtualHostResourceKey(deployConfig.vhost2.getVHostSpec(replacements)));
                 }
                 
                 if (deployConfig.vhost3 != null) {
-                    defaultOverrides.put("vhost3.rhq3.resource.key", keyUtil.getRHQ3NonSNMPLegacyVirtualHostResourceKey(deployConfig.vhost3.getVHostSpec()));
+                    defaultOverrides.put("vhost3.rhq3.resource.key", keyUtil.getRHQ3NonSNMPLegacyVirtualHostResourceKey(deployConfig.vhost3.getVHostSpec(replacements)));
                 }
                 
                 if (deployConfig.vhost4 != null) {
-                    defaultOverrides.put("vhost4.rhq3.resource.key", keyUtil.getRHQ3NonSNMPLegacyVirtualHostResourceKey(deployConfig.vhost4.getVHostSpec()));
+                    defaultOverrides.put("vhost4.rhq3.resource.key", keyUtil.getRHQ3NonSNMPLegacyVirtualHostResourceKey(deployConfig.vhost4.getVHostSpec(replacements)));
                 }
                 
                 testSetup.withDefaultOverrides(defaultOverrides);

@@ -59,7 +59,7 @@ public class ResourcePermission implements Serializable {
         boolean configureWrite, //
         boolean content, //
         boolean createChildResources,//
-        boolean deleteResource) {
+        boolean deleteResource, boolean drift) {
 
         this.permissions = new HashSet<Permission>();
 
@@ -93,8 +93,12 @@ public class ResourcePermission implements Serializable {
         if (deleteResource) {
             this.permissions.add(Permission.DELETE_RESOURCE);
         }
+        if (drift) {
+            this.permissions.add(Permission.MANAGE_DRIFT);
+        }
     }
 
+    @SuppressWarnings("unchecked")
     public ResourcePermission(Set<Permission> permissions) {
         if (permissions instanceof EnumSet) {
             throw new IllegalArgumentException("EnumSet is not allowed due to GWT Serialization issues");
@@ -119,10 +123,8 @@ public class ResourcePermission implements Serializable {
         return this.permissions.contains(Permission.MANAGE_ALERTS);
     }
 
-    // TODO geta real resource perm
     public boolean isDrift() {
-        return true;
-        //return this.permissions.contains(Permission.MANAGE_DRIFT);
+        return this.permissions.contains(Permission.MANAGE_DRIFT);
     }
 
     public boolean isEvent() {

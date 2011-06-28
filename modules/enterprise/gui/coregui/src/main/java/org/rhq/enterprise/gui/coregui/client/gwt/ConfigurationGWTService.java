@@ -88,7 +88,5 @@ public interface ConfigurationGWTService extends RemoteService {
     void deleteGroupResourceConfigurationUpdate(Integer groupId, Integer[] groupResourceConfigUpdateIds)
         throws RuntimeException;
 
-    Configuration getConfiguration(int configurationId);
-
     ConfigurationDefinition getOptionValuesForConfigDefinition(ConfigurationDefinition definition);
 }

@@ -53,7 +53,6 @@ public enum Permission {
      */
     MANAGE_SETTINGS(Target.GLOBAL), // 2
 
-    
     /* ========= Resource Permissions ========= */
 
     /**
@@ -126,8 +125,13 @@ public enum Permission {
      * Can C/U/D repositories and content sources
      */
     // NOTE: This is a GLOBAL permission but defined here to maintain the ordinal indexes
-    MANAGE_REPOSITORIES(Target.GLOBAL) // 15
-    
+    MANAGE_REPOSITORIES(Target.GLOBAL), // 15
+
+    /**
+     * Can C/U/D drift related entities
+     */
+    MANAGE_DRIFT(Target.RESOURCE) // 16
+
     ;
 
     /**
@@ -161,12 +165,12 @@ public enum Permission {
     static {
         for (Permission permission : Permission.values()) {
             switch (permission.getTarget()) {
-                case GLOBAL:
-                    GLOBAL_ALL.add(permission);
-                    break;
-                case RESOURCE:
-                    RESOURCE_ALL.add(permission);
-                    break;
+            case GLOBAL:
+                GLOBAL_ALL.add(permission);
+                break;
+            case RESOURCE:
+                RESOURCE_ALL.add(permission);
+                break;
             }
         }
     }

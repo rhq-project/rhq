@@ -105,6 +105,18 @@ public class DriftGWTServiceImpl extends AbstractGWTServiceImpl implements Drift
     }
 
     @Override
+    public DriftConfiguration getDriftConfiguration(EntityContext entityContext, int driftConfigId)
+        throws RuntimeException {
+        try {
+            DriftConfiguration driftConfig = driftManager.getDriftConfiguration(getSessionSubject(), entityContext,
+                driftConfigId);
+            return SerialUtility.prepare(driftConfig, "DriftService.getDriftConfiguration");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    @Override
     public void updateDriftConfiguration(EntityContext entityContext, DriftConfiguration driftConfig) {
         try {
             this.driftManager.updateDriftConfiguration(getSessionSubject(), entityContext, driftConfig);

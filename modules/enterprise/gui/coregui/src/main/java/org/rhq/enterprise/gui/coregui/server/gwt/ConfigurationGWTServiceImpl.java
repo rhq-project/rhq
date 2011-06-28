@@ -48,7 +48,7 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
         throws RuntimeException {
         try {
             configurationManager.purgeResourceConfigurationUpdates(getSessionSubject(), configUpdateIds,
-                    purgeInProgress);
+                purgeInProgress);
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
@@ -87,7 +87,7 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
     public PluginConfigurationUpdate getLatestPluginConfigurationUpdate(int resourceId) throws RuntimeException {
         try {
             PluginConfigurationUpdate update = configurationManager.getLatestPluginConfigurationUpdate(
-                    getSessionSubject(), resourceId);
+                getSessionSubject(), resourceId);
             return SerialUtility.prepare(update, "ConfigurationService.getLatestPluginConfigurationUpdate");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
@@ -108,7 +108,7 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
     public ConfigurationDefinition getPluginConfigurationDefinition(int resourceTypeId) throws RuntimeException {
         try {
             ConfigurationDefinition definition = configurationManager.getPluginConfigurationDefinitionForResourceType(
-                    getSessionSubject(), resourceTypeId);
+                getSessionSubject(), resourceTypeId);
             return SerialUtility.prepare(definition, "ConfigurationService.getPluginConfigDefinition");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
@@ -142,7 +142,7 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
         Long endDate, boolean suppressOldest, PageControl pc) throws RuntimeException {
         try {
             PageList<ResourceConfigurationUpdate> updates = configurationManager.findResourceConfigurationUpdates(
-                    getSessionSubject(), resourceId, beginDate, endDate, suppressOldest, pc);
+                getSessionSubject(), resourceId, beginDate, endDate, suppressOldest, pc);
             if (!updates.isEmpty()) {
                 List<Resource> resources = new ArrayList<Resource>(updates.size());
                 for (ResourceConfigurationUpdate update : updates) {
@@ -165,7 +165,7 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
         throws RuntimeException {
         try {
             ResourceConfigurationUpdate update = configurationManager.updateResourceConfiguration(getSessionSubject(),
-                    resourceId, configuration);
+                resourceId, configuration);
             return SerialUtility.prepare(update, "ConfigurationService.updateResourceConfiguration");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
@@ -177,7 +177,7 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
         throws RuntimeException {
         try {
             PluginConfigurationUpdate update = configurationManager.updatePluginConfiguration(getSessionSubject(),
-                    resourceId, configuration);
+                resourceId, configuration);
             return SerialUtility.prepare(update, "ConfigurationService.updatePluginConfiguration");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
@@ -323,7 +323,7 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
         try {
             Map<Integer, Configuration> configurations = convertToMap(pluginConfigurations);
             this.configurationManager.scheduleGroupPluginConfigurationUpdate(getSessionSubject(), groupId,
-                    configurations);
+                configurations);
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
@@ -334,7 +334,7 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
         throws RuntimeException {
         try {
             this.configurationManager.deleteGroupPluginConfigurationUpdates(getSessionSubject(), groupId,
-                    groupPluginConfigUpdateIds);
+                groupPluginConfigUpdateIds);
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
@@ -345,18 +345,19 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
         throws RuntimeException {
         try {
             this.configurationManager.deleteGroupResourceConfigurationUpdates(getSessionSubject(), groupId,
-                    groupResourceConfigUpdateIds);
+                groupResourceConfigUpdateIds);
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
     }
 
     @Override
-    public ConfigurationDefinition getOptionValuesForConfigDefinition(
-            ConfigurationDefinition definition) throws RuntimeException {
+    public ConfigurationDefinition getOptionValuesForConfigDefinition(ConfigurationDefinition definition)
+        throws RuntimeException {
         try {
-            ConfigurationDefinition def = configurationManager.getOptionsForConfigurationDefinition(getSessionSubject(), definition);
-            return SerialUtility.prepare(def,"ConfigurationService.getOptionValuesForPropertySimple");
+            ConfigurationDefinition def = configurationManager.getOptionsForConfigurationDefinition(
+                getSessionSubject(), definition);
+            return SerialUtility.prepare(def, "ConfigurationService.getOptionValuesForPropertySimple");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
@@ -371,16 +372,6 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
                 configurations.put(resourceConfiguration.getResourceId(), resourceConfiguration.getConfiguration());
             }
             return configurations;
-        } catch (Throwable t) {
-            throw getExceptionToThrowToClient(t);
-        }
-    }
-
-    @Override
-    public Configuration getConfiguration(int configurationId) throws RuntimeException {
-        try {
-            Configuration configuration = configurationManager.getConfiguration(getSessionSubject(), configurationId);
-            return SerialUtility.prepare(configuration, "ConfigurationService.getConfiguration");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

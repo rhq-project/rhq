@@ -74,6 +74,7 @@ public class ResourceTypeCriteria extends Criteria {
     private boolean fetchProductVersions;
     private boolean fetchBundleType;
     private boolean fetchResources;
+    private boolean fetchDriftConfigurationTemplates;
 
     private PageOrdering sortName;
     private PageOrdering sortCategory;
@@ -200,6 +201,10 @@ public class ResourceTypeCriteria extends Criteria {
 
     public void fetchResources(boolean fetchResources) {
         this.fetchResources = fetchResources;
+    }
+
+    public void fetchDriftConfigurationTemplates(boolean fetchDriftConfigurationTemplates) {
+        this.fetchDriftConfigurationTemplates = fetchDriftConfigurationTemplates;
     }
 
     public void addSortName(PageOrdering sortName) {

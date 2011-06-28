@@ -104,6 +104,16 @@ public interface DriftGWTService extends RemoteService {
     PageList<Drift> findDriftsByCriteria(DriftCriteria criteria) throws RuntimeException;
 
     /**
+     * Get the specified drift configuration for the specified context.
+     * 
+     * @param entityContext
+     * @param driftConfigId
+     * @return
+     * @throws RuntimeException
+     */
+    DriftConfiguration getDriftConfiguration(EntityContext entityContext, int driftConfigId) throws RuntimeException;
+
+    /**
      * Update the provided driftConfig (identified by name) on the specified EntityContext.  If it exists it will be replaced. If not it will
      * be added.  Agents, if available, will be notified of the change. 
      * 

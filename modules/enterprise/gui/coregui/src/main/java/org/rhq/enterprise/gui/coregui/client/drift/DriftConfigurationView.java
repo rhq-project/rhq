@@ -43,6 +43,7 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablem
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
+import org.rhq.enterprise.gui.coregui.client.drift.wizard.DriftAddConfigWizard;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
@@ -149,9 +150,7 @@ public class DriftConfigurationView extends TableSection<DriftConfigurationDataS
 
         addTableAction("Add", MSG.common_button_add(), null, new TableAction() {
             public boolean isEnabled(ListGridRecord[] selection) {
-                ListGrid grid = getListGrid();
-                ResultSet resultSet = (null != grid) ? grid.getResultSet() : null;
-                return (hasWriteAccess && grid != null && resultSet != null && !resultSet.isEmpty());
+                return hasWriteAccess;
             }
 
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
@@ -181,7 +180,7 @@ public class DriftConfigurationView extends TableSection<DriftConfigurationDataS
     }
 
     void add() {
-        // TODO: kick off wizard to add new drift config
+        DriftAddConfigWizard.showWizard(context);
     }
 
     void delete(ListGridRecord[] records) {

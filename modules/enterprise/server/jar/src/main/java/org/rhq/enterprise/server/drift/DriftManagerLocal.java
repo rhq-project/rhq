@@ -94,6 +94,17 @@ public interface DriftManagerLocal extends DriftManagerRemote {
     PageList<Drift> findDriftsByCriteria(Subject subject, DriftCriteria criteria);
 
     /**
+     * Get the specified drift configuration for the specified context.
+     * 
+     * @param entityContext
+     * @param driftConfigId
+     * @return The drift configuration
+     * @throws RuntimeException, IllegalArgumentException if entity or driftConfig not found.
+     */
+    DriftConfiguration getDriftConfiguration(Subject subject, EntityContext entityContext, int driftConfigId)
+        throws RuntimeException;
+
+    /**
      * This method stores the provided change-set file for the resource. The version will be incremented based
      * on the max version of existing change-sets for the resource. The change-set will be processed generating
      * requests for drift file content and/or drift instances as required.
@@ -122,6 +133,8 @@ public interface DriftManagerLocal extends DriftManagerRemote {
      * @param driftConfig
      */
     void updateDriftConfiguration(Subject subject, EntityContext entityContext, DriftConfiguration driftConfig);
+
+    // TODO, the stuff below is very preliminary and will change
 
     /**
      * SUPPORTS DRIFT RHQ SERVER PLUGIN 

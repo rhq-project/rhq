@@ -113,29 +113,30 @@ public class DriftConfigurationEditView extends LocatableVLayout implements Prop
             removeMember(editor);
         }
 
-        GWTServiceLookup.getConfigurationService().getConfiguration(driftConfigId, new AsyncCallback<Configuration>() {
-            @Override
-            public void onSuccess(final Configuration result) {
+        GWTServiceLookup.getDriftService().getDriftConfiguration(context, driftConfigId,
+            new AsyncCallback<DriftConfiguration>() {
+                @Override
+                public void onSuccess(final DriftConfiguration result) {
 
-                editor = new ConfigurationEditor(extendLocatorId("Editor"), DriftConfigurationDefinition.getInstance(),
-                    result);
-                editor.setOverflow(Overflow.AUTO);
-                editor.addPropertyValueChangeListener(DriftConfigurationEditView.this);
-                editor.setReadOnly(!hasWriteAccess);
-                addMember(editor);
+                    editor = new ConfigurationEditor(extendLocatorId("Editor"), DriftConfigurationDefinition
+                        .getInstance(), result.getConfiguration());
+                    editor.setOverflow(Overflow.AUTO);
+                    editor.addPropertyValueChangeListener(DriftConfigurationEditView.this);
+                    editor.setReadOnly(!hasWriteAccess);
+                    addMember(editor);
 
-                saveButton.disable();
-                buttonbar.setVisible(true);
-                markForRedraw();
-                refreshing = false;
-            }
+                    saveButton.disable();
+                    buttonbar.setVisible(true);
+                    markForRedraw();
+                    refreshing = false;
+                }
 
-            @Override
-            public void onFailure(Throwable caught) {
-                refreshing = false;
-                CoreGUI.getErrorHandler().handleError("Failed to load configuration.", caught);
-            }
-        });
+                @Override
+                public void onFailure(Throwable caught) {
+                    refreshing = false;
+                    CoreGUI.getErrorHandler().handleError("Failed to load configuration.", caught);
+                }
+            });
     }
 
     private void save() {

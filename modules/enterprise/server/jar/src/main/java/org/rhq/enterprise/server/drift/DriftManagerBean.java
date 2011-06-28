@@ -126,7 +126,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     public void storeChangeSet(final int resourceId, File changeSetZip) throws Exception {
         Resource resource = entityManager.find(Resource.class, resourceId);
         if (null == resource) {
-            throw new IllegalArgumentException("Resource not found: " + resourceId);
+            throw new IllegalArgumentException("Resource not found [" + resourceId + "]");
         }
 
         try {
@@ -189,7 +189,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
                             }
                         }
                     } catch (Exception e) {
-                        String msg = "Failed to store drift changeset: " + driftChangeSet;
+                        String msg = "Failed to store drift changeset [" + driftChangeSet + "]";
                         log.error(msg, e);
                         return false;
                     }
@@ -244,7 +244,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
 
         DriftFileContent df = entityManager.find(DriftFileContent.class, driftFile.getHashId());
         if (null == df) {
-            throw new IllegalArgumentException("DriftFile not found: " + driftFile.getHashId());
+            throw new IllegalArgumentException("DriftFile not found [" + driftFile.getHashId() + "]");
         }
         df.setData(Hibernate.createBlob(new BufferedInputStream(data)));
         df.setStatus(DriftFileStatus.LOADED);
@@ -289,7 +289,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
             int resourceId = entityContext.getResourceId();
             Resource resource = entityManager.find(Resource.class, resourceId);
             if (null == resource) {
-                throw new IllegalArgumentException("Resource not found: " + resourceId);
+                throw new IllegalArgumentException("Entity not found [" + entityContext + "]");
             }
 
             for (Iterator<Configuration> i = resource.getDriftConfigurations().iterator(); i.hasNext();) {
@@ -309,6 +309,11 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
                     break;
                 }
             }
+
+            break;
+
+        default:
+            throw new IllegalArgumentException("Entity Context Type not supported [" + entityContext + "]");
         }
     }
 
@@ -319,7 +324,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
             int resourceId = entityContext.getResourceId();
             Resource resource = entityManager.find(Resource.class, resourceId);
             if (null == resource) {
-                throw new IllegalArgumentException("Resource not found: " + resourceId);
+                throw new IllegalArgumentException("Entity not found [" + entityContext + "]");
             }
 
             for (Iterator<Configuration> i = resource.getDriftConfigurations().iterator(); i.hasNext();) {
@@ -340,6 +345,11 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
             } catch (Exception e) {
                 log.warn(" Unable to inform agent of unscheduled drift detection  [" + driftConfig + "]", e);
             }
+
+            break;
+
+        default:
+            throw new IllegalArgumentException("Entity Context Type not supported [" + entityContext + "]");
         }
     }
 
@@ -363,6 +373,40 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     }
 
     @Override
+    public DriftConfiguration getDriftConfiguration(Subject subject, EntityContext entityContext, int driftConfigId)
+        throws RuntimeException {
+
+        DriftConfiguration result = null;
+
+        switch (entityContext.getType()) {
+        case Resource:
+            Resource resource = entityManager.find(Resource.class, entityContext.getResourceId());
+            if (null == resource) {
+                throw new IllegalArgumentException("Entity not found [" + entityContext + "]");
+            }
+
+            for (Configuration config : resource.getDriftConfigurations()) {
+                if (config.getId() == driftConfigId) {
+                    result = new DriftConfiguration(config);
+                    break;
+                }
+            }
+
+            break;
+
+        default:
+            throw new IllegalArgumentException("Entity Context Type not supported [" + entityContext + "]");
+        }
+
+        if (null == result) {
+            throw new IllegalArgumentException("Drift Configuration Id [" + driftConfigId
+                + "] not found for entityContext [" + entityContext + "]");
+        }
+
+        return result;
+    }
+
+    @Override
     public DriftFile getDriftFile(Subject subject, String sha256) {
         DriftFile result = entityManager.find(DriftFile.class, sha256);
         return result;
@@ -373,7 +417,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
 
         Resource resource = entityManager.find(Resource.class, resourceId);
         if (null == resource) {
-            throw new IllegalArgumentException("Resource not found: " + resourceId);
+            throw new IllegalArgumentException("Resource not found [" + resourceId + "]");
         }
 
         AgentClient agentClient = agentManager.getAgentClient(subjectManager.getOverlord(), resourceId);

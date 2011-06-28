@@ -163,7 +163,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         tabs.add(summaryTab);
 
         inventoryTab = new TwoLevelTab(getTabSet().extendLocatorId("Inventory"), new ViewName("Inventory", MSG
-            .view_tabs_common_inventory()), "/images/icons/Inventory_grey_16.png");
+            .view_tabs_common_inventory()), "subsystems/inventory/Inventory_grey_16.png");
         inventoryChildren = new SubTab(inventoryTab.extendLocatorId("Children"), new ViewName("Children", MSG
             .view_tabs_common_child_resources()), null);
         inventoryChildHistory = new SubTab(inventoryTab.extendLocatorId("ChildHist"), new ViewName("ChildHistory", MSG
@@ -181,7 +181,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         tabs.add(inventoryTab);
 
         alertsTab = new TwoLevelTab(getTabSet().extendLocatorId("Alerts"), new ViewName("Alerts", MSG
-            .view_tabs_common_alerts()), "/images/icons/Alert_grey_16.png");
+            .view_tabs_common_alerts()), "subsystems/alert/Alerts_16.png");
         this.alertHistory = new SubTab(alertsTab.extendLocatorId("History"), new ViewName("History", MSG
             .view_tabs_common_history()), null);
         this.alertDef = new SubTab(alertsTab.extendLocatorId("Definitions"), new ViewName("Definitions", MSG
@@ -190,7 +190,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         tabs.add(alertsTab);
 
         monitoringTab = new TwoLevelTab(getTabSet().extendLocatorId("Monitoring"), new ViewName("Monitoring", MSG
-            .view_tabs_common_monitoring()), "/images/icons/Monitor_grey_16.png");
+            .view_tabs_common_monitoring()), "subsystems/monitor/Monitor_grey_16.png");
         monitorGraphs = new SubTab(monitoringTab.extendLocatorId("Graphs"), new ViewName("Graphs", MSG
             .view_tabs_common_graphs()), null);
         monitorTables = new SubTab(monitoringTab.extendLocatorId("Tables"), new ViewName("Tables", MSG
@@ -208,14 +208,14 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         tabs.add(monitoringTab);
 
         eventsTab = new TwoLevelTab(getTabSet().extendLocatorId("Events"), new ViewName("Events", MSG
-            .view_tabs_common_events()), "/images/icons/Events_grey_16.png");
+            .view_tabs_common_events()), "subsystems/event/Events_grey_16.png");
         this.eventHistory = new SubTab(eventsTab.extendLocatorId("History"), new ViewName("History", MSG
             .view_tabs_common_history()), null);
         eventsTab.registerSubTabs(eventHistory);
         tabs.add(eventsTab);
 
         operationsTab = new TwoLevelTab(getTabSet().extendLocatorId(Tab.OPERATIONS), new ViewName(Tab.OPERATIONS, MSG
-            .view_tabs_common_operations()), "/images/icons/Operation_grey_16.png");
+            .view_tabs_common_operations()), "subsystems/control/Operation_grey_16.png");
         this.operationsSchedules = new SubTab(operationsTab.extendLocatorId(OperationsSubTab.SCHEDULES), new ViewName(
             OperationsSubTab.SCHEDULES, MSG.view_tabs_common_schedules()), null);
         this.operationsHistory = new SubTab(operationsTab.extendLocatorId(OperationsSubTab.HISTORY), new ViewName(
@@ -224,7 +224,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         tabs.add(operationsTab);
 
         configurationTab = new TwoLevelTab(getTabSet().extendLocatorId(Tab.CONFIGURATION), new ViewName(
-            Tab.CONFIGURATION, MSG.view_tabs_common_configuration()), "/images/icons/Configure_grey_16.png");
+            Tab.CONFIGURATION, MSG.view_tabs_common_configuration()), "subsystems/configure/Configure_grey_16.png");
         this.configCurrent = new SubTab(configurationTab.extendLocatorId(ConfigurationSubTab.CURRENT), new ViewName(
             ConfigurationSubTab.CURRENT, MSG.view_tabs_common_current()), null);
         this.configHistory = new SubTab(configurationTab.extendLocatorId(ConfigurationSubTab.HISTORY), new ViewName(
@@ -233,7 +233,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         tabs.add(configurationTab);
 
         driftTab = new TwoLevelTab(getTabSet().extendLocatorId("Drift"), new ViewName("Drift", MSG
-            .view_tabs_common_drift()), "/images/icons/Configure_grey_16.png");
+            .view_tabs_common_drift()), "subsystems/drift/Drift_16.png");
         this.driftHistory = new SubTab(driftTab.extendLocatorId("History"), new ViewName("History", MSG
             .view_tabs_common_history()), null);
         this.driftConfig = new SubTab(driftTab.extendLocatorId("Config"), new ViewName("Config", MSG
@@ -242,7 +242,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         tabs.add(driftTab);
 
         contentTab = new TwoLevelTab(getTabSet().extendLocatorId("Content"), new ViewName("Content", MSG
-            .view_tabs_common_content()), "/images/icons/Content_grey_16.png");
+            .view_tabs_common_content()), "subsystems/content/Content_grey_16.png");
         this.contentDeployed = new SubTab(contentTab.extendLocatorId("Deployed"), new ViewName("Deployed", MSG
             .view_tabs_common_deployed()), null);
         this.contentNew = new SubTab(contentTab.extendLocatorId("New"),

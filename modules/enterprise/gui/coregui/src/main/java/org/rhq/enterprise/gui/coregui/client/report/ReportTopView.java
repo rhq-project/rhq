@@ -144,7 +144,7 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
         });
 
         NavigationItem recentDriftsItem = new NavigationItem(DriftHistoryView.SUBSYSTEM_VIEW_ID,
-            "subsystems/configure/Configure_16.png", new ViewFactory() {
+            "subsystems/drift/Drift_16.png", new ViewFactory() {
                 public Canvas createView() {
                     return new SubsystemResourceDriftView(
                         extendLocatorId(DriftHistoryView.SUBSYSTEM_VIEW_ID.getName()), getGlobalPermissions().contains(

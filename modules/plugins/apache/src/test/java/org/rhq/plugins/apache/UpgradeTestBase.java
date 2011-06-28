@@ -89,7 +89,8 @@ public class UpgradeTestBase extends PluginContainerTest {
         private ApacheSetup apacheSetup = new ApacheSetup();
         private DeploymentConfig deploymentConfig;
         private Map<String, String> defaultOverrides = new HashMap<String, String>();
-
+        private Map<String, String> inventoryFileReplacements;
+        
         public class ApacheSetup {
             private String serverRoot;
             private String exePath;
@@ -272,7 +273,8 @@ public class UpgradeTestBase extends PluginContainerTest {
             Map<String, String> replacements = deploymentConfig.getTokenReplacements();                  
             replacements.put("server.root", apacheSetup.serverRoot);
             replacements.put("exe.path", apacheSetup.exePath);
-            replacements.put("localhost", determineLocalhost());
+            
+            ApacheDeploymentUtil.addDefaultVariables(replacements, null);
     
             HttpdAddressUtility addressUtility = apacheSetup.getExecutionUtil().getServerComponent()
                 .getAddressUtility();
@@ -339,6 +341,8 @@ public class UpgradeTestBase extends PluginContainerTest {
             //let the user override everything we just did
             replacements.putAll(defaultOverrides);
             
+            inventoryFileReplacements = replacements;
+            
             InputStream dataStream = getClass().getResourceAsStream(inventoryFile);
     
             Reader rdr = new TokenReplacingReader(new InputStreamReader(dataStream), replacements);
@@ -355,20 +359,21 @@ public class UpgradeTestBase extends PluginContainerTest {
             return this;
         }
     
+        /**
+         * After the setup, this returns all the variables used to update the tokens in the inventory file. 
+         * 
+         * @return
+         */
+        public Map<String, String> getInventoryFileReplacements() {
+            return inventoryFileReplacements;
+        }
+        
         private void fixupParent(Resource parent, Collection<Resource> children) {
             for (Resource child : children) {
                 child.setParentResource(parent);
                 if (child.getChildResources() != null) {
                     fixupParent(child, child.getChildResources());
                 }
-            }
-        }
-    
-        private String determineLocalhost() {
-            try {
-                return InetAddress.getLocalHost().getCanonicalHostName();
-            } catch (UnknownHostException e) {
-                return "127.0.0.1";
             }
         }
     }

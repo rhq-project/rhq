@@ -12,35 +12,33 @@ public class ScheduleQueueImpl implements ScheduleQueue {
 
     @Override
     public DriftDetectionSchedule dequeue() {
-        Lock writeLock = lock.writeLock();
         try {
+            lock.writeLock().lock();
             return queue.poll();
         } finally {
-            writeLock.unlock();
+            lock.writeLock().unlock();
         }
     }
 
     @Override
     public boolean enqueue(DriftDetectionSchedule schedule) {
-        Lock writeLock = lock.writeLock();
         boolean inserted = false;
         try {
-            writeLock.lock();
+            lock.writeLock().lock();
             inserted = queue.offer(schedule);
         } finally {
-            writeLock.unlock();
+            lock.writeLock().unlock();
         }
         return inserted;
     }
 
     @Override
     public void clear() {
-        Lock writeLock = lock.writeLock();
         try {
-            writeLock.lock();
+            lock.writeLock().lock();
             queue.clear();
         } finally {
-            writeLock.unlock();
+            lock.writeLock().unlock();
         }
     }
 }

@@ -52,13 +52,14 @@ public class DriftDetector implements Runnable {
             return;
         }
 
+        DriftConfiguration driftConfig = schedule.getDriftConfiguration();
+
         try {
             // TODO add logic to determine if there is an existing changeset
             // if there is no previous changeset then we need to generate the initial
             // coverage changeset
             ChangeSetWriter writer = changeSetMgr.getChangeSetWriter(schedule.getResourceId(),
-                new Headers(schedule.getDriftConfiguration().getName(), schedule.getDriftConfiguration().getBasedir(),
-                    COVERAGE));
+                new Headers(driftConfig.getName(), driftConfig.getBasedir(), COVERAGE));
 
             DirectoryScanner scanner = new DirectoryScanner(schedule.getDriftConfiguration(), writer);
             scanner.scan();
@@ -69,15 +70,14 @@ public class DriftDetector implements Runnable {
 
         schedule.updateShedule();
         scheduleQueue.enqueue(schedule);
-        driftMgr.sendChangeSetToServer(schedule.getResourceId(), schedule.getDriftConfiguration());
+        driftMgr.sendChangeSetToServer(schedule.getResourceId(), driftConfig);
     }
 
     private String relativePath(File basedir, File file) {
         if (basedir.equals(file)) {
-            return basedir.getPath();
+            return basedir.getName();
         }
-        return FilenameUtils.getName(basedir.getAbsolutePath()) + separator +
-            file.getAbsolutePath().substring(basedir.getAbsolutePath().length() + 1);
+        return file.getAbsolutePath().substring(basedir.getAbsolutePath().length() + 1);
     }
 
     private String sha256(File file) throws IOException {
@@ -109,9 +109,9 @@ public class DriftDetector implements Runnable {
         @Override
         protected void handleDirectoryEnd(File directory, int depth, Collection results) throws IOException {
             DirectoryEntry dirEntry = stack.pop();
-            writer.writeDirectoryEntry(dirEntry);
-
-
+            if (dirEntry.getNumberOfFiles() > 0) {
+                writer.writeDirectoryEntry(dirEntry);
+            }
         }
 
         @Override

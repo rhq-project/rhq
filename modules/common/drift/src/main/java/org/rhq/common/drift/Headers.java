@@ -1,17 +1,20 @@
 package org.rhq.common.drift;
 
+import org.rhq.core.domain.drift.DriftChangeSet;
+import org.rhq.core.domain.drift.DriftChangeSetCategory;
+
 public class Headers {
 
     private String driftConfigurationName;
 
     private String basedir;
 
-    private boolean coverageChangeSet;
+    private DriftChangeSetCategory type;
 
-    public Headers(String driftConfigurationName, String basedir, boolean coverageChangeSet) {
+    public Headers(String driftConfigurationName, String basedir, DriftChangeSetCategory type) {
         this.driftConfigurationName = driftConfigurationName;
         this.basedir = basedir;
-        this.coverageChangeSet = coverageChangeSet;
+        this.type = type;
     }
 
     public String getDriftConfigurationName() {
@@ -22,7 +25,8 @@ public class Headers {
         return basedir;
     }
 
-    public boolean isCoverageChangeSet() {
-        return coverageChangeSet;
+    public DriftChangeSetCategory getType() {
+        return type;
     }
+
 }

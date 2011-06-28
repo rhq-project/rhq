@@ -13,11 +13,13 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.common.drift.ChangeSetWriter;
 import org.rhq.common.drift.DirectoryEntry;
 import org.rhq.common.drift.FileEntry;
+import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.util.MessageDigestGenerator;
 
 import static java.io.File.separator;
 import static java.util.Collections.EMPTY_LIST;
+import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
 
 public class DriftDetector implements Runnable {
     private Log log = LogFactory.getLog(DriftDetector.class);
@@ -54,7 +56,7 @@ public class DriftDetector implements Runnable {
             // if there is no previous changeset then we need to generate the initial
             // coverage changeset
             ChangeSetWriter writer = changeSetMgr.getChangeSetWriter(schedule.getResourceId(),
-            schedule.getDriftConfiguration(), true);
+            schedule.getDriftConfiguration(), COVERAGE);
 
             DirectoryScanner scanner = new DirectoryScanner(schedule.getDriftConfiguration(), writer);
             scanner.scan();

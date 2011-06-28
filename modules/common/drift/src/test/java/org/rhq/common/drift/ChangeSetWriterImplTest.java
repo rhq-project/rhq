@@ -9,6 +9,7 @@ import org.testng.annotations.Test;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.drift.DriftConfiguration;
 
 import static org.apache.commons.io.FileUtils.deleteDirectory;
@@ -17,6 +18,7 @@ import static org.apache.commons.io.IOUtils.readLines;
 import static org.rhq.common.drift.FileEntry.addedFileEntry;
 import static org.rhq.common.drift.FileEntry.changedFileEntry;
 import static org.rhq.common.drift.FileEntry.removedFileEntry;
+import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
@@ -35,9 +37,8 @@ public class ChangeSetWriterImplTest {
     public void writeDirectoryEntryWithAddedFile() throws Exception {
         File changeSetFile = new File(changeSetsDir, "added-file-test");
         DriftConfiguration driftConfig = driftConfiguration("added-file-test", "myresource");
-        boolean coverageChangeSet = true;
 
-        ChangeSetWriterImpl writer = new ChangeSetWriterImpl(changeSetFile, driftConfig, coverageChangeSet);
+        ChangeSetWriterImpl writer = new ChangeSetWriterImpl(changeSetFile, driftConfig, COVERAGE);
 
         writer.writeDirectoryEntry(new DirectoryEntry("myresource/conf").add(
             addedFileEntry("myconf.conf", "a34ef6")));
@@ -49,7 +50,7 @@ public class ChangeSetWriterImplTest {
         assertEquals(lines.size(), 6, "Expected to find six lines in " + metaDataFile.getPath() +
             " - three for the header followed by three for a directory entry.");
 
-        assertHeaderEquals(lines, "added-file-test", "myresource", "true");
+        assertHeaderEquals(lines, "added-file-test", "myresource", "C");
 
         assertEquals(lines.get(3), "myresource/conf 1", "The first line for a directory entry should specify the " +
             "directory path followed by the number of lines in the entry.");
@@ -62,9 +63,8 @@ public class ChangeSetWriterImplTest {
     public void writeDirectoryEntryWithRemovedFile() throws Exception {
         File changeSetFile = new File(changeSetsDir, "removed-file-test");
         DriftConfiguration driftConfig = driftConfiguration("removed-file-test", "myresource");
-        boolean coverageChangeSet = true;
 
-        ChangeSetWriterImpl writer = new ChangeSetWriterImpl(changeSetFile, driftConfig, coverageChangeSet);
+        ChangeSetWriterImpl writer = new ChangeSetWriterImpl(changeSetFile, driftConfig, COVERAGE);
 
         writer.writeDirectoryEntry(new DirectoryEntry("myresource/conf").add(
             removedFileEntry("myconf.conf", "a34ef6")));
@@ -76,7 +76,7 @@ public class ChangeSetWriterImplTest {
         assertEquals(lines.size(), 6, "Expected to find six lines in " + metaDataFile.getPath() +
             " - three for the header followed by three for a directory entry.");
 
-        assertHeaderEquals(lines, "removed-file-test", "myresource", "true");
+        assertHeaderEquals(lines, "removed-file-test", "myresource", "C");
 
         assertEquals(lines.get(3), "myresource/conf 1", "The first line for a directory entry should specify the " +
             "directory path followed by the number of lines in the entry.");
@@ -89,9 +89,8 @@ public class ChangeSetWriterImplTest {
     public void writeDirectoryEntryWithChangedFile() throws Exception {
         File changeSetFile = new File(changeSetsDir, "changed-file-test");
         DriftConfiguration driftConfig = driftConfiguration("changed-file-test", "myresource");
-        boolean coverageChangeSet = true;
 
-        ChangeSetWriterImpl writer = new ChangeSetWriterImpl(changeSetFile, driftConfig, coverageChangeSet);
+        ChangeSetWriterImpl writer = new ChangeSetWriterImpl(changeSetFile, driftConfig, COVERAGE);
 
         writer.writeDirectoryEntry(new DirectoryEntry("myresource/conf").add(
             changedFileEntry("myconf.conf", "a34ef6", "c2d55f")));
@@ -103,7 +102,7 @@ public class ChangeSetWriterImplTest {
         assertEquals(lines.size(), 6, "Expected to find six lines in " + metaDataFile.getPath() +
             " - three for the header followed by three for a directory entry.");
 
-        assertHeaderEquals(lines, "changed-file-test", "myresource", "true");
+        assertHeaderEquals(lines, "changed-file-test", "myresource", "C");
 
         assertEquals(lines.get(3), "myresource/conf 1", "The first line for a directory entry should specify the " +
             "directory path followed by the number of lines in the entry.");
@@ -120,7 +119,8 @@ public class ChangeSetWriterImplTest {
      * <ul>
      *   <li>drift configuration name</li>
      *   <li>drift configuration base directory</li>
-     *   <li>boolean flag indicating whether or not this is an initial changeset</li>
+     *   <li>Flag indicating whether or not this is an initial changeset. The flag is a
+     *   single letter code code from {@link DriftChangeSetCategory}</li>
      * </ul>
      * @param lines
      * @param expected
@@ -128,8 +128,8 @@ public class ChangeSetWriterImplTest {
     void assertHeaderEquals(List<String> lines, String... expected) {
         assertEquals(lines.get(0), expected[0], "The first header entry should be the drift configuration name.");
         assertEquals(lines.get(1), expected[1], "The second header entry should be the base directory.");
-        assertEquals(lines.get(2), expected[2], "The second header entry should be a flag indicating whether or not " +
-            "this is a coverage change set");
+        assertEquals(lines.get(2), expected[2], "The third header entry should be a flag indicating the change set " +
+            "type.");
     }
 
     /**

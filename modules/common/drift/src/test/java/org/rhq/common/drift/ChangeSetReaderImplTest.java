@@ -4,6 +4,9 @@ import java.io.StringReader;
 
 import org.testng.annotations.Test;
 
+import org.rhq.core.domain.drift.DriftChangeSetCategory;
+
+import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
 import static org.testng.Assert.*;
 
 public class ChangeSetReaderImplTest {
@@ -12,14 +15,14 @@ public class ChangeSetReaderImplTest {
     public void readDirectoryEntryWithFileAdded() throws Exception {
         String changeset = "file-added-test\n" +
                            "myresource\n" +
-                           "true\n" +
+                           "C\n" +
                            "myresource/conf 1\n" +
                            "a34ef6 0 myconf.conf A";
 
         ChangeSetReaderImpl reader = new ChangeSetReaderImpl(new StringReader(changeset));
 
         Headers actualHeaders = reader.getHeaders();
-        Headers expectedHeaders = new Headers("file-added-test", "myresource", true);
+        Headers expectedHeaders = new Headers("file-added-test", "myresource", COVERAGE);
 
         assertHeadersEquals(actualHeaders, expectedHeaders);
 
@@ -39,14 +42,14 @@ public class ChangeSetReaderImplTest {
     public void readDirectoryEntryWithFileRemoved() throws Exception {
         String changeset = "file-removed-test\n" +
                            "myresource\n" +
-                           "true\n" +
+                           "C\n" +
                            "myresource/conf 1\n" +
                            "0 a34ef6 myconf.conf R";
 
         ChangeSetReaderImpl reader = new ChangeSetReaderImpl(new StringReader(changeset));
 
         Headers actualHeaders = reader.getHeaders();
-        Headers expectedHeaders = new Headers("file-removed-test", "myresource", true);
+        Headers expectedHeaders = new Headers("file-removed-test", "myresource", COVERAGE);
 
         assertHeadersEquals(actualHeaders, expectedHeaders);
 
@@ -66,14 +69,14 @@ public class ChangeSetReaderImplTest {
     public void readDirectoryEntryWithFileChanged() throws Exception {
         String changeset = "file-changed-test\n" +
                            "myresource\n" +
-                           "true\n" +
+                           "C\n" +
                            "myresource/conf 1\n" +
                            "a34ef6 c41b8 myconf.conf C";
 
         ChangeSetReaderImpl reader = new ChangeSetReaderImpl(new StringReader(changeset));
 
         Headers actualHeaders = reader.getHeaders();
-        Headers expectedHeaders = new Headers("file-changed-test", "myresource", true);
+        Headers expectedHeaders = new Headers("file-changed-test", "myresource", COVERAGE);
 
         assertHeadersEquals(actualHeaders, expectedHeaders);
 
@@ -93,7 +96,7 @@ public class ChangeSetReaderImplTest {
             "The drift configuration name, which should be the first header, is wrong.");
         assertEquals(actual.getBasedir(), expected.getBasedir(), "The drift configuration base directory, which " +
             "should be the second header, is wrong.");
-        assertEquals(actual.isCoverageChangeSet(), expected.isCoverageChangeSet(), "The coverage change set flag, " +
+        assertEquals(actual.getType(), expected.getType(), "The change set type flag, " +
             "which should be the third header, is wrong.");
     }
 

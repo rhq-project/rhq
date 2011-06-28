@@ -5,6 +5,7 @@ import java.io.IOException;
 
 import org.rhq.common.drift.ChangeSetReader;
 import org.rhq.common.drift.ChangeSetWriter;
+import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.drift.DriftConfiguration;
 
 public interface ChangeSetManager {
@@ -34,7 +35,7 @@ public interface ChangeSetManager {
     ChangeSetReader getChangeSetReader(int resourceId, DriftConfiguration driftConfiguration) throws IOException;
 
     ChangeSetWriter getChangeSetWriter(int resourceId, DriftConfiguration driftConfiguration,
-        boolean coverageChangeSet) throws IOException;
+        DriftChangeSetCategory type) throws IOException;
 
     void addFileToChangeSet(int resourceId, DriftConfiguration driftConfiguration, File file);
 

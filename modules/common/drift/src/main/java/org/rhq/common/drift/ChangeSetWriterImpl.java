@@ -6,6 +6,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
 
+import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.drift.DriftConfiguration;
 
 public class ChangeSetWriterImpl implements ChangeSetWriter {
@@ -14,19 +15,19 @@ public class ChangeSetWriterImpl implements ChangeSetWriter {
 
     private File changeSetFile;
 
-    public ChangeSetWriterImpl(File changeSetFile, DriftConfiguration driftConfig, boolean coverageChangeSet)
+    public ChangeSetWriterImpl(File changeSetFile, DriftConfiguration driftConfig, DriftChangeSetCategory type)
         throws IOException {
 
         this.changeSetFile = changeSetFile;
         writer = new BufferedWriter(new FileWriter(this.changeSetFile));
 
-        writeHeader(driftConfig, coverageChangeSet);
+        writeHeader(driftConfig, type);
     }
 
-    private void writeHeader(DriftConfiguration driftConfig, boolean initialChangeSet) throws IOException {
+    private void writeHeader(DriftConfiguration driftConfig, DriftChangeSetCategory type) throws IOException {
         writer.write(driftConfig.getName() + "\n");
         writer.write(driftConfig.getBasedir() + "\n");
-        writer.write(initialChangeSet + "\n");
+        writer.write(type.code() + "\n");
     }
 
     public void writeDirectoryEntry(DirectoryEntry dirEntry) throws IOException {

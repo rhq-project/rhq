@@ -10,10 +10,12 @@ import org.testng.annotations.Test;
 import org.rhq.common.drift.ChangeSetWriterImpl;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.test.JMockTest;
 
 import static org.apache.commons.io.FileUtils.touch;
+import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
 import static org.testng.Assert.*;
 import static org.apache.commons.io.FileUtils.deleteDirectory;
 
@@ -80,9 +82,9 @@ public class DriftDetectorTest extends JMockTest {
             allowing(changeSetMgr).getChangeSetReader(schedule.getResourceId(), schedule.getDriftConfiguration());
             will(returnValue(new DriftDetectionSchedule(1, driftConfig)));
 
-            allowing(changeSetMgr).getChangeSetWriter(1, schedule.getDriftConfiguration(), true);
+            allowing(changeSetMgr).getChangeSetWriter(1, schedule.getDriftConfiguration(), COVERAGE);
             will(returnValue(new ChangeSetWriterImpl(new File(changeSetDir, "test"),
-                schedule.getDriftConfiguration(), true)));
+                schedule.getDriftConfiguration(), COVERAGE)));
         }});
 
         DriftDetector driftDetector = new DriftDetector();

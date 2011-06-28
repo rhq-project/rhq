@@ -28,9 +28,26 @@ package org.rhq.core.domain.drift;
  * @author Jay Shaughnesssy
  */
 public enum DriftChangeSetCategory {
-    COVERAGE, // Reports only on files being covered by a drift configuration.
-    DRIFT; // Reports on actual drift.
+    COVERAGE("C"), // Reports only on files being covered by a drift configuration.
+    DRIFT("D"); // Reports on actual drift.
 
-    DriftChangeSetCategory() {
+    private final String code;
+
+    DriftChangeSetCategory(String code) {
+        this.code = code;
     }
+
+    public String code() {
+        return code;
+    }
+
+    public static DriftChangeSetCategory fromCode(String code) {
+        for (DriftChangeSetCategory type : DriftChangeSetCategory.values()) {
+            if (type.code.equals(code)) {
+                return type;
+            }
+        }
+        throw new IllegalArgumentException(code + " is not a DriftChangeSetCategory code");
+    }
+
 }

@@ -9,6 +9,7 @@ import org.rhq.common.drift.ChangeSetReader;
 import org.rhq.common.drift.ChangeSetReaderImpl;
 import org.rhq.common.drift.ChangeSetWriter;
 import org.rhq.common.drift.ChangeSetWriterImpl;
+import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.drift.DriftConfiguration;
 
 import static java.io.File.separator;
@@ -47,7 +48,7 @@ public class ChangeSetManagerImpl implements ChangeSetManager {
 
     @Override
     public ChangeSetWriter getChangeSetWriter(int resourceId, DriftConfiguration driftConfiguration,
-        boolean coverageChangeSet) throws IOException {
+        DriftChangeSetCategory type) throws IOException {
         File resourceDir = new File(changeSetsDir, Integer.toString(resourceId));
         File changeSetDir = new File(resourceDir, driftConfiguration.getName());
 
@@ -55,12 +56,11 @@ public class ChangeSetManagerImpl implements ChangeSetManager {
             changeSetDir.mkdirs();
         }
 
-        return new ChangeSetWriterImpl(new File(changeSetDir, "changeset.txt"), driftConfiguration, coverageChangeSet);
+        return new ChangeSetWriterImpl(new File(changeSetDir, "changeset.txt"), driftConfiguration, type);
     }
 
     @Override
     public void addFileToChangeSet(int resourceId, DriftConfiguration driftConfiguration, File file) {
-        //To change body of implemented methods use File | Settings | File Templates.
     }
 
     private File findChangeSetDir(int resourceId, DriftConfiguration driftConfiguration) {

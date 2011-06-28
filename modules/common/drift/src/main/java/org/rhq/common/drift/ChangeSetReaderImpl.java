@@ -12,6 +12,8 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.drift.DriftChangeSetCategory;
+
 public class ChangeSetReaderImpl implements ChangeSetReader {
 
     private Pattern DIRECTORY_PATTERN = Pattern.compile("^\\s*(.*?)\\s+(\\d+)\\s*$");
@@ -35,9 +37,9 @@ public class ChangeSetReaderImpl implements ChangeSetReader {
     private void readHeaders() throws IOException {
         String name = reader.readLine();
         String basedir = reader.readLine();
-        boolean coverageChangeSet = Boolean.valueOf(reader.readLine());
+        DriftChangeSetCategory type = DriftChangeSetCategory.fromCode(reader.readLine());
 
-        headers = new Headers(name, basedir, coverageChangeSet);
+        headers = new Headers(name, basedir, type);
     }
 
     @Override

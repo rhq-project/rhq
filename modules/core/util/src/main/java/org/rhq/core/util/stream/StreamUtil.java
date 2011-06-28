@@ -34,6 +34,7 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.io.Serializable;
+import java.io.StringWriter;
 import java.io.Writer;
 
 import org.apache.commons.logging.Log;
@@ -74,6 +75,19 @@ public class StreamUtil {
         return out.toByteArray();
     }
 
+    /**
+     * Equivalent of {@link #slurp(InputStream)} but using a reader instead of input stream.
+     * 
+     * @param reader
+     * @return
+     * @throws RuntimeException
+     */
+    public static String slurp(Reader reader) throws RuntimeException {
+        StringWriter wrt = new StringWriter();
+        copy(reader, wrt);
+        return wrt.toString();
+    }
+    
     /**
      * Copies data from the input stream to the output stream. Upon completion or on an exception, the streams will be
      * closed.

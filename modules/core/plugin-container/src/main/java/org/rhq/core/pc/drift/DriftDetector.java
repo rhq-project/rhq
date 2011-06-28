@@ -6,7 +6,6 @@ import java.util.Collection;
 import java.util.Stack;
 
 import org.apache.commons.io.DirectoryWalker;
-import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -14,11 +13,9 @@ import org.rhq.common.drift.ChangeSetWriter;
 import org.rhq.common.drift.DirectoryEntry;
 import org.rhq.common.drift.FileEntry;
 import org.rhq.common.drift.Headers;
-import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.util.MessageDigestGenerator;
 
-import static java.io.File.separator;
 import static java.util.Collections.EMPTY_LIST;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
 
@@ -31,7 +28,7 @@ public class DriftDetector implements Runnable {
 
     private MessageDigestGenerator digestGenerator = new MessageDigestGenerator(MessageDigestGenerator.SHA_256);
 
-    private DriftManager driftMgr;
+    private DriftClient driftClient;
 
     public void setScheduleQueue(ScheduleQueue queue) {
         scheduleQueue = queue;
@@ -41,8 +38,8 @@ public class DriftDetector implements Runnable {
         changeSetMgr = changeSetManager;
     }
 
-    public void setDriftManager(DriftManager driftManager) {
-        driftMgr = driftManager;
+    public void setDriftClient(DriftClient driftClient) {
+        this.driftClient = driftClient;
     }
 
     @Override
@@ -70,7 +67,7 @@ public class DriftDetector implements Runnable {
 
         schedule.updateShedule();
         scheduleQueue.enqueue(schedule);
-        driftMgr.sendChangeSetToServer(schedule.getResourceId(), driftConfig);
+        driftClient.sendChangeSetToServer(schedule.getResourceId(), driftConfig);
     }
 
     private String relativePath(File basedir, File file) {

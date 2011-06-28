@@ -22,7 +22,7 @@ import org.rhq.core.pc.ContainerService;
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.agent.AgentService;
 
-public class DriftManager extends AgentService implements DriftAgentService, ContainerService {
+public class DriftManager extends AgentService implements DriftAgentService, DriftClient, ContainerService {
 
     private final Log log = LogFactory.getLog(DriftManager.class);
 
@@ -54,7 +54,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Con
         DriftDetector driftDetector = new DriftDetector();
         driftDetector.setScheduleQueue(schedulesQueue);
         driftDetector.setChangeSetManager(changeSetMgr);
-        driftDetector.setDriftManager(this);
+        driftDetector.setDriftClient(this);
 
         driftThreadPool = new ScheduledThreadPoolExecutor(5);
         driftThreadPool.scheduleAtFixedRate(new DriftDetector(), 30, 1800, TimeUnit.SECONDS);
@@ -71,6 +71,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Con
         changeSetMgr = null;
     }
 
+    @Override
     public void sendChangeSetToServer(int resourceId, DriftConfiguration driftConfiguration) {
         try {
             File changeSetFile = changeSetMgr.findChangeSet(resourceId, driftConfiguration.getName());
@@ -94,6 +95,21 @@ public class DriftManager extends AgentService implements DriftAgentService, Con
         } catch (IOException e) {
             log.error("An error occurred while trying to send changeset[resourceId: " + resourceId
                 + ", driftConfiguration: " + driftConfiguration.getName() + "]", e);
+        }
+    }
+
+    @Override
+    public void sendChangeSetContentToServer(int resourceId, String driftConfigurationName, File contentDir) {
+        try {
+            File zipFile = new File(pluginContainerConfiguration.getTemporaryDirectory(), "content.zip");
+            zipFileOrDirectory(contentDir, zipFile);
+
+            DriftServerService driftServer = pluginContainerConfiguration.getServerServices().getDriftServerService();
+            driftServer.sendFilesZip(resourceId, zipFile.length(), remoteInputStream(new BufferedInputStream(
+                new FileInputStream(zipFile))));
+        } catch (IOException e) {
+            log.error("An error occurred while trying to send content for changeset[resourceId: " + resourceId +
+                ", driftConfiguration: " + driftConfigurationName + "]", e);
         }
     }
 
@@ -125,7 +141,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Con
         DriftDetector driftDetector = new DriftDetector();
         driftDetector.setChangeSetManager(changeSetMgr);
         driftDetector.setScheduleQueue(queue);
-        driftDetector.setDriftManager(this);
+        driftDetector.setDriftClient(this);
 
         driftThreadPool.execute(driftDetector);
     }
@@ -135,29 +151,27 @@ public class DriftManager extends AgentService implements DriftAgentService, Con
         schedulesQueue.enqueue(new DriftDetectionSchedule(resourceId, driftConfiguration));
     }
 
-    public void sendSnapshotReport(int resourceId, SnapshotHandle handle) throws Exception {
-        DriftServerService driftServer = pluginContainerConfiguration.getServerServices().getDriftServerService();
-
-        driftServer.sendChangesetZip(resourceId, handle.getMetadataFile().length(),
-            remoteInputStream(new BufferedInputStream(new FileInputStream(handle.getMetadataFile()))));
-    }
-
     @Override
     public boolean requestDriftFiles(int resourceId, Headers headers, List<DriftFile> driftFiles) {
-        return false;
+        DriftFilesSender sender = new DriftFilesSender();
+        sender.setResourceId(resourceId);
+        sender.setDriftClient(this);
+        sender.setDriftFiles(driftFiles);
+        sender.setHeaders(headers);
+        sender.setChangeSetManager(changeSetMgr);
+
+        driftThreadPool.execute(sender);
+
+        return true;
     }
 
 
     @Override
     public void unscheduleDriftDetection(int resourceId, DriftConfiguration driftConfiguration) {
-        // TODO Auto-generated method stub
-
     }
 
     @Override
     public void updateDriftDetection(int resourceId, DriftConfiguration driftConfiguration) {
-        // TODO Auto-generated method stub
-
     }
 
 }

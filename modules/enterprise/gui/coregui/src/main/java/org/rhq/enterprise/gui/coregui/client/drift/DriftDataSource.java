@@ -124,6 +124,7 @@ public class DriftDataSource extends RPCDataSource<Drift, DriftCriteria> {
             pathField.setWidth("35%");
             resourceNameField.setWidth("25%");
             ancestryField.setWidth("40%");
+
         } else {
             ctimeField.setWidth(200);
             pathField.setWidth("*");
@@ -270,7 +271,7 @@ public class DriftDataSource extends RPCDataSource<Drift, DriftCriteria> {
         ListGridRecord record = new ListGridRecord();
         record.setAttribute("id", from.getId());
         record.setAttribute("ctime", new Date(from.getCtime()));
-        record.setAttribute("category", from.getCategory());
+        record.setAttribute("category", from.getCategory().name());
         record.setAttribute("path", from.getPath());
 
         DriftChangeSet changeSet = from.getChangeSet();

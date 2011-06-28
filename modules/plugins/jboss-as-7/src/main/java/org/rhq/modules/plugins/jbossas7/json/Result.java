@@ -40,6 +40,8 @@ public class Result {
     private /*List<Map<String, String>>*/Object failureDescription;
     @JsonIgnore
     private boolean success = false;
+    @JsonProperty("rolled-back")
+    private boolean rolledBack = false;
 
     public Result() {
 
@@ -83,4 +85,11 @@ public class Result {
         this.failureDescription = failureDescription;
     }
 
+    public boolean isRolledBack() {
+        return rolledBack;
+    }
+
+    public void setRolledBack(boolean rolledBack) {
+        this.rolledBack = rolledBack;
+    }
 }

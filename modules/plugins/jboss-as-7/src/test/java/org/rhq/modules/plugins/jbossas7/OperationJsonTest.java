@@ -185,7 +185,7 @@ public class OperationJsonTest {
 
     public void arrayResult1() throws Exception {
 
-        String resultString = "{\"outcome\":\"success\",\"result\":[\"standard-sockets\",\"messaging-sockets\"],\"compensating-operation\":null}";
+        String resultString = "{\"outcome\":\"success\",\"result\":[\"standard-sockets\",\"messaging-sockets\"],\"compensating-operation\":null, \"rolled-back\" : false}";
 
         ObjectMapper mapper = new ObjectMapper();
         Result result = mapper.readValue(resultString,Result.class);
@@ -197,6 +197,21 @@ public class OperationJsonTest {
         assert stringList.size()==2;
         assert stringList.get(0).equals("standard-sockets");
         assert stringList.get(1).equals("messaging-sockets");
+        assert !result.isRolledBack();
+
+    }
+
+    public void rolledBack() throws Exception {
+
+        String resultString = "{\"outcome\":\"failed\", \"rolled-back\" : true}";
+
+        ObjectMapper mapper = new ObjectMapper();
+        Result result = mapper.readValue(resultString,Result.class);
+
+        assert result != null;
+        assert result.getOutcome().equals("failed");
+        assert !result.isSuccess();
+        assert result.isRolledBack();
 
     }
 

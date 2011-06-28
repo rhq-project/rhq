@@ -13,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.common.drift.Headers;
 import org.rhq.core.clientapi.agent.drift.DriftAgentService;
 import org.rhq.core.clientapi.server.drift.DriftServerService;
 import org.rhq.core.domain.drift.DriftConfiguration;
@@ -72,7 +73,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Con
 
     public void sendChangeSetToServer(int resourceId, DriftConfiguration driftConfiguration) {
         try {
-            File changeSetFile = changeSetMgr.findChangeSet(resourceId, driftConfiguration);
+            File changeSetFile = changeSetMgr.findChangeSet(resourceId, driftConfiguration.getName());
             if (changeSetFile == null) {
                 log
                     .warn("changeset[resourceId: " + resourceId + ", driftConfiguration: "
@@ -142,7 +143,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Con
     }
 
     @Override
-    public boolean requestDriftFiles(int resourceId, String driftConfigurationName, List<DriftFile> driftFiles) {
+    public boolean requestDriftFiles(int resourceId, Headers headers, List<DriftFile> driftFiles) {
         return false;
     }
 

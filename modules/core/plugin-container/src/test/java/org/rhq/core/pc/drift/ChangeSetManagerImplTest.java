@@ -37,7 +37,7 @@ public class ChangeSetManagerImplTest {
     public void returnNullReaderWhenNoChangeSetExists() throws Exception {
         int resourceId = -1;
         ChangeSetManager changeSetMgr = new ChangeSetManagerImpl(changeSetsDir);
-        ChangeSetReader reader = changeSetMgr.getChangeSetReader(resourceId, driftConfiguration("test", "server"));
+        ChangeSetReader reader = changeSetMgr.getChangeSetReader(resourceId, "test");
 
         assertNull(reader, "Expect null for the reader when no change set exists for the drift configuration.");
     }
@@ -59,7 +59,7 @@ public class ChangeSetManagerImplTest {
         writeLines(new File(changeSetDir, "changeset.txt"), changeSet);
 
         ChangeSetManager changeSetMgr = new ChangeSetManagerImpl(changeSetsDir);
-        ChangeSetReader reader = changeSetMgr.getChangeSetReader(resourceId, drfitConfig);
+        ChangeSetReader reader = changeSetMgr.getChangeSetReader(resourceId, "test-1");
 
         assertNotNull(reader, "Expected to get a change set reader when change set exists");
         assertReaderOpenedOnChangeSet(reader, asList("server/conf", "1"));

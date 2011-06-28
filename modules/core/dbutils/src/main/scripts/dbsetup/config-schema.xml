@@ -58,7 +58,7 @@
         <column name="PROPERTY_DEF_ID" type="INTEGER" required="false" references="RHQ_CONFIG_PROP_DEF"/>
     </table>
 
-    <table name="RHQ_PROP_DEF_OPT_SRC">
+    <table name="RHQ_CONFIG_PD_OSRC">
         <column name="ID" type="INTEGER" required="true" default="sequence-only" initial="10001" primarykey="true"/>
         <column name="LINK_TO_TARGET" type="BOOLEAN" required="false"/>
         <column name="FILTER" type="VARCHAR2" required="false" size="40"/>

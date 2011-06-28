@@ -507,7 +507,17 @@ public class BundleManager extends AgentService implements BundleAgentService, B
         }
         }
 
-        return new File(baseLocation, relativeDeployDir);
+        File destDir = new File(baseLocation, relativeDeployDir);
+
+        if (!destDir.isAbsolute()) {
+            throw new IllegalArgumentException("The base location path specified by [" + destBaseDirValueName
+                + "] in the context [" + bundleDestBaseDir.getValueContext()
+                + "] along with the destination directory of [" + relativeDeployDir
+                + "] did not resolve to an absolute path [" + destDir.getPath()
+                + "] so there is no way to know where to put the bundle.");
+        }
+
+        return destDir;
     }
 
     /**

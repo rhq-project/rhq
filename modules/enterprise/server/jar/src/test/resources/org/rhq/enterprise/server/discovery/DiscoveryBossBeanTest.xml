@@ -10,8 +10,8 @@
                mtime="123456"/>
 
     <rhq_config_def/>
-    <rhq_config_pd_osrc/>
     <rhq_config_prop_def/>
+    <rhq_config_pd_osrc/>
     <rhq_conf_prop_def_enum/>
     <rhq_config_prop_constr/>
 

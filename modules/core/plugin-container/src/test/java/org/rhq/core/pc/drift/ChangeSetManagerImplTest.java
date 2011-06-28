@@ -45,7 +45,6 @@ public class ChangeSetManagerImplTest {
     @Test
     public void returnReaderForRequestedChangeSet() throws Exception {
         int resourceId = 1;
-        DriftConfiguration drfitConfig = driftConfiguration("test-1", "server");
 
         File resourceDir = new File(changeSetsDir, Integer.toString(resourceId));
         File changeSetDir = new File(resourceDir, "test-1");
@@ -53,6 +52,9 @@ public class ChangeSetManagerImplTest {
         assertTrue(changeSetDir.mkdirs(), "Failed to create change set directory: " + changeSetDir.getAbsolutePath());
 
         List<String> changeSet = asList(
+            "test-1",
+            "server",
+            "D",
             "server/conf 1",
             "8f26ac3d 0 myconf.conf A"
         );

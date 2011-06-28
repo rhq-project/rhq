@@ -45,8 +45,8 @@ import javax.xml.bind.annotation.XmlAccessorType;
  * @author Heiko W. Rupp
  */
 @Entity
-@Table(name="RHQ_PROP_DEF_OPT_SRC")
-@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_CONFIG_PROP_DEF_OPT_SRC_ID_SEQ")
+@Table(name="RHQ_CONFIG_PD_OSRC")
+@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_CONFIG_PD_OSRC_ID_SEQ")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class PropertyOptionsSource implements Serializable{
 

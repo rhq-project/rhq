@@ -165,6 +165,7 @@
     <!-- NOTE: The below line is a workaround for a Maven bug, where it does not expand settings.* properties
                used in the distributionManagement section of the POM. -->
     <localRepository>${user.home}/.m2/repository</localRepository>
+      <project.json.version>20080701</project.json.version>
   </properties>
 
 

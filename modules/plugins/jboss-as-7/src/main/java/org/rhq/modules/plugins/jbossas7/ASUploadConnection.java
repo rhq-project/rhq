@@ -51,7 +51,7 @@ public class ASUploadConnection {
 
     private static final String POST_REQUEST_METHOD = "POST";
 
-    private static final String UPLOAD_URL_PATH = "/domain-api/add-content";
+    private static final String UPLOAD_URL_PATH = "/management/add-content";
 
     private final Log log = LogFactory.getLog(ASUploadConnection.class);
 

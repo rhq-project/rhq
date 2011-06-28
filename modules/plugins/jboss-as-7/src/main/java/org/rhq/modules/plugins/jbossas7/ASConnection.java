@@ -52,7 +52,7 @@ public class ASConnection {
     public ASConnection(String host, int port) {
 
         try {
-            url = new URL("http",host,port,"/domain-api");
+            url = new URL("http",host,port,"/management");
             urlString = url.toString();
         } catch (MalformedURLException e) {
             throw new IllegalArgumentException(e.getMessage());

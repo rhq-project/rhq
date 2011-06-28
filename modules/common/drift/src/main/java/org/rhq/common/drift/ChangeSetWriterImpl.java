@@ -15,19 +15,19 @@ public class ChangeSetWriterImpl implements ChangeSetWriter {
 
     private File changeSetFile;
 
-    public ChangeSetWriterImpl(File changeSetFile, DriftConfiguration driftConfig, DriftChangeSetCategory type)
+    public ChangeSetWriterImpl(File changeSetFile, Headers headers)
         throws IOException {
 
         this.changeSetFile = changeSetFile;
         writer = new BufferedWriter(new FileWriter(this.changeSetFile));
 
-        writeHeader(driftConfig, type);
+        writeHeaders(headers);
     }
 
-    private void writeHeader(DriftConfiguration driftConfig, DriftChangeSetCategory type) throws IOException {
-        writer.write(driftConfig.getName() + "\n");
-        writer.write(driftConfig.getBasedir() + "\n");
-        writer.write(type.code() + "\n");
+    private void writeHeaders(Headers headers) throws IOException {
+        writer.write(headers.getDriftConfigurationName() + "\n");
+        writer.write(headers.getBasedir() + "\n");
+        writer.write(headers.getType().code() + "\n");
     }
 
     public void writeDirectoryEntry(DirectoryEntry dirEntry) throws IOException {

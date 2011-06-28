@@ -31,6 +31,12 @@
          <scope>provided</scope>
       </dependency>
 
+       <dependency>
+          <groupId>${rhq.groupId}</groupId>
+          <artifactId>rhq-common-drift</artifactId>
+          <version>${project.version}</version>
+      </dependency>
+
       <!-- TODO: This is a fix for the Javac bug requiring annotations to be
                  available when compiling dependent classes; it is fixed in JDK 6. -->
 

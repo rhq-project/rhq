@@ -36,9 +36,9 @@ public class ChangeSetWriterImplTest {
     @SuppressWarnings("unchecked")
     public void writeDirectoryEntryWithAddedFile() throws Exception {
         File changeSetFile = new File(changeSetsDir, "added-file-test");
-        DriftConfiguration driftConfig = driftConfiguration("added-file-test", "myresource");
+        Headers headers = new Headers("added-file-test", "myresource", COVERAGE);
 
-        ChangeSetWriterImpl writer = new ChangeSetWriterImpl(changeSetFile, driftConfig, COVERAGE);
+        ChangeSetWriterImpl writer = new ChangeSetWriterImpl(changeSetFile, headers);
 
         writer.writeDirectoryEntry(new DirectoryEntry("myresource/conf").add(
             addedFileEntry("myconf.conf", "a34ef6")));
@@ -62,9 +62,9 @@ public class ChangeSetWriterImplTest {
     @SuppressWarnings("unchecked")
     public void writeDirectoryEntryWithRemovedFile() throws Exception {
         File changeSetFile = new File(changeSetsDir, "removed-file-test");
-        DriftConfiguration driftConfig = driftConfiguration("removed-file-test", "myresource");
+        Headers headers = new Headers("removed-file-test", "myresource", COVERAGE);
 
-        ChangeSetWriterImpl writer = new ChangeSetWriterImpl(changeSetFile, driftConfig, COVERAGE);
+        ChangeSetWriterImpl writer = new ChangeSetWriterImpl(changeSetFile, headers);
 
         writer.writeDirectoryEntry(new DirectoryEntry("myresource/conf").add(
             removedFileEntry("myconf.conf", "a34ef6")));
@@ -88,9 +88,9 @@ public class ChangeSetWriterImplTest {
     @SuppressWarnings("unchecked")
     public void writeDirectoryEntryWithChangedFile() throws Exception {
         File changeSetFile = new File(changeSetsDir, "changed-file-test");
-        DriftConfiguration driftConfig = driftConfiguration("changed-file-test", "myresource");
+        Headers headers = new Headers("changed-file-test", "myresource", COVERAGE);
 
-        ChangeSetWriterImpl writer = new ChangeSetWriterImpl(changeSetFile, driftConfig, COVERAGE);
+        ChangeSetWriterImpl writer = new ChangeSetWriterImpl(changeSetFile, headers);
 
         writer.writeDirectoryEntry(new DirectoryEntry("myresource/conf").add(
             changedFileEntry("myconf.conf", "a34ef6", "c2d55f")));

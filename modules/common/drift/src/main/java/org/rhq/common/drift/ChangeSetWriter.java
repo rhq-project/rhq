@@ -22,7 +22,7 @@ import java.io.IOException;
  * <ul>
  *   <li>drift configuration name</li>
  *   <li>drift configuration base directory</li>
- *   <li>flag indicating whether or not this is a coverage changeset</li>
+ *   <li>change set type flag indicating whether this is a coverage or drift changeset</li>
  * </ul>
  * <br/>
  * and where DRIFT_ENTRY has two field that are space delimited. The first is the directory path

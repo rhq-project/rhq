@@ -21,6 +21,7 @@ package org.rhq.core.clientapi.agent.drift;
 
 import java.util.List;
 
+import org.rhq.common.drift.Headers;
 import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.domain.drift.DriftFile;
 
@@ -39,7 +40,7 @@ public interface DriftAgentService {
      * @param driftFiles
      * @return the results of the immediate scheduling
      */
-    boolean requestDriftFiles(int resourceId, String driftConfigurationName, List<DriftFile> driftFiles);
+    boolean requestDriftFiles(int resourceId, Headers headers, List<DriftFile> driftFiles);
 
     /**
      * Execute drift detection immediately. If any drift is found, the agent will send the

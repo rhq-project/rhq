@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.rhq.common.drift.Headers;
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.bundle.BundleAgentService;
 import org.rhq.core.clientapi.agent.bundle.BundlePurgeRequest;
@@ -330,7 +331,7 @@ public class TestAgentClient implements AgentClient, BundleAgentService, DriftAg
     }
 
     @Override
-    public boolean requestDriftFiles(int resourceId, String driftConfigurationName, List<DriftFile> driftFiles) {
+    public boolean requestDriftFiles(int resourceId, Headers headers, List<DriftFile> driftFiles) {
         return false;
     }
 

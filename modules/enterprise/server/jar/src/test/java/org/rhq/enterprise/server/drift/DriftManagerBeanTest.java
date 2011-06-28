@@ -32,6 +32,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import org.rhq.common.drift.Headers;
 import org.rhq.core.clientapi.agent.drift.DriftAgentService;
 import org.rhq.core.clientapi.server.drift.DriftServerService;
 import org.rhq.core.domain.auth.Subject;
@@ -342,7 +343,7 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
     private class TestConfigService implements DriftAgentService {
 
         @Override
-        public boolean requestDriftFiles(int resourceId, String driftConfigurationName, List<DriftFile> driftFiles) {
+        public boolean requestDriftFiles(int resourceId, Headers headers, List<DriftFile> driftFiles) {
             return false;
         }
 

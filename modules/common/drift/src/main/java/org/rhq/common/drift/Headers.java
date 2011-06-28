@@ -1,9 +1,12 @@
 package org.rhq.common.drift;
 
-import org.rhq.core.domain.drift.DriftChangeSet;
+import java.io.Serializable;
+
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
 
-public class Headers {
+public class Headers implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private String driftConfigurationName;
 

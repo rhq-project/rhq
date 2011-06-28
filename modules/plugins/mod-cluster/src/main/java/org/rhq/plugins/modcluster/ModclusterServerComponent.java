@@ -18,8 +18,6 @@
  */
 package org.rhq.plugins.modcluster;
 
-import java.io.InputStream;
-import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
@@ -27,22 +25,12 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
-import org.rhq.core.domain.content.PackageType;
-import org.rhq.core.domain.content.transfer.DeployPackageStep;
-import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
-import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
-import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
-import org.rhq.core.pluginapi.content.ContentFacet;
-import org.rhq.core.pluginapi.content.ContentServices;
-import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
-import org.rhq.core.pluginapi.inventory.CreateResourceReport;
-import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
@@ -62,9 +50,9 @@ import org.rhq.core.pluginapi.operation.OperationResult;
  *
  * @author John Mazzitelli
  */
-public class SamplePluginServerComponent implements ResourceComponent, MeasurementFacet, OperationFacet,
-    ConfigurationFacet, ContentFacet, DeleteResourceFacet, CreateChildResourceFacet {
-    private final Log log = LogFactory.getLog(SamplePluginServerComponent.class);
+public class ModclusterServerComponent implements ResourceComponent, MeasurementFacet, OperationFacet,
+    ConfigurationFacet {
+    private final Log log = LogFactory.getLog(ModclusterServerComponent.class);
 
     /**
      * Represents the resource configuration of the custom product being managed.
@@ -176,70 +164,5 @@ public class SamplePluginServerComponent implements ResourceComponent, Measureme
         resourceConfiguration = report.getConfiguration().deepCopy();
 
         report.setStatus(ConfigurationUpdateStatus.SUCCESS);
-    }
-
-    /**
-     * When this is called, the plugin is responsible for scanning its managed resource and look for content that need
-     * to be managed for that resource. This method should only discover packages of the given package type.
-     *
-     * @see ContentFacet#discoverDeployedPackages(PackageType)
-     */
-    public Set<ResourcePackageDetails> discoverDeployedPackages(PackageType type) {
-        return null;
-    }
-
-    /**
-     * The plugin container calls this method when new packages need to be deployed/installed on resources.
-     *
-     * @see ContentFacet#deployPackages(Set, ContentServices)
-     */
-    public DeployPackagesResponse deployPackages(Set<ResourcePackageDetails> packages, ContentServices contentServices) {
-        return null;
-    }
-
-    /**
-     * When a remote client wants to see the actual data content for an installed package, this method will be called.
-     * This method must return a stream of data containing the full content of the package.
-     *
-     * @see ContentFacet#retrievePackageBits(ResourcePackageDetails)
-     */
-    public InputStream retrievePackageBits(ResourcePackageDetails packageDetails) {
-        return null;
-    }
-
-    /**
-     * This is the method that is used when the component has to create the installation steps and their results.
-     *
-     * @see ContentFacet#generateInstallationSteps(ResourcePackageDetails)
-     */
-    public List<DeployPackageStep> generateInstallationSteps(ResourcePackageDetails packageDetails) {
-        return null;
-    }
-
-    /**
-     * This is called when the actual content of packages should be deleted from the managed resource.
-     *
-     * @see ContentFacet#removePackages(Set)
-     */
-    public RemovePackagesResponse removePackages(Set<ResourcePackageDetails> packages) {
-        return null;
-    }
-
-    /**
-     * When called, the plugin container is asking the plugin to create a new managed resource. The new resource's
-     * details need to be added to the given report.
-     *
-     * @see CreateChildResourceFacet#createResource(CreateResourceReport)
-     */
-    public CreateResourceReport createResource(CreateResourceReport report) {
-        return null;
-    }
-
-    /**
-     * When called, the plugin container is asking the plugin to delete a managed resource.
-     *
-     * @see DeleteResourceFacet#deleteResource()
-     */
-    public void deleteResource() {
     }
 }

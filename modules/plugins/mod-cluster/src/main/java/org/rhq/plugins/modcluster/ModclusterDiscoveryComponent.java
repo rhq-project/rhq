@@ -40,8 +40,8 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
  * @author John Mazzitelli
  */
 @SuppressWarnings("unchecked")
-public class SamplePluginDiscoveryComponent implements ResourceDiscoveryComponent, ManualAddFacet {
-    private final Log log = LogFactory.getLog(SamplePluginDiscoveryComponent.class);
+public class ModclusterDiscoveryComponent implements ResourceDiscoveryComponent, ManualAddFacet {
+    private final Log log = LogFactory.getLog(ModclusterDiscoveryComponent.class);
 
     /**
      * This discovery method is the way the plugin supports "manual-add" capability. The plugin

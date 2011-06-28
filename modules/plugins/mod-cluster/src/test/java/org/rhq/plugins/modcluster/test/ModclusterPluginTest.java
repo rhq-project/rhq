@@ -24,6 +24,9 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.testng.annotations.AfterSuite;
+import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.Test;
 
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.resource.Resource;
@@ -32,22 +35,19 @@ import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.plugin.FileSystemPluginFinder;
 import org.rhq.core.pc.plugin.PluginEnvironment;
 import org.rhq.core.pc.plugin.PluginManager;
-import org.testng.annotations.AfterSuite;
-import org.testng.annotations.BeforeSuite;
-import org.testng.annotations.Test;
 
 /**
  * @author Fady Matar
  */
-@Test(groups = "tomcat-plugin")
+@Test(groups = "modcluster-plugin")
 public class ModclusterPluginTest {
     private Log log = LogFactory.getLog(this.getClass());
-    private static final String PLUGIN_NAME = "Tomcat";
+    private static final String PLUGIN_NAME = "mod_cluster";
 
     @BeforeSuite
     public void start() {
         try {
-            File pluginDir = new File("target/itest/plugins");
+            File pluginDir = new File("target/testsetup/plugins");
             PluginContainerConfiguration pcConfig = new PluginContainerConfiguration();
             pcConfig.setPluginFinder(new FileSystemPluginFinder(pluginDir));
             pcConfig.setPluginDirectory(pluginDir);
@@ -75,16 +75,22 @@ public class ModclusterPluginTest {
         PluginEnvironment pluginEnvironment = pluginManager.getPlugin(PLUGIN_NAME);
         assert (pluginEnvironment != null) : "Null environment, plugin not loaded";
         assert (pluginEnvironment.getPluginName().equals(PLUGIN_NAME));
+
     }
 
     @Test(dependsOnMethods = "testPluginLoad")
     public void testDiscovery() throws Exception {
         InventoryReport report = PluginContainer.getInstance().getInventoryManager().executeServerScanImmediately();
         assert report != null;
-        log.info("Discovery took: " + (report.getEndTime() - report.getStartTime()) + "ms");
+        System.out.println("Discovery took: " + (report.getEndTime() - report.getStartTime()) + "ms");
+
+        report = PluginContainer.getInstance().getInventoryManager().executeServiceScanImmediately();
+        assert report != null;
+        System.out.println("Discovery took: " + (report.getEndTime() - report.getStartTime()) + "ms");
+
         Set<Resource> resources = findResource(PluginContainer.getInstance().getInventoryManager().getPlatform(),
-            "Tomcat");
-        log.info("Found " + resources.size() + " ews / apache tomcat instance(s).");
+            PLUGIN_NAME);
+        log.info("Found " + resources.size() + "mod_cluster instance(s).");
     }
 
     private Set<Resource> findResource(Resource parent, String typeName) {

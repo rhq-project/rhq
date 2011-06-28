@@ -6,17 +6,17 @@
 <objects>
 
 <resource>
-    <id>10041</id>
-    <uuid>02f44194-9bb8-44ef-9866-ef7b69eedc0a</uuid>
+    <id>10022</id>
+    <uuid>e61040b4-d645-44dc-a6b7-460d39f1b625</uuid>
     <resourceKey>${server.root}</resourceKey>
     <name>${localhost}:${listen1}</name>
     <inventoryStatus>COMMITTED</inventoryStatus>
-    <connected>true</connected>
+    <connected>false</connected>
     <version>2.2.17</version>
     <description>Apache Web Server</description>
-    <ctime>1309116183350</ctime>
-    <mtime>1309116225316</mtime>
-    <itime>1309116225316</itime>
+    <ctime>1308835177519</ctime>
+    <mtime>1308835282077</mtime>
+    <itime>1308835282077</itime>
     <modifiedBy>
         <factive>false</factive>
         <fsystem>false</fsystem>
@@ -44,245 +44,17 @@
         <supportsManualAdd>true</supportsManualAdd>
     </resourceType>
     <childResources>
-        <id>10046</id>
-        <uuid>908ea047-889e-4978-a61f-d96e8b1c6d17</uuid>
-        <resourceKey>${vhost4.rhq4.resource.key}</resourceKey>
-        <name>${vhost4.snmp.identifier}</name>
-        <inventoryStatus>COMMITTED</inventoryStatus>
-        <connected>false</connected>
-        <version></version>
-        <description></description>
-        <ctime>1309117635789</ctime>
-        <mtime>1309117635789</mtime>
-        <itime>1309117635788</itime>
-        <modifiedBy>
-            <factive>false</factive>
-            <fsystem>false</fsystem>
-            <id>1</id>
-        </modifiedBy>
-        <resourceType>
-            <category>SERVICE</category>
-            <createDeletePolicy>BOTH</createDeletePolicy>
-            <creationDataType>CONFIGURATION</creationDataType>
-            <id>10046</id>
-            <name>Apache Virtual Host</name>
-            <plugin>Apache</plugin>
-            <pluginConfigurationDefinition>
-                <configurationFormat>STRUCTURED</configurationFormat>
-                <id>10112</id>
-                <propertyDefinitions/>
-            </pluginConfigurationDefinition>
-            <resourceConfigurationDefinition>
-                <configurationFormat>STRUCTURED</configurationFormat>
-                <id>10113</id>
-                <propertyDefinitions/>
-            </resourceConfigurationDefinition>
-            <singleton>false</singleton>
-            <supportsManualAdd>false</supportsManualAdd>
-        </resourceType>
-        <resourceConfiguration>
-            <id>10241</id>
-            <version>0</version>
-            <ctime>1309117635789</ctime>
-            <mtime>1309117635789</mtime>
-        </resourceConfiguration>
-        <pluginConfiguration>
-            <id>10242</id>
-            <version>0</version>
-            <ctime>1309117635790</ctime>
-            <mtime>1309117635790</mtime>
-            <propertySimple>
-                <id>10858</id>
-                <name>responseTimeUrlExcludes</name>
-            </propertySimple>
-            <propertySimple>
-                <id>10857</id>
-                <name>responseTimeLogFile</name>
-                <stringValue>${server.root}/logs/localhost.localdomain11678_rt.log</stringValue>
-            </propertySimple>
-            <propertySimple>
-                <id>10860</id>
-                <name>url</name>
-                <stringValue>http://${vhost4.snmp.identifier}/</stringValue>
-            </propertySimple>
-            <propertySimple>
-                <id>10859</id>
-                <name>responseTimeUrlTransforms</name>
-            </propertySimple>
-        </pluginConfiguration>
-        <agent>
-            <backFilled>false</backFilled>
-            <id>10001</id>
-            <port>0</port>
-        </agent>
-        <currentAvailability>
-            <availabilityType>UP</availabilityType>
-        </currentAvailability>
-    </childResources>
-    <childResources>
-        <id>10047</id>
-        <uuid>5fccc52b-8003-42ed-aa69-0b146c783e91</uuid>
-        <resourceKey>${vhost3.rhq4.resource.key}</resourceKey>
-        <name>${vhost3.snmp.identifier}</name>
-        <inventoryStatus>COMMITTED</inventoryStatus>
-        <connected>false</connected>
-        <version></version>
-        <description></description>
-        <ctime>1309117635802</ctime>
-        <mtime>1309117635802</mtime>
-        <itime>1309117635802</itime>
-        <modifiedBy>
-            <factive>false</factive>
-            <fsystem>false</fsystem>
-            <id>1</id>
-        </modifiedBy>
-        <resourceType>
-            <category>SERVICE</category>
-            <createDeletePolicy>BOTH</createDeletePolicy>
-            <creationDataType>CONFIGURATION</creationDataType>
-            <id>10046</id>
-            <name>Apache Virtual Host</name>
-            <plugin>Apache</plugin>
-            <pluginConfigurationDefinition>
-                <configurationFormat>STRUCTURED</configurationFormat>
-                <id>10112</id>
-                <propertyDefinitions/>
-            </pluginConfigurationDefinition>
-            <resourceConfigurationDefinition>
-                <configurationFormat>STRUCTURED</configurationFormat>
-                <id>10113</id>
-                <propertyDefinitions/>
-            </resourceConfigurationDefinition>
-            <singleton>false</singleton>
-            <supportsManualAdd>false</supportsManualAdd>
-        </resourceType>
-        <resourceConfiguration>
-            <id>10243</id>
-            <version>0</version>
-            <ctime>1309117635802</ctime>
-            <mtime>1309117635802</mtime>
-        </resourceConfiguration>
-        <pluginConfiguration>
-            <id>10244</id>
-            <version>0</version>
-            <ctime>1309117635802</ctime>
-            <mtime>1309117635802</mtime>
-            <propertySimple>
-                <id>10922</id>
-                <name>responseTimeUrlExcludes</name>
-            </propertySimple>
-            <propertySimple>
-                <id>10921</id>
-                <name>responseTimeLogFile</name>
-                <stringValue>${server.root}/logs/localhost.localdomain11677_rt.log</stringValue>
-            </propertySimple>
-            <propertySimple>
-                <id>10924</id>
-                <name>url</name>
-                <stringValue>http://${vhost3.snmp.identifier}/</stringValue>
-            </propertySimple>
-            <propertySimple>
-                <id>10923</id>
-                <name>responseTimeUrlTransforms</name>
-            </propertySimple>
-        </pluginConfiguration>
-        <agent>
-            <backFilled>false</backFilled>
-            <id>10001</id>
-            <port>0</port>
-        </agent>
-        <currentAvailability>
-            <availabilityType>UP</availabilityType>
-        </currentAvailability>
-    </childResources>
-    <childResources>
-        <id>10048</id>
-        <uuid>704a31f3-7f5f-46c1-9bda-70f2645c9604</uuid>
-        <resourceKey>${main.rhq4.resource.key}</resourceKey>
-        <name>Main</name>
-        <inventoryStatus>COMMITTED</inventoryStatus>
-        <connected>false</connected>
-        <version></version>
-        <description></description>
-        <ctime>1309117635810</ctime>
-        <mtime>1309117635810</mtime>
-        <itime>1309117635810</itime>
-        <modifiedBy>
-            <factive>false</factive>
-            <fsystem>false</fsystem>
-            <id>1</id>
-        </modifiedBy>
-        <resourceType>
-            <category>SERVICE</category>
-            <createDeletePolicy>BOTH</createDeletePolicy>
-            <creationDataType>CONFIGURATION</creationDataType>
-            <id>10046</id>
-            <name>Apache Virtual Host</name>
-            <plugin>Apache</plugin>
-            <pluginConfigurationDefinition>
-                <configurationFormat>STRUCTURED</configurationFormat>
-                <id>10112</id>
-                <propertyDefinitions/>
-            </pluginConfigurationDefinition>
-            <resourceConfigurationDefinition>
-                <configurationFormat>STRUCTURED</configurationFormat>
-                <id>10113</id>
-                <propertyDefinitions/>
-            </resourceConfigurationDefinition>
-            <singleton>false</singleton>
-            <supportsManualAdd>false</supportsManualAdd>
-        </resourceType>
-        <resourceConfiguration>
-            <id>10245</id>
-            <version>0</version>
-            <ctime>1309117635811</ctime>
-            <mtime>1309117635811</mtime>
-        </resourceConfiguration>
-        <pluginConfiguration>
-            <id>10246</id>
-            <version>0</version>
-            <ctime>1309117635811</ctime>
-            <mtime>1309117635811</mtime>
-            <propertySimple>
-                <id>10926</id>
-                <name>responseTimeUrlExcludes</name>
-            </propertySimple>
-            <propertySimple>
-                <id>10925</id>
-                <name>responseTimeLogFile</name>
-                <stringValue>${server.root}/logs/127.0.0.111675_rt.log</stringValue>
-            </propertySimple>
-            <propertySimple>
-                <id>10928</id>
-                <name>url</name>
-                <stringValue>http://${localhost}:${listen1}/</stringValue>
-            </propertySimple>
-            <propertySimple>
-                <id>10927</id>
-                <name>responseTimeUrlTransforms</name>
-            </propertySimple>
-        </pluginConfiguration>
-        <agent>
-            <backFilled>false</backFilled>
-            <id>10001</id>
-            <port>0</port>
-        </agent>
-        <currentAvailability>
-            <availabilityType>UP</availabilityType>
-        </currentAvailability>
-    </childResources>
-    <childResources>
-        <id>10049</id>
-        <uuid>03638606-623b-4218-bd23-42e04db0e296</uuid>
-        <resourceKey>${vhost2.rhq4.resource.key}</resourceKey>
+        <id>10036</id>
+        <uuid>5eb8fa91-2a4e-4a6e-9cd7-7b1927ea1a3a</uuid>
+        <resourceKey>${vhost2.rhq3.resource.key}</resourceKey>
         <name>${vhost2.snmp.identifier}</name>
         <inventoryStatus>COMMITTED</inventoryStatus>
         <connected>false</connected>
         <version></version>
         <description></description>
-        <ctime>1309117635819</ctime>
-        <mtime>1309117635819</mtime>
-        <itime>1309117635818</itime>
+        <ctime>1308835287457</ctime>
+        <mtime>1308835287457</mtime>
+        <itime>1308835287457</itime>
         <modifiedBy>
             <factive>false</factive>
             <fsystem>false</fsystem>
@@ -309,32 +81,32 @@
             <supportsManualAdd>false</supportsManualAdd>
         </resourceType>
         <resourceConfiguration>
-            <id>10247</id>
+            <id>10186</id>
             <version>0</version>
-            <ctime>1309117635819</ctime>
-            <mtime>1309117635819</mtime>
+            <ctime>1308835287457</ctime>
+            <mtime>1308835287457</mtime>
         </resourceConfiguration>
         <pluginConfiguration>
-            <id>10248</id>
+            <id>10187</id>
             <version>0</version>
-            <ctime>1309117635819</ctime>
-            <mtime>1309117635819</mtime>
+            <ctime>1308835287458</ctime>
+            <mtime>1308835287458</mtime>
             <propertySimple>
-                <id>10930</id>
+                <id>10802</id>
                 <name>responseTimeUrlExcludes</name>
             </propertySimple>
             <propertySimple>
-                <id>10929</id>
+                <id>10801</id>
                 <name>responseTimeLogFile</name>
-                <stringValue>${server.root}/logs/localhost.localdomain11676_rt.log</stringValue>
+                <stringValue>/home/metlos/Progs/apache-2.2.17/build/logs/localhost.localdomain11676_rt.log</stringValue>
             </propertySimple>
             <propertySimple>
-                <id>10932</id>
+                <id>10804</id>
                 <name>url</name>
                 <stringValue>http://${vhost2.snmp.identifier}/</stringValue>
             </propertySimple>
             <propertySimple>
-                <id>10931</id>
+                <id>10803</id>
                 <name>responseTimeUrlTransforms</name>
             </propertySimple>
         </pluginConfiguration>
@@ -348,17 +120,17 @@
         </currentAvailability>
     </childResources>
     <childResources>
-        <id>10050</id>
-        <uuid>ae880c2d-747d-492d-8586-a47ab5791b0e</uuid>
-        <resourceKey>${vhost1.rhq4.resource.key}</resourceKey>
-        <name>${vhos1.snmp.identifier}</name>
+        <id>10037</id>
+        <uuid>b2928cc6-30ab-47fe-8095-e1292887ac18</uuid>
+        <resourceKey>${main.rhq3.resource.key}</resourceKey>
+        <name>Main</name>
         <inventoryStatus>COMMITTED</inventoryStatus>
         <connected>false</connected>
         <version></version>
         <description></description>
-        <ctime>1309117635829</ctime>
-        <mtime>1309117635829</mtime>
-        <itime>1309117635829</itime>
+        <ctime>1308835287473</ctime>
+        <mtime>1308835287473</mtime>
+        <itime>1308835287473</itime>
         <modifiedBy>
             <factive>false</factive>
             <fsystem>false</fsystem>
@@ -385,32 +157,260 @@
             <supportsManualAdd>false</supportsManualAdd>
         </resourceType>
         <resourceConfiguration>
-            <id>10249</id>
+            <id>10188</id>
             <version>0</version>
-            <ctime>1309117635829</ctime>
-            <mtime>1309117635829</mtime>
+            <ctime>1308835287473</ctime>
+            <mtime>1308835287473</mtime>
         </resourceConfiguration>
         <pluginConfiguration>
-            <id>10250</id>
+            <id>10189</id>
             <version>0</version>
-            <ctime>1309117635829</ctime>
-            <mtime>1309117635829</mtime>
+            <ctime>1308835287474</ctime>
+            <mtime>1308835287474</mtime>
             <propertySimple>
-                <id>10934</id>
+                <id>10806</id>
                 <name>responseTimeUrlExcludes</name>
             </propertySimple>
             <propertySimple>
-                <id>10933</id>
+                <id>10805</id>
                 <name>responseTimeLogFile</name>
-                <stringValue>${server.root}/logs/localhost.localdomain11675_rt.log</stringValue>
+                <stringValue>${server.root}/logs/127.0.0.111675_rt.log</stringValue>
             </propertySimple>
             <propertySimple>
-                <id>10936</id>
+                <id>10808</id>
                 <name>url</name>
-                <stringValue>http://${vhost1.snmp.identifier}/</stringValue>
+                <stringValue>http://${localhost}:${listen1}/</stringValue>
             </propertySimple>
             <propertySimple>
-                <id>10935</id>
+                <id>10807</id>
+                <name>responseTimeUrlTransforms</name>
+            </propertySimple>
+        </pluginConfiguration>
+        <agent>
+            <backFilled>false</backFilled>
+            <id>10001</id>
+            <port>0</port>
+        </agent>
+        <currentAvailability>
+            <availabilityType>UP</availabilityType>
+        </currentAvailability>
+    </childResources>
+    <childResources>
+        <id>100371</id>
+        <uuid>b2928cc6-30ab-47fe-8095-e1292887ac90</uuid>
+        <resourceKey>${localhost.ip}:${listen1}</resourceKey>
+        <name>Main</name>
+        <inventoryStatus>COMMITTED</inventoryStatus>
+        <connected>false</connected>
+        <version></version>
+        <description></description>
+        <ctime>1308835287473</ctime>
+        <mtime>1308835287473</mtime>
+        <itime>1308835287473</itime>
+        <modifiedBy>
+            <factive>false</factive>
+            <fsystem>false</fsystem>
+            <id>1</id>
+        </modifiedBy>
+        <resourceType>
+            <category>SERVICE</category>
+            <createDeletePolicy>BOTH</createDeletePolicy>
+            <creationDataType>CONFIGURATION</creationDataType>
+            <id>10046</id>
+            <name>Apache Virtual Host</name>
+            <plugin>Apache</plugin>
+            <pluginConfigurationDefinition>
+                <configurationFormat>STRUCTURED</configurationFormat>
+                <id>10112</id>
+                <propertyDefinitions/>
+            </pluginConfigurationDefinition>
+            <resourceConfigurationDefinition>
+                <configurationFormat>STRUCTURED</configurationFormat>
+                <id>10113</id>
+                <propertyDefinitions/>
+            </resourceConfigurationDefinition>
+            <singleton>false</singleton>
+            <supportsManualAdd>false</supportsManualAdd>
+        </resourceType>
+        <resourceConfiguration>
+            <id>10188</id>
+            <version>0</version>
+            <ctime>1308835287473</ctime>
+            <mtime>1308835287473</mtime>
+        </resourceConfiguration>
+        <pluginConfiguration>
+            <id>10189</id>
+            <version>0</version>
+            <ctime>1308835287474</ctime>
+            <mtime>1308835287474</mtime>
+            <propertySimple>
+                <id>10806</id>
+                <name>responseTimeUrlExcludes</name>
+            </propertySimple>
+            <propertySimple>
+                <id>10805</id>
+                <name>responseTimeLogFile</name>
+                <stringValue>${server.root}/logs/127.0.0.111675_rt.log</stringValue>
+            </propertySimple>
+            <propertySimple>
+                <id>10808</id>
+                <name>url</name>
+                <stringValue>http://${localhost.ip}:${listen1}/</stringValue>
+            </propertySimple>
+            <propertySimple>
+                <id>10807</id>
+                <name>responseTimeUrlTransforms</name>
+            </propertySimple>
+        </pluginConfiguration>
+        <agent>
+            <backFilled>false</backFilled>
+            <id>10001</id>
+            <port>0</port>
+        </agent>
+        <currentAvailability>
+            <availabilityType>UP</availabilityType>
+        </currentAvailability>
+    </childResources>
+    <childResources>
+        <id>10038</id>
+        <uuid>fe8d389e-5a45-4bf2-9f73-0831caca63df</uuid>
+        <resourceKey>${vhost4.rhq3.resource.key}</resourceKey>
+        <name>${vhost4.snmp.identifier}</name>
+        <inventoryStatus>COMMITTED</inventoryStatus>
+        <connected>false</connected>
+        <version></version>
+        <description></description>
+        <ctime>1308835287482</ctime>
+        <mtime>1308835287482</mtime>
+        <itime>1308835287481</itime>
+        <modifiedBy>
+            <factive>false</factive>
+            <fsystem>false</fsystem>
+            <id>1</id>
+        </modifiedBy>
+        <resourceType>
+            <category>SERVICE</category>
+            <createDeletePolicy>BOTH</createDeletePolicy>
+            <creationDataType>CONFIGURATION</creationDataType>
+            <id>10046</id>
+            <name>Apache Virtual Host</name>
+            <plugin>Apache</plugin>
+            <pluginConfigurationDefinition>
+                <configurationFormat>STRUCTURED</configurationFormat>
+                <id>10112</id>
+                <propertyDefinitions/>
+            </pluginConfigurationDefinition>
+            <resourceConfigurationDefinition>
+                <configurationFormat>STRUCTURED</configurationFormat>
+                <id>10113</id>
+                <propertyDefinitions/>
+            </resourceConfigurationDefinition>
+            <singleton>false</singleton>
+            <supportsManualAdd>false</supportsManualAdd>
+        </resourceType>
+        <resourceConfiguration>
+            <id>10190</id>
+            <version>0</version>
+            <ctime>1308835287482</ctime>
+            <mtime>1308835287482</mtime>
+        </resourceConfiguration>
+        <pluginConfiguration>
+            <id>10191</id>
+            <version>0</version>
+            <ctime>1308835287482</ctime>
+            <mtime>1308835287482</mtime>
+            <propertySimple>
+                <id>10810</id>
+                <name>responseTimeUrlExcludes</name>
+            </propertySimple>
+            <propertySimple>
+                <id>10809</id>
+                <name>responseTimeLogFile</name>
+                <stringValue>${server.root}/logs/localhost.localdomain11678_rt.log</stringValue>
+            </propertySimple>
+            <propertySimple>
+                <id>10812</id>
+                <name>url</name>
+                <stringValue>http://${vhost4.snmp.identifier}/</stringValue>
+            </propertySimple>
+            <propertySimple>
+                <id>10811</id>
+                <name>responseTimeUrlTransforms</name>
+            </propertySimple>
+        </pluginConfiguration>
+        <agent>
+            <backFilled>false</backFilled>
+            <id>10001</id>
+            <port>0</port>
+        </agent>
+        <currentAvailability>
+            <availabilityType>UP</availabilityType>
+        </currentAvailability>
+    </childResources>
+    <childResources>
+        <id>10039</id>
+        <uuid>369d9dee-b4e1-45bf-9ad9-6a5d8cdd563e</uuid>
+        <resourceKey>${vhost3.rhq3.resource.key}</resourceKey>
+        <name>${vhost3.snmp.identifier}</name>
+        <inventoryStatus>COMMITTED</inventoryStatus>
+        <connected>false</connected>
+        <version></version>
+        <description></description>
+        <ctime>1308835287493</ctime>
+        <mtime>1308835287493</mtime>
+        <itime>1308835287492</itime>
+        <modifiedBy>
+            <factive>false</factive>
+            <fsystem>false</fsystem>
+            <id>1</id>
+        </modifiedBy>
+        <resourceType>
+            <category>SERVICE</category>
+            <createDeletePolicy>BOTH</createDeletePolicy>
+            <creationDataType>CONFIGURATION</creationDataType>
+            <id>10046</id>
+            <name>Apache Virtual Host</name>
+            <plugin>Apache</plugin>
+            <pluginConfigurationDefinition>
+                <configurationFormat>STRUCTURED</configurationFormat>
+                <id>10112</id>
+                <propertyDefinitions/>
+            </pluginConfigurationDefinition>
+            <resourceConfigurationDefinition>
+                <configurationFormat>STRUCTURED</configurationFormat>
+                <id>10113</id>
+                <propertyDefinitions/>
+            </resourceConfigurationDefinition>
+            <singleton>false</singleton>
+            <supportsManualAdd>false</supportsManualAdd>
+        </resourceType>
+        <resourceConfiguration>
+            <id>10192</id>
+            <version>0</version>
+            <ctime>1308835287493</ctime>
+            <mtime>1308835287493</mtime>
+        </resourceConfiguration>
+        <pluginConfiguration>
+            <id>10193</id>
+            <version>0</version>
+            <ctime>1308835287494</ctime>
+            <mtime>1308835287494</mtime>
+            <propertySimple>
+                <id>10814</id>
+                <name>responseTimeUrlExcludes</name>
+            </propertySimple>
+            <propertySimple>
+                <id>10813</id>
+                <name>responseTimeLogFile</name>
+                <stringValue>${server.root}logs/localhost.localdomain11677_rt.log</stringValue>
+            </propertySimple>
+            <propertySimple>
+                <id>10816</id>
+                <name>url</name>
+                <stringValue>http://${vhost3.snmp.identifier}/</stringValue>
+            </propertySimple>
+            <propertySimple>
+                <id>10815</id>
                 <name>responseTimeUrlTransforms</name>
             </propertySimple>
         </pluginConfiguration>
@@ -424,102 +424,102 @@
         </currentAvailability>
     </childResources>
     <resourceConfiguration>
-        <id>10201</id>
+        <id>10174</id>
         <version>0</version>
-        <ctime>1309116183368</ctime>
-        <mtime>1309116183368</mtime>
+        <ctime>1308835177520</ctime>
+        <mtime>1308835177520</mtime>
     </resourceConfiguration>
     <pluginConfiguration>
-        <id>10211</id>
+        <id>10175</id>
         <version>0</version>
-        <ctime>1309117523737</ctime>
-        <mtime>1309117523737</mtime>
+        <ctime>1308835177520</ctime>
+        <mtime>1308835177520</mtime>
         <propertySimple>
-            <id>10863</id>
+            <id>10790</id>
             <name>errorLogIncludesPattern</name>
         </propertySimple>
         <propertySimple>
-            <id>10862</id>
+            <id>10783</id>
             <name>errorLogMinimumSeverity</name>
             <stringValue>error</stringValue>
         </propertySimple>
         <propertySimple>
-            <id>10861</id>
+            <id>10708</id>
             <name>augeasEnabled</name>
             <stringValue>no</stringValue>
         </propertySimple>
         <propertySimple>
-            <id>10865</id>
+            <id>10789</id>
             <name>errorLogFilePath</name>
         </propertySimple>
         <propertySimple>
-            <id>10864</id>
+            <id>10786</id>
             <name>snmpAgentCommunity</name>
             <stringValue>public</stringValue>
         </propertySimple>
         <propertySimple>
-            <id>10867</id>
+            <id>10784</id>
             <name>snmpAgentHost</name>
-            <stringValue>${unresolvable.host}</stringValue>
+            <stringValue>${snmp.host}</stringValue>
         </propertySimple>
         <propertySimple>
-            <id>10866</id>
+            <id>10782</id>
             <name>errorLogEventsEnabled</name>
             <stringValue>false</stringValue>
         </propertySimple>
         <propertySimple>
-            <id>10869</id>
+            <id>10793</id>
             <name>controlScriptPath</name>
         </propertySimple>
         <propertySimple>
-            <id>10868</id>
+            <id>10795</id>
             <name>url</name>
-            <stringValue>http://${servername}:${listen1}/</stringValue>
+            <stringValue>http://${localhost}:${listen1}/</stringValue>
         </propertySimple>
         <propertySimple>
-            <id>10870</id>
+            <id>10709</id>
             <name>augeasModuleName</name>
             <stringValue>Httpd</stringValue>
         </propertySimple>
         <propertySimple>
-            <id>10871</id>
+            <id>10794</id>
             <name>configFile</name>
             <stringValue>${server.root}/conf/httpd.conf</stringValue>
         </propertySimple>
         <propertySimple>
-            <id>10872</id>
+            <id>10710</id>
             <name>configurationFilesInclusionPatterns</name>
             <stringValue>${server.root}/conf/httpd.conf</stringValue>
         </propertySimple>
         <propertySimple>
-            <id>10873</id>
+            <id>10788</id>
             <name>vhostFilesMask</name>
             <stringValue>${server.root}/conf/*</stringValue>
         </propertySimple>
         <propertySimple>
-            <id>10874</id>
-            <name>executablePath</name>
-            <stringValue>${exe.path}</stringValue>
-        </propertySimple>
-        <propertySimple>
-            <id>10875</id>
+            <id>10787</id>
             <name>restartAfterConfigurationUpdate</name>
             <stringValue>true</stringValue>
         </propertySimple>
         <propertySimple>
-            <id>10876</id>
+            <id>10792</id>
+            <name>executablePath</name>
+            <stringValue>${exe.path}</stringValue>
+        </propertySimple>
+        <propertySimple>
+            <id>10785</id>
             <name>snmpAgentPort</name>
-            <stringValue>1610</stringValue>
+            <stringValue>${snmp.port}</stringValue>
         </propertySimple>
         <propertySimple>
-            <id>10877</id>
-            <name>serverRoot</name>
-            <stringValue>${server.root}</stringValue>
-        </propertySimple>
-        <propertySimple>
-            <id>10878</id>
+            <id>10781</id>
             <name>vhostCreationPolicy</name>
             <stringValue>vhost-per-file</stringValue>
+        </propertySimple>
+        <propertySimple>
+            <id>10791</id>
+            <name>serverRoot</name>
+            <stringValue>${server.root}</stringValue>
         </propertySimple>
     </pluginConfiguration>
     <agent>

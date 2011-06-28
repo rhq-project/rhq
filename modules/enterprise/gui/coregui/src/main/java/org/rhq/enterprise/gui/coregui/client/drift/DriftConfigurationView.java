@@ -28,7 +28,6 @@ import com.smartgwt.client.data.ResultSet;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -36,18 +35,14 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.drift.DriftCategory;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
-import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.drift.wizard.DriftAddConfigWizard;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * A view that displays a paginated table of {@link org.rhq.core.domain.drift.DriftConfiguration}s, along with the
@@ -124,24 +119,6 @@ public class DriftConfigurationView extends TableSection<DriftConfigurationDataS
         setupTableInteractions(this.hasWriteAccess);
 
         super.configureTable();
-    }
-
-    @Override
-    protected String getDetailsLinkColumnName() {
-        return "name";
-    }
-
-    @Override
-    protected CellFormatter getDetailsLinkColumnCellFormatter() {
-        return new CellFormatter() {
-            public String format(Object value, ListGridRecord record, int i, int i1) {
-                Integer resourceId = record.getAttributeAsInt(AncestryUtil.RESOURCE_ID);
-                Integer driftConfigId = getId(record);
-                String url = LinkManager.getSubsystemDriftConfigLink(resourceId, driftConfigId);
-                String formattedValue = TimestampCellFormatter.format(value);
-                return SeleniumUtility.getLocatableHref(url, formattedValue, null);
-            }
-        };
     }
 
     protected void setupTableInteractions(final boolean hasWriteAccess) {

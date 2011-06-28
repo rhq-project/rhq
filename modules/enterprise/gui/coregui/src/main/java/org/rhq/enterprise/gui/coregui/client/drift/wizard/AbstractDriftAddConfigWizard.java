@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.coregui.client.drift.wizard;
 
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizard;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardView;
@@ -35,7 +36,7 @@ public abstract class AbstractDriftAddConfigWizard extends AbstractWizard {
     private String newConfigName;
     private String newConfigInterval;
     private Configuration newStartingConfiguration;
-    private Configuration newDriftConfiguration;
+    private DriftConfiguration newDriftConfiguration;
 
     private WizardView view;
 
@@ -90,12 +91,12 @@ public abstract class AbstractDriftAddConfigWizard extends AbstractWizard {
         this.newStartingConfiguration = newStartingConfiguration;
     }
 
-    public Configuration getNewDriftConfiguration() {
+    public DriftConfiguration getNewDriftConfiguration() {
         return newDriftConfiguration;
     }
 
     public void setNewConfiguration(Configuration newDriftConfiguration) {
-        this.newDriftConfiguration = newDriftConfiguration;
+        this.newDriftConfiguration = new DriftConfiguration(newDriftConfiguration);
     }
 
     public void cancel() {

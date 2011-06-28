@@ -100,12 +100,12 @@ public class DriftAddConfigWizardInfoStep extends AbstractWizardStep {
                 }
             } else {
                 // TODO this should throw an error as there should be at least one template (can remove the +1 sizing above when changing)
-                // throw new IllegalStateException( "At least one srift configuration template should exist for the resource type" );
+                // throw new IllegalStateException( "At least one drift configuration template should exist for the resource type" );
                 ConfigurationTemplate test = new ConfigurationTemplate("Test", "Test");
                 Configuration config = new Configuration();
                 config.put(new PropertySimple("name", "Test"));
-                config.put(new PropertySimple("basedir", "/TestDir"));
-                config.put(new PropertySimple("interval", "1200"));
+                config.put(new PropertySimple("basedir", "C:/workspace/rhq/dev-container/jbossas/server/default/conf"));
+                config.put(new PropertySimple("interval", "6000"));
                 test.setConfiguration(config);
                 test.setConfigurationDefinition(DriftConfigurationDefinition.getInstance());
                 templatesMap.put("TestOnly", test);

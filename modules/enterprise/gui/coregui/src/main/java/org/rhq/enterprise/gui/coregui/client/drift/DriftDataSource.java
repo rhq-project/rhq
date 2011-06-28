@@ -242,6 +242,19 @@ public class DriftDataSource extends RPCDataSource<Drift, DriftCriteria> {
 
         DriftCriteria criteria = new DriftCriteria();
         criteria.addFilterCategories(categoriesFilter);
+
+        switch (entityContext.getType()) {
+        case Resource:
+            criteria.addFilterResourceIds(entityContext.getResourceId());
+            break;
+
+        case ResourceGroup:
+            // TODO ?
+
+        default:
+            // no filter
+        }
+
         criteria.fetchChangeSet(true);
         criteria.setPageControl(getPageControl(request));
 

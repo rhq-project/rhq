@@ -31,6 +31,7 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
  * @author Jay Shaughnessy
@@ -62,7 +63,35 @@ public class DriftAddConfigWizard extends AbstractDriftAddConfigWizard {
     }
 
     public void execute() {
-        // TODO
+        EntityContext context = getEntityContext();
+        switch (context.getType()) {
+        case Resource:
+
+            ResourceCriteria rc = new ResourceCriteria();
+            rc.addFilterId(context.getResourceId());
+            rc.fetchResourceType(true);
+            GWTServiceLookup.getDriftService().updateDriftConfiguration(context, getNewDriftConfiguration(),
+                new AsyncCallback<Void>() {
+                    public void onSuccess(Void result) {
+                        CoreGUI.getMessageCenter().notify(
+                            new Message(MSG.view_drift_wizard_addConfig_success(getNewDriftConfiguration().getName()),
+                                Message.Severity.Info));
+                        getView().closeDialog();
+                    }
+
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError(
+                            MSG.view_drift_wizard_addConfig_failure(getNewDriftConfiguration().getName()), caught);
+                        getView().closeDialog();
+                    }
+                });
+
+            break;
+
+        default:
+            throw new IllegalArgumentException("Entity Context Type not supported [" + context + "]");
+        }
+
     }
 
     public static void showWizard(final EntityContext context) {

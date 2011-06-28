@@ -236,6 +236,19 @@ public class DriftConfigurationDataSource extends RPCDataSource<DriftConfigurati
     protected ResourceCriteria getFetchCriteria(DSRequest request) {
 
         ResourceCriteria criteria = new ResourceCriteria();
+        switch (entityContext.getType()) {
+        case Resource:
+            criteria.addFilterId(entityContext.getResourceId());
+            break;
+
+        case ResourceGroup:
+            criteria.addFilterExplicitGroupIds(entityContext.getGroupId());
+            break;
+
+        default:
+            // no filter
+        }
+
         criteria.fetchDriftConfigurations(true);
         criteria.setPageControl(getPageControl(request));
 
@@ -265,7 +278,7 @@ public class DriftConfigurationDataSource extends RPCDataSource<DriftConfigurati
         ListGridRecord record = new ListGridRecord();
         record.setAttribute("id", from.getId());
         record.setAttribute("name", from.getName());
-        record.setAttribute("interval", from.getInterval());
+        record.setAttribute("interval", String.valueOf(from.getInterval()));
         record.setAttribute("baseDir", from.getBasedir());
         record.setAttribute("enabled", from.getEnabled());
 

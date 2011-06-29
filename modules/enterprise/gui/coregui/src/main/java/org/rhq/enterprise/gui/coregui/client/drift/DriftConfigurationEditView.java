@@ -33,11 +33,13 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.PropertyValueChangeEvent;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.PropertyValueChangeListener;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceDetailView;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenter;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
@@ -53,7 +55,6 @@ public class DriftConfigurationEditView extends LocatableVLayout implements Prop
 
     private EntityContext context;
     private int driftConfigId;
-    private DriftConfiguration driftConfig;
     private boolean hasWriteAccess;
     private ConfigurationEditor editor;
     private ToolStrip buttonbar;
@@ -149,8 +150,22 @@ public class DriftConfigurationEditView extends LocatableVLayout implements Prop
                 }
 
                 public void onSuccess(Void result) {
-                    Message message;
-                    message = new Message(MSG.view_drift_success_configurationUpdated(), Message.Severity.Info);
+                    Message message = new Message(MSG.view_drift_success_configurationUpdated(), Message.Severity.Info);
+
+                    switch (context.getType()) {
+                    case Resource:
+                        int resourceId = context.getResourceId();
+
+                        String driftHistoryUrl = LinkManager.getResourceTabLink(resourceId,
+                            ResourceDetailView.Tab.DRIFT, ResourceDetailView.ConfigurationSubTab.HISTORY);
+                        driftHistoryUrl = driftHistoryUrl.substring(1); // chop off the leading '#'
+                        CoreGUI.goToView(driftHistoryUrl, message);
+
+                        break;
+
+                    default:
+                        throw new IllegalArgumentException("Entity Context Type not supported [" + context + "]");
+                    }
                 }
             });
     }

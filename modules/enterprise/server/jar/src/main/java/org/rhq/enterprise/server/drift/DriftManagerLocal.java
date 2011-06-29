@@ -61,6 +61,39 @@ public interface DriftManagerLocal extends DriftManagerRemote {
     void addFiles(int resourceId, long zipSize, InputStream zipStream) throws Exception;
 
     /**
+     * Remove the specified drift in its own transaction. This is used for chunking transactions and
+     * should not be exposed in a Remote interface.
+     * 
+     * @param subject
+     * @param 
+     * @param driftConfig
+     * 
+     * @return the number of Drift records deleted
+     */
+    int deleteDriftsInNewTransaction(Subject subject, int... driftIds);
+
+    /**
+     * Remove the specified drifts.  Ids not identifying an actual drift record will be ignored.
+     *  
+     * @param subject
+     * @param 
+     * @param driftConfig
+     *
+     * @return the number of Drift records deleted
+     */
+    int deleteDrifts(Subject subject, int[] driftIds);
+
+    /**
+     * Remove all drifts on the specified entity context.
+     *  
+     * @param subject
+     * @param entityContext the context
+     * 
+     * @return the number of Drift records deleted
+     */
+    int deleteDriftsByContext(Subject subject, EntityContext entityContext) throws RuntimeException;
+
+    /**
      * Remove the provided driftConfig (identified by name) on the specified entityContext.
      * Agents, if available, will be notified of the change. 
      * @param subject

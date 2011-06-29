@@ -19,6 +19,8 @@
  */
 package org.rhq.enterprise.server.drift;
 
+import static javax.ejb.TransactionAttributeType.REQUIRES_NEW;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
@@ -46,6 +48,8 @@ import javax.persistence.PersistenceContext;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hibernate.Hibernate;
+
+import org.jboss.remoting.CannotConnectException;
 
 import org.rhq.common.drift.ChangeSetReader;
 import org.rhq.common.drift.ChangeSetReaderImpl;
@@ -75,8 +79,6 @@ import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 
-import static javax.ejb.TransactionAttributeType.REQUIRES_NEW;
-
 @Stateless
 public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     private final Log log = LogFactory.getLog(this.getClass());
@@ -102,6 +104,8 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
 
+    // use a new transaction when putting things on the JMS queue. see 
+    // http://management-platform.blogspot.com/2008/11/transaction-recovery-in-jbossas.html
     @Override
     @TransactionAttribute(REQUIRES_NEW)
     public void addChangeSet(int resourceId, long zipSize, InputStream zipStream) throws Exception {
@@ -114,6 +118,8 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
         connection.close();
     }
 
+    // use a new transaction when putting things on the JMS queue. see 
+    // http://management-platform.blogspot.com/2008/11/transaction-recovery-in-jbossas.html
     @Override
     @TransactionAttribute(REQUIRES_NEW)
     public void addFiles(int resourceId, long zipSize, InputStream zipStream) throws Exception {
@@ -139,7 +145,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
             c.addFilterResourceId(resourceId);
             List<DriftChangeSet> changeSets = findDriftChangeSetsByCriteria(subjectManager.getOverlord(), c);
             final int version = changeSets.size();
-            // TODO: set caetgory based on changeset parsing
+            // TODO: set category based on changeset parsing
             final DriftChangeSetCategory category = (0 == version) ? DriftChangeSetCategory.COVERAGE
                 : DriftChangeSetCategory.DRIFT;
 
@@ -287,6 +293,66 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     }
 
     @Override
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public int deleteDriftsInNewTransaction(Subject subject, int... driftIds) {
+        int result = 0;
+
+        for (int driftId : driftIds) {
+            Drift doomed = entityManager.find(Drift.class, driftId);
+            if (null != doomed) {
+                entityManager.remove(doomed);
+                ++result;
+            }
+        }
+
+        return result;
+    }
+
+    @Override
+    public int deleteDrifts(Subject subject, int[] driftIds) {
+        // avoid big transactions by doing this one at a time. if this is too slow we can chunk in bigger increments.
+        int result = 0;
+
+        for (int driftId : driftIds) {
+            result += driftManager.deleteDriftsInNewTransaction(subject, driftId);
+        }
+
+        return result;
+    }
+
+    @Override
+    public int deleteDriftsByContext(Subject subject, EntityContext entityContext) throws RuntimeException {
+        int result = 0;
+        DriftCriteria criteria = new DriftCriteria();
+
+        switch (entityContext.getType()) {
+        case Resource:
+            criteria.addFilterResourceIds(entityContext.getResourceId());
+            break;
+
+        case SubsystemView:
+            // delete them all
+            break;
+
+        default:
+            throw new IllegalArgumentException("Entity Context Type not supported [" + entityContext + "]");
+        }
+
+        List<Drift> drifts = driftManager.findDriftsByCriteria(subject, criteria);
+        if (!drifts.isEmpty()) {
+            int[] driftIds = new int[drifts.size()];
+            int i = 0;
+            for (Drift drift : drifts) {
+                driftIds[i++] = drift.getId();
+            }
+
+            result = driftManager.deleteDrifts(subject, driftIds);
+        }
+
+        return result;
+    }
+
+    @Override
     public void deleteDriftConfiguration(Subject subject, EntityContext entityContext, String driftConfigName) {
 
         switch (entityContext.getType()) {
@@ -430,10 +496,14 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
 
             AgentClient agentClient = agentManager.getAgentClient(subjectManager.getOverlord(), resourceId);
             DriftAgentService service = agentClient.getDriftAgentService();
+            // this is a one-time on-demand call. If it fails throw an exception to make sure the user knows it
+            // did not happen. But clean it up a bit if it's a connect exception            
             try {
                 service.detectDrift(resourceId, driftConfig);
-            } catch (Exception e) {
-                log.warn(" Unable to inform agent of drift detection request  [" + driftConfig + "]", e);
+            } catch (CannotConnectException e) {
+                throw new IllegalStateException(
+                    "Agent could not be reached and may be down (see server logs for more). Could not perform drift detection request ["
+                        + driftConfig + "]");
             }
 
             break;

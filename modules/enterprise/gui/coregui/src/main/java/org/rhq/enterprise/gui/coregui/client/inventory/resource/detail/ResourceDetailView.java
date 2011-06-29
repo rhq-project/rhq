@@ -85,17 +85,23 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
     private static final String BASE_VIEW_PATH = "Resource";
 
     public static class Tab {
-        public static final String OPERATIONS = "Operations";
         public static final String CONFIGURATION = "Configuration";
-    }
-
-    public static class OperationsSubTab {
-        public static final String SCHEDULES = "Schedules";
-        public static final String HISTORY = "History";
+        public static final String DRIFT = "Drift";
+        public static final String OPERATIONS = "Operations";
     }
 
     public static class ConfigurationSubTab {
         public static final String CURRENT = "Current";
+        public static final String HISTORY = "History";
+    }
+
+    public static class DriftSubTab {
+        public static final String CONFIGURATION = "Configuration";
+        public static final String HISTORY = "History";
+    }
+
+    public static class OperationsSubTab {
+        public static final String SCHEDULES = "Schedules";
         public static final String HISTORY = "History";
     }
 
@@ -232,12 +238,12 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         configurationTab.registerSubTabs(this.configCurrent, this.configHistory);
         tabs.add(configurationTab);
 
-        driftTab = new TwoLevelTab(getTabSet().extendLocatorId("Drift"), new ViewName("Drift", MSG
+        driftTab = new TwoLevelTab(getTabSet().extendLocatorId(Tab.DRIFT), new ViewName(Tab.DRIFT, MSG
             .view_tabs_common_drift()), "subsystems/drift/Drift_16.png");
-        this.driftHistory = new SubTab(driftTab.extendLocatorId("History"), new ViewName("History", MSG
-            .view_tabs_common_history()), null);
-        this.driftConfig = new SubTab(driftTab.extendLocatorId("Config"), new ViewName("Config", MSG
-            .view_tabs_common_configuration()), null);
+        this.driftHistory = new SubTab(driftTab.extendLocatorId(DriftSubTab.HISTORY), new ViewName(DriftSubTab.HISTORY,
+            MSG.view_tabs_common_history()), null);
+        this.driftConfig = new SubTab(driftTab.extendLocatorId(DriftSubTab.CONFIGURATION), new ViewName(
+            DriftSubTab.CONFIGURATION, MSG.view_tabs_common_configuration()), null);
         driftTab.registerSubTabs(driftHistory, driftConfig);
         tabs.add(driftTab);
 

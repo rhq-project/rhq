@@ -41,9 +41,7 @@ public class DriftGWTServiceImpl extends AbstractGWTServiceImpl implements Drift
     @Override
     public int deleteDrifts(int[] driftIds) throws RuntimeException {
         try {
-            // TODO
-            //return this.driftManager.deleteDrifts(getSessionSubject(), driftIds);
-            return 0;
+            return this.driftManager.deleteDrifts(getSessionSubject(), driftIds);
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
@@ -52,9 +50,7 @@ public class DriftGWTServiceImpl extends AbstractGWTServiceImpl implements Drift
     @Override
     public int deleteDriftsByContext(EntityContext entityContext) throws RuntimeException {
         try {
-            // TODO
-            //return this.driftManager.deleteDriftsByContext(getSessionSubject(), entityContext);
-            return 0;
+            return this.driftManager.deleteDriftsByContext(getSessionSubject(), entityContext);
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

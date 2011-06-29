@@ -75,6 +75,8 @@ import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 
+import static javax.ejb.TransactionAttributeType.REQUIRES_NEW;
+
 @Stateless
 public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     private final Log log = LogFactory.getLog(this.getClass());
@@ -101,6 +103,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     private EntityManager entityManager;
 
     @Override
+    @TransactionAttribute(REQUIRES_NEW)
     public void addChangeSet(int resourceId, long zipSize, InputStream zipStream) throws Exception {
 
         Connection connection = factory.createConnection();
@@ -112,6 +115,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     }
 
     @Override
+    @TransactionAttribute(REQUIRES_NEW)
     public void addFiles(int resourceId, long zipSize, InputStream zipStream) throws Exception {
 
         Connection connection = factory.createConnection();
@@ -123,6 +127,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     }
 
     @Override
+    @TransactionAttribute(REQUIRES_NEW)
     public void storeChangeSet(final int resourceId, File changeSetZip) throws Exception {
         Resource resource = entityManager.find(Resource.class, resourceId);
         if (null == resource) {
@@ -239,7 +244,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     }
 
     @Override
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    @TransactionAttribute(REQUIRES_NEW)
     public void persistDriftFileData(DriftFile driftFile, InputStream data) throws Exception {
 
         DriftFileContent df = entityManager.find(DriftFileContent.class, driftFile.getHashId());

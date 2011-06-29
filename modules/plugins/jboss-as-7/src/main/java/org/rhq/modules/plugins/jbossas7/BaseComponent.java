@@ -80,6 +80,7 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
     String key;
     String host;
     int port;
+    private boolean verbose = ASConnection.verbose;
 
     /**
      * Return availability of this resource
@@ -305,7 +306,9 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
         contentServices.downloadPackageBitsForChildResource(cctx, resourceTypeName, details.getKey(), out);
 
         JsonNode uploadResult = uploadConnection.finishUpload();
-        System.out.println(uploadResult);
+        if (verbose)
+            log.info(uploadResult);
+
         if (ASConnection.isErrorReply(uploadResult)) {
             report.setStatus(CreateResourceStatus.FAILURE);
             report.setErrorMessage(ASConnection.getFailureDescription(uploadResult));
@@ -319,7 +322,8 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
             fileName=fileName.substring("C:\\fakepath\\".length());
         }
 
-        log.info("Deploying [" + fileName + "] ...");
+        boolean toServerGroup = context.getResourceKey().contains("server-group=");
+        log.info("Deploying [" + fileName + "] to domain only= " + !toServerGroup + " ...");
 
         String tmpName = fileName; // TODO figure out the tmp-name biz with the AS guys
 
@@ -338,15 +342,22 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
         step1.addAdditionalProperty("name", tmpName);
         step1.addAdditionalProperty("runtime-name", fileName);
 
-        CompositeOperation cop = new CompositeOperation();
-        cop.addStep(step1);
         String resourceKey;
-
+        JsonNode result ;
         /*
          * We need to check here if this is an upload to /deployment only
          * or if this should be deployed to a server group too
          */
-        if (context.getResourceKey().contains("server-group=")) {
+
+        if (!toServerGroup) {
+
+            result = connection.executeRaw(step1);
+            resourceKey = addressToPath(step1.getAddress());
+
+        }
+        else {
+            CompositeOperation cop = new CompositeOperation();
+            cop.addStep(step1);
 
             List<PROPERTY_VALUE> serverGroupAddress = new ArrayList<PROPERTY_VALUE>();
             serverGroupAddress.addAll(pathToAddress(context.getResourceKey()));
@@ -359,19 +370,13 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
             cop.addStep(step3);
 
             resourceKey = addressToPath(serverGroupAddress);
-        }
-        else {
 
-/*
-            List<PROPERTY_VALUE> address = step1.getAddress();
-            Operation step3 = new Operation("deploy",address);
-            cop.addStep(step3);
-*/
+            if (verbose)
+                log.info("Deploy operation: " + cop);
 
-            resourceKey = addressToPath(step1.getAddress());
+            result = connection.executeRaw(cop);
         }
 
-        JsonNode result = connection.executeRaw(cop);
         if (ASConnection.isErrorReply(result)) {
             String failureDescription = ASConnection.getFailureDescription(result);
             report.setErrorMessage(failureDescription);

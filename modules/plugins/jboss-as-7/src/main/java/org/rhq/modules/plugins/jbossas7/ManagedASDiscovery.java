@@ -98,6 +98,9 @@ public class ManagedASDiscovery extends AbstractBaseDiscovery
                 }
                 config.put(new PropertySimple("socket-binding-port-offset",serverInfo.portOffset));
 
+                String path = "host=" + hostName + ",server-config=" + serverInfo.name;
+                config.put(new PropertySimple("path",path));
+
 
 
                 // TODO this fails for the downed servers.
@@ -241,6 +244,14 @@ public class ManagedASDiscovery extends AbstractBaseDiscovery
         boolean autoStart;
         int portOffset;
         String bindingGroup;
+
+        @Override
+        public String toString() {
+            return "ServerInfo{" +
+                "name='" + name + '\'' +
+                ", group='" + group + '\'' +
+                '}';
+        }
     }
 
 }

@@ -17,7 +17,7 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.plugins.apache;
+package org.rhq.plugins.apache.upgrade.rhq3_0_0;
 
 
 import static org.testng.Assert.assertEquals;
@@ -34,7 +34,12 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.ResourceErrorType;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.plugins.apache.ApacheServerComponent;
+import org.rhq.plugins.apache.ApacheServerDiscoveryComponent;
 import org.rhq.plugins.apache.parser.ApacheDirectiveTree;
+import org.rhq.plugins.apache.upgrade.UpgradeTestBase;
+import org.rhq.plugins.apache.upgrade.UpgradeTestBase.TestConfiguration;
+import org.rhq.plugins.apache.upgrade.UpgradeTestBase.TestSetup;
 import org.rhq.plugins.apache.util.ApacheDeploymentUtil.DeploymentConfig;
 import org.rhq.plugins.apache.util.RuntimeApacheConfiguration;
 import org.rhq.plugins.apache.util.VirtualHostLegacyResourceKeyUtil;

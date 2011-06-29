@@ -83,6 +83,15 @@ public class DriftGWTServiceImpl extends AbstractGWTServiceImpl implements Drift
     }
 
     @Override
+    public void detectDrift(EntityContext entityContext, DriftConfiguration driftConfig) {
+        try {
+            this.driftManager.detectDrift(getSessionSubject(), entityContext, driftConfig);
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    @Override
     public PageList<DriftChangeSet> findDriftChangeSetsByCriteria(DriftChangeSetCriteria criteria)
         throws RuntimeException {
         try {

@@ -590,8 +590,9 @@ public class WebservicesManagerBean implements WebservicesRemote {
     // DRIFTMANAGER: BEGIN ----------------------------------
 
     @Override
-    public void detectDrift(Subject subject, int resourceId, DriftConfiguration driftConfiguration) throws Exception {
-        driftManager.detectDrift(subject, resourceId, driftConfiguration);
+    public void detectDrift(Subject subject, EntityContext entityContext, DriftConfiguration driftConfiguration)
+        throws Exception {
+        driftManager.detectDrift(subject, entityContext, driftConfiguration);
     }
 
     // DRIFTMANAGER: END ------------------------------------

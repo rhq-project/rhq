@@ -34,6 +34,7 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.drift.DriftCategory;
+import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
@@ -122,7 +123,9 @@ public class DriftConfigurationView extends TableSection<DriftConfigurationDataS
     }
 
     protected void setupTableInteractions(final boolean hasWriteAccess) {
-        TableActionEnablement singleTargetEnablement = hasWriteAccess ? TableActionEnablement.ANY
+        TableActionEnablement deleteEnablement = hasWriteAccess ? TableActionEnablement.ANY
+            : TableActionEnablement.NEVER;
+        TableActionEnablement detectNowEnablement = hasWriteAccess ? TableActionEnablement.SINGLE
             : TableActionEnablement.NEVER;
 
         addTableAction("Add", MSG.common_button_add(), null, new TableAction() {
@@ -136,7 +139,7 @@ public class DriftConfigurationView extends TableSection<DriftConfigurationDataS
         });
 
         addTableAction("Delete", MSG.common_button_delete(), MSG.view_drift_delete_confirm(), new AbstractTableAction(
-            singleTargetEnablement) {
+            deleteEnablement) {
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 delete(selection);
             }
@@ -154,6 +157,13 @@ public class DriftConfigurationView extends TableSection<DriftConfigurationDataS
                     deleteAll();
                 }
             });
+
+        addTableAction("DetectNow", MSG.view_drift_button_detectNow(), null, new AbstractTableAction(
+            detectNowEnablement) {
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                detectDrift(selection);
+            }
+        });
     }
 
     void add() {
@@ -193,6 +203,22 @@ public class DriftConfigurationView extends TableSection<DriftConfigurationDataS
 
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError(MSG.view_drift_failure_deleteAll(), caught);
+            }
+        });
+    }
+
+    void detectDrift(ListGridRecord[] records) {
+        DriftConfiguration driftConfig = (DriftConfiguration) records[0]
+            .getAttributeAsObject(DriftConfigurationDataSource.ATTR_ENTITY);
+        GWTServiceLookup.getDriftService().detectDrift(context, driftConfig, new AsyncCallback<Void>() {
+            public void onSuccess(Void result) {
+                CoreGUI.getMessageCenter().notify(
+                    new Message(MSG.view_drift_success_detectNow(), Message.Severity.Info));
+                refresh();
+            }
+
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError(MSG.view_drift_failure_detectNow(), caught);
             }
         });
     }

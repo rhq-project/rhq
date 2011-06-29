@@ -413,21 +413,28 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     }
 
     @Override
-    public void detectDrift(Subject subject, int resourceId, DriftConfiguration driftConfig) {
+    public void detectDrift(Subject subject, EntityContext context, DriftConfiguration driftConfig) {
 
-        Resource resource = entityManager.find(Resource.class, resourceId);
-        if (null == resource) {
-            throw new IllegalArgumentException("Resource not found [" + resourceId + "]");
+        switch (context.getType()) {
+        case Resource:
+            int resourceId = context.getResourceId();
+            Resource resource = entityManager.find(Resource.class, resourceId);
+            if (null == resource) {
+                throw new IllegalArgumentException("Resource not found [" + resourceId + "]");
+            }
+
+            AgentClient agentClient = agentManager.getAgentClient(subjectManager.getOverlord(), resourceId);
+            DriftAgentService service = agentClient.getDriftAgentService();
+            try {
+                service.detectDrift(resourceId, driftConfig);
+            } catch (Exception e) {
+                log.warn(" Unable to inform agent of drift detection request  [" + driftConfig + "]", e);
+            }
+
+            break;
+
+        default:
+            throw new IllegalArgumentException("Entity Context Type not supported [" + context + "]");
         }
-
-        AgentClient agentClient = agentManager.getAgentClient(subjectManager.getOverlord(), resourceId);
-        DriftAgentService service = agentClient.getDriftAgentService();
-        try {
-            service.detectDrift(resourceId, driftConfig);
-        } catch (Exception e) {
-            log.warn(" Unable to inform agent of drift detection request  [" + driftConfig + "]", e);
-        }
-
     }
-
 }

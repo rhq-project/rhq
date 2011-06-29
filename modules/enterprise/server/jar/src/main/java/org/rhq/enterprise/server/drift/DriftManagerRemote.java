@@ -25,6 +25,7 @@ import javax.jws.WebService;
 import javax.jws.soap.SOAPBinding;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.enterprise.server.system.ServerVersion;
 
@@ -33,9 +34,16 @@ import org.rhq.enterprise.server.system.ServerVersion;
 @Remote
 public interface DriftManagerRemote {
 
+    /**
+     * One time on-demand request to detect drift on the specified entities, using the supplied config.
+     * 
+     * @param entityContext
+     * @param driftConfig
+     * @throws RuntimeException
+     */
     @WebMethod
     void detectDrift(//
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceId") int resourceId, //
+        @WebParam(name = "entityContext") EntityContext entityContext, //
         @WebParam(name = "driftConfiguration") DriftConfiguration driftConfiguration) throws Exception;
 }

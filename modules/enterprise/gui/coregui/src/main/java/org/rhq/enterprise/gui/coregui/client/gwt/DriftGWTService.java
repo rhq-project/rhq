@@ -86,6 +86,15 @@ public interface DriftGWTService extends RemoteService {
     int deleteDriftConfigurationsByContext(EntityContext entityContext) throws RuntimeException;
 
     /**
+     * One time on-demand request to detect drift on the specified entities, using the supplied config.
+     * 
+     * @param entityContext
+     * @param driftConfig
+     * @throws RuntimeException
+     */
+    void detectDrift(EntityContext entityContext, DriftConfiguration driftConfig) throws RuntimeException;
+
+    /**
      * Find all drift changesets that match the specified criteria.
      *
      * @param criteria the criteria

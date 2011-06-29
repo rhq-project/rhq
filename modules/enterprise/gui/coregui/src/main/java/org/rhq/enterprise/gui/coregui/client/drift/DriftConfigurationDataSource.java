@@ -58,6 +58,8 @@ public class DriftConfigurationDataSource extends RPCDataSource<DriftConfigurati
 
     public static final String FILTER_CATEGORIES = "categories";
 
+    public static final String ATTR_ENTITY = "Entity";
+
     private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
 
     private EntityContext entityContext;
@@ -266,7 +268,7 @@ public class DriftConfigurationDataSource extends RPCDataSource<DriftConfigurati
 
     @Override
     public DriftConfiguration copyValues(Record from) {
-        return null;
+        return (DriftConfiguration) from.getAttributeAsObject(ATTR_ENTITY);
     }
 
     @Override
@@ -276,6 +278,9 @@ public class DriftConfigurationDataSource extends RPCDataSource<DriftConfigurati
 
     public static ListGridRecord convert(DriftConfiguration from) {
         ListGridRecord record = new ListGridRecord();
+
+        record.setAttribute(ATTR_ENTITY, from);
+
         record.setAttribute("id", from.getId());
         record.setAttribute("name", from.getName());
         record.setAttribute("interval", String.valueOf(from.getInterval()));

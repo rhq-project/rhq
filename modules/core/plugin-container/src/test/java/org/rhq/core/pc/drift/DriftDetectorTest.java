@@ -73,8 +73,11 @@ public class DriftDetectorTest extends JMockTest {
 
         scheduleQueue.enqueue(schedule);
 
+        DriftClientTestStub driftClient = new DriftClientTestStub();
+        driftClient.setBaseDir(server1Dir);
+
         DriftDetector detector = new DriftDetector();
-        detector.setDriftClient(new DriftClientTestStub());
+        detector.setDriftClient(driftClient);
         detector.setChangeSetManager(changeSetMgr);
         detector.setScheduleQueue(scheduleQueue);
 

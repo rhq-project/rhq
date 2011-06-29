@@ -181,19 +181,19 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
     /**
      * Given a drift configuration, this examines the config and its associated resource to determine where exactly
      * the base directory is that should be monitoried.
-     * 
+     *
+     * @param resourceId The id of the resource to which the config belongs
      * @param driftConfiguration describes what is to be monitored for drift
      * 
      * @return absolute directory location where the drift configuration base directory is referring
      */
     @Override
-    public File getAbsoluteBaseDirectory(DriftConfiguration driftConfiguration) {
+    public File getAbsoluteBaseDirectory(int resourceId, DriftConfiguration driftConfiguration) {
 
         // get the resource entity stored in our local inventory
         InventoryManager im = getInventoryManager();
-        Resource resource = driftConfiguration.getResource();
-        ResourceContainer container = im.getResourceContainer(resource);
-        resource = container.getResource();
+        ResourceContainer container = im.getResourceContainer(resourceId);
+        Resource resource = container.getResource();
 
         // find out the type of base location that is specified by the drift config
         DriftConfiguration.BaseDirectory baseDir = driftConfiguration.getBasedir();

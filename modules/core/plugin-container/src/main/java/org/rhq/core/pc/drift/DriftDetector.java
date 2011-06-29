@@ -50,15 +50,16 @@ public class DriftDetector implements Runnable {
         }
 
         DriftConfiguration driftConfig = schedule.getDriftConfiguration();
+        int resourceId = schedule.getResourceId();
 
         try {
             // TODO add logic to determine if there is an existing changeset
             // if there is no previous changeset then we need to generate the initial
             // coverage changeset
             ChangeSetWriter writer = changeSetMgr.getChangeSetWriter(schedule.getResourceId(),
-                new Headers(driftConfig.getName(), basedir(driftConfig), COVERAGE));
+                new Headers(driftConfig.getName(), basedir(resourceId, driftConfig), COVERAGE));
 
-            DirectoryScanner scanner = new DirectoryScanner(schedule.getDriftConfiguration(), writer);
+            DirectoryScanner scanner = new DirectoryScanner(resourceId, driftConfig, writer);
             scanner.scan();
         } catch (IOException e) {
             // TODO Call ChangeSetManager here to rollback any thing that was written to disk.
@@ -81,30 +82,32 @@ public class DriftDetector implements Runnable {
         return digestGenerator.calcDigestString(file);
     }
 
-    private String basedir(DriftConfiguration driftConfig) {
-        return driftClient.getAbsoluteBaseDirectory(driftConfig).getAbsolutePath();
+    private String basedir(int resourceId, DriftConfiguration driftConfig) {
+        return driftClient.getAbsoluteBaseDirectory(resourceId, driftConfig).getAbsolutePath();
     }
 
     // TODO Do not use DirectoryWalker
     // Want to do the file scan iteratively to keep memory overhead as low as possible.
     private class DirectoryScanner extends DirectoryWalker {
 
+        int resourceId;
         DriftConfiguration driftConfig;
         ChangeSetWriter writer;
         Stack<DirectoryEntry> stack = new Stack<DirectoryEntry>();
 
-        public DirectoryScanner(DriftConfiguration driftConfig, ChangeSetWriter writer) {
+        public DirectoryScanner(int resourceId, DriftConfiguration driftConfig, ChangeSetWriter writer) {
+            this.resourceId = resourceId;
             this.driftConfig = driftConfig;
             this.writer = writer;
         }
 
         public void scan() throws IOException {
-            walk(new File(basedir(driftConfig)), EMPTY_LIST);
+            walk(new File(basedir(resourceId, driftConfig)), EMPTY_LIST);
         }
 
         @Override
         protected void handleDirectoryStart(File directory, int depth, Collection results) throws IOException {
-            stack.push(new DirectoryEntry(relativePath(new File(basedir(driftConfig)), directory)));
+            stack.push(new DirectoryEntry(relativePath(new File(basedir(resourceId, driftConfig)), directory)));
         }
 
         @Override

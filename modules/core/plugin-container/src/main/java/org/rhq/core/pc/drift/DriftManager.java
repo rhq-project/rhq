@@ -6,9 +6,7 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -20,10 +18,6 @@ import org.rhq.core.clientapi.agent.drift.DriftAgentService;
 import org.rhq.core.clientapi.server.drift.DriftServerService;
 import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.domain.drift.DriftFile;
-import org.rhq.core.domain.measurement.DataType;
-import org.rhq.core.domain.measurement.MeasurementData;
-import org.rhq.core.domain.measurement.MeasurementDataRequest;
-import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.pc.ContainerService;
 import org.rhq.core.pc.PluginContainer;
@@ -235,7 +229,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
             break;
         }
         case measurementTrait: {
-            baseLocation = getTraitValue(container, baseDirValueName);
+            baseLocation = getMeasurementManager().getTraitValue(container, baseDirValueName);
             if (baseLocation == null) {
                 throw new IllegalArgumentException("Cannot obtain trait [" + baseDirValueName + "] for resource ["
                     + resource.getName() + "]");
@@ -256,53 +250,6 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
         }
 
         return destDir;
-    }
-
-    /**
-     * Given the name of a trait, this will find the value of that trait for the given resource.
-     * 
-     * @param resource the resource whose trait value is to be obtained
-     * @param traitName the name of the trait whose value is to be obtained
-     *
-     * @return the value of the trait, or <code>null</code> if unknown
-     * 
-     * TODO: this is taken directly from BundleManager. We should refactor this and the one
-     * in BundleManager to a single place, perhaps MeasurementManager.
-     */
-    private String getTraitValue(ResourceContainer container, String traitName) {
-        Integer traitScheduleId = null;
-        Set<MeasurementScheduleRequest> schedules = container.getMeasurementSchedule();
-        for (MeasurementScheduleRequest schedule : schedules) {
-            if (schedule.getName().equals(traitName)) {
-                if (schedule.getDataType() != DataType.TRAIT) {
-                    throw new IllegalArgumentException("Measurement named [" + traitName + "] for resource ["
-                        + container.getResource().getName() + "] is not a trait, it is of type ["
-                        + schedule.getDataType() + "]");
-                }
-                traitScheduleId = Integer.valueOf(schedule.getScheduleId());
-            }
-        }
-        if (traitScheduleId == null) {
-            throw new IllegalArgumentException("There is no trait [" + traitName + "] for resource ["
-                + container.getResource().getName() + "]");
-        }
-
-        MeasurementManager mm = getMeasurementManager();
-        String traitValue = mm.getCachedTraitValue(traitScheduleId.intValue());
-        if (traitValue == null) {
-            // the trait hasn't been collected yet, so it isn't cached. We need to get its live value
-            List<MeasurementDataRequest> requests = new ArrayList<MeasurementDataRequest>();
-            requests.add(new MeasurementDataRequest(traitName, DataType.TRAIT));
-            Set<MeasurementData> dataset = mm.getRealTimeMeasurementValue(container.getResource().getId(), requests);
-            if (dataset != null && dataset.size() == 1) {
-                Object value = dataset.iterator().next().getValue();
-                if (value != null) {
-                    traitValue = value.toString();
-                }
-            }
-        }
-
-        return traitValue;
     }
 
     /**

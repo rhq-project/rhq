@@ -25,7 +25,6 @@ package org.rhq.core.pc.bundle;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -54,10 +53,6 @@ import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration;
 import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory.Status;
 import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration.BundleDestinationBaseDirectory;
 import org.rhq.core.domain.content.PackageVersion;
-import org.rhq.core.domain.measurement.DataType;
-import org.rhq.core.domain.measurement.MeasurementData;
-import org.rhq.core.domain.measurement.MeasurementDataRequest;
-import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.ContainerService;
@@ -495,7 +490,7 @@ public class BundleManager extends AgentService implements BundleAgentService, B
             break;
         }
         case measurementTrait: {
-            baseLocation = getTraitValue(container, destBaseDirValueName);
+            baseLocation = getMeasurementManager().getTraitValue(container, destBaseDirValueName);
             if (baseLocation == null) {
                 throw new IllegalArgumentException("Cannot obtain trait [" + destBaseDirName + "] for resource ["
                     + resource.getName() + "]");
@@ -518,50 +513,6 @@ public class BundleManager extends AgentService implements BundleAgentService, B
         }
 
         return destDir;
-    }
-
-    /**
-     * Given the name of a trait, this will find the value of that trait for the given resource.
-     * 
-     * @param resource the resource whose trait value is to be obtained
-     * @param traitName the name of the trait whose value is to be obtained
-     *
-     * @return the value of the trait, or <code>null</code> if unknown
-     */
-    private String getTraitValue(ResourceContainer container, String traitName) {
-        Integer traitScheduleId = null;
-        Set<MeasurementScheduleRequest> schedules = container.getMeasurementSchedule();
-        for (MeasurementScheduleRequest schedule : schedules) {
-            if (schedule.getName().equals(traitName)) {
-                if (schedule.getDataType() != DataType.TRAIT) {
-                    throw new IllegalArgumentException("Measurement named [" + traitName + "] for resource ["
-                        + container.getResource().getName() + "] is not a trait, it is of type ["
-                        + schedule.getDataType() + "]");
-                }
-                traitScheduleId = Integer.valueOf(schedule.getScheduleId());
-            }
-        }
-        if (traitScheduleId == null) {
-            throw new IllegalArgumentException("There is no trait [" + traitName + "] for resource ["
-                + container.getResource().getName() + "]");
-        }
-
-        MeasurementManager mm = getMeasurementManager();
-        String traitValue = mm.getCachedTraitValue(traitScheduleId.intValue());
-        if (traitValue == null) {
-            // the trait hasn't been collected yet, so it isn't cached. We need to get its live value
-            List<MeasurementDataRequest> requests = new ArrayList<MeasurementDataRequest>();
-            requests.add(new MeasurementDataRequest(traitName, DataType.TRAIT));
-            Set<MeasurementData> dataset = mm.getRealTimeMeasurementValue(container.getResource().getId(), requests);
-            if (dataset != null && dataset.size() == 1) {
-                Object value = dataset.iterator().next().getValue();
-                if (value != null) {
-                    traitValue = value.toString();
-                }
-            }
-        }
-
-        return traitValue;
     }
 
     /**

@@ -3,6 +3,7 @@ package org.rhq.core.pc.drift;
 import static org.apache.commons.io.FileUtils.deleteDirectory;
 import static org.apache.commons.io.IOUtils.readLines;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
+import static org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext.fileSystem;
 import static org.testng.Assert.assertEquals;
 import static org.unitils.thirdparty.org.apache.commons.io.FileUtils.touch;
 
@@ -24,6 +25,7 @@ import org.rhq.common.drift.DirectoryEntry;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.drift.DriftConfiguration;
+import org.rhq.core.domain.drift.DriftConfigurationDefinition;
 import org.rhq.test.JMockTest;
 
 public class DriftDetectorTest extends JMockTest {
@@ -93,11 +95,11 @@ public class DriftDetectorTest extends JMockTest {
     }
 
     DriftConfiguration driftConfiguration(String name, String basedir) {
-        Configuration config = new Configuration();
-        config.put(new PropertySimple("name", name));
-        config.put(new PropertySimple("basedir", basedir));
+        DriftConfiguration config = new DriftConfiguration(new Configuration());
+        config.setName(name);
+        config.setBasedir(config.new BaseDirectory(fileSystem, basedir));
 
-        return new DriftConfiguration(config);
+        return config;
     }
 
     void assertHeaderEquals(List<String> lines, String... expected) {

@@ -67,14 +67,6 @@ public class ChangeSetManagerImplTest {
         assertReaderOpenedOnChangeSet(reader, asList("server/conf", "1"));
     }
 
-    DriftConfiguration driftConfiguration(String name, String basedir) {
-        Configuration config = new Configuration();
-        config.put(new PropertySimple("name", name));
-        config.put(new PropertySimple("basedir", basedir));
-
-        return new DriftConfiguration(config);
-    }
-
     /**
      * Verifies that a {@link ChangeSetReader} has been opened on the expected change set.
      * This method first verifies that the reader is not null. It then reads the first

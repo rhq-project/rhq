@@ -56,7 +56,7 @@ public class DriftDetector implements Runnable {
             // if there is no previous changeset then we need to generate the initial
             // coverage changeset
             ChangeSetWriter writer = changeSetMgr.getChangeSetWriter(schedule.getResourceId(),
-                new Headers(driftConfig.getName(), driftConfig.getBasedir(), COVERAGE));
+                new Headers(driftConfig.getName(), basedir(driftConfig), COVERAGE));
 
             DirectoryScanner scanner = new DirectoryScanner(schedule.getDriftConfiguration(), writer);
             scanner.scan();
@@ -81,6 +81,10 @@ public class DriftDetector implements Runnable {
         return digestGenerator.calcDigestString(file);
     }
 
+    private String basedir(DriftConfiguration driftConfig) {
+        return driftClient.getAbsoluteBaseDirectory(driftConfig).getAbsolutePath();
+    }
+
     // TODO Do not use DirectoryWalker
     // Want to do the file scan iteratively to keep memory overhead as low as possible.
     private class DirectoryScanner extends DirectoryWalker {
@@ -95,12 +99,12 @@ public class DriftDetector implements Runnable {
         }
 
         public void scan() throws IOException {
-            walk(new File(driftConfig.getBasedir()), EMPTY_LIST);
+            walk(new File(basedir(driftConfig)), EMPTY_LIST);
         }
 
         @Override
         protected void handleDirectoryStart(File directory, int depth, Collection results) throws IOException {
-            stack.push(new DirectoryEntry(relativePath(new File(driftConfig.getBasedir()), directory)));
+            stack.push(new DirectoryEntry(relativePath(new File(basedir(driftConfig)), directory)));
         }
 
         @Override

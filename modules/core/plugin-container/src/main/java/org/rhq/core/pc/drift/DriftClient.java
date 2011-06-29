@@ -14,4 +14,6 @@ public interface DriftClient {
 
     void sendChangeSetContentToServer(int resourceId, String driftConfigurationName, File contentDir);
 
+    File getAbsoluteBaseDirectory(DriftConfiguration driftConfiguration);
+
 }

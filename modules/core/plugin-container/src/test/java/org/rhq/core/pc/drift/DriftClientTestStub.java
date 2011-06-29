@@ -12,4 +12,9 @@ class DriftClientTestStub implements DriftClient {
     @Override
     public void sendChangeSetContentToServer(int resourceId, String driftConfigurationName, File contentDir) {
     }
+
+    @Override
+    public File getAbsoluteBaseDirectory(DriftConfiguration driftConfiguration) {
+        return null;
+    }
 }

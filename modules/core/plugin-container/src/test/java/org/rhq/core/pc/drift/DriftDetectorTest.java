@@ -85,7 +85,7 @@ public class DriftDetectorTest extends JMockTest {
 
         List<String> lines = readLines(new BufferedInputStream(new FileInputStream(changeSet)));
 
-        assertHeaderEquals(lines, driftConfig.getName(), driftConfig.getBasedir(), COVERAGE.code());
+        assertHeaderEquals(lines, driftConfig.getName(), driftConfig.getBasedir().getValueName(), COVERAGE.code());
         assertThatChangeSetDoesNotContainEmptyDirs(changeSet);
     }
 

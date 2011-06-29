@@ -32,14 +32,46 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
+import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext;
 import org.rhq.core.domain.resource.Resource;
 
 /**
+ * This is a convienence wrapper around a Configuration object whose schema is that
+ * of {@link DriftConfigurationDefinition}.
+ * 
+ * Note that this is not an actual Configuration object - it's got a HAS-A relationship
+ * with Configuration.
+ * 
+ * This object also has an optional relationship with a Resource.
+ *
+ * TODO: this is missing setters for includes/excludes filters. We should add those.
+ *
  * @author John Sanda
+ * @author John Mazzitelli
  */
 public class DriftConfiguration implements Serializable {
 
     private static final long serialVersionUID = 1L;
+
+    public class BaseDirectory implements Serializable {
+        private static final long serialVersionUID = 1L;
+        private final BaseDirValueContext context;
+        private final String name;
+
+        public BaseDirectory(BaseDirValueContext context, String name) {
+            this.context = context;
+            this.name = name;
+        }
+
+        public BaseDirValueContext getValueContext() {
+            return context;
+        }
+
+        public String getValueName() {
+            return name;
+        }
+    }
 
     public static class Filter implements Serializable {
         private static final long serialVersionUID = 1L;
@@ -126,28 +158,94 @@ public class DriftConfiguration implements Serializable {
         return configuration.getId();
     }
 
-    public String getName() {
-        return configuration.getSimpleValue("name", "");
+    public void setId(int id) {
+        configuration.setId(id);
     }
 
-    public String getBasedir() {
-        return configuration.getSimpleValue("basedir", "");
+    public String getName() {
+        return configuration.getSimpleValue(DriftConfigurationDefinition.PROP_NAME, "");
+    }
+
+    public void setName(String name) {
+        if (name == null) {
+            throw new NullPointerException("name is null");
+        }
+        configuration.put(new PropertySimple(DriftConfigurationDefinition.PROP_NAME, name));
+    }
+
+    public BaseDirectory getBasedir() {
+        PropertyMap map = configuration.getMap(DriftConfigurationDefinition.PROP_BASEDIR);
+        String valueContext = map.getSimpleValue(DriftConfigurationDefinition.PROP_BASEDIR_VALUECONTEXT, null);
+        String valueName = map.getSimpleValue(DriftConfigurationDefinition.PROP_BASEDIR_VALUENAME, null);
+
+        BaseDirValueContext valueContextEnum;
+
+        if (valueContext == null) {
+            throw new NullPointerException("valueContext is null");
+        } else {
+            try {
+                valueContextEnum = BaseDirValueContext.valueOf(valueContext);
+            } catch (Exception e) {
+                throw new IllegalArgumentException("Invalid valueContext: " + valueContext);
+            }
+        }
+
+        if (valueName == null) {
+            throw new NullPointerException("valueName is null");
+        }
+
+        return new BaseDirectory(valueContextEnum, valueName);
+    }
+
+    public void setBasedir(BaseDirectory basedir) {
+        if (basedir == null) {
+            throw new NullPointerException("basedir is null");
+        }
+        if (basedir.getValueContext() == null) {
+            throw new NullPointerException("valueContext is null");
+        }
+        if (basedir.getValueName() == null) {
+            throw new NullPointerException("valueName is null");
+        }
+
+        String valueContext = basedir.getValueContext().name();
+        String valueName = basedir.getValueName();
+
+        PropertyMap basedirMap = new PropertyMap(DriftConfigurationDefinition.PROP_BASEDIR);
+        basedirMap.put(new PropertySimple(DriftConfigurationDefinition.PROP_BASEDIR_VALUECONTEXT, valueContext));
+        basedirMap.put(new PropertySimple(DriftConfigurationDefinition.PROP_BASEDIR_VALUENAME, valueName));
+
+        configuration.put(basedirMap);
     }
 
     public Long getInterval() {
-        return Long.parseLong(configuration.getSimpleValue("interval", "0"));
+        return Long.parseLong(configuration.getSimpleValue(DriftConfigurationDefinition.PROP_INTERVAL, String
+            .valueOf(DriftConfigurationDefinition.DEFAULT_INTERVAL)));
+    }
+
+    public void setInterval(Long interval) {
+        if (interval == null) {
+            configuration.remove(DriftConfigurationDefinition.PROP_INTERVAL);
+        } else {
+            configuration.put(new PropertySimple(DriftConfigurationDefinition.PROP_INTERVAL, interval.toString()));
+        }
     }
 
     public boolean getEnabled() {
-        return configuration.getSimpleValue("enabled", "false").equals("true");
+        return configuration.getSimpleValue(DriftConfigurationDefinition.PROP_ENABLED,
+            String.valueOf(DriftConfigurationDefinition.DEFAULT_ENABLED)).equals("true");
+    }
+
+    public void setEnabled(boolean enabled) {
+        configuration.put(new PropertySimple(DriftConfigurationDefinition.PROP_ENABLED, String.valueOf(enabled)));
     }
 
     public List<Filter> getIncludes() {
-        return getFilters("includes");
+        return getFilters(DriftConfigurationDefinition.PROP_INCLUDES);
     }
 
     public List<Filter> getExcludes() {
-        return getFilters("excludes");
+        return getFilters(DriftConfigurationDefinition.PROP_EXCLUDES);
     }
 
     private List<Filter> getFilters(String type) {
@@ -159,7 +257,8 @@ public class DriftConfiguration implements Serializable {
         List<Filter> filters = new ArrayList<Filter>();
         for (Property property : filtersListProperty.getList()) {
             PropertyMap filter = (PropertyMap) property;
-            filters.add(new Filter(filter.getSimpleValue("path", ""), filter.getSimpleValue("pattern", "")));
+            filters.add(new Filter(filter.getSimpleValue(DriftConfigurationDefinition.PROP_PATH, ""), filter
+                .getSimpleValue(DriftConfigurationDefinition.PROP_PATTERN, "")));
         }
 
         return filters;

@@ -2,37 +2,149 @@
 
 <dbsetup name="config-data.xml">
     <table name="RHQ_CONFIG_DEF">
-        <data id="1" name="GLOBAL_DRIFT_CONFIG_DEF" description="The drift configuration definition"/>
+        <data id="1" name="GLOBAL_DRIFT_CONFIG_DEF" description="The drift configuration definition"
+              config_format="STRUCTURED" />
     </table>
 
     <table name="RHQ_CONFIG_PROP_DEF">
-        <data id="1" name="name" display_name="Drift Configuration Name" description="The drift configuration name"
-              required="true" simple_type="string" order_index="0" dtype="property" config_def_id="1"/>
-        <data id="2" name="enabled" display_name="Enabled" description="Enables or disables the drift configuration"
-              required="true" default_value="false" simple_type="boolean" order_index="1" dtype="property" config_def_id="1"/>
-        <data id="3" name="basedir" display_name="Base Directory" dtype="property"
+        <data id="1" name="name" display_name="Drift Configuration Name" config_def_id="1"
+              description="The drift configuration name"
+              required="true"
+              readonly="false"
+              summary="true"
+              order_index="0"
+              dtype="property"
+              simple_type="STRING"
+              allow_custom_enum_value="false" />
+
+        <data id="2" name="enabled" display_name="Enabled" config_def_id="1"
+              description="Enables or disables the drift configuration" 
+              required="true"
+              readonly="false"
+              summary="true"
+              order_index="1"
+              dtype="property"
+              simple_type="BOOLEAN"
+              allow_custom_enum_value="false"
+              default_value="false" />
+              
+        <data id="3" name="basedir" display_name="Base Directory" config_def_id="1"
               description="The root directory from which snapshots will be generated during drift monitoring."
-              required="true" simple_type="string" order_index="2" config_def_id="1"/>
-        <data id="4" name="interval" display_name="Interval" dtype="property"
-              description="The frequency in seconds in which drift monitoring should run. Defaults to thirty minutes."
-              default_value="1800" simple_type="long" order_index="3" config_def_id="1"/>
-        <data id="5" name="includes" display_name="Includes" dtype="list"
-              description="A set of patterns that specify files and/or directories to include." order_index="4"
-              config_def_id="1"/>
-        <data id="6" name="include" display_name="Include" dtype="map" parent_list_definition_id="4"/>
-        <data id="7" name="path" display_name="Path" dtype="property"
+              required="true"
+              readonly="false"
+              summary="true"
+              order_index="2"
+              dtype="map" />
+              
+        <data id="4" name="valueContext" display_name="Value Context" parent_map_definition_id="3"
+              description="Identifies where the named value can be found."
+              required="true"
+              readonly="false"
+              summary="true"
+              order_index="0"
+              dtype="property"
+              simple_type="STRING"
+              allow_custom_enum_value="false" />
+
+        <data id="5" name="valueName" display_name="Value Name" parent_map_definition_id="3"
+              description="The name of the value as found in the context"
+              required="true"
+              readonly="false"
+              summary="true"
+              order_index="1"
+              dtype="property"
+              simple_type="STRING"
+              allow_custom_enum_value="false" />
+
+        <data id="6" name="interval" display_name="Interval" config_def_id="1"
+              description="The frequency in seconds in which drift monitoring should run. Defaults to 1800 seconds (i.e. 30 minutes)"
+              required="false"
+              readonly="false"
+              summary="true"
+              order_index="3"
+              dtype="property"
+              simple_type="LONG"
+              allow_custom_enum_value="false"
+              default_value="1800" />
+              
+        <data id="7" name="includes" display_name="Includes" config_def_id="1"
+              description="A set of patterns that specify files and/or directories to include."
+              required="false"
+              readonly="false"
+              summary="true"
+              order_index="4"
+              dtype="list" />
+              
+        <data id="8" name="include" display_name="Include" parent_list_definition_id="7"
+              description="A pattern that specifies a file or directory to include."
+              required="true"
+              readonly="false"
+              summary="true"
+              order_index="0"
+              dtype="map" />
+        
+        <data id="9" name="path" display_name="Path" parent_map_definition_id="8"
               description="A file system path that can be a directory or a file. The path is assumed to be relative to the base directory of the drift configuration."
-              simple_type="string" order_index="0" parent_map_definition_id="5"/>
-        <data id="8" name="pattern" display_name="Pattern" dtype="property" description="TBD" simple_type="string"
-              order_index="1" parent_map_definition_id="5"/>
-        <data id="9" name="excludes" display_name="Excludes" dtype="list"
-              description="A set of patterns that specify files and/or directories to exclude." order_index="5"
-              config_def_id="1"/>
-        <data id="10" name="exclude" display_name="Exclude" dtype="map" parent_list_definition_id="8"/>
-        <data id="11" name="path" display_name="Path" dtype="property"
+              required="true"
+              readonly="false"
+              summary="true"
+              order_index="0"
+              dtype="property"
+              simple_type="STRING"
+              allow_custom_enum_value="false" />
+
+        <data id="10" name="pattern" display_name="Pattern" parent_map_definition_id="8"
+              description="Pathname pattern that must match for the items in the directory path to be included."
+              required="false"
+              readonly="false"
+              summary="true"
+              order_index="1"
+              dtype="property"
+              simple_type="STRING"
+              allow_custom_enum_value="false" />
+        
+        <data id="11" name="excludes" display_name="Excludes" config_def_id="1"
+              description="A set of patterns that specify files and/or directories to exclude."
+              required="false"
+              readonly="false"
+              summary="true"
+              order_index="5"
+              dtype="list" />
+              
+        <data id="12" name="exclude" display_name="Exclude" parent_list_definition_id="11"
+              description="A pattern that specifies a files or directory to exclude."
+              required="true"
+              readonly="false"
+              summary="true"
+              order_index="0"
+              dtype="map" />
+        
+        <data id="13" name="path" display_name="Path" parent_map_definition_id="12"
               description="A file system path that can be a directory or a file. The path is assumed to be relative to the base directory of the drift configuration."
-              simple_type="string" order_index="0" parent_map_definition_id="9"/>
-        <data id="12" name="pattern" display_name="Pattern" dtype="property" description="TBD" simple_type="string"
-              order_index="1" parent_map_definition_id="9"/>
+              required="true"
+              readonly="false"
+              summary="true"
+              order_index="0"
+              dtype="property"
+              simple_type="STRING"
+              allow_custom_enum_value="false" />
+              
+        <data id="14" name="pattern" display_name="Pattern" parent_map_definition_id="12"
+              description="Pathname pattern that must match for the items in the directory path to be excluded."
+              required="false"
+              readonly="false"
+              summary="true"
+              order_index="1"
+              dtype="property"
+              simple_type="STRING"
+              allow_custom_enum_value="false" />
     </table>
+    
+    <table name="RHQ_CONF_PROP_DEF_ENUM">
+        <data id="1" name="pluginConfiguration"   string_value="pluginConfiguration"   order_index="0" property_def_id="4" />
+        <data id="2" name="resourceConfiguration" string_value="resourceConfiguration" order_index="1" property_def_id="4" />
+        <data id="3" name="measurementTrait"      string_value="measurementTrait"      order_index="2" property_def_id="4" />
+        <data id="4" name="fileSystem"            string_value="fileSystem"            order_index="3" property_def_id="4" />
+    </table>
+    
 </dbsetup>

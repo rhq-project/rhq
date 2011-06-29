@@ -6,7 +6,9 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -18,9 +20,18 @@ import org.rhq.core.clientapi.agent.drift.DriftAgentService;
 import org.rhq.core.clientapi.server.drift.DriftServerService;
 import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.domain.drift.DriftFile;
+import org.rhq.core.domain.measurement.DataType;
+import org.rhq.core.domain.measurement.MeasurementData;
+import org.rhq.core.domain.measurement.MeasurementDataRequest;
+import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.pc.ContainerService;
+import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.agent.AgentService;
+import org.rhq.core.pc.inventory.InventoryManager;
+import org.rhq.core.pc.inventory.ResourceContainer;
+import org.rhq.core.pc.measurement.MeasurementManager;
 
 public class DriftManager extends AgentService implements DriftAgentService, DriftClient, ContainerService {
 
@@ -108,8 +119,8 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
             driftServer.sendFilesZip(resourceId, zipFile.length(), remoteInputStream(new BufferedInputStream(
                 new FileInputStream(zipFile))));
         } catch (IOException e) {
-            log.error("An error occurred while trying to send content for changeset[resourceId: " + resourceId +
-                ", driftConfiguration: " + driftConfigurationName + "]", e);
+            log.error("An error occurred while trying to send content for changeset[resourceId: " + resourceId
+                + ", driftConfiguration: " + driftConfigurationName + "]", e);
         }
     }
 
@@ -165,7 +176,6 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
         return true;
     }
 
-
     @Override
     public void unscheduleDriftDetection(int resourceId, DriftConfiguration driftConfiguration) {
     }
@@ -174,4 +184,143 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
     public void updateDriftDetection(int resourceId, DriftConfiguration driftConfiguration) {
     }
 
+    /**
+     * Given a drift configuration, this examines the config and its associated resource to determine where exactly
+     * the base directory is that should be monitoried.
+     * 
+     * @param driftConfiguration describes what is to be monitored for drift
+     * 
+     * @return absolute directory location where the drift configuration base directory is referring
+     */
+    public File getAbsoluteBaseDirectory(DriftConfiguration driftConfiguration) {
+
+        // get the resource entity stored in our local inventory
+        InventoryManager im = getInventoryManager();
+        Resource resource = driftConfiguration.getResource();
+        ResourceContainer container = im.getResourceContainer(resource);
+        resource = container.getResource();
+
+        // find out the type of base location that is specified by the drift config
+        DriftConfiguration.BaseDirectory baseDir = driftConfiguration.getBasedir();
+        if (baseDir == null) {
+            throw new IllegalArgumentException("Missing basedir in drift config");
+        }
+
+        // based on the type of base location, determine the root base directory
+        String baseDirValueName = baseDir.getValueName(); // the name we look up in the given context
+        String baseLocation;
+        switch (baseDir.getValueContext()) {
+        case fileSystem: {
+            baseLocation = baseDirValueName; // the value name IS the absolute directory name
+            if (baseLocation == null || baseLocation.trim().length() == 0) {
+                baseLocation = File.separator; // paranoia, if not specified, assume the top root directory
+            }
+            break;
+        }
+        case pluginConfiguration: {
+            baseLocation = resource.getPluginConfiguration().getSimpleValue(baseDirValueName, null);
+            if (baseLocation == null) {
+                throw new IllegalArgumentException("Cannot determine the bundle base deployment location - "
+                    + "there is no plugin configuration setting for [" + baseDirValueName + "]");
+            }
+            break;
+        }
+        case resourceConfiguration: {
+            baseLocation = resource.getResourceConfiguration().getSimpleValue(baseDirValueName, null);
+            if (baseLocation == null) {
+                throw new IllegalArgumentException("Cannot determine the bundle base deployment location - "
+                    + "there is no resource configuration setting for [" + baseDirValueName + "]");
+            }
+            break;
+        }
+        case measurementTrait: {
+            baseLocation = getTraitValue(container, baseDirValueName);
+            if (baseLocation == null) {
+                throw new IllegalArgumentException("Cannot obtain trait [" + baseDirValueName + "] for resource ["
+                    + resource.getName() + "]");
+            }
+            break;
+        }
+        default: {
+            throw new IllegalArgumentException("Unknown location context: " + baseDir.getValueContext());
+        }
+        }
+
+        File destDir = new File(baseLocation);
+
+        if (!destDir.isAbsolute()) {
+            throw new IllegalArgumentException("The base location path specified by [" + baseDirValueName
+                + "] in the context [" + baseDir.getValueContext() + "] did not resolve to an absolute path ["
+                + destDir.getPath() + "] so there is no way to know what directory to monitor for drift");
+        }
+
+        return destDir;
+    }
+
+    /**
+     * Given the name of a trait, this will find the value of that trait for the given resource.
+     * 
+     * @param resource the resource whose trait value is to be obtained
+     * @param traitName the name of the trait whose value is to be obtained
+     *
+     * @return the value of the trait, or <code>null</code> if unknown
+     * 
+     * TODO: this is taken directly from BundleManager. We should refactor this and the one
+     * in BundleManager to a single place, perhaps MeasurementManager.
+     */
+    private String getTraitValue(ResourceContainer container, String traitName) {
+        Integer traitScheduleId = null;
+        Set<MeasurementScheduleRequest> schedules = container.getMeasurementSchedule();
+        for (MeasurementScheduleRequest schedule : schedules) {
+            if (schedule.getName().equals(traitName)) {
+                if (schedule.getDataType() != DataType.TRAIT) {
+                    throw new IllegalArgumentException("Measurement named [" + traitName + "] for resource ["
+                        + container.getResource().getName() + "] is not a trait, it is of type ["
+                        + schedule.getDataType() + "]");
+                }
+                traitScheduleId = Integer.valueOf(schedule.getScheduleId());
+            }
+        }
+        if (traitScheduleId == null) {
+            throw new IllegalArgumentException("There is no trait [" + traitName + "] for resource ["
+                + container.getResource().getName() + "]");
+        }
+
+        MeasurementManager mm = getMeasurementManager();
+        String traitValue = mm.getCachedTraitValue(traitScheduleId.intValue());
+        if (traitValue == null) {
+            // the trait hasn't been collected yet, so it isn't cached. We need to get its live value
+            List<MeasurementDataRequest> requests = new ArrayList<MeasurementDataRequest>();
+            requests.add(new MeasurementDataRequest(traitName, DataType.TRAIT));
+            Set<MeasurementData> dataset = mm.getRealTimeMeasurementValue(container.getResource().getId(), requests);
+            if (dataset != null && dataset.size() == 1) {
+                Object value = dataset.iterator().next().getValue();
+                if (value != null) {
+                    traitValue = value.toString();
+                }
+            }
+        }
+
+        return traitValue;
+    }
+
+    /**
+     * Returns the manager that can provide data on the inventory. This is a separate protected method
+     * so we can extend our manger class to have a mock manager for testing.
+     * 
+     * @return the inventory manager
+     */
+    protected InventoryManager getInventoryManager() {
+        return PluginContainer.getInstance().getInventoryManager();
+    }
+
+    /**
+     * Returns the manager that can provide data on the measurements/metrics. This is a separate protected method
+     * so we can extend our manger class to have a mock manager for testing.
+     * 
+     * @return the inventory manager
+     */
+    protected MeasurementManager getMeasurementManager() {
+        return PluginContainer.getInstance().getMeasurementManager();
+    }
 }

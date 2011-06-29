@@ -3451,70 +3451,52 @@
                         VALUES (1, 'GLOBAL_DRIFT_CONFIG_DEF', 'The drift configuration definition')
                     </statement>
                     <statement>
-                        INSERT INTO rhq_config_prop_def (id, name, display_name, description, required, simple_type,
-                            order_index, dtype, config_def_id)
-                        VALUES (1, 'name', 'Drift Configuration Name', 'The drift configuration name', true, 'string',
-                            0, 'property', 1)
+                        INSERT INTO rhq_config_prop_def (id, name, display_name, description, required, simple_type, order_index, dtype, config_def_id)
+                        VALUES (1, 'name', 'Drift Configuration Name', 'The drift configuration name', true, 'STRING', 0, 'property', 1)
                     </statement>
                     <statement>
-                        INSERT INTO rhq_config_prop_def (id, name, display_name, description, required, simple_type,
-                            default_value, order_index, dtype, config_def_id)
-                        VALUES (2, 'enabled', 'Enabled', 'Enables or disables drift detection for this configuration', true, 'boolean',
-                            'false', 1, 'property', 1)
+                        INSERT INTO rhq_config_prop_def (id, name, display_name, description, required, simple_type, default_value, order_index, dtype, config_def_id)
+                        VALUES (2, 'enabled', 'Enabled', 'Enables or disables drift detection for this configuration', true, 'BOOLEAN', 'false', 1, 'property', 1)
                     </statement>
                     <statement>
-                        INSERT INTO rhq_config_prop_def (id, name, display_name, description, required, simple_type,
-                            order_index, dtype, config_def_id)
-                        VALUES (3, 'basedir', 'Base Directory', 'The base directory from which files will be monitored for drift.',
-                            true, 'string', 2, 'property', 1)
+                        INSERT INTO rhq_config_prop_def (id, name, display_name, description, required, simple_type, order_index, dtype, config_def_id)
+                        VALUES (3, 'basedir', 'Base Directory', 'The base directory from which files will be monitored for drift.', true, 'STRING', 2, 'property', 1)
                     </statement>
                     <statement>
-                        INSERT INTO rhq_config_prop_def (id, name, display_name, description, required, simple_type,
-                            order_index, dtype, default_value, config_def_id)
-                        VALUES (4, 'interval', 'Interval', 'The interval, in seconds, between drift detection scans for this configuration. Default is thirty minutes.',
-                            false, 'long', 3, 'property', '1800', 1)
+                        INSERT INTO rhq_config_prop_def (id, name, display_name, description, required, simple_type, order_index, dtype, default_value, config_def_id)
+                        VALUES (4, 'interval', 'Interval', 'The interval, in seconds, between drift detection scans for this configuration. Default is thirty minutes.', false, 'LONG', 3, 'property', '1800', 1)
                     </statement>
                     <statement>
-                        INSERT INTO rhq_config_prop_def (id, name, display_name, dtype, description, order_index,
-                            config_def_id)
-                        VALUES (5, 'includes', 'Includes', 'list', 'A set of patterns that specify files and/or directories to include.',
-                            4, 1)
+                        INSERT INTO rhq_config_prop_def (id, name, display_name, dtype, description, order_index, config_def_id)
+                        VALUES (5, 'includes', 'Includes', 'list', 'A set of patterns that specify files and/or directories to include.', 4, 1)
                     </statement>
                     <statement>
                         INSERT INTO rhq_config_prop_def (id, name, display_name, dtype, parent_list_definition_id)
                         VALUES (6, 'include', 'Include', 'map', 4)
                     </statement>
                     <statement>
-                        INSERT INTO rhq_config_prop_def (id, name, display_name, description, simple_type,
-                            order_index, dtype, parent_map_definition_id)
-                        VALUES (7, 'path', 'Path', 'A file system path that can be a directory or a file. The path is assumed to be relative to the base directory of the drift configuration.',
-                            'string', 0, 'property', 5)
+                        INSERT INTO rhq_config_prop_def (id, name, display_name, description, simple_type, order_index, dtype, parent_map_definition_id)
+                        VALUES (7, 'path', 'Path', 'A file system path that can be a directory or a file. The path is assumed to be relative to the base directory of the drift configuration.', 'STRING', 0, 'property', 5)
                     </statement>
                     <statement>
-                        INSERT INTO rhq_config_prop_def (id, name, display_name, description, simple_type,
-                            order_index, dtype, parent_map_definition_id)
-                        VALUES (8, 'pattern', 'Pattern', 'TBD', 'string', 1, 'property', 5)
+                        INSERT INTO rhq_config_prop_def (id, name, display_name, description, simple_type, order_index, dtype, parent_map_definition_id)
+                        VALUES (8, 'pattern', 'Pattern', 'Pathname pattern that must match for the items in the directory path to be included.', 'STRING', 1, 'property', 5)
                     </statement>
                     <statement>
-                        INSERT INTO rhq_config_prop_def (id, name, display_name, dtype, description, order_index,
-                            config_def_id)
-                        VALUES (9, 'excludes', 'Excludes', 'list', 'A set of patterns that specify files and/or directories to exclude.',
-                            5, 1)
+                        INSERT INTO rhq_config_prop_def (id, name, display_name, dtype, description, order_index, config_def_id)
+                        VALUES (9, 'excludes', 'Excludes', 'list', 'A set of patterns that specify files and/or directories to exclude.', 5, 1)
                     </statement>
                     <statement>
                         INSERT INTO rhq_config_prop_def (id, name, display_name, dtype, parent_list_definition_id)
                         VALUES (10, 'exclude', 'Exclude', 'map', 8)
                     </statement>
                     <statement>
-                        INSERT INTO rhq_config_prop_def (id, name, display_name, description, simple_type,
-                            order_index, dtype, parent_map_definition_id)
-                        VALUES (11, 'path', 'Path', 'A file system path that can be a directory or a file. The path is assumed to be relative to the base directory of the drift configuration.',
-                            'string', 0, 'property', 9)
+                        INSERT INTO rhq_config_prop_def (id, name, display_name, description, simple_type, order_index, dtype, parent_map_definition_id)
+                        VALUES (11, 'path', 'Path', 'A file system path that can be a directory or a file. The path is assumed to be relative to the base directory of the drift configuration.', 'STRING', 0, 'property', 9)
                     </statement>
                     <statement>
-                        INSERT INTO rhq_config_prop_def (id, name, display_name, description, simple_type,
-                            order_index, dtype, parent_map_definition_id)
-                        VALUES (12, 'pattern', 'Pattern', 'TBD', 'string', 1, 'property', 9)
+                        INSERT INTO rhq_config_prop_def (id, name, display_name, description, simple_type, order_index, dtype, parent_map_definition_id)
+                        VALUES (12, 'pattern', 'Pattern', 'Pathname pattern that must match for the items in the directory path to be excluded.', 'STRING', 1, 'property', 9)
                     </statement>
                 </schema-directSQL>
             </schemaSpec>

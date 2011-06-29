@@ -177,28 +177,6 @@
                 <c:simple-property name="path" default="profile" readOnly="true"/>
             </plugin-configuration>
 
-            <service name="ModCluster"
-                     class="BaseComponent"
-                     discovery="SubsystemDiscovery"
-                     description="Mod_cluster support">
-
-                <plugin-configuration>
-                    <c:simple-property name="path" readOnly="true" default="subsystem=modcluster"/>
-                </plugin-configuration>
-
-                <operation name="list-proxies" description="Read the list of httpd contected to the nodes.">
-                </operation>
-
-                <operation name="validate-address" description="Read the list of httpd contected to the nodes.">
-                </operation>
-
-                <resource-configuration>
-                    <c:simple-property name="advertise-socket" displayName="Advertise Socket" type="string">
-                        <c:option-source target="configuration" expression="socket-binding=name:type=SocketBindingGroup"/>
-                    </c:simple-property>
-                </resource-configuration>
-            </service>
-
         </server>
 
         <server name="ServerGroup"
@@ -1375,6 +1353,36 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
 
         </service>
     </server>
+
+    <server name="ModCluster"
+             class="BaseComponent"
+             discovery="SubsystemDiscovery"
+             description="Mod_cluster support"
+             singleton="true"
+            >
+
+        <runs-inside>
+            <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
+            <parent-resource-type name="JBossAS7-Standalone"  plugin="jboss-as-7"/> <!-- FAKE as "runs inside Profile" only does not work -->
+        </runs-inside>
+
+        <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="subsystem=modcluster"/>
+        </plugin-configuration>
+
+        <operation name="list-proxies" description="Read the list of httpd connected to the nodes.">
+        </operation>
+
+        <operation name="validate-address" >
+        </operation>
+
+        <resource-configuration>
+            <c:simple-property name="advertise-socket" displayName="Advertise Socket" type="string">
+                <c:option-source target="configuration" expression="socket-binding=name:type=SocketBindingGroup"/>
+            </c:simple-property>
+        </resource-configuration>
+    </server>
+
 
     <service name="NetworkInterface"
              discovery="SubsystemDiscovery"

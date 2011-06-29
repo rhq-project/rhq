@@ -115,5 +115,51 @@ public class UpgradeSimpleConfigurationFromRHQ1_3Test extends UpgradeTestBase {
                 }
             }
         });        
-    }        
+    }
+    
+    @Test
+    @PluginContainerSetup(plugins = {PLATFORM_PLUGIN, AUGEAS_PLUGIN, APACHE_PLUGIN})
+    @Parameters({"apache2.install.dir", "apache2.exe.path" })
+    public void testWithAnyAddress(final String installPath, final String exePath) throws Throwable {
+        testUpgrade(new TestConfiguration() {
+            {
+                configurationName = DEPLOYMENT_SIMPLE_WITH_WILDCARD_LISTENS;
+                
+                apacheConfigurationFiles = new String[] { "/full-configurations/2.2.x/simple/httpd.conf" };
+                inventoryFile = "/mocked-inventories/rhq-1.3.x/simple/inventory.xml";
+                serverRoot = installPath;
+                binPath = exePath;
+                                            
+                defaultOverrides = new HashMap<String, String>();
+                defaultOverrides.put(variableName(configurationName, "listen1"), "0.0.0.0:${port1}");
+                defaultOverrides.put(variableName(configurationName, "listen2"), "0.0.0.0:${port2}");
+                defaultOverrides.put(variableName(configurationName, "listen3"), "0.0.0.0:${port3}");
+                defaultOverrides.put(variableName(configurationName, "listen4"), "0.0.0.0:${port4}");
+                defaultOverrides.put(variableName(configurationName, "vhost1.urls"), "0.0.0.0:${port1}");
+            }
+        });
+    }
+
+    @Test
+    @PluginContainerSetup(plugins = {PLATFORM_PLUGIN, AUGEAS_PLUGIN, APACHE_PLUGIN})
+    @Parameters({"apache2.install.dir", "apache2.exe.path" })
+    public void testWithWildcardAddress(final String installPath, final String exePath) throws Throwable {
+        testUpgrade(new TestConfiguration() {
+            {
+                configurationName = DEPLOYMENT_SIMPLE_WITH_WILDCARD_LISTENS;
+                
+                apacheConfigurationFiles = new String[] { "/full-configurations/2.2.x/simple/httpd.conf" };
+                inventoryFile = "/mocked-inventories/rhq-1.3.x/simple/inventory.xml";
+                serverRoot = installPath;
+                binPath = exePath;
+                                            
+                defaultOverrides = new HashMap<String, String>();
+                defaultOverrides.put(variableName(configurationName, "listen1"), "*:${port1}");
+                defaultOverrides.put(variableName(configurationName, "listen2"), "*:${port2}");
+                defaultOverrides.put(variableName(configurationName, "listen3"), "*:${port3}");
+                defaultOverrides.put(variableName(configurationName, "listen4"), "*:${port4}");
+                defaultOverrides.put(variableName(configurationName, "vhost1.urls"), "*:${port1}");
+            }
+        });
+    }
 }

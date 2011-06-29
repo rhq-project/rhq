@@ -23,7 +23,6 @@ package org.rhq.plugins.apache;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -64,6 +63,11 @@ public class UpgradeSimpleConfigurationFromRHQ3_0_0Test extends UpgradeTestBase 
                 serverRoot = installDir;
                 binPath = exePath;
                 configurationName = DEPLOYMENT_SIMPLE_WITH_RESOLVABLE_SERVERNAMES;
+                
+                //just define the servername value without actually setting the ${servername.directive} so that
+                //we don't define a servername directive itself but do have a value for the actual server name.
+                //this is deduced by apache and the plugin but tests aren't that clever.
+                defaultOverrides.put("servername", "${localhost}");
             }
         });
     }
@@ -80,7 +84,6 @@ public class UpgradeSimpleConfigurationFromRHQ3_0_0Test extends UpgradeTestBase 
                 binPath = exePath;
                 configurationName = DEPLOYMENT_SIMPLE_WITH_UNRESOLVABLE_SERVER_NAMES;
                 
-                defaultOverrides = new HashMap<String, String>();
                 defaultOverrides.put(variableName(configurationName, "servername.directive"), "ServerName ${unresolvable.host}");
                 defaultOverrides.put(variableName(configurationName, "vhost1.servername.directive"), "ServerName ${unresolvable.host}:${listen1}");
                 defaultOverrides.put(variableName(configurationName, "vhost2.servername.directive"), "ServerName ${unresolvable.host}:${listen2}");
@@ -102,7 +105,6 @@ public class UpgradeSimpleConfigurationFromRHQ3_0_0Test extends UpgradeTestBase 
                 binPath = exePath;
                 configurationName = DEPLOYMENT_SIMPLE_WITH_UNRESOLVABLE_SERVER_NAMES;
                 
-                defaultOverrides = new HashMap<String, String>();
                 defaultOverrides.put(variableName(configurationName, "servername.directive"), "ServerName ${unresolvable.host}");
                 defaultOverrides.put(variableName(configurationName, "vhost1.servername.directive"), "ServerName ${unresolvable.host}");
                 defaultOverrides.put(variableName(configurationName, "vhost2.servername.directive"), "ServerName ${unresolvable.host}");
@@ -134,9 +136,7 @@ public class UpgradeSimpleConfigurationFromRHQ3_0_0Test extends UpgradeTestBase 
                 serverRoot = installDir;
                 binPath = exePath;
                 configurationName = DEPLOYMENT_SIMPLE_WITH_RESOLVABLE_SERVERNAMES;                     
-                upgradeShouldSucceed = false;
-                
-                defaultOverrides = new HashMap<String, String>();
+                upgradeShouldSucceed = false;                
             }
             
             @Override
@@ -168,7 +168,6 @@ public class UpgradeSimpleConfigurationFromRHQ3_0_0Test extends UpgradeTestBase 
                 configurationName = DEPLOYMENT_SIMPLE_WITH_RESOLVABLE_SERVERNAMES;                     
                 upgradeShouldSucceed = false;
                 
-                defaultOverrides = new HashMap<String, String>();
                 defaultOverrides.put(variableName(configurationName, "servername.directive"), "ServerName ${unresolvable.host}");
                 defaultOverrides.put(variableName(configurationName, "vhost1.servername.directive"), "ServerName ${unresolvable.host}:${listen1}");
                 defaultOverrides.put(variableName(configurationName, "vhost2.servername.directive"), "ServerName ${unresolvable.host}:${listen2}");
@@ -205,7 +204,6 @@ public class UpgradeSimpleConfigurationFromRHQ3_0_0Test extends UpgradeTestBase 
                 configurationName = DEPLOYMENT_SIMPLE_WITH_RESOLVABLE_SERVERNAMES;                     
                 upgradeShouldSucceed = false;
                 
-                defaultOverrides = new HashMap<String, String>();
                 defaultOverrides.put(variableName(configurationName, "servername.directive"), "ServerName ${unresolvable.host}");
                 defaultOverrides.put(variableName(configurationName, "vhost1.servername.directive"), "ServerName ${unresolvable.host}");
                 defaultOverrides.put(variableName(configurationName, "vhost2.servername.directive"), "ServerName ${unresolvable.host}");
@@ -213,6 +211,135 @@ public class UpgradeSimpleConfigurationFromRHQ3_0_0Test extends UpgradeTestBase 
                 defaultOverrides.put(variableName(configurationName, "vhost4.servername.directive"), "ServerName ${unresolvable.host}");                                
             }
             
+            @Override
+            public void beforeTestSetup(TestSetup testSetup) throws Throwable {
+                beforeTestSetupWithSNMP(this, testSetup);
+            }
+
+            /**
+             * Do our own tests here, because the generic test method won't do much, since
+             * we told it that the upgrade won't succeed.
+             */
+            @Override
+            public void beforeTests(TestSetup setup) throws Throwable {
+                testWithSNMP(this, setup);
+            }
+        });
+    }
+    
+    @Test
+    @PluginContainerSetup(plugins = {PLATFORM_PLUGIN, AUGEAS_PLUGIN, APACHE_PLUGIN})
+    @Parameters({"apache2.install.dir", "apache2.exe.path" })
+    public void testWithAnyAddressWithoutSNMP(final String installPath, final String exePath) throws Throwable {
+        testUpgrade(new TestConfiguration() {
+            {
+                configurationName = DEPLOYMENT_SIMPLE_WITH_WILDCARD_LISTENS;
+                
+                apacheConfigurationFiles = new String[] { "/full-configurations/2.2.x/simple/httpd.conf" };
+                inventoryFile = "/mocked-inventories/rhq-3.0.0/simple/inventory-without-snmp.xml";
+                serverRoot = installPath;
+                binPath = exePath;
+                                                            
+                //just define the servername value without actually setting the ${servername.directive} so that
+                //we don't define a servername directive itself but do have a value for the actual server name.
+                //this is deduced by apache and the plugin but tests aren't that clever.
+                defaultOverrides.put("servername", "${localhost}");
+                defaultOverrides.put(variableName(configurationName, "listen1"), "0.0.0.0:${port1}");
+                defaultOverrides.put(variableName(configurationName, "listen2"), "0.0.0.0:${port2}");
+                defaultOverrides.put(variableName(configurationName, "listen3"), "0.0.0.0:${port3}");
+                defaultOverrides.put(variableName(configurationName, "listen4"), "0.0.0.0:${port4}");
+                defaultOverrides.put(variableName(configurationName, "vhost1.urls"), "0.0.0.0:${port1}");
+            }
+        });
+    }
+
+    /**
+     * Unlike other SNMP tests this one actually succeeds to upgrade because of the messed up discovery that
+     * RHQ 3.0.0 would perform. In case of any-address (0.0.0.0), the main vhost would get the MainServer
+     * resource key even with SNMP, because RHQ 3 codebase wouldn't be able to match what it think should
+     * have been the SNMP record with the actual results from SNMP module.
+     * <p>
+     * Because of this, RHQ 3 discovers all 5 vhosts and the upgrade code is therefore able to successfully
+     * upgrade all of them.
+     * 
+     * @param installPath
+     * @param exePath
+     * @throws Throwable
+     */
+    @Test
+    @PluginContainerSetup(plugins = {PLATFORM_PLUGIN, AUGEAS_PLUGIN, APACHE_PLUGIN})
+    @Parameters({"apache2.install.dir", "apache2.exe.path" })
+    public void testWithAnyAddressWithSNMP(final String installPath, final String exePath) throws Throwable {
+        testUpgrade(new TestConfiguration() {
+            {
+                configurationName = DEPLOYMENT_SIMPLE_WITH_WILDCARD_LISTENS;
+                
+                apacheConfigurationFiles = new String[] { "/full-configurations/2.2.x/simple/httpd.conf" };
+                inventoryFile = "/mocked-inventories/rhq-3.0.0/simple/inventory-with-snmp-anyaddr.xml";
+                serverRoot = installPath;
+                binPath = exePath;
+                                                            
+                defaultOverrides.put(variableName(configurationName, "listen1"), "0.0.0.0:${port1}");
+                defaultOverrides.put(variableName(configurationName, "listen2"), "0.0.0.0:${port2}");
+                defaultOverrides.put(variableName(configurationName, "listen3"), "0.0.0.0:${port3}");
+                defaultOverrides.put(variableName(configurationName, "listen4"), "0.0.0.0:${port4}");
+                defaultOverrides.put(variableName(configurationName, "vhost1.urls"), "0.0.0.0:${port1}");
+            }
+
+            @Override
+            public void beforeTestSetup(TestSetup testSetup) throws Throwable {
+                beforeTestSetupWithSNMP(this, testSetup);
+            }
+        });
+    }
+
+    @Test
+    @PluginContainerSetup(plugins = {PLATFORM_PLUGIN, AUGEAS_PLUGIN, APACHE_PLUGIN})
+    @Parameters({"apache2.install.dir", "apache2.exe.path" })
+    public void testWithWildcardAddressWithoutSNMP(final String installPath, final String exePath) throws Throwable {
+        testUpgrade(new TestConfiguration() {
+            {
+                configurationName = DEPLOYMENT_SIMPLE_WITH_WILDCARD_LISTENS;
+                
+                apacheConfigurationFiles = new String[] { "/full-configurations/2.2.x/simple/httpd.conf" };
+                inventoryFile = "/mocked-inventories/rhq-3.0.0/simple/inventory-without-snmp.xml";
+                serverRoot = installPath;
+                binPath = exePath;                                           
+                
+                //just define the servername value without actually setting the ${servername.directive} so that
+                //we don't define a servername directive itself but do have a value for the actual server name.
+                //this is deduced by apache and the plugin but tests aren't that clever.
+                defaultOverrides.put("servername", "${localhost}");
+                defaultOverrides.put(variableName(configurationName, "listen1"), "*:${port1}");
+                defaultOverrides.put(variableName(configurationName, "listen2"), "*:${port2}");
+                defaultOverrides.put(variableName(configurationName, "listen3"), "*:${port3}");
+                defaultOverrides.put(variableName(configurationName, "listen4"), "*:${port4}");
+                defaultOverrides.put(variableName(configurationName, "vhost1.urls"), "*:${port1}");
+            }
+        });
+    }
+    
+    @Test
+    @PluginContainerSetup(plugins = {PLATFORM_PLUGIN, AUGEAS_PLUGIN, APACHE_PLUGIN})
+    @Parameters({"apache2.install.dir", "apache2.exe.path" })
+    public void testWithWildcardAddressWithSNMP(final String installPath, final String exePath) throws Throwable {
+        testUpgrade(new TestConfiguration() {
+            {
+                configurationName = DEPLOYMENT_SIMPLE_WITH_WILDCARD_LISTENS;
+                
+                apacheConfigurationFiles = new String[] { "/full-configurations/2.2.x/simple/httpd.conf" };
+                inventoryFile = "/mocked-inventories/rhq-3.0.0/simple/inventory-with-snmp.xml";
+                serverRoot = installPath;
+                binPath = exePath;
+                upgradeShouldSucceed = false;
+                
+                defaultOverrides.put(variableName(configurationName, "listen1"), "*:${port1}");
+                defaultOverrides.put(variableName(configurationName, "listen2"), "*:${port2}");
+                defaultOverrides.put(variableName(configurationName, "listen3"), "*:${port3}");
+                defaultOverrides.put(variableName(configurationName, "listen4"), "*:${port4}");
+                defaultOverrides.put(variableName(configurationName, "vhost1.urls"), "*:${port1}");
+            }
+
             @Override
             public void beforeTestSetup(TestSetup testSetup) throws Throwable {
                 beforeTestSetupWithSNMP(this, testSetup);

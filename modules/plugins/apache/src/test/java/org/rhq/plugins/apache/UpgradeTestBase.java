@@ -60,10 +60,12 @@ import org.rhq.core.pluginapi.inventory.PluginContainerDeployment;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.system.SystemInfoFactory;
+import org.rhq.plugins.apache.parser.ApacheConfigReader;
 import org.rhq.plugins.apache.parser.ApacheDirectiveTree;
+import org.rhq.plugins.apache.parser.ApacheParser;
+import org.rhq.plugins.apache.parser.ApacheParserImpl;
 import org.rhq.plugins.apache.util.ApacheDeploymentUtil;
 import org.rhq.plugins.apache.util.ApacheDeploymentUtil.DeploymentConfig;
-import org.rhq.plugins.apache.util.ApacheDeploymentUtil.DeploymentConfig.VHost;
 import org.rhq.plugins.apache.util.ApacheExecutionUtil;
 import org.rhq.plugins.apache.util.HttpdAddressUtility;
 import org.rhq.plugins.apache.util.VHostSpec;
@@ -149,6 +151,8 @@ public class UpgradeTestBase extends PluginContainerTest {
                 assertTrue(confDir.exists(),
                     "The configured server root denotes a directory that doesn't have a 'conf' subdirectory. This is unexpected.");
     
+                String confFilePath = confDir.getAbsolutePath() + File.separatorChar + "httpd.conf";
+                
                 String snmpHost = null;
                 int snmpPort = 0;
                 String pingUrl = null;
@@ -157,13 +161,15 @@ public class UpgradeTestBase extends PluginContainerTest {
                     if (deploy) {
                         ApacheDeploymentUtil.deployConfiguration(confDir, configurationFiles, deploymentConfig);
                     }
-    
-                    HttpdAddressUtility.Address addr = deploymentConfig.mainServer.address1;
-                    HttpdAddressUtility.Address addrToUse = new HttpdAddressUtility.Address(null, null,
-                        HttpdAddressUtility.Address.NO_PORT_SPECIFIED_VALUE);
-                    addrToUse.scheme = addr.scheme == null ? "http" : addr.scheme;
-                    addrToUse.host = addr.host == null ? "localhost" : addr.host;
-                    addrToUse.port = addr.port;
+                    
+                    //ok, now try to find the ping URL. The best thing is to actually invoke
+                    //the same code the apache server discovery does.
+                    ApacheDirectiveTree tree = new ApacheDirectiveTree();
+                    ApacheParser parser = new ApacheParserImpl(tree, serverRootDir.getAbsolutePath());
+                    ApacheConfigReader.buildTree(confFilePath, parser);
+                    
+                    //XXX this hardcodes apache2 as the only option we have...
+                    HttpdAddressUtility.Address addrToUse = HttpdAddressUtility.APACHE_2_x.getMainServerSampleAddress(tree, null, -1);
                     pingUrl = addrToUse.toString();
     
                     snmpHost = deploymentConfig.snmpHost;
@@ -171,7 +177,7 @@ public class UpgradeTestBase extends PluginContainerTest {
                 }
     
                 execution = new ApacheExecutionUtil(findApachePluginResourceTypeByName("Apache HTTP Server"),
-                    serverRoot, exePath, confDir.getAbsolutePath() + File.separatorChar + "httpd.conf", pingUrl,
+                    serverRoot, exePath, confFilePath, pingUrl,
                     snmpHost, snmpPort);
                 execution.init();
             }
@@ -384,7 +390,7 @@ public class UpgradeTestBase extends PluginContainerTest {
         public String configurationName;
         public String serverRoot;
         public String binPath;
-        public Map<String, String> defaultOverrides;
+        public Map<String, String> defaultOverrides = new HashMap<String, String>();
         public boolean upgradeShouldSucceed = true;
         
         public void beforeTestSetup(TestSetup testSetup) throws Throwable {
@@ -406,6 +412,7 @@ public class UpgradeTestBase extends PluginContainerTest {
 
     protected static final String DEPLOYMENT_SIMPLE_WITH_RESOLVABLE_SERVERNAMES = "simpleWithResolvableServerNames";
     protected static final String DEPLOYMENT_SIMPLE_WITH_UNRESOLVABLE_SERVER_NAMES = "simpleWithUnresolvableServerNames";
+    protected static final String DEPLOYMENT_SIMPLE_WITH_WILDCARD_LISTENS = "simpleWithWildcardListens";
     
     private List<ResourceType> resourceTypesInApachePlugin;
     protected Resource platform;
@@ -572,5 +579,18 @@ public class UpgradeTestBase extends PluginContainerTest {
         bld.append(name);
         
         return bld.toString();
+    }
+    
+    protected static InetAddress determineLocalhost() {
+        try {
+            return InetAddress.getLocalHost();
+        } catch (UnknownHostException e) {
+            try {
+                return InetAddress.getByName("127.0.0.1");
+            } catch (UnknownHostException ee) {
+                //doesn't happen
+                return null;
+            }
+        }
     }
 }

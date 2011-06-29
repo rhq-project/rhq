@@ -1,5 +1,11 @@
 package org.rhq.core.pc.drift;
 
+import static org.apache.commons.io.FileUtils.deleteDirectory;
+import static org.apache.commons.io.IOUtils.readLines;
+import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
+import static org.testng.Assert.assertEquals;
+import static org.unitils.thirdparty.org.apache.commons.io.FileUtils.touch;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
@@ -19,12 +25,6 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.test.JMockTest;
-
-import static org.apache.commons.io.FileUtils.deleteDirectory;
-import static org.apache.commons.io.IOUtils.readLines;
-import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
-import static org.testng.Assert.assertEquals;
-import static org.unitils.thirdparty.org.apache.commons.io.FileUtils.touch;
 
 public class DriftDetectorTest extends JMockTest {
 
@@ -55,6 +55,7 @@ public class DriftDetectorTest extends JMockTest {
         scheduleQueue = new ScheduleQueueImpl();
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     public void generateCoverageChangeSet() throws Exception {
         File server1Dir = new File(resourcesDir, "server-1");
@@ -99,8 +100,8 @@ public class DriftDetectorTest extends JMockTest {
     void assertHeaderEquals(List<String> lines, String... expected) {
         assertEquals(lines.get(0), expected[0], "The first header entry should be the drift configuration name.");
         assertEquals(lines.get(1), expected[1], "The second header entry should be the base directory.");
-        assertEquals(lines.get(2), expected[2], "The third header entry should be a flag indicating the change set " +
-            "type.");
+        assertEquals(lines.get(2), expected[2], "The third header entry should be a flag indicating the change set "
+            + "type.");
     }
 
     void assertThatChangeSetDoesNotContainEmptyDirs(File changeSet) throws Exception {
@@ -108,8 +109,8 @@ public class DriftDetectorTest extends JMockTest {
         DirectoryEntry dirEntry = reader.readDirectoryEntry();
 
         while (dirEntry != null) {
-            Assert.assertTrue(dirEntry.getNumberOfFiles() > 0, "The change set file should not include empty " +
-                "directories");
+            Assert.assertTrue(dirEntry.getNumberOfFiles() > 0, "The change set file should not include empty "
+                + "directories");
             dirEntry = reader.readDirectoryEntry();
         }
     }

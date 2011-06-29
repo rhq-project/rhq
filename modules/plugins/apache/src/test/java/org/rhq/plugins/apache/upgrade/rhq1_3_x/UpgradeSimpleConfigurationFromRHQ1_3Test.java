@@ -17,7 +17,7 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.plugins.apache;
+package org.rhq.plugins.apache.upgrade.rhq1_3_x;
 
 import java.util.Comparator;
 import java.util.HashMap;
@@ -28,6 +28,9 @@ import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.plugins.apache.upgrade.UpgradeTestBase;
+import org.rhq.plugins.apache.upgrade.UpgradeTestBase.TestConfiguration;
+import org.rhq.plugins.apache.upgrade.UpgradeTestBase.TestSetup;
 import org.rhq.test.pc.PluginContainerSetup;
 
 /**

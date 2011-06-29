@@ -51,7 +51,7 @@ public class ASUploadConnection {
 
     private static final String POST_REQUEST_METHOD = "POST";
 
-    private static final String UPLOAD_URL_PATH = "/management/add-content";
+    private static final String UPLOAD_URL_PATH = ASConnection.MANAGEMENT + "/add-content";
 
     private final Log log = LogFactory.getLog(ASUploadConnection.class);
 
@@ -96,7 +96,7 @@ public class ASUploadConnection {
             os.flush();
 
             int code = connection.getResponseCode();
-            System.err.println("Response code " + code);
+            log.info("Response code for file upload: " + code);
             if (code==500)
                 is = connection.getErrorStream();
             else
@@ -116,10 +116,10 @@ public class ASUploadConnection {
                 if (s!=null)
                     tree = mapper.readTree(s);
                 else
-                    System.out.println("- no result received from InputStream -");
+                    log.warn("- no result received from InputStream -");
             }
             else
-                System.out.println("- no InputStream available -");
+                log.warn("- no InputStream available -");
 
         } catch (IOException e) {
             e.printStackTrace();  // TODO: Customise this generated block

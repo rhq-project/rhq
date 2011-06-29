@@ -169,14 +169,38 @@
 
 
         <server name="Profile"
-                description="One profile in a domain"
+                description="One profile in a domain. Profiles are assigned to server groups."
                 discovery="SubsystemDiscovery"
                 class="BaseComponent">
 
             <plugin-configuration>
                 <c:simple-property name="path" default="profile" readOnly="true"/>
             </plugin-configuration>
+
+            <service name="ModCluster"
+                     class="BaseComponent"
+                     discovery="SubsystemDiscovery"
+                     description="Mod_cluster support">
+
+                <plugin-configuration>
+                    <c:simple-property name="path" readOnly="true" default="subsystem=modcluster"/>
+                </plugin-configuration>
+
+                <operation name="list-proxies" description="Read the list of httpd contected to the nodes.">
+                </operation>
+
+                <operation name="validate-address" description="Read the list of httpd contected to the nodes.">
+                </operation>
+
+                <resource-configuration>
+                    <c:simple-property name="advertise-socket" displayName="Advertise Socket" type="string">
+                        <c:option-source target="configuration" expression="socket-binding=name:type=SocketBindingGroup"/>
+                    </c:simple-property>
+                </resource-configuration>
+            </service>
+
         </server>
+
         <server name="ServerGroup"
                 description="Server groups on this domain"
                 discovery="SubsystemDiscovery"
@@ -190,8 +214,12 @@
 
 
             <resource-configuration>
-                <c:simple-property name="profile" />
-                <c:simple-property name="socket-binding-group"/>
+                <c:simple-property name="profile" description="The profile name" required="true"/>
+                <c:simple-property name="socket-binding-group" readOnly="false" required="true">
+                    <c:option-source target="resource" expression="type=SocketBindingGroup"/>
+                </c:simple-property>
+                <c:simple-property name="socket-binding-port-offset" required="false" defaultValue="0" type="integer"
+                                   description="The default offset to be added to the port values given by the socket binding group."/>
                 <c:simple-property name="jvm" required="false"/>
             </resource-configuration>
 
@@ -236,7 +264,9 @@
 
             <operation name="domain-deployment:promote" displayName="Deploy to Server-Group" description="Deploy this deployment to a server group">
                 <parameters>
-                    <c:simple-property name="server-group" required="true" description="Server group to deploy to" type="string"/>
+                    <c:simple-property name="server-group" required="true" description="Server group to deploy to" type="string">
+                        <c:option-source target="resource" expression="type=ServerGroup" />
+                    </c:simple-property>
                     <c:simple-property name="enabled" required="true" default="true" description="Should the deployment be enabled on the server group?" type="boolean"/>
                 </parameters>
                 <results>
@@ -327,6 +357,7 @@
             <c:simple-property name="group" readOnly="true" displayName="Server Group" description="Server Group this instance belongs to."/>
             <c:simple-property name="socket-binding-group" readOnly="true" displayName="Socket binding group" description="Socket bindngs to use"/>
             <c:simple-property name="socket-binding-port-offset" readOnly="true" displayName="Port Offset" type="integer" default="0" description="Offset to the base ports"/>
+            <c:simple-property name="path" readOnly="true" />
 
             &logSources;
         </plugin-configuration>
@@ -351,7 +382,8 @@
             </results>
         </operation>
 
-
+        <metric property="status" dataType="trait" displayName="Server state" description="Detailed server state"
+                displayType="summary"/>
 
     </server>
 
@@ -1387,8 +1419,8 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
                     <c:simple-property name="interface" description="Name of the interface to which the socket should be bound, or, for multicast sockets, the interface on which it should listen. This should be one of the declared interfaces." required="false"/>
                     <c:simple-property name="port" description="Number of the port to which the socket should be bound." type="integer"/>
                     <c:simple-property name="fixed-port" description="Whether the port value should remain fixed even if numeric offsets are applied to the other sockets in the socket group." type="boolean"/>
-                    <c:simple-property name="multicast-address" description="Multicast address on which the socket should receive multicast traffic. If unspecified, the socket will not be configured to receive multicast." />
-                    <c:simple-property name="multicast-port" description="Port on which the socket should receive multicast traffic. Must be configured if 'multicast-address' is configured." type="integer"/>
+                    <c:simple-property name="multicast-address" description="Multicast address on which the socket should receive multicast traffic. If unspecified, the socket will not be configured to receive multicast." required="false"/>
+                    <c:simple-property name="multicast-port" description="Port on which the socket should receive multicast traffic. Must be configured if 'multicast-address' is configured." type="integer" required="false"/>
                 </c:map-property>
             </c:list-property>
         </resource-configuration>
@@ -1419,6 +1451,5 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
         </content>
 
     </service>
-
 
 </plugin>

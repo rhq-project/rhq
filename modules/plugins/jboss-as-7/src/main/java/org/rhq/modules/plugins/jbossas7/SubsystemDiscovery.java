@@ -101,7 +101,8 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
             if (cpath.contains("="))
                 path += "," + cpath;
 
-            System.out.println("total path: [" + path + "]");
+            if (Boolean.getBoolean("as7plugin.verbose"))
+                log.info("total path: [" + path + "]");
 
 
             JsonNode json ;

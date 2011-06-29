@@ -43,20 +43,26 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  */
 public class ASConnection {
 
+    public static final String MANAGEMENT = "/management";
+//    public static final String MANAGEMENT = "/domain-api"; // Old one - leave it here for the moment for tests.
     private final Log log = LogFactory.getLog(ASConnection.class);
     URL url;
     String urlString;
     private ObjectMapper mapper;
-    boolean verbose = true; // This is a variable on purpose, so devs can switch it on in the debugger
+    public static boolean verbose = false; // This is a variable on purpose, so devs can switch it on in the debugger or in the agent
 
     public ASConnection(String host, int port) {
 
         try {
-            url = new URL("http",host,port,"/management");
+            url = new URL("http",host,port, MANAGEMENT);
             urlString = url.toString();
+
         } catch (MalformedURLException e) {
             throw new IllegalArgumentException(e.getMessage());
         }
+
+        // read system property "as7plugin.verbose"
+        verbose = Boolean.getBoolean("as7plugin.verbose");
 
         mapper = new ObjectMapper();
     }
@@ -107,8 +113,7 @@ public class ASConnection {
 
             String result = mapper.writeValueAsString(operation);
             if (verbose) {
-                System.out.println("Json to send: " + result);
-                System.out.flush();
+                log.info("Json to send: " + result);
             }
             mapper.writeValue(out, operation);
 
@@ -141,8 +146,7 @@ public class ASConnection {
                     ObjectMapper om2 = new ObjectMapper();
                     om2.configure(SerializationConfig.Feature.INDENT_OUTPUT, true);
                     String tmp = om2.writeValueAsString(operationResult);
-                    System.out.println(tmp);
-                    System.out.flush();
+                    log.info(tmp);
                 }
             }
             else {
@@ -156,8 +160,6 @@ public class ASConnection {
             }
             else {
                 log.error("IS was null and code was " + responseCode);
-                if (verbose)
-                    System.err.println("IS was null and code was " + responseCode);
             }
 
 

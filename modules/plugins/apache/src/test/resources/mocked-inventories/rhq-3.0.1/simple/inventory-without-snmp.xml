@@ -46,7 +46,7 @@
     <childResources>
         <id>10046</id>
         <uuid>908ea047-889e-4978-a61f-d96e8b1c6d17</uuid>
-        <resourceKey>${vhost4.rhq4.resource.key}</resourceKey>
+        <resourceKey>${vhost4.rhq3.resource.key}</resourceKey>
         <name>${vhost4.snmp.identifier}</name>
         <inventoryStatus>COMMITTED</inventoryStatus>
         <connected>false</connected>
@@ -122,7 +122,7 @@
     <childResources>
         <id>10047</id>
         <uuid>5fccc52b-8003-42ed-aa69-0b146c783e91</uuid>
-        <resourceKey>${vhost3.rhq4.resource.key}</resourceKey>
+        <resourceKey>${vhost3.rhq3.resource.key}</resourceKey>
         <name>${vhost3.snmp.identifier}</name>
         <inventoryStatus>COMMITTED</inventoryStatus>
         <connected>false</connected>
@@ -198,7 +198,7 @@
     <childResources>
         <id>10048</id>
         <uuid>704a31f3-7f5f-46c1-9bda-70f2645c9604</uuid>
-        <resourceKey>${main.rhq4.resource.key}</resourceKey>
+        <resourceKey>${main.rhq3.resource.key}</resourceKey>
         <name>Main</name>
         <inventoryStatus>COMMITTED</inventoryStatus>
         <connected>false</connected>
@@ -274,7 +274,7 @@
     <childResources>
         <id>10049</id>
         <uuid>03638606-623b-4218-bd23-42e04db0e296</uuid>
-        <resourceKey>${vhost2.rhq4.resource.key}</resourceKey>
+        <resourceKey>${vhost2.rhq3.resource.key}</resourceKey>
         <name>${vhost2.snmp.identifier}</name>
         <inventoryStatus>COMMITTED</inventoryStatus>
         <connected>false</connected>
@@ -350,7 +350,7 @@
     <childResources>
         <id>10050</id>
         <uuid>ae880c2d-747d-492d-8586-a47ab5791b0e</uuid>
-        <resourceKey>${vhost1.rhq4.resource.key}</resourceKey>
+        <resourceKey>${vhost1.rhq3.resource.key}</resourceKey>
         <name>${vhost1.snmp.identifier}</name>
         <inventoryStatus>COMMITTED</inventoryStatus>
         <connected>false</connected>

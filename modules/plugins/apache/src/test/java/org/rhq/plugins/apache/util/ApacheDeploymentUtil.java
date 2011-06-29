@@ -159,9 +159,7 @@ public class ApacheDeploymentUtil {
                     : serverNameDirective);
 
                 String serverName = getServerName();
-                if (serverName != null) {
-                    tokenReplacements.put(prefix + SERVERNAME, serverName);
-                }
+                tokenReplacements.put(prefix + SERVERNAME, serverName == null ? "" : serverName);
 
                 String dirs = "";
                 if (!additionalDirectives.isEmpty()) {

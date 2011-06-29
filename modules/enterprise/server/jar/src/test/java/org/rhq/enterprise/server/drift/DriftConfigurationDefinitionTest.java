@@ -37,101 +37,97 @@ import org.rhq.enterprise.server.test.AbstractEJB3Test;
 public class DriftConfigurationDefinitionTest extends AbstractEJB3Test {
 
     public void testDriftConfigurationDefinition() throws Throwable {
+        ConfigurationDefinition def;
+        ConfigurationDefinition defDATABASE;
+
         getTransactionManager().begin();
         try {
-            ConfigurationDefinition def = DriftConfigurationDefinition.getInstance();
-            ConfigurationDefinition defDATABASE = getEntityManager().find(ConfigurationDefinition.class, def.getId());
-
-            assert defDATABASE.getId() == def.getId();
-            assert defDATABASE.getPropertyDefinitions().size() == def.getPropertyDefinitions().size();
-
-            PropertyDefinitionSimple simpleDATABASE;
-            PropertyDefinitionSimple simple;
-            PropertyDefinitionMap mapDATABASE;
-            PropertyDefinitionMap map;
-            PropertyDefinitionList listDATABASE;
-            PropertyDefinitionList list;
-
-            // NAME
-            simpleDATABASE = defDATABASE.getPropertyDefinitionSimple(DriftConfigurationDefinition.PROP_NAME);
-            simple = def.getPropertyDefinitionSimple(DriftConfigurationDefinition.PROP_NAME);
-            assertSimpleProperty(simpleDATABASE, simple);
-
-            // ENABLED
-            simpleDATABASE = defDATABASE.getPropertyDefinitionSimple(DriftConfigurationDefinition.PROP_ENABLED);
-            simple = def.getPropertyDefinitionSimple(DriftConfigurationDefinition.PROP_ENABLED);
-            assertSimpleProperty(simpleDATABASE, simple);
-
-            // INTERVAL
-            simpleDATABASE = defDATABASE.getPropertyDefinitionSimple(DriftConfigurationDefinition.PROP_INTERVAL);
-            simple = def.getPropertyDefinitionSimple(DriftConfigurationDefinition.PROP_INTERVAL);
-            assertSimpleProperty(simpleDATABASE, simple);
-
-            // BASEDIR
-            mapDATABASE = defDATABASE.getPropertyDefinitionMap(DriftConfigurationDefinition.PROP_BASEDIR);
-            map = def.getPropertyDefinitionMap(DriftConfigurationDefinition.PROP_BASEDIR);
-            assertMapProperty(mapDATABASE, map);
-
-            // BASEDIR VALUECONTEXT (implicitly also tests the enums)
-            simpleDATABASE = mapDATABASE
-                .getPropertyDefinitionSimple(DriftConfigurationDefinition.PROP_BASEDIR_VALUECONTEXT);
-            simple = map.getPropertyDefinitionSimple(DriftConfigurationDefinition.PROP_BASEDIR_VALUECONTEXT);
-            assertSimpleProperty(simpleDATABASE, simple);
-
-            // BASEDIR VALUENAME
-            simpleDATABASE = mapDATABASE
-                .getPropertyDefinitionSimple(DriftConfigurationDefinition.PROP_BASEDIR_VALUENAME);
-            simple = map.getPropertyDefinitionSimple(DriftConfigurationDefinition.PROP_BASEDIR_VALUENAME);
-            assertSimpleProperty(simpleDATABASE, simple);
-
-            // INCLUDES
-            listDATABASE = defDATABASE.getPropertyDefinitionList(DriftConfigurationDefinition.PROP_INCLUDES);
-            list = def.getPropertyDefinitionList(DriftConfigurationDefinition.PROP_INCLUDES);
-            assertListProperty(listDATABASE, list);
-
-            // INCLUDES INCLUDE
-            /*
-            PropertyDefinitionMap deleteme = getEntityManager().find(PropertyDefinitionMap.class, 8);
-
-            mapDATABASE = (PropertyDefinitionMap) listDATABASE.getMemberDefinition();
-            map = (PropertyDefinitionMap) list.getMemberDefinition();
-            assertMapProperty(mapDATABASE, map);
-
-            // INCLUDES INCLUDE PATH
-            simpleDATABASE = mapDATABASE.getPropertyDefinitionSimple(DriftConfigurationDefinition.PROP_PATH);
-            simple = map.getPropertyDefinitionSimple(DriftConfigurationDefinition.PROP_PATH);
-            assertSimpleProperty(simpleDATABASE, simple);
-            
-            // INCLUDES INCLUDE PATTERN
-            simpleDATABASE = mapDATABASE.getPropertyDefinitionSimple(DriftConfigurationDefinition.PROP_PATTERN);
-            simple = map.getPropertyDefinitionSimple(DriftConfigurationDefinition.PROP_PATTERN);
-            assertSimpleProperty(simpleDATABASE, simple);
-            */
-
-            // EXCLUDES
-            listDATABASE = defDATABASE.getPropertyDefinitionList(DriftConfigurationDefinition.PROP_EXCLUDES);
-            list = def.getPropertyDefinitionList(DriftConfigurationDefinition.PROP_EXCLUDES);
-            assertListProperty(listDATABASE, list);
-
-            /*
-            // EXCLUDES EXCLUDE
-            mapDATABASE = (PropertyDefinitionMap) listDATABASE.getMemberDefinition();
-            map = (PropertyDefinitionMap) list.getMemberDefinition();
-            assertMapProperty(mapDATABASE, map);
-
-            // EXCLUDES EXCLUDE PATH
-            simpleDATABASE = mapDATABASE.getPropertyDefinitionSimple(DriftConfigurationDefinition.PROP_PATH);
-            simple = map.getPropertyDefinitionSimple(DriftConfigurationDefinition.PROP_PATH);
-            assertSimpleProperty(simpleDATABASE, simple);
-
-            // EXCLUDES EXCLUDE PATTERN
-            simpleDATABASE = mapDATABASE.getPropertyDefinitionSimple(DriftConfigurationDefinition.PROP_PATTERN);
-            simple = map.getPropertyDefinitionSimple(DriftConfigurationDefinition.PROP_PATTERN);
-            assertSimpleProperty(simpleDATABASE, simple);
-            */
+            def = DriftConfigurationDefinition.getInstance();
+            defDATABASE = getEntityManager().find(ConfigurationDefinition.class, def.getId());
         } finally {
             getTransactionManager().rollback();
         }
+
+        assert defDATABASE.getId() == def.getId();
+        assert defDATABASE.getPropertyDefinitions().size() == def.getPropertyDefinitions().size();
+
+        PropertyDefinitionSimple simpleDATABASE;
+        PropertyDefinitionSimple simple;
+        PropertyDefinitionMap mapDATABASE;
+        PropertyDefinitionMap map;
+        PropertyDefinitionList listDATABASE;
+        PropertyDefinitionList list;
+
+        // NAME
+        simpleDATABASE = defDATABASE.getPropertyDefinitionSimple(DriftConfigurationDefinition.PROP_NAME);
+        simple = def.getPropertyDefinitionSimple(DriftConfigurationDefinition.PROP_NAME);
+        assertSimpleProperty(simpleDATABASE, simple);
+
+        // ENABLED
+        simpleDATABASE = defDATABASE.getPropertyDefinitionSimple(DriftConfigurationDefinition.PROP_ENABLED);
+        simple = def.getPropertyDefinitionSimple(DriftConfigurationDefinition.PROP_ENABLED);
+        assertSimpleProperty(simpleDATABASE, simple);
+
+        // INTERVAL
+        simpleDATABASE = defDATABASE.getPropertyDefinitionSimple(DriftConfigurationDefinition.PROP_INTERVAL);
+        simple = def.getPropertyDefinitionSimple(DriftConfigurationDefinition.PROP_INTERVAL);
+        assertSimpleProperty(simpleDATABASE, simple);
+
+        // BASEDIR
+        mapDATABASE = defDATABASE.getPropertyDefinitionMap(DriftConfigurationDefinition.PROP_BASEDIR);
+        map = def.getPropertyDefinitionMap(DriftConfigurationDefinition.PROP_BASEDIR);
+        assertMapProperty(mapDATABASE, map);
+
+        // BASEDIR VALUECONTEXT (implicitly also tests the enums)
+        simpleDATABASE = mapDATABASE
+            .getPropertyDefinitionSimple(DriftConfigurationDefinition.PROP_BASEDIR_VALUECONTEXT);
+        simple = map.getPropertyDefinitionSimple(DriftConfigurationDefinition.PROP_BASEDIR_VALUECONTEXT);
+        assertSimpleProperty(simpleDATABASE, simple);
+
+        // BASEDIR VALUENAME
+        simpleDATABASE = mapDATABASE.getPropertyDefinitionSimple(DriftConfigurationDefinition.PROP_BASEDIR_VALUENAME);
+        simple = map.getPropertyDefinitionSimple(DriftConfigurationDefinition.PROP_BASEDIR_VALUENAME);
+        assertSimpleProperty(simpleDATABASE, simple);
+
+        // INCLUDES
+        listDATABASE = defDATABASE.getPropertyDefinitionList(DriftConfigurationDefinition.PROP_INCLUDES);
+        list = def.getPropertyDefinitionList(DriftConfigurationDefinition.PROP_INCLUDES);
+        assertListProperty(listDATABASE, list);
+
+        // INCLUDES INCLUDE
+        mapDATABASE = (PropertyDefinitionMap) listDATABASE.getMemberDefinition();
+        map = (PropertyDefinitionMap) list.getMemberDefinition();
+        assertMapProperty(mapDATABASE, map);
+
+        // INCLUDES INCLUDE PATH
+        simpleDATABASE = mapDATABASE.getPropertyDefinitionSimple(DriftConfigurationDefinition.PROP_PATH);
+        simple = map.getPropertyDefinitionSimple(DriftConfigurationDefinition.PROP_PATH);
+        assertSimpleProperty(simpleDATABASE, simple);
+
+        // INCLUDES INCLUDE PATTERN
+        simpleDATABASE = mapDATABASE.getPropertyDefinitionSimple(DriftConfigurationDefinition.PROP_PATTERN);
+        simple = map.getPropertyDefinitionSimple(DriftConfigurationDefinition.PROP_PATTERN);
+        assertSimpleProperty(simpleDATABASE, simple);
+
+        // EXCLUDES
+        listDATABASE = defDATABASE.getPropertyDefinitionList(DriftConfigurationDefinition.PROP_EXCLUDES);
+        list = def.getPropertyDefinitionList(DriftConfigurationDefinition.PROP_EXCLUDES);
+        assertListProperty(listDATABASE, list);
+
+        // EXCLUDES EXCLUDE
+        mapDATABASE = (PropertyDefinitionMap) listDATABASE.getMemberDefinition();
+        map = (PropertyDefinitionMap) list.getMemberDefinition();
+        assertMapProperty(mapDATABASE, map);
+
+        // EXCLUDES EXCLUDE PATH
+        simpleDATABASE = mapDATABASE.getPropertyDefinitionSimple(DriftConfigurationDefinition.PROP_PATH);
+        simple = map.getPropertyDefinitionSimple(DriftConfigurationDefinition.PROP_PATH);
+        assertSimpleProperty(simpleDATABASE, simple);
+
+        // EXCLUDES EXCLUDE PATTERN
+        simpleDATABASE = mapDATABASE.getPropertyDefinitionSimple(DriftConfigurationDefinition.PROP_PATTERN);
+        simple = map.getPropertyDefinitionSimple(DriftConfigurationDefinition.PROP_PATTERN);
+        assertSimpleProperty(simpleDATABASE, simple);
     }
 
     private void assertListProperty(PropertyDefinitionList listDb, PropertyDefinitionList list) throws Throwable {

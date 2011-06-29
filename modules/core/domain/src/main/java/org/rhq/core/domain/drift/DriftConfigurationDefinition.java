@@ -241,7 +241,7 @@ public class DriftConfigurationDefinition implements Serializable {
 
     private static PropertyDefinitionMap createInclude() {
         String name = PROP_INCLUDES_INCLUDE;
-        String description = "A set of patterns that specify files and/or directories to include.";
+        String description = "A pattern that specifies a file or directory to include.";
         boolean required = true;
 
         PropertyDefinitionSimple path = createIncludePath();
@@ -307,7 +307,7 @@ public class DriftConfigurationDefinition implements Serializable {
 
     private static PropertyDefinitionMap createExclude() {
         String name = PROP_EXCLUDES_EXCLUDE;
-        String description = "A set of patterns that specify files and/or directories to exclude.";
+        String description = "A pattern that specifies a file or directory to exclude.";
         boolean required = true;
 
         PropertyDefinitionSimple path = createExcludePath();

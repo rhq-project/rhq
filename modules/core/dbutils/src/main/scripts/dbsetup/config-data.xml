@@ -67,15 +67,15 @@
               allow_custom_enum_value="false"
               default_value="1800" />
               
-        <data id="7" name="includes" display_name="Includes" config_def_id="1"
-              description="A set of patterns that specify files and/or directories to include."
-              required="false"
-              readonly="false"
-              summary="true"
-              order_index="4"
-              dtype="list" />
-              
-        <data id="8" name="include" display_name="Include" parent_list_definition_id="7"
+        <!-- the JPA mapping is weird here - we insert the child row first, then the parent.
+             This is because the child row does not specify any config_def_id OR parent_list_definition_id.
+             All relationship references are null.
+             The parent list will point its parent_list_definition_id to this map row's ID and is why
+             we need to put the child row in first, so it exists for the parent to refer to.
+             You do this to indicate it is the parent to this child row and this child row denotes
+             the parent list's member definition
+        -->
+        <data id="8" name="include" display_name="Include"
               description="A pattern that specifies a file or directory to include."
               required="true"
               readonly="false"
@@ -83,6 +83,14 @@
               order_index="0"
               dtype="map" />
         
+        <data id="7" name="includes" display_name="Includes" config_def_id="1" parent_list_definition_id="8"
+              description="A set of patterns that specify files and/or directories to include."
+              required="false"
+              readonly="false"
+              summary="true"
+              order_index="4"
+              dtype="list" />
+              
         <data id="9" name="path" display_name="Path" parent_map_definition_id="8"
               description="A file system path that can be a directory or a file. The path is assumed to be relative to the base directory of the drift configuration."
               required="true"
@@ -103,7 +111,23 @@
               simple_type="STRING"
               allow_custom_enum_value="false" />
         
-        <data id="11" name="excludes" display_name="Excludes" config_def_id="1"
+        <!-- the JPA mapping is weird here - we insert the child row first, then the parent.
+             This is because the child row does not specify any config_def_id OR parent_list_definition_id.
+             All relationship references are null.
+             The parent list will point its parent_list_definition_id to this map row's ID and is why
+             we need to put the child row in first, so it exists for the parent to refer to.
+             You do this to indicate it is the parent to this child row and this child row denotes
+             the parent list's member definition
+        -->
+        <data id="12" name="exclude" display_name="Exclude"
+              description="A pattern that specifies a file or directory to exclude."
+              required="true"
+              readonly="false"
+              summary="true"
+              order_index="0"
+              dtype="map" />
+        
+        <data id="11" name="excludes" display_name="Excludes" config_def_id="1" parent_list_definition_id="12"
               description="A set of patterns that specify files and/or directories to exclude."
               required="false"
               readonly="false"
@@ -111,14 +135,6 @@
               order_index="5"
               dtype="list" />
               
-        <data id="12" name="exclude" display_name="Exclude" parent_list_definition_id="11"
-              description="A pattern that specifies a files or directory to exclude."
-              required="true"
-              readonly="false"
-              summary="true"
-              order_index="0"
-              dtype="map" />
-        
         <data id="13" name="path" display_name="Path" parent_map_definition_id="12"
               description="A file system path that can be a directory or a file. The path is assumed to be relative to the base directory of the drift configuration."
               required="true"

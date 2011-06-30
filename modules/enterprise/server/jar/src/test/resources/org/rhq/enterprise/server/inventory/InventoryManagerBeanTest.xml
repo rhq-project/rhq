@@ -106,5 +106,6 @@
     <rhq_content_source/>
     <rhq_package/>
     <rhq_bundle/>
+    <rhq_drift_template_map/>
     <rhq_plugin/>
 </dataset>

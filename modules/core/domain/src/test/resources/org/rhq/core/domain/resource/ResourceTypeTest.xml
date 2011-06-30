@@ -102,6 +102,7 @@
     <rhq_drift_template id="-2"
                                resource_type_id="-8"
                                config_template_id="-2"/>
+    <rhq_drift_template_map/>
 
     <rhq_resource/>
     <rhq_resource_group/>

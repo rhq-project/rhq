@@ -43,7 +43,7 @@ public class MetadataBeanTest extends AbstractEJB3Test {
 
     private static List<String> plugins = new ArrayList<String>();
 
-    @BeforeGroups(groups = {"plugin.metadata"}, dependsOnGroups = {"integration.ejb3"})
+    @BeforeGroups(groups = { "plugin.metadata" }, dependsOnGroups = { "integration.ejb3" })
     public void startMBeanServer() throws Exception {
         setupDB();
 
@@ -58,14 +58,13 @@ public class MetadataBeanTest extends AbstractEJB3Test {
      * at what plugins are in the database, and then look for corresponding plugin files on the file system. MetadataTest
      * however removes the generated plugin files during each test run.
      */
-    @AfterGroups(groups = {"plugin.metadata"})
+    @AfterGroups(groups = { "plugin.metadata" })
     void removePluginsFromDB() throws Exception {
         unprepareScheduler();
 
         getTransactionManager().begin();
-        getEntityManager().createQuery("delete from Plugin p where p.name in (:plugins)")
-            .setParameter("plugins", plugins)
-            .executeUpdate();
+        getEntityManager().createQuery("delete from Plugin p where p.name in (:plugins)").setParameter("plugins",
+            plugins).executeUpdate();
         getTransactionManager().commit();
     }
 
@@ -104,8 +103,8 @@ public class MetadataBeanTest extends AbstractEJB3Test {
     }
 
     private IDataSet getDataSet() throws DataSetException {
-        FlatXmlProducer xmlProducer = new FlatXmlProducer(
-            new InputSource(getClass().getResourceAsStream(getDataSetFile())));
+        FlatXmlProducer xmlProducer = new FlatXmlProducer(new InputSource(getClass().getResourceAsStream(
+            getDataSetFile())));
         xmlProducer.setColumnSensing(true);
         return new FlatXmlDataSet(xmlProducer);
     }
@@ -198,14 +197,15 @@ public class MetadataBeanTest extends AbstractEJB3Test {
 
         String errors = "";
         if (!missing.isEmpty()) {
-            errors = "Failed to find the following " + propertyName + "(s) for type " + resourceTypeName +
-                ": " + missing;
+            errors = "Failed to find the following " + propertyName + "(s) for type " + resourceTypeName + ": "
+                + missing;
         }
 
         if (unexpected.size() > 0) {
-            errors += "\nFailed to find the following " + propertyName + "(s) for type " + resourceTypeName +
-                ": " + unexpected;
+            errors += "\nFound unexpected " + propertyName + "(s) for type " + resourceTypeName + ": " + unexpected;
         }
+
+        assert errors.isEmpty() : errors;
     }
 
     private boolean contains(ResourceType type, String propertyName, String expected) throws Exception {

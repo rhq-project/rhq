@@ -102,12 +102,22 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
     }
 
     @Test(dependsOnMethods = {"persistNewTypes"}, groups = {"plugin.metadata", "NewPlugin"})
+    public void persistDriftConfigurationTemplates() throws Exception {
+        assertResourceTypeAssociationEquals(
+            "ServerA",
+            "TestPlugin",
+            "driftConfigurationTemplates",
+            asList("drift1")
+        );
+    }
+
+    @Test(dependsOnMethods = {"persistNewTypes"}, groups = {"plugin.metadata", "NewPlugin"})
     public void persistChildTypes() throws Exception {
         assertResourceTypeAssociationEquals(
             "ServerA",
             "TestPlugin",
             "childResourceTypes",
-            asList("child1", "child2")
+            asList("Child1", "Child2")
         );
     }
 

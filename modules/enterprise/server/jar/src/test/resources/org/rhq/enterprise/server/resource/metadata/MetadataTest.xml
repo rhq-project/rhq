@@ -318,6 +318,7 @@
    <rhq_tagging_bundle_dest_map/>
    <rhq_create_res_hist/>
    <rhq_delete_res_hist/>
+   <rhq_drift_template_map/>
    <jms_messages/>
    <jms_transactions/>
    <jms_users/>

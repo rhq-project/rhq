@@ -30,6 +30,7 @@ import org.rhq.core.pc.agent.AgentService;
 import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.core.pc.measurement.MeasurementManager;
+import org.rhq.core.util.stream.StreamUtil;
 
 public class DriftManager extends AgentService implements DriftAgentService, DriftClient, ContainerService {
 
@@ -115,7 +116,10 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
             //zipFileOrDirectory(contentDir, zipFile);
 
             for (File file : contentDir.listFiles()) {
+                FileInputStream fis = new FileInputStream(file);
                 stream.putNextEntry(new ZipEntry(file.getName()));
+                StreamUtil.copy(fis, stream, false);
+                fis.close();
             }
             stream.close();
 

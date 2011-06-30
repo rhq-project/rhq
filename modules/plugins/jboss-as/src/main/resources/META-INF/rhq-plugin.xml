@@ -257,6 +257,18 @@
          </configuration>
       </content>
 
+      <drift-configuration name="Core Files">
+         <basedir>
+            <value-context>pluginConfiguration</value-context>
+            <value-name>jbossHomeDir</value-name>
+         </basedir>
+         <includes>
+            <include path="bin" />
+            <include path="lib" />
+            <include path="client" />
+         </includes>
+      </drift-configuration>
+
       <bundle-target>
          <destination-base-dir name="Install Directory" description="The top directory where the JBossAS Server is installed. (i.e. the value found in the 'JBoss Home Directory' connection property)">
             <value-context>pluginConfiguration</value-context>

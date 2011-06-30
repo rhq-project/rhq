@@ -86,7 +86,7 @@ public class UpgradeTestBase extends PluginContainerTest {
 
     private static final Log LOG = LogFactory.getLog(UpgradeTestBase.class);
     
-    protected class TestSetup {
+    public class TestSetup {
         private String configurationName;
         private FakeServerInventory fakeInventory = new FakeServerInventory();
         private String inventoryFile;
@@ -387,7 +387,7 @@ public class UpgradeTestBase extends PluginContainerTest {
         }
     }
 
-    protected static class TestConfiguration {
+    public static class TestConfiguration {
         public String[] apacheConfigurationFiles;
         public String inventoryFile;
         public String configurationName;

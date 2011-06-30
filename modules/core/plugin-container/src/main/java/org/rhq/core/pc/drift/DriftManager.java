@@ -67,7 +67,8 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
         driftDetector.setDriftClient(this);
 
         driftThreadPool = new ScheduledThreadPoolExecutor(5);
-        driftThreadPool.scheduleAtFixedRate(driftDetector, 30, 1800, TimeUnit.SECONDS);
+        // TODO Make the drift detection rate configurable
+        driftThreadPool.scheduleAtFixedRate(driftDetector, 30, 60, TimeUnit.SECONDS);
     }
 
     @Override

@@ -73,7 +73,7 @@ public class DriftDetector implements Runnable {
 
     private String relativePath(File basedir, File file) {
         if (basedir.equals(file)) {
-            return basedir.getName();
+            return ".";
         }
         return file.getAbsolutePath().substring(basedir.getAbsolutePath().length() + 1);
     }

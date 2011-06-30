@@ -75,4 +75,8 @@ public interface XmlSchemas {
     // the schema used to define content source metadata which is used by content plugins like the URL or Disk plugins
     public static final String XSD_CONTENTSOURCE_PACKAGEDETAILS = "rhq-contentsource-packagedetails.xsd";
     public static final String PKG_CONTENTSOURCE_PACKAGEDETAILS = "org.rhq.enterprise.server.xmlschema.generated.contentsource.packagedetails";
+
+    // the schema used to define content source metadata which is used by content plugins like the URL or Disk plugins
+    public static final String XSD_SERVERPLUGIN_DRIFT = "rhq-serverplugin-drift.xsd";
+    public static final String PKG_SERVERPLUGIN_DRIFT = "org.rhq.enterprise.server.xmlschema.generated.serverplugin.drift";
 }

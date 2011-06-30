@@ -83,6 +83,7 @@ public abstract class ServerPluginDescriptorUtil {
         PLUGIN_SCHEMA_PACKAGES.put(XmlSchemas.XSD_SERVERPLUGIN_ENTITLEMENT, XmlSchemas.PKG_SERVERPLUGIN_ENTITLEMENT);
         PLUGIN_SCHEMA_PACKAGES.put(XmlSchemas.XSD_SERVERPLUGIN_BUNDLE, XmlSchemas.PKG_SERVERPLUGIN_BUNDLE);
         PLUGIN_SCHEMA_PACKAGES.put(XmlSchemas.XSD_SERVERPLUGIN_PACKAGETYPE, XmlSchemas.PKG_SERVERPLUGIN_PACKAGETYPE);
+        PLUGIN_SCHEMA_PACKAGES.put(XmlSchemas.XSD_SERVERPLUGIN_DRIFT, XmlSchemas.PKG_SERVERPLUGIN_DRIFT);
 
         // so we only have to do this once, build a ':' separated context path containing all schema package names
         StringBuilder packages = new StringBuilder();
@@ -238,8 +239,8 @@ public abstract class ServerPluginDescriptorUtil {
                     pluginDescriptor = ((JAXBElement<? extends ServerPluginDescriptorType>) jaxbElement).getValue();
                 } finally {
                     if (unmarshaller != null) {
-                        ValidationEventCollector validationEventCollector = (ValidationEventCollector) unmarshaller
-                            .getEventHandler();
+                        ValidationEventCollector validationEventCollector =
+                                (ValidationEventCollector)unmarshaller.getEventHandler();
                         logValidationEvents(pluginJarFileUrl, validationEventCollector);
                     }
                 }
@@ -329,35 +330,34 @@ public abstract class ServerPluginDescriptorUtil {
             //
             StringBuilder message = new StringBuilder();
             String severity = null;
-            switch (event.getSeverity()) {
-            case ValidationEvent.WARNING:
-                severity = "warning";
-                break;
-            case ValidationEvent.ERROR:
-                severity = "error";
-                break;
-            case ValidationEvent.FATAL_ERROR:
-                severity = "fatal error";
-                break;
+            switch(event.getSeverity()) {
+                case ValidationEvent.WARNING:
+                    severity = "warning";
+                    break;
+                case ValidationEvent.ERROR:
+                    severity = "error";
+                    break;
+                case ValidationEvent.FATAL_ERROR:
+                    severity = "fatal error";
+                    break;
             }
             message.append("Validation ").append(severity);
             File pluginJarFile = new File(pluginJarFileUrl.getPath());
-            message.append(" while parsing [").append(pluginJarFile.getName()).append(":").append(
-                PLUGIN_DESCRIPTOR_PATH).append("]");
+            message.append(" while parsing [").append(pluginJarFile.getName()).append(":").append(PLUGIN_DESCRIPTOR_PATH).append("]");
             ValidationEventLocator locator = event.getLocator();
             message.append(" at line ").append(locator.getLineNumber());
             message.append(", column ").append(locator.getColumnNumber());
             message.append(": ").append(event.getMessage());
 
             // Now write the message to the log at an appropriate level.
-            switch (event.getSeverity()) {
-            case ValidationEvent.WARNING:
-            case ValidationEvent.ERROR:
-                LOG.warn(message);
-                break;
-            case ValidationEvent.FATAL_ERROR:
-                LOG.error(message);
-                break;
+            switch(event.getSeverity()) {
+                case ValidationEvent.WARNING:
+                case ValidationEvent.ERROR:
+                    LOG.warn(message);
+                    break;
+                case ValidationEvent.FATAL_ERROR:
+                    LOG.error(message);
+                    break;
             }
         }
     }

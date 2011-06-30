@@ -79,7 +79,7 @@ public class DriftConfigurationDefinition implements Serializable {
     }
 
     static {
-        INSTANCE.setId(1);
+        //INSTANCE.setId(1);
         INSTANCE.setConfigurationFormat(ConfigurationFormat.STRUCTURED);
 
         INSTANCE.put(createName());
@@ -98,7 +98,7 @@ public class DriftConfigurationDefinition implements Serializable {
         PropertySimpleType type = PropertySimpleType.STRING;
 
         PropertyDefinitionSimple pd = new PropertyDefinitionSimple(name, description, required, type);
-        pd.setId(1);
+        //pd.setId(1);
         pd.setDisplayName("Drift Configuration Name");
         pd.setReadOnly(false);
         pd.setSummary(true);
@@ -115,7 +115,7 @@ public class DriftConfigurationDefinition implements Serializable {
         PropertySimpleType type = PropertySimpleType.BOOLEAN;
 
         PropertyDefinitionSimple pd = new PropertyDefinitionSimple(name, description, required, type);
-        pd.setId(2);
+        //pd.setId(2);
         pd.setDisplayName("Enabled");
         pd.setReadOnly(false);
         pd.setSummary(true);
@@ -135,7 +135,7 @@ public class DriftConfigurationDefinition implements Serializable {
         PropertyDefinitionSimple valueName = createBasedirValueName();
 
         PropertyDefinitionMap pd = new PropertyDefinitionMap(name, description, required, valueContext, valueName);
-        pd.setId(3);
+        //pd.setId(3);
         pd.setDisplayName("Base Directory");
         pd.setReadOnly(false);
         pd.setSummary(true);
@@ -152,7 +152,7 @@ public class DriftConfigurationDefinition implements Serializable {
         PropertySimpleType type = PropertySimpleType.STRING;
 
         PropertyDefinitionSimple pd = new PropertyDefinitionSimple(name, description, required, type);
-        pd.setId(4);
+        //pd.setId(4);
         pd.setDisplayName("Value Context");
         pd.setReadOnly(false);
         pd.setSummary(true);
@@ -160,22 +160,22 @@ public class DriftConfigurationDefinition implements Serializable {
 
         PropertyDefinitionEnumeration pcEnum = new PropertyDefinitionEnumeration(
             BaseDirValueContext.pluginConfiguration.name(), BaseDirValueContext.pluginConfiguration.name());
-        pcEnum.setId(1);
+        //pcEnum.setId(1);
         pcEnum.setOrderIndex(0);
 
         PropertyDefinitionEnumeration rcEnum = new PropertyDefinitionEnumeration(
             BaseDirValueContext.resourceConfiguration.name(), BaseDirValueContext.resourceConfiguration.name());
-        rcEnum.setId(2);
+        //rcEnum.setId(2);
         rcEnum.setOrderIndex(1);
 
         PropertyDefinitionEnumeration mtEnum = new PropertyDefinitionEnumeration(BaseDirValueContext.measurementTrait
             .name(), BaseDirValueContext.measurementTrait.name());
-        mtEnum.setId(3);
+        //mtEnum.setId(3);
         mtEnum.setOrderIndex(2);
 
         PropertyDefinitionEnumeration fsEnum = new PropertyDefinitionEnumeration(BaseDirValueContext.fileSystem.name(),
             BaseDirValueContext.fileSystem.name());
-        fsEnum.setId(4);
+        //fsEnum.setId(4);
         fsEnum.setOrderIndex(3);
 
         ArrayList<PropertyDefinitionEnumeration> pdEnums = new ArrayList<PropertyDefinitionEnumeration>(4);
@@ -195,7 +195,7 @@ public class DriftConfigurationDefinition implements Serializable {
         PropertySimpleType type = PropertySimpleType.STRING;
 
         PropertyDefinitionSimple pd = new PropertyDefinitionSimple(name, description, required, type);
-        pd.setId(5);
+        //pd.setId(5);
         pd.setDisplayName("Value Name");
         pd.setReadOnly(false);
         pd.setSummary(true);
@@ -211,7 +211,7 @@ public class DriftConfigurationDefinition implements Serializable {
         PropertySimpleType type = PropertySimpleType.LONG;
 
         PropertyDefinitionSimple pd = new PropertyDefinitionSimple(name, description, required, type);
-        pd.setId(6);
+        //pd.setId(6);
         pd.setDisplayName("Interval");
         pd.setReadOnly(false);
         pd.setSummary(true);
@@ -230,7 +230,7 @@ public class DriftConfigurationDefinition implements Serializable {
         PropertyDefinitionMap map = createInclude();
 
         PropertyDefinitionList pd = new PropertyDefinitionList(name, description, required, map);
-        pd.setId(7);
+        //pd.setId(7);
         pd.setDisplayName("Includes");
         pd.setReadOnly(false);
         pd.setSummary(true);
@@ -248,7 +248,7 @@ public class DriftConfigurationDefinition implements Serializable {
         PropertyDefinitionSimple pattern = createIncludePattern();
 
         PropertyDefinitionMap pd = new PropertyDefinitionMap(name, description, required, path, pattern);
-        pd.setId(8);
+        //pd.setId(8);
         pd.setDisplayName("Include");
         pd.setReadOnly(false);
         pd.setSummary(true);
@@ -263,7 +263,7 @@ public class DriftConfigurationDefinition implements Serializable {
         PropertySimpleType type = PropertySimpleType.STRING;
 
         PropertyDefinitionSimple pd = new PropertyDefinitionSimple(name, description, required, type);
-        pd.setId(9);
+        //pd.setId(9);
         pd.setDisplayName("Path");
         pd.setReadOnly(false);
         pd.setSummary(true);
@@ -279,7 +279,7 @@ public class DriftConfigurationDefinition implements Serializable {
         PropertySimpleType type = PropertySimpleType.STRING;
 
         PropertyDefinitionSimple pd = new PropertyDefinitionSimple(name, description, required, type);
-        pd.setId(10);
+        //pd.setId(10);
         pd.setDisplayName("Pattern");
         pd.setReadOnly(false);
         pd.setSummary(true);
@@ -296,7 +296,7 @@ public class DriftConfigurationDefinition implements Serializable {
         PropertyDefinitionMap map = createExclude();
 
         PropertyDefinitionList pd = new PropertyDefinitionList(name, description, required, map);
-        pd.setId(11);
+        //pd.setId(11);
         pd.setDisplayName("Excludes");
         pd.setReadOnly(false);
         pd.setSummary(true);
@@ -314,7 +314,7 @@ public class DriftConfigurationDefinition implements Serializable {
         PropertyDefinitionSimple pattern = createExcludePattern();
 
         PropertyDefinitionMap pd = new PropertyDefinitionMap(name, description, required, path, pattern);
-        pd.setId(12);
+        //pd.setId(12);
         pd.setDisplayName("Exclude");
         pd.setReadOnly(false);
         pd.setSummary(true);
@@ -329,7 +329,7 @@ public class DriftConfigurationDefinition implements Serializable {
         PropertySimpleType type = PropertySimpleType.STRING;
 
         PropertyDefinitionSimple pd = new PropertyDefinitionSimple(name, description, required, type);
-        pd.setId(13);
+        //pd.setId(13);
         pd.setDisplayName("Path");
         pd.setReadOnly(false);
         pd.setSummary(true);
@@ -345,7 +345,7 @@ public class DriftConfigurationDefinition implements Serializable {
         PropertySimpleType type = PropertySimpleType.STRING;
 
         PropertyDefinitionSimple pd = new PropertyDefinitionSimple(name, description, required, type);
-        pd.setId(14);
+        //pd.setId(14);
         pd.setDisplayName("Pattern");
         pd.setReadOnly(false);
         pd.setSummary(true);

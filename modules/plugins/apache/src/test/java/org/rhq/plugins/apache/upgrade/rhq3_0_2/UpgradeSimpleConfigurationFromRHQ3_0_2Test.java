@@ -32,14 +32,33 @@ import org.rhq.test.pc.PluginContainerSetup;
  */
 public class UpgradeSimpleConfigurationFromRHQ3_0_2Test extends UpgradeTestBase {
 
+    private String[] configuredApacheConfigurationFiles;
+    private String configuredInventoryFile;
+
+    public UpgradeSimpleConfigurationFromRHQ3_0_2Test() {
+        configuredApacheConfigurationFiles = new String[] { "/full-configurations/2.2.x/simple/httpd.conf" };
+        configuredInventoryFile = "/mocked-inventories/rhq-3.0.2/simple/inventory.xml";
+    }
+
+    /**
+     * @param configuredApacheConfigurationFiles
+     * @param configuredInventoryFile
+     */
+    protected UpgradeSimpleConfigurationFromRHQ3_0_2Test(String configuredInventoryFile,
+        String... configuredApacheConfigurationFiles) {
+
+        this.configuredApacheConfigurationFiles = configuredApacheConfigurationFiles;
+        this.configuredInventoryFile = configuredInventoryFile;
+    }
+
     @Test
     @PluginContainerSetup(plugins = { PLATFORM_PLUGIN, AUGEAS_PLUGIN, APACHE_PLUGIN })
     @Parameters({ "apache2.install.dir", "apache2.exe.path" })
     public void testWithResolvableNames(final String installDir, final String exePath) throws Throwable {
         testUpgrade(new TestConfiguration() {
             {
-                apacheConfigurationFiles = new String[] { "/full-configurations/2.2.x/simple/httpd.conf" };
-                inventoryFile = "/mocked-inventories/rhq-3.0.2/simple/inventory.xml";
+                apacheConfigurationFiles = configuredApacheConfigurationFiles;
+                inventoryFile = configuredInventoryFile;
                 serverRoot = installDir;
                 binPath = exePath;
                 configurationName = DEPLOYMENT_SIMPLE_WITH_RESOLVABLE_SERVERNAMES;
@@ -53,8 +72,8 @@ public class UpgradeSimpleConfigurationFromRHQ3_0_2Test extends UpgradeTestBase 
     public void testWithUnresolvableNames(final String installDir, final String exePath) throws Throwable {
         testUpgrade(new TestConfiguration() {
             {
-                apacheConfigurationFiles = new String[] { "/full-configurations/2.2.x/simple/httpd.conf" };
-                inventoryFile = "/mocked-inventories/rhq-3.0.2/simple/inventory.xml";
+                apacheConfigurationFiles = configuredApacheConfigurationFiles;
+                inventoryFile = configuredInventoryFile;
                 serverRoot = installDir;
                 binPath = exePath;
                 configurationName = DEPLOYMENT_SIMPLE_WITH_RESOLVABLE_SERVERNAMES;
@@ -79,8 +98,8 @@ public class UpgradeSimpleConfigurationFromRHQ3_0_2Test extends UpgradeTestBase 
     public void testWithNonUniqueNames(final String installDir, final String exePath) throws Throwable {
         testUpgrade(new TestConfiguration() {
             {
-                apacheConfigurationFiles = new String[] { "/full-configurations/2.2.x/simple/httpd.conf" };
-                inventoryFile = "/mocked-inventories/rhq-3.0.2/simple/inventory.xml";
+                apacheConfigurationFiles = configuredApacheConfigurationFiles;
+                inventoryFile = configuredInventoryFile;
                 serverRoot = installDir;
                 binPath = exePath;
                 configurationName = DEPLOYMENT_SIMPLE_WITH_RESOLVABLE_SERVERNAMES;
@@ -107,8 +126,8 @@ public class UpgradeSimpleConfigurationFromRHQ3_0_2Test extends UpgradeTestBase 
             {
                 configurationName = DEPLOYMENT_SIMPLE_WITH_WILDCARD_LISTENS;
 
-                apacheConfigurationFiles = new String[] { "/full-configurations/2.2.x/simple/httpd.conf" };
-                inventoryFile = "/mocked-inventories/rhq-3.0.2/simple/inventory.xml";
+                apacheConfigurationFiles = configuredApacheConfigurationFiles;
+                inventoryFile = configuredInventoryFile;
                 serverRoot = installPath;
                 binPath = exePath;
 
@@ -137,8 +156,8 @@ public class UpgradeSimpleConfigurationFromRHQ3_0_2Test extends UpgradeTestBase 
             {
                 configurationName = DEPLOYMENT_SIMPLE_WITH_WILDCARD_LISTENS;
 
-                apacheConfigurationFiles = new String[] { "/full-configurations/2.2.x/simple/httpd.conf" };
-                inventoryFile = "/mocked-inventories/rhq-3.0.2/simple/inventory.xml";
+                apacheConfigurationFiles = configuredApacheConfigurationFiles;
+                inventoryFile = configuredInventoryFile;
                 serverRoot = installPath;
                 binPath = exePath;
 

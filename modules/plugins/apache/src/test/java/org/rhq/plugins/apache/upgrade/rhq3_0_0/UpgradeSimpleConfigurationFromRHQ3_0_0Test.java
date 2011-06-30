@@ -38,8 +38,6 @@ import org.rhq.plugins.apache.ApacheServerComponent;
 import org.rhq.plugins.apache.ApacheServerDiscoveryComponent;
 import org.rhq.plugins.apache.parser.ApacheDirectiveTree;
 import org.rhq.plugins.apache.upgrade.UpgradeTestBase;
-import org.rhq.plugins.apache.upgrade.UpgradeTestBase.TestConfiguration;
-import org.rhq.plugins.apache.upgrade.UpgradeTestBase.TestSetup;
 import org.rhq.plugins.apache.util.ApacheDeploymentUtil.DeploymentConfig;
 import org.rhq.plugins.apache.util.RuntimeApacheConfiguration;
 import org.rhq.plugins.apache.util.VirtualHostLegacyResourceKeyUtil;
@@ -52,6 +50,34 @@ import org.rhq.test.pc.PluginContainerSetup;
  */
 public class UpgradeSimpleConfigurationFromRHQ3_0_0Test extends UpgradeTestBase {
     
+    private String[] configuredApacheConfigurationFiles;
+    private String configuredInventoryFileWithoutSNMP;
+    private String configuredInventoryFileWithSNMP;
+    private String configuredInventoryFileWithSNMPWithAnyAddress;
+    
+    public UpgradeSimpleConfigurationFromRHQ3_0_0Test() {
+        configuredInventoryFileWithoutSNMP = "/mocked-inventories/rhq-3.0.0/simple/inventory-without-snmp.xml";
+        configuredInventoryFileWithSNMP = "/mocked-inventories/rhq-3.0.0/simple/inventory-with-snmp.xml";
+        configuredInventoryFileWithSNMPWithAnyAddress = "/mocked-inventories/rhq-3.0.0/simple/inventory-with-snmp-anyaddr.xml";
+        configuredApacheConfigurationFiles = new String[] {"/full-configurations/2.2.x/simple/httpd.conf"};
+    }
+    
+    
+    /**
+     * @param configuredApacheConfigurationFiles
+     * @param configuredInventoryFileWithoutSNMP
+     * @param configuredInventoryFileWithSNMP
+     * @param configuredInventoryFileWithSNMPWithAnyAddress
+     */
+    public UpgradeSimpleConfigurationFromRHQ3_0_0Test(String configuredInventoryFileWithoutSNMP,
+        String configuredInventoryFileWithSNMP, String configuredInventoryFileWithSNMPWithAnyAddress,
+        String... configuredApacheConfigurationFiles) {
+        this.configuredApacheConfigurationFiles = configuredApacheConfigurationFiles;
+        this.configuredInventoryFileWithoutSNMP = configuredInventoryFileWithoutSNMP;
+        this.configuredInventoryFileWithSNMP = configuredInventoryFileWithSNMP;
+        this.configuredInventoryFileWithSNMPWithAnyAddress = configuredInventoryFileWithSNMPWithAnyAddress;
+    }
+
     /**
      * This tests the upgrade from RHQ 3.0.0 where the apache server was discovered without SNMP support.
      * The Main Server URL must have been set in this case, otherwise the component would fail to start
@@ -63,8 +89,8 @@ public class UpgradeSimpleConfigurationFromRHQ3_0_0Test extends UpgradeTestBase 
     public void testWithResolvableNamesWithoutSNMP(final String installDir, final String exePath) throws Throwable {
         testUpgrade(new TestConfiguration() {
             {
-                apacheConfigurationFiles = new String[]{"/full-configurations/2.2.x/simple/httpd.conf"};
-                inventoryFile = "/mocked-inventories/rhq-3.0.0/simple/inventory-without-snmp.xml";
+                apacheConfigurationFiles = configuredApacheConfigurationFiles;
+                inventoryFile = configuredInventoryFileWithoutSNMP;
                 serverRoot = installDir;
                 binPath = exePath;
                 configurationName = DEPLOYMENT_SIMPLE_WITH_RESOLVABLE_SERVERNAMES;
@@ -83,8 +109,8 @@ public class UpgradeSimpleConfigurationFromRHQ3_0_0Test extends UpgradeTestBase 
     public void testWithUnresolvableNamesWithoutSNMP(final String installDir, final String exePath) throws Throwable {
         testUpgrade(new TestConfiguration() {
             {
-                apacheConfigurationFiles = new String[]{"/full-configurations/2.2.x/simple/httpd.conf"};
-                inventoryFile = "/mocked-inventories/rhq-3.0.0/simple/inventory-without-snmp.xml";
+                apacheConfigurationFiles = configuredApacheConfigurationFiles;
+                inventoryFile = configuredInventoryFileWithoutSNMP;
                 serverRoot = installDir;
                 binPath = exePath;
                 configurationName = DEPLOYMENT_SIMPLE_WITH_UNRESOLVABLE_SERVER_NAMES;
@@ -104,8 +130,8 @@ public class UpgradeSimpleConfigurationFromRHQ3_0_0Test extends UpgradeTestBase 
     public void testWithNonUniqueNamesWithoutSNMP(final String installDir, final String exePath) throws Throwable {
         testUpgrade(new TestConfiguration() {
             {
-                apacheConfigurationFiles = new String[]{"/full-configurations/2.2.x/simple/httpd.conf"};
-                inventoryFile = "/mocked-inventories/rhq-3.0.0/simple/inventory-without-snmp.xml";
+                apacheConfigurationFiles = configuredApacheConfigurationFiles;
+                inventoryFile = configuredInventoryFileWithoutSNMP;
                 serverRoot = installDir;
                 binPath = exePath;
                 configurationName = DEPLOYMENT_SIMPLE_WITH_UNRESOLVABLE_SERVER_NAMES;
@@ -136,8 +162,8 @@ public class UpgradeSimpleConfigurationFromRHQ3_0_0Test extends UpgradeTestBase 
     public void testWithResolvableNamesWithSNMP(final String installDir, final String exePath) throws Throwable {
         testUpgrade(new TestConfiguration() {
             {
-                apacheConfigurationFiles = new String[]{"/full-configurations/2.2.x/simple/httpd.conf"};
-                inventoryFile = "/mocked-inventories/rhq-3.0.0/simple/inventory-with-snmp.xml";
+                apacheConfigurationFiles = configuredApacheConfigurationFiles;
+                inventoryFile = configuredInventoryFileWithSNMP;
                 serverRoot = installDir;
                 binPath = exePath;
                 configurationName = DEPLOYMENT_SIMPLE_WITH_RESOLVABLE_SERVERNAMES;                     
@@ -166,8 +192,8 @@ public class UpgradeSimpleConfigurationFromRHQ3_0_0Test extends UpgradeTestBase 
     public void testWithUnresolvableNamesWithSNMP(final String installDir, final String exePath) throws Throwable {
         testUpgrade(new TestConfiguration() {
             {
-                apacheConfigurationFiles = new String[]{"/full-configurations/2.2.x/simple/httpd.conf"};
-                inventoryFile = "/mocked-inventories/rhq-3.0.0/simple/inventory-with-snmp.xml";
+                apacheConfigurationFiles = configuredApacheConfigurationFiles;
+                inventoryFile = configuredInventoryFileWithSNMP;
                 serverRoot = installDir;
                 binPath = exePath;
                 configurationName = DEPLOYMENT_SIMPLE_WITH_RESOLVABLE_SERVERNAMES;                     
@@ -202,8 +228,8 @@ public class UpgradeSimpleConfigurationFromRHQ3_0_0Test extends UpgradeTestBase 
     public void testWithNonUniqueNamesWithSNMP(final String installDir, final String exePath) throws Throwable {
         testUpgrade(new TestConfiguration() {
             {
-                apacheConfigurationFiles = new String[]{"/full-configurations/2.2.x/simple/httpd.conf"};
-                inventoryFile = "/mocked-inventories/rhq-3.0.0/simple/inventory-with-snmp.xml";
+                apacheConfigurationFiles = configuredApacheConfigurationFiles;
+                inventoryFile = configuredInventoryFileWithSNMP;
                 serverRoot = installDir;
                 binPath = exePath;
                 configurationName = DEPLOYMENT_SIMPLE_WITH_RESOLVABLE_SERVERNAMES;                     
@@ -240,8 +266,8 @@ public class UpgradeSimpleConfigurationFromRHQ3_0_0Test extends UpgradeTestBase 
             {
                 configurationName = DEPLOYMENT_SIMPLE_WITH_WILDCARD_LISTENS;
                 
-                apacheConfigurationFiles = new String[] { "/full-configurations/2.2.x/simple/httpd.conf" };
-                inventoryFile = "/mocked-inventories/rhq-3.0.0/simple/inventory-without-snmp.xml";
+                apacheConfigurationFiles = configuredApacheConfigurationFiles;
+                inventoryFile = configuredInventoryFileWithoutSNMP;
                 serverRoot = installPath;
                 binPath = exePath;
                                                             
@@ -279,8 +305,8 @@ public class UpgradeSimpleConfigurationFromRHQ3_0_0Test extends UpgradeTestBase 
             {
                 configurationName = DEPLOYMENT_SIMPLE_WITH_WILDCARD_LISTENS;
                 
-                apacheConfigurationFiles = new String[] { "/full-configurations/2.2.x/simple/httpd.conf" };
-                inventoryFile = "/mocked-inventories/rhq-3.0.0/simple/inventory-with-snmp-anyaddr.xml";
+                apacheConfigurationFiles = configuredApacheConfigurationFiles;
+                inventoryFile = configuredInventoryFileWithSNMPWithAnyAddress;
                 serverRoot = installPath;
                 binPath = exePath;
                                                             
@@ -306,8 +332,8 @@ public class UpgradeSimpleConfigurationFromRHQ3_0_0Test extends UpgradeTestBase 
             {
                 configurationName = DEPLOYMENT_SIMPLE_WITH_WILDCARD_LISTENS;
                 
-                apacheConfigurationFiles = new String[] { "/full-configurations/2.2.x/simple/httpd.conf" };
-                inventoryFile = "/mocked-inventories/rhq-3.0.0/simple/inventory-without-snmp.xml";
+                apacheConfigurationFiles = configuredApacheConfigurationFiles;
+                inventoryFile = configuredInventoryFileWithoutSNMP;
                 serverRoot = installPath;
                 binPath = exePath;                                           
                 
@@ -332,8 +358,8 @@ public class UpgradeSimpleConfigurationFromRHQ3_0_0Test extends UpgradeTestBase 
             {
                 configurationName = DEPLOYMENT_SIMPLE_WITH_WILDCARD_LISTENS;
                 
-                apacheConfigurationFiles = new String[] { "/full-configurations/2.2.x/simple/httpd.conf" };
-                inventoryFile = "/mocked-inventories/rhq-3.0.0/simple/inventory-with-snmp.xml";
+                apacheConfigurationFiles = configuredApacheConfigurationFiles;
+                inventoryFile = configuredInventoryFileWithSNMP;
                 serverRoot = installPath;
                 binPath = exePath;
                 upgradeShouldSucceed = false;

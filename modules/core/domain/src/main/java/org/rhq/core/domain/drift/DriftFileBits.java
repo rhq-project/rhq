@@ -28,29 +28,51 @@ import java.sql.Blob;
 import java.sql.SQLException;
 
 import javax.persistence.Column;
-import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
+import javax.persistence.Id;
 import javax.persistence.Lob;
+import javax.persistence.Table;
 
 /**
- * A DriftFile represents onee unique piece of content used for drift tracking.  Note that DriftFileContent provides
- * access to the bits through java.sql.Blob. This entity can not be used client-side (gwt) whereas the super-class,
- * DriftFile can. See RHQDomain.gwt.xml for how to exclude unwanted domain classes from the gwt compile.
+ * A DriftFile represents one unique piece of content used for drift tracking.  Note that DriftFileBits provides
+ * access to the bits through java.sql.Blob. This entity can not be used client-side (gwt) whereas its sister class,
+ * DriftFile, can.  Both enities share the same table and abstract superclass. See RHQDomain.gwt.xml for how to
+ * exclude unwanted domain classes from the gwt compile.
  *
  * @author Jay Shaughnessy
+ * @author John Mazzitelli
  * @author John Sanda 
  */
-@DiscriminatorValue("content")
 @Entity
-public class DriftFileContent extends DriftFile implements Serializable {
+@Table(name = "RHQ_DRIFT_FILE")
+public class DriftFileBits extends AbstractDriftFile implements Serializable {
     private static final long serialVersionUID = 1L;
+
+    // this is a hash/digest that should uniquely identify the content
+    @Id
+    @Column(name = "HASH_ID", nullable = false)
+    private String hashId;
+
+    protected DriftFileBits() {
+        super();
+    }
+
+    public DriftFileBits(String hashId) {
+        super();
+        this.hashId = hashId;
+    }
+
+    public String getHashId() {
+        return hashId;
+    }
+
+    public void setHashId(String hashId) {
+        this.hashId = hashId;
+    }
 
     @Lob
     @Column(name = "DATA", nullable = true)
     private Blob data;
-
-    protected DriftFileContent() {
-    }
 
     public Blob getBlob() {
         return data;
@@ -66,7 +88,7 @@ public class DriftFileContent extends DriftFile implements Serializable {
 
     @Override
     public String toString() {
-        return super.toString();
+        return "DriftFileContent [hashId=" + hashId + ", status=" + status + "]";
     }
 
 }

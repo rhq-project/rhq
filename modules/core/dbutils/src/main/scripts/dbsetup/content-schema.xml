@@ -651,8 +651,7 @@
     
     <!--  Content of a file being managed for drift. Used for diff and/or remediation -->    
     <table name="RHQ_DRIFT_FILE">
-        <column name="HASH_ID" type="VARCHAR2" size="64" primarykey="true" required="true"/>
-        <column name="DTYPE" type="VARCHAR2" required="true" size="10"/>        
+        <column name="HASH_ID" type="VARCHAR2" size="64" primarykey="true" required="true"/>        
         <column name="CTIME" type="LONG" required="true"/>
         <column name="DATA" type="LARGEOBJECT" required="false"/>
         <column name="DATA_SIZE" type="LONG" required="false"/>

@@ -66,7 +66,7 @@ import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.domain.drift.DriftFile;
-import org.rhq.core.domain.drift.DriftFileContent;
+import org.rhq.core.domain.drift.DriftFileBits;
 import org.rhq.core.domain.drift.DriftFileStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
@@ -253,7 +253,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     @TransactionAttribute(REQUIRES_NEW)
     public void persistDriftFileData(DriftFile driftFile, InputStream data) throws Exception {
 
-        DriftFileContent df = entityManager.find(DriftFileContent.class, driftFile.getHashId());
+        DriftFileBits df = entityManager.find(DriftFileBits.class, driftFile.getHashId());
         if (null == df) {
             throw new IllegalArgumentException("DriftFile not found [" + driftFile.getHashId() + "]");
         }

@@ -25,28 +25,22 @@ package org.rhq.core.domain.drift;
 import java.io.Serializable;
 
 import javax.persistence.Column;
-import javax.persistence.DiscriminatorColumn;
-import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
 import javax.persistence.Id;
-import javax.persistence.PrePersist;
 import javax.persistence.Table;
 
 /**
  * A DriftFile represents one unique piece of content used for drift tracking.  Note that DriftFile does not
  * include the actual bits, and therefore can be used freely client-side (gwt).  The bits are stored via the
- * DriftFileContent sub-class, which adds only a Blob field. 
+ * DriftFileBits class, which is like this one but adds the Blob field. 
  *  
  * @author Jay Shaughnessy
+ * @author John Mazzitelli
  * @author John Sanda 
  */
-@DiscriminatorColumn(name = "DTYPE")
-@DiscriminatorValue("no-content")
 @Entity
 @Table(name = "RHQ_DRIFT_FILE")
-public class DriftFile implements Serializable {
+public class DriftFile extends AbstractDriftFile implements Serializable {
     private static final long serialVersionUID = 1L;
 
     // this is a hash/digest that should uniquely identify the content
@@ -54,20 +48,12 @@ public class DriftFile implements Serializable {
     @Column(name = "HASH_ID", nullable = false)
     private String hashId;
 
-    @Column(name = "CTIME", nullable = false)
-    private Long ctime = -1L;
-
-    @Column(name = "DATA_SIZE", nullable = true)
-    private Long dataSize;
-
-    @Column(name = "STATUS", nullable = false)
-    @Enumerated(EnumType.STRING)
-    private DriftFileStatus status = DriftFileStatus.EMPTY;
-
     protected DriftFile() {
+        super();
     }
 
     public DriftFile(String hashId) {
+        super();
         this.hashId = hashId;
     }
 
@@ -77,35 +63,6 @@ public class DriftFile implements Serializable {
 
     public void setHashId(String hashId) {
         this.hashId = hashId;
-    }
-
-    public Long getCtime() {
-        return ctime;
-    }
-
-    @PrePersist
-    void onPersist() {
-        this.ctime = System.currentTimeMillis();
-    }
-
-    public void setDataSize(Long dataSize) {
-        this.dataSize = dataSize;
-    }
-
-    public long getDataSize() {
-        return dataSize;
-    }
-
-    public void setDataSize(long size) {
-        dataSize = size;
-    }
-
-    public DriftFileStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(DriftFileStatus status) {
-        this.status = status;
     }
 
     @Override

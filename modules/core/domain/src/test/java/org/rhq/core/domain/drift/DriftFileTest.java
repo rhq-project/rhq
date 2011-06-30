@@ -49,7 +49,7 @@ public class DriftFileTest extends AbstractEJB3Test {
         String hashId = digestGen.calcDigestString(content);
 
         // Create the initial driftFile
-        final DriftFileContent df1 = new DriftFileContent();
+        final DriftFileBits df1 = new DriftFileBits();
         df1.setHashId(hashId);
         df1.setDataSize(content.length());
         df1.setData(Hibernate.createBlob(toInputStream(content), content.length()));
@@ -66,7 +66,7 @@ public class DriftFileTest extends AbstractEJB3Test {
         executeInTransaction(new TransactionCallback() {
             @Override
             public void execute() {
-                DriftFileContent df2 = getEntityManager().find(DriftFileContent.class, df1.getHashId());
+                DriftFileBits df2 = getEntityManager().find(DriftFileBits.class, df1.getHashId());
                 df2.setData(Hibernate.createBlob(toInputStream(newContent), newContent.length()));
                 getEntityManager().merge(df2);
             }
@@ -77,7 +77,7 @@ public class DriftFileTest extends AbstractEJB3Test {
             @Override
             public void execute() {
                 try {
-                    DriftFileContent df3 = getEntityManager().find(DriftFileContent.class, df1.getHashId());
+                    DriftFileBits df3 = getEntityManager().find(DriftFileBits.class, df1.getHashId());
                     String expected = newContent;
                     String actual = IOUtils.toString(df3.getData());
 
@@ -101,7 +101,7 @@ public class DriftFileTest extends AbstractEJB3Test {
 
         for (int i = 0; i < numDriftFiles; ++i) {
             File dataFile = createDataFile("test_data.txt", 10, (char) ('a' + i));
-            final DriftFileContent driftFile = new DriftFileContent();
+            final DriftFileBits driftFile = new DriftFileBits();
             driftFile.setDataSize(dataFile.length());
             driftFile.setHashId(digestGen.calcDigestString(dataFile));
             driftFile.setData(Hibernate.createBlob(new BufferedInputStream(new FileInputStream(dataFile))));
@@ -117,14 +117,14 @@ public class DriftFileTest extends AbstractEJB3Test {
         }
 
         final List<Blob> blobs = new ArrayList<Blob>();
-        final List<DriftFile> driftFiles = new ArrayList<DriftFile>();
+        final List<DriftFileBits> driftFiles = new ArrayList<DriftFileBits>();
         for (final String hashId : driftFileHashIds) {
             executeInTransaction(new TransactionCallback() {
                 @Override
                 public void execute() {
-                    DriftFileContent driftFile = getEntityManager().find(DriftFileContent.class, hashId);
-                    blobs.add(driftFile.getBlob());
-                    driftFiles.add(driftFile);
+                    DriftFileBits driftFileBits = getEntityManager().find(DriftFileBits.class, hashId);
+                    blobs.add(driftFileBits.getBlob());
+                    driftFiles.add(driftFileBits);
                 }
             });
         }
@@ -141,7 +141,7 @@ public class DriftFileTest extends AbstractEJB3Test {
 
         for (int i = 0; i < numDriftFiles; ++i) {
             File dataFile = createDataFile("test_data.txt", 10, 'X');
-            final DriftFileContent driftFile = new DriftFileContent();
+            final DriftFileBits driftFile = new DriftFileBits();
             final int driftFileNum = i;
             driftFile.setDataSize(dataFile.length());
             driftFile.setHashId(digestGen.calcDigestString(dataFile));
@@ -165,14 +165,14 @@ public class DriftFileTest extends AbstractEJB3Test {
         }
 
         final List<Blob> blobs = new ArrayList<Blob>();
-        final List<DriftFile> driftFiles = new ArrayList<DriftFile>();
+        final List<DriftFileBits> driftFiles = new ArrayList<DriftFileBits>();
         for (final String hashId : driftFileHashIds) {
             executeInTransaction(new TransactionCallback() {
                 @Override
                 public void execute() {
-                    DriftFileContent driftFile = getEntityManager().find(DriftFileContent.class, hashId);
-                    blobs.add(driftFile.getBlob());
-                    driftFiles.add(driftFile);
+                    DriftFileBits driftFileBits = getEntityManager().find(DriftFileBits.class, hashId);
+                    blobs.add(driftFileBits.getBlob());
+                    driftFiles.add(driftFileBits);
                 }
             });
         }

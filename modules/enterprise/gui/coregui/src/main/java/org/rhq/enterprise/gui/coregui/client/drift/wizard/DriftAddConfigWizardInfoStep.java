@@ -34,9 +34,11 @@ import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
+import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition;
+import org.rhq.core.domain.drift.DriftConfiguration.BaseDirectory;
+import org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 import org.rhq.enterprise.gui.coregui.client.util.FormUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
@@ -103,10 +105,13 @@ public class DriftAddConfigWizardInfoStep extends AbstractWizardStep {
                 // throw new IllegalStateException( "At least one drift configuration template should exist for the resource type" );
                 ConfigurationTemplate test = new ConfigurationTemplate("Test", "Test");
                 Configuration config = new Configuration();
-                config.put(new PropertySimple("name", "Test"));
-                config.put(new PropertySimple("basedir", "C:/workspace/rhq/dev-container/jbossas/server/default/conf"));
-                config.put(new PropertySimple("interval", "6000"));
-                test.setConfiguration(config);
+                DriftConfiguration driftConfig = new DriftConfiguration(config);
+                driftConfig
+                    .setBasedir(new BaseDirectory(BaseDirValueContext.fileSystem,
+                        "C:/workspace/rhq/dev-container/jbossas/server/default/deploy/rhq.ear/coregui.war/images/subsystems/content"));
+                driftConfig.setName("Test");
+                driftConfig.setInterval(6000L);
+                test.setConfiguration(driftConfig.getConfiguration());
                 test.setConfigurationDefinition(DriftConfigurationDefinition.getInstance());
                 templatesMap.put("TestOnly", test);
             }

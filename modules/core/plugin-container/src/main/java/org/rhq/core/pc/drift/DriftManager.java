@@ -3,12 +3,16 @@ package org.rhq.core.pc.drift;
 import static org.rhq.core.util.ZipUtil.zipFileOrDirectory;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -107,7 +111,13 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
     public void sendChangeSetContentToServer(int resourceId, String driftConfigurationName, File contentDir) {
         try {
             File zipFile = new File(pluginContainerConfiguration.getTemporaryDirectory(), "content.zip");
-            zipFileOrDirectory(contentDir, zipFile);
+            ZipOutputStream stream = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(zipFile)));
+            //zipFileOrDirectory(contentDir, zipFile);
+
+            for (File file : contentDir.listFiles()) {
+                stream.putNextEntry(new ZipEntry(file.getName()));
+            }
+            stream.close();
 
             DriftServerService driftServer = pluginContainerConfiguration.getServerServices().getDriftServerService();
             driftServer.sendFilesZip(resourceId, zipFile.length(), remoteInputStream(new BufferedInputStream(

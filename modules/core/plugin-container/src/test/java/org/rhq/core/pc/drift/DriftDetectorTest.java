@@ -23,9 +23,8 @@ import org.rhq.common.drift.ChangeSetReader;
 import org.rhq.common.drift.ChangeSetReaderImpl;
 import org.rhq.common.drift.DirectoryEntry;
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.drift.DriftConfiguration;
-import org.rhq.core.domain.drift.DriftConfigurationDefinition;
+import org.rhq.core.domain.drift.DriftConfiguration.BaseDirectory;
 import org.rhq.test.JMockTest;
 
 public class DriftDetectorTest extends JMockTest {
@@ -97,7 +96,7 @@ public class DriftDetectorTest extends JMockTest {
     DriftConfiguration driftConfiguration(String name, String basedir) {
         DriftConfiguration config = new DriftConfiguration(new Configuration());
         config.setName(name);
-        config.setBasedir(config.new BaseDirectory(fileSystem, basedir));
+        config.setBasedir(new BaseDirectory(fileSystem, basedir));
 
         return config;
     }

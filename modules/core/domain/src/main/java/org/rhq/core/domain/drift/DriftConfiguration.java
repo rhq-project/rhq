@@ -54,10 +54,14 @@ public class DriftConfiguration implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    public class BaseDirectory implements Serializable {
+    public static class BaseDirectory implements Serializable {
         private static final long serialVersionUID = 1L;
-        private final BaseDirValueContext context;
-        private final String name;
+        private BaseDirValueContext context;
+        private String name;
+
+        // required for jaxb/web services remoting
+        protected BaseDirectory() {
+        }
 
         public BaseDirectory(BaseDirValueContext context, String name) {
             this.context = context;

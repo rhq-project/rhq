@@ -2438,7 +2438,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
                     if (tt== PropertyOptionsSource.TargetType.RESOURCE) {
 
-                        PropertyDefinitionEnumeration pde = new PropertyDefinitionEnumeration(composite.getResource().getName(),""+composite.getResource().getId());
+                        PropertyDefinitionEnumeration pde = new PropertyDefinitionEnumeration(composite.getResource().getName(),""+composite.getResource().getName());
                         // TODO filter -- or leave up to search expression??
                         pds.getEnumeratedValues().add(pde);
                     }

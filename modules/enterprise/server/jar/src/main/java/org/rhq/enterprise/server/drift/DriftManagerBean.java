@@ -135,7 +135,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     @Override
     @TransactionAttribute(REQUIRES_NEW)
     public void storeChangeSet(final int resourceId, File changeSetZip) throws Exception {
-        Resource resource = entityManager.find(Resource.class, resourceId);
+        final Resource resource = entityManager.find(Resource.class, resourceId);
         if (null == resource) {
             throw new IllegalArgumentException("Resource not found [" + resourceId + "]");
         }
@@ -145,23 +145,22 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
             c.addFilterResourceId(resourceId);
             List<DriftChangeSet> changeSets = findDriftChangeSetsByCriteria(subjectManager.getOverlord(), c);
             final int version = changeSets.size();
-            // TODO: set category based on changeset parsing
-            final DriftChangeSetCategory category = (0 == version) ? DriftChangeSetCategory.COVERAGE
-                : DriftChangeSetCategory.DRIFT;
-
-            // store the new change set info (not the actual blob)
-            final DriftChangeSet driftChangeSet = new DriftChangeSet(resource, version, category);
-            entityManager.persist(driftChangeSet);
 
             ZipUtil.walkZipFile(changeSetZip, new ChangeSetFileVisitor() {
 
                 @Override
                 public boolean visit(ZipEntry zipEntry, ZipInputStream stream) throws Exception {
                     List<DriftFile> emptyDriftFiles = new ArrayList<DriftFile>();
+                    DriftChangeSet driftChangeSet = null;
 
                     try {
                         ChangeSetReader reader = new ChangeSetReaderImpl(new BufferedReader(new InputStreamReader(
                             stream)));
+
+                        // store the new change set info (not the actual blob) 
+                        DriftChangeSetCategory category = reader.getHeaders().getType();
+                        driftChangeSet = new DriftChangeSet(resource, version, category);
+                        entityManager.persist(driftChangeSet);
 
                         for (DirectoryEntry dir = reader.readDirectoryEntry(); null != dir; dir = reader
                             .readDirectoryEntry()) {

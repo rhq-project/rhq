@@ -33,10 +33,10 @@ import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.core.clientapi.descriptor.drift.DriftDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.Bundle;
 import org.rhq.core.clientapi.descriptor.plugin.BundleTargetDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.ContentDescriptor;
+import org.rhq.core.clientapi.descriptor.plugin.DriftDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.EventDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.MetricDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.OperationDescriptor;

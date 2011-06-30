@@ -23,9 +23,9 @@
 
 package org.rhq.core.clientapi.agent.metadata;
 
-import org.rhq.core.clientapi.descriptor.drift.DriftDescriptor;
-import org.rhq.core.clientapi.descriptor.drift.DriftFilterDescriptor;
-import org.rhq.core.clientapi.descriptor.drift.DriftDescriptor.Basedir;
+import org.rhq.core.clientapi.descriptor.plugin.DriftDescriptor;
+import org.rhq.core.clientapi.descriptor.plugin.DriftFilterDescriptor;
+import org.rhq.core.clientapi.descriptor.plugin.DriftDescriptor.Basedir;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;

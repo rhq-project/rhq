@@ -2,7 +2,6 @@
 
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
            xmlns:config="urn:xmlns:rhq-configuration"
-           xmlns:drift="urn:xmlns:rhq-drift"
            xmlns:rhq="urn:xmlns:rhq-plugin"
            targetNamespace="urn:xmlns:rhq-plugin"
            elementFormDefault="qualified"
@@ -10,7 +9,6 @@
            xmlns:jaxb="http://java.sun.com/xml/ns/jaxb" blockDefault="">
 
    <xs:import namespace="urn:xmlns:rhq-configuration" schemaLocation="rhq-configuration.xsd"/>
-   <xs:import namespace="urn:xmlns:rhq-drift" schemaLocation="rhq-drift.xsd"/>
 
    <xs:annotation>
       <xs:documentation>Schema for the definition of an AMPS plugin. AMPS plugins provide the metadata for new
@@ -550,6 +548,111 @@
        </xs:complexType>
    </xs:element>
 
+    <!-- == Drift ================================================== -->
+
+    <xs:complexType name="Drift">
+        <xs:annotation>
+            <xs:appinfo>
+                <jaxb:class name="DriftDescriptor" />
+            </xs:appinfo>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="basedir" minOccurs="1" maxOccurs="1">
+                <xs:complexType>
+                    <xs:annotation>
+                        <xs:documentation>
+                            The root directory from which snapshots will be generated during drift monitoring.
+                            Each base directory's value is obtained from a particular context (e.g. in the
+                            resource's plugin configuration or its resource configuration).
+                            Within that context, the base directory value is obtained by looking up the named value in the given context.
+                            For example, if the value-name is "install.dir" and the value-context is "pluginConfiguration",
+                            then the destination base directory value is obtained by getting the "install.dir" property value
+                            found in the resource's plugin configuration.
+                        </xs:documentation>
+                    </xs:annotation>
+                    <xs:sequence>
+                        <xs:element name="value-context">
+                            <xs:simpleType>
+                                <xs:restriction base="xs:string">
+                                    <xs:enumeration value="pluginConfiguration"></xs:enumeration>
+                                    <xs:enumeration value="resourceConfiguration"></xs:enumeration>
+                                    <xs:enumeration value="measurementTrait"></xs:enumeration>
+                                    <xs:enumeration value="fileSystem"></xs:enumeration>
+                                </xs:restriction>
+                            </xs:simpleType>
+                        </xs:element>
+                        <xs:element name="value-name" type="xs:string"></xs:element>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="interval" type="xs:long" minOccurs="0" maxOccurs="1" default="1800">
+                <xs:annotation>
+                    <xs:documentation>
+                        The frequency in seconds in which drift monitoring should run. Defaults to thirty minutes.
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="includes" type="rhq:DriftIncludes" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation>
+                        A set of patterns that specify files and/or directories to include.
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="excludes" type="rhq:DriftExcludes" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation>
+                        A set of patterns that specify files and/or directories to exclude.
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+        </xs:sequence>
+        <xs:attribute name="name" type="xs:string" use="required" />
+    </xs:complexType>
+
+    <xs:complexType name="DriftIncludes">
+        <xs:annotation>
+            <xs:appinfo>
+                <jaxb:class name="DriftIncludesDescriptor" />
+            </xs:appinfo>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="include" type="rhq:DriftFilter" minOccurs="0" maxOccurs="unbounded" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="DriftExcludes">
+        <xs:annotation>
+            <xs:appinfo>
+                <jaxb:class name="DriftExcludesDescriptor" />
+            </xs:appinfo>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="exclude" type="rhq:DriftFilter" minOccurs="0" maxOccurs="unbounded" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="DriftFilter">
+        <xs:annotation>
+            <xs:appinfo>
+                <jaxb:class name="DriftFilterDescriptor" />
+            </xs:appinfo>
+        </xs:annotation>
+        <xs:attribute name="path" type="xs:string" use="required">
+            <xs:annotation>
+                <xs:documentation>
+                    A file system path that can be a directory or a file. The path is assumed to be
+                    relative to the base directory of the drift configuration.
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="pattern" type="xs:string" use="optional">
+            <xs:annotation>
+                <xs:documentation>Provides a pattern that matches those files to be monitored for drift.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+
    <!-- BASE RESOURCE -->
    
    <xs:element name="resource" type="rhq:resource">
@@ -622,7 +725,7 @@
          <xs:element ref="rhq:event" minOccurs="0" maxOccurs="unbounded"/>
          <xs:element ref="rhq:content" minOccurs="0" maxOccurs="unbounded"/>
          <xs:element name="resource-configuration" type="config:configuration" minOccurs="0"/>
-         <xs:element name="drift-configuration" type="drift:Drift" minOccurs="0" maxOccurs="unbounded"/>
+         <xs:element name="drift-configuration" type="rhq:Drift" minOccurs="0" maxOccurs="unbounded"/>
          <xs:element ref="rhq:bundle-target" minOccurs="0" maxOccurs="1"/>
          <xs:element ref="rhq:help" minOccurs="0" maxOccurs="1" />
       </xs:sequence>

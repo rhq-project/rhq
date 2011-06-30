@@ -364,14 +364,13 @@ public class PluginMetadataParserTest {
         PluginDescriptor descriptor = toPluginDescriptor("" + //
             "<plugin name='drift-test-plugin' displayName='Drift Test' package='org.rhq.plugins.test'" + //
             "    xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'" + //
-            "    xmlns='urn:xmlns:rhq-plugin'" + //
-            "    xmlns:d='urn:xmlns:rhq-drift'>" + //
+            "    xmlns='urn:xmlns:rhq-plugin'>" + //
             "  <server name='TestServer'>" + //
             "    <drift-configuration name='test1'>" + //
-            "      <d:basedir>" + //
-            "          <d:value-context>pluginConfiguration</d:value-context>" + //
-            "          <d:value-name>var.lib.test1</d:value-name>" + //
-            "      </d:basedir>" + //
+            "      <basedir>" + //
+            "          <value-context>pluginConfiguration</value-context>" + //
+            "          <value-name>var.lib.test1</value-name>" + //
+            "      </basedir>" + //
             "    </drift-configuration>" + //
             "  </server>" + //
             "</plugin>");
@@ -393,14 +392,13 @@ public class PluginMetadataParserTest {
             toPluginDescriptor("" + //
                 "<plugin name='drift-test-plugin' displayName='Drift Test' package='org.rhq.plugins.test'" + //
                 "    xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'" + //
-                "    xmlns='urn:xmlns:rhq-plugin'" + //
-                "    xmlns:d='urn:xmlns:rhq-drift'>" + //
+                "    xmlns='urn:xmlns:rhq-plugin'>" + //
                 "  <server name='TestServer'>" + //
                 "    <drift-configuration name='test1'>" + //
-                "      <d:basedir>" + //
-                "          <d:value-context>saywhat</d:value-context>" + // this is an invalid context
-                "          <d:value-name>var.lib.test1</d:value-name>" + //
-                "      </d:basedir>" + //
+                "      <basedir>" + //
+                "          <value-context>saywhat</value-context>" + // this is an invalid context
+                "          <value-name>var.lib.test1</value-name>" + //
+                "      </basedir>" + //
                 "    </drift-configuration>" + //
                 "  </server>" + //
                 "</plugin>");
@@ -415,14 +413,13 @@ public class PluginMetadataParserTest {
         PluginDescriptor descriptor = toPluginDescriptor("" + //
             "<plugin name='drift-test-plugin' displayName='Drift Test' package='org.rhq.plugins.test'" + //
             "    xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'" + //
-            "    xmlns='urn:xmlns:rhq-plugin'" + //
-            "    xmlns:d='urn:xmlns:rhq-drift'>" + //
+            "    xmlns='urn:xmlns:rhq-plugin'>" + //
             "  <server name='TestServer'>" + //
             "    <drift-configuration name='test1'>" + //
-            "      <d:basedir>" + //
-            "          <d:value-context>pluginConfiguration</d:value-context>" + //
-            "          <d:value-name>var.lib.test1</d:value-name>" + //
-            "      </d:basedir>" + //
+            "      <basedir>" + //
+            "          <value-context>pluginConfiguration</value-context>" + //
+            "          <value-name>var.lib.test1</value-name>" + //
+            "      </basedir>" + //
             "    </drift-configuration>" + //
             "  </server>" + //
             "</plugin>");
@@ -443,15 +440,14 @@ public class PluginMetadataParserTest {
         PluginDescriptor descriptor = toPluginDescriptor("" + //
             "<plugin name='drift-test-plugin' displayName='Drift Test' package='org.rhq.plugins.test'" + //
             "    xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'" + //
-            "    xmlns='urn:xmlns:rhq-plugin'" + //
-            "    xmlns:d='urn:xmlns:rhq-drift'>" + //
+            "    xmlns='urn:xmlns:rhq-plugin'>" + //
             "  <server name='TestServer'>" + //
             "    <drift-configuration name='test1'>" + //
-            "      <d:basedir>" + //
-            "          <d:value-context>pluginConfiguration</d:value-context>" + //
-            "          <d:value-name>var.lib.test1</d:value-name>" + //
-            "      </d:basedir>" + //
-            "      <d:interval>3600</d:interval>" + //
+            "      <basedir>" + //
+            "          <value-context>pluginConfiguration</value-context>" + //
+            "          <value-name>var.lib.test1</value-name>" + //
+            "      </basedir>" + //
+            "      <interval>3600</interval>" + //
             "    </drift-configuration>" + //
             "  </server>" + //
             "</plugin>");
@@ -472,18 +468,17 @@ public class PluginMetadataParserTest {
         PluginDescriptor descriptor = toPluginDescriptor("" + //
             "<plugin name='drift-test-plugin' displayName='Drift Test' package='org.rhq.plugins.test'" + //
             "    xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'" + //
-            "    xmlns='urn:xmlns:rhq-plugin'" + //
-            "    xmlns:d='urn:xmlns:rhq-drift'>" + //
+            "    xmlns='urn:xmlns:rhq-plugin'>" + //
             "  <server name='TestServer'>" + //
             "    <drift-configuration name='test1'>" + //
-            "      <d:basedir>" + //
-            "          <d:value-context>pluginConfiguration</d:value-context>" + //
-            "          <d:value-name>var.lib.test1</d:value-name>" + //
-            "      </d:basedir>" + //
-            "      <d:includes>" + //
-            "        <d:include path='lib' pattern='*.jar'/>" + //
-            "        <d:include path='conf' pattern='*.xml'/>" + //
-            "      </d:includes>" + //
+            "      <basedir>" + //
+            "          <value-context>pluginConfiguration</value-context>" + //
+            "          <value-name>var.lib.test1</value-name>" + //
+            "      </basedir>" + //
+            "      <includes>" + //
+            "        <include path='lib' pattern='*.jar'/>" + //
+            "        <include path='conf' pattern='*.xml'/>" + //
+            "      </includes>" + //
             "    </drift-configuration>" + //
             "  </server>" + //
             "</plugin>");
@@ -528,19 +523,18 @@ public class PluginMetadataParserTest {
         PluginDescriptor descriptor = toPluginDescriptor("" + //
             "<plugin name='drift-test-plugin' displayName='Drift Test' package='org.rhq.plugins.test'" + //
             "    xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'" + //
-            "    xmlns='urn:xmlns:rhq-plugin'" + //
-            "    xmlns:d='urn:xmlns:rhq-drift'>" + //
+            "    xmlns='urn:xmlns:rhq-plugin'>" + //
             "  <server name='TestServer'>" + //
             "    <drift-configuration name='test1'>" + //
-            "      <d:basedir>" + //
-            "          <d:value-context>pluginConfiguration</d:value-context>" + //
-            "          <d:value-name>var.lib.test1</d:value-name>" + //
-            "      </d:basedir>" + //
-            "      <d:interval>3600</d:interval>" + //
-            "      <d:excludes>" + //
-            "        <d:exclude path='lib' pattern='*.jar'/>" + //
-            "        <d:exclude path='conf' pattern='*.xml'/>" + //
-            "      </d:excludes>" + //
+            "      <basedir>" + //
+            "          <value-context>pluginConfiguration</value-context>" + //
+            "          <value-name>var.lib.test1</value-name>" + //
+            "      </basedir>" + //
+            "      <interval>3600</interval>" + //
+            "      <excludes>" + //
+            "        <exclude path='lib' pattern='*.jar'/>" + //
+            "        <exclude path='conf' pattern='*.xml'/>" + //
+            "      </excludes>" + //
             "    </drift-configuration>" + //
             "  </server>" + //
             "</plugin>");
@@ -590,52 +584,51 @@ public class PluginMetadataParserTest {
         PluginDescriptor descriptor = toPluginDescriptor("" + //
             "<plugin name='drift-test-plugin' displayName='Drift Test' package='org.rhq.plugins.test'" + //
             "    xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'" + //
-            "    xmlns='urn:xmlns:rhq-plugin'" + //
-            "    xmlns:d='urn:xmlns:rhq-drift'>" + //
+            "    xmlns='urn:xmlns:rhq-plugin'>" + //
             "  <server name='TestServer'>" + //
             "    <drift-configuration name='test1'>" + //
-            "      <d:basedir>" + //
-            "          <d:value-context>pluginConfiguration</d:value-context>" + //
-            "          <d:value-name>var.lib.test1</d:value-name>" + //
-            "      </d:basedir>" + //
-            "      <d:interval>11111</d:interval>" + //
-            "      <d:includes>" + //
-            "        <d:include path='ilib' pattern='*.ijar'/>" + //
-            "        <d:include path='iconf' pattern='*.ixml'/>" + //
-            "      </d:includes>" + //
+            "      <basedir>" + //
+            "          <value-context>pluginConfiguration</value-context>" + //
+            "          <value-name>var.lib.test1</value-name>" + //
+            "      </basedir>" + //
+            "      <interval>11111</interval>" + //
+            "      <includes>" + //
+            "        <include path='ilib' pattern='*.ijar'/>" + //
+            "        <include path='iconf' pattern='*.ixml'/>" + //
+            "      </includes>" + //
             "    </drift-configuration>" + //
             "    <drift-configuration name='test2'>" + //
-            "      <d:basedir>" + //
-            "          <d:value-context>resourceConfiguration</d:value-context>" + //
-            "          <d:value-name>var.lib.test2</d:value-name>" + //
-            "      </d:basedir>" + //
-            "      <d:interval>22222</d:interval>" + //
-            "      <d:excludes>" + //
-            "        <d:exclude path='elib' pattern='*.ejar'/>" + //
-            "        <d:exclude path='econf' pattern='*.exml'/>" + //
-            "      </d:excludes>" + //
+            "      <basedir>" + //
+            "          <value-context>resourceConfiguration</value-context>" + //
+            "          <value-name>var.lib.test2</value-name>" + //
+            "      </basedir>" + //
+            "      <interval>22222</interval>" + //
+            "      <excludes>" + //
+            "        <exclude path='elib' pattern='*.ejar'/>" + //
+            "        <exclude path='econf' pattern='*.exml'/>" + //
+            "      </excludes>" + //
             "    </drift-configuration>" + //
             "    <drift-configuration name='test3'>" + //
-            "      <d:basedir>" + //
-            "          <d:value-context>measurementTrait</d:value-context>" + //
-            "          <d:value-name>var.lib.test3</d:value-name>" + //
-            "      </d:basedir>" + //
-            "      <d:interval>33333</d:interval>" + //
-            "      <d:includes>" + //
-            "        <d:include path='ilib' pattern='*.ijar'/>" + //
-            "        <d:include path='iconf' pattern='*.ixml'/>" + //
-            "      </d:includes>" + //
-            "      <d:excludes>" + //
-            "        <d:exclude path='elib' pattern='*.ejar'/>" + //
-            "        <d:exclude path='econf' pattern='*.exml'/>" + //
-            "      </d:excludes>" + //
+            "      <basedir>" + //
+            "          <value-context>measurementTrait</value-context>" + //
+            "          <value-name>var.lib.test3</value-name>" + //
+            "      </basedir>" + //
+            "      <interval>33333</interval>" + //
+            "      <includes>" + //
+            "        <include path='ilib' pattern='*.ijar'/>" + //
+            "        <include path='iconf' pattern='*.ixml'/>" + //
+            "      </includes>" + //
+            "      <excludes>" + //
+            "        <exclude path='elib' pattern='*.ejar'/>" + //
+            "        <exclude path='econf' pattern='*.exml'/>" + //
+            "      </excludes>" + //
             "    </drift-configuration>" + //
             "    <drift-configuration name='test4'>" + //
-            "      <d:basedir>" + //
-            "          <d:value-context>fileSystem</d:value-context>" + //
-            "          <d:value-name>/wot/gorilla</d:value-name>" + //
-            "      </d:basedir>" + //
-            "      <d:interval>44444</d:interval>" + //
+            "      <basedir>" + //
+            "          <value-context>fileSystem</value-context>" + //
+            "          <value-name>/wot/gorilla</value-name>" + //
+            "      </basedir>" + //
+            "      <interval>44444</interval>" + //
             "    </drift-configuration>" + //
             "  </server>" + //
             "</plugin>");

@@ -57,6 +57,7 @@
          </activation>
          <modules>
             <module>core</module>
+            <module>common/drift</module>            
             <module>enterprise/comm</module>
             <module>enterprise/agent</module>
             <module>enterprise/agentupdate</module>

@@ -59,6 +59,9 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.PropertyList;
+import org.rhq.core.domain.configuration.PropertyMap;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.composite.ConfigurationUpdateComposite;
@@ -77,6 +80,7 @@ import org.rhq.core.domain.criteria.GroupResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.PluginConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
@@ -87,8 +91,6 @@ import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
-import org.rhq.core.domain.search.SearchSubsystem;
-import org.rhq.core.domain.search.SearchSuggestion;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
@@ -118,7 +120,6 @@ import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupNotFoundException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupUpdateException;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
-import org.rhq.enterprise.server.search.execution.SearchAssistManager;
 import org.rhq.enterprise.server.system.ServerVersion;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
@@ -2412,21 +2413,136 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         if (pds.getOptionsSource()!=null) {
             // evaluate the source parameters
             PropertyOptionsSource pos = pds.getOptionsSource();
-            ResourceCriteria criteria = new ResourceCriteria();
-            criteria.setSearchExpression(pos.getExpression());
-            // TODO for groups we need to talk to the group manager
-            List<ResourceComposite> composites = resourceManager.findResourceCompositesByCriteria(subject,criteria);
-            for (ResourceComposite composite : composites) {
+            PropertyOptionsSource.TargetType tt = pos.getTargetType();
+            String expression = pos.getExpression();
+            if (tt== PropertyOptionsSource.TargetType.RESOURCE || tt== PropertyOptionsSource.TargetType.CONFIGURATION) {
+                ResourceCriteria criteria = new ResourceCriteria();
 
-                // TODO for configuration we need to drill down into the resource configuration
-                PropertyDefinitionEnumeration pde = new PropertyDefinitionEnumeration(composite.getResource().getName(),""+composite.getResource().getId());
 
-                // TODO filter -- or leave up to search expression??
+                if (tt==PropertyOptionsSource.TargetType.CONFIGURATION) {
+                    // split out expression part for target=configuration
+                    // return if no property specifier is given
+                    String expr = expression;
+                    if (!expr.contains(":")) {
+                        log.warn("Option source expression for property " + pds.getName() + " and target configuration contains no ':'");
+                        return;
+                    }
+                }
+                else {
+                    criteria.setSearchExpression(expression);
+                }
 
-                pds.getEnumeratedValues().add(pde);
+
+                List<ResourceComposite> composites = resourceManager.findResourceCompositesByCriteria(subject,criteria);
+                for (ResourceComposite composite : composites) {
+
+                    if (tt== PropertyOptionsSource.TargetType.RESOURCE) {
+
+                        PropertyDefinitionEnumeration pde = new PropertyDefinitionEnumeration(composite.getResource().getName(),""+composite.getResource().getName());
+                        // TODO filter -- or leave up to search expression??
+                        pds.getEnumeratedValues().add(pde);
+                    }
+                    else if (tt== PropertyOptionsSource.TargetType.CONFIGURATION) {
+                        //  for configuration we need to drill down into the resource configuration
+                        if (!handleConfigurationTarget(pds, expression, composite.getResource())) return;
+
+                    }
+                }
+            }
+            else if (tt == PropertyOptionsSource.TargetType.GROUP) {
+                // for groups we need to talk to the group manager
+                ResourceGroupCriteria criteria = new ResourceGroupCriteria();
+                criteria.setSearchExpression(expression);
+
+                resourceGroupManager.findResourceGroupCompositesByCriteria(subject,criteria);
+            }
+            // TODO plugin and resourceType
+        }
+
+    }
+
+    /**
+     * Drill down in the case the user set up a target of "configuration". We need to check
+     * that the target property actually exiists and that it has a format we understand
+     * @param pds Propertydefinition to examine
+     * @param expression The whole expression starting with identifier: for the configuration
+     * identifier. This looks like <i>listname</i> for list of
+     * property simple or <i>mapname=mapkey</i> for a map with simple properties
+     * @param resource the
+     * @return false if the property can not be resolved, true otherwise
+     */
+    private boolean handleConfigurationTarget(PropertyDefinitionSimple pds, String expression,
+                                              Resource resource) {
+        Configuration configuration = resource.getResourceConfiguration();
+        Property p;
+        String propName = expression.substring(0, expression.indexOf(":"));
+        boolean isMap = expression.contains("=");
+
+        if (isMap) {
+            String mapPropName = propName.substring(0, propName.indexOf("="));
+            p = configuration.get(mapPropName);
+        } else
+            p = configuration.get(propName);
+
+        if (p == null) {
+            log.warn("Option source expression for property " + pds.getName() + " and target configuration not found");
+            return false;
+        }
+        if (!(p instanceof PropertyList)) {
+            log.warn("Option source expression for property " + pds.getName() + " and target configuration does not point to a list");
+            return false;
+        }
+        PropertyList pl = (PropertyList) p;
+        List<Property> propertyList = pl.getList();
+        if (propertyList.size()==0)
+            return false;
+
+        // Now List of simple or list of maps (of simple) ?
+
+        if (propertyList.get(0) instanceof PropertySimple) {
+            if (isMap) {
+                log.warn(" expected a List of Maps, but got a list of simple");
+                return  false;
+            }
+
+            for (Property tmp : propertyList) {
+                PropertySimple ps= (PropertySimple) tmp;
+                String name = ps.getStringValue();
+                if (name!=null) {
+                    PropertyDefinitionEnumeration pde = new PropertyDefinitionEnumeration(name, name);
+                    pds.getEnumeratedValues().add(pde);
+                }
+            }
+        } else if (propertyList.get(0) instanceof  PropertyMap) {
+            if (!isMap) {
+                log.warn(" expected a List of simple, but got a list of Maps");
+                return false;
+            }
+            String subPropName ;
+            subPropName = propName.substring(propName.indexOf("=") + 1);
+
+            for (Property tmp : propertyList) {
+                PropertyMap pm = (PropertyMap) tmp;
+                Property ps = pm.get(subPropName);
+                if (ps==null) {
+                    log.warn("Option source expression for property " + pds.getName() + " and target configuration does not have a map element " + subPropName);
+                    return false;
+                }
+                if (!(ps instanceof PropertySimple)) {
+                    log.warn("ListOfMapOf!Simple are not supported");
+                    return false;
+                }
+                PropertySimple propertySimple = (PropertySimple) ps;
+                String name = propertySimple.getStringValue();
+                if (name!=null) {
+                    PropertyDefinitionEnumeration pde = new PropertyDefinitionEnumeration(name, name);
+                    pds.getEnumeratedValues().add(pde);
+                }
             }
         }
 
+
+        return true;
     }
 
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

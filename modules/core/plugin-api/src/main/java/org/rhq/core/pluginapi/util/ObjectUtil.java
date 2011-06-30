@@ -145,6 +145,10 @@ public class ObjectUtil {
      * @return the value read from the object's property path
      */
     public static Object lookupDeepAttributeProperty(Object value, String propertyPath) {
+
+        if (value==null)
+            return null;
+
         String[] ps = propertyPath.split("\\.", 2);
 
         String searchProperty = ps[0];

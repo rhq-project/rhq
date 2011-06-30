@@ -82,6 +82,7 @@ public class DriftFilesSender implements Runnable {
                     return new File(dir, fileEntry.getFile());
                 }
             }
+            dirEntry = reader.readDirectoryEntry();
         }
         return null;
     }

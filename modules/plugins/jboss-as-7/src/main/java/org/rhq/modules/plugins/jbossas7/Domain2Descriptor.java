@@ -23,8 +23,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import org.omg.CosNaming._BindingIteratorImplBase;
-
 import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
@@ -71,6 +69,7 @@ public class Domain2Descriptor {
         }
 
         String path = args[pos];
+        path = path.replaceAll("/",","); // Allow path from jboss-admin.sh's pwd command
         String childType = null;
         if (args.length>pos+1)
             childType = args[pos+1];
@@ -400,7 +399,7 @@ public class Domain2Descriptor {
 
 
     private static void usage() {
-        System.out.println("Domain2Properties [-p|-m] path type");
+        System.out.println("Domain2Properties [-p|-m|-o] path type");
         System.out.println("   path is of kind 'key=value[,key=value]+");
         System.out.println(" -p create properties (default)");
         System.out.println(" -m create metrics");

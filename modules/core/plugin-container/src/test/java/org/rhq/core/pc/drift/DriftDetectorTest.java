@@ -18,12 +18,20 @@ import org.rhq.common.drift.DirectoryEntry;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.drift.DriftConfiguration;
 
+<<<<<<< Updated upstream
 import static org.apache.commons.io.IOUtils.readLines;
 import static org.rhq.core.domain.drift.DriftCategory.FILE_ADDED;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
 import static org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext.fileSystem;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
+=======
+import static org.apache.commons.io.FileUtils.deleteDirectory;
+import static org.apache.commons.io.IOUtils.readLines;
+import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
+import static org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext.fileSystem;
+import static org.testng.Assert.assertEquals;
+>>>>>>> Stashed changes
 import static org.unitils.thirdparty.org.apache.commons.io.FileUtils.touch;
 
 public class DriftDetectorTest extends DriftTest {
@@ -32,8 +40,23 @@ public class DriftDetectorTest extends DriftTest {
     ScheduleQueue scheduleQueue;
 
     DriftClientTestStub driftClient;
+<<<<<<< Updated upstream
 
     DriftDetector detector;
+=======
+
+    DriftDetector detector;
+
+//    @BeforeClass
+//    public void initDetector() throws Exception {
+//        File basedir = new File("target", getClass().getSimpleName());
+//        deleteDirectory(basedir);
+//        basedir.mkdir();
+//
+//        changeSetsDir = mkdir(basedir, "changesets");
+//        resourcesDir = mkdir(basedir, "resources");
+//    }
+>>>>>>> Stashed changes
 
     @BeforeMethod
     public void initDetector() {
@@ -50,12 +73,19 @@ public class DriftDetectorTest extends DriftTest {
 
     @SuppressWarnings("unchecked")
     @Test
+<<<<<<< Updated upstream
     public void excludeEmptyDirsFromCoverageChangeSet() throws Exception {
         File confDir = mkdir(resourceDir, "conf");
+=======
+    public void coverageChangeSetExcludesEmptyDirs() throws Exception {
+        File confDir = new File(resourceDir, "conf");
+        confDir.mkdir();
+>>>>>>> Stashed changes
         touch(new File(confDir, "server.conf"));
 
         DriftConfiguration driftConfig = driftConfiguration("coverage-test", resourceDir.getAbsolutePath());
 
+<<<<<<< Updated upstream
         scheduleQueue.enqueue(new DriftDetectionSchedule(resourceId(), driftConfig));
         detector.run();
 
@@ -79,6 +109,14 @@ public class DriftDetectorTest extends DriftTest {
         detector.run();
 
         File changeSetDir = changeSetDir(driftConfig.getName());
+=======
+        DriftDetectionSchedule schedule = new DriftDetectionSchedule(resourceId(), driftConfig);
+
+        scheduleQueue.enqueue(schedule);
+        detector.run();
+
+        File changeSetDir = new File(new File(changeSetsDir, Integer.toString(resourceId())), "coverage-test");
+>>>>>>> Stashed changes
         File changeSet = new File(changeSetDir, "changeset.txt");
         List<String> lines = readLines(new BufferedInputStream(new FileInputStream(changeSet)));
 
@@ -133,6 +171,7 @@ public class DriftDetectorTest extends DriftTest {
             dirEntry = reader.readDirectoryEntry();
         }
     }
+<<<<<<< Updated upstream
 
 //    void assertChangeSetContainsDirEntry(List<String> changeSet, String... dirEntry) {
 //        String dirEntryHeader = dirEntry[0];
@@ -164,4 +203,6 @@ public class DriftDetectorTest extends DriftTest {
 
         return config;
     }
+=======
+>>>>>>> Stashed changes
 }

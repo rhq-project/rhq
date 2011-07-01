@@ -43,7 +43,11 @@ public class DriftFilesSenderTest extends DriftTest {
         touch(new File(confDir, "server-1.conf"));
         touch(new File(confDir, "server-2.conf"));
 
+<<<<<<< Updated upstream
         File changeSetDir = changeSetDir(driftConfigName);
+=======
+        File changeSetDir = createChangeSetDir(resourceId(), driftConfigName);
+>>>>>>> Stashed changes
 
         // Each item in changeSet is listed by the line it will appear in the actual file
         // in an attemp to make it more self-documenting.
@@ -79,7 +83,11 @@ public class DriftFilesSenderTest extends DriftTest {
         touch(new File(libDir, "server-1.jar"));
         touch(new File(libDir, "server-2.jar"));
 
+<<<<<<< Updated upstream
         File changeSetDir = changeSetDir(driftConfigName);
+=======
+        File changeSetDir = createChangeSetDir(resourceId(), driftConfigName);
+>>>>>>> Stashed changes
 
         // Each item in changeSet is listed by the line it will appear in the actual file
         // in an attemp to make it more self-documenting.
@@ -127,6 +135,15 @@ public class DriftFilesSenderTest extends DriftTest {
             contentDir.getPath() + ". The SHA-256 hash should be used as the file name.");
     }
 
+<<<<<<< Updated upstream
+=======
+    File createChangeSetDir(int resourceId, String driftConfigName) {
+        File dir = new File(new File(changeSetsDir, Integer.toString(resourceId)), driftConfigName);
+        dir.mkdirs();
+        return dir;
+    }
+
+>>>>>>> Stashed changes
     void writeChangeSet(File changeSetDir, List<String> changeSet) throws Exception {
         BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(new File(changeSetDir,
             "changeset.txt")));

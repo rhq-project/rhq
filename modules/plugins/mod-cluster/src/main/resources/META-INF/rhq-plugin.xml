@@ -12,21 +12,25 @@
 
    <service name="mod_cluster"
            discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
-           class="LoadMetric"
+           class="ModclusterServerComponent"
            supportsManualAdd="true"
            description="mod_cluster plugin">
            
-      <!-- runs-inside>
-      	<parent-resource-type name="JMX Server" plugin="JMX"/>
-      </runs-inside-->
-      <runs-inside>
-         <parent-resource-type name="JMX Server" plugin="JMX"/>
-      </runs-inside> 
+      <runs-inside>         
+         <parent-resource-type name="JBossAS Server" plugin="JBossAS"/>
+         <parent-resource-type name="JBossAS Server" plugin="JBossAS5"/>
+      </runs-inside>
       
-      <plugin-configuration>         
-         <c:simple-property name="connectorAddress" default="http://192.168.1.56:6666"/>
-          <c:simple-property name="objectName" readOnly="true" default="ModClusterServiceMBean"/>
+      <plugin-configuration>        
+         <c:simple-property name="objectName" readOnly="true" default="Catalina:type=ModClusterListener,*"/>
+         <c:simple-property name="nameTemplate" default="{application}"/>         
       </plugin-configuration>
-
+      
+      <operation name="reset" displayName="Reset the node" description="Move the node out of an error state" />
+      
+      <metric property="proxyConfiguration" displayName="Proxy Configuration" displayType="summary" dataType="trait" />
+      <metric property="modelerType" displayName="Type of the modeled resource" displayType="summary" dataType="trait" />
+      <metric property="className" displayName="Fully qualified class name of the managed object" displayType="summary" dataType="trait" />
+      
    </service>
 </plugin>

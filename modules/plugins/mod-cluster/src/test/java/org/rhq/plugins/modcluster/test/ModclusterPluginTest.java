@@ -20,6 +20,8 @@ package org.rhq.plugins.modcluster.test;
 
 import java.io.File;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Queue;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
@@ -29,12 +31,18 @@ import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
+import org.rhq.core.domain.measurement.MeasurementData;
+import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.measurement.MeasurementReport;
+import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.plugin.FileSystemPluginFinder;
 import org.rhq.core.pc.plugin.PluginEnvironment;
 import org.rhq.core.pc.plugin.PluginManager;
+import org.rhq.core.pluginapi.inventory.ResourceComponent;
+import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 
 /**
  * @author Fady Matar
@@ -90,23 +98,53 @@ public class ModclusterPluginTest {
 
         Set<Resource> resources = findResource(PluginContainer.getInstance().getInventoryManager().getPlatform(),
             PLUGIN_NAME);
-        log.info("Found " + resources.size() + "mod_cluster instance(s).");
+        log.info("Found " + resources.size() + " mod_cluster instance(s).");
+
+        if (resources.size() != 0) {
+            testResourceMeasurement((Resource) resources.toArray()[0]);
+        }
+    }
+
+    private void testResourceMeasurement(Resource resource) throws Exception {
+        ResourceComponent resourceComponent = PluginContainer.getInstance().getInventoryManager()
+            .getResourceComponent(resource);
+        if (resourceComponent instanceof MeasurementFacet) {
+            for (MeasurementDefinition def : resource.getResourceType().getMetricDefinitions()) {
+                Set<MeasurementScheduleRequest> metricList = new HashSet<MeasurementScheduleRequest>();
+                metricList.add(new MeasurementScheduleRequest(1, def.getName(), 1000, true, def.getDataType(), null));
+                MeasurementReport report = new MeasurementReport();
+                ((MeasurementFacet) resourceComponent).getValues(report, metricList);
+
+                /*assert report.getNumericData().size() > 0 : "Measurement " + def.getName() + " not collected from "
+                    + resource;*/
+                MeasurementData data = report.getTraitData().iterator().next();
+                assert data != null : "Unable to collect trait [" + def.getName() + "] on " + resource;
+                log.info("Measurement: " + def.getName() + "=" + data.getValue());
+            }
+        }
     }
 
     private Set<Resource> findResource(Resource parent, String typeName) {
         Set<Resource> found = new HashSet<Resource>();
-        Resource platform = parent;
-        for (Resource resource : platform.getChildResources()) {
-            log.info("Discovered resource of type: " + resource.getResourceType().getName());
-            if (resource.getResourceType().getName().equals(typeName)) {
-                found.add(resource);
+
+        Queue<Resource> discoveryQueue = new LinkedList<Resource>();
+        discoveryQueue.add(parent);
+
+        while (!discoveryQueue.isEmpty()) {
+            Resource currentResource = discoveryQueue.poll();
+
+            log.info("Discovered resource of type: " + currentResource.getResourceType().getName());
+            if (currentResource.getResourceType().getName().equals(typeName)) {
+                found.add(currentResource);
             }
-            if (resource.getChildResources() != null) {
-                for (Resource child : found) {
-                    found.addAll(findResource(child, typeName));
+
+            if (currentResource.getChildResources() != null) {
+                for (Resource child : currentResource.getChildResources()) {
+                    discoveryQueue.add(child);
                 }
             }
         }
+
         return found;
     }
 }

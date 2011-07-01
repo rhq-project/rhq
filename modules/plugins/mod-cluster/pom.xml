@@ -69,6 +69,8 @@
                                  <fileset dir="${settings.localRepository}/">
                                     <include name="org/rhq/rhq-platform-plugin/${project.version}/rhq-platform-plugin-${project.version}.jar" />
                                     <include name="org/rhq/rhq-jmx-plugin/${project.version}/rhq-jmx-plugin-${project.version}.jar" />
+                                    <include name="org/jboss/on/jopr-jboss-as-plugin/${project.version}/jopr-jboss-as-plugin-${project.version}.jar" />
+                                    <include name="org/jboss/on/jopr-jboss-as-5-plugin/${project.version}/jopr-jboss-as-5-plugin-${project.version}.jar" />
                                  </fileset>
                                  <fileset dir="${rhq.deploymentDir}">
                                     <include name="${project.artifactId}-${project.version}.jar" />

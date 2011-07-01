@@ -11,6 +11,10 @@ import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 
 import static java.util.Arrays.asList;
+import static org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext.fileSystem;
+import static org.rhq.core.domain.drift.DriftConfigurationDefinition.PROP_BASEDIR;
+import static org.rhq.core.domain.drift.DriftConfigurationDefinition.PROP_BASEDIR_VALUECONTEXT;
+import static org.rhq.core.domain.drift.DriftConfigurationDefinition.PROP_BASEDIR_VALUENAME;
 import static org.testng.Assert.*;
 
 public class DriftConfigurationTest {
@@ -26,14 +30,20 @@ public class DriftConfigurationTest {
     }
 
     @Test
-    public void getBasedir() {
+    public void getBasedirForFileSystemContext() {
         String basedir = "/opt/drift/test" ;
         Configuration config = new Configuration();
-        config.put(new PropertySimple("basedir", basedir));
+
+        PropertyMap map = new PropertyMap(PROP_BASEDIR);
+        map.put(new PropertySimple(PROP_BASEDIR_VALUECONTEXT, fileSystem));
+        map.put(new PropertySimple(PROP_BASEDIR_VALUENAME, basedir));
+
+        config.put(map);
 
         DriftConfiguration driftConfig = new DriftConfiguration(config);
 
-        assertEquals(driftConfig.getBasedir(), basedir, "Failed to get drift configuration base directory");
+        assertEquals(driftConfig.getBasedir().getValueName(), basedir,
+            "Failed to get drift configuration base directory");
     }
 
     @Test

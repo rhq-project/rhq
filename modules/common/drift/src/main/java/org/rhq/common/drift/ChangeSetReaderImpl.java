@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.util.Iterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -77,5 +78,43 @@ public class ChangeSetReaderImpl implements ChangeSetReader {
     @Override
     public void close() throws IOException {
         reader.close();
+    }
+
+    @Override
+    public Iterator<DirectoryEntry> iterator() {
+
+        return new Iterator<DirectoryEntry>() {
+
+            private DirectoryEntry next;
+
+            {
+                try {
+                    next = readDirectoryEntry();
+                } catch (IOException e) {
+                    throw new RuntimeException("Failed to create iterator: " + e);
+                }
+            }
+
+            @Override
+            public boolean hasNext() {
+                return next != null;
+            }
+
+            @Override
+            public DirectoryEntry next() {
+                try {
+                    DirectoryEntry previous = next;
+                    next = readDirectoryEntry();
+                    return previous;
+                } catch (IOException e) {
+                    throw new RuntimeException("Failed to get next " + DirectoryEntry.class.getName() + ": " + e);
+                }
+            }
+
+            @Override
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
+        };
     }
 }

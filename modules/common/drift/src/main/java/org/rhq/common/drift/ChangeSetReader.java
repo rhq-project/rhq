@@ -2,7 +2,7 @@ package org.rhq.common.drift;
 
 import java.io.IOException;
 
-public interface ChangeSetReader {
+public interface ChangeSetReader extends Iterable<DirectoryEntry> {
 
     Headers getHeaders() throws IOException;
 

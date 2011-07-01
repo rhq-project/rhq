@@ -1,6 +1,8 @@
 package org.rhq.common.drift;
 
 import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.testng.annotations.Test;
 
@@ -89,6 +91,79 @@ public class ChangeSetReaderImplTest {
         FileEntry expectedFileEntry = new FileEntry("a34ef6", "c41b8", "myconf.conf", "C");
 
         assertFileEntryEquals(actualFileEntry, expectedFileEntry);
+    }
+
+    ////////////////////////////////////////////////////////
+    //              Iterator tests                        //
+    ////////////////////////////////////////////////////////
+
+    // For iterator related tests we are only verifying the number of directory entries
+    // returned to make sure that the iteration logic is correct. The actual parsing is
+    // verified in other tests.
+    //
+    // jsanda
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void iterateOverChangeSetWithMultipledDirectoryEntries() throws Exception {
+        String changeset = "multiple-dir-entries-test\n" +
+                           "myresource\n" +
+                           "C\n" +
+                           "conf 1\n" +
+                           "abcd 0 resource.conf A\n" +
+                           "\n" +
+                           "lib 1\n" +
+                           "1234 0 resource.jar A";
+
+        ChangeSetReaderImpl reader = new ChangeSetReaderImpl(new StringReader(changeset));
+        int numDirEntries = 0;
+
+        for (DirectoryEntry dirEntry : reader) {
+            ++numDirEntries;
+        }
+
+        assertEquals(numDirEntries, 2, "Expected iterator to return two directory entries");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void iterateOverChangeSetOneDirectoryEntry() throws Exception {
+        String changeset = "single-dir-entry-test\n" +
+                           "myresource\n" +
+                           "C\n" +
+                           "conf 1\n" +
+                           "abcd 0 resource.conf A\n" +
+                           "\n";
+
+        ChangeSetReaderImpl reader = new ChangeSetReaderImpl(new StringReader(changeset));
+        int numDirEntries = 0;
+
+        for (DirectoryEntry dirEntry : reader) {
+            ++numDirEntries;
+        }
+
+        assertEquals(numDirEntries, 1, "Expected iterator to return one directory entry");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void iterateOverEmptyChangeSet() throws Exception {
+        // Note: We shouldn't ever be working with empty change set files (excluding the
+        // header) but this test is here to make sure ChangeReaderImpl is robust in handling
+        // edge cases.
+
+        String changeset = "empty-changeset-test\n" +
+                           "myresouce\n" +
+                           "C\n";
+
+        ChangeSetReaderImpl reader = new ChangeSetReaderImpl(new StringReader(changeset));
+        int numDirEntries = 0;
+
+        for (DirectoryEntry dirEntry : reader) {
+            ++numDirEntries;
+        }
+
+        assertEquals(numDirEntries, 0, "Expected iterator to return zero directory entries");
     }
 
     void assertHeadersEquals(Headers actual, Headers expected) {

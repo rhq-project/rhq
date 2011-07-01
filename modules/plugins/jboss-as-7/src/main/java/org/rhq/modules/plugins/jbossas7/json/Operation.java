@@ -77,6 +77,11 @@ public class Operation {
         this.address = address;
     }
 
+    public Operation(String operation, Address address) {
+        this.operation = operation;
+        this.address = address.path;
+    }
+
     public Operation() {
         // needed for Jackson
     }

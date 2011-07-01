@@ -18,25 +18,22 @@
  */
 package org.rhq.modules.plugins.jbossas7.json;
 
-import java.util.List;
-
 /**
- * Reads data for one AS 7 resource
+ * Operation to write one attribute
  * @author Heiko W. Rupp
  */
-public class ReadResource extends Operation {
+public class WriteAttribute extends Operation {
 
-    private static final String READ_RESOURCE = "read-resource";
+    private static final String WRITE_ATTRIBUTE = "write-attribute";
 
-    public ReadResource(List<PROPERTY_VALUE> address) {
-        super(READ_RESOURCE, address);
+    public WriteAttribute(Address address) {
+        super(WRITE_ATTRIBUTE,address);
     }
 
-    public ReadResource(String resourceType,String typeValue) {
-        super(READ_RESOURCE,resourceType,typeValue);
+    public WriteAttribute(Address address,String name, Object value) {
+        super(WRITE_ATTRIBUTE,address);
+        addAdditionalProperty("name",name);
+        addAdditionalProperty("value",value);
     }
 
-    public ReadResource(Address address) {
-        super(READ_RESOURCE,address);
-    }
 }

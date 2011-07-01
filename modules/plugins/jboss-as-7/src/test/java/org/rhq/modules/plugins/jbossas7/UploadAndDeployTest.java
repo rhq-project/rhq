@@ -29,9 +29,11 @@ import java.util.Map;
 import org.codehaus.jackson.JsonNode;
 import org.testng.annotations.Test;
 
+import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.CompositeOperation;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
+import org.rhq.modules.plugins.jbossas7.json.Remove;
 import org.rhq.modules.plugins.jbossas7.json.Result;
 
 /**
@@ -41,21 +43,17 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  * the UPLOAD_FILE must point to a valid archive in the resources directory.
  * @author Heiko W. Rupp
  */
-@Test(enabled = UploadAndDeployTest.isEnabled) // TODO add an "integration test profile" that is able to fire the server before running the test
-public class UploadAndDeployTest {
+@Test(enabled = UploadAndDeployTest.isEnabled, groups = {"integration.as7"}) // TODO add an "integration test profile" that is able to fire the server before running the test
+public class UploadAndDeployTest extends AbstractIntegrationTest {
 
-    static final String TEST_WAR = "test.war";
-    private static final String UPLOAD_FILE = "test-simple.war";
-    private static final String DC_HOST = "localhost";
-    private static final int DC_HTTP_PORT = 9990;
+    private  String TEST_WAR = "test-simple.war";
 
-    protected static final boolean isEnabled = false;
-
+    protected static final boolean isEnabled = true;
 
     @Test(timeOut = 60*1000L, enabled=isEnabled)
     public void testUploadOnly() throws Exception {
 
-        String bytes_value = prepare();
+        String bytes_value = uploadToAs(TEST_WAR);
 
         assert bytes_value != null;
 
@@ -67,8 +65,8 @@ public class UploadAndDeployTest {
     @Test(timeOut = 60*1000L, enabled=isEnabled)
     public void testDoubleUploadOnly() throws Exception {
 
-        String bytes_value = prepare();
-        String bytes_value2 = prepare();
+        String bytes_value = uploadToAs(TEST_WAR);
+        String bytes_value2 = uploadToAs(TEST_WAR);
 
         assert bytes_value != null;
         assert bytes_value2 != null;
@@ -80,7 +78,7 @@ public class UploadAndDeployTest {
     @Test(timeOut = 60*1000L,enabled=isEnabled)
     public void testUploadIndividualSteps() throws Exception {
 
-        String bytes_value = prepare();
+        String bytes_value = uploadToAs(TEST_WAR);
 
         System.out.println("sha: " + bytes_value);
 
@@ -99,7 +97,6 @@ public class UploadAndDeployTest {
         op.addAdditionalProperty("runtime-name", TEST_WAR);
         System.out.flush();
         JsonNode ret = connection.executeRaw(op);
-        op = null;
         System.out.println("Add to /deploy done " + ret);
         System.out.flush();
 
@@ -160,15 +157,16 @@ public class UploadAndDeployTest {
     @Test(timeOut = 60*1000L,enabled = isEnabled)
     public void testUploadIndividualSteps2() throws Exception {
 
-        String bytes_value = prepare();
+        String bytes_value = uploadToAs(TEST_WAR);
 
         System.out.println("sha: " + bytes_value);
 
         System.out.println();
         ASConnection connection = new ASConnection(DC_HOST, DC_HTTP_PORT);
 
-        List<PROPERTY_VALUE> deploymentsAddress = new ArrayList<PROPERTY_VALUE>(1);
-        deploymentsAddress.add(new PROPERTY_VALUE("deployment", TEST_WAR));
+/*
+        Address deploymentsAddress = new Address();
+        deploymentsAddress.add("deployment", TEST_WAR);
         Operation op = new Operation("add",deploymentsAddress);
         List<Object> content = new ArrayList<Object>(1);
         Map<String,Object> contentValues = new HashMap<String,Object>();
@@ -178,6 +176,8 @@ public class UploadAndDeployTest {
         op.addAdditionalProperty("name", TEST_WAR); // this needs to be unique per upload
         op.addAdditionalProperty("runtime-name", TEST_WAR);
         System.out.flush();
+*/
+        Operation op = addDeployment(TEST_WAR,bytes_value);
         JsonNode ret = connection.executeRaw(op);
         op = null;
         System.out.println("Add to /deploy done " + ret);
@@ -212,7 +212,7 @@ public class UploadAndDeployTest {
 
         // Now tear down stuff again
 
-        Operation unattach = new Operation("remove",serverGroupAddress);
+        Operation unattach = new Remove(serverGroupAddress);
         ret = connection.executeRaw(unattach);
 
         assert ret.has("outcome") : "Ret not valid " + ret.toString();
@@ -221,7 +221,7 @@ public class UploadAndDeployTest {
 
         // remove from domain
 
-        Operation remove = new Operation("remove",deploymentsAddress);
+        Operation remove = new Remove("deployment",TEST_WAR);
         ret = connection.executeRaw(remove);
 
         assert ret.has("outcome") : "Ret not valid " + ret.toString();
@@ -234,7 +234,7 @@ public class UploadAndDeployTest {
     @Test(timeOut = 60*1000L,enabled = isEnabled)
     public void testUploadComposite() throws Exception {
 
-        String bytes_value = prepare();
+        String bytes_value = uploadToAs(TEST_WAR);
 
         System.out.println("Prepare done");
         System.out.flush();
@@ -300,7 +300,7 @@ public class UploadAndDeployTest {
     @Test(timeOut = 60*1000L,enabled = isEnabled)
     public void testUploadComposite2() throws Exception {
 
-        String bytes_value = prepare();
+        String bytes_value = uploadToAs(TEST_WAR);
 
         System.out.println("Prepare done");
         System.out.flush();
@@ -349,31 +349,4 @@ public class UploadAndDeployTest {
 
     }
 
-    private String prepare() throws IOException {
-        ASUploadConnection conn = new ASUploadConnection(DC_HOST, DC_HTTP_PORT);
-        OutputStream os = conn.getOutputStream("test.war");
-
-
-
-        InputStream fis = getClass().getClassLoader().getResourceAsStream(UPLOAD_FILE);
-        final byte[] buffer = new byte[1024];
-        int numRead = 0;
-
-        while(numRead > -1) {
-            numRead = fis.read(buffer);
-            if(numRead > 0) {
-                os.write(buffer,0,numRead);
-            }
-        }
-        fis.close();
-        JsonNode node = conn.finishUpload();
-        System.out.println(node);
-        assert node != null : "No result from upload - node was null";
-        assert node.has("outcome") : "No outcome from upload";
-        String outcome = node.get("outcome").getTextValue();
-        assert outcome.equals("success") : "Upload was no success" + outcome;
-
-        JsonNode resultNode = node.get("result");
-        return resultNode.get("BYTES_VALUE").getTextValue();
-    }
 }

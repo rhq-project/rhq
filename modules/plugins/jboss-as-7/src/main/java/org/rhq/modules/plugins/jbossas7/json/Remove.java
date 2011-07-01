@@ -21,22 +21,22 @@ package org.rhq.modules.plugins.jbossas7.json;
 import java.util.List;
 
 /**
- * Reads data for one AS 7 resource
+ * The :remove operation
  * @author Heiko W. Rupp
  */
-public class ReadResource extends Operation {
+public class Remove extends Operation{
 
-    private static final String READ_RESOURCE = "read-resource";
+    private static final String REMOVE = "remove";
 
-    public ReadResource(List<PROPERTY_VALUE> address) {
-        super(READ_RESOURCE, address);
+    public Remove(Address address) {
+        super("remove",address);
     }
 
-    public ReadResource(String resourceType,String typeValue) {
-        super(READ_RESOURCE,resourceType,typeValue);
+    public Remove(List<PROPERTY_VALUE> address) {
+        super(REMOVE,address);
     }
 
-    public ReadResource(Address address) {
-        super(READ_RESOURCE,address);
+    public Remove(String key, String value) {
+        super(REMOVE,key,value);
     }
 }

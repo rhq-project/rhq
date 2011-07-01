@@ -82,7 +82,7 @@ public class DriftDetectorTest extends DriftTest {
         scheduleQueue.enqueue(schedule);
         detector.run();
 
-        File changeSetDir = new File(new File(changeSetsDir, Integer.toString(resourceId())), "coverage-test");
+        File changeSetDir = changeSetDir(driftConfig.getName());
         File changeSet = new File(changeSetDir, "changeset.txt");
         List<String> lines = readLines(new BufferedInputStream(new FileInputStream(changeSet)));
 

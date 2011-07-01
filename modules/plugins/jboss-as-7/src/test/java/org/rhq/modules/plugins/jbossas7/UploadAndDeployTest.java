@@ -41,7 +41,7 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  * the UPLOAD_FILE must point to a valid archive in the resources directory.
  * @author Heiko W. Rupp
  */
-@Test(enabled = false) // TODO add an "integration test profile" that is able to fire the server before running the test
+@Test(enabled = UploadAndDeployTest.isEnabled) // TODO add an "integration test profile" that is able to fire the server before running the test
 public class UploadAndDeployTest {
 
     static final String TEST_WAR = "test.war";
@@ -49,7 +49,10 @@ public class UploadAndDeployTest {
     private static final String DC_HOST = "localhost";
     private static final int DC_HTTP_PORT = 9990;
 
-    @Test(timeOut = 60*1000L, enabled=false)
+    protected static final boolean isEnabled = false;
+
+
+    @Test(timeOut = 60*1000L, enabled=isEnabled)
     public void testUploadOnly() throws Exception {
 
         String bytes_value = prepare();
@@ -61,7 +64,7 @@ public class UploadAndDeployTest {
 
     }
 
-    @Test(timeOut = 60*1000L, enabled=false)
+    @Test(timeOut = 60*1000L, enabled=isEnabled)
     public void testDoubleUploadOnly() throws Exception {
 
         String bytes_value = prepare();
@@ -74,7 +77,7 @@ public class UploadAndDeployTest {
         assert bytes_value.equals("7jgpMVmynfxpqp8UDleKLmtgbrA=");
     }
 
-    @Test(timeOut = 60*1000L,enabled=false)
+    @Test(timeOut = 60*1000L,enabled=isEnabled)
     public void testUploadIndividualSteps() throws Exception {
 
         String bytes_value = prepare();
@@ -154,7 +157,7 @@ public class UploadAndDeployTest {
     }
 
     // Test for AS7-853
-    @Test(timeOut = 60*1000L,enabled = false)
+    @Test(timeOut = 60*1000L,enabled = isEnabled)
     public void testUploadIndividualSteps2() throws Exception {
 
         String bytes_value = prepare();
@@ -228,7 +231,7 @@ public class UploadAndDeployTest {
 
     }
 
-    @Test(timeOut = 60*1000L,enabled = false)
+    @Test(timeOut = 60*1000L,enabled = isEnabled)
     public void testUploadComposite() throws Exception {
 
         String bytes_value = prepare();
@@ -278,6 +281,62 @@ public class UploadAndDeployTest {
         cop = new CompositeOperation();
         cop.addStep(step3);
         cop.addStep(step3a);
+        cop.addStep(step4);
+        ret = connection.executeRaw(cop);
+
+        System.out.println(ret);
+        System.out.flush();
+
+        assert ret.has("outcome") : "Ret not valid " + ret.toString();
+        assert ret.get("outcome").getTextValue().equals("success") : "Composite remove was no success " + ret.getTextValue();
+
+
+    }
+
+    /**
+     * Test uploading to domain only, but not to a server group
+     * @throws Exception
+     */
+    @Test(timeOut = 60*1000L,enabled = isEnabled)
+    public void testUploadComposite2() throws Exception {
+
+        String bytes_value = prepare();
+
+        System.out.println("Prepare done");
+        System.out.flush();
+
+        List<PROPERTY_VALUE> deploymentsAddress = new ArrayList<PROPERTY_VALUE>(1);
+        deploymentsAddress.add(new PROPERTY_VALUE("deployment", TEST_WAR));
+        Operation step1 = new Operation("add",deploymentsAddress);
+        List<Object> content = new ArrayList<Object>(1);
+        Map<String,Object> contentValues = new HashMap<String,Object>();
+        contentValues.put("hash",new PROPERTY_VALUE("BYTES_VALUE",bytes_value));
+        content.add(contentValues);
+        step1.addAdditionalProperty("content", content);
+        step1.addAdditionalProperty("name", TEST_WAR); // this needs to be unique per upload
+
+
+        CompositeOperation cop = new CompositeOperation();
+        cop.addStep(step1);
+
+
+        ASConnection connection = new ASConnection(DC_HOST, DC_HTTP_PORT);
+        JsonNode ret = connection.executeRaw(cop);
+        System.out.println(ret);
+        System.out.flush();
+
+        assert ret.has("outcome") : "Ret not valid " + ret.toString();
+        assert ret.get("outcome").getTextValue().equals("success") : "Composite deploy was no success " + ret.getTextValue();
+
+        // Wait for AS to settle
+        Thread.sleep(1000);
+
+
+        // Now undeploy again to clean up
+
+        cop = new CompositeOperation();
+        Operation step4 = new Operation("remove",deploymentsAddress);
+
         cop.addStep(step4);
         ret = connection.executeRaw(cop);
 

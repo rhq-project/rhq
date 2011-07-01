@@ -65,7 +65,7 @@ public class AutodiscoveryQueueDataSource extends DataSource {
 
     private int unlimited = -1;
     private int maximumPlatformsToDisplay = -1;
-    private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
+    private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService(1000000);
     private PermissionsLoader permissionsLoader = new PermissionsLoader();
     private TreeGrid dataContainerReference = null;
     private static final Permission MANAGE_INVENTORY = Permission.MANAGE_INVENTORY;

@@ -30,6 +30,7 @@ import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
@@ -40,6 +41,7 @@ import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.PropertyValueChangeEvent;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.PropertyValueChangeListener;
+import org.rhq.enterprise.gui.coregui.client.gwt.ConfigurationGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceDetailView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
@@ -127,19 +129,31 @@ public class ResourceConfigurationEditView extends LocatableVLayout implements P
                             @Override
                             public void onTypesLoaded(ResourceType type) {
 
-                                editor = new ConfigurationEditor(extendLocatorId("Editor"), type
-                                    .getResourceConfigurationDefinition(), result.getConfiguration());
-                                editor.setOverflow(Overflow.AUTO);
-                                editor.addPropertyValueChangeListener(ResourceConfigurationEditView.this);
-                                editor.setReadOnly(!resourcePermission.isConfigureWrite());
-                                addMember(editor);
+                                ConfigurationGWTServiceAsync configurationService = GWTServiceLookup.getConfigurationService();
+                                configurationService.getOptionValuesForConfigDefinition(type.getResourceConfigurationDefinition(),new AsyncCallback<ConfigurationDefinition>(){
+                                    @Override
+                                    public void onFailure(Throwable throwable) {
+                                        refreshing = false;
+                                        CoreGUI.getErrorHandler().handleError("Failed to load configuration.", throwable);
+                                    }
 
-                                saveButton.disable();
-                                buttonbar.setVisible(true);
-                                markForRedraw();
-                                refreshing = false;
+                                    @Override
+                                    public void onSuccess(ConfigurationDefinition configurationDefinition) {
+
+                                            editor = new ConfigurationEditor(extendLocatorId("Editor"), configurationDefinition, result.getConfiguration());
+                                            editor.setOverflow(Overflow.AUTO);
+                                            editor.addPropertyValueChangeListener(ResourceConfigurationEditView.this);
+                                            editor.setReadOnly(!resourcePermission.isConfigureWrite());
+                                            addMember(editor);
+
+                                            saveButton.disable();
+                                            buttonbar.setVisible(true);
+                                            markForRedraw();
+                                            refreshing = false;
+                                    }
+                                });
                             }
-                        });
+                    });
                 }
 
                 @Override

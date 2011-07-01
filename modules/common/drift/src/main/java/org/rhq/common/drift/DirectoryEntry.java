@@ -33,4 +33,9 @@ public class DirectoryEntry implements Iterable<FileEntry>, Serializable {
     public Iterator<FileEntry> iterator() {
         return files.iterator();
     }
+
+    @Override
+    public String toString() {
+        return getClass().getSimpleName() + "[directory: " + directory + "]";
+    }
 }

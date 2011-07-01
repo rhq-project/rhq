@@ -75,4 +75,10 @@ public class FileEntry implements Serializable {
     public DriftCategory getType() {
         return type;
     }
+
+    @Override
+    public String toString() {
+        return getClass().getSimpleName() + "[newSHA: " + newSHA + ", oldSHA: " + oldSHA + ", file: " + file +
+            ", type: " + type.code() + "]";
+    }
 }

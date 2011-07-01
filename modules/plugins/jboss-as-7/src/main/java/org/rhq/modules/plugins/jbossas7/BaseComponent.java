@@ -25,6 +25,8 @@ import org.codehaus.jackson.JsonNode;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
+import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.DataType;
@@ -505,5 +507,28 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
         }
         // TODO throw an exception if the operation failed?
         return operationResult;
+    }
+
+    Object getObjectForProperty(PropertySimple prop, PropertyDefinitionSimple propDef) {
+
+        PropertySimpleType type = propDef.getType();
+        switch (type) {
+            case STRING:
+                return prop.getStringValue();
+            case INTEGER:
+                return prop.getIntegerValue();
+            case BOOLEAN:
+                return prop.getBooleanValue();
+            case LONG:
+                return prop.getLongValue();
+            case FLOAT:
+                return prop.getFloatValue();
+            case DOUBLE:
+                return prop.getDoubleValue();
+            default:
+                return prop.getStringValue();
+        }
+
+
     }
 }

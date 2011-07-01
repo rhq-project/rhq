@@ -102,26 +102,4 @@ public class JmsComponent extends DomainComponent {
         return report;
     }
 
-    Object getObjectForProperty(PropertySimple prop, PropertyDefinitionSimple propDef) {
-
-        PropertySimpleType type = propDef.getType();
-        switch (type) {
-            case STRING:
-                return prop.getStringValue();
-            case INTEGER:
-                return prop.getIntegerValue();
-            case BOOLEAN:
-                return prop.getBooleanValue();
-            case LONG:
-                return prop.getLongValue();
-            case FLOAT:
-                return prop.getFloatValue();
-            case DOUBLE:
-                return prop.getDoubleValue();
-            default:
-                return prop.getStringValue();
-        }
-
-
-    }
 }

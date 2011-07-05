@@ -47,5 +47,29 @@
       	<c:simple-property name="stickySessions" type="boolean" description="Enables sticky sessions."/>
       </resource-configuration>
       
+       <service name="mod_cluster_context"
+         discovery="ContextDiscoveryComponent"
+         class="ContextComponent"
+         description="A mod_cluster context">
+
+      	<operation name="enableContext" displayName="Enable webapp" description="Enable a single webapp">
+      		<results>
+      			<c:simple-property name="result" type="boolean" description="The result of the operation" />
+      		</results>
+      	</operation>
+      	<operation name="disableContext" displayName="Disable webpapp" description="Disable a single webapp">
+      		<results>
+	      		<c:simple-property name="result" type="boolean" description="The result of the operation" />
+      		</results>
+      	</operation>
+      	<operation name="stopContext" displayName="Stop webpapp" description="Gracefully stops a single webapp">
+      		<results>
+	      		<c:simple-property name="result" type="boolean" description="The result of the operation" />
+      		</results>
+      	</operation>
+
+      </service>
+      
+      
    </service>
 </plugin>

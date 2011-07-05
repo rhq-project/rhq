@@ -163,8 +163,8 @@ public class MetadataBeanTest extends AbstractEJB3Test {
         return pluginDescriptor.getAmpsVersion();
     }
 
-    protected void assertResourceTypeAssociationEquals(String resourceTypeName, String plugin, String propertyName,
-        List<String> expected) throws Exception {
+    protected ResourceType assertResourceTypeAssociationEquals(String resourceTypeName, String plugin,
+        String propertyName, List<String> expected) throws Exception {
         SubjectManagerLocal subjectMgr = LookupUtil.getSubjectManager();
         ResourceTypeManagerLocal resourceTypeMgr = LookupUtil.getResourceTypeManager();
 
@@ -206,6 +206,8 @@ public class MetadataBeanTest extends AbstractEJB3Test {
         }
 
         assert errors.isEmpty() : errors;
+
+        return resourceType;
     }
 
     private boolean contains(ResourceType type, String propertyName, String expected) throws Exception {

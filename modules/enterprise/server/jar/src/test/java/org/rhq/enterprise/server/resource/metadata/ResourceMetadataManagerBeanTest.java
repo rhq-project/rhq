@@ -3,6 +3,7 @@ package org.rhq.enterprise.server.resource.metadata;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.beanutils.MethodUtils;
 import org.apache.commons.beanutils.PropertyUtils;
@@ -15,6 +16,9 @@ import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.alert.BooleanExpression;
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleType;
+import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration;
+import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration.BundleDestinationBaseDirectory;
+import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration.BundleDestinationBaseDirectory.Context;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.criteria.OperationDefinitionCriteria;
@@ -107,10 +111,45 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
             "ServerA",
             "TestPlugin",
             "driftConfigurationTemplates",
-            asList("drift1")
+            asList("drift-pc", "drift-fs")
         );
     }
 
+    @Test(dependsOnMethods = {"persistNewTypes"}, groups = {"plugin.metadata", "NewPlugin"})
+    public void persistBundleTargetConfigurations() throws Exception {
+        String resourceTypeName="ServerA";
+        String plugin = "TestPlugin";
+
+        SubjectManagerLocal subjectMgr = LookupUtil.getSubjectManager();
+        ResourceTypeManagerLocal resourceTypeMgr = LookupUtil.getResourceTypeManager();
+
+        ResourceTypeCriteria criteria = new ResourceTypeCriteria();
+        criteria.addFilterName(resourceTypeName);
+        criteria.addFilterPluginName(plugin);
+        criteria.fetchBundleConfiguration(true);
+        List<ResourceType> resourceTypes = resourceTypeMgr.findResourceTypesByCriteria(subjectMgr.getOverlord(),
+            criteria);
+        ResourceType resourceType = resourceTypes.get(0);
+        
+        ResourceTypeBundleConfiguration rtbc = resourceType.getResourceTypeBundleConfiguration();
+        assertNotNull("missing bundle configuration", rtbc);
+        Set<BundleDestinationBaseDirectory> dirs = rtbc.getBundleDestinationBaseDirectories();
+        assertEquals("Should have persisted 2 bundle dest dirs", 2, dirs.size());
+        for (BundleDestinationBaseDirectory dir : dirs) {
+            if (dir.getName().equals("bundleTarget-pc")) {
+                assertEquals(Context.pluginConfiguration, dir.getValueContext());
+                assertEquals("connectionPropertyY", dir.getValueName());
+                assertEquals("pc-description", dir.getDescription());
+            } else if (dir.getName().equals("bundleTarget-fs")) {
+                assertEquals(Context.fileSystem, dir.getValueContext());
+                assertEquals("/wot/gorilla", dir.getValueName());
+                assertNull(dir.getDescription());                
+            } else {
+                assertTrue("got an unexpected bundle target dest dir: " + dir, false);
+            }
+        }
+    }
+    
     @Test(dependsOnMethods = {"persistNewTypes"}, groups = {"plugin.metadata", "NewPlugin"})
     public void persistChildTypes() throws Exception {
         assertResourceTypeAssociationEquals(
@@ -190,6 +229,51 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
             "processScans",
             asList("processA", "processB")
         );
+    }
+
+    @Test(enabled = false, dependsOnMethods = {"upgradePlugin"}, groups = {"plugin.metadata", "UpgradePlugin"})
+    public void upgradeDriftConfigurationTemplates() throws Exception {
+        assertResourceTypeAssociationEquals(
+            "ServerA",
+            "TestPlugin",
+            "driftConfigurationTemplates",
+            asList("drift-rc", "drift-mt")
+        );
+    }
+
+    @Test(dependsOnMethods = {"upgradePlugin"}, groups = {"plugin.metadata", "UpgradePlugin"})
+    public void upgradeBundleTargetConfigurations() throws Exception {
+        String resourceTypeName="ServerA";
+        String plugin = "TestPlugin";
+
+        SubjectManagerLocal subjectMgr = LookupUtil.getSubjectManager();
+        ResourceTypeManagerLocal resourceTypeMgr = LookupUtil.getResourceTypeManager();
+
+        ResourceTypeCriteria criteria = new ResourceTypeCriteria();
+        criteria.addFilterName(resourceTypeName);
+        criteria.addFilterPluginName(plugin);
+        criteria.fetchBundleConfiguration(true);
+        List<ResourceType> resourceTypes = resourceTypeMgr.findResourceTypesByCriteria(subjectMgr.getOverlord(),
+            criteria);
+        ResourceType resourceType = resourceTypes.get(0);
+        
+        ResourceTypeBundleConfiguration rtbc = resourceType.getResourceTypeBundleConfiguration();
+        assertNotNull("missing bundle configuration", rtbc);
+        Set<BundleDestinationBaseDirectory> dirs = rtbc.getBundleDestinationBaseDirectories();
+        assertEquals("Should have persisted 2 bundle dest dirs", 2, dirs.size());
+        for (BundleDestinationBaseDirectory dir : dirs) {
+            if (dir.getName().equals("bundleTarget-rc")) {
+                assertEquals(Context.resourceConfiguration, dir.getValueContext());
+                assertEquals("resourceConfig1", dir.getValueName());
+                assertEquals("rc-description", dir.getDescription());
+            } else if (dir.getName().equals("bundleTarget-mt")) {
+                assertEquals(Context.measurementTrait, dir.getValueContext());
+                assertEquals("trait1", dir.getValueName());
+                assertEquals("mt-description", dir.getDescription());
+            } else {
+                assertTrue("got an unexpected bundle target dest dir: " + dir, false);
+            }
+        }
     }
 
     @Test(dependsOnMethods = {"upgradePlugin"}, groups = {"plugin.metadata", "UpgradePlugin"})

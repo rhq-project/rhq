@@ -45,7 +45,7 @@
         </operation>
 
         <metric displayName="Metric 1" property="metric1" displayType="summary" defaultInterval="300000"/>
-        <metric displayName="Metric 2" property="metric2" displayType="summary" defaultInterval="300000"/>
+        <metric displayName="Metric 2" property="metric2" displayType="summary" defaultInterval="300000" dataType="trait"/>
 
         <event name="logAEntry" description="an entry was appended to a log file"/>
         <event name="logCEntry" description="an entry was appended to a log file"/>
@@ -62,6 +62,43 @@
                 <c:simple-property name="ServerA.Content.3.version"/>
             </configuration>
         </content>
+
+        <drift-configuration name="drift-rc">
+           <basedir>
+              <!-- this resource doesn't really have this resource config prop
+                   but today we do not check for validity so this is OK. In the future, if we do
+                   check, our tests will fail and we'll need to change this test drift config -->
+              <value-context>resourceConfiguration</value-context>
+              <value-name>resourceConfig1</value-name>
+           </basedir>
+        </drift-configuration>
+
+        <drift-configuration name="drift-mt">
+           <basedir>
+              <!-- this resource doesn't really have this metric trait
+                   but today we do not check for validity so this is OK. In the future, if we do
+                   check, our tests will fail and we'll need to change this test drift config -->
+              <value-context>measurementTrait</value-context>
+              <value-name>trait1</value-name>
+           </basedir>
+        </drift-configuration>
+
+        <bundle-target>
+           <destination-base-dir name="bundleTarget-rc" description="rc-description">
+              <!-- this resource doesn't really have this resource config prop
+                   but today we do not check for validity so this is OK. In the future, if we do
+                   check, our tests will fail and we'll need to change this test drift config -->
+              <value-context>resourceConfiguration</value-context>
+              <value-name>resourceConfig1</value-name>
+           </destination-base-dir>
+           <destination-base-dir name="bundleTarget-mt" description="mt-description">
+              <!-- this resource doesn't really have this metric trait
+                   but today we do not check for validity so this is OK. In the future, if we do
+                   check, our tests will fail and we'll need to change this test drift config -->
+              <value-context>measurementTrait</value-context>
+              <value-name>trait1</value-name>
+           </destination-base-dir>
+        </bundle-target>
 
         <service name="Child1"/>
         <service name="Child3"/>

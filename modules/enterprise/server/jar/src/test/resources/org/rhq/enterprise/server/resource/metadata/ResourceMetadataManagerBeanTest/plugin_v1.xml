@@ -34,7 +34,7 @@
         </operation>
 
         <metric displayName="Metric 1" property="metric1" displayType="summary" defaultInterval="300000"/>
-        <metric displayName="Metric 2" property="metric2" displayType="summary" defaultInterval="300000"/>
+        <metric displayName="Metric 2" property="metric2" displayType="summary" defaultInterval="300000" dataType="trait"/>
 
         <event name="logAEntry" description="an entry was appended to a log file"/>
         <event name="logBEntry" description="an entry was appended to a log file"/>
@@ -51,18 +51,28 @@
             </configuration>
         </content>
 
-        <drift-configuration name="drift1">
+        <drift-configuration name="drift-pc">
            <basedir>
               <value-context>pluginConfiguration</value-context>
-               <value-name>connectionPropertyX</value-name>
+              <value-name>connectionPropertyX</value-name>
            </basedir>
         </drift-configuration>
 
-<!-- THIS CAUSES A DEADLOCK DURING PLUGIN REGISTRATION! -->
+        <drift-configuration name="drift-fs">
+           <basedir>
+              <value-context>fileSystem</value-context>
+              <value-name>/</value-name>
+           </basedir>
+        </drift-configuration>
+
         <bundle-target>
-           <destination-base-dir name="bundleTarget1">
+           <destination-base-dir name="bundleTarget-pc" description="pc-description">
                <value-context>pluginConfiguration</value-context>
                <value-name>connectionPropertyY</value-name>
+           </destination-base-dir>
+           <destination-base-dir name="bundleTarget-fs"> <!--  note: no description, so we can test for proper null handling -->
+               <value-context>fileSystem</value-context>
+               <value-name>/wot/gorilla</value-name>
            </destination-base-dir>
         </bundle-target>
 

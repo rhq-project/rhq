@@ -1,18 +1,13 @@
 package org.rhq.core.pc.drift;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import org.apache.tools.ant.taskdefs.Java;
-import org.hibernate.engine.Collections;
 import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -20,19 +15,17 @@ import org.rhq.common.drift.ChangeSetReader;
 import org.rhq.common.drift.ChangeSetReaderImpl;
 import org.rhq.common.drift.DirectoryEntry;
 import org.rhq.common.drift.FileEntry;
+import org.rhq.common.drift.Headers;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.test.AssertUtils;
 
-import static org.apache.commons.io.IOUtils.readLines;
+import static org.apache.commons.io.FileUtils.touch;
 import static org.rhq.common.drift.FileEntry.addedFileEntry;
-import static org.rhq.core.domain.drift.DriftCategory.FILE_ADDED;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
 import static org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext.fileSystem;
-import static org.testng.Assert.assertEquals;
+import static org.rhq.test.AssertUtils.assertPropertiesMatch;
 import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
-import static org.unitils.thirdparty.org.apache.commons.io.FileUtils.touch;
 
 public class DriftDetectorTest extends DriftTest {
 
@@ -66,19 +59,19 @@ public class DriftDetectorTest extends DriftTest {
         scheduleQueue.enqueue(new DriftDetectionSchedule(resourceId(), driftConfig));
         detector.run();
 
-        File changeSetDir = changeSetDir(driftConfig.getName());
-        File changeSet = new File(changeSetDir, "changeset.txt");
-        List<String> lines = readLines(new BufferedInputStream(new FileInputStream(changeSet)));
+        File changeSet = changeSet(driftConfig.getName());
 
-        assertHeaderEquals(lines, driftConfig.getName(), driftConfig.getBasedir().getValueName(), COVERAGE.code());
+        assertHeaderEquals(changeSet, new Headers(driftConfig.getName(), resourceDir.getAbsolutePath(), COVERAGE));
         assertThatChangeSetDoesNotContainEmptyDirs(changeSet);
     }
 
     @SuppressWarnings("unchecked")
     @Test
     public void usePeriodAsNameOfBasedirDirectoryEntry() throws Exception {
-        touch(new File(resourceDir, "data-1.txt"));
-        touch(new File(resourceDir, "data-2.txt"));
+        File data1 = new File(resourceDir, "data-1.txt");
+        touch(data1);
+        File data2 = new File(resourceDir, "data-2.txt");
+        touch(data2);
 
         DriftConfiguration driftConfig = driftConfiguration("basedir-entry-test", resourceDir.getAbsolutePath());
 
@@ -90,13 +83,36 @@ public class DriftDetectorTest extends DriftTest {
         scheduleQueue.enqueue(schedule);
         detector.run();
 
-        File changeSetDir = changeSetDir(driftConfig.getName());
-        File changeSet = new File(changeSetDir, "changeset.txt");
-        List<String> lines = readLines(new BufferedInputStream(new FileInputStream(changeSet)));
+        assertChangeSetContainsDirEntry(changeSet(driftConfig.getName()),
+            new DirectoryEntry(".")
+                .add(addedFileEntry("data-1.txt", sha256(data1)))
+                .add(addedFileEntry("data-2.txt", sha256(data2))));
+    }
 
-        assertEquals(lines.size(), 7, "Expected " + changeSet.getPath() + " to have seven lines.");
-        assertEquals(". 2", lines.get(3), "The directory header name is wrong for change set " +
-            changeSet.getAbsolutePath());
+    @SuppressWarnings("unchecked")
+    @Test
+    public void includedSiblingDirsInCoverageChangeSet() throws Exception {
+        File confDir = mkdir(resourceDir, "conf");
+        File serverConf = new File(confDir, "server.conf");
+        touch(serverConf);
+
+        File libDir = mkdir(resourceDir, "lib");
+        File serverLib = new File(libDir, "server.jar");
+        touch(serverLib);
+
+        DriftConfiguration config = driftConfiguration("sibling-dirs-test", resourceDir.getAbsolutePath());
+
+        scheduleQueue.enqueue(new DriftDetectionSchedule(resourceId(), config));
+        detector.run();
+
+        File changeSet = changeSet(config.getName());
+
+        assertHeaderEquals(changeSet, new Headers(config.getName(), resourceDir.getAbsolutePath(), COVERAGE));
+
+        assertChangeSetContainsDirEntry(changeSet,
+            new DirectoryEntry("conf").add(addedFileEntry("server.conf", sha256(serverConf))));
+        assertChangeSetContainsDirEntry(changeSet,
+            new DirectoryEntry("lib").add(addedFileEntry("server.jar", sha256(serverLib))));
     }
 
     @SuppressWarnings("unchecked")
@@ -115,22 +131,21 @@ public class DriftDetectorTest extends DriftTest {
         scheduleQueue.enqueue(new DriftDetectionSchedule(resourceId(), config));
         detector.run();
 
-        File changesetDir = changeSetDir(config.getName());
-        File changeSet = new File(changesetDir, "changeset.txt");
-        List<String> lines = readLines(new BufferedInputStream(new FileInputStream(changeSet)));
+        File changeSet = changeSet(config.getName());
 
-        assertEquals(lines.size(), 9, "Expected " + changeSet.getPath() + " to have 9 lines");
+        assertHeaderEquals(changeSet, new Headers("nested-dirs-test", resourceDir.getAbsolutePath(), COVERAGE));
 
-        assertHeaderEquals(lines, "nested-dirs-test", resourceDir.getAbsolutePath(), "C");
         assertChangeSetContainsDirEntry(changeSet,
             new DirectoryEntry("conf").add(addedFileEntry("server-1.conf", sha256(server1Conf))));
+        assertChangeSetContainsDirEntry(changeSet,
+            new DirectoryEntry("conf/subconf").add(addedFileEntry("server-2.conf", sha256(server2Conf))));
     }
 
-    void assertHeaderEquals(List<String> lines, String... expected) {
-        assertEquals(lines.get(0), expected[0], "The first header entry should be the drift configuration name.");
-        assertEquals(lines.get(1), expected[1], "The second header entry should be the base directory.");
-        assertEquals(lines.get(2), expected[2], "The third header entry should be a flag indicating the change set "
-            + "type.");
+    void assertHeaderEquals(File changeSet, Headers expected) throws Exception {
+        ChangeSetReader reader = new ChangeSetReaderImpl(new BufferedReader(new FileReader(changeSet)));
+        Headers actual = reader.getHeaders();
+        assertPropertiesMatch(expected, actual, "Headers for " + changeSet.getPath() + " do not match " +
+            "expected values");
     }
 
     void assertThatChangeSetDoesNotContainEmptyDirs(File changeSet) throws Exception {
@@ -156,6 +171,8 @@ public class DriftDetectorTest extends DriftTest {
         }
 
         assertNotNull(actual, "Failed to find " + expected + " in " + changeSet.getPath());
+        AssertUtils.assertCollectionMatchesNoOrder(fileEntries(expected), fileEntries(actual), "File entries for " +
+            expected + " in change set " + changeSet.getPath() + " do not match");
 //        AssertUtils.assertCollectionEqualsNoOrder(fileEntries(expected), fileEntries(actual), "File entries for " +
 //            expected);
     }

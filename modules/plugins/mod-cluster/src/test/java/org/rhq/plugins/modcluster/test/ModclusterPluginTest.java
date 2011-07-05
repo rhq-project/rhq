@@ -19,8 +19,10 @@
 package org.rhq.plugins.modcluster.test;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
 import java.util.Set;
 
@@ -45,6 +47,7 @@ import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.plugins.modcluster.ProxyInfo;
 
 /**
  * @author Fady Matar
@@ -80,6 +83,31 @@ public class ModclusterPluginTest {
     }
 
     @Test
+    public void testProxyInfo() {
+        String test = "{mobile-work/192.168.1.40:6666=Node: [1],Name: 4e6189af-0502-3305-8ff3-fad7fee8b516,Balancer: mycluster,LBGroup: ,Host: 127.0.0.1,Port: 8009,Type: ajp,Flushpackets: Off,Flushwait: 10,Ping: 10,Smax: 26,Ttl: 60,Elected: 3233,Read: 7355619,Transfered: 0,Connected: 0,Load: 100\n"
+            + "Node: [2],Name: node2,Balancer: mycluster,LBGroup: ,Host: 127.0.0.1,Port: 8009,Type: ajp,Flushpackets: Off,Flushwait: 10,Ping: 10,Smax: 26,Ttl: 60,Elected: 0,Read: 0,Transfered: 0,Connected: 0,Load: 99\n"
+            + "Vhost: [1:1:1], Alias: localhost\n"
+            + "Vhost: [2:1:2], Alias: localhost\n"
+            + "Context: [1:1:1], Context: /invoker, Status: DISABLED\n"
+            + "Context: [1:1:2], Context: /loaddemo, Status: DISABLED\n"
+            + "Context: [1:1:3], Context: /jbossws, Status: DISABLED\n"
+            + "Context: [1:1:4], Context: /juddi, Status: DISABLED\n"
+            + "Context: [1:1:5], Context: /jbossmq-httpil, Status: DISABLED\n"
+            + "Context: [1:1:6], Context: /web-console, Status: DISABLED\n"
+            + "Context: [1:1:7], Context: /jmx-console, Status: DISABLED\n"
+            + "Context: [1:1:8], Context: /, Status: DISABLED\n"
+            + "Context: [2:1:9], Context: /loaddemo, Status: ENABLED\n" + "}";
+
+        ProxyInfo proxyInfo = new ProxyInfo(test);
+
+        for (ProxyInfo.Context context : proxyInfo.getAvailableContexts()) {
+            log.info(context.toString());
+        }
+
+        assert (proxyInfo.getAvailableContexts().size() != 0) : "Raw proxy info parsing failed!";
+    }
+
+    @Test
     public void testPluginLoad() {
         PluginManager pluginManager = PluginContainer.getInstance().getPluginManager();
         PluginEnvironment pluginEnvironment = pluginManager.getPlugin(PLUGIN_NAME);
@@ -98,12 +126,22 @@ public class ModclusterPluginTest {
         assert report != null;
         System.out.println("Discovery took: " + (report.getEndTime() - report.getStartTime()) + "ms");
 
+        List<String> typeNames = new ArrayList<String>() {
+            {
+                add(PLUGIN_NAME);
+                add(PLUGIN_NAME + "_context");
+            }
+        };
+
         Set<Resource> resources = findResource(PluginContainer.getInstance().getInventoryManager().getPlatform(),
-            PLUGIN_NAME);
-        log.info("Found " + resources.size() + " mod_cluster instance(s).");
+            typeNames);
+        log.info("Found " + resources.size() + " mod_cluster and mod_cluster_context instance(s).");
+
+        assert (resources.size() != 0) : "No mod_cluster or related instances found.";
 
         if (resources.size() != 0) {
             testResourceMeasurement((Resource) resources.toArray()[0]);
+            testContextOperations((Resource) resources.toArray()[1]);
         }
     }
 
@@ -132,7 +170,20 @@ public class ModclusterPluginTest {
         }
     }
 
-    private Set<Resource> findResource(Resource parent, String typeName) {
+    private void testContextOperations(Resource resource) throws Exception {
+        ResourceComponent resourceComponent = PluginContainer.getInstance().getInventoryManager()
+            .getResourceComponent(resource);
+
+        if (resourceComponent instanceof OperationFacet) {
+            OperationResult result = ((OperationFacet) resourceComponent).invokeOperation("enableContext", null);
+            log.info("Result of operation " + "enableContext" + " was: " + result.getSimpleResult());
+
+            /*result = ((OperationFacet) resourceComponent).invokeOperation("disable", null);
+            log.info("Result of operation test was: " + result.getSimpleResult());*/
+        }
+    }
+
+    private Set<Resource> findResource(Resource parent, List<String> typeNames) {
         Set<Resource> found = new HashSet<Resource>();
 
         Queue<Resource> discoveryQueue = new LinkedList<Resource>();
@@ -142,7 +193,7 @@ public class ModclusterPluginTest {
             Resource currentResource = discoveryQueue.poll();
 
             log.info("Discovered resource of type: " + currentResource.getResourceType().getName());
-            if (currentResource.getResourceType().getName().equals(typeName)) {
+            if (typeNames.contains(currentResource.getResourceType().getName())) {
                 found.add(currentResource);
             }
 

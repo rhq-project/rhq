@@ -18,9 +18,6 @@
  */
 package org.rhq.plugins.modcluster;
 
-import org.rhq.core.domain.operation.OperationDefinition;
-import org.rhq.core.pluginapi.inventory.ResourceComponent;
-import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
 
 /**
@@ -28,16 +25,4 @@ import org.rhq.plugins.jmx.MBeanResourceComponent;
  *
  */
 public class ModclusterServerComponent extends MBeanResourceComponent {
-
-    /**
-     * Stores the context and loads the MBean.
-     * @see ResourceComponent#start(ResourceContext)
-     */
-    @Override
-    public void start(ResourceContext context) {
-        super.start(context);
-
-        OperationDefinition test = new OperationDefinition(context.getResourceType(), "Text");
-        context.getResourceType().addOperationDefinition(test);
-    }
 }

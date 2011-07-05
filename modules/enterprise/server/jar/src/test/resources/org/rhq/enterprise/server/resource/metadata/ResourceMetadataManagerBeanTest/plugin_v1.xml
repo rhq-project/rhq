@@ -56,6 +56,14 @@
               <value-context>pluginConfiguration</value-context>
               <value-name>connectionPropertyX</value-name>
            </basedir>
+           <interval>123456</interval>
+           <includes>
+              <include path="foo/bar" pattern="**/*.blech"/>
+           </includes>
+           <excludes>
+              <exclude path="/wot/gorilla" pattern="*.xml" />
+              <exclude path="/hello"/>
+           </excludes>
         </drift-configuration>
 
         <drift-configuration name="drift-fs">

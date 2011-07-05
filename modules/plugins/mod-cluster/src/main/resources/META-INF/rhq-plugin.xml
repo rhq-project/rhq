@@ -27,10 +27,25 @@
       </plugin-configuration>
       
       <operation name="reset" displayName="Reset the node" description="Move the node out of an error state" />
+      <operation name="refresh" displayName="Refresh configuration" description="Refresh configuration" />
+      <operation name="enable" displayName="Enable all webapps" description="Enable all webapps for all engines">
+      	<results>
+      		<c:simple-property name="result" type="boolean" description="The result of the operation" />
+      	</results>
+      </operation>
+      <operation name="disable" displayName="Disable all webpapps" description="Disable all webapps for all engines">
+      	<results>
+      		<c:simple-property name="result" type="boolean" description="The result of the operation" />
+      	</results>
+      </operation>
       
       <metric property="proxyConfiguration" displayName="Proxy Configuration" displayType="summary" dataType="trait" />
       <metric property="modelerType" displayName="Type of the modeled resource" displayType="summary" dataType="trait" />
       <metric property="className" displayName="Fully qualified class name of the managed object" displayType="summary" dataType="trait" />
+      
+      <resource-configuration>
+      	<c:simple-property name="stickySessions" type="boolean" description="Enables sticky sessions."/>
+      </resource-configuration>
       
    </service>
 </plugin>

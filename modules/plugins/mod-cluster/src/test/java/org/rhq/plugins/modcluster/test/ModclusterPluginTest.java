@@ -43,6 +43,8 @@ import org.rhq.core.pc.plugin.PluginEnvironment;
 import org.rhq.core.pc.plugin.PluginManager;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
+import org.rhq.core.pluginapi.operation.OperationFacet;
+import org.rhq.core.pluginapi.operation.OperationResult;
 
 /**
  * @author Fady Matar
@@ -115,12 +117,18 @@ public class ModclusterPluginTest {
                 MeasurementReport report = new MeasurementReport();
                 ((MeasurementFacet) resourceComponent).getValues(report, metricList);
 
-                /*assert report.getNumericData().size() > 0 : "Measurement " + def.getName() + " not collected from "
-                    + resource;*/
                 MeasurementData data = report.getTraitData().iterator().next();
                 assert data != null : "Unable to collect trait [" + def.getName() + "] on " + resource;
                 log.info("Measurement: " + def.getName() + "=" + data.getValue());
             }
+        }
+
+        if (resourceComponent instanceof OperationFacet) {
+            OperationResult result = ((OperationFacet) resourceComponent).invokeOperation("reset", null);
+            log.info("Result of operation test was: " + result);
+
+            result = ((OperationFacet) resourceComponent).invokeOperation("disable", null);
+            log.info("Result of operation test was: " + result.getSimpleResult());
         }
     }
 

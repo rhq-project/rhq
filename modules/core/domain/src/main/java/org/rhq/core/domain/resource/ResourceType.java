@@ -827,6 +827,7 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
         this.bundleType = bundleType;
     }
 
+    // this must return the actual set, not a copy - see the metadata manager SLSB for when we update plugin metadata
     public Set<ConfigurationTemplate> getDriftConfigurationTemplates() {
         return driftConfigurationTemplates;
     }

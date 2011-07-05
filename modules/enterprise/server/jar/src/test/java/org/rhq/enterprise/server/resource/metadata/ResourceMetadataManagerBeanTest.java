@@ -269,7 +269,7 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
         );
     }
 
-    @Test(enabled = false, dependsOnMethods = {"upgradePlugin"}, groups = {"plugin.metadata", "UpgradePlugin"})
+    @Test(dependsOnMethods = {"upgradePlugin"}, groups = {"plugin.metadata", "UpgradePlugin"})
     public void upgradeDriftConfigurationTemplates() throws Exception {
         ResourceType type = assertResourceTypeAssociationEquals(
             "ServerA",

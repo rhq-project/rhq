@@ -25,6 +25,7 @@ package org.rhq.core.clientapi.agent.metadata;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -490,10 +491,17 @@ public class PluginMetadataParser {
                     .getName(), resourceDescriptor.getResourceConfiguration()));
             }
 
+            Set<String> driftConfigNames = new HashSet<String>();
             DriftMetadataParser driftMetadataParser = new DriftMetadataParser();
             for (DriftDescriptor descriptor : resourceDescriptor.getDriftConfiguration()) {
+                if (driftConfigNames.contains(descriptor.getName())) {
+                    throw new InvalidPluginDescriptorException("Duplicate drift configuration name detected ["
+                        + descriptor.getName() + "]");
+                }
+                driftConfigNames.add(descriptor.getName());
                 resourceType.addDriftConfigurationTemplate(driftMetadataParser.parseDriftMetadata(descriptor));
             }
+            driftConfigNames = null; // don't need this anymore
 
             int displayPosition = 1;
             for (MetricDescriptor metricDescriptor : resourceDescriptor.getMetric()) {

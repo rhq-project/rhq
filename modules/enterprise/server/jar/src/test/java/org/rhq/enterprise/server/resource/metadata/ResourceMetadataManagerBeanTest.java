@@ -50,10 +50,20 @@ import static java.util.Arrays.asList;
 public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
 
     @Test(groups = {"plugin.metadata", "NewPlugin"})
+    public void registerPluginWithDuplicateDriftConfigurations() {
+        try {
+            createPlugin("test-plugin.jar", "1.0", "dup_drift.xml");
+            fail("should not have succeeded - the drift config had duplicate names");
+        } catch (Exception e) {
+            // OK, the plugin should have failed to be deployed since it has duplicate drift configs
+        }
+    }
+
+    @Test(groups = {"plugin.metadata", "NewPlugin"})
     public void registerPlugin() throws Exception {
         createPlugin("test-plugin.jar", "1.0", "plugin_v1.xml");
     }
-
+    
     @Test(dependsOnMethods = {"registerPlugin"}, groups = {"plugin.metadata", "NewPlugin"})
     public void persistNewTypes() {
         List<String> newTypes = asList("ServerA", "ServerB");

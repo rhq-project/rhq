@@ -7,9 +7,6 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.io.IOUtils;
-
 import org.rhq.common.drift.ChangeSetReader;
 import org.rhq.common.drift.ChangeSetReaderImpl;
 import org.rhq.common.drift.ChangeSetWriter;
@@ -19,9 +16,6 @@ import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.util.stream.StreamUtil;
 
-import net.sourceforge.cobertura.coveragedata.CoverageData;
-
-import static java.io.File.separator;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
 
 public class ChangeSetManagerImpl implements ChangeSetManager {

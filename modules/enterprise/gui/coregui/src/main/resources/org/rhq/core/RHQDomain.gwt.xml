@@ -32,7 +32,7 @@
     <source path="client"/>
     <source path="domain">
        <!--  Exclude any domain classes that can not be used client-side due to use of unsupported class use -->
-       <exclude name="**/DriftFileContent.*"/>
+       <exclude name="**/DriftFileBits.*"/>
     </source>
     
     <!--<generate-with class="org.rhq.core.rebind.RecordBuilderGenerator">

@@ -5,6 +5,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+import javax.persistence.Query;
+
 import org.apache.commons.beanutils.MethodUtils;
 import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.lang.WordUtils;
@@ -19,6 +21,7 @@ import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration;
 import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration.BundleDestinationBaseDirectory;
 import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration.BundleDestinationBaseDirectory.Context;
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.Package;
@@ -38,6 +41,7 @@ import org.rhq.core.domain.shared.ResourceBuilder;
 import org.rhq.enterprise.server.alert.AlertTemplateManagerLocal;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.bundle.BundleManagerLocal;
+import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
@@ -48,6 +52,63 @@ import org.rhq.enterprise.server.util.LookupUtil;
 import static java.util.Arrays.asList;
 
 public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
+
+    @Test(groups = { "plugin.metadata", "NewPlugin" })
+    public void testRemovalOfObsoleteBundleAndDriftConfig() throws Exception {
+        // create the initial type that has bundle and drift configs 
+        createPlugin("test-plugin.jar", "1.0", "remove_bundle_drift_config_v1.xml");
+            
+        // make sure the drift config was persisted, and remember the type
+        ResourceType type1 = assertResourceTypeAssociationEquals(
+            "ServerWithBundleAndDriftConfig",
+            "TestPlugin",
+            "driftConfigurationTemplates",
+            asList("drift1"));
+
+        // sanity check, make sure our queries work and that we did persist these things
+        Query qTemplate;
+        Query qConfig;
+        String qTemplateString = "select ct from ConfigurationTemplate ct where ct.id = :id";
+        String qConfigString = "select c from Configuration c where c.id = :id";
+        ConfigurationTemplate driftTemplate = type1.getDriftConfigurationTemplates().iterator().next();
+        Configuration bundleConfig = type1.getResourceTypeBundleConfiguration().getBundleConfiguration();
+        Configuration driftConfig = driftTemplate.getConfiguration();
+
+        getTransactionManager().begin();
+        try {
+            qTemplate = getEntityManager().createQuery(qTemplateString).setParameter("id", driftTemplate.getId());
+            qConfig = getEntityManager().createQuery(qConfigString).setParameter("id", driftConfig.getId());
+            assertEquals("drift template didn't get persisted", 1, qTemplate.getResultList().size());
+            assertEquals("drift template config didn't get persisted", 1, qConfig.getResultList().size());
+
+            qConfig.setParameter("id", bundleConfig.getId());
+            assertEquals("bundle config didn't get persisted", 1, qConfig.getResultList().size());
+        } finally {
+            getTransactionManager().commit();
+        }
+
+        // make sure the bundle config was also persisted
+        // NOTE: WHY DOES THIS WORK? I DIDN'T ASK TO FETCH IT AND IT IS MARKED AS LAZY LOAD
+        assertNotNull(type1.getResourceTypeBundleConfiguration());
+        assertEquals("destdir1",
+                     type1.getResourceTypeBundleConfiguration().getBundleDestinationBaseDirectories().iterator().next().getName());
+
+            // upgrade the type which removes the bundle config and drift config
+        createPlugin("test-plugin.jar", "2.0", "remove_bundle_drift_config_v2.xml");
+
+        getTransactionManager().begin();
+        try {
+            qTemplate = getEntityManager().createQuery(qTemplateString).setParameter("id", driftTemplate.getId());
+            qConfig = getEntityManager().createQuery(qConfigString).setParameter("id", driftConfig.getId());
+            assertEquals("drift template didn't get purged", 0, qTemplate.getResultList().size());
+            assertEquals("drift template config didn't get purged", 0, qConfig.getResultList().size());
+
+            qConfig.setParameter("id", bundleConfig.getId());
+            assertEquals("bundle config didn't get purged", 0, qConfig.getResultList().size());
+        } finally {
+            getTransactionManager().commit();
+        }
+    }
 
     @Test(groups = {"plugin.metadata", "NewPlugin"})
     public void registerPluginWithDuplicateDriftConfigurations() {

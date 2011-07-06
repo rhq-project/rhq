@@ -75,9 +75,8 @@ public class ContentMetadataManagerBean implements ContentMetadataManagerLocal {
 
         // set the bundle configuration if the new type is a potential bundle deployment target
         ResourceTypeBundleConfiguration newBundleConfiguration = newType.getResourceTypeBundleConfiguration();
+        ResourceTypeBundleConfiguration existingBundleConfiguration = existingType.getResourceTypeBundleConfiguration();
         if (newBundleConfiguration != null) {
-            ResourceTypeBundleConfiguration existingBundleConfiguration = existingType
-                .getResourceTypeBundleConfiguration();
             if (existingBundleConfiguration == null) {
                 // the new type has now become a bundle target where the old type was not
                 existingType.setResourceTypeBundleConfiguration(newBundleConfiguration);
@@ -90,10 +89,13 @@ public class ContentMetadataManagerBean implements ContentMetadataManagerLocal {
                 }
             }
         } else {
-            if (log.isDebugEnabled()) {
-                log.debug("Removing bundle configuration");
+            if (existingBundleConfiguration != null) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Removing bundle configuration");
+                }
+                entityMgr.remove(existingBundleConfiguration.getBundleConfiguration());
+                existingType.setResourceTypeBundleConfiguration(null);
             }
-            existingType.setResourceTypeBundleConfiguration(null);
         }
 
         // Easy case: If there are no package definitions in the new type, null out any in the existing and return

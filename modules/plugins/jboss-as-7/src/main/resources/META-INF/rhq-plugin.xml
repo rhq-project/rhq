@@ -738,22 +738,38 @@
         <operation name="addDatasource" description="Add a datasource to the system. Needs a jdbc-driver that was already added to the domain and promoted to the respective server-group(s) (if in domain mode).">
             <parameters>
                 <c:simple-property name="name" required="true" description="Name of the datasource"/>
-                <c:simple-property name="driver" required="true">
+                <c:simple-property name="driver-name" required="true">
                     <c:option-source target="resource" expression="type=DomainDeployment"/>
                 </c:simple-property>
-<!--
-                <c:simple-property name="server-group" required="true" >
-                    <c:property-options>
-                        <c:option value="_all" name="All"/>
-                    </c:property-options>
-                    <c:option-source target="resource" expression="type=ServerGroup"/>
-                </c:simple-property>
--->
                 <c:simple-property name="jndi-name" description="JNDI-Name of the Datasource" required="true"/>
-                <c:simple-property name="pool-name" description="Name of the pool" required="true"/>
                 <c:simple-property name="connection-url" description="URL for the connection to the database" required="true"/>
+                <c:simple-property name="pool-name" description="Name of the pool" required="true"/>
                 <c:simple-property name="user-name" description="User name for DB-connections" required="false" />
                 <c:simple-property name="password" description="Password" type="password" required="false"/>
+            </parameters>
+            <results>
+                <c:simple-property name="operationResult"/>
+            </results>
+        </operation>
+
+        <operation name="addXADatasource" description="Add a XA datasource to the system. Needs a jdbc-driver that was already added to the domain and promoted to the respective server-group(s) (if in domain mode).">
+            <parameters>
+                <c:simple-property name="name" required="true" description="Name of the datasource"/>
+                <c:simple-property name="driver-name" required="true">
+                    <c:option-source target="resource" expression="type=DomainDeployment"/>
+                </c:simple-property>
+                <c:simple-property name="xa-data-source-class" required="true" description="xa-data-source-class"/>
+                <c:simple-property name="jndi-name" description="JNDI-Name of the Datasource" required="true"/>
+                <c:simple-property name="connection-url" description="URL for the connection to the database" required="true"/>
+                <c:simple-property name="pool-name" description="Name of the pool" required="true"/>
+                <c:simple-property name="user-name" description="User name for DB-connections" required="false" />
+                <c:simple-property name="password" description="Password" type="password" required="false"/>
+                <c:list-property name="xa-properties" displayName="XA Properties" description="Additional XA Properties" required="false">
+                    <c:map-property name="xa-properties">
+                        <c:simple-property name="key" displayName="Key" description="Key of the property"/>
+                        <c:simple-property name="value" displayName="Value" description="Value of the property"/>
+                    </c:map-property>
+                </c:list-property>
             </parameters>
             <results>
                 <c:simple-property name="operationResult"/>

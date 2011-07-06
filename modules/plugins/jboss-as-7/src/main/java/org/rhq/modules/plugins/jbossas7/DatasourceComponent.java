@@ -1,11 +1,14 @@
 package org.rhq.modules.plugins.jbossas7;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
@@ -47,25 +50,44 @@ public class DatasourceComponent extends BaseComponent implements OperationFacet
             }
         }
         else if (operationName.equals("addDatasource")) {
-            String driver = parameters.getSimpleValue("driver", NOTSET);
-            String jndiName = parameters.getSimpleValue("jndi-name", NOTSET);
-            String poolName = parameters.getSimpleValue("pool-name", NOTSET);
-            String connectionUrl = parameters.getSimpleValue("connection-url",NOTSET);
-            String userName = parameters.getSimpleValue("user-name","");
-            String password = parameters.getSimpleValue("password","");
             String name = parameters.getSimpleValue("name",NOTSET);
 
             List<PROPERTY_VALUE> address = pathToAddress(getPath());
             address.add(new PROPERTY_VALUE("data-source",name));
             Operation op = new Operation("add",address);
-            op.addAdditionalProperty("driver-name",driver);
-            op.addAdditionalProperty("jndi-name",jndiName);
-            op.addAdditionalProperty("pool-name",poolName);
-            op.addAdditionalProperty("connection-url",connectionUrl);
-            if (userName!=null && !userName.isEmpty())
-                op.addAdditionalProperty("user-name",userName);
-            if (password!=null && !password.isEmpty())
-                op.addAdditionalProperty("password",password);
+            addRequiredToOp(op,parameters,"driver-name");
+            addRequiredToOp(op,parameters,"jndi-name");
+            addRequiredToOp(op, parameters, "pool-name");
+            addRequiredToOp(op, parameters, "connection-url");
+            addOptionalToOp(op, parameters, "user-name");
+            addOptionalToOp(op,parameters,"password");
+
+            Result res = connection.execute(op);
+            if (res.isSuccess()) {
+                result.setSimpleResult("Success");
+            }
+            else {
+                result.setErrorMessage(res.getFailureDescription().toString());
+            }
+
+        }
+        else if (operationName.equals("addXADatasource")) {
+            String name = parameters.getSimpleValue("name",NOTSET);
+
+            List<PROPERTY_VALUE> address = pathToAddress(getPath());
+            address.add(new PROPERTY_VALUE("xa-data-source",name));
+            Operation op = new Operation("add",address);
+            addRequiredToOp(op,parameters,"driver-name");
+            addRequiredToOp(op,parameters,"jndi-name");
+            addRequiredToOp(op,parameters,"pool-name");
+            addRequiredToOp(op,parameters,"connection-url");
+            addOptionalToOp(op,parameters,"user-name");
+            addOptionalToOp(op,parameters,"password");
+            addRequiredToOp(op,parameters,"xa-data-source-class");
+
+            Map<String,Object> props = new HashMap<String, Object>(); // TODO
+            props.put("_foo","_bar"); // TODO AS7-1209
+            op.addAdditionalProperty("xa-data-source-properties",props);
 
             Result res = connection.execute(op);
             if (res.isSuccess()) {
@@ -83,7 +105,25 @@ public class DatasourceComponent extends BaseComponent implements OperationFacet
         return result;
     }
 
-    void addAdditionalToOp(Operation op, Configuration parameters, String property, boolean optional) {
+    void addAdditionalToOp(Operation op, Configuration parameters, String property, boolean optional)  {
 
+        PropertySimple ps = parameters.getSimple(property);
+        if (ps==null) {
+            if (!optional)
+                throw new IllegalArgumentException("Property " + property + " not found for required parameter");
+        }
+        else {
+            String tmp = ps.getStringValue();
+            op.addAdditionalProperty(property,tmp);
+        }
+    }
+
+
+    void addRequiredToOp(Operation op, Configuration parameters, String property)  {
+        addAdditionalToOp(op,parameters,property,false);
+    }
+
+    void addOptionalToOp(Operation op, Configuration parameters, String property) {
+        addAdditionalToOp(op,parameters,property,true);
     }
 }

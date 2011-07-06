@@ -19,6 +19,7 @@
 package org.rhq.modules.plugins.jbossas7;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -73,10 +74,7 @@ public class DatasourceDeployTest extends AbstractIntegrationTest {
         List<String> result = (List<String>) res.getResult();
         assert result.contains(DRIVER): "Driver not found in deployments";
 
-        op = new Operation("remove","deployment",DRIVER);
-        res = conn.execute(op);
-        assert res != null;
-        assert res.isSuccess() : "Removal of driver from /deployment failed";
+        cleanupDomainDeployment(conn);
     }
 
     /*
@@ -121,7 +119,7 @@ public class DatasourceDeployTest extends AbstractIntegrationTest {
         uploadDriverToDomain(conn);
         Result res;
 
-        Address sgAddress = addDriverToServerGroup(conn);
+        Address sgAddress = addDriverToMainServerGroup(conn);
 
         Operation op;
         // Now try to see if this ended up in server-one
@@ -149,18 +147,8 @@ public class DatasourceDeployTest extends AbstractIntegrationTest {
 
 
         // Now clean up
-        op = new Remove(sgAddress);
-        res = conn.execute(op);
-        assert res != null;
-        assert res.isSuccess() : "Could not remove driver from server group";
-
-
-        Address deployment = new Address("deployment",DRIVER);
-        op = new Remove(deployment);
-        res = conn.execute(op);
-        assert res != null;
-        assert res.isSuccess() : "Could not remove driver from /deployment";
-
+        cleanupSGDeployment(conn,sgAddress);
+        cleanupDomainDeployment(conn);
     }
 
     public void createDatasource() throws Exception {
@@ -168,12 +156,12 @@ public class DatasourceDeployTest extends AbstractIntegrationTest {
         ASConnection conn = getASConnection();
         uploadDriverToDomain(conn);
         Result res;
-        Address sgAddress = addDriverToServerGroup(conn);
+        Address sgAddress = addDriverToMainServerGroup(conn);
         Operation op;
 
         // Now create the data source in the profile, that main-server-group is using.
 
-        Address dsAddress = createDatasource(conn);
+        Address dsAddress = createDatasource(conn, false);
 
         System.out.println("Deployed new datasource at " + dsAddress.toString());
 
@@ -181,24 +169,33 @@ public class DatasourceDeployTest extends AbstractIntegrationTest {
 
         // clean up
 
-        op = new Remove(dsAddress);
-        res = conn.execute(op);
-        assert res != null;
-        assert res.isSuccess() : "Could not remove datasource from profile";
+        cleanupDatasource(conn,dsAddress);
+        cleanupSGDeployment(conn,sgAddress);
+        cleanupDomainDeployment(conn);
 
+    }
 
-        op = new Remove(sgAddress);
-        res = conn.execute(op);
-        assert res != null;
-        assert res.isSuccess() : "Could not remove driver from server group";
+    public void createXADatasource() throws Exception {
 
+        ASConnection conn = getASConnection();
+        uploadDriverToDomain(conn);
+        Result res;
+        Address sgAddress = addDriverToMainServerGroup(conn);
+        Operation op;
 
-        Address deployment = new Address("deployment",DRIVER);
-        op = new Remove(deployment);
-        res = conn.execute(op);
-        assert res != null;
-        assert res.isSuccess() : "Could not remove driver from /deployment";
+        // Now create the data source in the profile, that main-server-group is using.
 
+        Address dsAddress = createDatasource(conn, true);
+
+        System.out.println("Deployed new xa-datasource at " + dsAddress.toString());
+
+        Thread.sleep(1000L); // give some time to settle
+
+        // clean up
+
+        cleanupDatasource(conn,dsAddress);
+        cleanupSGDeployment(conn,sgAddress);
+        cleanupDomainDeployment(conn);
     }
 
 
@@ -206,12 +203,12 @@ public class DatasourceDeployTest extends AbstractIntegrationTest {
         ASConnection conn = getASConnection();
         uploadDriverToDomain(conn);
         Result res;
-        Address sgAddress = addDriverToServerGroup(conn);
+        Address sgAddress = addDriverToMainServerGroup(conn);
         Operation op;
 
         // Now create the data source in the profile, that main-server-group is using.
 
-        Address dsAddress = createDatasource(conn);
+        Address dsAddress = createDatasource(conn, false);
 
         System.out.println("Deployed new datasource at " + dsAddress.toString());
 
@@ -222,25 +219,9 @@ public class DatasourceDeployTest extends AbstractIntegrationTest {
         assert res != null;
         assert res.isSuccess(): "Updating the max-pool-size did not work: " + res.getFailureDescription();
 
-
-        op = new Remove(dsAddress);
-        res = conn.execute(op);
-        assert res != null;
-        assert res.isSuccess() : "Could not remove datasource from profile";
-
-
-        op = new Remove(sgAddress);
-        res = conn.execute(op);
-        assert res != null;
-        assert res.isSuccess() : "Could not remove driver from server group";
-
-
-        Address deployment = new Address("deployment",DRIVER);
-        op = new Remove(deployment);
-        res = conn.execute(op);
-        assert res != null;
-        assert res.isSuccess() : "Could not remove driver from /deployment";
-
+        cleanupDatasource(conn,dsAddress);
+        cleanupSGDeployment(conn,sgAddress);
+        cleanupDomainDeployment(conn);
 
     }
 
@@ -248,7 +229,7 @@ public class DatasourceDeployTest extends AbstractIntegrationTest {
         ASConnection conn = getASConnection();
         uploadDriverToDomain(conn);
         Result res;
-        Address sgAddress = addDriverToServerGroup(conn);
+        Address sgAddress = addDriverToMainServerGroup(conn);
         Operation op;
 
         // Now create the data source in the profile, that main-server-group is using.
@@ -261,7 +242,7 @@ public class DatasourceDeployTest extends AbstractIntegrationTest {
 
         Configuration parameters = new Configuration();
         parameters.put(new PropertySimple("name",name));
-        parameters.put(new PropertySimple("driver",DRIVER));
+        parameters.put(new PropertySimple("driver-name",DRIVER));
         parameters.put(new PropertySimple("pool-name","pgPool"));
         parameters.put(new PropertySimple("connection-url","jdbc:postgresql:foo@localhost:5432"));
         parameters.put(new PropertySimple("jndi-name","postgresDS"));
@@ -280,41 +261,102 @@ public class DatasourceDeployTest extends AbstractIntegrationTest {
 
         Thread.sleep(1000L); // give some time to settle
 
-
-
-        op = new Remove(dsAddress);
-        res = conn.execute(op);
-        assert res != null;
-        assert res.isSuccess() : "Could not remove datasource from profile";
-
-
-        op = new Remove(sgAddress);
-        res = conn.execute(op);
-        assert res != null;
-        assert res.isSuccess() : "Could not remove driver from server group";
-
-
-        Address deployment = new Address("deployment",DRIVER);
-        op = new Remove(deployment);
-        res = conn.execute(op);
-        assert res != null;
-        assert res.isSuccess() : "Could not remove driver from /deployment";
+        cleanupDatasource(conn, dsAddress);
+        cleanupSGDeployment(conn, sgAddress);
+        cleanupDomainDeployment(conn);
 
 
     }
 
+    public void deployXADatasourceViaOperation() throws Exception {
+        ASConnection conn = getASConnection();
+        uploadDriverToDomain(conn);
+        Result res;
+        Address sgAddress = addDriverToMainServerGroup(conn);
+        Operation op;
 
-    private Address createDatasource(ASConnection conn) {
+        // Now create the data source in the profile, that main-server-group is using.
+
+        String name = "myTestDS";
+
+        DatasourceComponent dc = new DatasourceComponent();
+        dc.path="profile=default,subsystem=datasources";
+        dc.connection = conn;
+
+        Configuration parameters = new Configuration();
+        parameters.put(new PropertySimple("name",name));
+        parameters.put(new PropertySimple("driver-name",DRIVER));
+        parameters.put(new PropertySimple("pool-name","pgPool"));
+        parameters.put(new PropertySimple("connection-url","jdbc:postgresql:foo@localhost:5432"));
+        parameters.put(new PropertySimple("jndi-name","postgresDS"));
+        parameters.put(new PropertySimple("xa-data-source-class","org.postgres.XA.driver"));
+        OperationResult operationResult = dc.invokeOperation("addXADatasource",parameters);
+        assert operationResult != null;
+        assert operationResult.getSimpleResult()!=null ;
+        assert operationResult.getErrorMessage()==null;
+
+        Address dsAddress = new Address();
+        dsAddress.add("profile","default");
+        dsAddress.add("subsystem","datasources");
+        dsAddress.add("xa-data-source",name);
+
+
+        System.out.println("Deployed new xa-datasource at " + dsAddress.toString());
+
+        Thread.sleep(1000L); // give some time to settle
+
+        cleanupDatasource(conn, dsAddress);
+        cleanupSGDeployment(conn, sgAddress);
+        cleanupDomainDeployment(conn);
+
+
+    }
+
+    private void cleanupDomainDeployment(ASConnection conn) {
+        Operation op;Result res;Address deployment = new Address("deployment",DRIVER);
+        op = new Remove(deployment);
+        res = conn.execute(op);
+        assert res != null;
+        assert res.isSuccess() : "Could not remove driver from /deployment";
+    }
+
+    private void cleanupSGDeployment(ASConnection conn, Address sgAddress) {
         Operation op;Result res;
+        op = new Remove(sgAddress);
+        res = conn.execute(op);
+        assert res != null;
+        assert res.isSuccess() : "Could not remove driver from server group @ " + sgAddress;
+    }
+
+    private void cleanupDatasource(ASConnection conn, Address dsAddress) {
+        Operation op;Result res;
+        op = new Remove(dsAddress);
+        res = conn.execute(op);
+        assert res != null;
+        assert res.isSuccess() : "Could not remove datasource from profile @ " + dsAddress;
+    }
+
+    private Address createDatasource(ASConnection conn, boolean isXa) {
+        Operation op;
+        Result res;
         Address dsAddress = new Address("profile","default");
         dsAddress.add("subsystem","datasources");
-        dsAddress.add("data-source", POSTGRES);
+        if (isXa)
+            dsAddress.add("xa-data-source", POSTGRES);
+        else
+            dsAddress.add("data-source", POSTGRES);
 
         op = new Operation("add",dsAddress);
         op.addAdditionalProperty("driver-name",DRIVER);
         op.addAdditionalProperty("jndi-name","postgresDS");
         op.addAdditionalProperty("pool-name","pgPool");
         op.addAdditionalProperty("connection-url","jdbc:postgresql://127.0.0.1:5432/rhqdev");
+        if (isXa) {
+            op.addAdditionalProperty("xa-data-source-class","org.postgresql.xa.PGXADataSource");
+            Map<String,String> map = new HashMap<String, String>(1); // TODO AS7-1209
+            map.put("key","value");
+            op.addAdditionalProperty("xa-data-source-properties",map);
+        }
 
         res = conn.execute(op);
         assert res != null;
@@ -322,7 +364,7 @@ public class DatasourceDeployTest extends AbstractIntegrationTest {
         return dsAddress;
     }
 
-    private Address addDriverToServerGroup(ASConnection conn) {
+    private Address addDriverToMainServerGroup(ASConnection conn) {
         Result res;// then add the driver to the server-group we want to have the DS on
         Address sgAddress = new Address();
         sgAddress.add("server-group", "main-server-group");

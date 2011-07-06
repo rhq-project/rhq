@@ -24,7 +24,7 @@
       
       <plugin-configuration>        
          <c:simple-property name="objectName" readOnly="true" default="Catalina:type=ModClusterListener,*"/>
-         <c:simple-property name="nameTemplate" default="{application}"/>         
+         <c:simple-property name="nameTemplate" default="mod_cluster"/>         
       </plugin-configuration>
       
       <operation name="reset" displayName="Reset the node" description="Move the node out of an error state" />
@@ -50,22 +50,22 @@
       	<c:simple-property name="advertise" type="boolean" description="Enable autodiscovery of httpd servers."/>
       </resource-configuration>
       
-       <service name="mod_cluster_context"
+       <service name="mod_cluster Webapp Context"
          discovery="ContextDiscoveryComponent"
          class="ContextComponent"
          description="A mod_cluster context">
 
-      	<operation name="enableContext" displayName="Enable webapp" description="Enable a single webapp">
+      	<operation name="enableContext" displayName="Enable webapp" description="Enable the webapp">
       		<results>
       			<c:simple-property name="result" type="boolean" description="The result of the operation" />
       		</results>
       	</operation>
-      	<operation name="disableContext" displayName="Disable webpapp" description="Disable a single webapp">
+      	<operation name="disableContext" displayName="Disable webpapp" description="Disable the webapp">
       		<results>
 	      		<c:simple-property name="result" type="boolean" description="The result of the operation" />
       		</results>
       	</operation>
-      	<operation name="stopContext" displayName="Stop webpapp" description="Gracefully stops a single webapp">
+      	<operation name="stopContext" displayName="Stop webpapp" description="Gracefully stops the webapp">
       		<results>
 	      		<c:simple-property name="result" type="boolean" description="The result of the operation" />
       		</results>

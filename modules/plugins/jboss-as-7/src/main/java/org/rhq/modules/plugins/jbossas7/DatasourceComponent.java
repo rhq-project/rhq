@@ -51,6 +51,8 @@ public class DatasourceComponent extends BaseComponent implements OperationFacet
             String jndiName = parameters.getSimpleValue("jndi-name", NOTSET);
             String poolName = parameters.getSimpleValue("pool-name", NOTSET);
             String connectionUrl = parameters.getSimpleValue("connection-url",NOTSET);
+            String userName = parameters.getSimpleValue("user-name","");
+            String password = parameters.getSimpleValue("password","");
             String name = parameters.getSimpleValue("name",NOTSET);
 
             List<PROPERTY_VALUE> address = pathToAddress(getPath());
@@ -60,6 +62,10 @@ public class DatasourceComponent extends BaseComponent implements OperationFacet
             op.addAdditionalProperty("jndi-name",jndiName);
             op.addAdditionalProperty("pool-name",poolName);
             op.addAdditionalProperty("connection-url",connectionUrl);
+            if (userName!=null && !userName.isEmpty())
+                op.addAdditionalProperty("user-name",userName);
+            if (password!=null && !password.isEmpty())
+                op.addAdditionalProperty("password",password);
 
             Result res = connection.execute(op);
             if (res.isSuccess()) {
@@ -75,5 +81,9 @@ public class DatasourceComponent extends BaseComponent implements OperationFacet
         }
 
         return result;
+    }
+
+    void addAdditionalToOp(Operation op, Configuration parameters, String property, boolean optional) {
+
     }
 }

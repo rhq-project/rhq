@@ -126,7 +126,7 @@
                 <c:simple-property name="auto-start" displayName="Autostart" default="false" type="boolean" />
             </parameters>
             <results>
-                <c:simple-property name="result" description="Outcome of the create server operation"/>
+                <c:simple-property name="operationResult" description="Outcome of the create server operation"/>
             </results>
         </operation>
         <operation name="managed-server:remove" displayName="Remove managed server" description="Remove a managed server">
@@ -137,7 +137,7 @@
                 </c:simple-property>
             </parameters>
             <results>
-                <c:simple-property name="result" description="Outcome of the remove server operation"/>
+                <c:simple-property name="operationResult" description="Outcome of the remove server operation"/>
             </results>
 
         </operation>
@@ -218,7 +218,7 @@
                     <c:simple-property name="auto-start" displayName="Autostart" description="Should this server start at boot?" type="boolean" default="false" required="true"/>
                 </parameters>
                 <results>
-                    <c:simple-property name="result" description="Outcome of the create server operation"/>
+                    <c:simple-property name="operationResult" description="Outcome of the create server operation"/>
                 </results>
             </operation>
             <operation name="server:remove" displayName="Delete server" description="Deletes a server on this host.">
@@ -226,7 +226,7 @@
                     <c:simple-property name="name" description="Name of this new server" required="true"/>
                 </parameters>
                 <results>
-                    <c:simple-property name="result" description="Outcome of the delete server operation"/>
+                    <c:simple-property name="operationResult" description="Outcome of the delete server operation"/>
                 </results>
             </operation>
         </server>
@@ -243,12 +243,15 @@
             <operation name="domain-deployment:promote" displayName="Deploy to Server-Group" description="Deploy this deployment to a server group">
                 <parameters>
                     <c:simple-property name="server-group" required="true" description="Server group to deploy to" type="string">
+                        <c:property-options>
+                            <c:option value="__all" name="All"/>
+                        </c:property-options>
                         <c:option-source target="resource" expression="type=ServerGroup" />
                     </c:simple-property>
                     <c:simple-property name="enabled" required="true" default="true" description="Should the deployment be enabled on the server group?" type="boolean"/>
                 </parameters>
                 <results>
-                    <c:simple-property name="result" description="Outcome of the deploy to server group operation"/>
+                    <c:simple-property name="operationResult" description="Outcome of the deploy to server group operation"/>
                 </results>
             </operation>
 
@@ -749,6 +752,8 @@
                 <c:simple-property name="jndi-name" description="JNDI-Name of the Datasource" required="true"/>
                 <c:simple-property name="pool-name" description="Name of the pool" required="true"/>
                 <c:simple-property name="connection-url" description="URL for the connection to the database" required="true"/>
+                <c:simple-property name="user-name" description="User name for DB-connections" required="false" />
+                <c:simple-property name="password" description="Password" type="password" required="false"/>
             </parameters>
             <results>
                 <c:simple-property name="operationResult"/>
@@ -806,7 +811,7 @@
                          description="A class that implements org.jboss.jca.adapters.jdbc.URLSelectorStrategy" required="false"/>
                 <c:simple-property name="use-java-context" type="boolean" readOnly="true"
                          description="Setting this to false will bind the DataSource into global JNDI;"/>
-                <c:simple-property name="enabled" type="string" readOnly="true" description="Specifies if the datasource should be enabled"/>
+                <c:simple-property name="enabled" type="boolean" readOnly="true" required="false" description="Specifies if the datasource should be enabled"/>
                 <c:simple-property name="max-pool-size" type="integer" readOnly="false" required="false"
                          description="The max-pool-size element indicates the maximum number of connections for a pool. No more connections will be created in each sub-pool."/>
                 <c:simple-property name="min-pool-size" type="integer" readOnly="false" required="false"

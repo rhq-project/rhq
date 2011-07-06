@@ -140,8 +140,14 @@ public class ModclusterPluginTest {
         assert (resources.size() != 0) : "No mod_cluster or related instances found.";
 
         if (resources.size() != 0) {
-            testResourceMeasurement((Resource) resources.toArray()[0]);
-            testContextOperations((Resource) resources.toArray()[1]);
+            for (Object objectResource : resources.toArray()) {
+                Resource resource = (Resource) objectResource;
+                if (resource.getResourceType().getName().equals("mod_cluster")) {
+                    testResourceMeasurement(resource);
+                } else {
+                    testContextOperations(resource);
+                }
+            }
         }
     }
 
@@ -175,9 +181,12 @@ public class ModclusterPluginTest {
             .getResourceComponent(resource);
 
         if (resourceComponent instanceof OperationFacet) {
-            OperationResult result = ((OperationFacet) resourceComponent).invokeOperation("enableContext", null);
-            log.info("Result of operation " + "enableContext" + " was: " + result.getSimpleResult());
-
+            try {
+                OperationResult result = ((OperationFacet) resourceComponent).invokeOperation("enableContext", null);
+                log.info("Result of operation " + "enableContext" + " was: " + result.getSimpleResult());
+            } catch (Exception e) {
+                log.info("Operation failed");
+            }
             /*result = ((OperationFacet) resourceComponent).invokeOperation("disable", null);
             log.info("Result of operation test was: " + result.getSimpleResult());*/
         }

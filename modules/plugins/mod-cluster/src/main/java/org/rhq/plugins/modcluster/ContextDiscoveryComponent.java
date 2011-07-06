@@ -33,11 +33,15 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
 
 /**
- * Discovers hibernate entities from a hibernate stats mbean
+ * Discovers mod_cluster contexts from the proxyInfo mbean property.
  *
- * @author Greg Hinkle
+ * @author Stefan Negrea
  */
 public class ContextDiscoveryComponent implements ResourceDiscoveryComponent<MBeanResourceComponent> {
+
+    /* (non-Javadoc)
+     * @see org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent#discoverResources(org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext)
+     */
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<MBeanResourceComponent> context) {
         Set<DiscoveredResourceDetails> entities = new HashSet<DiscoveredResourceDetails>();
 

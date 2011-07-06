@@ -45,6 +45,8 @@
       
       <resource-configuration>
       	<c:simple-property name="stickySessions" type="boolean" description="Enables sticky sessions."/>
+      	<c:simple-property name="stickySessionRemove" type="boolean" description="Remove session when the request cannot be routed to the right node."/>
+      	<c:simple-property name="advertise" type="boolean" description="Enable autodiscovery of httpd servers."/>
       </resource-configuration>
       
        <service name="mod_cluster_context"

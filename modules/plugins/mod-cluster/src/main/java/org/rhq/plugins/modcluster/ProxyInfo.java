@@ -16,7 +16,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-
 package org.rhq.plugins.modcluster;
 
 import java.util.ArrayList;
@@ -25,15 +24,16 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * Simple parser for the raw proxy information provided by mod_cluster.
+ * 
+ * @author Stefan Negrea
+ */
 public class ProxyInfo {
 
     private List<Context> availableContexts = new ArrayList<ProxyInfo.Context>();
 
     public ProxyInfo(String rawProxyInfo) {
-
-        System.out.println("--------------------------------------");
-        System.out.println(rawProxyInfo);
-        System.out.println("--------------------------------------");
 
         Pattern test = Pattern.compile("Context.*\n");
         Matcher m = test.matcher(rawProxyInfo);
@@ -42,7 +42,7 @@ public class ProxyInfo {
             String[] contextPieces = rawContext.split(",");
             String actualContext = contextPieces[1].substring(contextPieces[1].indexOf("/")).trim();
 
-            availableContexts.add(new Context(actualContext, "localHost"));
+            availableContexts.add(new Context(actualContext, "localhost"));
         }
     }
 
@@ -50,12 +50,11 @@ public class ProxyInfo {
         return Collections.unmodifiableList(availableContexts);
     }
 
-    public class Context {
+    public static class Context {
         String path;
         String host;
 
         public Context(String path, String host) {
-            super();
             this.path = path;
             this.host = host;
         }
@@ -79,6 +78,24 @@ public class ProxyInfo {
         @Override
         public String toString() {
             return "Context [path=" + path + ", host=" + host + "]";
+        }
+
+        public static Context fromString(String stringRepresentation) {
+            stringRepresentation = stringRepresentation.substring(stringRepresentation.indexOf('[') + 1);
+            stringRepresentation = stringRepresentation.substring(0, stringRepresentation.indexOf(']'));
+            stringRepresentation = stringRepresentation.trim();
+
+            String host = null;
+            String path = null;
+            for (String part : stringRepresentation.split(",")) {
+                part = part.trim();
+                if (part.startsWith("path=")) {
+                    path = part.substring(5).trim();
+                } else if (part.startsWith("host=")) {
+                    host = part.substring(5).trim();
+                }
+            }
+            return new Context(path, host);
         }
     }
 }

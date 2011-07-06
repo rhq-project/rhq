@@ -23,9 +23,12 @@ import org.rhq.test.AssertUtils;
 import static org.apache.commons.io.FileUtils.touch;
 import static org.rhq.common.drift.FileEntry.addedFileEntry;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
+import static org.rhq.core.domain.drift.DriftChangeSetCategory.DRIFT;
 import static org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext.fileSystem;
+import static org.rhq.test.AssertUtils.assertCollectionMatchesNoOrder;
 import static org.rhq.test.AssertUtils.assertPropertiesMatch;
 import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
 
 public class DriftDetectorTest extends DriftTest {
 
@@ -59,7 +62,7 @@ public class DriftDetectorTest extends DriftTest {
         scheduleQueue.enqueue(new DriftDetectionSchedule(resourceId(), driftConfig));
         detector.run();
 
-        File changeSet = changeSet(driftConfig.getName());
+        File changeSet = changeSet(driftConfig.getName(), COVERAGE);
 
         assertHeaderEquals(changeSet, new Headers(driftConfig.getName(), resourceDir.getAbsolutePath(), COVERAGE));
         assertThatChangeSetDoesNotContainEmptyDirs(changeSet);
@@ -83,10 +86,33 @@ public class DriftDetectorTest extends DriftTest {
         scheduleQueue.enqueue(schedule);
         detector.run();
 
-        assertChangeSetContainsDirEntry(changeSet(driftConfig.getName()),
+        assertChangeSetContainsDirEntry(changeSet(driftConfig.getName(), COVERAGE),
             new DirectoryEntry(".")
                 .add(addedFileEntry("data-1.txt", sha256(data1)))
                 .add(addedFileEntry("data-2.txt", sha256(data2))));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void includeMultipleFilesInDirInCoverageChangeSet() throws Exception {
+        File confDir = mkdir(resourceDir, "conf");
+        File server1Conf = new File(confDir, "server-1.conf");
+        touch(server1Conf);
+        File server2Conf = new File(confDir, "server-2.conf");
+        touch(server2Conf);
+
+        DriftConfiguration config = driftConfiguration("multiple-files-test", resourceDir.getAbsolutePath());
+
+        scheduleQueue.enqueue(new DriftDetectionSchedule(resourceId(), config));
+        detector.run();
+
+        File changeSet = changeSet(config.getName(), COVERAGE);
+
+        assertHeaderEquals(changeSet, new Headers(config.getName(), resourceDir.getAbsolutePath(), COVERAGE));
+        assertChangeSetContainsDirEntry(changeSet,
+            new DirectoryEntry("conf")
+                .add(addedFileEntry("server-1.conf", sha256(server1Conf)))
+                .add(addedFileEntry("server-2.conf", sha256(server2Conf))));
     }
 
     @SuppressWarnings("unchecked")
@@ -105,7 +131,7 @@ public class DriftDetectorTest extends DriftTest {
         scheduleQueue.enqueue(new DriftDetectionSchedule(resourceId(), config));
         detector.run();
 
-        File changeSet = changeSet(config.getName());
+        File changeSet = changeSet(config.getName(), COVERAGE);
 
         assertHeaderEquals(changeSet, new Headers(config.getName(), resourceDir.getAbsolutePath(), COVERAGE));
 
@@ -131,7 +157,7 @@ public class DriftDetectorTest extends DriftTest {
         scheduleQueue.enqueue(new DriftDetectionSchedule(resourceId(), config));
         detector.run();
 
-        File changeSet = changeSet(config.getName());
+        File changeSet = changeSet(config.getName(), COVERAGE);
 
         assertHeaderEquals(changeSet, new Headers("nested-dirs-test", resourceDir.getAbsolutePath(), COVERAGE));
 
@@ -139,6 +165,38 @@ public class DriftDetectorTest extends DriftTest {
             new DirectoryEntry("conf").add(addedFileEntry("server-1.conf", sha256(server1Conf))));
         assertChangeSetContainsDirEntry(changeSet,
             new DirectoryEntry("conf/subconf").add(addedFileEntry("server-2.conf", sha256(server2Conf))));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void includeAddedFileInDriftChangeSet() throws Exception {
+        DriftConfiguration config = driftConfiguration("file-added-drift-test", resourceDir.getAbsolutePath());
+
+        File confDir = mkdir(resourceDir, "conf");
+        File server1Conf = new File(confDir, "server-1.conf");
+        touch(server1Conf);
+
+        File changeSetDir = changeSetDir(config.getName());
+
+        // Generate the initial, coverage change set
+        writeChangeSet(changeSetDir,
+            config.getName(),
+            resourceDir.getAbsolutePath(),
+            COVERAGE.code(),
+            "conf 1",
+            sha256(server1Conf) + " 0 server-1.conf A",
+            ""
+        );
+
+        // Create some drift
+        File server2Conf = new File(confDir, "server-2.conf");
+        touch(server2Conf);
+
+        scheduleQueue.enqueue(new DriftDetectionSchedule(resourceId(), config));
+        detector.run();
+
+        File changeSet = changeSet(config.getName(), DRIFT);
+        assertTrue(changeSet.exists(), "Expected to find drift change set " + changeSet.getPath());
     }
 
     void assertHeaderEquals(File changeSet, Headers expected) throws Exception {
@@ -171,10 +229,8 @@ public class DriftDetectorTest extends DriftTest {
         }
 
         assertNotNull(actual, "Failed to find " + expected + " in " + changeSet.getPath());
-        AssertUtils.assertCollectionMatchesNoOrder(fileEntries(expected), fileEntries(actual), "File entries for " +
+        assertCollectionMatchesNoOrder(fileEntries(expected), fileEntries(actual), "File entries for " +
             expected + " in change set " + changeSet.getPath() + " do not match");
-//        AssertUtils.assertCollectionEqualsNoOrder(fileEntries(expected), fileEntries(actual), "File entries for " +
-//            expected);
     }
 
     Collection<FileEntry> fileEntries(DirectoryEntry dirEntry) {
@@ -185,11 +241,4 @@ public class DriftDetectorTest extends DriftTest {
         return list;
     }
 
-    DriftConfiguration driftConfiguration(String name, String basedir) {
-        DriftConfiguration config = new DriftConfiguration(new Configuration());
-        config.setName(name);
-        config.setBasedir(new DriftConfiguration.BaseDirectory(fileSystem, basedir));
-
-        return config;
-    }
 }

@@ -3,12 +3,15 @@ package org.rhq.core.pc.drift;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.Stack;
 
 import org.apache.commons.io.DirectoryWalker;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.common.drift.ChangeSetReader;
 import org.rhq.common.drift.ChangeSetWriter;
 import org.rhq.common.drift.DirectoryEntry;
 import org.rhq.common.drift.FileEntry;
@@ -18,6 +21,7 @@ import org.rhq.core.util.MessageDigestGenerator;
 
 import static java.util.Collections.EMPTY_LIST;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
+import static org.rhq.core.domain.drift.DriftChangeSetCategory.DRIFT;
 
 public class DriftDetector implements Runnable {
     private Log log = LogFactory.getLog(DriftDetector.class);
@@ -56,11 +60,12 @@ public class DriftDetector implements Runnable {
             // TODO add logic to determine if there is an existing changeset
             // if there is no previous changeset then we need to generate the initial
             // coverage changeset
-            ChangeSetWriter writer = changeSetMgr.getChangeSetWriter(schedule.getResourceId(),
-                new Headers(driftConfig.getName(), basedir(resourceId, driftConfig), COVERAGE));
-
-            DirectoryScanner scanner = new DirectoryScanner(resourceId, driftConfig, writer);
-            scanner.scan();
+            if (changeSetMgr.changeSetExists(schedule.getResourceId(), new Headers(driftConfig.getName(),
+                basedir(resourceId, driftConfig), COVERAGE))) {
+                generateDriftChangeSet(schedule);
+            } else {
+                generateCoverageChangeSet(schedule);
+            }
         } catch (IOException e) {
             // TODO Call ChangeSetManager here to rollback any thing that was written to disk.
             log.error("An error occurred while scanning for drift", e);
@@ -69,6 +74,32 @@ public class DriftDetector implements Runnable {
         schedule.updateShedule();
         scheduleQueue.enqueue(schedule);
         driftClient.sendChangeSetToServer(schedule.getResourceId(), driftConfig);
+    }
+
+    private void generateDriftChangeSet(DriftDetectionSchedule schedule) throws IOException {
+//        File basedir = new File(basedir(schedule.getResourceId(), schedule.getDriftConfiguration()));
+//
+//        ChangeSetWriter writer = changeSetMgr.getChangeSetWriter(schedule.getResourceId(),
+//            new Headers(schedule.getDriftConfiguration().getName(), basedir.getAbsolutePath(), DRIFT));
+//        ChangeSetReader reader = changeSetMgr.getChangeSetReader(schedule.getResourceId(),
+//            schedule.getDriftConfiguration().getName());
+//
+//        for (DirectoryEntry dirEntry : reader) {
+//            File dir = new File(basedir, dirEntry.getDirectory());
+//            if (dir.list().length > dirEntry.getNumberOfFiles()) {
+//
+//            }
+//        }
+    }
+
+    private void generateCoverageChangeSet(DriftDetectionSchedule schedule) throws IOException {
+        ChangeSetWriter writer = changeSetMgr.getChangeSetWriter(schedule.getResourceId(),
+            new Headers(schedule.getDriftConfiguration().getName(),
+                basedir(schedule.getResourceId(), schedule.getDriftConfiguration()), COVERAGE));
+
+        DirectoryScanner scanner = new DirectoryScanner(schedule.getResourceId(), schedule.getDriftConfiguration(),
+            writer);
+        scanner.scan();
     }
 
     private String relativePath(File basedir, File file) {

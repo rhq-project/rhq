@@ -1,15 +1,23 @@
 package org.rhq.core.pc.drift;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Method;
 
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.drift.DriftChangeSetCategory;
+import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.util.MessageDigestGenerator;
 
+import static java.util.Arrays.asList;
 import static org.apache.commons.io.FileUtils.deleteDirectory;
+import static org.apache.commons.io.IOUtils.writeLines;
+import static org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext.fileSystem;
 
 /**
  * A base test class that provides a framework for drift related tests. DriftTest sets up
@@ -133,14 +141,17 @@ public class DriftTest {
     }
 
     /**
-     * Returns the change set file for the specified drift configuration.
+     * Returns the change set file for the specified drift configuration for the resource
+     * with the id that can be obtained from {@link #resourceId}. The type argument
+     * determines whether a coverage or drift change set file is returned.
      *
      * @param config The drift configuration name
-     * @return The change set file or null if not found
+     * @param type Determines whether a coverage or drift change set file is to be returned
+     * @return The change set file
      * @throws IOException
      */
-    protected File changeSet(String config) throws IOException {
-        return changeSetMgr.findChangeSet(resourceId(), config);
+    protected File changeSet(String config, DriftChangeSetCategory type) throws IOException {
+        return changeSetMgr.findChangeSet(resourceId(), config, type);
     }
 
     protected File changeSetDir(String driftConfigName) throws Exception {
@@ -157,5 +168,28 @@ public class DriftTest {
      */
     protected String sha256(File file) throws IOException {
         return digestGenerator.calcDigestString(file);
+    }
+
+    protected void writeChangeSet(File changeSetDir, String... changeSet) throws Exception {
+        BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(new File(changeSetDir,
+            "changeset.txt")));
+        writeLines(asList(changeSet), "\n", stream);
+        stream.close();
+    }
+
+    /**
+     * Creates a {@link DriftConfiguration} with the specified basedir. The file system is
+     * used as the context for the basedir which means the path specified is used as is.
+     *
+     * @param name The configuration name
+     * @param basedir An absolute path of the base directory
+     * @return The drift configuration object
+     */
+    protected DriftConfiguration driftConfiguration(String name, String basedir) {
+        DriftConfiguration config = new DriftConfiguration(new Configuration());
+        config.setName(name);
+        config.setBasedir(new DriftConfiguration.BaseDirectory(fileSystem, basedir));
+
+        return config;
     }
 }

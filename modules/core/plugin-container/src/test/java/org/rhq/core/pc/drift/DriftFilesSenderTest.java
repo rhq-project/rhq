@@ -47,7 +47,7 @@ public class DriftFilesSenderTest extends DriftTest {
 
         // Each item in changeSet is listed by the line it will appear in the actual file
         // in an attemp to make it more self-documenting.
-        writeChangeSet(changeSetDir, asList(
+        writeChangeSet(changeSetDir,
             driftConfigName,
             resourceDir.getAbsolutePath(),
             COVERAGE.code(),
@@ -55,7 +55,7 @@ public class DriftFilesSenderTest extends DriftTest {
             "2e345df 0 server-1.conf A",
             "a5d8c3e 0 server-2.conf A",
             ""
-        ));
+        );
 
         sender.setDriftFiles(driftFiles("2e345df", "a5d8c3e"));
         sender.setHeaders(new Headers(driftConfigName, resourceDir.getAbsolutePath(), COVERAGE));
@@ -83,7 +83,7 @@ public class DriftFilesSenderTest extends DriftTest {
 
         // Each item in changeSet is listed by the line it will appear in the actual file
         // in an attemp to make it more self-documenting.
-        writeChangeSet(changeSetDir, asList(
+        writeChangeSet(changeSetDir,
             driftConfigName,
             resourceDir.getAbsolutePath(),
             COVERAGE.code(),
@@ -95,7 +95,7 @@ public class DriftFilesSenderTest extends DriftTest {
             "91d4abb 0 server-1.jar A",
             "92c4abb 0 server-2.jar A",
             ""
-        ));
+        );
 
         // Note that the order of the drift files is random. When the server sends a request
         // for files we cannot assume that the files will be in any particular order.
@@ -125,13 +125,6 @@ public class DriftFilesSenderTest extends DriftTest {
         File file = new File(contentDir, fileHash);
         assertTrue(file.exists(), "Expected to find file named " + file.getName() + " in content directory " +
             contentDir.getPath() + ". The SHA-256 hash should be used as the file name.");
-    }
-
-    void writeChangeSet(File changeSetDir, List<String> changeSet) throws Exception {
-        BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(new File(changeSetDir,
-            "changeset.txt")));
-        writeLines(changeSet, "\n", stream);
-        stream.close();
     }
 
     List<DriftFile> driftFiles(String... hashes) {

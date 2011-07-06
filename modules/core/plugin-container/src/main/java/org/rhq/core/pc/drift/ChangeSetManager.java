@@ -11,8 +11,11 @@ import org.rhq.core.domain.drift.DriftConfiguration;
 
 public interface ChangeSetManager {
 
+    boolean changeSetExists(int resourceId, Headers headers) throws IOException;
+
     /**
-     * Locates the latest change set for the specified resource id and drift configuration.
+     * Locates the latest coverage change set for the specified resource id and drift
+     * configuration.
      *
      * @param resourceId The id of the resource to which the change set belongs
      * @param driftConfigurationName The name of the drift configuration for which the
@@ -21,6 +24,8 @@ public interface ChangeSetManager {
      * @throws IOException
      */
     File findChangeSet(int resourceId, String driftConfigurationName) throws IOException;
+
+    File findChangeSet(int resourceId, String name, DriftChangeSetCategory type);
 
     /**
      * Locates the latest change set for the given resource and drift configuration and

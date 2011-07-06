@@ -1,9 +1,14 @@
 package org.rhq.core.pc.drift;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.IOUtils;
 
 import org.rhq.common.drift.ChangeSetReader;
 import org.rhq.common.drift.ChangeSetReaderImpl;
@@ -12,6 +17,7 @@ import org.rhq.common.drift.ChangeSetWriterImpl;
 import org.rhq.common.drift.Headers;
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.drift.DriftConfiguration;
+import org.rhq.core.util.stream.StreamUtil;
 
 import net.sourceforge.cobertura.coveragedata.CoverageData;
 
@@ -93,6 +99,31 @@ public class ChangeSetManagerImpl implements ChangeSetManager {
             changeSet = new File(changeSetDir, "drift-changeset.txt");
         }
         return new ChangeSetWriterImpl(changeSet, headers);
+    }
+
+    @Override
+    public ChangeSetWriter getChangeSetWriterForUpdate(int resourceId, Headers headers) throws IOException {
+        File resourceDir = new File(changeSetsDir, Integer.toString(resourceId));
+        File changeSetDir = new File(resourceDir, headers.getDriftConfigurationName());
+
+        return new ChangeSetWriterImpl(new File(changeSetDir, "changeset.working"), headers);
+    }
+
+    @Override
+    public void updateChangeSet(int resourceId, Headers headers) throws IOException {
+        File resourceDir = new File(changeSetsDir, Integer.toString(resourceId));
+        File changeSetDir = new File(resourceDir, headers.getDriftConfigurationName());
+        File newChangeSet = new File(changeSetDir, "changeset.working");
+        File changeSet = new File(changeSetDir, "changeset.txt");
+
+        if (!newChangeSet.exists()) {
+            return;
+        }
+
+        changeSet.delete();
+
+        StreamUtil.copy(new BufferedInputStream(new FileInputStream(newChangeSet)),
+            new BufferedOutputStream(new FileOutputStream(changeSet)));
     }
 
     @Override

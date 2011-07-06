@@ -26,6 +26,22 @@ public class DirectoryEntry implements Iterable<FileEntry>, Serializable {
         return this;
     }
 
+    public DirectoryEntry remove(FileEntry entry) {
+        FileEntry entryToRemove = null;
+        int i = 0;
+        for (FileEntry fileEntry : files) {
+            if (entry.getFile().equals(fileEntry.getFile())) {
+                entryToRemove = fileEntry;
+                break;
+            }
+            ++i;
+        }
+        if (entryToRemove != null) {
+            files.remove(i);
+        }
+        return this;
+    }
+
     public int getNumberOfFiles() {
         return files.size();
     }

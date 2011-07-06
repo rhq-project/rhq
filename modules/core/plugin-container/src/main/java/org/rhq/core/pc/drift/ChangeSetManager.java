@@ -44,6 +44,10 @@ public interface ChangeSetManager {
 
     ChangeSetWriter getChangeSetWriter(int resourceId, Headers headers) throws IOException;
 
+    ChangeSetWriter getChangeSetWriterForUpdate(int resourceId, Headers headers) throws IOException;
+
+    void updateChangeSet(int resourceId, Headers headers) throws IOException;
+
     void addFileToChangeSet(int resourceId, DriftConfiguration driftConfiguration, File file);
 
 }

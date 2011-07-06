@@ -14,11 +14,12 @@
            discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
            class="ModclusterServerComponent"
            supportsManualAdd="true"
-           description="mod_cluster plugin">
+           description="mod_cluster plugin"
+           singleton="true">
            
       <runs-inside>         
          <parent-resource-type name="JBossAS Server" plugin="JBossAS"/>
-         <parent-resource-type name="JBossAS Server" plugin="JBossAS5"/>
+         <parent-resource-type name="JBossAS5 Server" plugin="JBossAS5"/>
       </runs-inside>
       
       <plugin-configuration>        

@@ -1,22 +1,17 @@
 package org.rhq.core.pc.drift;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Set;
-import java.util.TreeSet;
 
 import org.testng.annotations.Test;
 
 import org.rhq.common.drift.DirectoryEntry;
-import org.rhq.common.drift.FileEntry;
 import org.rhq.core.domain.drift.DriftConfiguration;
-import org.rhq.test.AssertUtils;
 
 import static java.util.Arrays.asList;
-import static java.util.Collections.addAll;
 import static org.apache.commons.io.FileUtils.touch;
+import static org.apache.commons.io.FileUtils.writeLines;
 import static org.rhq.common.drift.FileEntry.addedFileEntry;
+import static org.rhq.common.drift.FileEntry.changedFileEntry;
 import static org.rhq.common.drift.FileEntry.removedFileEntry;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
 import static org.rhq.test.AssertUtils.assertCollectionMatchesNoOrder;
@@ -90,5 +85,37 @@ public class DirectoryAnalyzerTest extends DriftTest {
 
         assertCollectionMatchesNoOrder(asList(removedFileEntry("server-2.conf", server2ConfHash)),
             analyzer.getFilesRemoved(), "Failed to detect removed file.");
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void detectChangedFile() throws Exception {
+        DriftConfiguration config = driftConfiguration("changed-files-test", resourceDir.getAbsolutePath());
+        File confDir = mkdir(resourceDir, "conf");
+        File server1Conf = new File(confDir, "server-1.conf");
+        touch(server1Conf);
+
+        String server1ConfHash = sha256(server1Conf);
+        File changeSetDir = changeSetDir(config.getName());
+
+        // generate the initial, coverage changes set
+        writeChangeSet(changeSetDir,
+            config.getName(),
+            resourceDir.getAbsolutePath(),
+            COVERAGE.code(),
+            "conf 1",
+            sha256(server1Conf) + " 0 server-1.conf A",
+            ""
+        );
+
+        // create some drift
+        writeLines(server1Conf, asList("This is a test", "Testing a changed file"));
+
+        DirectoryAnalyzer analyzer = new DirectoryAnalyzer(resourceDir, new DirectoryEntry("conf")
+            .add(addedFileEntry("server-1.conf", server1ConfHash)));
+        analyzer.run();
+
+        assertCollectionMatchesNoOrder(asList(changedFileEntry("server-1.conf", server1ConfHash, sha256(server1Conf))),
+            analyzer.getFilesChanged(), "Failed to detect changed files.");
     }
 }

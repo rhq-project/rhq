@@ -171,8 +171,8 @@ public class DriftTest {
     }
 
     protected void writeChangeSet(File changeSetDir, String... changeSet) throws Exception {
-        BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(new File(changeSetDir,
-            "changeset.txt")));
+        File changeSetFile = new File(changeSetDir, "changeset.txt");
+        BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(changeSetFile));
         writeLines(asList(changeSet), "\n", stream);
         stream.close();
     }

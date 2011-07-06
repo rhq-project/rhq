@@ -14,6 +14,7 @@ import org.rhq.common.drift.FileEntry;
 import org.rhq.core.util.MessageDigestGenerator;
 
 import static org.rhq.common.drift.FileEntry.addedFileEntry;
+import static org.rhq.common.drift.FileEntry.changedFileEntry;
 import static org.rhq.common.drift.FileEntry.removedFileEntry;
 
 public class DirectoryAnalyzer {
@@ -49,20 +50,32 @@ public class DirectoryAnalyzer {
 
     public void run() throws IOException {
         File dir = new File(basedir, dirEntry.getDirectory());
+        // TODO handle directories
         Set<String> files = fileNames(dir.listFiles());
         Map<String, FileEntry> fileEntries = createFileEntriesMap();
+        List<String> processed = new ArrayList<String>();
 
         Set<String> dirEntryFileNames = dirEntryFileNames();
 
         for (String file : files) {
             if (!fileEntries.containsKey(file)) {
                 filesAdded.add(addedFileEntry(file, sha256(new File(dir, file))));
+                processed.add(file);
             }
         }
+        files.removeAll(processed);
 
         for (String file : fileEntries.keySet()) {
             if (!files.contains(file)) {
                 filesRemoved.add(removedFileEntry(file, fileEntries.get(file).getNewSHA()));
+            }
+        }
+
+        for (String file : files) {
+            FileEntry entry = fileEntries.get(file);
+            String currentHash = sha256(new File(dir, file));
+            if (!currentHash.equals(entry.getNewSHA())) {
+                filesChanged.add(changedFileEntry(file, entry.getNewSHA(), currentHash));
             }
         }
     }

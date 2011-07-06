@@ -2,6 +2,7 @@ package org.rhq.core.pc.drift;
 
 import java.io.File;
 
+import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.drift.DriftConfiguration;
 
 class DriftClientTestStub implements DriftClient {
@@ -9,7 +10,9 @@ class DriftClientTestStub implements DriftClient {
     private File basedir;
 
     @Override
-    public void sendChangeSetToServer(int resourceId, DriftConfiguration driftConfiguration) {
+    public void sendChangeSetToServer(int resourceId, DriftConfiguration driftConfiguration,
+        DriftChangeSetCategory type) {
+
     }
 
     @Override

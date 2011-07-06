@@ -20,6 +20,7 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.common.drift.Headers;
 import org.rhq.core.clientapi.agent.drift.DriftAgentService;
 import org.rhq.core.clientapi.server.drift.DriftServerService;
+import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.resource.Resource;
@@ -83,9 +84,10 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
     }
 
     @Override
-    public void sendChangeSetToServer(int resourceId, DriftConfiguration driftConfiguration) {
+    public void sendChangeSetToServer(int resourceId, DriftConfiguration driftConfiguration,
+        DriftChangeSetCategory type) {
         try {
-            File changeSetFile = changeSetMgr.findChangeSet(resourceId, driftConfiguration.getName());
+            File changeSetFile = changeSetMgr.findChangeSet(resourceId, driftConfiguration.getName(), type);
             if (changeSetFile == null) {
                 log
                     .warn("changeset[resourceId: " + resourceId + ", driftConfiguration: "

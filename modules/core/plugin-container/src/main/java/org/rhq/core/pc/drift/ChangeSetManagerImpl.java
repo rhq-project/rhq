@@ -28,8 +28,11 @@ public class ChangeSetManagerImpl implements ChangeSetManager {
 
     @Override
     public boolean changeSetExists(int resourceId, Headers headers) throws IOException {
-        File file = findChangeSet(resourceId, headers.getDriftConfigurationName());
-        return file != null && file.exists();
+        File changeSetDir = findChangeSetDir(resourceId, headers.getDriftConfigurationName());
+        if (changeSetDir == null || !changeSetDir.exists()) {
+            return false;
+        }
+        return new File(changeSetDir, "changeset.txt").exists();
     }
 
     @Override
@@ -46,7 +49,12 @@ public class ChangeSetManagerImpl implements ChangeSetManager {
 
     @Override
     public File findChangeSet(int resourceId, String name, DriftChangeSetCategory type) {
-        File changeSetDir = findChangeSetDir(resourceId, name);
+        File resourceDir = new File(changeSetsDir, Integer.toString(resourceId));
+        File changeSetDir = new File(resourceDir, name);
+        if (!changeSetDir.exists()) {
+            changeSetDir.mkdirs();
+        }
+
         switch (type) {
         case COVERAGE:
             return new File(changeSetDir, "changeset.txt");
@@ -71,15 +79,19 @@ public class ChangeSetManagerImpl implements ChangeSetManager {
 
     @Override
     public ChangeSetWriter getChangeSetWriter(int resourceId, Headers headers) throws IOException {
-//        File resourceDir = new File(changeSetsDir, Integer.toString(resourceId));
-//        File changeSetDir = new File(resourceDir, headers.getDriftConfigurationName());
-//
-//        if (!changeSetDir.exists()) {
-//            changeSetDir.mkdirs();
-//        }
-//
-//        return new ChangeSetWriterImpl(new File(changeSetDir, "changeset.txt"), headers);
-        File changeSet = findChangeSet(resourceId, headers.getDriftConfigurationName(), headers.getType());
+        File resourceDir = new File(changeSetsDir, Integer.toString(resourceId));
+        File changeSetDir = new File(resourceDir, headers.getDriftConfigurationName());
+
+        if (!changeSetDir.exists()) {
+            changeSetDir.mkdirs();
+        }
+
+        File changeSet;
+        if (headers.getType() == COVERAGE) {
+            changeSet = new File(changeSetDir, "changeset.txt");
+        } else {
+            changeSet = new File(changeSetDir, "drift-changeset.txt");
+        }
         return new ChangeSetWriterImpl(changeSet, headers);
     }
 
@@ -97,11 +109,4 @@ public class ChangeSetManagerImpl implements ChangeSetManager {
 
     }
 
-    private String relativePath(File basedir, File file) {
-        if (basedir.equals(file)) {
-            return basedir.getPath();
-        }
-        return FilenameUtils.getName(basedir.getAbsolutePath()) + separator +
-            file.getAbsolutePath().substring(basedir.getAbsolutePath().length() + 1);
-    }
 }

@@ -12,7 +12,7 @@
    <artifactId>modcluster-plugin</artifactId>
    <packaging>jar</packaging>
 
-   <name>mod_cluster RHQ Plugin</name>
+   <name>RHQ mod_cluster Plugin</name>
    <description>mod_cluster RHQ Agent plugin</description>
 
    <dependencies>

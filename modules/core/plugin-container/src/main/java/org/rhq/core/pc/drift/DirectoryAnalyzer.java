@@ -1,6 +1,7 @@
 package org.rhq.core.pc.drift;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -51,7 +52,12 @@ public class DirectoryAnalyzer {
     public void run() throws IOException {
         File dir = new File(basedir, dirEntry.getDirectory());
         // TODO handle directories
-        Set<String> files = fileNames(dir.listFiles());
+        Set<String> files = fileNames(dir.listFiles(new FileFilter() {
+            @Override
+            public boolean accept(File path) {
+                return path.isFile();
+            }
+        }));
         Map<String, FileEntry> fileEntries = createFileEntriesMap();
         List<String> processed = new ArrayList<String>();
 

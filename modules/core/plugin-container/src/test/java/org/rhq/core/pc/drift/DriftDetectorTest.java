@@ -16,17 +16,13 @@ import org.rhq.common.drift.ChangeSetReaderImpl;
 import org.rhq.common.drift.DirectoryEntry;
 import org.rhq.common.drift.FileEntry;
 import org.rhq.common.drift.Headers;
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.drift.DriftConfiguration;
-import org.rhq.test.AssertUtils;
 
 import static org.apache.commons.io.FileUtils.touch;
 import static org.rhq.common.drift.FileEntry.addedFileEntry;
 import static org.rhq.common.drift.FileEntry.removedFileEntry;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.DRIFT;
-import static org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext.fileSystem;
 import static org.rhq.test.AssertUtils.assertCollectionMatchesNoOrder;
 import static org.rhq.test.AssertUtils.assertPropertiesMatch;
 import static org.testng.Assert.assertNotNull;

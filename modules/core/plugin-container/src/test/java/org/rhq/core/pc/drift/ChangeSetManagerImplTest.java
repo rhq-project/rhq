@@ -1,26 +1,21 @@
 package org.rhq.core.pc.drift;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.List;
 
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import org.rhq.common.drift.ChangeSetReader;
 import org.rhq.common.drift.DirectoryEntry;
-import org.rhq.common.drift.FileEntry;
 import org.rhq.common.drift.Headers;
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.drift.DriftChangeSetCategory;
-import org.rhq.core.domain.drift.DriftConfiguration;
 
 import static java.util.Arrays.asList;
-import static org.apache.commons.io.FileUtils.writeLines;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.DRIFT;
-import static org.testng.Assert.*;
-import static org.apache.commons.io.FileUtils.deleteDirectory;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
 
 public class ChangeSetManagerImplTest extends DriftTest {
 

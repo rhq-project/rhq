@@ -55,8 +55,6 @@ public class DirectoryAnalyzer {
         Map<String, FileEntry> fileEntries = createFileEntriesMap();
         List<String> processed = new ArrayList<String>();
 
-        Set<String> dirEntryFileNames = dirEntryFileNames();
-
         for (String file : files) {
             if (!fileEntries.containsKey(file)) {
                 filesAdded.add(addedFileEntry(file, sha256(new File(dir, file))));

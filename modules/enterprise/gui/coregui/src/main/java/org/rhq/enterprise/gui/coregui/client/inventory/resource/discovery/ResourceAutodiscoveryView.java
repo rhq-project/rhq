@@ -40,6 +40,8 @@ import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+import com.smartgwt.client.widgets.grid.events.DataArrivedEvent;
+import com.smartgwt.client.widgets.grid.events.DataArrivedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionEvent;
 import com.smartgwt.client.widgets.layout.HLayout;
@@ -260,6 +262,20 @@ public class ResourceAutodiscoveryView extends LocatableVLayout implements Refre
 
         });
 
+        treeGrid.addDataArrivedHandler(new DataArrivedHandler() {
+            public void onDataArrived(DataArrivedEvent dataArrivedEvent) {
+                if (treeGrid != null) {
+                    updateButtonEnablement(selectAllButton, deselectAllButton, importButton, ignoreButton,
+                            unignoreButton);
+                    // NOTE: Due to a SmartGWT bug, the TreeGrid is not automatically redrawn upon data arrival, and
+                    //       calling treeGrid.markForRedraw() doesn't redraw it either. The user can mouse over the grid
+                    //       to cause it to redraw, but it is obviously not reasonable to expect that. So we must
+                    //       explicitly call redraw() here.
+                    treeGrid.redraw();
+                }
+            }
+        });
+
         selectAllButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 SC.ask(MSG.view_autoDiscoveryQ_confirmSelectAll(), new BooleanCallback() {
@@ -371,6 +387,7 @@ public class ResourceAutodiscoveryView extends LocatableVLayout implements Refre
             importButton.setDisabled(true);
             ignoreButton.setDisabled(true);
             unignoreButton.setDisabled(true);
+            markForRedraw();
             return;
         }
 
@@ -426,8 +443,10 @@ public class ResourceAutodiscoveryView extends LocatableVLayout implements Refre
      * Custom refresh operation, as we cannot extend Table because we use a TreeGrid, not a ListGrid.
      */
     public void refresh() {
-        this.treeGrid.invalidateCache();
-        this.treeGrid.markForRedraw();
+        if (this.treeGrid != null) {
+            this.treeGrid.invalidateCache();
+            this.treeGrid.markForRedraw();
+        }
     }
 
     public DataSource getDataSource() {

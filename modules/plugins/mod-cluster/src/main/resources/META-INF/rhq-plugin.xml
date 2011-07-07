@@ -27,41 +27,70 @@
          <c:simple-property name="nameTemplate" default="mod_cluster"/>         
       </plugin-configuration>
       
-      <operation name="reset" displayName="Reset the node" description="Move the node out of an error state" />
+      <operation name="stop" displayName="Stop all webapps" description="Gracefully stops all webapps for all engines.">
+            <parameters>
+            	<c:simple-property required="true" name="timeout" type="string" displayName="Session draining timeout"/>
+                <c:simple-property required="true" name="unit" default="MILLISECONDS" displayName="Time unit of the timeout parameter">
+	                 <c:property-options allowCustomValue="false">
+                        <c:option value="MICROSECONDS" name="MICROSECONDS"/>
+                        <c:option value="MILLISECONDS" name="MILLISECONDS"/>
+                        <c:option value="NANOSECONDS" name="NANOSECONDS"/>
+                        <c:option value="SECONDS" name="SECONDS"/>                        
+                    </c:property-options>
+                </c:simple-property>
+            </parameters>
+      		<results>
+	      		<c:simple-property name="result" type="boolean" description="The result of the operation" />
+      		</results>
+   	  </operation>
+   	  <operation name="addProxy" displayName="Add a proxy" description="Add a proxy.">
+		<parameters>
+        	<c:simple-property required="true" name="host" type="string" displayName="Proxy address"/>
+            <c:simple-property required="true" name="port" type="string" displayName="Proxy port"/>
+        </parameters>
+   	  </operation>
+   	  <operation name="enable" displayName="Enable all webapps" description="Enable all webapps for all engines">
+      	<results>
+      		<c:simple-property name="result" type="boolean" description="The result of the operation" />
+      	</results>
+      </operation>      
+      <operation name="reset" displayName="Reset the node" description="Move the node out of an error state." />
+      <operation name="disable" displayName="Disable all webpapps" description="Disable all webapps for all engines.">
+      	<results>
+      		<c:simple-property name="result" type="boolean" description="The result of the operation" />
+      	</results>
+      </operation>
+      <operation name="refreshProxy" displayName="Remove a proxy" description="Remove a proxy.">
+		<parameters>
+        	<c:simple-property required="true" name="host" type="string" displayName="Proxy address"/>
+            <c:simple-property required="true" name="port" type="string" displayName="Proxy port"/>
+        </parameters>
+   	  </operation>
       <operation name="refresh" displayName="Refresh configuration" description="Refresh configuration" />
-      <operation name="enable" displayName="Enable all webapps" description="Enable all webapps for all engines">
-      	<results>
-      		<c:simple-property name="result" type="boolean" description="The result of the operation" />
-      	</results>
-      </operation>
-      <operation name="disable" displayName="Disable all webpapps" description="Disable all webapps for all engines">
-      	<results>
-      		<c:simple-property name="result" type="boolean" description="The result of the operation" />
-      	</results>
-      </operation>
+      
       
       <metric property="proxyConfiguration" displayName="Proxy Configuration" displayType="summary" dataType="trait" />
       <metric property="modelerType" displayName="Type of the modeled resource" displayType="summary" dataType="trait" />
       <metric property="className" displayName="Fully qualified class name of the managed object" displayType="summary" dataType="trait" />
       
       <resource-configuration>
-      	<c:simple-property name="workerTimeout" type="int" description="Timeout to wait for an available worker (default is no wait)"
+      	<c:simple-property name="workerTimeout" type="integer" description="Timeout to wait for an available worker (default is no wait)"
       	<c:simple-property name="stickySession" type="boolean" description="Enables sticky session for the cluster."/>
       	<c:simple-property name="stickySessionRemove" type="boolean" description="Remove session when the request cannot be routed to the right node."/>
       	<c:simple-property name="advertise" type="boolean" description="Enable autodiscovery of httpd servers."/>
-      	<c:simple-property name="smax" type="int" description="Maximum time on seconds for idle connections above smax."/>
-      	<c:simple-property name="maxAttempts" type="int" description="Maximum number of attempts to send the request to the backend server."/>
-      	<c:simple-property name="advertiseSecurityKey" type="int" description="Security key for discovery."/>
+      	<c:simple-property name="smax" type="integer" description="Maximum time on seconds for idle connections above smax."/>
+      	<c:simple-property name="maxAttempts" type="integer" description="Maximum number of attempts to send the request to the backend server."/>
+      	<c:simple-property name="advertiseSecurityKey" type="integer" description="Security key for discovery."/>
       	<c:simple-property name="stickySessionForce" type="boolean" description="Return an error when the request cannot be routed to the right node."/>
       	<c:simple-property name="balancer" type="string" description="Name of the balancer."/>
       	<c:simple-property name="flushPackets" type="boolean" descritpion="Allows controlling flusing of packets."/>
-      	<c:simple-property name="socketTimeout" type="int" description="Connection timeout for communication with the proxy." />
+      	<c:simple-property name="socketTimeout" type="integer" description="Connection timeout for communication with the proxy." />
       	<c:simple-property name="containerName" type="string" description="Object name of the container."/>
       	<c:simple-property name="domain" type="string" description="Domain parameter, which allows tying a jvmRoute to a particular domain."/>
-      	<c:simple-property name="advertisePort" type="int" description="Multicast port for discovery" />
+      	<c:simple-property name="advertisePort" type="integer" description="Multicast port for discovery" />
       	<c:simple-property name="advertiseGroupAddress" type="string" description="Multicast address for discovery."/>
-      	<c:simple-property name="flushWait" type="int" description="Time in ms to wait before flushing packets."/>
-      	<c:simple-property name="ping" type="int" description="Time in s to wait for a pong answer to a ping"/>
+      	<c:simple-property name="flushWait" type="integer" description="Time in ms to wait before flushing packets."/>
+      	<c:simple-property name="ping" type="integer" description="Time in s to wait for a pong answer to a ping."/>
       </resource-configuration>
       
        <service name="mod_cluster Webapp Context"
@@ -69,19 +98,30 @@
          class="ContextComponent"
          description="A mod_cluster context">
 
-      	<operation name="enableContext" displayName="Enable webapp" description="Enable this webapp">
+      	<operation name="disableContext" displayName="Disable webapp" description="Disable this webapp.">
       		<results>
-      			<c:simple-property name="result" type="boolean" description="The result of the operation" />
-      		</results>
-      	</operation>
-      	<operation name="disableContext" displayName="Disable webapp" description="Disable this webapp">
-      		<results>
-	      		<c:simple-property name="result" type="boolean" description="The result of the operation" />
+	      		<c:simple-property name="result" type="boolean" description="The result of the operation."/>
       		</results>
       	</operation>
       	<operation name="stopContext" displayName="Stop webapp" description="Gracefully stops this webapp.">
+            <parameters>
+            	<c:simple-property required="true" name="timeout" type="integer" displayName="Session draining timeout"/>
+                <c:simple-property required="true" name="unit" default="MILLISECONDS" displayName="Time unit of the timeout parameter">
+	                 <c:property-options allowCustomValue="false">
+                        <c:option value="MICROSECONDS" name="MICROSECONDS"/>
+                        <c:option value="MILLISECONDS" name="MILLISECONDS"/>
+                        <c:option value="NANOSECONDS" name="NANOSECONDS"/>
+                        <c:option value="SECONDS" name="SECONDS"/>                        
+                    </c:property-options>
+                </c:simple-property>
+            </parameters>
       		<results>
 	      		<c:simple-property name="result" type="boolean" description="The result of the operation" />
+      		</results>
+      	</operation>
+      	<operation name="enableContext" displayName="Enable webapp" description="Enable this webapp.">
+      		<results>
+      			<c:simple-property name="result" type="boolean" description="The result of the operation" />
       		</results>
       	</operation>
 

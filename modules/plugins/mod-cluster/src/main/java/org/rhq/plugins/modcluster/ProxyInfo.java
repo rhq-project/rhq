@@ -20,7 +20,9 @@ package org.rhq.plugins.modcluster;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -32,22 +34,64 @@ import java.util.regex.Pattern;
 public class ProxyInfo {
 
     private List<Context> availableContexts = new ArrayList<ProxyInfo.Context>();
+    private Map<String, Vhost> availableVHosts = new HashMap<String, Vhost>();
 
     public ProxyInfo(String rawProxyInfo) {
+        Pattern vhostPattern = Pattern.compile("Vhost.*\n");
+        Matcher vhostMatcher = vhostPattern.matcher(rawProxyInfo);
+        while (vhostMatcher.find()) {
+            String rawVhost = vhostMatcher.group();
+            String[] vhostPieces = rawVhost.split(",");
 
-        Pattern test = Pattern.compile("Context.*\n");
-        Matcher m = test.matcher(rawProxyInfo);
-        while (m.find()) {
-            String rawContext = m.group();
+            String identifier = vhostPieces[0].trim();
+            identifier = identifier.substring(identifier.indexOf("[") + 1, identifier.indexOf("]"));
+            identifier = identifier.substring(0, identifier.lastIndexOf(":"));
+
+            String host = vhostPieces[1].trim();
+            host = host.substring(host.indexOf(":") + 1).trim();
+
+            System.out.println(identifier + "--" + host);
+            availableVHosts.put(identifier, new Vhost(identifier, host));
+
+        }
+
+        Pattern contextPattern = Pattern.compile("Context.*[\n|}]");
+        Matcher contextMatcher = contextPattern.matcher(rawProxyInfo);
+        while (contextMatcher.find()) {
+            String rawContext = contextMatcher.group();
             String[] contextPieces = rawContext.split(",");
             String actualContext = contextPieces[1].substring(contextPieces[1].indexOf("/")).trim();
 
-            availableContexts.add(new Context("localhost", actualContext));
+            String identifier = contextPieces[0];
+            identifier = identifier.substring(identifier.indexOf("[") + 1, identifier.indexOf("]"));
+            identifier = identifier.substring(0, identifier.lastIndexOf(":"));
+            Vhost relatedVhost = availableVHosts.get(identifier);
+
+            availableContexts.add(new Context(relatedVhost.getHost(), actualContext));
         }
     }
 
     public List<Context> getAvailableContexts() {
         return Collections.unmodifiableList(availableContexts);
+    }
+
+    private static class Vhost {
+        private String identifier;
+        private String host;
+
+        public Vhost(String identifier, String host) {
+            this.identifier = identifier;
+            this.host = host;
+        }
+
+        public String getIdentifier() {
+            return identifier;
+        }
+
+        public String getHost() {
+            return host;
+        }
+
     }
 
     public static class Context {
@@ -63,16 +107,8 @@ public class ProxyInfo {
             return path;
         }
 
-        public void setPath(String path) {
-            this.path = path;
-        }
-
         public String getHost() {
             return host;
-        }
-
-        public void setHost(String host) {
-            this.host = host;
         }
 
         @Override

@@ -80,15 +80,14 @@
       	<c:simple-property name="advertise" type="boolean" description="Enable autodiscovery of httpd servers."/>
       	<c:simple-property name="smax" type="integer" description="Maximum time on seconds for idle connections above smax."/>
       	<c:simple-property name="maxAttempts" type="integer" description="Maximum number of attempts to send the request to the backend server."/>
-      	<c:simple-property name="advertiseSecurityKey" type="integer" description="Security key for discovery."/>
+      	<c:simple-property name="advertiseSecurityKey" type="string" required="false" description="Security key for discovery."/>
       	<c:simple-property name="stickySessionForce" type="boolean" description="Return an error when the request cannot be routed to the right node."/>
-      	<c:simple-property name="balancer" type="string" description="Name of the balancer."/>
+      	<c:simple-property name="balancer" type="string" required="false" description="Name of the balancer."/>
       	<c:simple-property name="flushPackets" type="boolean" description="Allows controlling flusing of packets."/>
-      	<c:simple-property name="socketTimeout" type="integer" description="Connection timeout for communication with the proxy." />
-      	<c:simple-property name="containerName" type="string" description="Object name of the container."/>
-      	<c:simple-property name="domain" type="string" description="Domain parameter, which allows tying a jvmRoute to a particular domain."/>
-      	<c:simple-property name="advertisePort" type="integer" description="Multicast port for discovery" />
-      	<c:simple-property name="advertiseGroupAddress" type="string" description="Multicast address for discovery."/>
+      	<c:simple-property name="socketTimeout" type="integer" description="Connection timeout for communication with the proxy." />      	
+      	<c:simple-property name="domain" type="string" required="false" description="Domain parameter, which allows tying a jvmRoute to a particular domain."/>
+      	<c:simple-property name="advertisePort" type="integer" required="false" description="Multicast port for discovery" />
+      	<c:simple-property name="advertiseGroupAddress" type="string" required="false" description="Multicast address for discovery."/>
       	<c:simple-property name="flushWait" type="integer" description="Time in ms to wait before flushing packets."/>
       	<c:simple-property name="ping" type="integer" description="Time in s to wait for a pong answer to a ping."/>
       </resource-configuration>

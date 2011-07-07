@@ -77,7 +77,7 @@ public class ProxyInfo {
 
         @Override
         public String toString() {
-            return path + ":" + host;
+            return host + ":" + path;
         }
 
         public static Context fromString(String stringRepresentation) {

@@ -42,7 +42,7 @@ public class ProxyInfo {
             String[] contextPieces = rawContext.split(",");
             String actualContext = contextPieces[1].substring(contextPieces[1].indexOf("/")).trim();
 
-            availableContexts.add(new Context(actualContext, "localhost"));
+            availableContexts.add(new Context("localhost", actualContext));
         }
     }
 
@@ -54,7 +54,7 @@ public class ProxyInfo {
         String path;
         String host;
 
-        public Context(String path, String host) {
+        public Context(String host, String path) {
             this.path = path;
             this.host = host;
         }
@@ -77,25 +77,12 @@ public class ProxyInfo {
 
         @Override
         public String toString() {
-            return "Context [path=" + path + ", host=" + host + "]";
+            return path + ":" + host;
         }
 
         public static Context fromString(String stringRepresentation) {
-            stringRepresentation = stringRepresentation.substring(stringRepresentation.indexOf('[') + 1);
-            stringRepresentation = stringRepresentation.substring(0, stringRepresentation.indexOf(']'));
-            stringRepresentation = stringRepresentation.trim();
-
-            String host = null;
-            String path = null;
-            for (String part : stringRepresentation.split(",")) {
-                part = part.trim();
-                if (part.startsWith("path=")) {
-                    path = part.substring(5).trim();
-                } else if (part.startsWith("host=")) {
-                    host = part.substring(5).trim();
-                }
-            }
-            return new Context(path, host);
+            String part[] = stringRepresentation.trim().split(":");
+            return new Context(part[0], part[1]);
         }
     }
 }

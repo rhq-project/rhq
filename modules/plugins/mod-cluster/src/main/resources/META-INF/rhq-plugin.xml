@@ -74,7 +74,7 @@
       <metric property="className" displayName="Fully qualified class name of the managed object" displayType="summary" dataType="trait" />
       
       <resource-configuration>
-      	<c:simple-property name="workerTimeout" type="integer" description="Timeout to wait for an available worker (default is no wait)"
+      	<c:simple-property name="workerTimeout" type="integer" description="Timeout to wait for an available worker (default is no wait)" />
       	<c:simple-property name="stickySession" type="boolean" description="Enables sticky session for the cluster."/>
       	<c:simple-property name="stickySessionRemove" type="boolean" description="Remove session when the request cannot be routed to the right node."/>
       	<c:simple-property name="advertise" type="boolean" description="Enable autodiscovery of httpd servers."/>
@@ -83,7 +83,7 @@
       	<c:simple-property name="advertiseSecurityKey" type="integer" description="Security key for discovery."/>
       	<c:simple-property name="stickySessionForce" type="boolean" description="Return an error when the request cannot be routed to the right node."/>
       	<c:simple-property name="balancer" type="string" description="Name of the balancer."/>
-      	<c:simple-property name="flushPackets" type="boolean" descritpion="Allows controlling flusing of packets."/>
+      	<c:simple-property name="flushPackets" type="boolean" description="Allows controlling flusing of packets."/>
       	<c:simple-property name="socketTimeout" type="integer" description="Connection timeout for communication with the proxy." />
       	<c:simple-property name="containerName" type="string" description="Object name of the container."/>
       	<c:simple-property name="domain" type="string" description="Domain parameter, which allows tying a jvmRoute to a particular domain."/>

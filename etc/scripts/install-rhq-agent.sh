@@ -1,5 +1,24 @@
 #!/bin/sh
 
+#
+# This script silently installs an RHQ Agent. It requires that the RHQ Server
+# that the Agent will register with be up and running. It is configured via the
+# following environment variables. For convenience, these variables can be 
+# defined in a file named install-rhq-agent-env.sh located in the same directory
+# as this script.
+#
+# RHQ_AGENT_ENV_URL - the URL or path of the rhq-agent-env.sh to be used by the 
+#                     Agent                     
+# RHQ_AGENT_CONFIGURATION_URL - the URL or path of the agent-configuration.xml 
+#                               to be used by the Agent for its initial 
+#                               configuration
+# RHQ_AGENT_INSTALL_PARENT_DIR - the path of the directory under which the Agent
+#                                install directory (rhq-agent) will be created
+#                                (e.g. $HOME/Applications)
+# RHQ_AGENT_NAME - the Agent name
+# RHQ_AGENT_SERVER_BIND_ADDRESS - the Server bind address
+#
+
 # Define functions.
 abort()
 {
@@ -15,12 +34,23 @@ usage()
    abort "$@" "Usage:   $EXE RHQ_SERVER_URL RHQ_AGENT_ENV_URL RHQ_AGENT_CONFIGURATION_URL RHQ_AGENT_INSTALL_PARENT_DIR" "Example: $EXE http://localhost:7080/ rhq-agent-env.sh agent-configuration.xml ~/Applications"
 }
 
+SCRIPT_PATH=`readlink -e "$0" 2>/dev/null || readlink "$0" 2>/dev/null || echo "$0"`
+SCRIPT_PARENT_DIR=`dirname "$SCRIPT_PATH"`
+
+SCRIPT_ENV_PATH="${SCRIPT_PARENT_DIR}/install-rhq-agent-env.sh"
+if [ -f "$SCRIPT_ENV_PATH" ]; then
+   . "$SCRIPT_ENV_PATH" $*
+else
+   echo "No environment script found at: $SCRIPT_ENV_PATH"
+fi
+
 # Process command line args.
 EXE=`basename $0`
 if [ "$#" -ne 4 ]; then
    usage "Invalid number of arguments."
 fi  
-RHQ_SERVER_URL="$1"
+
+RHQ_SERVER_URL="http://$RHQ_AGENT_SERVER_BIND_ADDRESS:7080/"
 RHQ_AGENT_ENV_URL="$2"
 RHQ_AGENT_CONFIGURATION_URL="$3"
 RHQ_AGENT_INSTALL_PARENT_DIR="$4"

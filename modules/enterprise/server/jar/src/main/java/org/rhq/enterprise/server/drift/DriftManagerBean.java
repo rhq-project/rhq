@@ -24,6 +24,7 @@ import static javax.ejb.TransactionAttributeType.REQUIRES_NEW;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
@@ -262,9 +263,40 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
 
     @Override
     public void storeFiles(File filesZip) throws Exception {
+        // No longer using ZipUtil.walkZipFile because an IOException was getting thrown
+        // after reading the first entry, resulting in subsequent entries being skipped.
+        // DriftFileVisitor passed the ZipInputStream to Hibernate.createBlob, and either
+        // Hibernate, the JDBC driver, or something else is closing the stream which in
+        // turn causes the exception.
+        //
+        // jsanda
 
-        DriftFileVisitor dfVisitor = new DriftFileVisitor(driftManager);
-        ZipUtil.walkZipFile(filesZip, dfVisitor);
+        String zipFileName = filesZip.getName();
+        File tmpDir = new File(System.getProperty("java.io.tmpdir"));
+        File dir = new File(tmpDir, zipFileName.substring(0, zipFileName.indexOf(".")));
+        dir.mkdir();
+
+        ZipUtil.unzipFile(filesZip, dir);
+        for (File file : dir.listFiles()) {
+            DriftFile driftFile = new DriftFile(file.getName());
+            try {
+                driftManager.persistDriftFileData(driftFile, new FileInputStream(file));
+            } catch (Exception e) {
+                LogFactory.getLog(getClass()).info("Skipping bad drift file", e);
+            }
+        }
+
+        for (File file : dir.listFiles()) {
+            file.delete();
+        }
+        boolean deleted = dir.delete();
+        if (!deleted) {
+            LogFactory.getLog(getClass()).info("Unable to delete " + dir.getAbsolutePath() + ". This directory and " +
+                "its contents are no longer needed. It can be deleted.");
+        }
+
+//        DriftFileVisitor dfVisitor = new DriftFileVisitor(driftManager);
+//        ZipUtil.walkZipFile(filesZip, dfVisitor);
 
     }
 

@@ -47,10 +47,9 @@ import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
-import org.rhq.plugins.modcluster.ProxyInfo;
 
 /**
- * @author Fady Matar
+ * @author Stefan Negrea
  */
 @Test(groups = "modcluster-plugin")
 public class ModclusterPluginTest {
@@ -80,31 +79,6 @@ public class ModclusterPluginTest {
     @AfterSuite
     public void stop() {
         PluginContainer.getInstance().shutdown();
-    }
-
-    @Test
-    public void testProxyInfo() {
-        String test = "{mobile-work/192.168.1.40:6666=Node: [1],Name: 4e6189af-0502-3305-8ff3-fad7fee8b516,Balancer: mycluster,LBGroup: ,Host: 127.0.0.1,Port: 8009,Type: ajp,Flushpackets: Off,Flushwait: 10,Ping: 10,Smax: 26,Ttl: 60,Elected: 3233,Read: 7355619,Transfered: 0,Connected: 0,Load: 100\n"
-            + "Node: [2],Name: node2,Balancer: mycluster,LBGroup: ,Host: 127.0.0.1,Port: 8009,Type: ajp,Flushpackets: Off,Flushwait: 10,Ping: 10,Smax: 26,Ttl: 60,Elected: 0,Read: 0,Transfered: 0,Connected: 0,Load: 99\n"
-            + "Vhost: [1:1:1], Alias: localhost\n"
-            + "Vhost: [2:1:2], Alias: localhost\n"
-            + "Context: [1:1:1], Context: /invoker, Status: DISABLED\n"
-            + "Context: [1:1:2], Context: /loaddemo, Status: DISABLED\n"
-            + "Context: [1:1:3], Context: /jbossws, Status: DISABLED\n"
-            + "Context: [1:1:4], Context: /juddi, Status: DISABLED\n"
-            + "Context: [1:1:5], Context: /jbossmq-httpil, Status: DISABLED\n"
-            + "Context: [1:1:6], Context: /web-console, Status: DISABLED\n"
-            + "Context: [1:1:7], Context: /jmx-console, Status: DISABLED\n"
-            + "Context: [1:1:8], Context: /, Status: DISABLED\n"
-            + "Context: [2:1:9], Context: /loaddemo, Status: ENABLED\n" + "}";
-
-        ProxyInfo proxyInfo = new ProxyInfo(test);
-
-        for (ProxyInfo.Context context : proxyInfo.getAvailableContexts()) {
-            log.info(context.toString());
-        }
-
-        assert (proxyInfo.getAvailableContexts().size() != 0) : "Raw proxy info parsing failed!";
     }
 
     @Test

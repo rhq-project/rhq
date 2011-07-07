@@ -415,6 +415,12 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             log.debug("Overlord is asynchronously deleting resource [" + attachedResource + "]");
         }
 
+        // our unidirectional one-to-many mapping of drift config makes it not possible to easily bulk delete drift config
+        // so remove them here and let cascading of delete_orphan do the work
+        if (attachedResource.getDriftConfigurations() != null) {
+            attachedResource.getDriftConfigurations().clear();
+        }
+
         // one more thing, delete any autogroup backing groups
         if (attachedResource != null) {
             List<ResourceGroup> backingGroups = attachedResource.getAutoGroupBackingGroups();
@@ -518,8 +524,9 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                 continue;
             }
 
-            if (debugEnabled)
+            if (debugEnabled) {
                 log.debug("uninv, running query: " + namedQueryToExecute);
+            }
             hasErrors |= resourceManager.bulkNamedQueryDeleteInNewTransaction(overlord, namedQueryToExecute,
                 resourceIds);
         }

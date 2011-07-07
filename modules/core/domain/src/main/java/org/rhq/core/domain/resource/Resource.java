@@ -1076,6 +1076,7 @@ public class Resource implements Comparable<Resource>, Serializable {
 
     @JoinTable(name = "RHQ_DRIFT_CONFIG_MAP", joinColumns = { @JoinColumn(name = "RESOURCE_ID") }, inverseJoinColumns = { @JoinColumn(name = "CONFIG_ID") })
     @OneToMany(fetch = FetchType.LAZY, cascade = { CascadeType.ALL })
+    @org.hibernate.annotations.Cascade(org.hibernate.annotations.CascadeType.DELETE_ORPHAN)
     private Set<Configuration> driftConfigurations = null;
 
     public Resource() {

@@ -51,14 +51,6 @@
             </configuration>
         </content>
 
-        <drift-configuration name="drift1">
-           <basedir>
-              <value-context>pluginConfiguration</value-context>
-               <value-name>connectionPropertyX</value-name>
-           </basedir>
-        </drift-configuration>
-
-<!-- THIS CAUSES A DEADLOCK DURING PLUGIN REGISTRATION! -->
         <bundle-target>
            <destination-base-dir name="bundleTarget1">
                <value-context>pluginConfiguration</value-context>

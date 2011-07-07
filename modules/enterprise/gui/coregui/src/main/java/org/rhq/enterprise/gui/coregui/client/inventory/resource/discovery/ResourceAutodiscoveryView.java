@@ -265,19 +265,24 @@ public class ResourceAutodiscoveryView extends LocatableVLayout implements Refre
                 SC.ask(MSG.view_autoDiscoveryQ_confirmSelectAll(), new BooleanCallback() {
                     public void execute(Boolean selectChildServers) {
                         selectionChangedHandlerDisabled = true;
+                        TreeNode[] nodesToSelect;
                         if (selectChildServers) {
-                            treeGrid.selectAllRecords();
+                            // NOTE: We do not use treeGrid.selectAllRecords() here, because it only selects nodes that
+                            //       are currently visible, and we want to select all nodes, including server nodes
+                            //       under a collapsed platform node.
+                            nodesToSelect = treeGrid.getTree().getAllNodes();
                         } else {
-                            // Select only the platforms.
                             TreeNode rootNode = treeGrid.getTree().getRoot();
-                            TreeNode[] platformNodes = treeGrid.getTree().getChildren(rootNode);
-                            for (TreeNode platformNode : platformNodes) {
-                                treeGrid.selectRecord(platformNode);
-                            }
+                            // The children of the root node are the platform nodes.
+                            nodesToSelect = treeGrid.getTree().getChildren(rootNode);
                         }
-                        selectionChangedHandlerDisabled = false;
+                        for (TreeNode nodeToSelect : nodesToSelect) {
+                            treeGrid.selectRecord(nodeToSelect);
+                        }
+                        treeGrid.markForRedraw();
                         updateButtonEnablement(selectAllButton, deselectAllButton, importButton, ignoreButton,
                                 unignoreButton);
+                        selectionChangedHandlerDisabled = false;
                     }
                 });
             }
@@ -287,8 +292,9 @@ public class ResourceAutodiscoveryView extends LocatableVLayout implements Refre
             public void onClick(ClickEvent clickEvent) {
                 selectionChangedHandlerDisabled = true;
                 treeGrid.deselectAllRecords();
-                selectionChangedHandlerDisabled = false;
+                treeGrid.markForRedraw();
                 updateButtonEnablement(selectAllButton, deselectAllButton, importButton, ignoreButton, unignoreButton);
+                selectionChangedHandlerDisabled = false;
             }
         });
 

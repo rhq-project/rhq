@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.discovery;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -91,6 +92,7 @@ import org.rhq.enterprise.server.system.SystemManagerLocal;
  */
 @Stateless
 public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemote {
+
     private final Log log = LogFactory.getLog(DiscoveryBossBean.class.getName());
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
@@ -101,7 +103,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
     @EJB
     private AuthorizationManagerLocal authorizationManager;
     @EJB
-    private DiscoveryBossLocal discoveryBoss; // ourself for Tx purposes
+    private DiscoveryBossLocal discoveryBoss; // ourselves for Tx purposes
     @EJB
     private ResourceGroupManagerLocal groupManager;
     @EJB
@@ -914,26 +916,56 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             + "    FROM Resource res " //
             + "   WHERE res.id IN ( :resourceIds ) " //
             + "GROUP BY res.inventoryStatus ");
-        query.setParameter("resourceIds", ArrayUtils.wrapInList(resourceIds));
-        List<InventoryStatus> results = query.getResultList();
+        List<Integer> resourceIdList = ArrayUtils.wrapInList(resourceIds);
+
+        // Do one query per 1000 Resource id's to prevent Oracle from failing because of an IN clause with more
+        // than 1000 items.
+        List<InventoryStatus> results = new ArrayList(resourceIds.length);
+        int fromIndex = 0;
+        while (fromIndex < resourceIds.length) {
+            int toIndex = (resourceIds.length < (fromIndex + 1000)) ? resourceIds.length : (fromIndex + 1000);
+
+            List<Integer> resourceIdSubList = resourceIdList.subList(fromIndex, toIndex);
+            query.setParameter("resourceIds", resourceIdSubList);
+            List<InventoryStatus> batchResults = query.getResultList();
+            results.addAll(batchResults);
+
+            fromIndex = toIndex;
+        }
 
         for (InventoryStatus expected : validStatuses) {
             results.remove(expected);
         }
-        if (results.size() > 0) {
-            throw new IllegalArgumentException("Can only commit resources with status: " + results);
+        if (!results.isEmpty()) {
+            throw new IllegalArgumentException("Can only set inventory status to [" + target
+                    + "] for Resources with current inventory status of one of [" + validStatuses + "].");
         }
 
-        PageList<Resource> resources = resourceManager.findResourceByIds(subject, resourceIds, false, PageControl
-            .getUnlimitedInstance());
+        // Do one query per 1000 Resource id's to prevent Oracle from failing because of an IN clause with more
+        // than 1000 items.
+        List<Resource> resources = new ArrayList(resourceIds.length);
+        fromIndex = 0;
+        while (fromIndex < resourceIds.length) {
+            int toIndex = (resourceIds.length < (fromIndex + 1000)) ? resourceIds.length : (fromIndex + 1000);
+
+            int[] resourceIdSubArray = Arrays.copyOfRange(resourceIds, fromIndex, toIndex);
+            PageList<Resource> batchResources = resourceManager.findResourceByIds(subject, resourceIdSubArray, false,
+                    PageControl.getUnlimitedInstance());
+            resources.addAll(batchResources);
+
+            fromIndex = toIndex;
+        }
+
+        // Split the Resources into two lists - one for platforms and one for servers, since that's what
+        // updateInventoryStatus() expects.
         List<Resource> platforms = new ArrayList<Resource>();
         List<Resource> servers = new ArrayList<Resource>();
-        for (Resource res : resources) {
-            ResourceCategory category = res.getResourceType().getCategory();
+        for (Resource resource : resources) {
+            ResourceCategory category = resource.getResourceType().getCategory();
             if (category == ResourceCategory.PLATFORM) {
-                platforms.add(res);
+                platforms.add(resource);
             } else if (category == ResourceCategory.SERVER) {
-                servers.add(res);
+                servers.add(resource);
             } else {
                 throw new IllegalArgumentException("Can not directly change the inventory status of a service");
             }
@@ -945,4 +977,5 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
     private static <T> boolean needsUpgrade(T oldValue, T newValue) {
         return newValue != null && (oldValue == null || !newValue.equals(oldValue));
     }
+
 }

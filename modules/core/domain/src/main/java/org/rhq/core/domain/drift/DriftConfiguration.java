@@ -137,6 +137,9 @@ public class DriftConfiguration implements Serializable {
         }
     }
 
+    /**
+     * @deprecated this is not to be used and will be removed
+     */
     private Resource resource;
 
     private Configuration configuration;
@@ -268,10 +271,16 @@ public class DriftConfiguration implements Serializable {
         return filters;
     }
 
+    /**
+     * @deprecated this is not to be used and will be removed
+     */
     public Resource getResource() {
         return resource;
     }
 
+    /**
+     * @deprecated this is not to be used and will be removed
+     */
     public void setResource(Resource resource) {
         this.resource = resource;
     }

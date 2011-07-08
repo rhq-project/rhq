@@ -34,7 +34,7 @@
         </operation>
 
         <metric displayName="Metric 1" property="metric1" displayType="summary" defaultInterval="300000"/>
-        <metric displayName="Metric 2" property="metric2" displayType="summary" defaultInterval="300000" dataType="summary"/>
+        <metric displayName="Metric 2" property="metric2" displayType="summary" defaultInterval="300000" dataType="trait"/>
 
         <event name="logAEntry" description="an entry was appended to a log file"/>
         <event name="logBEntry" description="an entry was appended to a log file"/>

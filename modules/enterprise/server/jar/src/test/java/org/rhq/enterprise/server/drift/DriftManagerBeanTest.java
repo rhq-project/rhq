@@ -244,7 +244,7 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
             try {
                 // wipe out any test DriftFiles (the test files have sha256 0,1,...)
                 for (int i = 0, numDeleted = 1; (numDeleted > 0); ++i) {
-                    numDeleted = getEntityManager().createQuery("delete from DriftFile where sha256 = '" + i + "'")
+                    numDeleted = getEntityManager().createQuery("delete from DriftFile where hash_id = '" + i + "'")
                         .executeUpdate();
                 }
             } catch (Exception e) {

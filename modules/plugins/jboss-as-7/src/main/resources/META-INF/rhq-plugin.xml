@@ -825,18 +825,18 @@
                          description="Specifies the delimeter for URLs in connection-url for HA datasources" required="false"/>
                 <c:simple-property name="url-selector-strategy-class-name" type="string" readOnly="true"
                          description="A class that implements org.jboss.jca.adapters.jdbc.URLSelectorStrategy" required="false"/>
-                <c:simple-property name="use-java-context" type="boolean" readOnly="true"
+                <c:simple-property name="use-java-context" type="boolean" readOnly="true" required="false"
                          description="Setting this to false will bind the DataSource into global JNDI;"/>
                 <c:simple-property name="enabled" type="boolean" readOnly="true" required="false" description="Specifies if the datasource should be enabled"/>
                 <c:simple-property name="max-pool-size" type="integer" readOnly="false" required="false"
                          description="The max-pool-size element indicates the maximum number of connections for a pool. No more connections will be created in each sub-pool."/>
                 <c:simple-property name="min-pool-size" type="integer" readOnly="false" required="false"
                          description="The min-pool-size element indicates the minimum number of connections a pool should hold. These are not created until a Subject is known from a request for a connection."/>
-                <c:simple-property name="pool-prefill" type="boolean" readOnly="false"
+                <c:simple-property name="pool-prefill" type="boolean" readOnly="false" required="false"
                          description="Whether to attempt to prefill the connection pool. Changing this value require a server restart."/>
-                <c:simple-property name="pool-use-strict-min" type="boolean" readOnly="false"
+                <c:simple-property name="pool-use-strict-min" type="boolean" readOnly="false" required="false"
                          description="Define if the min-pool-size should be considered a strictly."/>
-                <c:simple-property name="user-name" type="string" readOnly="true"
+                <c:simple-property name="user-name" type="string" readOnly="true" required="false"
                          description="Specify the username used when creating a new connection."/>
                 <c:simple-property name="password" type="password" readOnly="true"
                          description="Specify the passwprd used when creating a new connection."/>
@@ -872,14 +872,15 @@
                          description="An org.jboss.jca.adapters.jdbc.ValidConnectionChecker that provides a SQLException isValidConnection(Connection e) method to validate is a connection is valid. An exception means the connection is destroyed. This overrides the check-valid-connection-sql when present."/>
                 <c:simple-property name="background-validation-minutes" type="long" readOnly="false" required="false"
                          description="The background-validation-minutes element specifies the amount of time, in minutes, that background validation will run. Changing this value require a server restart."/>
-                <c:simple-property name="background-validation" type="boolean" readOnly="false"
+                <c:simple-property name="background-validation" type="boolean" readOnly="false" required="false"
                          description="An element to specify that connections should be validated on a background thread versus being validated prior to use. Changing this value require a server restart."/>
-                <c:simple-property name="use-fast-fail" type="boolean" readOnly="false"
+                <c:simple-property name="use-fast-fail" type="boolean" readOnly="false" required="false"
                          description="Whether fail a connection allocation on the first connection if it is invalid (true) or keep trying until the pool is exhausted of all potential connections (false)"/>
-                <c:simple-property name="validate-on-match" type="boolean" readOnly="true"
+                <c:simple-property name="validate-on-match" type="boolean" readOnly="true" required="false"
                          description="The validate-on-match element indicates whether or not connection level validation should be done when a connection factory attempts to match a managed connection for a given set. This is typically exclusive to the use of background validation"/>
                 <c:simple-property name="spy" type="boolean" readOnly="true" required="false"
                          description="whatever spy or not the jdbc connection"/>
+                <c:simple-property name="use-ccm" type="boolean" readOnly="true" required="false" description="Enable the use of a cached connection manager"/>
             </resource-configuration>
         </service>
 

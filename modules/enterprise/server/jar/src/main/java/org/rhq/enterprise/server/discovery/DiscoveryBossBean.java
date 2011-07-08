@@ -920,25 +920,24 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
 
         // Do one query per 1000 Resource id's to prevent Oracle from failing because of an IN clause with more
         // than 1000 items.
-        List<InventoryStatus> results = new ArrayList(resourceIds.length);
+        // After the below while loop completes, this Set will contain the statuses represented by the Resources with
+        // the passed in id's.
+        Set<InventoryStatus> statuses = EnumSet.noneOf(InventoryStatus.class);
         int fromIndex = 0;
         while (fromIndex < resourceIds.length) {
             int toIndex = (resourceIds.length < (fromIndex + 1000)) ? resourceIds.length : (fromIndex + 1000);
 
             List<Integer> resourceIdSubList = resourceIdList.subList(fromIndex, toIndex);
             query.setParameter("resourceIds", resourceIdSubList);
-            List<InventoryStatus> batchResults = query.getResultList();
-            results.addAll(batchResults);
+            List<InventoryStatus> batchStatuses = query.getResultList();
+            statuses.addAll(batchStatuses);
 
             fromIndex = toIndex;
         }
 
-        for (InventoryStatus expected : validStatuses) {
-            results.remove(expected);
-        }
-        if (!results.isEmpty()) {
+        if (!validStatuses.containsAll(statuses)) {
             throw new IllegalArgumentException("Can only set inventory status to [" + target
-                    + "] for Resources with current inventory status of one of [" + validStatuses + "].");
+                + "] for Resources with current inventory status of one of [" + validStatuses + "].");
         }
 
         // Do one query per 1000 Resource id's to prevent Oracle from failing because of an IN clause with more

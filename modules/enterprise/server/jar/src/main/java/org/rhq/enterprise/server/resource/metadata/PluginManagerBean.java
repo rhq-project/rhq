@@ -395,41 +395,6 @@ public class PluginManagerBean implements PluginManagerLocal {
 
     public boolean registerPluginTypes(Plugin newPlugin, PluginDescriptor pluginDescriptor, boolean newOrUpdated,
         boolean forceUpdate) throws Exception {
-
-        // TODO GH: Consider how to remove features from plugins in updates without breaking everything
-
-//        Plugin existingPlugin = null;
-//        boolean newOrUpdated = false;
-//        boolean typesUpdated = false;
-//
-//        try {
-//            existingPlugin = getPlugin(newPlugin.getName());
-//        } catch (NoResultException nre) {
-//            newOrUpdated = true; // this is expected for new plugins
-//        }
-//
-//        if (existingPlugin != null) {
-//            Plugin obsolete = AgentPluginDescriptorUtil.determineObsoletePlugin(newPlugin, existingPlugin);
-//            if (obsolete == existingPlugin) { // yes, use == for reference equality
-//                newOrUpdated = true;
-//            }
-//            newPlugin.setId(existingPlugin.getId());
-//            newPlugin.setEnabled(existingPlugin.isEnabled());
-//        }
-//
-//        // If this is a brand new plugin, it gets "updated" too.
-//        if (newOrUpdated) {
-//            if (newPlugin.getDisplayName() == null) {
-//                newPlugin.setDisplayName(newPlugin.getName());
-//            }
-//
-//            newPlugin = updatePluginExceptContent(newPlugin);
-//            if (pluginFile != null) {
-//                entityManager.flush();
-//                streamPluginFileContentToDatabase(newPlugin.getId(), pluginFile);
-//            }
-//            log.debug("Updated plugin entity [" + newPlugin + "]");
-//        }
         boolean typesUpdated = false;
 
         if (newOrUpdated || forceUpdate || !PLUGIN_METADATA_MANAGER.getPluginNames().contains(newPlugin.getName())) {
@@ -443,10 +408,6 @@ public class PluginManagerBean implements PluginManagerLocal {
                 typesUpdated = true;
             }
         }
-
-        // TODO GH: JBNADM-1310/JBNADM-1630 - Push updated plugins to running agents and have them reboot their PCs
-        // We probably want to be smart about this - perhaps have the agents periodically poll their server to see
-        // if there are new plugins and if so download them - this of course would be configurable/disableable
 
         return typesUpdated;
     }

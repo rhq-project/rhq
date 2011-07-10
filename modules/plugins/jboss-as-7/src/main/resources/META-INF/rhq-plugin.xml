@@ -709,6 +709,7 @@
             discovery="SubsystemDiscovery"
             class="DatasourceComponent"
             singleton="true"
+            description="Datasources subsystem"
             >
 
         <runs-inside>
@@ -779,7 +780,7 @@
         <service name="DataSource"
                  discovery="SubsystemDiscovery"
                  class="DatasourceComponent"
-                 singleton="true"
+                 description="A non-XA data source"
                 >
 
             <plugin-configuration>
@@ -887,7 +888,7 @@
         <service name="XADataSource"
                  discovery="SubsystemDiscovery"
                  class="BaseComponent"
-                 singleton="true"
+                 description="An XA data source"
                 >
 
             <plugin-configuration>

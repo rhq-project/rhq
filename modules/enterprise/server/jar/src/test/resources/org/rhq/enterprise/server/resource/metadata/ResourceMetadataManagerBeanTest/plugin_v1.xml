@@ -51,6 +51,13 @@
             </configuration>
         </content>
 
+        <bundle-target>
+           <destination-base-dir name="bundleTarget1">
+               <value-context>pluginConfiguration</value-context>
+               <value-name>connectionPropertyY</value-name>
+           </destination-base-dir>
+        </bundle-target>
+
         <service name="Child1" description="Child 1 description"/>
         <service name="Child2" description="Child 2 description"/>
     </server>

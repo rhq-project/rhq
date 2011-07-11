@@ -35,10 +35,6 @@ import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
-import org.rhq.core.domain.drift.DriftConfiguration;
-import org.rhq.core.domain.drift.DriftConfigurationDefinition;
-import org.rhq.core.domain.drift.DriftConfiguration.BaseDirectory;
-import org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 import org.rhq.enterprise.gui.coregui.client.util.FormUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
@@ -95,25 +91,15 @@ public class DriftAddConfigWizardInfoStep extends AbstractWizardStep {
 
             Set<ConfigurationTemplate> templates = wizard.getType().getDriftConfigurationTemplates();
             final HashMap<String, ConfigurationTemplate> templatesMap = new HashMap<String, ConfigurationTemplate>(
-                templates.size() + 1);
+                templates.size());
             if (!templates.isEmpty()) {
                 for (ConfigurationTemplate template : templates) {
                     templatesMap.put(template.getName(), template);
                 }
             } else {
-                // TODO this should throw an error as there should be at least one template (can remove the +1 sizing above when changing)
-                // throw new IllegalStateException( "At least one drift configuration template should exist for the resource type" );
-                ConfigurationTemplate test = new ConfigurationTemplate("Test", "Test");
-                Configuration config = new Configuration();
-                DriftConfiguration driftConfig = new DriftConfiguration(config);
-                driftConfig
-                    .setBasedir(new BaseDirectory(BaseDirValueContext.fileSystem,
-                        "C:/workspace/rhq/dev-container/jbossas/server/default/deploy/rhq.ear/coregui.war/images/subsystems/content"));
-                driftConfig.setName("Test");
-                driftConfig.setInterval(6000L);
-                test.setConfiguration(driftConfig.getConfiguration());
-                test.setConfigurationDefinition(DriftConfigurationDefinition.getInstance());
-                templatesMap.put("TestOnly", test);
+                // there should be at least one template for any resource type that supports drift monitoring
+                throw new IllegalStateException(
+                    "At least one drift configuration template should exist for the resource type");
             }
 
             templateSelect.setValueMap(templatesMap.keySet().toArray(new String[templatesMap.size()]));

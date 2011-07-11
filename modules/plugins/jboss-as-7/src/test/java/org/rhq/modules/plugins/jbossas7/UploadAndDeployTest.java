@@ -48,7 +48,7 @@ public class UploadAndDeployTest extends AbstractIntegrationTest {
 
     private  String TEST_WAR = "test-simple.war";
 
-    protected static final boolean isEnabled = true;
+    protected static final boolean isEnabled = false;
 
     @Test(timeOut = 60*1000L, enabled=isEnabled)
     public void testUploadOnly() throws Exception {

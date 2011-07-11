@@ -340,6 +340,12 @@
 
       <profile>
          <id>oracle</id>
+         <activation>
+           <property>
+             <name>rhq.test.db.type</name>
+             <value>oracle</value>
+           </property>
+         </activation>
          <build>
             <plugins>
                <plugin>

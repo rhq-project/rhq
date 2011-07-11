@@ -60,7 +60,7 @@
       		<c:simple-property name="result" type="boolean" description="The result of the operation" />
       	</results>
       </operation>
-      <operation name="refreshProxy" displayName="Remove a proxy" description="Remove a proxy.">
+      <operation name="removeProxy" displayName="Remove a proxy" description="Remove a proxy.">
 		<parameters>
         	<c:simple-property required="true" name="host" type="string" displayName="Proxy address"/>
             <c:simple-property required="true" name="port" type="string" displayName="Proxy port"/>

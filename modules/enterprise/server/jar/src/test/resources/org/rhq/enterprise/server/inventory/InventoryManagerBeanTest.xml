@@ -5,6 +5,10 @@
     <rhq_conf_prop_def_enum/>
     <rhq_config_prop_constr/>
 
+    <rhq_config/>
+    <rhq_config_property/>
+    <rhq_config_template/>
+
     <rhq_resource_type id="1"
                        name="TestServer1"
                        category="SERVER"
@@ -75,9 +79,6 @@
     <rhq_operation_def/>
     <rhq_package_type/>
     <rhq_bundle_type/>
-    <rhq_config/>
-    <rhq_config_property/>
-    <rhq_config_template/>
 
     <rhq_resource id="1"
                   resource_type_id="1"

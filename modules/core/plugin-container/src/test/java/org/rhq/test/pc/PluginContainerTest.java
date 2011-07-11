@@ -175,7 +175,7 @@ public class PluginContainerTest extends JMockTest {
                 Thread.sleep(100);
             }
         } catch (InterruptedException e) {
-            throw new IllegalStateException("Thread interrupted while waiting for plugin container to start.");
+            throw new IllegalStateException("Thread interrupted while waiting for plugin container to start.", e);
         }
         
         InventoryManager im = PluginContainer.getInstance().getInventoryManager();

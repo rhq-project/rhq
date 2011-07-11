@@ -39,6 +39,14 @@
          </destination-base-dir>
       </bundle-target>
 '>
+ <!ENTITY driftConfig '
+      <drift-configuration name="File System">
+          <basedir>
+              <value-context>fileSystem</value-context>
+              <value-name>/</value-name>
+          </basedir>
+      </drift-configuration>
+'>
  <!ENTITY metrics '      
       <metric displayName="Hostname"
               property="Trait.hostname"
@@ -257,6 +265,7 @@
          </configuration>
       </content>
       
+      &driftConfig;
       &bundleTarget;
 
    </platform>
@@ -353,6 +362,7 @@
       </content>
 -->
 
+      &driftConfig;
       &bundleTarget;
 
    </platform>
@@ -372,6 +382,7 @@
       &platformCpu;
       &metrics;
       &syslogEventDefinition;
+      &driftConfig;
       &bundleTarget;
 
    </platform>
@@ -385,6 +396,7 @@
       &nativeMetrics;
       &platformCpu;
       &metrics;
+      &driftConfig;
       &bundleTarget;
    </platform>
    
@@ -397,6 +409,7 @@
       &nativeMetrics;
       &platformCpu;
       &metrics;
+      &driftConfig;
       &bundleTarget;      
    </platform>
    
@@ -409,6 +422,7 @@
       &nativeMetrics;
       &platformCpu;
       &metrics;
+      &driftConfig;
       &bundleTarget;
    </platform>
    
@@ -426,6 +440,7 @@
       &platformCpu;
       &metrics;
       &syslogEventDefinition;
+      &driftConfig;
       &bundleTarget;
    </platform>
    
@@ -436,6 +451,7 @@
       &platformSubcategories;
       &platformOperations;
       &metrics;
+      &driftConfig;
       &bundleTarget;
    </platform>
 

@@ -36,6 +36,7 @@ import org.rhq.core.domain.resource.ResourceUpgradeReport;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.inventory.ResourceContainer;
+import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
@@ -212,7 +213,13 @@ public class ResourceUpgradeDelegate {
                     ResourceContainer container = inventoryManager.getResourceContainer(request.getResourceId());
                     if (container != null) {
                         Resource resource = container.getResource();
-                        inventoryManager.activateResource(resource, container, true);
+                        try {
+                            inventoryManager.activateResource(resource, container, true);
+                        } catch (InvalidPluginConfigurationException e) {
+                            log.debug("Resource [" + resource + "] failed to start up after upgrade.", e);
+                        } catch (Throwable t) {
+                            log.error("Failed to activate the resource [" + resource + "] after upgrade.", t);
+                        }
                     }
                 }
             } catch (Throwable t) {

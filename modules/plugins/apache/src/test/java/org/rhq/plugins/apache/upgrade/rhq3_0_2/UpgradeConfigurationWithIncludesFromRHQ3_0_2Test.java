@@ -27,7 +27,8 @@ package org.rhq.plugins.apache.upgrade.rhq3_0_2;
 public class UpgradeConfigurationWithIncludesFromRHQ3_0_2Test extends UpgradeSimpleConfigurationFromRHQ3_0_2Test {
 
     public UpgradeConfigurationWithIncludesFromRHQ3_0_2Test() {
-        super("/mocked-inventories/rhq-3.0.2/includes/inventory.xml", "/full-configurations/2.2.x/includes/httpd.conf",
+        super("/mocked-inventories/rhq-3.0.2/includes/inventory.xml", 
+            "/mocked-inventories/rhq-3.0.2/includes/inventory-single-vhost.xml", "/full-configurations/2.2.x/includes/httpd.conf",
             "/full-configurations/2.2.x/includes/1.vhost.conf", "/full-configurations/2.2.x/includes/2.vhost.conf");
     }
 }

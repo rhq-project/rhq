@@ -17,20 +17,18 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.plugins.apache.upgrade.rhq1_3_x;
+package org.rhq.plugins.apache.upgrade.rhq3_0_0;
 
 /**
  * 
  *
  * @author Lukas Krejci
  */
-public class UpgradeConfigurationWithIncludesFromRHQ1_3Test extends UpgradeSimpleConfigurationFromRHQ1_3Test {
+public class UpgradeMessyConfigurationFromRHQ3_0_0Test extends UpgradeNestedConfigurationFromRHQ3_0_0Test {
 
-    public UpgradeConfigurationWithIncludesFromRHQ1_3Test() {
-        super("/mocked-inventories/rhq-1.3.x/includes/inventory.xml",
-            "/mocked-inventories/rhq-1.3.x/includes/inventory-single-vhost.xml",
-            "/full-configurations/2.2.x/includes/httpd.conf", "/full-configurations/2.2.x/includes/1.vhost.conf",
-            "/full-configurations/2.2.x/includes/2.vhost.conf");
+    public UpgradeMessyConfigurationFromRHQ3_0_0Test() {
+        super("/mocked-inventories/rhq-3.0.0/mess/inventory-without-snmp.xml",
+            "/mocked-inventories/rhq-3.0.0/mess/inventory-with-snmp.xml", "/full-configurations/2.2.x/mess/httpd.conf",
+            "/full-configurations/2.2.x/mess/1.vhost.conf", "/full-configurations/2.2.x/mess/2.vhost.conf");
     }
-
 }

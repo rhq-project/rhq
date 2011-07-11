@@ -398,7 +398,7 @@
         <propertySimple>
             <id>10795</id>
             <name>url</name>
-            <stringValue>http://${localhost}:${port1}/</stringValue>
+            <stringValue>http://${localhost.ip}:${port1}/</stringValue>
         </propertySimple>
         <propertySimple>
             <id>10709</id>

@@ -24,6 +24,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.net.InetAddress;
@@ -41,6 +42,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.unitils.thirdparty.org.apache.commons.io.FileUtils;
 
+import org.rhq.core.util.file.FileUtil;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.plugins.apache.util.HttpdAddressUtility.Address;
 import org.rhq.test.TokenReplacingProperties;
@@ -100,6 +102,11 @@ public class ApacheDeploymentUtil {
             }
 
             private String getServerName(Map<String, String> replacements) {
+                String serverName = getServerName();
+                if (serverName == null) {
+                    return null;
+                }
+                
                 TokenReplacingReader rdr = new TokenReplacingReader(new StringReader(getServerName()), replacements);
                 StringWriter wrt = new StringWriter(); 
                 StreamUtil.copy(rdr, wrt);
@@ -224,6 +231,17 @@ public class ApacheDeploymentUtil {
 
             return ret;
         }
+        
+        public VHost getVHost(int number) {
+            switch (number) {
+            case 0 : return mainServer;
+            case 1 : return vhost1;
+            case 2 : return vhost2;
+            case 3 : return vhost3;
+            case 4 : return vhost4;
+            default: throw new IllegalArgumentException();
+            }
+        }
     }
 
     public static void addDefaultVariables(Map<String, String> variables, String prefix) {
@@ -309,8 +327,8 @@ public class ApacheDeploymentUtil {
     }
 
     public static void deployConfiguration(File targetConfDirectory, Collection<String> configFilesOnClasspath,
-        DeploymentConfig config) throws IOException {
-        List<File> targetFiles = new ArrayList<File>();
+        Collection<File> additionalTargetFiles, DeploymentConfig config) throws IOException {
+        List<File> targetFiles = new ArrayList<File>(additionalTargetFiles);
         for (String fileOnClassPath : configFilesOnClasspath) {
             String fileName = new File(fileOnClassPath).getName();
 
@@ -332,7 +350,7 @@ public class ApacheDeploymentUtil {
         Map<String, String> replacements = config.getTokenReplacements();
 
         for (File file : configFiles) {
-            TokenReplacingReader rdr = null;
+            Reader rdr = null;
             FileWriter wrt = null;
 
             try {
@@ -348,11 +366,31 @@ public class ApacheDeploymentUtil {
                     wrt.write(buffer, 0, cnt);
                 }
 
+                rdr.close();
                 wrt.close();
-
-                tmp.renameTo(file);
+                
+                //now overwrite the contents of the original file with the new one.
+                //we don't just move the new file to the location of the original one
+                //here to preserve the file permissions and file mode on the original.
+                FileUtil.copyFile(tmp, file);
             } catch (IOException e) {
                 LOG.error("Error while replacing the tokens in file '" + file + "'.", e);
+                
+                if (rdr != null) {
+                    try {
+                        rdr.close();
+                    } catch (IOException ioe) {
+                        
+                    }
+                }
+                
+                if (wrt != null) {
+                    try {
+                        wrt.close();
+                    } catch (IOException ioe) {
+                        
+                    }
+                }
             }
         }
     }

@@ -19,33 +19,12 @@
 
 package org.rhq.plugins.apache.upgrade.rhq3_0_1;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-
-import java.io.StringReader;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.Arrays;
 
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceError;
-import org.rhq.core.domain.resource.ResourceErrorType;
-import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.util.stream.StreamUtil;
-import org.rhq.plugins.apache.ApacheServerComponent;
-import org.rhq.plugins.apache.ApacheServerDiscoveryComponent;
-import org.rhq.plugins.apache.parser.ApacheDirectiveTree;
 import org.rhq.plugins.apache.upgrade.UpgradeTestBase;
-import org.rhq.plugins.apache.upgrade.UpgradeTestBase.TestConfiguration;
-import org.rhq.plugins.apache.upgrade.UpgradeTestBase.TestSetup;
-import org.rhq.plugins.apache.util.ApacheDeploymentUtil.DeploymentConfig;
-import org.rhq.plugins.apache.util.RuntimeApacheConfiguration;
-import org.rhq.plugins.apache.util.VirtualHostLegacyResourceKeyUtil;
-import org.rhq.test.TokenReplacingReader;
 import org.rhq.test.pc.PluginContainerSetup;
 
 /**
@@ -99,22 +78,11 @@ public class UpgradeSimpleConfigurationFromRHQ3_0_1Test extends UpgradeTestBase 
                 serverRoot = installDir;
                 binPath = exePath;
                 configurationName = DEPLOYMENT_SIMPLE_WITH_RESOLVABLE_SERVERNAMES;
-                upgradeShouldSucceed = false;
             }
             
             @Override
             public void beforeTestSetup(TestSetup testSetup) throws Throwable {
                 defineRHQ3ResourceKeys(this, testSetup);
-            }
-
-            /**
-             * Do our own tests here, because the generic test method won't do much, since
-             * we told it that the upgrade won't succeed.
-             */
-            @Override
-            public void beforeTests(TestSetup setup) throws Throwable {
-                String failingRK = interpret("${main.rhq3.resource.key}", setup.getInventoryFileReplacements());
-                testExpectedFailures(this, setup, 4, failingRK);
             }
         });
     }
@@ -130,7 +98,6 @@ public class UpgradeSimpleConfigurationFromRHQ3_0_1Test extends UpgradeTestBase 
                 serverRoot = installDir;
                 binPath = exePath;
                 configurationName = DEPLOYMENT_SIMPLE_WITH_RESOLVABLE_SERVERNAMES;
-                upgradeShouldSucceed = false;
                 
                 //just define the servername value without actually setting the ${servername.directive} so that
                 //we don't define a servername directive itself but do have a value for the actual server name.
@@ -144,10 +111,24 @@ public class UpgradeSimpleConfigurationFromRHQ3_0_1Test extends UpgradeTestBase 
             }
             
             @Override
-            public void beforeTests(TestSetup setup) throws Throwable {
-                String vhost1RK = interpret("${vhost1.rhq3.resource.key}", setup.getInventoryFileReplacements());
-                testExpectedFailures(this, setup, 5, vhost1RK);
-            }            
+            public String[] getExpectedResourceKeysAfterUpgrade(TestSetup setup) {
+                //the inventory has main, vhost1, vhost2, vhost3 and vhost4
+                //the main vhost uses the URL of the server resource as its RK which is 
+                //setup to be the IP address, whereas vhost1 uses the 'normal'
+                //discovered RK with uses the domain name of that IP.
+                //Therefore, unlike in the WithSNMP test cases, we have 5 vhosts discovered
+                //by RHQ 3.0.1.
+                //The vhost1 will fail to upgrade because it could be ambiguously matched
+                //to either main vhost or vhost1.
+                
+                return getVHostRKs(setup, new int[] { 0, 2, 3, 4 }, new int[] { 1 }, ResourceKeyFormat.RHQ3);
+            }
+            
+            @Override
+            public String[] getExpectedResourceKeysWithFailures(TestSetup setup) {
+                String failedRK = setup.getInventoryFileReplacements().get("vhost1.rhq3.resource.key");
+                return new String[] { failedRK };
+            }
         });
     }
     
@@ -162,7 +143,6 @@ public class UpgradeSimpleConfigurationFromRHQ3_0_1Test extends UpgradeTestBase 
                 serverRoot = installDir;
                 binPath = exePath;
                 configurationName = DEPLOYMENT_SIMPLE_WITH_RESOLVABLE_SERVERNAMES;
-                upgradeShouldSucceed = false;
                 
                 defaultOverrides.put(variableName(configurationName, "servername.directive"), "ServerName ${unresolvable.host}");
                 defaultOverrides.put(variableName(configurationName, "vhost1.servername.directive"), "ServerName ${unresolvable.host}:${listen1}");
@@ -174,16 +154,6 @@ public class UpgradeSimpleConfigurationFromRHQ3_0_1Test extends UpgradeTestBase 
             @Override
             public void beforeTestSetup(TestSetup testSetup) throws Throwable {
                 defineRHQ3ResourceKeys(this, testSetup);
-            }
-
-            /**
-             * Do our own tests here, because the generic test method won't do much, since
-             * we told it that the upgrade won't succeed.
-             */
-            @Override
-            public void beforeTests(TestSetup setup) throws Throwable {
-                String failingRK = interpret("${main.rhq3.resource.key}", setup.getInventoryFileReplacements());
-                testExpectedFailures(this, setup, 4, failingRK);
             }
         });
     }
@@ -228,7 +198,6 @@ public class UpgradeSimpleConfigurationFromRHQ3_0_1Test extends UpgradeTestBase 
                 serverRoot = installDir;
                 binPath = exePath;
                 configurationName = DEPLOYMENT_SIMPLE_WITH_RESOLVABLE_SERVERNAMES;
-                upgradeShouldSucceed = false;
                 
                 defaultOverrides.put(variableName(configurationName, "servername.directive"), "ServerName ${unresolvable.host}");
                 defaultOverrides.put(variableName(configurationName, "vhost1.servername.directive"), "ServerName ${unresolvable.host}");
@@ -240,16 +209,6 @@ public class UpgradeSimpleConfigurationFromRHQ3_0_1Test extends UpgradeTestBase 
             @Override
             public void beforeTestSetup(TestSetup testSetup) throws Throwable {
                 defineRHQ3ResourceKeys(this, testSetup);
-            }
-
-            /**
-             * Do our own tests here, because the generic test method won't do much, since
-             * we told it that the upgrade won't succeed.
-             */
-            @Override
-            public void beforeTests(TestSetup setup) throws Throwable {
-                String failingRK = interpret("${main.rhq3.resource.key}", setup.getInventoryFileReplacements());
-                testExpectedFailures(this, setup, 4, failingRK);
             }
         });
     }
@@ -317,7 +276,6 @@ public class UpgradeSimpleConfigurationFromRHQ3_0_1Test extends UpgradeTestBase 
                 serverRoot = installDir;
                 binPath = exePath;
                 configurationName = DEPLOYMENT_SIMPLE_WITH_RESOLVABLE_SERVERNAMES;
-                upgradeShouldSucceed = false;
             }
             
             @Override
@@ -325,17 +283,30 @@ public class UpgradeSimpleConfigurationFromRHQ3_0_1Test extends UpgradeTestBase 
                 defineRHQ3ResourceKeys(this, testSetup);
             }
 
-            /**
-             * Do our own tests here, because the generic test method won't do much, since
-             * we told it that the upgrade won't succeed.
-             */
             @Override
-            public void beforeTests(TestSetup setup) throws Throwable {
-                String mainVHost1RK = interpret("${main.rhq3.resource.key}", setup.getInventoryFileReplacements());
+            public String[] getExpectedResourceKeysAfterUpgrade(TestSetup setup) {
+                //the inventory has main1, main2, vhost2, vhost3 and vhost4
+                //vhost1 has the same resource key as the main vhost in RHQ 3.0.0
+                //because the upgrade failed for main (because of the ambiguity),
+                //no discoveries are being made
+                //therefore we expect the main to have the old resource key and
+                //vhost2, 3 and 4 to have the new resource keys.
+                
+                String[] ret = getVHostRKs(setup, new int[] { 2, 3, 4 }, new int[] { 0 }, ResourceKeyFormat.RHQ3);
                 String mainVhost2RK = interpret("${localhost}:${port1}", setup.getInventoryFileReplacements());
                 
-                testExpectedFailures(this, setup, 5, mainVHost1RK, mainVhost2RK);
+                ret = Arrays.copyOf(ret, ret.length + 1);
+                ret[ret.length - 1] = mainVhost2RK;
+                
+                return ret;
             }
+            
+            @Override
+            public String[] getExpectedResourceKeysWithFailures(TestSetup setup) {
+                String mainVhost1RK = setup.getInventoryFileReplacements().get("main.rhq3.resource.key");
+                String mainVhost2RK = interpret("${localhost}:${port1}", setup.getInventoryFileReplacements());
+                return new String[] { mainVhost1RK, mainVhost2RK };
+            }            
         });
     }
     
@@ -428,7 +399,6 @@ public class UpgradeSimpleConfigurationFromRHQ3_0_1Test extends UpgradeTestBase 
                 inventoryFile = configuredInventoryFileWithoutSNMP;
                 serverRoot = installPath;
                 binPath = exePath;                                           
-                upgradeShouldSucceed = false;
                 
                 //just define the servername value without actually setting the ${servername.directive} so that
                 //we don't define a servername directive itself but do have a value for the actual server name.
@@ -447,9 +417,23 @@ public class UpgradeSimpleConfigurationFromRHQ3_0_1Test extends UpgradeTestBase 
             }
             
             @Override
-            public void beforeTests(TestSetup setup) throws Throwable {
-                String failingRK = interpret("${vhost1.rhq3.resource.key}", setup.getInventoryFileReplacements());
-                testExpectedFailures(this, setup, 5, failingRK);
+            public String[] getExpectedResourceKeysAfterUpgrade(TestSetup setup) {
+                //the inventory has main, vhost1, vhost2, vhost3 and vhost4
+                //the main vhost uses the URL of the server resource as its RK which is 
+                //setup to be the IP address, whereas vhost1 uses the 'normal'
+                //discovered RK with uses the domain name of that IP.
+                //Therefore, unlike in the WithSNMP test cases, we have 5 vhosts discovered
+                //by RHQ 3.0.1.
+                //The vhost1 will fail to upgrade because it could be ambiguously matched
+                //to either main vhost or vhost1.
+                
+                return getVHostRKs(setup, new int[] { 0, 2, 3, 4 }, new int[] { 1 }, ResourceKeyFormat.RHQ3);
+            }
+            
+            @Override
+            public String[] getExpectedResourceKeysWithFailures(TestSetup setup) {
+                String failedRK = setup.getInventoryFileReplacements().get("vhost1.rhq3.resource.key");
+                return new String[] { failedRK };
             }
         });
     }
@@ -466,7 +450,6 @@ public class UpgradeSimpleConfigurationFromRHQ3_0_1Test extends UpgradeTestBase 
                 inventoryFile = configuredInventoryFileWithSNMP;
                 serverRoot = installPath;
                 binPath = exePath;
-                upgradeShouldSucceed = false;
                 
                 defaultOverrides.put(variableName(configurationName, "listen1"), "*:${port1}");
                 defaultOverrides.put(variableName(configurationName, "listen2"), "*:${port2}");
@@ -479,109 +462,6 @@ public class UpgradeSimpleConfigurationFromRHQ3_0_1Test extends UpgradeTestBase 
             public void beforeTestSetup(TestSetup testSetup) throws Throwable {
                 defineRHQ3ResourceKeys(this, testSetup);
             }
-
-            /**
-             * Do our own tests here, because the generic test method won't do much, since
-             * we told it that the upgrade won't succeed.
-             */
-            @Override
-            public void beforeTests(TestSetup setup) throws Throwable {
-                String failingRK = interpret("${main.rhq3.resource.key}", setup.getInventoryFileReplacements());
-                testExpectedFailures(this, setup, 4, failingRK);
-            }
         });
-    }
-
-    private void defineRHQ3ResourceKeys(TestConfiguration testConfig, TestSetup setup) throws Exception {
-        setup.withApacheSetup().init();
-        ApacheServerComponent component = setup.withApacheSetup().getExecutionUtil().getServerComponent();
-        ApacheDirectiveTree config = component.loadParser();
-        config = RuntimeApacheConfiguration.extract(config, component.getCurrentProcessInfo(), component.getCurrentBinaryInfo(), component.getModuleNames(), false);
-
-        DeploymentConfig deployConfig = setup.getDeploymentConfig();
-        
-        VirtualHostLegacyResourceKeyUtil keyUtil = new VirtualHostLegacyResourceKeyUtil(component, config);
-        
-        Map<String, String> replacements = deployConfig.getTokenReplacements();
-        
-        testConfig.defaultOverrides.put("main.rhq3.resource.key", keyUtil.getRHQ3NonSNMPLegacyMainServerResourceKey());
-        
-        if (deployConfig.vhost1 != null) {                    
-            testConfig.defaultOverrides.put("vhost1.rhq3.resource.key", keyUtil.getRHQ3NonSNMPLegacyVirtualHostResourceKey(deployConfig.vhost1.getVHostSpec(replacements)));
-        }
-        
-        if (deployConfig.vhost2 != null) {
-            testConfig.defaultOverrides.put("vhost2.rhq3.resource.key", keyUtil.getRHQ3NonSNMPLegacyVirtualHostResourceKey(deployConfig.vhost2.getVHostSpec(replacements)));
-        }
-        
-        if (deployConfig.vhost3 != null) {
-            testConfig.defaultOverrides.put("vhost3.rhq3.resource.key", keyUtil.getRHQ3NonSNMPLegacyVirtualHostResourceKey(deployConfig.vhost3.getVHostSpec(replacements)));
-        }
-        
-        if (deployConfig.vhost4 != null) {
-            testConfig.defaultOverrides.put("vhost4.rhq3.resource.key", keyUtil.getRHQ3NonSNMPLegacyVirtualHostResourceKey(deployConfig.vhost4.getVHostSpec(replacements)));
-        }
-        
-        setup.withDefaultOverrides(testConfig.defaultOverrides);
-    }
-    
-    private void testExpectedFailures(TestConfiguration testConfig, TestSetup setup, int numberOfVhosts, String... failingRKs) {
-        //ok, now we should see the resources upgraded in the fake server inventory.
-        ResourceType serverResourceType = findApachePluginResourceTypeByName("Apache HTTP Server");
-        ResourceType vhostResourceType = findApachePluginResourceTypeByName("Apache Virtual Host");
-
-        Set<Resource> servers = setup.getFakeInventory().findResourcesByType(serverResourceType);
-
-        assertEquals(servers.size(), 1, "There should be exactly one apache server discovered.");
-
-        Resource server = servers.iterator().next();
-
-        String expectedResourceKey = ApacheServerDiscoveryComponent.formatResourceKey(testConfig.serverRoot, testConfig.serverRoot
-            + "/conf/httpd.conf");
-
-        assertEquals(server.getResourceKey(), expectedResourceKey,
-            "The server resource key doesn't seem to be upgraded.");
-
-        Set<Resource> vhosts = setup.getFakeInventory().findResourcesByType(vhostResourceType);
-
-        assertEquals(vhosts.size(), numberOfVhosts, "Unexpected number of vhosts discovered found");
-
-        //let's check that the main vhost has a an upgrade error attached to it
-        ApacheServerComponent component = setup.withApacheSetup().getExecutionUtil().getServerComponent();
-        ApacheDirectiveTree config = component.loadParser();
-        config = RuntimeApacheConfiguration.extract(config, component.getCurrentProcessInfo(), component.getCurrentBinaryInfo(), component.getModuleNames(), false);
-        VirtualHostLegacyResourceKeyUtil keyUtil = new VirtualHostLegacyResourceKeyUtil(component, config);
-
-        Set<Resource> failingResources = new HashSet<Resource>();
-        
-        for(String rk : failingRKs) {
-            for(Resource r : vhosts) {
-                if (rk.equals(r.getResourceKey())) {
-                    failingResources.add(r);
-                    break;
-                }
-            }
-        }
-        
-        assertEquals(failingResources.size(), failingRKs.length, "Couldn't find all the resources that should have failed.");
-        
-        for(Resource failingResource : failingResources) {
-            List<ResourceError> errors = failingResource.getResourceErrors(ResourceErrorType.UPGRADE);
-            assertNotNull(errors, "The main vhost doesn't have any upgrade errors.");
-            assertEquals(errors.size(), 1, "There should be exactly one upgrade error on the main vhost.");
-        }
-        
-        //check that all other vhosts were not upgraded but have no errors
-        for(Resource r : vhosts) {
-            if (failingResources.contains(r)) {
-                continue;
-            }
-            
-            assertEquals(r.getResourceErrors(ResourceErrorType.UPGRADE).size(), 0, "Unexpected number of resource upgrade errors on non-main vhost " + r);
-        }
-    }    
-    
-    private String interpret(String string, Map<String, String> variables) {
-        return StreamUtil.slurp(new TokenReplacingReader(new StringReader(string), variables));
     }
 }

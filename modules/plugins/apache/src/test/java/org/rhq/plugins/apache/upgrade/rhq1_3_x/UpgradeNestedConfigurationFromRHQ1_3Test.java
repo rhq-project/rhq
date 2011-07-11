@@ -32,20 +32,18 @@ import org.rhq.test.pc.PluginContainerSetup;
  *
  * @author Lukas Krejci
  */
-@Test(groups = "apache-integration-tests")
-public class UpgradeSimpleConfigurationFromRHQ1_3Test extends UpgradeTestBase {
-
+public class UpgradeNestedConfigurationFromRHQ1_3Test extends UpgradeTestBase {
     String[] configuredApacheConfigurationFiles;
     String configuredInventoryFile;
     String configuredInventoryFileWithSingleVHost;
     
-    public UpgradeSimpleConfigurationFromRHQ1_3Test() {
-        configuredApacheConfigurationFiles = new String[] { "/full-configurations/2.2.x/simple/httpd.conf" };
-        configuredInventoryFile = "/mocked-inventories/rhq-1.3.x/simple/inventory.xml";
-        configuredInventoryFileWithSingleVHost = "/mocked-inventories/rhq-1.3.x/simple/inventory-single-vhost.xml";
+    public UpgradeNestedConfigurationFromRHQ1_3Test() {
+        configuredApacheConfigurationFiles = new String[] { "/full-configurations/2.2.x/nested/httpd.conf" };
+        configuredInventoryFile = "/mocked-inventories/rhq-1.3.x/nested/inventory.xml";
+        configuredInventoryFileWithSingleVHost = "/mocked-inventories/rhq-1.3.x/nested/inventory-single-vhost.xml";
     }
     
-    protected UpgradeSimpleConfigurationFromRHQ1_3Test(String defaultInventoryFile, String defaultInventoryFileWithSingleVHost, String... defaultApacheConfigurationFiles) {
+    protected UpgradeNestedConfigurationFromRHQ1_3Test(String defaultInventoryFile, String defaultInventoryFileWithSingleVHost, String... defaultApacheConfigurationFiles) {
         this.configuredApacheConfigurationFiles = defaultApacheConfigurationFiles;
         this.configuredInventoryFile = defaultInventoryFile;
         this.configuredInventoryFileWithSingleVHost = defaultInventoryFileWithSingleVHost;
@@ -54,7 +52,7 @@ public class UpgradeSimpleConfigurationFromRHQ1_3Test extends UpgradeTestBase {
     @Test
     @PluginContainerSetup(plugins = { PLATFORM_PLUGIN, AUGEAS_PLUGIN, APACHE_PLUGIN })
     @Parameters({ "apache2.install.dir", "apache2.exe.path" })
-    public void testWithResolvableServerNames_Apache2(final String installPath, final String exePath)
+    public void testWithResolvableServerNames(final String installPath, final String exePath)
         throws Throwable {
 
         testUpgrade(new TestConfiguration() {
@@ -65,29 +63,34 @@ public class UpgradeSimpleConfigurationFromRHQ1_3Test extends UpgradeTestBase {
                 apacheConfigurationFiles = configuredApacheConfigurationFiles;
                 inventoryFile = configuredInventoryFile;
             }
+            
+            @Override
+            public String[] getExpectedResourceKeysAfterUpgrade(TestSetup setup) {
+                return getVHostRKs(setup, new int[] { 0, 2, 4 }, null, ResourceKeyFormat.SNMP);
+            }                        
         });
     }
 
-    @Test(enabled = false)
-    //ApacheServerOperationsDelegate doesn't work with apache 1.3
-    @PluginContainerSetup(plugins = { PLATFORM_PLUGIN, AUGEAS_PLUGIN, APACHE_PLUGIN })
-    @Parameters({ "apache1.install.dir", "apache1.exe.path" })
-    public void testWithResolvableServerNames_Apache1(final String installPath, final String exePath)
-        throws Throwable {
-
-        testUpgrade(new TestConfiguration() {{
-            serverRoot = installPath;
-            binPath = exePath;
-            configurationName = DEPLOYMENT_SIMPLE_WITH_RESOLVABLE_SERVERNAMES;
-            apacheConfigurationFiles = configuredApacheConfigurationFiles;
-            inventoryFile = configuredInventoryFile;
-        }});
-    }
+//    @Test(enabled = false)
+//    //ApacheServerOperationsDelegate doesn't work with apache 1.3
+//    @PluginContainerSetup(plugins = { PLATFORM_PLUGIN, AUGEAS_PLUGIN, APACHE_PLUGIN })
+//    @Parameters({ "apache1.install.dir", "apache1.exe.path" })
+//    public void testWithResolvableServerNames_Apache1(final String installPath, final String exePath)
+//        throws Throwable {
+//
+//        testUpgrade(new TestConfiguration() {{
+//            serverRoot = installPath;
+//            binPath = exePath;
+//            configurationName = DEPLOYMENT_SIMPLE_WITH_RESOLVABLE_SERVERNAMES;
+//            apacheConfigurationFiles = configuredApacheConfigurationFiles;
+//            inventoryFile = configuredInventoryFile;
+//        }});
+//    }
 
     @Test
-    @PluginContainerSetup(plugins = { PLATFORM_PLUGIN, AUGEAS_PLUGIN, APACHE_PLUGIN })
+    @PluginContainerSetup(plugins = { PLATFORM_PLUGIN, AUGEAS_PLUGIN, APACHE_PLUGIN }, numberOfInitialDiscoveries = 2)
     @Parameters({ "apache2.install.dir", "apache2.exe.path" })
-    public void testWithNonUniqueServerNames_Apache2(final String installPath, final String exePath) throws Throwable {
+    public void testWithNonUniqueServerNames(final String installPath, final String exePath) throws Throwable {
         testUpgrade(new TestConfiguration() {
             {
                 configurationName = DEPLOYMENT_SIMPLE_WITH_UNRESOLVABLE_SERVER_NAMES;
@@ -96,19 +99,22 @@ public class UpgradeSimpleConfigurationFromRHQ1_3Test extends UpgradeTestBase {
                 serverRoot = installPath;
                 binPath = exePath;
                             
-                
-                defaultOverrides = new HashMap<String, String>();
                 defaultOverrides.put(variableName(configurationName, "servername.directive"), "ServerName ${unresolvable.host}");
                 defaultOverrides.put(variableName(configurationName, "vhost1.servername.directive"), "ServerName ${unresolvable.host}");
                 defaultOverrides.put(variableName(configurationName, "vhost2.servername.directive"), "ServerName ${unresolvable.host}");
                 defaultOverrides.put(variableName(configurationName, "vhost3.servername.directive"), "ServerName ${unresolvable.host}");
                 defaultOverrides.put(variableName(configurationName, "vhost4.servername.directive"), "ServerName ${unresolvable.host}");                
-            }            
+            }
+            
+            @Override
+            public String[] getExpectedResourceKeysAfterUpgrade(TestSetup setup) {
+                return getVHostRKs(setup, new int[] { 0, 2, 4 }, null, ResourceKeyFormat.SNMP);
+            }                        
         });        
     }
     
     @Test
-    @PluginContainerSetup(plugins = {PLATFORM_PLUGIN, AUGEAS_PLUGIN, APACHE_PLUGIN})
+    @PluginContainerSetup(plugins = {PLATFORM_PLUGIN, AUGEAS_PLUGIN, APACHE_PLUGIN}, numberOfInitialDiscoveries = 2)
     @Parameters({"apache2.install.dir", "apache2.exe.path" })
     public void testWithAnyAddress(final String installPath, final String exePath) throws Throwable {
         testUpgrade(new TestConfiguration() {
@@ -120,12 +126,18 @@ public class UpgradeSimpleConfigurationFromRHQ1_3Test extends UpgradeTestBase {
                 serverRoot = installPath;
                 binPath = exePath;
                                             
+                defaultOverrides = new HashMap<String, String>();
                 defaultOverrides.put(variableName(configurationName, "listen1"), "0.0.0.0:${port1}");
                 defaultOverrides.put(variableName(configurationName, "listen2"), "0.0.0.0:${port2}");
                 defaultOverrides.put(variableName(configurationName, "listen3"), "0.0.0.0:${port3}");
                 defaultOverrides.put(variableName(configurationName, "listen4"), "0.0.0.0:${port4}");
                 defaultOverrides.put(variableName(configurationName, "vhost1.urls"), "0.0.0.0:${port1}");
             }
+            
+            @Override
+            public String[] getExpectedResourceKeysAfterUpgrade(TestSetup setup) {
+                return getVHostRKs(setup, new int[] { 0, 2, 4 }, null, ResourceKeyFormat.SNMP);
+            }                        
         });
     }
 
@@ -142,12 +154,18 @@ public class UpgradeSimpleConfigurationFromRHQ1_3Test extends UpgradeTestBase {
                 serverRoot = installPath;
                 binPath = exePath;
                                             
+                defaultOverrides = new HashMap<String, String>();
                 defaultOverrides.put(variableName(configurationName, "listen1"), "*:${port1}");
                 defaultOverrides.put(variableName(configurationName, "listen2"), "*:${port2}");
                 defaultOverrides.put(variableName(configurationName, "listen3"), "*:${port3}");
                 defaultOverrides.put(variableName(configurationName, "listen4"), "*:${port4}");
                 defaultOverrides.put(variableName(configurationName, "vhost1.urls"), "*:${port1}");
             }
+            
+            @Override
+            public String[] getExpectedResourceKeysAfterUpgrade(TestSetup setup) {
+                return getVHostRKs(setup, new int[] { 0, 2, 4 }, null, ResourceKeyFormat.SNMP);
+            }                        
         });
     }
 }

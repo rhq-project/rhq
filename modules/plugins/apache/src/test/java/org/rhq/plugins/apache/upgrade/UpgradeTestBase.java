@@ -20,12 +20,14 @@
 package org.rhq.plugins.apache.upgrade;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
 import java.io.File;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.io.StringReader;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
@@ -34,6 +36,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -52,6 +55,7 @@ import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceError;
+import org.rhq.core.domain.resource.ResourceErrorType;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.ServerServices;
 import org.rhq.core.pc.upgrade.FakeServerInventory;
@@ -59,7 +63,10 @@ import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.PluginContainerDeployment;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.core.system.ProcessInfo;
 import org.rhq.core.system.SystemInfoFactory;
+import org.rhq.core.util.stream.StreamUtil;
+import org.rhq.plugins.apache.ApacheServerComponent;
 import org.rhq.plugins.apache.ApacheServerDiscoveryComponent;
 import org.rhq.plugins.apache.ApacheVirtualHostServiceComponent;
 import org.rhq.plugins.apache.ApacheVirtualHostServiceDiscoveryComponent;
@@ -67,11 +74,14 @@ import org.rhq.plugins.apache.parser.ApacheConfigReader;
 import org.rhq.plugins.apache.parser.ApacheDirectiveTree;
 import org.rhq.plugins.apache.parser.ApacheParser;
 import org.rhq.plugins.apache.parser.ApacheParserImpl;
+import org.rhq.plugins.apache.upgrade.UpgradeTestBase.ResourceKeyFormat;
 import org.rhq.plugins.apache.util.ApacheDeploymentUtil;
 import org.rhq.plugins.apache.util.ApacheDeploymentUtil.DeploymentConfig;
 import org.rhq.plugins.apache.util.ApacheExecutionUtil;
 import org.rhq.plugins.apache.util.HttpdAddressUtility;
+import org.rhq.plugins.apache.util.RuntimeApacheConfiguration;
 import org.rhq.plugins.apache.util.VHostSpec;
+import org.rhq.plugins.apache.util.VirtualHostLegacyResourceKeyUtil;
 import org.rhq.test.ObjectCollectionSerializer;
 import org.rhq.test.TokenReplacingReader;
 import org.rhq.test.pc.PluginContainerTest;
@@ -85,6 +95,10 @@ import org.rhq.test.pc.PluginContainerTest;
 public class UpgradeTestBase extends PluginContainerTest {
 
     private static final Log LOG = LogFactory.getLog(UpgradeTestBase.class);
+    
+    public enum ResourceKeyFormat {
+        SNMP, RHQ3, RHQ4
+    };
     
     public class TestSetup {
         private String configurationName;
@@ -162,7 +176,12 @@ public class UpgradeTestBase extends PluginContainerTest {
     
                 if (configurationName != null) {
                     if (deploy) {
-                        ApacheDeploymentUtil.deployConfiguration(confDir, configurationFiles, deploymentConfig);
+                        File binDir = new File(serverRootDir, "bin");
+                        List<File> additionalFilesToProcess = Arrays.asList(
+                            new File(binDir, "apachectl"),
+                            new File(binDir, "envvars"),
+                            new File(binDir, "envvars-std"));
+                        ApacheDeploymentUtil.deployConfiguration(confDir, configurationFiles, additionalFilesToProcess, deploymentConfig);
                     }
                     
                     //ok, now try to find the ping URL. The best thing is to actually invoke
@@ -187,7 +206,31 @@ public class UpgradeTestBase extends PluginContainerTest {
     
             private void doSetup() throws Exception {
                 init();
-                execution.invokeOperation("start");
+                
+                int i = 0;
+                while (i < 10) {
+                    execution.invokeOperation("start");
+                    
+                    //wait for max 30s for the httpd to start up                    
+                    int w = 0;
+                    ProcessInfo pi;
+                    while (w < 30) {
+                        pi = execution.getResourceContext().getNativeProcess();
+                        if (pi != null && pi.isRunning()) {
+                            //all is well, we have an apache process to test with
+                            return;
+                        }
+                        
+                        Thread.sleep(1000);
+                        ++w;
+                    }
+                    
+                    ++i;
+                    
+                    LOG.warn("Could not detect the httpd process after invoking the start operation but the operation didn't throw any exception. I will retry at most ten times and then fail loudly. This has been attempt no. " + i);
+                }
+                
+                throw new IllegalStateException("Failed to start the httpd process even after 10 retries without the apache component complaining. This is super strange.");
             }
     
             public TestSetup setup() throws Exception {
@@ -394,7 +437,6 @@ public class UpgradeTestBase extends PluginContainerTest {
         public String serverRoot;
         public String binPath;
         public Map<String, String> defaultOverrides = new HashMap<String, String>();
-        public boolean upgradeShouldSucceed = true;
         
         public void beforeTestSetup(TestSetup testSetup) throws Throwable {
             
@@ -406,6 +448,34 @@ public class UpgradeTestBase extends PluginContainerTest {
         
         public void beforeTests(TestSetup setup) throws Throwable {
             
+        }
+        
+        public String[] getExpectedResourceKeysAfterUpgrade(TestSetup setup) {
+            return getFullSuccessfulUpgradeResourceKeys(setup);
+        }
+        
+        public String[] getExpectedResourceKeysWithFailures(TestSetup setup) {
+            return null;
+        }
+        
+        protected String[] getFullSuccessfulUpgradeResourceKeys(TestSetup setup) {
+            DeploymentConfig dc = setup.getDeploymentConfig();
+            Map<String, String> replacements = dc.getTokenReplacements();
+
+            VHostSpec vh1 = dc.vhost1.getVHostSpec(replacements);
+            VHostSpec vh2 = dc.vhost2.getVHostSpec(replacements);
+            VHostSpec vh3 = dc.vhost3.getVHostSpec(replacements);
+            VHostSpec vh4 = dc.vhost4.getVHostSpec(replacements);
+
+            String[] ret = new String[5];
+
+            ret[0] = ApacheVirtualHostServiceComponent.MAIN_SERVER_RESOURCE_KEY;
+            ret[1] = ApacheVirtualHostServiceDiscoveryComponent.createResourceKey(vh1.serverName, vh1.hosts);
+            ret[2] = ApacheVirtualHostServiceDiscoveryComponent.createResourceKey(vh2.serverName, vh2.hosts);
+            ret[3] = ApacheVirtualHostServiceDiscoveryComponent.createResourceKey(vh3.serverName, vh3.hosts);
+            ret[4] = ApacheVirtualHostServiceDiscoveryComponent.createResourceKey(vh4.serverName, vh4.hosts);
+
+            return ret;
         }
     }
 
@@ -441,9 +511,8 @@ public class UpgradeTestBase extends PluginContainerTest {
         boolean testFailed = false;
         try {
             
-            String[] configFiles = Arrays.copyOf(testConfiguration.apacheConfigurationFiles, testConfiguration.apacheConfigurationFiles.length + 2);
+            String[] configFiles = Arrays.copyOf(testConfiguration.apacheConfigurationFiles, testConfiguration.apacheConfigurationFiles.length + 1);
             configFiles[testConfiguration.apacheConfigurationFiles.length] = "/snmpd.conf";
-            configFiles[testConfiguration.apacheConfigurationFiles.length + 1] = "/mime.types";
             
             setup.withInventoryFrom(testConfiguration.inventoryFile)
                 .withPlatformResource(platform).withDefaultExpectations().withDefaultOverrides(testConfiguration.defaultOverrides)
@@ -459,10 +528,6 @@ public class UpgradeTestBase extends PluginContainerTest {
             startConfiguredPluginContainer();
     
             testConfiguration.beforeTests(setup);
-            
-            if (!testConfiguration.upgradeShouldSucceed) {
-                return;
-            }
             
             //ok, now we should see the resources upgraded in the fake server inventory.
             ResourceType serverResourceType = findApachePluginResourceTypeByName("Apache HTTP Server");
@@ -482,32 +547,53 @@ public class UpgradeTestBase extends PluginContainerTest {
     
             Set<Resource> vhosts = setup.getFakeInventory().findResourcesByType(vhostResourceType);
     
-            assertEquals(vhosts.size(), 5, "Unexpected number of vhosts discovered found");
-    
-            List<String> expectedResourceKeys = new ArrayList<String>(5);
-    
-            DeploymentConfig dc = setup.getDeploymentConfig();
-            Map<String, String> replacements = dc.getTokenReplacements();
+            String[] expectedRKs = testConfiguration.getExpectedResourceKeysAfterUpgrade(setup);
             
-            VHostSpec vh1 = dc.vhost1.getVHostSpec(replacements);
-            VHostSpec vh2 = dc.vhost2.getVHostSpec(replacements);
-            VHostSpec vh3 = dc.vhost3.getVHostSpec(replacements);
-            VHostSpec vh4 = dc.vhost4.getVHostSpec(replacements);
-            
-            expectedResourceKeys.add(ApacheVirtualHostServiceComponent.MAIN_SERVER_RESOURCE_KEY);
-            expectedResourceKeys.add(ApacheVirtualHostServiceDiscoveryComponent.createResourceKey(
-                vh1.serverName, vh1.hosts));
-            expectedResourceKeys.add(ApacheVirtualHostServiceDiscoveryComponent.createResourceKey(
-                vh2.serverName, vh2.hosts));
-            expectedResourceKeys.add(ApacheVirtualHostServiceDiscoveryComponent.createResourceKey(
-                vh3.serverName, vh3.hosts));
-            expectedResourceKeys.add(ApacheVirtualHostServiceDiscoveryComponent.createResourceKey(
-                vh4.serverName, vh4.hosts));
+            assertEquals(vhosts.size(), expectedRKs.length, "Unexpected number of vhosts discovered found");
+    
+            List<String> expectedResourceKeys = Arrays.asList(expectedRKs);
     
             for (Resource vhost : vhosts) {
                 assertTrue(expectedResourceKeys.contains(vhost.getResourceKey()),
                     "Unexpected virtual host resource key: '" + vhost.getResourceKey() + "'. Only expecting " + expectedResourceKeys);
             }
+            
+            String[] expectedFailureRKs = testConfiguration.getExpectedResourceKeysWithFailures(setup);
+            if (expectedFailureRKs != null && expectedFailureRKs.length > 0) {
+                Set<Resource> failingResources = new HashSet<Resource>();
+                
+                for(String rk : expectedFailureRKs) {
+                    for(Resource r : vhosts) {
+                        if (rk.equals(r.getResourceKey())) {
+                            failingResources.add(r);
+                            break;
+                        }
+                    }
+                }
+                
+                assertEquals(failingResources.size(), expectedFailureRKs.length, "Couldn't find all the resources that should have failed.");
+                
+                for(Resource failingResource : failingResources) {
+                    List<ResourceError> errors = failingResource.getResourceErrors(ResourceErrorType.UPGRADE);
+                    assertNotNull(errors, "The main vhost doesn't have any upgrade errors.");
+                    assertEquals(errors.size(), 1, "There should be exactly one upgrade error on the main vhost.");
+                }
+                
+                //check that all other vhosts were not upgraded but have no errors
+                for(Resource r : vhosts) {
+                    if (failingResources.contains(r)) {
+                        continue;
+                    }
+                    
+                    assertEquals(r.getResourceErrors(ResourceErrorType.UPGRADE).size(), 0, "Unexpected number of resource upgrade errors on vhost " + r);
+                }
+            } else {
+                for(Resource r : vhosts) {
+                    assertEquals(r.getResourceErrors(ResourceErrorType.UPGRADE).size(), 0, "Unexpected number of resource upgrade errors on vhost " + r);
+                }
+            }
+        } catch (AssertionError e) {
+            throw e;
         } catch (Throwable t) {
             testFailed = true;
             LOG.error("Error during test upgrade execution.", t);
@@ -523,6 +609,97 @@ public class UpgradeTestBase extends PluginContainerTest {
                 }
             }
         }
+    }
+
+    protected void defineRHQ3ResourceKeys(TestConfiguration testConfig, TestSetup setup) throws Exception {
+        setup.withApacheSetup().init();
+        ApacheServerComponent component = setup.withApacheSetup().getExecutionUtil().getServerComponent();
+        ApacheDirectiveTree config = component.loadParser();
+        config = RuntimeApacheConfiguration.extract(config, component.getCurrentProcessInfo(), component.getCurrentBinaryInfo(), component.getModuleNames(), false);
+    
+        DeploymentConfig deployConfig = setup.getDeploymentConfig();
+        
+        VirtualHostLegacyResourceKeyUtil keyUtil = new VirtualHostLegacyResourceKeyUtil(component, config);
+        
+        Map<String, String> replacements = deployConfig.getTokenReplacements();
+        
+        testConfig.defaultOverrides.put("main.rhq3.resource.key", keyUtil.getRHQ3NonSNMPLegacyMainServerResourceKey());
+        
+        if (deployConfig.vhost1 != null) {                    
+            testConfig.defaultOverrides.put("vhost1.rhq3.resource.key", keyUtil.getRHQ3NonSNMPLegacyVirtualHostResourceKey(deployConfig.vhost1.getVHostSpec(replacements)));
+        }
+        
+        if (deployConfig.vhost2 != null) {
+            testConfig.defaultOverrides.put("vhost2.rhq3.resource.key", keyUtil.getRHQ3NonSNMPLegacyVirtualHostResourceKey(deployConfig.vhost2.getVHostSpec(replacements)));
+        }
+        
+        if (deployConfig.vhost3 != null) {
+            testConfig.defaultOverrides.put("vhost3.rhq3.resource.key", keyUtil.getRHQ3NonSNMPLegacyVirtualHostResourceKey(deployConfig.vhost3.getVHostSpec(replacements)));
+        }
+        
+        if (deployConfig.vhost4 != null) {
+            testConfig.defaultOverrides.put("vhost4.rhq3.resource.key", keyUtil.getRHQ3NonSNMPLegacyVirtualHostResourceKey(deployConfig.vhost4.getVHostSpec(replacements)));
+        }
+        
+        setup.withDefaultOverrides(testConfig.defaultOverrides);
+    }
+
+    protected String interpret(String string, Map<String, String> variables) {
+        return StreamUtil.slurp(new TokenReplacingReader(new StringReader(string), variables));
+    }
+
+    protected static String[] getVHostRKs(TestSetup setup, int[] successfulUpgrades, int[] failedUpgrades, ResourceKeyFormat rkFormat) {
+        int sucLen = successfulUpgrades == null ? 0 : successfulUpgrades.length;
+        int failLen = failedUpgrades == null ? 0 : failedUpgrades.length;
+        
+        String[] ret = new String[sucLen + failLen];
+        
+        int retIdx = 0;
+        
+        Map<String, String> replacements = setup.getInventoryFileReplacements();
+        
+        for(int i = 0; i < sucLen; ++i, ++retIdx) {
+            int vhostNum = successfulUpgrades[i];
+            if (vhostNum == 0) {
+                ret[retIdx] = ApacheVirtualHostServiceComponent.MAIN_SERVER_RESOURCE_KEY;
+            } else {
+                VHostSpec vhost = setup.getDeploymentConfig().getVHost(vhostNum).getVHostSpec(replacements);
+                ret[retIdx] = ApacheVirtualHostServiceDiscoveryComponent.createResourceKey(vhost.serverName, vhost.hosts);
+            }
+        }
+        
+        for(int i = 0; i < failLen; ++i, ++retIdx) {
+            String variableName = null;
+            if (failedUpgrades[i] == 0) {
+                if (rkFormat == ResourceKeyFormat.SNMP) {
+                    variableName = "";
+                } else {
+                    variableName = "main.rhq";
+                }
+            } else {
+                if (rkFormat == ResourceKeyFormat.SNMP) {
+                    variableName += "vhost" + failedUpgrades[i] + ".";
+                } else {
+                    variableName = "vhost" + failedUpgrades[i] + ".rhq";
+                }
+            }
+            
+            switch (rkFormat) {
+            case RHQ3:
+                variableName += "3.resource.key";
+                break;
+            case RHQ4:
+                variableName += "4.resource.key";
+                break;
+            case SNMP:
+                variableName += "snmp.identifier";
+                break;
+            }
+            
+            ret[retIdx] = replacements.get(variableName);
+        }
+        
+        return ret;
     }
 
     private static List<ResourceType> getResourceTypesInPlugin(String pluginUri) throws Exception {

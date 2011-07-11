@@ -23,6 +23,7 @@ import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import org.rhq.plugins.apache.upgrade.UpgradeTestBase;
+import org.rhq.plugins.apache.upgrade.UpgradeTestBase.TestSetup;
 import org.rhq.test.pc.PluginContainerSetup;
 
 /**
@@ -30,29 +31,29 @@ import org.rhq.test.pc.PluginContainerSetup;
  *
  * @author Lukas Krejci
  */
-public class UpgradeSimpleConfigurationFromRHQ3_0_2Test extends UpgradeTestBase {
+public class UpgradeNestedConfigurationFromRHQ3_0_2Test extends UpgradeTestBase {
 
     private String[] configuredApacheConfigurationFiles;
     private String configuredInventoryFile;
-    private String configuredInventoryFileWithSingleVhost;
-    
-    public UpgradeSimpleConfigurationFromRHQ3_0_2Test() {
-        configuredApacheConfigurationFiles = new String[] { "/full-configurations/2.2.x/simple/httpd.conf" };
-        configuredInventoryFile = "/mocked-inventories/rhq-3.0.2/simple/inventory.xml";
-        configuredInventoryFileWithSingleVhost = "/mocked-inventories/rhq-3.0.2/simple/inventory-single-vhost.xml";
+    private String configuredInventoryFileWithSingleVHost;
+
+    public UpgradeNestedConfigurationFromRHQ3_0_2Test() {
+        configuredApacheConfigurationFiles = new String[] { "/full-configurations/2.2.x/nested/httpd.conf" };
+        configuredInventoryFile = "/mocked-inventories/rhq-3.0.2/nested/inventory.xml";
+        configuredInventoryFileWithSingleVHost = "/mocked-inventories/rhq-3.0.2/nested/inventory-single-vhost.xml";
     }
 
     /**
      * @param configuredApacheConfigurationFiles
      * @param configuredInventoryFile
      */
-    protected UpgradeSimpleConfigurationFromRHQ3_0_2Test(String configuredInventoryFile,
-        String configuredInventoryFileWithSingleVhost,
+    protected UpgradeNestedConfigurationFromRHQ3_0_2Test(String configuredInventoryFile,
+        String configuredInventoryFileWithSingleVHost,
         String... configuredApacheConfigurationFiles) {
 
         this.configuredApacheConfigurationFiles = configuredApacheConfigurationFiles;
         this.configuredInventoryFile = configuredInventoryFile;
-        this.configuredInventoryFileWithSingleVhost = configuredInventoryFileWithSingleVhost;
+        this.configuredInventoryFileWithSingleVHost = configuredInventoryFileWithSingleVHost;
     }
 
     @Test
@@ -66,6 +67,11 @@ public class UpgradeSimpleConfigurationFromRHQ3_0_2Test extends UpgradeTestBase 
                 serverRoot = installDir;
                 binPath = exePath;
                 configurationName = DEPLOYMENT_SIMPLE_WITH_RESOLVABLE_SERVERNAMES;
+            }
+            
+            @Override
+            public String[] getExpectedResourceKeysAfterUpgrade(TestSetup setup) {
+                return getVHostRKs(setup, new int[] { 0, 2, 4 }, null, null);
             }
         });
     }
@@ -93,6 +99,11 @@ public class UpgradeSimpleConfigurationFromRHQ3_0_2Test extends UpgradeTestBase 
                 defaultOverrides.put(variableName(configurationName, "vhost4.servername.directive"),
                     "ServerName ${unresolvable.host}:${listen4}");
             }
+            
+            @Override
+            public String[] getExpectedResourceKeysAfterUpgrade(TestSetup setup) {
+                return getVHostRKs(setup, new int[] { 0, 2, 4 }, null, null);
+            }
         });
     }
 
@@ -103,7 +114,7 @@ public class UpgradeSimpleConfigurationFromRHQ3_0_2Test extends UpgradeTestBase 
         testUpgrade(new TestConfiguration() {
             {
                 apacheConfigurationFiles = configuredApacheConfigurationFiles;
-                inventoryFile = configuredInventoryFileWithSingleVhost;
+                inventoryFile = configuredInventoryFileWithSingleVHost;
                 serverRoot = installDir;
                 binPath = exePath;
                 configurationName = DEPLOYMENT_SIMPLE_WITH_RESOLVABLE_SERVERNAMES;
@@ -118,6 +129,11 @@ public class UpgradeSimpleConfigurationFromRHQ3_0_2Test extends UpgradeTestBase 
                     "ServerName ${unresolvable.host}");
                 defaultOverrides.put(variableName(configurationName, "vhost4.servername.directive"),
                     "ServerName ${unresolvable.host}");
+            }
+            
+            @Override
+            public String[] getExpectedResourceKeysAfterUpgrade(TestSetup setup) {
+                return getVHostRKs(setup, new int[] { 0, 2, 4 }, null, null);
             }
         });
     }
@@ -144,6 +160,11 @@ public class UpgradeSimpleConfigurationFromRHQ3_0_2Test extends UpgradeTestBase 
                 defaultOverrides.put(variableName(configurationName, "listen3"), "0.0.0.0:${port3}");
                 defaultOverrides.put(variableName(configurationName, "listen4"), "0.0.0.0:${port4}");
                 defaultOverrides.put(variableName(configurationName, "vhost1.urls"), "0.0.0.0:${port1}");
+            }
+            
+            @Override
+            public String[] getExpectedResourceKeysAfterUpgrade(TestSetup setup) {
+                return getVHostRKs(setup, new int[] { 0, 2, 4 }, null, null);
             }
         });
     }
@@ -174,6 +195,11 @@ public class UpgradeSimpleConfigurationFromRHQ3_0_2Test extends UpgradeTestBase 
                 defaultOverrides.put(variableName(configurationName, "listen3"), "*:${port3}");
                 defaultOverrides.put(variableName(configurationName, "listen4"), "*:${port4}");
                 defaultOverrides.put(variableName(configurationName, "vhost1.urls"), "*:${port1}");
+            }
+            
+            @Override
+            public String[] getExpectedResourceKeysAfterUpgrade(TestSetup setup) {
+                return getVHostRKs(setup, new int[] { 0, 2, 4 }, null, null);
             }
         });
     }

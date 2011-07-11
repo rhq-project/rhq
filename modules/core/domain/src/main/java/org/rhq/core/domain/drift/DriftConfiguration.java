@@ -75,6 +75,47 @@ public class DriftConfiguration implements Serializable {
         public String getValueName() {
             return name;
         }
+
+        @Override
+        public String toString() {
+            StringBuilder builder = new StringBuilder();
+            builder.append("BaseDirectory [context=").append(context).append(", name=").append(name).append("]");
+            return builder.toString();
+        }
+
+        @Override
+        public int hashCode() {
+            int result = 1;
+            result = 31 * result + ((context == null) ? 0 : context.hashCode());
+            result = 31 * result + ((name == null) ? 0 : name.hashCode());
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (!(obj instanceof BaseDirectory)) {
+                return false;
+            }
+            BaseDirectory other = (BaseDirectory) obj;
+            if (context == null) {
+                if (other.context != null) {
+                    return false;
+                }
+            } else if (!context.equals(other.context)) {
+                return false;
+            }
+            if (name == null) {
+                if (other.name != null) {
+                    return false;
+                }
+            } else if (!name.equals(other.name)) {
+                return false;
+            }
+            return true;
+        }
     }
 
     public static class Filter implements Serializable {

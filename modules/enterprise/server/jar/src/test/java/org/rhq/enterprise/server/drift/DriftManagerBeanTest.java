@@ -38,6 +38,7 @@ import org.rhq.core.clientapi.server.drift.DriftServerService;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
@@ -47,6 +48,7 @@ import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.DriftFileStatus;
+import org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
@@ -157,8 +159,11 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
     public void testDriftConfig() throws Exception {
         Configuration config = new Configuration();
         config.put(new PropertySimple("name", "testDriftConfig"));
-        config.put(new PropertySimple("basedir", "foo/bar"));
         config.put(new PropertySimple("interval", "60"));
+        PropertyMap basedirMap = new PropertyMap("basedir");
+        basedirMap.put(new PropertySimple("valueContext", BaseDirValueContext.fileSystem));
+        basedirMap.put(new PropertySimple("valueName", "foo/bar"));
+        config.put(basedirMap);
         DriftConfiguration driftConfigPojo = new DriftConfiguration(config);
 
         driftManager
@@ -196,8 +201,11 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
 
         config = driftConfigPojo.getConfiguration();
         config.put(new PropertySimple("name", "testDriftConfig-2"));
-        config.put(new PropertySimple("basedir", "foo/baz"));
         config.put(new PropertySimple("interval", "30"));
+        basedirMap = new PropertyMap("basedir");
+        basedirMap.put(new PropertySimple("valueContext", BaseDirValueContext.fileSystem));
+        basedirMap.put(new PropertySimple("valueName", "foo/baz"));
+        config.put(basedirMap);
 
         driftManager
             .updateDriftConfiguration(overlord, EntityContext.forResource(newResource.getId()), driftConfigPojo);
@@ -211,7 +219,8 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
             driftConfig = new DriftConfiguration(i.next());
             if ("testDriftConfig".equals(driftConfig.getName())) {
                 assertTrue(driftConfig.getConfiguration().getId() > 0); // persisted
-                assertEquals("foo/bar", driftConfig.getBasedir());
+                assertEquals("foo/bar", driftConfig.getBasedir().getValueName());
+                assertEquals(BaseDirValueContext.fileSystem, driftConfig.getBasedir().getValueContext());
                 assertEquals(new Long(120), driftConfig.getInterval());
             } else if ("testDriftConfig-2".equals(driftConfig.getName())) {
                 assertTrue(driftConfig.getConfiguration().getId() > 0); // persisted

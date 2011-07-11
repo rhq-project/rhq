@@ -157,10 +157,14 @@ public class Domain2Descriptor {
                         if (key.equals("type") || key.equals("description") || key.equals("required"))
                             continue;
 
-                        Map<String,Object> emapEntryValue = (Map<String, Object>) emapEntry.getValue();
-                        String ts = getTypeStringForTypeAndName(getTypeFromProps(emapEntryValue),key);
-                        StringBuilder sb = generateProperty(indent, emapEntryValue,ts,emapEntry.getKey(),getAccessType(emapEntryValue));
-                        System.out.println(sb.toString());
+                        if (emapEntry.getValue() instanceof Map) {
+                            Map<String,Object> emapEntryValue = (Map<String, Object>) emapEntry.getValue();
+                            String ts = getTypeStringForTypeAndName(getTypeFromProps(emapEntryValue),key);
+                            StringBuilder sb = generateProperty(indent, emapEntryValue,ts,emapEntry.getKey(),getAccessType(emapEntryValue));
+                            System.out.println(sb.toString());
+                        }
+                        else
+                            System.out.println(emapEntry.getValue());
 
                     }
                 }
@@ -228,6 +232,9 @@ public class Domain2Descriptor {
     }
 
     private void createOperation(String name, Map<String, Object> operationMap) {
+
+        if (operationMap==null)
+            return;
 
         StringBuilder builder = new StringBuilder("<operation name=\"");
 

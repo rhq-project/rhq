@@ -36,7 +36,6 @@ public class ProxyInfoTest {
 
     @Test
     public void testProxyInfo() throws IOException {
-
         String[] availableFiles = new String[] { "/proxy_config/proxy_config_1.txt", "/proxy_config/proxy_config_2.txt" };
 
         for (String testConfigurationFile : availableFiles) {
@@ -44,10 +43,6 @@ public class ProxyInfoTest {
             ProxyInfo proxyInfo = new ProxyInfo(testConfiguration);
 
             for (ProxyInfo.Context context : proxyInfo.getAvailableContexts()) {
-                log.info(context.toString() + " - " + context.isEnabled());
-
-                log.info(proxyInfo.getAvailableContexts().indexOf(context));
-
                 assert (proxyInfo.getAvailableContexts().indexOf(context) != -1) : "Equals and hash functions not implemented correctly for "
                     + ProxyInfo.Context.class.getCanonicalName();
 

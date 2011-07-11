@@ -172,6 +172,7 @@ public class MetadataBeanTest extends AbstractEJB3Test {
         ResourceTypeCriteria criteria = new ResourceTypeCriteria();
         criteria.addFilterName(resourceTypeName);
         criteria.addFilterPluginName(plugin);
+        criteria.setStrict(true);
         MethodUtils.invokeMethod(criteria, fetch, true);
 
         List<ResourceType> resourceTypes = resourceTypeMgr.findResourceTypesByCriteria(subjectMgr.getOverlord(),

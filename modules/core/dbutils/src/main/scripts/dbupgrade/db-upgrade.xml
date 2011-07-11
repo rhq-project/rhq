@@ -3422,10 +3422,8 @@
                     </statement>
                 </schema-directSQL>
                 <schema-addColumn table="RHQ_CONFIG_PD_OSRC" column="LINK_TO_TARGET" columnType="BOOLEAN"/>
-                <schema-alterColumn table="RHQ_CONFIG_PD_OSRC" column="LINK_TO_TARGET" nullable="TRUE"/>
 
                 <schema-addColumn table="RHQ_CONFIG_PD_OSRC" column="FILTER" columnType="VARCHAR2" precision="40"/>
-                <schema-alterColumn table="RHQ_CONFIG_PD_OSRC" column="FILTER" nullable="TRUE"/>
 
                 <schema-addColumn table="RHQ_CONFIG_PD_OSRC" column="EXPRESSION" columnType="VARCHAR2" precision="400"/>
                 <schema-alterColumn table="RHQ_CONFIG_PD_OSRC" column="EXPRESSION" nullable="FALSE"/>

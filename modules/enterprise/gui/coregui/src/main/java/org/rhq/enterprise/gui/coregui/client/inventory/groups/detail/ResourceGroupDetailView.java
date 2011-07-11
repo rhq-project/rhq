@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -261,9 +261,11 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
     }
 
     private void updateMonitoringTab(final int groupId, GroupCategory groupCategory, Set<ResourceTypeFacet> facets) {
-        boolean visible;
         ViewFactory viewFactory;
-        if (updateTab(this.monitoringTab, groupCategory == GroupCategory.COMPATIBLE, true)) {
+        // TODO: Once we add an Availability subtab, the Monitoring tab will always be visible, even for groups with
+        //       no metrics.
+        boolean visible = hasMetricsOfType(this.groupComposite, null);
+        if (updateTab(this.monitoringTab, visible, true)) {
             visible = hasMetricsOfType(this.groupComposite, DataType.MEASUREMENT);
             viewFactory = (!visible) ? null : new ViewFactory() {
                 @Override

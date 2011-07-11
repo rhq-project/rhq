@@ -50,9 +50,7 @@ public class ProxyInfo {
             String host = vhostPieces[1].trim();
             host = host.substring(host.indexOf(":") + 1).trim();
 
-            System.out.println(identifier + "--" + host);
             availableVHosts.put(identifier, new Vhost(identifier, host));
-
         }
 
         Pattern contextPattern = Pattern.compile("Context.*[\n|}]");
@@ -65,9 +63,14 @@ public class ProxyInfo {
             String identifier = contextPieces[0];
             identifier = identifier.substring(identifier.indexOf("[") + 1, identifier.indexOf("]"));
             identifier = identifier.substring(0, identifier.lastIndexOf(":"));
+
+            String rawIsEnabled = contextPieces[2];
+            rawIsEnabled = rawIsEnabled.substring(rawIsEnabled.indexOf(':') + 1).trim();
+            boolean isEnabled = rawIsEnabled.equals("ENABLED") ? true : false;
+
             Vhost relatedVhost = availableVHosts.get(identifier);
 
-            availableContexts.add(new Context(relatedVhost.getHost(), actualContext));
+            availableContexts.add(new Context(relatedVhost.getHost(), actualContext, isEnabled));
         }
     }
 
@@ -95,12 +98,18 @@ public class ProxyInfo {
     }
 
     public static class Context {
-        String path;
-        String host;
+        private String path;
+        private String host;
+        private boolean isEnabled;
 
         public Context(String host, String path) {
+            this(path, host, false);
+        }
+
+        public Context(String host, String path, boolean isEnabled) {
             this.path = path;
             this.host = host;
+            this.isEnabled = isEnabled;
         }
 
         public String getPath() {
@@ -111,14 +120,49 @@ public class ProxyInfo {
             return host;
         }
 
+        public boolean isEnabled() {
+            return isEnabled;
+        }
+
         @Override
         public String toString() {
             return host + ":" + path;
         }
 
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + ((host == null) ? 0 : host.hashCode());
+            result = prime * result + ((path == null) ? 0 : path.hashCode());
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            Context other = (Context) obj;
+            if (host == null) {
+                if (other.host != null)
+                    return false;
+            } else if (!host.equals(other.host))
+                return false;
+            if (path == null) {
+                if (other.path != null)
+                    return false;
+            } else if (!path.equals(other.path))
+                return false;
+            return true;
+        }
+
         public static Context fromString(String stringRepresentation) {
             String part[] = stringRepresentation.trim().split(":");
-            return new Context(part[0], part[1]);
+            return new Context(part[1], part[0]);
         }
     }
 }

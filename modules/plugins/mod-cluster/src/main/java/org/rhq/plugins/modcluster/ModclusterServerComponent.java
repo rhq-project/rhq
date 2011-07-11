@@ -18,6 +18,9 @@
  */
 package org.rhq.plugins.modcluster;
 
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
 
 /**
@@ -25,4 +28,15 @@ import org.rhq.plugins.jmx.MBeanResourceComponent;
  *
  */
 public class ModclusterServerComponent extends MBeanResourceComponent {
+
+    @Override
+    public AvailabilityType getAvailability() {
+        try {
+            OperationResult result = this.invokeOperation("refresh", new Configuration());
+        } catch (Exception e) {
+            log.info(e);
+        }
+
+        return super.getAvailability();
+    }
 }

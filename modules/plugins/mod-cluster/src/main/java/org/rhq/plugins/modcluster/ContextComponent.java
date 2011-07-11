@@ -21,6 +21,7 @@ package org.rhq.plugins.modcluster;
 import org.mc4j.ems.connection.bean.EmsBean;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
 
@@ -36,18 +37,43 @@ public class ContextComponent extends MBeanResourceComponent<MBeanResourceCompon
     }
 
     @Override
+    public AvailabilityType getAvailability() {
+        ClassLoader cl = Thread.currentThread().getContextClassLoader();
+        try {
+            Thread.currentThread().setContextClassLoader(getEmsBean().getClass().getClassLoader());
+            String rawProxyInfo = (String) getEmsBean().getAttribute("proxyInfo").refresh().toString();
+            ProxyInfo proxyInfo = new ProxyInfo(rawProxyInfo);
+
+            ProxyInfo.Context context = ProxyInfo.Context.fromString(resourceContext.getResourceKey());
+
+            ProxyInfo.Context currentContext = proxyInfo.getAvailableContexts().get(
+                proxyInfo.getAvailableContexts().indexOf(context));
+
+            if (currentContext.isEnabled()) {
+                return AvailabilityType.UP;
+            }
+
+            return AvailabilityType.DOWN;
+        } catch (Exception e) {
+            log.info(e);
+            return AvailabilityType.DOWN;
+        } finally {
+            Thread.currentThread().setContextClassLoader(cl);
+        }
+    }
+
+    @Override
     public OperationResult invokeOperation(String name, Configuration parameters) throws Exception {
         if ("enableContext".equals(name) || "disableContext".equals(name) || "stopContext".equals(name)) {
 
             ProxyInfo.Context context = ProxyInfo.Context.fromString(resourceContext.getResourceKey());
-            System.out.println(context.toString());
 
             ClassLoader cl = Thread.currentThread().getContextClassLoader();
             try {
                 Thread.currentThread().setContextClassLoader(getEmsBean().getClass().getClassLoader());
 
                 Object resultObject = getEmsBean().getOperation(name).invoke(
-                    new Object[] { context.host, context.path });
+                    new Object[] { context.getHost(), context.getPath() });
 
                 return new OperationResult(String.valueOf(resultObject));
             } finally {

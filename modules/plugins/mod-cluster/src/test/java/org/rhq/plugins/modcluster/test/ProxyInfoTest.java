@@ -37,15 +37,26 @@ public class ProxyInfoTest {
     @Test
     public void testProxyInfo() throws IOException {
 
-        String testConfiguration = readConfigFile("/proxy_config/proxy_config_1.txt");
+        String[] availableFiles = new String[] { "/proxy_config/proxy_config_1.txt", "/proxy_config/proxy_config_2.txt" };
 
-        ProxyInfo proxyInfo = new ProxyInfo(testConfiguration);
+        for (String testConfigurationFile : availableFiles) {
+            String testConfiguration = readConfigFile(testConfigurationFile);
+            ProxyInfo proxyInfo = new ProxyInfo(testConfiguration);
 
-        for (ProxyInfo.Context context : proxyInfo.getAvailableContexts()) {
-            log.info(context.toString());
+            for (ProxyInfo.Context context : proxyInfo.getAvailableContexts()) {
+                log.info(context.toString() + " - " + context.isEnabled());
+
+                log.info(proxyInfo.getAvailableContexts().indexOf(context));
+
+                assert (proxyInfo.getAvailableContexts().indexOf(context) != -1) : "Equals and hash functions not implemented correctly for "
+                    + ProxyInfo.Context.class.getCanonicalName();
+
+                assert (context.equals(ProxyInfo.Context.fromString(context.toString())) == true) : "fromString and toString are not equivalent for:"
+                    + ProxyInfo.Context.class.getCanonicalName();
+            }
+
+            assert (proxyInfo.getAvailableContexts().size() != 0) : "Raw proxy info parsing failed!";
         }
-
-        assert (proxyInfo.getAvailableContexts().size() != 0) : "Raw proxy info parsing failed!";
     }
 
     private String readConfigFile(String filePath) throws IOException {

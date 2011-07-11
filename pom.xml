@@ -510,6 +510,12 @@
                <artifactId>cobertura</artifactId>
                <version>${cobertura.version}</version>
              </dependency>
+             <!-- Just to have more tasks available -->
+             <dependency>
+                <groupId>ant</groupId>
+                <artifactId>ant-nodeps</artifactId>
+                <version>1.6.5</version>
+             </dependency>
            </dependencies>
          </plugin>
          <plugin>

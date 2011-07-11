@@ -83,7 +83,7 @@ public class ASUploadConnection {
              return os;
          }
          catch (Exception e) {
-             e.printStackTrace();
+             log.error("getOutputStream failed: " + e.getMessage());
          }
 
         return null;

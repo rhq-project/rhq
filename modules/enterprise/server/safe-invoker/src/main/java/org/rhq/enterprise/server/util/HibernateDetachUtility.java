@@ -251,15 +251,17 @@ public class HibernateDetachUtility {
             if (fieldValue instanceof HibernateProxy) {
 
                 Object replacement = null;
-                if (fieldValue.getClass().getName().contains("javassist")) {
+                String assistClassName = fieldValue.getClass().getName();
+                if (assistClassName.contains("javassist") || assistClassName.contains("EnhancerByCGLIB")) {
 
                     Class assistClass = fieldValue.getClass();
                     try {
                         Method m = assistClass.getMethod("writeReplace");
                         replacement = m.invoke(fieldValue);
 
-                        String className = fieldValue.getClass().getName();
-                        className = className.substring(0, className.indexOf("_$$_"));
+                        String assistNameDelimiter = assistClassName.contains("javassist") ? "_$$_" : "$$";
+                        
+                        assistClassName = assistClassName.substring(0, assistClassName.indexOf(assistNameDelimiter));
                         if (!replacement.getClass().getName().contains("hibernate")) {
                             nullOutUninitializedFields(replacement, checkedObjects, depth + 1, serializationType);
 
@@ -275,7 +277,11 @@ public class HibernateDetachUtility {
                 if (replacement == null) {
 
                     String className = ((HibernateProxy) fieldValue).getHibernateLazyInitializer().getEntityName();
-                    Class clazz = Class.forName(className);
+                    
+                    //see if there is a context classloader we should use instead of the current one.
+                    ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
+                    
+                    Class clazz = contextClassLoader == null ? Class.forName(className) : Class.forName(className, true, contextClassLoader);
                     Class[] constArgs = { Integer.class };
                     Constructor construct = null;
 

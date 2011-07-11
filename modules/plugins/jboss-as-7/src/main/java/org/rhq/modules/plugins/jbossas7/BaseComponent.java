@@ -21,10 +21,13 @@ package org.rhq.modules.plugins.jbossas7;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonNode;
+import org.hibernate.cfg.CollectionSecondPass;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
+import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.DataType;
@@ -51,11 +54,14 @@ import org.rhq.modules.plugins.jbossas7.json.CompositeOperation;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
 import org.rhq.modules.plugins.jbossas7.json.ReadAttribute;
+import org.rhq.modules.plugins.jbossas7.json.ReadChildrenNames;
 import org.rhq.modules.plugins.jbossas7.json.ReadResource;
 import org.rhq.modules.plugins.jbossas7.json.Result;
 
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -476,16 +482,32 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
         } else if (what.equals("domain-deployment")) {
             if (op.equals("promote")) {
                 String serverGroup = parameters.getSimpleValue("server-group","-not set-");
+                List<String> serverGroups = new ArrayList<String>();
+                if (serverGroup.equals("__all")) {
+                    serverGroups.addAll(getServerGroups());
+                }
+                else {
+                    serverGroups.add(serverGroup);
+                }
+                String resourceKey = context.getResourceKey();
+                resourceKey = resourceKey.substring(resourceKey.indexOf("=")+1);
+
+                log.info("Promoting [" + resourceKey + "] to server group(s) [" + Arrays.asList(serverGroups) + "]");
+
                 PropertySimple simple = parameters.getSimple("enabled");
                 Boolean enabled = false;
                 if (simple!=null && simple.getBooleanValue()!=null)
                     enabled= simple.getBooleanValue();
-                address.add(new PROPERTY_VALUE("server-group",serverGroup));
-                String resourceKey = context.getResourceKey();
-                resourceKey = resourceKey.substring(resourceKey.indexOf("=")+1);
-                address.add(new PROPERTY_VALUE("deployment", resourceKey));
-                operation = new Operation("add",address,"enabled",enabled);
 
+                operation = new CompositeOperation();
+                for (String theGroup : serverGroups) {
+                    address = new ArrayList<PROPERTY_VALUE>();
+                    address.add(new PROPERTY_VALUE("server-group",theGroup));
+
+                    address.add(new PROPERTY_VALUE("deployment", resourceKey));
+                    Operation step = new Operation("add",address,"enabled",enabled);
+                    ((CompositeOperation)operation).addStep(step);
+                }
             }
         }
 
@@ -503,7 +525,37 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
         else {
             operationResult.setErrorMessage("No valid operation was given for input [" + name + "]");
         }
-        // TODO throw an exception if the operation failed?
         return operationResult;
+    }
+
+    @SuppressWarnings("unchecked")
+    private Collection<String> getServerGroups() {
+        Operation op = new ReadChildrenNames(Collections.<PROPERTY_VALUE>emptyList(),"server-group");
+        Result res = connection.execute(op);
+
+        return (Collection<String>) res.getResult();
+    }
+
+    Object getObjectForProperty(PropertySimple prop, PropertyDefinitionSimple propDef) {
+
+        PropertySimpleType type = propDef.getType();
+        switch (type) {
+            case STRING:
+                return prop.getStringValue();
+            case INTEGER:
+                return prop.getIntegerValue();
+            case BOOLEAN:
+                return prop.getBooleanValue();
+            case LONG:
+                return prop.getLongValue();
+            case FLOAT:
+                return prop.getFloatValue();
+            case DOUBLE:
+                return prop.getDoubleValue();
+            default:
+                return prop.getStringValue();
+        }
+
+
     }
 }

@@ -86,7 +86,7 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
         tree = RuntimeApacheConfiguration.extract(tree, serverComponent.getCurrentProcessInfo(), serverComponent.getCurrentBinaryInfo(), serverComponent.getModuleNames(), false);
         
         //first define the root server as one virtual host
-        discoverMainServer(context, discoveredResources);
+        discoverMainServer(context, tree, discoveredResources);
 
         ResourceType resourceType = context.getResourceType();
 
@@ -273,7 +273,7 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
     }
    
     private void discoverMainServer(ResourceDiscoveryContext<ApacheServerComponent> context,
-        Set<DiscoveredResourceDetails> discoveredResources) throws Exception {
+        ApacheDirectiveTree runtimeConfig, Set<DiscoveredResourceDetails> discoveredResources) throws Exception {
 
         ResourceType resourceType = context.getResourceType();
         Configuration mainServerPluginConfig = context.getDefaultPluginConfiguration();
@@ -284,25 +284,28 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
         String mainServerUrl = context.getParentResourceContext().getPluginConfiguration().getSimple(
             ApacheServerComponent.PLUGIN_CONFIG_PROP_URL).getStringValue();
         
-        if (mainServerUrl != null && !"null".equals(mainServerUrl)) {
-            PropertySimple mainServerUrlProp = new PropertySimple(ApacheVirtualHostServiceComponent.URL_CONFIG_PROP,
-                mainServerUrl);
-
-            mainServerPluginConfig.put(mainServerUrlProp);
-
-            URI mainServerUri = new URI(mainServerUrl);
-            String host = mainServerUri.getHost();
-            int port = mainServerUri.getPort();
-            if (port == -1) {
-                port = 80;
-            }
-
-            File rtLogFile = new File(logsDir, host + port + RT_LOG_FILE_NAME_SUFFIX);
-
-            PropertySimple rtLogProp = new PropertySimple(
-                ApacheVirtualHostServiceComponent.RESPONSE_TIME_LOG_FILE_CONFIG_PROP, rtLogFile.toString());
-            mainServerPluginConfig.put(rtLogProp);
+        if (mainServerUrl == null || mainServerUrl.trim().isEmpty()) {
+            HttpdAddressUtility.Address addr = context.getParentResourceComponent().getAddressUtility().getMainServerSampleAddress(runtimeConfig, null, 0);
+            mainServerUrl = addr.toString();
         }
+        
+        PropertySimple mainServerUrlProp = new PropertySimple(ApacheVirtualHostServiceComponent.URL_CONFIG_PROP,
+            mainServerUrl);
+
+        mainServerPluginConfig.put(mainServerUrlProp);
+
+        URI mainServerUri = new URI(mainServerUrl);
+        String host = mainServerUri.getHost();
+        int port = mainServerUri.getPort();
+        if (port == -1) {
+            port = 80;
+        }
+
+        File rtLogFile = new File(logsDir, host + port + RT_LOG_FILE_NAME_SUFFIX);
+
+        PropertySimple rtLogProp = new PropertySimple(
+            ApacheVirtualHostServiceComponent.RESPONSE_TIME_LOG_FILE_CONFIG_PROP, rtLogFile.toString());
+        mainServerPluginConfig.put(rtLogProp);
 
         String key = ApacheVirtualHostServiceComponent.MAIN_SERVER_RESOURCE_KEY;
         

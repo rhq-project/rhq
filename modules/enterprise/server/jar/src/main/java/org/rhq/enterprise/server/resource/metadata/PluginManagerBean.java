@@ -341,8 +341,10 @@ public class PluginManagerBean implements PluginManagerLocal {
         log.debug("Registering " + plugin);
         long startTime = System.currentTimeMillis();
 
-        boolean typesUpdated = pluginMgr.registerPluginTypes(subject, plugin, pluginDescriptor,
-            pluginFile, forceUpdate);
+//        boolean typesUpdated = pluginMgr.registerPluginTypes(subject, plugin, pluginDescriptor,
+//            pluginFile, forceUpdate);
+        boolean newOrUpdated = pluginMgr.installPluginJar(subject, plugin, pluginDescriptor, pluginFile);
+        boolean typesUpdated = pluginMgr.registerPluginTypes(plugin, pluginDescriptor, newOrUpdated, forceUpdate);
 
         if (typesUpdated) {
             resourceMetadataManager.removeObsoleteTypes(subject, plugin.getName(), PLUGIN_METADATA_MANAGER);
@@ -352,15 +354,13 @@ public class PluginManagerBean implements PluginManagerLocal {
         log.debug("Finished registering " + plugin + " in " + (endTime - startTime) + " ms");
     }
 
+
     @RequiredPermission(Permission.MANAGE_SETTINGS)
-    public boolean registerPluginTypes(Subject subject, Plugin newPlugin, PluginDescriptor pluginDescriptor,
-        File pluginFile, boolean forceUpdate) throws Exception {
-
-        // TODO GH: Consider how to remove features from plugins in updates without breaking everything
-
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public boolean installPluginJar(Subject subject, Plugin newPlugin, PluginDescriptor pluginDescriptor,
+        File pluginFile) throws Exception {
         Plugin existingPlugin = null;
         boolean newOrUpdated = false;
-        boolean typesUpdated = false;
 
         try {
             existingPlugin = getPlugin(newPlugin.getName());
@@ -390,6 +390,12 @@ public class PluginManagerBean implements PluginManagerLocal {
             }
             log.debug("Updated plugin entity [" + newPlugin + "]");
         }
+        return newOrUpdated;
+    }
+
+    public boolean registerPluginTypes(Plugin newPlugin, PluginDescriptor pluginDescriptor, boolean newOrUpdated,
+        boolean forceUpdate) throws Exception {
+        boolean typesUpdated = false;
 
         if (newOrUpdated || forceUpdate || !PLUGIN_METADATA_MANAGER.getPluginNames().contains(newPlugin.getName())) {
             Set<ResourceType> rootResourceTypes = PLUGIN_METADATA_MANAGER.loadPlugin(pluginDescriptor);
@@ -402,10 +408,6 @@ public class PluginManagerBean implements PluginManagerLocal {
                 typesUpdated = true;
             }
         }
-
-        // TODO GH: JBNADM-1310/JBNADM-1630 - Push updated plugins to running agents and have them reboot their PCs
-        // We probably want to be smart about this - perhaps have the agents periodically poll their server to see
-        // if there are new plugins and if so download them - this of course would be configurable/disableable
 
         return typesUpdated;
     }

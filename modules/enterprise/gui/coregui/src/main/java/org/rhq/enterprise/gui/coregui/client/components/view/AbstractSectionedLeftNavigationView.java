@@ -101,7 +101,7 @@ public abstract class AbstractSectionedLeftNavigationView extends LocatableHLayo
         new PermissionsLoader().loadExplicitGlobalPermissions(new PermissionsLoadedListener() {
 
             public void onPermissionsLoaded(Set<Permission> permissions) {
-                globalPermissions = permissions;
+                globalPermissions = (permissions != null) ? permissions : EnumSet.noneOf(Permission.class);
 
                 List<NavigationSection> sections = getNavigationSections();
                 sectionsByName = new HashMap<String, NavigationSection>(sections.size());

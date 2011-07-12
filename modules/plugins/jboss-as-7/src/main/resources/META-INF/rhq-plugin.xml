@@ -102,7 +102,9 @@
         <operation name="server-group:add" displayName="Add ServerGroup" description="Add a server group to the Domain.">
             <parameters>
                 <c:simple-property name="name" description="Name of Group to add"/>
-                <c:simple-property name="profile" description="Profile to add this group to"/>
+                <c:simple-property name="profile" description="Profile to add this group to">
+                    <c:option-source target="resource" expression="type=Profile plugin=jboss-as-7"/>
+                </c:simple-property>
             </parameters>
         </operation>
         <operation name="server-group:remove" displayName="Remove ServerGroup" description="Remove a server group from the Domain.">
@@ -116,7 +118,7 @@
             <parameters>
                 <c:simple-property name="servername" displayName="Name of the new server" required="true"/>
                 <c:simple-property name="hostname" displayName="Name of the host to put the server on" required="true">
-                    <c:option-source target="resource" expression="type=Host plugin=jboss-as-7"/>
+                    <c:option-source target="resource" expression="type=^Host$ plugin=jboss-as-7"/>
                 </c:simple-property>
                 <c:simple-property name="server-group" displayName="Server group to add to" required="true">
                     <c:option-source target="resource" expression="type=ServerGroup"/>
@@ -131,9 +133,11 @@
         </operation>
         <operation name="managed-server:remove" displayName="Remove managed server" description="Remove a managed server">
             <parameters>
-                <c:simple-property name="servername" displayName="Name of the server to remove" required="true"/>
+                <c:simple-property name="servername" displayName="Name of the server to remove" required="true">
+                    <c:option-source target="resource" expression="type=JBossAS-Managed"/>
+                </c:simple-property>
                 <c:simple-property name="hostname" displayName="Name of the host where the server is on" required="true">
-                        <c:option-source target="resource" expression="type=JBossAS-Managed"/>
+                    <c:option-source target="resource" expression="type=^Host$ plugin=jboss-as-7"/>
                 </c:simple-property>
             </parameters>
             <results>
@@ -1706,7 +1710,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
         <content name="file" category="deployable" isCreationType="true" description="Deployments on this server group">
             <configuration>
                <c:group name="deployment" displayName="Deployment Options">
-                   <c:simple-property name="runtimeName" required="true"/>
+                   <c:simple-property name="runtimeName" required="false"/>
                </c:group>
             </configuration>
         </content>

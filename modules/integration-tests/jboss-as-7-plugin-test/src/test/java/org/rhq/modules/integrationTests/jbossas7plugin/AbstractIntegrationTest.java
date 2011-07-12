@@ -22,7 +22,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -48,8 +47,8 @@ public abstract class AbstractIntegrationTest {
         OutputStream os = conn.getOutputStream(deploymentName);
 
 
-        URL url = getClass().getClassLoader().getResource(".");
-        System.out.println(url);
+//        URL url = getClass().getClassLoader().getResource(".");
+//        System.out.println(url);
 
 
         InputStream fis = getClass().getClassLoader().getResourceAsStream(deploymentName);
@@ -66,7 +65,7 @@ public abstract class AbstractIntegrationTest {
         }
         fis.close();
         JsonNode node = conn.finishUpload();
-        System.out.println(node);
+//        System.out.println(node);
         assert node != null : "No result from upload - node was null";
         assert node.has("outcome") : "No outcome from upload";
         String outcome = node.get("outcome").getTextValue();

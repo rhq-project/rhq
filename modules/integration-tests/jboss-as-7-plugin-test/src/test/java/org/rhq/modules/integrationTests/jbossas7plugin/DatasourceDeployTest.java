@@ -330,8 +330,8 @@ public class DatasourceDeployTest extends AbstractIntegrationTest {
 
         // Now invoke the operation
         DatasourceComponent dc = new DatasourceComponent();
-        dc.path="profile=default,subsystem=datasources,data-source=" + POSTGRES;
-        dc.connection = conn;
+        dc.setPath("profile=default,subsystem=datasources,data-source=" + POSTGRES);
+        dc.setConnection(conn);
 
         Configuration parameters = new Configuration();
         // Operation takes no parameters

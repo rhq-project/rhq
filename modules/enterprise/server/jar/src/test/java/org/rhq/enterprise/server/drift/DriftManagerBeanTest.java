@@ -145,7 +145,7 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
         assertEquals(1, changeSet.getVersion());
         assertEquals(1, changeSet.getDrifts().size());
         Drift drift = changeSet.getDrifts().iterator().next();
-        assertEquals("test/dir/filename.ext", drift.getPath());
+        assertEquals("dir/filename.ext", drift.getPath());
         assertEquals("aaaaa", drift.getOldDriftFile().getHashId());
         assertEquals("bbbbb", drift.getNewDriftFile().getHashId());
         assertEquals(DriftCategory.FILE_CHANGED, drift.getCategory());
@@ -353,7 +353,7 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
 
         @Override
         public boolean requestDriftFiles(int resourceId, Headers headers, List<DriftFile> driftFiles) {
-            return false;
+            return true;
         }
 
         @Override

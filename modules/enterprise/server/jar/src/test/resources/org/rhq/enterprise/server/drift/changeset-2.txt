@@ -1,2 +1,5 @@
-test\dir 1
+test-2
+/test
+D
+dir 1
 bbbbb aaaaa filename.ext C

@@ -1,2 +1,5 @@
-test/dir 1
+test-1
+/test
+C
+dir 1
 aaaaa 0 filename.ext A

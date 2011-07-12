@@ -740,11 +740,11 @@
         </operation>
 -->
 
-        <operation name="addDatasource" description="Add a datasource to the system. Needs a jdbc-driver that was already added to the domain and promoted to the respective server-group(s) (if in domain mode).">
+        <operation name="addDatasource" description="Add a datasource to the system. Needs a jdbc-driver that was already added to the domain and promoted to the respective server-group(s) for the profile (if in domain mode).">
             <parameters>
                 <c:simple-property name="name" required="true" description="Name of the datasource"/>
                 <c:simple-property name="driver-name" required="true">
-                    <c:option-source target="resource" expression="type=DomainDeployment"/>
+                    <c:option-source target="resource" expression="type=^Deployment$"/>
                 </c:simple-property>
                 <c:simple-property name="jndi-name" description="JNDI-Name of the Datasource" required="true"/>
                 <c:simple-property name="connection-url" description="URL for the connection to the database" required="true"/>
@@ -757,11 +757,11 @@
             </results>
         </operation>
 
-        <operation name="addXADatasource" description="Add a XA datasource to the system. Needs a jdbc-driver that was already added to the domain and promoted to the respective server-group(s) (if in domain mode).">
+        <operation name="addXADatasource" description="Add a XA datasource to the system. Needs a jdbc-driver that was already added to the domain and promoted to the respective server-group(s) for the profile (if in domain mode).">
             <parameters>
                 <c:simple-property name="name" required="true" description="Name of the datasource"/>
                 <c:simple-property name="driver-name" required="true">
-                    <c:option-source target="resource" expression="type=DomainDeployment"/>
+                    <c:option-source target="resource" expression="type=^Deployment$"/>
                 </c:simple-property>
                 <c:simple-property name="xa-data-source-class" required="true" description="xa-data-source-class"/>
                 <c:simple-property name="jndi-name" description="JNDI-Name of the Datasource" required="true"/>

@@ -252,11 +252,17 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
         }
 
         Set<VHostSpec> matchingVhosts = possibleMatchesPerRK.get(resourceKey);
-        if (matchingVhosts == null || matchingVhosts.size() != 1) {
-            throw new IllegalArgumentException("Failed to uniquely identify the vhost from the old-style resource key. The old resource key is '"
+        if (matchingVhosts == null || matchingVhosts.isEmpty()) {
+            throw new IllegalArgumentException("Failed to identify the vhost resource with the old-style resource key '" + resourceKey + 
+                "' with any of the vhosts in the apache configuration files. This means that the vhost resource is stale and you can safely uninventory it.");
+        } else if (matchingVhosts.size() > 1) {
+            String message = "Failed to uniquely identify the vhost from the old-style resource key. The old resource key is '"
                 + resourceKey
-                + "' which couldn't be matched with any of the following possible new-style resource keys: "
-                + matchingVhosts);
+                + "' which could be matched with any of the following possible new-style resource keys: "
+                + matchingVhosts + ". The plugin does not have enough information to successfully upgrade this resource."
+                + " Please take note of any alert definitions or operation schedules that you have defined for this resource and manually uninventory it.";
+            
+            throw new IllegalArgumentException(message);
         } else {
             VHostSpec vhost = matchingVhosts.iterator().next();
             if (vhost == null) {

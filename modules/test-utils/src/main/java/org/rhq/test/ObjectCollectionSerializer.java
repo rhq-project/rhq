@@ -137,7 +137,7 @@ public class ObjectCollectionSerializer {
      * @see #deserialize(XMLStreamReader) 
      */
     public List<?> deserialize(InputStream inputStream) throws IOException, XMLStreamException, ClassNotFoundException, JAXBException {
-        XMLStreamReader rdr = XMLInputFactory.newFactory().createXMLStreamReader(inputStream);
+        XMLStreamReader rdr = XMLInputFactory.newInstance().createXMLStreamReader(inputStream);
         return deserialize(rdr);
     }
     
@@ -145,7 +145,7 @@ public class ObjectCollectionSerializer {
      * @see #deserialize(XMLStreamReader) 
      */
     public List<?> deserialize(Reader inputReader) throws IOException, XMLStreamException, ClassNotFoundException, JAXBException {
-        XMLStreamReader rdr = XMLInputFactory.newFactory().createXMLStreamReader(inputReader);
+        XMLStreamReader rdr = XMLInputFactory.newInstance().createXMLStreamReader(inputReader);
         return deserialize(rdr);
     }
 

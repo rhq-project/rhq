@@ -29,6 +29,9 @@ public class DatasourceComponent extends BaseComponent implements OperationFacet
                                            Configuration parameters) throws Exception {
 
         OperationResult result = new OperationResult();
+        ASConnection connection = getASConnection();
+        Operation op;
+
         if (operationName.equals("addDriver")) { // TODO decide if we need this at all. See also the plugin-descriptor
             String drivername = parameters.getSimpleValue("driver-name", NOTSET);
 
@@ -36,25 +39,18 @@ public class DatasourceComponent extends BaseComponent implements OperationFacet
             List<PROPERTY_VALUE> address = pathToAddress(getPath());
             address.add(new PROPERTY_VALUE("jdbc-driver",drivername));
 
-            Operation op =  new Operation("add",address,"driver-name",drivername);
+            op =  new Operation("add",address,"driver-name",drivername);
             op.addAdditionalProperty("deployment-name",parameters.getSimpleValue("deployment-name", NOTSET));
             op.addAdditionalProperty("driver-class-name",parameters.getSimpleValue("driver-class-name", NOTSET));
 
-            ASConnection connection = getASConnection();
-            Result res = connection.execute(op);
-            if (res.isSuccess()) {
-                result.setSimpleResult("Success");
-            }
-            else {
-                result.setErrorMessage(res.getFailureDescription().toString());
-            }
+
         }
         else if (operationName.equals("addDatasource")) {
             String name = parameters.getSimpleValue("name",NOTSET);
 
             List<PROPERTY_VALUE> address = pathToAddress(getPath());
             address.add(new PROPERTY_VALUE("data-source",name));
-            Operation op = new Operation("add",address);
+            op = new Operation("add",address);
             addRequiredToOp(op,parameters,"driver-name");
             addRequiredToOp(op,parameters,"jndi-name");
             addRequiredToOp(op, parameters, "pool-name");
@@ -76,7 +72,7 @@ public class DatasourceComponent extends BaseComponent implements OperationFacet
 
             List<PROPERTY_VALUE> address = pathToAddress(getPath());
             address.add(new PROPERTY_VALUE("xa-data-source",name));
-            Operation op = new Operation("add",address);
+            op = new Operation("add",address);
             addRequiredToOp(op,parameters,"driver-name");
             addRequiredToOp(op,parameters,"jndi-name");
             addRequiredToOp(op,parameters,"pool-name");
@@ -99,8 +95,21 @@ public class DatasourceComponent extends BaseComponent implements OperationFacet
 
         }
         else {
-            result.setErrorMessage("Unknown operation " + operationName);
+            /*
+             * This is a catch all for operations that are not explicitly treated above.
+             */
+            List<PROPERTY_VALUE> address = pathToAddress(getPath());
+            op = new Operation(operationName,address);
         }
+
+        Result res = connection.execute(op);
+        if (res.isSuccess()) {
+            result.setSimpleResult("Success");
+        }
+        else {
+            result.setErrorMessage(res.getFailureDescription().toString());
+        }
+
 
         return result;
     }

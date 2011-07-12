@@ -230,9 +230,7 @@ public class DatasourceDeployTest extends AbstractIntegrationTest {
     public void deployDatasourceViaOperation() throws Exception {
         ASConnection conn = getASConnection();
         uploadDriverToDomain(conn);
-        Result res;
         Address sgAddress = addDriverToMainServerGroup(conn);
-        Operation op;
 
         // Now create the data source in the profile, that main-server-group is using.
 
@@ -314,8 +312,45 @@ public class DatasourceDeployTest extends AbstractIntegrationTest {
 
     }
 
+    public void flushDSviaOperation() throws Exception {
+        // This test executes the "fall through" operation in the DatasourceComponent
+
+        String theOperation = "flush-all-connection-in-pool";
+
+        ASConnection conn = getASConnection();
+        uploadDriverToDomain(conn);
+        Address sgAddress = addDriverToMainServerGroup(conn);
+
+        // Now create the data source in the profile, that main-server-group is using.
+        Address dsAddress = createDatasource(conn, false);
+
+        System.out.println("Deployed new datasource at " + dsAddress.toString());
+
+        Thread.sleep(1000L); // give some time to settle
+
+        // Now invoke the operation
+        DatasourceComponent dc = new DatasourceComponent();
+        dc.path="profile=default,subsystem=datasources,data-source=" + POSTGRES;
+        dc.connection = conn;
+
+        Configuration parameters = new Configuration();
+        // Operation takes no parameters
+        OperationResult operationResult = dc.invokeOperation(theOperation,parameters);
+        assert operationResult != null;
+        assert operationResult.getSimpleResult()!=null;
+        assert operationResult.getErrorMessage()==null;
+
+
+        cleanupDatasource(conn,dsAddress);
+        cleanupSGDeployment(conn,sgAddress);
+        cleanupDomainDeployment(conn);
+
+    }
+
     private void cleanupDomainDeployment(ASConnection conn) {
-        Operation op;Result res;Address deployment = new Address("deployment",DRIVER);
+        Operation op;
+        Result res;
+        Address deployment = new Address("deployment",DRIVER);
         op = new Remove(deployment);
         res = conn.execute(op);
         assert res != null;

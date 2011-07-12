@@ -31,7 +31,7 @@ abort()
 
 usage() 
 {   
-   abort "$@" "Usage:   $EXE RHQ_SERVER_URL RHQ_AGENT_ENV_URL RHQ_AGENT_CONFIGURATION_URL RHQ_AGENT_INSTALL_PARENT_DIR" "Example: $EXE http://localhost:7080/ rhq-agent-env.sh agent-configuration.xml ~/Applications"
+   abort "$@" "Usage: $EXE"
 }
 
 SCRIPT_PATH=`readlink -e "$0" 2>/dev/null || readlink "$0" 2>/dev/null || echo "$0"`
@@ -46,14 +46,33 @@ fi
 
 # Process command line args.
 EXE=`basename $0`
-if [ "$#" -ne 4 ]; then
-   usage "Invalid number of arguments."
+if [ "$#" -ne 0 ]; then
+   usage "This script does not take any arguments. It is configured via environment variables."
 fi  
 
+if [ -z "$RHQ_AGENT_ENV_URL" ]; then
+   abort "RHQ_AGENT_ENV_URL environment variable is not defined."
+fi
+
+if [ -z "$RHQ_AGENT_CONFIGURATION_URL" ]; then
+   abort "RHQ_AGENT_CONFIGURATION_URL environment variable is not defined."
+fi
+
+if [ -z "$RHQ_AGENT_INSTALL_PARENT_DIR" ]; then
+   abort "RHQ_AGENT_INSTALL_PARENT_DIR environment variable is not defined."
+fi
+
+if [ -z "$RHQ_AGENT_NAME" ]; then
+   RHQ_AGENT_NAME=`hostname`
+   echo "RHQ_AGENT_NAME environment variable is not defined - defaulting to $RHQ_AGENT_NAME"
+fi
+
+if [ -z "$RHQ_AGENT_SERVER_BIND_ADDRESS" ]; then
+   RHQ_AGENT_SERVER_BIND_ADDRESS="127.0.0.1"
+   echo "RHQ_AGENT_SERVER_BIND_ADDRESS environment variable is not defined - defaulting to $RHQ_AGENT_SERVER_BIND_ADDRESS"
+fi
+
 RHQ_SERVER_URL="http://$RHQ_AGENT_SERVER_BIND_ADDRESS:7080/"
-RHQ_AGENT_ENV_URL="$2"
-RHQ_AGENT_CONFIGURATION_URL="$3"
-RHQ_AGENT_INSTALL_PARENT_DIR="$4"
 
 # Download the Agent installer jarfile.
 mkdir -p "$HOME/Downloads/tmp"

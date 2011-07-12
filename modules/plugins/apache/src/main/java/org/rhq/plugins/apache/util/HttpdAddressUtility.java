@@ -149,12 +149,27 @@ public enum HttpdAddressUtility {
         /**
          * A simple parser of the provided address into host and port
          * sections.
+         * <p>
+         * This is equivalent to calling {@link #parse(String, String)} with
+         * the default scheme "http".
          * 
          * @param address the address to parse
          * @return an instance of Address with host and port set accordingly
          */
         public static Address parse(String address) {
-            String scheme = "http";
+            return parse(address, "http");
+        }
+
+        /**
+         * Parses given address into an Address object and assigns a default scheme if none
+         * is present in the address itself.
+         * 
+         * @param address the address to parse
+         * @param defaultScheme the default scheme to apply or null if no scheme is required by default
+         * @return the parsed address
+         */
+        public static Address parse(String address, String defaultScheme) {
+            String scheme = defaultScheme;
             int schemeSpecIdx = address.indexOf("://");
             if (schemeSpecIdx >= 0) {
                 scheme = address.substring(0, schemeSpecIdx);
@@ -163,7 +178,7 @@ public enum HttpdAddressUtility {
             
             int lastColonIdx = address.lastIndexOf(':');
             if (lastColonIdx == -1) {
-                return new Address(address, NO_PORT_SPECIFIED_VALUE);
+                return new Address(scheme, address, NO_PORT_SPECIFIED_VALUE);
             } else {
                 int lastRightBracketPos = address.lastIndexOf(']');
                 if (lastColonIdx > lastRightBracketPos) {
@@ -184,7 +199,7 @@ public enum HttpdAddressUtility {
                 }
             }
         }
-
+        
         public boolean isPortWildcard() {
             return port == PORT_WILDCARD_VALUE;
         }
@@ -257,15 +272,19 @@ public enum HttpdAddressUtility {
         public String toString(boolean includeScheme, boolean interpretWildcardPort) {
             StringBuilder bld = new StringBuilder();
             
-            if (includeScheme) {
+            if (includeScheme && scheme != null) {
                 bld.append(scheme).append("://");
             }
 
-            bld.append(host);
+            if (host != null) {
+                bld.append(host);
+                
+                if (port != NO_PORT_SPECIFIED_VALUE) {
+                    bld.append(":");
+                }
+            }
 
             if (port != NO_PORT_SPECIFIED_VALUE) {
-                bld.append(":");
-                
                 if (port == PORT_WILDCARD_VALUE && interpretWildcardPort) {
                     bld.append(WILDCARD);
                 } else {
@@ -309,6 +328,9 @@ public enum HttpdAddressUtility {
         for (Address address : addressesToMatch) {
             if (isAddressConforming(address, limitToHost, limitToPort, false)) {
                 substituteWildcards(ag, address);
+                if (address.scheme == null) {
+                    address.scheme = "http";
+                }
                 return address;
             }
         }
@@ -428,8 +450,8 @@ public enum HttpdAddressUtility {
         return ret;
     }
     
-    private static Address parseListen(String listenValue) {
-        Address ret = Address.parse(listenValue);
+    public static Address parseListen(String listenValue) {
+        Address ret = Address.parse(listenValue, null);
         if (!ret.isPortDefined()) {
             try {
                 ret.port = Integer.parseInt(ret.host);

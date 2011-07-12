@@ -86,7 +86,7 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
         tree = RuntimeApacheConfiguration.extract(tree, serverComponent.getCurrentProcessInfo(), serverComponent.getCurrentBinaryInfo(), serverComponent.getModuleNames(), false);
         
         //first define the root server as one virtual host
-        discoverMainServer(context, discoveredResources);
+        discoverMainServer(context, tree, discoveredResources);
 
         ResourceType resourceType = context.getResourceType();
 
@@ -252,11 +252,17 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
         }
 
         Set<VHostSpec> matchingVhosts = possibleMatchesPerRK.get(resourceKey);
-        if (matchingVhosts == null || matchingVhosts.size() != 1) {
-            throw new IllegalArgumentException("Failed to uniquely identify the vhost from the old-style resource key. The old resource key is '"
+        if (matchingVhosts == null || matchingVhosts.isEmpty()) {
+            throw new IllegalArgumentException("Failed to identify the vhost resource with the old-style resource key '" + resourceKey + 
+                "' with any of the vhosts in the apache configuration files. This means that the vhost resource is stale and you can safely uninventory it.");
+        } else if (matchingVhosts.size() > 1) {
+            String message = "Failed to uniquely identify the vhost from the old-style resource key. The old resource key is '"
                 + resourceKey
-                + "' which couldn't be matched with any of the following possible new-style resource keys: "
-                + matchingVhosts);
+                + "' which could be matched with any of the following possible new-style resource keys: "
+                + matchingVhosts + ". The plugin does not have enough information to successfully upgrade this resource."
+                + " Please take note of any alert definitions or operation schedules that you have defined for this resource and manually uninventory it.";
+            
+            throw new IllegalArgumentException(message);
         } else {
             VHostSpec vhost = matchingVhosts.iterator().next();
             if (vhost == null) {
@@ -273,7 +279,7 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
     }
    
     private void discoverMainServer(ResourceDiscoveryContext<ApacheServerComponent> context,
-        Set<DiscoveredResourceDetails> discoveredResources) throws Exception {
+        ApacheDirectiveTree runtimeConfig, Set<DiscoveredResourceDetails> discoveredResources) throws Exception {
 
         ResourceType resourceType = context.getResourceType();
         Configuration mainServerPluginConfig = context.getDefaultPluginConfiguration();
@@ -284,25 +290,28 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
         String mainServerUrl = context.getParentResourceContext().getPluginConfiguration().getSimple(
             ApacheServerComponent.PLUGIN_CONFIG_PROP_URL).getStringValue();
         
-        if (mainServerUrl != null && !"null".equals(mainServerUrl)) {
-            PropertySimple mainServerUrlProp = new PropertySimple(ApacheVirtualHostServiceComponent.URL_CONFIG_PROP,
-                mainServerUrl);
-
-            mainServerPluginConfig.put(mainServerUrlProp);
-
-            URI mainServerUri = new URI(mainServerUrl);
-            String host = mainServerUri.getHost();
-            int port = mainServerUri.getPort();
-            if (port == -1) {
-                port = 80;
-            }
-
-            File rtLogFile = new File(logsDir, host + port + RT_LOG_FILE_NAME_SUFFIX);
-
-            PropertySimple rtLogProp = new PropertySimple(
-                ApacheVirtualHostServiceComponent.RESPONSE_TIME_LOG_FILE_CONFIG_PROP, rtLogFile.toString());
-            mainServerPluginConfig.put(rtLogProp);
+        if (mainServerUrl == null || mainServerUrl.trim().isEmpty()) {
+            HttpdAddressUtility.Address addr = context.getParentResourceComponent().getAddressUtility().getMainServerSampleAddress(runtimeConfig, null, 0);
+            mainServerUrl = addr.toString();
         }
+        
+        PropertySimple mainServerUrlProp = new PropertySimple(ApacheVirtualHostServiceComponent.URL_CONFIG_PROP,
+            mainServerUrl);
+
+        mainServerPluginConfig.put(mainServerUrlProp);
+
+        URI mainServerUri = new URI(mainServerUrl);
+        String host = mainServerUri.getHost();
+        int port = mainServerUri.getPort();
+        if (port == -1) {
+            port = 80;
+        }
+
+        File rtLogFile = new File(logsDir, host + port + RT_LOG_FILE_NAME_SUFFIX);
+
+        PropertySimple rtLogProp = new PropertySimple(
+            ApacheVirtualHostServiceComponent.RESPONSE_TIME_LOG_FILE_CONFIG_PROP, rtLogFile.toString());
+        mainServerPluginConfig.put(rtLogProp);
 
         String key = ApacheVirtualHostServiceComponent.MAIN_SERVER_RESOURCE_KEY;
         

@@ -102,7 +102,9 @@
         <operation name="server-group:add" displayName="Add ServerGroup" description="Add a server group to the Domain.">
             <parameters>
                 <c:simple-property name="name" description="Name of Group to add"/>
-                <c:simple-property name="profile" description="Profile to add this group to"/>
+                <c:simple-property name="profile" description="Profile to add this group to">
+                    <c:option-source target="resource" expression="type=Profile plugin=jboss-as-7"/>
+                </c:simple-property>
             </parameters>
         </operation>
         <operation name="server-group:remove" displayName="Remove ServerGroup" description="Remove a server group from the Domain.">
@@ -116,7 +118,7 @@
             <parameters>
                 <c:simple-property name="servername" displayName="Name of the new server" required="true"/>
                 <c:simple-property name="hostname" displayName="Name of the host to put the server on" required="true">
-                    <c:option-source target="resource" expression="type=Host plugin=jboss-as-7"/>
+                    <c:option-source target="resource" expression="type=^Host$ plugin=jboss-as-7"/>
                 </c:simple-property>
                 <c:simple-property name="server-group" displayName="Server group to add to" required="true">
                     <c:option-source target="resource" expression="type=ServerGroup"/>
@@ -126,18 +128,20 @@
                 <c:simple-property name="auto-start" displayName="Autostart" default="false" type="boolean" />
             </parameters>
             <results>
-                <c:simple-property name="result" description="Outcome of the create server operation"/>
+                <c:simple-property name="operationResult" description="Outcome of the create server operation"/>
             </results>
         </operation>
         <operation name="managed-server:remove" displayName="Remove managed server" description="Remove a managed server">
             <parameters>
-                <c:simple-property name="servername" displayName="Name of the server to remove" required="true"/>
+                <c:simple-property name="servername" displayName="Name of the server to remove" required="true">
+                    <c:option-source target="resource" expression="type=JBossAS-Managed"/>
+                </c:simple-property>
                 <c:simple-property name="hostname" displayName="Name of the host where the server is on" required="true">
-                        <c:option-source target="resource" expression="type=JBossAS-Managed"/>
+                    <c:option-source target="resource" expression="type=^Host$ plugin=jboss-as-7"/>
                 </c:simple-property>
             </parameters>
             <results>
-                <c:simple-property name="result" description="Outcome of the remove server operation"/>
+                <c:simple-property name="operationResult" description="Outcome of the remove server operation"/>
             </results>
 
         </operation>
@@ -218,7 +222,7 @@
                     <c:simple-property name="auto-start" displayName="Autostart" description="Should this server start at boot?" type="boolean" default="false" required="true"/>
                 </parameters>
                 <results>
-                    <c:simple-property name="result" description="Outcome of the create server operation"/>
+                    <c:simple-property name="operationResult" description="Outcome of the create server operation"/>
                 </results>
             </operation>
             <operation name="server:remove" displayName="Delete server" description="Deletes a server on this host.">
@@ -226,7 +230,7 @@
                     <c:simple-property name="name" description="Name of this new server" required="true"/>
                 </parameters>
                 <results>
-                    <c:simple-property name="result" description="Outcome of the delete server operation"/>
+                    <c:simple-property name="operationResult" description="Outcome of the delete server operation"/>
                 </results>
             </operation>
         </server>
@@ -243,12 +247,15 @@
             <operation name="domain-deployment:promote" displayName="Deploy to Server-Group" description="Deploy this deployment to a server group">
                 <parameters>
                     <c:simple-property name="server-group" required="true" description="Server group to deploy to" type="string">
+                        <c:property-options>
+                            <c:option value="__all" name="All"/>
+                        </c:property-options>
                         <c:option-source target="resource" expression="type=ServerGroup" />
                     </c:simple-property>
                     <c:simple-property name="enabled" required="true" default="true" description="Should the deployment be enabled on the server group?" type="boolean"/>
                 </parameters>
                 <results>
-                    <c:simple-property name="result" description="Outcome of the delete server operation"/>
+                    <c:simple-property name="operationResult" description="Outcome of the deploy to server group operation"/>
                 </results>
             </operation>
 
@@ -264,7 +271,7 @@
             <resource-configuration>
                 <c:simple-property name="name" readOnly="true"/>
                 <c:simple-property name="runtime-name" readOnly="true"/>
-                <c:simple-property name="hash" readOnly="true"/>
+                <c:simple-property name="content" readOnly="true"/>
             </resource-configuration>
         </service>
     </server>
@@ -487,6 +494,7 @@
             <plugin-configuration>
                 <c:simple-property name="path" readOnly="true" default="queue"/>
             </plugin-configuration>
+
             <resource-configuration> <!-- See BZ 705713 TODO -->
                 <c:simple-property name="durable" required="false" type="boolean" readOnly="false" default="false"
                                    description="Whether the queue is durable or not."/>
@@ -703,8 +711,9 @@
 
     <server name="Datasources"
             discovery="SubsystemDiscovery"
-            class="BaseComponent"
+            class="DatasourceComponent"
             singleton="true"
+            description="Datasources subsystem"
             >
 
         <runs-inside>
@@ -716,132 +725,380 @@
             <c:simple-property name="path" readOnly="true" default="subsystem=datasources"/>
         </plugin-configuration>
 
+<!-- not needed for hot-deployed drivers - only for module ones, but I am not sure we want to support that
+        <operation name="addDriver" displayName="Add a JDBC driver" >
+            <parameters>
+                <c:simple-property name="driver-name" required="true"/>
+                <c:simple-property name="deployment-name" required="true">
+                    <c:option-source target="resource" expression="type=DomainDeployment"/>
+                </c:simple-property>
+                <c:simple-property name="driver-class-name" required="true"/>
+            </parameters>
+            <results>
+                <c:simple-property name="operationResult"/>
+            </results>
+        </operation>
+-->
+
+        <operation name="addDatasource" description="Add a datasource to the system. Needs a jdbc-driver that was already added to the domain and promoted to the respective server-group(s) (if in domain mode).">
+            <parameters>
+                <c:simple-property name="name" required="true" description="Name of the datasource"/>
+                <c:simple-property name="driver-name" required="true">
+                    <c:option-source target="resource" expression="type=DomainDeployment"/>
+                </c:simple-property>
+                <c:simple-property name="jndi-name" description="JNDI-Name of the Datasource" required="true"/>
+                <c:simple-property name="connection-url" description="URL for the connection to the database" required="true"/>
+                <c:simple-property name="pool-name" description="Name of the pool" required="true"/>
+                <c:simple-property name="user-name" description="User name for DB-connections" required="false" />
+                <c:simple-property name="password" description="Password" type="password" required="false"/>
+            </parameters>
+            <results>
+                <c:simple-property name="operationResult"/>
+            </results>
+        </operation>
+
+        <operation name="addXADatasource" description="Add a XA datasource to the system. Needs a jdbc-driver that was already added to the domain and promoted to the respective server-group(s) (if in domain mode).">
+            <parameters>
+                <c:simple-property name="name" required="true" description="Name of the datasource"/>
+                <c:simple-property name="driver-name" required="true">
+                    <c:option-source target="resource" expression="type=DomainDeployment"/>
+                </c:simple-property>
+                <c:simple-property name="xa-data-source-class" required="true" description="xa-data-source-class"/>
+                <c:simple-property name="jndi-name" description="JNDI-Name of the Datasource" required="true"/>
+                <c:simple-property name="connection-url" description="URL for the connection to the database" required="true"/>
+                <c:simple-property name="pool-name" description="Name of the pool" required="true"/>
+                <c:simple-property name="user-name" description="User name for DB-connections" required="false" />
+                <c:simple-property name="password" description="Password" type="password" required="false"/>
+                <c:list-property name="xa-properties" displayName="XA Properties" description="Additional XA Properties" required="false">
+                    <c:map-property name="xa-properties">
+                        <c:simple-property name="key" displayName="Key" description="Key of the property"/>
+                        <c:simple-property name="value" displayName="Value" description="Value of the property"/>
+                    </c:map-property>
+                </c:list-property>
+            </parameters>
+            <results>
+                <c:simple-property name="operationResult"/>
+            </results>
+        </operation>
+
         <service name="DataSource"
                  discovery="SubsystemDiscovery"
-                 class="BaseComponent"
-                 singleton="true"
+                 class="DatasourceComponent"
+                 description="A non-XA data source"
                 >
 
             <plugin-configuration>
                 <c:simple-property name="path" readOnly="true" default="data-source"/>
             </plugin-configuration>
 
+            <operation name="enable" description="Enables the data-source">
+                <results>
+                    <c:simple-property name="operationResult"/>
+                </results>
+            </operation>
+            <operation name="disable" description="Disables the XA data-source">
+                <results>
+                    <c:simple-property name="operationResult"/>
+                </results>
+            </operation>
+
+            <operation name="flush-all-connection-in-pool" description="Flushes the pool for all connections">
+                <results>
+                    <c:simple-property name="operationResult"/>
+                </results>
+            </operation>
+
+            <operation name="flush-idle-connection-in-pool" description="Flushes the pool for idle connections">
+                <results>
+                    <c:simple-property name="operationResult"/>
+                </results>
+            </operation>
+
             <metric property="PreparedStatementCacheCurrentSize"
                     description="The number of prepared and callable statements currently cached in the statement cache"/>
-            <metric property="PreparedStatementCacheMissCount"
+            <metric property="PreparedStatementCacheMissCount" measurementType="trendsup"
                     description="The number of times that a statement request could not be satisfied with a statement from the cache"/>
-            <metric property="PreparedStatementCacheAddCount" description="The number of statements added to the statement cache"/>
-            <metric property="PreparedStatementCacheAccessCount" description="The number of times that the statement cache was accessed"/>
-            <metric property="PreparedStatementCacheDeleteCount" description="The number of statements discarded from the cache"/>
-            <metric property="PreparedStatementCacheHitCount" description="The number of times that statements from the cache were used"/>
-            <metric property="AverageBlockingTime" description="The average time spent blocking for a connection"/>
-            <metric property="MaxWaitTime" description="The maximum wait time for a connection"/>
-            <metric property="ActiveCount" description="The active count"/>
-            <metric property="CreatedCount" description="The created count"/>
-            <metric property="MaxCreationTime" description="The maximum time for creating a physical connection"/>
-            <metric property="MaxWaitCount" description="The maximum number of threads waiting for a connection"/>
-            <metric property="TotalCreationTime" description="The total time spent creating physical connections"/>
-            <metric property="AvailableCount" description="The available count"/>
+            <metric property="PreparedStatementCacheAddCount"
+                    description="The number of statements added to the statement cache"/>
+            <metric property="PreparedStatementCacheAccessCount" measurementType="trendsup"
+                    description="The number of times that the statement cache was accessed"/>
+            <metric property="PreparedStatementCacheDeleteCount" measurementType="trendsup"
+                    description="The number of statements discarded from the cache"/>
+            <metric property="PreparedStatementCacheHitCount" measurementType="trendsup"
+                    description="The number of times that statements from the cache were used"/>
+            <metric property="AverageBlockingTime" units="milliseconds"
+                    description="The average time spent blocking for a connection"/>
+            <metric property="MaxWaitTime" units="milliseconds"
+                    description="The maximum wait time for a connection" displayType="summary"/>
+            <metric property="ActiveCount"
+                    description="The active count"/>
+            <metric property="CreatedCount" description="The created count" measurementType="trendsup"/>
+            <metric property="MaxCreationTime" description="The maximum time for creating a physical connection" units="milliseconds"/>
+            <metric property="MaxWaitCount" description="The maximum number of threads waiting for a connection" units="milliseconds" displayType="summary"/>
+            <metric property="TotalCreationTime" description="The total time spent creating physical connections" measurementType="trendsup" units="milliseconds"/>
+            <metric property="AvailableCount" description="The available count" units="milliseconds"/>
             <metric property="MaxUsedCount" description="The maximum number of connections used"/>
-            <metric property="TimedOut" description="The timed out count"/>
-            <metric property="TotalBlockingTime" description="The total blocking time"/>
-            <metric property="AverageCreationTime" description="The average time spent creating a physical connection"/>
-            <metric property="DestroyedCount" description="The destroyed count"/>
+            <metric property="TimedOut" description="The timed out count" measurementType="trendsup" displayType="summary"/>
+            <metric property="TotalBlockingTime" description="The total blocking time" measurementType="trendsup" units="milliseconds"/>
+            <metric property="AverageCreationTime" description="The average time spent creating a physical connection" units="milliseconds"/>
+            <metric property="DestroyedCount" description="The destroyed count" measurementType="trendsup"/>
 
             <resource-configuration>
                 <c:simple-property name="connection-url" required="true" type="string" readOnly="true" description="The JDBC driver connection URL"/>
-                <c:simple-property name="driver-class" required="true" type="string" readOnly="true"
+                <c:simple-property name="driver-name" required="true" type="string" description="Name of the (existing) JDBC driver to use"/>
+                <c:simple-property name="driver-class" required="false" type="string" readOnly="true"
                          description="The fully qualifed name of the JDBC driver class"/>
                 <c:simple-property name="jndi-name" required="true" type="string" readOnly="true"
                          description="Specifies the JNDI name for the datasource"/>
-                <c:simple-property name="driver" required="true" type="string" readOnly="true"
-                         description="Defines the JDBC driver the datasource should use with this format: &lt;driver-name>#&lt;major-version>.&lt;minor-version> where &lt;driver-name> is the fully qualifed name of the JDBC driver class"/>
-                <c:simple-property name="new-connection-sql" type="string" readOnly="true"
+                <c:simple-property name="driver" required="false" type="string" readOnly="true"
+                         description="Defines the JDBC driver the datasource should use with this format: driver-name>#major-version.minor-version where driver-name is the fully qualifed name of the JDBC driver class"/>
+                <c:simple-property name="new-connection-sql" type="string" readOnly="true" required="false"
                          description="Specifies an SQL statement to execute whenever a connection is added to the connection pool."/>
                 <c:simple-property name="pool-name" type="string" readOnly="true"
                          description="Specifies the pool name for the datasource used for management"/>
                 <c:simple-property name="url-delimiter" type="string" readOnly="true"
-                         description="Specifies the delimeter for URLs in connection-url for HA datasources"/>
+                         description="Specifies the delimeter for URLs in connection-url for HA datasources" required="false"/>
                 <c:simple-property name="url-selector-strategy-class-name" type="string" readOnly="true"
-                         description="A class that implements org.jboss.jca.adapters.jdbc.URLSelectorStrategy"/>
-                <c:simple-property name="use-java-context" type="boolean" readOnly="true"
+                         description="A class that implements org.jboss.jca.adapters.jdbc.URLSelectorStrategy" required="false"/>
+                <c:simple-property name="use-java-context" type="boolean" readOnly="true" required="false"
                          description="Setting this to false will bind the DataSource into global JNDI;"/>
-                <c:simple-property name="enabled" type="string" readOnly="true" description="Specifies if the datasource should be enabled"/>
-                <c:simple-property name="max-pool-size" type="integer" readOnly="false"
+                <c:simple-property name="enabled" type="boolean" readOnly="true" required="false" description="Specifies if the datasource should be enabled"/>
+                <c:simple-property name="max-pool-size" type="integer" readOnly="false" required="false"
                          description="The max-pool-size element indicates the maximum number of connections for a pool. No more connections will be created in each sub-pool."/>
-                <c:simple-property name="min-pool-size" type="integer" readOnly="false"
+                <c:simple-property name="min-pool-size" type="integer" readOnly="false" required="false"
                          description="The min-pool-size element indicates the minimum number of connections a pool should hold. These are not created until a Subject is known from a request for a connection."/>
-                <c:simple-property name="pool-prefill" type="boolean" readOnly="false"
+                <c:simple-property name="pool-prefill" type="boolean" readOnly="false" required="false"
                          description="Whether to attempt to prefill the connection pool. Changing this value require a server restart."/>
-                <c:simple-property name="pool-use-strict-min" type="boolean" readOnly="false"
+                <c:simple-property name="pool-use-strict-min" type="boolean" readOnly="false" required="false"
                          description="Define if the min-pool-size should be considered a strictly."/>
-                <c:simple-property name="user-name" type="string" readOnly="true"
+                <c:simple-property name="user-name" type="string" readOnly="true" required="false"
                          description="Specify the username used when creating a new connection."/>
                 <c:simple-property name="password" type="password" readOnly="true"
                          description="Specify the passwprd used when creating a new connection."/>
-                <c:simple-property name="prepared-statements-cacheSize" type="long" readOnly="true"
+                <c:simple-property name="prepared-statements-cacheSize" type="long" readOnly="true" required="false"
                          description="The number of prepared statements per connection in an LRU cache"/>
-                <c:simple-property name="share-prepared-statements" type="boolean" readOnly="true"
+                <c:simple-property name="share-prepared-statements" type="boolean" readOnly="true" required="false"
                          description="Whether to share prepare statements, i.e. whether asking for same statement twice without closing uses the same underlying prepared statement"/>
-                <c:simple-property name="track-statements" type="string" readOnly="true"
+                <c:simple-property name="track-statements" type="string" readOnly="true" required="false"
                          description="Whether to check for unclosed statements when a connection is returned to the pool and result sets are closed when a statement is closed/return to the prepared statement cache. valid values are: false - do not track statements and results true - track statements and result sets and warn when they are not closed nowarn - track statements but do no warn about them being unclosed"/>
-                <c:simple-property name="allocation-retry" type="integer" readOnly="true"
+                <c:simple-property name="allocation-retry" type="integer" readOnly="true" required="false"
                          description="The allocation retry element indicates the number of times that allocating a connection should be tried before throwing an exception."/>
-                <c:simple-property name="allocation-retry-wait-millis" type="long" readOnly="true"
+                <c:simple-property name="allocation-retry-wait-millis" type="long" readOnly="true" required="false"
                          description="Indicates the time in milliseconds to wait between retrying to allocate a connection."/>
-                <c:simple-property name="blocking-timeout-wait-millis" type="long" readOnly="false"
+                <c:simple-property name="blocking-timeout-wait-millis" type="long" readOnly="false" required="false"
                          description="The blocking-timeout-millis element indicates the maximum time in milliseconds to block while waiting for a connection before throwing an exception. Note that this blocks only while waiting for a permit for a connection, and will never throw an exception if creating a new connection takes an inordinately long time."/>
-                <c:simple-property name="idle-timeout-minutes" type="long" readOnly="false"
+                <c:simple-property name="idle-timeout-minutes" type="long" readOnly="false" required="false"
                          description="The idle-timeout-minutes elements indicates the maximum time in minutes a connection may be idle before being closed. The actual maximum time depends also on the IdleRemover scan time, which is 1/2 the smallest idle-timeout-minutes of any pool. Changing this value require a server restart."/>
-                <c:simple-property name="query-timeout" type="long" readOnly="true"
+                <c:simple-property name="query-timeout" type="long" readOnly="true" required="false"
                          description="Any configured query timeout in seconds The default is no timeout"/>
-                <c:simple-property name="use-try-lock" type="long" readOnly="true"
+                <c:simple-property name="use-try-lock" type="long" readOnly="true" required="false"
                          description="Any configured timeout for internal locks on the resource adapter objects in seconds"/>
-                <c:simple-property name="set-tx-query-timeout" type="boolean" readOnly="true"
+                <c:simple-property name="set-tx-query-timeout" type="boolean" readOnly="true" required="false"
                          description="Whether to set the query timeout based on the time remaining until transaction timeout, any configured query timeout will be used if there is no transaction."/>
-                <c:simple-property name="transaction-isolation" type="string" readOnly="true"
+                <c:simple-property name="transaction-isolation" type="string" readOnly="true" required="false"
                          description="Set java.sql.Connection transaction isolation level to use. The constants defined by transaction-isolation-values are the possible transaction isolation levels and include: TRANSACTION_READ_UNCOMMITTED TRANSACTION_READ_COMMITTED TRANSACTION_REPEATABLE_READ TRANSACTION_SERIALIZABLE TRANSACTION_NONE"/>
-                <c:simple-property name="check-valid-connection-sql" type="string" readOnly="true"
+                <c:simple-property name="check-valid-connection-sql" type="string" readOnly="true" required="false"
                          description="Specify an SQL statement to check validity of a pool connection. This may be called when managed connection is taken from pool for use."/>
-                <c:simple-property name="exception-sorter-class-name" type="string" readOnly="true"
+                <c:simple-property name="exception-sorter-class-name" type="string" readOnly="true" required="false"
                          description="An org.jboss.jca.adapters.jdbc.ExceptionSorter that provides a boolean isExceptionFatal(SQLException e) method to validate is an exception should be broadcast to all javax.resource.spi.ConnectionEventListener as a connectionErrorOccurred"/>
-                <c:simple-property name="stale-connection-checker-class-name" type="string" readOnly="true"
+                <c:simple-property name="stale-connection-checker-class-name" type="string" readOnly="true" required="false"
                          description="An org.jboss.jca.adapters.jdbc.StaleConnectionChecker that provides a boolean isStaleConnection(SQLException e) method which if it it returns true will wrap the exception in an org.jboss.jca.adapters.jdbc.StaleConnectionException"/>
-                <c:simple-property name="valid-connection-checker-class-name" type="string" readOnly="true"
+                <c:simple-property name="valid-connection-checker-class-name" type="string" readOnly="true" required="false"
                          description="An org.jboss.jca.adapters.jdbc.ValidConnectionChecker that provides a SQLException isValidConnection(Connection e) method to validate is a connection is valid. An exception means the connection is destroyed. This overrides the check-valid-connection-sql when present."/>
-                <c:simple-property name="background-validation-minutes" type="long" readOnly="false"
+                <c:simple-property name="background-validation-minutes" type="long" readOnly="false" required="false"
                          description="The background-validation-minutes element specifies the amount of time, in minutes, that background validation will run. Changing this value require a server restart."/>
-                <c:simple-property name="background-validation" type="boolean" readOnly="false"
+                <c:simple-property name="background-validation" type="boolean" readOnly="false" required="false"
                          description="An element to specify that connections should be validated on a background thread versus being validated prior to use. Changing this value require a server restart."/>
-                <c:simple-property name="use-fast-fail" type="boolean" readOnly="false"
+                <c:simple-property name="use-fast-fail" type="boolean" readOnly="false" required="false"
                          description="Whether fail a connection allocation on the first connection if it is invalid (true) or keep trying until the pool is exhausted of all potential connections (false)"/>
-                <c:simple-property name="validate-on-match" type="boolean" readOnly="true"
+                <c:simple-property name="validate-on-match" type="boolean" readOnly="true" required="false"
                          description="The validate-on-match element indicates whether or not connection level validation should be done when a connection factory attempts to match a managed connection for a given set. This is typically exclusive to the use of background validation"/>
-                <c:simple-property name="spy" type="boolean" readOnly="true" description="whatever spy or not the jdbc connection"/>
+                <c:simple-property name="spy" type="boolean" readOnly="true" required="false"
+                         description="whatever spy or not the jdbc connection"/>
+                <c:simple-property name="use-ccm" type="boolean" readOnly="true" required="false" description="Enable the use of a cached connection manager"/>
             </resource-configuration>
         </service>
 
         <service name="XADataSource"
                  discovery="SubsystemDiscovery"
-                 class="BaseComponent"
-                 singleton="true"
+                 class="DatasourceComponent"
+                 description="An XA data source"
                 >
 
             <plugin-configuration>
                 <c:simple-property name="path" readOnly="true" default="xa-data-source"/>
             </plugin-configuration>
+
+            <operation name="enable" description="Enables the data-source">
+                <results>
+                    <c:simple-property name="operationResult"/>
+                </results>
+            </operation>
+            <operation name="disable" description="Disables the XA data-source">
+                <results>
+                    <c:simple-property name="operationResult"/>
+                </results>
+            </operation>
+
+            <operation name="flush-all-connection-in-pool" description="Flushes the pool for all connections">
+                <results>
+                    <c:simple-property name="operationResult"/>
+                </results>
+            </operation>
+
+            <operation name="flush-idle-connection-in-pool" description="Flushes the pool for idle connections">
+                <results>
+                    <c:simple-property name="operationResult"/>
+                </results>
+            </operation>
+
+            <metric property="PreparedStatementCacheCurrentSize"
+                    description="The number of prepared and callable statements currently cached in the statement cache"/>
+            <metric property="PreparedStatementCacheMissCount" measurementType="trendsup"
+                    description="The number of times that a statement request could not be satisfied with a statement from the cache"/>
+            <metric property="PreparedStatementCacheAddCount"
+                    description="The number of statements added to the statement cache"/>
+            <metric property="PreparedStatementCacheAccessCount" measurementType="trendsup"
+                    description="The number of times that the statement cache was accessed"/>
+            <metric property="PreparedStatementCacheDeleteCount" measurementType="trendsup"
+                    description="The number of statements discarded from the cache"/>
+            <metric property="PreparedStatementCacheHitCount" measurementType="trendsup"
+                    description="The number of times that statements from the cache were used"/>
+            <metric property="AverageBlockingTime" units="milliseconds"
+                    description="The average time spent blocking for a connection"/>
+            <metric property="MaxWaitTime" units="milliseconds"
+                    description="The maximum wait time for a connection" displayType="summary"/>
+            <metric property="ActiveCount"
+                    description="The active count"/>
+            <metric property="CreatedCount" description="The created count" measurementType="trendsup"/>
+            <metric property="MaxCreationTime" description="The maximum time for creating a physical connection" units="milliseconds"/>
+            <metric property="MaxWaitCount" description="The maximum number of threads waiting for a connection" units="milliseconds" displayType="summary"/>
+            <metric property="TotalCreationTime" description="The total time spent creating physical connections" measurementType="trendsup" units="milliseconds"/>
+            <metric property="AvailableCount" description="The available count" units="milliseconds"/>
+            <metric property="MaxUsedCount" description="The maximum number of connections used"/>
+            <metric property="TimedOut" description="The timed out count" measurementType="trendsup" displayType="summary"/>
+            <metric property="TotalBlockingTime" description="The total blocking time" measurementType="trendsup" units="milliseconds"/>
+            <metric property="AverageCreationTime" description="The average time spent creating a physical connection" units="milliseconds"/>
+            <metric property="DestroyedCount" description="The destroyed count" measurementType="trendsup"/>
+
+            <resource-configuration>
+                <c:simple-property name="xa-data-source-class" required="true" type="string" readOnly="true" description="The fully qualifed name of the javax.sql.XADataSource implementation"/>
+                <c:simple-property name="jndi-name" required="true" type="string" readOnly="true" description="Specifies the JNDI name for the datasource"/>
+                <c:simple-property name="driver-name" required="true" type="string" readOnly="true" description="Defines the JDBC driver the datasource should use. It is a symbolic name matching the the name of installed driver. In case the driver is deployed as jar, the name is the name of deployment unit"/>
+                <c:simple-property name="new-connection-sql" required="false" type="string" readOnly="true" description="Specifies an SQL statement to execute whenever a connection is added to the connection pool."/>
+                <c:simple-property name="pool-name" required="false" type="string" readOnly="true" description="Specifies the pool name for the datasource used for management"/>
+                <c:simple-property name="url-delimiter" required="false" type="string" readOnly="true" description="Specifies the delimeter for URLs in connection-url for HA datasources"/>
+                <c:simple-property name="url-selector-strategy-class-name" required="false" type="string" readOnly="true" description="A class that implements org.jboss.jca.adapters.jdbc.URLSelectorStrategy"/>
+                <c:simple-property name="use-java-context" required="false" type="boolean" readOnly="true" description="Setting this to false will bind the DataSource into global JNDI;"/>
+                <c:simple-property name="enabled" required="false" type="boolean" readOnly="true" description="Specifies if the datasource should be enabled"/>
+                <c:simple-property name="max-pool-size" required="false" type="integer" readOnly="false" description="The max-pool-size element indicates the maximum number of connections for a pool. No more connections will be created in each sub-pool."/>
+                <c:simple-property name="min-pool-size" required="false" type="integer" readOnly="false" description="The min-pool-size element indicates the minimum number of connections a pool should hold. These are not created until a Subject is known from a request for a connection."/>
+                <c:simple-property name="pool-prefill" required="false" type="boolean" readOnly="false" description="Whether to attempt to prefill the connection pool. Changing this value require a server restart."/>
+                <c:simple-property name="pool-use-strict-min" required="false" type="boolean" readOnly="false" description="Define if the min-pool-size should be considered a strictly."/>
+                <c:simple-property name="interliving" required="false" type="boolean" readOnly="true" description="An element to enable interleaving for XA connection factories"/>
+                <c:simple-property name="no-tx-separate-pool" required="false" type="boolean" readOnly="true" description="Oracle does not like XA connections getting used both inside and outside a JTA transaction. To workaround the problem you can create separate sub-pools for the different context"/>
+                <c:simple-property name="pad-xid" required="false" type="boolean" readOnly="true" description="Should the Xid be padded"/>
+                <c:simple-property name="same-rm-override" required="false" type="boolean" readOnly="true" description="The is-same-rm-override element allows one to unconditionally set whether the javax.transaction.xa.XAResource.isSameRM(XAResource) returns true or false"/>
+                <c:simple-property name="wrap-xa-datasource" required="false" type="boolean" readOnly="true" description="Should the XAResource instances be wrapped in a org.jboss.tm.XAResourceWrapper instance"/>
+                <c:simple-property name="user-name" required="false" type="string" readOnly="true" description="Specify the username used when creating a new connection."/>
+                <c:simple-property name="password" required="false" type="string" readOnly="true" description="Specify the passwprd used when creating a new connection."/>
+                <c:simple-property name="security-domain" required="false" type="string" readOnly="true" description="Indicates Subject (from security domain) are used to distinguish connections in the pool. The content of the security-domain is the name of the JAAS security manager that will handleauthentication. This name correlates to the JAAS login-config.xml descriptor application-policy/name attribute."/>
+                <c:simple-property name="recovery-plugin-class-name" required="false" type="string" readOnly="true" description="recovery plugin implementation provided for specific puropose (i.e vendor)"/>
+                <c:simple-property name="reauth-plugin-class-name" required="false" type="string" readOnly="true" description="re-authentication plugin implementation provided for specific puropose (i.e vendor)"/>
+<!--
+                <c:map-property name="reauth-plugin-properties" description="properties for reauthentication pluginq passed to the implementation provided for specific puropose (i.e vendor)" >
+                    read-only
+                    configuration
+                </c:map-property>
+-->
+                <c:simple-property name="flush-strategy" required="false" type="string" readOnly="true" description="Specifies how the pool should be flush in case of an error. Valid values are: FailingConnectionOnly (default), IdleConnections, EntirePool"/>
+                <c:simple-property name="prepared-statements-cacheSize" required="false" type="long" readOnly="true" description="The number of prepared statements per connection in an LRU cache"/>
+                <c:simple-property name="share-prepared-statements" required="false" type="boolean" readOnly="true" description="Whether to share prepare statements, i.e. whether asking for same statement twice without closing uses the same underlying prepared statement"/>
+                <c:simple-property name="track-statements" required="false" type="string" readOnly="true" description="Whether to check for unclosed statements when a connection is returned to the pool and result sets are closed when a statement is closed/return to the prepared statement cache. valid values are: false - do not track statements and results true - track statements and result sets and warn when they are not closed nowarn - track statements but do no warn about them being unclosed"/>
+                <c:simple-property name="allocation-retry" required="false" type="integer" readOnly="true" description="The allocation retry element indicates the number of times that allocating a connection should be tried before throwing an exception."/>
+                <c:simple-property name="allocation-retry-wait-millis" required="false" type="long" readOnly="true" description="he allocation retry wait millis element indicates the time in milliseconds to wait between retrying to allocate a connection."/>
+                <c:simple-property name="blocking-timeout-wait-millis" required="false" type="long" readOnly="false" description="The blocking-timeout-millis element indicates the maximum time in milliseconds to block while waiting for a connection before throwing an exception. Note that this blocks only while waiting for a permit for a connection, and will never throw an exception if creating a new connection takes an inordinately long time."/>
+                <c:simple-property name="idle-timeout-minutes" required="false" type="long" readOnly="false" description="The idle-timeout-minutes elements indicates the maximum time in minutes a connection may be idle before being closed. The actual maximum time depends also on the IdleRemover scan time, which is 1/2 the smallest idle-timeout-minutes of any pool. Changing this value require a server restart."/>
+                <c:simple-property name="query-timeout" required="false" type="long" readOnly="true" description="Any configured query timeout in seconds The default is no timeout"/>
+                <c:simple-property name="use-try-lock" required="false" type="long" readOnly="true" description="Any configured timeout for internal locks on the resource adapter objects in seconds"/>
+                <c:simple-property name="set-tx-query-timeout" required="false" type="boolean" readOnly="true" description="Whether to set the query timeout based on the time remaining until transaction timeout, any configured query timeout will be used if there is no transaction."/>
+                <c:simple-property name="transaction-isolation" required="false" type="string" readOnly="true" description="Set java.sql.Connection transaction isolation level to use. The constants defined by transaction-isolation-values are the possible transaction isolation levels and include: TRANSACTION_READ_UNCOMMITTED TRANSACTION_READ_COMMITTED TRANSACTION_REPEATABLE_READ TRANSACTION_SERIALIZABLE TRANSACTION_NONE"/>
+                <c:simple-property name="check-valid-connection-sql" required="false" type="string" readOnly="true" description="Specify an SQL statement to check validity of a pool connection. This may be called when managed connection is taken from pool for use."/>
+                <c:simple-property name="exception-sorter-class-name" required="false" type="string" readOnly="true" description="An org.jboss.jca.adapters.jdbc.ExceptionSorter that provides a boolean isExceptionFatal(SQLException e) method to validate is an exception should be broadcast to all javax.resource.spi.ConnectionEventListener as a connectionErrorOccurred"/>
+<!--
+                <c:map-property name="exception-sorter-properties" description="exceptionsorter properties" >
+                    read-only
+                    configuration
+                </c:map-property>
+-->
+                <c:simple-property name="stale-connection-checker-class-name" required="false" type="string" readOnly="true" description="An org.jboss.jca.adapters.jdbc.StaleConnectionChecker that provides a boolean isStaleConnection(SQLException e) method which if it it returns true will wrap the exception in an org.jboss.jca.adapters.jdbc.StaleConnectionException"/>
+<!--
+                <c:map-property name="stale-connection-checker-properties" description="staleconnectionchecker properties" >
+                    read-only
+                    configuration
+                </c:map-property>
+-->
+                <c:simple-property name="valid-connection-checker-class-name" required="false" type="string" readOnly="true" description="An org.jboss.jca.adapters.jdbc.ValidConnectionChecker that provides a SQLException isValidConnection(Connection e) method to validate is a connection is valid. An exception means the connection is destroyed. This overrides the check-valid-connection-sql when present."/>
+<!--
+                <c:map-property name="valid-connection-checker-properties" description="validconnectionchecker properties" >
+                    read-only
+                    configuration
+                </c:map-property>
+-->
+                <c:simple-property name="background-validation-minutes" required="false" type="long" readOnly="false" description="The background-validation-minutes element specifies the amount of time, in minutes, that background validation will run. Changing this value require a server restart."/>
+                <c:simple-property name="background-validation" required="false" type="boolean" readOnly="false" description="An element to specify that connections should be validated on a background thread versus being validated prior to use. Changing this value require a server restart."/>
+                <c:simple-property name="use-fast-fail" required="false" type="boolean" readOnly="false" description="Whether fail a connection allocation on the first connection if it is invalid (true) or keep trying until the pool is exhausted of all potential connections (false)"/>
+                <c:simple-property name="validate-on-match" required="false" type="boolean" readOnly="true" description="The validate-on-match element indicates whether or not connection level validation should be done when a connection factory attempts to match a managed connection for a given set. This is typically exclusive to the use of background validation"/>
+                <c:simple-property name="xa-resource-timeout" required="false" type="integer" readOnly="true" description="Passed to XAResource.setTransactionTimeout() Default is zero which does not invoke the setter. In seconds"/>
+                <c:simple-property name="spy" required="false" type="boolean" readOnly="true" description="whatever spy or not the jdbc connection"/>
+                <c:simple-property name="use-ccm" required="false" type="boolean" readOnly="true" description="Enable the use of a cached connection manager"/>
+                <c:simple-property name="recovery-username" required="false" type="string" readOnly="true" description="username used to try connection recovery"/>
+                <c:simple-property name="recovery-password" required="false" type="string" readOnly="true" description="password used to try connection recovery"/>
+                <c:simple-property name="recovery-security-domain" required="false" type="string" readOnly="true" description="security-domain used to try connection recovery"/>
+<!--
+                <c:map-property name="recovery-plugin-properties" description="recovery plugin properties passed to the implementation provided for specific puropose (i.e vendor)" >
+                    read-only
+                    configuration
+                </c:map-property>
+-->
+                <c:simple-property name="no-recovery" required="false" type="boolean" readOnly="true" description="if true no recovery are tried for this connection pool"/>
+            </resource-configuration>
         </service>
 
+<!--
         <service name="JdbcDriver"
                  discovery="SubsystemDiscovery"
-                 class="BaseComponent"
+                 class="DatasourceComponent"
                  singleton="true"
                 >
 
             <plugin-configuration>
                 <c:simple-property name="path" readOnly="true" default="jdbc-driver"/>
             </plugin-configuration>
+
+
+            <resource-configuration>
+                <c:simple-property name="driver-name" required="true" type="string" readOnly="true" description="The symbolic name of this driver used to reference it in the register"/>
+                <c:simple-property name="deployment-name" required="false" type="string" readOnly="true" description="The name of the deployment unit from which the driver was loaded, if it was loaded from a deployment"/>
+                <c:simple-property name="driver-module-name" required="false" type="string" readOnly="true" description="The name of the module from which the driver was loaded, if it was loaded from the module path"/>
+                <c:simple-property name="module-slot" required="false" type="string" readOnly="true" description="The slot of the module from which the driver was loaded, if it was loaded from the module path"/>
+                <c:simple-property name="driver-class-name" required="false" type="string" readOnly="true" description="The fully qualified class name of the driver's implementation of java.sql.Driver"/>
+                <c:simple-property name="xa-data-source-class" required="false" type="string" readOnly="true" description="The fully qualified class name of the XA datasource implementation of javax.sql.XADataSource"/>
+                <c:simple-property name="driver-major-version" required="false" type="integer" readOnly="true" description="The driver's major version number"/>
+                <c:simple-property name="driver-minor-version" required="false" type="integer" readOnly="true" description="The driver's minor version number"/>
+                <c:simple-property name="jdbc-compliant" required="false" type="boolean" readOnly="true" description="Whether or not the driver is JDBC compliant"/>
+&lt;!&ndash;
+                <c:template name="add" description="Add a jdbc driver"> &lt;!&ndash; See BZ 705713 TODO &ndash;&gt;
+                    <c:simple-property name="driver-name" required="true"/>
+                    <c:simple-property name="deployment-name" required="true">
+                        <c:option-source target="resource" expression="type=DomainDeployment"/> &lt;!&ndash; TODO filter ? &ndash;&gt;
+                    </c:simple-property>
+                    <c:simple-property name="driver-class-name" required="true"/>
+                </c:template>
+&ndash;&gt;
+            </resource-configuration>
         </service>
+-->
 
     </server>
 
@@ -1453,7 +1710,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
         <content name="file" category="deployable" isCreationType="true" description="Deployments on this server group">
             <configuration>
                <c:group name="deployment" displayName="Deployment Options">
-                   <c:simple-property name="runtimeName" required="true"/>
+                   <c:simple-property name="runtimeName" required="false"/>
                </c:group>
             </configuration>
         </content>

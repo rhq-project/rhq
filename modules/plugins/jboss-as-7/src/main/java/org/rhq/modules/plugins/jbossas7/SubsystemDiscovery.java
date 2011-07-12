@@ -149,7 +149,7 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
                                     resKey, // Key
                                     val, // Name
                                     null, // Version
-                                    "TODO", // subsystem.description, // TODO Description
+                                    context.getResourceType().getDescription(), // subsystem.description
                                     config2,
                                     null);
                             details.add(detail);
@@ -166,7 +166,8 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
 
                 }
                 else {
-
+                    if (path.startsWith(","))
+                        path = path.substring(1);
 
                     String resKey = path;
                     String name = resKey.substring(resKey.lastIndexOf("=") + 1);
@@ -181,7 +182,7 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
                             path, // Key
                             name, // Name
                             null, // Version
-                            path, // Description
+                            context.getResourceType().getDescription(), // Description
                             config2,
                             null);
                     details.add(detail);

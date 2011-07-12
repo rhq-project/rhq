@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.modules.plugins.jbossas7;
+package org.rhq.modules.integrationTests.jbossas7plugin;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -28,6 +28,8 @@ import org.testng.annotations.Test;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.modules.plugins.jbossas7.ASConnection;
+import org.rhq.modules.plugins.jbossas7.DatasourceComponent;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
@@ -237,8 +239,8 @@ public class DatasourceDeployTest extends AbstractIntegrationTest {
         String name = "myTestDS";
 
         DatasourceComponent dc = new DatasourceComponent();
-        dc.path="profile=default,subsystem=datasources";
-        dc.connection = conn;
+        dc.setPath("profile=default,subsystem=datasources");
+        dc.setConnection(conn);
 
         Configuration parameters = new Configuration();
         parameters.put(new PropertySimple("name",name));
@@ -280,8 +282,8 @@ public class DatasourceDeployTest extends AbstractIntegrationTest {
         String name = "myTestDS";
 
         DatasourceComponent dc = new DatasourceComponent();
-        dc.path="profile=default,subsystem=datasources";
-        dc.connection = conn;
+        dc.setPath("profile=default,subsystem=datasources");
+        dc.setConnection(conn);
 
         Configuration parameters = new Configuration();
         parameters.put(new PropertySimple("name",name));

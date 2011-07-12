@@ -558,4 +558,15 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
 
 
     }
+
+    ///// Those two are used to 'inject' the connection and the path from tests.
+    public void setConnection(ASConnection connection) {
+        this.connection = connection;
+    }
+
+    public void setPath(String path) {
+        this.path = path;
+    }
+
+
 }

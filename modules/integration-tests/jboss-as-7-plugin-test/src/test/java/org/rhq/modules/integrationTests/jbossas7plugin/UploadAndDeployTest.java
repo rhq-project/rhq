@@ -16,11 +16,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.modules.plugins.jbossas7;
+package org.rhq.modules.integrationTests.jbossas7plugin;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -29,7 +26,7 @@ import java.util.Map;
 import org.codehaus.jackson.JsonNode;
 import org.testng.annotations.Test;
 
-import org.rhq.modules.plugins.jbossas7.json.Address;
+import org.rhq.modules.plugins.jbossas7.ASConnection;
 import org.rhq.modules.plugins.jbossas7.json.CompositeOperation;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
@@ -48,7 +45,7 @@ public class UploadAndDeployTest extends AbstractIntegrationTest {
 
     private  String TEST_WAR = "test-simple.war";
 
-    protected static final boolean isEnabled = false;
+    protected static final boolean isEnabled = true;
 
     @Test(timeOut = 60*1000L, enabled=isEnabled)
     public void testUploadOnly() throws Exception {

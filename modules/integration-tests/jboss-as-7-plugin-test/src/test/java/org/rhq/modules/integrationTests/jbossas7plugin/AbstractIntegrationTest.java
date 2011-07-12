@@ -16,11 +16,13 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.modules.plugins.jbossas7;
+package org.rhq.modules.integrationTests.jbossas7plugin;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -28,6 +30,8 @@ import java.util.Map;
 
 import org.codehaus.jackson.JsonNode;
 
+import org.rhq.modules.plugins.jbossas7.ASConnection;
+import org.rhq.modules.plugins.jbossas7.ASUploadConnection;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
 
@@ -39,15 +43,18 @@ public abstract class AbstractIntegrationTest {
     protected static final String DC_HOST = "localhost";
     protected static final int DC_HTTP_PORT = 9990;
 
-//    private final Log log = LogFactory.getLog(AbstractIntegrationTest.class);
-
     String uploadToAs(String deploymentName) throws IOException {
         ASUploadConnection conn = new ASUploadConnection(DC_HOST, DC_HTTP_PORT);
         OutputStream os = conn.getOutputStream(deploymentName);
 
 
+        URL url = getClass().getClassLoader().getResource(".");
+        System.out.println(url);
+
 
         InputStream fis = getClass().getClassLoader().getResourceAsStream(deploymentName);
+        if (fis==null)
+            throw new FileNotFoundException("Input stream for resource [" + deploymentName + "] could not be opened - does the file exist?");
         final byte[] buffer = new byte[1024];
         int numRead = 0;
 

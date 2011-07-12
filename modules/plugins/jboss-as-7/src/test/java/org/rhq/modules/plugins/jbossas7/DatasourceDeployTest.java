@@ -41,7 +41,7 @@ import org.rhq.modules.plugins.jbossas7.json.WriteAttribute;
  * Integration test for deploying datasources and installing jdbc drivers
  * @author Heiko W. Rupp
  */
-@Test(enabled = UploadAndDeployTest.isEnabled, groups = {"integration.as7"})
+@Test(enabled = UploadAndDeployTest.isEnabled)
 public class DatasourceDeployTest extends AbstractIntegrationTest {
     private static final String POSTGRES = "postgres";
 

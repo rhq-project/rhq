@@ -43,7 +43,7 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  * the UPLOAD_FILE must point to a valid archive in the resources directory.
  * @author Heiko W. Rupp
  */
-@Test(enabled = UploadAndDeployTest.isEnabled, groups = {"integration.as7"}) // TODO add an "integration test profile" that is able to fire the server before running the test
+@Test(enabled = UploadAndDeployTest.isEnabled)
 public class UploadAndDeployTest extends AbstractIntegrationTest {
 
     private  String TEST_WAR = "test-simple.war";

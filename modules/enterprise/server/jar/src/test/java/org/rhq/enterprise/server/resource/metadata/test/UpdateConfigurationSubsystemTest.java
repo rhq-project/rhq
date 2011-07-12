@@ -1241,7 +1241,7 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
             defaultTemplate = cd.getDefaultTemplate();
             templateMap = cd.getTemplates();
             assert defaultTemplate != null;
-            assert templateMap.size() == 2 : "Expected 2 templates but got " + templateMap.size();
+            assert templateMap.size() == 2 : "Expected 2 templates but got " + templateMap;
             template = templateMap.get("additional");
             assert template != null;
             ps = template.getConfiguration().getSimple("second_one");
@@ -1259,7 +1259,7 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
             defaultTemplate = cd.getDefaultTemplate();
             templateMap = cd.getTemplates();
             assert defaultTemplate != null;
-            assert templateMap.size() == 2 : "Expected 2 templates but got " + templateMap.size();
+            assert templateMap.size() == 2 : "Expected 2 templates but got " + templateMap;
             template = templateMap.get("additional");
             assert template != null;
             ps = template.getConfiguration().getSimple("second_one");
@@ -1278,7 +1278,7 @@ public class UpdateConfigurationSubsystemTest extends UpdateSubsytemTestBase {
             defaultTemplate = cd.getDefaultTemplate();
             templateMap = cd.getTemplates();
             assert defaultTemplate != null;
-            assert templateMap.size() == 1 : "Expected only the 1 default template but got " + templateMap.size();
+            assert templateMap.size() == 1 : "Expected only the 1 default template but got " + templateMap;
             getTransactionManager().rollback();
 
             System.out.println("Done with v1(2)");

@@ -46,6 +46,7 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
@@ -95,7 +96,6 @@ public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet
         setDataSource(new PlatformMetricDataSource(this));
         setInitialCriteria(new Criteria(ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.PLATFORM
             .name()));
-
     }
 
     private void prefetch() {
@@ -159,7 +159,7 @@ public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet
         measurementService.findLiveData(resource.getId(), pmd.getDefinitionIds(),
             new AsyncCallback<Set<MeasurementData>>() {
                 public void onFailure(Throwable caught) {
-                    // this can happen if the agent is down, don't crash out of the entire portlet
+                    // this can happen if the agent is down - don't crash out of the entire portlet
                     record.setAttribute(FIELD_CPU, MSG.common_val_na());
                     record.setAttribute(FIELD_MEMORY, MSG.common_val_na());
                     record.setAttribute(FIELD_SWAP, MSG.common_val_na());
@@ -384,7 +384,6 @@ public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet
         public static PortletViewFactory INSTANCE = new Factory();
 
         public final Portlet getInstance(String locatorId) {
-
             return new PlatformSummaryPortlet(locatorId);
         }
     }
@@ -393,8 +392,8 @@ public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet
          */
     @Override
     public void redraw() {
-        super.redraw();
         invalidateCache();
-        markForRedraw();
+        super.redraw();
     }
+
 }

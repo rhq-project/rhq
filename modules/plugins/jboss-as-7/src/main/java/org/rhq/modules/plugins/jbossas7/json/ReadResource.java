@@ -35,4 +35,8 @@ public class ReadResource extends Operation {
     public ReadResource(String resourceType,String typeValue) {
         super(READ_RESOURCE,resourceType,typeValue);
     }
+
+    public ReadResource(Address address) {
+        super(READ_RESOURCE,address);
+    }
 }

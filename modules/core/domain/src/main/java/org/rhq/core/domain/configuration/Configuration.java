@@ -23,9 +23,11 @@
 package org.rhq.core.domain.configuration;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -45,7 +47,9 @@ import javax.persistence.PreUpdate;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorOrder;
 import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementRef;
 import javax.xml.bind.annotation.XmlElementRefs;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -152,6 +156,82 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
     @XmlTransient
     private Map<String, Property> properties = new LinkedHashMap<String, Property>();
 
+    private class PropertiesProxy implements Collection<Property> {
+
+        public int size() {
+            return properties.size();
+        }
+
+        public boolean isEmpty() {
+            return properties.isEmpty();
+        }
+
+        public boolean contains(Object o) {
+            return properties.containsValue(o);
+        }
+
+        public Iterator<Property> iterator() {
+            return properties.values().iterator();
+        }
+
+        public Object[] toArray() {
+            return properties.values().toArray();
+        }
+
+        public <T> T[] toArray(T[] a) {
+            return properties.values().toArray(a);
+        }
+
+        public boolean add(Property e) {
+            put(e);
+            return true; //we always allow adding an element even if it is already present
+        }
+
+        public boolean remove(Object o) {
+            return properties.values().remove(o);
+        }
+
+        public boolean containsAll(Collection<?> c) {
+            return properties.values().containsAll(c);
+        }
+
+        public boolean addAll(Collection<? extends Property> c) {
+            boolean ret = false;
+            for(Property p : c) {
+                ret = ret || add(p);
+            }
+            
+            return ret;
+        }
+
+        public boolean removeAll(Collection<?> c) {
+            boolean ret = false;
+            for(Object o : c) {
+                ret = ret || remove(o);
+            }
+            
+            return ret;
+        }
+
+        public boolean retainAll(Collection<?> c) {
+            boolean ret = false;
+            ArrayList<Property> ps = new ArrayList<Property>(properties.values());
+            for(Property p : ps) {
+                if (!c.contains(p)) {
+                    ret = ret || remove(p);
+                }
+            }
+            
+            return ret;
+        }
+
+        public void clear() {
+            properties.clear();
+        }
+    }
+    
+    private transient PropertiesProxy propertiesProxy = new PropertiesProxy();
+    
     @OneToMany(mappedBy = "configuration", fetch = FetchType.EAGER)
     @Cascade( { CascadeType.PERSIST, CascadeType.MERGE, CascadeType.DELETE_ORPHAN })
     private Set<RawConfiguration> rawConfigurations = new HashSet<RawConfiguration>();
@@ -321,7 +401,11 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
 
     /**
      * Returns all the <i>direct</i> children of this Configuration.
-     *
+     * This collection is fully modifiable and can be added to and removed from.
+     * <p>
+     * When adding a property to the collection returned from this method, its
+     * {@link Property#getConfiguration() configuration property} is set to this instance.
+     * 
      * @return all child properties of this Configuration
      */
     @NotNull
@@ -329,7 +413,7 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
         @XmlElementRef(name = "PropertySimple", type = PropertySimple.class),
         @XmlElementRef(name = "PropertyMap", type = PropertyMap.class) })
     public Collection<Property> getProperties() {
-        return getMap().values();
+        return propertiesProxy;
     }
 
     public void setProperties(Collection<Property> properties) {

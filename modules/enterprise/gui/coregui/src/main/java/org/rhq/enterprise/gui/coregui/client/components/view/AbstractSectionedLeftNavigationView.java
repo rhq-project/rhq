@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components.view;
 
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -73,7 +74,7 @@ public abstract class AbstractSectionedLeftNavigationView extends LocatableHLayo
     private Map<String, NavigationSection> sectionsByName;
 
     // Capture the user's global permissions for use by any dashboard or portlet that may need it for rendering.
-    private Set<Permission> globalPermissions;
+    private Set<Permission> globalPermissions = EnumSet.noneOf(Permission.class);
 
     public AbstractSectionedLeftNavigationView(String viewId) {
         super(viewId);

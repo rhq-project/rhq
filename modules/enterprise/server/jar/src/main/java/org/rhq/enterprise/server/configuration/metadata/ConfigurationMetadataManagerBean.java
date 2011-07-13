@@ -174,29 +174,29 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
         Map<String, ConfigurationTemplate> existingTemplates = existingDefinition.getTemplates();
         Map<String, ConfigurationTemplate> newTemplates = newDefinition.getTemplates();
         List<String> toRemove = new ArrayList<String>();
+        List<String> templatesToUpdate = new ArrayList<String>();
+
         for (String name : existingTemplates.keySet()) {
-            ConfigurationTemplate exTemplate = existingTemplates.get(name);
             if (newTemplates.containsKey(name)) {
-                //                System.out.println("updating template with name " + name);
-                updateTemplate(exTemplate, newTemplates.get(name));
+                templatesToUpdate.add(name);
             } else {
-                // template in newTemplates not there -> delete old stuff
-                //                System.out.println("Deleting template with name " + name);
-                entityManager.remove(exTemplate);
                 toRemove.add(name);
             }
         }
-        // Remove the deleted ones from the existing templates map
+
         for (String name : toRemove) {
-            existingTemplates.remove(name);
+            ConfigurationTemplate template = existingTemplates.remove(name);
+            entityManager.remove(template);
         }
-//        entityManager.flush();
+
+        for (String name : templatesToUpdate) {
+            updateTemplate(existingDefinition.getTemplate(name), newTemplates.get(name));
+        }
 
         for (String name : newTemplates.keySet()) {
             // add completely new templates
             if (!existingTemplates.containsKey(name)) {
 
-                //                System.out.println("Persisting new template with name " + name);
                 ConfigurationTemplate newTemplate = newTemplates.get(name);
 
                 // we need to set a valid configurationDefinition, where we will live on.
@@ -206,8 +206,6 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
                 existingTemplates.put(name, newTemplate);
             }
         }
-
-//        entityManager.flush();
 
         return updateReport;
     }

@@ -845,7 +845,7 @@
 
             <resource-configuration>
                 <c:simple-property name="connection-url" required="true" type="string" readOnly="true" description="The JDBC driver connection URL"/>
-                <c:simple-property name="driver-name" required="true" type="string" description="Name of the (existing) JDBC driver to use"/>
+                <c:simple-property name="driver-name" required="true" type="string" description="Name of the (existing) JDBC driver to use" readOnly="true"/>
                 <c:simple-property name="driver-class" required="false" type="string" readOnly="true"
                          description="The fully qualifed name of the JDBC driver class"/>
                 <c:simple-property name="jndi-name" required="true" type="string" readOnly="true"
@@ -873,8 +873,19 @@
                          description="Define if the min-pool-size should be considered a strictly."/>
                 <c:simple-property name="user-name" type="string" readOnly="true" required="false"
                          description="Specify the username used when creating a new connection."/>
-                <c:simple-property name="password" type="password" readOnly="true"
+                <c:simple-property name="password" type="password" readOnly="true" required="false"
                          description="Specify the passwprd used when creating a new connection."/>
+                <c:simple-property name="security-domain" required="false" type="string" readOnly="true" description="Indicates Subject (from security domain) are used to distinguish connections in the pool. The content of the security-domain is the name of the JAAS security manager that will handleauthentication. This name correlates to the JAAS login-config.xml descriptor application-policy/name attribute."/>
+                <c:simple-property name="recovery-plugin-class-name" required="false" type="string" readOnly="true" description="recovery plugin implementation provided for specific puropose (i.e vendor)"/>
+                <c:simple-property name="reauth-plugin-class-name" required="false" type="string" readOnly="true" description="re-authentication plugin implementation provided for specific puropose (i.e vendor)"/>
+<!--
+                <c:map-property name="reauth-plugin-properties" description="properties for reauthentication pluginq passed to the implementation provided for specific puropose (i.e vendor)" >
+                    read-only
+                    configuration
+                </c:map-property>
+-->
+                <c:simple-property name="flush-strategy" required="false" type="string" readOnly="true" description="Specifies how the pool should be flush in case of an error. Valid values are: FailingConnectionOnly (default), IdleConnections, EntirePool"/>
+
                 <c:simple-property name="prepared-statements-cacheSize" type="long" readOnly="true" required="false"
                          description="The number of prepared statements per connection in an LRU cache"/>
                 <c:simple-property name="share-prepared-statements" type="boolean" readOnly="true" required="false"

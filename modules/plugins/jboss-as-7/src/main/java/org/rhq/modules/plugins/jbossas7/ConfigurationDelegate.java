@@ -20,16 +20,12 @@ package org.rhq.modules.plugins.jbossas7;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.omg.CORBA.portable.ValueInputStream;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
@@ -43,10 +39,8 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertyGroupDefinition;
-import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
-import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
 import org.rhq.modules.plugins.jbossas7.json.NameValuePair;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
@@ -92,7 +86,7 @@ public class ConfigurationDelegate implements ConfigurationFacet {
          */
         List<PropertyGroupDefinition> gdef = configurationDefinition.getGroupDefinitions();
         for (PropertyGroupDefinition pgDef : gdef) {
-            handleGroup(config,pgDef);
+            loadHandleGroup(config, pgDef);
         }
         /*
          * Now handle the non-grouped properties
@@ -100,7 +94,7 @@ public class ConfigurationDelegate implements ConfigurationFacet {
         List<PropertyDefinition> nonGroupdedDefs = configurationDefinition.getNonGroupedProperties();
         Operation op = new ReadResource(address);
         op.addAdditionalProperty("recursive", "true");
-        handleProperties(config,nonGroupdedDefs,op);
+        loadHandleProperties(config, nonGroupdedDefs, op);
 
         return config;
     }
@@ -115,7 +109,7 @@ public class ConfigurationDelegate implements ConfigurationFacet {
      * @param groupDefinition Definition of this group
      * @throws Exception If anything goes wrong
      */
-    private void handleGroup(Configuration config, PropertyGroupDefinition groupDefinition) throws Exception{
+    private void loadHandleGroup(Configuration config, PropertyGroupDefinition groupDefinition) throws Exception{
         Operation operation = null;
         String groupName = groupDefinition.getName();
         if (groupName.startsWith("attribute:")) {
@@ -131,12 +125,12 @@ public class ConfigurationDelegate implements ConfigurationFacet {
             throw new IllegalArgumentException("Unknown operation in group name [" + groupName + "]");
         }
         List<PropertyDefinition> listedDefs = configurationDefinition.getPropertiesInGroup(groupName);
-        handleProperties(config,listedDefs,operation);
+        loadHandleProperties(config, listedDefs, operation);
 
     }
 
 
-    private void handleProperties(Configuration config, List<PropertyDefinition> definitions, Operation op) throws Exception {
+    private void loadHandleProperties(Configuration config, List<PropertyDefinition> definitions, Operation op) throws Exception {
         if (definitions.size()==0)
             return;
 
@@ -147,7 +141,8 @@ public class ConfigurationDelegate implements ConfigurationFacet {
 
 
         if (operationResult.getResult() instanceof List) {
-            PropertyList propertyList = handlePropertyList((PropertyDefinitionList) definitions.get(0),operationResult.getResult());
+            PropertyList propertyList = loadHandlePropertyList((PropertyDefinitionList) definitions.get(0),
+                    operationResult.getResult());
 
                 if (propertyList!=null)
                     config.put(propertyList);
@@ -171,19 +166,19 @@ public class ConfigurationDelegate implements ConfigurationFacet {
 
             if (propDef instanceof PropertyDefinitionSimple) {
 
-                PropertySimple value = handlePropertySimple((PropertyDefinitionSimple) propDef, valueObject);
+                PropertySimple value = loadHandlePropertySimple((PropertyDefinitionSimple) propDef, valueObject);
                 if (value!=null)
                     config.put(value);
             }
 
             else if (propDef instanceof PropertyDefinitionList) {
-                PropertyList propertyList = handlePropertyList((PropertyDefinitionList) propDef,valueObject);
+                PropertyList propertyList = loadHandlePropertyList((PropertyDefinitionList) propDef, valueObject);
 
                 if (propertyList!=null)
                     config.put(propertyList);
             }
             else if (propDef instanceof PropertyDefinitionMap) {
-                PropertyMap propertyMap = handlePropertyMap((PropertyDefinitionMap) propDef,valueObject);
+                PropertyMap propertyMap = loadHandlePropertyMap((PropertyDefinitionMap) propDef, valueObject);
 
                 if (propertyMap!=null)
                     config.put(propertyMap);
@@ -191,7 +186,7 @@ public class ConfigurationDelegate implements ConfigurationFacet {
         }
     }
 
-    PropertySimple handlePropertySimple(PropertyDefinitionSimple propDef, Object valueObject) {
+    PropertySimple loadHandlePropertySimple(PropertyDefinitionSimple propDef, Object valueObject) {
         PropertySimple propertySimple;
 
         String name = propDef.getName();
@@ -218,7 +213,7 @@ public class ConfigurationDelegate implements ConfigurationFacet {
      * @param valueObject the objects to put into the map
      * @return the populated map
      */
-    PropertyMap handlePropertyMap(PropertyDefinitionMap propDef, Object valueObject) {
+    PropertyMap loadHandlePropertyMap(PropertyDefinitionMap propDef, Object valueObject) {
         if (valueObject==null)
             return null;
 
@@ -237,11 +232,11 @@ public class ConfigurationDelegate implements ConfigurationFacet {
             Property property;
             PropertyDefinition value = maEntry.getValue();
             if (value instanceof PropertyDefinitionSimple)
-                property = handlePropertySimple((PropertyDefinitionSimple) value,o);
+                property = loadHandlePropertySimple((PropertyDefinitionSimple) value, o);
             else if (value instanceof PropertyDefinitionList)
-                property = handlePropertyList((PropertyDefinitionList) value,o);
+                property = loadHandlePropertyList((PropertyDefinitionList) value, o);
             else if (value instanceof PropertyDefinitionMap)
-                property = handlePropertyMap((PropertyDefinitionMap) value,o);
+                property = loadHandlePropertyMap((PropertyDefinitionMap) value, o);
             else
                 throw new IllegalArgumentException("Unknown property type in map property [" + propDef.getName() +"]");
 
@@ -261,7 +256,7 @@ public class ConfigurationDelegate implements ConfigurationFacet {
      * @param valueObject The objects to put into the list
      * @return the property that describes the list.
      */
-    PropertyList handlePropertyList(PropertyDefinitionList propDef,Object valueObject) {
+    PropertyList loadHandlePropertyList(PropertyDefinitionList propDef, Object valueObject) {
         String propertyName = propDef.getName();
         PropertyList propertyList = new PropertyList(propertyName);
         PropertyDefinition memberDefinition = propDef.getMemberDefinition();
@@ -282,7 +277,7 @@ public class ConfigurationDelegate implements ConfigurationFacet {
 
         if (memberDefinition instanceof PropertyDefinitionSimple) {
             for (Object obj : objects) {
-                PropertySimple property = handlePropertySimple((PropertyDefinitionSimple) memberDefinition,
+                PropertySimple property = loadHandlePropertySimple((PropertyDefinitionSimple) memberDefinition,
                         obj);
                 if (property!=null)
                     propertyList.add(property);
@@ -292,8 +287,8 @@ public class ConfigurationDelegate implements ConfigurationFacet {
             for (Object obj : objects) {
                 Map<String,Object>  map = (Map<String, Object>) obj;
 
-                PropertyMap propertyMap = handlePropertyMap(
-                        (PropertyDefinitionMap) propDef.getMemberDefinition(),map);
+                PropertyMap propertyMap = loadHandlePropertyMap(
+                        (PropertyDefinitionMap) propDef.getMemberDefinition(), map);
                 if (propertyMap!=null)
                     propertyList.add(propertyMap);
             }

@@ -41,6 +41,7 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertyGroupDefinition;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
+import org.rhq.modules.plugins.jbossas7.json.CompositeOperation;
 import org.rhq.modules.plugins.jbossas7.json.NameValuePair;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
@@ -297,21 +298,46 @@ public class ConfigurationDelegate implements ConfigurationFacet {
         return propertyList;
     }
 
-
-
+    /**
+     * Write the configuration back to the AS. Care must be taken, not to send properties that
+     * are read-only, as AS will choke on them.
+     * @param report
+     */
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
 
         Configuration conf = report.getConfiguration();
-        for (Map.Entry<String, PropertySimple> entry : conf.getSimpleProperties().entrySet()) {
 
-            NameValuePair nvp = new NameValuePair(entry.getKey(), entry.getValue().getStringValue());
-            Operation writeAttribute = new Operation("write-attribute",
-                    address, nvp); // TODO test path
-            JsonNode result = connection.executeRaw(writeAttribute);
-            if (ASConnection.isErrorReply(result)) {
-                report.setStatus(ConfigurationUpdateStatus.FAILURE);
-                report.setErrorMessage(ASConnection.getFailureDescription(result));
+        CompositeOperation cop = new CompositeOperation();
+
+        for (Property prop  : conf.getProperties()) {
+            PropertyDefinition propDef = configurationDefinition.get(prop.getName());
+            // Skip over read-only properties, the AS can not use them anyway
+            if (propDef.isReadOnly())
+                continue;
+
+
+            if (prop instanceof PropertySimple) {
+                PropertySimple propertySimple = (PropertySimple) prop;
+
+                // If the property value is null and the property is optional, skip too
+                if (propertySimple.getStringValue()==null && !propDef.isRequired())
+                    continue;
+
+                NameValuePair nvp = new NameValuePair(propertySimple.getName(), propertySimple.getStringValue());
+                Operation writeAttribute = new Operation("write-attribute",
+                        address, nvp); // TODO test path
+                cop.addStep(writeAttribute);
             }
+        }
+
+        Result result = connection.execute(cop);
+        if (!result.isSuccess()) {
+            report.setStatus(ConfigurationUpdateStatus.FAILURE);
+            report.setErrorMessage(result.getFailureDescription());
+        }
+        else {
+            report.setStatus(ConfigurationUpdateStatus.SUCCESS);
+            // TODO how to signal "need reload"
         }
 
     }

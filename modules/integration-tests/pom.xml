@@ -67,5 +67,6 @@
 
     <modules>
         <module>jboss-as-7-plugin-test</module>
+        <module>apache-plugin-test</module>
     </modules>
 </project>

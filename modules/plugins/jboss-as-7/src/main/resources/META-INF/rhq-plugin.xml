@@ -876,7 +876,6 @@
                 <c:simple-property name="password" type="password" readOnly="true" required="false"
                          description="Specify the passwprd used when creating a new connection."/>
                 <c:simple-property name="security-domain" required="false" type="string" readOnly="true" description="Indicates Subject (from security domain) are used to distinguish connections in the pool. The content of the security-domain is the name of the JAAS security manager that will handleauthentication. This name correlates to the JAAS login-config.xml descriptor application-policy/name attribute."/>
-                <c:simple-property name="recovery-plugin-class-name" required="false" type="string" readOnly="true" description="recovery plugin implementation provided for specific puropose (i.e vendor)"/>
                 <c:simple-property name="reauth-plugin-class-name" required="false" type="string" readOnly="true" description="re-authentication plugin implementation provided for specific puropose (i.e vendor)"/>
 <!--
                 <c:map-property name="reauth-plugin-properties" description="properties for reauthentication pluginq passed to the implementation provided for specific puropose (i.e vendor)" >

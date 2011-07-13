@@ -230,7 +230,7 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
         }
     }
     
-    private transient PropertiesProxy propertiesProxy = new PropertiesProxy();
+    private transient PropertiesProxy propertiesProxy;
     
     @OneToMany(mappedBy = "configuration", fetch = FetchType.EAGER)
     @Cascade( { CascadeType.PERSIST, CascadeType.MERGE, CascadeType.DELETE_ORPHAN })
@@ -413,6 +413,9 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
         @XmlElementRef(name = "PropertySimple", type = PropertySimple.class),
         @XmlElementRef(name = "PropertyMap", type = PropertyMap.class) })
     public Collection<Property> getProperties() {
+        if (propertiesProxy == null) {
+            propertiesProxy = new PropertiesProxy();
+        }
         return propertiesProxy;
     }
 

@@ -136,8 +136,8 @@ fi
 mvn -version >/dev/null
 [ $? -ne 0 ] && abort "mvn --version failed with exit code $?."
 MAVEN_VERSION=`mvn -version | head -1 | sed 's|[^0-9]*\([^ ]*\).*|\1|'`
-if echo $MAVEN_VERSION | grep -v "^2.[12]"; then
-   abort "Unsupported Maven version - $MAVEN_VERSION. Only Maven 2.1.x or 2.2.x are supported. Please update the value of M2_HOME, then try again."
+if echo $MAVEN_VERSION | grep -Ev "^(2\.[12]|3\.0)"; then
+   abort "Unsupported Maven version - $MAVEN_VERSION. Only Maven 2.1.x, 2.2.x, or 3.0.x is supported. Please update the value of M2_HOME, then try again."
 fi
 
 
@@ -170,7 +170,8 @@ if [ -n "$HUDSON_URL" ] && [ -n "$WORKSPACE" ]; then
    MAVEN_SETTINGS_FILE="$HOME/.m2/hudson-$JOB_NAME-settings.xml"
 elif [ -z "$WORKING_DIR" ]; then
    WORKING_DIR="$HOME/release/rhq"
-   MAVEN_LOCAL_REPO_DIR="$HOME/release/m2-repository"
+#   MAVEN_LOCAL_REPO_DIR="$HOME/release/m2-repository"
+   MAVEN_LOCAL_REPO_DIR="$HOME/.m2/repository"
    MAVEN_SETTINGS_FILE="$HOME/release/m2-settings.xml"
 fi
 
@@ -179,9 +180,9 @@ PROJECT_GIT_URL="ssh://${GIT_USERNAME}@git.fedorahosted.org/git/rhq/rhq.git"
 MAVEN_ARGS="--settings $MAVEN_SETTINGS_FILE --batch-mode --errors -Penterprise,dist,release"
 # TODO: We may eventually want to reenable tests for production releases.
 #if [ "$MODE" = "test" ]; then
-#   MAVEN_ARGS="$MAVEN_ARGS -Dmaven.test.skip=true"
+#   MAVEN_ARGS="$MAVEN_ARGS -DskipTests=true"
 #fi
-MAVEN_ARGS="$MAVEN_ARGS -Dmaven.test.skip=true"
+MAVEN_ARGS="$MAVEN_ARGS -DskipTests=true"
 if [ "$RELEASE_TYPE" = "enterprise" ]; then
    MAVEN_ARGS="$MAVEN_ARGS -Dexclude-webdav -Djava5.home=$JAVA5_HOME/jre"
 fi
@@ -196,11 +197,11 @@ if [ -z "$MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS" ]; then
 fi
 
 # TODO: We may eventually want to reenable publishing of enterprise artifacts.
-if [ "$MODE" = "production" ] && [ "$RELEASE_TYPE" = "community" ]; then
-   MAVEN_RELEASE_PERFORM_GOAL="deploy"
-else   
+#if [ "$MODE" = "production" ] && [ "$RELEASE_TYPE" = "community" ]; then
+#   MAVEN_RELEASE_PERFORM_GOAL="deploy"
+#else   
    MAVEN_RELEASE_PERFORM_GOAL="install"
-fi
+#fi
 
 
 TAG_VERSION=`echo $RELEASE_VERSION | sed 's/\./_/g'`
@@ -259,11 +260,12 @@ if [ -f "$MAVEN_LOCAL_REPO_DIR" ]; then
       echo "Purging MAVEN_LOCAL_REPO_DIR ($MAVEN_LOCAL_REPO_DIR) since this is a production build..."
       #rm -rf "$MAVEN_LOCAL_REPO_DIR"
    else
-      OUTPUT=`find "$MAVEN_LOCAL_REPO_DIR" -maxdepth 0 -mtime $MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS`
-      if [ -n "$OUTPUT" ]; then       
-         echo "MAVEN_LOCAL_REPO_DIR ($MAVEN_LOCAL_REPO_DIR) has existed for more than $MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS hours - purging it for a clean-clean build..."
-         rm -rf "$MAVEN_LOCAL_REPO_DIR"
-      fi
+      echo boo
+      #OUTPUT=`find "$MAVEN_LOCAL_REPO_DIR" -maxdepth 0 -mtime $MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS`
+      #if [ -n "$OUTPUT" ]; then       
+      #   echo "MAVEN_LOCAL_REPO_DIR ($MAVEN_LOCAL_REPO_DIR) has existed for more than $MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS hours - purging it for a clean-clean build..."
+      #   rm -rf "$MAVEN_LOCAL_REPO_DIR"
+      #fi
    fi
    
 fi
@@ -298,6 +300,8 @@ cat <<EOF >"${MAVEN_SETTINGS_FILE}"
             <DatabaseTest.nofail>true</DatabaseTest.nofail>
 
             <rhq.testng.excludedGroups>agent-comm,comm-client,postgres-plugin,native-system</rhq.testng.excludedGroups>
+
+            <gwt-plugin.extraJvmArgs>-Xms512M -Xmx1024M -XX:PermSize=256M -XX:MaxPermSize=512M</gwt-plugin.extraJvmArgs>
          </properties>
       </profile>
 
@@ -351,7 +355,9 @@ if [ ! -d "$WORKING_DIR" ]; then
    git clone "$PROJECT_GIT_URL" "$WORKING_DIR"
    [ "$?" -ne 0 ] && abort "Failed to clone $PROJECT_NAME git repo ($PROJECT_GIT_URL)."
    cd "$CLONE_DIR"
-   git checkout --track -b $RELEASE_BRANCH "origin/$RELEASE_BRANCH"
+   if [ "$RELEASE_BRANCH" != "master" ]; then
+       git checkout --track -b $RELEASE_BRANCH "origin/$RELEASE_BRANCH"
+   fi
    [ "$?" -ne 0 ] && abort "Failed to checkout release branch ($RELEASE_BRANCH)."
 fi
 
@@ -408,12 +414,12 @@ fi
  
 # Run a test build before tagging. This will publish the snapshot artifacts to the local repo to "bootstrap" the repo.
 
-echo "Building project to ensure tests pass and to bootstrap local Maven repo (this will take about 15-30 minutes)..."
+#echo "Building project to ensure tests pass and to bootstrap local Maven repo (this will take about 15-30 minutes)..."
 # NOTE: There is no need to do a mvn clean below, since we just did either a clone or clean checkout above.
-mvn install $MAVEN_ARGS -Ddbreset
-[ "$?" -ne 0 ] && abort "Test build failed. Please see above Maven output for details, fix any issues, then try again."
-echo
-echo "Test build succeeded!"
+#mvn install $MAVEN_ARGS -Ddbreset
+#[ "$?" -ne 0 ] && abort "Test build failed. Please see above Maven output for details, fix any issues, then try again."
+#echo
+#echo "Test build succeeded!"
 
 
 # Clean up the snapshot jars produced by the test build from module target dirs.
@@ -426,9 +432,9 @@ mvn clean $MAVEN_ARGS
 # If this is a production build perform a dry run of tagging the release. Skip this for test builds to reduce the
 # build time 
 
-if [ "$MODE" = "production" ]; then
+if [ "$MODE" = "todo" ]; then
     echo "Doing a dry run of tagging the release..."
-    mvn release:prepare $MAVEN_ARGS -DreleaseVersion=$RELEASE_VERSION -DdevelopmentVersion=$DEVELOPMENT_VERSION -Dresume=false -Dtag=$RELEASE_TAG "-DpreparationGoals=install $MAVEN_ARGS -Dmaven.test.skip=true -Ddbsetup-do-not-check-schema=true" -DdryRun=true
+    mvn release:prepare $MAVEN_ARGS -DreleaseVersion=$RELEASE_VERSION -DdevelopmentVersion=$DEVELOPMENT_VERSION -Dresume=false -Dtag=$RELEASE_TAG "-DpreparationGoals=install $MAVEN_ARGS -DskipTests=true -Ddbsetup-do-not-check-schema=true" -DdryRun=true
     [ "$?" -ne 0 ] && abort "Tagging dry run failed. Please see above Maven output for details, fix any issues, then try again."
     mvn release:clean $MAVEN_ARGS
     [ "$?" -ne 0 ] && abort "Failed to cleanup release plugin working files from tagging dry run. Please see above Maven output for details, fix any issues, then try again."
@@ -440,7 +446,7 @@ fi
 # If the dry run was skipped or succeeded, tag it for real.
 
 echo "Tagging the release..."
-mvn release:prepare $MAVEN_ARGS -DreleaseVersion=$RELEASE_VERSION -DdevelopmentVersion=$DEVELOPMENT_VERSION -Dresume=false -Dtag=$RELEASE_TAG "-DpreparationGoals=install $MAVEN_ARGS -Dmaven.test.skip=true -Ddbsetup-do-not-check-schema=true" -DdryRun=false -Dusername=$GIT_USERNAME
+mvn release:prepare $MAVEN_ARGS -DreleaseVersion=$RELEASE_VERSION -DdevelopmentVersion=$DEVELOPMENT_VERSION -Dresume=false -Dtag=$RELEASE_TAG "-DpreparationGoals=install $MAVEN_ARGS -DskipTests=true -Ddbsetup-do-not-check-schema=true" -DdryRun=false -Dusername=$GIT_USERNAME
 [ "$?" -ne 0 ] && abort "Tagging failed. Please see above Maven output for details, fix any issues, then try again."
 echo
 echo "Tagging succeeded!"
@@ -448,16 +454,16 @@ echo "Tagging succeeded!"
 
 # Checkout the tag and build it. If in production mode, publish the Maven artifacts.
 
-echo "Checking out release tag $RELEASE_TAG..."
-git checkout "$RELEASE_TAG"
-[ "$?" -ne 0 ] && abort "Checkout of release tag ($RELEASE_TAG) failed. Please see above git output for details, fix any issues, then try again."
-git clean -dxf
-[ "$?" -ne 0 ] && abort "Failed to cleanup unversioned files. Please see above git output for details, fix any issues, then try again."
-echo "Building release from tag and publishing Maven artifacts (this will take about 10-15 minutes)..."
-mvn $MAVEN_RELEASE_PERFORM_GOAL $MAVEN_ARGS -Dmaven.test.skip=true -Ddbsetup-do-not-check-schema=true
-[ "$?" -ne 0 ] && abort "Release build failed. Please see above Maven output for details, fix any issues, then try again."
-echo
-echo "Release build succeeded!"
+#echo "Checking out release tag $RELEASE_TAG..."
+#git checkout "$RELEASE_TAG"
+#[ "$?" -ne 0 ] && abort "Checkout of release tag ($RELEASE_TAG) failed. Please see above git output for details, fix any issues, then try again."
+#git clean -dxf
+#[ "$?" -ne 0 ] && abort "Failed to cleanup unversioned files. Please see above git output for details, fix any issues, then try again."
+#echo "Building release from tag and publishing Maven artifacts (this will take about 10-15 minutes)..."
+#mvn $MAVEN_RELEASE_PERFORM_GOAL $MAVEN_ARGS -Dmaven.test.skip=true -Ddbsetup-do-not-check-schema=true
+#[ "$?" -ne 0 ] && abort "Release build failed. Please see above Maven output for details, fix any issues, then try again."
+#echo
+#echo "Release build succeeded!"
 
 
 echo

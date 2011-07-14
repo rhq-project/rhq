@@ -67,17 +67,17 @@ public abstract class AbstractManagedDeploymentComponent extends AbstractManaged
     private final Log log = LogFactory.getLog(this.getClass());
 
     /**
-     * The name of the ManagedDeployment (e.g.: vfszip:/C:/opt/jboss-5.0.0.GA/server/default/deploy/foo.war).
+     * The name of the ManagedDeployment (e.g.: vfszip:/C:/opt/jboss-6.0.0.Final/server/default/deploy/foo.war).
      */
     protected String deploymentName;
 
     /**
-     * The type of the ManagedDeployment.
+     * The type of the ManagedDeployment (e.g. war).
      */
     protected KnownDeploymentTypes deploymentType;
 
     /**
-     * The absolute path of the deployment file (e.g.: C:/opt/jboss-5.0.0.GA/server/default/deploy/foo.war).
+     * The absolute path of the deployment file (e.g.: C:/opt/jboss-6.0.0.Final/server/default/deploy/foo.war).
      */
     protected File deploymentFile;
 
@@ -99,7 +99,7 @@ public abstract class AbstractManagedDeploymentComponent extends AbstractManaged
             log
                 .warn("The underlying file ["
                     + this.deploymentFile
-                    + "] no longer exists. It may have been deleted from the filesystem external to Jopr. If you wish to remove this Resource from inventory, you may add &debug=true to the URL for the Browse Resources > Services page and then click the UNINVENTORY button next to this Resource");
+                    + "] no longer exists. It may have been deleted from the filesystem external to RHQ. If you wish to remove this Resource from inventory, you may add &debug=true to the URL for the Browse Resources > Services page and then click the UNINVENTORY button next to this Resource.");
         }
     }
 
@@ -198,13 +198,13 @@ public abstract class AbstractManagedDeploymentComponent extends AbstractManaged
     }
 
     private File getDeploymentFile() {
-        // e.g.: vfszip:/C:/opt/jboss-5.0.0.GA/server/default/deploy/foo.war
+        // e.g.: vfszip:/C:/opt/jboss-6.0.0.Final/server/default/deploy/foo.war
         URI vfsURI = URI.create(this.deploymentName);
         // e.g.: foo.war
         String path = vfsURI.getPath();
         // Under Windows, the deployment name URL will look like:
-        // vfszip:/C:/opt/jboss-5.1.0.CR1/server/default/deploy/foo.ear/
-        // and the path portion will look like: /C:/opt/jboss-5.1.0.CR1/server/default/deploy/foo.ear/
+        // vfszip:/C:/opt/jboss-6.0.0.Final/server/default/deploy/foo.ear/
+        // and the path portion will look like: /C:/opt/jboss-6.0.0.Final/server/default/deploy/foo.ear/
         // Java considers the path with the leading slash to be valid and equivalent to the same path with the
         // leading slash removed, but the leading slash is unnecessary and ugly, so excise it.
         if (IS_WINDOWS && path.charAt(0) == '/')

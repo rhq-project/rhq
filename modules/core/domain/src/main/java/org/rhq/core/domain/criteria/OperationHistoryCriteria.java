@@ -22,12 +22,15 @@
  */
 package org.rhq.core.domain.criteria;
 
+import java.util.List;
+
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
 import org.rhq.core.domain.operation.JobId;
 import org.rhq.core.domain.operation.OperationHistory;
 import org.rhq.core.domain.operation.OperationRequestStatus;
+import org.rhq.core.domain.util.CriteriaUtils;
 import org.rhq.core.domain.util.PageOrdering;
 
 /**
@@ -42,6 +45,7 @@ public abstract class OperationHistoryCriteria extends Criteria {
     private String filterJobName;
     private String filterJobGroup;
     private OperationRequestStatus filterStatus;
+    private List<OperationRequestStatus> filterStatuses; // requires overrides
     private String filterErrorMessage;
     private Integer filterOperationDefinitionId; // requires override
     private String filterOperationName; // requires override
@@ -67,6 +71,8 @@ public abstract class OperationHistoryCriteria extends Criteria {
             + "     FROM ResourceOperationHistory roh " //
             + "    WHERE roh.resource.id IN ( ? ) ) ");
 
+        filterOverrides.put("statuses", "status IN ( ? )");
+
         sortOverrides.put("startTime", "startedTime");
         sortOverrides.put("endTime", "modifiedTime");
         sortOverrides.put("operationName", "operationDefinition.name");
@@ -88,6 +94,10 @@ public abstract class OperationHistoryCriteria extends Criteria {
 
     public void addFilterStatus(OperationRequestStatus filterStatus) {
         this.filterStatus = filterStatus;
+    }
+
+    public void addFilterStatuses(OperationRequestStatus... operationStatus) {
+        this.filterStatuses = CriteriaUtils.getListIgnoringNulls(operationStatus);
     }
 
     public void addFilterErrorMessage(String filterErrorMessage) {

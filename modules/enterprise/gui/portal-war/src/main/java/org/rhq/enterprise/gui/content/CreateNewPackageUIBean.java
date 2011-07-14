@@ -51,7 +51,6 @@ import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.content.ContentException;
-import org.rhq.enterprise.server.content.ContentManagerBean;
 import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.content.ContentUIManagerLocal;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
@@ -90,7 +89,7 @@ public class CreateNewPackageUIBean {
     private static final String REPO_OPTION_NONE = "none";
 
     private String packageName;
-    private String version;
+    private String version = "1.0";
     private int selectedArchitectureId;
     private int selectedPackageTypeId;
 
@@ -141,7 +140,7 @@ public class CreateNewPackageUIBean {
 
         // Collect the necessary information
         Subject subject = EnterpriseFacesContextUtility.getSubject();
-        Resource resource = EnterpriseFacesContextUtility.getResource();
+        Resource resource = EnterpriseFacesContextUtility.getResourceIfExists();
 
         HttpServletRequest request = FacesContextUtility.getRequest();
         UploadNewPackageUIBean uploadUIBean = FacesContextUtility.getManagedBean(UploadNewPackageUIBean.class);
@@ -185,16 +184,22 @@ public class CreateNewPackageUIBean {
         // Determine which repo the package will go into
         String repoId = null;
         if (usingARepo) {
-            try {
-                repoId = determineRepo(repoOption, subject, resource.getId());
-            } catch (ContentException ce) {
-                String errorMessages = ThrowableUtil.getAllMessages(ce);
-                FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to determine repository. Cause: "
-                    + errorMessages);
-                return "failure";
+            if (resource != null) {
+                try {
+                    repoId = determineRepo(repoOption, subject, resource.getId());
+                } catch (ContentException ce) {
+                    String errorMessages = ThrowableUtil.getAllMessages(ce);
+                    FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to determine repository. Cause: "
+                        + errorMessages);
+                    return "failure";
+                }
+            } else {
+                //we're creating a package directly inside a repo. The repo id
+                //will be in the request params.
+                repoId = FacesContextUtility.getRequiredRequestParameter("id");
             }
         }
-
+        
         try {
             // Grab a stream for the file being uploaded
             InputStream packageStream;
@@ -223,26 +228,24 @@ public class CreateNewPackageUIBean {
 
                 //store information about uploaded file for packageDetails as most of it is already available
                 Map<String, String> packageUploadDetails = new HashMap<String, String>();
-                packageUploadDetails.put(ContentManagerBean.UPLOAD_FILE_SIZE, String.valueOf(fileItem.getFileSize()));
-                packageUploadDetails.put(ContentManagerBean.UPLOAD_FILE_INSTALL_DATE, String.valueOf(System
+                packageUploadDetails.put(ContentManagerLocal.UPLOAD_FILE_SIZE, String.valueOf(fileItem.getFileSize()));
+                packageUploadDetails.put(ContentManagerLocal.UPLOAD_FILE_INSTALL_DATE, String.valueOf(System
                     .currentTimeMillis()));
-                packageUploadDetails.put(ContentManagerBean.UPLOAD_OWNER, subject.getName());
-                packageUploadDetails.put(ContentManagerBean.UPLOAD_FILE_NAME, fileItem.getFileName());
+                packageUploadDetails.put(ContentManagerLocal.UPLOAD_OWNER, subject.getName());
+                packageUploadDetails.put(ContentManagerLocal.UPLOAD_FILE_NAME, fileItem.getFileName());
 
                 try {//Easier to implement here than in server side bean. Shouldn't affect performance too much.
-                    packageUploadDetails.put(ContentManagerBean.UPLOAD_MD5, new MessageDigestGenerator(
+                    packageUploadDetails.put(ContentManagerLocal.UPLOAD_MD5, new MessageDigestGenerator(
                         MessageDigestGenerator.MD5).calcDigestString(fileItem.getFile()));
-                    packageUploadDetails.put(ContentManagerBean.UPLOAD_SHA256, new MessageDigestGenerator(
+                    packageUploadDetails.put(ContentManagerLocal.UPLOAD_SHA256, new MessageDigestGenerator(
                         MessageDigestGenerator.SHA_256).calcDigestString(fileItem.getFile()));
                 } catch (IOException e1) {
-                    log.warn("Error calculating file digest(s) : " + e1.getMessage());
-                    e1.printStackTrace();
+                    log.warn("Error calculating file digest(s)", e1);
                 }
 
-                //TODO: need to get parent id instead right? ref to app server inst itself?
-                int newResourceTypeId = resource.getResourceType().getId();
-                packageVersion = contentManager.getUploadedPackageVersion(packageName, packageTypeId, version,
-                    architectureId, packageStream, packageUploadDetails, newResourceTypeId);
+                Integer iRepoId = usingARepo ? Integer.parseInt(repoId) : null;
+                packageVersion = contentManager.getUploadedPackageVersion(subject, packageName, packageTypeId,
+                    version, architectureId, packageStream, packageUploadDetails, iRepoId);
 
             } catch (NoResultException nre) {
                 //eat the exception.  Some of the queries return no results if no package yet exists which is fine.
@@ -254,21 +257,6 @@ public class CreateNewPackageUIBean {
             }
 
             int[] packageVersionList = new int[] { packageVersion.getId() };
-
-            // Add the package to the repo
-            if (usingARepo) {
-                try {
-                    int iRepoId = Integer.parseInt(repoId);
-
-                    RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
-                    repoManager.addPackageVersionsToRepo(subject, iRepoId, packageVersionList);
-                } catch (Exception e) {
-                    String errorMessages = ThrowableUtil.getAllMessages(e);
-                    FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to associate package ["
-                        + packageName + "] with repository ID [" + repoId + "]. Cause: " + errorMessages);
-                    return "failure";
-                }
-            }
 
             // Put the package ID in the session so it can fit into the deploy existing package workflow
             HttpSession session = request.getSession();
@@ -323,21 +311,39 @@ public class CreateNewPackageUIBean {
     }
 
     public SelectItem[] getPackageTypes() {
-        Resource resource = EnterpriseFacesContextUtility.getResource();
+        return getPackageTypes(false);
+    }
 
+    public SelectItem[] getPackageTypesWithResourceTypeNames() {
+        return getPackageTypes(true);
+    }
+    
+    private SelectItem[] getPackageTypes(boolean includeResourceTypeResolution) {
+        Resource resource = EnterpriseFacesContextUtility.getResourceIfExists();
+
+        List<PackageType> packageTypes = null;
         ContentUIManagerLocal contentUIManager = LookupUtil.getContentUIManager();
-        List<PackageType> packageTypes = contentUIManager.getPackageTypes(resource.getResourceType().getId());
+        if (resource != null) {
+            packageTypes = contentUIManager.getPackageTypes(resource.getResourceType().getId());
+        } else {
+            packageTypes = contentUIManager.getPackageTypes();
+        }
 
         SelectItem[] items = new SelectItem[packageTypes.size()];
         int itemCounter = 0;
         for (PackageType packageType : packageTypes) {
-            SelectItem item = new SelectItem(packageType.getId(), packageType.getDisplayName());
+            String displayName = packageType.getDisplayName();
+            if (includeResourceTypeResolution && packageType.getResourceType() != null) {
+                ResourceType rt = packageType.getResourceType();
+                displayName += " [" + rt.getName() + ":" + rt.getPlugin() + "]";
+            }
+            SelectItem item = new SelectItem(packageType.getId(), displayName);
             items[itemCounter++] = item;
         }
 
         return items;
     }
-
+    
     public SelectItem[] getSubscribedRepos() {
         Resource resource = EnterpriseFacesContextUtility.getResource();
 
@@ -373,12 +379,20 @@ public class CreateNewPackageUIBean {
     }
 
     public boolean isNeedRequestPackageDetails() {
+        if (!isResourcePackage()) {
+            return true;
+        }
+        
         boolean isPackageBacked = isResourcePackageBacked();
         boolean backingPackageExists = lookupBackingPackage() != null;
 
         return !isPackageBacked || !backingPackageExists;
     }
 
+    public boolean isResourcePackage() {
+        return EnterpriseFacesContextUtility.getResourceIfExists() != null;
+    }
+    
     public boolean isResourcePackageBacked() {
         Resource resource = EnterpriseFacesContextUtility.getResource();
         ResourceType resourceType = resource.getResourceType();
@@ -426,7 +440,14 @@ public class CreateNewPackageUIBean {
     }
 
     public String getPackageName() {
-        return packageName;
+        if (packageName != null) {
+            return packageName;
+        }
+        
+        UploadNewPackageUIBean uploadUIBean = FacesContextUtility.getManagedBean(UploadNewPackageUIBean.class);
+        UploadItem fileItem = uploadUIBean.getFileItem();
+        
+        return fileItem == null ? null : fileItem.getFileName();
     }
 
     public void setPackageName(String packageName) {

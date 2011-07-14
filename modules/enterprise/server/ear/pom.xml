@@ -5,7 +5,8 @@
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-parent</artifactId>
-      <version>4.0.0-SNAPSHOT</version>
+      <version>4.1.0-SNAPSHOT</version>
+      <relativePath>../../../../pom.xml</relativePath>
    </parent>
 
    <groupId>org.rhq</groupId>
@@ -64,15 +65,6 @@
          <type>war</type>
       </dependency>
 
-
-
-      <dependency>
-         <groupId>org.rhq</groupId>
-         <artifactId>rhq-webdav</artifactId>
-         <version>${project.version}</version>
-         <type>war</type>
-      </dependency>
-
       <dependency>
          <groupId>org.rhq</groupId>
          <artifactId>rhq-content_http</artifactId>
@@ -86,6 +78,20 @@
          <version>${project.version}</version> <type>sar</type> </dependency>
       -->
 
+      <!-- ** JARs -->
+      
+      <dependency>
+         <groupId>org.rhq</groupId>
+         <artifactId>rhq-script-bindings</artifactId>
+         <version>${project.version}</version>
+      </dependency>
+      
+      <dependency>
+        <groupId>org.rhq</groupId>
+        <artifactId>rhq-server-client-api</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      
       <!-- 3rd Party Deps -->
 
       <!-- ** WARs -->
@@ -126,25 +132,6 @@
       </resources>
 
       <plugins>
-
-         <plugin>
-            <artifactId>maven-antrun-plugin</artifactId>
-            <version>1.1</version>
-            <executions>
-               <execution>
-                  <phase>generate-sources</phase>
-                  <configuration>
-                     <tasks>
-                        <mkdir dir="${earDirectory}/license" />
-                          <copy todir="${earDirectory}/license" file="${basedir}/src/main/license/license.xml" />
-                     </tasks>
-                  </configuration>
-                  <goals>
-                     <goal>run</goal>
-                  </goals>
-               </execution>
-            </executions>
-         </plugin>
 
          <plugin>
             <artifactId>maven-ear-plugin</artifactId>
@@ -209,7 +196,6 @@
                      <jarModule> <groupId>jboss</groupId> <artifactId>jboss-seam</artifactId> <bundleDir>lib</bundleDir>
                      <includeInApplicationXml>true</includeInApplicationXml> </jarModule>
                   -->
-
                </modules>
             </configuration>
          </plugin>
@@ -334,6 +320,18 @@
                            <groupId>org.rhq</groupId>
                             <artifactId>alert-subject</artifactId>
                             <version>${project.version}</version>
+                        </artifactItem>
+                        
+                        <artifactItem>
+                          <groupId>org.rhq</groupId>
+                          <artifactId>alert-cli</artifactId>
+                          <version>${project.version}</version>
+                        </artifactItem>
+                        
+                        <artifactItem>
+                          <groupId>org.rhq</groupId>
+                          <artifactId>packagetype-cli</artifactId>
+                          <version>${project.version}</version>
                         </artifactItem>
                      </artifactItems>
                      <outputDirectory>${earDirectory}/rhq-serverplugins</outputDirectory>
@@ -694,6 +692,12 @@
 
                                 <artifactItem>
                                   <groupId>org.rhq</groupId>
+                                  <artifactId>rhq-perftest-plugin</artifactId>
+                                  <version>${project.version}</version>
+                                </artifactItem>
+
+                                <artifactItem>
+                                  <groupId>org.rhq</groupId>
                                   <artifactId>rhq-snmptrapd-plugin</artifactId>
                                   <version>${project.version}</version>
                                 </artifactItem>
@@ -744,8 +748,6 @@
                         <phase>package</phase>
                         <configuration>
                            <tasks>
-                              <mkdir dir="${earDirectory}/license" />
-                              <copy todir="${earDirectory}/license" file="${basedir}/src/main/license/license.xml" />
                               <property name="deployment.dir" location="${rhq.deploymentDir}" />
                               <echo>*** Copying updated files from
                                  target${file.separator}${project.build.finalName}${file.separator} to

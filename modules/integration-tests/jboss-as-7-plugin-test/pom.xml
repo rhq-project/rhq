@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.rhq</groupId>
+        <artifactId>rhq-integration-tests</artifactId>
+        <version>4.1.0-SNAPSHOT</version>
+    </parent>
+
+
+    <groupId>org.rhq</groupId>
+    <artifactId>jboss-as-7-plugin-test</artifactId>
+    <packaging>jar</packaging>
+
+    <name>RHQ AS7 Integration Test</name>
+    <description>Integration tests for the AS7 plugin</description>
+
+    <scm>
+       <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/integration-tests/jboss-as-7-plugin-test</connection>
+       <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/integration-tests/jboss-as-7-plugin-test</developerConnection>
+    </scm>
+
+    <properties>
+       <scm.module.path>modules/integration-tests/jboss-as-7-plugin-test</scm.module.path>
+    </properties>
+
+
+    <dependencies>
+        <dependency>
+            <groupId>org.rhq</groupId>
+            <artifactId>rhq-jboss-as-7-plugin</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
+
+</project>

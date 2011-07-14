@@ -1,13 +1,11 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" 
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
    <modelVersion>4.0.0</modelVersion>
 
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-parent</artifactId>
-      <version>4.0.0-SNAPSHOT</version>
+      <version>4.1.0-SNAPSHOT</version>
       <relativePath>../../../../pom.xml</relativePath>
    </parent>
 
@@ -30,6 +28,8 @@
 
       <!-- dependency versions -->
       <jboss-embeddable-ejb3.version>1.0.0.Alpha9</jboss-embeddable-ejb3.version>
+
+      <clean.db>true</clean.db>
    </properties>
 
    <dependencies>
@@ -83,7 +83,120 @@
          <groupId>org.rhq</groupId>
          <artifactId>test-utils</artifactId>
          <version>${project.version}</version>
+         <scope>test</scope>
+          <exclusions>
+              <exclusion>
+                  <groupId>org.testng</groupId>
+                  <artifactId>testng</artifactId>
+              </exclusion>
+          </exclusions>
       </dependency>
+
+      <dependency>
+         <groupId>org.rhq</groupId>
+         <artifactId>rhq-core-domain</artifactId>
+         <version>${project.version}</version>
+         <type>test-jar</type>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>org.rhq</groupId>
+         <artifactId>rhq-common-drift</artifactId>
+         <version>${project.version}</version>
+      </dependency>
+
+      <!--================ Test Deps ================-->
+
+      <!-- Note, the test deps are intentionally placed above the other scoped deps because of classpath
+           reasons.  Maven orders the [test] classpath in the order listed in the pom.  We specifically
+           need the embeddable-ejb3 jar above the standard ejb3 jars because we need the embeddble packages
+           loaded when testing.  -->
+           
+      <dependency>
+         <groupId>jboss.jboss-embeddable-ejb3</groupId>
+         <artifactId>jboss-ejb3-all</artifactId>
+         <version>${jboss-embeddable-ejb3.version}</version>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+          <groupId>${project.groupId}</groupId>
+          <artifactId>rhq-core-client-api</artifactId>
+          <version>${project.version}</version>
+          <type>test-jar</type>
+          <scope>test</scope>
+      </dependency>
+
+
+      <!-- NOTE: The remaining test deps correspond to the classes contained in hibernate-all.jar and thirdparty-all.jar. -->
+
+      <dependency>
+         <groupId>antlr</groupId>
+         <artifactId>antlr</artifactId>
+         <version>2.7.7</version>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>hibernate-entitymanager</groupId>
+         <artifactId>hibernate-entitymanager</artifactId>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>jboss</groupId>
+         <artifactId>javassist</artifactId>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>trove</groupId>
+         <artifactId>trove</artifactId>
+         <version>1.0.2</version>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>xerces</groupId>
+         <artifactId>xercesImpl</artifactId>
+         <version>2.8.1</version>
+         <scope>test</scope>
+      </dependency>
+
+       <dependency>
+           <groupId>net.sf.opencsv</groupId>
+           <artifactId>opencsv</artifactId>
+           <version>1.8</version>
+           <scope>test</scope>
+       </dependency>
+
+       <dependency>
+        <groupId>org.rhq.helpers</groupId>
+        <artifactId>perftest-support</artifactId>
+        <version>${project.version}</version>
+        <scope>test</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>ant</groupId>
+            <artifactId>ant</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>ant</groupId>
+            <artifactId>ant-launcher</artifactId>
+          </exclusion>
+        </exclusions>
+       </dependency>
+
+       <dependency>
+           <groupId>commons-jxpath</groupId>
+           <artifactId>commons-jxpath</artifactId>
+           <version>1.3</version>
+           <scope>test</scope>
+       </dependency>
+
 
       <!-- 3rd Party Deps -->
 
@@ -218,6 +331,15 @@
          <scope>provided</scope> <!-- by JBossAS -->
       </dependency>
 
+      <!-- includes the org.jboss.ejb3.StrictMaxPool class, which is needed by the PoolClass annotation used on some
+           of our SLSB's -->
+      <dependency>
+         <groupId>jboss</groupId>
+         <artifactId>jboss-ejb3</artifactId>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+         <scope>provided</scope> <!-- by JBossAS -->
+      </dependency>
+
       <dependency>
          <groupId>jboss</groupId>
          <artifactId>jboss-j2ee</artifactId>
@@ -344,81 +466,6 @@
            <version>0.1.29</version>
        </dependency>
 
-      <!--================ Test Deps ================-->
-
-      <dependency>
-         <groupId>jboss.jboss-embeddable-ejb3</groupId>
-         <artifactId>jboss-ejb3-all</artifactId>
-         <version>${jboss-embeddable-ejb3.version}</version>
-         <scope>test</scope>
-      </dependency>
-
-      <!-- NOTE: The remaining test deps correspond to the classes contained in hibernate-all.jar and thirdparty-all.jar. -->
-
-      <dependency>
-         <groupId>antlr</groupId>
-         <artifactId>antlr</artifactId>
-         <version>2.7.7</version>
-         <scope>test</scope>
-      </dependency>
-
-      <dependency>
-         <groupId>hibernate-entitymanager</groupId>
-         <artifactId>hibernate-entitymanager</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-         <scope>test</scope>
-      </dependency>
-
-      <dependency>
-         <groupId>jboss</groupId>
-         <artifactId>javassist</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-         <scope>test</scope>
-      </dependency>
-
-      <dependency>
-         <groupId>trove</groupId>
-         <artifactId>trove</artifactId>
-         <version>1.0.2</version>
-         <scope>test</scope>
-      </dependency>
-
-      <dependency>
-         <groupId>xerces</groupId>
-         <artifactId>xercesImpl</artifactId>
-         <version>2.8.1</version>
-         <scope>test</scope>
-      </dependency>
-
-       <dependency>
-          <groupId>${project.groupId}</groupId>
-          <artifactId>test-utils</artifactId>
-          <version>${project.version}</version>
-          <scope>test</scope>
-       </dependency>
-
-       <dependency>
-           <groupId>net.sf.opencsv</groupId>
-           <artifactId>opencsv</artifactId>
-           <version>1.8</version>
-           <scope>test</scope>
-       </dependency>
-
-       <dependency>
-       	<groupId>org.rhq.helpers</groupId>
-       	<artifactId>perftest-support</artifactId>
-       	<version>${project.version}</version>
-       	<scope>test</scope>
-       </dependency>
-
-
-       <dependency>
-           <groupId>commons-jxpath</groupId>
-           <artifactId>commons-jxpath</artifactId>
-           <version>1.3</version>
-           <scope>test</scope>
-       </dependency>
-
    </dependencies>
 
    <build>
@@ -448,6 +495,14 @@
       </testResources>
 
       <plugins>
+        <plugin>
+           <groupId>org.apache.maven.plugins</groupId>
+           <artifactId>maven-ejb-plugin</artifactId>
+           <version>2.3</version>
+           <configuration>
+              <generateClient>true</generateClient>
+           </configuration>
+         </plugin>
 
          <plugin>
             <artifactId>maven-antrun-plugin</artifactId>
@@ -500,6 +555,7 @@ Build-OS-Version=${os.version}
            <configuration>
                <excludes>
                   <exclude>com/**/*.java</exclude>
+                  <exclude>org/rhq/**/performance/**/*.java</exclude>
                </excludes>
                <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
                <groups>${rhq.testng.includedGroups}</groups>
@@ -507,6 +563,7 @@ Build-OS-Version=${os.version}
                   <embeddedDeployment>true</embeddedDeployment>
                   <deploymentDirectory>target/classes</deploymentDirectory>
                   <hibernate.dialect>${rhq.test.ds.hibernate-dialect}</hibernate.dialect>
+                  <clean.db>${clean.db}</clean.db>
                </systemPropertyVariables>
                <additionalClasspathElements>
                   <!-- The below is required for tests to run against Oracle. -->
@@ -549,7 +606,6 @@ Build-OS-Version=${os.version}
                </execution>
             </executions>
          </plugin>
-
       </plugins>
    </build>
 
@@ -710,12 +766,12 @@ Build-OS-Version=${os.version}
         <build>
          <plugins>
            <plugin>
-              <artifactId>maven-antrun-plugin</artifactId>          
+              <artifactId>maven-antrun-plugin</artifactId>
               <dependencies>
                <dependency>
                  <groupId>net.sourceforge.cobertura</groupId>
                  <artifactId>cobertura</artifactId>
-                 <version>1.9.4.1</version>                 
+                 <version>${cobertura.version}</version>
                </dependency>
              </dependencies>
              <executions>
@@ -726,7 +782,7 @@ Build-OS-Version=${os.version}
                    <tasks>
                    <!-- prepare directory structure for cobertura-->
                    <mkdir dir="target/cobertura" />
-                   <mkdir dir="target/cobertura/backup"/>
+                   <mkdir dir="target/cobertura/backup" />
                    <!-- backup all classes so that we can instrument the original classes-->
                    <copy toDir="target/cobertura/backup" verbose="true" overwrite="true">
                       <fileset dir="target/classes">
@@ -734,13 +790,13 @@ Build-OS-Version=${os.version}
                       </fileset>
                    </copy>
                    <!-- create a properties file and save there location of cobertura data file-->
-                   <touch file="target/classes/cobertura.properties"/>
+                   <touch file="target/classes/cobertura.properties" />
                    <echo file="target/classes/cobertura.properties">net.sourceforge.cobertura.datafile=${project.build.directory}/cobertura/cobertura.ser</echo>
                    <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties" />
                    <!-- instrument all classes in target/classes directory -->
                    <cobertura-instrument datafile="${project.build.directory}/cobertura/cobertura.ser" todir="${project.build.directory}/classes">
                      <fileset dir="${project.build.directory}/classes">
-                        <include name="**/*.class"/>
+                        <include name="**/*.class" />
                         <exclude name="**/DynamicConfigurationPropertyLocal.class" />
                         <exclude name="**/DynamicConfigurationPropertyBean.class" />
                       </fileset>
@@ -767,7 +823,7 @@ Build-OS-Version=${os.version}
                       </fileset>
                      </copy>
                      <!-- delete backup folder-->
-                     <delete dir="target/cobertura/backup"/>
+                     <delete dir="target/cobertura/backup" />
                      <!-- create a code coverage report -->
                      <cobertura-report format="html" datafile="${project.build.directory}/cobertura/cobertura.ser" destdir="${project.build.directory}/site/cobertura">
                       <fileset dir="${basedir}/src/main/java">
@@ -775,7 +831,7 @@ Build-OS-Version=${os.version}
                       </fileset>
                      </cobertura-report>
                      <!-- delete cobertura.properties file -->
-                     <delete file="target/classes/cobertura.properties"/>
+                     <delete file="target/classes/cobertura.properties" />
                    </tasks>
                  </configuration>
                <goals>

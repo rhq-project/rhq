@@ -33,6 +33,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -54,9 +55,13 @@ public class RevertStep extends AbstractWizardStep {
         return MSG.view_bundle_revertWizard_revertStep_name();
     }
 
-    public Canvas getCanvas() {
+    public Canvas getCanvas(Locatable parent) {
         if (canvas == null) {
-            canvas = new LocatableVLayout("BundleRevertRevert");
+            if (parent != null) {
+                canvas = new LocatableVLayout(parent.extendLocatorId("BundleRevertRevert"));
+            } else {
+                canvas = new LocatableVLayout("BundleRevertRevert");
+            }
             canvas.setWidth100();
             canvas.setHeight100();
             canvas.setAlign(Alignment.CENTER);
@@ -81,6 +86,7 @@ public class RevertStep extends AbstractWizardStep {
                         CoreGUI.getMessageCenter().notify(
                             new Message(MSG.view_bundle_revertWizard_revertStep_scheduledDetails(result.getName(),
                                 result.getDestination().getGroup().getName()), Severity.Info));
+                        CoreGUI.refresh();
                         wizard.setDeployment(result);
                     }
 
@@ -88,8 +94,7 @@ public class RevertStep extends AbstractWizardStep {
                         deployingImage.setSrc("/images/status_error.gif");
                         deployingMessage.setText(MSG.view_bundle_revertWizard_revertStep_scheduledFailure());
                         CoreGUI.getErrorHandler().handleError(
-                            MSG.view_bundle_revertWizard_revertStep_scheduledFailure() + ": " + caught.getMessage(),
-                            caught);
+                            MSG.view_bundle_revertWizard_revertStep_scheduledFailure(), caught);
                     }
                 });
         }

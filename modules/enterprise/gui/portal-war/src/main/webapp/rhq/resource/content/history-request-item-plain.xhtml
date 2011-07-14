@@ -1,0 +1,131 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+        PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+<ui:composition template="/rhq/resource/layout/main-plain.xhtml">
+
+<ui:param name="pageTitle" value="View Content for Resource '#{ResourceUIBean.name}'"/>
+<ui:param name="selectedTabName" value="Content.History"/>
+
+<ui:define name="content">
+
+<!-- Content Requests Table -->
+
+<h:form id="contentRequestsForm">
+<input type="hidden" name="id" value="${param.id}"/>
+
+<rich:panel>
+   <f:facet name="header"><h:outputText value="Package Details"/></f:facet>
+
+   <ui:remove><!-- Ultimately, this page should display the deployment time configuration values specified by
+                   the user. --></ui:remove>
+
+   <table class="revision-data-table" width="100%">
+      <tr class="revision-data-table-even-row">
+         <td><b>Package Name</b></td>
+         <td>
+            <h:outputText value="#{ShowInstalledPackageHistoryUIBean.history.packageVersion.displayName}"
+                          rendered="#{!empty ShowInstalledPackageHistoryUIBean.history.packageVersion.displayName}"/>
+            <h:outputText value="#{ShowInstalledPackageHistoryUIBean.history.packageVersion.generalPackage.name}"
+                          rendered="#{empty ShowInstalledPackageHistoryUIBean.history.packageVersion.displayName}"/>
+
+         </td>
+      </tr>
+      <tr class="revision-data-table-odd-row">
+         <td><b>Version</b></td>
+         <td>
+            <h:outputText value="#{ShowInstalledPackageHistoryUIBean.history.packageVersion.displayVersion}"
+                          rendered="#{!empty ShowInstalledPackageHistoryUIBean.history.packageVersion.displayVersion}"/>
+            <h:outputText value="#{ShowInstalledPackageHistoryUIBean.history.packageVersion.version}"
+                          rendered="#{empty ShowInstalledPackageHistoryUIBean.history.packageVersion.displayVersion}"/>
+         </td>
+      </tr>
+      <tr class="revision-data-table-even-row">
+         <td><b>Architecture</b></td>
+         <td>
+            <h:outputText value="#{ShowInstalledPackageHistoryUIBean.history.packageVersion.architecture.name}"/>
+         </td>
+      </tr>
+      <tr class="revision-data-table-odd-row">
+         <td><b>Result</b></td>
+         <td>
+            <h:outputText value="#{ShowInstalledPackageHistoryUIBean.history.status.displayName}"/>
+         </td>
+      </tr>
+      <tr class="revision-data-table-even-row">
+         <td valign="top"><b>Error Message</b></td>
+         <td><pre><h:outputText value="#{ShowInstalledPackageHistoryUIBean.history.errorMessage}" rendered="#{!empty ShowInstalledPackageHistoryUIBean.history.errorMessage}"/></pre></td>
+      </tr>
+   </table>
+</rich:panel>
+
+<rich:panel rendered="#{!empty ShowInstalledPackageHistoryUIBean.installationSteps}">
+   <f:facet name="header"><h:outputText value="Installation Step Details"/></f:facet>
+
+   <h:dataTable value="#{ShowInstalledPackageHistoryUIBean.installationSteps}"
+                var="item"
+                styleClass="instructions-data-table"
+                headerClass="instructions-data-table-header"
+                columnClasses="instructions-data-table-number-col, instructions-data-table-description-col"
+                rowClasses="instructions-data-table-even-row, instructions-data-table-odd-row"
+                cellpadding="3"
+                cellspacing="0"
+                width="100%">
+
+      <h:column>
+         <f:facet name="header">Step Number</f:facet>
+         <h:outputText value="#{ShowInstalledPackageHistoryUIBean.stepsData.rowIndex + 1}"/>
+      </h:column>
+
+      <h:column>
+         <f:facet name="header">Description</f:facet>
+         <h:outputText value="#{item.description}"/>
+      </h:column>
+
+      <h:column>
+         <f:facet name="header">Errors</f:facet>
+
+         <h:commandLink action="stepDetails" value="View" rendered="#{!empty item.errorMessage}">
+            <f:param name="id" value="${param.id}"/>
+            <f:param name="stepId" value="#{item.id}"/>
+            <f:param name="selectedRequestId" value="${param.selectedRequestId}"/>
+            <f:param name="selectedHistoryId" value="${param.selectedHistoryId}"/>
+         </h:commandLink>
+
+      </h:column>
+      
+      <h:column>
+         <f:facet name="header">Result</f:facet>
+         <h:outputText value="#{item.result}"/>
+      </h:column>
+
+   </h:dataTable>
+
+</rich:panel>
+
+<p align="center">
+   <h:commandLink action="returnToRequest" value="Return to Request Details">
+      <f:param name="id" value="${param.id}"/>
+      <f:param name="selectedRequestId" value="${param.selectedRequestId}"/>
+      <f:param name="selectedHistoryId" value="${param.selectedHistoryId}"/>
+   </h:commandLink>
+</p>
+
+</h:form>
+   
+
+</ui:define>
+</ui:composition>
+
+</html>

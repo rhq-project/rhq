@@ -6,9 +6,9 @@ import java.util.List;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeSuite;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.auth.Subject;
@@ -41,16 +41,13 @@ public class MeasurementViewManagerTest extends AbstractEJB3Test {
         // TODO: jmarques - write unit tests for MeasurementViewManager
     }
 
-    @BeforeSuite
-    public void beforeSuite() throws Exception {
+    @BeforeMethod
+    public void init() throws Exception {
         viewManager = LookupUtil.getMeasurementViewManager();
         subjectManager = LookupUtil.getSubjectManager();
 
         overlord = subjectManager.getOverlord();
-    }
 
-    @BeforeTest
-    public void beforeTest() throws Exception {
         getTransactionManager().begin();
         try {
             EntityManager em = getEntityManager();
@@ -102,7 +99,7 @@ public class MeasurementViewManagerTest extends AbstractEJB3Test {
         }
     }
 
-    @AfterTest
+    @AfterMethod
     public void afterTest() throws Exception {
         getTransactionManager().begin();
         try {

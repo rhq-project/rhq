@@ -121,7 +121,7 @@ public class BundleDeployWizard extends AbstractBundleDeployWizard {
 
                                         public void onFailure(Throwable caught) {
                                             CoreGUI.getErrorHandler().handleError(
-                                                MSG.view_bundle_deployWizard_error_1(caught.getMessage()), caught);
+                                                MSG.view_bundle_deployWizard_error_1(), caught);
                                         }
                                     });
                             }
@@ -130,8 +130,7 @@ public class BundleDeployWizard extends AbstractBundleDeployWizard {
 
                     public void onFailure(Throwable caught) {
                         // should not really get here
-                        CoreGUI.getErrorHandler().handleError(
-                            MSG.view_bundle_deployWizard_error_1(caught.getMessage()), caught);
+                        CoreGUI.getErrorHandler().handleError(MSG.view_bundle_deployWizard_error_1(), caught);
                         deleteNewDestination();
                     }
                 });
@@ -151,8 +150,7 @@ public class BundleDeployWizard extends AbstractBundleDeployWizard {
                     }
 
                     public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError(
-                            MSG.view_bundle_deployWizard_error_2(caught.getMessage()), caught);
+                        CoreGUI.getErrorHandler().handleError(MSG.view_bundle_deployWizard_error_2(), caught);
                     }
                 });
         }

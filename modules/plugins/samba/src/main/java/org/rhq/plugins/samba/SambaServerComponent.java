@@ -152,16 +152,18 @@ public class SambaServerComponent extends AugeasConfigurationComponent implement
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
 
         NetworkStats stats = resourceContext.getSystemInformation().getNetworkStats("localhost", PORT);
-        
-        processInfo.refresh();
 
-        for (MeasurementScheduleRequest request : metrics) {
-            if (request.getName().startsWith("NetworkStat.")) {
-                int val = stats.getByName(request.getName().substring("NetworkStat.".length()));
-                report.addData(new MeasurementDataNumeric(request, (double) val));
-            } else if (request.getName().startsWith("Process.")) {
-                Double value = ObjectUtil.lookupDeepNumericAttributeProperty(processInfo, request.getName().substring("Process.".length()));
-                report.addData(new MeasurementDataNumeric(request, value));
+        if (processInfo!=null) {
+            processInfo.refresh();
+
+            for (MeasurementScheduleRequest request : metrics) {
+                if (request.getName().startsWith("NetworkStat.")) {
+                    int val = stats.getByName(request.getName().substring("NetworkStat.".length()));
+                    report.addData(new MeasurementDataNumeric(request, (double) val));
+                } else if (request.getName().startsWith("Process.")) {
+                    Double value = ObjectUtil.lookupDeepNumericAttributeProperty(processInfo, request.getName().substring("Process.".length()));
+                    report.addData(new MeasurementDataNumeric(request, value));
+                }
             }
         }
     }
@@ -269,7 +271,7 @@ public class SambaServerComponent extends AugeasConfigurationComponent implement
         if (args != null) {
             processExecution.setArguments(args.split(" "));
         }
-        
+
         processExecution.setCaptureOutput(true);
         processExecution.setWaitForCompletion(1000L);
         processExecution.setKillOnTimeout(true);

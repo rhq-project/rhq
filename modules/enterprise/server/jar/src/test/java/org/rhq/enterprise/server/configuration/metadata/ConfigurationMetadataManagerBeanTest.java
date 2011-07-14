@@ -32,7 +32,6 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
-import org.rhq.core.clientapi.descriptor.plugin.ServerDescriptor;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionEnumeration;
@@ -40,12 +39,13 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertyGroupDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyOptionsSource;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.test.AssertUtils;
 
-import static org.rhq.enterprise.server.configuration.metadata.PluginDescriptorUtil.loadPluginConfigDefFor;
-import static org.rhq.enterprise.server.configuration.metadata.PluginDescriptorUtil.loadPluginDescriptor;
+import static org.rhq.core.clientapi.shared.PluginDescriptorUtil.loadPluginConfigDefFor;
+import static org.rhq.core.clientapi.shared.PluginDescriptorUtil.loadPluginDescriptor;
 import static java.util.Arrays.asList;
 
 /**
@@ -54,7 +54,7 @@ import static java.util.Arrays.asList;
  * is the original version and the other is the upgraded version. In order to avoid inter-dependencies between test
  * methods, a separate plugin configuration should be used for each test method. A separate resource type is declared
  * for each test, further documenting and delinating where each configuration is used. In the test methods, the
- * original and updated coniguration definitions are initialized with an xpath expression that specifies the owning
+ * original and updated configuration definitions are initialized with an xpath expression that specifies the owning
  * resource type.
  */
 public class ConfigurationMetadataManagerBeanTest extends AbstractEJB3Test {
@@ -73,8 +73,8 @@ public class ConfigurationMetadataManagerBeanTest extends AbstractEJB3Test {
         String version1 = pluginFileBaseName + "_v1.xml";
         String version2 = pluginFileBaseName + "_v2.xml";
 
-        originalDescriptor = loadPluginDescriptor(getPackagePath() + version1);
-        updatedDescriptor = loadPluginDescriptor(getPackagePath() + version2);
+        originalDescriptor = loadPluginDescriptor(getClass().getResource(version1));
+        updatedDescriptor = loadPluginDescriptor(getClass().getResource(version2));
     }
 
     @Test
@@ -177,6 +177,27 @@ public class ConfigurationMetadataManagerBeanTest extends AbstractEJB3Test {
             expected, actual, ignoredProperties);
     }
 
+    @Test
+    public void updatePropertyDefinitionOptionSource() {
+        initConfigDefs("servers[name='OptionSourceTest']", "OptionSourceTest");
+
+        // now check the upgrades
+        PropertyDefinitionSimple prop1 = (PropertyDefinitionSimple) updatedConfigDef.get("prop1");
+        assert prop1 !=null;
+        assert prop1.getEnumeratedValues().size()==0 : "Found an option value. ";
+        PropertyOptionsSource source = prop1.getOptionsSource();
+        assert source !=null : "PropertyOptionSource was not persisted";
+        assert source.getFilter()==null : "Assumed filter to be null, but was " + source.getFilter();
+
+        PropertyDefinitionSimple prop2 = (PropertyDefinitionSimple) updatedConfigDef.get("prop2");
+        assert prop2 !=null;
+        assert prop2.getEnumeratedValues().size()==1;
+        assert prop2.getOptionsSource()!=null;
+        assert prop2.getOptionsSource().getExpression().equals("*");
+
+
+    }
+
     private void initConfigDefs(String path, String configName) {
         loadAndPersistConfigDefs(path, configName);
         updateConfigDef();
@@ -206,6 +227,7 @@ public class ConfigurationMetadataManagerBeanTest extends AbstractEJB3Test {
 
     private void updateConfigDef() {
         ConfigurationMetadataManagerLocal configMetadataMgr = LookupUtil.getConfigurationMetadataManager();
+        // The next line updates originalConfigDef with the content of updatedConfigDef
         configMetadataMgr.updateConfigurationDefinition(updatedConfigDef, originalConfigDef);
     }
 

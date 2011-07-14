@@ -1,13 +1,8 @@
-/*body {
-    background-color: white;
-    color: black;
-    font-family: Arial, sans-serif;
-    font-size: small;
-    margin: 8px;
-}*/
+body {
+    color: #010101;
+}
 
 body, p, td, th, option, input, textarea, select {
-    color: #000000;
     font-family: tahoma, verdana, sans-serif !important;
     font-size: 11px !important;
 }
@@ -30,11 +25,18 @@ hr {
 a, a:link, a:visited, a:hover {
     color: #4A5D75 !important;
     font-weight: bold !important;
+}
+
+a, a:link, a:visited {
     text-decoration: none !important;
 }
 
 a:hover {
     text-decoration: underline !important;
+}
+
+a.menuBar, a.menuBar:link, a.menuBar:visited, a.menuBar:hover {
+    color: inherit !important;
 }
 
 
@@ -97,22 +99,27 @@ a:hover {
 
 }
 
-.TopSectionLink, .topsectionlinkselected {
-    vertical-align: bottom;
-    padding:5px;
-    padding-left: 15px;
-    padding-right: 15px;
+.inheritColor {
+    color: inherit !important;
+}
 
-    cursor: pointer;
-    font-size: 10pt;
-    font-weight: bold;
-    text-decoration: none;
-    color: #4A5D75;
+.TopSectionLink, .TopSectionLinkSelected {
+    font-size: 12px !important;
+}
+
+.TopSectionLink {
+    color: #4A5D75 !important;
 }
 
 .TopSectionLinkSelected {
+    color: white !important;
+}
+
+.TopSectionLinkDiv {
+}
+
+.TopSectionLinkDivSelected {
     background-image: url('images/header/header_bg_selected.png');
-    color: white;
 }
 
 .BreadCrumb {
@@ -397,4 +404,11 @@ a:hover {
 .requiredFieldMarker {
     font-weight: bolder;
     color: #B77  /* medium red */
+}
+
+.configurationEditorHeaderCell {
+    border-style: solid;
+    border-width: 1px;
+    background-color: #EEE; /* light gray */
+    font-weight: bolder;
 }

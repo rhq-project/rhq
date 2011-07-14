@@ -31,19 +31,23 @@ import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
 import com.smartgwt.client.widgets.events.CloseClientEvent;
+import com.smartgwt.client.widgets.events.DrawEvent;
+import com.smartgwt.client.widgets.events.DrawHandler;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.LayoutSpacer;
-import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHTMLFlow;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 
 /**
  * @author Greg Hinkle
  */
-public class WizardView extends VLayout {
+public class WizardView extends LocatableVLayout {
     static private final Messages MSG = CoreGUI.getMessages();
 
     static private final String CANCEL = MSG.common_button_cancel();
@@ -76,7 +80,8 @@ public class WizardView extends VLayout {
     HashSet<Canvas> createdCanvases = new HashSet<Canvas>();
 
     public WizardView(Wizard wizard) {
-        super(10);
+        super("WizardView", 10);
+
         this.wizard = wizard;
     }
 
@@ -118,7 +123,7 @@ public class WizardView extends VLayout {
         messageBar.setHeight(20);
         messageBar.setPadding(2);
         messageBar.setBackgroundColor("#F0F0F0");
-        messageLabel = new HTMLFlow();
+        messageLabel = new LocatableHTMLFlow(extendLocatorId("Message"));
         messageLabel.setWidth("*");
         messageLabel.setLeft(20);
         messageBar.addMember(messageLabel);
@@ -161,7 +166,7 @@ public class WizardView extends VLayout {
     }
 
     private void setupButtons() {
-        cancelButton = new LocatableIButton("Cancel", CANCEL);
+        cancelButton = new LocatableIButton(extendLocatorId("Cancel"), CANCEL);
         cancelButton.setDisabled(false);
         cancelButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
@@ -169,7 +174,7 @@ public class WizardView extends VLayout {
                 closeDialog();
             }
         });
-        previousButton = new LocatableIButton("Previous", PREVIOUS);
+        previousButton = new LocatableIButton(extendLocatorId("Previous"), PREVIOUS);
         previousButton.setDisabled(true);
         previousButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
@@ -180,7 +185,7 @@ public class WizardView extends VLayout {
                 }
             }
         });
-        nextButton = new LocatableIButton("Next", NEXT);
+        nextButton = new LocatableIButton(extendLocatorId("Next"), NEXT);
         nextButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
 
@@ -198,14 +203,14 @@ public class WizardView extends VLayout {
 
     }
 
-    private void setStep(int stepIndex) {
+    private void setStep(final int stepIndex) {
         if (stepIndex < 0) {
             this.previousButton.setDisabled(true);
             return;
         }
 
         // determine if we are "finished" - that is, going past our last step
-        List<WizardStep> wizardSteps = wizard.getSteps();
+        final List<WizardStep> wizardSteps = wizard.getSteps();
         if (stepIndex >= wizardSteps.size()) {
             closeDialog();
             return;
@@ -214,21 +219,17 @@ public class WizardView extends VLayout {
         // a valid step, continue 
         currentStep = stepIndex;
 
-        stepLabel.setContents("Step " + (stepIndex + 1) + " of " + wizardSteps.size());
+        stepLabel.setContents(MSG.common_msg_step_x_of_y(String.valueOf(stepIndex + 1), String.valueOf(wizardSteps
+            .size())));
         stepLabel.setWrap(false);
 
         WizardStep step = wizardSteps.get(currentStep);
 
         stepTitleLabel.setContents(step.getName());
 
-        previousButton.setDisabled(stepIndex == 0);
-
-        boolean last = (stepIndex == (wizardSteps.size() - 1));
-        if (last) {
-            nextButton.setTitle(MSG.common_button_finish());
-        } else {
-            nextButton.setTitle(MSG.common_button_next());
-        }
+        cancelButton.setDisabled(true);
+        previousButton.setDisabled(true);
+        nextButton.setDisabled(true);
 
         for (IButton button : customButtons) {
             buttonBar.removeMember(button);
@@ -237,6 +238,7 @@ public class WizardView extends VLayout {
         List<IButton> cbs = wizard.getCustomButtons(currentStep);
         if (cbs != null) {
             for (IButton button : cbs) {
+                button.setDisabled(true);
                 buttonBar.addMember(button);
                 customButtons.add(button);
             }
@@ -245,9 +247,34 @@ public class WizardView extends VLayout {
         if (currentCanvas != null) {
             contentLayout.removeMember(currentCanvas);
         }
-        currentCanvas = wizardSteps.get(currentStep).getCanvas();
-        createdCanvases.add(currentCanvas);
+        currentCanvas = wizardSteps.get(currentStep).getCanvas(this);
 
+        // after the canvas is drawn, enable the wizard buttons (unlikely a user will notice, but useful
+        // for keeping automated testing from advancing too quickly).
+        currentCanvas.addDrawHandler(new DrawHandler() {
+
+            @Override
+            public void onDraw(DrawEvent event) {
+                boolean last = (stepIndex == (wizardSteps.size() - 1));
+                if (last) {
+                    nextButton.setTitle(MSG.common_button_finish());
+                } else {
+                    nextButton.setTitle(MSG.common_button_next());
+                }
+
+                cancelButton.setDisabled(false);
+                previousButton.setDisabled(stepIndex == 0);
+                nextButton.setDisabled(false);
+
+                for (IButton button : customButtons) {
+                    button.setDisabled(false);
+                }
+
+                markForRedraw();
+            }
+        });
+
+        createdCanvases.add(currentCanvas);
         contentLayout.addMember(currentCanvas);
 
         // clean any message from a previous step
@@ -257,7 +284,7 @@ public class WizardView extends VLayout {
     }
 
     public void displayDialog() {
-        wizardWindow = new Window();
+        wizardWindow = new LocatableWindow(extendLocatorId("Wizard"));
         wizardWindow.setTitle(wizard.getWindowTitle());
         wizardWindow.setWidth(800);
         wizardWindow.setHeight(600);

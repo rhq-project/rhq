@@ -28,10 +28,6 @@ import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.ListGridFieldType;
-import com.smartgwt.client.types.Overflow;
-import com.smartgwt.client.widgets.Window;
-import com.smartgwt.client.widgets.events.CloseClickHandler;
-import com.smartgwt.client.widgets.events.CloseClientEvent;
 import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
@@ -48,24 +44,24 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ErrorMessageWindow;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
+import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.ConfigurationGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHTMLPane;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 
 /**
  * Table showing group plugin configuration history.
  *
  * @author John Mazzitelli
  */
-public class HistoryGroupPluginConfigurationTable extends Table {
+public class HistoryGroupPluginConfigurationTable extends Table<HistoryGroupPluginConfigurationTable.DataSource> {
     private final ResourceGroup group;
     private final ResourcePermission groupPerms;
 
@@ -79,17 +75,20 @@ public class HistoryGroupPluginConfigurationTable extends Table {
 
     @Override
     protected void configureTable() {
-        ListGridField fieldId = new ListGridField("id", MSG.common_title_version());
-        ListGridField fieldDateCreated = new ListGridField("dateCreated", MSG.common_title_dateCreated());
-        ListGridField fieldLastUpdated = new ListGridField("lastUpdated", MSG.common_title_lastUpdated());
-        ListGridField fieldUser = new ListGridField("user", MSG.common_title_user());
-        ListGridField fieldStatus = new ListGridField("status", MSG.common_title_status());
+        ListGridField fieldId = new ListGridField(DataSource.Field.ID, MSG.common_title_version());
+        ListGridField fieldDateCreated = new ListGridField(DataSource.Field.DATECREATED, MSG.common_title_dateCreated());
+        ListGridField fieldLastUpdated = new ListGridField(DataSource.Field.LASTUPDATED, MSG.common_title_lastUpdated());
+        ListGridField fieldStatus = new ListGridField(DataSource.Field.STATUS, MSG.common_title_status());
+        ListGridField fieldUser = new ListGridField(DataSource.Field.USER, MSG.common_title_user());
+
+        TimestampCellFormatter.prepareDateField(fieldDateCreated);
+        TimestampCellFormatter.prepareDateField(fieldLastUpdated);
 
         fieldId.setWidth("10%");
         fieldDateCreated.setWidth("35%");
         fieldLastUpdated.setWidth("35%");
-        fieldUser.setWidth("*");
         fieldStatus.setWidth("10%");
+        fieldUser.setWidth("*");
 
         fieldStatus.setType(ListGridFieldType.ICON);
         HashMap<String, String> statusIcons = new HashMap<String, String>(4);
@@ -105,34 +104,8 @@ public class HistoryGroupPluginConfigurationTable extends Table {
         fieldStatus.addRecordClickHandler(new RecordClickHandler() {
             @Override
             public void onRecordClick(RecordClickEvent event) {
-                final Window winModal = new LocatableWindow(HistoryGroupPluginConfigurationTable.this
-                    .extendLocatorId("statusDetailsWin"));
-                winModal.setTitle(MSG.view_group_pluginConfig_table_statusDetails());
-                winModal.setOverflow(Overflow.VISIBLE);
-                winModal.setShowMinimizeButton(false);
-                winModal.setShowMaximizeButton(true);
-                winModal.setIsModal(true);
-                winModal.setShowModalMask(true);
-                winModal.setAutoSize(true);
-                winModal.setAutoCenter(true);
-                winModal.setShowResizer(true);
-                winModal.setCanDragResize(true);
-                winModal.centerInPage();
-                winModal.addCloseClickHandler(new CloseClickHandler() {
-                    @Override
-                    public void onCloseClick(CloseClientEvent event) {
-                        winModal.markForDestroy();
-                    }
-                });
-
-                LocatableHTMLPane htmlPane = new LocatableHTMLPane(HistoryGroupPluginConfigurationTable.this
-                    .extendLocatorId("statusDetailsPane"));
-                htmlPane.setMargin(10);
-                htmlPane.setDefaultWidth(500);
-                htmlPane.setDefaultHeight(400);
-                htmlPane.setContents(getStatusHtmlString(event.getRecord()));
-                winModal.addItem(htmlPane);
-                winModal.show();
+                new ErrorMessageWindow("errWin", MSG.common_title_error(), getStatusHtmlString(event.getRecord()))
+                    .show();
             }
         });
         fieldStatus.setShowHover(true);
@@ -145,7 +118,7 @@ public class HistoryGroupPluginConfigurationTable extends Table {
         });
 
         ListGrid listGrid = getListGrid();
-        listGrid.setFields(fieldId, fieldDateCreated, fieldLastUpdated, fieldUser, fieldStatus);
+        listGrid.setFields(fieldId, fieldDateCreated, fieldLastUpdated, fieldStatus, fieldUser);
 
         addTableAction(extendLocatorId("deleteAction"), MSG.common_button_delete(), MSG.common_msg_areYouSure(),
             new AbstractTableAction(this.groupPerms.isInventory() ? TableActionEnablement.ANY
@@ -162,7 +135,7 @@ public class HistoryGroupPluginConfigurationTable extends Table {
                     Integer[] updateIds = new Integer[selection.length];
                     int i = 0;
                     for (ListGridRecord record : selection) {
-                        updateIds[i++] = record.getAttributeAsInt("id");
+                        updateIds[i++] = record.getAttributeAsInt(DataSource.Field.ID);
                     }
 
                     service.deleteGroupPluginConfigurationUpdate(groupId, updateIds, new AsyncCallback<Void>() {
@@ -188,10 +161,9 @@ public class HistoryGroupPluginConfigurationTable extends Table {
             new AbstractTableAction(TableActionEnablement.SINGLE) {
                 @Override
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    CoreGUI.goToView(LinkManager
-                        .getGroupPluginConfigurationUpdateHistoryLink(HistoryGroupPluginConfigurationTable.this.group
-                            .getId())
-                        + "/" + selection[0].getAttribute("id") + "/Settings");
+                    CoreGUI.goToView(LinkManager.getGroupPluginConfigurationUpdateHistoryLink(
+                        HistoryGroupPluginConfigurationTable.this.group.getId(), null)
+                        + "/" + selection[0].getAttribute(DataSource.Field.ID) + "/Settings");
                 }
             });
 
@@ -199,10 +171,9 @@ public class HistoryGroupPluginConfigurationTable extends Table {
             .view_group_pluginConfig_table_viewMemberHistory(), new AbstractTableAction(TableActionEnablement.SINGLE) {
             @Override
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                CoreGUI.goToView(LinkManager
-                    .getGroupPluginConfigurationUpdateHistoryLink(HistoryGroupPluginConfigurationTable.this.group
-                        .getId())
-                    + "/" + selection[0].getAttribute("id") + "/Members");
+                CoreGUI.goToView(LinkManager.getGroupPluginConfigurationUpdateHistoryLink(
+                    HistoryGroupPluginConfigurationTable.this.group.getId(), null)
+                    + "/" + selection[0].getAttribute(DataSource.Field.ID) + "/Members");
             }
         });
 
@@ -210,7 +181,8 @@ public class HistoryGroupPluginConfigurationTable extends Table {
 
     private String getStatusHtmlString(Record record) {
         String html = null;
-        AbstractConfigurationUpdate obj = (AbstractConfigurationUpdate) record.getAttributeAsObject("object");
+        AbstractConfigurationUpdate obj = (AbstractConfigurationUpdate) record
+            .getAttributeAsObject(DataSource.Field.OBJECT);
         switch (obj.getStatus()) {
         case SUCCESS: {
             html = MSG.view_group_pluginConfig_table_statusSuccess();
@@ -246,36 +218,41 @@ public class HistoryGroupPluginConfigurationTable extends Table {
         return html;
     }
 
-    private class DataSource extends RPCDataSource<GroupPluginConfigurationUpdate> {
+    class DataSource extends RPCDataSource<GroupPluginConfigurationUpdate, GroupPluginConfigurationUpdateCriteria> {
+
+        public class Field {
+            public static final String ID = "id";
+            public static final String DATECREATED = "createdTime";
+            public static final String LASTUPDATED = "modifiedTime";
+            public static final String STATUS = "status";
+            public static final String USER = "subjectName";
+            public static final String OBJECT = "object";
+        }
 
         @Override
         public GroupPluginConfigurationUpdate copyValues(Record from) {
-            return (GroupPluginConfigurationUpdate) from.getAttributeAsObject("object");
+            return (GroupPluginConfigurationUpdate) from.getAttributeAsObject(DataSource.Field.OBJECT);
         }
 
         @Override
         public ListGridRecord copyValues(GroupPluginConfigurationUpdate from) {
             ListGridRecord record = new ListGridRecord();
 
-            record.setAttribute("id", from.getId());
-            record.setAttribute("dateCreated", new Date(from.getCreatedTime()));
-            record.setAttribute("lastUpdated", new Date(from.getModifiedTime()));
-            record.setAttribute("user", from.getSubjectName());
-            record.setAttribute("status", from.getStatus().name());
+            record.setAttribute(Field.ID, from.getId());
+            record.setAttribute(Field.DATECREATED, new Date(from.getCreatedTime()));
+            record.setAttribute(Field.LASTUPDATED, new Date(from.getModifiedTime()));
+            record.setAttribute(Field.STATUS, from.getStatus().name());
+            record.setAttribute(Field.USER, from.getSubjectName());
 
-            record.setAttribute("object", from);
+            record.setAttribute(Field.OBJECT, from);
 
             return record;
         }
 
         @Override
-        protected void executeFetch(final DSRequest request, final DSResponse response) {
+        protected void executeFetch(final DSRequest request, final DSResponse response,
+            final GroupPluginConfigurationUpdateCriteria criteria) {
             ConfigurationGWTServiceAsync configurationService = GWTServiceLookup.getConfigurationService();
-
-            GroupPluginConfigurationUpdateCriteria criteria = new GroupPluginConfigurationUpdateCriteria();
-            ArrayList<Integer> groupList = new ArrayList<Integer>(1);
-            groupList.add(HistoryGroupPluginConfigurationTable.this.group.getId());
-            criteria.addFilterResourceGroupIds(groupList);
 
             configurationService.findGroupPluginConfigurationUpdatesByCriteria(criteria,
                 new AsyncCallback<PageList<GroupPluginConfigurationUpdate>>() {
@@ -289,11 +266,20 @@ public class HistoryGroupPluginConfigurationTable extends Table {
 
                     @Override
                     public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to get group plugin config history", caught);
+                        CoreGUI.getErrorHandler().handleError(MSG.view_group_pluginConfig_table_failFetch(), caught);
                         response.setStatus(DSResponse.STATUS_FAILURE);
                         processResponse(request.getRequestId(), response);
                     }
                 });
+        }
+
+        @Override
+        protected GroupPluginConfigurationUpdateCriteria getFetchCriteria(final DSRequest request) {
+            GroupPluginConfigurationUpdateCriteria criteria = new GroupPluginConfigurationUpdateCriteria();
+            ArrayList<Integer> groupList = new ArrayList<Integer>(1);
+            groupList.add(HistoryGroupPluginConfigurationTable.this.group.getId());
+            criteria.addFilterResourceGroupIds(groupList);
+            return criteria;
         }
     }
 }

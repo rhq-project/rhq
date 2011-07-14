@@ -1,22 +1,40 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2011 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource;
 
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.AVAILABILITY;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.CATEGORY;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.DESCRIPTION;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.NAME;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.PLUGIN;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.TYPE;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.*;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
-import com.smartgwt.client.data.fields.DataSourceImageField;
-import com.smartgwt.client.data.fields.DataSourceIntegerField;
-import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
@@ -24,12 +42,15 @@ import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.TypesLoadedCallback;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 
 /**
@@ -39,7 +60,8 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
  *  
  * @author Jay Shaughnessy
  */
-public class ResourceCompositeDataSource extends RPCDataSource<ResourceComposite> {
+public class ResourceCompositeDataSource extends RPCDataSource<ResourceComposite, ResourceCriteria> {
+
     private static ResourceCompositeDataSource INSTANCE;
 
     private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
@@ -62,44 +84,10 @@ public class ResourceCompositeDataSource extends RPCDataSource<ResourceComposite
     protected List<DataSourceField> addDataSourceFields() {
         List<DataSourceField> fields = super.addDataSourceFields();
 
-        DataSourceField idDataField = new DataSourceIntegerField("id", MSG.common_title_id(), 50);
-        idDataField.setPrimaryKey(true);
-        idDataField.setCanEdit(false);
-        fields.add(idDataField);
-
-        DataSourceImageField iconField = new DataSourceImageField("icon", "");
-        iconField.setImageURLPrefix("types/");
-        fields.add(iconField);
-
-        DataSourceTextField nameDataField = new DataSourceTextField(NAME.propertyName(), NAME.title(), 200);
-        nameDataField.setCanEdit(false);
-        fields.add(nameDataField);
-
-        DataSourceTextField descriptionDataField = new DataSourceTextField(DESCRIPTION.propertyName(), DESCRIPTION
-            .title());
-        descriptionDataField.setCanEdit(false);
-        fields.add(descriptionDataField);
-
-        DataSourceTextField typeNameDataField = new DataSourceTextField(TYPE.propertyName(), TYPE.title());
-        fields.add(typeNameDataField);
-
-        DataSourceTextField pluginNameDataField = new DataSourceTextField(PLUGIN.propertyName(), PLUGIN.title());
-        fields.add(pluginNameDataField);
-
-        DataSourceTextField categoryDataField = new DataSourceTextField(CATEGORY.propertyName(), CATEGORY.title());
-        fields.add(categoryDataField);
-
-        DataSourceImageField availabilityDataField = new DataSourceImageField(AVAILABILITY.propertyName(), AVAILABILITY
-            .title(), 20);
-        availabilityDataField.setCanEdit(false);
-        fields.add(availabilityDataField);
-
-        return fields;
+        return ResourceDatasource.addResourceDatasourceFields(fields);
     }
 
-    public void executeFetch(final DSRequest request, final DSResponse response) {
-        ResourceCriteria criteria = getFetchCriteria(request);
-
+    public void executeFetch(final DSRequest request, final DSResponse response, final ResourceCriteria criteria) {
         getResourceService().findResourceCompositesByCriteria(criteria,
             new AsyncCallback<PageList<ResourceComposite>>() {
                 public void onFailure(Throwable caught) {
@@ -114,13 +102,57 @@ public class ResourceCompositeDataSource extends RPCDataSource<ResourceComposite
             });
     }
 
-    protected void dataRetrieved(PageList<ResourceComposite> result, DSResponse response, DSRequest request) {
-        Record[] records = this.buildRecords(result);
-        response.setData(records);
-        response.setTotalRows(result.getTotalSize()); // for paging to work we have to specify size of full result set
-        processResponse(request.getRequestId(), response);
+    protected void dataRetrieved(final PageList<ResourceComposite> result, final DSResponse response,
+        final DSRequest request) {
+        Set<Integer> typesSet = new HashSet<Integer>();
+        Set<String> ancestries = new HashSet<String>();
+        List<Resource> resources = new ArrayList<Resource>(result.size());
+        for (ResourceComposite resourceComposite : result) {
+            Resource resource = resourceComposite.getResource();
+            resources.add(resource);
+            ResourceType type = resource.getResourceType();
+            if (type != null) {
+                typesSet.add(type.getId());
+            }
+            ancestries.add(resource.getAncestry());
+        }
+
+        // In addition to the types of the result resources, get the types of their ancestry
+        // NOTE: this may be too labor intensive in general, but since this is a singleton I couldn't
+        //       make it easily optional.
+        typesSet.addAll(AncestryUtil.getAncestryTypeIds(ancestries));
+
+        ResourceTypeRepository typeRepo = ResourceTypeRepository.Cache.getInstance();
+        typeRepo.getResourceTypes(typesSet.toArray(new Integer[typesSet.size()]), new TypesLoadedCallback() {
+            @Override
+            public void onTypesLoaded(Map<Integer, ResourceType> types) {
+                // Smartgwt has issues storing a Map as a ListGridRecord attribute. Wrap it in a pojo.                
+                AncestryUtil.MapWrapper typesWrapper = new AncestryUtil.MapWrapper(types);
+
+                Record[] records = buildRecords(result);
+                for (Record record : records) {
+                    // replace type id with type name
+                    Integer typeId = record.getAttributeAsInt(TYPE.propertyName());
+                    ResourceType type = types.get(typeId);
+                    if (type != null) {
+                        record.setAttribute(TYPE.propertyName(), type.getName());
+                    }
+
+                    // To avoid a lot of unnecessary String construction, be lazy about building ancestry hover text.
+                    // Store the types map off the records so we can build a detailed hover string as needed.                      
+                    record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY_TYPES, typesWrapper);
+
+                    // Build the decoded ancestry Strings now for display
+                    record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY_VALUE, AncestryUtil.getAncestryValue(record));
+                }
+                response.setData(records);
+                response.setTotalRows(result.getTotalSize()); // for paging to work we have to specify size of full result set
+                processResponse(request.getRequestId(), response);
+            }
+        });
     }
 
+    @Override
     protected ResourceCriteria getFetchCriteria(final DSRequest request) {
         ResourceCriteria criteria = new ResourceCriteria();
         criteria.setPageControl(getPageControl(request));
@@ -128,7 +160,7 @@ public class ResourceCompositeDataSource extends RPCDataSource<ResourceComposite
         criteria.addFilterId(getFilter(request, "id", Integer.class));
         criteria.addFilterParentResourceId(getFilter(request, "parentId", Integer.class));
         criteria.addFilterCurrentAvailability(getFilter(request, AVAILABILITY.propertyName(), AvailabilityType.class));
-        criteria.addFilterResourceCategory(getFilter(request, CATEGORY.propertyName(), ResourceCategory.class));
+        criteria.addFilterResourceCategories(getArrayFilter(request, CATEGORY.propertyName(), ResourceCategory.class));
         criteria.addFilterIds(getArrayFilter(request, "resourceIds", Integer.class));
         criteria.addFilterImplicitGroupIds(getFilter(request, "groupId", Integer.class));
         criteria.addFilterName(getFilter(request, NAME.propertyName(), String.class));
@@ -137,6 +169,8 @@ public class ResourceCompositeDataSource extends RPCDataSource<ResourceComposite
         criteria.addFilterTagNamespace(getFilter(request, "tagNamespace", String.class));
         criteria.addFilterTagSemantic(getFilter(request, "tagSemantic", String.class));
         criteria.addFilterTagName(getFilter(request, "tagName", String.class));
+        criteria.addFilterVersion(getFilter(request, "version", String.class));
+        criteria.setSearchExpression(getFilter(request, "search", String.class));
 
         return criteria;
     }
@@ -155,20 +189,33 @@ public class ResourceCompositeDataSource extends RPCDataSource<ResourceComposite
         record.setAttribute("resource", res);
         record.setAttribute("id", res.getId());
         record.setAttribute(NAME.propertyName(), res.getName());
+        record.setAttribute(KEY.propertyName(), res.getResourceKey());
         record.setAttribute(DESCRIPTION.propertyName(), res.getDescription());
+        record.setAttribute(LOCATION.propertyName(), res.getLocation());
         record.setAttribute(TYPE.propertyName(), res.getResourceType().getId());
         record.setAttribute(PLUGIN.propertyName(), res.getResourceType().getPlugin());
+        record.setAttribute(VERSION.propertyName(), res.getVersion());
         record.setAttribute(CATEGORY.propertyName(), res.getResourceType().getCategory().name());
-        record.setAttribute("icon", res.getResourceType().getCategory().getDisplayName() + "_"
-            + (res.getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP ? "up" : "down") + "_16.png");
+        record.setAttribute("icon", ImageManager.getResourceIcon(res.getResourceType().getCategory(), res
+            .getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP));
         record.setAttribute(AVAILABILITY.propertyName(), ImageManager.getAvailabilityIconFromAvailType(res
             .getCurrentAvailability().getAvailabilityType()));
+        record.setAttribute(CTIME.propertyName(), res.getCtime());
+        record.setAttribute(ITIME.propertyName(), res.getItime());
+        record.setAttribute(MTIME.propertyName(), res.getMtime());
+        record.setAttribute(MODIFIER.propertyName(), res.getModifiedBy());
 
-        record.setAttribute("resourcePersmission", from.getResourcePermission());
+        record.setAttribute("resourcePermission", from.getResourcePermission());
+
+        // for ancestry handling       
+        record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY, res.getAncestry());
+        record.setAttribute(AncestryUtil.RESOURCE_TYPE_ID, res.getResourceType().getId());
+
         return record;
     }
 
     public ResourceGWTServiceAsync getResourceService() {
         return resourceService;
     }
+
 }

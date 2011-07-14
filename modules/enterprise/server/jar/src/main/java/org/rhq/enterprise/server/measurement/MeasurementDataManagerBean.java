@@ -67,6 +67,7 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
+import org.rhq.core.domain.measurement.ui.MetricDisplaySummary;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
@@ -88,7 +89,6 @@ import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.jaxb.adapter.MeasurementDataNumericHighLowCompositeAdapter;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
-import org.rhq.enterprise.server.measurement.uibean.MetricDisplaySummary;
 import org.rhq.enterprise.server.measurement.util.MeasurementDataManagerUtility;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
@@ -409,6 +409,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
                     mds.setBeginTimeFrame(begin);
                     mds.setEndTimeFrame(end);
                     mds.setDefinitionId(defId);
+                    mds.setMetricName(defMap.get(defId).getName());
                     mds.setLabel(defMap.get(defId).getDisplayName());
                     mds.setParentId(parentId);
                     mds.setChildTypeId(resourceTypeId);
@@ -539,6 +540,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
             for (MeasurementDefinition def : defs) {
                 MetricDisplaySummary sum = new MetricDisplaySummary();
                 sum.setDefinitionId(def.getId());
+                sum.setMetricName(def.getName());
                 sum.setLabel(def.getDisplayName());
                 sum.setBeginTimeFrame(beginTime);
                 sum.setEndTimeFrame(endTime);
@@ -786,7 +788,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
 
         AgentClient ac = agentClientManager.getAgentClient(agent);
         Set<MeasurementData> values = ac.getMeasurementAgentService().getRealTimeMeasurementValue(resourceId,
-            createRequests(definitions));    
+            createRequests(definitions));
 
         return values;
     }
@@ -835,13 +837,8 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
 
         Map<String, Object> filterFields = generator.getFilterFields(criteria);
         if (!this.authorizationManager.isInventoryManager(subject)) {
-            if (filterFields.get(MeasurementDataTraitCriteria.FILTER_FIELD_GROUP_ID) != null) {
-                generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.GROUP, subject
-                    .getId());
-            } else {
-                generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.RESOURCE,
-                    subject.getId());
-            }
+            generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.RESOURCE,
+                "schedule.resource", subject.getId());
         }
 
         CriteriaQueryRunner<MeasurementDataTrait> queryRunner = new CriteriaQueryRunner(criteria, generator,

@@ -21,12 +21,17 @@ package org.rhq.plugins.apache;
 import java.io.File;
 import java.net.InetAddress;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -40,9 +45,11 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.pluginapi.upgrade.ResourceUpgradeContext;
 import org.rhq.core.pluginapi.upgrade.ResourceUpgradeFacet;
-import org.rhq.plugins.apache.parser.ApacheDirective;
 import org.rhq.plugins.apache.parser.ApacheDirectiveTree;
 import org.rhq.plugins.apache.util.HttpdAddressUtility;
+import org.rhq.plugins.apache.util.RuntimeApacheConfiguration;
+import org.rhq.plugins.apache.util.VHostSpec;
+import org.rhq.plugins.apache.util.VirtualHostLegacyResourceKeyUtil;
 import org.rhq.plugins.apache.util.HttpdAddressUtility.Address;
 import org.rhq.plugins.www.snmp.SNMPException;
 import org.rhq.plugins.www.snmp.SNMPSession;
@@ -64,6 +71,8 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
 
     private static final String RT_LOG_FILE_NAME_SUFFIX = "_rt.log";
 
+    private static final String LEGACY_SNMP_SERVICE_INDEX_CONFIG_PROP = "snmpWwwServiceIndex";
+    
     private static final Log log = LogFactory.getLog(ApacheVirtualHostServiceDiscoveryComponent.class);
     
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<ApacheServerComponent> context)
@@ -73,8 +82,11 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
 
         ApacheServerComponent serverComponent = context.getParentResourceComponent();
         ApacheDirectiveTree tree = serverComponent.loadParser();
+        
+        tree = RuntimeApacheConfiguration.extract(tree, serverComponent.getCurrentProcessInfo(), serverComponent.getCurrentBinaryInfo(), serverComponent.getModuleNames(), false);
+        
         //first define the root server as one virtual host
-        discoverMainServer(context, discoveredResources);
+        discoverMainServer(context, tree, discoveredResources);
 
         ResourceType resourceType = context.getResourceType();
 
@@ -130,7 +142,7 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
                 pluginConfiguration.put(rtLogProp);
 
                 //redefine the resourcename using the virtual host sample address
-                resourceName = address.toString(false);
+                resourceName = address.toString(false, true);
             }
             
             discoveredResources.add(new DiscoveredResourceDetails(resourceType, resourceKey, resourceName, null, null,
@@ -142,54 +154,132 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
 
     public ResourceUpgradeReport upgrade(ResourceUpgradeContext<ApacheServerComponent> inventoriedResource) {
         String resourceKey = inventoriedResource.getResourceKey();
-        
-        if (ApacheVirtualHostServiceComponent.MAIN_SERVER_RESOURCE_KEY.equals(resourceKey) ||
-            resourceKey.contains("|")) {
+
+        if (ApacheVirtualHostServiceComponent.MAIN_SERVER_RESOURCE_KEY.equals(resourceKey) || resourceKey.contains("|")) {
             //a new style resource key. we're done.
             return null;
         }
-        
+
         String newResourceKey = null;
-        
+
         ApacheServerComponent serverComponent = inventoriedResource.getParentResourceComponent();
-        
+
         ApacheDirectiveTree tree = serverComponent.loadParser();
-        
+        tree = RuntimeApacheConfiguration.extract(tree, serverComponent.getCurrentProcessInfo(),
+            serverComponent.getCurrentBinaryInfo(), serverComponent.getModuleNames(), false);
+
         List<VHostSpec> vhosts = VHostSpec.detect(tree);
+        VirtualHostLegacyResourceKeyUtil legacyResourceKeyUtil = new VirtualHostLegacyResourceKeyUtil(serverComponent, tree);
+        
 
-        SnmpWwwServiceIndexes snmpIndexes = getSnmpDiscoveries(serverComponent, inventoriedResource.getParentResourceContext().getResourceKey());
+        //first, let's see if the inventoried resource has the snmpWwwServiceIndex property set
+        //if it does, use that to determine what vhost this corresponds to.
+        String snmpServiceIndexString = inventoriedResource.getPluginConfiguration().getSimpleValue(
+            LEGACY_SNMP_SERVICE_INDEX_CONFIG_PROP, null);
+        if (snmpServiceIndexString != null) {
+            Integer snmpServiceIndex = null;
+            try {
+                snmpServiceIndex = Integer.parseInt(snmpServiceIndexString);
+            } catch (NumberFormatException e) {
+                log.warn("Invalid format of the " + LEGACY_SNMP_SERVICE_INDEX_CONFIG_PROP
+                    + " property value. It should be an integer but is '" + snmpServiceIndexString
+                    + "'. The upgrade will continue using the resource key matching.", e);
+            }
 
-        for (VHostSpec vhost : vhosts) {
-            String legacyResourceKey = createLegacyResourceKey(serverComponent, vhost.serverName, vhost.hosts, snmpIndexes);
-            if (resourceKey.equals(legacyResourceKey)) {
-                newResourceKey = createResourceKey(vhost.serverName, vhost.hosts);
-                break;
+            if (snmpServiceIndex != null) {
+                if (snmpServiceIndex > 0) {
+                    //yay, we can use the snmpService index to determine which vhost we're dealing with
+                    if (snmpServiceIndex == 1) {
+                        //k, looks the vhost was representing the main server. Let's do a cross-check.
+                        Set<String> legacyResourceKeys = legacyResourceKeyUtil.getLegacyMainServerResourceKeys();
+                        if (legacyResourceKeys.contains(resourceKey)) {
+                            newResourceKey = ApacheVirtualHostServiceComponent.MAIN_SERVER_RESOURCE_KEY;
+                        } else {
+                            log.debug("The cross-check of the SNMP WWW Service Index value and resource key failed for virtual host with old resource key: "
+                                + resourceKey + ". The upgrade will continue using resource key matching.");
+                        }
+                    } else {
+                        if (vhosts.size() + 1 < snmpServiceIndex) {
+                            log.debug("The "
+                                + LEGACY_SNMP_SERVICE_INDEX_CONFIG_PROP
+                                + " property contains incorrect value ("
+                                + snmpServiceIndex
+                                + "), which is larger than the total number of active virtual hosts in the configuration files ("
+                                + (vhosts.size() + 1) + ". The upgrade will continue using the resource key matching.");
+                        } else {
+                            //k, this seems to be a correct value
+                            //the SNMP indices are in the reverse order of the definitions in the config files
+                            //+1, where the main server is always on index 1.
+                            VHostSpec vhost = vhosts.get(vhosts.size() - snmpServiceIndex + 1);
+                            
+                            //right, let's do a cross-check before we actually create the resource key so
+                            //that we catch user-generated errors.
+                            Set<String> legacyResourceKeys = legacyResourceKeyUtil.getLegacyVirtualHostResourceKeys(vhost);
+                            if (legacyResourceKeys.contains(resourceKey)) {
+                                newResourceKey = createResourceKey(vhost.serverName, vhost.hosts);
+                            } else {
+                                log.debug("The cross-check of the SNMP WWW Service Index value and resource key failed for virtual host with old resource key: "
+                                    + resourceKey + ". The upgrade will continue using resource key matching.");
+                            }
+                        }
+                    }
+                } else {
+                    log.warn("The " + LEGACY_SNMP_SERVICE_INDEX_CONFIG_PROP
+                        + " property should be a positive integer greater than zero but is " + snmpServiceIndex
+                        + " instead. The upgrade will continue using the resource key matching.");
+                }
             }
         }
-        
-        if (newResourceKey == null) {
-            //the last thing to check is whether the inventoried vhost isn't in fact the main server
-            String serverUrl = serverComponent.getServerUrl();
-            HttpdAddressUtility.Address serverAddress = HttpdAddressUtility.Address.parse(serverUrl);        
-            HttpdAddressUtility.Address vhostAddress = HttpdAddressUtility.Address.parse(resourceKey);
-            
-            if (ApacheVirtualHostServiceComponent.matchRate(Collections.singletonList(serverAddress), vhostAddress) > 0) {
-                newResourceKey = ApacheVirtualHostServiceComponent.MAIN_SERVER_RESOURCE_KEY;
-            }
-        }
-        
+
         if (newResourceKey != null) {
             ResourceUpgradeReport report = new ResourceUpgradeReport();
             report.setNewResourceKey(newResourceKey);
-            
+
             return report;
-        } else {
-            return null;
         }
+        
+        Map<String, Set<VHostSpec>> possibleMatchesPerRK = new HashMap<String, Set<VHostSpec>>();
+        for (VHostSpec vhost : vhosts) {            
+            Set<String> legacyResourceKeys = legacyResourceKeyUtil.getLegacyVirtualHostResourceKeys(vhost);
+
+            for(String legacyRK : legacyResourceKeys) {
+                addPossibleRKMatch(legacyRK, vhost, possibleMatchesPerRK);
+            }
+        }
+
+        for(String legacyRK : legacyResourceKeyUtil.getLegacyMainServerResourceKeys()) {
+            addPossibleRKMatch(legacyRK, null, possibleMatchesPerRK);
+        }
+
+        Set<VHostSpec> matchingVhosts = possibleMatchesPerRK.get(resourceKey);
+        if (matchingVhosts == null || matchingVhosts.isEmpty()) {
+            throw new IllegalArgumentException("Failed to identify the vhost resource with the old-style resource key '" + resourceKey + 
+                "' with any of the vhosts in the apache configuration files. This means that the vhost resource is stale and you can safely uninventory it.");
+        } else if (matchingVhosts.size() > 1) {
+            String message = "Failed to uniquely identify the vhost from the old-style resource key. The old resource key is '"
+                + resourceKey
+                + "' which could be matched with any of the following possible new-style resource keys: "
+                + matchingVhosts + ". The plugin does not have enough information to successfully upgrade this resource."
+                + " Please take note of any alert definitions or operation schedules that you have defined for this resource and manually uninventory it.";
+            
+            throw new IllegalArgumentException(message);
+        } else {
+            VHostSpec vhost = matchingVhosts.iterator().next();
+            if (vhost == null) {
+                newResourceKey = ApacheVirtualHostServiceComponent.MAIN_SERVER_RESOURCE_KEY;
+            } else {
+                newResourceKey = createResourceKey(vhost.serverName, vhost.hosts);
+            }
+        }
+
+        ResourceUpgradeReport report = new ResourceUpgradeReport();
+        report.setNewResourceKey(newResourceKey);
+
+        return report;
     }
-    
+   
     private void discoverMainServer(ResourceDiscoveryContext<ApacheServerComponent> context,
-        Set<DiscoveredResourceDetails> discoveredResources) throws Exception {
+        ApacheDirectiveTree runtimeConfig, Set<DiscoveredResourceDetails> discoveredResources) throws Exception {
 
         ResourceType resourceType = context.getResourceType();
         Configuration mainServerPluginConfig = context.getDefaultPluginConfiguration();
@@ -200,25 +290,28 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
         String mainServerUrl = context.getParentResourceContext().getPluginConfiguration().getSimple(
             ApacheServerComponent.PLUGIN_CONFIG_PROP_URL).getStringValue();
         
-        if (mainServerUrl != null && !"null".equals(mainServerUrl)) {
-            PropertySimple mainServerUrlProp = new PropertySimple(ApacheVirtualHostServiceComponent.URL_CONFIG_PROP,
-                mainServerUrl);
-
-            mainServerPluginConfig.put(mainServerUrlProp);
-
-            URI mainServerUri = new URI(mainServerUrl);
-            String host = mainServerUri.getHost();
-            int port = mainServerUri.getPort();
-            if (port == -1) {
-                port = 80;
-            }
-
-            File rtLogFile = new File(logsDir, host + port + RT_LOG_FILE_NAME_SUFFIX);
-
-            PropertySimple rtLogProp = new PropertySimple(
-                ApacheVirtualHostServiceComponent.RESPONSE_TIME_LOG_FILE_CONFIG_PROP, rtLogFile.toString());
-            mainServerPluginConfig.put(rtLogProp);
+        if (mainServerUrl == null || mainServerUrl.trim().isEmpty()) {
+            HttpdAddressUtility.Address addr = context.getParentResourceComponent().getAddressUtility().getMainServerSampleAddress(runtimeConfig, null, 0);
+            mainServerUrl = addr.toString();
         }
+        
+        PropertySimple mainServerUrlProp = new PropertySimple(ApacheVirtualHostServiceComponent.URL_CONFIG_PROP,
+            mainServerUrl);
+
+        mainServerPluginConfig.put(mainServerUrlProp);
+
+        URI mainServerUri = new URI(mainServerUrl);
+        String host = mainServerUri.getHost();
+        int port = mainServerUri.getPort();
+        if (port == -1) {
+            port = 80;
+        }
+
+        File rtLogFile = new File(logsDir, host + port + RT_LOG_FILE_NAME_SUFFIX);
+
+        PropertySimple rtLogProp = new PropertySimple(
+            ApacheVirtualHostServiceComponent.RESPONSE_TIME_LOG_FILE_CONFIG_PROP, rtLogFile.toString());
+        mainServerPluginConfig.put(rtLogProp);
 
         String key = ApacheVirtualHostServiceComponent.MAIN_SERVER_RESOURCE_KEY;
         
@@ -243,114 +336,13 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
         return keyBuilder.toString();
     }
     
-    private static String createLegacyResourceKey(ApacheServerComponent serverComponent, String serverName, List<String> hosts, SnmpWwwServiceIndexes snmpIndexes) {       
-        if (snmpIndexes != null) {
-            String newStyleResourceKey = createResourceKey(serverName, hosts);
-            String legacyResourceKey = null;
-
-            int snmpWwwServiceIndex = ApacheVirtualHostServiceComponent.getMatchingWwwServiceIndex(serverComponent, newStyleResourceKey, snmpIndexes.names, snmpIndexes.ports);
-            
-            if (snmpWwwServiceIndex > 0) {
-                String host = snmpIndexes.names.get(snmpWwwServiceIndex - 1).toString();
-                String fullPort = snmpIndexes.ports.get(snmpWwwServiceIndex - 1).toString();
-
-                // The port value will be in the form "1.3.6.1.2.1.6.XXXXX",
-                // where "1.3.6.1.2.1.6" represents the TCP protocol ID,
-                // and XXXXX is the actual port number
-                String port = fullPort.substring(fullPort.lastIndexOf(".") + 1);
-                legacyResourceKey = host + ":" + port;
-            }
-            
-            if (legacyResourceKey != null) {
-                return legacyResourceKey;
-            }
+    private static void addPossibleRKMatch(String resourceKey, VHostSpec vhost, Map<String, Set<VHostSpec>> possibleMatches) {
+        Set<VHostSpec> matches = possibleMatches.get(resourceKey);
+        if (matches == null) {
+            matches = new HashSet<VHostSpec>();
+            possibleMatches.put(resourceKey, matches);
         }
         
-        //try to derive the same resource key as the SNMP would have... this is to prevent the duplication of
-        //vhost resources after the SNMP was configured - how I wish resource upgrade made it to 3.0 to prevent this
-        //kind of guessing being necessary.
-        String host = hosts.get(0);
-        HttpdAddressUtility.Address hostAddr = HttpdAddressUtility.Address.parse(host);
-        if (serverName != null) {
-            HttpdAddressUtility.Address serverAddr = HttpdAddressUtility.Address.parse(serverName);
-            hostAddr.host = serverAddr.host;
-        }
-        
-        //the SNMP module seems to resolve the IPs to hostnames.
-        try {
-            InetAddress hostName = InetAddress.getByName(hostAddr.host);
-            hostAddr.host = hostName.getHostName();
-        } catch (UnknownHostException e) {
-            log.debug("Host " + hostAddr.host + " is not resolvable.", e);
-        } 
-        
-        return hostAddr.host + ":" + hostAddr.port;
-    }
-    
-    /**
-     * @param discoveryContext
-     * @return
-     */
-    private static SnmpWwwServiceIndexes getSnmpDiscoveries(ApacheServerComponent serverComponent, String serverResourceKey) {
-        try {
-            SNMPSession snmpSession = serverComponent.getSNMPSession();
-            List<SNMPValue> nameValues;
-            List<SNMPValue> portValues;
-            
-            try {
-                nameValues = snmpSession.getColumn(SNMPConstants.COLUMN_VHOST_NAME);
-            } catch (SNMPException e) {
-                throw new Exception(
-                    "Error getting SNMP column: " + SNMPConstants.COLUMN_VHOST_NAME + ": " + e.getMessage(), e);
-            }
-    
-            try {
-                portValues = snmpSession.getColumn(SNMPConstants.COLUMN_VHOST_PORT);
-            } catch (SNMPException e) {
-                throw new Exception(
-                    "Error getting SNMP column: " + SNMPConstants.COLUMN_VHOST_PORT + ": " + e.getMessage(), e);
-            }
-            
-            SnmpWwwServiceIndexes ret = new SnmpWwwServiceIndexes();
-            ret.names = nameValues;
-            ret.ports = portValues;
-            
-            return ret;
-        } catch (Exception e) {
-            log.debug("Error while trying to contact SNMP of the apache server " + serverResourceKey, e);
-            return null;
-        }
-    }
-    
-    private static class SnmpWwwServiceIndexes {
-        public List<SNMPValue> names;
-        public List<SNMPValue> ports;
-    }
-    
-    private static class VHostSpec {
-        public String serverName;
-        public List<String> hosts;
-        
-        public static List<VHostSpec> detect(ApacheDirectiveTree config) {
-            List<ApacheDirective> virtualHosts = config.search("/<VirtualHost");
-            
-            List<VHostSpec> ret = new ArrayList<VHostSpec>(virtualHosts.size());
-            
-            for(ApacheDirective dir : virtualHosts) {
-                ret.add(new VHostSpec(dir));
-            }
-            
-            return ret;
-        }
-        
-        public VHostSpec(ApacheDirective vhostDirective) {
-            hosts = vhostDirective.getValues();
-
-            List<ApacheDirective> serverNames = vhostDirective.getChildByName("ServerName");
-            serverName = null;
-            if (serverNames.size() > 0) {
-                serverName = serverNames.get(0).getValuesAsString();
-            }
-        }
+        matches.add(vhost);
     }
 }

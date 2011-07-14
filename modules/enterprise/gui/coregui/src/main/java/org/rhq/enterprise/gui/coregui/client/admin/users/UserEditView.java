@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -19,15 +19,11 @@
 package org.rhq.enterprise.gui.coregui.client.admin.users;
 
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
-import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.Record;
-import com.smartgwt.client.types.Alignment;
-import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.PasswordItem;
 import com.smartgwt.client.widgets.form.fields.RadioGroupItem;
@@ -40,15 +36,14 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.auth.Principal;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
+import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.form.AbstractRecordEditor;
 import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.components.selector.AssignedItemsChangedEvent;
 import org.rhq.enterprise.gui.coregui.client.components.selector.AssignedItemsChangedHandler;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
  * A form for viewing and/or editing an RHQ user (i.e. a {@link Subject}, and optionally an associated
@@ -61,10 +56,9 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
     private static final String HEADER_ICON = "global/User_24.png";
     private static final int SUBJECT_ID_RHQADMIN = 2;
 
-    private CanvasItem rolesItem;
     private SubjectRoleSelector roleSelector;
 
-    private boolean hasManageSecurityPermission;
+    private boolean loggedInUserHasManageSecurityPermission;
 
     public UserEditView(String locatorId, int subjectId) {
         super(locatorId, new UsersDataSource(), subjectId, MSG.common_label_user(), HEADER_ICON);
@@ -74,21 +68,16 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
     public void renderView(ViewPath viewPath) {
         super.renderView(viewPath);
 
-        GWTServiceLookup.getAuthorizationService().getExplicitGlobalPermissions(new AsyncCallback<Set<Permission>>() {
+        new PermissionsLoader().loadExplicitGlobalPermissions(new PermissionsLoadedListener() {
             @Override
-            public void onSuccess(Set<Permission> result) {
-                UserEditView.this.hasManageSecurityPermission = result.contains(Permission.MANAGE_SECURITY);
-                Subject sessionSubject = UserSessionManager.getSessionSubject();
-                boolean isEditingSelf = (sessionSubject.getId() == getRecordId());
-                boolean isReadOnly = (!UserEditView.this.hasManageSecurityPermission && !isEditingSelf);
-                init(isReadOnly);
-            }
-
-            @Override
-            public void onFailure(Throwable caught) {
-                CoreGUI.getMessageCenter().notify(
-                    new Message(MSG.util_userPerm_loadFailGlobal(), caught, Message.Severity.Error, EnumSet
-                        .of(Message.Option.BackgroundJobResult)));
+            public void onPermissionsLoaded(Set<Permission> permissions) {
+                if (permissions != null) {
+                    UserEditView.this.loggedInUserHasManageSecurityPermission = permissions.contains(Permission.MANAGE_SECURITY);
+                    Subject sessionSubject = UserSessionManager.getSessionSubject();
+                    boolean isEditingSelf = (sessionSubject.getId() == getRecordId());
+                    boolean isReadOnly = (!UserEditView.this.loggedInUserHasManageSecurityPermission && !isEditingSelf);
+                    init(isReadOnly);
+                }
             }
         });
     }
@@ -106,31 +95,23 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
     protected void editRecord(Record record) {
         super.editRecord(record);
 
-        // Don't allow the rhqadmin account to be disabled.
-        if (getRecordId() == SUBJECT_ID_RHQADMIN) {
-            FormItem activeField = getForm().getField(UsersDataSource.Field.FACTIVE);
-            activeField.disable();
-        }
+        Subject sessionSubject = UserSessionManager.getSessionSubject();
+        boolean userBeingEditedIsLoggedInUser = (getRecordId() == sessionSubject.getId());
 
         // A user can always view their own assigned roles, but only users with MANAGE_SECURITY can view or update
         // other users' assigned roles.
-        Subject whoami = UserSessionManager.getSessionSubject();
-        String username = record.getAttribute(UsersDataSource.Field.NAME);
-        if (this.hasManageSecurityPermission || whoami.getName().equals(username)) {
+        if (this.loggedInUserHasManageSecurityPermission || userBeingEditedIsLoggedInUser) {
             Record[] roleRecords = record.getAttributeAsRecordArray(UsersDataSource.Field.ROLES);
             ListGridRecord[] roleListGridRecords = toListGridRecordArray(roleRecords);
+            boolean rolesAreReadOnly = areRolesReadOnly(record);
 
-            boolean isReadOnly = areRolesReadOnly(record);
-
-            roleSelector = new SubjectRoleSelector(this.extendLocatorId("Roles"), roleListGridRecords, isReadOnly);
-            roleSelector.setWidth100();
-            roleSelector.setAlign(Alignment.LEFT);
-            roleSelector.addAssignedItemsChangedHandler(new AssignedItemsChangedHandler() {
+            this.roleSelector = new SubjectRoleSelector(this.extendLocatorId("Roles"), roleListGridRecords, rolesAreReadOnly);
+            this.roleSelector.addAssignedItemsChangedHandler(new AssignedItemsChangedHandler() {
                 public void onSelectionChanged(AssignedItemsChangedEvent event) {
-                    onItemChanged();
+                    UserEditView.this.onItemChanged();
                 }
             });
-            this.rolesItem.setCanvas(this.roleSelector);
+            getContentPane().addMember(this.roleSelector);
         }
     }
 
@@ -143,7 +124,7 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
     //
     private boolean areRolesReadOnly(Record record) {
         boolean isLdap = Boolean.valueOf(record.getAttribute(UsersDataSource.Field.LDAP));
-        return (!hasManageSecurityPermission || (getRecordId() == SUBJECT_ID_RHQADMIN) || isLdap);
+        return (!this.loggedInUserHasManageSecurityPermission || (getRecordId() == SUBJECT_ID_RHQADMIN) || isLdap);
     }
 
     @Override
@@ -151,26 +132,28 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
         List<FormItem> items = new ArrayList<FormItem>();
 
         // Username field should be editable when creating a new user, but should be read-only for existing users.
-        if (form.isNewRecord()) {
-            TextItem nameItem = new TextItem(UsersDataSource.Field.NAME);
-            items.add(nameItem);
+        FormItem nameItem;
+        if (isNewRecord()) {
+            nameItem = new TextItem(UsersDataSource.Field.NAME);
         } else {
-            StaticTextItem nameItem = new StaticTextItem(UsersDataSource.Field.NAME);
-            items.add(nameItem);
+            nameItem = new StaticTextItem(UsersDataSource.Field.NAME);
+            ((StaticTextItem)nameItem).setOutputAsHTML(true);
         }
+        items.add(nameItem);
 
-        RadioGroupItem isLdapItem = new RadioGroupItem(UsersDataSource.Field.LDAP);
-        isLdapItem.setVertical(false);
+        StaticTextItem isLdapItem = new StaticTextItem(UsersDataSource.Field.LDAP);
         items.add(isLdapItem);
 
-        boolean isLdap = Boolean.valueOf(isLdapItem.getValueAsString());
+        boolean isLdap = Boolean.valueOf(form.getValueAsString(UsersDataSource.Field.LDAP));
 
         // Only display the password fields for non-LDAP users (i.e. users that have an associated RHQ Principal).
-        if (!isLdap) {
+        if (!this.isReadOnly() && !isLdap) {
             PasswordItem passwordItem = new PasswordItem(UsersDataSource.Field.PASSWORD);
+            passwordItem.setShowTitle(true);
             items.add(passwordItem);
 
             final PasswordItem verifyPasswordItem = new PasswordItem(UsersDataSource.Field.PASSWORD_VERIFY);
+            verifyPasswordItem.setShowTitle(true);
             final boolean[] initialPasswordChange = { true };
             passwordItem.addChangedHandler(new ChangedHandler() {
                 public void onChanged(ChangedEvent event) {
@@ -180,40 +163,48 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
                     }
                 }
             });
-
             items.add(verifyPasswordItem);
         }
 
         TextItem firstNameItem = new TextItem(UsersDataSource.Field.FIRST_NAME);
+        firstNameItem.setShowTitle(true);
+        firstNameItem.setAttribute(EnhancedDynamicForm.OUTPUT_AS_HTML_ATTRIBUTE, true);
         items.add(firstNameItem);
 
         TextItem lastNameItem = new TextItem(UsersDataSource.Field.LAST_NAME);
+        lastNameItem.setShowTitle(true);
+        lastNameItem.setAttribute(EnhancedDynamicForm.OUTPUT_AS_HTML_ATTRIBUTE, true);
         items.add(lastNameItem);
 
         TextItem emailAddressItem = new TextItem(UsersDataSource.Field.EMAIL_ADDRESS);
+        emailAddressItem.setShowTitle(true);
+        emailAddressItem.setAttribute(EnhancedDynamicForm.OUTPUT_AS_HTML_ATTRIBUTE, true);
         items.add(emailAddressItem);
 
         TextItem phoneNumberItem = new TextItem(UsersDataSource.Field.PHONE_NUMBER);
+        phoneNumberItem.setAttribute(EnhancedDynamicForm.OUTPUT_AS_HTML_ATTRIBUTE, true);
         items.add(phoneNumberItem);
 
         TextItem departmentItem = new TextItem(UsersDataSource.Field.DEPARTMENT);
+        departmentItem.setAttribute(EnhancedDynamicForm.OUTPUT_AS_HTML_ATTRIBUTE, true);
         items.add(departmentItem);
 
-        RadioGroupItem activeItem = new RadioGroupItem(UsersDataSource.Field.FACTIVE);
-        activeItem.setVertical(false);
+        boolean userBeingEditedIsRhqadmin = (getRecordId() == SUBJECT_ID_RHQADMIN);
+        FormItem activeItem;
+        if (!this.loggedInUserHasManageSecurityPermission || userBeingEditedIsRhqadmin) {
+            activeItem = new StaticTextItem(UsersDataSource.Field.FACTIVE);
+        } else {
+            RadioGroupItem activeRadioGroupItem = new RadioGroupItem(UsersDataSource.Field.FACTIVE);
+            activeRadioGroupItem.setVertical(false);
+            activeItem = activeRadioGroupItem;
+        }
         items.add(activeItem);
-
-        this.rolesItem = new CanvasItem(UsersDataSource.Field.ROLES);
-        this.rolesItem.setShowTitle(false);
-        this.rolesItem.setColSpan(form.getNumCols());
-        this.rolesItem.setCanvas(new Canvas());
-        items.add(this.rolesItem);
 
         return items;
     }
 
     @Override
-    protected void save() {
+    protected void save(DSRequest requestProperties) {
         // Grab the currently assigned roles from the selector and stick them into the corresponding canvas
         // item on the form, so when the form is saved, they'll get submitted along with the rest of the simple fields
         // to the datasource's add or update methods.
@@ -223,7 +214,7 @@ public class UserEditView extends AbstractRecordEditor<UsersDataSource> {
         }
 
         // Submit the form values to the datasource.
-        super.save();
+        super.save(requestProperties);
     }
 
     @Override

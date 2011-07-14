@@ -22,9 +22,9 @@
  */
 package org.rhq.bundle.ant.type;
 
-import org.apache.tools.ant.BuildException;
-
 import java.io.File;
+
+import org.apache.tools.ant.BuildException;
 
 /**
  * A file to be copied during the bundle deployment. If the replace attribute is set to true, any template variables
@@ -43,19 +43,24 @@ public class FileType extends AbstractFileType {
 
     // Pass in a String, rather than a File, since we don't want Ant to resolve the path relative to basedir if it's relative.
     public void setDestinationDir(String destinationDir) {
-        if (getDestinationFile() != null) {
-            throw new BuildException("Both 'destinationDir' and 'destinationFile' attributes are defined - only one or the other may be specified.");
+        if (this.destinationFile != null) {
+            throw new BuildException(
+                "Both 'destinationDir' and 'destinationFile' attributes are defined - only one or the other may be specified.");
         }
         this.destinationDir = new File(destinationDir);
     }
 
     public File getDestinationFile() {
+        if (this.destinationDir == null && this.destinationFile == null) {
+            return new File(getName()); // the default destination is the same relative path as that of its local name
+        }
         return this.destinationFile;
     }
 
     public void setDestinationFile(String destinationFile) {
-        if (getDestinationDir() != null) {
-            throw new BuildException("Both 'destinationDir' and 'destinationFile' attributes are defined - only one or the other may be specified.");
+        if (this.destinationDir != null) {
+            throw new BuildException(
+                "Both 'destinationDir' and 'destinationFile' attributes are defined - only one or the other may be specified.");
         }
         this.destinationFile = new File(destinationFile);
     }

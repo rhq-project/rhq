@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,8 +20,10 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.allen_sauer.gwt.log.client.Log;
@@ -58,7 +60,7 @@ import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
  */
 public class ResourceTreeDatasource extends DataSource {
 
-    Messages MSG = CoreGUI.getMessages();
+    private static final Messages MSG = CoreGUI.getMessages();
 
     private List<Resource> initialData;
     private List<Resource> lockedData;
@@ -124,25 +126,24 @@ public class ResourceTreeDatasource extends DataSource {
         final String parentResourceId = request.getCriteria().getAttribute("parentId");
         //com.allen_sauer.gwt.log.client.Log.info("All attributes: " + Arrays.toString(request.getCriteria().getAttributes()));
 
-        ResourceCriteria criteria = new ResourceCriteria();
-
         if (parentResourceId == null) {
             // If this gets called more than once it's a problem. Don't load initial data more than once.
             // Subsequent fetches should be due to parent node tree expansion
             if (null != this.initialData) {
                 Log.debug("ResourceTreeDatasource: Loading initial data...");
-
-                processIncomingData(this.initialData, response, requestId);
-                response.setStatus(DSResponse.STATUS_SUCCESS);
+                List<Resource> temp = this.initialData;
                 this.initialData = null;
+
+                processIncomingData(temp, response, requestId);
             } else {
-                processResponse(requestId, response);
                 response.setStatus(DSResponse.STATUS_FAILURE);
+                processResponse(requestId, response);
             }
 
         } else {
             Log.debug("ResourceTreeDatasource: Loading Resource [" + parentResourceId + "]...");
 
+            ResourceCriteria criteria = new ResourceCriteria();
             criteria.addFilterParentResourceId(Integer.parseInt(parentResourceId));
 
             resourceService.findResourcesByCriteria(criteria, new AsyncCallback<PageList<Resource>>() {
@@ -166,11 +167,11 @@ public class ResourceTreeDatasource extends DataSource {
             EnumSet.of(ResourceTypeRepository.MetadataType.operations, ResourceTypeRepository.MetadataType.children,
                 ResourceTypeRepository.MetadataType.subCategory),
             new ResourceTypeRepository.ResourceTypeLoadedCallback() {
+
                 public void onResourceTypeLoaded(List<Resource> result) {
                     TreeNode[] treeNodes = buildNodes(result, lockedData);
                     response.setData(treeNodes);
                     processResponse(requestId, response);
-                    response.setStatus(DSResponse.STATUS_SUCCESS);
                 }
             });
     }
@@ -207,6 +208,9 @@ public class ResourceTreeDatasource extends DataSource {
         // ensure a clean set.
         Set<String> allNodeIds = new HashSet<String>(resourceNodes.size() * 2);
 
+        Map<String, Map<String, AutoGroupTreeNode>> parentNodeIdToAutoGroupsByName = new HashMap<String, Map<String, AutoGroupTreeNode>>();
+        Set<AutoGroupTreeNode> ambiguouslyNamedAutoGroupNodes = new HashSet<AutoGroupTreeNode>();
+
         for (ResourceTreeNode resourceNode : resourceNodes) {
             if (allNodeIds.contains(resourceNode.getID())) {
                 Log.debug("Duplicate ResourceTreeNode - Skipping: " + resourceNode);
@@ -226,24 +230,41 @@ public class ResourceTreeDatasource extends DataSource {
                 // If the parent node is an autogroup node, make sure the autogroup node is in the
                 // tree prior to the resource node.
 
-                if (!allNodeIds.contains(resourceNode.getParentID())) {
+                String autoGroupNodeID = resourceNode.getParentID();
+                if (!allNodeIds.contains(autoGroupNodeID)) {
                     AutoGroupTreeNode autogroupNode = new AutoGroupTreeNode(resource);
+                    String parentID = autogroupNode.getParentID();
+                    Map<String, AutoGroupTreeNode> autoGroupNodesByName = parentNodeIdToAutoGroupsByName.get(parentID);
+                    if (autoGroupNodesByName == null) {
+                        autoGroupNodesByName = new HashMap<String, AutoGroupTreeNode>();
+                        parentNodeIdToAutoGroupsByName.put(parentID, autoGroupNodesByName);
+                    } else {
+                        AutoGroupTreeNode ambiguouslyNamedAutogroupNode = autoGroupNodesByName.get(autogroupNode
+                            .getName());
+                        if (ambiguouslyNamedAutogroupNode != null) {
+                            ambiguouslyNamedAutoGroupNodes.add(ambiguouslyNamedAutogroupNode);
+                            ambiguouslyNamedAutoGroupNodes.add(autogroupNode);
+                        }
+                    }
+                    autoGroupNodesByName.put(autogroupNode.getName(), autogroupNode);
 
                     if (autogroupNode.isParentSubcategory()) {
-
                         // If the parent node of the autogroup node is a subcategory node, make sure the subcategory
                         // node is in the tree prior to the autogroup node.  Note that it could itself be a
                         // tree of subcategories.   
                         addSubCategoryNodes(allNodes, allNodeIds, resource);
-
                     }
-                    allNodeIds.add(resourceNode.getParentID());
+                    allNodeIds.add(autoGroupNodeID);
                     allNodes.add(autogroupNode);
                 }
             }
 
             allNodeIds.add(resourceNode.getID());
             allNodes.add(resourceNode);
+        }
+
+        for (AutoGroupTreeNode autogroupNode : ambiguouslyNamedAutoGroupNodes) {
+            autogroupNode.disambiguateName();
         }
 
         return allNodes;
@@ -311,10 +332,14 @@ public class ResourceTreeDatasource extends DataSource {
             }
             this.setParentID(parentId);
 
+            // name and description are user-editable, so escape HTML to prevent XSS attacks
             String name = resource.getName();
-            setName(name);
+            String escapedName = StringUtility.escapeHtml(name);
+            setName(escapedName);
 
-            setAttribute(Attributes.DESCRIPTION, resource.getDescription());
+            String description = resource.getDescription();
+            String escapedDescription = StringUtility.escapeHtml(description);
+            setAttribute(Attributes.DESCRIPTION, escapedDescription);
 
             Set<ResourceType> childTypes = resource.getResourceType().getChildResourceTypes();
             setIsFolder((childTypes != null && !childTypes.isEmpty()));
@@ -451,6 +476,13 @@ public class ResourceTreeDatasource extends DataSource {
          */
         public static String idOf(Resource parentResource, ResourceType resourceType) {
             return (parentResource != null) ? "autogroup_" + resourceType.getId() + "_" + parentResource.getId() : null;
+        }
+
+        public void disambiguateName() {
+            String typeName = StringUtility.pluralize(this.resourceType.getName());
+            String name = typeName + " (" + this.resourceType.getPlugin() + " "
+                + MSG.common_title_plugin().toLowerCase() + ")";
+            setName(name);
         }
     }
 

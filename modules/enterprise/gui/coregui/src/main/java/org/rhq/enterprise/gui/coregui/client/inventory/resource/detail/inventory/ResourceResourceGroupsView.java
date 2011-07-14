@@ -25,7 +25,6 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
-import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 import org.rhq.core.domain.criteria.ResourceCriteria;
@@ -45,11 +44,23 @@ public class ResourceResourceGroupsView extends LocatableVLayout {
     private int resourceId;
     private Resource resource;
     private ResourceResourceGroupSelector selector;
+    private ClickHandler saveButtonHandler;
 
     public ResourceResourceGroupsView(String locatorId, int resourceId) {
         super(locatorId);
 
         this.resourceId = resourceId;
+    }
+
+    /**
+     * Allows an external component to hook into the save button. The given
+     * handler will be invoked when the save button is pressed. If <code>null</code>
+     * is given, then no external handler will be called.
+     * 
+     * @param saveButtonHandler
+     */
+    public void setSaveButtonHandler(ClickHandler saveButtonHandler) {
+        this.saveButtonHandler = saveButtonHandler;
     }
 
     @Override
@@ -62,13 +73,17 @@ public class ResourceResourceGroupsView extends LocatableVLayout {
     public void build() {
         ToolStrip toolStrip = new ToolStrip();
         toolStrip.setWidth100();
-
-        toolStrip.addMember(new LayoutSpacer());
+        toolStrip.setExtraSpace(10);
+        toolStrip.setMembersMargin(5);
+        toolStrip.setLayoutMargin(5);
 
         IButton saveButton = new LocatableIButton(this.extendLocatorId("Save"), MSG.common_button_save());
         saveButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 save();
+                if (ResourceResourceGroupsView.this.saveButtonHandler != null) {
+                    ResourceResourceGroupsView.this.saveButtonHandler.onClick(clickEvent);
+                }
             }
         });
 
@@ -104,9 +119,13 @@ public class ResourceResourceGroupsView extends LocatableVLayout {
                 }
 
                 public void onSuccess(Void result) {
-                    CoreGUI.getMessageCenter().notify(
-                        new Message(MSG.view_resourceResourceGroupList_message_updateSuccess(
-                            ResourceResourceGroupsView.this.resource.getName()), Message.Severity.Info));
+                    CoreGUI
+                        .getMessageCenter()
+                        .notify(
+                            new Message(
+                                MSG
+                                    .view_resourceResourceGroupList_message_updateSuccess(ResourceResourceGroupsView.this.resource
+                                        .getName()), Message.Severity.Info));
                     CoreGUI.refresh();
                 }
             });
@@ -114,7 +133,7 @@ public class ResourceResourceGroupsView extends LocatableVLayout {
 
     private int[] getSelectedResourceGroupIds() {
         Set<Integer> selectedIds = this.selector.getSelection();
-        int[] selection = new int[selectedIds.size()];        
+        int[] selection = new int[selectedIds.size()];
         int i = 0;
         for (Integer id : selectedIds) {
             selection[i++] = id;

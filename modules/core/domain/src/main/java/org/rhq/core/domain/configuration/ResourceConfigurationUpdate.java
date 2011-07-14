@@ -32,6 +32,7 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlTransient;
 
+import org.rhq.core.domain.configuration.group.AbstractGroupConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.GroupResourceConfigurationUpdate;
 import org.rhq.core.domain.resource.Resource;
 
@@ -94,6 +95,11 @@ import org.rhq.core.domain.resource.Resource;
         + "SELECT cu.id " //
         + "  FROM ResourceConfigurationUpdate cu " //
         + " WHERE cu.groupConfigurationUpdate.id = :groupConfigurationUpdateId"),
+    @NamedQuery(name = ResourceConfigurationUpdate.QUERY_FIND_STATUS_BY_PARENT_UPDATE_ID, query = "" //
+        + "SELECT cu.status " //
+        + "  FROM ResourceConfigurationUpdate cu " //
+        + " WHERE cu.groupConfigurationUpdate.id = :groupConfigurationUpdateId " //
+        + " GROUP BY cu.status"), //
     @NamedQuery(name = ResourceConfigurationUpdate.QUERY_FIND_ALL_COMPOSITES_ADMIN, query = "" //
         + "   SELECT new org.rhq.core.domain.configuration.composite.ConfigurationUpdateComposite" //
         + "        ( cu.id, cu.status, cu.errorMessage, cu.subjectName, cu.createdTime, cu.modifiedTime, " // update w/o config
@@ -177,6 +183,7 @@ public class ResourceConfigurationUpdate extends AbstractResourceConfigurationUp
     public static final String QUERY_FIND_BY_PARENT_UPDATE_ID_AND_STATUS = "ResourceConfigurationUpdate.findByParentUpdateIdAndStatus";
     public static final String QUERY_FIND_COMPOSITE_BY_PARENT_UPDATE_ID = "ResourceConfigurationUpdate.findCompositeByParentUpdateId";
     public static final String QUERY_FIND_BY_PARENT_UPDATE_ID = "ResourceConfigurationUpdate.findByParentUpdateId";
+    public static final String QUERY_FIND_STATUS_BY_PARENT_UPDATE_ID = "ResourceConfigurationUpdate.findStatusByParentUpdateId";
 
     // for subsystem views
     public static final String QUERY_FIND_ALL_COMPOSITES = "ResourceConfigurationUpdate.findAllComposites";
@@ -207,12 +214,18 @@ public class ResourceConfigurationUpdate extends AbstractResourceConfigurationUp
         this.resource = resource;
     }
 
+    @Override
     public Resource getResource() {
         return resource;
     }
 
     public void setResource(Resource resource) {
         this.resource = resource;
+    }
+
+    @Override
+    public AbstractGroupConfigurationUpdate getAbstractGroupConfigurationUpdate() {
+        return getGroupConfigurationUpdate();
     }
 
     public GroupResourceConfigurationUpdate getGroupConfigurationUpdate() {

@@ -32,6 +32,7 @@ import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceTypeTemplateCountComposite;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceTypeGWTServiceAsync;
 
@@ -42,6 +43,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.ResourceTypeGWTServiceAsync;
  * @author John Mazzitelli
  */
 public class ResourceTypeTreeNodeBuilder {
+    static private final Messages MSG = CoreGUI.getMessages();
 
     public static final String ATTRIB_ID = "id";
     public static final String ATTRIB_PARENT_ID = "parentId";
@@ -132,7 +134,7 @@ public class ResourceTypeTreeNodeBuilder {
 
                 @Override
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Failed to load resource types", caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.widget_typeTree_loadFail(), caught);
                 }
             });
     }
@@ -200,8 +202,6 @@ public class ResourceTypeTreeNodeBuilder {
             setAttribute(ATTRIB_DISABLED_ALERT_TEMPLATES, composite.getDisabledAlertCount());
             setAttribute(ATTRIB_DISABLED_METRIC_TEMPLATES, composite.getEnabledMetricCount());
             setAttribute(ATTRIB_ENABLED_METRIC_TEMPLATES, composite.getDisabledMetricCount());
-
-            setIsFolder(true);
         }
 
         @Override

@@ -25,57 +25,128 @@ package org.rhq.enterprise.gui.coregui.client.bundle.deployment;
 import java.util.HashMap;
 
 import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.types.ListGridFieldType;
+import com.smartgwt.client.widgets.events.DoubleClickEvent;
+import com.smartgwt.client.widgets.events.DoubleClickHandler;
 import com.smartgwt.client.widgets.grid.CellFormatter;
+import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+import com.smartgwt.client.widgets.grid.events.RecordClickEvent;
+import com.smartgwt.client.widgets.grid.events.RecordClickHandler;
 
 import org.rhq.core.domain.bundle.BundleDeploymentStatus;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ErrorMessageWindow;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.bundle.list.BundleVersionDataSource;
+import org.rhq.enterprise.gui.coregui.client.components.table.EscapedHtmlCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
+import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
+import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 
 /**
  * @author Greg Hinkle
  */
-public class BundleDeploymentListView extends Table {
+public class BundleDeploymentListView extends Table<BundleDeploymentDataSource> {
 
-    public BundleDeploymentListView(String locatorId, Criteria criteria) {
+    private final boolean canManageBundles;
+
+    public BundleDeploymentListView(String locatorId, Criteria criteria, boolean canManageBundles) {
         super(locatorId, MSG.view_bundle_bundleDeployments(), criteria);
+        this.canManageBundles = canManageBundles;
         setDataSource(new BundleDeploymentDataSource());
         setHeaderIcon("subsystems/bundle/BundleDeployment_24.png");
     }
 
     @Override
     protected void configureTable() {
-        getListGrid().getField("id").setWidth("60");
-        getListGrid().getField("name").setWidth("25%");
-        getListGrid().getField("name").setCellFormatter(new CellFormatter() {
+        ListGridField idField = new ListGridField(BundleDeploymentDataSource.FIELD_ID, MSG.common_title_id());
+        ListGridField nameField = new ListGridField(BundleDeploymentDataSource.FIELD_NAME, MSG
+            .view_bundle_deploy_name());
+        ListGridField descriptionField = new ListGridField(BundleDeploymentDataSource.FIELD_DESCRIPTION, MSG
+            .common_title_description());
+        ListGridField bundleVersionField = new ListGridField(BundleDeploymentDataSource.FIELD_BUNDLE_VERSION_VERSION,
+            MSG.view_bundle_bundleVersion());
+        ListGridField statusField = new ListGridField(BundleDeploymentDataSource.FIELD_STATUS, MSG
+            .common_title_status());
+        ListGridField deployTimeField = new ListGridField(BundleDeploymentDataSource.FIELD_DEPLOY_TIME, MSG
+            .view_bundle_deploy_time());
+        TimestampCellFormatter.prepareDateField(deployTimeField);
+        deployTimeField.setType(ListGridFieldType.DATE);
+
+        // only users that are authorized can see deployments
+        if (canManageBundles) {
+            nameField.setCellFormatter(new CellFormatter() {
+                public String format(Object value, ListGridRecord record, int i, int i1) {
+                    return "<a href=\""
+                        + LinkManager.getBundleDeploymentLink(record
+                            .getAttributeAsInt(BundleDeploymentDataSource.FIELD_BUNDLE_ID), record
+                            .getAttributeAsInt(BundleDeploymentDataSource.FIELD_ID)) + "\">"
+                        + StringUtility.escapeHtml(String.valueOf(value))
+                        + "</a>";
+                }
+            });
+        } else {
+            nameField.setCellFormatter(new EscapedHtmlCellFormatter());
+        }
+
+        descriptionField.setCellFormatter(new EscapedHtmlCellFormatter());
+
+        bundleVersionField.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord record, int i, int i1) {
-                return "<a href=\"#Bundles/Bundle/" + record.getAttribute("bundleId") + "/deployments/"
-                    + record.getAttribute("id") + "\">" + String.valueOf(o) + "</a>";
+                return "<a href=\""
+                    + LinkManager.getBundleVersionLink(record
+                        .getAttributeAsInt(BundleDeploymentDataSource.FIELD_BUNDLE_ID), record
+                        .getAttributeAsInt(BundleDeploymentDataSource.FIELD_BUNDLE_VERSION_ID)) + "\">"
+                    + String.valueOf(o) + "</a>";
             }
         });
 
-        getListGrid().getField("bundleVersionVersion").setWidth("80");
-        getListGrid().getField("bundleVersionVersion").setCellFormatter(new CellFormatter() {
-            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                return "<a href=\"#Bundles/Bundle/" + listGridRecord.getAttribute("bundleId") + "/versions/"
-                    + listGridRecord.getAttribute("bundleVersionId") + "\">" + o + "</a>";
-            }
-        });
-
-        getListGrid().getField("description").setWidth("25%");
-        getListGrid().getField("deploymentTime").setWidth("20%");
-        getListGrid().getField("status").setWidth("25%");
-        ListGridField status = getListGrid().getField("status");
         HashMap<String, String> statusIcons = new HashMap<String, String>();
+        statusIcons.put(BundleDeploymentStatus.PENDING.name(), "subsystems/bundle/install-loader.gif");
         statusIcons.put(BundleDeploymentStatus.IN_PROGRESS.name(), "subsystems/bundle/install-loader.gif");
-        statusIcons.put(BundleDeploymentStatus.FAILURE.name(), "subsystems/bundle/Warning_11.png");
+        statusIcons.put(BundleDeploymentStatus.FAILURE.name(), "subsystems/bundle/Error_11.png");
         statusIcons.put(BundleDeploymentStatus.MIXED.name(), "subsystems/bundle/Warning_11.png");
-        statusIcons.put(BundleDeploymentStatus.WARN.name(), "subsystems/bundle/Warning_11.png");
         statusIcons.put(BundleDeploymentStatus.SUCCESS.name(), "subsystems/bundle/Ok_11.png");
-        status.setValueIcons(statusIcons);
-        status.setValueIconHeight(11);
-        status.setWidth(80);
+        statusField.setValueIcons(statusIcons);
+        statusField.setValueIconWidth(11);
+        statusField.setValueIconHeight(11);
+        statusField.setShowValueIconOnly(true);
+        statusField.addRecordClickHandler(new RecordClickHandler() {
+            @Override
+            public void onRecordClick(RecordClickEvent event) {
+                String err = event.getRecord().getAttribute(BundleDeploymentDataSource.FIELD_ERROR_MESSAGE);
+                if (err != null && err.length() > 0) {
+                    err = "<pre>" + err + "</pre>";
+                    new ErrorMessageWindow(extendLocatorId("errWin"), MSG.common_title_error(), err).show();
+                }
+            }
+        });
 
+        idField.setWidth(50);
+        nameField.setWidth("30%");
+        descriptionField.setWidth("40%");
+        bundleVersionField.setWidth("15%");
+        deployTimeField.setWidth("15%");
+        statusField.setWidth(80);
 
+        setListGridFields(idField, nameField, descriptionField, bundleVersionField, deployTimeField, statusField);
+
+        if (canManageBundles) {
+            setListGridDoubleClickHandler(new DoubleClickHandler() {
+                @Override
+                public void onDoubleClick(DoubleClickEvent event) {
+                    ListGrid listGrid = (ListGrid) event.getSource();
+                    ListGridRecord[] selectedRows = listGrid.getSelection();
+                    if (selectedRows != null && selectedRows.length == 1) {
+                        String selectedId = selectedRows[0].getAttribute(BundleVersionDataSource.FIELD_BUNDLE_ID);
+                        String selectedVersionId = selectedRows[0].getAttribute(BundleVersionDataSource.FIELD_ID);
+                        CoreGUI.goToView(LinkManager.getBundleDeploymentLink(Integer.valueOf(selectedId), Integer
+                            .valueOf(selectedVersionId)));
+                    }
+                }
+            });
+        }
     }
 }

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -30,10 +30,13 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
+import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
+import org.rhq.enterprise.gui.coregui.client.admin.users.UsersDataSource;
 import org.rhq.enterprise.gui.coregui.client.dashboard.ConfigurablePortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
+import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHTMLPane;
 
 /**
@@ -41,7 +44,13 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHTMLPane;
  */
 public class MessagePortlet extends LocatableHTMLPane implements ConfigurablePortlet {
 
-    public static final String KEY = MSG.view_portlet_message_title();
+    // A non-displayed, persisted identifier for the portlet
+    public static final String KEY = "Message";
+    // A default displayed, persisted name for the portlet    
+    public static final String NAME = MSG.view_portlet_defaultName_message();
+
+    private static final String MESSAGE_PROPERTY = "message";
+    private static final String DEFAULT_MESSAGE = MSG.view_dashboardsManager_message_title_details();
 
     public MessagePortlet(String locatorId) {
         super(locatorId);
@@ -49,23 +58,29 @@ public class MessagePortlet extends LocatableHTMLPane implements ConfigurablePor
     }
 
     public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
-        String contents = storedPortlet.getConfiguration().getSimpleValue("message", null);
+        String contents = storedPortlet.getConfiguration().getSimpleValue(MESSAGE_PROPERTY, null);
         if (contents != null) {
+            if (UserSessionManager.getSessionSubject().getId() != UsersDataSource.ID_RHQADMIN &&
+                    !contents.equals(DEFAULT_MESSAGE)) {
+                // To avoid XSS attacks, don't allow non-superusers to enter HTML.
+                // TODO (ips, 04/06/11): Sanitize this, rather than escaping it, once we upgrade to GWT 2.1 or later.
+                contents = StringUtility.escapeHtml(contents);
+            }
             setContents(contents);
         } else {
-            setContents("<i>" + MSG.view_portlet_message_unconfigured());
+            setContents(DEFAULT_MESSAGE);
         }
     }
 
     public Canvas getHelpCanvas() {
-        return new HTMLFlow(MSG.view_portlet_message_help());
+        return new HTMLFlow(MSG.view_portlet_help_message());
     }
 
     public ConfigurationDefinition getConfigurationDefinition() {
-        ConfigurationDefinition definition = new ConfigurationDefinition(MSG.view_portlet_message_config_title(), MSG
-            .view_portlet_message_config_title_desc());
+        ConfigurationDefinition definition = new ConfigurationDefinition(MSG.view_portlet_configure_definitionTitle(),
+            MSG.view_portlet_configure_definitionDesc());
 
-        definition.put(new PropertyDefinitionSimple("message", MSG.view_portlet_message_title(), true,
+        definition.put(new PropertyDefinitionSimple(MESSAGE_PROPERTY, MSG.view_portlet_message_title(), true,
             PropertySimpleType.LONG_STRING));
 
         return definition;
@@ -75,8 +90,8 @@ public class MessagePortlet extends LocatableHTMLPane implements ConfigurablePor
         public static PortletViewFactory INSTANCE = new Factory();
 
         public final Portlet getInstance(String locatorId) {
-            //return GWT.create(MessagePortlet.class);
             return new MessagePortlet(locatorId);
         }
     }
+
 }

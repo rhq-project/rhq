@@ -1,6 +1,7 @@
 package org.rhq.enterprise.gui.coregui.client.gwt;
 
 import java.util.List;
+import java.util.Map;
 
 import com.google.gwt.user.client.rpc.RemoteService;
 import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
@@ -16,55 +17,76 @@ import org.rhq.core.domain.criteria.GroupPluginConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.GroupResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.PluginConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
-import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 
 /**
- *
+ * API for resource and plugin configurations for resources and groups, as well as any other 
+ * configuration related methods.
  */
 @RemoteServiceRelativePath("ConfigurationGWTService")
 public interface ConfigurationGWTService extends RemoteService {
-    Configuration getPluginConfiguration(int resourceId);
 
-    ConfigurationDefinition getPluginConfigurationDefinition(int resourceTypeId);
+    void purgePluginConfigurationUpdates(int[] configUpdateIds, boolean purgeInProgress) throws RuntimeException;
 
-    Configuration getResourceConfiguration(int resourceId);
+    void purgeResourceConfigurationUpdates(int[] configUpdateIds, boolean purgeInProgress) throws RuntimeException;
 
-    ConfigurationDefinition getResourceConfigurationDefinition(int resourceTypeId);
+    void rollbackPluginConfiguration(int resourceId, int configHistoryId) throws RuntimeException;
+
+    void rollbackResourceConfiguration(int resourceId, int configHistoryId) throws RuntimeException;
+
+    ResourceConfigurationUpdate getLatestResourceConfigurationUpdate(int resourceId) throws RuntimeException;
+
+    PluginConfigurationUpdate getLatestPluginConfigurationUpdate(int resourceId) throws RuntimeException;
+
+    Configuration getPluginConfiguration(int resourceId) throws RuntimeException;
+
+    ConfigurationDefinition getPluginConfigurationDefinition(int resourceTypeId) throws RuntimeException;
+
+    Configuration getResourceConfiguration(int resourceId) throws RuntimeException;
+
+    ConfigurationDefinition getResourceConfigurationDefinition(int resourceTypeId) throws RuntimeException;
 
     PageList<ResourceConfigurationUpdate> findResourceConfigurationUpdates(Integer resourceId, Long beginDate,
-        Long endDate, boolean suppressOldest, PageControl pc);
+        Long endDate, boolean suppressOldest, PageControl pc) throws RuntimeException;
 
-    ResourceConfigurationUpdate updateResourceConfiguration(int resourceId, Configuration configuration);
+    ResourceConfigurationUpdate updateResourceConfiguration(int resourceId, Configuration configuration)
+        throws RuntimeException;
 
-    PluginConfigurationUpdate updatePluginConfiguration(int resourceId, Configuration configuration);
+    PluginConfigurationUpdate updatePluginConfiguration(int resourceId, Configuration configuration)
+        throws RuntimeException;
 
     PageList<ResourceConfigurationUpdate> findResourceConfigurationUpdatesByCriteria(
-        ResourceConfigurationUpdateCriteria criteria);
+        ResourceConfigurationUpdateCriteria criteria) throws RuntimeException;
 
     PageList<PluginConfigurationUpdate> findPluginConfigurationUpdatesByCriteria(
-        PluginConfigurationUpdateCriteria criteria);
+        PluginConfigurationUpdateCriteria criteria) throws RuntimeException;
 
     PageList<GroupResourceConfigurationUpdate> findGroupResourceConfigurationUpdatesByCriteria(
-        GroupResourceConfigurationUpdateCriteria criteria);
+        GroupResourceConfigurationUpdateCriteria criteria) throws RuntimeException;
 
     PageList<GroupPluginConfigurationUpdate> findGroupPluginConfigurationUpdatesByCriteria(
-        GroupPluginConfigurationUpdateCriteria criteria);
+        GroupPluginConfigurationUpdateCriteria criteria) throws RuntimeException;
 
-    List<DisambiguationReport<ResourceConfigurationComposite>> findResourceConfigurationsForGroup(int groupId);
+    Map<Integer, Configuration> findResourceConfigurationsForGroup(int groupId) throws RuntimeException;
 
-    List<DisambiguationReport<ResourceConfigurationComposite>> findPluginConfigurationsForGroup(int groupId);
+    Map<Integer, Configuration> findPluginConfigurationsForGroup(int groupId) throws RuntimeException;
 
-    List<DisambiguationReport<ResourceConfigurationComposite>> findPluginConfigurationsForGroupUpdate(int groupUpdateId);
+    Map<Integer, Configuration> findResourceConfigurationsForGroupUpdate(int groupUpdateId) throws RuntimeException;
 
-    void updateResourceConfigurationsForGroup(int groupId, List<ResourceConfigurationComposite> resourceConfigurations);
+    Map<Integer, Configuration> findPluginConfigurationsForGroupUpdate(int groupUpdateId) throws RuntimeException;
 
-    void updatePluginConfigurationsForGroup(int groupId, List<ResourceConfigurationComposite> pluginConfigurations);
+    void updateResourceConfigurationsForGroup(int groupId, List<ResourceConfigurationComposite> resourceConfigurations)
+        throws RuntimeException;
 
-    void deleteGroupPluginConfigurationUpdate(Integer groupId, Integer[] groupPluginConfigUpdateIds);
+    void updatePluginConfigurationsForGroup(int groupId, List<ResourceConfigurationComposite> pluginConfigurations)
+        throws RuntimeException;
 
-    void deleteGroupResourceConfigurationUpdate(Integer groupId, Integer[] groupResourceConfigUpdateIds);
+    void deleteGroupPluginConfigurationUpdate(Integer groupId, Integer[] groupPluginConfigUpdateIds)
+        throws RuntimeException;
 
-    //RawConfiguration dummy(RawConfiguration config);
+    void deleteGroupResourceConfigurationUpdate(Integer groupId, Integer[] groupResourceConfigUpdateIds)
+        throws RuntimeException;
+
+    ConfigurationDefinition getOptionValuesForConfigDefinition(ConfigurationDefinition definition);
 }

@@ -1,0 +1,92 @@
+<plugin name="TestPlugin" displayName="Test Plugin" package="org.rhq.plugins.test"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+    <server name="ServerA" description="Server A description">
+        <subcategories>
+            <subcategory name="Resources" description="Resources subcategory"/>
+            <subcategory name="Applications" description="Applications subcategory"/>
+        </subcategories>
+
+        <plugin-configuration>
+            <c:simple-property name="connectionPropertyX" default="x"/>
+            <c:simple-property name="connectionPropertyY" default="y"/>
+        </plugin-configuration>
+
+        <process-scan name="serverA" query="process|basename|match=^java.*,arg|org.jboss.Main|match=.*"/>
+
+        <operation name="start">
+            <parameters>
+                <c:simple-property name="immediate" type="boolean"/>
+            </parameters>
+            <results>
+                <c:simple-property name="exitCode" type="integer"/>
+            </results>
+        </operation>
+
+        <operation name="stop">
+            <parameters>
+                <c:simple-property name="immediate" type="boolean"/>
+            </parameters>
+            <results>
+                <c:simple-property name="exitCode" type="integer"/>
+            </results>
+        </operation>
+
+        <metric displayName="Metric 1" property="metric1" displayType="summary" defaultInterval="300000"/>
+        <metric displayName="Metric 2" property="metric2" displayType="summary" defaultInterval="300000" dataType="trait"/>
+
+        <event name="logAEntry" description="an entry was appended to a log file"/>
+        <event name="logBEntry" description="an entry was appended to a log file"/>
+
+        <content name="ServerA.Content.1" category="deployable">
+            <configuration>
+                <c:simple-property name="ServerA.Content.1.version"/>
+            </configuration>
+        </content>
+
+        <content name="ServerA.Content.2" category="deployable">
+            <configuration>
+                <c:simple-property name="ServerA.Content.2.version"/>
+            </configuration>
+        </content>
+
+        <drift-configuration name="drift-pc">
+           <basedir>
+              <value-context>pluginConfiguration</value-context>
+              <value-name>connectionPropertyX</value-name>
+           </basedir>
+           <interval>123456</interval>
+           <includes>
+              <include path="foo/bar" pattern="**/*.blech"/>
+           </includes>
+           <excludes>
+              <exclude path="/wot/gorilla" pattern="*.xml" />
+              <exclude path="/hello"/>
+           </excludes>
+        </drift-configuration>
+
+        <drift-configuration name="drift-fs">
+           <basedir>
+              <value-context>fileSystem</value-context>
+              <value-name>/</value-name>
+           </basedir>
+        </drift-configuration>
+
+        <bundle-target>
+           <destination-base-dir name="bundleTarget-pc" description="pc-description">
+               <value-context>pluginConfiguration</value-context>
+               <value-name>connectionPropertyY</value-name>
+           </destination-base-dir>
+           <destination-base-dir name="bundleTarget-fs"> <!--  note: no description, so we can test for proper null handling -->
+               <value-context>fileSystem</value-context>
+               <value-name>/wot/gorilla</value-name>
+           </destination-base-dir>
+        </bundle-target>
+
+        <service name="Child1" description="Child 1 description"/>
+        <service name="Child2" description="Child 2 description"/>
+    </server>
+
+    <server name="ServerB" description="Server B description"/>
+</plugin>

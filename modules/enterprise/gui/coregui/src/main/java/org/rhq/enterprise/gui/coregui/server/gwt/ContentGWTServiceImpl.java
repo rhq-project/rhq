@@ -25,17 +25,26 @@ package org.rhq.enterprise.gui.coregui.server.gwt;
 import java.util.List;
 
 import org.rhq.core.domain.content.Architecture;
+import org.rhq.core.domain.content.InstalledPackageHistory;
+import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
+import org.rhq.core.domain.content.composite.PackageAndLatestVersionComposite;
+import org.rhq.core.domain.content.composite.PackageTypeAndVersionFormatComposite;
+import org.rhq.core.domain.criteria.InstalledPackageHistoryCriteria;
+import org.rhq.core.domain.criteria.PackageCriteria;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.coregui.client.gwt.ContentGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.content.ContentManagerLocal;
+import org.rhq.enterprise.server.content.ContentUIManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
+ * @author Simeon Pinder
  * @author Greg Hinkle
  */
 public class ContentGWTServiceImpl extends AbstractGWTServiceImpl implements ContentGWTService {
@@ -44,38 +53,92 @@ public class ContentGWTServiceImpl extends AbstractGWTServiceImpl implements Con
 
     private ContentManagerLocal contentManager = LookupUtil.getContentManager();
 
-    public void deletePackageVersion(int packageVersionId) {
+    //TODO: spinder. should the become it's own GWTService?
+    private ContentUIManagerLocal contentUiManager = LookupUtil.getContentUIManager();
+
+    public void deletePackageVersion(int packageVersionId) throws RuntimeException {
         try {
             contentManager.deletePackageVersion(getSessionSubject(), packageVersionId);
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
         }
     }
 
-    public PageList<PackageVersion> findPackageVersionsByCriteria(PackageVersionCriteria criteria) {
+    public PageList<PackageVersion> findPackageVersionsByCriteria(PackageVersionCriteria criteria)
+        throws RuntimeException {
         try {
             return SerialUtility.prepare(contentManager.findPackageVersionsByCriteria(getSessionSubject(), criteria),
                 "ContentService.findPackageVersionsByCriteria");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
         }
     }
 
-    public List<Architecture> getArchitectures() {
+    public PageList<Package> findPackagesByCriteria(PackageCriteria criteria) {
+        try {
+            return SerialUtility.prepare(contentManager.findPackagesByCriteria(getSessionSubject(), criteria),
+                "ContentService.findPackagesByCriteria");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    public PageList<InstalledPackageHistory> findInstalledPackageHistoryByCriteria(
+        InstalledPackageHistoryCriteria criteria) throws RuntimeException {
+        try {
+            PageList<InstalledPackageHistory> results = SerialUtility.prepare(contentUiManager
+                .findInstalledPackageHistoryByCriteria(getSessionSubject(), criteria),
+                "ContentService.findInstalledPackageHistoryByCriteria");
+            return results;
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+    
+    public PageList<PackageAndLatestVersionComposite> findPackagesWithLatestVersion(PackageCriteria criteria) {
+        try {
+            return SerialUtility.prepare(contentManager.findPackagesWithLatestVersion(getSessionSubject(), criteria),
+                "ContentService.findPackagesByCriteria");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+    public PageList<InstalledPackageHistory> getInstalledPackageHistoryForResource(int resourceId, int count)
+        throws RuntimeException {
+        try {
+            PageControl pc = new PageControl(0, count);
+            return SerialUtility.prepare(contentUiManager.getInstalledPackageHistoryForResource(resourceId, pc),
+                "ContentService.getInstalledPackageHistoryForResource");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    public List<Architecture> getArchitectures() throws RuntimeException {
         try {
             return SerialUtility.prepare(contentManager.findArchitectures(getSessionSubject()),
                 "ContentService.getArchitectures");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
         }
     }
 
-    public PackageType getResourceCreationPackageType(int resourceTypeId) {
+    public PackageType getResourceCreationPackageType(int resourceTypeId) throws RuntimeException {
         try {
             return SerialUtility.prepare(contentManager.getResourceCreationPackageType(resourceTypeId),
                 "ContentService.getResourceCreationPackageType");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+    
+    @Override
+    public PackageTypeAndVersionFormatComposite findPackageType(Integer resourceTypeId, String packageTypeName) throws RuntimeException {
+        try {
+            return SerialUtility.prepare(contentManager.findPackageTypeWithVersionFormat(getSessionSubject(), resourceTypeId, packageTypeName),
+                "ContentService.findPackageType");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
         }
     }
 }

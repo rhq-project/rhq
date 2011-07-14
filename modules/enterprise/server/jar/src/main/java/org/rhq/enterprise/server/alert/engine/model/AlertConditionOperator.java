@@ -27,8 +27,8 @@ public enum AlertConditionOperator {
      * absolute value comparison operators
      */
     LESS_THAN_OR_EQUAL_TO(Type.STATEFUL), //
-    LESS_THAN(Type.STATEFUL), // 
-    EQUALS(Type.STATELESS), // 
+    LESS_THAN(Type.STATEFUL), //
+    EQUALS(Type.STATEFUL), //
     REGEX(Type.STATELESS), // more flexible form of EQUALS
     GREATER_THAN(Type.STATEFUL), //
     GREATER_THAN_OR_EQUAL_TO(Type.STATEFUL), //
@@ -56,17 +56,17 @@ public enum AlertConditionOperator {
     }
 
     public enum Type {
-        /* 
-         * stateful is used to support a sliding scale of values, usually a number line; once the stateful operator's 
+        /*
+         * stateful is used to support a sliding scale of values, usually a number line; once the stateful operator's
          * condition threshold is met, stateful cache elements are disabled until the threshold is crossed once again
          * into the expected range;
          */
         STATEFUL,
 
         /*
-         * stateless can be used for anything stateful can, but will never be disabled in the cache; so, if you're 
+         * stateless can be used for anything stateful can, but will never be disabled in the cache; so, if you're
          * worried about being able to suppress sliding-scale conditions once a threshold is meet, mark your operator
-         * as stateful 
+         * as stateful
          */
         STATELESS,
 

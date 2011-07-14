@@ -187,7 +187,7 @@
                 </snapshots>
                 <id>jboss</id>
                 <name>JBoss Repository</name>
-                <url>http://repository.jboss.org/maven2/</url>
+                <url>https://repository.jboss.org/nexus/content/groups/public/</url>
             </repository>
             <!-- TODO add your own maven repositories here (if needed) -->
         </repositories>
@@ -199,7 +199,7 @@
                 </snapshots>
                 <id>jboss</id>
                 <name>JBoss Plugin Repository</name>
-                <url>http://repository.jboss.org/maven2/</url>
+                <url>https://repository.jboss.org/nexus/content/groups/public/</url>
             </pluginRepository>
         </pluginRepositories>
 

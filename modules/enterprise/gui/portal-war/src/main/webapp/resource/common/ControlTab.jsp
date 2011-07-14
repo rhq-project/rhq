@@ -53,12 +53,6 @@
                             border="0"/>
                </td>
             </c:when>
-            <c:when test="${not monitorEnabled && (tab.value eq 'Monitor' || tab.value eq 'Alert')}">
-               <%--<td>--%>
-                  <%--<html:img page="/images/tab_${tab.value}_off.gif" width="${tab.width}" height="${tab.height}" alt=""--%>
-                            <%--border="0"/>--%>
-               <%--</td>--%>
-            </c:when>
             <c:otherwise>
                <c:url var="tabLink" value="${tab.link}">
                   <c:choose>

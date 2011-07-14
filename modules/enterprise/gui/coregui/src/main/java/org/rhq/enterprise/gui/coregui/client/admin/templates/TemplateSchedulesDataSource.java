@@ -23,9 +23,7 @@ import java.util.List;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
-import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
-import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
@@ -65,12 +63,6 @@ public class TemplateSchedulesDataSource extends AbstractMeasurementScheduleComp
     }
 
     @Override
-    protected void executeFetch(DSRequest request, DSResponse response) {
-        super.executeFetch(request, response);
-
-    }
-
-    @Override
     protected EntityContext getEntityContext(DSRequest request) {
         Criteria requestCriteria = request.getCriteria();
         Integer typeId = requestCriteria.getAttributeAsInt(MeasurementScheduleCriteria.FILTER_FIELD_RESOURCE_TYPE_ID);
@@ -87,7 +79,7 @@ public class TemplateSchedulesDataSource extends AbstractMeasurementScheduleComp
     @Override
     protected void enableSchedules(final AbstractMeasurementScheduleListView measurementScheduleListView,
         final int[] measurementDefinitionIds, final List<String> measurementDefinitionDisplayNames) {
-        TemplateSchedulesView templateSchedulesView = (TemplateSchedulesView)measurementScheduleListView;
+        TemplateSchedulesView templateSchedulesView = (TemplateSchedulesView) measurementScheduleListView;
         boolean updateExistingSchedules = templateSchedulesView.isUpdateExistingSchedules();
         final String s = (measurementDefinitionIds.length > 1) ? "s" : "";
         this.measurementService.enableSchedulesForResourceType(measurementDefinitionIds, updateExistingSchedules,
@@ -95,16 +87,16 @@ public class TemplateSchedulesDataSource extends AbstractMeasurementScheduleComp
                 @Override
                 public void onFailure(Throwable throwable) {
                     CoreGUI.getErrorHandler().handleError(
-                        "Failed to enable collection of metric" + s + " " + measurementDefinitionDisplayNames
-                            + " by default for ResourceType with id [" + resourceTypeId + "].", throwable);
+                        MSG.datasource_templateSchedules_enabled_failed(s,
+                            measurementDefinitionDisplayNames.toString(), String.valueOf(resourceTypeId)), throwable);
                 }
 
                 @Override
                 public void onSuccess(Void aVoid) {
                     CoreGUI.getMessageCenter().notify(
-                        new Message("Enabled collection of selected metric" + s + ".", "Enabled collection of metric"
-                            + s + " " + measurementDefinitionDisplayNames + " by default for ResourceType with id ["
-                            + resourceTypeId + "].", Message.Severity.Info));
+                        new Message(MSG.datasource_templateSchedules_enabled(s), MSG
+                            .datasource_templateSchedules_enabled_detailed(s, measurementDefinitionDisplayNames
+                                .toString(), String.valueOf(resourceTypeId)), Message.Severity.Info));
                     measurementScheduleListView.refresh();
                 }
             });
@@ -113,7 +105,7 @@ public class TemplateSchedulesDataSource extends AbstractMeasurementScheduleComp
     @Override
     protected void disableSchedules(final AbstractMeasurementScheduleListView measurementScheduleListView,
         int[] measurementDefinitionIds, final List<String> measurementDefinitionDisplayNames) {
-        TemplateSchedulesView templateSchedulesView = (TemplateSchedulesView)measurementScheduleListView;
+        TemplateSchedulesView templateSchedulesView = (TemplateSchedulesView) measurementScheduleListView;
         boolean updateExistingSchedules = templateSchedulesView.isUpdateExistingSchedules();
         final String s = (measurementDefinitionIds.length > 1) ? "s" : "";
         this.measurementService.disableSchedulesForResourceType(measurementDefinitionIds, updateExistingSchedules,
@@ -121,16 +113,16 @@ public class TemplateSchedulesDataSource extends AbstractMeasurementScheduleComp
                 @Override
                 public void onFailure(Throwable throwable) {
                     CoreGUI.getErrorHandler().handleError(
-                        "Failed to disable collection of metric" + s + " " + measurementDefinitionDisplayNames
-                            + " by default for ResourceType with id [" + resourceTypeId + "].", throwable);
+                        MSG.datasource_templateSchedules_disabled_failed(s, measurementDefinitionDisplayNames
+                            .toString(), String.valueOf(resourceTypeId)), throwable);
                 }
 
                 @Override
                 public void onSuccess(Void aVoid) {
                     CoreGUI.getMessageCenter().notify(
-                        new Message("Disabled collection of selected metric" + s + ".", "Disabled collection of metric"
-                            + s + " " + measurementDefinitionDisplayNames + " by default for ResourceType with id ["
-                            + resourceTypeId + "].", Message.Severity.Info));
+                        new Message(MSG.datasource_templateSchedules_disabled(s), MSG
+                            .datasource_templateSchedules_disabled_detailed(s, measurementDefinitionDisplayNames
+                                .toString(), String.valueOf(resourceTypeId)), Message.Severity.Info));
                     measurementScheduleListView.refresh();
                 }
             });
@@ -140,7 +132,7 @@ public class TemplateSchedulesDataSource extends AbstractMeasurementScheduleComp
     protected void updateSchedules(final AbstractMeasurementScheduleListView measurementScheduleListView,
         int[] measurementDefinitionIds, final List<String> measurementDefinitionDisplayNames,
         final long collectionInterval) {
-        TemplateSchedulesView templateSchedulesView = (TemplateSchedulesView)measurementScheduleListView;
+        TemplateSchedulesView templateSchedulesView = (TemplateSchedulesView) measurementScheduleListView;
         boolean updateExistingSchedules = templateSchedulesView.isUpdateExistingSchedules();
         final String s = (measurementDefinitionIds.length > 1) ? "s" : "";
         this.measurementService.updateSchedulesForResourceType(measurementDefinitionIds, collectionInterval,
@@ -148,18 +140,18 @@ public class TemplateSchedulesDataSource extends AbstractMeasurementScheduleComp
                 @Override
                 public void onFailure(Throwable throwable) {
                     CoreGUI.getErrorHandler().handleError(
-                        "Failed to set collection interval to " + (collectionInterval / 1000) + " seconds for metric"
-                            + s + " " + measurementDefinitionDisplayNames + " by default for ResourceType with id ["
-                            + resourceTypeId + "].", throwable);
+                        MSG.datasource_templateSchedules_updated_failed(String.valueOf(collectionInterval / 1000), s,
+                            measurementDefinitionDisplayNames.toString(), String.valueOf(resourceTypeId)), throwable);
                 }
 
                 @Override
                 public void onSuccess(Void aVoid) {
-                    CoreGUI.getMessageCenter().notify(
-                        new Message("Updated collection intervals of selected metric" + s + ".",
-                            "Collection interval for metric" + s + " " + measurementDefinitionDisplayNames
-                                + " by default for ResourceType with id [" + resourceTypeId + "] set to "
-                                + (collectionInterval / 1000) + " seconds.", Message.Severity.Info));
+                    CoreGUI.getMessageCenter()
+                        .notify(
+                            new Message(MSG.datasource_templateSchedules_updated(s), MSG
+                                .datasource_templateSchedules_updated_detail(s, measurementDefinitionDisplayNames
+                                    .toString(), String.valueOf(resourceTypeId), String
+                                    .valueOf(collectionInterval / 1000)), Message.Severity.Info));
                     measurementScheduleListView.refresh();
                 }
             });

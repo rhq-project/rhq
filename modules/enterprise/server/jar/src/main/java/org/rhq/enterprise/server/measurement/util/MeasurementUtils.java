@@ -6,7 +6,7 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.enterprise.server.measurement.uibean.MetricDisplaySummary;
+import org.rhq.core.domain.measurement.ui.MetricDisplaySummary;
 
 public class MeasurementUtils {
 

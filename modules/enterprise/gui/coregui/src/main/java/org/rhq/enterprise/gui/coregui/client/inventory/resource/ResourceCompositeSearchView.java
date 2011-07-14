@@ -1,3 +1,26 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2011 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
+
 package org.rhq.enterprise.gui.coregui.client.inventory.resource;
 
 import java.util.LinkedHashMap;
@@ -44,10 +67,14 @@ public class ResourceCompositeSearchView extends ResourceSearchView {
         this(locatorId, null, criteria, title, headerIcons);
     }
 
-    protected RPCDataSource<?> getDataSourceInstance() {
+    // surpress unchecked warnings because the superclass has different generic types for the datasource
+    @SuppressWarnings("unchecked")
+    @Override
+    protected RPCDataSource getDataSourceInstance() {
         return ResourceCompositeDataSource.getInstance();
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     protected void configureTable() {
         addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), MSG
@@ -147,11 +174,6 @@ public class ResourceCompositeSearchView extends ResourceSearchView {
     public static ResourceCompositeSearchView getChildrenOf(String locatorId, ResourceComposite parentResourceComposite) {
         return new ResourceCompositeSearchView(locatorId, parentResourceComposite, new Criteria("parentId", String
             .valueOf(parentResourceComposite.getResource().getId())), MSG.view_inventory_resources_title_children());
-    }
-
-    public static ResourceCompositeSearchView getMembersOf(String locatorId, int groupId) {
-        return new ResourceCompositeSearchView(locatorId, (ResourceComposite) null, new Criteria("groupId", String
-            .valueOf(groupId)), MSG.view_inventory_resources_title_members());
     }
 
 }

@@ -31,4 +31,13 @@ public class LocatableLayout extends Layout implements Locatable {
         return this.locatorId + "_" + extension;
     }
 
+    public void destroyMembers() {
+        SeleniumUtility.destroyMembers(this);
+    }
+
+    @Override
+    public void destroy() {
+        destroyMembers();
+        super.destroy();
+    }
 }

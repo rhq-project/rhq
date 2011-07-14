@@ -45,11 +45,16 @@ import java.util.Properties;
  */
 public class DBInstallatonTest {
 
-    final String TEST_DB = "installer_test_db";
-    final String USERNAME = "rhqadmin";
-    final String PASSWORD = "rhqadmin";
+    private final String LOG_DIRECTORY = System.getProperty("java.io.tmpdir", "rhq/installer-test");
+    private final String TEST_DB = System.getProperty("rhq.test.ds.db-name","rhq_installer_test_db");
+    private final String USERNAME = System.getProperty("rhq.test.ds.user-name", "rhqadmin");
+    private final String PASSWORD = System.getProperty("rhq.test.ds.password", "rhqadmin");
+    private final String SERVER = System.getProperty("rhq.test.ds.server-name", "127.0.0.1");
+    private final String DB_URL = System.getProperty("rhq.test.ds.connection-url", "jdbc:postgresql://" + SERVER + ":5432/"+TEST_DB);
+    private final String ADMIN_USERNAME = System.getProperty("rhq.db.admin.username", "postgres");
+    private final String ADMIN_PASSWORD = System.getProperty("rhq.db.admin.password", "postgres");
 
-    ServerInformation installer = new ServerInformation();
+    private ServerInformation installer;
 
     @BeforeMethod
     public void prepareForInstallation() throws Exception {
@@ -57,7 +62,7 @@ public class DBInstallatonTest {
         recreateTestDatabase();
 
         installer = new ServerInformation();
-        installer.setLogDirectory(getLogDirectory());
+        installer.setLogDirectory(new File(LOG_DIRECTORY));
     }
 
     @Test
@@ -74,8 +79,8 @@ public class DBInstallatonTest {
 
     @Test
     public void overwriteJON231Schema() throws Exception {
-        installSchemaAndData("2.3.1");
-        installer.createNewDatabaseSchema(getInstallProperties());
+            installSchemaAndData("2.3.1");
+            installer.createNewDatabaseSchema(getInstallProperties());
     }
 
     @Test
@@ -83,51 +88,60 @@ public class DBInstallatonTest {
         installSchemaAndData("2.3.1");
         installer.upgradeExistingDatabaseSchema(getInstallProperties());
     }
+    
+    @Test
+    public void overwriteJON240Schema() throws Exception {
+            installSchemaAndData("2.4.0");
+            installer.createNewDatabaseSchema(getInstallProperties());
+    }
+    
+    @Test
+    public void upgradeJON240Schema() throws Exception {
+        installSchemaAndData("2.4.0");
+        installer.upgradeExistingDatabaseSchema(getInstallProperties());
+    }
 
-    void initLogDirectory() {
-        File logDir = getLogDirectory();
+    private void initLogDirectory() {
+        File logDir = new File(LOG_DIRECTORY);
         if (logDir.exists()) {
             logDir.delete();
         }
         logDir.mkdirs();
     }
 
-    void recreateTestDatabase() throws Exception {
+    private void recreateTestDatabase() throws Exception {
         Connection connection = null;
         Statement dropDB = null;
         Statement createDB = null;
 
         try {
-            String dbUrl = "jdbc:postgresql://127.0.0.1:5432/postgres";
-
-            connection = DbUtil.getConnection(dbUrl, "postgres", "postgres");
+            connection = DbUtil.getConnection(DB_URL.replace(TEST_DB,"postgres"), ADMIN_USERNAME, ADMIN_PASSWORD);
+            
             dropDB = connection.createStatement();
-            createDB = connection.createStatement();
-
             dropDB.execute("drop database if exists " + TEST_DB);
+            
+            createDB = connection.createStatement();
             createDB.execute("create database " + TEST_DB + " with owner " + USERNAME);
         } finally {
+            if (connection != null) {
+                connection.close();
+            }
             if (dropDB != null) {
                 dropDB.close();
             }
             if (createDB != null) {
                 createDB.close();
             }
-            if (connection != null) {
-                connection.close();
-            }
         }
     }
 
-    void installSchemaAndData(String jonVersion) throws Exception {
-        String testDbUrl = getTestDbUrl();
-
-        DBSetup dbsetup = new DBSetup(testDbUrl, USERNAME, PASSWORD);
+    private void installSchemaAndData(String jonVersion) throws Exception {
+        DBSetup dbsetup = new DBSetup(DB_URL, USERNAME, PASSWORD);
         dbsetup.setup(getSchemaFile(jonVersion).getAbsolutePath());
         dbsetup.setup(getDataFile(jonVersion).getAbsolutePath());
     }
 
-    File getSchemaFile(String version) throws Exception {
+    private File getSchemaFile(String version) throws Exception {
         URL url = getClass().getResource("db-schema-combined-" + version + ".xml");
 
         if (url == null) {
@@ -137,7 +151,7 @@ public class DBInstallatonTest {
         return new File(url.toURI().getPath());
     }
 
-    File getDataFile(String version) throws Exception {
+    private File getDataFile(String version) throws Exception {
         URL url = getClass().getResource("db-data-combined-" + version + ".xml");
 
         if (url == null) {
@@ -147,23 +161,12 @@ public class DBInstallatonTest {
         return new File(url.toURI().getPath());
     }
 
-    File getLogDirectory() {
-        return new File(System.getProperty("java.io.tmpdir", "rhq/installer-test"));
-    }
-
     private Properties getInstallProperties() {
         Properties dbProperties = new Properties();
-        dbProperties.put(ServerProperties.PROP_DATABASE_CONNECTION_URL, getTestDbUrl());
+        dbProperties.put(ServerProperties.PROP_DATABASE_CONNECTION_URL, DB_URL);
         dbProperties.put(ServerProperties.PROP_DATABASE_USERNAME, USERNAME);
         dbProperties.put(ServerProperties.PROP_DATABASE_PASSWORD, PASSWORD);
         dbProperties.put(ServerProperties.PROP_EMAIL_FROM_ADDRESS, "rhqadmin@localhost.com");
         return dbProperties;
     }
-
-    private String getTestDbUrl() {
-        return "jdbc:postgresql://127.0.0.1:5432/" + TEST_DB;
-    }
-
-
-
 }

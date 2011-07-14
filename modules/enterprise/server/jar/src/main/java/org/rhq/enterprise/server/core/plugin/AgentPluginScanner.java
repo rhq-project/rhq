@@ -54,6 +54,7 @@ import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.core.plugin.ProductPluginDeployer.DeploymentInfo;
+import org.rhq.enterprise.server.resource.metadata.PluginManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -91,18 +92,19 @@ public class AgentPluginScanner {
     }
 
     void registerAgentPlugins() throws Exception {
-        for (DeploymentInfo di : this.scanned) {
-            log.debug("Hot deploying agent plugin [" + di.url + "]...");
-            this.agentPluginDeployer.pluginDetected(di);
+        try {
+            for (DeploymentInfo di : this.scanned) {
+                log.debug("Hot deploying agent plugin [" + di.url + "]...");
+                this.agentPluginDeployer.pluginDetected(di);
+            }
+
+            // Register all the new plugins.
+            // Call this even if we don't have any update files this time, in case an error occurred last time
+            // and we need to finish what we started before.
+            this.agentPluginDeployer.registerPlugins();
+        } finally {
+            scanned.clear();
         }
-        this.scanned.clear();
-
-        // Register all the new plugins.
-        // Call this even if we don't have any update files this time, in case an error occurred last time
-        // and we need to finish what we started before.
-        this.agentPluginDeployer.registerPlugins();
-
-        return;
     }
 
     void agentPluginScan() throws Exception {
@@ -115,6 +117,7 @@ public class AgentPluginScanner {
 
         // ensure that the filesystem and database are in a consistent state
         List<File> updatedFiles1 = agentPluginScanFilesystem();
+        removeDeletedPluginsFromFileSystem();
         List<File> updatedFiles2 = agentPluginScanDatabase();
 
         // process any newly detected plugins
@@ -228,6 +231,26 @@ public class AgentPluginScanner {
         }
 
         return updated;
+    }
+
+    void removeDeletedPluginsFromFileSystem() {
+        List<Plugin> deletedPlugins = getDeletedPlugins();
+        for (Plugin plugin : deletedPlugins) {
+            File pluginFile = new File(agentPluginDeployer.getPluginDir(), plugin.getPath());
+            if (agentPluginsOnFilesystem.containsKey(pluginFile)) {
+                agentPluginsOnFilesystem.remove(pluginFile);
+                if (pluginFile.delete()) {
+                    log.info("Plugin file [" + pluginFile + "] has been deleted from the file system.");
+                } else {
+                    log.warn("Failed to delete plugin file [" + pluginFile + "] from the file system");
+                }
+            }
+        }
+    }
+
+    List<Plugin> getDeletedPlugins() {
+        PluginManagerLocal pluginMgr = LookupUtil.getPluginManager();
+        return pluginMgr.findAllDeletedPlugins();
     }
 
     /**
@@ -354,10 +377,17 @@ public class AgentPluginScanner {
                         cachedPluginOnFilesystem.setVersion(version);
                         cachedPluginOnFilesystem.setMd5(md5);
                     } else {
-                        if (log.isDebugEnabled()) {
-                            log.debug("It appears the agent plugin [" + dbPlugin
-                                + "] in the database may be obsolete. If so, it will be updated soon.");
-                        }
+                        String message = "It appears the agent plugin [" + dbPlugin
+                        + "] in the database may be obsolete. If so, it will be updated soon by the version on the filesystem [" + currentFile + "].";
+                        if (currentFile.getAbsolutePath().equals(expectedFile.getAbsolutePath())) {
+                            if (log.isDebugEnabled()) {
+                                log.debug(message);
+                            }
+                        } else {
+                            //inform on the info level so that it's clear from the logs that the new file 
+                            //is going to be used.
+                            log.info(message);
+                        }                
                     }
                 } else {
                     log.info("Found agent plugin in the DB that we do not yet have: " + name);

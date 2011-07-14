@@ -24,6 +24,7 @@
 package org.rhq.enterprise.server.util;
 
 import java.lang.reflect.Field;
+import java.util.Collection;
 import java.util.List;
 
 import javax.persistence.EntityManager;
@@ -31,8 +32,10 @@ import javax.persistence.Query;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.hibernate.Hibernate;
 
 import org.rhq.core.domain.criteria.Criteria;
+import org.rhq.core.domain.criteria.Criteria.Restriction;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 
@@ -43,57 +46,111 @@ public class CriteriaQueryRunner<T> {
     private Criteria criteria;
     private CriteriaQueryGenerator queryGenerator;
     private EntityManager entityManager;
-    private boolean autoInitializeBags;;
+    private boolean automaticFetching;;
 
     public CriteriaQueryRunner(Criteria criteria, CriteriaQueryGenerator queryGenerator, EntityManager entityManager) {
         this(criteria, queryGenerator, entityManager, true);
     }
 
     public CriteriaQueryRunner(Criteria criteria, CriteriaQueryGenerator queryGenerator, EntityManager entityManager,
-        boolean autoInitializeBags) {
+        boolean automaticFetching) {
         this.criteria = criteria;
         this.queryGenerator = queryGenerator;
         this.entityManager = entityManager;
-        this.autoInitializeBags = autoInitializeBags;
+        this.automaticFetching = automaticFetching;
+    }
+
+    public PageList<T> execute() {
+        PageList<T> results = null;
+        PageControl pageControl = CriteriaQueryGenerator.getPageControl(criteria);
+
+        Restriction criteriaRestriction = criteria.getRestriction();
+        if (criteriaRestriction == null) {
+            results = new PageList<T>(getCollection(), getCount(), pageControl);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("restriction=" + criteriaRestriction + ", resultSize=" + results.size() + ", resultCount="
+                    + results.getTotalSize());
+            }
+
+        } else if (criteriaRestriction == Restriction.COUNT_ONLY) {
+            results = new PageList<T>(getCount(), pageControl);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("restriction=" + criteriaRestriction + ", resultCount=" + results.getTotalSize());
+            }
+
+        } else if (criteriaRestriction == Restriction.COLLECTION_ONLY) {
+            results = new PageList<T>(getCollection(), pageControl);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("restriction=" + criteriaRestriction + ", resultSize=" + results.size());
+            }
+
+        } else {
+            throw new IllegalArgumentException(this.getClass().getSimpleName()
+                + " does not support query execution for criteria with " + Restriction.class.getSimpleName() + " "
+                + criteriaRestriction);
+        }
+
+        return results;
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<T> execute() {
+    private Collection<? extends T> getCollection() {
         Query query = queryGenerator.getQuery(entityManager);
-        Query countQuery = queryGenerator.getCountQuery(entityManager);
-
-        long count = (Long) countQuery.getSingleResult();
         List<T> results = query.getResultList();
 
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("resultSize=" + results.size() + ", count=" + count);
-        }
-
-        if (autoInitializeBags && (!queryGenerator.getPersistentBagFields().isEmpty())) {
-            for (T entity : results) {
-                initPersistentBags(entity);
+        /* 
+         * suppression of auto-fetch useful in cases where alterProject(String) was called on the generator, which
+         * changed the return type of the result set from List<T> to something else.  in that case, the caller to
+         * this method must, as necessary, perform the fetch manually.
+         */
+        if (automaticFetching) {
+            if (!queryGenerator.getPersistentBagFields().isEmpty()) {
+                for (T entity : results) {
+                    initPersistentBags(entity);
+                }
+            }
+            if (queryGenerator.isProjectionAltered() && !queryGenerator.getJoinFetchFields().isEmpty()) {
+                for (T entity : results) {
+                    initJoinFetchFields(entity);
+                }
             }
         }
 
-        PageControl pageControl = CriteriaQueryGenerator.getPageControl(criteria);
-        PageList<T> pagedResults = new PageList<T>(results, (int) count, pageControl);
-        return pagedResults;
+        return results;
     }
 
-    public void initPersistentBags(Object entity) {
-        for (Field persistentBagField : queryGenerator.getPersistentBagFields()) {
-            List<?> persistentBag = getList(entity, persistentBagField);
-            persistentBag.size();
+    private int getCount() {
+        Query countQuery = queryGenerator.getCountQuery(entityManager);
+        long count = (Long) countQuery.getSingleResult();
+
+        return (int) count;
+    }
+
+    public void initFetchFields(Object entity) {
+        initPersistentBags(entity);
+        if (queryGenerator.isProjectionAltered()) {
+            initJoinFetchFields(entity);
         }
     }
 
-    private List<?> getList(Object entity, Field field) {
+    private void initPersistentBags(Object entity) {
+        for (Field persistentBagField : queryGenerator.getPersistentBagFields()) {
+            initialize(entity, persistentBagField);
+        }
+    }
+
+    private void initJoinFetchFields(Object entity) {
+        for (Field joinFetchField : queryGenerator.getJoinFetchFields()) {
+            initialize(entity, joinFetchField);
+        }
+    }
+
+    private void initialize(Object entity, Field field) {
         try {
             field.setAccessible(true);
-            return (List<?>) field.get(entity);
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-            return null;
+            Hibernate.initialize(field.get(entity));
+        } catch (Exception e) {
+            LOG.warn("Could not initialize " + field);
         }
     }
 

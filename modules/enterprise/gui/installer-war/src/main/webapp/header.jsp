@@ -14,7 +14,7 @@
 
       <meta http-equiv="Pragma"        content="no-cache" />
       <meta http-equiv="Expires"       content="-1" />
-      <meta http-equiv="Cache-control" content="no-cache" />
+      <meta http-equiv="Cache-Control" content="no-cache" />
 
       <%-- we only do our AJAX forwarding to the login page if fully deployed but not on the installer start page --%>
       <c:if test="<%= new ServerInformation().isFullyDeployed() && request.getRequestURI().indexOf("installer/start") == -1 %>">

@@ -47,14 +47,12 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.core.gui.configuration.ConfigurationMaskingUtility;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
-import org.rhq.enterprise.server.content.ContentManagerBean;
 import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.content.ContentUIManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceFactoryManagerLocal;
@@ -120,16 +118,16 @@ public class CreateNewPackageChildResourceUIBean {
 
         //store information about uploaded file for packageDetails as most of it is already available
         Map<String, String> packageUploadDetails = new HashMap<String, String>();
-        packageUploadDetails.put(ContentManagerBean.UPLOAD_FILE_SIZE, String.valueOf(fileItem.getFileSize()));
-        packageUploadDetails.put(ContentManagerBean.UPLOAD_FILE_INSTALL_DATE, String
-            .valueOf(System.currentTimeMillis()));
-        packageUploadDetails.put(ContentManagerBean.UPLOAD_OWNER, user.getName());
-        packageUploadDetails.put(ContentManagerBean.UPLOAD_FILE_NAME, fileItem.getFileName());
+        packageUploadDetails.put(ContentManagerLocal.UPLOAD_FILE_SIZE, String.valueOf(fileItem.getFileSize()));
+        packageUploadDetails.put(ContentManagerLocal.UPLOAD_FILE_INSTALL_DATE, String.valueOf(System
+            .currentTimeMillis()));
+        packageUploadDetails.put(ContentManagerLocal.UPLOAD_OWNER, user.getName());
+        packageUploadDetails.put(ContentManagerLocal.UPLOAD_FILE_NAME, fileItem.getFileName());
 
         try {//Easier to implement here than in server side bean. Shouldn't affect performance too much.
-            packageUploadDetails.put(ContentManagerBean.UPLOAD_MD5, new MessageDigestGenerator(
+            packageUploadDetails.put(ContentManagerLocal.UPLOAD_MD5, new MessageDigestGenerator(
                 MessageDigestGenerator.MD5).calcDigestString(fileItem.getFile()));
-            packageUploadDetails.put(ContentManagerBean.UPLOAD_SHA256, new MessageDigestGenerator(
+            packageUploadDetails.put(ContentManagerLocal.UPLOAD_SHA256, new MessageDigestGenerator(
                 MessageDigestGenerator.SHA_256).calcDigestString(fileItem.getFile()));
         } catch (IOException e1) {
             log.warn("Error calculating file digest(s) : " + e1.getMessage());
@@ -175,7 +173,6 @@ public class CreateNewPackageChildResourceUIBean {
             // Collect data for create call
             Resource parentResource = EnterpriseFacesContextUtility.getResource();
             Configuration deployTimeConfiguration = getConfiguration();
-            ConfigurationMaskingUtility.unmaskConfiguration(deployTimeConfiguration, getConfigurationDefinition());
             String packageName = fileItem.getFileName();
 
             // some browsers (IE in particular) passes an absolute filename, we just want the name of the file, no paths
@@ -303,9 +300,6 @@ public class CreateNewPackageChildResourceUIBean {
         Configuration deployTimeConfiguration = (deployTimeConfigurationTemplates != null) ? deployTimeConfigurationTemplates
             .createConfiguration()
             : new Configuration();
-        if (deployTimeConfiguration != null) {
-            ConfigurationMaskingUtility.maskConfiguration(deployTimeConfiguration, configDef);
-        }
 
         return deployTimeConfiguration;
     }
@@ -320,12 +314,13 @@ public class CreateNewPackageChildResourceUIBean {
      * @return list of failed create history requests
      */
     public SelectItem[] getFailedCreateHistory() {
+        Subject subject = EnterpriseFacesContextUtility.getSubject();
         Resource parentResource = EnterpriseFacesContextUtility.getResource();
 
         ResourceFactoryManagerLocal resourceFactoryManager = LookupUtil.getResourceFactoryManager();
         PageControl pageControl = new PageControl(0, 1000);
-        PageList<CreateResourceHistory> pageList = resourceFactoryManager.findCreateChildResourceHistory(parentResource
-            .getId(), null, null, pageControl);
+        PageList<CreateResourceHistory> pageList = resourceFactoryManager.findCreateChildResourceHistory(subject,
+            parentResource.getId(), null, null, pageControl);
 
         List<SelectItem> selectItemsList = new ArrayList<SelectItem>();
         for (CreateResourceHistory history : pageList) {

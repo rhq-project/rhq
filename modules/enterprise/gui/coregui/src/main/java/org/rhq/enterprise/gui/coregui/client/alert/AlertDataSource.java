@@ -20,7 +20,8 @@ package org.rhq.enterprise.gui.coregui.client.alert;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import com.allen_sauer.gwt.log.client.Log;
@@ -29,12 +30,9 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.core.DataClass;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
-import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
-import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.types.Alignment;
-import com.smartgwt.client.types.AutoFitWidthApproach;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.HoverCustomizer;
@@ -44,10 +42,13 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionLog;
+import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.alert.notification.AlertNotificationLog;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.AlertCriteria;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
@@ -55,22 +56,29 @@ import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.AlertGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.TypesLoadedCallback;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author Ian Springer
  * @author Joseph Marques
  * @author John Mazzitelli
  */
-public class AlertDataSource extends RPCDataSource<Alert> {
+public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
+
+    public static final String PRIORITY_ICON_HIGH = ImageManager.getAlertIcon(AlertPriority.HIGH);
+    public static final String PRIORITY_ICON_MEDIUM = ImageManager.getAlertIcon(AlertPriority.MEDIUM);
+    public static final String PRIORITY_ICON_LOW = ImageManager.getAlertIcon(AlertPriority.LOW);
+
+    public static final String FILTER_PRIORITIES = "priorities";
+
     private AlertGWTServiceAsync alertService = GWTServiceLookup.getAlertService();
 
     private EntityContext entityContext;
-
-    private static final String PRIORITY_ICON_HIGH = ImageManager.getAlertIcon(AlertPriority.HIGH);
-    private static final String PRIORITY_ICON_MEDIUM = ImageManager.getAlertIcon(AlertPriority.MEDIUM);
-    private static final String PRIORITY_ICON_LOW = ImageManager.getAlertIcon(AlertPriority.LOW);
 
     public AlertDataSource() {
         this(EntityContext.forSubsystemView());
@@ -83,15 +91,6 @@ public class AlertDataSource extends RPCDataSource<Alert> {
         addDataSourceFields();
     }
 
-    @Override
-    protected List<DataSourceField> addDataSourceFields() {
-        // for some reason, the client seems to crash if you don't specify any data source fields
-        // even though we know we defined override ListGridFields for all columns.
-        List<DataSourceField> fields = super.addDataSourceFields();
-        fields.add(new DataSourceTextField("name"));
-        return fields;
-    }
-
     /**
      * The view that contains the list grid which will display this datasource's data will call this
      * method to get the field information which is used to control the display of the data.
@@ -101,31 +100,28 @@ public class AlertDataSource extends RPCDataSource<Alert> {
     public ArrayList<ListGridField> getListGridFields() {
         ArrayList<ListGridField> fields = new ArrayList<ListGridField>(6);
 
-        ListGridField ctimeField = new ListGridField(AlertCriteria.SORT_FIELD_CTIME, MSG
-            .view_alerts_field_created_time());
-        ctimeField.setWidth("15%");
-        ctimeField.setAutoFitWidth(true);
-        ctimeField.setAutoFitWidthApproach(AutoFitWidthApproach.TITLE);
+        ListGridField ctimeField = new ListGridField(AlertCriteria.SORT_FIELD_CTIME, MSG.common_title_createTime());
         ctimeField.setCellFormatter(new TimestampCellFormatter());
+        ctimeField.setShowHover(true);
+        ctimeField.setHoverCustomizer(TimestampCellFormatter.getHoverCustomizer(AlertCriteria.SORT_FIELD_CTIME));
         fields.add(ctimeField);
 
-        ListGridField nameField = new ListGridField("name", MSG.view_alerts_field_name());
-        nameField.setWidth("25%");
-        nameField.setAutoFitWidth(true);
-        nameField.setAutoFitWidthApproach(AutoFitWidthApproach.TITLE);
+        ListGridField nameField = new ListGridField("name", MSG.common_title_name());
+        nameField.setCellFormatter(new CellFormatter() {
+            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
+                Integer resourceId = listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID);
+                Integer defId = listGridRecord.getAttributeAsInt("definitionId");
+                String url = LinkManager.getSubsystemAlertDefinitionLink(resourceId, defId);
+                return SeleniumUtility.getLocatableHref(url, o.toString(), null);
+            }
+        });
         fields.add(nameField);
 
         ListGridField conditionField = new ListGridField("conditionText", MSG.view_alerts_field_condition_text());
-        conditionField.setWidth("30%");
-        conditionField.setAutoFitWidth(true);
-        conditionField.setAutoFitWidthApproach(AutoFitWidthApproach.TITLE);
         fields.add(conditionField);
 
         ListGridField priorityField = new ListGridField("priority", MSG.view_alerts_field_priority());
         priorityField.setType(ListGridFieldType.IMAGE);
-        priorityField.setWidth("5%");
-        priorityField.setAutoFitWidth(true);
-        priorityField.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
         priorityField.setAlign(Alignment.CENTER);
         priorityField.setShowHover(true);
         priorityField.setHoverCustomizer(new HoverCustomizer() {
@@ -146,46 +142,86 @@ public class AlertDataSource extends RPCDataSource<Alert> {
         fields.add(priorityField);
 
         ListGridField statusField = new ListGridField("status", MSG.common_title_status());
-        statusField.setWidth("15%");
-        statusField.setAutoFitWidth(true);
-        statusField.setAutoFitWidthApproach(AutoFitWidthApproach.TITLE);
         statusField.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                String ackTime = listGridRecord.getAttribute("acknowledgeTime");
                 String ackSubject = listGridRecord.getAttribute("acknowledgingSubject");
                 if (ackSubject == null) {
-                    return MSG.view_alerts_field_ack_status_empty();
+                    return MSG.view_alerts_field_ack_status_noAck();
                 } else {
-                    String formattedTime = TimestampCellFormatter.DATE_TIME_FORMAT.format(new Date(Long
-                        .parseLong(ackTime)));
-                    return MSG.view_alerts_field_ack_status_filled(ackSubject, formattedTime);
+                    return MSG.view_alerts_field_ack_status_ack(ackSubject);
                 }
+            }
+        });
+        statusField.setShowHover(true);
+        statusField.setHoverCustomizer(new HoverCustomizer() {
+            public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
+                String ackSubject = record.getAttribute("acknowledgingSubject");
+                StringBuilder sb = new StringBuilder("<p");
+                if (ackSubject == null) {
+                    sb.append(" style='width:150px'>");
+                    sb.append(MSG.view_alerts_field_ack_status_noAckHover());
+                } else {
+                    sb.append(" style='width:500px'>");
+                    Date ackTime = record.getAttributeAsDate("acknowledgeTime");
+                    String ackTimeString = TimestampCellFormatter.format(ackTime,
+                        TimestampCellFormatter.DATE_TIME_FORMAT_FULL);
+                    sb.append(MSG.view_alerts_field_ack_status_ackHover(ackSubject, ackTimeString));
+                }
+                sb.append("</p>");
+                return sb.toString();
             }
         });
         fields.add(statusField);
 
         if (this.entityContext.type != EntityContext.Type.Resource) {
-            // TODO need to disambiguate this
-            ListGridField resourceNameField = new ListGridField("resourceName", MSG.view_alerts_field_resource());
-            resourceNameField.setWidth("10%");
-            resourceNameField.setAutoFitWidth(true);
-            resourceNameField.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
+            ListGridField resourceNameField = new ListGridField(AncestryUtil.RESOURCE_NAME, MSG.common_title_resource());
             resourceNameField.setCellFormatter(new CellFormatter() {
                 public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                    Integer resourceId = listGridRecord.getAttributeAsInt("resourceId");
-                    return "<a href=\"" + LinkManager.getResourceLink(resourceId) + "\">" + o + "</a>";
+                    String url = LinkManager
+                        .getResourceLink(listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
+                    return SeleniumUtility.getLocatableHref(url, o.toString(), null);
+                }
+            });
+            resourceNameField.setShowHover(true);
+            resourceNameField.setHoverCustomizer(new HoverCustomizer() {
+
+                public String hoverHTML(Object value, ListGridRecord listGridRecord, int rowNum, int colNum) {
+                    return AncestryUtil.getResourceHoverHTML(listGridRecord, 0);
                 }
             });
             fields.add(resourceNameField);
+
+            ListGridField ancestryField = AncestryUtil.setupAncestryListGridField();
+            fields.add(ancestryField);
+
+            ctimeField.setWidth(100);
+            nameField.setWidth("15%");
+            conditionField.setWidth("35%");
+            priorityField.setWidth(50);
+            statusField.setWidth(100);
+            resourceNameField.setWidth("25%");
+            ancestryField.setWidth("25%");
+        } else {
+            ctimeField.setWidth(200);
+            nameField.setWidth("15%");
+            conditionField.setWidth("60%");
+            priorityField.setWidth(50);
+            statusField.setWidth("25%");
         }
 
         return fields;
     }
 
-    protected void executeFetch(final DSRequest request, final DSResponse response) {
-        final long start = System.currentTimeMillis();
+    @Override
+    protected void executeFetch(final DSRequest request, final DSResponse response, final AlertCriteria criteria) {
+        if (criteria == null) {
+            // the user selected no priorities in the filter - it makes sense from the UI perspective to show 0 rows
+            response.setTotalRows(0);
+            processResponse(request.getRequestId(), response);
+            return;
+        }
 
-        AlertCriteria criteria = getCriteria(request);
+        final long start = System.currentTimeMillis();
 
         this.alertService.findAlertsByCriteria(criteria, new AsyncCallback<PageList<Alert>>() {
 
@@ -198,23 +234,114 @@ public class AlertDataSource extends RPCDataSource<Alert> {
             public void onSuccess(PageList<Alert> result) {
                 long fetchTime = System.currentTimeMillis() - start;
                 Log.info(result.size() + " alerts fetched in: " + fetchTime + "ms");
-                response.setData(buildRecords(result));
-                // For paging to work, we have to specify size of full result set.
-                response.setTotalRows(result.getTotalSize());
-                processResponse(request.getRequestId(), response);
+
+                dataRetrieved(result, response, request);
             }
         });
     }
 
-    protected AlertCriteria getCriteria(DSRequest request) {
+    /**
+     * Additional processing to support entity-specific or cross-resource views, and something that can be overidden.
+     */
+    protected void dataRetrieved(final PageList<Alert> result, final DSResponse response, final DSRequest request) {
+        switch (entityContext.type) {
+
+        // no need to disambiguate, the alerts are for a singe resource
+        case Resource:
+            response.setData(buildRecords(result));
+            // for paging to work we have to specify size of full result set
+            response.setTotalRows(getTotalRows(result, response, request));
+            processResponse(request.getRequestId(), response);
+            break;
+
+        // disambiguate as the results could be cross-resource
+        default:
+            Set<Integer> typesSet = new HashSet<Integer>();
+            Set<String> ancestries = new HashSet<String>();
+            for (Alert alert : result) {
+                Resource resource = alert.getAlertDefinition().getResource();
+                typesSet.add(resource.getResourceType().getId());
+                ancestries.add(resource.getAncestry());
+            }
+
+            // In addition to the types of the result resources, get the types of their ancestry
+            typesSet.addAll(AncestryUtil.getAncestryTypeIds(ancestries));
+
+            ResourceTypeRepository typeRepo = ResourceTypeRepository.Cache.getInstance();
+            typeRepo.getResourceTypes(typesSet.toArray(new Integer[typesSet.size()]), new TypesLoadedCallback() {
+                @Override
+                public void onTypesLoaded(Map<Integer, ResourceType> types) {
+                    // Smartgwt has issues storing a Map as a ListGridRecord attribute. Wrap it in a pojo.                
+                    AncestryUtil.MapWrapper typesWrapper = new AncestryUtil.MapWrapper(types);
+
+                    Record[] records = buildRecords(result);
+                    for (Record record : records) {
+                        // To avoid a lot of unnecessary String construction, be lazy about building ancestry hover text.
+                        // Store the types map off the records so we can build a detailed hover string as needed.                      
+                        record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY_TYPES, typesWrapper);
+
+                        // Build the decoded ancestry Strings now for display
+                        record
+                            .setAttribute(AncestryUtil.RESOURCE_ANCESTRY_VALUE, AncestryUtil.getAncestryValue(record));
+                    }
+                    response.setData(records);
+                    // for paging to work we have to specify size of full result set
+                    response.setTotalRows(getTotalRows(result, response, request));
+                    processResponse(request.getRequestId(), response);
+                }
+            });
+        }
+    }
+
+    /**
+     * Sub-classes can override this to add fine-grained control over the result set size. By default the
+     * total rows are set to the total result set for the query, allowing proper paging.  But some views (portlets)
+     * may want to limit results to a small set (like most recent).  
+     * @param result
+     * @param response
+     * @param request
+     * 
+     * @return should not exceed result.getTotalSize(). 
+     */
+    protected int getTotalRows(final PageList<Alert> result, final DSResponse response, final DSRequest request) {
+
+        return result.getTotalSize();
+    }
+
+    @Override
+    protected AlertCriteria getFetchCriteria(DSRequest request) {
+        AlertPriority[] prioritiesFilter = getArrayFilter(request, FILTER_PRIORITIES, AlertPriority.class);
+
+        if (prioritiesFilter == null || prioritiesFilter.length == 0) {
+            return null; // user didn't select any priorities - return null to indicate no data should be displayed
+        }
+
         AlertCriteria criteria = new AlertCriteria();
         criteria.setPageControl(getPageControl(request));
 
-        criteria.addFilterPriorities(getArrayFilter(request, "severities", AlertPriority.class));
+        criteria.addFilterPriorities(prioritiesFilter);
         criteria.addFilterEntityContext(entityContext);
         criteria.fetchConditionLogs(true);
 
         return criteria;
+    }
+
+    @Override
+    protected String getSortFieldForColumn(String columnName) {
+        if (AncestryUtil.RESOURCE_ANCESTRY.equals(columnName)) {
+            return "alertDefinition.resource.ancestry";
+        }
+        if ("status".equals(columnName)) {
+            return "acknowledgeTime";
+        }
+        if ("conditionText".equals(columnName)) {
+            // Note: I don't think this should even be getting called, but it is. We already setCanSortClientOnly(true)
+            // on this ListGridField. To me that should mean any sorting done client side on this field should
+            // not be passed in on the Request, but it seems to be...
+            return null;
+        }
+
+        return super.getSortFieldForColumn(columnName);
     }
 
     @Override
@@ -230,14 +357,25 @@ public class AlertDataSource extends RPCDataSource<Alert> {
     public static ListGridRecord convert(Alert from) {
         ListGridRecord record = new ListGridRecord();
         record.setAttribute("id", from.getId());
-        record.setAttribute("ctime", from.getCtime());
-        record.setAttribute("acknowledgeTime", from.getAcknowledgeTime());
+        record.setAttribute("ctime", new Date(from.getCtime()));
+        if (from.getAcknowledgeTime() != null && from.getAcknowledgeTime().longValue() > 0) {
+            record.setAttribute("acknowledgeTime", new Date(from.getAcknowledgeTime().longValue()));
+        }
         record.setAttribute("acknowledgingSubject", from.getAcknowledgingSubject());
 
-        record.setAttribute("resourceId", from.getAlertDefinition().getResource().getId());
-        record.setAttribute("resourceName", from.getAlertDefinition().getResource().getName());
-        record.setAttribute("name", from.getAlertDefinition().getName());
-        record.setAttribute("priority", ImageManager.getAlertIcon(from.getAlertDefinition().getPriority()));
+        AlertDefinition alertDefinition = from.getAlertDefinition();
+
+        record.setAttribute("definitionId", alertDefinition.getId());
+        Resource resource = alertDefinition.getResource();
+        record.setAttribute("name", alertDefinition.getName());
+        record.setAttribute("description", alertDefinition.getDescription());
+        record.setAttribute("priority", ImageManager.getAlertIcon(alertDefinition.getPriority()));
+
+        // for ancestry handling       
+        record.setAttribute(AncestryUtil.RESOURCE_ID, resource.getId());
+        record.setAttribute(AncestryUtil.RESOURCE_NAME, resource.getName());
+        record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY, resource.getAncestry());
+        record.setAttribute(AncestryUtil.RESOURCE_TYPE_ID, resource.getResourceType().getId());
 
         Set<AlertConditionLog> conditionLogs = from.getConditionLogs();
         String conditionText;
@@ -251,8 +389,13 @@ public class AlertDataSource extends RPCDataSource<Alert> {
             conditionText = AlertFormatUtility.formatAlertConditionForDisplay(condition);
             conditionValue = conditionLog.getValue();
             if (condition.getMeasurementDefinition() != null) {
-                conditionValue = MeasurementConverterClient.format(Double.valueOf(conditionLog.getValue()), condition
-                    .getMeasurementDefinition().getUnits(), true);
+                try {
+                    conditionValue = MeasurementConverterClient.format(Double.valueOf(conditionLog.getValue()),
+                        condition.getMeasurementDefinition().getUnits(), true);
+                } catch (Exception e) {
+                    // the condition log value was probably not a number (most likely a trait). Ignore this exception.
+                    // even if any other errors occur trying to format the value, ignore this and just use the raw value string
+                }
             }
         } else {
             conditionText = MSG.view_alerts_field_condition_text_none();
@@ -270,14 +413,19 @@ public class AlertDataSource extends RPCDataSource<Alert> {
             dc.setAttribute("text", AlertFormatUtility.formatAlertConditionForDisplay(condition));
             String value = log.getValue();
             if (condition.getMeasurementDefinition() != null) {
-                value = MeasurementConverterClient.format(Double.valueOf(log.getValue()), condition
-                    .getMeasurementDefinition().getUnits(), true);
+                try {
+                    value = MeasurementConverterClient.format(Double.valueOf(log.getValue()), condition
+                        .getMeasurementDefinition().getUnits(), true);
+                } catch (Exception e) {
+                    // the condition log value was probably not a number (most likely a trait). Ignore this exception.
+                    // even if any other errors occur trying to format the value, ignore this and just use the raw value string
+                }
             }
             dc.setAttribute("value", value);
             conditions[i++] = dc;
         }
         record.setAttribute("conditionLogs", conditions);
-        record.setAttribute("conditionExpression", from.getAlertDefinition().getConditionExpression());
+        record.setAttribute("conditionExpression", alertDefinition.getConditionExpression());
 
         String recoveryInfo = AlertFormatUtility.getAlertRecoveryInfo(from);
         record.setAttribute("recoveryInfo", recoveryInfo);
@@ -288,7 +436,7 @@ public class AlertDataSource extends RPCDataSource<Alert> {
         for (AlertNotificationLog log : from.getAlertNotificationLogs()) {
             DataClass dc = new DataClass();
             dc.setAttribute("sender", log.getSender());
-            dc.setAttribute("status", log.getResultState());
+            dc.setAttribute("status", log.getResultState().name());
             dc.setAttribute("message", log.getMessage());
 
             notifications[i++] = dc;
@@ -305,4 +453,13 @@ public class AlertDataSource extends RPCDataSource<Alert> {
     public AlertGWTServiceAsync getAlertService() {
         return alertService;
     }
+
+    protected EntityContext getEntityContext() {
+        return entityContext;
+    }
+
+    protected void setEntityContext(EntityContext entityContext) {
+        this.entityContext = entityContext;
+    }
+
 }

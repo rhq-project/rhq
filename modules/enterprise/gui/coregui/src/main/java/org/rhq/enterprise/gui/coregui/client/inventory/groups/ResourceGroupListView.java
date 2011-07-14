@@ -27,33 +27,48 @@ import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGro
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.Alignment;
-import com.smartgwt.client.types.AutoFitWidthApproach;
+import com.smartgwt.client.types.Overflow;
+import com.smartgwt.client.widgets.events.ClickEvent;
+import com.smartgwt.client.widgets.events.ClickHandler;
+import com.smartgwt.client.widgets.events.CloseClickHandler;
+import com.smartgwt.client.widgets.events.CloseClientEvent;
+import com.smartgwt.client.widgets.events.DoubleClickEvent;
+import com.smartgwt.client.widgets.events.DoubleClickHandler;
 import com.smartgwt.client.widgets.grid.CellFormatter;
+import com.smartgwt.client.widgets.grid.HoverCustomizer;
+import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-import com.smartgwt.client.widgets.grid.events.CellDoubleClickEvent;
-import com.smartgwt.client.widgets.grid.events.CellDoubleClickHandler;
 
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.resource.group.GroupCategory;
+import org.rhq.core.domain.search.SearchSubsystem;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
+import org.rhq.enterprise.gui.coregui.client.components.table.AuthorizedTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.wizard.GroupCreateWizard;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.ResourceResourceGroupsView;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author Greg Hinkle
  * @author Joseph Marques
  */
-public class ResourceGroupListView extends Table {
+public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSource> {
 
     private static final String DEFAULT_TITLE = MSG.view_inventory_groups_resourceGroups();
+
+    // our static factory method will set this to a non-null resource ID if the user can modify that resource's group membership
+    private Integer resourceIdToModify = null;
 
     private boolean showDeleteButton = true;
     private boolean showNewButton = true;
@@ -88,41 +103,27 @@ public class ResourceGroupListView extends Table {
     @Override
     protected void configureTable() {
         ListGridField idField = new ListGridField("id", MSG.common_title_id());
-        idField.setWidth("10");
+        idField.setWidth(50);
 
-        ListGridField nameField = new ListGridField(NAME.propertyName(), NAME.title());
-        nameField.setWidth("10%");
-
-        nameField.setCellFormatter(new CellFormatter() {
-            public String format(Object value, ListGridRecord record, int i, int i1) {
-                String groupId = record.getAttribute("id");
-                String groupUrl = LinkManager.getResourceGroupLink(Integer.valueOf(groupId));
-                return SeleniumUtility.getLocatableHref(groupUrl, value.toString(), null);
-            }
-        });
-
-        ListGridField descriptionField = new ListGridField(DESCRIPTION.propertyName(), DESCRIPTION.title());
-        descriptionField.setWidth("10%");
-
-        ListGridField typeNameField = new ListGridField(TYPE.propertyName(), TYPE.title());
-        typeNameField.setWidth("1");
-        typeNameField.setAutoFitWidth(true);
-        typeNameField.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
-
-        ListGridField pluginNameField = new ListGridField(PLUGIN.propertyName(), PLUGIN.title());
-        pluginNameField.setWidth("1");
-        pluginNameField.setAutoFitWidth(true);
-        pluginNameField.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
-
-        ListGridField categoryField = new ListGridField(CATEGORY.propertyName(), CATEGORY.title());
-        categoryField.setWidth("1");
-        categoryField.setAutoFitWidth(true);
-        categoryField.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
+        ListGridField categoryField = new ListGridField(CATEGORY.propertyName());
+        categoryField.setTitle("&nbsp;");
+        categoryField.setWidth(25);
+        categoryField.setAlign(Alignment.CENTER);
         categoryField.setCellFormatter(new CellFormatter() {
             public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
                 String categoryName = (String) value;
                 GroupCategory category = GroupCategory.valueOf(categoryName);
-                String displayName = "";
+                String icon = ImageManager.getGroupIcon(category);
+                return "<img src=\"" + ImageManager.getFullImagePath(icon) + "\" />";
+            }
+        });
+        categoryField.setShowHover(true);
+        categoryField.setHoverCustomizer(new HoverCustomizer() {
+            @Override
+            public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
+                String categoryName = record.getAttribute(CATEGORY.propertyName());
+                GroupCategory category = GroupCategory.valueOf(categoryName);
+                String displayName = null;
                 switch (category) {
                 case COMPATIBLE:
                     displayName = MSG.view_group_summary_compatible();
@@ -135,6 +136,26 @@ public class ResourceGroupListView extends Table {
             }
         });
 
+        ListGridField nameField = new ListGridField(NAME.propertyName(), NAME.title());
+        nameField.setWidth("40%");
+
+        nameField.setCellFormatter(new CellFormatter() {
+            public String format(Object value, ListGridRecord record, int i, int i1) {
+                String groupId = record.getAttribute("id");
+                String groupUrl = LinkManager.getResourceGroupLink(Integer.valueOf(groupId));
+                return SeleniumUtility.getLocatableHref(groupUrl, value.toString(), null);
+            }
+        });
+
+        ListGridField descriptionField = new ListGridField(DESCRIPTION.propertyName(), DESCRIPTION.title());
+        descriptionField.setWidth("30%");
+
+        ListGridField typeNameField = new ListGridField(TYPE.propertyName(), TYPE.title());
+        typeNameField.setWidth("10%");
+
+        ListGridField pluginNameField = new ListGridField(PLUGIN.propertyName(), PLUGIN.title());
+        pluginNameField.setWidth("10%");
+
         ListGridField availabilityChildrenField = new ListGridField("availabilityChildren", MSG
             .view_inventory_groups_children(), 120); // 120 due to the html in ResourceGroupCompositeDataSource.getAlignedAvailabilityResults
         availabilityChildrenField.setWrap(false);
@@ -145,12 +166,12 @@ public class ResourceGroupListView extends Table {
         availabilityDescendantsField.setWrap(false);
         availabilityDescendantsField.setAlign(Alignment.CENTER);
 
-        setListGridFields(nameField, descriptionField, typeNameField, pluginNameField, categoryField,
+        setListGridFields(idField, categoryField, nameField, descriptionField, typeNameField, pluginNameField,
             availabilityChildrenField, availabilityDescendantsField);
 
         if (this.showDeleteButton) {
             addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), MSG.common_msg_areYouSure(),
-                new AbstractTableAction(TableActionEnablement.ANY) {
+                new AuthorizedTableAction(this, TableActionEnablement.ANY, Permission.MANAGE_INVENTORY) {
                     public void executeAction(ListGridRecord[] selections, Object actionValue) {
                         int[] groupIds = new int[selections.length];
                         int index = 0;
@@ -176,28 +197,85 @@ public class ResourceGroupListView extends Table {
         }
 
         if (this.showNewButton) {
-            addTableAction(extendLocatorId("New"), MSG.common_button_new(), new AbstractTableAction() {
+            addTableAction(extendLocatorId("New"), MSG.common_button_new(), new AuthorizedTableAction(this,
+                Permission.MANAGE_INVENTORY) {
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     new GroupCreateWizard(ResourceGroupListView.this).startWizard();
                 }
             });
         }
 
-        //adding cell double click handler
-        getListGrid().addCellDoubleClickHandler(new CellDoubleClickHandler() {
-            @Override
-            public void onCellDoubleClick(CellDoubleClickEvent event) {
-                CoreGUI.goToView("ResourceGroup/" + event.getRecord().getAttribute("id"));
+        if (this.resourceIdToModify != null) {
+            addTableAction(extendLocatorId("Membership"), MSG.view_tabs_common_group_membership() + "...",
+                new AbstractTableAction(TableActionEnablement.ALWAYS) {
+                    @Override
+                    public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                        final LocatableWindow winModal = new LocatableWindow(extendLocatorId("MembershipWindow"));
+                        winModal.setTitle(MSG.view_tabs_common_group_membership());
+                        winModal.setOverflow(Overflow.VISIBLE);
+                        winModal.setShowMinimizeButton(false);
+                        winModal.setIsModal(true);
+                        winModal.setShowModalMask(true);
+                        winModal.setWidth(700);
+                        winModal.setHeight(450);
+                        winModal.setAutoCenter(true);
+                        winModal.setShowResizer(true);
+                        winModal.setCanDragResize(true);
+                        winModal.centerInPage();
+                        winModal.addCloseClickHandler(new CloseClickHandler() {
+                            @Override
+                            public void onCloseClick(CloseClientEvent event) {
+                                winModal.markForDestroy();
+                            }
+                        });
+
+                        ResourceResourceGroupsView membershipView = new ResourceResourceGroupsView(
+                            ResourceGroupListView.this.extendLocatorId("MembershipView"),
+                            ResourceGroupListView.this.resourceIdToModify.intValue());
+
+                        membershipView.setSaveButtonHandler(new ClickHandler() {
+                            @Override
+                            public void onClick(ClickEvent event) {
+                                winModal.markForDestroy();
+                                CoreGUI.refresh();
+                            }
+                        });
+
+                        winModal.addItem(membershipView);
+                        winModal.show();
+                    }
+                });
+        }
+
+        setListGridDoubleClickHandler(new DoubleClickHandler() {
+            public void onDoubleClick(DoubleClickEvent event) {
+                ListGrid listGrid = (ListGrid) event.getSource();
+                ListGridRecord[] selectedRows = listGrid.getSelection();
+                if (selectedRows != null && selectedRows.length == 1) {
+                    String selectedId = selectedRows[0].getAttribute("id");
+                    CoreGUI.goToView(LinkManager.getResourceGroupLink(Integer.valueOf(selectedId)));
+                }
             }
         });
-
     }
 
     // -------- Static Utility loaders ------------
 
-    public static ResourceGroupListView getGroupsOf(String locatorId, int explicitResourceId) {
-        return new ResourceGroupListView(locatorId, new Criteria("explicitResourceId", String
+    public static ResourceGroupListView getGroupsOf(String locatorId, int explicitResourceId,
+        boolean canModifyMembership) {
+
+        ResourceGroupListView view = new ResourceGroupListView(locatorId, new Criteria("explicitResourceId", String
             .valueOf(explicitResourceId)), MSG.view_inventory_groups_resourceGroups());
+        if (canModifyMembership) {
+            view.resourceIdToModify = Integer.valueOf(explicitResourceId);
+        }
+
+        return view;
+    }
+
+    @Override
+    protected SearchSubsystem getSearchSubsystem() {
+        return SearchSubsystem.GROUP;
     }
 
 }

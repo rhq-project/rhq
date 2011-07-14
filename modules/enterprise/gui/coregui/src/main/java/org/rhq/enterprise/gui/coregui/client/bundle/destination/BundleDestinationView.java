@@ -27,6 +27,8 @@ import java.util.HashSet;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.util.BooleanCallback;
+import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
@@ -41,8 +43,8 @@ import org.rhq.core.domain.criteria.BundleDestinationCriteria;
 import org.rhq.core.domain.tagging.Tag;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
-import org.rhq.enterprise.gui.coregui.client.Breadcrumb;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.bundle.deploy.BundleDeployWizard;
@@ -55,6 +57,7 @@ import org.rhq.enterprise.gui.coregui.client.components.tagging.TagEditorView;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagsChangedCallback;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
@@ -64,18 +67,19 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Greg Hinkle
  */
 public class BundleDestinationView extends LocatableVLayout implements BookmarkableView {
-    private BundleGWTServiceAsync bundleService;
-
     private BundleDestination destination;
     private Bundle bundle;
 
     private Canvas detail;
 
-    public BundleDestinationView(String locatorId) {
+    private boolean canManageBundles;
+
+    public BundleDestinationView(String locatorId, boolean canManageBundles) {
         super(locatorId);
+        this.canManageBundles = canManageBundles;
         setWidth100();
         setHeight100();
-        setMargin(10);
+        //setMargin(10); // do not set margin, we already have our margin set outside of us
     }
 
     private void viewBundleDestination(BundleDestination bundleDestination, ViewId current) {
@@ -85,25 +89,73 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
         this.destination = bundleDestination;
         this.bundle = bundleDestination.getBundle();
 
-        addMember(new BackButton(extendLocatorId("BackButton"), MSG.view_bundle_dest_backToBundle() + ": "
-            + bundle.getName(), "Bundles/Bundle/" + bundle.getId()));
+        BackButton backButton = new BackButton(extendLocatorId("BackButton"), MSG.view_bundle_dest_backToBundle()
+            + ": " + StringUtility.escapeHtml(bundle.getName()), "Bundles/Bundle/" + bundle.getId());
 
-        addMember(new HeaderLabel(Canvas.getImgURL("subsystems/bundle/BundleDestination_24.png"), destination.getName()));
+        HeaderLabel header = new HeaderLabel(Canvas.getImgURL("subsystems/bundle/BundleDestination_24.png"),
+            StringUtility.escapeHtml(destination.getName()));
 
-        LocatableDynamicForm form = new LocatableDynamicForm(getLocatorId());
+        detail = new Canvas();
+        detail.setHeight("50%");
+        detail.hide();
+
+        addMember(backButton);
+        addMember(header);
+        addMember(createTagEditor());
+        addMember(createSummaryForm());
+        addMember(createDeploymentsTable());
+        addMember(detail);
+    }
+
+    private LocatableDynamicForm createSummaryForm() {
+        LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("Summary"));
         form.setWidth100();
-        form.setNumCols(4);
-        form.setColWidths("20%", "30%", "25%", "25%");
+        form.setColWidths("20%", "40%", "40%");
+        form.setNumCols(3);
+        form.setAutoHeight();
+        form.setWrapItemTitles(false);
+        form.setExtraSpace(10);
+        form.setIsGroup(true);
+        form.setGroupTitle(MSG.common_title_summary());
+        form.setPadding(5);
 
         LinkItem bundleName = new LinkItem("bundle");
         bundleName.setTitle(MSG.view_bundle_bundle());
-        bundleName.setValue("#Bundles/Bundle/" + bundle.getId());
-        bundleName.setLinkTitle(bundle.getName());
+        bundleName.setValue(LinkManager.getBundleLink(bundle.getId()));
+        bundleName.setLinkTitle(StringUtility.escapeHtml(bundle.getName()));
         bundleName.setTarget("_self");
 
-        CanvasItem tagItem = new CanvasItem("tag");
-        tagItem.setShowTitle(false);
-        TagEditorView tagEditor = new TagEditorView(form.extendLocatorId("Tags"), destination.getTags(), false,
+        CanvasItem actionItem = new CanvasItem("actions");
+        actionItem.setColSpan(1);
+        actionItem.setRowSpan(5);
+        actionItem.setShowTitle(false);
+        actionItem.setCanvas(getActionLayout(form.extendLocatorId("actions")));
+
+        StaticTextItem created = new StaticTextItem("created", MSG.view_bundle_dest_created());
+        created.setValue(new Date(destination.getCtime()));
+
+        LinkItem destinationGroup = new LinkItem("group");
+        destinationGroup.setTitle(MSG.view_bundle_dest_group());
+        destinationGroup.setValue(LinkManager.getResourceGroupLink(destination.getGroup().getId()));
+        destinationGroup.setLinkTitle(StringUtility.escapeHtml(destination.getGroup().getName()));
+        destinationGroup.setTarget("_self");
+
+        StaticTextItem baseDirName = new StaticTextItem("baseDir", MSG.view_bundle_dest_baseDirName());
+        baseDirName.setValue(destination.getDestinationBaseDirectoryName());
+
+        StaticTextItem path = new StaticTextItem("path", MSG.view_bundle_dest_deployDir());
+        path.setValue(destination.getDeployDir());
+
+        StaticTextItem description = new StaticTextItem("description", MSG.common_title_description());
+        description.setValue(StringUtility.escapeHtml(destination.getDescription()));
+
+        form.setFields(bundleName, actionItem, created, destinationGroup, baseDirName, path, description);
+        return form;
+    }
+
+    private TagEditorView createTagEditor() {
+        boolean readOnly = !this.canManageBundles;
+        TagEditorView tagEditor = new TagEditorView(extendLocatorId("Tags"), destination.getTags(), readOnly,
             new TagsChangedCallback() {
                 public void tagsChanged(HashSet<Tag> tags) {
                     GWTServiceLookup.getTagService().updateBundleDestinationTags(destination.getId(), tags,
@@ -119,45 +171,13 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
                         });
                 }
             });
-        tagEditor.setVertical(true);
-        tagItem.setCanvas(tagEditor);
-        tagItem.setRowSpan(4);
-
-        CanvasItem actionItem = new CanvasItem("actions");
-        actionItem.setShowTitle(false);
-        actionItem.setCanvas(getActionLayout(form.extendLocatorId("actions")));
-        actionItem.setRowSpan(4);
-
-        StaticTextItem created = new StaticTextItem("created", MSG.view_bundle_dest_created());
-        created.setValue(new Date(destination.getCtime()));
-
-        LinkItem destinationGroup = new LinkItem("group");
-        destinationGroup.setTitle(MSG.view_bundle_dest_group());
-        destinationGroup.setValue("#ResourceGroup/" + destination.getGroup().getId());
-        destinationGroup.setLinkTitle(destination.getGroup().getName());
-        destinationGroup.setTarget("_self");
-
-        StaticTextItem path = new StaticTextItem("path", MSG.view_bundle_dest_deployDir());
-        path.setValue(destination.getDeployDir());
-
-        form.setFields(bundleName, tagItem, actionItem, created, destinationGroup, path);
-
-        addMember(form);
-
-        Table deployments = createDeploymentsTable();
-        deployments.setHeight100();
-        deployments.setShowResizeBar(true);
-        addMember(createDeploymentsTable());
-
-        detail = new Canvas();
-        detail.setHeight("50%");
-        detail.hide();
-        addMember(detail);
+        tagEditor.setAutoHeight();
+        tagEditor.setExtraSpace(10);
+        return tagEditor;
     }
 
     private Canvas getActionLayout(String locatorId) {
-        LocatableVLayout actionLayout = new LocatableVLayout(locatorId);
-        actionLayout.setMembersMargin(10);
+        LocatableVLayout actionLayout = new LocatableVLayout(locatorId, 10);
         IButton deployButton = new LocatableIButton(actionLayout.extendLocatorId("Deploy"), MSG.view_bundle_deploy());
         deployButton.setIcon("subsystems/bundle/BundleAction_Deploy_16.png");
         deployButton.addClickHandler(new ClickHandler() {
@@ -171,71 +191,101 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
         revertButton.setIcon("subsystems/bundle/BundleAction_Revert_16.png");
         revertButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                new BundleRevertWizard(destination).startWizard();
+                SC.ask(MSG.view_bundle_dest_revertConfirm(), new BooleanCallback() {
+                    public void execute(Boolean aBoolean) {
+                        if (aBoolean) {
+                            new BundleRevertWizard(destination).startWizard();
+                        }
+                    }
+                });
             }
         });
         actionLayout.addMember(revertButton);
+
+        IButton purgeButton = new LocatableIButton(actionLayout.extendLocatorId("Purge"), MSG.view_bundle_purge());
+        purgeButton.setIcon("subsystems/bundle/BundleDestinationAction_Purge_16.png");
+        purgeButton.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent clickEvent) {
+                SC.ask(MSG.view_bundle_dest_purgeConfirm(), new BooleanCallback() {
+                    public void execute(Boolean aBoolean) {
+                        if (aBoolean) {
+                            BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService(600000); // 10m should be enough right?
+                            bundleService.purgeBundleDestination(destination.getId(), new AsyncCallback<Void>() {
+                                @Override
+                                public void onFailure(Throwable caught) {
+                                    CoreGUI.getErrorHandler().handleError(
+                                        MSG.view_bundle_dest_purgeFailure(destination.getName()), caught);
+                                }
+
+                                @Override
+                                public void onSuccess(Void result) {
+                                    CoreGUI.getMessageCenter().notify(
+                                        new Message(MSG.view_bundle_dest_purgeSuccessful(destination.getName()),
+                                            Message.Severity.Info));
+                                    // Bundle destination is purged, go back to bundle destination view
+                                    CoreGUI.goToView(LinkManager.getBundleDestinationLink(bundle.getId(), destination
+                                        .getId()), true);
+                                }
+                            });
+                        }
+                    }
+                });
+            }
+        });
+        actionLayout.addMember(purgeButton);
+
+        IButton deleteButton = new LocatableIButton(actionLayout.extendLocatorId("Delete"), MSG.common_button_delete());
+        deleteButton.setIcon("subsystems/bundle/BundleDestinationAction_Delete_16.png");
+        deleteButton.addClickHandler(new ClickHandler() {
+            @Override
+            public void onClick(ClickEvent event) {
+                SC.ask(MSG.view_bundle_dest_deleteConfirm(), new BooleanCallback() {
+                    public void execute(Boolean aBoolean) {
+                        if (aBoolean) {
+                            BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService();
+                            bundleService.deleteBundleDestination(destination.getId(), new AsyncCallback<Void>() {
+                                public void onFailure(Throwable caught) {
+                                    CoreGUI.getErrorHandler().handleError(
+                                        MSG.view_bundle_dest_deleteFailure(destination.getName()), caught);
+                                }
+
+                                public void onSuccess(Void result) {
+                                    CoreGUI.getMessageCenter().notify(
+                                        new Message(MSG.view_bundle_dest_deleteSuccessful(destination.getName()),
+                                            Message.Severity.Info));
+                                    // Bundle destination is deleted, go back to bundle destinations root view
+                                    CoreGUI.goToView(LinkManager.getBundleDestinationLink(bundle.getId(), 0), true);
+                                }
+                            });
+                        }
+                    }
+                });
+            }
+        });
+        actionLayout.addMember(deleteButton);
+
+        if (!canManageBundles) {
+            deployButton.setDisabled(true);
+            revertButton.setDisabled(true);
+            purgeButton.setDisabled(true);
+            deleteButton.setDisabled(true);
+        }
+
         return actionLayout;
     }
 
     private Table createDeploymentsTable() {
-
         Criteria criteria = new Criteria();
         criteria.addCriteria("bundleDestinationId", destination.getId());
-
-        return new BundleDeploymentListView(extendLocatorId("Deployments"), criteria);
-
-        /* Table table = new Table("Deployment History");
-
-         ListGridField name = new ListGridField("name", "Name");
-         name.setCellFormatter(new CellFormatter() {
-             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                 return "<a href=\"#Bundles/Bundle/" + bundle.getId() + "/deployments/"
-                         + listGridRecord.getAttribute("id") + "\">" + o + "</a>";
-             }
-         });
-
-         ListGridField version = new ListGridField("version", "Version");
-         ListGridField description = new ListGridField("description", "Description");
-         ListGridField installDate = new ListGridField("installDate", "Install Date");
-         ListGridField status = new ListGridField("status", "Status");
-         HashMap<String, String> statusIcons = new HashMap<String, String>();
-         statusIcons.put(BundleDeploymentStatus.IN_PROGRESS.name(), "subsystems/bundle/install-loader.gif");
-         statusIcons.put(BundleDeploymentStatus.FAILURE.name(), "subsystems/bundle/Warning_11.png");
-         statusIcons.put(BundleDeploymentStatus.MIXED.name(), "subsystems/bundle/Warning_11.png");
-         statusIcons.put(BundleDeploymentStatus.WARN.name(), "subsystems/bundle/Warning_11.png");
-         statusIcons.put(BundleDeploymentStatus.SUCCESS.name(), "subsystems/bundle/Ok_11.png");
-         status.setValueIcons(statusIcons);
-         status.setValueIconHeight(11);
-         status.setWidth(80);
-
-
-         table.getListGrid().setFields(name, version, description, installDate, status);
-
-         ArrayList<ListGridRecord> records = new ArrayList<ListGridRecord>();
-         for (BundleDeployment rd : destination.getDeployments()) {
-             ListGridRecord record = new ListGridRecord();
-
-             record.setAttribute("name", rd.getName());
-             record.setAttribute("description", rd.getDescription());
-             record.setAttribute("bundleId", bundle.getId());
-             record.setAttribute("version", rd.getBundleVersion().getName());
-             record.setAttribute("status", rd.getStatus().name());
-             record.setAttribute("id", rd.getId());
-             record.setAttribute("entity", rd);
-             record.setAttribute("installDate", new Date(rd.getCtime()));
-             records.add(record);
-         }
-
-         table.getListGrid().setData(records.toArray(new ListGridRecord[records.size()]));
-
-         return table;*/
+        BundleDeploymentListView deployments = new BundleDeploymentListView(extendLocatorId("Deployments"), criteria,
+            canManageBundles);
+        deployments.setHeight100();
+        deployments.setShowResizeBar(true);
+        return deployments;
     }
 
     public void renderView(final ViewPath viewPath) {
         int bundleDestinationId = Integer.parseInt(viewPath.getCurrent().getPath());
-
-        final ViewId viewId = viewPath.getCurrent();
 
         BundleDestinationCriteria criteria = new BundleDestinationCriteria();
         criteria.addFilterId(bundleDestinationId);
@@ -243,26 +293,17 @@ public class BundleDestinationView extends LocatableVLayout implements Bookmarka
         criteria.fetchDeployments(true);
         criteria.fetchTags(true);
 
-        bundleService = GWTServiceLookup.getBundleService();
+        BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService();
         bundleService.findBundleDestinationsByCriteria(criteria, new AsyncCallback<PageList<BundleDestination>>() {
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError(MSG.view_bundle_dest_loadFailure(), caught);
             }
 
             public void onSuccess(PageList<BundleDestination> result) {
-
                 final BundleDestination destination = result.get(0);
-
-                viewPath.getViewForIndex(2).getBreadcrumbs().set(0,
-                    new Breadcrumb(String.valueOf(destination.getBundle().getId()), destination.getBundle().getName()));
-                viewId.getBreadcrumbs().set(0,
-                    new Breadcrumb(String.valueOf(destination.getId()), destination.getName()));
-                CoreGUI.refreshBreadCrumbTrail();
-
                 viewBundleDestination(destination, viewPath.getCurrent());
             }
         });
-
     }
 
 }

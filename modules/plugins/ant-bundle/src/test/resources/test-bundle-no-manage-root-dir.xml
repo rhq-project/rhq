@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+
+<project name="simple-build" default="main"
+         xmlns:rhq="antlib:org.rhq.bundle">
+
+    <rhq:bundle name="testNoManageRootDirBundle" version="1.0">
+        <rhq:deployment-unit name="simulated-war" manageRootDir="false">
+            <rhq:file name="zero.properties" destinationFile="zero.properties"/>
+            <rhq:file name="one.properties" destinationFile="subdir1/one.properties"/>
+            <rhq:file name="two.properties" destinationFile="subdir2/two.properties"/>
+        </rhq:deployment-unit>
+    </rhq:bundle>
+
+    <target name="main"/>
+
+</project>

@@ -37,16 +37,7 @@ public interface AlertGWTService extends RemoteService {
      *
      * @return all alerts that match the specified criteria
      */
-    PageList<Alert> findAlertsByCriteria(AlertCriteria criteria);
-
-    /**
-     * Find the count of alerts that match the specified criteria.
-     *
-     * @param criteria the criteria
-     *
-     * @return the count of alerts that match the specified criteria
-     */
-    long findAlertCountByCriteria(AlertCriteria criteria);
+    PageList<Alert> findAlertsByCriteria(AlertCriteria criteria) throws RuntimeException;
 
     /**
      * Delete the alerts with the specified ids if the current user has permission to do so (i.e. either
@@ -59,7 +50,7 @@ public interface AlertGWTService extends RemoteService {
      * @param alertIds the ids of the alerts to be deleted
      * @return the number of alerts deleted
      */
-    int deleteAlerts(int[] alertIds);
+    int deleteAlerts(int[] alertIds) throws RuntimeException;
 
     /**
      * Deletes all alerts for the given context if the current user has permission to do so (i.e., either
@@ -71,7 +62,7 @@ public interface AlertGWTService extends RemoteService {
      *        the user
      * @return the number of alerts deleted
      */
-    int deleteAlertsByContext(EntityContext context);
+    int deleteAlertsByContext(EntityContext context) throws RuntimeException;
 
     /**
      * Acknowledges the alerts with the specified ids if the current user has permission to do so (i.e., either
@@ -84,7 +75,7 @@ public interface AlertGWTService extends RemoteService {
      * @param alertIds the ids of the alerts to be acknowledged
      * @return the number of alerts acknowledged
      */
-    int acknowledgeAlerts(int[] alertIds);
+    int acknowledgeAlerts(int[] alertIds) throws RuntimeException;
 
     /**
      * Acknowledges all alerts for the given context if the current user has permission to do so (i.e., either
@@ -96,5 +87,5 @@ public interface AlertGWTService extends RemoteService {
      *        the user
      * @return the number of alerts acknowledged
      */
-    int acknowledgeAlertsByContext(EntityContext context);
+    int acknowledgeAlertsByContext(EntityContext context) throws RuntimeException;
 }

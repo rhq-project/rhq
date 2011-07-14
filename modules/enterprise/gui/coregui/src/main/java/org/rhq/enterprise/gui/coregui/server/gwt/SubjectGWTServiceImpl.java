@@ -18,12 +18,9 @@
  */
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.SubjectCriteria;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.coregui.client.gwt.SubjectGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
@@ -37,128 +34,111 @@ public class SubjectGWTServiceImpl extends AbstractGWTServiceImpl implements Sub
 
     private static final long serialVersionUID = 1L;
 
-    private final Log log = LogFactory.getLog(this.getClass());
-
     private SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
 
-    public void createPrincipal(String username, String password) {
+    public void createPrincipal(String username, String password) throws RuntimeException {
         try {
             subjectManager.createPrincipal(getSessionSubject(), username, password);
-        } catch (RuntimeException e) {
-            handleException(e);
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
         }
     }
 
-    public Subject createSubject(Subject subjectToCreate) {
+    public Subject createSubject(Subject subjectToCreate) throws RuntimeException {
         try {
             return SerialUtility.prepare(subjectManager.createSubject(getSessionSubject(), subjectToCreate),
                 "SubjectManager.createSubject");
-        } catch (RuntimeException e) {
-            handleException(e);
-            return null;
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
         }
     }
 
-    public Subject createSubject(Subject subjectToCreate, String password) {
+    public Subject createSubject(Subject subjectToCreate, String password) throws RuntimeException {
         try {
             return SerialUtility.prepare(subjectManager.createSubject(getSessionSubject(), subjectToCreate, password),
                 "SubjectManager.createSubject");
-        } catch (RuntimeException e) {
-            handleException(e);
-            return null;
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
         }
     }
 
-    public void deleteSubjects(int[] subjectIds) {
+    public void deleteSubjects(int[] subjectIds) throws RuntimeException {
         try {
             subjectManager.deleteSubjects(getSessionSubject(), subjectIds);
-        } catch (RuntimeException e) {
-            handleException(e);
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
         }
     }
 
-    public Subject login(String username, String password) {
+    public Subject login(String username, String password) throws RuntimeException {
         try {
             return SerialUtility.prepare(subjectManager.login(username, password), "SubjectManager.login");
-        } catch (LoginException e) {
-            throw new RuntimeException("LoginException: " + e.getMessage());
-        } catch (RuntimeException e) {
-            handleException(e);
-            return null;
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
         }
     }
 
-    public void logout(Subject subject) {
+    public void logout(int sessionId) throws RuntimeException {
         try {
-            subjectManager.logout(subject.getSessionId());
-        } catch (RuntimeException e) {
-            handleException(e);
+            subjectManager.logout(sessionId);
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
         }
     }
 
-    public Subject updateSubject(Subject subjectToModify, String newPassword) {
+    public Subject updateSubject(Subject subjectToModify) throws RuntimeException {
         try {
-            return SerialUtility.prepare(subjectManager.updateSubject(getSessionSubject(), subjectToModify, newPassword),
+            return SerialUtility.prepare(subjectManager.updateSubject(getSessionSubject(), subjectToModify),
                 "SubjectManager.updateSubject");
-        } catch (RuntimeException e) {
-            handleException(e);
-            return null;
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
         }
     }
 
-    public Subject processSubjectForLdap(Subject subjectToModify, String password) {
+    public Subject updateSubject(Subject subjectToModify, String newPassword) throws RuntimeException {
+        try {
+            return SerialUtility.prepare(subjectManager
+                .updateSubject(getSessionSubject(), subjectToModify, newPassword), "SubjectManager.updateSubject");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    public Subject processSubjectForLdap(Subject subjectToModify, String password) throws RuntimeException {
         //no permissions check as embedded in the SLSB call.
         try {
             Subject processedSubject = subjectManager.processSubjectForLdap(subjectToModify, password);
-            //if sessionId has changed then need to refresh the WebUser
-            //            if (subjectToModify.getSessionId() != processedSubject.getSessionId()) {
-            //                HttpServletRequest request = requestReference;
-            //                if ((request != null) && (request.getSession() != null)) {
-            //                    HttpSession session = request.getSession();
-            //
-            //                    //                    //move this to the sessionAccessServlet
-            //                    //                    WebUser webUser = new WebUser(processedSubject, false);
-            //                    //                    session.invalidate();
-            //                    //                    session = request.getSession(true);
-            //                    //                    SessionUtils.setWebUser(session, webUser);
-            //                    //                    // look up the user's permissions
-            //                    //                    Set<Permission> all_permissions = LookupUtil.getAuthorizationManager()
-            //                    //                        .getExplicitGlobalPermissions(processedSubject);
-            //                    //
-            //                    //                    Map<String, Boolean> userGlobalPermissionsMap = new HashMap<String, Boolean>();
-            //                    //                    for (Permission permission : all_permissions) {
-            //                    //                        userGlobalPermissionsMap.put(permission.toString(), Boolean.TRUE);
-            //                    //                    }
-            //                    //                    //load all session attributes
-            //                    //                    session.setAttribute(Constants.USER_OPERATIONS_ATTR, userGlobalPermissionsMap);
-            //                }
-            //            }
             return SerialUtility.prepare(processedSubject, "SubjectManager.processSubjectForLdap");
-        } catch (LoginException e) {
-            throw new RuntimeException("LoginException: " + e.getMessage());
-        } catch (RuntimeException e) {
-            handleException(e);
-            return null;
+        } catch (LoginException le) {
+            throw new RuntimeException("LoginException: " + le.getMessage());
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
         }
     }
 
-    public PageList<Subject> findSubjectsByCriteria(SubjectCriteria criteria) {
+    public PageList<Subject> findSubjectsByCriteria(SubjectCriteria criteria) throws RuntimeException {
         try {
             return SerialUtility.prepare(subjectManager.findSubjectsByCriteria(getSessionSubject(), criteria),
                 "SubjectManager.findSubjectsByCriteria");
-        } catch (RuntimeException e) {
-            handleException(e);
-            return null;
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
         }
     }
-    
-    public boolean isUserWithPrincipal(String username) {
-        return subjectManager.isUserWithPrincipal(username);
+
+    public boolean isUserWithPrincipal(String username) throws RuntimeException {
+        try {
+            return subjectManager.isUserWithPrincipal(username);
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
     }
 
-    private void handleException(Exception e) {
-        log.error("Unexpected error.", e);
-        throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+    public Subject checkAuthentication(String username, String password) {
+        try {
+            return SerialUtility.prepare(subjectManager.checkAuthentication(username, password),
+                "SubjectManager.checkAuthentication");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
     }
-    
 }

@@ -53,22 +53,25 @@ public class DashboardPortlet implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    // This is the only unique key. dashboard+portletKey+name does not have to be unique
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_DASHBOARD_PORTLET_ID_SEQ")
     @Id
-    private int id;
+    private int id = 0;
 
+    // A non-displayed, persisted identifier for the portlet.
     @Column(name = "PORTLET_KEY")
     private String portletKey;
 
+    // A displayed, persisted, editable name for the portlet.
     @Column(name = "NAME")
     private String name;
 
     @Column(name = "COL")
-    private int column;
+    private int column = 0;
 
     @Column(name = "COL_INDEX")
-    private int index;
+    private int index = 0;
 
     @Column(name = "HEIGHT")
     private int height = 300;
@@ -167,4 +170,39 @@ public class DashboardPortlet implements Serializable {
         newPortlet.configuration = this.configuration != null ? this.configuration.deepCopy(keepIds) : null;
         return newPortlet;
     }
+
+    public String toString() {
+        return "DashboardPortlet[id=" + id + ",key=" + portletKey + ",name=" + name + "]";
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + id;
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+
+        if (!(obj instanceof DashboardPortlet)) {
+            return false;
+        }
+
+        final DashboardPortlet other = (DashboardPortlet) obj;
+
+        // id test is only valid for entities. if not persisted entities then fail.
+        if (id <= 0 || other.id <= 0) {
+            return false;
+        } else if (id != other.id) {
+            return false;
+        }
+
+        return true;
+    }
+
 }

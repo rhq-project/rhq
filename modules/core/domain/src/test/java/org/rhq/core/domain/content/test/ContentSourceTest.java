@@ -41,7 +41,7 @@ import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.test.AbstractEJB3Test;
 
-@Test
+@Test(groups = "integration.ejb3")
 public class ContentSourceTest extends AbstractEJB3Test {
     public void testInsert() throws Exception {
         getTransactionManager().begin();

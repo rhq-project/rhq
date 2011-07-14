@@ -23,8 +23,11 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -35,6 +38,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
 import org.rhq.augeas.AugeasProxy;
 import org.rhq.augeas.config.AugeasModuleConfig;
 import org.rhq.augeas.node.AugeasNode;
@@ -42,6 +46,9 @@ import org.rhq.augeas.tree.AugeasTree;
 import org.rhq.augeas.util.Glob;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
+import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.PropertyList;
+import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.event.EventSeverity;
@@ -64,6 +71,7 @@ import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.system.OperatingSystemType;
+import org.rhq.core.system.ProcessInfo;
 import org.rhq.core.system.SystemInfo;
 import org.rhq.plugins.apache.augeas.ApacheAugeasNode;
 import org.rhq.plugins.apache.augeas.AugeasConfigurationApache;
@@ -120,6 +128,11 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
     public static final String PLUGIN_CONFIG_VHOST_IN_SINGLE_FILE_PROP_VALUE = "single-file";
     public static final String PLUGIN_CONFIG_VHOST_PER_FILE_PROP_VALUE = "vhost-per-file";
     
+    public static final String PLUGIN_CONFIG_CUSTOM_MODULE_NAMES = "customModuleNames";
+    public static final String PLUGIN_CONFIG_MODULE_MAPPING = "moduleMapping";
+    public static final String PLUGIN_CONFIG_MODULE_NAME = "moduleName";
+    public static final String PLUGIN_CONFIG_MODULE_SOURCE_FILE = "moduleSourceFile";
+    
     public static final String AUXILIARY_INDEX_PROP = "_index";
 
     public static final String SERVER_BUILT_TRAIT = "serverBuilt";
@@ -143,6 +156,8 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
     private ApacheBinaryInfo binaryInfo;
     private long availPingTime = -1;
     
+    private Map<String, String> moduleNames;
+    
     /**
      * Delegate instance for handling all calls to invoke operations on this component.
      */
@@ -153,7 +168,7 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
         this.resourceContext = resourceContext;
         this.eventContext = resourceContext.getEventContext();
         this.snmpClient = new SNMPClient();
-
+        
         try {
             boolean configured = false;
 
@@ -208,6 +223,29 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
             this.operationsDelegate = new ApacheServerOperationsDelegate(this, pluginConfig, this.resourceContext
                 .getSystemInformation());
 
+            //init the module names with the defaults
+            moduleNames = new HashMap<String, String>(ApacheServerDiscoveryComponent.getDefaultModuleNames(binaryInfo.getVersion()));
+            
+            //and add the user-provided overrides/additions
+            PropertyList list = resourceContext.getPluginConfiguration().getList(PLUGIN_CONFIG_CUSTOM_MODULE_NAMES);
+            
+            if (list != null) {
+                for (Property p : list.getList()) {
+                    PropertyMap map = (PropertyMap) p;
+                    String sourceFile = map.getSimpleValue(PLUGIN_CONFIG_MODULE_SOURCE_FILE, null);
+                    String moduleName = map.getSimpleValue(PLUGIN_CONFIG_MODULE_NAME, null);
+    
+                    if (sourceFile == null || moduleName == null) {
+                        log.info("A corrupted module name mapping found (" + sourceFile + " = " + moduleName
+                            + "). Check your module mappings in the plugin configuration for the server: "
+                            + resourceContext.getResourceKey());
+                        continue;
+                    }
+    
+                    moduleNames.put(sourceFile, moduleName);
+                }
+            }
+            
             startEventPollers();
         } catch (Exception e) {
             if (this.snmpClient != null) {
@@ -400,6 +438,11 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
                 ApacheParser parser = new ApacheParserImpl(parserTree,getServerRoot().getAbsolutePath());
          
                 ApacheConfigReader.buildTree(getHttpdConfFile().getAbsolutePath(), parser);
+                Pattern virtualHostPattern = Pattern.compile(".+:([\\d]+|\\*)");
+                Matcher matcher = virtualHostPattern.matcher(vhostDefs[0]);
+                if (!matcher.matches())
+                     throw new Exception("Wrong format of virtual host resource name. The right format is Address:Port.");
+                
                 addr = getAddressUtility().getVirtualHostSampleAddress(parserTree, vhostDefs[0], serverName, false);
             } catch (Exception e) {
               report.setStatus(CreateResourceStatus.FAILURE);
@@ -625,35 +668,43 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
         File controlScriptFile = null;
         if (controlScriptPath != null) {
             controlScriptFile = resolvePathRelativeToServerRoot(controlScriptPath);
-        } else {         
-                boolean found = false;
-                // First try server root as base
-                String serverRoot=null; 
-                try {
+        } else {
+            boolean found = false;
+            // First try server root as base
+            String serverRoot = null;
+            try {
                 ApacheDirectiveTree tree = loadParser();
                 List<ApacheDirective> directives = tree.search("/ServerRoot");
                 if (!directives.isEmpty())
-                   if (!directives.get(0).getValues().isEmpty())    
-                     serverRoot = directives.get(0).getValues().get(0);
-                
-                }catch(Exception e){
-                    log.error("Could not load configuration parser.",e);
-                }
-                if (serverRoot!=null)
-                 for (String path : CONTROL_SCRIPT_PATHS) {
+                    if (!directives.get(0).getValues().isEmpty())
+                        serverRoot = directives.get(0).getValues().get(0);
+
+            } catch (Exception e) {
+                log.error("Could not load configuration parser.", e);
+            }
+            if (serverRoot != null) {
+                for (String path : CONTROL_SCRIPT_PATHS) {
                     controlScriptFile = new File(serverRoot, path);
                     if (controlScriptFile.exists()) {
                         found = true;
                         break;
                     }
-                  }
-                if (!found) {
-                    String executablePath = pluginConfig.getSimpleValue(PLUGIN_CONFIG_PROP_EXECUTABLE_PATH, null);
-                    if (executablePath != null) {
-                        // this is now somethig like /usr/sbin/httpd .. trim off the last 2 parts
-                        int i = executablePath.lastIndexOf('/');
+                }
+            }
+            
+            //only try harder on the control script path on OSes with UNIX file system layout
+            if (!found && resourceContext.getSystemInformation().getOperatingSystemType() != OperatingSystemType.WINDOWS) {
+                String executablePath = pluginConfig.getSimpleValue(PLUGIN_CONFIG_PROP_EXECUTABLE_PATH, null);
+                if (executablePath != null) {
+                    // this is now something like /usr/sbin/httpd .. trim off the last 2 parts
+                    int i = executablePath.lastIndexOf(File.separatorChar);
+                    
+                    if (i >= 0) {
                         executablePath = executablePath.substring(0, i);
-                        i = executablePath.lastIndexOf('/');
+                        i = executablePath.lastIndexOf(File.separatorChar);
+                    }
+                    
+                    if (i >= 0) {
                         executablePath = executablePath.substring(0, i);
                         for (String path : CONTROL_SCRIPT_PATHS) {
                             controlScriptFile = new File(executablePath, path);
@@ -662,11 +713,13 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
                                 break;
                             }
                         }
-                    }
+                    }                    
                 }
-                if (!found) {
-                    controlScriptFile = getExecutablePath(); // fall back to the httpd binary
-                }          
+            }
+            
+            if (!found) {
+                controlScriptFile = getExecutablePath(); // fall back to the httpd binary
+            }
         }
 
         return controlScriptFile;
@@ -738,6 +791,18 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
         if (fileContents.size() == 0) {
             file.delete();
         }
+    }
+    
+    public Map<String, String> getModuleNames() {
+        return moduleNames;
+    }
+    
+    public ProcessInfo getCurrentProcessInfo() {
+        return resourceContext.getNativeProcess();
+    }
+    
+    public ApacheBinaryInfo getCurrentBinaryInfo() {
+        return binaryInfo;
     }
     
     // TODO: Move this method to a helper class.
@@ -841,7 +906,7 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
     }
 
     public HttpdAddressUtility getAddressUtility() {
-        String version = resourceContext.getVersion();
+        String version = getVersion();
         return HttpdAddressUtility.get(version);
     }
     
@@ -894,7 +959,7 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
                 log.error("Augeas is enabled in configuration but was not found on the system.");
                 throw new RuntimeException(CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);                
             }
-            String version = resourceContext.getVersion();
+            String version = getVersion();
             
             if (!version.startsWith("2.")) {
                 log.error(CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
@@ -904,5 +969,19 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
         }else{
             return false;                
         }
+    }
+    
+    private String getVersion() {
+        String ret = resourceContext.getVersion();
+        if (ret == null) {
+            //strange, but this happens sometimes when 
+            //the resource is synced with the server for the first
+            //time after data purge on the agent side
+            
+            //let's determine the version from the binary info
+            ret = binaryInfo.getVersion();
+        }
+        
+        return ret;
     }
 }

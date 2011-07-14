@@ -31,12 +31,9 @@ import org.jboss.seam.annotations.web.RequestParameter;
 import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.RawConfiguration;
-import org.rhq.core.gui.configuration.ConfigurationMaskingUtility;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
-
-import org.richfaces.model.UploadItem;
 
 import javax.ejb.EJBException;
 import javax.faces.application.FacesMessage;
@@ -146,8 +143,6 @@ public class ResourceConfigurationEditor extends ResourceConfigurationViewer imp
 
     public String updateConfiguration() {
         ConfigurationManagerLocal configurationMgr = LookupUtil.getConfigurationManager();
-
-        ConfigurationMaskingUtility.unmaskConfiguration(resourceConfiguration, resourceConfigurationDefinition);
 
         try {
             AbstractResourceConfigurationUpdate updateRequest;

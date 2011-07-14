@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.server.system;
 
-import java.util.Date;
 import java.util.Properties;
 
 import javax.ejb.Local;
@@ -26,7 +25,7 @@ import javax.ejb.Local;
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.ProductInfo;
-import org.rhq.enterprise.server.license.License;
+import org.rhq.core.domain.common.ServerDetails;
 
 /**
  * Provides access to the server cloud's system configuration as well as some methods
@@ -50,24 +49,6 @@ public interface SystemManagerLocal {
      * cloud - this config cache reloader will load in that new configuration.
      */
     void scheduleConfigCacheReloader();
-
-    /**
-     * Get the server cloud configuration. These are the server configurations that will be
-     * the same for all servers in the HA server cloud.
-     *
-     * @return Properties
-     */
-    Properties getSystemConfiguration();
-
-    /**
-     * Set the server cloud configuration.  The given properties will be the new settings
-     * for all servers in the HA server cloud.
-     *
-     * @param subject        the user who wants to change the settings
-     * @param properties     the new system configuration settings
-     * @param skipValidation if true, validation will not be performed on the properties
-     */
-    void setSystemConfiguration(Subject subject, Properties properties, boolean skipValidation);
 
     /**
      * Creates and registers the Hibernate Statistics MBean. This allows us to monitor
@@ -155,24 +136,17 @@ public interface SystemManagerLocal {
 
     boolean isExperimentalFeaturesEnabled();
 
-    //////////////////////////////////
-    // license specific methods follow
-
-    boolean isMonitoringEnabled();
-
-    License getLicense();
-
-    void updateLicense(Subject subject, byte[] licenseData);
-
-    Date getExpiration();
-
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //
     // The following are shared with the Remote Interface
     //
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-    ServerVersion getServerVersion(Subject subject) throws Exception;
-
     ProductInfo getProductInfo(Subject subject);
+
+    ServerDetails getServerDetails(Subject subject);
+
+    Properties getSystemConfiguration(Subject subject);
+
+    void setSystemConfiguration(Subject subject, Properties properties, boolean skipValidation) throws Exception;
 }

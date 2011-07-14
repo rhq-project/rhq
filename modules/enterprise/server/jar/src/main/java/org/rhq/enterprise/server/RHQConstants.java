@@ -32,15 +32,12 @@ public class RHQConstants {
     public static final String PERSISTENCE_UNIT_NAME = "rhqpu";
     public static final String TRANSACTION_MANAGER_JNDI_NAME = "java:/TransactionManager";
 
+    // JAAS settings   
     public static final String JAASProvider = "CAM_JAAS_PROVIDER";
-
-    /**
-     * Valid JAAS Providers *
-     */
     public static final String JDBCJAASProvider = "JDBC";
     public static final String LDAPJAASProvider = "LDAP";
 
-    // LDAP Configuration props
+    // LDAP JAAS properties
     public static final String LDAPFactory = "CAM_LDAP_NAMING_FACTORY_INITIAL";
     public static final String LDAPUrl = "CAM_LDAP_NAMING_PROVIDER_URL";
     public static final String LDAPProtocol = "CAM_LDAP_PROTOCOL";
@@ -52,9 +49,7 @@ public class RHQConstants {
     public static final String LDAPBindDN = "CAM_LDAP_BIND_DN";
     public static final String LDAPBindPW = "CAM_LDAP_BIND_PW";
 
-    /**
-     * Base URL for the application *
-     */
+    // Base URL for the application - (i think this is only used for alert emails)
     public static final String BaseURL = "CAM_BASE_URL";
 
     // how long can an agent be quiet (i.e. not send an avail report) before we consider it down and backfill it
@@ -106,14 +101,17 @@ public class RHQConstants {
     // How much data to include
     public static final String BaselineDataSet = "CAM_BASELINE_DATASET";
 
+    //allow plugin initiated resource name & description upgrades (resource key is always upgradable)
+    public static final String AllowResourceGenericPropertiesUpgrade = "RESOURCE_GENERIC_PROPERTIES_UPGRADE";
+
+    /////////////////////////////////////////////////////
+    // the settings below are not used today and can probably be removed at some point
+
     // Help related
     public static final String HelpUser = "CAM_HELP_USER";
     public static final String HelpUserPassword = "CAM_HELP_PASSWORD";
 
     // Syslog Actions enabled
     public static final String SyslogActionsEnabled = "CAM_SYSLOG_ACTIONS_ENABLED";
-    
-    //allow plugin initiated resource name & description upgrades (resource key is always upgradable)
-    public static final String AllowResourceGenericPropertiesUpgrade = "RESOURCE_GENERIC_PROPERTIES_UPGRADE";
 
 }

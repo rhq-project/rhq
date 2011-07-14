@@ -22,12 +22,12 @@ import org.quartz.SchedulerException;
 import org.quartz.SimpleTrigger;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.operation.bean.OperationSchedule;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.common.scheduling.OperationDetailsScheduleComponent;
 import org.rhq.enterprise.gui.operation.model.OperationParameters;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
-import org.rhq.enterprise.server.operation.OperationSchedule;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 

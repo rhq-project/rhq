@@ -23,7 +23,6 @@ import java.util.EnumSet;
 import java.util.List;
 
 import com.allen_sauer.gwt.log.client.Log;
-import com.google.gwt.user.client.History;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSCallback;
 import com.smartgwt.client.data.DSRequest;
@@ -42,7 +41,6 @@ import com.smartgwt.client.widgets.form.events.ItemChangedEvent;
 import com.smartgwt.client.widgets.form.events.ItemChangedHandler;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
@@ -62,8 +60,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  *
  * @author Ian Springer
  */
-public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends LocatableVLayout
-    implements BookmarkableView, DetailsView {
+public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends LocatableVLayout implements
+    BookmarkableView, DetailsView {
 
     private static final Label LOADING_LABEL = new Label(MSG.widget_recordEditor_label_loading());
 
@@ -79,11 +77,11 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
     private boolean isReadOnly;
     private String dataTypeName;
     private String listViewPath;
-    private boolean wasInvalid;
     private ButtonBar buttonBar;
+    private LocatableVLayout contentPane;
+    private boolean postFetchHandlerExecutedAlready;
 
-    public AbstractRecordEditor(String locatorId, DS dataSource, int recordId, String dataTypeName,
-                                String headerIcon) {
+    public AbstractRecordEditor(String locatorId, DS dataSource, int recordId, String dataTypeName, String headerIcon) {
         super(locatorId);
         this.dataSource = dataSource;
         this.recordId = recordId;
@@ -107,12 +105,7 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
         viewPath.next();
 
         String parentViewPath = viewPath.getParentViewPath();
-        if (!viewPath.isEnd()) {
-            CoreGUI.getErrorHandler().handleError(MSG.widget_recordEditor_error_invalidViewPath(viewPath.toString()));
-            CoreGUI.goToView(parentViewPath);
-        } else {
-            this.listViewPath = parentViewPath; // e.g. Administration/Security/Roles
-        }
+        this.listViewPath = parentViewPath; // e.g. Administration/Security/Roles
     }
 
     /**
@@ -123,21 +116,20 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
      */
     protected void init(boolean isReadOnly) {
         if (this.recordId == ID_NEW && isReadOnly) {
-            Message message =
-                new Message("You do not have the permissions required to create a new " + this.dataTypeName + ".",
-                    Message.Severity.Error);
+            Message message = new Message(MSG.widget_recordEditor_error_permissionCreate(this.dataTypeName),
+                Message.Severity.Error);
             CoreGUI.goToView(getListViewPath(), message);
         } else {
             this.isReadOnly = isReadOnly;
 
-            VLayout contentPane = buildContentPane();
-            contentPane.hide();
-            addMember(contentPane);
+            this.contentPane = buildContentPane();
+            this.contentPane.hide();
+            addMember(this.contentPane);
 
             this.buttonBar = buildButtonBar();
-            if (buttonBar != null) {
-                buttonBar.hide();
-                addMember(buttonBar);
+            if (this.buttonBar != null) {
+                this.buttonBar.hide();
+                addMember(this.buttonBar);
             }
 
             if (this.recordId == ID_NEW) {
@@ -158,7 +150,7 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
         contentPane.setOverflow(Overflow.AUTO);
         //contentPane.setPadding(7);
 
-        this.form = buildForm();        
+        this.form = buildForm();
         contentPane.addMember(this.form);
 
         return contentPane;
@@ -174,7 +166,7 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
 
     protected EnhancedDynamicForm buildForm() {
         boolean isNewRecord = (this.recordId == ID_NEW);
-        EnhancedDynamicForm form = new EnhancedDynamicForm(this.getLocatorId(), isFormReadOnly(), isNewRecord);        
+        EnhancedDynamicForm form = new EnhancedDynamicForm(this.getLocatorId(), isFormReadOnly(), isNewRecord);
         form.setDataSource(this.dataSource);
 
         List<FormItem> items = createFormItems(form);
@@ -185,13 +177,16 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
                 AbstractRecordEditor.this.onItemChanged();
             }
         });
-                
+
         return form;
     }
 
-
     protected boolean isFormReadOnly() {
         return this.isReadOnly;
+    }
+
+    public LocatableVLayout getContentPane() {
+        return this.contentPane;
     }
 
     public void setForm(EnhancedDynamicForm form) {
@@ -214,6 +209,10 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
         return this.recordId;
     }
 
+    public boolean isNewRecord() {
+        return (getRecordId() == ID_NEW);
+    }
+
     public String getListViewPath() {
         return this.listViewPath;
     }
@@ -225,38 +224,18 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
      * and update the Save button's enablement based on whether or not all items on the form are valid.
      */
     public void onItemChanged() {
-        boolean isValid = this.form.valuesAreValid(false);
-        //boolean isValid = this.valuesManager.validate();
-
         // If we're in editable mode, update the button enablement.
         if (!this.isReadOnly) {
             IButton saveButton = this.buttonBar.getSaveButton();
-            boolean saveButtonWasDisabled = saveButton.isDisabled();
-            saveButton.setDisabled(!isValid);
-            if (saveButtonWasDisabled != !saveButton.isDisabled()) {
-                 CanvasUtility.blink(saveButton);
+            if (saveButton.isDisabled()) {
+                saveButton.setDisabled(false);
+                CanvasUtility.blink(saveButton);
             }
 
             IButton resetButton = this.buttonBar.getResetButton();
             if (resetButton.isDisabled()) {
                 resetButton.setDisabled(false);
                 CanvasUtility.blink(resetButton);
-            }
-
-            if (!isValid) {
-                this.wasInvalid = true;
-                Message message = new Message("One or more fields have invalid values. This " + this.dataTypeName
-                    + " cannot be saved until these values are corrected.", Message.Severity.Warning, EnumSet.of(
-                    Message.Option.Sticky, Message.Option.Transient));
-                CoreGUI.getMessageCenter().notify(message);
-            } else {
-                if (this.wasInvalid) {
-                    Message message = new Message("All fields now have valid values. This " + this.dataTypeName
-                        + " can now be saved.", Message.Severity.Info, EnumSet.of(Message.Option.Sticky,
-                        Message.Option.Transient));
-                    CoreGUI.getMessageCenter().notify(message);
-                    this.wasInvalid = false;
-                }
             }
         }
     }
@@ -265,7 +244,14 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
         this.form.resetValues();
     }
 
-    protected void save() {
+    protected void save(DSRequest requestProperties) {
+        if (!this.form.validate()) {
+            Message message = new Message(MSG.widget_recordEditor_warn_validation(this.dataTypeName),
+                Message.Severity.Warning, EnumSet.of(Message.Option.Transient));
+            CoreGUI.getMessageCenter().notify(message);
+            return;
+        }
+
         this.form.saveData(new DSCallback() {
             public void execute(DSResponse response, Object rawData, DSRequest request) {
                 if (response.getStatus() == RPCResponse.STATUS_SUCCESS) {
@@ -288,41 +274,41 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
                         }
                     }
                     switch (operationType) {
-                        case ADD:
-                            conciseMessage = MSG.widget_recordEditor_info_recordCreatedConcise(dataTypeName);
-                            detailedMessage = MSG.widget_recordEditor_info_recordCreatedDetailed(dataTypeName, name);
-                            if (CoreGUI.isDebugMode()) {
-                                conciseMessage += " (" + FIELD_ID + "=" + id + ")";
-                                detailedMessage += " (" + FIELD_ID + "=" + id + ")";
-                            }
-                            break;
-                        case UPDATE:
-                            conciseMessage = MSG.widget_recordEditor_info_recordUpdatedConcise(dataTypeName);
-                            detailedMessage = MSG.widget_recordEditor_info_recordUpdatedDetailed(dataTypeName, name);
-                            break;
-                        default:
-                            throw new IllegalStateException(
-                                MSG.widget_recordEditor_error_unsupportedOperationType(operationType.name()));
+                    case ADD:
+                        conciseMessage = MSG.widget_recordEditor_info_recordCreatedConcise(dataTypeName);
+                        detailedMessage = MSG.widget_recordEditor_info_recordCreatedDetailed(dataTypeName, name);
+                        if (CoreGUI.isDebugMode()) {
+                            conciseMessage += " (" + FIELD_ID + "=" + id + ")";
+                            detailedMessage += " (" + FIELD_ID + "=" + id + ")";
+                        }
+                        break;
+                    case UPDATE:
+                        conciseMessage = MSG.widget_recordEditor_info_recordUpdatedConcise(dataTypeName);
+                        detailedMessage = MSG.widget_recordEditor_info_recordUpdatedDetailed(dataTypeName, name);
+                        break;
+                    default:
+                        throw new IllegalStateException(MSG
+                            .widget_recordEditor_error_unsupportedOperationType(operationType.name()));
                     }
 
                     message = new Message(conciseMessage, detailedMessage);
                     CoreGUI.goToView(getListViewPath(), message);
                 } else if (response.getStatus() == RPCResponse.STATUS_VALIDATION_ERROR) {
-                    Message message = new Message("Operation failed - one or more fields have invalid values.",
+                    Message message = new Message(MSG.widget_recordEditor_error_operationInvalidValues(),
                         Message.Severity.Error);
                     CoreGUI.getMessageCenter().notify(message);
                 } else {
                     // assume failure                    
-                    Message message = new Message("Operation failed - an error occurred.", Message.Severity.Error);
+                    Message message = new Message(MSG.widget_recordEditor_error_operation(), Message.Severity.Error);
                     CoreGUI.getMessageCenter().notify(message);
                 }
             }
-        });
+        }, requestProperties);
     }
 
     protected void editNewRecord() {
         // Update the view title.
-        this.titleBar.setTitle("New " + this.dataTypeName);
+        this.titleBar.setTitle(MSG.widget_recordEditor_title_new(this.dataTypeName));
 
         // Create a new record.
         Record record = createNewRecord();
@@ -345,8 +331,8 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
     protected void editExistingRecord(Record record) {
         // Update the view title.
         String recordName = record.getAttribute(getTitleFieldName());
-        String title = (this.isReadOnly) ? MSG.widget_recordEditor_title_view(this.dataTypeName, recordName) :
-            MSG.widget_recordEditor_title_edit(this.dataTypeName, recordName);
+        String title = (this.isReadOnly) ? MSG.widget_recordEditor_title_view(this.dataTypeName, recordName) : MSG
+            .widget_recordEditor_title_edit(this.dataTypeName, recordName);
         this.titleBar.setTitle(title);
 
         // Load the data into the form.
@@ -390,19 +376,25 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
         criteria.addCriteria(FIELD_ID, recordId);
         this.form.fetchData(criteria, new DSCallback() {
             public void execute(DSResponse response, Object rawData, DSRequest request) {
-                if (response.getStatus() == DSResponse.STATUS_SUCCESS) {
-                    Record[] records = response.getData();
-                    if (records.length == 0) {
-                        throw new IllegalStateException(MSG.widget_recordEditor_error_noRecords());
-                    }
-                    if (records.length > 1) {
-                        throw new IllegalStateException(MSG.widget_recordEditor_error_multipleRecords());
-                    }
-                    Record record = records[0];
-                    editExistingRecord(record);
+                // The below check is a workaround for a SmartGWT bug, where it calls the execute() method on this
+                // callback twice, rather than once.
+                // TODO: Remove it once the SmartGWT bug has been fixed.
+                if (!postFetchHandlerExecutedAlready) {
+                    postFetchHandlerExecutedAlready = true;
+                    if (response.getStatus() == DSResponse.STATUS_SUCCESS) {
+                        Record[] records = response.getData();
+                        if (records.length == 0) {
+                            throw new IllegalStateException(MSG.widget_recordEditor_error_noRecords());
+                        }
+                        if (records.length > 1) {
+                            throw new IllegalStateException(MSG.widget_recordEditor_error_multipleRecords());
+                        }
+                        Record record = records[0];
+                        editExistingRecord(record);
 
-                    // Now that all the widgets have been created and initialized, make everything visible.
-                    displayForm();
+                        // Now that all the widgets have been created and initialized, make everything visible.
+                        displayForm();
+                    }
                 }
             }
         });
@@ -421,11 +413,11 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
         ListGridRecord[] roleListGridRecords = new ListGridRecord[roleRecords.length];
         for (int i = ID_NEW, roleRecordsLength = roleRecords.length; i < roleRecordsLength; i++) {
             Record roleRecord = roleRecords[i];
-            roleListGridRecords[i] = (ListGridRecord)roleRecord;
+            roleListGridRecords[i] = (ListGridRecord) roleRecord;
         }
         return roleListGridRecords;
     }
-    
+
     private static String capitalize(String itemTitle) {
         return Character.toUpperCase(itemTitle.charAt(ID_NEW)) + itemTitle.substring(1);
     }
@@ -454,7 +446,7 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
             saveButton.setDisabled(true);
             saveButton.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
-                    save();
+                    save(new DSRequest());
                 }
             });
             hLayout.addMember(saveButton);
@@ -465,6 +457,7 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
                 public void onClick(ClickEvent clickEvent) {
                     reset();
                     resetButton.disable();
+                    saveButton.disable();
                 }
             });
             hLayout.addMember(resetButton);
@@ -472,7 +465,7 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
             cancelButton = new LocatableIButton(extendLocatorId("Cancel"), MSG.common_button_cancel());
             cancelButton.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
-                    History.back();
+                    CoreGUI.goToView(getListViewPath());
                 }
             });
             hLayout.addMember(cancelButton);
@@ -492,5 +485,5 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
             return saveButton;
         }
     }
-    
+
 }

@@ -23,9 +23,11 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.common.event;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.widgets.Canvas;
@@ -39,22 +41,37 @@ import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.components.form.EnumSelectItem;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
+import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author Joseph Marques
  */
-public class EventCompositeHistoryView extends TableSection {
+public class EventCompositeHistoryView extends TableSection<EventCompositeDatasource> {
 
-    private static SortSpecifier DEFAULT_SORT_SPECIFIER = new SortSpecifier("timestamp", SortDirection.DESCENDING);
+    private static final SortSpecifier DEFAULT_SORT_SPECIFIER = new SortSpecifier("timestamp", SortDirection.DESCENDING);
+    private static final Criteria INITIAL_CRITERIA = new Criteria();
     private EntityContext context;
     private boolean hasWriteAccess;
+
+    static {
+        EventSeverity[] severityValues = EventSeverity.values();
+        String[] severityNames = new String[severityValues.length];
+        int i = 0;
+        for (EventSeverity s : severityValues) {
+            severityNames[i++] = s.name();
+        }
+
+        INITIAL_CRITERIA.addCriteria(EventCompositeDatasource.FILTER_SEVERITIES, severityNames);
+    }
 
     public static EventCompositeHistoryView get(String locatorId, ResourceGroupComposite composite) {
         String tableTitle = MSG.view_inventory_eventHistory_groupEventHistory();
@@ -71,10 +88,11 @@ public class EventCompositeHistoryView extends TableSection {
     }
 
     private EventCompositeHistoryView(String locatorId, String tableTitle, EntityContext context, boolean hasWriteAccess) {
-        super(locatorId, tableTitle, new SortSpecifier[] { DEFAULT_SORT_SPECIFIER });
+        super(locatorId, tableTitle, INITIAL_CRITERIA, new SortSpecifier[] { DEFAULT_SORT_SPECIFIER });
         this.context = context;
         this.hasWriteAccess = hasWriteAccess;
 
+        setInitialCriteriaFixed(false);
         setDataSource(new EventCompositeDatasource(this.context));
     }
 
@@ -88,40 +106,48 @@ public class EventCompositeHistoryView extends TableSection {
     @Override
     protected void configureTableFilters() {
         final TextItem sourceFilter = new TextItem("source", MSG.view_inventory_eventHistory_sourceFilter());
-        final TextItem detailsFilter = new TextItem("details", MSG.view_inventory_eventHistory_detailsFilter());
-        final EnumSelectItem severityFilter = new EnumSelectItem("severities", MSG
-            .view_inventory_eventHistory_severityFilter(), EventSeverity.class);
+        final TextItem detailsFilter = new TextItem("detail", MSG.view_inventory_eventHistory_detailsFilter());
+
+        LinkedHashMap<String, String> severities = new LinkedHashMap<String, String>(5);
+        severities.put(EventSeverity.DEBUG.name(), MSG.common_severity_debug());
+        severities.put(EventSeverity.INFO.name(), MSG.common_severity_info());
+        severities.put(EventSeverity.WARN.name(), MSG.common_severity_warn());
+        severities.put(EventSeverity.ERROR.name(), MSG.common_severity_error());
+        severities.put(EventSeverity.FATAL.name(), MSG.common_severity_fatal());
+        LinkedHashMap<String, String> severityIcons = new LinkedHashMap<String, String>(5);
+        severityIcons.put(EventSeverity.DEBUG.name(), ImageManager.getEventSeverityBadge(EventSeverity.DEBUG));
+        severityIcons.put(EventSeverity.INFO.name(), ImageManager.getEventSeverityBadge(EventSeverity.INFO));
+        severityIcons.put(EventSeverity.WARN.name(), ImageManager.getEventSeverityBadge(EventSeverity.WARN));
+        severityIcons.put(EventSeverity.ERROR.name(), ImageManager.getEventSeverityBadge(EventSeverity.ERROR));
+        severityIcons.put(EventSeverity.FATAL.name(), ImageManager.getEventSeverityBadge(EventSeverity.FATAL));
+        final EnumSelectItem severityFilter = new EnumSelectItem(EventCompositeDatasource.FILTER_SEVERITIES, MSG
+            .view_inventory_eventHistory_severityFilter(), EventSeverity.class, severities, severityIcons);
 
         setFilterFormItems(sourceFilter, detailsFilter, severityFilter);
     }
 
     @Override
     protected void configureTable() {
-        ListGridField timestampField = new ListGridField("timestamp", MSG.view_inventory_eventHistory_timestamp(), 125);
-        ListGridField severityField = new ListGridField("severity", MSG.view_inventory_eventHistory_severity(), 75);
-        severityField.setCellFormatter(new CellFormatter() {
-            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                return Canvas.imgHTML("subsystems/event/" + o + "_16.png", 16, 16) + o;
-            }
-        });
-        ListGridField detailsField = new ListGridField("details-highlight", MSG.view_inventory_eventHistory_details());
-        ListGridField sourceField = new ListGridField("source", MSG.view_inventory_eventHistory_sourceLocation(), 275);
-        sourceField.setCellFormatter(new CellFormatter() {
-            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                String sourceLocation = (String) o;
-                int length = sourceLocation.length();
-                if (length > 40) {
-                    return "..." + sourceLocation.substring(length - 40); // the last 40 chars
-                }
-                return sourceLocation;
-            }
-        });
-
-        setListGridFields(timestampField, severityField, detailsField, sourceField);
+        ArrayList<ListGridField> dataSourceFields = getDataSource().getListGridFields();
+        getListGrid().setFields(dataSourceFields.toArray(new ListGridField[dataSourceFields.size()]));
 
         setupTableInteractions();
 
+        super.configureTable();
+    }
 
+    protected String getDetailsLinkColumnName() {
+        return "timestamp";
+    }
+
+    protected CellFormatter getDetailsLinkColumnCellFormatter() {
+        return new CellFormatter() {
+            public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
+                Integer recordId = getId(record);
+                String detailsUrl = "#" + getBasePath() + "/" + recordId;
+                return SeleniumUtility.getLocatableHref(detailsUrl, TimestampCellFormatter.format(value), null);
+            }
+        };
     }
 
     private void setupTableInteractions() {
@@ -188,4 +214,5 @@ public class EventCompositeHistoryView extends TableSection {
     public Canvas getDetailsView(int eventId) {
         return EventCompositeDetailsView.getInstance();
     }
+
 }

@@ -19,7 +19,6 @@
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -57,11 +56,12 @@ public class LdapGWTServiceImpl extends AbstractGWTServiceImpl implements LdapGW
     private final Log log = LogFactory.getLog(LdapGWTServiceImpl.class);
 
     @Override
-    public Set<Map<String, String>> findAvailableGroups() {
-        //add permissions check
-        Set<Permission> globalPermissions = authorizationManager.getExplicitGlobalPermissions(getSessionSubject());
-        Boolean accessGranted = globalPermissions.contains(Permission.MANAGE_SECURITY);
+    public Set<Map<String, String>> findAvailableGroups() throws RuntimeException {
         try {
+            //add permissions check
+            Set<Permission> globalPermissions = authorizationManager.getExplicitGlobalPermissions(getSessionSubject());
+            Boolean accessGranted = globalPermissions.contains(Permission.MANAGE_SECURITY);
+
             Set<Map<String, String>> results = null;
             if (accessGranted) {
                 results = ldapManager.findAvailableGroups();
@@ -77,11 +77,12 @@ public class LdapGWTServiceImpl extends AbstractGWTServiceImpl implements LdapGW
         }
     }
 
-    public void setLdapGroupsForRole(int roleId, List<String> groupIds) {
-        //add permissions check
-        Set<Permission> globalPermissions = authorizationManager.getExplicitGlobalPermissions(getSessionSubject());
-        Boolean accessGranted = globalPermissions.contains(Permission.MANAGE_SECURITY);
+    public void setLdapGroupsForRole(int roleId, List<String> groupIds) throws RuntimeException {
         try {
+            //add permissions check
+            Set<Permission> globalPermissions = authorizationManager.getExplicitGlobalPermissions(getSessionSubject());
+            Boolean accessGranted = globalPermissions.contains(Permission.MANAGE_SECURITY);
+
             if (accessGranted) {
                 //clean out existing roles as this defines the new list of roles
                 PageList<LdapGroup> existing = ldapManager.findLdapGroupsByRole(roleId, PageControl
@@ -122,13 +123,12 @@ public class LdapGWTServiceImpl extends AbstractGWTServiceImpl implements LdapGW
         }
     }
 
-    @Override
-    public PageList<LdapGroup> findLdapGroupsAssignedToRole(int roleId) {
-        //add permissions check
-        Set<Permission> globalPermissions = authorizationManager.getExplicitGlobalPermissions(getSessionSubject());
-        Boolean accessGranted = globalPermissions.contains(Permission.MANAGE_SECURITY);
-
+    public PageList<LdapGroup> findLdapGroupsAssignedToRole(int roleId) throws RuntimeException {
         try {
+            //add permissions check
+            Set<Permission> globalPermissions = authorizationManager.getExplicitGlobalPermissions(getSessionSubject());
+            Boolean accessGranted = globalPermissions.contains(Permission.MANAGE_SECURITY);
+
             PageList<LdapGroup> allAssignedLdapGroups = null;
             if (accessGranted) {
                 allAssignedLdapGroups = ldapManager.findLdapGroupsByRole(roleId, PageControl.getUnlimitedInstance());
@@ -144,32 +144,27 @@ public class LdapGWTServiceImpl extends AbstractGWTServiceImpl implements LdapGW
         }
     }
 
-    /**Light call to determine ldap configuration status.
-     * 
+    /**
+     * Light call to determine ldap configuration status.
      */
-    @Override
-    public Boolean checkLdapConfiguredStatus() {
-        Boolean ldapEnabled = false;
+    public Boolean checkLdapConfiguredStatus() throws RuntimeException {
         try {
-            String provider = systemManager.getSystemConfiguration().getProperty(RHQConstants.JAASProvider);
-            ldapEnabled = ((provider != null) && provider.equals(RHQConstants.LDAPJAASProvider));
+            String provider = systemManager.getSystemConfiguration(subjectManager.getOverlord()).getProperty(
+                RHQConstants.JAASProvider);
+            return ((provider != null) && provider.equals(RHQConstants.LDAPJAASProvider));
         } catch (Exception e) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(e));
         }
-        return ldapEnabled;
     }
 
-    /**Returns all LDAP details for a given user, using the configured ldap details of server.
-     * 
+    /**
+     * Returns all LDAP details for a given user, using the configured ldap details of server.
      */
-    @Override
-    public Map<String, String> getLdapDetailsFor(String user) {
-        Map<String, String> ldapDetails = new HashMap<String, String>();
+    public Map<String, String> getLdapDetailsFor(String user) throws RuntimeException {
         try {
-            ldapDetails = ldapManager.findLdapUserDetails(user);
+            return ldapManager.findLdapUserDetails(user);
         } catch (Exception e) {
             throw new RuntimeException(ThrowableUtil.getAllMessages(e));
         }
-        return ldapDetails;
     }
 }

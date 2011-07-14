@@ -24,6 +24,7 @@ import com.google.gwt.user.client.rpc.RpcRequestBuilder;
 import com.google.gwt.user.client.rpc.ServiceDefTarget;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 
 /**
@@ -49,16 +50,36 @@ public class GWTServiceLookup {
         return secure(GroupAlertDefinitionGWTServiceAsync.Util.getInstance());
     }
 
+    public static GroupDefinitionExpressionBuilderGWTServiceAsync getGroupDefinitionExpressionBuilderService() {
+        return secure(GroupDefinitionExpressionBuilderGWTServiceAsync.Util.getInstance());
+    }
+
     public static ConfigurationGWTServiceAsync getConfigurationService() {
         return secure(ConfigurationGWTServiceAsync.Util.getInstance());
+    }
+
+    public static DriftGWTServiceAsync getDriftService() {
+        return secure(DriftGWTServiceAsync.Util.getInstance());
+    }
+
+    public static PluginGWTServiceAsync getPluginService() {
+        return secure(PluginGWTServiceAsync.Util.getInstance());
     }
 
     public static ResourceGWTServiceAsync getResourceService() {
         return secure(ResourceGWTServiceAsync.Util.getInstance());
     }
 
+    public static ResourceGWTServiceAsync getResourceService(int timeout) {
+        return secure(ResourceGWTServiceAsync.Util.getInstance(), timeout);
+    }
+
     public static ResourceGroupGWTServiceAsync getResourceGroupService() {
         return secure(ResourceGroupGWTServiceAsync.Util.getInstance());
+    }
+
+    public static ResourceGroupGWTServiceAsync getResourceGroupService(int timeout) {
+        return secure(ResourceGroupGWTServiceAsync.Util.getInstance(), timeout);
     }
 
     public static ResourceTypeGWTServiceAsync getResourceTypeGWTService() {
@@ -85,6 +106,18 @@ public class GWTServiceLookup {
         return secure(MeasurementDataGWTServiceAsync.Util.getInstance());
     }
 
+    public static MeasurementDataGWTServiceAsync getMeasurementDataService(int timeout) {
+        return secure(MeasurementDataGWTServiceAsync.Util.getInstance(), timeout);
+    }
+
+    public static MeasurementChartsGWTServiceAsync getMeasurementChartsService() {
+        return secure(MeasurementChartsGWTServiceAsync.Util.getInstance());
+    }
+
+    public static MeasurementScheduleGWTServiceAsync getMeasurementScheduleService() {
+        return secure(MeasurementScheduleGWTServiceAsync.Util.getInstance());
+    }
+
     public static AlertGWTServiceAsync getAlertService() {
         return secure(AlertGWTServiceAsync.Util.getInstance());
     }
@@ -97,10 +130,18 @@ public class GWTServiceLookup {
         return secure(BundleGWTServiceAsync.Util.getInstance());
     }
 
+    public static BundleGWTServiceAsync getBundleService(int timeout) {
+        return secure(BundleGWTServiceAsync.Util.getInstance(), timeout);
+    }
+
     public static ResourceBossGWTServiceAsync getResourceBossService() {
         return secure(ResourceBossGWTServiceAsync.Util.getInstance());
     }
 
+    /**
+     * Consider using {@link PermissionsLoader} instead of using
+     * this authorization service directly.
+     */
     public static AuthorizationGWTServiceAsync getAuthorizationService() {
         return secure(AuthorizationGWTServiceAsync.Util.getInstance());
     }
@@ -113,8 +154,8 @@ public class GWTServiceLookup {
         return secure(TagGWTServiceAsync.Util.getInstance());
     }
 
-    public static RemoteInstallGWTServiceAsync getRemoteInstallService() {
-        return secure(RemoteInstallGWTServiceAsync.Util.getInstance());
+    public static RemoteInstallGWTServiceAsync getRemoteInstallService(int timeout) {
+        return secure(RemoteInstallGWTServiceAsync.Util.getInstance(), timeout);
     }
 
     public static RepoGWTServiceAsync getRepoService() {
@@ -189,8 +230,10 @@ public class GWTServiceLookup {
 
             String sessionId = UserSessionManager.getSessionId();
             if (sessionId != null) {
-                Log.debug("SessionRpcRequestBuilder is adding sessionId(" + sessionId + ") to request("
-                    + serviceEntryPoint + ")");
+                if (Log.isDebugEnabled()) {
+                    Log.debug("SessionRpcRequestBuilder is adding sessionId(" + sessionId + ") to request("
+                        + serviceEntryPoint + ")");
+                }
                 rb.setHeader(UserSessionManager.SESSION_NAME, sessionId);
             } else {
                 Log.error("SessionRpcRequestBuilder missing sessionId for request(" + serviceEntryPoint + ") ");

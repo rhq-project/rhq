@@ -39,6 +39,7 @@ import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
+import com.smartgwt.client.widgets.form.validator.IsFloatValidator;
 
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
@@ -302,7 +303,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
             newCondition.setName(measDef.getDisplayName()); // TODO should not use display name
             newCondition.setThreshold(Double.valueOf(getValueAsString(BASELINE_PERCENTAGE_ITEMNAME)) / 100.0);
             newCondition.setComparator(getValueAsString(BASELINE_COMPARATOR_ITEMNAME));
-            newCondition.setOption(null);
+            newCondition.setOption(getValueAsString(BASELINE_SELECTION_ITEMNAME));
             newCondition.setMeasurementDefinition(measDef);
             break;
         }
@@ -390,7 +391,9 @@ public class NewConditionEditor extends LocatableDynamicForm {
         absoluteValue.setWrapTitle(false);
         absoluteValue.setRequired(true);
         absoluteValue.setTooltip(MSG.view_alert_definition_condition_editor_metric_threshold_value_tooltip());
-
+        absoluteValue.setHoverWidth(200);
+        absoluteValue.setValidateOnChange(true);
+        absoluteValue.setValidators(new IsFloatValidator());
         absoluteValue.setShowIfCondition(ifFunc);
         formItems.add(absoluteValue);
 
@@ -415,7 +418,10 @@ public class NewConditionEditor extends LocatableDynamicForm {
         baselinePercentage.setWrapTitle(false);
         baselinePercentage.setRequired(true);
         baselinePercentage.setTooltip(MSG.view_alert_definition_condition_editor_metric_baseline_percentage_tooltip());
+        baselinePercentage.setHoverWidth(200);
         baselinePercentage.setShowIfCondition(ifFunc);
+        baselinePercentage.setValidateOnChange(true);
+        baselinePercentage.setValidators(new IsFloatValidator());
         formItems.add(baselinePercentage);
 
         SelectItem baselineSelection = new SelectItem(BASELINE_SELECTION_ITEMNAME, MSG
@@ -468,6 +474,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
         limits.put("MAX", MSG.view_alert_definition_condition_editor_common_max());
         minMaxAvgSelection
             .setTooltip(MSG.view_alert_definition_condition_editor_metric_calltime_common_limit_tooltip());
+        minMaxAvgSelection.setHoverWidth(200);
         minMaxAvgSelection.setValueMap(limits);
         minMaxAvgSelection.setDefaultValue("AVG");
         minMaxAvgSelection.setWrapTitle(false);
@@ -482,13 +489,17 @@ public class NewConditionEditor extends LocatableDynamicForm {
         absoluteValue.setWrapTitle(false);
         absoluteValue.setRequired(true);
         absoluteValue.setTooltip(MSG.view_alert_definition_condition_editor_metric_calltime_threshold_value_tooltip());
+        absoluteValue.setHoverWidth(200);
         absoluteValue.setShowIfCondition(ifFunc);
+        absoluteValue.setValidateOnChange(true);
+        absoluteValue.setValidators(new IsFloatValidator());
         formItems.add(absoluteValue);
 
         TextItem regex = new TextItem(CALLTIME_THRESHOLD_REGEX_ITEMNAME, MSG
             .view_alert_definition_condition_editor_metric_calltime_common_regex());
         regex.setRequired(false);
         regex.setTooltip(MSG.view_alert_definition_condition_editor_metric_calltime_common_regex_tooltip());
+        regex.setHoverWidth(200);
         regex.setWrapTitle(false);
         regex.setShowIfCondition(ifFunc);
         formItems.add(regex);
@@ -515,6 +526,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
         limits.put("MAX", MSG.view_alert_definition_condition_editor_common_max());
         minMaxAvgSelection
             .setTooltip(MSG.view_alert_definition_condition_editor_metric_calltime_common_limit_tooltip());
+        minMaxAvgSelection.setHoverWidth(200);
         minMaxAvgSelection.setValueMap(limits);
         minMaxAvgSelection.setDefaultValue("AVG");
         minMaxAvgSelection.setWrapTitle(false);
@@ -530,13 +542,17 @@ public class NewConditionEditor extends LocatableDynamicForm {
         percentage.setWrapTitle(false);
         percentage.setRequired(true);
         percentage.setTooltip(MSG.view_alert_definition_condition_editor_metric_calltime_change_percentage_tooltip());
+        percentage.setHoverWidth(200);
         percentage.setShowIfCondition(ifFunc);
+        percentage.setValidateOnChange(true);
+        percentage.setValidators(new IsFloatValidator());
         formItems.add(percentage);
 
         TextItem regex = new TextItem(CALLTIME_CHANGE_REGEX_ITEMNAME, MSG
             .view_alert_definition_condition_editor_metric_calltime_common_regex());
         regex.setRequired(false);
         regex.setTooltip(MSG.view_alert_definition_condition_editor_metric_calltime_common_regex_tooltip());
+        regex.setHoverWidth(200);
         regex.setWrapTitle(false);
         regex.setShowIfCondition(ifFunc);
         formItems.add(regex);
@@ -664,6 +680,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
             .view_alert_definition_condition_editor_event_regex());
         eventRegex.setRequired(false);
         eventRegex.setTooltip(MSG.view_alert_definition_condition_editor_event_regex_tooltip());
+        eventRegex.setHoverWidth(200);
         eventRegex.setWrapTitle(false);
         eventRegex.setShowIfCondition(ifFunc);
         formItems.add(eventRegex);
@@ -739,6 +756,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
         comparatorSelection.setDefaultValue("<");
         comparatorSelection
             .setTooltip(MSG.view_alert_definition_condition_editor_metric_threshold_comparator_tooltip());
+        comparatorSelection.setHoverWidth(200);
         comparatorSelection.setShowIfCondition(ifFunc);
         return comparatorSelection;
     }
@@ -756,6 +774,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
         comparatorSelection.setDefaultValue("CH");
         comparatorSelection.setTooltip(MSG
             .view_alert_definition_condition_editor_metric_calltime_common_comparator_tooltip());
+        comparatorSelection.setHoverWidth(200);
         comparatorSelection.setShowIfCondition(ifFunc);
         return comparatorSelection;
     }

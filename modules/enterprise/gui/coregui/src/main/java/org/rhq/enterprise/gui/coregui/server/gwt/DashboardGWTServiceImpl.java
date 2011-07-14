@@ -22,9 +22,9 @@
  */
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
-import java.util.List;
-
+import org.rhq.core.domain.criteria.DashboardCriteria;
 import org.rhq.core.domain.dashboard.Dashboard;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.coregui.client.gwt.DashboardGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
@@ -40,38 +40,29 @@ public class DashboardGWTServiceImpl extends AbstractGWTServiceImpl implements D
 
     private DashboardManagerLocal dashboardManager = LookupUtil.getDashboardManagerLocal();
 
-    public List<Dashboard> findDashboardsForSubject() {
+    public PageList<Dashboard> findDashboardsByCriteria(DashboardCriteria criteria) throws RuntimeException {
         try {
-            return SerialUtility.prepare(dashboardManager.findDashboardsForSubject(getSessionSubject()),
-                "DashboardManager.findDashboardsForSubject");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+            return SerialUtility.prepare(dashboardManager.findDashboardsByCriteria(getSessionSubject(), criteria),
+                "DashboardManager.findDashboardsByCriteria");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
         }
     }
 
-    public List<Dashboard> findSharedDashboards() {
-        try {
-            return SerialUtility.prepare(dashboardManager.findSharedDashboards(getSessionSubject()),
-                "DashboardManager.findSharedDashboards");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
-        }
-    }
-
-    public Dashboard storeDashboard(Dashboard dashboard) {
+    public Dashboard storeDashboard(Dashboard dashboard) throws RuntimeException {
         try {
             return SerialUtility.prepare(dashboardManager.storeDashboard(getSessionSubject(), dashboard),
                 "DashboardManager.storeDashboard");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
         }
     }
 
-    public void removeDashboard(int dashboardId) {
+    public void removeDashboard(int dashboardId) throws RuntimeException {
         try {
             dashboardManager.removeDashboard(getSessionSubject(), dashboardId);
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
         }
     }
 }

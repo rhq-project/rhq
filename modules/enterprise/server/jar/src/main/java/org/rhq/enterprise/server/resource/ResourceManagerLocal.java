@@ -32,6 +32,7 @@ import org.rhq.core.domain.measurement.ResourceAvailability;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceAncestryFormat;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.ResourceErrorType;
@@ -218,7 +219,15 @@ public interface ResourceManagerLocal {
         String pluginName, Resource parentResource, String searchString, boolean attachParentResource,
         PageControl pageControl);
 
-    // TODO GH: This would be more useful if it used a groupby to return a map of categories to their size
+    /**
+     * Get a summary of counts, by category, of the user's viewable resources having the provided inventory status.  
+     * 
+     * @param user
+     * @param status
+     * @return A 3 element int array with counts for platform, service, service as a[0], a[1], a[2], respectively.
+     */
+    int[] getResourceCountSummary(Subject user, InventoryStatus status);
+
     int getResourceCountByCategory(Subject user, ResourceCategory category, InventoryStatus status);
 
     int getResourceCountByTypeAndIds(Subject user, ResourceType type, int[] resourceIds);
@@ -387,6 +396,15 @@ public interface ResourceManagerLocal {
     void clearResourceConfigError(int resourceId);
 
     /**
+     * Clears errors of the given type.
+     * @param subject the user that is making the request
+     * @param resourceId id of the resource
+     * @param resourceErrorType type of error to clear
+     * @return the number of errors that were cleared
+     */
+    int clearResourceConfigErrorByType(Subject subject, int resourceId, ResourceErrorType resourceErrorType);
+
+    /**
      * Returns the platform Resource associated with the specified Agent.
      *
      * @param agent an Agent
@@ -415,6 +433,21 @@ public interface ResourceManagerLocal {
     List<ResourceFlyweight> findResourcesByCompatibleGroup(Subject user, int compatibleGroupId, PageControl pageControl);
 
     ResourceAvailabilitySummary getAvailabilitySummary(Subject user, int resourceId);
+
+    /**
+     * Update the ancestry for the specified resource and its child lineage.
+     * <pre>
+     * The ancestry is recursively defined as:
+     * 
+     *     resourceAncestry=parentResourceResourceTypeId_:_parentResourceId_:_parentResourceName_::_parentResourceAncestry
+     *     
+     *     * note that platform resources have no parent and therefore have a null ancestry
+     * 
+     * </pre>
+     * @param subject
+     * @param resourceId
+     */
+    public void updateAncestry(Subject subject, int resourceId);
 
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //
@@ -470,4 +503,11 @@ public interface ResourceManagerLocal {
      */
     <T> List<DisambiguationReport<T>> disambiguate(List<T> results, IntExtractor<? super T> resourceIdExtractor,
         DisambiguationUpdateStrategy updateStrategy);
+
+    List<Integer> findIdsByTypeIds(List<Integer> resourceTypeIds);
+
+    Integer getResourceCount(List<Integer> resourceTypeIds);
+
+    Map<Integer, String> getResourcesAncestry(Subject subject, Integer[] resourceIds, ResourceAncestryFormat format);
+
 }

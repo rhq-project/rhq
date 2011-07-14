@@ -7,6 +7,10 @@ import javax.naming.InitialContext;
 
 import org.jboss.deployers.spi.management.ManagementView;
 import org.jboss.deployers.spi.management.deploy.DeploymentManager;
+import org.jboss.managed.api.ComponentType;
+import org.jboss.managed.api.ManagedComponent;
+import org.jboss.managed.api.ManagedProperty;
+import org.jboss.metatype.api.values.SimpleValueSupport;
 import org.jboss.profileservice.spi.ProfileService;
 
 public class RmiClient
@@ -35,11 +39,35 @@ public class RmiClient
       DeploymentManager deploymentManager = profileService.getDeploymentManager();
       System.err.println("DeploymentManager: " + deploymentManager);      
       
-      profileService.getDomains();
-      profileService.getProfileKeys();
+      //profileService.getDomains();
+      //profileService.getProfileKeys();
       managementView.load();
-      managementView.getDeploymentNames();      
-      deploymentManager.getProfiles();
+      //managementView.getDeploymentNames();      
+      //deploymentManager.getProfiles();
+
+      ComponentType localTxDataSourceType = new ComponentType("DataSource", "LocalTx");
+      ManagedComponent defaultDSComponent = managementView.getComponent("DefaultDS", localTxDataSourceType);      
+      ManagedProperty maxPoolSizeProp = defaultDSComponent.getProperty("query-timeout");
+      SimpleValueSupport maxPoolSizeValue = (SimpleValueSupport)maxPoolSizeProp.getValue();
+      System.err.println("getValue(): " + maxPoolSizeValue.getValue());            
+
+      System.err.println("setValue(33)");                  
+      maxPoolSizeValue.setValue(33);      
+      managementView.updateComponent(defaultDSComponent);
+      managementView.load();
+      defaultDSComponent = managementView.getComponent("DefaultDS", localTxDataSourceType);      
+      maxPoolSizeProp = defaultDSComponent.getProperty("query-timeout");
+      maxPoolSizeValue = ((SimpleValueSupport)maxPoolSizeProp.getValue());
+      System.err.println("getValue(): " + maxPoolSizeValue.getValue());            
+
+      System.err.println("setValue(null)");                  
+      maxPoolSizeValue.setValue(null);
+      managementView.updateComponent(defaultDSComponent);
+      managementView.load();
+      defaultDSComponent = managementView.getComponent("DefaultDS", localTxDataSourceType);      
+      maxPoolSizeProp = defaultDSComponent.getProperty("query-timeout");
+      maxPoolSizeValue = ((SimpleValueSupport)maxPoolSizeProp.getValue());
+      System.err.println("getValue(): " + maxPoolSizeValue.getValue());
    }
 }
 

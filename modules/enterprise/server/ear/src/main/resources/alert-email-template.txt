@@ -4,18 +4,17 @@ The resource @@@RESOURCE_NAME@@@ has generated the following alert:
 
 ------------------------------------------
 
-- Resource Name: @@@RESOURCE_NAME@@@
-- Alert Name: @@@ALERT_NAME@@@
-- Alert Severity: @@@PRIORITY@@@
-- Alert Date/Time: @@@TIMESTAMP@@@
-- Conditions: @@@CONDITIONS@@@
+Resource Name    : @@@RESOURCE_NAME@@@
+Alert Name       : @@@ALERT_NAME@@@
+Alert Severity   : @@@PRIORITY@@@
+Alert Date/Time  : @@@TIMESTAMP@@@
+Conditions: @@@CONDITIONS@@@
   
 ------------------------------------------
 
-Resource Hierarchy was:
+Resource Ancestry:
 
 @@@FULL_RESOURCE_HIERARCHY@@@
-
 
 ------------------------------------------
 

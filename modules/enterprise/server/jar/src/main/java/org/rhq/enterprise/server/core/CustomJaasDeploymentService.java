@@ -65,7 +65,8 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
     public void installJaasModules() {
         try {
             log.info("Installing RHQ Server's JAAS login modules");
-            Properties conf = LookupUtil.getSystemManager().getSystemConfiguration();
+            Properties conf = LookupUtil.getSystemManager().getSystemConfiguration(
+                LookupUtil.getSubjectManager().getOverlord());
             registerJaasModules(conf);
         } catch (Exception e) {
             log.fatal("Error deploying JAAS login modules", e);

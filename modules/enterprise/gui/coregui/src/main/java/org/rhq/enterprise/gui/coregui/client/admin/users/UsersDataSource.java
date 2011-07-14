@@ -51,10 +51,11 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
  * @author Greg Hinkle
  * @author Ian Springer
  */
-public class UsersDataSource extends RPCDataSource<Subject> {
+public class UsersDataSource extends RPCDataSource<Subject, SubjectCriteria> {
 
     private static UsersDataSource INSTANCE;
-    private static final String EMAIL_ADDRESS_REGEXP = "^([a-zA-Z0-9_.\\-+])+@(([a-zA-Z0-9\\-])+\\.)+[a-zA-Z0-9]{2,4}$";
+
+    private static final String EMAIL_ADDRESS_REGEXP = "^([a-zA-Z0-9_.\\-+])+@([a-zA-Z0-9\\-])+(\\.([a-zA-Z0-9\\-])+)*$";
     private static final String MASKED_PASSWORD_VALUE = "XXXXXXXX";
 
     public static abstract class Field {
@@ -87,6 +88,10 @@ public class UsersDataSource extends RPCDataSource<Subject> {
         return INSTANCE;
     }
 
+    public static boolean isSystemSubjectId(int subjectId) {
+        return (subjectId == ID_OVERLORD || subjectId == ID_RHQADMIN);
+    }
+
     public UsersDataSource() {
         List<DataSourceField> fields = addDataSourceFields();
         addFields(fields);
@@ -101,56 +106,56 @@ public class UsersDataSource extends RPCDataSource<Subject> {
         idDataField.setCanEdit(false);
         fields.add(idDataField);
 
-        DataSourceTextField usernameField = createTextField(Field.NAME, MSG.dataSource_users_field_name(), 3, 100,
-            true);
-            
+        DataSourceTextField usernameField = createTextField(Field.NAME, MSG.dataSource_users_field_name(), 3, 100, true);
+        // Don't allow characters that could be used in HTML intended for an XSS attack.
+        RegExpValidator regExpValidator = new RegExpValidator("[^&<]*");
+        usernameField.setValidators(regExpValidator);
         fields.add(usernameField);
 
         DataSourceTextField ldapField = createBooleanField(Field.LDAP, MSG.dataSource_users_field_ldap(), true);
         ldapField.setCanEdit(false); // read-only
         fields.add(ldapField);
 
-        DataSourcePasswordField passwordField = new DataSourcePasswordField(Field.PASSWORD,
-            MSG.dataSource_users_field_password(), 100, true);
+        DataSourcePasswordField passwordField = new DataSourcePasswordField(Field.PASSWORD, MSG
+            .dataSource_users_field_password(), 100, true);
         LengthRangeValidator passwordValidator = new LengthRangeValidator();
         passwordValidator.setMin(6);
         passwordValidator.setMax(100);
         passwordField.setValidators(passwordValidator);
         fields.add(passwordField);
 
-        DataSourcePasswordField passwordVerifyField = new DataSourcePasswordField(Field.PASSWORD_VERIFY,
-            MSG.dataSource_users_field_passwordVerify(), 100, true);
+        DataSourcePasswordField passwordVerifyField = new DataSourcePasswordField(Field.PASSWORD_VERIFY, MSG
+            .dataSource_users_field_passwordVerify(), 100, true);
         MatchesFieldValidator passwordsEqualValidator = new MatchesFieldValidator();
         passwordsEqualValidator.setOtherField(Field.PASSWORD);
-        passwordsEqualValidator.setErrorMessage("Passwords do not match.");
+        passwordsEqualValidator.setErrorMessage(MSG.dataSource_users_passwordsDoNotMatch());
         passwordVerifyField.setValidators(passwordsEqualValidator);
         fields.add(passwordVerifyField);
 
-        DataSourceTextField firstNameField = createTextField(Field.FIRST_NAME,
-            MSG.dataSource_users_field_firstName(), null, 100, true);
+        DataSourceTextField firstNameField = createTextField(Field.FIRST_NAME, MSG.dataSource_users_field_firstName(),
+            null, 100, true);
         fields.add(firstNameField);
 
         DataSourceTextField lastNameField = createTextField(Field.LAST_NAME, MSG.dataSource_users_field_lastName(),
             null, 100, true);
         fields.add(lastNameField);
 
-        DataSourceTextField emailAddressField = createTextField(Field.EMAIL_ADDRESS,
-            MSG.dataSource_users_field_emailAddress(), null, 100, true);
+        DataSourceTextField emailAddressField = createTextField(Field.EMAIL_ADDRESS, MSG
+            .dataSource_users_field_emailAddress(), null, 100, true);
         fields.add(emailAddressField);
         RegExpValidator emailAddressValidator = new RegExpValidator(EMAIL_ADDRESS_REGEXP);
-        emailAddressValidator.setErrorMessage("Invalid email address.");
+        emailAddressValidator.setErrorMessage(MSG.dataSource_users_invalidEmailAddress());
         emailAddressField.setValidators(emailAddressValidator);
 
-        DataSourceTextField phoneNumberField = createTextField(Field.PHONE_NUMBER,
-            MSG.dataSource_users_field_phoneNumber(), null, 100, false);
+        DataSourceTextField phoneNumberField = createTextField(Field.PHONE_NUMBER, MSG
+            .dataSource_users_field_phoneNumber(), null, 100, false);
         fields.add(phoneNumberField);
 
         DataSourceTextField departmentField = createTextField(Field.DEPARTMENT,
             MSG.dataSource_users_field_department(), null, 100, false);
         fields.add(departmentField);
 
-        DataSourceTextField enabledField = createBooleanField(Field.FACTIVE, MSG.dataSource_users_field_factive(),
-            true);
+        DataSourceTextField enabledField = createBooleanField(Field.FACTIVE, MSG.dataSource_users_field_factive(), true);
         fields.add(enabledField);
 
         DataSourceField rolesField = new DataSourceField(Field.ROLES, FieldType.ANY, "Roles");
@@ -159,9 +164,9 @@ public class UsersDataSource extends RPCDataSource<Subject> {
         return fields;
     }
 
-    public void executeFetch(final DSRequest request, final DSResponse response) {
-        SubjectCriteria criteria = getFetchCriteria(request);
-                
+    @Override
+    public void executeFetch(final DSRequest request, final DSResponse response, final SubjectCriteria criteria) {
+
         subjectService.findSubjectsByCriteria(criteria, new AsyncCallback<PageList<Subject>>() {
             public void onFailure(Throwable caught) {
                 String message = "Failed to fetch user(s).";
@@ -172,7 +177,7 @@ public class UsersDataSource extends RPCDataSource<Subject> {
                 final PageList<Record> userRecordsPageList = new PageList<Record>(fetchedSubjects.getPageControl());
                 userRecordsPageList.setTotalSize(fetchedSubjects.getTotalSize());
                 userRecordsPageList.setUnbounded(fetchedSubjects.isUnbounded());
-                final boolean[] failed = {false};
+                final boolean[] failed = { false };
                 for (int i = 0, fetchedSubjectsSize = fetchedSubjects.size(); i < fetchedSubjectsSize; i++) {
                     if (failed[0]) {
                         break;
@@ -195,7 +200,7 @@ public class UsersDataSource extends RPCDataSource<Subject> {
                             }
                         }
                     });
-                }                                                
+                }
             }
         });
     }
@@ -204,13 +209,18 @@ public class UsersDataSource extends RPCDataSource<Subject> {
     protected void executeAdd(final Record recordToAdd, final DSRequest request, final DSResponse response) {
         final Subject newSubject = copyValues(recordToAdd);
         String password = recordToAdd.getAttribute(Field.PASSWORD);
-                
+
         subjectService.createSubject(newSubject, password, new AsyncCallback<Subject>() {
             public void onFailure(Throwable caught) {
                 // TODO: Throw more specific SLSB exceptions so we can set the right validation errors.
-                Map<String, String> errorMessages = new HashMap<String, String>();
-                errorMessages.put(Field.NAME, "A user named [" + newSubject.getName() + "] already exists.");
-                sendValidationErrorResponse(request, response, errorMessages);
+                String message = caught.getMessage();
+                if (message != null && message.contains("javax.persistence.EntityExistsException")) {
+                    Map<String, String> errorMessages = new HashMap<String, String>();
+                    errorMessages.put(Field.NAME, "A user named [" + newSubject.getName() + "] already exists.");
+                    sendValidationErrorResponse(request, response, errorMessages);
+                } else {
+                    throw new RuntimeException(caught);
+                }
             }
 
             public void onSuccess(final Subject createdSubject) {
@@ -222,7 +232,7 @@ public class UsersDataSource extends RPCDataSource<Subject> {
 
     @Override
     protected void executeUpdate(final Record editedUserRecord, Record oldUserRecord, final DSRequest request,
-                                 final DSResponse response) {
+        final DSResponse response) {
         Subject editedSubject = copyValues(editedUserRecord);
         final String username = editedSubject.getName();
 
@@ -249,12 +259,12 @@ public class UsersDataSource extends RPCDataSource<Subject> {
         final String username = subjectToRemove.getName();
         subjectService.deleteSubjects(new int[] { subjectToRemove.getId() }, new AsyncCallback<Void>() {
             public void onFailure(Throwable caught) {
-                String message = "Failed to delete user [" + username + "].";
+                String message = MSG.dataSource_users_deleteFailed(username);
                 sendFailureResponse(request, response, message, caught);
             }
 
             public void onSuccess(Void result) {
-                Message message = new Message("User [" + username + "] deleted.");
+                Message message = new Message(MSG.dataSource_users_delete(username));
                 sendSuccessResponse(request, response, subjectToRemove, message, UsersView.VIEW_PATH);
             }
         });
@@ -264,7 +274,7 @@ public class UsersDataSource extends RPCDataSource<Subject> {
     @SuppressWarnings("unchecked")
     public Subject copyValues(Record from) {
         Subject to = new Subject();
-        
+
         to.setId(from.getAttributeAsInt(Field.ID));
         to.setName(from.getAttributeAsString(Field.NAME));
         to.setFirstName(from.getAttributeAsString(Field.FIRST_NAME));
@@ -286,7 +296,7 @@ public class UsersDataSource extends RPCDataSource<Subject> {
 
         targetRecord.setAttribute(Field.LDAP, isLdap);
 
-        // Leave the password field blank if username is null (i.e. it's a new user).
+        // Leave the password fields blank if username is null (i.e. it's a new user).
         if (subject.getName() != null) {
             targetRecord.setAttribute(Field.PASSWORD, MASKED_PASSWORD_VALUE);
             targetRecord.setAttribute(Field.PASSWORD_VERIFY, MASKED_PASSWORD_VALUE);
@@ -321,6 +331,7 @@ public class UsersDataSource extends RPCDataSource<Subject> {
         return to;
     }
 
+    @Override
     protected SubjectCriteria getFetchCriteria(DSRequest request) {
         SubjectCriteria criteria = new SubjectCriteria();
 
@@ -343,6 +354,17 @@ public class UsersDataSource extends RPCDataSource<Subject> {
         //       count across the wire.  this count will not require permission checks at all.
 
         return criteria;
+    }
+
+    @Override
+    protected String getSortFieldForColumn(String columnName) {
+
+        // this is a calculated field, can't perform server-side sort
+        if (Field.LDAP.equals(columnName)) {
+            return null;
+        }
+
+        return super.getSortFieldForColumn(columnName);
     }
 
 }

@@ -34,6 +34,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.operation.OperationDefinition;
+import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
@@ -51,8 +52,7 @@ import org.rhq.enterprise.gui.operation.schedule.group.ResourceGroupOperationSch
 import org.rhq.enterprise.gui.operation.schedule.resource.ResourceOperationScheduleUIBean;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
-import org.rhq.enterprise.server.operation.OperationSchedule;
-import org.rhq.enterprise.server.operation.ResourceOperationSchedule;
+import org.rhq.core.domain.operation.bean.OperationSchedule;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public abstract class OperationScheduleUIBean extends PagedDataTableUIBean {

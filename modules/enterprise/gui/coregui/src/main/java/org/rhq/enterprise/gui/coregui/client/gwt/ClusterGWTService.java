@@ -36,7 +36,6 @@ import org.rhq.core.domain.resource.group.composite.ClusterFlyweight;
  */
 public interface ClusterGWTService extends RemoteService {
 
-    
     /**
      * Given a cluster key create a backing group.
      * @param clusterKey
@@ -44,7 +43,7 @@ public interface ClusterGWTService extends RemoteService {
      * Otherwise no resources will be assigned to the new group.
      * @throws IllegalArgumentException if a backing group exists for this clusterKey
      */
-    ResourceGroup createAutoClusterBackingGroup(ClusterKey clusterKey, boolean addResources);
+    ResourceGroup createAutoClusterBackingGroup(ClusterKey clusterKey, boolean addResources) throws RuntimeException;
 
     /**
      * Return the backing group for the supplied cluster key.  Resource membership will represent the resources
@@ -52,17 +51,15 @@ public interface ClusterGWTService extends RemoteService {
      * @param clusterKey
      * @return The backing group, or null if the key does not have a backing group.
      */
-    ResourceGroup getAutoClusterBackingGroup(ClusterKey clusterKey);
+    ResourceGroup getAutoClusterBackingGroup(ClusterKey clusterKey) throws RuntimeException;
 
     /**
      * Given a cluster key get the auto cluster resource membership. The membership is always determined
      * at call time, regardless of whether a backing group exists. To get the backing group, if it exists,
      * for a cluster key then call {@link #getAutoClusterBackingGroup(String)}.
      */
-    List<Resource> getAutoClusterResources(ClusterKey clusterKey);
+    List<Resource> getAutoClusterResources(ClusterKey clusterKey) throws RuntimeException;
 
-
-    ClusterFlyweight getClusterTree(int groupId);
-
+    ClusterFlyweight getClusterTree(int groupId) throws RuntimeException;
 
 }

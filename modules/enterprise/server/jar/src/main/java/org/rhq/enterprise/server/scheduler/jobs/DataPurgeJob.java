@@ -83,7 +83,8 @@ public class DataPurgeJob extends AbstractStatefulJob {
         LOG.info("Data Purge Job STARTING");
 
         try {
-            Properties systemConfig = LookupUtil.getSystemManager().getSystemConfiguration();
+            Properties systemConfig = LookupUtil.getSystemManager().getSystemConfiguration(
+                LookupUtil.getSubjectManager().getOverlord());
             compressMeasurementData(LookupUtil.getMeasurementCompressionManager());
             purgeEverything(systemConfig);
             performDatabaseMaintenance(LookupUtil.getSystemManager(), systemConfig);
@@ -227,7 +228,7 @@ public class DataPurgeJob extends AbstractStatefulJob {
         int alertDefinitionsPurged = 0;
 
         try {
-            alertDefinitionsPurged = alertDefinitionManager.purgeUnusedAlertDefinition();
+            alertDefinitionsPurged = alertDefinitionManager.purgeUnusedAlertDefinitions();
         } catch (Exception e) {
             LOG.error("Failed to purge alert definition data. Cause: " + e, e);
         } finally {

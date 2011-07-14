@@ -82,6 +82,7 @@ import org.rhq.core.clientapi.server.core.ConnectAgentRequest;
 import org.rhq.core.clientapi.server.core.ConnectAgentResults;
 import org.rhq.core.clientapi.server.core.CoreServerService;
 import org.rhq.core.clientapi.server.discovery.DiscoveryServerService;
+import org.rhq.core.clientapi.server.drift.DriftServerService;
 import org.rhq.core.clientapi.server.event.EventServerService;
 import org.rhq.core.clientapi.server.inventory.ResourceFactoryServerService;
 import org.rhq.core.clientapi.server.measurement.MeasurementServerService;
@@ -90,6 +91,7 @@ import org.rhq.core.domain.cloud.composite.FailoverListComposite;
 import org.rhq.core.domain.cloud.composite.FailoverListComposite.ServerEntry;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.PluginContainerConfiguration;
+import org.rhq.core.pc.RebootRequestListener;
 import org.rhq.core.pc.ServerServices;
 import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.plugin.FileSystemPluginFinder;
@@ -115,6 +117,7 @@ import org.rhq.enterprise.agent.promptcmd.GetConfigPromptCommand;
 import org.rhq.enterprise.agent.promptcmd.HelpPromptCommand;
 import org.rhq.enterprise.agent.promptcmd.IdentifyPromptCommand;
 import org.rhq.enterprise.agent.promptcmd.InventoryPromptCommand;
+import org.rhq.enterprise.agent.promptcmd.ListDataPromptCommand;
 import org.rhq.enterprise.agent.promptcmd.LogPromptCommand;
 import org.rhq.enterprise.agent.promptcmd.MetricsPromptCommand;
 import org.rhq.enterprise.agent.promptcmd.NativePromptCommand;
@@ -1628,7 +1631,7 @@ public class AgentMain {
         //the next thing is to setup the conditional restart of the PC if it fails to merge
         //the upgrade results with the server due to some network glitch
         m_clientSender.addStateListener(new PluginContainerConditionalRestartListener(), false);
-        
+
         return register;
     }
 
@@ -1661,6 +1664,93 @@ public class AgentMain {
             return true;
         }
 
+        plugin_container.setRebootRequestListener(new RebootRequestListener() {
+            public void reboot() {
+                try {
+                    shutdown();
+                } catch (Throwable t) {
+                    LOG.error(t, "The plugin container has requested the agent be restarted but the shutdown "
+                        + "operation failed.");
+                }
+                if (isStarted()) {
+                    // Pause for a few seconds and try to shut down one more time.
+                    try {
+                        Thread.sleep(3000);
+                        shutdown();
+                    } catch (Throwable t) {
+                        LOG.error(t, "The plugin container has requested the agent be restarted but the shutdown "
+                            + "operation failed again.");
+                    }
+                }
+                if (isStarted()) {
+                    // At this point agent shut down failed twice. We can get by with rebooting the plugin container
+                    // so we will try that as last ditch effort.
+
+                    LOG.warn("The agent shut down operation has failed twice. Attempting to reboot the plugin "
+                        + "container so that stale resource types and deleted plugins are removed.");
+                    try {
+                        rebootPluginContainer();
+                    } catch (Throwable t) {
+                        // If rebooting the plugin container fails as well, there is not much else we can do besides
+                        // reporting the failures. Manual intervention is needed.
+                        LOG.error("The agent could not be shut down and rebooting the plugin container failed. "
+                            + "Please check the logs for errors and manually restart the agent as soon as "
+                            + "possible.");
+                        return;
+                    }
+                } else {
+                    try {
+                        cleanDataDirectory();
+                    } catch (Throwable t) {
+                        LOG.warn(t, "The plugin container has requested the agent be restarted but purging the "
+                            + "data directory failed.");
+                    }
+                    try {
+                        start();
+                    } catch (Throwable t) {
+                        LOG.warn(t, "An error occurred while trying to restart the agent. Attempting restart "
+                            + "one more time");
+                        try {
+                            shutdown();
+                            start();
+                        } catch (Throwable t1) {
+                            LOG.error(t1, "Restarting the agent has failed. Please check the logs for errors and "
+                                + "manually restart the agent as soon as possible.");
+                            return;
+                        }
+                    }
+                    getAgentRestartCounter().restartedAgent(AgentRestartReason.STALE_INVENTORY);
+                }
+            }
+
+            private void rebootPluginContainer() throws Throwable {
+                PluginContainer pc = PluginContainer.getInstance();
+
+                if (pc.isStarted()) {
+                    try {
+                        shutdownPluginContainer();
+                    } catch (Throwable t) {
+                        LOG.error(t, "The plugin container shut down operation failed.");
+                        throw t;
+                    }
+                    try {
+                        startPluginContainer(0L);
+                    } catch (Throwable t) {
+                        LOG.error(t, "The plugin container was shut down but an error occurred trying to restart it.");
+                        throw t;
+                    }
+                } else {
+                    LOG.warn("The plugin container is already shut down. Attempting to restart it...");
+                    try {
+                        startPluginContainer(0L);
+                    } catch (Throwable t) {
+                        LOG.error(t, "The plugin container was shut down but an error occurred trying to restart it.");
+                        throw t;
+                    }
+                }
+            }
+        });
+
         // if wait param is <=0 this BLOCKS INDEFINITELY! If the server is down, this will never return until it comes back up
         try {
             waitToBeRegistered(wait_for_registration);
@@ -1692,6 +1782,7 @@ public class AgentMain {
             ContentServerService contentServerService = factory.getRemotePojo(ContentServerService.class);
             EventServerService eventServerService = factory.getRemotePojo(EventServerService.class);
             BundleServerService bundleServerService = factory.getRemotePojo(BundleServerService.class);
+            DriftServerService driftServerService = factory.getRemotePojo(DriftServerService.class);
 
             ServerServices serverServices = new ServerServices();
             serverServices.setCoreServerService(coreServerService);
@@ -1703,6 +1794,7 @@ public class AgentMain {
             serverServices.setContentServerService(contentServerService);
             serverServices.setEventServerService(eventServerService);
             serverServices.setBundleServerService(bundleServerService);
+            serverServices.setDriftServerService(driftServerService);
 
             pc_config.setServerServices(serverServices);
         } catch (Exception e) {
@@ -2798,7 +2890,7 @@ public class AgentMain {
      * @throws HelpException            if help was requested and the agent should not be created
      */
     private void processArguments(String[] args) throws Exception {
-        String sopts = "-:hdlasntuD:i:o:c:p:e:";
+        String sopts = "-:hdlasntguD:i:o:c:p:e:";
         LongOpt[] lopts = { new LongOpt("help", LongOpt.NO_ARGUMENT, null, 'h'),
             new LongOpt("input", LongOpt.REQUIRED_ARGUMENT, null, 'i'),
             new LongOpt("output", LongOpt.REQUIRED_ARGUMENT, null, 'o'),
@@ -3036,7 +3128,7 @@ public class AgentMain {
             new LogPromptCommand(), new TimerPromptCommand(), new PingPromptCommand(), new DownloadPromptCommand(),
             new DumpSpoolPromptCommand(), new SenderPromptCommand(), new FailoverPromptCommand(),
             new UpdatePromptCommand(), new DebugPromptCommand(), new SleepPromptCommand(), new GCPromptCommand(),
-            new SchedulesPromptCommand() };
+            new SchedulesPromptCommand(), new ListDataPromptCommand() };
 
         // hold the conflicts
         StringBuilder conflicts = new StringBuilder();
@@ -3412,15 +3504,16 @@ public class AgentMain {
             try {
                 InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
                 if (inventoryManager != null && inventoryManager.hasUpgradeMergeFailed()) {
-                    m_output.println(MSG.getMsg(AgentI18NResourceKeys.RESTARTING_PLUGIN_CONTAINER_AFTER_UPGRADE_MERGE_FAILURE));
+                    m_output.println(MSG
+                        .getMsg(AgentI18NResourceKeys.RESTARTING_PLUGIN_CONTAINER_AFTER_UPGRADE_MERGE_FAILURE));
                     LOG.info(AgentI18NResourceKeys.RESTARTING_PLUGIN_CONTAINER_AFTER_UPGRADE_MERGE_FAILURE);
-                    
+
                     PluginContainerPromptCommand pcCommand = new PluginContainerPromptCommand();
                     pcCommand.execute(AgentMain.this, new String[] { "stop" });
                     pcCommand.execute(AgentMain.this, new String[] { "start" });
                 }
             } catch (Exception e) {
-                LOG.error("Failed to restart the plugin container when server connection established.");                
+                LOG.error("Failed to restart the plugin container when server connection established.");
             }
             return true;
         }
@@ -3430,7 +3523,7 @@ public class AgentMain {
             return true;
         }
     }
-    
+
     /**
      * When the agent starts up, it needs to create the communications servers before starting the plugin container;
      * however, the agent must not process any incoming commands until after the plugin container fully starts. This

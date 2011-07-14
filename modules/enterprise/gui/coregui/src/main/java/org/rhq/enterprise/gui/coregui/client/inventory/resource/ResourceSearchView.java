@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -18,46 +18,51 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource;
 
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.AVAILABILITY;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.CATEGORY;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.DESCRIPTION;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.NAME;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.PLUGIN;
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.TYPE;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.*;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.SortSpecifier;
-import com.smartgwt.client.types.Alignment;
-import com.smartgwt.client.types.ListGridFieldType;
-import com.smartgwt.client.types.Overflow;
-import com.smartgwt.client.widgets.events.ClickEvent;
-import com.smartgwt.client.widgets.events.ClickHandler;
-import com.smartgwt.client.widgets.events.CloseClickHandler;
-import com.smartgwt.client.widgets.events.CloseClientEvent;
+import com.smartgwt.client.widgets.events.DoubleClickEvent;
+import com.smartgwt.client.widgets.events.DoubleClickHandler;
 import com.smartgwt.client.widgets.grid.CellFormatter;
+import com.smartgwt.client.widgets.grid.HoverCustomizer;
+import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.core.domain.search.SearchSubsystem;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
-import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
+import org.rhq.enterprise.gui.coregui.client.components.table.EscapedHtmlCellFormatter;
+import org.rhq.enterprise.gui.coregui.client.components.table.RecordExtractor;
+import org.rhq.enterprise.gui.coregui.client.components.table.ResourceAuthorizedTableAction;
+import org.rhq.enterprise.gui.coregui.client.components.table.IconField;
+import org.rhq.enterprise.gui.coregui.client.components.table.ResourceCategoryCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
+import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.inventory.ResourceGroupMembershipView;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.TableUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
+ * The list view for {@link Resource}s.
+ *
  * @author Greg Hinkle
  */
 public class ResourceSearchView extends Table {
@@ -65,9 +70,6 @@ public class ResourceSearchView extends Table {
     private static final String DEFAULT_TITLE = MSG.view_inventory_resources_title();
 
     private List<ResourceSelectListener> selectListeners = new ArrayList<ResourceSelectListener>();
-
-    // our static factory method will set this to a non-null resource group ID iff the user can modify that group's membership
-    private Integer groupIdToModify = null;
 
     /**
      * A list of all Resources in the system.
@@ -101,6 +103,7 @@ public class ResourceSearchView extends Table {
      *
      * @param headerIcons 24x24 icon(s) to be displayed in the header
      */
+    @SuppressWarnings("unchecked")
     public ResourceSearchView(String locatorId, Criteria criteria, String title, SortSpecifier[] sortSpecifier,
         String[] excludeFields, String... headerIcons) {
         super(locatorId, title, criteria, sortSpecifier, excludeFields);
@@ -109,82 +112,47 @@ public class ResourceSearchView extends Table {
             addHeaderIcon(headerIcon);
         }
 
-        //        DynamicForm searchPanel = new DynamicForm();
-        //        final TextItem searchBox = new TextItem("query", "Search Resources");
-        //        searchBox.setValue("");
-        //        searchPanel.setWrapItemTitles(false);
-        //        searchPanel.setFields(searchBox);
-
-        final RPCDataSource<?> datasource = getDataSourceInstance();
+        final RPCDataSource<Resource, ResourceCriteria> datasource = getDataSourceInstance();
         setDataSource(datasource);
     }
 
-    protected RPCDataSource<?> getDataSourceInstance() {
+    // surpress unchecked warnings because the subclasses may have different generic types for the datasource
+    @SuppressWarnings("unchecked")
+    protected RPCDataSource getDataSourceInstance() {
         return ResourceDatasource.getInstance();
     }
 
     @Override
     protected void configureTable() {
-        ListGridField iconField = new ListGridField("icon", MSG.common_title_icon(), 26);
-        iconField.setType(ListGridFieldType.IMAGE);
-        iconField.setImageURLPrefix("types/");
-        iconField.setShowDefaultContextMenu(false);
-        iconField.setCanSort(false);
-        iconField.setTitle("&nbsp;");
-
-        ListGridField nameField = new ListGridField(NAME.propertyName(), NAME.title(), 250);
-        nameField.setCellFormatter(new CellFormatter() {
-            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                return "<a href=\"" + LinkManager.getResourceLink(listGridRecord.getAttributeAsInt("id")) + "\">" + o
-                    + "</a>";
-            }
-        });
-
-        ListGridField descriptionField = new ListGridField(DESCRIPTION.propertyName(), DESCRIPTION.title());
-
-        ListGridField typeNameField = new ListGridField(TYPE.propertyName(), TYPE.title(), 130);
-
-        ListGridField pluginNameField = new ListGridField(PLUGIN.propertyName(), PLUGIN.title(), 100);
-
-        ListGridField categoryField = new ListGridField(CATEGORY.propertyName(), CATEGORY.title(), 60);
-        categoryField.setCellFormatter(new CellFormatter() {
-            public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
-                String categoryName = (String)value;
-                ResourceCategory category = ResourceCategory.valueOf(categoryName);
-                String displayName = "";
-                switch (category) {
-                    case PLATFORM:
-                        displayName = MSG.common_title_platform(); break;
-                    case SERVER:
-                        displayName = MSG.common_title_server(); break;
-                    case SERVICE:
-                        displayName = MSG.common_title_service(); break;
-                }
-                return displayName;
-            }
-        });
-
-        ListGridField availabilityField = new ListGridField(AVAILABILITY.propertyName(), AVAILABILITY.title(), 70);
-        availabilityField.setType(ListGridFieldType.IMAGE);
-        availabilityField.setAlign(Alignment.CENTER);
-
-        setListGridFields(iconField, nameField, descriptionField, typeNameField, pluginNameField, categoryField,
-            availabilityField);
+        List<ListGridField> fields = createFields();
+        setListGridFields(fields.toArray(new ListGridField[fields.size()]));
 
         addTableAction(extendLocatorId("Uninventory"), MSG.common_button_uninventory(), MSG
-            .view_inventory_resources_deleteConfirm(), new AbstractTableAction(TableActionEnablement.ANY) {
+            .view_inventory_resources_uninventoryConfirm(), new ResourceAuthorizedTableAction(ResourceSearchView.this,
+            TableActionEnablement.ANY, Permission.DELETE_RESOURCE, new RecordExtractor<Integer>() {
+
+                public Collection<Integer> extract(Record[] records) {
+                    List<Integer> result = new ArrayList<Integer>(records.length);
+                    for (Record record : records) {
+                        result.add(record.getAttributeAsInt("id"));
+                    }
+
+                    return result;
+                }
+            }) {
+
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 int[] resourceIds = TableUtility.getIds(selection);
                 ResourceGWTServiceAsync resourceManager = GWTServiceLookup.getResourceService();
 
                 resourceManager.uninventoryResources(resourceIds, new AsyncCallback<List<Integer>>() {
                     public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError(MSG.view_inventory_resources_deleteFailed(), caught);
+                        CoreGUI.getErrorHandler().handleError(MSG.view_inventory_resources_uninventoryFailed(), caught);
                     }
 
                     public void onSuccess(List<Integer> result) {
                         CoreGUI.getMessageCenter().notify(
-                            new Message(MSG.view_inventory_resources_deleteSuccessful(), Severity.Info));
+                            new Message(MSG.view_inventory_resources_uninventorySuccessful(), Severity.Info));
 
                         ResourceSearchView.this.refresh();
                     }
@@ -192,84 +160,102 @@ public class ResourceSearchView extends Table {
             }
         });
 
-        if (this.groupIdToModify != null) {
-            addTableAction(extendLocatorId("Membership"), MSG.view_tabs_common_membership(), new AbstractTableAction(
-                TableActionEnablement.ALWAYS) {
-                @Override
-                public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    final LocatableWindow winModal = new LocatableWindow(extendLocatorId("MembershipWindow"));
-                    winModal.setTitle(MSG.view_tabs_common_group_membership());
-                    winModal.setOverflow(Overflow.VISIBLE);
-                    winModal.setShowMinimizeButton(false);
-                    winModal.setIsModal(true);
-                    winModal.setShowModalMask(true);
-                    winModal.setWidth(700);
-                    winModal.setHeight(450);
-                    winModal.setAutoCenter(true);
-                    winModal.setShowResizer(true);
-                    winModal.setCanDragResize(true);
-                    winModal.centerInPage();
-                    winModal.addCloseClickHandler(new CloseClickHandler() {
-                        @Override
-                        public void onCloseClick(CloseClientEvent event) {
-                            winModal.markForDestroy();
-                        }
-                    });
-
-                    ResourceGroupMembershipView membershipView = new ResourceGroupMembershipView(
-                        ResourceSearchView.this.extendLocatorId("View"), ResourceSearchView.this.groupIdToModify
-                            .intValue());
-
-                    membershipView.setSaveButtonHandler(new ClickHandler() {
-                        @Override
-                        public void onClick(ClickEvent event) {
-                            winModal.markForDestroy();
-                        }
-                    });
-
-                    winModal.addItem(membershipView);
-                    winModal.show();
-                }
-            });
-        }
-
-        //        //load double click handler for this table
-        //        configureDoubleClickHandler();
-
-        /*searchBox.addKeyPressHandler(new KeyPressHandler() {
-            public void onKeyPress(KeyPressEvent event) {
-                if ((event.getCharacterValue() != null) && (event.getCharacterValue() == KeyCodes.KEY_ENTER)) {
-                    datasource.setQuery((String) searchBox.getValue());
-
-                    Criteria c = getListGrid().getCriteria();
-                    if (c == null) {
-                        c = new Criteria();
-                    }
-
-                    c.addCriteria("name", (String) searchBox.getValue());
-
-                    long start = System.currentTimeMillis();
-                    getListGrid().fetchData(c);
-                    com.allen_sauer.gwt.log.client.Log.info("Loaded in: " + (System.currentTimeMillis() - start));
+        setListGridDoubleClickHandler(new DoubleClickHandler() {
+            public void onDoubleClick(DoubleClickEvent event) {
+                ListGrid listGrid = (ListGrid) event.getSource();
+                ListGridRecord[] selectedRows = listGrid.getSelection();
+                if (selectedRows != null && selectedRows.length == 1) {
+                    String selectedId = selectedRows[0].getAttribute("id");
+                    CoreGUI.goToView(LinkManager.getResourceLink(Integer.valueOf(selectedId)));
                 }
             }
-        });*/
-
+        });
     }
 
-    //    /** Defines the double click handler action for ResourceSearch.  This means that on double
-    //     * click a (Resource-relative) url, specifically Summary/Overview is what will happen
-    //     * with this action. Override in subclasses to define alternate behavior.
-    //     */
-    //    protected void configureDoubleClickHandler() {
-    //        //adding cell double click handler
-    //        getListGrid().addCellDoubleClickHandler(new CellDoubleClickHandler() {
-    //            @Override
-    //            public void onCellDoubleClick(CellDoubleClickEvent event) {
-    //                CoreGUI.goToView("Resource/" + event.getRecord().getAttribute("id") + "/Summary/Overview");
-    //            }
-    //        });
-    //    }
+    protected List<ListGridField> createFields() {
+        List<ListGridField> fields = new ArrayList<ListGridField>();
+
+        IconField iconField = new IconField();
+        iconField.setShowHover(true);
+        iconField.setHoverCustomizer(new HoverCustomizer() {
+            public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
+                String resCat = record.getAttribute(CATEGORY.propertyName());
+                switch (ResourceCategory.valueOf(resCat)) {
+                    case PLATFORM:
+                        return MSG.common_title_platform();
+                    case SERVER:
+                        return MSG.common_title_server();
+                    case SERVICE:
+                        return MSG.common_title_service();
+                }
+                return null;
+            }
+        });
+        fields.add(iconField);
+
+        ListGridField nameField = new ListGridField(NAME.propertyName(), NAME.title(), 250);
+        nameField.setCellFormatter(new CellFormatter() {
+            public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
+                String url = LinkManager.getResourceLink(record.getAttributeAsInt("id"));
+                String name = StringUtility.escapeHtml(value.toString());
+                return SeleniumUtility.getLocatableHref(url, name, null);
+            }
+        });
+        nameField.setShowHover(true);
+        nameField.setHoverCustomizer(new HoverCustomizer() {
+            public String hoverHTML(Object value, ListGridRecord listGridRecord, int rowNum, int colNum) {
+                return AncestryUtil.getResourceHoverHTML(listGridRecord, 0);
+            }
+        });
+        fields.add(nameField);
+
+        ListGridField keyField = new ListGridField(KEY.propertyName(), KEY.title(), 170);
+        fields.add(keyField);
+
+        ListGridField ancestryField = AncestryUtil.setupAncestryListGridField();
+        fields.add(ancestryField);
+
+        ListGridField descriptionField = new ListGridField(DESCRIPTION.propertyName(), DESCRIPTION.title());
+        descriptionField.setCellFormatter(new EscapedHtmlCellFormatter());
+        fields.add(descriptionField);
+
+        ListGridField locationField = new ListGridField(LOCATION.propertyName(), LOCATION.title(), 180);
+        locationField.setCellFormatter(new EscapedHtmlCellFormatter());
+        fields.add(locationField);
+
+        ListGridField typeNameField = new ListGridField(TYPE.propertyName(), TYPE.title(), 130);
+        fields.add(typeNameField);
+
+        ListGridField pluginNameField = new ListGridField(PLUGIN.propertyName(), PLUGIN.title(), 100);
+        fields.add(pluginNameField);
+
+        ListGridField versionField = new ListGridField(VERSION.propertyName(), VERSION.title(), 60);
+        fields.add(versionField);
+
+        ListGridField categoryField = new ListGridField(CATEGORY.propertyName(), CATEGORY.title(), 60);
+        categoryField.setCellFormatter(new ResourceCategoryCellFormatter());
+        fields.add(categoryField);
+
+        IconField availabilityField = new IconField(AVAILABILITY.propertyName(), AVAILABILITY.title(), 70);
+        fields.add(availabilityField);
+
+        ListGridField ctimeField = new ListGridField(CTIME.propertyName(), CTIME.title(), 120);
+        ctimeField.setCellFormatter(new TimestampCellFormatter());
+        fields.add(ctimeField);
+
+        ListGridField itimeField = new ListGridField(ITIME.propertyName(), ITIME.title(), 120);
+        itimeField.setCellFormatter(new TimestampCellFormatter());
+        fields.add(itimeField);
+
+        ListGridField mtimeField = new ListGridField(MTIME.propertyName(), MTIME.title(), 120);
+        mtimeField.setCellFormatter(new TimestampCellFormatter());
+        fields.add(mtimeField);
+
+        ListGridField modifiedByField = new ListGridField(MODIFIER.propertyName(), MODIFIER.title(), 100);
+        fields.add(modifiedByField);
+
+        return fields;
+    }
 
     public int getMatches() {
         return this.getListGrid().getTotalRows();
@@ -279,20 +265,9 @@ public class ResourceSearchView extends Table {
         selectListeners.add(listener);
     }
 
-    // -------- Static Utility loaders ------------
-
-    public static ResourceSearchView getChildrenOf(String locatorId, int resourceId) {
-        return new ResourceSearchView(locatorId, new Criteria("parentId", String.valueOf(resourceId)), MSG
-            .view_inventory_resources_title_children());
-    }
-
-    public static ResourceSearchView getMembersOf(String locatorId, int groupId, boolean canModifyMembership) {
-        ResourceSearchView view = new ResourceSearchView(locatorId, new Criteria("groupId", String.valueOf(groupId)),
-            MSG.view_inventory_resources_title_members());
-        if (canModifyMembership) {
-            view.groupIdToModify = Integer.valueOf(groupId);
-        }
-        return view;
+    @Override
+    protected SearchSubsystem getSearchSubsystem() {
+        return SearchSubsystem.RESOURCE;
     }
 
 }

@@ -26,6 +26,9 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.RunAsyncCallback;
 import com.google.gwt.user.client.History;
 import com.smartgwt.client.types.SelectionStyle;
+import com.smartgwt.client.widgets.grid.events.DataArrivedEvent;
+import com.smartgwt.client.widgets.grid.events.DataArrivedHandler;
+import com.smartgwt.client.widgets.tree.Tree;
 import com.smartgwt.client.widgets.tree.TreeNode;
 import com.smartgwt.client.widgets.tree.events.NodeClickEvent;
 import com.smartgwt.client.widgets.tree.events.NodeClickHandler;
@@ -39,12 +42,16 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTreeGrid;
  */
 public class BundleTreeView extends LocatableTreeGrid {
 
-    public BundleTreeView(String locatorId) {
+    // We may need to wait for tree data to be fetched before we can complete processing the selected path.
+    // If so, hold it here and retry after the datasource pulls the data.
+    private ViewPath pendingPath = null;
+
+    public BundleTreeView(String locatorId, boolean canManageBundles) {
         super(locatorId);
         setWidth100();
         setHeight100();
         setLeaveScrollbarGap(false);
-        //        setShowRoot(true);
+        // fetch the top bundle nodes at the inital onDraw()
         setAutoFetchData(true);
         setAnimateFolders(false);
         setSelectionType(SelectionStyle.SINGLE);
@@ -52,36 +59,78 @@ public class BundleTreeView extends LocatableTreeGrid {
         setSortField("name");
         setShowHeader(false);
 
-        setDataSource(new BundleTreeDataSource());
+        setDataSource(new BundleTreeDataSource(canManageBundles));
 
         addNodeClickHandler(new NodeClickHandler() {
             public void onNodeClick(NodeClickEvent event) {
-                String path = event.getNode().getAttribute("id").replaceAll("_", "/");
+                TreeNode node = event.getNode();
+                String path = node.getAttribute("id").replaceAll("_", "/");
                 History.newItem("Bundles/Bundle/" + path);
             }
         });
     }
 
+    @Override
+    protected void onInit() {
+        super.onInit();
+
+        // We may need to wait for tree data to be fetched before we can complete processing the selected path.
+        // When the datasource pulls data keep processing the selectedPath if necessary.
+        this.addDataArrivedHandler(new DataArrivedHandler() {
+
+            public void onDataArrived(DataArrivedEvent dataArrivedEvent) {
+                if (null != pendingPath) {
+                    selectPath(pendingPath);
+                }
+            }
+        });
+    }
+
     public void selectPath(ViewPath viewPath) {
+        Tree theTree = getTree();
 
         if (viewPath.viewsLeft() > 0) {
             String key = "";
             for (ViewId view : viewPath.getViewPath().subList(2, viewPath.getViewPath().size())) {
                 if (key.length() > 0)
-                    key += ":";
+                    key += "_";
 
                 key += view.getPath();
 
-                TreeNode node = getTree().findById(key);
+                TreeNode node = theTree.findById(key);
+
+                // special case code to handle a "deployments" path. the path structure does not mirror the
+                // tree structure, so we may have to manually force the "destinations" folder to open.
+                if (node == null) {
+                    if (key.endsWith("deployments")) {
+                        String tempKey = key.replace("deployments", "destinations");
+                        node = theTree.findById(tempKey);
+                    }
+                }
+
                 if (node != null) {
-                    getTree().openFolder(node);
+                    // open the node, this will force a fetch of child data if necessary
+                    theTree.openFolder(node);
+
+                    // special case code to handle a "deployments" path. the path structure does not mirror the
+                    // tree structure, so we may have to manually force the "destinations" folder to open, and
+                    // then its children (deployment nodes)
+                    if (key.endsWith("deployments")) {
+                        theTree.openFolders(theTree.getChildren(node));
+                    }
+                } else {
+                    // wait for data to get loaded...
+                    pendingPath = new ViewPath(viewPath.toString());
+                    return;
                 }
             }
+
+            // we found the node, so keep going
+            pendingPath = null;
 
             final String finalKey = key;
             GWT.runAsync(new RunAsyncCallback() {
                 public void onFailure(Throwable reason) {
-
                 }
 
                 public void onSuccess() {

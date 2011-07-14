@@ -5,7 +5,7 @@
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-core-parent</artifactId>
-      <version>4.0.0-SNAPSHOT</version>
+      <version>4.1.0-SNAPSHOT</version>
    </parent>
 
   <groupId>org.rhq</groupId>
@@ -22,7 +22,7 @@
 
   <properties>
     <scm.module.path>modules/core/dbutils/</scm.module.path>
-    <db.schema.version>2.101</db.schema.version>
+    <db.schema.version>2.111</db.schema.version>
   </properties>
 
   <dependencies>
@@ -102,30 +102,35 @@
                 db = project.properties.db
                 if (db == 'dev') {
                   database = project.properties['rhq.dev.ds.db-name']
-		  }
-		  // This is a bit of a temporary hack to work around
-		  // https://cvs.codehaus.org/browse/GMAVEN-46 which results in
-		  // groovy scripts not being able to get the correct values of
-		  // build properties that are overridden on the command line.
-		  // This is being done in support of the hudson job which is
-		  // trying to use a database named rhqupgrade.
-		  else if (project.properties['upgrade.db']) {
-                    database = 'rhqupgrade'
-		  }
-		  else {
+                  server = project.properties['rhq.dev.ds.server-name'] ?: '127.0.0.1'
+                  rhqUser = project.properties['rhq.dev.ds.user-name'] ?: 'rhqadmin'
+		}
+		else {
                   database = project.properties['rhq.test.ds.db-name']
+                  server = project.properties['rhq.test.ds.server-name'] ?: '127.0.0.1'
+                  rhqUser = project.properties['rhq.test.ds.user-name'] ?: 'rhqadmin'
                 }
+
+                // The upgrade.db property should be set for local builds when you
+                // need to test upgrade changes. Hudson builds will specify the
+                // database to use in settings.xml
+                if (project.properties['upgrade.db']) {
+                  database = 'rhqupgrade'
+                }
+
+                adminUsername = project.properties['rhq.db.admin.username'] ?: 'postgres'
+                adminPassword = project.properties['rhq.db.admin.password'] ?: 'postgres'
                 project.properties.dbsetup = 'true'
 
                 sql = Sql.newInstance(
-                     "jdbc:postgresql://127.0.0.1:5432/postgres",
-                     "postgres",
-                     "postgres",
+                     "jdbc:postgresql://${server}:5432/postgres",
+                     adminUsername,
+                     adminPassword,
                      "org.postgresql.Driver")
 
                 sql.execute("drop database if exists ${Sql.expand(database)};")
                 log.info("dropped database $database")
-                sql.execute("create database ${Sql.expand(database)} with owner rhqadmin;")
+                sql.execute("create database ${Sql.expand(database)} with owner ${Sql.expand(rhqUser)};")
                 log.info("created database $database")
               </source>
             </configuration>
@@ -466,37 +471,37 @@
         <build>
          <plugins>
            <plugin>
-             <artifactId>maven-antrun-plugin</artifactId>            
+             <artifactId>maven-antrun-plugin</artifactId>
               <dependencies>
                <dependency>
                  <groupId>net.sourceforge.cobertura</groupId>
                  <artifactId>cobertura</artifactId>
-                 <version>1.9.4.1</version>       
+                 <version>${cobertura.version}</version>
                </dependency>
              </dependencies>
-             <executions>                         
-              <execution>              
+             <executions>
+              <execution>
                <id>cobertura-instrument</id>
                <phase>process-test-classes</phase>
-                 <configuration>                  
-                   <tasks> 
+                 <configuration>
+                   <tasks>
                    <!-- prepare directory structure for cobertura-->
-                   <mkdir dir="target/cobertura" /> 
-                   <mkdir dir="target/cobertura/backup"/>
+                   <mkdir dir="target/cobertura" />
+                   <mkdir dir="target/cobertura/backup" />
                    <!-- backup all classes so that we can instrument the original classes-->
                    <copy toDir="target/cobertura/backup" verbose="true" overwrite="true">
                       <fileset dir="target/classes">
-                         <include name="**/*.class" />                         
+                         <include name="**/*.class" />
                       </fileset>
                    </copy>
                    <!-- create a properties file and save there location of cobertura data file-->
-                   <touch file="target/classes/cobertura.properties"/>
+                   <touch file="target/classes/cobertura.properties" />
                    <echo file="target/classes/cobertura.properties">net.sourceforge.cobertura.datafile=${project.build.directory}/cobertura/cobertura.ser</echo>
                    <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties" />
                    <!-- instrument all classes in target/classes directory -->
                    <cobertura-instrument datafile="${project.build.directory}/cobertura/cobertura.ser" todir="${project.build.directory}/classes">
-                     <fileset dir="${project.build.directory}/classes">                     
-                        <include name="**/*.class"/>
+                     <fileset dir="${project.build.directory}/classes">
+                        <include name="**/*.class" />
                       </fileset>
                     </cobertura-instrument>
                    </tasks>
@@ -504,7 +509,7 @@
                <goals>
                  <goal>run</goal>
                </goals>
-              </execution>                            
+              </execution>
               <execution>
                <id>cobertura-report</id>
                <phase>prepare-package</phase>
@@ -517,11 +522,11 @@
                      <!-- restore classes from backup folder to classes folder -->
                      <copy toDir="target/classes" verbose="true" overwrite="true">
                       <fileset dir="target/cobertura/backup">
-                         <include name="**/*.class" />                         
+                         <include name="**/*.class" />
                       </fileset>
                      </copy>
                      <!-- delete backup folder-->
-                     <delete dir="target/cobertura/backup"/>
+                     <delete dir="target/cobertura/backup" />
                      <!-- create a code coverage report -->
                      <cobertura-report format="html" datafile="${project.build.directory}/cobertura/cobertura.ser" destdir="${project.build.directory}/site/cobertura">
                       <fileset dir="${basedir}/src/main/java">
@@ -529,15 +534,15 @@
                       </fileset>
                      </cobertura-report>
                      <!-- delete cobertura.properties file -->
-                     <delete file="target/classes/cobertura.properties"/>
+                     <delete file="target/classes/cobertura.properties" />
                    </tasks>
                  </configuration>
                <goals>
                  <goal>run</goal>
                </goals>
-               </execution>                                           
-            </executions>   
-           </plugin>          
+               </execution>
+            </executions>
+           </plugin>
           </plugins>
        </build>
      </profile>

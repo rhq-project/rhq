@@ -18,8 +18,11 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.templates;
 
+import java.util.Set;
+
 import com.smartgwt.client.data.Criteria;
 
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.criteria.MeasurementScheduleCriteria;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMeasurementScheduleListView;
 
@@ -29,15 +32,22 @@ import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMeasuremen
  * @author Ian Springer
  */
 public class TemplateSchedulesView extends AbstractMeasurementScheduleListView {
-    private static final String TITLE = "Template Metric Collection Schedules";
 
+    private static final String TITLE = MSG.view_admin_measTemplates_title();
     private static final String[] EXCLUDED_FIELD_NAMES = new String[] { MeasurementScheduleCriteria.FILTER_FIELD_RESOURCE_TYPE_ID };
 
     private boolean updateExistingSchedules = true;
+    private Set<Permission> globalPermissions;
 
-    public TemplateSchedulesView(String locatorId, int resourceTypeId) {
+    public TemplateSchedulesView(String locatorId, int resourceTypeId, Set<Permission> globalPermissions) {
         super(locatorId, TITLE, new TemplateSchedulesDataSource(resourceTypeId), createCriteria(resourceTypeId),
             EXCLUDED_FIELD_NAMES);
+
+        this.globalPermissions = globalPermissions;
+    }
+
+    public boolean hasManageMeasurementsPermission() {
+        return globalPermissions.contains(Permission.MANAGE_INVENTORY);
     }
 
     private static Criteria createCriteria(int resourceTypeId) {
@@ -47,10 +57,10 @@ public class TemplateSchedulesView extends AbstractMeasurementScheduleListView {
     }
 
     @Override
-    protected void configureTable() {        
+    protected void configureTable() {
         super.configureTable();
 
-        addExtraWidget(new UpdateExistingSchedulesWidget(this));        
+        addExtraWidget(new UpdateExistingSchedulesWidget(this), true);
     }
 
     public boolean isUpdateExistingSchedules() {
@@ -60,4 +70,5 @@ public class TemplateSchedulesView extends AbstractMeasurementScheduleListView {
     public void setUpdateExistingSchedules(boolean updateExistingSchedules) {
         this.updateExistingSchedules = updateExistingSchedules;
     }
+
 }

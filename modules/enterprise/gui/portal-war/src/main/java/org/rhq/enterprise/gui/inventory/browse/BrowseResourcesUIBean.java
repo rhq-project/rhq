@@ -83,7 +83,7 @@ public class BrowseResourcesUIBean extends PagedDataTableUIBean {
 
                 ResourceCriteria criteria = new ResourceCriteria();
                 criteria.setPageControl(pc);
-                criteria.addFilterResourceCategory(category);
+                criteria.addFilterResourceCategories(category);
                 if (search != null && !search.trim().equals("")) {
                     criteria.setSearchExpression(search);
                 }

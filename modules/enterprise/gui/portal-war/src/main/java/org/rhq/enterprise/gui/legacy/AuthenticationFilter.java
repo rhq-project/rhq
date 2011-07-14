@@ -38,10 +38,6 @@ import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.server.auth.SessionManager;
 import org.rhq.enterprise.server.auth.SessionNotFoundException;
 import org.rhq.enterprise.server.auth.SessionTimeoutException;
-import org.rhq.enterprise.server.license.License;
-import org.rhq.enterprise.server.system.LicenseException;
-import org.rhq.enterprise.server.system.SystemManagerLocal;
-import org.rhq.enterprise.server.util.LookupUtil;
 
 public final class AuthenticationFilter extends BaseFilter {
 
@@ -106,25 +102,6 @@ public final class AuthenticationFilter extends BaseFilter {
                 response.sendRedirect(request.getContextPath() + "/Login.do");
             }
         } else {
-            // Now check if the license is up and running
-            if (request.getRequestURI().indexOf("/admin/license") < 0) {
-                SystemManagerLocal systemManager = LookupUtil.getSystemManager();
-                License license = null;
-                try {
-                    license = systemManager.getLicense();
-                } catch (LicenseException le) {
-                    /*
-                     * license will still be null because the exception is thrown out of azboss.getLicense()
-                     * LicenseAdmin.do will take care of showing the appropriate exception by delegating to
-                     * LicenseController
-                     */
-                }
-
-                if ((license == null) || (license.getLicenseExpiration() < System.currentTimeMillis())) {
-                    response.sendRedirect(request.getContextPath() + "/admin/license/LicenseAdmin.do?mode=view");
-                }
-            }
-
             try {
                 chain.doFilter(request, response);
             } catch (IOException e) {

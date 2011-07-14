@@ -1,0 +1,49 @@
+<plugin name="ContentMetadataManagerBeanTestPlugin"
+        displayName="ContentMetadataManagerBean Test Plugin"
+        package="org.rhq.plugins.test"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+    <server name="ContentServer">
+        <content name="ContentServer.Content.1" category="deployable">
+            <configuration>
+                <c:simple-property name="version"/>
+            </configuration>
+        </content>
+    </server>
+
+    <server name="ContentServer1">
+        <content name="ContentServer1.Content.1" category="deployable"/>
+        <content name="ContentServer1.Content.2" category="configuration"/>
+    </server>
+
+    <server name="ContentServer2"/>
+
+    <server name="ContentServer3">
+        <content name="ContentServer3.Content.2" category="deployable"/>
+        <content name="ContentServer3.Content.3" category="deployable"/>
+    </server>
+
+    <server name="ContentServer4">
+        <content name="ContentServer4.Content.1" category="deployable"/>
+        <content name="ContentServer4.Content.2" category="deployable"/>
+    </server>
+
+    <server name="ContentServer5">
+        <content name="ContentServer5.Content.1" category="deployable">
+            <configuration>
+                <c:simple-property name="x"/>
+                <c:simple-property name="y"/>
+            </configuration>
+        </content>
+        <content name="ContentServer5.Content.2" category="deployable"/>
+    </server>
+
+    <server name="ContentServer6">
+        <bundle type="ContentServer6.Bundle.1"/>
+    </server>
+
+    <server name="ContentServer7">
+        <bundle type="ContentServer.Bundle.2"/>
+    </server>
+</plugin>

@@ -22,12 +22,16 @@
  */
 package org.rhq.plugins.ant;
 
+import java.util.Date;
+
 import org.apache.tools.ant.BuildEvent;
 import org.apache.tools.ant.BuildListener;
 import org.apache.tools.ant.util.StringUtils;
 
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory;
+import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory.Category;
+import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory.Status;
 import org.rhq.core.pluginapi.bundle.BundleManagerProvider;
 
 /**
@@ -71,6 +75,35 @@ public class DeploymentAuditorBuildListener implements BuildListener {
     }
 
     public void messageLogged(BuildEvent event) {
+        try {
+            // this will see if this is an audit message (e.g. <rhq:audit>) and if so, send it up to the server
+            // see org.rhq.bundle.ant.task.AuditTask.execute()
+            // RHQ_AUDIT_MESSAGE___<status>___<action>___<info>___<message>___<details>
+            String[] eventStrings = event.getMessage().split("___");
+            int index = 0;
+            if (eventStrings[index++].equals("RHQ_AUDIT_MESSAGE")) {
+                Status status = Status.SUCCESS;
+                String action = "Audit Message";
+                String info = "Recipe Audit Message";
+                String message = new Date().toString();
+                String details = null;
+
+                try {
+                    String statusStr = eventStrings[index++];
+                    status = Status.valueOf(statusStr.toUpperCase());
+                    action = eventStrings[index++];
+                    info = eventStrings[index++];
+                    message = eventStrings[index++];
+                    details = eventStrings[index++];
+                } catch (ArrayIndexOutOfBoundsException e) {
+                    // the message didn't have all the info, just skip looking for the rest and log what we have
+                }
+                this.bundleManagerProvider.auditDeployment(this.bundleResourceDeployment, action, info,
+                    Category.AUDIT_MESSAGE, status, message, details);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
         return;
     }
 
@@ -101,7 +134,6 @@ public class DeploymentAuditorBuildListener implements BuildListener {
         return msg.toString();
     }
 
-    @SuppressWarnings( { "ThrowableResultOfMethodCallIgnored" })
     private static String createMessage(String action, BuildEvent event) {
         StringBuilder msg = new StringBuilder(action);
 

@@ -56,12 +56,22 @@ public class SystemUsersNotificationSenderForm extends AbstractNotificationSende
 
     private SubjectSelector selector;
 
+    private boolean isInitialized = false;
+
     public SystemUsersNotificationSenderForm(String locatorId, AlertNotification notif, String sender) {
         super(locatorId, notif, sender);
     }
 
     @Override
     protected void onInit() {
+        // for reasons I'm not sure about, perhaps due to the way NewNotificationEditor destroys its own parent
+        // via callback, this onInit may be called a second time, during the destroy() call chain. Prevent
+        // it from re-executing.
+        if (isInitialized) {
+            return;
+        }
+        isInitialized = true;
+
         super.onInit();
 
         String subjectIds = getConfiguration().getSimpleValue(PROPNAME, ""); // we know the subject plugin defines this
@@ -104,20 +114,21 @@ public class SystemUsersNotificationSenderForm extends AbstractNotificationSende
     }
 
     @Override
-    public boolean validate() {
+    public void validate(AsyncCallback<Void> callback) {
         if (selector != null) {
             try {
                 Set<Integer> selectedIds = selector.getSelection();
                 String newPropValue = fence(selectedIds);
                 getConfiguration().put(new PropertySimple(PROPNAME, newPropValue));
-                return true;
+                callback.onSuccess(null);
             } catch (Exception e) {
                 CoreGUI.getErrorHandler().handleError(MSG.view_alert_definition_notification_user_editor_saveFailed(),
                     e);
-                return false;
+                callback.onFailure(null);
             }
+        } else {
+            callback.onSuccess(null);
         }
-        return true;
     }
 
     @SuppressWarnings("unchecked")
@@ -161,7 +172,7 @@ public class SystemUsersNotificationSenderForm extends AbstractNotificationSende
         return builder.toString();
     }
 
-    private class SubjectSelector extends AbstractSelector<Subject> {
+    private class SubjectSelector extends AbstractSelector<Subject, SubjectCriteria> {
         public SubjectSelector(String id, Collection<Subject> subjects) {
             super(id);
             if (subjects != null) {
@@ -171,7 +182,7 @@ public class SystemUsersNotificationSenderForm extends AbstractNotificationSende
         }
 
         @Override
-        protected RPCDataSource<Subject> getDataSource() {
+        protected RPCDataSource<Subject, SubjectCriteria> getDataSource() {
             return new UsersDataSource();
         }
 

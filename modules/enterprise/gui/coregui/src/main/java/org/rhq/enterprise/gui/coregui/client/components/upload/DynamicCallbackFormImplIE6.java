@@ -40,10 +40,4 @@ public class DynamicCallbackFormImplIE6 extends DynamicCallbackFormImpl {
 	    }
 	  }-*/;
 
-    @Override
-    public native void unhookEvents(Element iframe) /*-{
-	    if (iframe)
-	      iframe.onreadystatechange = null;
-	    form.onsubmit = null;
-	  }-*/;
 }

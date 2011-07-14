@@ -24,10 +24,22 @@ import java.util.Set;
 import org.rhq.core.domain.authz.Permission;
 
 /**
+ * This is called by the {@link PermissionsLoader} when a set of permissions have been loaded
+ * or a failure occurred and the permissions failed to load.
+ * 
  * @author Ian Springer
+ * @author John Mazzitelli
  */
 public interface PermissionsLoadedListener {
 
-     void onPermissionsLoaded(Set<Permission> permissions);
-    
+    /**
+     * The callback method that is called when the {@link PermissionsLoader} finished
+     * its remote call. If the call was successful, the given permissions argument will
+     * be non-null (but may be empty). If an error occurred that failed to load the permissions,
+     * <code>null</code> will be passed in as the value.
+     *  
+     * @param permissions the permissions if successfully loaded; <code>null</code> if an error
+     *                    occurred and the permissions are unknown
+     */
+    void onPermissionsLoaded(Set<Permission> permissions);
 }

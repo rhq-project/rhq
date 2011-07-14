@@ -22,6 +22,7 @@
   */
 package org.rhq.core.pc.operation;
 
+import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pluginapi.operation.OperationContext;
 import org.rhq.core.pluginapi.operation.OperationServices;
 
@@ -33,15 +34,14 @@ import org.rhq.core.pluginapi.operation.OperationServices;
  */
 public class OperationContextImpl implements OperationContext {
     private int resourceId;
-    private OperationServices operationServices;
 
-    public OperationContextImpl(int resourceId, OperationServices operationServices) {
+    public OperationContextImpl(int resourceId) {
         this.resourceId = resourceId;
-        this.operationServices = operationServices;
     }
 
     public OperationServices getOperationServices() {
-        return operationServices;
+        OperationManager operationManager = PluginContainer.getInstance().getOperationManager();
+        return new OperationServicesAdapter(operationManager);
     }
 
     public int getResourceId() {

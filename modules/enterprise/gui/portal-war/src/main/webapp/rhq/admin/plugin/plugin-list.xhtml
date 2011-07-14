@@ -112,20 +112,47 @@
                <h:graphicImage value="/images/icons/availability_red_16.png" rendered="#{!agentPlugin.enabled}"/>
             </rich:column>
 
+            <rich:column  sortBy="#{agentPlugin.status}" rendered="#{InstalledPluginsSessionUIBean.showAllAgentPlugins}">
+               <f:facet name="header">
+                  <h:outputText styleClass="headerText" value="Deployed"/>
+               </f:facet>
+
+               <h:graphicImage value="/images/icons/availability_green_16.png" rendered="#{agentPlugin.status eq 'INSTALLED' }"/>
+               <h:graphicImage value="/images/icons/availability_red_16.png" rendered="#{agentPlugin.status ne 'INSTALLED' }"/>
+            </rich:column>
+
             <f:facet name="footer">
                <rich:columnGroup>
-                  <rich:column colspan="5" width="100%">
+                  <rich:column colspan="#{InstalledPluginsSessionUIBean.showAllAgentPlugins ? 6 : 5}" width="100%">
                      <onc:selectCommandButton action="#{InstalledPluginsUIBean.enableAgentPlugins}"
                                               value="ENABLE" target="selectedPlugin" styleClass="on-pager-button buttonsmall">
                      </onc:selectCommandButton>
                      <onc:selectCommandButton action="#{InstalledPluginsUIBean.disableAgentPlugins}"
                                               value="DISABLE" target="selectedPlugin" styleClass="on-pager-button buttonsmall">
                      </onc:selectCommandButton>
+                     <onc:selectCommandButton action="#{InstalledPluginsUIBean.deleteAgentPlugins}"
+                                              value="DELETE"
+                                              target="selectedPlugin"
+                                              styleClass="on-pager-button buttonsmall"/>
+                     <onc:selectCommandButton action="#{InstalledPluginsUIBean.purgeAgentPlugins}"
+                                              rendered="#{InstalledPluginsSessionUIBean.showAllAgentPlugins}"
+                                              value="PURGE"
+                                              target="selectedPlugin"
+                                              styleClass="on-pager-button buttonsmall"/>
                   </rich:column>
-                  <rich:column colspan="5" width="100%" breakBefore="true">
+                  <rich:column colspan="#{InstalledPluginsSessionUIBean.showAllAgentPlugins ? 6 : 5}"
+                               width="100%"
+                               breakBefore="true">
                      <h:commandButton action="#{InstalledPluginsUIBean.scan}"
-                                      value="SCAN FOR UPDATES" styleClass="on-pager-button buttonsmall">
-                     </h:commandButton>
+                                      value="SCAN FOR UPDATES" styleClass="on-pager-button buttonsmall"/>
+                     <h:commandButton action="#{InstalledPluginsSessionUIBean.showDeletedAgentPlugins}"
+                                      rendered="#{!InstalledPluginsSessionUIBean.showAllAgentPlugins}"
+                                      value="SHOW DELETED"
+                                      styleClass="on-pager-button buttonsmall"/>
+                     <h:commandButton action="#{InstalledPluginsSessionUIBean.hideDeletedAgentPlugins}"
+                                      rendered="#{InstalledPluginsSessionUIBean.showAllAgentPlugins}"
+                                      value="HIDE DELETED"
+                                      styleClass="on-pager-button buttonsmall"/>
                   </rich:column>
                </rich:columnGroup>
             </f:facet>

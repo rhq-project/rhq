@@ -28,12 +28,13 @@ import java.util.LinkedHashMap;
 import com.smartgwt.client.widgets.form.fields.RadioGroupItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
-import com.smartgwt.client.widgets.form.fields.TextAreaItem;
-import com.smartgwt.client.widgets.form.fields.TextItem;
 
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.components.form.SimpleEditableTextAreaFormItem;
+import org.rhq.enterprise.gui.coregui.client.components.form.SimpleEditableFormItem;
+import org.rhq.enterprise.gui.coregui.client.components.form.StringLengthValidator;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 /**
@@ -43,14 +44,12 @@ public class GeneralPropertiesAlertDefinitionForm extends LocatableDynamicForm i
 
     private AlertDefinition alertDefinition;
 
-    private TextItem nameTextField;
-    private TextAreaItem descriptionTextField;
+    private SimpleEditableFormItem nameField;
+    private SimpleEditableTextAreaFormItem descriptionField;
     private SelectItem prioritySelection;
     private RadioGroupItem enabledSelection;
     private RadioGroupItem readOnlySelection;
 
-    private StaticTextItem nameStatic;
-    private StaticTextItem descriptionStatic;
     private StaticTextItem priorityStatic;
     private StaticTextItem enabledStatic;
     private StaticTextItem readOnlyStatic;
@@ -91,11 +90,9 @@ public class GeneralPropertiesAlertDefinitionForm extends LocatableDynamicForm i
         if (alertDef == null) {
             clearFormValues();
         } else {
-            nameTextField.setValue(alertDef.getName());
-            nameStatic.setValue(alertDef.getName());
+            nameField.setValue(alertDef.getName());
 
-            descriptionTextField.setValue(alertDef.getDescription());
-            descriptionStatic.setValue(alertDef.getDescription());
+            descriptionField.setValue(alertDef.getDescription());
 
             prioritySelection.setValue(alertDef.getPriority().name());
             priorityStatic.setValue(alertDef.getPriority().name());
@@ -112,11 +109,9 @@ public class GeneralPropertiesAlertDefinitionForm extends LocatableDynamicForm i
 
     @Override
     public void makeEditable() {
-        nameTextField.show();
-        nameStatic.hide();
+        nameField.switchToEditMode();
 
-        descriptionTextField.show();
-        descriptionStatic.hide();
+        descriptionField.switchToEditMode();
 
         prioritySelection.show();
         priorityStatic.hide();
@@ -144,11 +139,9 @@ public class GeneralPropertiesAlertDefinitionForm extends LocatableDynamicForm i
 
     @Override
     public void makeViewOnly() {
-        nameTextField.hide();
-        nameStatic.show();
+        nameField.switchToStaticMode();
 
-        descriptionTextField.hide();
-        descriptionStatic.show();
+        descriptionField.switchToStaticMode();
 
         prioritySelection.hide();
         priorityStatic.show();
@@ -176,8 +169,11 @@ public class GeneralPropertiesAlertDefinitionForm extends LocatableDynamicForm i
 
     @Override
     public void saveAlertDefinition() {
-        alertDefinition.setName(nameTextField.getValue().toString());
-        alertDefinition.setDescription(descriptionTextField.getValue().toString());
+        alertDefinition.setName(nameField.getValue().toString());
+        Object description = descriptionField.getValue();
+        if (null != description) {
+            alertDefinition.setDescription(description.toString());
+        }
 
         String prioritySelected = prioritySelection.getValue().toString();
         alertDefinition.setPriority(AlertPriority.valueOf(prioritySelected));
@@ -188,14 +184,12 @@ public class GeneralPropertiesAlertDefinitionForm extends LocatableDynamicForm i
 
     @Override
     public void clearFormValues() {
-        nameTextField.clearValue();
-        descriptionTextField.clearValue();
+        nameField.clearValue();
+        descriptionField.clearValue();
         prioritySelection.clearValue();
         enabledSelection.clearValue();
         readOnlySelection.clearValue();
 
-        nameStatic.clearValue();
-        descriptionStatic.clearValue();
         priorityStatic.clearValue();
         enabledStatic.clearValue();
         readOnlyStatic.clearValue();
@@ -205,15 +199,15 @@ public class GeneralPropertiesAlertDefinitionForm extends LocatableDynamicForm i
 
     private void buildForm() {
         if (!formBuilt) {
-            nameTextField = new TextItem("name", MSG.common_title_name());
-            nameTextField.setWidth(300);
-            nameTextField.setDefaultValue("");
-            nameStatic = new StaticTextItem("nameStatic", MSG.common_title_name());
+            nameField = new SimpleEditableFormItem("name", MSG.common_title_name());
+            nameField.setWidth(300);
+            StringLengthValidator notEmptyValidator = new StringLengthValidator(1, null, false);
+            // ensure these are executed in a validate() override
+            nameField.setValidators(notEmptyValidator);
 
-            descriptionTextField = new TextAreaItem("description", MSG.common_title_description());
-            descriptionTextField.setWidth(300);
-            descriptionTextField.setDefaultValue("");
-            descriptionStatic = new StaticTextItem("descriptionStatic", MSG.common_title_description());
+            descriptionField = new SimpleEditableTextAreaFormItem("description", MSG.common_title_description());
+            descriptionField.setWidth(300);
+            descriptionField.setDefaultValue("");
 
             prioritySelection = new SelectItem("priority", MSG.view_alerts_field_priority());
             LinkedHashMap<String, String> priorities = new LinkedHashMap<String, String>(3);
@@ -247,11 +241,19 @@ public class GeneralPropertiesAlertDefinitionForm extends LocatableDynamicForm i
             readOnlySelection.setPrompt(MSG.view_alerts_field_protected_tooltip());
             readOnlyStatic = new StaticTextItem("readOnlyStatic", MSG.view_alerts_field_protected());
 
-            setFields(nameTextField, nameStatic, descriptionTextField, descriptionStatic, prioritySelection,
-                priorityStatic, enabledSelection, enabledStatic, readOnlySelection, readOnlyStatic);
+            setFields(nameField, descriptionField, prioritySelection, priorityStatic, enabledSelection, enabledStatic,
+                readOnlySelection, readOnlyStatic);
 
             formBuilt = true;
         }
-
     }
+
+    /**
+     * Must explicitly force outer-form validatation of EditibleFormItems.   
+     */
+    @Override
+    public boolean validate() {
+        return super.validate() && nameField.validate();
+    }
+
 }

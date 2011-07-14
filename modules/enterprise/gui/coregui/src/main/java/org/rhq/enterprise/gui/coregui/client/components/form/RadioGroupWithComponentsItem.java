@@ -25,9 +25,11 @@ package org.rhq.enterprise.gui.coregui.client.components.form;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.Map;
 
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.form.fields.ButtonItem;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.RadioGroupItem;
@@ -35,13 +37,17 @@ import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
+ * TODO
+ *
  * @author Greg Hinkle
+ * @author Lukas Krejci
  */
 public class RadioGroupWithComponentsItem extends CanvasItem {
 
-    private final LinkedHashMap<String, ? extends Canvas> valueMap;
+    private final LinkedHashMap<NameAndTitle, Canvas> valueMap;
     private final RGWCCanvas canvas;
     private final DynamicForm form;
     private String selected;
@@ -50,7 +56,12 @@ public class RadioGroupWithComponentsItem extends CanvasItem {
         DynamicForm form) {
 
         super(name, title);
-        this.valueMap = valueMap;
+
+        this.valueMap = new LinkedHashMap<NameAndTitle, Canvas>();
+        for (Map.Entry<String, ? extends Canvas> entry : valueMap.entrySet()) {
+            this.valueMap.put(new NameAndTitle(entry.getKey()), entry.getValue());
+        }
+
         this.form = form;
         // since the name is an internal identifier I think it can be used as the locatorId
         this.canvas = new RGWCCanvas(name);
@@ -62,12 +73,76 @@ public class RadioGroupWithComponentsItem extends CanvasItem {
         return this.selected;
     }
 
+    public int getSelectedIndex() {
+        if (selected == null) {
+            return -1;
+        }
+
+        int idx = 0;
+        for (NameAndTitle t : valueMap.keySet()) {
+            if (selected.equals(t.getTitle())) {
+                break;
+            }
+            ++idx;
+        }
+
+        return idx;
+    }
+
+    public void setSelected(String selected) {
+        RadioGroupItem radio = (RadioGroupItem) canvas.getItem(SeleniumUtility.getSafeId(selected));
+        if (radio != null) {
+            this.selected = selected;
+            radio.setValue(selected);
+            canvas.updateEnablement();
+            form.markForRedraw();
+        }
+    }
+
     public Canvas getSelectedComponent() {
         if (null == this.selected) {
             return null;
         }
 
-        return valueMap.get(this.selected);
+        return valueMap.get(new NameAndTitle(this.selected));
+    }
+
+    private static class NameAndTitle {
+        private String name;
+        private String title;
+
+        public NameAndTitle(String title) {
+            name = SeleniumUtility.getSafeId(title);
+            this.title = title;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public String getTitle() {
+            return title;
+        }
+
+        @Override
+        public int hashCode() {
+            return name.hashCode();
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (other == this) {
+                return true;
+            }
+
+            if (!(other instanceof NameAndTitle)) {
+                return false;
+            }
+
+            NameAndTitle o = (NameAndTitle) other;
+
+            return name.equals(o.name);
+        }
     }
 
     public class RGWCCanvas extends LocatableDynamicForm {
@@ -83,11 +158,11 @@ public class RadioGroupWithComponentsItem extends CanvasItem {
 
             ArrayList<FormItem> items = new ArrayList<FormItem>();
 
-            for (final String label : valueMap.keySet()) {
-                RadioGroupItem button = new RadioGroupItem(label, label);
+            for (final NameAndTitle label : valueMap.keySet()) {
+                RadioGroupItem button = new RadioGroupItem(label.getName(), label.getTitle());
                 button.setShowTitle(false);
                 button.setStartRow(true);
-                button.setValueMap(label);
+                button.setValueMap(label.getTitle());
                 items.add(button);
 
                 Canvas value = valueMap.get(label);
@@ -112,23 +187,49 @@ public class RadioGroupWithComponentsItem extends CanvasItem {
 
         public void updateEnablement() {
 
-            for (String key : valueMap.keySet()) {
+            for (NameAndTitle key : valueMap.keySet()) {
                 Canvas value = valueMap.get(key);
-                Boolean disabled = !selected.equals(key);
+                Boolean disabled = !selected.equals(key.getTitle());
                 if (disabled) {
-                    canvas.getItem(key).clearValue();
-                    canvas.getItem(key).redraw();
+                    canvas.getItem(key.getName()).clearValue();
+                    canvas.getItem(key.getName()).redraw();
                 }
-                if (value != null && value instanceof DynamicForm) {
-                    if (!disabled.equals(value.isDisabled())) {
-                        value.setDisabled(disabled);
-                        for (FormItem item : ((DynamicForm) value).getFields()) {
-                            item.clearValue();
-                            item.redraw();
+                disableAllFormFields(value, disabled);
+            }
+        }
+
+        private void disableAllFormFields(Canvas value, Boolean disabled) {
+            if (value != null && value instanceof DynamicForm) {
+                for (FormItem item : ((DynamicForm) value).getFields()) {
+                    if (item instanceof CanvasItem) {
+                        // recursively drill down in case this is a dynamic form inside a dynamic form
+                        disableAllFormFields(((CanvasItem) item).getCanvas(), disabled);
+                    }
+
+                    if (disabled) {
+                        item.clearValue();
+                        item.redraw();
+                        if (item instanceof ButtonItem) {
+                            item.disable();
                         }
-                        value.markForRedraw();
+                    } else {
+                        if (item instanceof ButtonItem) {
+                            item.enable();
+                        }
                     }
                 }
+                value.setDisabled(disabled);
+                value.markForRedraw();
+            }
+        }
+    }
+
+    public void destroyComponents() {
+        for (Canvas canvas : valueMap.values()) {
+            try {
+                canvas.destroy();
+            } catch (Throwable t) {
+                int i = 0;
             }
         }
     }

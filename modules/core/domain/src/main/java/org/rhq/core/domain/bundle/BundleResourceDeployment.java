@@ -78,11 +78,11 @@ public class BundleResourceDeployment implements Serializable {
     private int id;
 
     @JoinColumn(name = "BUNDLE_DEPLOYMENT_ID", referencedColumnName = "ID", nullable = false)
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     private BundleDeployment bundleDeployment;
 
     @JoinColumn(name = "RESOURCE_ID", referencedColumnName = "ID", nullable = false)
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     private Resource resource;
 
     @Column(name = "STATUS", nullable = false)
@@ -172,6 +172,12 @@ public class BundleResourceDeployment implements Serializable {
         return str.toString();
     }
 
+    /*
+     * These fields make up the natural key but note that some fields are lazy loaded. As such care should
+     * be taken to have properly loaded instances when required.
+     *
+     * @see java.lang.Object#hashCode()
+     */
     @Override
     public int hashCode() {
         int result = 1;
@@ -180,6 +186,12 @@ public class BundleResourceDeployment implements Serializable {
         return result;
     }
 
+    /*
+     * These fields make up the natural key but note that some fields are lazy loaded. As such care should
+     * be taken to have properly loaded instances when required.
+     *
+     * @see java.lang.Object#equals(java.lang.Object)
+     */
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {

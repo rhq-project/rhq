@@ -5,7 +5,8 @@
   <parent>
     <groupId>org.rhq</groupId>
     <artifactId>rhq-parent</artifactId>
-    <version>4.0.0-SNAPSHOT</version>
+    <version>4.1.0-SNAPSHOT</version>
+    <relativePath>../../../../pom.xml</relativePath>
   </parent>
 
   <groupId>org.rhq</groupId>
@@ -34,12 +35,12 @@
     <product.sales.email>sales@rhq-project.org</product.sales.email>
     <product.support.email>info@rhq-project.org</product.support.email>
     <product.version>${project.version}</product.version>
-    <product.help.doc.root>http://support.rhq-project.org/display/RHQ/</product.help.doc.root>
-    <product.help.installation>Installing</product.help.installation>
-    <product.help.guide.server>Running+the+Server</product.help.guide.server>
-    <product.help.guide.agent>Running+the+Agent</product.help.guide.agent>
+    <product.help.doc.root>http://support.rhq-project.org/display/JOPR2/</product.help.doc.root>
+    <product.help.installation>Installation</product.help.installation>
+    <product.help.guide.server>Running+the+RHQ+Server</product.help.guide.server>
+    <product.help.guide.agent>Running+the+RHQ+Agent</product.help.guide.agent>
     <product.help.FAQ>FAQ</product.help.FAQ>
-    <product.help.config.props>http://support.rhq-project.org/display/RHQ/Configuring+the+Server#ConfiguringtheServer</product.help.config.props>
+    <product.help.config.props>http://support.rhq-project.org/display/JOPR2/Startup+Properties#ConfiguringtheServer</product.help.config.props>
   </properties>
 
   <dependencies>
@@ -142,6 +143,20 @@
     <finalName>rhq-installer</finalName>
 
     <plugins>
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <systemPropertyVariables>
+            <rhq.test.ds.server-name>${rhq.test.ds.server-name}</rhq.test.ds.server-name>
+            <rhq.test.ds.db-name>${rhq.test.ds.db-name}</rhq.test.ds.db-name>
+            <rhq.test.ds.connection-url>${rhq.test.ds.connection-url}</rhq.test.ds.connection-url>
+            <rhq.db.admin.username>${rhq.db.admin.username}</rhq.db.admin.username>
+            <rhq.db.admin.password>${rhq.db.admin.password}</rhq.db.admin.password>
+            <rhq.test.ds.user-name>${rhq.test.ds.user-name}</rhq.test.ds.user-name>
+            <rhq.test.ds.password>${rhq.test.ds.password}</rhq.test.ds.password>
+          </systemPropertyVariables>
+        </configuration>
+      </plugin>
 
       <plugin>
         <artifactId>maven-war-plugin</artifactId>
@@ -193,6 +208,28 @@
             <goals>
               <goal>run</goal>
             </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <artifactId>maven-resources-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>copy-resources</id>
+            <!-- here the phase you need -->
+            <phase>validate</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.outputDirectory}</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>src/main/resources</directory>
+                  <filtering>true</filtering>
+                </resource>
+              </resources>
+            </configuration>
           </execution>
         </executions>
       </plugin>
@@ -282,7 +319,6 @@
 
          <build>
             <plugins>
-
                <plugin>
                   <!-- See http://jetty.mortbay.org/jspc-maven-plugin/ -->
                   <groupId>org.mortbay.jetty</groupId>
@@ -301,7 +337,28 @@
             </plugins>
          </build>
       </profile>
-  </profiles>
 
+      <profile>
+         <id>oracle</id>
+         <activation>
+           <property>
+             <name>rhq.test.db.type</name>
+             <value>oracle</value>
+           </property>
+         </activation>
+         <build>
+            <plugins>
+               <plugin>
+                  <artifactId>maven-surefire-plugin</artifactId>
+                     <configuration>
+                        <excludes>
+                           <exclude>**/DBInstallatonTest.java</exclude>
+                        </excludes>
+                     </configuration>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
+   </profiles>
 </project>
 

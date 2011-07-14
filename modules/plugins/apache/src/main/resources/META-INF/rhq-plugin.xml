@@ -84,7 +84,7 @@
     </c:list-property>
 '>   
 <!ENTITY DocumentRoot '
-    <c:simple-property name="DocumentRoot">
+    <c:simple-property name="DocumentRoot" default="THIS IS AUTO-DISCOVERED">
         <c:description>
             This directive sets the directory from which httpd  will serve files. Unless matched by a directive like Alias, the server appends the path from the requested URL to the document root to make the path to the document.
             If the directory-path is not absolute then it is assumed to be relative to the ServerRoot.
@@ -264,16 +264,19 @@
                activationPolicy: immediate
          -->
          <c:simple-property name="serverRoot" required="true"
-                            description="the absolute path of the Apache server root directory"/>
+                            description="the absolute path of the Apache server root directory" default="THIS SHOULD BE AUTO-DISCOVERED"/>
          <c:simple-property name="executablePath" required="false"
                             description="the path to the Apache executable - if the path is not absolute, it will be resolved relative to the server root directory; if unset, default value is 'bin/httpd' on UNIX or 'bin\Apache.exe' on Windows"/>
          <c:simple-property name="controlScriptPath" required="false"
                             description="the path to the Apache control script - if the path is not absolute, it will be resolved relative to the server root directory; if unset, default will be 'bin/apachectl' on UNIX or the Apache executable on Windows"/>
          <!-- TODO need to add a comment about the file location on Win* -->
          <c:simple-property name="configFile" required="true" readOnly="true"
-                             description="the path to the httpd.conf file - if the path is not absolute, it will be resolved relative to the server root directory; if unset, default will be 'conf/httpd.conf' on UNIX"/>
+                             description="the path to the httpd.conf file - if the path is not absolute, it will be resolved relative to the server root directory; if unset, default will be 'conf/httpd.conf' on UNIX" default="THIS SHOULD BE AUTO-DISCOVERED"/>
          <c:simple-property name="url" displayName="URL" required="false"
-                            description="the http or https URL that will be used to check availability for this Apache server; if not set, availablity will be determined based on whether plugin can connect to the Apache server's SNMP agent"/>
+                            description="The http or https URL that will be used to check availability for this Apache
+                                server; if not set, availablity will be determined based on whether plugin can connect
+                                to the Apache server's SNMP agent. Note that SSL certificate validation is disabled
+                                during availability checks if this is an HTTPS URL."/>
          <c:simple-property name="snmpAgentHost" displayName="SNMP Agent Host" default="127.0.0.1"
                             description="the host name or IP address of the Apache SNMP agent (typically '127.0.0.1')"/>
          <c:simple-property name="snmpAgentPort" displayName="SNMP Agent Port" type="integer" default="1610"
@@ -317,7 +320,7 @@
                    </c:property-options>
                 </c:simple-property>
 
-               <c:simple-property name="vhostFilesMask" displayName="Path To Contain Virtual Hosts Files">
+               <c:simple-property name="vhostFilesMask" displayName="Path To Contain Virtual Hosts Files" default="conf.d/*.conf">
                   <c:description>
                     If the new virtual hosts should be created in standalone files, this mask determines where
                     to create those files. The '*' in the path is replaced by the name of the virtual host.
@@ -352,6 +355,25 @@
 
           </c:group>
 
+          <c:group name="Advanced">
+              <c:list-property name="customModuleNames">
+                  <c:description>
+                    Apache can use 2 values to identify a module. Either its module name that is used in the LoadModule directive
+                    or its source file that can be used in the IfModule directive (as of Apache 2.1 the IfModule directive can but doesn't have to
+                    use the module name, too).
+                    
+                    The plugin contains the mappings of the module names to module files for all the standard apache modules mentioned
+                    on the http://httpd.apache.org/docs/current/mod/ plus the SNMP module and mod_jk.
+                    
+                    If you use any non-standard modules and use their source file in the IfModule directives, you have to add the module-name-to-module-file
+                    mapping to this list so that the plugin can determine the correct runtime configuration of the apache instance.
+                  </c:description>
+                  <c:map-property name="moduleMapping">
+                      <c:simple-property name="moduleSourceFile" description="The source file of the module (as used in IfModule directives)"/>
+                      <c:simple-property name="moduleName" description="The name of the module (as used in LoadModule directives)"/>
+                  </c:map-property>
+              </c:list-property>  
+          </c:group>
       </plugin-configuration>
 
       <!-- all httpd processes that are not child processes of another httpd process -->
@@ -491,8 +513,11 @@
       <service name="Apache Virtual Host" discovery="ApacheVirtualHostServiceDiscoveryComponent" class="ApacheVirtualHostServiceComponent" createDeletePolicy="both">
 
          <plugin-configuration>
-            <c:simple-property name="url" displayName="URL"
-                               description="the http or https URL that will be used to check availability for this virtual host"/>
+            <c:simple-property name="url" displayName="URL" required="false"
+                               description="The http or https URL that will be used to check availability for this
+                                virtual host. Note that SSL certificate validation is disabled during availability
+                                checks if this is an HTTPS URL. If the URL is not set, the availability is determined 
+                                by pinging the configured SNMP location."/>
             <c:group name="ResponseTime">
                <c:simple-property name="responseTimeLogFile" required="false"
                                   description="the full path to the log file containing response-time stats for this virtual host"/>
@@ -693,7 +718,7 @@
          
          <service name="Directory" class="ApacheDirectoryComponent" discovery="ApacheDirectoryDiscoveryComponent" createDeletePolicy="both">
             <plugin-configuration>
-                <c:simple-property name="directiveIndex" readOnly="true" required="true" type="integer"/>
+                <c:simple-property name="directiveIndex" readOnly="true" required="true" type="integer" default="-1"/>
                 <c:simple-property name="regexp" displayName="Regular Expression" type="boolean" default="false" readOnly="true"
                                    description="Does the name of this directory denote a regular expression?"/>
             </plugin-configuration>

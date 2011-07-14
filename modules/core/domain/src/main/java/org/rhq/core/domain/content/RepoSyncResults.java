@@ -66,7 +66,7 @@ public class RepoSyncResults implements Serializable, ContentSyncResults {
     private int id;
 
     @JoinColumn(name = "REPO_ID", referencedColumnName = "ID", nullable = false)
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     private Repo repo;
 
     @Column(name = "STATUS", nullable = false)
@@ -168,7 +168,9 @@ public class RepoSyncResults implements Serializable, ContentSyncResults {
 
     @Override
     public String toString() {
-        StringBuilder str = new StringBuilder(this.getClass().getName().substring(this.getClass().getName().lastIndexOf(".")+1) + ": ");
+        StringBuilder str = new StringBuilder(this.getClass().getName().substring(
+            this.getClass().getName().lastIndexOf(".") + 1)
+            + ": ");
         str.append("start-time=[" + new Date(startTime));
         str.append("], end-time=[" + ((endTime != null) ? new Date(endTime) : "---"));
         str.append("], percentComplete=[" + status);

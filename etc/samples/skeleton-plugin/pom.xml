@@ -15,7 +15,7 @@
    <description>A template for building a custom RHQ Agent plugin</description>
 
    <properties>
-      <rhq.version>3.0.0.B05</rhq.version>
+      <rhq.version>4.1.0-SNAPSHOT</rhq.version>
    </properties>
 
    <dependencies>

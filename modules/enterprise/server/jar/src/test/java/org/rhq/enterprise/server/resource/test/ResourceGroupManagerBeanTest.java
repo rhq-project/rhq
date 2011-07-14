@@ -20,7 +20,7 @@ package org.rhq.enterprise.server.resource.test;
 
 import javax.persistence.EntityManager;
 
-import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.auth.Subject;
@@ -40,7 +40,7 @@ import org.rhq.enterprise.server.util.SessionTestHelper;
 public class ResourceGroupManagerBeanTest extends AbstractEJB3Test {
     private static ResourceGroupManagerLocal resourceGroupManager;
 
-    @BeforeSuite
+    @BeforeMethod
     @SuppressWarnings("unused")
     private void init() {
         try {
@@ -94,7 +94,6 @@ public class ResourceGroupManagerBeanTest extends AbstractEJB3Test {
             /* bootstrap */
             ResourceType type = new ResourceType("type", "plugin", ResourceCategory.PLATFORM, null);
             Subject testSubject = SessionTestHelper.createNewSubject(em, "testSubject");
-            createSession(testSubject);
             Role testRole = SessionTestHelper.createNewRoleForSubject(em, testSubject, "testRole");
             testRole.addPermission(Permission.MANAGE_INVENTORY);
             ResourceGroup compatGroup = new ResourceGroup("group1", type);
@@ -128,7 +127,6 @@ public class ResourceGroupManagerBeanTest extends AbstractEJB3Test {
             /* bootstrap */
             ResourceType type = new ResourceType("type", "plugin", ResourceCategory.PLATFORM, null);
             Subject testSubject = SessionTestHelper.createNewSubject(em, "testSubject");
-            createSession(testSubject);
             Role testRole = SessionTestHelper.createNewRoleForSubject(em, testSubject, "testRole");
             testRole.addPermission(Permission.MANAGE_INVENTORY);
             ResourceGroup compatGroup = new ResourceGroup("group1", type);

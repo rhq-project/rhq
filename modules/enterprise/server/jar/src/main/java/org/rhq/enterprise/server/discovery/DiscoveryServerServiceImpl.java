@@ -30,6 +30,7 @@ import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeResponse;
 import org.rhq.core.clientapi.server.discovery.DiscoveryServerService;
 import org.rhq.core.clientapi.server.discovery.InvalidInventoryReportException;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
+import org.rhq.core.clientapi.server.discovery.StaleTypeException;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.discovery.AvailabilityReport;
@@ -40,7 +41,6 @@ import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceError;
-import org.rhq.core.domain.resource.ResourceUpgradeReport;
 import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.server.alert.AlertDefinitionCreationException;
@@ -65,7 +65,8 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
     /**
      * @see DiscoveryServerService#mergeInventoryReport(InventoryReport)
      */
-    public ResourceSyncInfo mergeInventoryReport(InventoryReport report) throws InvalidInventoryReportException {
+    public ResourceSyncInfo mergeInventoryReport(InventoryReport report) throws InvalidInventoryReportException,
+        StaleTypeException {
         long start = System.currentTimeMillis();
         DiscoveryBossLocal discoveryBoss = LookupUtil.getDiscoveryBoss();
         ResourceSyncInfo syncInfo;
@@ -161,8 +162,13 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
     }
 
     public void setResourceError(ResourceError resourceError) {
-        ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
-        resourceManager.addResourceError(resourceError);
+        try {
+            ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
+            resourceManager.addResourceError(resourceError);
+        } catch (RuntimeException re) {
+            log.error("Failed to persist resource error: " + resourceError);
+            throw re;
+        }
     }
 
     public void clearResourceConfigError(int resourceId) {
@@ -184,7 +190,7 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
         DiscoveryBossLocal discoveryBoss = LookupUtil.getDiscoveryBoss();
         return discoveryBoss.upgradeResources(upgradeRequests);
     }
-    
+
     private static Resource convertToPojoResource(Resource resource, boolean includeDescendants) {
         Resource pojoResource = new Resource(resource.getId());
         pojoResource.setUuid(resource.getUuid());
@@ -200,6 +206,8 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
         pojoResource.setName(resource.getName());
         pojoResource.setDescription(resource.getDescription());
         pojoResource.setLocation(resource.getLocation());
+        pojoResource.setVersion(resource.getVersion());
+        
         if (resource.getParentResource() != null) {
             pojoResource.setParentResource(convertToPojoResource(resource.getParentResource(), false));
         }

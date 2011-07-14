@@ -19,26 +19,24 @@
 package org.rhq.enterprise.gui.coregui.client.admin.users;
 
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
-import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import com.smartgwt.client.widgets.grid.events.CellClickEvent;
+import com.smartgwt.client.widgets.grid.events.CellClickHandler;
 import org.rhq.core.domain.authz.Permission;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
+import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
 import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
+import org.rhq.enterprise.gui.coregui.client.components.table.EscapedHtmlCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * A table that lists all users and provides the ability to view or edit details of users, delete users, or create new
@@ -57,6 +55,9 @@ public class UsersView extends TableSection<UsersDataSource> {
 
     private static final String HEADER_ICON = "global/User_24.png";
 
+    private boolean hasManageSecurity;
+    private boolean initialized;
+
     public UsersView(String locatorId) {
         super(locatorId, MSG.view_adminSecurity_users());
 
@@ -64,29 +65,65 @@ public class UsersView extends TableSection<UsersDataSource> {
 
         setDataSource(dataSource);
         setHeaderIcon(HEADER_ICON);
+        setEscapeHtmlInDetailsLinkColumn(true);
+
+        fetchManageSecurityPermissionAsync();
     }
 
     @Override
     protected void configureTable() {
+        updateSelectionStyle();
+        getListGrid().addCellClickHandler(new CellClickHandler() {
+            public void onCellClick(CellClickEvent event) {
+                updateSelectionStyle();
+            }
+        });
+
         List<ListGridField> fields = createFields();
         setListGridFields(fields.toArray(new ListGridField[fields.size()]));
 
+        addTableAction(extendLocatorId("New"), MSG.common_button_new(), createNewAction());
         addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), getDeleteConfirmMessage(),
             createDeleteAction());
-        addTableAction(extendLocatorId("New"), MSG.common_button_new(), createNewAction());
+
+        super.configureTable();
+    }
+
+    @Override
+    public void refresh() {
+        super.refresh();
+
+        updateSelectionStyle();
+    }
+
+    private void fetchManageSecurityPermissionAsync() {
+        new PermissionsLoader().loadExplicitGlobalPermissions(new PermissionsLoadedListener() {
+            public void onPermissionsLoaded(Set<Permission> permissions) {
+                if (permissions != null) {
+                    hasManageSecurity = permissions.contains(Permission.MANAGE_SECURITY);
+                    refreshTableInfo();
+                } else {
+                    hasManageSecurity = false;
+                }
+                initialized = true;
+            }
+        });
+    }
+
+    private void updateSelectionStyle() {
+        if (initialized) {
+            if (!hasManageSecurity) {
+                getListGrid().deselectAllRecords();
+            }
+            SelectionStyle selectionStyle = hasManageSecurity ? getDefaultSelectionStyle() : SelectionStyle.NONE;
+            getListGrid().setSelectionType(selectionStyle);
+        }
     }
 
     private List<ListGridField> createFields() {
         List<ListGridField> fields = new ArrayList<ListGridField>();
 
         ListGridField nameField = new ListGridField(UsersDataSource.Field.NAME, 150);
-        nameField.setCellFormatter(new CellFormatter() {
-            public String format(Object value, ListGridRecord record, int i, int i1) {
-                Integer subjectId = getId(record);
-                String userUrl = LinkManager.getUserLink(subjectId);
-                return SeleniumUtility.getLocatableHref(userUrl, value.toString(), null);
-            }
-        });
         fields.add(nameField);
 
         ListGridField activeField = new ListGridField(UsersDataSource.Field.FACTIVE, 90);
@@ -96,12 +133,15 @@ public class UsersView extends TableSection<UsersDataSource> {
         fields.add(ldapField);
 
         ListGridField firstNameField = new ListGridField(UsersDataSource.Field.FIRST_NAME, 150);
+        firstNameField.setCellFormatter(new EscapedHtmlCellFormatter());
         fields.add(firstNameField);
 
         ListGridField lastNameField = new ListGridField(UsersDataSource.Field.LAST_NAME, 150);
+        lastNameField.setCellFormatter(new EscapedHtmlCellFormatter());
         fields.add(lastNameField);
 
         ListGridField departmentField = new ListGridField(UsersDataSource.Field.DEPARTMENT, 150);
+        departmentField.setCellFormatter(new EscapedHtmlCellFormatter());
         fields.add(departmentField);
 
         // TODO: instead of fetching roles, use a composite object that will pull the role count across the wire.
@@ -131,17 +171,33 @@ public class UsersView extends TableSection<UsersDataSource> {
         return fields;
     }
 
+    private TableAction createNewAction() {
+        return new TableAction() {
+            public boolean isEnabled(ListGridRecord[] selection) {
+                return hasManageSecurity;
+            }
+
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                newDetails();
+            }
+        };
+    }
+
     private TableAction createDeleteAction() {
         return new TableAction() {
             public boolean isEnabled(ListGridRecord[] selection) {
+                if (!hasManageSecurity) {
+                    return false;
+                }
+
                 int count = selection.length;
                 if (count == 0) {
                     return false;
                 }
 
                 for (ListGridRecord record : selection) {
-                    int id = record.getAttributeAsInt(UsersDataSource.Field.ID);
-                    if (id == UsersDataSource.ID_OVERLORD || id == UsersDataSource.ID_RHQADMIN) {
+                    int subjectId = record.getAttributeAsInt(UsersDataSource.Field.ID);
+                    if (UsersDataSource.isSystemSubjectId(subjectId)) {
                         // The superuser and rhqadmin users cannot be deleted.
                         return false;
                     }
@@ -151,34 +207,6 @@ public class UsersView extends TableSection<UsersDataSource> {
 
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 deleteSelectedRecords();
-            }
-        };
-    }
-
-    private TableAction createNewAction() {
-        return new TableAction() {
-            private boolean hasManageSecurity = false;
-
-            public boolean isEnabled(ListGridRecord[] selection) {
-                GWTServiceLookup.getAuthorizationService().getExplicitGlobalPermissions(
-                    new AsyncCallback<Set<Permission>>() {
-                        @Override
-                        public void onSuccess(Set<Permission> result) {
-                            hasManageSecurity = result.contains(Permission.MANAGE_SECURITY);
-                        }
-
-                        @Override
-                        public void onFailure(Throwable caught) {
-                            CoreGUI.getMessageCenter().notify(
-                                new Message(MSG.util_userPerm_loadFailGlobal(), caught, Message.Severity.Error, EnumSet
-                                    .of(Message.Option.BackgroundJobResult)));
-                        }
-                    });
-                return hasManageSecurity;
-            }
-
-            public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                newDetails();
             }
         };
     }

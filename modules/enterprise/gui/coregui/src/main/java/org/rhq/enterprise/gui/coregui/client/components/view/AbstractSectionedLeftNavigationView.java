@@ -18,11 +18,14 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components.view;
 
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+import com.allen_sauer.gwt.log.client.Log;
 import com.smartgwt.client.types.VisibilityMode;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.events.CellClickEvent;
@@ -33,9 +36,12 @@ import com.smartgwt.client.widgets.tree.Tree;
 import com.smartgwt.client.widgets.tree.TreeGrid;
 import com.smartgwt.client.widgets.tree.TreeNode;
 
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.InitializableView;
+import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
+import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
 import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
@@ -54,6 +60,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTreeGrid;
  */
 public abstract class AbstractSectionedLeftNavigationView extends LocatableHLayout implements BookmarkableView,
     InitializableView {
+
     private String viewId;
     private boolean initialized;
     private ViewId currentSectionViewId;
@@ -65,6 +72,9 @@ public abstract class AbstractSectionedLeftNavigationView extends LocatableHLayo
     private Canvas currentContent;
     private Map<String, TreeGrid> treeGrids = new LinkedHashMap<String, TreeGrid>();
     private Map<String, NavigationSection> sectionsByName;
+
+    // Capture the user's global permissions for use by any dashboard or portlet that may need it for rendering.
+    private Set<Permission> globalPermissions = EnumSet.noneOf(Permission.class);
 
     public AbstractSectionedLeftNavigationView(String viewId) {
         super(viewId);
@@ -88,19 +98,26 @@ public abstract class AbstractSectionedLeftNavigationView extends LocatableHLayo
         sectionStack.setWidth(250);
         sectionStack.setHeight100();
 
-        List<NavigationSection> sections = getNavigationSections();
-        this.sectionsByName = new HashMap<String, NavigationSection>(sections.size());
-        for (NavigationSection section : sections) {
-            TreeGrid treeGrid = buildTreeGridForSection(section);
-            addSection(treeGrid);
-            treeGrid.getTree().openAll();
-            this.sectionsByName.put(section.getName(), section);
-        }
+        new PermissionsLoader().loadExplicitGlobalPermissions(new PermissionsLoadedListener() {
 
-        addMember(sectionStack);
-        addMember(contentCanvas);
+            public void onPermissionsLoaded(Set<Permission> permissions) {
+                globalPermissions = (permissions != null) ? permissions : EnumSet.noneOf(Permission.class);
 
-        this.initialized = true;
+                List<NavigationSection> sections = getNavigationSections();
+                sectionsByName = new HashMap<String, NavigationSection>(sections.size());
+                for (NavigationSection section : sections) {
+                    TreeGrid treeGrid = buildTreeGridForSection(section);
+                    addSection(treeGrid);
+                    treeGrid.getTree().openAll();
+                    sectionsByName.put(section.getName(), section);
+                }
+
+                addMember(sectionStack);
+                addMember(contentCanvas);
+
+                initialized = true;
+            }
+        });
     }
 
     @Override
@@ -162,15 +179,19 @@ public abstract class AbstractSectionedLeftNavigationView extends LocatableHLayo
         this.sectionStack.addSection(section);
     }
 
-    public void setContent(Canvas newContent) {
+    public void destroyCurrentContent() {
         // A call to destroy (e.g. certain IFrames/FullHTMLPane) can actually remove multiple children of the
         // contentCanvas. As such, we need to query for the children after each destroy to ensure only valid children
-        // are in the array.
-        Canvas[] children;
-        while ((children = contentCanvas.getChildren()).length > 0) {
-            children[0].destroy();
+        // are in the array. Note that we need to make sure we do this destroy before we create the new content
+        if (contentCanvas != null) {
+            Canvas[] children;
+            while ((children = contentCanvas.getChildren()).length > 0) {
+                children[0].destroy();
+            }
         }
+    }
 
+    public void setContent(Canvas newContent) {
         contentCanvas.addChild(newContent);
         contentCanvas.markForRedraw();
         currentContent = newContent;
@@ -201,12 +222,15 @@ public abstract class AbstractSectionedLeftNavigationView extends LocatableHLayo
 
         // Only update the content pane if the item has an associated view factory.
         ViewFactory viewFactory = item.getViewFactory();
-        Canvas content = (viewFactory != null) ? viewFactory.createView() : null;
-        if (content != null) {
-            setContent(content);
+        if (viewFactory != null) {
+            destroyCurrentContent();
+            Canvas content = viewFactory.createView();
+            if (content != null) {
+                setContent(content);
 
-            if (content instanceof BookmarkableView) {
-                ((BookmarkableView) content).renderView(viewPath.next().next());
+                if (content instanceof BookmarkableView) {
+                    ((BookmarkableView) content).renderView(viewPath.next().next());
+                }
             }
         }
     }
@@ -214,18 +238,30 @@ public abstract class AbstractSectionedLeftNavigationView extends LocatableHLayo
     public void renderView(ViewPath viewPath) {
         if (!viewPath.isCurrent(currentSectionViewId) || !viewPath.isNext(currentPageViewId)) {
             if (viewPath.isEnd()) {
-                // Display default view
+                // Display default view - note that defaultView() will create new content, so we have to destroy the old, current content
+                destroyCurrentContent();
                 setContent(defaultView());
+                initSectionPageTreeGrids();
             } else {
                 renderContentView(viewPath);
             }
         } else {
             if (this.currentContent instanceof BookmarkableView) {
                 ((BookmarkableView) this.currentContent).renderView(viewPath.next().next());
-            }
-            if (this.currentContent instanceof RefreshableView) {
+            } else if (this.currentContent instanceof RefreshableView && this.currentContent.isDrawn()) {
+                // Refresh the data on the content pane, so it's not stale.
+                Log.debug("Refreshing data for [" + this.currentContent.getClass().getName() + "]...");
                 ((RefreshableView) this.currentContent).refresh();
             }
+        }
+    }
+
+    private void initSectionPageTreeGrids() {
+        for (String name : treeGrids.keySet()) {
+            TreeGrid treeGrid = treeGrids.get(name);
+            treeGrid.deselectAllRecords();
+            this.currentSectionViewId = null;
+            this.currentPageViewId = null;
         }
     }
 
@@ -245,4 +281,9 @@ public abstract class AbstractSectionedLeftNavigationView extends LocatableHLayo
             }
         }
     }
+
+    public Set<Permission> getGlobalPermissions() {
+        return globalPermissions;
+    }
+
 }

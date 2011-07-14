@@ -45,7 +45,7 @@
 
             String icon = FunctionTagLibrary.getOperationStatusURL(operation.getStatus()); 
 
-            String link = "/rhq/resource/operation/resourceOperationHistoryDetails.xhtml?id=" + resourceId + "&opId=" + operation.getId();
+            String link = "/coregui/CoreGUI.html#Resource/" + resourceId + "/Operations/History/" + operation.getId();
 
 //            out.write(
 //                    "    <event start=\"" + sdf.format(new Date(operation.getCreatedTime())) + "\" " +

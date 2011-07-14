@@ -21,30 +21,38 @@ package org.rhq.enterprise.gui.coregui.client.util;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.Collections;
+import java.util.Date;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.user.client.Window;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSource;
 import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
+import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.types.DSDataFormat;
 import com.smartgwt.client.types.DSProtocol;
 import com.smartgwt.client.util.JSOHelper;
+import com.smartgwt.client.widgets.form.validator.IntegerRangeValidator;
 import com.smartgwt.client.widgets.form.validator.LengthRangeValidator;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.alert.AlertPriority;
+import org.rhq.core.domain.drift.DriftCategory;
 import org.rhq.core.domain.event.EventSeverity;
+import org.rhq.core.domain.operation.OperationRequestStatus;
+import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
@@ -52,15 +60,19 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.util.effects.ColoringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.rpc.DataSourceResponseStatistics;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * Base GWT-RPC oriented DataSource class.
+ * 
+ * The <T> type is the entity POJO type that represents a record retrieved by the data source
+ * The <C> type is the criteria type that is used to fetch data from the data source
  *
  * @author Greg Hinkle
  * @author Ian Springer
  */
-public abstract class RPCDataSource<T> extends DataSource {
+public abstract class RPCDataSource<T, C extends org.rhq.core.domain.criteria.Criteria> extends DataSource {
 
     protected static final Messages MSG = CoreGUI.getMessages();
 
@@ -84,7 +96,7 @@ public abstract class RPCDataSource<T> extends DataSource {
     }
 
     /**
-     * A pattern that can be used for Datasource subclassing.  Each subclass can add it's own fields prior to
+     * A pattern that can be used for Datasource subclassing.  Each subclass can add its own fields prior to
      * all of the fields being added to the datasource. 
      */
     protected List<DataSourceField> addDataSourceFields() {
@@ -101,7 +113,16 @@ public abstract class RPCDataSource<T> extends DataSource {
 
             switch (request.getOperationType()) {
             case FETCH:
-                executeFetch(request, response);
+                C criteria = getFetchCriteria(request);
+                if (criteria != null) {
+                    // unsure if this is the right thing to do - we are always going to supply a PageControl, but reading
+                    // the javadoc for setPageControl, it says this overrides addSortField, which is used by our criteria objects.
+                    // I still think this is OK, but if you are reading this as part of debugging a problem, investigate this.
+                    if (criteria.getPageControlOverrides() == null) {
+                        criteria.setPageControl(getPageControl(request));
+                    }
+                }
+                executeFetch(request, response, criteria);
                 break;
             case ADD:
                 ListGridRecord newRecord = getDataObject(request);
@@ -182,9 +203,32 @@ public abstract class RPCDataSource<T> extends DataSource {
             for (String sort : sorts) {
                 PageOrdering ordering = (sort.startsWith("-")) ? PageOrdering.DESC : PageOrdering.ASC;
                 String columnName = (ordering == PageOrdering.DESC) ? sort.substring(1) : sort;
-                pageControl.addDefaultOrderingField(columnName, ordering);
+                String sortField = getSortFieldForColumn(columnName);
+                if (null != sortField)
+                    pageControl.addDefaultOrderingField(sortField, ordering);
             }
         }
+    }
+
+    /**
+     * By default, for a sortable column, the field name (usually a ListGridField name) is used as the
+     * OrderingField in the PageControl passed to the server.  If for some reason the field name does not
+     * properly map to a sortable entity field, this method can be overrident to provide the proper maping.
+     * Note that certain columns may also leverage sort fields in the underlying (rhq) criteria class itself, but
+     * not every sortable column may be appropriate as a sort field in the criteria.      
+     * 
+     * @param columnName The column field name 
+     * @return The entity field for the desired sort. By default just returns back the columnName. Can be null if
+     * there is no valid mapping. 
+     */
+    protected String getSortFieldForColumn(String columnName) {
+        return columnName;
+    }
+
+    @Override
+    public void processResponse(String requestId, DSResponse responseProperties) {
+        super.processResponse(requestId, responseProperties);
+        DataSourceResponseStatistics.record(requestId, responseProperties);
     }
 
     protected void sendSuccessResponse(DSRequest request, DSResponse response, T dataObject) {
@@ -291,8 +335,7 @@ public abstract class RPCDataSource<T> extends DataSource {
             return null;
         }
 
-        Set<T> results = new HashSet<T>(records.length);
-        int i = 0;
+        Set<T> results = new LinkedHashSet<T>(records.length);
         for (Record record : records) {
             results.add(copyValues(record));
         }
@@ -331,6 +374,15 @@ public abstract class RPCDataSource<T> extends DataSource {
     }
 
     /**
+     * Given a request, this returns a criteria object that should be used to fetch data that the request
+     * is asking for. If a particular data source subclass does not use criteria, this can return <code>null</code>.
+     * 
+     * @param request the request being made for data
+     * @return a criteria object that is to be used when fetching for the requested data, or <code>null</code> if not used
+     */
+    protected abstract C getFetchCriteria(final DSRequest request);
+
+    /**
      * Extensions should implement this method to retrieve data. Paging solutions should use
      * {@link #getPageControl(com.smartgwt.client.data.DSRequest)}. All implementations should call processResponse()
      * whether they fail or succeed. Data should be set on the request via setData. Implementations can use
@@ -338,8 +390,9 @@ public abstract class RPCDataSource<T> extends DataSource {
      *
      * @param request
      * @param response
+     * @param criteria can be used by the method to perform queries in order to fetch the required data
      */
-    protected abstract void executeFetch(final DSRequest request, final DSResponse response);
+    protected abstract void executeFetch(final DSRequest request, final DSResponse response, final C criteria);
 
     public abstract T copyValues(Record from);
 
@@ -423,21 +476,36 @@ public abstract class RPCDataSource<T> extends DataSource {
         if (value == null) {
             // nothing to do, result is already null
         } else if (type == Integer.class) {
-            int[] intermediates = criteria.getAttributeAsIntArray(paramName);
+            int[] intermediates;
+            if (isArray(value)) {
+                intermediates = criteria.getAttributeAsIntArray(paramName);
+            } else { // want array return, but only single instance of the type in the request
+                intermediates = new int[] { criteria.getAttributeAsInt(paramName) };
+            }
             resultArray = (S[]) new Integer[intermediates.length];
             int index = 0;
             for (int next : intermediates) {
                 resultArray[index++] = (S) Integer.valueOf(next);
             }
         } else if (type == String.class) {
-            String[] intermediates = criteria.getAttributeAsStringArray(paramName);
+            String[] intermediates;
+            if (isArray(value)) {
+                intermediates = criteria.getAttributeAsStringArray(paramName);
+            } else { // want array return, but only single instance of the type in the request
+                intermediates = new String[] { criteria.getAttributeAsString(paramName) };
+            }
             resultArray = (S[]) new String[intermediates.length];
             int index = 0;
             for (String next : intermediates) {
                 resultArray[index++] = (S) next;
             }
         } else if (type.isEnum()) {
-            String[] intermediates = criteria.getAttributeAsStringArray(paramName);
+            String[] intermediates;
+            if (isArray(value)) {
+                intermediates = criteria.getAttributeAsStringArray(paramName);
+            } else { // want array return, but only single instance of the type in the request
+                intermediates = new String[] { criteria.getAttributeAsString(paramName) };
+            }
             List<S> buffer = new ArrayList<S>();
             for (String next : intermediates) {
                 buffer.add((S) Enum.valueOf((Class<? extends Enum>) type, next));
@@ -452,6 +520,10 @@ public abstract class RPCDataSource<T> extends DataSource {
         return resultArray;
     }
 
+    private static boolean isArray(Object value) {
+        return value.getClass().isArray() || value.getClass().equals(ArrayList.class);
+    }
+
     @SuppressWarnings("unchecked")
     private static <S> S[] getEnumArray(Class<S> genericEnumType, int size) {
         // workaround until GWT implements reflection APIs, so we can do: 
@@ -460,16 +532,32 @@ public abstract class RPCDataSource<T> extends DataSource {
             return (S[]) new AlertPriority[size];
         } else if (genericEnumType == EventSeverity.class) {
             return (S[]) new EventSeverity[size];
+        } else if (genericEnumType == OperationRequestStatus.class) {
+            return (S[]) new OperationRequestStatus[size];
+        } else if (genericEnumType == ResourceCategory.class) {
+            return (S[]) new ResourceCategory[size];
+        } else if (genericEnumType == DriftCategory.class) {
+            return (S[]) new DriftCategory[size];
         } else {
             throw new IllegalArgumentException(MSG.dataSource_rpc_error_unsupportedEnumType(genericEnumType.getName()));
         }
     }
 
     @SuppressWarnings("unchecked")
-    public static <S> S getFilter(DSRequest request, String paramName, Class<S> type) {
-        Log.debug("Fetching " + paramName + " (" + type + ")");
+    public static void printRequestCriteria(DSRequest request) {
         Criteria criteria = request.getCriteria();
         Map<String, Object> criteriaMap = criteria.getValues();
+
+        for (Map.Entry<String, Object> nextEntry : criteriaMap.entrySet()) {
+            Window.alert(nextEntry.getKey() + ":" + nextEntry.getValue());
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <S> S getFilter(DSRequest request, String paramName, Class<S> type) {
+        Criteria criteria = request.getCriteria();
+        Map<String, Object> criteriaMap = (criteria != null) ? criteria.getValues() : Collections
+            .<String, Object> emptyMap();
 
         S result = null;
 
@@ -496,8 +584,8 @@ public abstract class RPCDataSource<T> extends DataSource {
         return result;
     }
 
-    protected DataSourceTextField createTextField(String name, String title, Integer minLength, Integer maxLength,
-        Boolean required) {
+    protected static DataSourceTextField createTextField(String name, String title, Integer minLength,
+        Integer maxLength, Boolean required) {
         DataSourceTextField textField = new DataSourceTextField(name, title);
         textField.setLength(maxLength);
         textField.setRequired(required);
@@ -510,7 +598,7 @@ public abstract class RPCDataSource<T> extends DataSource {
         return textField;
     }
 
-    protected DataSourceTextField createBooleanField(String name, String title, Boolean required) {
+    protected static DataSourceTextField createBooleanField(String name, String title, Boolean required) {
         DataSourceTextField textField = new DataSourceTextField(name, title);
         textField.setLength(Boolean.FALSE.toString().length());
         textField.setRequired(required);
@@ -519,6 +607,31 @@ public abstract class RPCDataSource<T> extends DataSource {
         valueMap.put(Boolean.FALSE.toString(), MSG.common_val_no_lower());
         textField.setValueMap(valueMap);
         return textField;
+    }
+
+    protected static DataSourceIntegerField createIntegerField(String name, String title, Integer minValue,
+        Integer maxValue, Boolean required) {
+        DataSourceIntegerField textField = new DataSourceIntegerField(name, title);
+        textField.setRequired(required);
+        if (minValue != null || maxValue != null) {
+            IntegerRangeValidator integerRangeValidator = new IntegerRangeValidator();
+            if (minValue != null) {
+                integerRangeValidator.setMin(minValue);
+            }
+            if (maxValue != null) {
+                integerRangeValidator.setMax(maxValue);
+            }
+            textField.setValidators(integerRangeValidator);
+        }
+        return textField;
+    }
+
+    protected static Date convertTimestampToDate(Long timestamp) {
+        if (timestamp == null) {
+            return null;
+        }
+        // Assume 0 means null, not Jan 1, 1970.
+        return (timestamp != 0) ? new Date(timestamp) : null;
     }
 
 }

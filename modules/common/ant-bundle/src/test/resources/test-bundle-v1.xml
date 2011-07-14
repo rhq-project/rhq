@@ -34,12 +34,12 @@
 
     <target name="preinstall">
         <echo>Deploying Test Bundle v1.0 to ${rhq.deploy.dir}...</echo>
-        <property name="preinstallTargetExecuted" value="true"/>
+        <property name="preinstallTargetExecuted" value="1a"/>
     </target>
 
     <target name="postinstall">
         <echo>Done deploying Test Bundle v1.0 to ${rhq.deploy.dir}.</echo>
-        <property name="postinstallTargetExecuted" value="true"/>
+        <property name="postinstallTargetExecuted" value="1b"/>
     </target>
 
 </project>

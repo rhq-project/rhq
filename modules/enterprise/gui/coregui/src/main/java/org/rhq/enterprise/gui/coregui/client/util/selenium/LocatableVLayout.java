@@ -50,4 +50,10 @@ public class LocatableVLayout extends VLayout implements Locatable {
     public void destroyMembers() {
         SeleniumUtility.destroyMembers(this);
     }
+
+    @Override
+    public void destroy() {
+        destroyMembers();
+        super.destroy();
+    }
 }

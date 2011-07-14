@@ -25,10 +25,13 @@ package org.rhq.enterprise.gui.coregui.client.bundle.version.file;
 import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.types.AutoFitWidthApproach;
+import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.bundle.BundleFile;
+import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.criteria.BundleFileCriteria;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.util.PageList;
@@ -43,6 +46,13 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  */
 public class FileListView extends LocatableVLayout {
 
+    private static final String ID = "id";
+    private static final String NAME = "name";
+    private static final String FILESIZE = "fileSize";
+    private static final String MD5 = "md5";
+    private static final String SHA256 = "sha256";
+    private static final String VERSION = "version";
+
     private int bundleVersionId;
 
     public FileListView(String locatorId, int bundleVersionId) {
@@ -54,20 +64,32 @@ public class FileListView extends LocatableVLayout {
 
         Table table = new Table(extendLocatorId("BundleFiles"), MSG.view_bundle_bundleFiles());
 
-        ListGridField id = new ListGridField("id", MSG.common_title_id());
-        id.setWidth("20%");
+        ListGridField id = new ListGridField(ID, MSG.common_title_id());
+        ListGridField name = new ListGridField(NAME, MSG.common_title_name());
+        ListGridField size = new ListGridField(FILESIZE, MSG.view_bundle_fileListView_fileSize());
+        //ListGridField md5 = new ListGridField(MD5, MSG.view_bundle_fileListView_md5());
+        ListGridField sha256 = new ListGridField(SHA256, MSG.view_bundle_fileListView_sha256());
+        ListGridField version = new ListGridField(VERSION, MSG.common_title_version());
 
-        ListGridField name = new ListGridField("name", MSG.common_title_name());
-        name.setWidth("60%");
-
-        ListGridField size = new ListGridField("size", MSG.view_bundle_fileListView_fileSize());
-        name.setWidth("20%");
+        id.setWidth("50");
+        setAutoFitOnField(name);
+        setAutoFitOnField(size);
+        //setAutoFitOnField(md5);
+        setAutoFitOnField(sha256);
+        setAutoFitOnField(version);
 
         // To get the ListGrid the Table must be initialized (via onInit()) by adding to the Canvas
         addMember(table);
-        table.getListGrid().setFields(id, name, size);
-        table.getListGrid().setData(buildRecords(files));
 
+        ListGrid listGrid = table.getListGrid();
+        listGrid.setFields(id, name, size, /*md5,*/sha256, version); // today, we don't set md5, no sense showing it
+        listGrid.setData(buildRecords(files));
+        table.setTableActionDisableOverride(true);
+    }
+
+    private void setAutoFitOnField(ListGridField field) {
+        field.setAutoFitWidth(true);
+        field.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
     }
 
     @Override
@@ -96,17 +118,27 @@ public class FileListView extends LocatableVLayout {
         int i = 0;
         for (BundleFile file : files) {
             ListGridRecord record = new ListGridRecord();
-            record.setAttribute("id", file.getId());
-            record.setAttribute("name", file.getPackageVersion().getFileName());
+            PackageVersion packageVersion = file.getPackageVersion();
 
-            Long size = file.getPackageVersion().getFileSize();
+            record.setAttribute(ID, file.getId());
+            record.setAttribute(NAME, returnValueOrUnknown(packageVersion.getFileName()));
+            record.setAttribute(MD5, returnValueOrUnknown(packageVersion.getMD5()));
+            record.setAttribute(SHA256, returnValueOrUnknown(packageVersion.getSHA256()));
+            record.setAttribute(VERSION, returnValueOrUnknown(packageVersion.getVersion()));
+
+            Long size = packageVersion.getFileSize();
             if (size != null) {
-                record.setAttribute("size", MeasurementConverterClient.format(size.doubleValue(),
+                record.setAttribute(FILESIZE, MeasurementConverterClient.format(size.doubleValue(),
                     MeasurementUnits.BYTES, true));
+            } else {
+                record.setAttribute(FILESIZE, MSG.common_val_na());
             }
             records[i++] = record;
         }
         return records;
     }
 
+    private String returnValueOrUnknown(String val) {
+        return (val != null && val.length() > 0) ? val : MSG.common_val_na();
+    }
 }

@@ -18,8 +18,12 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components.tab;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.tab.Tab;
 import com.smartgwt.client.widgets.tab.events.TabSelectedEvent;
 import com.smartgwt.client.widgets.tab.events.TabSelectedHandler;
@@ -30,6 +34,11 @@ import com.smartgwt.client.widgets.tab.events.TabSelectedHandler;
  * @author Greg Hinkle
  */
 public class TwoLevelTabSet extends NamedTabSet implements TabSelectedHandler, TwoLevelTabSelectedHandler {
+
+    /** maps Tab locator IDs to Tabs. */
+    private Map<String, TwoLevelTab> hiddenTabs = new LinkedHashMap<String, TwoLevelTab>();
+
+    private boolean ignoreSelectEvents = false;
 
     public TwoLevelTabSet(String locatorId) {
         super(locatorId);
@@ -58,6 +67,41 @@ public class TwoLevelTabSet extends NamedTabSet implements TabSelectedHandler, T
         return twoLevelTabs;
     }
 
+    // Smartgwt does not currently offer the ability to hide a Tab (why!) so we fake it here.  This allows us to keep
+    // the Tab structure in place while removing it from the TabSet
+    public void setTabHidden(TwoLevelTab tab, boolean hidden) {
+        if (hidden) {
+            if (hiddenTabs.containsKey(tab.getLocatorId())) {
+                return;
+            }
+
+            // don't let the removeTab() destroy the pane
+            Canvas contentPane = tab.getPane();
+            updateTab(tab, null);
+            removeTab(tab);
+            // Reset the pane on the tab, since the call to updateTab() above nulled it out.
+            tab.setPane(contentPane);
+
+            hiddenTabs.put(tab.getLocatorId(), tab);
+        } else {
+            if (!hiddenTabs.containsKey(tab.getLocatorId())) {
+                return;
+            }
+
+            hiddenTabs.remove(tab.getLocatorId());
+            addTab(tab);
+        }
+    }
+
+    public void destroyViews() {
+        for (TwoLevelTab tab : getTabs()) {
+            tab.getLayout().destroyViews();
+        }
+        for (TwoLevelTab tab : hiddenTabs.values()) {
+            tab.getLayout().destroyViews();
+        }
+    }
+
     // ------- Event support -------
     // Done with a separate handler manager from parent class on purpose (compatibility issue)
 
@@ -67,7 +111,15 @@ public class TwoLevelTabSet extends NamedTabSet implements TabSelectedHandler, T
         return m.addHandler(TwoLevelTabSelectedEvent.TYPE, handler);
     }
 
+    // This is invoked by smartgwt when the user clicks on a Tab in the TabSet, or TabSet.selectTab() is called. It
+    // sets the current SubTab and fires an event to notify AbstractTwoLevelTabSet that a tab/subtab has been selected.
     public void onTabSelected(TabSelectedEvent tabSelectedEvent) {
+        // if requested, ignore select tab notifications. smartgwt can generate unwanted notifications
+        // while we manipulate the tabset (e.g. when hiding the current tab). We want to manage this at a higher level
+        if (isIgnoreSelectEvents()) {
+            return;
+        }
+
         TwoLevelTab tab = (TwoLevelTab) getSelectedTab();
         SubTab currentSubTab = tab.getLayout().getCurrentSubTab();
         if (null != currentSubTab) {
@@ -77,7 +129,15 @@ public class TwoLevelTabSet extends NamedTabSet implements TabSelectedHandler, T
         }
     }
 
+    // This is invoked by an event fired in SubTabLayout when the user clicks a SubTab button. It sets the Tab
+    // and fires an event to notify AbstractTwoLevelTabSet that a tab/subtab has been selected.
     public void onTabSelected(TwoLevelTabSelectedEvent tabSelectedEvent) {
+        // if requested, ignore select tab notifications. smartgwt can generate unwanted notifications
+        // while we manipulate the tabset (e.g. when hiding the current tab). We want to manage this at a higher level
+        if (isIgnoreSelectEvents()) {
+            return;
+        }
+
         tabSelectedEvent.setTabNum(getSelectedTabNumber());
         Tab tab = getSelectedTab();
         tabSelectedEvent.setId(this.getTabByTitle(tab.getTitle()).getName());
@@ -113,4 +173,26 @@ public class TwoLevelTabSet extends NamedTabSet implements TabSelectedHandler, T
             disableTab(tab);
         }
     }
+
+    public boolean isIgnoreSelectEvents() {
+        return ignoreSelectEvents;
+    }
+
+    public void setIgnoreSelectEvents(boolean ignoreSelectEvents) {
+        this.ignoreSelectEvents = ignoreSelectEvents;
+    }
+
+    @Override
+    public void destroy() {
+        // add the hidden tabs back under the TabSet. This will get them destroyed by smartgwt when the tabset
+        // goes away. There is no explicit Tab.destroy().
+        for (TwoLevelTab tab : hiddenTabs.values()) {
+            addTab(tab);
+        }
+        for (TwoLevelTab tab : getTabs()) {
+            tab.getLayout().destroyViews();
+        }
+        super.destroy();
+    }
+
 }

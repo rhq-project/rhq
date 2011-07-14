@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -62,6 +63,7 @@ import org.rhq.enterprise.server.util.CriteriaQueryRunner;
  */
 @Stateless
 public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
+
     @SuppressWarnings("unused")
     private final Log log = LogFactory.getLog(RoleManagerBean.class);
 
@@ -136,9 +138,39 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
      * @see org.rhq.enterprise.server.authz.RoleManagerLocal#createRole(Subject, Role)
      */
     @RequiredPermission(Permission.MANAGE_SECURITY)
-    public Role createRole(Subject subject, Role newRole) {
+    public Role createRole(Subject whoami, Role newRole) {
+        // TODO (ips): Do we want to enforce uniqueness of the Role name?
+
+        Boolean isSystemRole = newRole.getFsystem();
+        if (isSystemRole) {
+            throw new IllegalArgumentException("Unable to create system role [" + newRole.getName()
+                + "] - new system roles cannot be created.");
+        }
         processDependentPermissions(newRole);
+
+        Set<LdapGroup> ldapGroups = newRole.getLdapGroups();
+        for (LdapGroup ldapGroup : ldapGroups) {
+            ldapGroup.setRole(newRole);
+        }
+
         entityManager.persist(newRole);
+
+        // Now we must merge subjects and resource groups, since those fields in Role do not have persist cascade
+        // enabled.
+        int[] subjectIds = new int[newRole.getSubjects().size()];
+        int i = 0;
+        for (Subject subject : newRole.getSubjects()) {
+            subjectIds[i++] = subject.getId();
+        }
+        addSubjectsToRole(whoami, newRole.getId(), subjectIds);
+
+        int[] resourceGroupIds = new int[newRole.getResourceGroups().size()];
+        i = 0;
+        for (ResourceGroup resourceGroup : newRole.getResourceGroups()) {
+            resourceGroupIds[i++] = resourceGroup.getId();
+        }
+        addResourceGroupsToRole(whoami, newRole.getId(), resourceGroupIds);
+
         return newRole;
     }
 
@@ -532,9 +564,9 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
 
             for (Integer groupId : groupIds) {
                 ResourceGroup group = entityManager.find(ResourceGroup.class, groupId);
-                if (role == null) {
+                if (group == null) {
                     throw new IllegalArgumentException("Tried to add resourceGroup[" + groupId + "] to role[" + roleId
-                        + "], but resourceGroup was not found");
+                        + "], but resourceGroup was not found.");
                 }
                 role.addResourceGroup(group);
             }

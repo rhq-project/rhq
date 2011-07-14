@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class ApacheDirective {
+public class ApacheDirective implements Cloneable {
 
     private String name;
     private List<String> values;
@@ -14,12 +14,12 @@ public class ApacheDirective {
     private boolean isComment;
     private static final String WS = "[ \t]*";
     private static final String WORD = "\"(?:[^\"\n]|\\\")*\"|'(?:[^'\n]|\\\')*'|[^'\" \t\n]+";
-    private static final String DIRECTIVE_PATTERN =  WS + "(" + WORD + ")" + WS;
-    private static final String COMMENT_PATTERN="^[\t ]*#.*+$";
+    private static final String DIRECTIVE_REGEX =  WS + "(" + WORD + ")" + WS;
+    private static final String COMMENT_REGEX="^[\t ]*#.*+$";
     private boolean updated=false;
   
-    private final Pattern directivePattern = Pattern.compile(DIRECTIVE_PATTERN);
-    private final Pattern commentPattern = Pattern.compile(COMMENT_PATTERN);
+    private static final Pattern DIRECTIVE_PATTERN = Pattern.compile(DIRECTIVE_REGEX);
+    private static final Pattern COMMENT_PATTERN = Pattern.compile(COMMENT_REGEX);
     private List<ApacheDirective> childNodes;
     private ApacheDirective parentNode;
     private String file;
@@ -33,7 +33,7 @@ public class ApacheDirective {
         values = new ArrayList<String>();
         childNodes = new ArrayList<ApacheDirective>();
         
-        Matcher matcher = commentPattern.matcher(directive);
+        Matcher matcher = COMMENT_PATTERN.matcher(directive);
         if (matcher.matches()){
             isComment = true;
             values.add(directive);
@@ -43,7 +43,7 @@ public class ApacheDirective {
         boolean updated = true;
         while (updated & startIndex < directive.length()){
             updated = false;          
-                Matcher m = directivePattern.matcher(directive);
+                Matcher m = DIRECTIVE_PATTERN.matcher(directive);
                 while (m.find(startIndex)) {
                     for (int i = 1; i <= m.groupCount(); i++) {
                         String val = m.group(i);
@@ -194,5 +194,24 @@ public class ApacheDirective {
     
     public void addValue(String val){
         values.add(val);
+    }
+    
+    @Override
+    public ApacheDirective clone() {
+        try {
+            ApacheDirective copy = (ApacheDirective) super.clone();
+            
+            List<ApacheDirective> newChildNodes = new ArrayList<ApacheDirective>(childNodes.size());
+            for(ApacheDirective child : childNodes) {
+                ApacheDirective childCopy = child.clone();
+                childCopy.parentNode = copy;
+                newChildNodes.add(childCopy);
+            }
+            copy.childNodes = newChildNodes;
+            
+            return copy;
+        } catch (CloneNotSupportedException e) {
+            throw new IllegalStateException("ApacheDirective not cloneable even though it is declared as such.", e);
+        }
     }
 }

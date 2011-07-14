@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -18,19 +18,25 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.definitions;
 
+import java.util.Date;
 import java.util.Set;
 
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.CellFormatter;
+import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
+import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
+import org.rhq.enterprise.gui.coregui.client.components.table.EscapedHtmlCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
@@ -44,22 +50,28 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
  * @author Greg Hinkle
  * @author Joseph Marques
  */
-public class GroupDefinitionListView extends TableSection {
+public class GroupDefinitionListView extends TableSection<GroupDefinitionDataSource> {
+
     private static final String TITLE = MSG.view_dynagroup_definitions();
 
     public GroupDefinitionListView(String locatorId, String headerIcon) {
         super(locatorId, TITLE);
 
         setHeaderIcon(headerIcon);
-
         setDataSource(GroupDefinitionDataSource.getInstance());
+        setEscapeHtmlInDetailsLinkColumn(true);
     }
 
     @Override
     protected void configureTable() {
-        ListGridField idField = new ListGridField("id", MSG.common_title_id(), 50);
+        ListGridField idField = new ListGridField("id", MSG.common_title_id());
+        idField.setType(ListGridFieldType.INTEGER);
+        idField.setWidth(50);
+
         ListGridField nameField = new ListGridField("name", MSG.common_title_name(), 150);
+        nameField.setCellFormatter(new EscapedHtmlCellFormatter());
         ListGridField descriptionField = new ListGridField("description", MSG.common_title_description());
+        descriptionField.setCellFormatter(new EscapedHtmlCellFormatter());
         ListGridField expressionField = new ListGridField("expression", MSG.view_dynagroup_expressionSet(), 250);
         expressionField.setCellFormatter(new CellFormatter() {
             public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
@@ -78,10 +90,20 @@ public class GroupDefinitionListView extends TableSection {
                 return super.format(value, record, rowNum, colNum);
             }
         });
+        lastCalculationTimeField.setShowHover(true);
+        lastCalculationTimeField.setHoverCustomizer(new HoverCustomizer() {
+            public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
+                String attribValue = record.getAttribute("lastCalculationTime");
+                if (attribValue != null) {
+                    return TimestampCellFormatter.getHoverDateString(new Date(Long.valueOf(attribValue).longValue()));
+                } else {
+                    return null;
+                }
+            }
+        });
 
         ListGridField nextCalculationTimeField = new ListGridField("nextCalculationTime", MSG
             .view_dynagroup_nextCalculationTime(), 175);
-        //nextCalculationTimeField.setAlign(Alignment.CENTER);
         nextCalculationTimeField.setCellFormatter(new TimestampCellFormatter() {
             public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
                 if (value == null || "0".equals(value.toString())) {
@@ -90,15 +112,26 @@ public class GroupDefinitionListView extends TableSection {
                 return super.format(value, record, rowNum, colNum);
             }
         });
+        nextCalculationTimeField.setShowHover(true);
+        nextCalculationTimeField.setHoverCustomizer(new HoverCustomizer() {
+            public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
+                String attribValue = record.getAttribute("nextCalculationTime");
+                if (attribValue != null && !("0".equals(attribValue.toString()))) {
+                    return TimestampCellFormatter.getHoverDateString(new Date(Long.valueOf(attribValue).longValue()));
+                } else {
+                    return null;
+                }
+            }
+        });
 
-        getListGrid().setFields(idField, nameField, descriptionField, expressionField, lastCalculationTimeField,
+        setListGridFields(idField, nameField, descriptionField, expressionField, lastCalculationTimeField,
             nextCalculationTimeField);
 
-        addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), null, new AbstractTableAction(
-            TableActionEnablement.ANY) {
+        addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), MSG.common_msg_areYouSure(),
+                new AbstractTableAction(TableActionEnablement.ANY) {
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 final int[] groupDefinitionIds = TableUtility.getIds(selection);
-                ResourceGroupGWTServiceAsync groupManager = GWTServiceLookup.getResourceGroupService();
+                ResourceGroupGWTServiceAsync groupManager = GWTServiceLookup.getResourceGroupService(60000);
                 groupManager.deleteGroupDefinitions(groupDefinitionIds, new AsyncCallback<Void>() {
                     @Override
                     public void onSuccess(Void result) {
@@ -137,12 +170,13 @@ public class GroupDefinitionListView extends TableSection {
                         CoreGUI.getMessageCenter().notify(
                             new Message(MSG.view_dynagroup_recalcSuccessfulSelection(String
                                 .valueOf(groupDefinitionIds.length)), Severity.Info));
-
                         GroupDefinitionListView.this.refresh();
                     }
                 });
             }
         });
+
+        super.configureTable();
     }
 
     @Override
@@ -154,26 +188,22 @@ public class GroupDefinitionListView extends TableSection {
 
     @Override
     public void renderView(final ViewPath viewPath) {
-        GWTServiceLookup.getAuthorizationService().getExplicitGlobalPermissions(new AsyncCallback<Set<Permission>>() {
+
+        new PermissionsLoader().loadExplicitGlobalPermissions(new PermissionsLoadedListener() {
             @Override
-            public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError(MSG.view_dynagroup_permUnknown(), caught);
-                handleAuthorizationFailure();
+            public void onPermissionsLoaded(Set<Permission> permissions) {
+                if (permissions != null && permissions.contains(Permission.MANAGE_INVENTORY)) {
+                    GroupDefinitionListView.super.renderView(viewPath);
+                } else {
+                    handleAuthorizationFailure();
+                }
             }
 
             private void handleAuthorizationFailure() {
                 CoreGUI.getErrorHandler().handleError(MSG.view_dynagroup_permDenied());
                 History.back();
             }
-
-            @Override
-            public void onSuccess(Set<Permission> result) {
-                if (result.contains(Permission.MANAGE_INVENTORY) == false) {
-                    handleAuthorizationFailure();
-                } else {
-                    GroupDefinitionListView.super.renderView(viewPath);
-                }
-            }
         });
     }
+
 }

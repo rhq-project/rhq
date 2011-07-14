@@ -34,6 +34,7 @@ import javax.xml.bind.annotation.XmlAccessorType;
 
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageList;
 
 /**
  * @author Joseph Marques
@@ -42,6 +43,37 @@ import org.rhq.core.domain.util.PageControl;
 public abstract class Criteria implements Serializable {
     public enum Type {
         FILTER, FETCH, SORT;
+    }
+
+    /**
+     * This is the type of a filter value when the override for that filter does not
+     * define any query parameter. ON means the filter is enabled and will take effect,
+     * OFF means the filter will not be used in the query.
+     * Example, from AlertDefinitionCriteria:
+     *    private NonBindingOverrideFilter filterResourceOnly; // requires overrides - finds only those associated with a resource
+     *    ...
+     *    filterOverrides.put("resourceTypeOnly", "resourceType IS NOT NULL"); // notice no ? parameter
+     * 
+     * Note: Typically a null value is analogous to OFF.
+     */
+    public enum NonBindingOverrideFilter {
+        ON, OFF;
+    }
+
+    /**
+     * Apply a restriction to reduce the cost of the {@link Criteria}-based query generation and execution routines.
+     */
+    public enum Restriction {
+        /** 
+         * This returns an empty {@link PageList} result whose {@link PageList#getTotalSize()} method otherwise
+         * contains the correct value.
+         */
+        COUNT_ONLY,
+        /** 
+         * This will return the {@link PageList} result whose {@link PageList#isUnbounded()} returned true, meaning
+         * that the value contained within {@link PageList#getTotalSize()} is invalid / undefined.
+         */
+        COLLECTION_ONLY;
     }
 
     private static final long serialVersionUID = 1L;
@@ -53,6 +85,7 @@ public abstract class Criteria implements Serializable {
     private boolean caseSensitive;
     private List<Permission> requiredPermissions;
     private boolean strict;
+    private Restriction restriction = null;
 
     protected Map<String, String> filterOverrides;
     protected Map<String, String> sortOverrides;
@@ -174,6 +207,23 @@ public abstract class Criteria implements Serializable {
         return this.strict;
     }
 
+    /**
+     * By default, two queries will be generated for this Criteria: one which fetches the requested page/subset of
+     * entity results, and one which fetches the total cardinality of the result set.  If you wish to only retrieve one
+     * of those pieces of data, you can do so by setting a restriction on the query generation and execution routines.
+     * 
+     * The restriction, once set, can be removed by passing NULL to this method.
+     * 
+     * @see Restriction
+     */
+    public void setRestriction(Restriction restriction) {
+        this.restriction = restriction;
+    }
+
+    public Restriction getRestriction() {
+        return this.restriction;
+    }
+
     public void setSearchExpression(String searchExpression) {
         this.searchExpression = searchExpression;
     }
@@ -204,6 +254,7 @@ public abstract class Criteria implements Serializable {
      * @param requiredPermissions the permissions required by the user on any applicable objects.
      * Typically resource permissions needed by the user on returned resources or resource related data.
      */
+    // TODO (ips): This should really be renamed setRequiredPermissions()...
     public void addRequiredPermissions(Permission... requiredPermissions) {
         this.requiredPermissions = Arrays.asList(requiredPermissions);
     }

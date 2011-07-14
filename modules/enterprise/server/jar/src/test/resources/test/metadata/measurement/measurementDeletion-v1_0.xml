@@ -2,12 +2,11 @@
         version="1.0"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin">
-  
+
    <server name="testServer1">
    		<metric displayName="One" property="connectionCount1" displayType="detail" />
    		<metric displayName="Two" property="connectionCount2" displayType="detail" />
    		<metric displayName="Three" property="connectionCount3" displayType="detail" />
-   		<metric displayName="Five" property="connectionCount5" displayType="detail" defaultInterval="10000" />
+   		<metric displayName="Five" property="connectionCount5" displayType="detail" defaultInterval="30000" />
    </server>
 </plugin>
-   

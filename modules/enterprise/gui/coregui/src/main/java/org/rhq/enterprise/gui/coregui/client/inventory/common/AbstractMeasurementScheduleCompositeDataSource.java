@@ -34,6 +34,7 @@ import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.common.EntityContext;
+import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.criteria.MeasurementScheduleCriteria;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.composite.MeasurementScheduleComposite;
@@ -49,7 +50,7 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
  * @author Ian Springer
  */
 public abstract class AbstractMeasurementScheduleCompositeDataSource extends
-    RPCDataSource<MeasurementScheduleComposite> {
+    RPCDataSource<MeasurementScheduleComposite, Criteria> {
     private MeasurementDataGWTServiceAsync measurementService = GWTServiceLookup.getMeasurementDataService();
 
     protected AbstractMeasurementScheduleCompositeDataSource() {
@@ -94,14 +95,21 @@ public abstract class AbstractMeasurementScheduleCompositeDataSource extends
         return fields;
     }
 
-    protected void executeFetch(final DSRequest request, final DSResponse response) {
+    @Override
+    protected Criteria getFetchCriteria(DSRequest request) {
+        // we don't use criterias for this datasource, just return null
+        return null;
+    }
+
+    @Override
+    protected void executeFetch(final DSRequest request, final DSResponse response, final Criteria unused) {
         final EntityContext entityContext = getEntityContext(request);
 
         this.measurementService.getMeasurementScheduleCompositesByContext(entityContext,
             new AsyncCallback<PageList<MeasurementScheduleComposite>>() {
                 public void onFailure(Throwable caught) {
                     CoreGUI.getErrorHandler().handleError(
-                        "Failed to fetch measurement schedules for context " + entityContext, caught);
+                        MSG.dataSource_schedules_loadFailedContext(entityContext.toString()), caught);
                     response.setStatus(RPCResponse.STATUS_FAILURE);
                     processResponse(request.getRequestId(), response);
                 }

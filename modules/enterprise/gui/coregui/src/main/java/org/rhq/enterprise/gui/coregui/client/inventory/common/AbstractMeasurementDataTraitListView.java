@@ -65,5 +65,13 @@ public abstract class AbstractMeasurementDataTraitListView extends TableSection 
         ListGridField timestampField = listGrid.getField(MeasurementDataTraitCriteria.SORT_FIELD_TIMESTAMP);
         timestampField.setWidth("20%");
         timestampField.setCellFormatter(new TimestampCellFormatter());
+
+        super.configureTable();
     }
+
+    @Override
+    protected String getDetailsLinkColumnName() {
+        return MeasurementDataTraitCriteria.SORT_FIELD_DISPLAY_NAME;
+    }
+
 }

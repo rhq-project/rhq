@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -18,9 +18,8 @@
  */
 package org.rhq.enterprise.server.authz;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -33,7 +32,7 @@ import javax.persistence.Query;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Permission.Target;
-import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.enterprise.server.RHQConstants;
 
@@ -45,6 +44,10 @@ import org.rhq.enterprise.server.RHQConstants;
 @ExcludeDefaultInterceptors
 @Stateless
 public class AuthorizationManagerBean implements AuthorizationManagerLocal {
+
+    private static final int SUBJECT_ID_OVERLORD = 1;
+    private static final int SUBJECT_ID_RHQADMIN = 2;
+
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
 
@@ -52,29 +55,48 @@ public class AuthorizationManagerBean implements AuthorizationManagerLocal {
     public Set<Permission> getExplicitGlobalPermissions(Subject subject) {
         Query query = entityManager.createNamedQuery(Subject.QUERY_GET_GLOBAL_PERMISSIONS);
         query.setParameter("subject", subject);
-        List<Permission> results = query.getResultList();
-        EnumSet permissions = EnumSet.noneOf(Permission.class);
-        for (Permission permission : results) {
+        List<Permission> intermediate = query.getResultList();
+        Set<Permission> results = new HashSet<Permission>();
+        for (Permission permission : intermediate) {
             if (permission.getTarget() == Target.GLOBAL) {
-                permissions.add(permission);
+                results.add(permission);
             }
         }
 
-        return permissions;
+        return results;
     }
 
     @SuppressWarnings("unchecked")
     public Set<Permission> getExplicitGroupPermissions(Subject subject, int groupId) {
-        Query query = entityManager.createNamedQuery(Subject.QUERY_GET_PERMISSIONS_BY_GROUP_ID);
-        query.setParameter("subject", subject);
-        query.setParameter("groupId", groupId);
-        List<Permission> results = query.getResultList();
-        EnumSet permissions = EnumSet.noneOf(Permission.class);
-        for (Permission permission : results) {
-            permissions.add(permission);
+        Set<Permission> result = new HashSet<Permission>();
+
+        ResourceGroup group = entityManager.find(ResourceGroup.class, groupId);
+        Subject owner = group.getSubject();
+
+        if (null == owner) {
+            // role-owned group
+            Query query = entityManager.createNamedQuery(Subject.QUERY_GET_PERMISSIONS_BY_GROUP_ID);
+            query.setParameter("subject", subject);
+            query.setParameter("groupId", groupId);
+            List<Permission> resultList = query.getResultList();
+            for (Permission permission : resultList) {
+                result.add(permission);
+            }
+
+        } else {
+            // don't let a user other than the owner do anything with this group
+            if (subject.equals(owner)) {
+                Query query = entityManager.createNamedQuery(Subject.QUERY_GET_PERMISSIONS_BY_PRIVATE_GROUP_ID);
+                query.setParameter("subjectId", subject.getId());
+                query.setParameter("privateGroupId", groupId);
+                List<Object[]> resultList = query.getResultList();
+                for (Object[] row : resultList) {
+                    result.add((Permission) row[0]);
+                }
+            }
         }
 
-        return permissions;
+        return result;
     }
 
     public Set<Permission> getImplicitGroupPermissions(Subject subject, int groupId) {
@@ -88,13 +110,13 @@ public class AuthorizationManagerBean implements AuthorizationManagerLocal {
         Query query = entityManager.createNamedQuery(Subject.QUERY_GET_PERMISSIONS_BY_RESOURCE_ID);
         query.setParameter("subject", subject);
         query.setParameter("resourceId", resourceId);
-        List<Permission> results = query.getResultList();
-        EnumSet permissions = EnumSet.noneOf(Permission.class);
-        for (Permission permission : results) {
-            permissions.add(permission);
+        List<Permission> intermediate = query.getResultList();
+        Set<Permission> results = new HashSet<Permission>();
+        for (Permission permission : intermediate) {
+            results.add(permission);
         }
 
-        return permissions;
+        return results;
     }
 
     public Set<Permission> getImplicitResourcePermissions(Subject subject, int resourceId) {
@@ -115,6 +137,7 @@ public class AuthorizationManagerBean implements AuthorizationManagerLocal {
         return (count != 0);
     }
 
+    @SuppressWarnings("unchecked")
     public boolean hasGroupPermission(Subject subject, Permission permission, int groupId) {
         if (isInventoryManager(subject)) {
             return true;
@@ -138,14 +161,12 @@ public class AuthorizationManagerBean implements AuthorizationManagerLocal {
                 return false;
             }
 
-            // subject-owned group, requires perm check against each group member
-            Set<Resource> members = group.getExplicitResources();
-            List<Integer> memberIds = new ArrayList<Integer>(members.size());
-            for (Resource member : members) {
-                memberIds.add(member.getId());
-            }
-
-            return hasResourcePermission(owner, permission, memberIds);
+            Query query = entityManager.createNamedQuery(Subject.QUERY_HAS_PRIVATE_GROUP_PERMISSION);
+            query.setParameter("subjectId", subject.getId());
+            query.setParameter("permission", permission);
+            query.setParameter("privateGroupId", groupId);
+            List<Object[]> resultList = query.getResultList();
+            return (!resultList.isEmpty());
         }
     }
 
@@ -172,11 +193,10 @@ public class AuthorizationManagerBean implements AuthorizationManagerLocal {
         query.setParameter("permission", permission);
         query.setParameter("parentResourceId", parentResourceId);
         query.setParameter("resourceTypeId", resourceTypeId);
-
-        query.setParameter("subject", -1);
+        query.setParameter("subjectId", -1);
         long baseCount = (Long) query.getSingleResult();
 
-        query.setParameter("subject", subject);
+        query.setParameter("subjectId", subject.getId());
         long subjectCount = (Long) query.getSingleResult();
 
         /* 
@@ -232,11 +252,10 @@ public class AuthorizationManagerBean implements AuthorizationManagerLocal {
         Query query = entityManager.createNamedQuery(Subject.QUERY_CAN_VIEW_AUTO_GROUP);
         query.setParameter("parentResourceId", parentResourceId);
         query.setParameter("resourceTypeId", resourceTypeId);
-
-        query.setParameter("subject", -1);
+        query.setParameter("subjectId", -1);
         long baseCount = (Long) query.getSingleResult();
 
-        query.setParameter("subject", subject);
+        query.setParameter("subjectId", subject.getId());
         long subjectCount = (Long) query.getSingleResult();
 
         /* 
@@ -271,7 +290,7 @@ public class AuthorizationManagerBean implements AuthorizationManagerLocal {
         }
 
         // We know that our overlord is always id=1 and the rhqadmin user is always id=2.
-        return ((subject.getId() == 1) || (subject.getId() == 2));
+        return ((subject.getId() == SUBJECT_ID_OVERLORD) || (subject.getId() == SUBJECT_ID_RHQADMIN));
     }
 
     public boolean isOverlord(Subject subject) {
@@ -279,6 +298,31 @@ public class AuthorizationManagerBean implements AuthorizationManagerLocal {
             return false;
         }
 
-        return (subject.getId() == 1);
+        return (subject.getId() == SUBJECT_ID_OVERLORD);
+    }
+
+    public boolean canUpdateRepo(Subject subject, int repoId) {
+        if (hasGlobalPermission(subject, Permission.MANAGE_REPOSITORIES)) {
+            return true;
+        }
+        Query q = entityManager.createNamedQuery(Repo.QUERY_CHECK_REPO_OWNED_BY_SUBJECT_ID);
+        q.setParameter("repoId", repoId);
+        q.setParameter("subjectId", subject.getId());
+        
+        Long num = (Long) q.getSingleResult();
+        return num > 0;
+    }
+    
+    public boolean canViewRepo(Subject subject, int repoId) {
+        if (hasGlobalPermission(subject, Permission.MANAGE_REPOSITORIES)) {
+            return true;
+        }
+
+        Query q = entityManager.createNamedQuery(Repo.QUERY_CHECK_REPO_VISIBLE_BY_SUBJECT_ID);
+        q.setParameter("repoId", repoId);
+        q.setParameter("subjectId", subject.getId());
+        
+        Long num = (Long) q.getSingleResult();
+        return num > 0;
     }
 }

@@ -53,7 +53,7 @@ public class ResourceAlertDefinitionsView extends AbstractAlertDefinitionsView {
     private ResourcePermission permissions;
 
     public ResourceAlertDefinitionsView(String locatorId, ResourceComposite resourceComposite) {
-        super(locatorId, "Alert Definitions");
+        super(locatorId, "Alert Definitions", getCriteria(resourceComposite));
         this.resource = resourceComposite.getResource();
         this.permissions = resourceComposite.getResourcePermission();
 
@@ -81,10 +81,9 @@ public class ResourceAlertDefinitionsView extends AbstractAlertDefinitionsView {
         return resource.getResourceType();
     }
 
-    @Override
-    protected Criteria getCriteria() {
+    private static Criteria getCriteria(ResourceComposite composite) {
         Criteria criteria = new Criteria();
-        criteria.addCriteria(CRITERIA_RESOURCE_ID, resource.getId());
+        criteria.addCriteria(CRITERIA_RESOURCE_ID, composite.getResource().getId());
         return criteria;
     }
 
@@ -104,7 +103,7 @@ public class ResourceAlertDefinitionsView extends AbstractAlertDefinitionsView {
     }
 
     @Override
-    protected boolean isAllowedToModifyAlertDefinitions() {
+    protected boolean isAuthorizedToModifyAlertDefinitions() {
         return this.permissions.isAlert();
     }
 
@@ -204,6 +203,7 @@ public class ResourceAlertDefinitionsView extends AbstractAlertDefinitionsView {
                         CoreGUI.getMessageCenter().notify(
                             new Message(MSG.view_alert_definitions_create_success(), Severity.Info));
                         alertDefinition.setId(result.intValue());
+                        ResourceAlertDefinitionsView.this.refresh();
                     }
 
                     @Override
@@ -218,6 +218,7 @@ public class ResourceAlertDefinitionsView extends AbstractAlertDefinitionsView {
                     public void onSuccess(AlertDefinition result) {
                         CoreGUI.getMessageCenter().notify(
                             new Message(MSG.view_alert_definitions_update_success(), Severity.Info));
+                        ResourceAlertDefinitionsView.this.refresh();
                     }
 
                     @Override

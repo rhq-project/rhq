@@ -28,22 +28,27 @@ import com.smartgwt.client.widgets.Canvas;
 
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.ResourceSelector;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
 
 /**
  * @author Greg Hinkle
  */
 public class GroupMembersStep extends AbstractWizardStep {
 
-    private GroupCreateWizard wizard = null;
+    private AbstractGroupCreateWizard wizard = null;
     private ResourceSelector selector = null;
 
-    public GroupMembersStep(GroupCreateWizard wizard) {
+    public GroupMembersStep(AbstractGroupCreateWizard wizard) {
         this.wizard = wizard;
     }
 
-    public Canvas getCanvas() {
+    public Canvas getCanvas(Locatable parent) {
         if (selector == null) {
-            selector = new ResourceSelector("GroupMembers");
+            if (parent != null) {
+                selector = new ResourceSelector(parent.extendLocatorId("GroupMembers"));
+            } else {
+                selector = new ResourceSelector("GroupMembers");
+            }
         }
         return selector;
     }

@@ -64,6 +64,7 @@ import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceAncestryFormat;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.server.MeasurementConverter;
 import org.rhq.core.server.PersistenceUtility;
@@ -75,6 +76,7 @@ import org.rhq.enterprise.server.alert.i18n.AlertI18NResourceKeys;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
+import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.core.EmailManagerLocal;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 import org.rhq.enterprise.server.measurement.util.MeasurementFormatter;
@@ -85,6 +87,7 @@ import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderPluginManager;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertServerPluginContainer;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
+import org.rhq.enterprise.server.util.BatchIterator;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -150,9 +153,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
 
         int updated = 0;
         BatchIterator<Integer> batchIter = new BatchIterator<Integer>(alertIdList);
-        while (batchIter.hasMoreBatches()) {
-            List<Integer> nextBatch = batchIter.getNextBatch();
-
+        for (List<Integer> nextBatch : batchIter) {
             // need to delete related objects before deleting alerts
             deleteConditionLogsQuery.setParameter("alertIds", nextBatch);
             deleteConditionLogsQuery.executeUpdate();
@@ -190,15 +191,14 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
 
         int modified = 0;
         BatchIterator<Integer> batchIter = new BatchIterator<Integer>(alertIdList);
-        while (batchIter.hasMoreBatches()) {
-            List<Integer> nextBatch = batchIter.getNextBatch();
+        for (List<Integer> nextBatch : batchIter) {
             ackAlertsQuery.setParameter("alertIds", nextBatch);
             modified += ackAlertsQuery.executeUpdate();
         }
-
         return modified;
     }
 
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
     public int deleteAlertsByContext(Subject subject, EntityContext context) {
         Query deleteConditionLogsQuery = null;
         Query deleteNotificationLogsQuery = null;
@@ -243,6 +243,19 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
             deleteConditionLogsQuery = entityManager.createNamedQuery(AlertConditionLog.QUERY_DELETE_ALL);
             deleteNotificationLogsQuery = entityManager.createNamedQuery(AlertNotificationLog.QUERY_DELETE_ALL);
             deleteAlertsQuery = entityManager.createNamedQuery(Alert.QUERY_DELETE_ALL);
+        } else if (context.type == EntityContext.Type.ResourceTemplate) {
+            // TODO Need to determine what security check(s) need to be performed here
+            deleteAlertsQuery = entityManager.createNamedQuery(Alert.QUERY_DELETE_BY_RESOURCE_TEMPLATE);
+            deleteAlertsQuery.setParameter("resourceTypeId", context.resourceTypeId);
+
+            deleteConditionLogsQuery = entityManager
+                .createNamedQuery(AlertConditionLog.QUERY_DELETE_BY_RESOURCE_TEMPLATE);
+            deleteConditionLogsQuery.setParameter("resourceTypeId", context.resourceTypeId);
+
+            deleteNotificationLogsQuery = entityManager
+                .createNamedQuery(AlertNotificationLog.QUERY_DELETE_BY_RESOURCE_TEMPLATE);
+            deleteNotificationLogsQuery.setParameter("resourceTypeId", context.resourceTypeId);
+
         } else {
             throw new IllegalArgumentException("No support for deleting alerts for " + context);
         }
@@ -331,42 +344,6 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         }
     }
 
-    class BatchIterator<T> {
-        public static final int DEFAULT_BATCH_SIZE = 1000;
-
-        private int batchSize;
-        private int index;
-        private List<T> data;
-
-        public BatchIterator(List<T> data) {
-            this(data, DEFAULT_BATCH_SIZE);
-        }
-
-        public BatchIterator(List<T> data, int batchSize) {
-            this.batchSize = batchSize;
-            this.index = 0;
-            this.data = data;
-        }
-
-        public boolean hasMoreBatches() {
-            return index < data.size();
-        }
-
-        public List<T> getNextBatch() {
-            List<T> batch = null;
-
-            if (index + batchSize < data.size()) {
-                batch = data.subList(index, index + batchSize);
-                index += batchSize;
-            } else {
-                batch = data.subList(index, data.size());
-                index = data.size();
-            }
-
-            return batch;
-        }
-    }
-
     private long checkAuthz(Subject subject, List<Integer> alertIds) {
         /* 
          * get the count of the number of these alerts for which user
@@ -378,9 +355,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
 
         long canModifyCount = 0;
         BatchIterator<Integer> batchIter = new BatchIterator<Integer>(alertIds);
-        while (batchIter.hasMoreBatches()) {
-            List<Integer> nextBatch = batchIter.getNextBatch();
-
+        for (List<Integer> nextBatch : batchIter) {
             authzQuery.setParameter("alertIds", nextBatch);
             canModifyCount += (Long) authzQuery.getSingleResult();
         }
@@ -398,13 +373,10 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
 
         List<Integer> existingAlertIds = new ArrayList<Integer>();
         BatchIterator<Integer> batchIter = new BatchIterator<Integer>(alertIds);
-        while (batchIter.hasMoreBatches()) {
-            List<Integer> nextBatch = batchIter.getNextBatch();
-
+        for (List<Integer> nextBatch : batchIter) {
             authzQuery.setParameter("alertIds", nextBatch);
             existingAlertIds.addAll((List<Integer>) authzQuery.getResultList());
         }
-
         return existingAlertIds;
     }
 
@@ -756,9 +728,11 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         }
 
         AlertDefinition alertDefinition = alert.getAlertDefinition();
-        Map<String, String> alertMessage = emailManager.getAlertEmailMessage(
-            prettyPrintResourceHierarchy(alertDefinition.getResource()), //
-            alertDefinition.getResource().getName(), //
+        Resource resource = alertDefinition.getResource();
+        Map<Integer, String> ancestry = resourceManager.getResourcesAncestry(subjectManager.getOverlord(),
+            new Integer[] { resource.getId() }, ResourceAncestryFormat.VERBOSE);
+        Map<String, String> alertMessage = emailManager.getAlertEmailMessage(ancestry.get(resource.getId()), //
+            resource.getName(), //
             alertDefinition.getName(), //
             alertDefinition.getPriority().toString(), //
             new Date(alert.getCtime()).toString(), //
@@ -783,40 +757,6 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
     }
 
     private static String NEW_LINE = System.getProperty("line.separator");
-
-    private String prettyPrintResourceHierarchy(Resource resource) {
-        StringBuilder builder = new StringBuilder();
-
-        List<Resource> lineage = resourceManager.getResourceLineage(resource.getId());
-
-        int depth = 0;
-        for (Resource res : lineage) {
-            if (depth == 0) {
-                builder.append(" - ");
-            } else {
-                builder.append(NEW_LINE);
-
-                for (int i = 0; i < depth; i++) {
-                    builder.append("   ");
-                }
-
-                builder.append("|");
-                builder.append(NEW_LINE);
-
-                for (int i = 0; i < depth; i++) {
-                    builder.append("   ");
-                }
-
-                builder.append("+- ");
-            }
-
-            builder.append(res.getName());
-
-            depth++;
-        }
-
-        return builder.toString();
-    }
 
     /**
      * Create a human readable description of the conditions that led to this alert.
@@ -856,9 +796,8 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
                 dateFormat = new SimpleDateFormat("yy/MM/dd HH:mm:ss z");
             else
                 dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss z");
-            builder.append(AlertI18NFactory.getMessage(format, conditionCounter,
-                prettyPrintAlertCondition(aLog.getCondition(), shortVersion),
-                dateFormat.format(new Date(aLog.getCtime())), formattedValue));
+            builder.append(AlertI18NFactory.getMessage(format, conditionCounter, prettyPrintAlertCondition(aLog
+                .getCondition(), shortVersion), dateFormat.format(new Date(aLog.getCtime())), formattedValue));
             conditionCounter++;
         }
 
@@ -956,16 +895,17 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
     public String prettyPrintAlertURL(Alert alert) {
         StringBuilder builder = new StringBuilder();
 
-        String baseUrl = systemManager.getSystemConfiguration().getProperty(RHQConstants.BaseURL);
+        String baseUrl = systemManager.getSystemConfiguration(subjectManager.getOverlord()).getProperty(
+            RHQConstants.BaseURL);
         builder.append(baseUrl);
         if (!baseUrl.endsWith("/")) {
             builder.append("/");
         }
 
-        builder.append("alerts/Alerts.do?mode=viewAlert");
-
-        builder.append("&id=").append(alert.getAlertDefinition().getResource().getId());
-        builder.append("&a=").append(alert.getId());
+        builder.append("coregui/CoreGUI.html#Resource/");
+        builder.append(alert.getAlertDefinition().getResource().getId());
+        builder.append("/Alerts/History/");
+        builder.append(alert.getId());
 
         return builder.toString();
     }
@@ -982,8 +922,10 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
                 recoveryDefinitionId);
             boolean wasEnabled = toBeRecoveredDefinition.getEnabled();
 
-            log.debug(firedDefinition + (wasEnabled ? "does not need to recover " : "needs to recover ")
-                + toBeRecoveredDefinition + (wasEnabled ? ", it was already enabled " : ", it was currently disabled "));
+            log
+                .debug(firedDefinition + (wasEnabled ? "does not need to recover " : "needs to recover ")
+                    + toBeRecoveredDefinition
+                    + (wasEnabled ? ", it was already enabled " : ", it was currently disabled "));
 
             if (!wasEnabled) {
                 /*
@@ -1053,19 +995,5 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         fetchCollectionFields(alerts);
 
         return alerts;
-    }
-
-    public long findAlertCountByCriteria(Subject subject, AlertCriteria criteria) {
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
-
-        if (!authorizationManager.isInventoryManager(subject)) {
-            generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.RESOURCE,
-                "alertDefinition.resource", subject.getId());
-        }
-
-        Query countQuery = generator.getCountQuery(entityManager);
-        long count = (Long) countQuery.getSingleResult();
-
-        return count;
     }
 }

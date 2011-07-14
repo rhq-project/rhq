@@ -5,7 +5,8 @@
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-parent</artifactId>
-      <version>4.0.0-SNAPSHOT</version>
+      <version>4.1.0-SNAPSHOT</version>
+      <relativePath>../../../../pom.xml</relativePath>
    </parent>
 
    <artifactId>rhq-remoting-cli</artifactId>
@@ -30,12 +31,26 @@
       <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>rhq-remoting-client-api</artifactId>
-         <version>${project.version}</version>         
-      </dependency>   
+         <version>${project.version}</version>
+      </dependency>
+      
+      <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>rhq-script-bindings</artifactId>
+            <version>${project.version}</version>
+      </dependency>
+      
+      <dependency>
+          <groupId>${project.groupId}</groupId>
+          <artifactId>rhq-core-domain</artifactId>
+          <version>${project.version}</version>
+          <type>test-jar</type>
+          <scope>test</scope>
+      </dependency>
 
       <dependency>
          <groupId>commons-logging</groupId>
-         <artifactId>commons-logging</artifactId>         
+         <artifactId>commons-logging</artifactId>
       </dependency>
 
       <dependency>
@@ -46,7 +61,7 @@
 
       <dependency>
          <groupId>gnu-getopt</groupId>
-         <artifactId>getopt</artifactId>         
+         <artifactId>getopt</artifactId>
       </dependency>
 
       <dependency>
@@ -63,17 +78,17 @@
       <dependency>
          <groupId>org.testng</groupId>
          <artifactId>testng</artifactId>
-         <version>${testng.version}</version>          
+         <version>${testng.version}</version>
          <!-- Yes, this is actually meant to be compile, and not test, scoped. -->
       </dependency>
 
       <dependency>
          <groupId>log4j</groupId>
          <artifactId>log4j</artifactId>
-         <version>${log4j.version}</version>         
+         <version>${log4j.version}</version>
          <scope>runtime</scope>
       </dependency>
-      
+
       <dependency>
          <groupId>commons-lang</groupId>
          <artifactId>commons-lang</artifactId>
@@ -84,7 +99,7 @@
 
    <build>
       <plugins>
-                
+
          <plugin>
             <artifactId>maven-antrun-plugin</artifactId>
             <executions>
@@ -111,6 +126,7 @@
                            <property name="opencsv.version" value="${opencsv.version}" />
                            <property name="concurrent.version" value="${concurrent.version}" />
                            <property name="getopt.version" value="${getopt.version}" />
+                           <property name="hibernate-annotations.version" value="${hibernate-annotations.version}" />
                            <property name="i18nlog.version" value="${i18nlog.version}" />
                            <property name="jboss-common.version" value="${jboss-common.version}" />
                            <property name="jboss.version" value="${jboss.version}" />
@@ -153,7 +169,7 @@
             </executions>
          </plugin>
 
-         <plugin>            
+         <plugin>
             <artifactId>maven-jar-plugin</artifactId>
             <configuration>
                <includes>
@@ -165,7 +181,7 @@
                   <manifestEntries>
                      <Implementation-Title>${rhq.product.name} - ${project.name}</Implementation-Title>
                      <Implementation-Version>${project.version}</Implementation-Version>
-                     <Specification-Vendor>org.jboss</Specification-Vendor>                     
+                     <Specification-Vendor>org.jboss</Specification-Vendor>
                      <Specification-Title>JBossWS</Specification-Title>
                      <Specification-Version>${jbossws-native-dist.version}</Specification-Version>
                      <Build-Number>${buildNumber}</Build-Number>
@@ -241,7 +257,7 @@
                <name>java5.home</name>
             </property>
          </activation>
-         
+
          <build>
            <plugins>
               <plugin>
@@ -255,11 +271,11 @@
             </plugins>
           </build>
       </profile>
-      
+
       <profile>
          <id>dev</id>
          <properties>
-            <rhq.client.build.include.client.jar>true</rhq.client.build.include.client.jar>        
+            <rhq.client.build.include.client.jar>true</rhq.client.build.include.client.jar>
             <rhq.rootDir>../../../..</rhq.rootDir>
             <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
             <rhq.projectJar>${project.build.finalName}.zip</rhq.projectJar>
@@ -320,37 +336,37 @@
         <build>
          <plugins>
            <plugin>
-             <artifactId>maven-antrun-plugin</artifactId>                
+             <artifactId>maven-antrun-plugin</artifactId>
               <dependencies>
                <dependency>
                  <groupId>net.sourceforge.cobertura</groupId>
                  <artifactId>cobertura</artifactId>
-                 <version>1.9.4.1</version>       
+                 <version>${cobertura.version}</version>
                </dependency>
              </dependencies>
-             <executions>                         
-              <execution>              
+             <executions>
+              <execution>
                <id>cobertura-instrument</id>
                <phase>process-test-classes</phase>
-                 <configuration>                  
-                   <tasks> 
+                 <configuration>
+                   <tasks>
                    <!-- prepare directory structure for cobertura-->
-                   <mkdir dir="target/cobertura" /> 
-                   <mkdir dir="target/cobertura/backup"/>
+                   <mkdir dir="target/cobertura" />
+                   <mkdir dir="target/cobertura/backup" />
                    <!-- backup all classes so that we can instrument the original classes-->
                    <copy toDir="target/cobertura/backup" verbose="true" overwrite="true">
                       <fileset dir="target/classes">
-                         <include name="**/*.class" />                         
+                         <include name="**/*.class" />
                       </fileset>
                    </copy>
                    <!-- create a properties file and save there location of cobertura data file-->
-                   <touch file="target/classes/cobertura.properties"/>
+                   <touch file="target/classes/cobertura.properties" />
                    <echo file="target/classes/cobertura.properties">net.sourceforge.cobertura.datafile=${project.build.directory}/cobertura/cobertura.ser</echo>
                    <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties" />
                    <!-- instrument all classes in target/classes directory -->
                    <cobertura-instrument datafile="${project.build.directory}/cobertura/cobertura.ser" todir="${project.build.directory}/classes">
-                     <fileset dir="${project.build.directory}/classes">                     
-                        <include name="**/*.class"/>
+                     <fileset dir="${project.build.directory}/classes">
+                        <include name="**/*.class" />
                       </fileset>
                     </cobertura-instrument>
                    </tasks>
@@ -358,7 +374,7 @@
                <goals>
                  <goal>run</goal>
                </goals>
-              </execution>                            
+              </execution>
               <execution>
                <id>cobertura-report</id>
                <phase>prepare-package</phase>
@@ -371,11 +387,11 @@
                      <!-- restore classes from backup folder to classes folder -->
                      <copy toDir="target/classes" verbose="true" overwrite="true">
                       <fileset dir="target/cobertura/backup">
-                         <include name="**/*.class" />                         
+                         <include name="**/*.class" />
                       </fileset>
                      </copy>
                      <!-- delete backup folder-->
-                     <delete dir="target/cobertura/backup"/>
+                     <delete dir="target/cobertura/backup" />
                      <!-- create a code coverage report -->
                      <cobertura-report format="html" datafile="${project.build.directory}/cobertura/cobertura.ser" destdir="${project.build.directory}/site/cobertura">
                       <fileset dir="${basedir}/src/main/java">
@@ -383,18 +399,18 @@
                       </fileset>
                      </cobertura-report>
                      <!-- delete cobertura.properties file -->
-                     <delete file="target/classes/cobertura.properties"/>
+                     <delete file="target/classes/cobertura.properties" />
                    </tasks>
                  </configuration>
                <goals>
                  <goal>run</goal>
                </goals>
-               </execution>                                           
-            </executions>   
-           </plugin>          
+               </execution>
+            </executions>
+           </plugin>
           </plugins>
        </build>
      </profile>
    </profiles>
-   
+
 </project>

@@ -15,13 +15,13 @@ import org.rhq.core.domain.util.PageList;
 @RemoteServiceRelativePath("ResourceTypeGWTService")
 public interface ResourceTypeGWTService extends RemoteService {
 
-    PageList<ResourceType> findResourceTypesByCriteria(ResourceTypeCriteria criteria);
+    PageList<ResourceType> findResourceTypesByCriteria(ResourceTypeCriteria criteria) throws RuntimeException;
 
-    ArrayList<ResourceType> getResourceTypesForResourceAncestors(int resourceId);
+    ArrayList<ResourceType> getResourceTypesForResourceAncestors(int resourceId) throws RuntimeException;
 
-    ArrayList<ResourceType> getAllResourceTypeAncestors(int resourceTypeId);
+    ArrayList<ResourceType> getAllResourceTypeAncestors(int resourceTypeId) throws RuntimeException;
 
-    HashMap<Integer, String> getResourceTypeDescendantsWithOperations(int resourceTypeId);
+    HashMap<Integer, String> getResourceTypeDescendantsWithOperations(int resourceTypeId) throws RuntimeException;
 
-    Map<Integer, ResourceTypeTemplateCountComposite> getTemplateCountCompositeMap();
+    Map<Integer, ResourceTypeTemplateCountComposite> getTemplateCountCompositeMap() throws RuntimeException;
 }

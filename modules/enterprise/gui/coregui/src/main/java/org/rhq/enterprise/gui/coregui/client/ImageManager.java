@@ -1,9 +1,12 @@
 package org.rhq.enterprise.gui.coregui.client;
 
 import org.rhq.core.domain.alert.AlertPriority;
+import org.rhq.core.domain.alert.notification.ResultState;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
+import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.ResourceAvailability;
+import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
@@ -23,11 +26,90 @@ public class ImageManager {
     public static final String IMAGES_DIR = "images/";
 
     /**
+     * Returns a generic "help" icon. This will also have a peer "disabled" help icon.
+     */
+    public static String getHelpIcon() {
+        return "global/help.png";
+    }
+
+    public static String getLoadingIcon() {
+        return "ajax-loader.gif";
+    }
+
+    /**
+     * Returns a generic "upload" icon.
+     */
+    public static String getUploadIcon() {
+        return "global/upload.png";
+    }
+
+    /**
+     * Returns a generic view icon.
+     */
+    public static String getViewIcon() {
+        return "[SKIN]/actions/view.png";
+    }
+
+    /**
+     * Returns a generic edit icon.
+     */
+    public static String getEditIcon() {
+        return "[SKIN]/actions/edit.png";
+    }
+
+    /**
+     * Returns a generic remove icon.
+     */
+    public static String getRemoveIcon() {
+        return "[SKIN]/actions/remove.png";
+    }
+
+    /**
+     * Returns a generic approve (aka "ok") icon.
+     */
+    public static String getApproveIcon() {
+        return "[SKIN]/actions/approve.png";
+    }
+
+    /**
+     * Returns a generic cancel icon.
+     */
+    public static String getCancelIcon() {
+        return "[SKIN]/actions/undo.png";
+    }
+
+    /**
+     * Returns the operation status icon. If status is null, returns
+     * the plain, unbadged, operation icon.
+     */
+    public static String getOperationResultsIcon(OperationRequestStatus status) {
+        String icon = "";
+        if (status != null) {
+            switch (status) {
+            case INPROGRESS:
+                icon = "_inprogress";
+                break;
+            case SUCCESS:
+                icon = "_ok";
+                break;
+            case FAILURE:
+                icon = "_failed";
+                break;
+            case CANCELED:
+                icon = "_cancel";
+                break;
+            }
+        }
+
+        return "subsystems/control/Operation" + icon + "_16.png";
+    }
+
+    /**
      * All methods in this ImageManager class return image paths relative to the top
      * {@link #IMAGES_DIR images directory}. If you need a full path to the image, including
      * this top images directory name (for example, if you need to populate an explicit HTML
      * img tag's src attribute) pass in an image path to this {@link #getFullImagePath(String)}
-     * method to obtain the full path.  The caller can optionall prepend {@link #IMAGES_DIR}
+     * method to obtain the full path.  The caller can optionally prepend {@link #IMAGES_DIR}
      * to any path returned by ImageManager, which is all this method really does.
      * 
      * @param image a relative image path
@@ -67,6 +149,27 @@ public class ImageManager {
             avail = null;
         }
         return getResourceIcon(category, avail, size);
+    }
+
+    public static String getClusteredResourceIcon(ResourceCategory category) {
+        String categoryName = null;
+
+        switch (category) {
+        case PLATFORM: {
+            categoryName = "Platform";
+            break;
+        }
+        case SERVER: {
+            categoryName = "Server";
+            break;
+        }
+        case SERVICE: {
+            categoryName = "Service";
+            break;
+        }
+        }
+
+        return "resources/" + categoryName + "_Group_16.png";
     }
 
     public static String getResourceIcon(ResourceCategory category) {
@@ -226,7 +329,7 @@ public class ImageManager {
     }
 
     public static String getAlertIcon() {
-        return "subsystems/alert/Alert_16.png";
+        return "subsystems/alert/Flag_blue_16.png";
     }
 
     public static String getAlertLargeIcon() {
@@ -235,6 +338,10 @@ public class ImageManager {
 
     public static String getAlertEditIcon() {
         return "subsystems/alert/Edit_Alert.png";
+    }
+
+    public static String getMetricEditIcon() {
+        return "subsystems/monitor/Edit_Metric.png";
     }
 
     public static String getPluginConfigurationIcon(ConfigurationUpdateStatus updateStatus) {
@@ -267,17 +374,130 @@ public class ImageManager {
                 return "subsystems/configure/Configure_failed_16.png";
             }
             case INPROGRESS: {
-                return "subsystems/inventory/Configure_inprogress_16.png";
+                return "subsystems/configure/Configure_inprogress_16.png";
             }
             case NOCHANGE:
-                return "subsystems/inventory/Configure_16.png";
+                return "subsystems/configure/Configure_16.png";
             }
         }
 
-        return "subsystems/inventory/Configure_16.png";
+        return "subsystems/configure/Configure_16.png";
     }
 
     public static String getLockedIcon() {
         return "global/Locked_16.png";
+    }
+
+    public static String getEventSeverityIcon(EventSeverity severity) {
+        String icon = "";
+        if (severity != null) {
+            switch (severity) {
+            case DEBUG:
+                icon = "_debug";
+                break;
+            case INFO:
+                icon = "_info";
+                break;
+            case WARN:
+                icon = "_warning";
+                break;
+            case ERROR:
+                icon = "_error";
+                break;
+            case FATAL:
+                icon = "_fatal";
+                break;
+            }
+        }
+
+        return "subsystems/event/Events" + icon + "_16.png";
+    }
+
+    public static String getAlertNotificationResultIcon(ResultState status) {
+        if (status == null) {
+            status = ResultState.UNKNOWN;
+        }
+        switch (status) {
+        case SUCCESS:
+            return ImageManager.getAvailabilityIcon(Boolean.TRUE);
+        case FAILURE:
+            return ImageManager.getAvailabilityIcon(Boolean.FALSE);
+        case PARTIAL:
+            return ImageManager.getAvailabilityYellowIcon();
+        case DEFERRED:
+            return "[skin]/actions/redo.png"; // for lack of a better icon
+        case UNKNOWN:
+        default:
+            return ImageManager.getAvailabilityIcon(null);
+        }
+    }
+
+    /**
+     * This returns an icon of the badge (e.g. the red X or the blue I) without the
+     * event icon. This is used if you have a table of events and the user knows they are
+     * events so there is no need to show the event icon itself- showing a bigger badge
+     * to indicate severity is more useful.
+     * 
+     * @param severity
+     * @return badge icon
+     */
+    public static String getEventSeverityBadge(EventSeverity severity) {
+        return "subsystems/event/" + severity.name() + "_16.png";
+    }
+
+    public static String getEventLargeIcon() {
+        return "subsystems/event/Events_24.png";
+    }
+
+    public static String getEventIcon() {
+        return "subsystems/event/Events_16.png";
+    }
+
+    public static String getMonitorIcon() {
+        return "subsystems/monitor/Monitor_16.png";
+    }
+
+    public static String getMonitorLargeIcon() {
+        return "subsystems/monitor/Monitor_24.png";
+    }
+
+    public static String getMonitorFailedIcon() {
+        return "subsystems/monitor/Monitor_failed_16.png";
+    }
+
+    public static String getMonitorFailedLargeIcon() {
+        return "subsystems/monitor/Monitor_failed_24.png";
+    }
+
+    public static String getOperationLargeIcon() {
+        return "subsystems/control/Operation_24.png";
+    }
+
+    public static String getOperationIcon() {
+        return "subsystems/control/Operation_16.png";
+    }
+
+    public static String getActivityPackageLargeIcon() {
+        return "subsystems/content/Package_24.png";
+    }
+
+    public static String getActivityPackageIcon() {
+        return "subsystems/content/Package_16.png";
+    }
+
+    public static String getBundleLargeIcon() {
+        return "subsystems/content/Content_24.png";
+    }
+
+    public static String getBundleIcon() {
+        return "subsystems/content/Content_16.png";
+    }
+
+    public static String getConfigureLargeIcon() {
+        return "subsystems/configure/Configure_24.png";
+    }
+
+    public static String getConfigureIcon() {
+        return "subsystems/configure/Configure_16.png";
     }
 }

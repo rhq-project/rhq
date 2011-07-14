@@ -42,133 +42,145 @@ public class ResourceGroupGWTServiceImpl extends AbstractGWTServiceImpl implemen
     private ResourceGroupManagerLocal groupManager = LookupUtil.getResourceGroupManager();
     private GroupDefinitionManagerLocal definitionManager = LookupUtil.getGroupDefinitionManager();
 
-    public PageList<ResourceGroup> findResourceGroupsByCriteria(ResourceGroupCriteria criteria) {
+    public PageList<ResourceGroup> findResourceGroupsByCriteria(ResourceGroupCriteria criteria) throws RuntimeException {
         try {
             PageList<ResourceGroup> groups = groupManager.findResourceGroupsByCriteria(getSessionSubject(), criteria);
             return SerialUtility.prepare(groups, "ResourceGroupService.findResourceGroupsByCriteria");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
-    public PageList<ResourceGroupComposite> findResourceGroupCompositesByCriteria(ResourceGroupCriteria criteria) {
+    public PageList<ResourceGroupComposite> findResourceGroupCompositesByCriteria(ResourceGroupCriteria criteria)
+        throws RuntimeException {
         try {
             PageList<ResourceGroupComposite> composites = groupManager.findResourceGroupCompositesByCriteria(
                 getSessionSubject(), criteria);
             return SerialUtility.prepare(composites, "ResourceGroupService.findResourceGroupCompositesByCriteria");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
-    public PageList<GroupDefinition> findGroupDefinitionsByCriteria(ResourceGroupDefinitionCriteria criteria) {
+    public PageList<GroupDefinition> findGroupDefinitionsByCriteria(ResourceGroupDefinitionCriteria criteria)
+        throws RuntimeException {
         try {
             PageList<GroupDefinition> definitions = definitionManager.findGroupDefinitionsByCriteria(
                 getSessionSubject(), criteria);
             return SerialUtility.prepare(definitions, "ResourceGroupService.findGroupDefinitionsByCriteria");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
-    public void setAssignedResources(int groupId, int[] resourceIds, boolean setType) {
+    public void setAssignedResources(int groupId, int[] resourceIds, boolean setType) throws RuntimeException {
         try {
             groupManager.setAssignedResources(getSessionSubject(), groupId, resourceIds, setType);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
-    public void setAssignedResourceGroupsForResource(int resourceId, int[] resourceGroupIds, boolean setType) {
+    public void setAssignedResourceGroupsForResource(int resourceId, int[] resourceGroupIds, boolean setType)
+        throws RuntimeException {
         try {
-            groupManager.setAssignedResources(getSessionSubject(), resourceId, resourceGroupIds, setType);
+            groupManager.setAssignedResourceGroupsForResource(getSessionSubject(), resourceId, resourceGroupIds,
+                setType);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
-    public ResourceGroup createPrivateResourceGroup(ResourceGroup group, int[] resourceIds) {
+    public ResourceGroup createPrivateResourceGroup(ResourceGroup group, int[] resourceIds) throws RuntimeException {
         try {
             Subject user = getSessionSubject();
             group = groupManager.createPrivateResourceGroup(user, group);
             groupManager.setAssignedResources(user, group.getId(), resourceIds, true);
             return SerialUtility.prepare(group, "ResourceGroupService.createResourceGroup");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
-    public ResourceGroup createResourceGroup(ResourceGroup group, int[] resourceIds) {
+    public ResourceGroup createResourceGroup(ResourceGroup group, int[] resourceIds) throws RuntimeException {
         try {
             Subject user = getSessionSubject();
             group = groupManager.createResourceGroup(user, group);
             groupManager.setAssignedResources(user, group.getId(), resourceIds, true);
             return SerialUtility.prepare(group, "ResourceGroupService.createResourceGroup");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
-    public void deleteResourceGroups(int[] groupIds) {
+    public void deleteResourceGroups(int[] groupIds) throws RuntimeException {
         try {
             groupManager.deleteResourceGroups(getSessionSubject(), groupIds);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
-    public void updateResourceGroup(ResourceGroup group) {
+    public void updateResourceGroup(ResourceGroup group) throws RuntimeException {
         try {
             groupManager.updateResourceGroup(getSessionSubject(), group);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
-    public void updateResourceGroup(ResourceGroup group, boolean updateMembership) {
+    public void updateResourceGroup(ResourceGroup group, boolean updateMembership) throws RuntimeException {
         try {
             groupManager.updateResourceGroup(getSessionSubject(), group, null, updateMembership);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
-    public GroupDefinition createGroupDefinition(GroupDefinition groupDefinition) {
+    public GroupDefinition createGroupDefinition(GroupDefinition groupDefinition) throws RuntimeException {
         try {
             GroupDefinition results = definitionManager.createGroupDefinition(getSessionSubject(), groupDefinition);
 
             return SerialUtility.prepare(results, "ResourceGroupService.createGroupDefinition");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
-    public void updateGroupDefinition(GroupDefinition groupDefinition) {
+    public void updateGroupDefinition(GroupDefinition groupDefinition) throws RuntimeException {
         try {
             definitionManager.updateGroupDefinition(getSessionSubject(), groupDefinition);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
-    public void recalculateGroupDefinitions(int[] groupDefinitionIds) {
+    public void recalculateGroupDefinitions(int[] groupDefinitionIds) throws RuntimeException {
         try {
             for (int nextGroupDefinitionId : groupDefinitionIds) {
                 definitionManager.calculateGroupMembership(getSessionSubject(), nextGroupDefinitionId);
             }
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
-    public void deleteGroupDefinitions(int[] groupDefinitionIds) {
+    public void deleteGroupDefinitions(int[] groupDefinitionIds) throws RuntimeException {
         try {
             for (int nextGroupDefinitionId : groupDefinitionIds) {
                 definitionManager.removeGroupDefinition(getSessionSubject(), nextGroupDefinitionId);
             }
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
+    @Override
+    public void setRecursive(int groupId, boolean isRecursive) throws RuntimeException {
+        try {
+            groupManager.setRecursive(getSessionSubject(), groupId, isRecursive);
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
 }

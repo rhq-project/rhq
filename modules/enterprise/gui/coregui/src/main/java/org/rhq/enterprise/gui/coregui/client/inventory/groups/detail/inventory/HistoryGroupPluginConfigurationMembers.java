@@ -20,16 +20,15 @@ package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.inventory;
 
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.ListGridFieldType;
-import com.smartgwt.client.types.Overflow;
-import com.smartgwt.client.widgets.Window;
-import com.smartgwt.client.widgets.events.CloseClickHandler;
-import com.smartgwt.client.widgets.events.CloseClientEvent;
+import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
@@ -41,24 +40,30 @@ import org.rhq.core.domain.configuration.AbstractConfigurationUpdate;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.criteria.PluginConfigurationUpdateCriteria;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ErrorMessageWindow;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
+import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.ConfigurationGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.TypesLoadedCallback;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
- * Shows a table of individual resource members that belonged to the group when the group plugin configuration was updated.
+ * Shows a table of individual resource members that belonged to the group when the group configuration was updated.
  *
  * @author John Mazzitelli
  */
@@ -75,7 +80,7 @@ public class HistoryGroupPluginConfigurationMembers extends LocatableVLayout {
 
         setMargin(5);
         setMembersMargin(5);
-        String backPath = LinkManager.getGroupPluginConfigurationUpdateHistoryLink(this.group.getId());
+        String backPath = LinkManager.getGroupPluginConfigurationUpdateHistoryLink(this.group.getId(), null);
         BackButton backButton = new BackButton(extendLocatorId("BackButton"), MSG.view_tableSection_backButton(),
             backPath);
         addMember(backButton);
@@ -89,7 +94,7 @@ public class HistoryGroupPluginConfigurationMembers extends LocatableVLayout {
         super.onDraw();
     }
 
-    private class MembersTable extends Table {
+    private class MembersTable extends Table<MembersTable.DataSource> {
         public MembersTable(String locatorId) {
             super(locatorId, MSG.view_group_pluginConfig_members_title());
             setDataSource(new DataSource());
@@ -97,19 +102,41 @@ public class HistoryGroupPluginConfigurationMembers extends LocatableVLayout {
 
         @Override
         protected void configureTable() {
-            ListGridField fieldResource = new ListGridField("resourceLink", MSG.common_title_resource());
-            ListGridField fieldDateCreated = new ListGridField("dateCreated", MSG.common_title_dateCreated());
-            ListGridField fieldLastUpdated = new ListGridField("lastUpdated", MSG.common_title_lastUpdated());
-            ListGridField fieldUser = new ListGridField("user", MSG.common_title_user());
-            ListGridField fieldStatus = new ListGridField("status", MSG.common_title_status());
+            ListGridField fieldResource = new ListGridField(AncestryUtil.RESOURCE_NAME, MSG.common_title_resource());
+            fieldResource.setCellFormatter(new CellFormatter() {
+                public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
+                    String url = LinkManager
+                        .getResourceLink(listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
+                    return SeleniumUtility.getLocatableHref(url, o.toString(), null);
+                }
+            });
+            fieldResource.setShowHover(true);
+            fieldResource.setHoverCustomizer(new HoverCustomizer() {
 
-            fieldResource.setWidth("*");
-            fieldDateCreated.setWidth("15%");
-            fieldLastUpdated.setWidth("15%");
-            fieldUser.setWidth("10%");
+                public String hoverHTML(Object value, ListGridRecord listGridRecord, int rowNum, int colNum) {
+                    return AncestryUtil.getResourceHoverHTML(listGridRecord, 0);
+                }
+            });
+
+            ListGridField fieldAncestry = AncestryUtil.setupAncestryListGridField();
+            ListGridField fieldDateCreated = new ListGridField(DataSource.Field.DATECREATED, MSG
+                .common_title_dateCreated());
+            TimestampCellFormatter.prepareDateField(fieldDateCreated);
+            ListGridField fieldLastUpdated = new ListGridField(DataSource.Field.LASTUPDATED, MSG
+                .common_title_lastUpdated());
+            TimestampCellFormatter.prepareDateField(fieldLastUpdated);
+            ListGridField fieldStatus = new ListGridField(DataSource.Field.STATUS, MSG.common_title_status());
+            ListGridField fieldUser = new ListGridField(DataSource.Field.USER, MSG.common_title_user());
+
+            fieldResource.setWidth("30%");
+            fieldAncestry.setWidth("*");
+            fieldDateCreated.setWidth(150);
+            fieldLastUpdated.setWidth(150);
             fieldStatus.setWidth("10%");
+            fieldUser.setWidth("10%");
 
             fieldResource.setType(ListGridFieldType.LINK);
+            fieldResource.setTarget("_self");
 
             fieldStatus.setType(ListGridFieldType.ICON);
             HashMap<String, String> statusIcons = new HashMap<String, String>(4);
@@ -125,34 +152,8 @@ public class HistoryGroupPluginConfigurationMembers extends LocatableVLayout {
             fieldStatus.addRecordClickHandler(new RecordClickHandler() {
                 @Override
                 public void onRecordClick(RecordClickEvent event) {
-                    final Window winModal = new LocatableWindow(HistoryGroupPluginConfigurationMembers.this
-                        .extendLocatorId("statusDetailsWin"));
-                    winModal.setTitle(MSG.view_group_pluginConfig_members_statusDetails());
-                    winModal.setOverflow(Overflow.VISIBLE);
-                    winModal.setShowMinimizeButton(false);
-                    winModal.setShowMaximizeButton(true);
-                    winModal.setIsModal(true);
-                    winModal.setShowModalMask(true);
-                    winModal.setAutoSize(true);
-                    winModal.setAutoCenter(true);
-                    winModal.setShowResizer(true);
-                    winModal.setCanDragResize(true);
-                    winModal.centerInPage();
-                    winModal.addCloseClickHandler(new CloseClickHandler() {
-                        @Override
-                        public void onCloseClick(CloseClientEvent event) {
-                            winModal.markForDestroy();
-                        }
-                    });
-
-                    LocatableHTMLPane htmlPane = new LocatableHTMLPane(HistoryGroupPluginConfigurationMembers.this
-                        .extendLocatorId("statusDetailsPane"));
-                    htmlPane.setMargin(10);
-                    htmlPane.setDefaultWidth(500);
-                    htmlPane.setDefaultHeight(400);
-                    htmlPane.setContents("<pre>" + getStatusHtmlString(event.getRecord()) + "</pre>");
-                    winModal.addItem(htmlPane);
-                    winModal.show();
+                    new ErrorMessageWindow("statusDetailsWin", MSG.view_group_pluginConfig_members_statusDetails(),
+                        "<pre>" + getStatusHtmlString(event.getRecord()) + "</pre>").show();
                 }
             });
             fieldStatus.setShowHover(true);
@@ -170,15 +171,14 @@ public class HistoryGroupPluginConfigurationMembers extends LocatableVLayout {
             });
 
             ListGrid listGrid = getListGrid();
-            listGrid.setFields(fieldResource, fieldDateCreated, fieldLastUpdated, fieldUser, fieldStatus);
-
-            listGrid.setLinkTextProperty("resourceName");
-
+            listGrid
+                .setFields(fieldResource, fieldAncestry, fieldDateCreated, fieldLastUpdated, fieldStatus, fieldUser);
         }
 
         private String getStatusHtmlString(Record record) {
             String html = null;
-            AbstractConfigurationUpdate obj = (AbstractConfigurationUpdate) record.getAttributeAsObject("object");
+            AbstractConfigurationUpdate obj = (AbstractConfigurationUpdate) record
+                .getAttributeAsObject(DataSource.Field.OBJECT);
             switch (obj.getStatus()) {
             case SUCCESS: {
                 html = MSG.view_group_pluginConfig_members_statusSuccess();
@@ -203,47 +203,89 @@ public class HistoryGroupPluginConfigurationMembers extends LocatableVLayout {
             return html;
         }
 
-        private class DataSource extends RPCDataSource<PluginConfigurationUpdate> {
+        private class DataSource extends RPCDataSource<PluginConfigurationUpdate, PluginConfigurationUpdateCriteria> {
+
+            public class Field {
+                public static final String ID = "id";
+                public static final String DATECREATED = "dateCreated";
+                public static final String LASTUPDATED = "lastUpdated";
+                public static final String STATUS = "status";
+                public static final String USER = "user";
+                public static final String OBJECT = "object";
+            }
 
             @Override
             public PluginConfigurationUpdate copyValues(Record from) {
-                return (PluginConfigurationUpdate) from.getAttributeAsObject("object");
+                return (PluginConfigurationUpdate) from.getAttributeAsObject(Field.OBJECT);
             }
 
             @Override
             public ListGridRecord copyValues(PluginConfigurationUpdate from) {
                 ListGridRecord record = new ListGridRecord();
 
-                record.setAttribute("id", from.getId());
-                record.setAttribute("resourceLink", LinkManager.getResourceLink(from.getResource().getId()));
-                record.setAttribute("resourceName", from.getResource().getName());
-                record.setAttribute("dateCreated", new Date(from.getCreatedTime()));
-                record.setAttribute("lastUpdated", new Date(from.getModifiedTime()));
-                record.setAttribute("user", from.getSubjectName());
-                record.setAttribute("status", from.getStatus().name());
+                record.setAttribute(Field.ID, from.getId());
+                record.setAttribute(Field.DATECREATED, new Date(from.getCreatedTime()));
+                record.setAttribute(Field.LASTUPDATED, new Date(from.getModifiedTime()));
+                record.setAttribute(Field.USER, from.getSubjectName());
+                record.setAttribute(Field.STATUS, from.getStatus().name());
 
-                record.setAttribute("object", from);
+                // for ancestry handling
+                Resource resource = from.getResource();
+                record.setAttribute(AncestryUtil.RESOURCE_ID, resource.getId());
+                record.setAttribute(AncestryUtil.RESOURCE_NAME, resource.getName());
+                record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY, resource.getAncestry());
+                record.setAttribute(AncestryUtil.RESOURCE_TYPE_ID, resource.getResourceType().getId());
+
+                record.setAttribute(Field.OBJECT, from);
 
                 return record;
             }
 
             @Override
-            protected void executeFetch(final DSRequest request, final DSResponse response) {
-                ConfigurationGWTServiceAsync configurationService = GWTServiceLookup.getConfigurationService();
+            protected void executeFetch(final DSRequest request, final DSResponse response,
+                final PluginConfigurationUpdateCriteria criteria) {
 
-                PluginConfigurationUpdateCriteria criteria = new PluginConfigurationUpdateCriteria();
-                criteria.addFilterGroupConfigurationUpdateId(HistoryGroupPluginConfigurationMembers.this.groupUpdateId);
-                // TODO need to disambiguate resources
-                criteria.fetchResource(true);
+                ConfigurationGWTServiceAsync configurationService = GWTServiceLookup.getConfigurationService();
 
                 configurationService.findPluginConfigurationUpdatesByCriteria(criteria,
                     new AsyncCallback<PageList<PluginConfigurationUpdate>>() {
 
                         @Override
-                        public void onSuccess(PageList<PluginConfigurationUpdate> result) {
-                            response.setData(buildRecords(result));
-                            response.setTotalRows(result.getTotalSize());
-                            processResponse(request.getRequestId(), response);
+                        public void onSuccess(final PageList<PluginConfigurationUpdate> result) {
+                            HashSet<Integer> typesSet = new HashSet<Integer>();
+                            HashSet<String> ancestries = new HashSet<String>();
+                            for (PluginConfigurationUpdate update : result) {
+                                Resource resource = update.getResource();
+                                typesSet.add(resource.getResourceType().getId());
+                                ancestries.add(resource.getAncestry());
+                            }
+
+                            // In addition to the types of the result resources, get the types of their ancestry
+                            typesSet.addAll(AncestryUtil.getAncestryTypeIds(ancestries));
+
+                            ResourceTypeRepository typeRepo = ResourceTypeRepository.Cache.getInstance();
+                            typeRepo.getResourceTypes(typesSet.toArray(new Integer[typesSet.size()]),
+                                new TypesLoadedCallback() {
+                                    @Override
+                                    public void onTypesLoaded(Map<Integer, ResourceType> types) {
+                                        // Smartgwt has issues storing a Map as a ListGridRecord attribute. Wrap it in a pojo.                
+                                        AncestryUtil.MapWrapper typesWrapper = new AncestryUtil.MapWrapper(types);
+
+                                        Record[] records = buildRecords(result);
+                                        for (Record record : records) {
+                                            // To avoid a lot of unnecessary String construction, be lazy about building ancestry hover text.
+                                            // Store the types map off the records so we can build a detailed hover string as needed.                      
+                                            record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY_TYPES, typesWrapper);
+
+                                            // Build the decoded ancestry Strings now for display
+                                            record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY_VALUE, AncestryUtil
+                                                .getAncestryValue(record));
+                                        }
+                                        response.setData(records);
+                                        response.setTotalRows(result.getTotalSize()); // for paging to work we have to specify size of full result set
+                                        processResponse(request.getRequestId(), response);
+                                    }
+                                });
                         }
 
                         @Override
@@ -255,6 +297,14 @@ public class HistoryGroupPluginConfigurationMembers extends LocatableVLayout {
                             processResponse(request.getRequestId(), response);
                         }
                     });
+            }
+
+            @Override
+            protected PluginConfigurationUpdateCriteria getFetchCriteria(DSRequest request) {
+                PluginConfigurationUpdateCriteria criteria = new PluginConfigurationUpdateCriteria();
+                criteria.addFilterGroupConfigurationUpdateId(HistoryGroupPluginConfigurationMembers.this.groupUpdateId);
+                criteria.fetchResource(true);
+                return criteria;
             }
         }
     }

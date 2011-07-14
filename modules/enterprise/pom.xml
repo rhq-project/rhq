@@ -5,7 +5,8 @@
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-parent</artifactId>
-      <version>4.0.0-SNAPSHOT</version>
+      <version>4.1.0-SNAPSHOT</version>
+      <relativePath>../../pom.xml</relativePath>
    </parent>
 
    <groupId>org.rhq</groupId>
@@ -28,7 +29,7 @@
       <dependency>
         <groupId>net.sourceforge.cobertura</groupId>
         <artifactId>cobertura</artifactId>
-        <version>1.9.4.1</version>
+        <version>${cobertura.version}</version>
      </dependency>
   </dependencies>
 
@@ -52,6 +53,8 @@
             <module>gui</module>
             <module>server/plugins</module>
             <module>server/ear</module>
+            <module>binding</module>
+            <module>server/client-api</module>            
          </modules>
       </profile>
 
@@ -70,12 +73,14 @@
             <module>server/jar</module>
             <module>server/safe-invoker</module>
             <module>server/sars</module>
+            <module>binding</module>
             <module>remoting</module>
             <module>gui</module>
             <module>server/plugins</module>
             <module>server/ear</module>
             <module>server/container-lib</module>
             <module>server/container</module>
+            <module>server/client-api</module>
          </modules>
       </profile>
 

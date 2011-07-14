@@ -19,6 +19,8 @@
 
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.selection;
 
+import com.smartgwt.client.types.SelectionStyle;
+
 import org.rhq.core.domain.resource.ResourceType;
 
 /**
@@ -37,11 +39,27 @@ public class SingleResourceSelector extends ResourceSelector {
     }
 
     @Override
+    protected void onInit() {
+        super.onInit();
+
+        // we only allow a single resource to be selected
+        availableGrid.setSelectionType(SelectionStyle.SINGLE);
+    }
+
+    @Override
     protected void updateButtonEnablement() {
         addButton.setDisabled(!availableGrid.anySelected() || availableGrid.getTotalRows() == 0
             || assignedGrid.getTotalRows() > 0);
         removeButton.setDisabled(!assignedGrid.anySelected());
         addAllButton.hide();
         removeAllButton.hide();
+    }
+
+    @Override
+    public void addSelectedRows() {
+        // do not allow more than one row into the assigned grid
+        if (assignedGrid.getTotalRows() == 0) {
+            super.addSelectedRows();
+        }
     }
 }

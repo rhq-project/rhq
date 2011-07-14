@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
@@ -34,12 +33,13 @@ import com.smartgwt.client.widgets.toolbar.ToolStrip;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.composite.ResourceConfigurationComposite;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.resource.ResourceAncestryFormat;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.GroupConfigurationEditor;
@@ -48,8 +48,8 @@ import org.rhq.enterprise.gui.coregui.client.components.configuration.PropertyVa
 import org.rhq.enterprise.gui.coregui.client.components.configuration.PropertyValueChangeListener;
 import org.rhq.enterprise.gui.coregui.client.gwt.ConfigurationGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceDetailView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
-import org.rhq.enterprise.gui.coregui.client.resource.disambiguation.ReportDecorator;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenter;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
@@ -71,6 +71,8 @@ public class GroupResourceConfigurationEditView extends LocatableVLayout impleme
 
     private ConfigurationEditor editor;
     private IButton saveButton;
+
+    private boolean refreshing = false;
 
     public GroupResourceConfigurationEditView(String locatorId, ResourceGroupComposite groupComposite) {
         super(locatorId);
@@ -110,6 +112,11 @@ public class GroupResourceConfigurationEditView extends LocatableVLayout impleme
 
     @Override
     public void refresh() {
+        if (this.refreshing) {
+            return; // we are already in the process of refreshing, don't do it again
+        }
+
+        this.refreshing = true;
         this.saveButton.disable();
         if (editor != null) {
             editor.destroy();
@@ -129,6 +136,7 @@ public class GroupResourceConfigurationEditView extends LocatableVLayout impleme
             this.editor.addPropertyValueChangeListener(this);
             this.editor.setReadOnly(!this.resourcePermission.isConfigureWrite());
             addMember(this.editor);
+            this.refreshing = false; // when we get here, we know we are done the refresh
         }
     }
 
@@ -152,29 +160,44 @@ public class GroupResourceConfigurationEditView extends LocatableVLayout impleme
     private void loadConfigurations() {
         this.memberConfigurations = null;
         this.configurationService.findResourceConfigurationsForGroup(group.getId(),
-            new AsyncCallback<List<DisambiguationReport<ResourceConfigurationComposite>>>() {
+            new AsyncCallback<Map<Integer, Configuration>>() {
+
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(
-                        "Failed to retrieve member Resource configurations for [" + group + "]", caught);
+                    handleLoadFailure(caught);
                 }
 
-                public void onSuccess(List<DisambiguationReport<ResourceConfigurationComposite>> results) {
-                    memberConfigurations = new ArrayList<GroupMemberConfiguration>(results.size());
-                    for (DisambiguationReport<ResourceConfigurationComposite> result : results) {
-                        int resourceId = result.getOriginal().getResourceId();
-                        String label = ReportDecorator.decorateDisambiguationReport(result, resourceId, false);
-                        Configuration configuration = result.getOriginal().getConfiguration();
-                        GroupMemberConfiguration memberConfiguration = new GroupMemberConfiguration(resourceId, label,
-                            configuration);
-                        if (configuration == null || configuration.getProperties().isEmpty()) {
-                            throw new RuntimeException(
-                                "One or more null or empty member Resource configuration was returned by the Server.");
-                        }
-                        memberConfigurations.add(memberConfiguration);
-                    }
-                    initEditor();
+                public void onSuccess(final Map<Integer, Configuration> configMap) {
+                    final Integer[] resourceIds = configMap.keySet().toArray(new Integer[configMap.size()]);
+                    GWTServiceLookup.getResourceService().getResourcesAncestry(resourceIds,
+                        ResourceAncestryFormat.EXTENDED, new AsyncCallback<Map<Integer, String>>() {
+
+                            public void onFailure(Throwable caught) {
+                                handleLoadFailure(caught);
+                            }
+
+                            public void onSuccess(Map<Integer, String> labelMap) {
+                                memberConfigurations = new ArrayList<GroupMemberConfiguration>(configMap.size());
+                                for (Integer resourceId : resourceIds) {
+                                    String label = labelMap.get(resourceId);
+                                    Configuration configuration = configMap.get(resourceId);
+                                    GroupMemberConfiguration memberConfiguration = new GroupMemberConfiguration(
+                                        resourceId, label, configuration);
+                                    if (configuration == null || configuration.getProperties().isEmpty()) {
+                                        throw new RuntimeException(
+                                            "One or more null or empty member connection settings was returned by the Server.");
+                                    }
+                                    memberConfigurations.add(memberConfiguration);
+                                }
+                                initEditor();
+                            }
+                        });
                 }
             });
+    }
+
+    private void handleLoadFailure(Throwable caught) {
+        refreshing = false;
+        CoreGUI.getErrorHandler().handleError(MSG.view_group_resConfig_edit_loadFail(group.toString()), caught);
     }
 
     private void save() {
@@ -188,11 +211,13 @@ public class GroupResourceConfigurationEditView extends LocatableVLayout impleme
                 }
 
                 public void onSuccess(Void result) {
-                    CoreGUI.getMessageCenter().notify(
-                        new Message(MSG.view_group_resConfig_edit_saveInitiated_concise(), MSG
+                    String configHistoryUrl = LinkManager.getResourceGroupTabLink(group.getId(),
+                            ResourceDetailView.Tab.CONFIGURATION, ResourceDetailView.ConfigurationSubTab.HISTORY);
+                    String configHistoryView = configHistoryUrl.substring(1); // chop off the leading '#'
+                    Message message = new Message(MSG.view_group_resConfig_edit_saveInitiated_concise(), MSG
                             .view_group_resConfig_edit_saveInitiated_full(group.getResourceType().getName(), group
-                                .getName()), Message.Severity.Info));
-                    refresh();
+                                .getName()), Message.Severity.Info);
+                    CoreGUI.goToView(configHistoryView, message);
                 }
             });
     }
@@ -211,15 +236,15 @@ public class GroupResourceConfigurationEditView extends LocatableVLayout impleme
     public void propertyValueChanged(PropertyValueChangeEvent event) {
         MessageCenter messageCenter = CoreGUI.getMessageCenter();
         Message message;
-        if (event.isValidationStateChanged()) {
-            Set<String> invalidPropertyNames = event.getInvalidPropertyNames();
+        if (event.isInvalidPropertySetChanged()) {
+            Map<String, String> invalidPropertyNames = event.getInvalidPropertyNames();
             if (invalidPropertyNames.isEmpty()) {
                 this.saveButton.enable();
                 message = new Message(MSG.view_group_resConfig_edit_valid(), Message.Severity.Info, EnumSet.of(
                     Message.Option.Transient, Message.Option.Sticky));
             } else {
                 this.saveButton.disable();
-                message = new Message(MSG.view_group_resConfig_edit_invalid(invalidPropertyNames.toString()),
+                message = new Message(MSG.view_group_resConfig_edit_invalid(invalidPropertyNames.values().toString()),
                     Message.Severity.Error, EnumSet.of(Message.Option.Transient, Message.Option.Sticky));
             }
             messageCenter.notify(message);

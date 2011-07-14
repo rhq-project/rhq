@@ -54,6 +54,7 @@
 #                                      is mainly used to augment the Server's
 #                                      default set of options. This can be
 #                                      left unset if it is not needed.
+#RHQ_SERVER_ADDITIONAL_JAVA_OPTS=-agentlib:jdwp=transport=dt_socket,address=8787,server=y,suspend=n
 #
 #    RHQ_SERVER_CMDLINE_OPTS - If this is defined, these are the command line
 #                              arguments that will be passed to the RHQ Server
@@ -286,7 +287,8 @@ if [ -z "$RHQ_SERVER_JAVA_OPTS" ]; then
    RHQ_SERVER_JAVA_OPTS="-Xms1024M -Xmx1024M -XX:PermSize=256M -XX:MaxPermSize=256M -Djava.net.preferIPv4Stack=true -Djboss.server.log.dir=${_LOG_DIR_PATH}"
 fi
 # Add the JVM opts that we always want to specify, whether or not the user set RHQ_SERVER_JAVA_OPTS.
-RHQ_SERVER_JAVA_OPTS="-Dapp.name=rhq-server $RHQ_SERVER_JAVA_OPTS -Djava.awt.headless=true -Djboss.platform.mbeanserver -Dsun.lang.ClassLoader.allowArraySyntax=true -Djava.util.logging.config.file=$RHQ_SERVER_HOME/jbossas/server/default/conf/logging.properties"
+# Note that the double equals for the policy file specification IS INTENTIONAL
+RHQ_SERVER_JAVA_OPTS="-Dapp.name=rhq-server $RHQ_SERVER_JAVA_OPTS -Djava.awt.headless=true -Djboss.platform.mbeanserver -Dsun.lang.ClassLoader.allowArraySyntax=true -Djava.util.logging.config.file=$RHQ_SERVER_HOME/jbossas/server/default/conf/logging.properties -Djava.security.manager -Djava.security.policy==$RHQ_SERVER_HOME/bin/rhq-server.security-policy"
 
 debug_msg "RHQ_SERVER_JAVA_OPTS: $RHQ_SERVER_JAVA_OPTS"
 debug_msg "RHQ_SERVER_ADDITIONAL_JAVA_OPTS: $RHQ_SERVER_ADDITIONAL_JAVA_OPTS"

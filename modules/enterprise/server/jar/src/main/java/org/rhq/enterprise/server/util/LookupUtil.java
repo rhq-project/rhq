@@ -103,12 +103,16 @@ import org.rhq.enterprise.server.dashboard.DashboardManagerBean;
 import org.rhq.enterprise.server.dashboard.DashboardManagerLocal;
 import org.rhq.enterprise.server.discovery.DiscoveryBossBean;
 import org.rhq.enterprise.server.discovery.DiscoveryBossLocal;
+import org.rhq.enterprise.server.drift.DriftManagerBean;
+import org.rhq.enterprise.server.drift.DriftManagerLocal;
 import org.rhq.enterprise.server.entitlement.EntitlementManagerBean;
 import org.rhq.enterprise.server.entitlement.EntitlementManagerLocal;
 import org.rhq.enterprise.server.event.EventManagerBean;
 import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.install.remote.RemoteInstallManagerBean;
 import org.rhq.enterprise.server.install.remote.RemoteInstallManagerLocal;
+import org.rhq.enterprise.server.inventory.InventoryManagerBean;
+import org.rhq.enterprise.server.inventory.InventoryManagerLocal;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerBean;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.measurement.CallTimeDataManagerBean;
@@ -163,6 +167,8 @@ import org.rhq.enterprise.server.resource.group.definition.GroupDefinitionExpres
 import org.rhq.enterprise.server.resource.group.definition.GroupDefinitionExpressionBuilderManagerLocal;
 import org.rhq.enterprise.server.resource.group.definition.GroupDefinitionManagerBean;
 import org.rhq.enterprise.server.resource.group.definition.GroupDefinitionManagerLocal;
+import org.rhq.enterprise.server.resource.metadata.PluginManagerBean;
+import org.rhq.enterprise.server.resource.metadata.PluginManagerLocal;
 import org.rhq.enterprise.server.resource.metadata.ResourceMetadataManagerBean;
 import org.rhq.enterprise.server.resource.metadata.ResourceMetadataManagerLocal;
 import org.rhq.enterprise.server.scheduler.SchedulerBean;
@@ -442,6 +448,10 @@ public final class LookupUtil {
         return lookupLocal(ContentSourceManagerBean.class);
     }
 
+    public static DriftManagerLocal getDriftManager() {
+        return lookupLocal(DriftManagerBean.class);
+    }
+
     public static RepoManagerLocal getRepoManagerLocal() {
         return lookupLocal(RepoManagerBean.class);
     }
@@ -476,6 +486,10 @@ public final class LookupUtil {
 
     public static RemoteInstallManagerLocal getRemoteInstallManager() {
         return lookupLocal(RemoteInstallManagerBean.class);
+    }
+
+    public static PluginManagerLocal getPluginManager() {
+        return lookupLocal(PluginManagerBean.class);
     }
 
     public static ResourceMetadataManagerLocal getResourceMetadataManager() {
@@ -562,6 +576,10 @@ public final class LookupUtil {
         return lookupLocal(TagManagerBean.class);
     }
 
+    public static InventoryManagerLocal getInventoryManager() {
+        return lookupLocal(InventoryManagerBean.class);
+    }
+
     public static DashboardManagerLocal getDashboardManagerLocal() {
         return lookupLocal(DashboardManagerBean.class);
     }
@@ -630,10 +648,12 @@ public final class LookupUtil {
 
     @SuppressWarnings("unchecked")
     private static <T> T lookupLocal(Class<? super T> type) {
+        String localJNDIName = "-not initialized-";
         try {
-            return (T) lookup(getLocalJNDIName(type));
+            localJNDIName = getLocalJNDIName(type);
+            return (T) lookup(localJNDIName);
         } catch (NamingException e) {
-            throw new RuntimeException("Failed to lookup local interface to EJB " + type, e);
+            throw new RuntimeException("Failed to lookup local interface to EJB " + type + ", localJNDI=[" + localJNDIName + "]", e);
         }
     }
 

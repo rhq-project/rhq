@@ -24,6 +24,7 @@
                 <h:form>
                     <h:selectBooleanCheckbox id="groupByVersion" value="#{ResourceInstallReportUIBean.groupByVersion}" 
                                              label="gbvLabel">
+                        <a4j:support reRender="reportTable" event="onclick" status="commonStatus"/>                                             
                     </h:selectBooleanCheckbox>
                     <h:outputText value="Group By Version" id="gbvLabel"/>
 
@@ -41,7 +42,7 @@
                             <f:facet name="header">
                                 Type
                             </f:facet>
-                            <h:outputLink value="/coregui/CoreGUI.html#Resources" target="_top">
+                            <h:outputLink value="/coregui/CoreGUI.html#Inventory/Resources/#{installReport.category}s" target="_top">
                                 <h:outputText value="#{installReport.typeName}"/>
                             </h:outputLink>
                         </rich:column>

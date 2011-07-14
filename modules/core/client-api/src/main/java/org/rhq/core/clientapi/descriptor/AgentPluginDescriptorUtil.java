@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -38,6 +38,7 @@ import javax.xml.XMLConstants;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.bind.ValidationEvent;
+import javax.xml.bind.ValidationEventLocator;
 import javax.xml.bind.util.ValidationEventCollector;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
@@ -62,6 +63,7 @@ import org.rhq.core.util.exception.WrappedRemotingException;
  * Utilities for agent plugin descriptors.
  *
  * @author John Mazzitelli
+ * @author Ian Springer
  */
 public abstract class AgentPluginDescriptorUtil {
     private static final Log LOG = LogFactory.getLog(AgentPluginDescriptorUtil.class);
@@ -282,7 +284,7 @@ public abstract class AgentPluginDescriptorUtil {
     /**
      * Loads a plugin descriptor from the given plugin jar and returns it.
      * 
-     * This is a static method to provide a convienence method for others to be able to use.
+     * This is a static method to provide a convenience method for others to be able to use.
      *  
      * @param pluginJarFileUrl URL to a plugin jar file
      * @return the plugin descriptor found in the given plugin jar file
@@ -308,7 +310,7 @@ public abstract class AgentPluginDescriptorUtil {
 
         JarInputStream jis = null;
         JarEntry descriptorEntry = null;
-
+        ValidationEventCollector validationEventCollector = new ValidationEventCollector();
         try {
             jis = new JarInputStream(pluginJarFileUrl.openStream());
             JarEntry nextEntry = jis.getNextJarEntry();
@@ -332,22 +334,14 @@ public abstract class AgentPluginDescriptorUtil {
             Schema pluginSchema = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI).newSchema(
                 pluginSchemaURL);
             unmarshaller.setSchema(pluginSchema);
-
-            ValidationEventCollector vec = new ValidationEventCollector();
-            unmarshaller.setEventHandler(vec);
+            unmarshaller.setEventHandler(validationEventCollector);
 
             PluginDescriptor pluginDescriptor = (PluginDescriptor) unmarshaller.unmarshal(jis);
-
-            for (ValidationEvent event : vec.getEvents()) {
-                logger.debug("Plugin [" + pluginDescriptor.getName() + "] descriptor messages {Severity: "
-                    + event.getSeverity() + ", Message: " + event.getMessage() + ", Exception: "
-                    + event.getLinkedException() + "}");
-            }
 
             return pluginDescriptor;
         } catch (Exception e) {
             throw new PluginContainerException("Could not successfully parse the plugin descriptor ["
-                + PLUGIN_DESCRIPTOR_PATH + " found in plugin jar at [" + pluginJarFileUrl + "]",
+                + PLUGIN_DESCRIPTOR_PATH + "] found in plugin jar at [" + pluginJarFileUrl + "].",
                 new WrappedRemotingException(e));
         } finally {
             if (jis != null) {
@@ -356,6 +350,51 @@ public abstract class AgentPluginDescriptorUtil {
                 } catch (Exception e) {
                     logger.warn("Cannot close jar stream [" + pluginJarFileUrl + "]. Cause: " + e);
                 }
+            }
+
+            logValidationEvents(pluginJarFileUrl, validationEventCollector, logger);
+        }
+    }
+
+    private static void logValidationEvents(URL pluginJarFileUrl, ValidationEventCollector validationEventCollector,
+                                            Log logger) {
+        for (ValidationEvent event : validationEventCollector.getEvents()) {
+            // First build the message to be logged. The message will look something like this:
+            //
+            //   Validation fatal error while parsing [jopr-jboss-as-plugin-4.1.0-SNAPSHOT.jar:META-INF/rhq-plugin.xml]
+            //   at line 221, column 94: cvc-minInclusive-valid: Value '20000' is not facet-valid with respect to
+            //   minInclusive '30000' for type '#AnonType_defaultIntervalmetric'.
+            //
+            StringBuilder message = new StringBuilder();
+            String severity = null;
+            switch(event.getSeverity()) {
+                case ValidationEvent.WARNING:
+                    severity = "warning";
+                    break;
+                case ValidationEvent.ERROR:
+                    severity = "error";
+                    break;
+                case ValidationEvent.FATAL_ERROR:
+                    severity = "fatal error";
+                    break;
+            }
+            message.append("Validation ").append(severity);
+            File pluginJarFile = new File(pluginJarFileUrl.getPath());
+            message.append(" while parsing [").append(pluginJarFile.getName()).append(":").append(PLUGIN_DESCRIPTOR_PATH).append("]");
+            ValidationEventLocator locator = event.getLocator();
+            message.append(" at line ").append(locator.getLineNumber());
+            message.append(", column ").append(locator.getColumnNumber());
+            message.append(": ").append(event.getMessage());
+
+            // Now write the message to the log at an appropriate level.
+            switch(event.getSeverity()) {
+                case ValidationEvent.WARNING:
+                case ValidationEvent.ERROR:
+                    logger.warn(message);
+                    break;
+                case ValidationEvent.FATAL_ERROR:
+                    logger.error(message);
+                    break;
             }
         }
     }

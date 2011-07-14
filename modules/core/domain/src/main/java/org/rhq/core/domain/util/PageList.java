@@ -28,6 +28,8 @@ import java.util.Collection;
 
 import javax.xml.bind.annotation.XmlRootElement;
 
+import org.rhq.core.domain.criteria.Criteria;
+
 /**
  * Tracks the result set for a paginated data lookup. Includes the data and the total rows that are available.
  *
@@ -51,6 +53,22 @@ public class PageList<E> extends ArrayList<E> implements Serializable {
         this.pageControl = pageControl;
     }
 
+    /**
+     * Used to represent the cardinality of a result set without when the data is not needed 
+     * 
+     * @see Criteria.Restriction#COUNT_ONLY
+     */
+    public PageList(int totalSize, PageControl pageControl) {
+        super();
+        this.totalSize = totalSize;
+        this.pageControl = pageControl;
+    }
+
+    /**
+     * Used to represent a result set when the cardinality of the data is not needed 
+     * 
+     * @see Criteria.Restriction#COLLECTION_ONLY
+     */
     public PageList(Collection<? extends E> collection, PageControl pageControl) {
         super(collection);
         isUnbounded = true;

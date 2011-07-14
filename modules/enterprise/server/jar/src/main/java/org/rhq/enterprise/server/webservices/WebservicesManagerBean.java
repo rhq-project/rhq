@@ -27,10 +27,10 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 
 import javax.ejb.Stateless;
-import javax.jws.WebParam;
 import javax.jws.WebService;
 import javax.xml.bind.annotation.XmlSeeAlso;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
@@ -47,9 +47,11 @@ import org.rhq.core.domain.bundle.BundleFile;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
+import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration;
 import org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.common.ProductInfo;
+import org.rhq.core.domain.common.ServerDetails;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
@@ -62,9 +64,12 @@ import org.rhq.core.domain.configuration.group.GroupPluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.GroupResourceConfigurationUpdate;
 import org.rhq.core.domain.content.Architecture;
 import org.rhq.core.domain.content.InstalledPackage;
+import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.Repo;
+import org.rhq.core.domain.content.composite.PackageAndLatestVersionComposite;
+import org.rhq.core.domain.content.composite.PackageTypeAndVersionFormatComposite;
 import org.rhq.core.domain.content.transfer.SubscribedRepo;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
@@ -82,6 +87,7 @@ import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
 import org.rhq.core.domain.criteria.MeasurementDefinitionCriteria;
 import org.rhq.core.domain.criteria.MeasurementScheduleCriteria;
 import org.rhq.core.domain.criteria.OperationDefinitionCriteria;
+import org.rhq.core.domain.criteria.PackageCriteria;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
 import org.rhq.core.domain.criteria.RepoCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
@@ -90,6 +96,7 @@ import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.criteria.RoleCriteria;
 import org.rhq.core.domain.criteria.SubjectCriteria;
+import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.measurement.Availability;
@@ -105,9 +112,12 @@ import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowCo
 import org.rhq.core.domain.operation.GroupOperationHistory;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
+import org.rhq.core.domain.operation.bean.GroupOperationSchedule;
+import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.rhq.core.domain.resource.CreateResourceHistory;
 import org.rhq.core.domain.resource.DeleteResourceHistory;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceAncestryFormat;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ProblemResourceComposite;
 import org.rhq.core.domain.resource.group.ResourceGroup;
@@ -126,6 +136,7 @@ import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.content.RepoException;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.discovery.DiscoveryBossLocal;
+import org.rhq.enterprise.server.drift.DriftManagerLocal;
 import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.exception.LoginException;
 import org.rhq.enterprise.server.exception.ScheduleException;
@@ -140,9 +151,7 @@ import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementProblemManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
-import org.rhq.enterprise.server.operation.GroupOperationSchedule;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
-import org.rhq.enterprise.server.operation.ResourceOperationSchedule;
 import org.rhq.enterprise.server.resource.ResourceFactoryManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceNotFoundException;
@@ -180,6 +189,7 @@ public class WebservicesManagerBean implements WebservicesRemote {
     //removed as it is problematic for WS clients having XMLAny for Object.
     //    private DataAccessManagerLocal dataAccessManager = LookupUtil.getDataAccessManager();
     private DiscoveryBossLocal discoveryBoss = LookupUtil.getDiscoveryBoss();
+    private DriftManagerLocal driftManager = LookupUtil.getDriftManager();
     private EventManagerLocal eventManager = LookupUtil.getEventManager();
     private MeasurementBaselineManagerLocal measurementBaselineManager = LookupUtil.getMeasurementBaselineManager();
     private MeasurementDataManagerLocal measurementDataManager = LookupUtil.getMeasurementDataManager();
@@ -263,6 +273,12 @@ public class WebservicesManagerBean implements WebservicesRemote {
 
     //BUNDLEMANAGER: BEGIN ------------------------------------------
 
+    @Override
+    public ResourceTypeBundleConfiguration getResourceTypeBundleConfiguration(Subject subject, int compatGroupId)
+        throws Exception {
+        return bundleManager.getResourceTypeBundleConfiguration(subject, compatGroupId);
+    }
+
     public BundleFile addBundleFile(Subject subject, int bundleVersionId, String name, String version,
         Architecture architecture, InputStream fileStream) throws Exception {
         return bundleManager.addBundleFile(subject, bundleVersionId, name, version, architecture, fileStream);
@@ -291,8 +307,9 @@ public class WebservicesManagerBean implements WebservicesRemote {
     }
 
     public BundleDestination createBundleDestination(Subject subject, int bundleId, String name, String description,
-        String deployDir, Integer groupId) throws Exception {
-        return bundleManager.createBundleDestination(subject, bundleId, name, description, deployDir, groupId);
+        String destBaseDirName, String deployDir, Integer groupId) throws Exception {
+        return bundleManager.createBundleDestination(subject, bundleId, name, description, destBaseDirName, deployDir,
+            groupId);
     }
 
     public BundleVersion createBundleVersionViaRecipe(Subject subject, String recipe) throws Exception {
@@ -305,6 +322,10 @@ public class WebservicesManagerBean implements WebservicesRemote {
 
     public BundleVersion createBundleVersionViaURL(Subject subject, String distributionFileUrl) throws Exception {
         return bundleManager.createBundleVersionViaURL(subject, distributionFileUrl);
+    }
+
+    public void deleteBundles(Subject subject, int[] bundleIds) throws Exception {
+        bundleManager.deleteBundles(subject, bundleIds);
     }
 
     public void deleteBundle(Subject subject, int bundleId) throws Exception {
@@ -368,6 +389,10 @@ public class WebservicesManagerBean implements WebservicesRemote {
         String deploymentDescription, boolean isCleanDeployment) throws Exception {
         return bundleManager.scheduleRevertBundleDeployment(subject, bundleDestinationId, deploymentDescription,
             isCleanDeployment);
+    }
+
+    public void purgeBundleDestination(Subject subject, int bundleDestinationId) throws Exception {
+        bundleManager.purgeBundleDestination(subject, bundleDestinationId);
     }
 
     //BUNDLEMANAGER: END ----------------------------------  
@@ -501,12 +526,32 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return contentManager.findPackageTypes(subject, resourceTypeName, pluginName);
     }
 
+    public PackageType findPackageType(Subject subject, Integer resourceTypeId, String packageTypeName) {
+        return contentManager.findPackageType(subject, resourceTypeId, packageTypeName);
+    }
+
+    public PackageTypeAndVersionFormatComposite findPackageTypeWithVersionFormat(Subject subject,
+        Integer resourceTypeId, String packageTypeName) {
+        return contentManager.findPackageTypeWithVersionFormat(subject, resourceTypeId, packageTypeName);
+    }
+
     public InstalledPackage getBackingPackageForResource(Subject subject, int resourceId) {
         return contentManager.getBackingPackageForResource(subject, resourceId);
     }
 
     public byte[] getPackageBytes(Subject subject, int resourceId, int installedPackageId) {
         return contentManager.getPackageBytes(subject, resourceId, installedPackageId);
+    }
+
+    public PageList<Package> findPackagesByCriteria(Subject subject, PackageCriteria criteria) {
+        checkParametersPassedIn(subject, criteria);
+        return contentManager.findPackagesByCriteria(subject, criteria);
+    }
+
+    public PageList<PackageAndLatestVersionComposite> findPackagesWithLatestVersion(Subject subject,
+        PackageCriteria criteria) {
+        checkParametersPassedIn(subject, criteria);
+        return contentManager.findPackagesWithLatestVersion(subject, criteria);
     }
 
     //CONTENTMANAGER: END ----------------------------------
@@ -541,6 +586,16 @@ public class WebservicesManagerBean implements WebservicesRemote {
     }
 
     //DISCOVERYBOSS: END ------------------------------------
+
+    // DRIFTMANAGER: BEGIN ----------------------------------
+
+    @Override
+    public void detectDrift(Subject subject, EntityContext entityContext, DriftConfiguration driftConfiguration)
+        throws Exception {
+        driftManager.detectDrift(subject, entityContext, driftConfiguration);
+    }
+
+    // DRIFTMANAGER: END ------------------------------------
 
     //EVENTMANAGER: BEGIN ----------------------------------
     public PageList<Event> findEventsByCriteria(Subject subject, EventCriteria criteria) {
@@ -771,6 +826,14 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return repoManager.findPackageVersionsInRepoByCriteria(subject, criteria);
     }
 
+    public PackageVersion getLatestPackageVersion(Subject subject, int packageId, int repoId) {
+        return repoManager.getLatestPackageVersion(subject, packageId, repoId);
+    }
+
+    public boolean deletePackageVersionsFromRepo(Subject subject, int repoId, int[] packageVersionIds) {
+        return repoManager.deletePackageVersionsFromRepo(subject, repoId, packageVersionIds);
+    }
+
     public PageList<Resource> findSubscribedResources(Subject subject, int repoId, PageControl pc) {
         return repoManager.findSubscribedResources(subject, repoId, pc);
     }
@@ -813,6 +876,12 @@ public class WebservicesManagerBean implements WebservicesRemote {
             pluginConfiguration, resourceConfiguration);
     }
 
+    public CreateResourceHistory createResource(Subject subject, int parentResourceId, int resourceTypeId,
+        String resourceName, Configuration pluginConfiguration, Configuration resourceConfiguration, Integer timeout) {
+        return resourceFactoryManager.createResource(subject, parentResourceId, resourceTypeId, resourceName,
+            pluginConfiguration, resourceConfiguration, timeout);
+    }
+
     public CreateResourceHistory createPackageBackedResource(Subject subject, int parentResourceId,
         int newResourceTypeId, String newResourceName,//
         @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
@@ -822,6 +891,17 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return resourceFactoryManager.createPackageBackedResource(subject, parentResourceId, newResourceTypeId,
             newResourceName, pluginConfiguration, packageName, packageVersion, architectureId,
             deploymentTimeConfiguration, packageBits);
+    }
+
+    public CreateResourceHistory createPackageBackedResource(Subject subject, int parentResourceId,
+        int newResourceTypeId, String newResourceName,//
+        @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
+        Configuration pluginConfiguration, String packageName, String packageVersion, Integer architectureId,//
+        @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
+        Configuration deploymentTimeConfiguration, byte[] packageBits, Integer timeout) {
+        return resourceFactoryManager.createPackageBackedResource(subject, parentResourceId, newResourceTypeId,
+            newResourceName, pluginConfiguration, packageName, packageVersion, architectureId,
+            deploymentTimeConfiguration, packageBits, timeout);
     }
 
     public CreateResourceHistory createPackageBackedResourceViaPackageVersion(Subject subject, int parentResourceId,
@@ -834,6 +914,17 @@ public class WebservicesManagerBean implements WebservicesRemote {
             newResourceTypeId, newResourceName, pluginConfiguration, deploymentTimeConfiguration, packageVersionId);
     }
 
+    public CreateResourceHistory createPackageBackedResourceViaPackageVersion(Subject subject, int parentResourceId,
+        int newResourceTypeId, String newResourceName,//        
+        @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
+        Configuration pluginConfiguration, //
+        @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
+        Configuration deploymentTimeConfiguration, int packageVersionId, Integer timeout) {
+        return resourceFactoryManager.createPackageBackedResourceViaPackageVersion(subject, parentResourceId,
+            newResourceTypeId, newResourceName, pluginConfiguration, deploymentTimeConfiguration, packageVersionId,
+            timeout);
+    }
+
     public DeleteResourceHistory deleteResource(Subject subject, int resourceId) {
         return resourceFactoryManager.deleteResource(subject, resourceId);
     }
@@ -842,7 +933,17 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return resourceFactoryManager.deleteResources(subject, resourceIds);
     }
 
-    //RESOURCEFACTORYMANAGER: END ----------------------------------
+    public PageList<CreateResourceHistory> findCreateChildResourceHistory(Subject subject, int parentResourceId,
+        Long beginDate, Long endDate, PageControl pageControl) {
+        return resourceFactoryManager.findCreateChildResourceHistory(subject, parentResourceId, beginDate, endDate,
+            pageControl);
+    }
+
+    public PageList<DeleteResourceHistory> findDeleteChildResourceHistory(Subject subject, int parentResourceId,
+        Long beginDate, Long endDate, PageControl pageControl) {
+        return resourceFactoryManager.findDeleteChildResourceHistory(subject, parentResourceId, beginDate, endDate,
+            pageControl);
+    }
 
     //RESOURCEMANAGER: BEGIN ----------------------------------
     public List<Resource> findResourceLineage(Subject subject, int resourceId) {
@@ -868,6 +969,11 @@ public class WebservicesManagerBean implements WebservicesRemote {
 
     public Resource getResource(Subject subject, int resourceId) {
         return resourceManager.getResource(subject, resourceId);
+    }
+
+    public Map<Integer, String> getResourcesAncestry(Subject subject, Integer[] resourceIds,
+        ResourceAncestryFormat format) {
+        return resourceManager.getResourcesAncestry(subject, resourceIds, format);
     }
 
     public List<Integer> uninventoryResources(Subject subject, int[] resourceIds) {
@@ -1070,12 +1176,21 @@ public class WebservicesManagerBean implements WebservicesRemote {
     //SUPPORTMANAGER: END ------------------------------------
 
     //SYSTEMMANAGER: BEGIN ------------------------------------
-    public ServerVersion getServerVersion(Subject subject) throws Exception {
-        return systemManager.getServerVersion(subject);
+
+    public ProductInfo getProductInfo(Subject subject) {
+        return systemManager.getProductInfo(subject);
     }
 
-    public ProductInfo getProductInfo(@WebParam(name = "subject") Subject subject) {
-        return systemManager.getProductInfo(subject);
+    public ServerDetails getServerDetails(Subject subject) {
+        return systemManager.getServerDetails(subject);
+    }
+
+    public Properties getSystemConfiguration(Subject subject) {
+        return systemManager.getSystemConfiguration(subject);
+    }
+
+    public void setSystemConfiguration(Subject subject, Properties properties, boolean skipValidation) throws Exception {
+        systemManager.setSystemConfiguration(subject, properties, skipValidation);
     }
 
     //SYSTEMMANAGER: END ------------------------------------
@@ -1088,4 +1203,5 @@ public class WebservicesManagerBean implements WebservicesRemote {
             throw new IllegalArgumentException("Criteria cannot be null.");
         }
     }
+
 }

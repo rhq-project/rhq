@@ -111,6 +111,7 @@ public class BundleServerPluginComponent implements ServerPluginComponent, Bundl
                 PropertyDefinitionSimple prop = new PropertyDefinitionSimple(replacementVar,
                     "Needed by bundle recipe.", false, PropertySimpleType.STRING);
                 prop.setDisplayName(replacementVar);
+                prop.setDefaultValue(recipeContext.getReplacementVariableDefaultValues().get(replacementVar));
                 configDef.put(prop);
             }
         }

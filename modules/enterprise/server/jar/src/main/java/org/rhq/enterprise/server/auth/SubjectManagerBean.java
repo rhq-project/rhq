@@ -61,6 +61,7 @@ import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.authz.RoleManagerLocal;
+import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.core.CustomJaasDeploymentServiceMBean;
 import org.rhq.enterprise.server.exception.LoginException;
 import org.rhq.enterprise.server.resource.group.LdapGroupManagerLocal;
@@ -103,6 +104,10 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
     @IgnoreDependency
     private RoleManagerLocal roleManager;
 
+    @EJB
+    @IgnoreDependency
+    private RepoManagerLocal repoManager;
+
     private SessionManager sessionManager = SessionManager.getInstance();
 
     /**
@@ -123,76 +128,38 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
     }
 
     /**
-     * @see org.rhq.enterprise.server.auth.SubjectManagerLocal#findSubjectsById(Integer[],PageControl)
-     */
-    @SuppressWarnings("unchecked")
-    public PageList<Subject> findSubjectsById(Integer[] subjectIds, PageControl pc) {
-        if ((subjectIds == null) || (subjectIds.length == 0)) {
-            return new PageList<Subject>(pc);
-        }
-
-        pc.initDefaultOrderingField("s.name");
-
-        String queryName = Subject.QUERY_FIND_BY_IDS;
-        Query queryCount = PersistenceUtility.createCountQuery(entityManager, queryName);
-        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, queryName, pc);
-
-        List<Integer> subjectIdsList = Arrays.asList(subjectIds);
-        queryCount.setParameter("ids", subjectIdsList);
-        query.setParameter("ids", subjectIdsList);
-
-        long count = (Long) queryCount.getSingleResult();
-        List<Subject> subjects = query.getResultList();
-
-        if (subjects != null) {
-            // eagerly load in the members - can't use left-join due to PersistenceUtility usage; perhaps use EAGER
-            for (Subject subject : subjects) {
-                subject.getRoles().size();
-            }
-        } else {
-            subjects = new ArrayList<Subject>();
-        }
-
-        return new PageList<Subject>(subjects, (int) count, pc);
-    }
-
-    /**
      * @see org.rhq.enterprise.server.auth.SubjectManagerLocal#updateSubject(Subject, Subject)
      */
     public Subject updateSubject(Subject whoami, Subject subjectToModify) {
         // let a user change his own details
-        if (whoami.equals(subjectToModify)
-            || authorizationManager.getExplicitGlobalPermissions(whoami).contains(Permission.MANAGE_SECURITY)) {
-            if (subjectToModify.getFsystem() || (authorizationManager.isSystemSuperuser(subjectToModify))) {
-                if (!subjectToModify.getFactive()) {
-                    throw new PermissionException("You cannot disable user [" + subjectToModify.getName()
-                        + "] - it must always be active");
-                }
-            }
-        } else {
+        Set<Permission> globalPermissions = authorizationManager.getExplicitGlobalPermissions(whoami);
+        if (!whoami.equals(subjectToModify) && !globalPermissions.contains(Permission.MANAGE_SECURITY)) {
             throw new PermissionException("You [" + whoami.getName() + "] do not have permission to update user ["
-                + subjectToModify.getName() + "]");
+                + subjectToModify.getName() + "].");
+        }
+        if (authorizationManager.isSystemSuperuser(subjectToModify) && !subjectToModify.getFactive()) {
+            throw new PermissionException("You cannot disable system user [" + subjectToModify.getName()
+                + "] - it must always be active.");
         }
 
-        // Reset the roles and ldap roles according to the current settings as this method will not update them
-        // To update assinged roles see RoleManager
+        // Reset the roles, LDAP roles, and owned groups according to the current settings as this method will not
+        // update them. To update assigned roles, use the 3-param createSubject() or use RoleManagerLocal.
         Subject currentSubject = entityManager.find(Subject.class, subjectToModify.getId());
         subjectToModify.setRoles(currentSubject.getRoles());
         subjectToModify.setLdapRoles(currentSubject.getLdapRoles());
+        subjectToModify.setOwnedGroups(currentSubject.getOwnedGroups());
 
         return entityManager.merge(subjectToModify);
     }
 
-    @Override
-    public Subject createSubject(Subject whoami, Subject subjectToCreate, String password)
-        throws SubjectException, EntityExistsException {
-        // Make sure there's not an existing subject with the same name.
+    public Subject createSubject(Subject whoami, Subject subjectToCreate, String password) throws SubjectException,
+        EntityExistsException {
         if (getSubjectByName(subjectToCreate.getName()) != null) {
             throw new EntityExistsException("A user named [" + subjectToCreate.getName() + "] already exists.");
         }
 
         if (subjectToCreate.getFsystem()) {
-            throw new SubjectException("Cannot create new system subjects: " + subjectToCreate.getName());
+            throw new SubjectException("Cannot create new system users: " + subjectToCreate.getName());
         }
 
         entityManager.persist(subjectToCreate);
@@ -213,18 +180,30 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
 
         boolean subjectToModifyIsSystemSuperuser = authorizationManager.isSystemSuperuser(subjectToModify);
         if (!subjectToModify.getFactive() && subjectToModifyIsSystemSuperuser) {
-            throw new PermissionException("You cannot disable the system user [" + subjectToModify.getName()
-                + "].");
+            throw new PermissionException("You cannot disable the system user [" + subjectToModify.getName() + "].");
+        }
+
+        Subject attachedSubject = getSubjectById(subjectToModify.getId());
+        if (attachedSubject == null) {
+            throw new IllegalArgumentException("No user exists with id [" + subjectToModify.getId() + "].");
+        }
+        if (!attachedSubject.getName().equals(subjectToModify.getName())) {
+            throw new IllegalArgumentException("You cannot change a user's username.");
         }
 
         Set<Role> newRoles = subjectToModify.getRoles();
         if (newRoles != null) {
-            int[] newRoleIds = new int[newRoles.size()];
-            int i = 0;
-            for (Role role : newRoles) {
-                newRoleIds[i] = role.getId();
+            Set<Role> currentRoles = new HashSet<Role>(roleManager.findRolesBySubject(subjectToModify.getId(),
+                PageControl.getUnlimitedInstance()));
+            boolean rolesChanged = !(newRoles.containsAll(currentRoles) && currentRoles.containsAll(newRoles));
+            if (rolesChanged) {
+                int[] newRoleIds = new int[newRoles.size()];
+                int i = 0;
+                for (Role role : newRoles) {
+                    newRoleIds[i++] = role.getId();
+                }
+                roleManager.setAssignedSubjectRoles(whoami, subjectToModify.getId(), newRoleIds);
             }
-            roleManager.setAssignedSubjectRoles(whoami, subjectToModify.getId(), newRoleIds);
         }
 
         boolean ldapRolesModified = false;
@@ -237,18 +216,18 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
             subjectLdapRolesCriteria.addFilterLdapSubjectId(subjectToModify.getId());
             PageList<Role> currentLdapRoles = roleManager.findRolesByCriteria(whoami, subjectLdapRolesCriteria);
 
-            ldapRolesModified =
-                !(currentLdapRoles.containsAll(newLdapRoles) && newLdapRoles.containsAll(currentLdapRoles));
+            ldapRolesModified = !(currentLdapRoles.containsAll(newLdapRoles) && newLdapRoles
+                .containsAll(currentLdapRoles));
         }
 
         boolean isUserWithPrincipal = isUserWithPrincipal(subjectToModify.getName());
         if (ldapRolesModified) {
             if (!isSecurityManager) {
-                throw new PermissionException("You cannot change the LDAP roles assigned to [" + subjectToModify.getName()
-                    + "] - only a user with the MANAGE_SECURITY permission can do so.");
+                throw new PermissionException("You cannot change the LDAP roles assigned to ["
+                    + subjectToModify.getName() + "] - only a user with the MANAGE_SECURITY permission can do so.");
             } else if (isUserWithPrincipal) {
-                throw new PermissionException("You cannot set LDAP roles on non-LDAP user [" + subjectToModify.getName()
-                            + "].");
+                throw new PermissionException("You cannot set LDAP roles on non-LDAP user ["
+                    + subjectToModify.getName() + "].");
             }
 
             // TODO: Update LDAP roles.
@@ -276,17 +255,12 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
      * @see org.rhq.enterprise.server.auth.SubjectManagerRemote#getSubjectByName(String)
      */
     public Subject getSubjectByName(String username) {
-        Subject subject;
 
-        try {
-            Query query = entityManager.createNamedQuery(Subject.QUERY_FIND_BY_NAME);
-            query.setParameter("name", username);
-            subject = (Subject) query.getSingleResult();
-        } catch (NoResultException nre) {
-            subject = null;
-        }
+        SubjectCriteria c = new SubjectCriteria();
+        c.addFilterName(username);
+        PageList<Subject> result = findSubjectsByCriteria(getOverlord(), c);
 
-        return subject;
+        return result.isEmpty() ? null : result.get(0);
     }
 
     /**
@@ -296,7 +270,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
     public Subject createSubject(Subject whoami, Subject subject) throws SubjectException {
         // Make sure there's not an existing subject with the same name.
         if (getSubjectByName(subject.getName()) != null) {
-            throw new SubjectException("A user named [" + subject.getName() + "] already exists.");
+            throw new EntityExistsException("A user named [" + subject.getName() + "] already exists.");
         }
 
         if (subject.getFsystem()) {
@@ -305,6 +279,8 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
 
         // we are ignoring roles - anything the caller gave us is thrown out
         subject.setRoles(null);
+        subject.setLdapRoles(null);
+        subject.setOwnedGroups(null);
         Configuration configuration = subject.getUserConfiguration();
         if (configuration != null) {
             configuration = entityManager.merge(configuration);
@@ -314,24 +290,6 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
         entityManager.persist(subject);
 
         return subject;
-    }
-
-    /**
-     * @see org.rhq.enterprise.server.auth.SubjectManagerLocal#findAllSubjects(PageControl)
-     */
-    @SuppressWarnings("unchecked")
-    public PageList<Subject> findAllSubjects(PageControl pc) {
-        pc.initDefaultOrderingField("s.name");
-
-        String queryName = Subject.QUERY_FIND_ALL;
-        Query subjectQueryCount = PersistenceUtility.createCountQuery(entityManager, queryName);
-        Query subjectQuery = PersistenceUtility.createQueryWithOrderBy(entityManager, queryName, pc);
-
-        long totalCount = (Long) subjectQueryCount.getSingleResult();
-
-        List<Subject> subjects = subjectQuery.getResultList();
-
-        return new PageList<Subject>(subjects, (int) totalCount, pc);
     }
 
     /**
@@ -351,19 +309,9 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
         }
 
         // get the configuration properties and use the JAAS modules to perform the login
-        Properties config = systemManager.getSystemConfiguration();
+        Properties config = systemManager.getSystemConfiguration(getOverlord());
 
-        try {
-            UsernamePasswordHandler handler = new UsernamePasswordHandler(username, password.toCharArray());
-            LoginContext loginContext;
-            loginContext = new LoginContext(CustomJaasDeploymentServiceMBean.SECURITY_DOMAIN_NAME, handler);
-
-            loginContext.login();
-            loginContext.getSubject().getPrincipals().iterator().next();
-            loginContext.logout();
-        } catch (javax.security.auth.login.LoginException e) {
-            throw new LoginException(e.getMessage());
-        }
+        _checkAuthentication(username, password);
 
         // User is authenticated!
 
@@ -377,17 +325,6 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
             // fetch the roles
             subject.getRoles().size();
 
-            // let's see if this user was already logged in with a valid session
-            try {
-                int sessionId = sessionManager.getSessionIdFromUsername(username);
-                subject.setSessionId(sessionId);
-                //insert processing for LDAP users who have registered before and have jdbc credentials, but no principal.
-                log.trace("Processing subject '" + subject.getName() + "' for LDAP functionality.");
-                //as already logged in as regular JDBC 
-                subject = processSubjectForLdap(subject, password);
-            } catch (SessionException se) {
-                // nope, no session; continue on so we can create the session
-            }
         } else {
             // There is no subject in the database yet.
             // If LDAP authentication is enabled and we cannot find the subject,
@@ -410,9 +347,32 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
             }
         }
 
-        sessionManager.put(subject);
-
+        // make sure to return the session-activated subject
+        subject = sessionManager.put(subject);
         return subject;
+    }
+
+    public Subject checkAuthentication(String username, String password) {
+        try {
+            _checkAuthentication(username, password);
+            return getSubjectByName(username);
+        } catch (LoginException e) {
+            return null;
+        }
+    }
+
+    private void _checkAuthentication(String username, String password) throws LoginException {
+        try {
+            UsernamePasswordHandler handler = new UsernamePasswordHandler(username, password.toCharArray());
+            LoginContext loginContext;
+            loginContext = new LoginContext(CustomJaasDeploymentServiceMBean.SECURITY_DOMAIN_NAME, handler);
+
+            loginContext.login();
+            loginContext.getSubject().getPrincipals().iterator().next();
+            loginContext.logout();
+        } catch (javax.security.auth.login.LoginException e) {
+            throw new LoginException(e.getMessage());
+        }
     }
 
     /**This method is applied to Subject instances that may require LDAP auth/authz processing.
@@ -429,7 +389,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
 
             //if user has principal then bail as LDAP processing not required
             boolean userHasPrincipal = isUserWithPrincipal(subject.getName());
-            log.trace("Processing subject '" + subject.getName() + "' for LDAP check, userHasPrincipal:"
+            log.debug("Processing subject '" + subject.getName() + "' for LDAP check, userHasPrincipal:"
                 + userHasPrincipal);
 
             //if user has principal then return as non-ldap user
@@ -438,7 +398,7 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
             } else {//Start LDAP check.
 
                 //retrieve configuration properties and do LDAP check(permissions check in SubjectGWTImpl)
-                Properties config = systemManager.getSystemConfiguration();
+                Properties config = systemManager.getSystemConfiguration(getOverlord());
 
                 //determine if ldap configured.
                 boolean ldapConfigured = config.getProperty(RHQConstants.JAASProvider).equals(
@@ -446,7 +406,17 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
 
                 if (ldapConfigured) {//we can proceed with LDAP checking
                     //check that session is valid. RHQ auth has already occurred. Security check required to initiate following
-                    if (!isValidSessionId(subject.getSessionId(), subject.getName(), subject.getId())) {
+                    //spinder BZ:682755: 3/10/11: can't use isValidSessionId() as it also compares subject.id which is changing during case insensitive
+                    // and new registration. This worked before because HTTP get took longer to invalidate sessions.
+                    Subject sessionSubject = null;
+                    try {
+                        sessionSubject = sessionManager.getSubject(subject.getSessionId());
+                    } catch (SessionNotFoundException e) {
+                        throw new LoginException("User session not valid. Login to proceed.");
+                    } catch (SessionTimeoutException e) {
+                        throw new LoginException("User session not valid. Login to proceed.");
+                    }
+                    if (!subject.getName().equals(sessionSubject.getName())) {
                         throw new LoginException("User session not valid. Login to proceed.");
                     }
 
@@ -475,14 +445,14 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
                             logout(subject.getSessionId().intValue());
                             subject = login(ldapSubject.getName(), subjectPassword);
                             Integer sessionId = subject.getSessionId();
-                            log.trace("Logged in as [" + ldapSubject.getName() + "] with session id [" + sessionId
+                            log.debug("Logged in as [" + ldapSubject.getName() + "] with session id [" + sessionId
                                 + "]");
                         } else {//then this is a registration request. insert overlord registration and login
                             //we've verified that this user has valid session, requires registration and that ldap is configured.
                             Subject superuser = getOverlord();
 
                             // create the subject, but don't add a principal since LDAP will handle authentication
-                            log.trace("registering new LDAP-authenticated subject [" + subject.getName() + "]");
+                            log.debug("registering new LDAP-authenticated subject [" + subject.getName() + "]");
                             createSubject(superuser, subject);
 
                             // nuke the temporary session and establish a new
@@ -490,36 +460,21 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
                             // new subject in order to do it with his own credentials
                             logout(subject.getSessionId().intValue());
                             subject = login(subject.getName(), subjectPassword);
+                            //insert empty configuration to start
+                            Configuration newUserConfig = new Configuration();
+                            subject.setUserConfiguration(newUserConfig);
                         }
-                        //                        //either way need to refresh the WebUser
-                        //                        if ((request != null) && (request.getSession() != null)) {
-                        //                            HttpSession session = request.getSession();
-                        //                            WebUser webUser = new WebUser(subject, false);
-                        //                            session.invalidate();
-                        //                            session = request.getSession(true);
-                        //                            SessionUtils.setWebUser(session, webUser);
-                        //                            // look up the user's permissions
-                        //                            Set<Permission> all_permissions = LookupUtil.getAuthorizationManager()
-                        //                                .getExplicitGlobalPermissions(subject);
-                        //
-                        //                            Map<String, Boolean> userGlobalPermissionsMap = new HashMap<String, Boolean>();
-                        //                            for (Permission permission : all_permissions) {
-                        //                                userGlobalPermissionsMap.put(permission.toString(), Boolean.TRUE);
-                        //                            }
-                        //                            //load all session attributes
-                        //                            session.setAttribute(Constants.USER_OPERATIONS_ATTR, userGlobalPermissionsMap);
-                        //                        }
                     }
 
                     //Subject.id guaranteed to be > 0 then iii)authorization updates for ldap groups necessary
                     //BZ-580127: only do group authz check if one or both of group filter fields is set
-                    Properties options = systemManager.getSystemConfiguration();
+                    Properties options = systemManager.getSystemConfiguration(getOverlord());
                     String groupFilter = options.getProperty(RHQConstants.LDAPGroupFilter, "");
                     String groupMember = options.getProperty(RHQConstants.LDAPGroupMember, "");
                     if ((groupFilter.trim().length() > 0) || (groupMember.trim().length() > 0)) {
                         List<String> groupNames = new ArrayList<String>(ldapManager.findAvailableGroupsFor(subject
                             .getName()));
-                        log.trace("Updating ldap authorization data for user '" + subject.getName() + "'");
+                        log.debug("Updating ldap authorization data for user '" + subject.getName() + "'");
                         ldapManager.assignRolesToLdapSubject(subject.getId(), groupNames);
                     }
                 } else {//ldap not configured. Somehow authenticated for LDAP without ldap being configured. Error. Bail 
@@ -531,42 +486,23 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
     }
 
     /**
-     * @see org.rhq.enterprise.server.auth.SubjectManagerLocal#logout(Subject)
+     * @see org.rhq.enterprise.server.auth.SubjectManagerRemote#logout(Subject)
      */
     public void logout(Subject subject) {
         try {
-            int sessionId = sessionManager.getSessionIdFromUsername(subject.getName());
-            sessionManager.invalidate(sessionId);
-        } catch (SessionTimeoutException ste) {
-            // it's ok, logout can be considered successful if the user's session already timed out
-        } catch (SessionNotFoundException snfe) {
-            // it's ok, logout can be considered successful if the user's never logged in to begin with
+            // make sure the Subject is valid by pairing the name and sessionId            
+            Subject s = getSubjectByNameAndSessionId(subject.getName(), subject.getSessionId());
+            sessionManager.invalidate(s.getSessionId());
+        } catch (Exception e) {
+            // ignore invalid logout request
         }
     }
 
     /**
-     * Logs out a user.
-     *
-     * @param sessionId The sessionId for the user to log out
-     */
+      * @see org.rhq.enterprise.server.auth.SubjectManagerLocal#logout(java.lang.int)
+      * */
     public void logout(int sessionId) {
         sessionManager.invalidate(sessionId);
-    }
-
-    /**
-     * @see org.rhq.enterprise.server.auth.SubjectManagerLocal#isLoggedIn(java.lang.String)
-     */
-    public boolean isLoggedIn(String username) {
-        boolean loggedIn = false;
-
-        try {
-            sessionManager.getSessionIdFromUsername(username);
-            loggedIn = true;
-        } catch (SessionException e) {
-            // safely ignore
-        }
-
-        return loggedIn;
     }
 
     /**
@@ -595,10 +531,10 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
      */
     public void changePassword(Subject whoami, String username, String password) {
         // a user can change his/her own password, as can a user with the appropriate permission
-        if (!whoami.getName().equals(username) &&
-            !authorizationManager.hasGlobalPermission(whoami, Permission.MANAGE_SECURITY)) {
-                throw new PermissionException("You do not have permission to change the password for user [" + username
-                    + "]");
+        if (!whoami.getName().equals(username)
+            && !authorizationManager.hasGlobalPermission(whoami, Permission.MANAGE_SECURITY)) {
+            throw new PermissionException("You do not have permission to change the password for user [" + username
+                + "]");
         }
 
         changePasswordInternal(username, password);
@@ -646,17 +582,9 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
     }
 
     /**
-     * @see org.rhq.enterprise.server.auth.SubjectManagerLocal#loginUnauthenticated(String, boolean)
+     * @see org.rhq.enterprise.server.auth.SubjectManagerLocal#loginUnauthenticated(String)
      */
-    public Subject loginUnauthenticated(String username, boolean reattach) throws LoginException {
-        if (reattach) {
-            try {
-                int sessionId = sessionManager.getSessionIdFromUsername(username);
-                return sessionManager.getSubject(sessionId);
-            } catch (SessionException e) {
-                // continue, we'll need to create a session
-            }
-        }
+    public Subject loginUnauthenticated(String username) throws LoginException {
 
         Subject subject = getSubjectByName(username);
 
@@ -668,8 +596,8 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
             throw new LoginException("User account has been disabled. [" + username + "]");
         }
 
-        sessionManager.put(subject, 1000L * 60 * 2); // 2mins only
-
+        // make sure we return the Subject returned from this call, which may differ from the one passed in 
+        subject = sessionManager.put(subject, 1000L * 60 * 2); // 2mins only
         return subject;
     }
 
@@ -746,6 +674,8 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
         }
 
         alertNotificationManager.cleanseAlertNotificationBySubject(doomedSubject.getId());
+        repoManager.removeOwnershipOfSubject(doomedSubject.getId());
+
         entityManager.remove(doomedSubject);
 
         return;
@@ -844,11 +774,10 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
         return new PageList<Subject>(subjects, (int) count, pc);
     }
 
-    @SuppressWarnings("unchecked")
     public PageList<Subject> findSubjectsByCriteria(Subject subject, SubjectCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
 
-        CriteriaQueryRunner<Subject> queryRunner = new CriteriaQueryRunner(criteria, generator, entityManager);
+        CriteriaQueryRunner<Subject> queryRunner = new CriteriaQueryRunner<Subject>(criteria, generator, entityManager);
         return queryRunner.execute();
     }
 

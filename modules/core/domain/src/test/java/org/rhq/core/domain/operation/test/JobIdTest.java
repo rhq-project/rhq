@@ -22,13 +22,17 @@
   */
 package org.rhq.core.domain.operation.test;
 
+import org.rhq.core.domain.operation.ScheduleJobId;
 import org.testng.annotations.Test;
 import org.rhq.core.domain.operation.HistoryJobId;
 import org.rhq.core.domain.operation.JobId;
-import org.rhq.core.domain.operation.ScheduleJobId;
 
+ /**
+  * Test the equals() and hashCode() methods on {@link JobId}, {@link HistoryJobId}, and {@link ScheduleJobId}.
+  */
 @Test
 public class JobIdTest {
+
     public void testJobIdEquals() {
         JobId one;
         JobId two;
@@ -170,4 +174,5 @@ public class JobIdTest {
         assert !one.equals(two);
         assert one.hashCode() != two.hashCode();
     }
+
 }

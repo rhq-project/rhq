@@ -46,6 +46,7 @@ public class HibernateStatisticsStopWatch {
     }
 
     public void start() {
+        //stats.clear();
         queryExecutions = -stats.getQueryExecutionCount();
         transations = -stats.getTransactionCount();
         entityLoads = -stats.getEntityLoadCount();

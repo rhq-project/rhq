@@ -50,7 +50,7 @@ import org.rhq.core.domain.alert.notification.AlertNotificationLog;
  * @author Joseph Marques
  */
 @Entity
-@NamedQueries({
+@NamedQueries( {
     @NamedQuery(name = Alert.QUERY_FIND_BY_MEASUREMENT_DEFINITION_ID, query = "SELECT a " + "  FROM Alert AS a "
         + "  JOIN a.alertDefinition definition " + "  JOIN definition.conditions condition "
         + " WHERE condition.measurementDefinition.id = :measurementDefinitionId "
@@ -123,6 +123,10 @@ import org.rhq.core.domain.alert.notification.AlertNotificationLog;
         + "                       FROM AlertDefinition ad " //
         + "                       JOIN ad.alerts innerA " //
         + "                      WHERE ad.resource.id IN ( :resourceIds ) )"),
+    @NamedQuery(name = Alert.QUERY_DELETE_BY_RESOURCE_TEMPLATE, query = "DELETE FROM Alert alert "
+        + "WHERE alert.id IN (SELECT innerAlerts.id " + "                   FROM AlertDefinition alertDef "
+        + "                   JOIN alertDef.alerts innerAlerts "
+        + "                   WHERE alertDef.resourceType.id = :resourceTypeId)"),
     @NamedQuery(name = Alert.QUERY_DELETE_BY_RESOURCE_GROUPS, query = "" //
         + "DELETE FROM Alert alert " //
         + " WHERE alert.id IN ( SELECT innerA.id " //
@@ -217,6 +221,7 @@ public class Alert implements Serializable {
     public static final String QUERY_DELETE_ALL = "Alert.deleteByAll";
     public static final String QUERY_DELETE_BY_IDS = "Alert.deleteByIds";
     public static final String QUERY_DELETE_BY_RESOURCES = "Alert.deleteByResources";
+    public static final String QUERY_DELETE_BY_RESOURCE_TEMPLATE = "Alert.deleteByResourceType";
     public static final String QUERY_DELETE_BY_RESOURCE_GROUPS = "Alert.deleteByResourceGroups";
     public static final String QUERY_ACKNOWLEDGE_ALL = "Alert.acknowledgeByAll";
     public static final String QUERY_ACKNOWLEDGE_BY_IDS = "Alert.acknowledgeByIds";
@@ -265,8 +270,8 @@ public class Alert implements Serializable {
     @Column(name = "RECOVERY_ID")
     private Integer recoveryId;
 
-    @JoinColumn(name = "RECOVERY_ID", referencedColumnName = "ID", insertable = false, updatable = false)
-    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "RECOVERY_ID", referencedColumnName = "ID", insertable = false, updatable = false, nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     private AlertDefinition recoveryAlertDefinition;
 
     @Column(name = "WILL_RECOVER", nullable = false)

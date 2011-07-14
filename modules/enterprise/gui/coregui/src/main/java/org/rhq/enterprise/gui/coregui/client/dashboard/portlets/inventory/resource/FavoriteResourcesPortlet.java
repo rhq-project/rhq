@@ -24,16 +24,20 @@ package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.resou
 
 import java.util.Set;
 
+import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
+import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.events.FieldStateChangedEvent;
 import com.smartgwt.client.widgets.grid.events.FieldStateChangedHandler;
 
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
+import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortletUtil;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
@@ -42,25 +46,29 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchVi
 /**
  * @author Greg Hinkle
  */
-public class FavoriteResourcesPortlet extends ResourceSearchView implements Portlet {
+public class FavoriteResourcesPortlet extends ResourceSearchView implements AutoRefreshPortlet {
 
-    public static final String KEY = MSG.view_portlet_favoriteResources_title();
+    // A non-displayed, persisted identifier for the portlet
+    public static final String KEY = "FavoriteResources";
+    // A default displayed, persisted name for the portlet    
+    public static final String NAME = MSG.view_portlet_defaultName_favoriteResources();
 
     public static final String CFG_TABLE_PREFS = "tablePreferences";
 
-    private DashboardPortlet storedPortlet;
+    // set on initial configuration, the window for this portlet view.
     private PortletWindow portletWindow;
 
+    private Timer refreshTimer;
+
     public FavoriteResourcesPortlet(String locatorId) {
-        super(locatorId);
-        setOverflow(Overflow.HIDDEN);
+        super(locatorId, createInitialCriteria());
+        setOverflow(Overflow.VISIBLE);
 
         setShowHeader(false);
         setShowFooter(false);
     }
 
-    @Override
-    protected void configureTable() {
+    private static Criteria createInitialCriteria() {
         Set<Integer> favoriteIds = UserSessionManager.getUserPreferences().getFavoriteResources();
 
         Integer[] favArray = favoriteIds.toArray(new Integer[favoriteIds.size()]);
@@ -72,41 +80,72 @@ public class FavoriteResourcesPortlet extends ResourceSearchView implements Port
             criteria.addCriteria("resourceIds", favArray);
         }
 
-        refresh(criteria);
+        return criteria;
+    }
+
+    @Override
+    protected void configureTable() {
+        super.configureTable();
 
         getListGrid().addFieldStateChangedHandler(new FieldStateChangedHandler() {
             public void onFieldStateChanged(FieldStateChangedEvent fieldStateChangedEvent) {
                 String state = getListGrid().getViewState();
 
-                storedPortlet.getConfiguration().put(new PropertySimple(CFG_TABLE_PREFS, state));
+                portletWindow.getStoredPortlet().getConfiguration().put(new PropertySimple(CFG_TABLE_PREFS, state));
                 portletWindow.save();
             }
         });
 
-        super.configureTable();
+        DashboardPortlet storedPortlet = portletWindow.getStoredPortlet();
+        if ((null != storedPortlet && null != storedPortlet.getConfiguration())) {
+
+            PropertySimple tablePrefs = storedPortlet.getConfiguration().getSimple(CFG_TABLE_PREFS);
+            ListGrid listGrid = getListGrid();
+            if (null != tablePrefs && null != listGrid) {
+                String state = tablePrefs.getStringValue();
+                listGrid.setViewState(state);
+            }
+        }
     }
 
     public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
-        this.portletWindow = portletWindow;
-        this.storedPortlet = storedPortlet;
-
-        if (storedPortlet.getConfiguration().getSimple(CFG_TABLE_PREFS) != null) {
-            String state = storedPortlet.getConfiguration().getSimple(CFG_TABLE_PREFS).getStringValue();
-            getListGrid().setViewState(state);
+        if (null == this.portletWindow && null != portletWindow) {
+            this.portletWindow = portletWindow;
         }
-
     }
 
     public Canvas getHelpCanvas() {
-        return new HTMLFlow(MSG.view_portlet_favoriteResources_msg());
+        return new HTMLFlow(MSG.view_portlet_help_favoriteResources());
     }
 
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
         public final Portlet getInstance(String locatorId) {
-            //return GWT.create(FavoriteResourcesPortlet.class);
+
             return new FavoriteResourcesPortlet(locatorId);
+        }
+    }
+
+    public void startRefreshCycle() {
+        refreshTimer = AutoRefreshPortletUtil.startRefreshCycle(this, this, refreshTimer);
+    }
+
+    @Override
+    protected void onDestroy() {
+        AutoRefreshPortletUtil.onDestroy(this, refreshTimer);
+
+        super.onDestroy();
+    }
+
+    public boolean isRefreshing() {
+        return false;
+    }
+
+    @Override
+    public void refresh() {
+        if (!isRefreshing()) {
+            super.refresh();
         }
     }
 

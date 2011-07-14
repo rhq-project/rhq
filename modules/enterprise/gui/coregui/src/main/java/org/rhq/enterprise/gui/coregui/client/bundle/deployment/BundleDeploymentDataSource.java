@@ -46,7 +46,20 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 /**
  * @author Greg Hinkle
  */
-public class BundleDeploymentDataSource extends RPCDataSource<BundleDeployment> {
+public class BundleDeploymentDataSource extends RPCDataSource<BundleDeployment, BundleDeploymentCriteria> {
+
+    public static final String FIELD_ID = "id";
+    public static final String FIELD_NAME = "name";
+    public static final String FIELD_DEPLOY_DIR = "deployDir";
+    public static final String FIELD_DESCRIPTION = "description";
+    public static final String FIELD_DEPLOY_TIME = "ctime";
+    public static final String FIELD_ERROR_MESSAGE = "errorMessage";
+    public static final String FIELD_CONFIG = "configuration";
+    public static final String FIELD_STATUS = "status";
+    public static final String FIELD_DEPLOYER = "deployer"; // a user name
+    public static final String FIELD_BUNDLE_VERSION_VERSION = "bundleVersionVersion";
+    public static final String FIELD_BUNDLE_VERSION_ID = "bundleVersionId";
+    public static final String FIELD_BUNDLE_ID = "bundleId";
 
     private BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService();
 
@@ -60,40 +73,57 @@ public class BundleDeploymentDataSource extends RPCDataSource<BundleDeployment> 
     protected List<DataSourceField> addDataSourceFields() {
         List<DataSourceField> fields = super.addDataSourceFields();
 
-        DataSourceIntegerField id = new DataSourceIntegerField("id", MSG.common_title_id());
+        DataSourceIntegerField id = new DataSourceIntegerField(FIELD_ID, MSG.common_title_id());
         id.setPrimaryKey(true);
         fields.add(id);
 
-        DataSourceTextField name = new DataSourceTextField("name", MSG.view_bundle_deploy_name());
+        DataSourceTextField name = new DataSourceTextField(FIELD_NAME, MSG.view_bundle_deploy_name());
         fields.add(name);
 
-        DataSourceTextField bundleVersion = new DataSourceTextField("bundleVersionVersion", MSG
+        DataSourceTextField bundleVersion = new DataSourceTextField(FIELD_BUNDLE_VERSION_VERSION, MSG
             .view_bundle_bundleVersion());
         fields.add(bundleVersion);
 
-        DataSourceTextField description = new DataSourceTextField("description", MSG.common_title_description());
+        DataSourceTextField description = new DataSourceTextField(FIELD_DESCRIPTION, MSG.common_title_description());
         fields.add(description);
 
-        DataSourceTextField status = new DataSourceTextField("status", MSG.common_title_status());
+        DataSourceTextField status = new DataSourceTextField(FIELD_STATUS, MSG.common_title_status());
         fields.add(status);
 
-        DataSourceDateTimeField created = new DataSourceDateTimeField("deploymentTime", MSG.view_bundle_deploy_time());
+        DataSourceDateTimeField created = new DataSourceDateTimeField(FIELD_DEPLOY_TIME, MSG.view_bundle_deploy_time());
         fields.add(created);
 
         return fields;
     }
 
     @Override
-    protected void executeFetch(final DSRequest request, final DSResponse response) {
+    protected void executeFetch(final DSRequest request, final DSResponse response,
+        final BundleDeploymentCriteria criteria) {
+        bundleService.findBundleDeploymentsByCriteria(criteria, new AsyncCallback<PageList<BundleDeployment>>() {
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError(MSG.view_bundle_deploy_loadDeployFailure(), caught);
+            }
+
+            public void onSuccess(PageList<BundleDeployment> result) {
+                response.setData(buildRecords(result));
+                processResponse(request.getRequestId(), response);
+            }
+        });
+
+    }
+
+    @Override
+    protected BundleDeploymentCriteria getFetchCriteria(final DSRequest request) {
         BundleDeploymentCriteria criteria = new BundleDeploymentCriteria();
         criteria.fetchBundleVersion(true);
 
-        if (request.getCriteria().getValues().containsKey("bundleId")) {
-            criteria.addFilterBundleId(Integer.parseInt(request.getCriteria().getAttribute("bundleId")));
+        if (request.getCriteria().getValues().containsKey(FIELD_BUNDLE_ID)) {
+            criteria.addFilterBundleId(Integer.parseInt(request.getCriteria().getAttribute(FIELD_BUNDLE_ID)));
         }
 
-        if (request.getCriteria().getValues().containsKey("bundleVersionId")) {
-            criteria.addFilterBundleVersionId(Integer.parseInt(request.getCriteria().getAttribute("bundleVersionId")));
+        if (request.getCriteria().getValues().containsKey(FIELD_BUNDLE_VERSION_ID)) {
+            criteria.addFilterBundleVersionId(Integer.parseInt(request.getCriteria().getAttribute(
+                FIELD_BUNDLE_VERSION_ID)));
         }
 
         if (request.getCriteria().getValues().containsKey("bundleDestinationId")) {
@@ -112,23 +142,21 @@ public class BundleDeploymentDataSource extends RPCDataSource<BundleDeployment> 
         if (request.getCriteria().getValues().get("tagName") != null) {
             criteria.addFilterTagName((String) request.getCriteria().getValues().get("tagName"));
         }
+        return criteria;
+    }
 
-        bundleService.findBundleDeploymentsByCriteria(criteria, new AsyncCallback<PageList<BundleDeployment>>() {
-            public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError(MSG.view_bundle_deploy_loadDeployFailure(), caught);
-            }
+    @Override
+    protected String getSortFieldForColumn(String columnName) {
+        if (FIELD_BUNDLE_VERSION_VERSION.equals(columnName)) {
+            return "bundleVersion.version";
+        }
 
-            public void onSuccess(PageList<BundleDeployment> result) {
-                response.setData(buildRecords(result));
-                processResponse(request.getRequestId(), response);
-            }
-        });
-
+        return super.getSortFieldForColumn(columnName);
     }
 
     @Override
     public BundleDeployment copyValues(Record from) {
-        return null; // TODO: Implement this method.
+        return (BundleDeployment) from.getAttributeAsObject("object");
     }
 
     @Override
@@ -136,23 +164,26 @@ public class BundleDeploymentDataSource extends RPCDataSource<BundleDeployment> 
 
         ListGridRecord record = new ListGridRecord();
 
-        record.setAttribute("id", from.getId());
-        record.setAttribute("name", from.getName());
-        record.setAttribute("deployDir", from.getDestination().getDeployDir());
-        record.setAttribute("description", from.getDescription());
-        record.setAttribute("deploymentTime", new Date(from.getCtime()));
-        record.setAttribute("configuration", from.getConfiguration());
-        record.setAttribute("status", from.getStatus().name());
-        record.setAttribute("deployer", from.getSubjectName());
+        record.setAttribute(FIELD_ID, from.getId());
+        record.setAttribute(FIELD_NAME, from.getName());
+        record.setAttribute(FIELD_DEPLOY_DIR, from.getDestination().getDeployDir());
+        record.setAttribute(FIELD_DESCRIPTION, from.getDescription());
+        record.setAttribute(FIELD_ERROR_MESSAGE, from.getErrorMessage());
+        record.setAttribute(FIELD_DEPLOY_TIME, new Date(from.getCtime()));
+        record.setAttribute(FIELD_CONFIG, from.getConfiguration());
+        record.setAttribute(FIELD_STATUS, from.getStatus().name());
+        record.setAttribute(FIELD_DEPLOYER, from.getSubjectName());
 
         if (from.getBundleVersion() != null) {
-            record.setAttribute("bundleVersionVersion", from.getBundleVersion().getVersion());
-            record.setAttribute("bundleVersionId", from.getBundleVersion().getId());
+            record.setAttribute(FIELD_BUNDLE_VERSION_VERSION, from.getBundleVersion().getVersion());
+            record.setAttribute(FIELD_BUNDLE_VERSION_ID, from.getBundleVersion().getId());
 
             if (from.getBundleVersion().getBundle() != null) {
-                record.setAttribute("bundleId", from.getBundleVersion().getBundle().getId());
+                record.setAttribute(FIELD_BUNDLE_ID, from.getBundleVersion().getBundle().getId());
             }
         }
+
+        record.setAttribute("object", from);
 
         return record;
     }

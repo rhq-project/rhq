@@ -18,7 +18,9 @@ package org.rhq.enterprise.gui.coregui.client.resource;
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
@@ -27,16 +29,22 @@ import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceImageField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
+import com.smartgwt.client.rpc.RPCResponse;
+import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
-import org.rhq.core.domain.resource.composite.DisambiguationReport;
+import org.rhq.core.domain.criteria.Criteria;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ProblemResourceComposite;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.problems.ProblemResourcesPortlet;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.resource.disambiguation.ReportDecorator;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.TypesLoadedCallback;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 
 /**
@@ -44,13 +52,50 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
  * translating the deserialized content into specific record entries for display
  * 
  * @author Simeon Pinder
+ * @author Jay Shaughnessy
  */
-public class ProblemResourcesDataSource extends RPCDataSource<DisambiguationReport<ProblemResourceComposite>> {
+public class ProblemResourcesDataSource extends RPCDataSource<ProblemResourceComposite, Criteria> {
 
-    public static final String FIELD_RESOURCE = "resource";
-    public static final String FIELD_LOCATION = "location";
-    public static final String FIELD_ALERTS = "alerts";
-    public static final String FIELD_AVAILABLE = "available";
+    public enum Field {
+
+        ALERTS("numAlerts", MSG.dataSource_problemResources_field_alerts()),
+
+        AVAILABILITY("availabilityType", MSG.common_title_availability()),
+
+        RESOURCE("resource", MSG.common_title_resource());
+
+        /**
+         * Corresponds to a property name of Resource (e.g. resourceType.name).
+         */
+        private String propertyName;
+
+        /**
+         * The table header for the field or property (e.g. Type).
+         */
+        private String title;
+
+        private Field(String propertyName, String title) {
+            this.propertyName = propertyName;
+            this.title = title;
+        }
+
+        public String propertyName() {
+            return propertyName;
+        }
+
+        public String title() {
+            return title;
+        }
+
+        public ListGridField getListGridField() {
+            return new ListGridField(propertyName, title);
+        }
+
+        public ListGridField getListGridField(int width) {
+            return new ListGridField(propertyName, title, width);
+        }
+
+    }
 
     private Portlet portlet = null;
     private long oldestDate = -1;
@@ -73,24 +118,22 @@ public class ProblemResourcesDataSource extends RPCDataSource<DisambiguationRepo
     protected List<DataSourceField> addDataSourceFields() {
         List<DataSourceField> fields = super.addDataSourceFields();
 
-        DataSourceTextField resourceField = new DataSourceTextField(FIELD_RESOURCE, MSG
-            .dataSource_problemResources_field_resource());
-        resourceField.setPrimaryKey(true);
-        fields.add(resourceField);
-
-        DataSourceTextField locationField = new DataSourceTextField(FIELD_LOCATION, MSG
-            .dataSource_problemResources_field_location());
-        fields.add(locationField);
-
-        DataSourceTextField alertsField = new DataSourceTextField(FIELD_ALERTS, MSG
-            .dataSource_problemResources_field_alerts());
+        DataSourceTextField alertsField = new DataSourceTextField(Field.ALERTS.propertyName, Field.ALERTS.title());
         fields.add(alertsField);
 
-        DataSourceImageField availabilityField = new DataSourceImageField(FIELD_AVAILABLE, MSG
-            .dataSource_problemResources_field_available());
+        DataSourceImageField availabilityField = new DataSourceImageField(Field.AVAILABILITY.propertyName,
+            Field.AVAILABILITY.title(), 20);
+        availabilityField.setCanEdit(false);
         fields.add(availabilityField);
 
         return fields;
+    }
+
+    @Override
+    protected Criteria getFetchCriteria(DSRequest request) {
+        // we don't use criteria fetch for this datasource, just return null
+
+        return null;
     }
 
     /** Fetch the ProblemResource data, and populate the response object appropriately.
@@ -98,7 +141,7 @@ public class ProblemResourcesDataSource extends RPCDataSource<DisambiguationRepo
      * @param request incoming request
      * @param response outgoing response
      */
-    public void executeFetch(final DSRequest request, final DSResponse response) {
+    public void executeFetch(final DSRequest request, final DSResponse response, final Criteria unused) {
 
         long ctime = -1;
         int maxItems = -1;
@@ -119,78 +162,84 @@ public class ProblemResourcesDataSource extends RPCDataSource<DisambiguationRepo
         }
 
         GWTServiceLookup.getResourceService().findProblemResources(ctime, maxItems,
-            new AsyncCallback<List<DisambiguationReport<ProblemResourceComposite>>>() {
+            new AsyncCallback<PageList<ProblemResourceComposite>>() {
 
                 public void onFailure(Throwable throwable) {
                     CoreGUI.getErrorHandler().handleError(MSG.dataSource_problemResources_error_fetchFailure(),
                         throwable);
+                    response.setStatus(RPCResponse.STATUS_FAILURE);
+                    processResponse(request.getRequestId(), response);
                 }
 
-                public void onSuccess(List<DisambiguationReport<ProblemResourceComposite>> problemResourcesList) {
-
-                    //translate DisambiguationReport into dataset entries
-                    response.setData(buildList(problemResourcesList));
-                    //entry count
-                    if (null != problemResourcesList) {
-                        response.setTotalRows(problemResourcesList.size());
-                    } else {
-                        response.setTotalRows(0);
-                    }
-                    //pass off for processing
-                    processResponse(request.getRequestId(), response);
+                public void onSuccess(PageList<ProblemResourceComposite> result) {
+                    dataRetrieved(result, response, request);
                 }
             });
     }
 
-    /** Translates the DisambiguationReport of ProblemResourceComposites into specific
-     *  and ordered record values.
-     * 
-     * @param list DisambiguationReport of entries.
-     * @return Record[] ordered record entries.
-     */
-    protected Record[] buildList(List<DisambiguationReport<ProblemResourceComposite>> list) {
-
-        ListGridRecord[] dataValues = null;
-        if (list != null) {
-            dataValues = new ListGridRecord[list.size()];
-            int indx = 0;
-
-            for (DisambiguationReport<ProblemResourceComposite> report : list) {
-                ListGridRecord record = new ListGridRecord();
-                //disambiguated Resource name, decorated with html anchors to problem resources 
-                record.setAttribute(FIELD_RESOURCE, ReportDecorator.decorateResourceName(
-                    ReportDecorator.GWT_RESOURCE_URL, report.getResourceType(), report.getOriginal().getResourceName(),
-                    report.getOriginal().getResourceId(), true));
-                //disambiguated resource lineage, decorated with html anchors
-                record.setAttribute(FIELD_LOCATION, ReportDecorator.decorateResourceLineage(report.getParents(), true));
-                //alert cnt.
-                record.setAttribute(FIELD_ALERTS, report.getOriginal().getNumAlerts());
-                //populate availability icon
-                record.setAttribute(FIELD_AVAILABLE, ImageManager.getAvailabilityIconFromAvailType(report.getOriginal()
-                    .getAvailabilityType()));
-
-                dataValues[indx++] = record;
-            }
+    protected void dataRetrieved(final PageList<ProblemResourceComposite> result, final DSResponse response,
+        final DSRequest request) {
+        HashSet<Integer> typesSet = new HashSet<Integer>();
+        HashSet<String> ancestries = new HashSet<String>();
+        for (ProblemResourceComposite resourceComposite : result) {
+            typesSet.add(resourceComposite.getResourceTypeId());
+            ancestries.add(resourceComposite.getAncestry());
         }
-        return dataValues;
+
+        // In addition to the types of the result resources, get the types of their ancestry
+        // NOTE: this may be too labor intensive in general, but since this datasource is a singleton I couldn't
+        //       make it easily optional.
+        typesSet.addAll(AncestryUtil.getAncestryTypeIds(ancestries));
+
+        ResourceTypeRepository typeRepo = ResourceTypeRepository.Cache.getInstance();
+        typeRepo.getResourceTypes(typesSet.toArray(new Integer[typesSet.size()]), new TypesLoadedCallback() {
+            @Override
+            public void onTypesLoaded(Map<Integer, ResourceType> types) {
+                // Smartgwt has issues storing a Map as a ListGridRecord attribute. Wrap it in a pojo.                
+                AncestryUtil.MapWrapper typesWrapper = new AncestryUtil.MapWrapper(types);
+
+                Record[] records = buildRecords(result);
+                for (Record record : records) {
+                    // To avoid a lot of unnecessary String construction, be lazy about building ancestry hover text.
+                    // Store the types map off the records so we can build a detailed hover string as needed.                      
+                    record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY_TYPES, typesWrapper);
+
+                    // Build the decoded ancestry Strings now for display
+                    record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY_VALUE, AncestryUtil.getAncestryValue(record));
+                }
+                response.setData(records);
+                // for paging to work we have to specify size of full result set, but if a limit has been set,
+                // respect the limit
+                int resultSize = result.getTotalSize();
+                if (maximumProblemResourcesToDisplay > 0 && maximumProblemResourcesToDisplay < resultSize) {
+                    resultSize = maximumProblemResourcesToDisplay;
+                }
+                response.setTotalRows(resultSize);
+                processResponse(request.getRequestId(), response);
+            }
+        });
     }
 
     @Override
-    public ListGridRecord copyValues(DisambiguationReport<ProblemResourceComposite> from) {
+    public ListGridRecord copyValues(ProblemResourceComposite from) {
         ListGridRecord record = new ListGridRecord();
-        record.setAttribute(FIELD_RESOURCE, ReportDecorator.decorateResourceName(ReportDecorator.GWT_RESOURCE_URL, from
-            .getResourceType(), from.getOriginal().getResourceName(), from.getOriginal().getResourceId(), true));
-        record.setAttribute(FIELD_LOCATION, ReportDecorator.decorateResourceLineage(from.getParents(), true));
-        record.setAttribute(FIELD_ALERTS, from.getOriginal().getNumAlerts());
-        record.setAttribute(FIELD_AVAILABLE, ImageManager.getAvailabilityIconFromAvailType(from.getOriginal()
+        record.setAttribute("id", from.getResourceId());
+        record.setAttribute(Field.ALERTS.propertyName, from.getNumAlerts());
+        record.setAttribute(Field.AVAILABILITY.propertyName, ImageManager.getAvailabilityIconFromAvailType(from
             .getAvailabilityType()));
+        record.setAttribute(Field.RESOURCE.propertyName, from.getResourceName());
+
+        // for ancestry handling
+        record.setAttribute(AncestryUtil.RESOURCE_NAME, from.getResourceName());
+        record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY, from.getAncestry());
+        record.setAttribute(AncestryUtil.RESOURCE_TYPE_ID, from.getResourceTypeId());
 
         record.setAttribute("entity", from);
         return record;
     }
 
     @Override
-    public DisambiguationReport<ProblemResourceComposite> copyValues(Record from) {
+    public ProblemResourceComposite copyValues(Record from) {
         throw new UnsupportedOperationException("ProblemResource data is read only");
     }
 

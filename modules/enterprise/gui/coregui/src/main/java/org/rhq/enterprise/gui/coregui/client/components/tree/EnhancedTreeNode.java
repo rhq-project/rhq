@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2010 Red Hat, Inc.
+ * Copyright (C) 2010-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,12 +20,11 @@ package org.rhq.enterprise.gui.coregui.client.components.tree;
 
 import com.smartgwt.client.widgets.tree.TreeNode;
 
-import org.rhq.core.domain.util.StringUtils;
-
 /**
  * @author Ian Springer
  */
 public class EnhancedTreeNode extends TreeNode {
+
     public EnhancedTreeNode() {
         super();
     }
@@ -33,14 +32,14 @@ public class EnhancedTreeNode extends TreeNode {
     public EnhancedTreeNode(String name) {
         super(name);
         if (name != null) {
-            setTitle(StringUtils.deCamelCase(name));
+            setTitle(name);
         }
     }
 
     public EnhancedTreeNode(String name, TreeNode... children) {
         super(name, children);
         if (name != null) {
-            setTitle(StringUtils.deCamelCase(name));
+            setTitle(name);
         }
     }
 
@@ -49,7 +48,7 @@ public class EnhancedTreeNode extends TreeNode {
         if (!(null == title || "".equals(title.trim()))) {
             setTitle(title);
         } else if (name != null) {
-            setTitle(StringUtils.deCamelCase(name));
+            setTitle(name);
         }
     }
 
@@ -57,7 +56,7 @@ public class EnhancedTreeNode extends TreeNode {
     public void setName(String name) {
         super.setName(name);
         if (name != null && getTitle() == null) {
-            setTitle(StringUtils.deCamelCase(name));
+            super.setTitle(name);
         }
     }
 
@@ -67,6 +66,15 @@ public class EnhancedTreeNode extends TreeNode {
 
     public String getParentID() {
         return getAttribute(Attributes.PARENT_ID);
+    }
+
+    public boolean isFolderNode() {
+        Boolean isFolder = getAttributeAsBoolean(Attributes.IS_FOLDER);
+        if (isFolder == null) {
+            Object children = getAttributeAsBoolean(Attributes.CHILDREN);
+            isFolder = Boolean.valueOf(children != null);
+        }
+        return isFolder.booleanValue();
     }
 
     @Override
@@ -97,8 +105,11 @@ public class EnhancedTreeNode extends TreeNode {
         public static final String PARENT_ID = "parentId";
         public static final String NAME = "name";
         public static final String DESCRIPTION = "description";
+        public static final String IS_FOLDER = "isFolder";
+        public static final String CHILDREN = "children";
 
         private Attributes() {
         }
     }
+
 }

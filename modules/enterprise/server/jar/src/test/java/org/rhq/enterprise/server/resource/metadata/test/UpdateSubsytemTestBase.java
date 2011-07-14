@@ -39,7 +39,7 @@ import javax.xml.validation.SchemaFactory;
 
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeTest;
 
 import org.rhq.core.clientapi.agent.measurement.MeasurementAgentService;
@@ -48,7 +48,6 @@ import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
-import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDataRequest;
 import org.rhq.core.domain.measurement.ResourceMeasurementScheduleRequest;
@@ -63,6 +62,7 @@ import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.metadata.ResourceMetadataManagerLocal;
+import org.rhq.enterprise.server.resource.metadata.PluginManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TestServerCommunicationsService;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -83,14 +83,14 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
     protected static final String AGENT_NAME = "-dummy agent-";
     protected static final String COMMON_PATH_PREFIX = "./test/metadata/";
 
-    protected static ResourceMetadataManagerLocal metadataManager;
+    protected static PluginManagerLocal pluginMgr;
     protected static ResourceTypeManagerLocal resourceTypeManager;
     protected static ResourceManagerLocal resourceManager;
 
-    @BeforeSuite
+    @BeforeMethod
     protected void init() {
         try {
-            metadataManager = LookupUtil.getResourceMetadataManager();
+            pluginMgr = LookupUtil.getPluginManager();
             resourceTypeManager = LookupUtil.getResourceTypeManager();
             resourceManager = LookupUtil.getResourceManager();
         } catch (Throwable t) {
@@ -113,14 +113,15 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
     public void afterClass() throws Exception {
         unprepareForTestAgents();
         unprepareScheduler();
-    }
-
-    @BeforeTest
-    public void beforeTest() throws Exception {
-        startTest();
-        // cleanup anything left over from a previous, interrupted run.
         cleanupTest();
     }
+
+//    @BeforeTest
+//    public void beforeTest() throws Exception {
+////        startTest(); Done in super.@BeforeMethod already ??
+//        // cleanup anything left over from a previous, interrupted run.
+//        cleanupTest();
+//    }
 
     protected ResourceType getResourceType(String typeName) {
         return getResourceType(typeName, PLUGIN_NAME);
@@ -193,8 +194,14 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
         } else {
             testPlugin.setVersion(descriptor.getVersion());
         }
-        metadataManager
-            .registerPlugin(LookupUtil.getSubjectManager().getOverlord(), testPlugin, descriptor, null, true);
+        try {
+            pluginMgr.registerPlugin(LookupUtil.getSubjectManager().getOverlord(), testPlugin, descriptor, null,
+                    true);
+        } catch (Throwable t) {
+            t.printStackTrace();
+            throw new RuntimeException(t);
+        }
+
     }
 
     protected void registerPlugin(String pathToDescriptor) throws Exception {

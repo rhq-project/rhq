@@ -29,13 +29,14 @@ import org.rhq.enterprise.gui.coregui.client.components.upload.PackageVersionFil
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
 
 /**
  * @author Jay Shaughnessy
  */
 public class ResourceFactoryPackageStep extends AbstractWizardStep {
 
-    private PackageVersionFileUploadForm form;
+    private PackageVersionFileUploadForm uploadForm;
     private ResourceFactoryCreateWizard wizard;
     private boolean isUploadComplete = false;
     private int packageVersionId;
@@ -44,34 +45,40 @@ public class ResourceFactoryPackageStep extends AbstractWizardStep {
         this.wizard = wizard;
     }
 
-    public Canvas getCanvas() {
-        if (null == form) {
+    public Canvas getCanvas(Locatable parent) {
+        if (null == uploadForm) {
 
-            form = new PackageVersionFileUploadForm("ResFactPackageStep", wizard.getNewResourcePackageType().getId(),
-                wizard.getChildType().getName(), wizard.getNewResourceVersion(), wizard.getNewResourceArchitectureId(),
-                true, null);
-            form.setPadding(20);
-            form.addFormHandler(new DynamicFormHandler() {
+            if (parent != null) {
+                uploadForm = new PackageVersionFileUploadForm(parent.extendLocatorId("ResFactPackageStep"), wizard
+                    .getNewResourcePackageType().getId(), wizard.getChildType().getName(), wizard
+                    .getNewResourceVersion(), wizard.getNewResourceArchitectureId(), null, true, true, null);
+            } else {
+                uploadForm = new PackageVersionFileUploadForm("ResFactPackageStep", wizard.getNewResourcePackageType()
+                    .getId(), wizard.getChildType().getName(), wizard.getNewResourceVersion(), wizard
+                    .getNewResourceArchitectureId(), null, true, true, null);
+            }
+            uploadForm.setPadding(20);
+            uploadForm.addFormHandler(new DynamicFormHandler() {
                 public void onSubmitComplete(DynamicFormSubmitCompleteEvent event) {
                     processUpload();
                 }
             });
-            form.addFormSubmitFailedHandler(new FormSubmitFailedHandler() {
+            uploadForm.addFormSubmitFailedHandler(new FormSubmitFailedHandler() {
                 public void onFormSubmitFailed(FormSubmitFailedEvent event) {
                     return;
                 }
             });
         }
 
-        return form;
+        return uploadForm;
     }
 
     private void processUpload() {
-        if (Boolean.TRUE.equals(form.getUploadResult())) {
+        if (Boolean.TRUE.equals(uploadForm.getUploadResult())) {
             isUploadComplete = true;
-            this.wizard.setNewResourcePackageVersionId(form.getPackageVersionId());
+            this.wizard.setNewResourcePackageVersionId(uploadForm.getPackageVersionId());
         } else {
-            String errorMessage = form.getUploadError();
+            String errorMessage = uploadForm.getUploadError();
             handleUploadError(errorMessage, true);
         }
     }
@@ -79,15 +86,15 @@ public class ResourceFactoryPackageStep extends AbstractWizardStep {
     public boolean nextPage() {
         wizard.getView().hideMessage();
 
-        if (form.isUploadInProgress()) {
+        if (uploadForm.isUploadInProgress()) {
             handleUploadError(MSG.widget_resourceFactoryWizard_uploadInProgress(), false);
             return false;
         }
 
         if (!isUploadComplete) {
-            form.submitForm();
+            uploadForm.submitForm();
             // on certain errors the form may never be submitted, report these errors outside submit handlers
-            handleUploadError(form.getUploadError(), false);
+            handleUploadError(uploadForm.getUploadError(), false);
             return false;
         }
 

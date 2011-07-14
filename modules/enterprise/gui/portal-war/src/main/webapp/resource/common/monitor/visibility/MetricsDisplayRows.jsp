@@ -29,31 +29,31 @@
              var="MODE_MON_CHART_MMSR"/>
 
 <hq:constant
-      classname="org.rhq.enterprise.server.measurement.uibean.MetricDisplayConstants"
+      classname="org.rhq.core.domain.measurement.ui.MetricDisplayConstants"
       symbol="MAX_KEY"
       var="max"/>
 <hq:constant
-      classname="org.rhq.enterprise.server.measurement.uibean.MetricDisplayConstants"
+      classname="org.rhq.core.domain.measurement.ui.MetricDisplayConstants"
       symbol="MIN_KEY"
       var="min"/>
 <hq:constant
-      classname="org.rhq.enterprise.server.measurement.uibean.MetricDisplayConstants"
+      classname="org.rhq.core.domain.measurement.ui.MetricDisplayConstants"
       symbol="AVERAGE_KEY"
       var="average"/>
 <hq:constant
-      classname="org.rhq.enterprise.server.measurement.uibean.MetricDisplayConstants"
+      classname="org.rhq.core.domain.measurement.ui.MetricDisplayConstants"
       symbol="LAST_KEY"
       var="last"/>
 <hq:constant
-      classname="org.rhq.enterprise.server.measurement.uibean.MetricDisplayConstants"
+      classname="org.rhq.core.domain.measurement.ui.MetricDisplayConstants"
       symbol="BASELINE_KEY"
       var="baseline"/>
 <hq:constant
-      classname="org.rhq.enterprise.server.measurement.uibean.MetricDisplayConstants"
+      classname="org.rhq.core.domain.measurement.ui.MetricDisplayConstants"
       symbol="HIGH_RANGE_KEY"
       var="high"/>
 <hq:constant
-      classname="org.rhq.enterprise.server.measurement.uibean.MetricDisplayConstants"
+      classname="org.rhq.core.domain.measurement.ui.MetricDisplayConstants"
       symbol="LOW_RANGE_KEY"
       var="low"/>
 

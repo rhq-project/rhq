@@ -25,17 +25,25 @@ package org.rhq.enterprise.gui.coregui.client.bundle.destination;
 import java.util.HashMap;
 
 import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.types.ListGridFieldType;
+import com.smartgwt.client.widgets.events.DoubleClickEvent;
+import com.smartgwt.client.widgets.events.DoubleClickHandler;
 import com.smartgwt.client.widgets.grid.CellFormatter;
+import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.bundle.BundleDeploymentStatus;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
+import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
+import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 
 /**
  * @author Greg Hinkle
  */
-public class BundleDestinationListView extends Table {
+public class BundleDestinationListView extends Table<BundleDestinationDataSource> {
 
     public BundleDestinationListView(String locatorId) {
         this(locatorId, null);
@@ -49,32 +57,91 @@ public class BundleDestinationListView extends Table {
 
     @Override
     protected void configureTable() {
-        getListGrid().getField("id").setWidth(45);
-        getListGrid().getField("name").setWidth("20%");
-        getListGrid().getField("name").setCellFormatter(new CellFormatter() {
-            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                return "<a href=\"#Bundles/Bundles/" + listGridRecord.getAttribute("bundleId") + "/destinations/"
-                    + listGridRecord.getAttribute("id") + "\">" + o + "</a>";
+        ListGridField idField = new ListGridField(BundleDestinationDataSource.FIELD_ID, MSG.common_title_id());
+        ListGridField nameField = new ListGridField(BundleDestinationDataSource.FIELD_NAME, MSG.common_title_name());
+        ListGridField descriptionField = new ListGridField(BundleDestinationDataSource.FIELD_DESCRIPTION, MSG
+            .common_title_description());
+        ListGridField bundleNameField = new ListGridField(BundleDestinationDataSource.FIELD_BUNDLE_NAME, MSG
+            .view_bundle_bundle());
+        ListGridField groupNameField = new ListGridField(BundleDestinationDataSource.FIELD_GROUP_NAME, MSG
+            .view_bundle_dest_group());
+        ListGridField baseDirNameField = new ListGridField(BundleDestinationDataSource.FIELD_BASE_DIR_NAME, MSG
+            .view_bundle_dest_baseDirName());
+        ListGridField deployDirField = new ListGridField(BundleDestinationDataSource.FIELD_DEPLOY_DIR, MSG
+            .view_bundle_dest_deployDir());
+        ListGridField latestDeploymentVersionField = new ListGridField(
+            BundleDestinationDataSource.FIELD_LATEST_DEPLOY_VERSION, MSG.view_bundle_dest_lastDeployedVersion());
+        ListGridField latestDeploymentDateField = new ListGridField(
+            BundleDestinationDataSource.FIELD_LATEST_DEPLOY_DATE, MSG.view_bundle_dest_lastDeploymentDate());
+        ListGridField latestDeploymentStatusField = new ListGridField(
+            BundleDestinationDataSource.FIELD_LATEST_DEPLOY_STATUS, MSG.view_bundle_dest_lastDeploymentStatus());
+
+        latestDeploymentDateField.setType(ListGridFieldType.DATE);
+        TimestampCellFormatter.prepareDateField(latestDeploymentDateField);
+
+        nameField.setCellFormatter(new CellFormatter() {
+            public String format(Object value, ListGridRecord listGridRecord, int i, int i1) {
+                Integer bundleId = listGridRecord.getAttributeAsInt(BundleDestinationDataSource.FIELD_BUNDLE_ID);
+                Integer bundleDestId = listGridRecord.getAttributeAsInt(BundleDestinationDataSource.FIELD_ID);
+                return "<a href=\"" + LinkManager.getBundleDestinationLink(bundleId, bundleDestId) + "\">"
+                    + StringUtility.escapeHtml(value.toString()) + "</a>";
             }
         });
 
-        getListGrid().getField("description").setWidth("15%");
-        //getListGrid().getField("bundleName").setWidth("20%");
-        getListGrid().hideField("bundleName");
-        getListGrid().getField("groupName").setWidth("15%");
-        getListGrid().getField("deployDir").setWidth("15%");
+        groupNameField.setCellFormatter(new CellFormatter() {
+            public String format(Object value, ListGridRecord listGridRecord, int i, int i1) {
+                Integer groupId = listGridRecord.getAttributeAsInt(BundleDestinationDataSource.FIELD_GROUP_ID);
+                return "<a href=\"" + LinkManager.getResourceGroupLink(groupId) + "\">"
+                    + StringUtility.escapeHtml(value.toString()) + "</a>";
+            }
+        });
 
-        ListGridField status = getListGrid().getField("latestDeploymentStatus");
+        bundleNameField.setCellFormatter(new CellFormatter() {
+            public String format(Object value, ListGridRecord listGridRecord, int i, int i1) {
+                Integer bid = listGridRecord.getAttributeAsInt(BundleDestinationDataSource.FIELD_BUNDLE_ID);
+                return "<a href=\"" + LinkManager.getBundleLink(bid) + "\">"
+                    + StringUtility.escapeHtml(value.toString()) + "</a>";
+            }
+        });
+
         HashMap<String, String> statusIcons = new HashMap<String, String>();
+        statusIcons.put(BundleDeploymentStatus.PENDING.name(), "subsystems/bundle/install-loader.gif");
         statusIcons.put(BundleDeploymentStatus.IN_PROGRESS.name(), "subsystems/bundle/install-loader.gif");
-        statusIcons.put(BundleDeploymentStatus.FAILURE.name(), "subsystems/bundle/Warning_11.png");
+        statusIcons.put(BundleDeploymentStatus.FAILURE.name(), "subsystems/bundle/Error_11.png");
         statusIcons.put(BundleDeploymentStatus.MIXED.name(), "subsystems/bundle/Warning_11.png");
-        statusIcons.put(BundleDeploymentStatus.WARN.name(), "subsystems/bundle/Warning_11.png");
         statusIcons.put(BundleDeploymentStatus.SUCCESS.name(), "subsystems/bundle/Ok_11.png");
-        status.setValueIcons(statusIcons);
-        status.setValueIconHeight(11);
-        status.setWidth(80);
+        latestDeploymentStatusField.setValueIcons(statusIcons);
+        latestDeploymentStatusField.setValueIconHeight(11);
+        latestDeploymentStatusField.setValueIconWidth(11);
+        latestDeploymentStatusField.setShowValueIconOnly(true);
 
+        idField.setWidth(50);
+        nameField.setWidth("15%");
+        descriptionField.setWidth("20%");
+        bundleNameField.setHidden(true);
+        groupNameField.setWidth("15%");
+        baseDirNameField.setWidth("15%");
+        deployDirField.setWidth("15%");
+        latestDeploymentVersionField.setWidth("10%");
+        latestDeploymentDateField.setWidth("10%");
+        latestDeploymentStatusField.setWidth(80);
 
+        // XXX there seems to be a bug here - i want to hide the bundle column, but setHidden(true) causes the entire rendering to fail
+        setListGridFields(idField, nameField, descriptionField, /*bundleNameField, */groupNameField, baseDirNameField,
+            deployDirField, latestDeploymentVersionField, latestDeploymentDateField, latestDeploymentStatusField);
+
+        setListGridDoubleClickHandler(new DoubleClickHandler() {
+            @Override
+            public void onDoubleClick(DoubleClickEvent event) {
+                ListGrid listGrid = (ListGrid) event.getSource();
+                ListGridRecord[] selectedRows = listGrid.getSelection();
+                if (selectedRows != null && selectedRows.length == 1) {
+                    String selectedId = selectedRows[0].getAttribute(BundleDestinationDataSource.FIELD_BUNDLE_ID);
+                    String selectedDestId = selectedRows[0].getAttribute(BundleDestinationDataSource.FIELD_ID);
+                    CoreGUI.goToView(LinkManager.getBundleDestinationLink(Integer.valueOf(selectedId), Integer
+                        .valueOf(selectedDestId)));
+                }
+            }
+        });
     }
 }

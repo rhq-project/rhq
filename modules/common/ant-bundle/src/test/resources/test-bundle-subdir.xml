@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+
+<project name="test-bundle" default="main" xmlns:rhq="antlib:org.rhq.bundle">
+
+    <rhq:bundle name="test" version="1">
+
+        <rhq:input-property name="X" />
+
+        <rhq:deployment-unit name="appserver">
+            <rhq:file name="subdir/test0.txt" replace="false" />
+            <rhq:file name="subdir/test1.txt" destinationFile="another/foo.txt" replace="false"/>
+            <rhq:file name="subdir/test2.txt" destinationDir="second.dir" replace="false"/>
+            <rhq:archive name="subdir/test.zip" exploded="false" />
+            <rhq:archive name="subdir/test-explode.zip" exploded="true" />
+            <rhq:archive name="subdir/test-replace.zip" exploded="false">
+                <rhq:replace>
+                    <rhq:fileset includes="template.txt"/>
+                </rhq:replace>
+            </rhq:archive>
+        </rhq:deployment-unit>
+
+    </rhq:bundle>
+
+    <target name="main"/>
+
+</project>

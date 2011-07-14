@@ -635,7 +635,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         List<ResourceConfigurationUpdate> requests;
 
         requests = configurationManager.findResourceConfigurationUpdates(overlord, resource.getId(), null, null, false,
-                configUpdatesPageControl);
+            configUpdatesPageControl);
 
         assert requests.size() == 1;
         assert requests.get(0) != null;
@@ -677,7 +677,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         configurationManager.purgeResourceConfigurationUpdate(overlord, request.getId(), false);
 
         requests = configurationManager.findResourceConfigurationUpdates(overlord, resource.getId(), null, null, false,
-                configUpdatesPageControl);
+            configUpdatesPageControl);
 
         assert requests.size() == 1; // it will create one for us from the "live" configuration
     }
@@ -707,7 +707,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
 
         List<ResourceConfigurationUpdate> history;
         history = configurationManager.findResourceConfigurationUpdates(overlord, resource.getId(), null, null, false,
-                configUpdatesPageControl);
+            configUpdatesPageControl);
 
         assert history != null;
         assert history.size() == 3;
@@ -727,7 +727,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         Thread.sleep(2000); // wait for the test agent to complete the request
 
         history = configurationManager.findResourceConfigurationUpdates(overlord, resource.getId(), null, null, false,
-                configUpdatesPageControl);
+            configUpdatesPageControl);
         assert history != null;
         assert history.size() == 4;
         ResourceConfigurationUpdate newConfigUpdate = history.get(3); // the last one is the new one
@@ -772,7 +772,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         List<ResourceConfigurationUpdate> requests;
 
         requests = configurationManager.findResourceConfigurationUpdates(overlord, resource.getId(), null, null, false,
-                configUpdatesPageControl);
+            configUpdatesPageControl);
 
         assert requests != null;
         assert requests.size() == 1 : "Got " + requests.size() + " config update requests - expected 1.";
@@ -803,7 +803,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         List<ResourceConfigurationUpdate> requests;
 
         requests = configurationManager.findResourceConfigurationUpdates(overlord, resource.getId(), null, null, false,
-                configUpdatesPageControl);
+            configUpdatesPageControl);
 
         assert requests != null;
         assert requests.size() == 2 : "Got " + requests.size() + " config update requests - expected 2.";
@@ -817,7 +817,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         // now get the current configs/requests and
         // make sure we deleted just the one configuration, leaving one left
         requests = configurationManager.findResourceConfigurationUpdates(overlord, resource.getId(), null, null, false,
-                configUpdatesPageControl);
+            configUpdatesPageControl);
 
         assert requests.size() == 1;
         assert requests.get(0).getId() == savedRequest.getId();
@@ -861,13 +861,15 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         List<ResourceConfigurationUpdate> requests;
 
         requests = configurationManager.findResourceConfigurationUpdates(overlord, resource.getId(), null, null, false,
-                configUpdatesPageControl);
+            configUpdatesPageControl);
 
         assert requests != null;
         assert requests.size() == 2; // one succeeded and one failed
 
-        assert requests.get(0).getStatus() == ConfigurationUpdateStatus.FAILURE : "actual: " + requests.get(0).getStatus();
-        assert requests.get(1).getStatus() == ConfigurationUpdateStatus.SUCCESS : "actual: " + requests.get(1).getStatus();
+        assert requests.get(0).getStatus() == ConfigurationUpdateStatus.FAILURE : "actual: "
+            + requests.get(0).getStatus();
+        assert requests.get(1).getStatus() == ConfigurationUpdateStatus.SUCCESS : "actual: "
+            + requests.get(1).getStatus();
 
         ResourceConfigurationUpdate savedRequest = requests.get(0); // this is the one that failed
         ResourceConfigurationUpdate doomedRequest = requests.get(1); // this is the one that succeeded
@@ -877,7 +879,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         // now get the current configs/requests and
         // make sure we deleted the only one configuration that succeeded, leaving one update record
         requests = configurationManager.findResourceConfigurationUpdates(overlord, resource.getId(), null, null, false,
-                configUpdatesPageControl);
+            configUpdatesPageControl);
 
         assert requests.size() == 1;
 
@@ -901,7 +903,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
 
         try {
             noPermSubject = LookupUtil.getSubjectManager().createSubject(superuser, noPermSubject);
-            createSession(noPermSubject);
+            noPermSubject = createSession(noPermSubject);
 
             try {
                 configurationManager.updateResourceConfiguration(noPermSubject, resource.getId(), new Configuration());

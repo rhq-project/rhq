@@ -24,15 +24,19 @@ package org.rhq.core.domain.dashboard;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -52,9 +56,12 @@ import org.hibernate.annotations.Cascade;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.group.ResourceGroup;
 
 /**
  * @author Greg Hinkle
+ * @author Jay Shaughnessy
  */
 @Entity
 @SequenceGenerator(name = "RHQ_DASHBOARD_ID_SEQ", sequenceName = "RHQ_DASHBOARD_ID_SEQ")
@@ -68,24 +75,37 @@ public class Dashboard implements Serializable {
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_DASHBOARD_ID_SEQ")
     @Id
-    private int id;
+    private int id = 0;
 
     @Column(name = "NAME", nullable = false)
     private String name;
 
+    @Column(name = "CATEGORY", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private DashboardCategory category;
+
+    // currently unused
     @Column(name = "SHARED", nullable = false)
     private boolean shared = false;
 
-    @JoinColumn(name = "CONFIGURATION_ID", referencedColumnName = "ID")
-    @OneToOne(cascade = { CascadeType.ALL })
+    @JoinColumn(name = "CONFIGURATION_ID", referencedColumnName = "ID", nullable = true)
+    @OneToOne(cascade = { CascadeType.ALL }, optional = true)
     private Configuration configuration = new Configuration();
 
     @JoinColumn(name = "SUBJECT_ID", nullable = false)
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     private Subject owner;
 
+    @JoinColumn(name = "RESOURCE_ID", nullable = true)
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
+    private Resource resource;
+
+    @JoinColumn(name = "GROUP_ID", nullable = true)
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
+    private ResourceGroup group;
+
     @OneToMany(mappedBy = "dashboard", fetch = FetchType.EAGER)
-    @Cascade({ org.hibernate.annotations.CascadeType.PERSIST, org.hibernate.annotations.CascadeType.MERGE,
+    @Cascade( { org.hibernate.annotations.CascadeType.PERSIST, org.hibernate.annotations.CascadeType.MERGE,
         org.hibernate.annotations.CascadeType.DELETE_ORPHAN })
     private Set<DashboardPortlet> portlets = new HashSet<DashboardPortlet>();
 
@@ -126,8 +146,32 @@ public class Dashboard implements Serializable {
         this.owner = owner;
     }
 
+    public DashboardCategory getCategory() {
+        return category;
+    }
+
+    public void setCategory(DashboardCategory category) {
+        this.category = category;
+    }
+
+    public Resource getResource() {
+        return resource;
+    }
+
+    public void setResource(Resource resource) {
+        this.resource = resource;
+    }
+
+    public ResourceGroup getGroup() {
+        return group;
+    }
+
+    public void setGroup(ResourceGroup group) {
+        this.group = group;
+    }
+
     public int getColumns() {
-        return configuration.getSimple(CFG_COLUMNS).getIntegerValue();
+        return Integer.valueOf(configuration.getSimpleValue(CFG_COLUMNS, "1"));
     }
 
     public void setColumns(int columns) {
@@ -135,11 +179,25 @@ public class Dashboard implements Serializable {
     }
 
     public String[] getColumnWidths() {
-        return configuration.getSimple(CFG_WIDTHS).getStringValue().split(",");
+        return configuration.getSimpleValue(CFG_WIDTHS, "").split(",");
     }
 
     public void setColumnWidths(String... columnWidths) {
-        configuration.put(new PropertySimple(CFG_WIDTHS, columnWidths));
+        if (null == columnWidths || columnWidths.length == 0) {
+            return;
+        }
+
+        // note - this impl is a little verbose but it avoids a smartgwt javascript problem with
+        // varargs handling. Not sure how bad the problem is but it definitely occured with SmartGwt 2.4
+        // when a single String was pssed as the varArg list.  Be wary of directly using varargs array
+        // element 0...
+        StringBuilder sb = new StringBuilder();
+        sb.append(columnWidths[0]);
+        for (int i = 1; i < columnWidths.length; ++i) {
+            sb.append(",");
+            sb.append(columnWidths[i]);
+        }
+        configuration.put(new PropertySimple(CFG_WIDTHS, sb));
     }
 
     public Configuration getConfiguration() {
@@ -156,7 +214,7 @@ public class Dashboard implements Serializable {
 
     public List<DashboardPortlet> getPortlets(int column) {
 
-        List<DashboardPortlet> columnPortlets = new ArrayList<DashboardPortlet>();
+        ArrayList<DashboardPortlet> columnPortlets = new ArrayList<DashboardPortlet>();
         for (DashboardPortlet p : this.portlets) {
             if (p.getColumn() == column) {
                 columnPortlets.add(p);
@@ -173,9 +231,59 @@ public class Dashboard implements Serializable {
     }
 
     public boolean removePortlet(DashboardPortlet storedPortlet) {
-        return portlets.remove(storedPortlet);
+        if (!portlets.contains(storedPortlet)) {
+            return false;
+        }
+
+        // lower the index by 1 for  portlets in the same column, below the one being removed
+        int col = storedPortlet.getColumn();
+        int index = storedPortlet.getIndex();
+
+        portlets.remove(storedPortlet);
+
+        for (Iterator<DashboardPortlet> i = portlets.iterator(); i.hasNext();) {
+            DashboardPortlet next = i.next();
+            if (col == next.getColumn() && index < next.getIndex()) {
+                next.setIndex(next.getIndex() - 1);
+            }
+        }
+
+        return true;
     }
 
+    /** 
+     * This can be used to safely add a portlet without knowing the current portlet positioning on the
+     * Dashboard. It adds the portlet to the bottom of column with the least portlets.
+     * 
+     * @param storedPortlet, MODIFIED with assigned column, index
+     */
+    public void addPortlet(DashboardPortlet storedPortlet) {
+        int[] columnCounts = new int[getColumns()];
+        Arrays.fill(columnCounts, 0);
+        // set column counts
+        for (DashboardPortlet dashboardPortlet : portlets) {
+            ++(columnCounts[dashboardPortlet.getColumn()]);
+        }
+        // get best column
+        int bestColumn = -1;
+        int minPortlets = Integer.MAX_VALUE;
+        for (int column = 0; (column < columnCounts.length); ++column) {
+            if (columnCounts[column] < minPortlets) {
+                bestColumn = column;
+                minPortlets = columnCounts[column];
+            }
+        }
+        // addPortlet to best Column
+        addPortlet(storedPortlet, bestColumn, minPortlets);
+    }
+
+    /**
+     * Call this only if you are sure the column and index are valid, not already used and not leaving gaps.
+     * 
+     * @param storedPortlet, MODIFIED with assigned column, index
+     * @param column
+     * @param index
+     */
     public void addPortlet(DashboardPortlet storedPortlet, int column, int index) {
         storedPortlet.setColumn(column);
         storedPortlet.setIndex(index);
@@ -183,7 +291,7 @@ public class Dashboard implements Serializable {
         portlets.add(storedPortlet);
     }
 
-    public Dashboard deepCoopy(boolean keepIds) {
+    public Dashboard deepCopy(boolean keepIds) {
 
         Dashboard newDashboard = new Dashboard();
         if (keepIds) {

@@ -18,11 +18,11 @@
  */
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
 import org.rhq.core.domain.authz.Permission;
-import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.coregui.client.gwt.AuthorizationGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
@@ -37,49 +37,58 @@ public class AuthorizationGWTServiceImpl extends AbstractGWTServiceImpl implemen
 
     private AuthorizationManagerLocal authorizationManager = LookupUtil.getAuthorizationManager();
 
-    public Set<Permission> getExplicitResourcePermissions(int resourceId) {
+    public Set<Permission> getExplicitResourcePermissions(int resourceId) throws RuntimeException {
         try {
             return SerialUtility.prepare(new HashSet<Permission>(authorizationManager.getExplicitResourcePermissions(
                 getSessionSubject(), resourceId)), "AuthorizationManager.getExplicitResourcePermissions");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
         }
     }
 
-    public Set<Permission> getImplicitResourcePermissions(int resourceId) {
+    public Set<Permission> getImplicitResourcePermissions(int resourceId) throws RuntimeException {
         try {
             return SerialUtility.prepare(new HashSet<Permission>(authorizationManager.getImplicitResourcePermissions(
                 getSessionSubject(), resourceId)), "AuthorizationManager.getImplicitResourcePermissions");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
         }
     }
 
-    public Set<Permission> getExplicitGroupPermissions(int groupId) {
+    public Set<Permission> getExplicitGroupPermissions(int groupId) throws RuntimeException {
         try {
             return SerialUtility.prepare(new HashSet<Permission>(authorizationManager.getExplicitGroupPermissions(
                 getSessionSubject(), groupId)), "AuthorizationManager.getExplicitGroupPermissions");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
         }
     }
 
-    public Set<Permission> getImplicitGroupPermissions(int groupId) {
+    public Set<Permission> getImplicitGroupPermissions(int groupId) throws RuntimeException {
         try {
             return SerialUtility.prepare(new HashSet<Permission>(authorizationManager.getImplicitGroupPermissions(
                 getSessionSubject(), groupId)), "AuthorizationManager.getImplicitGroupPermissions");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
         }
     }
 
-    public Set<Permission> getExplicitGlobalPermissions() {
+    public Set<Permission> getExplicitGlobalPermissions() throws RuntimeException {
         try {
             return SerialUtility.prepare(new HashSet<Permission>(authorizationManager
                 .getExplicitGlobalPermissions(getSessionSubject())),
                 "AuthorizationManager.getExplicitGlobalPermissions");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    public boolean hasResourcePermission(Permission permission, Collection<Integer> resourceIds) {
+        try {
+            boolean result = authorizationManager.hasResourcePermission(getSessionSubject(), permission, resourceIds);
+            return result;
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
         }
     }
 

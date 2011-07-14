@@ -59,7 +59,10 @@ import javax.persistence.Transient;
 import javax.xml.bind.annotation.XmlTransient;
 
 import org.rhq.core.domain.bundle.BundleType;
+import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration;
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.event.EventDefinition;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
@@ -79,37 +82,40 @@ import org.rhq.core.domain.util.Summary;
 @Table(name = ResourceType.TABLE_NAME)
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_RESOURCE_TYPE_ID_SEQ")
 @NamedQueries( {
-    @NamedQuery(name = ResourceType.QUERY_FIND_BY_PLUGIN, query = "SELECT rt FROM ResourceType AS rt WHERE rt.plugin = :plugin"),
+    @NamedQuery(name = ResourceType.QUERY_GET_BUNDLE_CONFIG_BY_GROUP_ID, query = "SELECT rg.resourceType.bundleConfiguration FROM ResourceGroup rg WHERE rg.id = :groupId"),
+    @NamedQuery(name = ResourceType.QUERY_FIND_BY_PLUGIN, query = "SELECT rt FROM ResourceType AS rt "
+        + "WHERE rt.plugin = :plugin AND rt.deleted = false"),
     @NamedQuery(name = ResourceType.QUERY_FIND_BY_NAME_AND_PLUGIN, // TODO: QUERY: names are case-sensitive
-    query = "SELECT rt FROM ResourceType AS rt WHERE LOWER(rt.name) = LOWER(:name) AND rt.plugin = :plugin"),
-    @NamedQuery(name = ResourceType.QUERY_FIND_ALL, query = "SELECT rt FROM ResourceType AS rt"),
+    query = "SELECT rt FROM ResourceType AS rt WHERE LOWER(rt.name) = LOWER(:name) AND rt.plugin = :plugin "
+        + "AND rt.deleted = false"),
+    @NamedQuery(name = ResourceType.QUERY_FIND_ALL, query = "SELECT rt FROM ResourceType AS rt where rt.deleted = false"),
     @NamedQuery(name = ResourceType.QUERY_FIND_BY_PARENT_AND_NAME, // TODO: QUERY: Not looking up by the full key, get rid of this query
-    query = "SELECT rt FROM ResourceType AS rt WHERE :parent MEMBER OF rt.parentResourceTypes AND rt.name = :name"),
+    query = "SELECT rt FROM ResourceType AS rt WHERE :parent MEMBER OF rt.parentResourceTypes AND rt.name = :name "
+        + "AND rt.deleted = false"),
 
     /* authz'ed queries for ResourceTypeManagerBean */
-    @NamedQuery(name = ResourceType.QUERY_FIND_CHILDREN, query = "SELECT rt.childResourceTypes "
-        + "FROM ResourceType rt WHERE rt.id = :resourceTypeId "),
+    @NamedQuery(name = ResourceType.QUERY_FIND_CHILDREN, query = "SELECT c "
+        + "FROM ResourceType rt JOIN rt.childResourceTypes c WHERE rt.id = :resourceTypeId AND rt.deleted = false "
+        + "AND c.deleted = false"),
     @NamedQuery(name = ResourceType.FIND_CHILDREN_BY_PARENT, query = "SELECT DISTINCT rt FROM ResourceType AS rt "
         + "JOIN FETCH rt.parentResourceTypes AS pa " + // also fetch parents, as we need them later
-        "WHERE pa IN (:resourceType)"),
-    // template count composites need the parent types fetched; however, because of a quirk in hibernate,
-    // we can't use the template component constructor in the select, we'll build the composites in our code
+        "WHERE rt.deleted = false and pa IN (:resourceType)"),
     @NamedQuery(name = ResourceType.FIND_ALL_TEMPLATE_COUNT_COMPOSITES, query = "" //
-    //  + "SELECT new org.rhq.core.domain.resource.composite.ResourceTypeTemplateCountComposite (" //
-        + "SELECT " //
+        + "SELECT new org.rhq.core.domain.resource.composite.ResourceTypeTemplateCountComposite" //
+        + "(" //
         + "  rt," //
         + "  (SELECT COUNT(md) FROM MeasurementDefinition AS md WHERE md.resourceType = rt AND md.defaultOn = TRUE), "//
         + "  (SELECT COUNT(md) FROM MeasurementDefinition AS md WHERE md.resourceType = rt AND md.defaultOn = FALSE), "//
         + "  (SELECT COUNT(ad) FROM AlertDefinition AS ad WHERE ad.resourceType = rt AND ad.deleted = FALSE AND ad.enabled = TRUE), "//
         + "  (SELECT COUNT(ad) FROM AlertDefinition AS ad WHERE ad.resourceType = rt AND ad.deleted = FALSE AND ad.enabled = FALSE) "//
-        //  + ")" //
-        + "FROM ResourceType AS rt LEFT JOIN FETCH rt.parentResourceTypes p"),
+        + ")" //
+        + "FROM ResourceType AS rt WHERE rt.deleted = false"),
     @NamedQuery(name = ResourceType.QUERY_FIND_BY_CATEGORY, query = "SELECT rt FROM ResourceType AS rt "
-        + "WHERE rt.category = :category"),
+        + "WHERE rt.category = :category and rt.deleted = false"),
     @NamedQuery(name = ResourceType.QUERY_FIND_UTILIZED_BY_CATEGORY, query = "SELECT DISTINCT res.resourceType "
         + "FROM Resource res, IN (res.implicitGroups) g, IN (g.roles) r, IN (r.subjects) s " //
         + "WHERE s = :subject " //
-        + "AND res.resourceType.category = :category "
+        + "AND res.resourceType.category = :category " + "AND res.resourceType.deleted = false "
         + "AND (UPPER(res.name) LIKE :nameFilter ESCAPE :escapeChar OR :nameFilter is null) "
         + "AND (res.resourceType.plugin = :pluginName OR :pluginName is null) "
         + "AND (:inventoryStatus = res.inventoryStatus OR :inventoryStatus is null) "
@@ -118,6 +124,7 @@ import org.rhq.core.domain.util.Summary;
         + "FROM Resource res " //
         + "WHERE res.resourceType.category = :category "
         + "AND (UPPER(res.name) LIKE :nameFilter ESCAPE :escapeChar OR :nameFilter is null) "
+        + "AND res.resourceType.deleted = false "
         + "AND (res.resourceType.plugin = :pluginName OR :pluginName is null) "
         + "AND (:inventoryStatus = res.inventoryStatus OR :inventoryStatus is null) "
         + "ORDER BY res.resourceType.name "),
@@ -126,10 +133,12 @@ import org.rhq.core.domain.util.Summary;
         + "WHERE s = :subject "
         + "AND res.parentResource = :parentResource "
         + "AND res.resourceType.category = :category "
+        + "AND res.resourceType.deleted = false "
         + "AND (:inventoryStatus = res.inventoryStatus OR :inventoryStatus is null) "),
     @NamedQuery(name = ResourceType.QUERY_FIND_UTILIZED_CHILDREN_BY_CATEGORY_admin, query = "SELECT DISTINCT res.resourceType "
         + "FROM Resource res "
         + "WHERE res.parentResource = :parentResource "
+        + "AND res.resourceType.deleted = false "
         + "AND res.resourceType.category = :category "
         + "AND (:inventoryStatus = res.inventoryStatus OR :inventoryStatus is null) "),
     @NamedQuery(name = ResourceType.QUERY_FIND_BY_RESOURCE_GROUP, query = "" //
@@ -138,26 +147,24 @@ import org.rhq.core.domain.util.Summary;
         + "  JOIN rg.resourceType rt" //
         + "  JOIN rg.roles r JOIN r.subjects s " //
         + " WHERE s = :subject " //
-        + "   AND ( rt.plugin = :pluginName OR :pluginName is null ) "),
+        + "   AND rt.deleted = false " + "   AND ( rt.plugin = :pluginName OR :pluginName is null ) "),
     @NamedQuery(name = ResourceType.QUERY_FIND_BY_RESOURCE_GROUP_admin, query = "" //
         + "SELECT DISTINCT rt " //
         + "  FROM ResourceGroup rg " //
         + "  JOIN rg.resourceType rt" //
-        + " WHERE ( rt.plugin = :pluginName OR :pluginName is null ) "),
+        + " WHERE rt.deleted = false AND ( rt.plugin = :pluginName OR :pluginName is null ) "),
     @NamedQuery(name = ResourceType.QUERY_GET_EXPLICIT_RESOURCE_TYPE_COUNTS_BY_GROUP, query = "SELECT type.id, type.name, COUNT(type.id) "
         + "FROM ResourceGroup rg JOIN rg.explicitResources res JOIN res.resourceType type "
-        + "WHERE rg.id = :groupId "
-        + "GROUP BY type.id, type.name "),
+        + "WHERE rg.id = :groupId AND res.resourceType.deleted = false " + "GROUP BY type.id, type.name "),
     @NamedQuery(name = ResourceType.QUERY_GET_IMPLICIT_RESOURCE_TYPE_COUNTS_BY_GROUP, query = "SELECT type.id, type.name, COUNT(type.id) "
         + "FROM ResourceGroup rg JOIN rg.implicitResources res JOIN res.resourceType type "
-        + "WHERE rg.id = :groupId "
-        + "GROUP BY type.id, type.name "),
+        + "WHERE rg.id = :groupId AND res.resourceType.deleted = false " + "GROUP BY type.id, type.name "),
     @NamedQuery(name = ResourceType.QUERY_FIND_BY_SUBCATEGORY, query = "SELECT rt " + "FROM ResourceType rt "
-        + "WHERE rt.subCategory = :subCategory"),
+        + "WHERE rt.subCategory = :subCategory AND rt.deleted = false"),
     @NamedQuery(name = ResourceType.QUERY_FIND_BY_ID_WITH_ALL_OPERATIONS, query = "SELECT DISTINCT rt "
         + "FROM ResourceType rt " + "LEFT JOIN FETCH rt.operationDefinitions def "
         + "LEFT JOIN FETCH def.parametersConfigurationDefinition "
-        + "LEFT JOIN FETCH def.resultsConfigurationDefinition " + "WHERE rt.id = :id"),
+        + "LEFT JOIN FETCH def.resultsConfigurationDefinition " + "WHERE rt.id = :id AND rt.deleted = false"),
     @NamedQuery(name = ResourceType.QUERY_FIND_RESOURCE_FACETS, query = "" //
         + "SELECT new org.rhq.core.domain.resource.composite.ResourceFacets " //
         + "       ( " //
@@ -169,24 +176,28 @@ import org.rhq.core.domain.util.Summary;
         + "         (SELECT COUNT(operationDef) FROM rt.operationDefinitions operationDef)," // operation
         + "         (SELECT COUNT(packageType) FROM rt.packageTypes packageType)," // content
         + "         (SELECT COUNT(metricDef) FROM rt.metricDefinitions metricDef WHERE metricDef.dataType = 3)," // calltime
-        + "         (SELECT COUNT(propDef) FROM rt.pluginConfigurationDefinition pluginConfig JOIN pluginConfig.propertyDefinitions propDef WHERE propDef.name = 'snapshotLogEnabled')" // support 
+        + "         (SELECT COUNT(propDef) FROM rt.pluginConfigurationDefinition pluginConfig JOIN pluginConfig.propertyDefinitions propDef WHERE propDef.name = 'snapshotLogEnabled')," //
+        + "         (SELECT COUNT(driftConfig) FROM rt.driftConfigurationTemplates driftConfig)" // drift 
         + "       ) " //
         + "  FROM ResourceType rt " //
-        + " WHERE ( rt.id = :resourceTypeId OR :resourceTypeId IS NULL )"),
+        + " WHERE rt.deleted = false AND ( rt.id = :resourceTypeId OR :resourceTypeId IS NULL )"),
     @NamedQuery(name = ResourceType.QUERY_FIND_DUPLICATE_TYPE_NAMES, query = "" //
         + "  SELECT rt.name " //
-        + "    FROM ResourceType rt " //
-        + "GROUP BY rt.name " //
+        + "  FROM ResourceType rt " //
+        + "  WHERE rt.deleted = false " + "  GROUP BY rt.name " //
         + "  HAVING COUNT(rt.name) > 1"), //
     @NamedQuery(name = ResourceType.QUERY_DYNAMIC_CONFIG_WITH_PLUGIN, query = "" //
-        + "SELECT rt.plugin || ' - ' || rt.name, rt.plugin || '-' || rt.name FROM ResourceType rt") //
-})
+        + "SELECT rt.plugin || ' - ' || rt.name, rt.plugin || '-' || rt.name FROM ResourceType rt WHERE rt.deleted = false"), //
+    @NamedQuery(name = ResourceType.QUERY_MARK_TYPES_DELETED, query = "UPDATE ResourceType t SET t.deleted = true WHERE t.id IN (:resourceTypeIds)"),
+    @NamedQuery(name = ResourceType.QUERY_FIND_IDS_BY_PLUGIN, query = "SELECT t.id FROM ResourceType t WHERE t.plugin = :plugin AND t.deleted = false"),
+    @NamedQuery(name = ResourceType.QUERY_FIND_COUNT_BY_PLUGIN, query = "SELECT COUNT(t) FROM ResourceType t WHERE t.plugin = :plugin AND t.deleted = false") })
 @NamedNativeQueries( {
     // TODO: Add authz conditions to the below query.
     @NamedNativeQuery(name = ResourceType.QUERY_FIND_CHILDREN_BY_CATEGORY, query = "" //
-        + "(SELECT crt.id, crt.name, crt.category, crt.creation_data_type, crt.create_delete_policy, crt.singleton, crt.supports_manual_add, crt.description, crt.plugin, crt.ctime, crt.mtime, crt.subcategory_id, crt.plugin_config_def_id, crt.res_config_def_id "
+        + "(SELECT crt.id, crt.name, crt.category, crt.creation_data_type, crt.create_delete_policy, crt.singleton, crt.supports_manual_add, crt.description, crt.plugin, crt.ctime, crt.mtime, crt.deleted, crt.subcategory_id, crt.plugin_config_def_id, crt.res_config_def_id "
         + "FROM RHQ_resource_type crt, RHQ_resource res, RHQ_resource_type rt, RHQ_resource_type_parents rtp "
         + "WHERE res.id = ? "
+        + "AND crt.deleted = false "
         + "AND res.resource_type_id = rt.id "
         + "AND rt.id = rtp.parent_resource_type_id "
         + "AND rtp.resource_type_id = crt.id "
@@ -194,7 +205,7 @@ import org.rhq.core.domain.util.Summary;
         +
         //               "ORDER BY crt.name " +
         "UNION "
-        + "SELECT DISTINCT crt2.id, crt2.name, crt2.category, crt2.creation_data_type, crt2.create_delete_policy, crt2.singleton, crt2.supports_manual_add, crt2.description, crt2.plugin, crt2.ctime, crt2.mtime, crt2.subcategory_id, crt2.plugin_config_def_id, crt2.res_config_def_id "
+        + "SELECT DISTINCT crt2.id, crt2.name, crt2.category, crt2.creation_data_type, crt2.create_delete_policy, crt2.singleton, crt2.supports_manual_add, crt2.description, crt2.plugin, crt2.ctime, crt2.mtime, crt2.deleted, crt2.subcategory_id, crt2.plugin_config_def_id, crt2.res_config_def_id "
         + "FROM RHQ_resource_type crt2 " + "WHERE 1 = "
         + "(SELECT COUNT(res2.id) "
         + "FROM RHQ_resource res2, RHQ_resource_type rt2 "
@@ -203,11 +214,14 @@ import org.rhq.core.domain.util.Summary;
         + "AND 0 = "
         + "(SELECT COUNT(rtp2.resource_type_id) "
         + "FROM RHQ_resource_type_parents rtp2 "
-        + "WHERE rtp2.resource_type_id = crt2.id) " + "AND crt2.category = ? " + " ) ORDER BY name", resultSetMapping = ResourceType.MAPPING_FIND_CHILDREN_BY_CATEGORY),
+        + "WHERE rtp2.resource_type_id = crt2.id) " + "AND crt2.deleted = false "
+        + "AND crt2.category = ? "
+        + " ) ORDER BY name", resultSetMapping = ResourceType.MAPPING_FIND_CHILDREN_BY_CATEGORY),
     @NamedNativeQuery(name = ResourceType.QUERY_FIND_CHILDREN_BY_CATEGORY_admin, query = "" //
-        + "(SELECT crt.id, crt.name, crt.category, crt.creation_data_type, crt.create_delete_policy, crt.singleton, crt.supports_manual_add, crt.description, crt.plugin, crt.ctime, crt.mtime, crt.subcategory_id, crt.plugin_config_def_id, crt.res_config_def_id "
+        + "(SELECT crt.id, crt.name, crt.category, crt.creation_data_type, crt.create_delete_policy, crt.singleton, crt.supports_manual_add, crt.description, crt.plugin, crt.ctime, crt.mtime, crt.deleted, crt.subcategory_id, crt.plugin_config_def_id, crt.res_config_def_id "
         + "FROM RHQ_resource_type crt, RHQ_resource res, RHQ_resource_type rt, RHQ_resource_type_parents rtp "
         + "WHERE res.id = ? "
+        + "AND crt.deleted = false "
         + "AND res.resource_type_id = rt.id "
         + "AND rt.id = rtp.parent_resource_type_id "
         + "AND rtp.resource_type_id = crt.id "
@@ -215,7 +229,7 @@ import org.rhq.core.domain.util.Summary;
         +
         //               "ORDER BY crt.name " +
         "UNION "
-        + "(SELECT DISTINCT crt2.id, crt2.name, crt2.category, crt2.creation_data_type, crt2.create_delete_policy, crt2.singleton, crt2.supports_manual_add, crt2.description, crt2.plugin, crt2.ctime, crt2.mtime, crt2.subcategory_id, crt2.plugin_config_def_id, crt2.res_config_def_id "
+        + "(SELECT DISTINCT crt2.id, crt2.name, crt2.category, crt2.creation_data_type, crt2.create_delete_policy, crt2.singleton, crt2.supports_manual_add, crt2.description, crt2.plugin, crt2.ctime, crt2.mtime, crt2.deleted, crt2.subcategory_id, crt2.plugin_config_def_id, crt2.res_config_def_id "
         + "FROM RHQ_resource_type crt2 " + "WHERE 1 = "
         + "(SELECT COUNT(res2.id) "
         + "FROM RHQ_resource res2, RHQ_resource_type rt2 "
@@ -224,7 +238,7 @@ import org.rhq.core.domain.util.Summary;
         + "AND 0 = "
         + "(SELECT COUNT(rtp2.resource_type_id) "
         + "FROM RHQ_resource_type_parents rtp2 "
-        + "WHERE rtp2.resource_type_id = crt2.id) " + "AND crt2.category = ? " +
+        + "WHERE rtp2.resource_type_id = crt2.id) " + "AND crt2.category = ?" +
         //               "ORDER BY crt2.name" +
         ")) ORDER BY name", resultSetMapping = ResourceType.MAPPING_FIND_CHILDREN_BY_CATEGORY) //
 })
@@ -237,6 +251,7 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
 
     public static final ResourceType ANY_PLATFORM_TYPE = null;
 
+    public static final String QUERY_GET_BUNDLE_CONFIG_BY_GROUP_ID = "ResourceType.getBundleConfigByGroupResourceType";
     public static final String QUERY_GET_EXPLICIT_RESOURCE_TYPE_COUNTS_BY_GROUP = "ResourceType.getExplicitResourceTypeCountsByGroup";
     public static final String QUERY_GET_IMPLICIT_RESOURCE_TYPE_COUNTS_BY_GROUP = "ResourceType.getImplicitResourceTypeCountsByGroup";
     public static final String QUERY_FIND_BY_NAME_AND_PLUGIN = "ResourceType.findByNameAndPlugin";
@@ -266,6 +281,11 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
     public static final String QUERY_FIND_DUPLICATE_TYPE_NAMES = "ResourceType.findDuplicateTypeNames";
 
     public static final String QUERY_DYNAMIC_CONFIG_WITH_PLUGIN = "ResourceType.dynamicConfigWithPlugin";
+
+    public static final String QUERY_MARK_TYPES_DELETED = "ResourceType.markTypesDeleted";
+
+    public static final String QUERY_FIND_IDS_BY_PLUGIN = "ResourceType.findIdsByPlugin";
+    public static final String QUERY_FIND_COUNT_BY_PLUGIN = "ResourceType.findCountByPlugin";
 
     @Id
     @Column(name = "ID", nullable = false)
@@ -324,25 +344,25 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
     //@Cache(usage = CacheConcurrencyStrategy.TRANSACTIONAL)
     private Set<ResourceType> parentResourceTypes;
 
-    @JoinColumn(name = "PLUGIN_CONFIG_DEF_ID")
-    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JoinColumn(name = "PLUGIN_CONFIG_DEF_ID", nullable = true)
+    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY, optional = true)
     //@Cache(usage = CacheConcurrencyStrategy.TRANSACTIONAL)
     private ConfigurationDefinition pluginConfigurationDefinition;
 
-    @JoinColumn(name = "RES_CONFIG_DEF_ID")
-    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JoinColumn(name = "RES_CONFIG_DEF_ID", nullable = true)
+    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY, optional = true)
     //@Cache(usage = CacheConcurrencyStrategy.TRANSACTIONAL)
     private ConfigurationDefinition resourceConfigurationDefinition;
 
-    @JoinColumn(name = "SUBCATEGORY_ID")
-    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "SUBCATEGORY_ID", nullable = true)
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
     private ResourceSubCategory subCategory;
 
     @OneToMany(mappedBy = "resourceType", cascade = CascadeType.ALL)
     @OrderBy
     // primary key
     //@Cache(usage = CacheConcurrencyStrategy.TRANSACTIONAL)
-    private Set<MeasurementDefinition> metricDefinitions;
+    private Set<MeasurementDefinition> metricDefinitions = new LinkedHashSet<MeasurementDefinition>();
 
     @OneToMany(mappedBy = "resourceType", cascade = CascadeType.ALL)
     @OrderBy
@@ -353,14 +373,14 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
     @OneToMany(mappedBy = "resourceType", cascade = CascadeType.ALL)
     @OrderBy
     // primary key
-    private Set<OperationDefinition> operationDefinitions;
+    private Set<OperationDefinition> operationDefinitions = new HashSet<OperationDefinition>();
 
     @JoinColumn(name = "RESOURCE_TYPE_ID")
     @OneToMany(cascade = CascadeType.ALL)
     private Set<ProcessScan> processScans;
 
     @OneToMany(mappedBy = "resourceType", cascade = CascadeType.ALL)
-    private Set<PackageType> packageTypes;
+    private Set<PackageType> packageTypes = new HashSet<PackageType>();
 
     @OneToMany(mappedBy = "resourceType", cascade = CascadeType.ALL)
     private List<ResourceSubCategory> subCategories;
@@ -376,6 +396,17 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
 
     @OneToOne(mappedBy = "resourceType", fetch = FetchType.LAZY, cascade = CascadeType.ALL, optional = true)
     private BundleType bundleType;
+
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JoinTable(name = "RHQ_DRIFT_TEMPLATE_MAP", joinColumns = @JoinColumn(name = "RESOURCE_TYPE_ID", nullable = false), inverseJoinColumns = @JoinColumn(name = "CONFIG_TEMPLATE_ID", nullable = false))
+    private Set<ConfigurationTemplate> driftConfigurationTemplates = new HashSet<ConfigurationTemplate>();
+
+    // note that this is mapped to a Configuration entity, which is what it really is. However, our getter/setter
+    // only provides access to this via ResourceTypeBundleConfiguration to encapsulate the innards of this implementation
+    // detail, exposing only the more strongly typed methods to obtain bundle-related config properties
+    @JoinColumn(name = "BUNDLE_CONFIG_ID", nullable = true)
+    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY, optional = true)
+    private Configuration bundleConfiguration;
 
     @Transient
     private transient String helpText;
@@ -636,6 +667,22 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
         this.resourceConfigurationDefinition = resourceConfigurationDefinition;
     }
 
+    public ResourceTypeBundleConfiguration getResourceTypeBundleConfiguration() {
+        if (this.bundleConfiguration == null) {
+            return null;
+        } else {
+            return new ResourceTypeBundleConfiguration(bundleConfiguration);
+        }
+    }
+
+    public void setResourceTypeBundleConfiguration(ResourceTypeBundleConfiguration rtbc) {
+        if (rtbc == null) {
+            this.bundleConfiguration = null;
+        } else {
+            this.bundleConfiguration = rtbc.getBundleConfiguration();
+        }
+    }
+
     @XmlTransient
     public Set<MeasurementDefinition> getMetricDefinitions() {
         return metricDefinitions;
@@ -702,17 +749,12 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
     }
 
     public void addPackageType(PackageType packageType) {
-        if (this.packageTypes == null) {
-            this.packageTypes = new HashSet<PackageType>();
-        }
         packageType.setResourceType(this);
-        this.packageTypes.add(packageType);
+        packageTypes.add(packageType);
     }
 
     public void removePackageType(PackageType packageType) {
-        if (this.packageTypes != null) {
-            this.packageTypes.remove(packageType);
-        }
+        packageTypes.remove(packageType);
         packageType.setResourceType(null);
     }
 
@@ -783,6 +825,15 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
 
     public void setBundleType(BundleType bundleType) {
         this.bundleType = bundleType;
+    }
+
+    // this must return the actual set, not a copy - see the metadata manager SLSB for when we update plugin metadata
+    public Set<ConfigurationTemplate> getDriftConfigurationTemplates() {
+        return driftConfigurationTemplates;
+    }
+
+    public void addDriftConfigurationTemplate(ConfigurationTemplate template) {
+        driftConfigurationTemplates.add(template);
     }
 
     @Override

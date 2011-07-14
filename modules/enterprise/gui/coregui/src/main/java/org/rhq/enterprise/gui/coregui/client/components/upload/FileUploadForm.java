@@ -29,8 +29,9 @@ import com.smartgwt.client.widgets.form.fields.ButtonItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.FormItemIcon;
 import com.smartgwt.client.widgets.form.fields.HiddenItem;
-import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.UploadItem;
+import com.smartgwt.client.widgets.form.fields.events.ChangeEvent;
+import com.smartgwt.client.widgets.form.fields.events.ChangeHandler;
 import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 
@@ -50,14 +51,13 @@ public class FileUploadForm extends DynamicCallbackForm {
 
     private UploadItem fileUploadItem;
     private ButtonItem uploadButton;
-    private StaticTextItem icon;
 
     private Boolean uploadResult;
     private String uploadError;
     private boolean uploadInProgress;
 
-    private final String name;
-    private final String version;
+    private String name;
+    private String version;
     private final boolean showNameLabel;
     private final boolean showUploadButton;
     private final FormItemIcon iconLoading;
@@ -111,6 +111,20 @@ public class FileUploadForm extends DynamicCallbackForm {
         return name;
     }
 
+    public void setName(String name) {
+        this.name = name;
+        onDraw();
+    }
+    
+    public String getVersion() {
+        return version;
+    }
+    
+    public void setVersion(String version) {
+        this.version = version;
+        onDraw();
+    }
+    
     /**
      * Returns true if the file was successfully uploaded, false if an error occurred.
      * Returns null if this upload form has not be submitted yet (see {@link #submitForm()}).
@@ -148,16 +162,21 @@ public class FileUploadForm extends DynamicCallbackForm {
         Object value = fileUploadItem.getValue();
         if (value == null || value.toString().length() == 0) {
             String message = MSG.view_upload_prompt_1(name);
-            icon.setIcons(iconRed);
-            icon.setTooltip(message);
+            changeIcon(iconRed, message);
             setUploadError(message);
             // note - don't even submit this definite failure            
         } else {
-            icon.setIcons(iconLoading);
-            icon.setTooltip(MSG.common_msg_loading());
+            changeIcon(iconLoading, MSG.common_msg_loading());
             uploadInProgress = true;
             super.submitForm();
         }
+    }
+
+    protected void changeIcon(FormItemIcon icon, String tooltip) {
+        FormItem item = (this.showUploadButton) ? this.uploadButton : this.fileUploadItem;
+        item.setIcons(icon);
+        item.setIconPrompt(tooltip);
+        markForRedraw();
     }
 
     protected List<FormItem> getOnDrawItems() {
@@ -176,40 +195,61 @@ public class FileUploadForm extends DynamicCallbackForm {
         onDrawItems.add(versionField);
 
         fileUploadItem = new UploadItem("fileUploadItem", name);
-        fileUploadItem.setEndRow(false);
         fileUploadItem.setShowTitle(showNameLabel);
+        fileUploadItem.setWrapTitle(false);
+        fileUploadItem.setColSpan(1);
         onDrawItems.add(fileUploadItem);
 
-        uploadButton = new ButtonItem(MSG.view_upload_upload());
-        uploadButton.setVisible(this.showUploadButton);
-        uploadButton.setStartRow(false);
-        uploadButton.setEndRow(false);
-        uploadButton.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent clickEvent) {
-                submitForm();
-            }
-        });
-        onDrawItems.add(uploadButton);
+        if (showUploadButton) {
+            // this intercepts an enable request and only allows it if there is a file selected
+            class EnableInterceptingButtonItem extends ButtonItem {
+                EnableInterceptingButtonItem(String name) {
+                    super(name);
+                }
 
-        icon = new StaticTextItem("icon");
-        icon.setStartRow(false);
-        icon.setShowTitle(false);
+                @Override
+                public void enable() {
+                    String selectedFile = fileUploadItem.getValueAsString();
+                    if (selectedFile != null && selectedFile.length() > 0) {
+                        super.enable();
+                    }
+                }
+            }
+
+            uploadButton = new EnableInterceptingButtonItem(MSG.view_upload_upload());
+            uploadButton.setDisabled(true);
+            uploadButton.setColSpan(1);
+            uploadButton.setStartRow(false);
+            uploadButton.setAutoFit(true);
+            uploadButton.setIcon(ImageManager.getUploadIcon());
+            uploadButton.addClickHandler(new ClickHandler() {
+                public void onClick(ClickEvent clickEvent) {
+                    submitForm();
+                }
+            });
+
+            fileUploadItem.setEndRow(false);
+            fileUploadItem.addChangeHandler(new ChangeHandler() {
+                @Override
+                public void onChange(ChangeEvent changeEvent) {
+                    uploadButton.setDisabled(false);
+                }
+            });
+
+            onDrawItems.add(uploadButton);
+        }
+
         if (uploadResult != null) {
             if (uploadResult.booleanValue()) {
-                icon.setIcons(iconGreen);
-                icon.setTooltip(MSG.view_upload_alreadyUploaded());
+                changeIcon(iconGreen, MSG.view_upload_alreadyUploaded());
             } else {
                 String message = MSG.view_upload_tooltip_2();
-                icon.setIcons(iconRed);
-                icon.setTooltip(message);
+                changeIcon(iconRed, message);
                 setUploadError(message);
             }
         } else {
-            icon.setIcons(iconGrey);
-            icon.setTooltip(MSG.view_upload_tooltip_1());
+            changeIcon(iconGrey, (showUploadButton) ? MSG.view_upload_tooltip_1a() : MSG.view_upload_tooltip_1b());
         }
-        icon.setShowIcons(true);
-        onDrawItems.add(icon);
 
         return onDrawItems;
     }
@@ -222,22 +262,15 @@ public class FileUploadForm extends DynamicCallbackForm {
                 String results = event.getResults();
                 if (processSubmitCompleteResults(results)) {
                     uploadResult = Boolean.TRUE;
-                    icon.setIcons(iconGreen);
-                    icon.setTooltip(MSG.view_upload_success());
+                    changeIcon(iconGreen, MSG.view_upload_success());
                     CoreGUI.getMessageCenter().notify(new Message(MSG.view_upload_success(), results, Severity.Info));
-                    icon.hide();
-                    icon.show();
                 } else {
                     uploadResult = Boolean.FALSE;
                     String cause = "[" + name + "] " + parseCauseFromResponse(results);
-                    icon.setIcons(iconRed);
-                    icon.setTooltip(cause);
+                    changeIcon(iconRed, cause);
                     setUploadError(cause);
-                    icon.setTooltip(cause);
                     CoreGUI.getMessageCenter().notify(
                         new Message(MSG.view_upload_error_fileName(name), results, Severity.Error));
-                    icon.hide();
-                    icon.show();
                 }
             }
         };
@@ -250,12 +283,9 @@ public class FileUploadForm extends DynamicCallbackForm {
 
                 uploadResult = Boolean.FALSE;
                 String cause = MSG.view_upload_error_fileName_2(name);
-                icon.setIcons(iconRed);
-                icon.setTooltip(cause);
+                changeIcon(iconRed, cause);
                 setUploadError(cause);
                 CoreGUI.getMessageCenter().notify(new Message(cause, Severity.Error));
-                icon.hide();
-                icon.show();
             }
         };
     }
@@ -264,14 +294,10 @@ public class FileUploadForm extends DynamicCallbackForm {
     protected void onDraw() {
         super.onDraw();
 
+        //set the number of columns before we create the items so that
+        //they have this value available
+        setNumCols(((this.showUploadButton) ? 2 : 1) + ((this.showNameLabel) ? 1 : 0));
         List<FormItem> onDrawItems = getOnDrawItems();
-        int numCols = 0;
-        for (FormItem fi : onDrawItems) {
-            if (!(fi instanceof HiddenItem)) {
-                ++numCols;
-            }
-        }
-        setNumCols(numCols);
         setItems(onDrawItems.toArray(new FormItem[onDrawItems.size()]));
 
         // push the form handler so it executes first if the form creator has also added a handler

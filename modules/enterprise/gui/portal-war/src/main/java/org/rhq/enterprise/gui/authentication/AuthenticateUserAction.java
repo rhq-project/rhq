@@ -38,7 +38,6 @@ import org.apache.struts.tiles.actions.TilesAction;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.enterprise.gui.legacy.AttrConstants;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
@@ -157,8 +156,6 @@ public class AuthenticateUserAction extends TilesAction {
             session.setAttribute(Constants.PASSWORD_SES_ATTR, logonForm.getJ_password());
         }
 
-        updateMonitoringEnabled(ctx);
-
         return af;
     }
 
@@ -209,24 +206,11 @@ public class AuthenticateUserAction extends TilesAction {
         String provider = (String) context.getAttribute(Constants.JAAS_PROVIDER_CTX_ATTR);
 
         if (provider == null) {
-            provider = LookupUtil.getSystemManager().getSystemConfiguration().getProperty(RHQConstants.JAASProvider);
+            provider = LookupUtil.getSystemManager().getSystemConfiguration(
+                LookupUtil.getSubjectManager().getOverlord()).getProperty(RHQConstants.JAASProvider);
             context.setAttribute(Constants.JAAS_PROVIDER_CTX_ATTR, provider);
         }
 
         return (provider != null) && provider.equals(RHQConstants.LDAPJAASProvider);
-    }
-
-    /**
-     * Returns <code>true</code> if the RHQ Server's monitoring capabilities has been enabled. A servlet context
-     * attribute "monitorEnabled" is also set to this method's return value.
-     *
-     * @param  context
-     *
-     * @return <code>true</code> if all monitoring capabilities are allowed
-     */
-    public static boolean updateMonitoringEnabled(ServletContext context) {
-        boolean enabled = LookupUtil.getSystemManager().isMonitoringEnabled();
-        context.setAttribute(AttrConstants.MONITOR_ENABLED, Boolean.valueOf(enabled));
-        return enabled;
     }
 }

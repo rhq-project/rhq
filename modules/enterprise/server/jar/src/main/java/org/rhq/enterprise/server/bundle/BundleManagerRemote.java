@@ -37,6 +37,7 @@ import org.rhq.core.domain.bundle.BundleFile;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
+import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration;
 import org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.content.Architecture;
@@ -59,6 +60,21 @@ import org.rhq.enterprise.server.system.ServerVersion;
 @WebService(targetNamespace = ServerVersion.namespace)
 @Remote
 public interface BundleManagerRemote {
+
+    /**
+     * Given the ID for a compatible group, this will return the bundle configuration metadata for that group's resource type.
+     * User interfaces will need to use this method in order to find out if a) the group can be a target for a bundle deployment
+     * and/or b) what different destination base locations are supported by the group.
+     * 
+     * @param subject the user making the request
+     * @param compatGroupId the ID for a compatible group whose type's bundle config is to be returned
+     * @return the bundle configuration for the group's resource type
+     * @throws Exception
+     */
+    @WebMethod
+    ResourceTypeBundleConfiguration getResourceTypeBundleConfiguration( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "compatGroupId") int compatGroupId) throws Exception;
 
     /**
      * Adds a BundleFile to the BundleVersion and implicitly creates the backing PackageVersion. If the PackageVersion
@@ -87,6 +103,7 @@ public interface BundleManagerRemote {
      * 
      * @see {@link addBundleFile(Subject, int, String, String, Architecture, InputStream, boolean)}     
      */
+    @WebMethod
     BundleFile addBundleFileViaByteArray( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "bundleVersionid") int bundleVersionId, //
@@ -100,6 +117,7 @@ public interface BundleManagerRemote {
      * 
      * @see {@link addBundleFile(Subject, int, String, String, Architecture, InputStream, boolean)}     
      */
+    @WebMethod
     BundleFile addBundleFileViaURL( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "bundleVersionid") int bundleVersionId, //
@@ -113,6 +131,7 @@ public interface BundleManagerRemote {
      * 
      * @see {@link addBundleFile(Subject, int, String, String, Architecture, InputStream, boolean)}     
      */
+    @WebMethod
     BundleFile addBundleFileViaPackageVersion( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "bundleVersionid") int bundleVersionId, //
@@ -133,6 +152,7 @@ public interface BundleManagerRemote {
      * @return the persisted deployment
      * @throws Exception
      */
+    @WebMethod
     BundleDeployment createBundleDeployment( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "bundleVersionId") int bundleVersionId, //
@@ -141,20 +161,28 @@ public interface BundleManagerRemote {
         @WebParam(name = "configuration") Configuration configuration) throws Exception;
 
     /**
+     * Creates a bundle destination that describes a target for the bundle deployments.
+     * 
      * @param subject user must have MANAGE_INVENTORY permission
      * @param BundleId the Bundle to be deployed to this Destination
      * @param name a name for this destination. not null or empty
      * @param description an optional longer description describing this destination 
+     * @param destBaseDirName The name of the base directory location where the bundle will be deployed.
+     *                        <code>deployDir</code> is relative to the directory that this name refers to.
+     *                        This name isn't the directory itself, it refers to the named location as
+     *                        defined in the agent plugin's descriptor for the resource's type
      * @param deployDir the root dir for deployments to this destination
      * @param groupIf the target platforms for deployments to this destination 
      * @return the persisted destination
      * @throws Exception
      */
+    @WebMethod
     BundleDestination createBundleDestination( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "bundleId") int bundleId, //
         @WebParam(name = "name") String name, //
         @WebParam(name = "description") String description, //
+        @WebParam(name = "destBaseDirName") String destBaseDirName, //        
         @WebParam(name = "deployDir") String deployDir, //        
         @WebParam(name = "groupId") Integer groupId) throws Exception;
 
@@ -169,6 +197,7 @@ public interface BundleManagerRemote {
      * @return the persisted BundleVersion with alot of the internal relationships filled in to help the caller
      *         understand all that this method did.
      */
+    @WebMethod
     BundleVersion createBundleVersionViaRecipe( //
         @WebParam(name = "subject") Subject subject, //        
         @WebParam(name = "recipe") String recipe) throws Exception;
@@ -185,6 +214,7 @@ public interface BundleManagerRemote {
      * @return the persisted BundleVersion with alot of the internal relationships filled in to help the caller
      *         understand all that this method did. Bundle files specifically are returned.
      */
+    @WebMethod
     BundleVersion createBundleVersionViaFile( //
         @WebParam(name = "subject") Subject subject, //        
         @WebParam(name = "distributionFile") File distributionFile) throws Exception;
@@ -205,9 +235,24 @@ public interface BundleManagerRemote {
      * @return the persisted BundleVersion with alot of the internal relationships filled in to help the caller
      *         understand all that this method did. Bundle files specifically are returned.
      */
+    @WebMethod
     BundleVersion createBundleVersionViaURL( //
         @WebParam(name = "subject") Subject subject, //        
         @WebParam(name = "distributionFileUrl") String distributionFileUrl) throws Exception;
+
+    /**
+     * Remove everything associated with the Bundles with the exception of files laid down by related deployments.
+     * Deployed files are left as is on the deployment platforms but the bundle mechanism will no longer track
+     * the deployment of all bundles that have been deleted.
+     *    
+     * @param subject
+     * @param bundleIds IDs of all bundles to be deleted
+     * @throws Exception if any part of the removal fails. 
+     */
+    @WebMethod
+    void deleteBundles( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "bundleIds") int[] bundleIds) throws Exception;
 
     /**
      * Remove everything associated with the Bundle with the exception of files laid down by related deployments.
@@ -294,6 +339,7 @@ public interface BundleManagerRemote {
      * @return The List of filenames.
      * @throws Exception
      */
+    @WebMethod
     Set<String> getBundleVersionFilenames( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "bundleVersionId") int bundleVersionId, //
@@ -314,6 +360,17 @@ public interface BundleManagerRemote {
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "bundleVersionId") int bundleVersionId) throws Exception;
      */
+
+    /**
+     * Purges the destination's live deployment content from the remote platforms.
+     *
+     * @param subject user that must have proper permissions
+     * @param bundleDestinationId the ID of the destination that is to be purged of bundle content
+     */
+    @WebMethod
+    void purgeBundleDestination( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "bundleDestinationId") int bundleDestinationId) throws Exception;
 
     /**
      * Deploy the bundle to the destination, as described in the provided deployment.

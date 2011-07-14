@@ -42,6 +42,8 @@ import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
+import org.rhq.core.pluginapi.operation.OperationFacet;
+import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.plugins.database.DatabaseComponent;
 import org.rhq.plugins.database.DatabaseQueryUtility;
 
@@ -51,7 +53,7 @@ import org.rhq.plugins.database.DatabaseQueryUtility;
  * @author Greg Hinkle
  */
 public class PostgresTableComponent implements DatabaseComponent<PostgresDatabaseComponent>, MeasurementFacet,
-    ConfigurationFacet, DeleteResourceFacet {
+    ConfigurationFacet, DeleteResourceFacet, OperationFacet {
     private static final List<String> PG_STAT_USER_TABLE_STATS = Arrays.asList("seq_scan", "seq_tup_read", "idx_scan",
         "idx_tup_fetch", "n_tup_ins", "n_tup_upd", "n_tup_del", "table_size", "total_size");
 
@@ -228,6 +230,15 @@ public class PostgresTableComponent implements DatabaseComponent<PostgresDatabas
 
     public void removeConnection() {
         this.resourceContext.getParentResourceComponent().removeConnection();
+    }
+
+    public OperationResult invokeOperation(String name, Configuration parameters) throws InterruptedException,
+        Exception {
+
+        if ("vacuum".equals(name)) {
+            DatabaseQueryUtility.executeUpdate(this,"vacuum " + getTableName());
+        }
+        return null;
     }
 
     private static class ColumnDefinition {

@@ -29,4 +29,6 @@ package org.rhq.core.pluginapi.bundle;
  */
 public interface BundleFacet {
     BundleDeployResult deployBundle(BundleDeployRequest request);
+
+    BundlePurgeResult purgeBundle(BundlePurgeRequest request);
 }

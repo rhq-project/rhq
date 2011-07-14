@@ -57,7 +57,7 @@ import org.rhq.core.domain.test.AbstractEJB3Test;
  *
  * @author John Mazzitelli
  */
-@Test
+@Test(groups = "integration.ejb3")
 public class PackageVersionContentSourceTest extends AbstractEJB3Test {
     public void testInsert() throws Exception {
         getTransactionManager().begin();

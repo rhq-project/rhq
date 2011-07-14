@@ -43,6 +43,7 @@ import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.cloud.instance.CacheConsistencyManagerBean;
 import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * There are various changes that can occur in the system that make the alertscondition cache stale.
@@ -126,7 +127,7 @@ public class StatusManagerBean implements StatusManagerLocal {
          * this is informational debugging only - do NOT change the status bits here
          */
         if (log.isDebugEnabled()) {
-            Agent agent = agentManager.getAgentByResourceId(subject, resourceId);
+            Agent agent = agentManager.getAgentByResourceId(LookupUtil.getSubjectManager().getOverlord(), resourceId);
             log.debug("Marking status, agent[id=" + agent.getId() + ", status=" + agent.getStatus()
                 + "] for resource[id=" + resourceId + "]");
 
@@ -160,7 +161,8 @@ public class StatusManagerBean implements StatusManagerLocal {
          */
         if (log.isDebugEnabled()) {
             AlertDefinition definition = entityManager.find(AlertDefinition.class, alertDefinitionId);
-            Agent agent = agentManager.getAgentByResourceId(subject, definition.getResource().getId());
+            Agent agent = agentManager.getAgentByResourceId(LookupUtil.getSubjectManager().getOverlord(), definition
+                .getResource().getId());
             log.debug("Marking status, agent[id=" + agent.getId() + ", status=" + agent.getStatus()
                 + "] for alertDefinition[id=" + alertDefinitionId + "]");
 

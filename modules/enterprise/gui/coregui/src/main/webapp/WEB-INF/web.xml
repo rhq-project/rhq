@@ -7,6 +7,15 @@
 
     <display-name>RHQ GUI</display-name>
 
+    <filter>
+       <filter-name>CacheControlFilter</filter-name>
+       <filter-class>org.rhq.enterprise.gui.coregui.server.filter.CacheControlFilter</filter-class>
+    </filter>
+
+    <filter-mapping>
+       <filter-name>CacheControlFilter</filter-name>
+       <url-pattern>/*</url-pattern>
+    </filter-mapping>
 
     <servlet>
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI RoleGWTService</servlet-name>
@@ -41,6 +50,14 @@
         <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.MeasurementDataGWTServiceImpl</servlet-class>
     </servlet>
     <servlet>
+        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI MeasurementChartsGWTService</servlet-name>
+        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.MeasurementChartsGWTServiceImpl</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI MeasurementScheduleGWTService</servlet-name>
+        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.MeasurementScheduleGWTServiceImpl</servlet-class>
+    </servlet>
+    <servlet>
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI AlertGWTService</servlet-name>
         <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.AlertGWTServiceImpl</servlet-class>
     </servlet>
@@ -55,6 +72,10 @@
     <servlet>
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI GroupAlertDefinitionGWTService</servlet-name>
         <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.GroupAlertDefinitionGWTServiceImpl</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI GroupDefinitionExpressionBuilderGWTService</servlet-name>
+        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.GroupDefinitionExpressionBuilderGWTServiceImpl</servlet-class>
     </servlet>
     <servlet>
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI OperationGWTService</servlet-name>
@@ -132,6 +153,14 @@
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI AgentGWTService</servlet-name>
         <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.AgentGWTServiceImpl</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI PluginGWTService</servlet-name>
+        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.PluginGWTServiceImpl</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI DriftGWTService</servlet-name>
+        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.DriftGWTServiceImpl</servlet-class>
+    </servlet>    
 
 
     <servlet-mapping>
@@ -167,6 +196,14 @@
         <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/MeasurementDataGWTService</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
+        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI MeasurementChartsGWTService</servlet-name>
+        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/MeasurementChartsGWTService</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI MeasurementScheduleGWTService</servlet-name>
+        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/MeasurementScheduleGWTService</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI AlertGWTService</servlet-name>
         <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/AlertGWTService</url-pattern>
     </servlet-mapping>
@@ -181,6 +218,10 @@
     <servlet-mapping>
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI GroupAlertDefinitionGWTService</servlet-name>
         <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/GroupAlertDefinitionGWTService</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI GroupDefinitionExpressionBuilderGWTService</servlet-name>
+        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/GroupDefinitionExpressionBuilderGWTService</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI OperationGWTService</servlet-name>
@@ -262,10 +303,34 @@
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI AgentGWTService</servlet-name>
         <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/AgentGWTService</url-pattern>
     </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI PluginGWTService</servlet-name>
+        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/PluginGWTService</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI DriftGWTService</servlet-name>
+        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/DriftGWTService</url-pattern>
+    </servlet-mapping>    
 
 
     <welcome-file-list>
         <welcome-file>CoreGUI.html</welcome-file>
     </welcome-file-list>
+
+
+    <!-- Uncomment the below to automatically redirect all HTTP requests to the 
+         corresponding HTTPS URLs. -->
+    <!--
+    <security-constraint>
+        <display-name>Redirect HTTP to HTTPS</display-name>
+        <web-resource-collection>
+            <web-resource-name>Entire Application</web-resource-name>
+            <url-pattern>/*</url-pattern>
+        </web-resource-collection>
+        <user-data-constraint>
+            <transport-guarantee>CONFIDENTIAL</transport-guarantee>
+        </user-data-constraint>
+    </security-constraint>
+    -->
 
 </web-app>

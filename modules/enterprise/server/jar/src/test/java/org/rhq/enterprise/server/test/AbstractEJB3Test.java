@@ -63,7 +63,8 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * @author Greg Hinkle
  */
 public abstract class AbstractEJB3Test extends AssertJUnit {
-    @BeforeSuite(groups = {"integration.ejb3","PERF"})
+    //@BeforeSuite(groups = {"integration.ejb3","PERF"}) // TODO investigate again
+    @BeforeSuite(alwaysRun = true)
     public static void startupEmbeddedJboss() throws Exception {
         // Setting content location to the tmp dir
         System.setProperty(ContentSourceManagerBean.FILESYSTEM_PROPERTY, System.getProperty("java.io.tmpdir"));
@@ -144,7 +145,10 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
             }
         }
 
-        start = stats.getQueryExecutionCount();
+        if (stats != null)
+            start = stats.getQueryExecutionCount();
+        else
+            start = 0;
     }
 
     public static Connection getConnection() throws SQLException {
@@ -201,9 +205,10 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
      * annotations by creating sessions for different users with different permissions.
      *
      * @param subject a JON subject
+     * @return the session activated subject, a copy of the subject passed in. 
      */
-    public void createSession(Subject subject) {
-        SessionManager.getInstance().put(subject);
+    public Subject createSession(Subject subject) {
+        return SessionManager.getInstance().put(subject);
     }
 
     /**
@@ -232,6 +237,9 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
     public TestServerCommunicationsService prepareForTestAgents() {
         try {
             MBeanServer mbs = getJBossMBeanServer();
+            if (mbs.isRegistered(ServerCommunicationsServiceMBean.OBJECT_NAME)) {
+                mbs.unregisterMBean(ServerCommunicationsServiceMBean.OBJECT_NAME);
+            }
             TestServerCommunicationsService testAgentContainer = new TestServerCommunicationsService();
             mbs.registerMBean(testAgentContainer, ServerCommunicationsServiceMBean.OBJECT_NAME);
             return testAgentContainer;
@@ -294,6 +302,10 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
 
     public void prepareScheduler() {
         try {
+            if (schedulerService != null) {
+                return;
+            }
+
             Properties quartzProps = new Properties();
             quartzProps.load(this.getClass().getClassLoader().getResourceAsStream("test-scheduler.properties"));
 

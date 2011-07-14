@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -22,12 +22,16 @@ import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.EventTarget;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Window.Location;
 import com.smartgwt.client.core.KeyIdentifier;
 import com.smartgwt.client.types.Overflow;
@@ -49,11 +53,11 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceT
 import org.rhq.enterprise.gui.coregui.client.menu.MenuBarView;
 import org.rhq.enterprise.gui.coregui.client.report.ReportTopView;
 import org.rhq.enterprise.gui.coregui.client.report.tag.TaggedView;
+import org.rhq.enterprise.gui.coregui.client.test.TestRemoteServiceStatisticsView;
+import org.rhq.enterprise.gui.coregui.client.test.TestDataSourceResponseStatisticsView;
 import org.rhq.enterprise.gui.coregui.client.test.TestTopView;
 import org.rhq.enterprise.gui.coregui.client.util.ErrorHandler;
-import org.rhq.enterprise.gui.coregui.client.util.WidgetUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.message.MessageBar;
 import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenter;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
@@ -63,39 +67,47 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * @author Greg Hinkle
  * @author Ian Springer
  */
-public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
-
-    // This must come first to ensure proper I18N class loading for dev mode
-    private static final Messages MSG = GWT.create(Messages.class);
-
-    private static final String DEFAULT_VIEW_PATH = DashboardsView.VIEW_ID.getName();
-
-    // just to avoid constructing this over and over
-    private static final String TREE_NAV_VIEW_PATTERN = "(" + ResourceTopView.VIEW_ID + "|"
-        + ResourceGroupTopView.VIEW_ID + "|" + ResourceGroupDetailView.AUTO_GROUP_VIEW_PATH + ")/[^/]*";
+public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.NativePreviewHandler {
 
     public static final String CONTENT_CANVAS_ID = "BaseContent";
 
+    // This must come first to ensure proper I18N class loading for dev mode
+    private static final Messages MSG = GWT.create(Messages.class);
+    private static final MessageConstants MSGCONST = GWT.create(MessageConstants.class);
+
+    private static final String DEFAULT_VIEW = DashboardsView.VIEW_ID.getName();
+    private static final String LOGOUT_VIEW = "LogOut";
+
+    private static String currentView;
+    private static ViewPath currentViewPath;
+
+    // just to avoid constructing this over and over. the ordering is important, more complex viewPaths first,
+    // javascript will greedily match "Resource" and give up trying after that, missing "Resource/AutoGroup" for
+    // example.
+    private static final String TREE_NAV_VIEW_PATTERN = "(" //
+        + ResourceGroupDetailView.AUTO_GROUP_VIEW + "|" //
+        + ResourceGroupDetailView.AUTO_CLUSTER_VIEW //
+        + ResourceGroupTopView.VIEW_ID + "|" //
+        + ResourceTopView.VIEW_ID + "|" // 
+        + ")/[^/]*";
+
     private static ErrorHandler errorHandler = new ErrorHandler();
-
-    private static MessageBar messageBar;
-
-    private static BreadcrumbTrailPane breadCrumbTrailPane;
 
     private static MessageCenter messageCenter;
 
-    private static String currentPath;
-
-    @SuppressWarnings("unused")
-    private static Canvas content;
-
-    private RootCanvas rootCanvas;
-
-    private static ViewPath currentViewPath;
-
     private static CoreGUI coreGUI;
 
+    // store a message to be posted in the message center during the next renderView processing.
     private static Message pendingMessage;
+
+    // store the fact that we want the ViewPath for the next renderView to have refresh on. This allows us to
+    // ask for a refresh even when changing viewPaths, which can be useful when we want to say, refresh a LHS tree
+    // while also changing the main content. Typically we refresh only when the path is not changed.
+    private static boolean pendingRefresh = false;
+
+    private RootCanvas rootCanvas;
+    private MenuBarView menuBarView;
+    private Footer footer;
 
     public void onModuleLoad() {
         String hostPageBaseURL = GWT.getHostPageBaseURL();
@@ -111,6 +123,71 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
 
         coreGUI = this;
 
+        Event.addNativePreviewHandler(this);
+
+        registerPageKeys();
+
+        GWT.setUncaughtExceptionHandler(new GWT.UncaughtExceptionHandler() {
+            public void onUncaughtException(Throwable e) {
+                getErrorHandler().handleError(MSG.view_core_uncaught(), e);
+            }
+        });
+
+        /* after having this enabled for a while, the majority opinion is that this is more annoying than helpful 
+         *  
+        Window.addWindowClosingHandler(new Window.ClosingHandler() {
+            public void onWindowClosing(Window.ClosingEvent event) {
+                event.setMessage("Are you sure you want to leave RHQ?");                              
+            }
+        });
+        */
+
+        messageCenter = new MessageCenter();
+
+        UserSessionManager.login();
+
+        // Remove loading image, which can be seen if LoginView doesn't completely cover it.
+        Element loadingPanel = DOM.getElementById("Loading-Panel");
+        loadingPanel.removeFromParent();
+    }
+
+    public void onPreviewNativeEvent(Event.NativePreviewEvent event) {
+        if (SC.isIE() && event.getTypeInt() == Event.ONCLICK) {
+            NativeEvent nativeEvent = event.getNativeEvent();
+            EventTarget target = nativeEvent.getEventTarget();
+            if (Element.is(target)) {
+                Element element = Element.as(target);
+                if ("a".equalsIgnoreCase(element.getTagName())) {
+                    // make sure it's not a hyperlink that GWT already handles
+                    if (element.getPropertyString("__listener") == null) {
+                        String url = element.getAttribute("href");
+                        String viewPath = getViewPath(url);
+                        if (viewPath != null) {
+                            GWT.log("Forcing History.newItem(\"" + viewPath + "\")...");
+                            History.newItem(viewPath);
+                            nativeEvent.preventDefault();
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private static String getViewPath(String url) {
+        String token;
+        if (url.startsWith("#")) {
+            token = url.substring(1);
+        } else if (url.startsWith("/#")) {
+            token = url.substring(2);
+        } else if (url.contains(Location.getHost()) && url.indexOf('#') > 0) {
+            token = url.substring(url.indexOf('#') + 1);
+        } else {
+            token = null;
+        }
+        return token;
+    }
+
+    private void registerPageKeys() {
         if (isDebugMode()) {
             KeyIdentifier debugKey = new KeyIdentifier();
             debugKey.setCtrlKey(true);
@@ -122,19 +199,48 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
             });
         }
 
-        GWT.setUncaughtExceptionHandler(new GWT.UncaughtExceptionHandler() {
-            public void onUncaughtException(Throwable e) {
-                getErrorHandler().handleError(MSG.view_core_uncaught(), e);
+        // Control-Shift-S for aggregate rpc service stats
+        KeyIdentifier statisticsWindowKey = new KeyIdentifier();
+        statisticsWindowKey.setCtrlKey(true);
+        statisticsWindowKey.setShiftKey(true);
+        statisticsWindowKey.setAltKey(false);
+        statisticsWindowKey.setKeyName("S");
+        Page.registerKey(statisticsWindowKey, new KeyCallback() {
+            public void execute(String keyName) {
+                TestRemoteServiceStatisticsView.showInWindow();
             }
         });
 
-        messageCenter = new MessageCenter();
+        // Control-Alt-S for response stats
+        KeyIdentifier responseStatsWindowKey = new KeyIdentifier();
+        responseStatsWindowKey.setCtrlKey(true);
+        statisticsWindowKey.setShiftKey(false);
+        responseStatsWindowKey.setAltKey(true);
+        responseStatsWindowKey.setKeyName("s");
+        Page.registerKey(responseStatsWindowKey, new KeyCallback() {
+            public void execute(String keyName) {
+                TestDataSourceResponseStatisticsView.showInWindow();
+            }
+        });
 
-        UserSessionManager.login();
+        KeyIdentifier messageCenterWindowKey = new KeyIdentifier();
+        messageCenterWindowKey.setCtrlKey(true);
+        messageCenterWindowKey.setKeyName("M");
+        Page.registerKey(messageCenterWindowKey, new KeyCallback() {
+            public void execute(String keyName) {
+                footer.getMessageCenter().showMessageCenterWindow();
+            }
+        });
 
-        // removing loading image, which can be seen if LoginView doesn't completely cover it
-        Element loadingPanel = DOM.getElementById("Loading-Panel");
-        loadingPanel.removeFromParent();
+        KeyIdentifier testTopViewKey = new KeyIdentifier();
+        testTopViewKey.setCtrlKey(true);
+        testTopViewKey.setAltKey(true);
+        testTopViewKey.setKeyName("t");
+        Page.registerKey(testTopViewKey, new KeyCallback() {
+            public void execute(String keyName) {
+                goToView("Test");
+            }
+        });
     }
 
     public static CoreGUI get() {
@@ -142,14 +248,11 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
     }
 
     public void buildCoreUI() {
-        // If the core gui is already built (eg. from previous login, just refire event)
+        // If the core gui is already built (eg. from previous login) skip the build and just refire event
         if (rootCanvas == null) {
-            MenuBarView menuBarView = new MenuBarView("TopMenu");
+            menuBarView = new MenuBarView("TopMenu");
             menuBarView.setWidth("100%");
-
-            messageBar = new MessageBar();
-
-            breadCrumbTrailPane = new BreadcrumbTrailPane();
+            footer = new Footer();
 
             Canvas canvas = new Canvas(CONTENT_CANVAS_ID);
             canvas.setWidth100();
@@ -157,72 +260,79 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
 
             rootCanvas = new RootCanvas();
             rootCanvas.setOverflow(Overflow.HIDDEN);
-            rootCanvas.addMember(menuBarView);
 
-            rootCanvas.addMember(messageBar);
-            //rootCanvas.addMember(breadCrumbTrailPane);
+            rootCanvas.addMember(menuBarView);
+            rootCanvas.addMember(footer);
             rootCanvas.addMember(canvas);
-            rootCanvas.addMember(new Footer());
+
             rootCanvas.draw();
 
             History.addValueChangeHandler(this);
         }
 
-        if (History.getToken().equals("") || History.getToken().equals("LogOut")) {
-            // request a redraw of the MenuBarItem to ensure the correct sessio info is displayed 
-            rootCanvas.getMember(0).markForRedraw();
+        if (History.getToken().equals("") || History.getToken().equals(LOGOUT_VIEW)) {
+
+            // init the rootCanvas to ensure a clean slate for a new user
+            rootCanvas.initCanvas();
 
             // go to default view if user doesn't specify a history token
             History.newItem(getDefaultView());
         } else {
+
             // otherwise just fire an event for the bookmarked URL they are returning to
             History.fireCurrentHistoryState();
+        }
+
+        // The root canvas is hidden by user log out, show again if necessary
+        if (!rootCanvas.isVisible()) {
+            rootCanvas.show();
         }
     }
 
     public void onValueChange(ValueChangeEvent<String> stringValueChangeEvent) {
-        currentPath = URL.decodeComponent(stringValueChangeEvent.getValue());
-        Log.debug("Handling history event for path: " + currentPath);
+        currentView = URL.decodeComponent(stringValueChangeEvent.getValue());
+        Log.debug("Handling history event for view: " + currentView);
 
-        currentViewPath = new ViewPath(currentPath);
+        currentViewPath = new ViewPath(currentView);
         coreGUI.rootCanvas.renderView(currentViewPath);
     }
 
     public static void refresh() {
-        currentViewPath = new ViewPath(currentPath, true);
+        currentViewPath = new ViewPath(currentView, true);
         coreGUI.rootCanvas.renderView(currentViewPath);
     }
 
-    public Canvas createContent(String breadcrumbName) {
+    public Canvas createContent(String viewName) {
         Canvas canvas;
 
-        if (breadcrumbName.equals(DashboardsView.VIEW_ID.getName())) {
-            canvas = new DashboardsView(breadcrumbName);
-        } else if (breadcrumbName.equals(InventoryView.VIEW_ID.getName())) {
+        if (viewName.equals(DashboardsView.VIEW_ID.getName())) {
+            canvas = new DashboardsView(viewName);
+        } else if (viewName.equals(InventoryView.VIEW_ID.getName())) {
             canvas = new InventoryView();
-        } else if (breadcrumbName.equals(ResourceTopView.VIEW_ID.getName())) {
-            canvas = new ResourceTopView(breadcrumbName);
-        } else if (breadcrumbName.equals(ResourceGroupTopView.VIEW_ID.getName())) {
-            canvas = new ResourceGroupTopView(breadcrumbName);
-        } else if (breadcrumbName.equals(ReportTopView.VIEW_ID.getName())) {
+        } else if (viewName.equals(ResourceTopView.VIEW_ID.getName())) {
+            canvas = new ResourceTopView(viewName);
+        } else if (viewName.equals(ResourceGroupTopView.VIEW_ID.getName())) {
+            canvas = new ResourceGroupTopView(viewName);
+        } else if (viewName.equals(ReportTopView.VIEW_ID.getName())) {
             canvas = new ReportTopView();
-        } else if (breadcrumbName.equals(BundleTopView.VIEW_ID.getName())) {
-            canvas = new BundleTopView(breadcrumbName);
-        } else if (breadcrumbName.equals(AdministrationView.VIEW_ID.getName())) {
+        } else if (viewName.equals(BundleTopView.VIEW_ID.getName())) {
+            canvas = new BundleTopView(viewName);
+        } else if (viewName.equals(AdministrationView.VIEW_ID.getName())) {
             canvas = new AdministrationView();
-        } else if (breadcrumbName.equals(HelpView.VIEW_ID.getName())) {
+        } else if (viewName.equals(HelpView.VIEW_ID.getName())) {
             canvas = new HelpView();
-        } else if (breadcrumbName.equals("LogOut")) {
-            // TODO: don't make LogOut a history event, just perform the logout action by responding to click event
+        } else if (viewName.equals(LOGOUT_VIEW)) {
+            UserSessionManager.logout();
+            rootCanvas.hide();
+
             LoginView logoutView = new LoginView("Login");
             canvas = logoutView;
-            UserSessionManager.logout();
             logoutView.showLoginDialog();
-        } else if (breadcrumbName.equals(TaggedView.VIEW_ID.getName())) {
-            canvas = new TaggedView(breadcrumbName);
-        } else if (breadcrumbName.equals("Subsystems")) {
+        } else if (viewName.equals(TaggedView.VIEW_ID.getName())) {
+            canvas = new TaggedView(viewName);
+        } else if (viewName.equals("Subsystems")) {
             canvas = new AlertHistoryView("Alert");
-        } else if (breadcrumbName.equals(TestTopView.VIEW_ID.getName())) {
+        } else if (viewName.equals(TestTopView.VIEW_ID.getName())) {
             canvas = new TestTopView();
         } else {
             canvas = null;
@@ -240,47 +350,40 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
         return errorHandler;
     }
 
-    public static void printWidgetTree() {
-        WidgetUtility.printWidgetTree(coreGUI.rootCanvas);
-    }
-
     private static String getDefaultView() {
         // TODO: should this be Dashboard or a User Preference?
-        return DEFAULT_VIEW_PATH;
+        return DEFAULT_VIEW;
     }
 
-    public static void setContent(Canvas newContent) {
-        Canvas contentCanvas = Canvas.getById(CONTENT_CANVAS_ID);
-        for (Canvas child : contentCanvas.getChildren()) {
-            child.destroy();
-        }
-        if (newContent != null) {
-            content = newContent;
-            contentCanvas.addChild(newContent);
-        }
-        contentCanvas.markForRedraw();
+    public static void goToView(String view) {
+        goToView(view, null, false);
     }
 
-    public static void goToView(String viewPath) {
-        goToView(viewPath, null);
+    public static void goToView(String view, Message message) {
+        goToView(view, message, false);
     }
 
-    public static void goToView(String viewPath, Message message) {
+    public static void goToView(String view, boolean refresh) {
+        goToView(view, null, refresh);
+    }
+
+    public static void goToView(String view, Message message, boolean refresh) {
         pendingMessage = message;
+        pendingRefresh = refresh;
 
         // if path starts with "#" (e.g. if caller used LinkManager to obtain some of the path), strip it off 
-        if (viewPath.charAt(0) == '#') {
-            viewPath = viewPath.substring(1);
+        if (view.charAt(0) == '#') {
+            view = view.substring(1);
         }
 
         String currentViewPath = History.getToken();
-        if (currentViewPath.equals(viewPath)) {
+        if (currentViewPath.equals(view)) {
             // We're already there - just refresh the view.
             refresh();
         } else {
-            if (viewPath.matches(TREE_NAV_VIEW_PATTERN)) {
+            if (view.matches(TREE_NAV_VIEW_PATTERN)) {
                 // e.g. "Resource/10001" or "Resource/AutoGroup/10003"
-                if (!currentViewPath.startsWith(viewPath)) {
+                if (!currentViewPath.startsWith(view)) {
                     // The Node that was selected is not the same Node that was previously selected - it
                     // may not even be the same node type. For example, the user could have moved from a
                     // resource to an autogroup in the same tree. Try to keep the tab selection sticky as best as
@@ -292,19 +395,19 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
                     // trying to render non-applicable detail views.  We'll do this by chopping at the start 
                     // of any other numeric in the path
                     suffix = suffix.replaceFirst("\\d.*", "");
-                    viewPath += suffix;
+                    view += suffix;
                 }
             }
-            History.newItem(viewPath);
+            History.newItem(view);
         }
-    }
-
-    public static void refreshBreadCrumbTrail() {
-        breadCrumbTrailPane.refresh(currentViewPath);
     }
 
     public static Messages getMessages() {
         return MSG;
+    }
+
+    public static MessageConstants getMessageConstants() {
+        return MSGCONST;
     }
 
     private class RootCanvas extends VLayout implements BookmarkableView {
@@ -316,52 +419,117 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
             setHeight100();
         }
 
-        public void renderView(final ViewPath viewPath) {
+        private String getViewPathTitle(ViewPath viewPath) {
+            // default title is the path minus any IDs we find. That should give a least some nice default title.
+            StringBuilder viewPathTitle = new StringBuilder();
+            for (ViewId viewId : viewPath.getViewPath()) {
+                // none of our path elements start with a digit that is NOT an ID; if we see an ID, skip it
+                if (!Character.isDigit(viewId.getPath().charAt(0))) {
+                    if (viewPathTitle.length() > 0) {
+                        viewPathTitle.append(" | ");
+                    }
+                    viewPathTitle.append(viewId.getPath());
+                }
+            }
+            if (viewPathTitle.length() == 0) {
+                viewPathTitle.append("Core Application");
+            }
+            return "RHQ: " + viewPathTitle.toString();
+        }
+
+        public void initCanvas() {
+            // request a redraw of the MenuBarItem to ensure the correct session info is displayed 
+            getMember(0).markForRedraw();
+
+            // remove any current viewId so the next requested view generates new content
+            this.currentViewId = null;
+        }
+
+        public void renderView(ViewPath viewPath) {
+            // If the session is logged out ensure that we only navigate to the log out view, otherwise keep 
+            // our CoreGUI session alive by refreshing the session timer each time the user performs navigation
+            if (UserSessionManager.isLoggedOut()) {
+                if (!LOGOUT_VIEW.equals(viewPath.getCurrent().getPath())) {
+                    History.newItem(LOGOUT_VIEW);
+                }
+                return;
+            } else {
+                UserSessionManager.refresh();
+            }
+
+            Window.setTitle(getViewPathTitle(viewPath));
+
+            // clear any message when navigating to a new view (not refreshing), the user is probably no longer interested
+            if (!viewPath.isRefresh()) {
+                coreGUI.footer.getMessageBar().clearMessage(true);
+            }
+
             if (viewPath.isEnd()) {
                 // default view
-                History.newItem(DEFAULT_VIEW_PATH);
+                History.newItem(DEFAULT_VIEW);
             } else {
-                messageBar.clearMessage();
                 if (pendingMessage != null) {
                     getMessageCenter().notify(pendingMessage);
                     pendingMessage = null;
                 }
 
+                if (pendingRefresh) {
+                    viewPath.setRefresh(true);
+                    pendingRefresh = false;
+                }
+
                 ViewId topLevelViewId = viewPath.getCurrent(); // e.g. Administration
                 if (!topLevelViewId.equals(this.currentViewId)) {
+                    // Destroy the current canvas before creating the new one. This helps prevent locator
+                    // conflicts if the old and new content share (logical) widgets.  A call to destroy (e.g. certain
+                    // IFrames/FullHTMLPane) can actually remove multiple children of the contentCanvas. As such, we
+                    // need to query for the children after each destroy to ensure only valid children are in the array.
+                    Canvas contentCanvas = Canvas.getById(CONTENT_CANVAS_ID);
+                    Canvas[] children;
+                    while ((children = contentCanvas.getChildren()).length > 0) {
+                        children[0].destroy();
+                    }
+
+                    // Set the new content and redraw
                     this.currentViewId = topLevelViewId;
                     this.currentCanvas = createContent(this.currentViewId.getPath());
-                    setContent(this.currentCanvas);
+
+                    if (null != this.currentCanvas) {
+                        contentCanvas.addChild(this.currentCanvas);
+                    }
+
+                    contentCanvas.markForRedraw();
                 }
 
-                if (this.currentCanvas instanceof BookmarkableView) {
-                    if (this.currentCanvas instanceof InitializableView) {
-                        final InitializableView initializableView = (InitializableView) this.currentCanvas;
+                if (this.currentCanvas instanceof InitializableView) {
+                    final InitializableView initializableView = (InitializableView) this.currentCanvas;
+                    final ViewPath initializableViewPath = viewPath;
+                    new Timer() {
                         final long startTime = System.currentTimeMillis();
-                        final Timer timer = new Timer() {
-                            public void run() {
-                                if (initializableView.isInitialized()) {
-                                    ((BookmarkableView) currentCanvas).renderView(viewPath.next());
+
+                        public void run() {
+                            if (initializableView.isInitialized()) {
+                                if (RootCanvas.this.currentCanvas instanceof BookmarkableView) {
+                                    ((BookmarkableView) RootCanvas.this.currentCanvas).renderView(initializableViewPath
+                                        .next());
                                 } else {
-                                    long elapsedMillis = System.currentTimeMillis() - startTime;
-                                    if (elapsedMillis < 5000) {
-                                        // Reschedule the timer.
-                                        schedule(100);
-                                    }
+                                    RootCanvas.this.currentCanvas.markForRedraw();
+                                }
+                            } else {
+                                long elapsedMillis = System.currentTimeMillis() - startTime;
+                                if (elapsedMillis < 10000) {
+                                    schedule(100); // Reschedule the timer.
                                 }
                             }
-                        };
-                        if (initializableView.isInitialized()) {
-                            ((BookmarkableView) currentCanvas).renderView(viewPath.next());
-                        } else {
-                            timer.schedule(100);
                         }
+                    }.run(); // fire the timer immediately
+                } else {
+                    if (this.currentCanvas instanceof BookmarkableView) {
+                        ((BookmarkableView) this.currentCanvas).renderView(viewPath.next());
                     } else {
-                        ((BookmarkableView) currentCanvas).renderView(viewPath.next());
+                        this.currentCanvas.markForRedraw();
                     }
                 }
-
-                refreshBreadCrumbTrail();
             }
         }
     }
@@ -369,4 +537,5 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
     public static boolean isDebugMode() {
         return !GWT.isScript();
     }
+
 }

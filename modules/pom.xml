@@ -6,7 +6,7 @@
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-parent</artifactId>
-      <version>4.0.0-SNAPSHOT</version>
+      <version>4.1.0-SNAPSHOT</version>
    </parent>
 
    <groupId>org.rhq</groupId>
@@ -29,9 +29,15 @@
       <profile>
          <id>default</id>
          <activation>
+            <activeByDefault>true</activeByDefault>
+            <!--     The problem with the below approach is that the default modules are
+                     always activated. This causes duplicate module decls when trying to use other
+                     profiles, or adds the default modules when they are not wanted.
+
             <property>
                <name>java.home</name>
             </property>
+            -->
          </activation>
          <modules>
             <module>core</module>
@@ -51,6 +57,7 @@
          </activation>
          <modules>
             <module>core</module>
+            <module>common/drift</module>            
             <module>enterprise/comm</module>
             <module>enterprise/agent</module>
             <module>enterprise/agentupdate</module>
@@ -73,14 +80,15 @@
       </profile>
 
       <profile>
-         <id>model</id>
+         <id>coregui</id>
          <activation>
             <property>
-               <name>model</name>
+               <name>coregui</name>
             </property>
          </activation>
          <modules>
             <module>core/domain</module>
+            <module>core/client-api</module>
             <module>enterprise/server/jar</module>
             <module>enterprise/gui/coregui</module>
          </modules>
@@ -119,6 +127,20 @@
           </modules>
        </profile>
 
+       <profile>
+           <id>integration-tests</id>
+           <activation>
+               <property>
+                   <name>integration.tests</name>
+               </property>
+           </activation>
+
+           <modules>
+               <module>core</module>
+               <module>plugins</module>
+               <module>integration-tests</module>
+           </modules>
+       </profile>
    </profiles>
 
    <modules>

@@ -49,7 +49,7 @@ public class PluginFactory {
     @Factory(value = "plugin", autoCreate = true)
     public AbstractPlugin lookupPlugin() {
         if (this.deployment == PluginDeploymentType.AGENT) {
-            return LookupUtil.getResourceMetadataManager().getPlugin(this.name);
+            return LookupUtil.getPluginManager().getPlugin(this.name);
         } else if (this.deployment == PluginDeploymentType.SERVER) {
             PluginKey pluginKey = new PluginKey(this.deployment, this.pluginType, this.name);
             ServerPluginsLocal serverPluginsBean = LookupUtil.getServerPlugins();

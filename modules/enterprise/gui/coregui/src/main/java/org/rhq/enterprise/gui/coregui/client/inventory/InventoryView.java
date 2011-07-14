@@ -23,31 +23,30 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
-import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.Label;
-import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.group.GroupCategory;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
+import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
 import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
 import org.rhq.enterprise.gui.coregui.client.components.view.AbstractSectionedLeftNavigationView;
 import org.rhq.enterprise.gui.coregui.client.components.view.NavigationItem;
 import org.rhq.enterprise.gui.coregui.client.components.view.NavigationSection;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewFactory;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.definitions.GroupDefinitionListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.discovery.ResourceAutodiscoveryView;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * The Inventory top-level view.
@@ -69,7 +68,8 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
     private static final ViewName PAGE_PLATFORMS = new ViewName("Platforms", MSG.view_inventory_platforms());
     private static final ViewName PAGE_SERVERS = new ViewName("Servers", MSG.view_inventory_servers());
     private static final ViewName PAGE_SERVICES = new ViewName("Services", MSG.view_inventory_services());
-    private static final ViewName PAGE_DOWN_SERVERS = new ViewName("DownServers", MSG.view_inventory_downServers());
+    private static final ViewName PAGE_UNAVAIL_SERVERS = new ViewName("UnavailableServers", MSG
+        .view_inventory_unavailableServers());
 
     // view IDs for Groups section
     private static final ViewName GROUPS_SECTION_VIEW_ID = new ViewName("Groups", MSG.view_inventory_groups());
@@ -92,24 +92,17 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
 
     @Override
     protected void onInit() {
-        GWTServiceLookup.getAuthorizationService().getExplicitGlobalPermissions(new AsyncCallback<Set<Permission>>() {
+        new PermissionsLoader().loadExplicitGlobalPermissions(new PermissionsLoadedListener() {
             @Override
-            public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError(MSG.view_inventory_cannotGetGlobalPerms(), caught);
-                globalPermissions = EnumSet.noneOf(Permission.class);
-                InventoryView.super.onInit();
-            }
-
-            @Override
-            public void onSuccess(Set<Permission> result) {
-                globalPermissions = result;
+            public void onPermissionsLoaded(Set<Permission> permissions) {
+                globalPermissions = (permissions != null) ? permissions : EnumSet.noneOf(Permission.class);
                 InventoryView.super.onInit();
             }
         });
     }
 
     protected Canvas defaultView() {
-        VLayout vLayout = new VLayout();
+        LocatableVLayout vLayout = new LocatableVLayout(this.extendLocatorId("Default"));
         vLayout.setWidth100();
 
         // TODO: Admin icon.
@@ -137,12 +130,13 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
     }
 
     private NavigationSection buildResourcesSection() {
-        NavigationItem autodiscoveryQueueItem = new NavigationItem(PAGE_AUTODISCOVERY_QUEUE, "global/Recent_16.png",
-            new ViewFactory() {
+        NavigationItem autodiscoveryQueueItem = new NavigationItem(PAGE_AUTODISCOVERY_QUEUE,
+            "global/AutoDiscovery_16.png", new ViewFactory() {
                 public Canvas createView() {
                     return new ResourceAutodiscoveryView(extendLocatorId(PAGE_AUTODISCOVERY_QUEUE.getName()));
                 }
             }, this.globalPermissions.contains(Permission.MANAGE_INVENTORY));
+        autodiscoveryQueueItem.setRefreshRequired(true);
 
         // TODO: Specify an icon for this item.
         NavigationItem allResourcesItem = new NavigationItem(PAGE_ALL_RESOURCES, null, new ViewFactory() {
@@ -157,40 +151,49 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
         NavigationItem platformsItem = new NavigationItem(PAGE_PLATFORMS, ImageManager.getResourceIcon(
             ResourceCategory.PLATFORM, Boolean.TRUE), new ViewFactory() {
             public Canvas createView() {
-                return new ResourceSearchView(extendLocatorId(PAGE_PLATFORMS.getName()), new Criteria(
-                    ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.PLATFORM.name()), PAGE_PLATFORMS
-                    .getTitle(), ImageManager.getResourceLargeIcon(ResourceCategory.PLATFORM, Boolean.TRUE));
+                ResourceSearchView view = new ResourceSearchView(extendLocatorId(PAGE_PLATFORMS.getName()),
+                    new Criteria(ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.PLATFORM.name()),
+                    PAGE_PLATFORMS.getTitle(), ImageManager.getResourceLargeIcon(ResourceCategory.PLATFORM,
+                        Boolean.TRUE));
+                view.setInitialSearchBarSearchText("category=platform");
+                return view;
             }
         });
 
         NavigationItem serversItem = new NavigationItem(PAGE_SERVERS, ImageManager.getResourceIcon(
             ResourceCategory.SERVER, Boolean.TRUE), new ViewFactory() {
             public Canvas createView() {
-                return new ResourceSearchView(extendLocatorId(PAGE_SERVERS.getName()), new Criteria(
+                ResourceSearchView view = new ResourceSearchView(extendLocatorId(PAGE_SERVERS.getName()), new Criteria(
                     ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.SERVER.name()), PAGE_SERVERS
                     .getTitle(), ImageManager.getResourceLargeIcon(ResourceCategory.SERVER, Boolean.TRUE));
+                view.setInitialSearchBarSearchText("category=server");
+                return view;
             }
         });
 
         NavigationItem servicesItem = new NavigationItem(PAGE_SERVICES, ImageManager.getResourceIcon(
             ResourceCategory.SERVICE, Boolean.TRUE), new ViewFactory() {
             public Canvas createView() {
-                return new ResourceSearchView(extendLocatorId(PAGE_SERVICES.getName()), new Criteria(
-                    ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.SERVICE.name()), PAGE_SERVICES
-                    .getTitle(), ImageManager.getResourceLargeIcon(ResourceCategory.SERVICE, Boolean.TRUE));
+                ResourceSearchView view = new ResourceSearchView(extendLocatorId(PAGE_SERVICES.getName()),
+                    new Criteria(ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.SERVICE.name()),
+                    PAGE_SERVICES.getTitle(), ImageManager.getResourceLargeIcon(ResourceCategory.SERVICE, Boolean.TRUE));
+                view.setInitialSearchBarSearchText("category=service");
+                return view;
             }
         });
 
-        NavigationItem downServersItem = new NavigationItem(PAGE_DOWN_SERVERS, ImageManager.getResourceIcon(
+        NavigationItem downServersItem = new NavigationItem(PAGE_UNAVAIL_SERVERS, ImageManager.getResourceIcon(
             ResourceCategory.SERVER, Boolean.FALSE), new ViewFactory() {
             public Canvas createView() {
                 Criteria criteria = new Criteria(ResourceDataSourceField.AVAILABILITY.propertyName(),
                     AvailabilityType.DOWN.name());
                 criteria.addCriteria(ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.SERVER.name());
                 // TODO (ips, 10/28/10): Should we include down platforms too?
-                return new ResourceSearchView(extendLocatorId(PAGE_DOWN_SERVERS.getName()), criteria, MSG
-                    .view_inventory_downServers(), ImageManager.getResourceLargeIcon(ResourceCategory.SERVER,
-                    Boolean.FALSE));
+                ResourceSearchView view = new ResourceSearchView(extendLocatorId(PAGE_UNAVAIL_SERVERS.getName()),
+                    criteria, MSG.view_inventory_unavailableServers(), ImageManager.getResourceLargeIcon(
+                        ResourceCategory.SERVER, Boolean.FALSE));
+                view.setInitialSearchBarSearchText("category=server availability=down");
+                return view;
             }
         });
 
@@ -219,18 +222,23 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
         NavigationItem compatibleGroupsItem = new NavigationItem(PAGE_COMPATIBLE_GROUPS, ImageManager
             .getGroupIcon(GroupCategory.COMPATIBLE), new ViewFactory() {
             public Canvas createView() {
-                return new ResourceGroupListView(extendLocatorId(PAGE_COMPATIBLE_GROUPS.getName()), new Criteria(
-                    ResourceGroupDataSourceField.CATEGORY.propertyName(), GroupCategory.COMPATIBLE.name()),
+                ResourceGroupListView view = new ResourceGroupListView(
+                    extendLocatorId(PAGE_COMPATIBLE_GROUPS.getName()), new Criteria(
+                        ResourceGroupDataSourceField.CATEGORY.propertyName(), GroupCategory.COMPATIBLE.name()),
                     PAGE_COMPATIBLE_GROUPS.getTitle(), ImageManager.getGroupLargeIcon(GroupCategory.COMPATIBLE));
+                view.setInitialSearchBarSearchText("groupCategory=compatible");
+                return view;
             }
         });
 
         NavigationItem mixedGroupsItem = new NavigationItem(PAGE_MIXED_GROUPS, ImageManager
             .getGroupIcon(GroupCategory.MIXED), new ViewFactory() {
             public Canvas createView() {
-                return new ResourceGroupListView(extendLocatorId(PAGE_MIXED_GROUPS.getName()), new Criteria(
-                    ResourceGroupDataSourceField.CATEGORY.propertyName(), GroupCategory.MIXED.name()),
+                ResourceGroupListView view = new ResourceGroupListView(extendLocatorId(PAGE_MIXED_GROUPS.getName()),
+                    new Criteria(ResourceGroupDataSourceField.CATEGORY.propertyName(), GroupCategory.MIXED.name()),
                     PAGE_MIXED_GROUPS.getTitle(), ImageManager.getGroupLargeIcon(GroupCategory.MIXED));
+                view.setInitialSearchBarSearchText("groupCategory=mixed");
+                return view;
             }
         });
 
@@ -240,6 +248,7 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
                 ResourceGroupListView view = new ResourceGroupListView(extendLocatorId(PAGE_PROBLEM_GROUPS.getName()),
                     new Criteria("downMemberCount", "1"), PAGE_PROBLEM_GROUPS.getTitle(), ImageManager
                         .getGroupLargeIcon(GroupCategory.MIXED, 0.0d));
+                //view.setInitialSearchBarSearchText("availability=down"); I don't think this matches exactly what the criteria returns
                 view.setShowNewButton(false);
                 return view;
             }

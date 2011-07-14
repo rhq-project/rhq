@@ -1,41 +1,41 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 
 <scenario xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-          xmlns="urn:xmlns:jboss.org:on-perftest">
+          xmlns="urn:xmlns:jboss.org:rhq-perftest">
 
    <!--
         Sets up "omega servers" that have two kinds of child services, "alpha" and "beta".
 
         Example:
 
-        -Don.perftest.scenario=configurable-alphaomega
-        -Don.perftest.server-omega-count=10
-        -Don.perftest.service-alpha-count=25
-        -Don.perftest.service-beta-count=2
+        -Drhq.perftest.scenario=configurable-alphaomega
+        -Drhq.perftest.server-omega-count=10
+        -Drhq.perftest.service-alpha-count=25
+        -Drhq.perftest.service-beta-count=2
         
         You can optionally indicate how many content packages to have:
-        -Don.perftest.omega-content[0-4]-count
-        -Don.perftest.alpha-content0-count
+        -Drhq.perftest.omega-content[0-4]-count
+        -Drhq.perftest.alpha-content0-count
    -->
 
    <resource type="server-omega">
-      <simpleResourceGenerator property="on.perftest.server-omega-count"/>
+      <simpleResourceGenerator property="rhq.perftest.server-omega-count"/>
       <simpleNumericMeasurementGenerator/>
-      <simpleContentGenerator packageType="omega-content0" property="on.perftest.omega-content0-count" numberOfPackages="10" />
-      <simpleContentGenerator packageType="omega-content1" property="on.perftest.omega-content1-count" numberOfPackages="10" />
-      <simpleContentGenerator packageType="omega-content2" property="on.perftest.omega-content2-count" numberOfPackages="10" />
-      <simpleContentGenerator packageType="omega-content3" property="on.perftest.omega-content3-count" numberOfPackages="10" />
-      <simpleContentGenerator packageType="omega-content4" property="on.perftest.omega-content4-count" numberOfPackages="10" />
+      <simpleContentGenerator packageType="omega-content0" property="rhq.perftest.omega-content0-count" numberOfPackages="10" />
+      <simpleContentGenerator packageType="omega-content1" property="rhq.perftest.omega-content1-count" numberOfPackages="10" />
+      <simpleContentGenerator packageType="omega-content2" property="rhq.perftest.omega-content2-count" numberOfPackages="10" />
+      <simpleContentGenerator packageType="omega-content3" property="rhq.perftest.omega-content3-count" numberOfPackages="10" />
+      <simpleContentGenerator packageType="omega-content4" property="rhq.perftest.omega-content4-count" numberOfPackages="10" />
    </resource>
 
    <resource type="service-alpha">
-      <simpleResourceGenerator property="on.perftest.service-alpha-count"/>
+      <simpleResourceGenerator property="rhq.perftest.service-alpha-count"/>
       <simpleNumericMeasurementGenerator/>
-      <simpleContentGenerator packageType="alpha-content0" property="on.perftest.alpha-content0-count" numberOfPackages="1" />
+      <simpleContentGenerator packageType="alpha-content0" property="rhq.perftest.alpha-content0-count" numberOfPackages="1" />
    </resource>
 
    <resource type="service-beta">
-      <simpleResourceGenerator property="on.perftest.service-beta-count"/>
+      <simpleResourceGenerator property="rhq.perftest.service-beta-count"/>
       <simpleConfigurationGenerator/>
       <simpleNumericMeasurementGenerator/>
    </resource>

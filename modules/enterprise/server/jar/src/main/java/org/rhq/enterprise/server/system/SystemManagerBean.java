@@ -19,21 +19,20 @@
 package org.rhq.enterprise.server.system;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.DateFormat;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.TimeZone;
 
-import javax.annotation.PostConstruct;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ejb.Timeout;
@@ -51,6 +50,7 @@ import javax.sql.DataSource;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.jboss.annotation.IgnoreDependency;
 import org.jboss.deployment.MainDeployerMBean;
 import org.jboss.mx.util.MBeanServerLocator;
 
@@ -59,19 +59,19 @@ import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.common.ProductInfo;
+import org.rhq.core.domain.common.ServerDetails;
 import org.rhq.core.domain.common.SystemConfiguration;
+import org.rhq.core.domain.common.ServerDetails.Detail;
 import org.rhq.core.server.PersistenceUtility;
 import org.rhq.core.util.ObjectNameFactory;
 import org.rhq.core.util.StopWatch;
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.core.CoreServerMBean;
 import org.rhq.enterprise.server.core.CustomJaasDeploymentServiceMBean;
-import org.rhq.enterprise.server.license.FeatureUnavailableException;
-import org.rhq.enterprise.server.license.License;
-import org.rhq.enterprise.server.license.LicenseManager;
-import org.rhq.enterprise.server.license.LicenseStoreManager;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.enterprise.server.util.SystemDatabaseInformation;
 
 @Stateless
 public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemote {
@@ -103,17 +103,15 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
     @javax.annotation.Resource
     private TimerService timerService;
 
-    private LicenseManager licenseManager;
-
     @EJB
     private SystemManagerLocal systemManager;
+
+    @EJB
+    @IgnoreDependency
+    private SubjectManagerLocal subjectManager;
+
     private static Properties systemConfigurationCache = null;
     private final String TIMER_DATA = "SystemManagerBean.reloadConfigCache";
-
-    @PostConstruct
-    public void initialize() {
-        licenseManager = LicenseManager.instance();
-    }
 
     @SuppressWarnings("unchecked")
     public void scheduleConfigCacheReloader() {
@@ -172,7 +170,8 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
         }
     }
 
-    public Properties getSystemConfiguration() {
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    public Properties getSystemConfiguration(Subject subject) {
 
         if (systemConfigurationCache == null) {
             loadSystemConfigurationCache();
@@ -214,7 +213,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
 
     @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_SETTINGS)
-    public void setSystemConfiguration(Subject subject, Properties properties, boolean skipValidation) {
+    public void setSystemConfiguration(Subject subject, Properties properties, boolean skipValidation) throws Exception {
         // first, we need to get the current settings so we'll know if we need to persist or merge the new ones
         List<SystemConfiguration> configs;
         configs = entityManager.createNamedQuery(SystemConfiguration.QUERY_FIND_ALL).getResultList();
@@ -530,22 +529,10 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
         return;
     }
 
-    /**
-     * See if monitoring feature is enabled for product.
-     */
-    public boolean isMonitoringEnabled() {
-        try {
-            LicenseManager.instance().enforceFeatureLimit(LicenseManager.FEATURE_MONITOR);
-            return true;
-        } catch (FeatureUnavailableException e) {
-            log.debug("Monitoring feature is not enabled");
-            return false;
-        }
-    }
-
     public boolean isDebugModeEnabled() {
         try {
-            return Boolean.valueOf(getSystemConfiguration().getProperty(RHQConstants.EnableDebugMode, "false"));
+            Subject su = this.subjectManager.getOverlord();
+            return Boolean.valueOf(getSystemConfiguration(su).getProperty(RHQConstants.EnableDebugMode, "false"));
         } catch (Throwable t) {
             return false; // paranoid catch-all
         }
@@ -553,120 +540,45 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
 
     public boolean isExperimentalFeaturesEnabled() {
         try {
-            return Boolean.valueOf(getSystemConfiguration().getProperty(RHQConstants.EnableExperimentalFeatures,
+            Subject su = this.subjectManager.getOverlord();
+            return Boolean.valueOf(getSystemConfiguration(su).getProperty(RHQConstants.EnableExperimentalFeatures,
                 "false"));
         } catch (Throwable t) {
             return false; // paranoid catch-all
         }
     }
 
-    /**
-     * Retrieves the currently active license. Returns null if there is no active license. Otherwise it needs to
-     * propogate the appropriate error back up to the caller, otherwise the error will be masked, and from a UI
-     * perspective the user will think no license has been installed yet.
-     *
-     * @return The License object
-     */
-    public License getLicense() {
-        // it's legal to return a null license, which then by-passes the check to
-        // whether the expirationDate in the backing store has been fiddled with
-        License license = LicenseManager.instance().getLicense();
-        if (license == null) {
-            return license;
-        }
-
-        // but if the license exists, it can only be returned if the data in the backing store is consistent.  so call
-        // the get method, which checks the backing store, and returns the license. if there are any errors, they will
-        // bubble up as exceptions for the UI to handle appropriately.  otherwise, the license will be synced with the
-        // backing store appropriately.
-        try {
-            LicenseStoreManager.store(license);
-        } catch (Exception ule) {
-            log.error(ule.getMessage());
-            throw new LicenseException(ule);
-        }
-
-        return license;
-    }
-
-    /**
-     * Update the deployed license file by writing it to disk and reinitializing the LicenseManager static singleton.
-     *
-     * @param licenseData a byte array of the license data
-     */
     @RequiredPermission(Permission.MANAGE_SETTINGS)
-    public void updateLicense(Subject subject, byte[] licenseData) {
-        try {
-            File serverHomeDir = LookupUtil.getCoreServer().getJBossServerHomeDir();
+    public ServerDetails getServerDetails(Subject subject) {
+        CoreServerMBean coreServerMBean = LookupUtil.getCoreServer();
 
-            File deployDirectory = new File(serverHomeDir, "deploy");
+        ServerDetails serverDetails = new ServerDetails();
 
-            String licenseFileName = LicenseManager.getLicenseFileName();
+        serverDetails.setProductInfo(getProductInfo(subject));
 
-            if (deployDirectory.exists()) {
-                String licenseDirectoryName = deployDirectory.getAbsolutePath() + File.separator
-                    + RHQConstants.EAR_FILE_NAME + File.separator + "license";
-                File licenseDir = new File(licenseDirectoryName);
-                if (licenseDir.exists()) {
-                    File licenseFile = saveLicenseFile(licenseDir, licenseFileName, licenseData);
+        HashMap<Detail, String> details = serverDetails.getDetails();
 
-                    // Now, we've updated the licenses on disk and we'll re-initialize the LicenseManager
-                    LicenseManager.instance().doStartupCheck(licenseFile.getAbsolutePath());
-                } else {
-                    log.error("Could not update license file in non-existent directory: "
-                        + licenseDir.getAbsolutePath());
-                }
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
+        DateFormat localTimeFormatter = DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.FULL);
+        details.put(ServerDetails.Detail.SERVER_LOCAL_TIME, localTimeFormatter.format(new Date()));
+        details.put(ServerDetails.Detail.SERVER_TIMEZONE, TimeZone.getDefault().getDisplayName());
+        details.put(ServerDetails.Detail.SERVER_HOME_DIR, coreServerMBean.getJBossServerHomeDir().getAbsolutePath());
+        details.put(ServerDetails.Detail.SERVER_INSTALL_DIR, coreServerMBean.getInstallDir().getAbsolutePath());
 
-    private File saveLicenseFile(File dataDir, String licenseFileName, byte[] licenseData) throws IOException {
-        log.debug("Updating license file in directory: " + dataDir.getAbsolutePath());
+        SystemDatabaseInformation dbInfo = SystemDatabaseInformation.getInstance();
+        details.put(ServerDetails.Detail.DATABASE_CONNECTION_URL, dbInfo.getDatabaseConnectionURL());
+        details.put(ServerDetails.Detail.DATABASE_DRIVER_NAME, dbInfo.getDatabaseDriverName());
+        details.put(ServerDetails.Detail.DATABASE_DRIVER_VERSION, dbInfo.getDatabaseDriverVersion());
+        details.put(ServerDetails.Detail.DATABASE_PRODUCT_NAME, dbInfo.getDatabaseProductName());
+        details.put(ServerDetails.Detail.DATABASE_PRODUCT_VERSION, dbInfo.getDatabaseProductVersion());
+        details.put(ServerDetails.Detail.CURRENT_MEASUREMENT_TABLE, dbInfo.getCurrentMeasurementTable());
+        details.put(ServerDetails.Detail.NEXT_MEASUREMENT_TABLE_ROTATION, dbInfo.getNextMeasurementTableRotation());
 
-        // Copy file to data dir
-        File licenseFile = new File(dataDir, licenseFileName);
-        FileOutputStream fos = new FileOutputStream(licenseFile);
-
-        // Writing in a single block since
-        // a) we may be writing it twice, and
-        // b) the license files are fairly small
-        // c) this will be rare
-        fos.write(licenseData);
-        fos.close();
-        return licenseFile;
-    }
-
-    /**
-     * @return the expiration date, or null if the product never expires.
-     */
-    public Date getExpiration() {
-        long exp;
-        try {
-            exp = licenseManager.getExpiration();
-        } catch (Exception e) {
-            throw new LicenseException(e);
-        }
-
-        if (exp == -1) {
-            return null;
-        }
-
-        return new Date(exp);
-    }
-
-    public ServerVersion getServerVersion(Subject subject) throws Exception {
-        CoreServerMBean coreServer = LookupUtil.getCoreServer();
-        String version = coreServer.getVersion();
-        String buildNumber = coreServer.getBuildNumber();
-        ServerVersion serverVersion = new ServerVersion(version, buildNumber);
-        return serverVersion;
+        return serverDetails;
     }
 
     public ProductInfo getProductInfo(Subject subject) {
         CoreServerMBean coreServer = LookupUtil.getCoreServer();
         ProductInfo productInfo = coreServer.getProductInfo();
         return productInfo;
-    }    
+    }
 }

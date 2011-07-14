@@ -314,9 +314,9 @@
          <metric property="metric002" defaultOn="true" displayType="summary" defaultInterval="720000"/>
          <metric property="metric003" defaultOn="true" displayType="summary" defaultInterval="600000"/>
          <metric property="metric004" defaultOn="true" displayType="summary" defaultInterval="600000"/>
-         <metric property="trait001"  defaultOn="true" dataType="trait" displayType="summary" defaultInterval="1200000"/>
-         <metric property="trait002"  defaultOn="true" dataType="trait" displayType="summary" defaultInterval="1440000"/>
-         <metric displayName="CallTime" property="calltime" defaultOn="true" dataType="calltime" defaultInterval="1200000" units="milliseconds"/>
+         <metric property="trait001"  defaultOn="true" dataType="trait" displayType="summary" defaultInterval="3600000"/>
+         <metric property="trait002"  defaultOn="true" dataType="trait" displayType="summary" defaultInterval="2400000"/>
+         <metric displayName="CallTime" property="calltime" defaultOn="true" dataType="calltime" defaultInterval="2400000" units="milliseconds"/>
          <event name="PerfTestEventType" description="a test event type"/>
       </service>
    </server>
@@ -356,18 +356,18 @@
 
    <help>
       <![CDATA[
-         <p>To enable the perftest plugin, start the agent with <tt>-Don.perftest.scenario=scenario-name</tt> where the
+         <p>To enable the perftest plugin, start the agent with <tt>-Drhq.perftest.scenario=scenario-name</tt> where the
          scenario name matches one of the included scenario files for an inventory structure you would like to
-         simulated.</p>
+         simulate.</p>
 
          <p>The following setup, for example, will use some typical server and service configurations resulting in 10
-         servers each with 25 child services and each of those will have 2 child-child services.<p>
+         servers each with 25 child services each having 2 child services of their own.<p>
 
          <code><pre>
-            -Don.perftest.scenario=configurable-average
-            -Don.perftest.server-a-count=10
-            -Don.perftest.service-a-count=25
-            -Don.perftest.service-ab-count=2
+            -Drhq.perftest.scenario=configurable-average
+            -Drhq.perftest.server-a-count=10
+            -Drhq.perftest.service-a-count=25
+            -Drhq.perftest.service-ab-count=2
          </pre></code>
       ]]>
    </help>

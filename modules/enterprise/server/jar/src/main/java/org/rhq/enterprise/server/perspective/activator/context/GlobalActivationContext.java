@@ -22,11 +22,11 @@ import java.util.EnumSet;
 import java.util.Set;
 
 import org.jetbrains.annotations.NotNull;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.perspective.activator.LicenseFeature;
-import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -52,15 +52,11 @@ public class GlobalActivationContext implements ActivationContext {
         // lazy load
         if (this.licenseFeatures == null) {
             this.licenseFeatures = EnumSet.noneOf(LicenseFeature.class);
-            SystemManagerLocal systemManager = LookupUtil.getSystemManager();
-            boolean monitoringEnabled = systemManager.isMonitoringEnabled();
-            if (monitoringEnabled) {
-                this.licenseFeatures.add(LicenseFeature.MONITORING);
-            }
+            this.licenseFeatures.add(LicenseFeature.MONITORING); // always give this permission
         }
         return this.licenseFeatures;
     }
-    
+
     public Subject getSubject() {
         return this.subject;
     }

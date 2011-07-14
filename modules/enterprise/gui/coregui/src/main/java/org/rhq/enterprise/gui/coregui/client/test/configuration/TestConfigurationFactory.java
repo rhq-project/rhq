@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright 2010, Red Hat Middleware LLC, and individual contributors
+ * Copyright 2010-2011, Red Hat Middleware LLC, and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -44,6 +44,7 @@ import org.rhq.core.domain.configuration.definition.PropertySimpleType;
  * @author Ian Springer
  */
 public abstract class TestConfigurationFactory {
+
     public static ConfigurationDefinition createConfigurationDefinition() {
         ConfigurationDefinition configDef = new ConfigurationDefinition("TestConfig", "a test config");
 
@@ -75,11 +76,8 @@ public abstract class TestConfigurationFactory {
         simplePropDef.setDisplayName(simplePropDef.getName());
         addPropertyDefinition(configDef, simplePropDef, orderIndex++);
 
-        simplePropDef = new PropertyDefinitionSimple("Boolean", "a required Boolean simple prop", true,
-            PropertySimpleType.BOOLEAN);
-        simplePropDef.setDisplayName(simplePropDef.getName());
+        simplePropDef = createBooleanPropDef();
         addPropertyDefinition(configDef, simplePropDef, orderIndex++);
-        simplePropDef.setRequired(true);
 
         simplePropDef = createIntegerPropDef();
         addPropertyDefinition(configDef, simplePropDef, orderIndex++);
@@ -117,6 +115,7 @@ public abstract class TestConfigurationFactory {
         PropertyDefinitionMap mapPropDef = new PropertyDefinitionMap("MapOfSimples", "a map of simples", false);
         mapPropDef.put(createStringPropDef1());
         mapPropDef.put(createStringPropDef2());
+        mapPropDef.put(createBooleanPropDef());
         mapPropDef.put(createIntegerPropDef());
         mapPropDef.setDisplayName(mapPropDef.getName());
         addPropertyDefinition(configDef, mapPropDef, orderIndex++);
@@ -142,6 +141,7 @@ public abstract class TestConfigurationFactory {
             new PropertyDefinitionMap("MapOfSimplesInList", "a map of simples in a list", false);
         mapInListPropDef.put(createStringPropDef1());
         mapInListPropDef.put(createStringPropDef2());
+        mapInListPropDef.put(createBooleanPropDef());
         mapInListPropDef.put(createIntegerPropDef());
         mapInListPropDef.setDisplayName(mapInListPropDef.getName());
 
@@ -154,6 +154,7 @@ public abstract class TestConfigurationFactory {
             new PropertyDefinitionMap("MapOfSimplesInReadOnlyList", "a map of simples in a list", false);
         mapInReadOnlyListPropDef.put(createStringPropDef1());
         mapInReadOnlyListPropDef.put(createStringPropDef2());
+        mapInReadOnlyListPropDef.put(createBooleanPropDef());
         mapInReadOnlyListPropDef.put(createIntegerPropDef());
         mapInReadOnlyListPropDef.setDisplayName(mapInReadOnlyListPropDef.getName());
 
@@ -219,10 +220,12 @@ public abstract class TestConfigurationFactory {
         configuration.setVersion(1);        
 
         configuration.put(new PropertySimple("String1", "blah"));
-        configuration.put(new PropertySimple("String2",
-            "a really, really, really, really, really long value that won't fit in the text input box"));
+        PropertySimple string2Prop = new PropertySimple("String2",
+                "a really, really, really, really, really long value that won't fit in the text input box");
+        string2Prop.setErrorMessage("illegal value!");
+        configuration.put(string2Prop);
         configuration.put(new PropertySimple("LongString", "blah blah blah\nblah blah blah"));
-        configuration.put(new PropertySimple("Password", null));
+        configuration.put(new PropertySimple("Password", "ou812"));
         configuration.put(new PropertySimple("Boolean", false));
         configuration.put(new PropertySimple("Integer", 666));
         configuration.put(new PropertySimple("Float", Math.PI));
@@ -233,6 +236,7 @@ public abstract class TestConfigurationFactory {
         PropertyMap propMap1 = new PropertyMap("MapOfSimples");
         propMap1.put(new PropertySimple("String1", "One"));
         propMap1.put(new PropertySimple("String2", "Two"));
+        propMap1.put(new PropertySimple("Boolean", true));
         propMap1.put(new PropertySimple("Integer", 11));
         configuration.put(propMap1);
 
@@ -255,25 +259,31 @@ public abstract class TestConfigurationFactory {
         PropertyMap propMap2 = new PropertyMap("MapOfSimplesInList");
         propMap2.put(new PropertySimple("String1", "Uno"));
         propMap2.put(new PropertySimple("String2", "Dos"));
+        propMap2.put(new PropertySimple("Boolean", true));
         propMap2.put(new PropertySimple("Integer", Integer.MIN_VALUE));
         PropertyMap propMap3 = new PropertyMap("MapOfSimplesInList");
         propMap3.put(new PropertySimple("String1", "Un"));
         propMap3.put(new PropertySimple("String2", "Deux"));
+        propMap3.put(new PropertySimple("Boolean", false));
         propMap3.put(new PropertySimple("Integer", Integer.MAX_VALUE));
         configuration.put(new PropertyList("ListOfMaps", propMap2, propMap3));
 
         PropertyMap propMap4 = new PropertyMap("MapOfSimplesInReadOnlyList");
         propMap4.put(new PropertySimple("String1", "A"));
         propMap4.put(new PropertySimple("String2", "B"));
+        propMap4.put(new PropertySimple("Boolean", false));
         propMap4.put(new PropertySimple("Integer", 999));
         PropertyMap propMap5 = new PropertyMap("MapOfSimplesInReadOnlyList");
         propMap5.put(new PropertySimple("String1", "a"));
         propMap5.put(new PropertySimple("String2", "b"));
+        propMap5.put(new PropertySimple("Boolean", true));
         propMap5.put(new PropertySimple("Integer", 0));
         configuration.put(new PropertyList("ReadOnlyListOfMaps", propMap4, propMap5));
 
         configuration.put(new PropertySimple("myString1", "grouped String 1"));
-        configuration.put(new PropertySimple("myString2", "grouped String 2"));
+        PropertySimple myString2Prop = new PropertySimple("myString2", "grouped String 2");
+        myString2Prop.setErrorMessage("bogus value!");
+        configuration.put(myString2Prop);
         configuration.put(new PropertySimple("myString3", "strings are cool"));
         configuration.put(new PropertySimple("myEnum", "Burlington"));
 
@@ -283,7 +293,7 @@ public abstract class TestConfigurationFactory {
     private static PropertyDefinitionSimple createStringPropDef1() {
         PropertyDefinitionSimple stringPropDef1;
         stringPropDef1 = new PropertyDefinitionSimple("String1",
-            "an optional String simple prop", false, PropertySimpleType.STRING);
+            "a String simple prop", false, PropertySimpleType.STRING);
         stringPropDef1.setDisplayName(stringPropDef1.getName());
         return stringPropDef1;
     }
@@ -291,16 +301,25 @@ public abstract class TestConfigurationFactory {
     private static PropertyDefinitionSimple createStringPropDef2() {
         PropertyDefinitionSimple stringPropDef2;
         stringPropDef2 = new PropertyDefinitionSimple("String2",
-            "a read-only String simple prop", false, PropertySimpleType.STRING);
+            "a read-only required String simple prop", true, PropertySimpleType.STRING);
         stringPropDef2.setDisplayName(stringPropDef2.getName());
         stringPropDef2.setReadOnly(true);
         return stringPropDef2;
     }
 
+    private static PropertyDefinitionSimple createBooleanPropDef() {
+        PropertyDefinitionSimple propDef;
+        propDef = new PropertyDefinitionSimple("Boolean",
+            "a summary Boolean simple prop", false, PropertySimpleType.BOOLEAN);
+        propDef.setDisplayName(propDef.getName());
+        propDef.setSummary(true);
+        return propDef;
+    }
+
     private static PropertyDefinitionSimple createIntegerPropDef() {
         PropertyDefinitionSimple integerPropDef;
         integerPropDef = new PropertyDefinitionSimple("Integer",
-            "a required summary Integer simple prop", true, PropertySimpleType.INTEGER);
+            "a summary Integer simple prop", false, PropertySimpleType.INTEGER);
         integerPropDef.setDisplayName(integerPropDef.getName());
         integerPropDef.setSummary(true);
         return integerPropDef;
@@ -308,4 +327,5 @@ public abstract class TestConfigurationFactory {
 
     private TestConfigurationFactory() {
     }
+
 }

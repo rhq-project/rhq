@@ -30,6 +30,7 @@ import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.criteria.SubjectCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.admin.users.UsersDataSource;
 import org.rhq.enterprise.gui.coregui.client.components.selector.AbstractSelector;
@@ -38,18 +39,18 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 /**
  * @author Greg Hinkle
  */
-public class RoleSubjectSelector extends AbstractSelector<Subject> {
-    
+public class RoleSubjectSelector extends AbstractSelector<Subject, SubjectCriteria> {
+
     private static final String ITEM_ICON = "global/User_16.png";
 
     public RoleSubjectSelector(String id, ListGridRecord[] subjectRecords, boolean isReadOnly) {
         super(id, isReadOnly);
-        
+
         setAssigned(subjectRecords);
     }
 
     @Override
-    protected RPCDataSource<Subject> getDataSource() {
+    protected RPCDataSource<Subject, SubjectCriteria> getDataSource() {
         return new RoleUsersDataSource();
     }
 
@@ -80,7 +81,7 @@ public class RoleSubjectSelector extends AbstractSelector<Subject> {
             for (Record record : records) {
                 Integer id = record.getAttributeAsInt(Field.ID);
                 if (id.equals(ID_RHQADMIN)) {
-                   rhqAdminRecord = record;
+                    rhqAdminRecord = record;
                 }
             }
             if (rhqAdminRecord != null) {

@@ -27,21 +27,43 @@ import java.util.List;
 import com.google.gwt.user.client.rpc.RemoteService;
 
 import org.rhq.core.domain.content.Architecture;
+import org.rhq.core.domain.content.InstalledPackageHistory;
+import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
+import org.rhq.core.domain.content.composite.PackageAndLatestVersionComposite;
+import org.rhq.core.domain.content.composite.PackageTypeAndVersionFormatComposite;
+import org.rhq.core.domain.criteria.InstalledPackageHistoryCriteria;
+import org.rhq.core.domain.criteria.PackageCriteria;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
 import org.rhq.core.domain.util.PageList;
 
 /**
  * @author Greg Hinkle
+ * @author Lukas Krejci
  */
 public interface ContentGWTService extends RemoteService {
 
-    void deletePackageVersion(int packageVersionId);
+    void deletePackageVersion(int packageVersionId) throws RuntimeException;
 
-    PageList<PackageVersion> findPackageVersionsByCriteria(PackageVersionCriteria criteria);
+    PageList<PackageVersion> findPackageVersionsByCriteria(PackageVersionCriteria criteria) throws RuntimeException;
 
-    List<Architecture> getArchitectures();
+    PageList<Package> findPackagesByCriteria(PackageCriteria criteria) throws RuntimeException;;
 
-    PackageType getResourceCreationPackageType(int resourceTypeId);
+    PageList<PackageAndLatestVersionComposite> findPackagesWithLatestVersion(PackageCriteria criteria)
+        throws RuntimeException;;
+
+    PageList<InstalledPackageHistory> getInstalledPackageHistoryForResource(int resourceId, int count)
+        throws RuntimeException;;
+
+    PageList<InstalledPackageHistory> findInstalledPackageHistoryByCriteria(InstalledPackageHistoryCriteria criteria)
+        throws RuntimeException;;
+
+    List<Architecture> getArchitectures() throws RuntimeException;
+
+    PackageType getResourceCreationPackageType(int resourceTypeId) throws RuntimeException;
+
+    PackageTypeAndVersionFormatComposite findPackageType(Integer resourceTypeId, String packageTypeName)
+        throws RuntimeException;
+
 }

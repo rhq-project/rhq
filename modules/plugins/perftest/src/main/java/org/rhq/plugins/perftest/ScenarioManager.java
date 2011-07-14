@@ -68,7 +68,7 @@ import org.rhq.plugins.perftest.trait.SimpleTraitFactory;
 import org.rhq.plugins.perftest.trait.TraitFactory;
 
 /**
- * Loads performance testing scenarios and parses into usable components by the JON resource components.
+ * Loads performance testing scenarios and parses into usable components by the RHQ resource components.
  *
  * @author Jason Dobies
  */
@@ -82,7 +82,7 @@ public class ScenarioManager {
      * name of the scenario, minus the ".xml". For example, to use the scenario defined in high-servers.xml, this
      * property should be set to "high-servers".
      */
-    public static final String SCENARIO_PROPERTY = "on.perftest.scenario";
+    public static final String SCENARIO_PROPERTY = "rhq.perftest.scenario";
 
     /**
      * Resource factory used when a scenario doesn't define any resources of a particular type.
@@ -453,11 +453,11 @@ public class ScenarioManager {
         String scenarioName = System.getProperty(SCENARIO_PROPERTY);
 
         if (scenarioName == null) {
-            log.error("Cannot find scenario name. Make sure the property " + SCENARIO_PROPERTY + " is set.");
+            log.info("Cannot find scenario name. Make sure the system property " + SCENARIO_PROPERTY + " is set.");
             return;
         }
 
-        log.info("Loading Performance Testing Scenario: " + scenarioName);
+        log.info("Loading Performance Testing Scenario [" + scenarioName + "]...");
 
         ClassLoader loader = this.getClass().getClassLoader();
         URL scenarioUrl = loader.getResource(scenarioName + ".xml");
@@ -486,7 +486,7 @@ public class ScenarioManager {
             unmarshaller.setEventHandler(vec);
             this.scenario = (Scenario) unmarshaller.unmarshal(scenarioUrl);
         } catch (JAXBException e) {
-            log.error("Scenario could not be loaded", e);
+            log.error("Scenario [" + scenarioName + "] could not be loaded from [" + scenarioUrl + "]." , e);
             return;
         }
     }

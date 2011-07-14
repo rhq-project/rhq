@@ -75,7 +75,6 @@ public final class CriteriaQueryGenerator {
     private String searchExpressionWhereClause;
 
     private Subject subject;
-    private String authorizationJoinFragment;
     private String authorizationPermsFragment;
     private String authorizationCustomConditionFragment;
     private int authorizationSubjectId;
@@ -90,6 +89,7 @@ public final class CriteriaQueryGenerator {
     private static List<String> EXPRESSION_START_KEYWORDS;
 
     private List<Field> persistentBagFields = new ArrayList<Field>();
+    private List<Field> joinFetchFields = new ArrayList<Field>();
 
     static {
         EXPRESSION_START_KEYWORDS = new ArrayList<String>(2);
@@ -164,29 +164,10 @@ public final class CriteriaQueryGenerator {
     public void setAuthorizationResourceFragment(AuthorizationTokenType type, String fragment, int subjectId) {
         this.authorizationSubjectId = subjectId;
         if (type == AuthorizationTokenType.RESOURCE) {
-            if (fragment == null) {
-                this.authorizationJoinFragment = "" //
-                    + "JOIN " + alias + ".implicitGroups authGroup " + NL //
-                    + "JOIN authGroup.roles authRole " + NL //
-                    + "JOIN authRole.subjects authSubject " + NL;
-            } else {
-                this.authorizationJoinFragment = "" //
-                    + "JOIN " + alias + "." + fragment + " authRes " + NL //
-                    + "JOIN authRes.implicitGroups authGroup " + NL //
-                    + "JOIN authGroup.roles authRole " + NL //
-                    + "JOIN authRole.subjects authSubject " + NL;
-            }
+            setAuthorizationCustomConditionFragment(getEnhancedResourceAuthorizationWhereFragment(fragment, subjectId));
         } else if (type == AuthorizationTokenType.GROUP) {
-            if (fragment == null) {
-                this.authorizationJoinFragment = "" // 
-                    + "JOIN " + alias + ".roles authRole " + NL //
-                    + "JOIN authRole.subjects authSubject " + NL;
-            } else {
-                this.authorizationJoinFragment = "" //
-                    + "JOIN " + alias + "." + fragment + " authGroup " + NL //
-                    + "JOIN authGroup.roles authRole " + NL //
-                    + "JOIN authRole.subjects authSubject " + NL;
-            }
+            // support for: 1) role-based for groups, 2) role-based for containing cluster groups, 3) private groups
+            setAuthorizationCustomConditionFragment(getEnhancedGroupAuthorizationWhereFragment(fragment, subjectId));
         } else {
             throw new IllegalArgumentException(this.getClass().getSimpleName()
                 + " does not yet support generating queries for '" + type + "' token types");
@@ -200,13 +181,53 @@ public final class CriteriaQueryGenerator {
         List<Permission> requiredPerms = this.criteria.getRequiredPermissions();
         if (!(null == requiredPerms || requiredPerms.isEmpty())) {
             this.authorizationPermsFragment = "" //
-                + "AND ( SELECT COUNT(DISTINCT p)" + NL //
-                + "      FROM Subject innerSubject" + NL //
-                + "      JOIN innerSubject.roles r" + NL //
-                + "      JOIN r.permissions p" + NL //
-                + "      WHERE innerSubject.id = " + this.authorizationSubjectId + NL //
-                + "      AND p IN ( :requiredPerms ) ) = :requiredPermsSize" + NL;
+                + "( SELECT COUNT(DISTINCT p)" + NL //
+                + "   FROM Subject innerSubject" + NL //
+                + "   JOIN innerSubject.roles r" + NL //
+                + "   JOIN r.permissions p" + NL //
+                + "   WHERE innerSubject.id = " + this.authorizationSubjectId + NL //
+                + "   AND p IN ( :requiredPerms ) ) = :requiredPermsSize" + NL;
         }
+    }
+
+    private String getEnhancedResourceAuthorizationWhereFragment(String fragment, int subjectId) {
+        String customAuthzFragment = "" //
+            + "( %aliasWithFragment%.id IN ( SELECT %innerAlias%.id " + NL //
+            + "                    FROM %alias% innerAlias " + NL //
+            + "                    JOIN %innerAlias%.implicitGroups g JOIN g.roles r JOIN r.subjects s " + NL //
+            + "                   WHERE s.id = %subjectId% ) )" + NL; //
+        String aliasReplacement = criteria.getAlias() + (fragment != null ? "." + fragment : "");
+        String innerAliasReplacement = "innerAlias" + (fragment != null ? "." + fragment : "");
+        customAuthzFragment = customAuthzFragment.replace("%alias%", criteria.getAlias());
+        customAuthzFragment = customAuthzFragment.replace("%aliasWithFragment%", aliasReplacement);
+        customAuthzFragment = customAuthzFragment.replace("%innerAlias%", innerAliasReplacement);
+        customAuthzFragment = customAuthzFragment.replace("%subjectId%", String.valueOf(subjectId));
+        return customAuthzFragment;
+    }
+
+    private String getEnhancedGroupAuthorizationWhereFragment(String fragment, int subjectId) {
+        String customAuthzFragment = "" //
+            + "( %aliasWithFragment%.id IN ( SELECT %innerAlias%.id " + NL //
+            + "                    FROM %alias% innerAlias " + NL //
+            + "                    JOIN %innerAlias%.roles r JOIN r.subjects s " + NL //
+            + "                   WHERE s.id = %subjectId% )" + NL //
+            + "  OR" + NL //
+            + "  %aliasWithFragment%.id IN ( SELECT %innerAlias%.id " + NL //
+            + "                    FROM %alias% innerAlias " + NL //
+            + "                    JOIN %innerAlias%.clusterResourceGroup crg JOIN crg.roles r JOIN r.subjects s " + NL //
+            + "                   WHERE crg.recursive = true AND s.id = %subjectId% )" + NL //
+            + "  OR" + NL //
+            + "  %aliasWithFragment%.id IN ( SELECT %innerAlias%.id" + NL //
+            + "                    FROM %alias% innerAlias " + NL //
+            + "                    JOIN %innerAlias%.subject s" + NL //
+            + "                   WHERE s.id = %subjectId% ) ) " + NL;
+        String aliasReplacement = criteria.getAlias() + (fragment != null ? "." + fragment : "");
+        String innerAliasReplacement = "innerAlias" + (fragment != null ? "." + fragment : "");
+        customAuthzFragment = customAuthzFragment.replace("%alias%", criteria.getAlias());
+        customAuthzFragment = customAuthzFragment.replace("%aliasWithFragment%", aliasReplacement);
+        customAuthzFragment = customAuthzFragment.replace("%innerAlias%", innerAliasReplacement);
+        customAuthzFragment = customAuthzFragment.replace("%subjectId%", String.valueOf(subjectId));
+        return customAuthzFragment;
     }
 
     public String getParameterReplacedQuery(boolean countQuery) {
@@ -285,16 +306,16 @@ public final class CriteriaQueryGenerator {
         return EnumType.STRING; // catch-all
     }
 
-    // for testing purposes only, should use getQuery(EntityManager) or getCountQuery(EntityManager) instead
     public String getQueryString(boolean countQuery) {
         StringBuilder results = new StringBuilder();
         results.append("SELECT ");
         if (countQuery) {
             if (groupByClause == null) { // non-grouped method
-                results.append("COUNT(").append(alias).append(")").append(NL);
+                // use count(*) instead of count(alias) due to https://bugzilla.redhat.com/show_bug.cgi?id=699842
+                results.append("COUNT(*)").append(NL);
             } else {
                 // gets the count of the number of aggregate/grouped rows
-                // NOTE: this only works when the gorupBy is a single element, as opposed to a list of elements
+                // NOTE: this only works when the groupBy is a single element, as opposed to a list of elements
                 results.append("COUNT(DISTINCT ").append(groupByClause).append(")").append(NL);
             }
         } else {
@@ -310,16 +331,29 @@ public final class CriteriaQueryGenerator {
              * don't fetch in the count query to avoid: "query specified join fetching, 
              * but the owner of the fetched association was not present in the select list"
              */
-            for (String fetchJoin : getFetchFields(criteria)) {
-                if (isPersistentBag(fetchJoin)) {
-                    addPersistentBag(fetchJoin);
+            for (String fetchField : getFetchFields(criteria)) {
+                if (isPersistentBag(fetchField)) {
+                    addPersistentBag(fetchField);
                 } else {
-                    results.append("LEFT JOIN FETCH ").append(alias).append('.').append(fetchJoin).append(NL);
+                    if (this.projection == null) {
+                        /* 
+                         * if not altering the projection, join fetching can be using
+                         * to retrieve the associated instance in the same SELECT
+                         */
+                        results.append("LEFT JOIN FETCH ").append(alias).append('.').append(fetchField).append(NL);
+                    } else {
+                        /* 
+                         * if the projection is altered (perhaps converting it into a constructor query), then all
+                         * fields specified in the fetch must be in the explicit return list.  this is not possible
+                         * today with constructor queries, so any altered projection will implicitly disable fetching.
+                         * instead, we'll record which fields need to be explicitly fetched after the primary query
+                         * returns the bulk of the data, and use a similar methodology at the SLSB layer to eagerly
+                         * load those before returning the PageList back to the caller. 
+                         */
+                        addJoinFetch(fetchField);
+                    }
                 }
             }
-        }
-        if (authorizationJoinFragment != null) {
-            results.append(authorizationJoinFragment);
         }
 
         // figure out the 'LEFT JOIN's needed for 'ORDER BY' tokens
@@ -381,7 +415,8 @@ public final class CriteriaQueryGenerator {
         }
 
         Map<String, Object> filterFields = getFilterFields(criteria);
-        if (filterFields.size() > 0 || authorizationJoinFragment != null || searchExpressionWhereClause != null) {
+        if (filterFields.size() > 0 || authorizationPermsFragment != null
+            || authorizationCustomConditionFragment != null || searchExpressionWhereClause != null) {
             results.append("WHERE ");
         }
 
@@ -392,6 +427,15 @@ public final class CriteriaQueryGenerator {
         StringBuilder conjunctiveResults = new StringBuilder();
         boolean firstCrit = true;
         for (Map.Entry<String, Object> filterField : filterFields.entrySet()) {
+            Object filterFieldValue = filterField.getValue();
+
+            // if this filter field is non-binding (that is, the query has no parameter whose value is to be bound for the field)
+            // and that filter field is turned off, do nothing and continue to the next filter.
+            // this in effect does not filter on this field at all.
+            if (Criteria.NonBindingOverrideFilter.OFF.equals(filterFieldValue)) {
+                continue;
+            }
+
             if (firstCrit) {
                 firstCrit = false;
             } else {
@@ -404,7 +448,7 @@ public final class CriteriaQueryGenerator {
                 fragment = fixFilterOverride(override, fieldName);
             } else {
                 String operator = "=";
-                if (filterField.getValue() instanceof String) {
+                if (filterFieldValue instanceof String) {
                     operator = "like";
                     if (wantCaseInsensitiveMatch) {
                         fragment = "LOWER( " + alias + "." + fieldName + " ) " + operator + " :" + fieldName;
@@ -425,17 +469,14 @@ public final class CriteriaQueryGenerator {
         }
 
         // authorization
-        if (authorizationJoinFragment != null) {
+        if (authorizationPermsFragment != null) {
             if (firstCrit) {
                 firstCrit = false;
             } else {
                 // always want AND for security, regardless of conjunctiveFragment
                 results.append(NL).append(" AND ");
             }
-            results.append("authSubject.id = " + authorizationSubjectId + " ");
-            if (null != this.authorizationPermsFragment) {
-                results.append(this.authorizationPermsFragment + " ");
-            }
+            results.append(this.authorizationPermsFragment + " ");
         }
 
         if (authorizationCustomConditionFragment != null) {
@@ -574,8 +615,8 @@ public final class CriteriaQueryGenerator {
 
         try {
             Class<?> entityClass = criteria.getPersistentClass();
-            SearchTranslationManager searchManager = new SearchTranslationManager(subject, SearchSubsystem
-                .get(entityClass));
+            SearchTranslationManager searchManager = new SearchTranslationManager(criteria.getAlias(), subject,
+                SearchSubsystem.get(entityClass));
             searchManager.setExpression(searchExpression);
 
             // translate first, if there was an error we won't add the dangling 'AND' to the where clause
@@ -632,6 +673,15 @@ public final class CriteriaQueryGenerator {
         }
     }
 
+    private void addJoinFetch(String fieldName) {
+        try {
+            Field field = criteria.getPersistentClass().getDeclaredField(fieldName);
+            joinFetchFields.add(field);
+        } catch (NoSuchFieldException e) {
+            LOG.warn("Failed to add join fetch field.", e);
+        }
+    }
+
     /**
      * <strong>Note:</strong> This method should only be called after {@link #getQueryString(boolean)}} because it is
      * that method where the persistentBagFields property is initialized.
@@ -641,6 +691,10 @@ public final class CriteriaQueryGenerator {
      */
     public List<Field> getPersistentBagFields() {
         return persistentBagFields;
+    }
+
+    public List<Field> getJoinFetchFields() {
+        return joinFetchFields;
     }
 
     /**
@@ -654,6 +708,10 @@ public final class CriteriaQueryGenerator {
      */
     public void alterProjection(String projection) {
         this.projection = projection;
+    }
+
+    public boolean isProjectionAltered() {
+        return this.projection != null;
     }
 
     /**
@@ -705,6 +763,8 @@ public final class CriteriaQueryGenerator {
                 query.setParameter("tagSemantic", tag.getSemantic());
                 query.setParameter("tagName", tag.getName());
 
+            } else if (value instanceof Criteria.NonBindingOverrideFilter) {
+                // skip this one - do nothing since there is no parameter binding for this value
             } else {
                 if (value instanceof String) {
                     value = prepareStringBindValue((String) value);
@@ -812,7 +872,7 @@ public final class CriteriaQueryGenerator {
 
     public static void testResourceCriteria() {
         ResourceCriteria resourceCriteria = new ResourceCriteria();
-        resourceCriteria.addFilterResourceCategory(ResourceCategory.SERVER);
+        resourceCriteria.addFilterResourceCategories(ResourceCategory.SERVER);
         resourceCriteria.addFilterName("marques");
         resourceCriteria.fetchAgent(true);
         resourceCriteria.addSortResourceTypeName(PageOrdering.ASC);

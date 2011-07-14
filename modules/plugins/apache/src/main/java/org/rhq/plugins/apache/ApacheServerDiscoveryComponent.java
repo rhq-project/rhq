@@ -20,15 +20,17 @@ package org.rhq.plugins.apache;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -36,10 +38,13 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
 import org.rhq.augeas.util.Glob;
 import org.rhq.augeas.util.GlobFilter;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.PropertyList;
+import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.resource.ResourceUpgradeReport;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
@@ -62,6 +67,7 @@ import org.rhq.plugins.apache.util.AugeasNodeValueUtil;
 import org.rhq.plugins.apache.util.HttpdAddressUtility;
 import org.rhq.plugins.apache.util.HttpdAddressUtility.Address;
 import org.rhq.plugins.apache.util.OsProcessUtility;
+import org.rhq.plugins.apache.util.RuntimeApacheConfiguration;
 import org.rhq.plugins.platform.PlatformComponent;
 import org.rhq.rhqtransform.impl.PluginDescriptorBasedAugeasConfiguration;
 
@@ -77,6 +83,159 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
 
     private static final Log log = LogFactory.getLog(ApacheServerDiscoveryComponent.class);
 
+    private static class DiscoveryFailureException extends Exception {
+        private static final long serialVersionUID = 1L;
+
+        public DiscoveryFailureException(String message) {
+            super(message);
+        }
+    }
+
+    public static final Map<String, String> MODULE_SOURCE_FILE_TO_MODULE_NAME_20;
+    public static final Map<String, String> MODULE_SOURCE_FILE_TO_MODULE_NAME_13;
+    
+    static {
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20 = new LinkedHashMap<String, String>();
+        
+        //these are extracted from http://httpd.apache.org/docs/current/mod/
+        //and linked pages
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("beos.c", "mpm_beos_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("event.c", "mpm_event_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mpm_netware.c", "mpm_netware_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mpmt_os2.c", "mpm_mpmt_os2_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("prefork.c", "mpm_prefork_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mpm_winnt.c", "mpm_winnt_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("worker.c", "mpm_worker_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_actions.c", "actions_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_alias.c", "alias_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_asis.c", "asis_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_auth_basic.c", "auth_basic_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_auth_digest.c", "auth_digest_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_authn_alias.c", "authn_alias_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_authn_anon.c", "authn_anon_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_authn_dbd.c", "authn_dbd_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_authn_dbm.c", "authn_dbm_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_authn_default.c", "authn_default_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_authn_file.c", "authn_file_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_authnz_ldap.c", "authnz_ldap_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_authz_dbm.c", "authz_dbm_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_authz_default.c", "authz_default_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_authz_groupfile.c", "authz_groupfile_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_authz_host.c", "authz_host_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_authz_owner.c", "authz_owner_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_authz_user.c", "authz_user_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_autoindex.c", "autoindex_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_cache.c", "cache_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_cern_meta.c", "cern_meta_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_cgi.c", "cgi_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_cgid.c", "cgid_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_charset_lite.c", "charset_lite_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_dav.c", "dav_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_dav_fs.c", "dav_fs_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_dav_lock.c", "dav_lock_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_dbd.c", "dbd_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_deflate.c", "deflate_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_dir.c", "dir_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_disk_cache.c", "disk_cache_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_dumpio.c", "dumpio_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_echo.c", "echo_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_env.c", "env_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_example.c", "example_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_expires.c", "expires_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_ext_filter.c", "ext_filter_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_file_cache.c", "file_cache_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_filter.c", "filter_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_headers.c", "headers_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_ident.c", "ident_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_imagemap.c", "imagemap_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_include.c", "include_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_info.c", "info_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_isapi.c", "isapi_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("util_ldap.c", "ldap_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_log_config.c", "log_config_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_log_forensic.c", "log_forensic_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_logio.c", "logio_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_mem_cache.c", "mem_cache_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_mime.c", "mime_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_mime_magic.c", "mime_magic_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_negotiation.c", "negotiation_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_nw_ssl.c", "nwssl_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_proxy.c", "proxy_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_proxy_ajp.c", "proxy_ajp_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_proxy_balancer.c", "proxy_balancer_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_proxy_connect.c", "proxy_connect_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_proxy_ftp.c", "proxy_ftp_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_proxy_http.c", "proxy_http_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_proxy_scgi.c", "proxy_scgi_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_reqtimeout.c", "reqtimeout_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_rewrite.c", "rewrite_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_setenvif.c", "setenvif_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_so.c", "so_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_speling.c", "speling_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_ssl.c", "ssl_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_status.c", "status_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_substitute.c", "substitute_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_suexec.c", "suexec_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_unique_id.c", "unique_id_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_userdir.c", "userdir_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_usertrack.c", "usertrack_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_version.c", "version_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_vhost_alias.c", "vhost_alias_module");
+        
+        //some hand picked modules
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod_jk.c", "jk_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod-snmpcommon.c", "snmpcommon_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("mod-snmpagt.c", "snmpagt_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_20.put("covalent-snmp-v20.c", "snmp_agt_module");
+        
+        //this list is for apache 1.3
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13 = new LinkedHashMap<String, String>();
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_access.c", "access_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_actions.c", "action_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_alias.c", "alias_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_asis.c", "asis_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_auth.c", "auth_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_auth_anon.c", "anon_auth_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_auth_db.c", "db_auth_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_auth_dbm.c", "dbm_auth_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_auth_digest.c", "digest_auth_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_autoindex.c", "autoindex_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_cern_meta.c", "cern_meta_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_cgi.c", "cgi_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_digest.c", "digest_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_dir.c", "dir_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_env.c", "env_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_example.c", "example_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_expires.c", "expires_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_headers.c", "headers_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_imap.c", "imap_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_include.c", "includes_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_info.c", "info_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_isapi.c", "isapi_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_log_agent.c", "agent_log_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_log_config.c", "config_log_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_log_forensic.c", "log_forensic_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_log_referer.c", "referer_log_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_mime.c", "mime_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_mime_magic.c", "mime_magic_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_mmap_static.c", "mmap_static_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_negotiation.c", "negotiation_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_proxy.c", "proxy_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_rewrite.c", "rewrite_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_setenvif.c", "setenvif_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_so.c", "so_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_speling.c", "speling_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_status.c", "status_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_unique_id.c", "unique_id_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_userdir.c", "userdir_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_usertrack.c", "usertrack_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_vhost_alias.c", "vhost_alias_module");
+
+        //and some hand-picks
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("mod_jk.c", "jk_module");
+        MODULE_SOURCE_FILE_TO_MODULE_NAME_13.put("covalent-snmp-v13.c", "snmp_agt_module");        
+    }
+    
     public Set<DiscoveredResourceDetails>
         discoverResources(ResourceDiscoveryContext<PlatformComponent> discoveryContext) throws Exception {
         Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>();
@@ -84,107 +243,131 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
         // Process any PC-discovered OS processes...
         List<ProcessScanResult> processes = discoveryContext.getAutoDiscoveredProcesses();
         for (ProcessScanResult process : processes) {
-            //String executablePath = process.getProcessInfo().getName();
-            String executableName = getExecutableName(process);
-            File executablePath = OsProcessUtility.getProcExe(process.getProcessInfo().getPid(), executableName);
-            if (executablePath == null) {
-                log.error("Executable path could not be determined for Apache [" + process.getProcessInfo() + "].");
-                continue;
-            }
-            if (!executablePath.isAbsolute()) {
-                log.error("Executable path (" + executablePath + ") is not absolute for Apache ["
-                    + process.getProcessInfo() + "]."
-                    + "Please restart Apache specifying an absolute path for the executable.");
-                continue;
-            }
-            log.debug("Apache executable path: " + executablePath);
-            ApacheBinaryInfo binaryInfo;
             try {
-                binaryInfo = ApacheBinaryInfo
-                    .getInfo(executablePath.getPath(), discoveryContext.getSystemInformation());
+                DiscoveredResourceDetails apache = discoverSingleProcess(discoveryContext, process);
+                discoveredResources.add(apache);
+            } catch (DiscoveryFailureException e) {
+                log.warn("Discovery of Apache process [" + process.getProcessInfo() + "] failed: " + e.getMessage());
             } catch (Exception e) {
-                log.error("'" + executablePath + "' is not a valid Apache executable (" + e + ").");
-                continue;
-            }
-
-            if (isSupportedVersion(binaryInfo.getVersion())) {
-                String serverRoot = getServerRoot(binaryInfo, process.getProcessInfo());
-                if (serverRoot == null) {
-                    log.error("Unable to determine server root for Apache process: " + process.getProcessInfo());
-                    continue;
-                }
-
-                File serverConfigFile = getServerConfigFile(binaryInfo, process.getProcessInfo(), serverRoot);
-                if (serverConfigFile == null) {
-                    log.error("Unable to determine server config file for Apache process: " + process.getProcessInfo());
-                    continue;
-                }
-
-                Configuration pluginConfig = discoveryContext.getDefaultPluginConfiguration();
-
-                PropertySimple executablePathProp = new PropertySimple(
-                    ApacheServerComponent.PLUGIN_CONFIG_PROP_EXECUTABLE_PATH, executablePath);
-                pluginConfig.put(executablePathProp);
-
-                PropertySimple serverRootProp = new PropertySimple(
-                    ApacheServerComponent.PLUGIN_CONFIG_PROP_SERVER_ROOT, serverRoot);
-                pluginConfig.put(serverRootProp);
-
-                PropertySimple configFile = new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_HTTPD_CONF,
-                    serverConfigFile);
-                pluginConfig.put(configFile);
-
-                PropertySimple inclusionGlobs = new PropertySimple(
-                    PluginDescriptorBasedAugeasConfiguration.INCLUDE_GLOBS_PROP, serverConfigFile);
-                pluginConfig.put(inclusionGlobs);
-
-                ApacheDirectiveTree serverConfig = loadParser(serverConfigFile.getAbsolutePath(), serverRoot);
-
-                String serverUrl = null;
-                String vhostsGlobInclude = null;
-
-                //now check if the httpd.conf doesn't redefine the ServerRoot
-                List<ApacheDirective> serverRoots = serverConfig.search("/ServerRoot");
-                if (!serverRoots.isEmpty()) {
-                    serverRoot = AugeasNodeValueUtil.unescape(serverRoots.get(0).getValuesAsString());
-                    serverRootProp.setValue(serverRoot);
-                    //reparse the configuration with the new ServerRoot
-                    serverConfig = loadParser(serverConfigFile.getAbsolutePath(), serverRoot);
-                }
-
-                serverUrl = getUrl(serverConfig, binaryInfo.getVersion());
-                vhostsGlobInclude = scanForGlobInclude(serverConfig);
-
-                if (serverUrl != null) {
-                    Property urlProp = new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_URL, serverUrl);
-                    pluginConfig.put(urlProp);
-                }
-
-                if (vhostsGlobInclude != null) {
-                    pluginConfig.put(new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_VHOST_FILES_MASK,
-                        vhostsGlobInclude));
-                } else {
-                    if (serverConfigFile.exists())
-                        pluginConfig.put(new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_VHOST_FILES_MASK,
-                            serverConfigFile.getParent() + File.separator + "*"));
-                }
-
-                List<InetSocketAddress> snmpAddresses = findSNMPAddresses(serverConfig, new File(serverRoot));
-                if (snmpAddresses != null && snmpAddresses.size() > 0) {
-                    InetSocketAddress addr = snmpAddresses.get(0);
-                    int port = addr.getPort();
-                    InetAddress host = addr.getAddress() == null ? InetAddress.getLocalHost() : addr.getAddress();
-                    
-                    pluginConfig.put(new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_SNMP_AGENT_HOST, host.getHostAddress()));
-                    pluginConfig.put(new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_SNMP_AGENT_PORT, port));
-                }
-                
-                discoveredResources.add(createResourceDetails(discoveryContext, pluginConfig, process.getProcessInfo(),
-                    binaryInfo));
+                log.error("Discovery of Apache process [" + process.getProcessInfo() + "] failed with an exception.", e);
             }
         }
 
         return discoveredResources;
+    }
+
+    /**
+     * Performs discovery on the single process scan result.
+     * 
+     * @param discoveryContext the discovery context
+     * @param process the process discovered by the scan
+     * @return resource details
+     * @throws DiscoveryFailureException if the discovery failed due to inability to detect necessary data from
+     * the process info.
+     * @throws Exception other unhandled exception
+     */
+    private DiscoveredResourceDetails discoverSingleProcess(ResourceDiscoveryContext<PlatformComponent> discoveryContext,
+        ProcessScanResult process) throws DiscoveryFailureException, Exception {
+        //String executablePath = process.getProcessInfo().getName();
+        String executableName = getExecutableName(process);
+        File executablePath = OsProcessUtility.getProcExe(process.getProcessInfo().getPid(), executableName);
+        if (executablePath == null) {
+            throw new DiscoveryFailureException("Executable path could not be determined.");
+        }
+        if (!executablePath.isAbsolute()) {
+            throw new DiscoveryFailureException("Executable path (" + executablePath + ") is not absolute."
+                + "Please restart Apache specifying an absolute path for the executable.");
+        }
+        log.debug("Apache executable path: " + executablePath);
+        ApacheBinaryInfo binaryInfo;
+        try {
+            binaryInfo = ApacheBinaryInfo
+                .getInfo(executablePath.getPath(), discoveryContext.getSystemInformation());
+        } catch (Exception e) {
+            throw new DiscoveryFailureException("'" + executablePath + "' is not a valid Apache executable (" + e + ").");
+        }
+
+        if (!isSupportedVersion(binaryInfo.getVersion())) {
+            throw new DiscoveryFailureException("Apache " + binaryInfo.getVersion() + " is not suppported.");
+        }
+        
+        String serverRoot = getServerRoot(binaryInfo, process.getProcessInfo());
+        if (serverRoot == null) {
+            throw new DiscoveryFailureException("Unable to determine server root.");
+        }
+
+        File serverConfigFile = getServerConfigFile(binaryInfo, process.getProcessInfo(), serverRoot);
+        if (serverConfigFile == null) {
+            throw new DiscoveryFailureException("Unable to determine server config file.");
+        }
+
+        Configuration pluginConfig = discoveryContext.getDefaultPluginConfiguration();
+
+        PropertySimple executablePathProp = new PropertySimple(
+            ApacheServerComponent.PLUGIN_CONFIG_PROP_EXECUTABLE_PATH, executablePath);
+        pluginConfig.put(executablePathProp);
+
+        PropertySimple serverRootProp = new PropertySimple(
+            ApacheServerComponent.PLUGIN_CONFIG_PROP_SERVER_ROOT, serverRoot);
+        pluginConfig.put(serverRootProp);
+
+        PropertySimple configFile = new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_HTTPD_CONF,
+            serverConfigFile);
+        pluginConfig.put(configFile);
+
+        PropertySimple inclusionGlobs = new PropertySimple(
+            PluginDescriptorBasedAugeasConfiguration.INCLUDE_GLOBS_PROP, serverConfigFile);
+        pluginConfig.put(inclusionGlobs);
+
+        pluginConfig.put(new PropertyList(ApacheServerComponent.PLUGIN_CONFIG_CUSTOM_MODULE_NAMES));
+        
+        ApacheDirectiveTree serverConfig = loadParser(serverConfigFile.getAbsolutePath(), serverRoot);
+
+        //extract the runtime configuration out of declared config
+        serverConfig = RuntimeApacheConfiguration.extract(serverConfig, process.getProcessInfo(), binaryInfo, getDefaultModuleNames(binaryInfo.getVersion()), true);
+        
+        String serverUrl = null;
+        String vhostsGlobInclude = null;
+
+        //now check if the httpd.conf doesn't redefine the ServerRoot
+        List<ApacheDirective> serverRoots = serverConfig.search("/ServerRoot");
+        if (!serverRoots.isEmpty()) {
+            serverRoot = AugeasNodeValueUtil.unescape(serverRoots.get(0).getValuesAsString());
+            serverRootProp.setValue(serverRoot);
+            //reparse the configuration with the new ServerRoot
+            serverConfig = loadParser(serverConfigFile.getAbsolutePath(), serverRoot);
+            serverConfig = RuntimeApacheConfiguration.extract(serverConfig, process.getProcessInfo(), binaryInfo, getDefaultModuleNames(binaryInfo.getVersion()), true);            
+        }
+
+        serverUrl = getUrl(serverConfig, binaryInfo.getVersion());
+        vhostsGlobInclude = scanForGlobInclude(serverConfig);
+
+        if (serverUrl != null) {
+            Property urlProp = new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_URL, serverUrl);
+            pluginConfig.put(urlProp);
+        }
+
+        if (vhostsGlobInclude != null) {
+            pluginConfig.put(new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_VHOST_FILES_MASK,
+                vhostsGlobInclude));
+        } else {
+            if (serverConfigFile.exists())
+                pluginConfig.put(new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_VHOST_FILES_MASK,
+                    serverConfigFile.getParent() + File.separator + "*"));
+        }
+
+        List<InetSocketAddress> snmpAddresses = findSNMPAddresses(serverConfig, new File(serverRoot));
+        if (snmpAddresses != null && snmpAddresses.size() > 0) {
+            InetSocketAddress addr = snmpAddresses.get(0);
+            int port = addr.getPort();
+            InetAddress host = addr.getAddress() == null ? InetAddress.getLocalHost() : addr.getAddress();
+            
+            pluginConfig.put(new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_SNMP_AGENT_HOST, host.getHostAddress()));
+            pluginConfig.put(new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_SNMP_AGENT_PORT, port));
+        }
+        
+        return createResourceDetails(discoveryContext, pluginConfig, process.getProcessInfo(),
+            binaryInfo);
     }
 
     public ResourceUpgradeReport upgrade(ResourceUpgradeContext<PlatformComponent> context) {
@@ -414,7 +597,7 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
         }
     }
 
-    private static ApacheDirectiveTree loadParser(String path, String serverRoot) throws Exception {
+    public static ApacheDirectiveTree loadParser(String path, String serverRoot) {
 
         ApacheDirectiveTree tree = new ApacheDirectiveTree();
         ApacheParser parser = new ApacheParserImpl(tree, serverRoot);
@@ -453,11 +636,23 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
         return null;
     }
     
-    private static String formatResourceKey(Configuration pluginConfiguration) {
+    public static String formatResourceKey(Configuration pluginConfiguration) {
         String serverRoot = pluginConfiguration.getSimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_SERVER_ROOT).getStringValue();
         String httpdConf = pluginConfiguration.getSimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_HTTPD_CONF).getStringValue();
         
+        return formatResourceKey(serverRoot, httpdConf);
+    }
+    
+    public static String formatResourceKey(String serverRoot, String httpdConf) {
         serverRoot = FileUtils.getCanonicalPath(serverRoot);
+        
+        //we could have inherited the configuration from
+        //RHQ 1.x times, when the httpdConf was relative.
+        File httpdConfF = new File(httpdConf);
+        if (!httpdConfF.isAbsolute()) {
+            httpdConfF = new File(serverRoot, httpdConf);
+            httpdConf = httpdConfF.getAbsolutePath();
+        }
         httpdConf = FileUtils.getCanonicalPath(httpdConf);
         
         return serverRoot + "||" + httpdConf;
@@ -563,5 +758,15 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
         } finally {
             rdr.close();
         }
+    }
+
+    public static Map<String, String> getDefaultModuleNames(String version) {
+        switch (HttpdAddressUtility.get(version)) {
+        case APACHE_1_3 : 
+            return MODULE_SOURCE_FILE_TO_MODULE_NAME_13;
+        case APACHE_2_x:
+            return MODULE_SOURCE_FILE_TO_MODULE_NAME_20;
+        default: throw new IllegalStateException("Unknown HttpdAddressUtility instance.");
+    }        
     }
 }

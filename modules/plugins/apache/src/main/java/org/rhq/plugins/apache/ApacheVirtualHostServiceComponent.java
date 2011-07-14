@@ -19,18 +19,16 @@
 package org.rhq.plugins.apache;
 
 import java.io.File;
-import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.augeas.node.AugeasNode;
 import org.rhq.augeas.tree.AugeasTree;
 import org.rhq.core.domain.configuration.Configuration;
@@ -55,11 +53,12 @@ import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.util.ResponseTimeConfiguration;
 import org.rhq.core.pluginapi.util.ResponseTimeLogParser;
 import org.rhq.plugins.apache.mapping.ApacheAugeasMapping;
+import org.rhq.plugins.apache.parser.ApacheDirective;
 import org.rhq.plugins.apache.parser.ApacheDirectiveTree;
 import org.rhq.plugins.apache.util.AugeasNodeSearch;
 import org.rhq.plugins.apache.util.AugeasNodeValueUtil;
 import org.rhq.plugins.apache.util.ConfigurationTimestamp;
-import org.rhq.plugins.apache.util.HttpdAddressUtility;
+import org.rhq.plugins.apache.util.RuntimeApacheConfiguration;
 import org.rhq.plugins.www.snmp.SNMPException;
 import org.rhq.plugins.www.snmp.SNMPSession;
 import org.rhq.plugins.www.snmp.SNMPValue;
@@ -75,7 +74,7 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
 
     public static final String URL_CONFIG_PROP = "url";
     public static final String MAIN_SERVER_RESOURCE_KEY = "MainServer";
-
+    
     public static final String RESPONSE_TIME_LOG_FILE_CONFIG_PROP = ResponseTimeConfiguration.RESPONSE_TIME_LOG_FILE_CONFIG_PROP;
     public static final String RESPONSE_TIME_URL_EXCLUDES_CONFIG_PROP = ResponseTimeConfiguration.RESPONSE_TIME_URL_EXCLUDES_CONFIG_PROP;
     public static final String RESPONSE_TIME_URL_TRANSFORMS_CONFIG_PROP = ResponseTimeConfiguration.RESPONSE_TIME_URL_TRANSFORMS_CONFIG_PROP;
@@ -130,7 +129,27 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
     }
 
     public AvailabilityType getAvailability() {
-        return (this.url != null && WWWUtils.isAvailable(this.url)) ? AvailabilityType.UP : AvailabilityType.DOWN;
+        if (url != null) {
+            return WWWUtils.isAvailable(url) ? AvailabilityType.UP : AvailabilityType.DOWN;
+        } else {
+            try {
+                //we don't need the SNMP connection to figure out the index on which the SNMP
+                //module would report this vhost. So first, let's check if that index is valid
+                //(i.e. check that the vhost is actually still present in the apache configuration)                                
+                if (getWwwServiceIndex() < 1) {
+                    return AvailabilityType.DOWN;
+                }
+                
+                //ok, so the vhost is present. Now let's just ping the SNMP module to see
+                //if it is reachable and base our availability on that...
+                SNMPSession snmpSession = resourceContext.getParentResourceComponent().getSNMPSession();
+                
+                return snmpSession.ping() ? AvailabilityType.UP : AvailabilityType.DOWN;
+            } catch (Exception e) {
+                log.debug("Determining the availability of the vhost [" + resourceContext.getResourceKey() + "] using SNMP failed.", e);
+                return AvailabilityType.DOWN;
+            }
+        }
     }
 
     public Configuration loadResourceConfiguration() throws Exception {
@@ -330,73 +349,47 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
     public AugeasNode getNode(AugeasTree tree) {
         String resourceKey = resourceContext.getResourceKey();
 
-        if (ApacheVirtualHostServiceComponent.MAIN_SERVER_RESOURCE_KEY.equals(resourceKey)) {
+        int snmpIdx = getWwwServiceIndex();
+
+        ApacheServerComponent server = resourceContext.getParentResourceComponent();
+
+        if (snmpIdx < 1) {
+            throw new IllegalStateException(
+                "Could not determine the index of the virtual host [" + resourceKey + "] in the runtime configuration. This is very strange.");
+        }
+
+        if (snmpIdx == 1) {
             return tree.getRootNode();
         }
 
-        String serverName = null;
-        int pipeIdx = resourceKey.indexOf('|');
-        //the resource key always contains the '|' so we're only checking for non-empty
-        //server names
-        if (pipeIdx > 0) {
-            serverName = resourceKey.substring(0, pipeIdx);
-        }
+        final List<AugeasNode> allVhosts = new ArrayList<AugeasNode>();
 
-        String[] addrs = resourceKey.substring(pipeIdx + 1).split(" ");
-        List<AugeasNode> nodes = tree.matchRelative(tree.getRootNode(), "<VirtualHost");
-        List<AugeasNode> virtualHosts = new ArrayList<AugeasNode>();
-
-        boolean matching = false;
-
-        for (AugeasNode node : nodes) {
-            matching = false;
-            List<AugeasNode> serverNameNodes = tree.matchRelative(node, "ServerName/param");
-            String tempServerName = null;
-
-            if (!(serverNameNodes.isEmpty())) {
-                tempServerName = serverNameNodes.get(0).getValue();
-            }
-            if (tempServerName == null & serverName == null) {
-                matching = true;
-            }
-            
-            if (tempServerName != null & serverName != null) {
-                if (tempServerName.equals(serverName)) {
-                    matching = true;
+        RuntimeApacheConfiguration.walkRuntimeConfig(new RuntimeApacheConfiguration.NodeVisitor<AugeasNode>() {
+            public void visitOrdinaryNode(AugeasNode node) {
+                if ("<VirtualHost".equalsIgnoreCase(node.getLabel())) {
+                    allVhosts.add(node);
                 }
             }
-            
-            if (matching) {
-                List<AugeasNode> params = node.getChildByLabel("param");
-                for (AugeasNode nd : params) {
-                    matching = false;
-                    for (String adr : addrs) {
-                        if (adr.equals(nd.getValue())) {
-                            matching = true;
-                        }
-                    }
-                    if (!matching) {
-                        break;
-                    }
-                }
 
-                if (matching) {
-                    virtualHosts.add(node);
-                }
+            public void visitConditionalNode(AugeasNode node, boolean isSatisfied) {
             }
-        }
-       
-        if (virtualHosts.size() == 0) {
-            throw new IllegalStateException("Could not find virtual host configuration in augeas for virtual host: "
-                + resourceKey);
-        }
+        }, tree, server.getCurrentProcessInfo(), server.getCurrentBinaryInfo(), server.getModuleNames(), false);
 
-        if (virtualHosts.size() > 1) {
-            throw new IllegalStateException("Found more than 1 virtual host configuration in augeas for virtual host: "
-                + resourceKey);
-        }
+        //transform the SNMP index into the index of the vhost
+        int idx = allVhosts.size() - snmpIdx + 1;
 
-        return virtualHosts.get(0);
+        AugeasNode vhost = allVhosts.get(idx);
+
+        //now check if there are any If* directives underneath this vhost.
+        //we don't support configuring such beasts.
+        if (vhost.getChildByLabel("<IfDefine").isEmpty() && vhost.getChildByLabel("<IfModule").isEmpty()
+            && vhost.getChildByLabel("<IfVersion").isEmpty()) {
+
+            return vhost;
+        } else {
+            throw new IllegalStateException("Configuration of the virtual host [" + resourceKey
+                + "] contains conditional blocks. This is not supported by this plugin.");
+        }
     }
 
     /**
@@ -480,11 +473,7 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
         return oid;
     }
 
-    public static int getMatchingWwwServiceIndex(ApacheServerComponent parent, String resourceKey, List<SNMPValue> names, List<SNMPValue> ports) {
-        int ret = -1;
-        Iterator<SNMPValue> namesIterator = names.iterator();
-        Iterator<SNMPValue> portsIterator = ports.iterator();
-
+    public static int getWwwServiceIndex(ApacheServerComponent parent, String resourceKey) {        
         //figure out the servername and addresses of this virtual host
         //from the resource key.
         String vhostServerName = null;
@@ -492,154 +481,87 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
         int pipeIdx = resourceKey.indexOf('|');
         if (pipeIdx >= 0) {
             vhostServerName = resourceKey.substring(0, pipeIdx);
-        }
+            if (vhostServerName.isEmpty()) {
+                vhostServerName = null;
+            }
+        }        
         vhostAddressStrings = resourceKey.substring(pipeIdx + 1).split(" ");
 
-        ApacheDirectiveTree tree = parent.loadParser(); 
+        int foundIdx = 0;
         
-        //convert the vhost addresses into fully qualified ip/port addresses
-        List<HttpdAddressUtility.Address> vhostAddresses = new ArrayList<HttpdAddressUtility.Address>(
-            vhostAddressStrings.length);
-
-        if (vhostAddressStrings.length == 1 && MAIN_SERVER_RESOURCE_KEY.equals(vhostAddressStrings[0])) {
-            HttpdAddressUtility.Address serverAddr = parent.getAddressUtility().getMainServerSampleAddress(tree, null, 0);
-            if (serverAddr != null) {
-                vhostAddresses.add(serverAddr);
-            }
-        } else {
-            for (int i = 0; i < vhostAddressStrings.length; ++i) {
-                HttpdAddressUtility.Address vhostAddr = parent.getAddressUtility().getVirtualHostSampleAddress(tree, vhostAddressStrings[i],
-                    vhostServerName, true);
-                if (vhostAddr != null) {
-                    vhostAddresses.add(vhostAddr);
-                }
-            }
-        }
-
-        //finding the snmp index that corresponds to the address(es) of the vhost isn't that simple
-        //because the snmp module in apache always resolves the IPs to hostnames.
-        //on the other hand, the resource key tries to be more accurate about what a 
-        //vhost can actually be represented as. A vhost is represented by at most 1 hostname (i.e. ServerName)
-        //and possibly multiple IP addresses.
-        SNMPValue bestMatch = null;
-        int bestMatchRate = 0;
-        
-        while (namesIterator.hasNext()) {
-            SNMPValue nameValue = namesIterator.next();
-            SNMPValue portValue = portsIterator.next();
-
-            String snmpHost = nameValue.toString();
-            String fullPort = portValue.toString();
-
-            int snmpPort = Integer.parseInt(fullPort.substring(fullPort.lastIndexOf(".") + 1));
+        //only look for the vhost entry if the vhost we're looking for isn't the main server
+        if (!MAIN_SERVER_RESOURCE_KEY.equals(vhostAddressStrings[0])) {
+            ApacheDirectiveTree tree = parent.loadParser(); 
+            tree = RuntimeApacheConfiguration.extract(tree, parent.getCurrentProcessInfo(), parent.getCurrentBinaryInfo(), parent.getModuleNames(), false);            
             
-            HttpdAddressUtility.Address snmpAddress = new HttpdAddressUtility.Address(snmpHost, snmpPort);
-        
-            int matchRate = matchRate(vhostAddresses, snmpAddress);
-            if (matchRate > bestMatchRate) {
-                bestMatch = nameValue;
-                bestMatchRate = matchRate;
+            //find the vhost entry the resource key represents
+            List<ApacheDirective> vhosts = tree.search("/<VirtualHost");
+            for(ApacheDirective vhost : vhosts) {
+                List<ApacheDirective> serverNames = vhost.getChildByName("ServerName");
+                String serverName = serverNames.size() > 0 ? serverNames.get(0).getValuesAsString() : null; 
+                
+                List<String> addrs = vhost.getValues();
+                
+                boolean serverNamesMatch = (serverName == null && vhostServerName == null) ||
+                    (serverName != null && serverName.equals(vhostServerName));
+                boolean addrsMatch = true;
+                
+                if (addrs.size() != vhostAddressStrings.length) {
+                    addrsMatch = false;
+                } else {
+                    for(int i = 0; i < vhostAddressStrings.length; ++i) {
+                        if (!addrs.contains(vhostAddressStrings[i])) {
+                            addrsMatch = false;
+                            break;
+                        }
+                    }
+                }
+                
+                if (serverNamesMatch && addrsMatch) {
+                    break;
+                }
+                
+                ++foundIdx;
+            }
+            
+            if (foundIdx == vhosts.size()) {
+                log.debug("The virtual host with resource key [" + resourceKey + "] doesn't seem to be present in the apache configuration anymore.");
+                return -1;
+            } else {
+                //httpd vhosts are internally (in httpd internal data structures) ordered like this:
+                //1) the main server entry is always first
+                //2) all the vhosts are ordered from the last to appear in the joined config files to the first one
+                
+                //we now have an index to the list of the vhosts in the order they are defined.
+                //so let's swap it over.
+                //just subtracting from the size will give us the "room" for the first index
+                //being the main host. In another words the below subtraction is correct even though
+                //you might think there's a 1-off bug there.
+                foundIdx = vhosts.size() - foundIdx;
             }
         }
         
-        if (bestMatch != null) {
-            String nameOID = bestMatch.getOID();
-            ret = Integer.parseInt(nameOID.substring(nameOID.lastIndexOf(".") + 1));
-        } else {
-            log.warn("Unable to match the Virtual Host [" + resourceKey + "] with any of the SNMP advertised vhosts: " + names + ". It won't be possible to monitor the Virtual Host.");
-        }
-        return ret;
+        //the snmp indices are 1-based
+        return foundIdx + 1;
     }
     
     /**
      * @return the index of the virtual host that identifies it in SNMP
      * @throws Exception on SNMP error
      */
-    private int getWwwServiceIndex() throws Exception {
+    private int getWwwServiceIndex() {
         ConfigurationTimestamp currentTimestamp = resourceContext.getParentResourceComponent().getConfigurationTimestamp();
         if (!lastConfigurationTimeStamp.equals(currentTimestamp)) {
             snmpWwwServiceIndex = -1;
             //don't go through this configuration again even if we fail further below.. we'd fail again.
             lastConfigurationTimeStamp = currentTimestamp;
             
-            //configuration has changed. re-read the service index of this virtual host
-
-            //we have to scan the SNMP to find the entry corresponding to this vhost.
-            SNMPSession snmpSession = resourceContext.getParentResourceComponent().getSNMPSession();
-
-            List<SNMPValue> names;
-            List<SNMPValue> ports;
-
-            names = snmpSession.getColumn(SNMPConstants.COLUMN_VHOST_NAME);
-            ports = snmpSession.getColumn(SNMPConstants.COLUMN_VHOST_PORT);
-            
-            snmpWwwServiceIndex = getMatchingWwwServiceIndex(resourceContext.getParentResourceComponent(), resourceContext.getResourceKey(), names, ports);
+            //configuration has changed. re-read the service index of this virtual host            
+            snmpWwwServiceIndex = getWwwServiceIndex(resourceContext.getParentResourceComponent(), resourceContext.getResourceKey());
         }
         return snmpWwwServiceIndex;
     }
 
-    public static int matchRate(List<HttpdAddressUtility.Address> addresses, HttpdAddressUtility.Address addressToCheck) {
-        for(HttpdAddressUtility.Address a : addresses) {
-            if (HttpdAddressUtility.isAddressConforming(addressToCheck, a.host, a.port, true)) {
-                return 3;
-            }
-        }
-        
-        //try to get the IP of the address to check
-        InetAddress[] ipAddresses;
-        try {
-            ipAddresses = InetAddress.getAllByName(addressToCheck.host);
-            for(InetAddress ip : ipAddresses) {
-                HttpdAddressUtility.Address newCheck = new HttpdAddressUtility.Address(ip.getHostAddress(), addressToCheck.port);
-                
-                for(HttpdAddressUtility.Address a : addresses) {
-                    if (HttpdAddressUtility.isAddressConforming(newCheck, a.host, a.port, true)) {
-                        return 2;
-                    }
-                }
-            }            
-        } catch (UnknownHostException e) {
-            log.debug("Unknown host encountered in the httpd configuration: " + addressToCheck.host);
-            return 0;
-        }
-        
-        //this stupid 80 = 0 rule is to conform with snmp module
-        //the problem is that snmp module represents both 80 and * port defs as 0, 
-        //so whatever we do, we might mismatch the vhost. But there's no working around that
-        //but to modify the snmp module itself.
-        
-        int addressPort = addressToCheck.port;
-        if (addressPort == 80) {
-            addressPort = 0;
-        }
-        
-        //ok, try the hardest...
-        for(HttpdAddressUtility.Address listAddress: addresses) {
-            int listPort = listAddress.port;
-            if (listPort == 80) {
-                listPort = 0;
-            }
-            
-            InetAddress[] listAddresses;
-            try {
-                listAddresses = InetAddress.getAllByName(listAddress.host);
-            } catch (UnknownHostException e) {
-                log.debug("Unknown host encountered in the httpd configuration: " + listAddress.host);
-                return 0;
-            }
-            
-            for (InetAddress listInetAddr : listAddresses) {
-                for (InetAddress ip : ipAddresses) {
-                    if (ip.equals(listInetAddr) && addressPort == listPort) {
-                        return 1;
-                    }
-                }
-            }
-        }
-        
-        return 0;
-    }
-    
     private ResourceType getDirectoryResourceType() {
         return resourceContext.getResourceType().getChildResourceTypes().iterator().next();
     }

@@ -53,7 +53,8 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
  * @author Ian Springer
  */
 @Deprecated
-public abstract class AbstractMeasurementScheduleDataSource extends RPCDataSource<MeasurementSchedule> {
+public abstract class AbstractMeasurementScheduleDataSource extends
+    RPCDataSource<MeasurementSchedule, MeasurementScheduleCriteria> {
     private MeasurementDataGWTServiceAsync measurementService = GWTServiceLookup.getMeasurementDataService();
 
     protected AbstractMeasurementScheduleDataSource() {
@@ -97,16 +98,15 @@ public abstract class AbstractMeasurementScheduleDataSource extends RPCDataSourc
         return fields;
     }
 
-    protected void executeFetch(final DSRequest request, final DSResponse response) {
+    protected void executeFetch(final DSRequest request, final DSResponse response,
+        final MeasurementScheduleCriteria criteria) {
         final long startTime = System.currentTimeMillis();
-
-        final MeasurementScheduleCriteria criteria = getCriteria(request);
 
         this.measurementService.findMeasurementSchedulesByCriteria(criteria,
             new AsyncCallback<PageList<MeasurementSchedule>>() {
                 public void onFailure(Throwable caught) {
                     CoreGUI.getErrorHandler().handleError(
-                        "Failed to fetch measurement schedules for criteria " + criteria, caught);
+                        MSG.dataSource_schedules_loadFailedCriteria(criteria.toString()), caught);
                     response.setStatus(RPCResponse.STATUS_FAILURE);
                     processResponse(request.getRequestId(), response);
                 }
@@ -124,7 +124,8 @@ public abstract class AbstractMeasurementScheduleDataSource extends RPCDataSourc
             });
     }
 
-    protected MeasurementScheduleCriteria getCriteria(DSRequest request) {
+    @Override
+    protected MeasurementScheduleCriteria getFetchCriteria(DSRequest request) {
         MeasurementScheduleCriteria criteria = new MeasurementScheduleCriteria();
         criteria.fetchDefinition(true);
 

@@ -156,6 +156,20 @@ public class RecipeParserTest {
         assert vars.size() == 2 : vars;
         assert vars.contains("my.first.property");
         assert vars.contains("custom.prop");
+        assert context.getReplacementVariableDefaultValues().isEmpty();
+
+        cleanRecipe();
+        addRecipeCommand("configdef -n custom.prop -d 8080");
+        addRecipeCommand("configdef --name another.prop --default some.default.value");
+        parser = new RecipeParser();
+        context = new RecipeContext(getRecipe());
+        parser.parseRecipe(context);
+        vars = context.getReplacementVariables();
+        assert vars.size() == 2 : vars;
+        assert vars.contains("custom.prop");
+        assert vars.contains("another.prop");
+        assert context.getReplacementVariableDefaultValues().containsKey("another.prop");
+        assert context.getReplacementVariableDefaultValues().get("another.prop").equals("some.default.value");
     }
 
     public void testRealizeRecipe() throws Exception {

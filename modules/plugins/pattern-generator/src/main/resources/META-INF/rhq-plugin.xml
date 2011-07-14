@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<plugin name="pattern-generator"
+        displayName="pattern-generator Plugin"
+        description="Devs plugin that generates metrics that follow patterns"
+        package="org.rhq.plugins.pattern"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+
+    <server name="pattern"
+            discovery="PatternDiscovery"
+            class="PatternComponent"
+            singleton="true"
+            >
+
+        <plugin-configuration>
+            <c:simple-property name="ones" description="Number of ones in a row" type="integer" default="1"/>
+            <c:simple-property name="zeros" description="Number of zeros in a row" type="integer" default="2"/>
+        </plugin-configuration>
+
+        <metric property="pattern1" displayName="Pattern 1 metric" defaultInterval="60000" displayType="summary" defaultOn="true"/>
+        <metric property="text1" displayName="Pattern 1 trait" defaultInterval="60000" displayType="summary" defaultOn="true" dataType="trait"/>
+
+    </server>
+
+</plugin>

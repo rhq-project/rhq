@@ -34,6 +34,7 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlTransient;
 
+import org.rhq.core.domain.configuration.group.AbstractGroupConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.GroupPluginConfigurationUpdate;
 import org.rhq.core.domain.resource.Resource;
 
@@ -138,12 +139,12 @@ public class PluginConfigurationUpdate extends AbstractResourceConfigurationUpda
     public static final String QUERY_DELETE_GROUP_UPDATE = "pluginConfigurationUpdate.deleteGroupUpdate";
 
     @JoinColumn(name = "PLUGIN_CONFIG_RES_ID", referencedColumnName = "ID", nullable = true)
-    @ManyToOne(cascade = CascadeType.MERGE, fetch = FetchType.LAZY)
+    @ManyToOne(cascade = CascadeType.MERGE, fetch = FetchType.LAZY, optional = true)
     @XmlTransient
     private Resource resource;
 
     @JoinColumn(name = "AGG_PLUGIN_UPDATE_ID", referencedColumnName = "ID", nullable = true)
-    @ManyToOne
+    @ManyToOne(optional = true)
     private GroupPluginConfigurationUpdate groupConfigurationUpdate;
 
     protected PluginConfigurationUpdate() {
@@ -154,12 +155,18 @@ public class PluginConfigurationUpdate extends AbstractResourceConfigurationUpda
         this.resource = resource;
     }
 
+    @Override
     public Resource getResource() {
         return resource;
     }
 
     public void setResource(Resource resource) {
         this.resource = resource;
+    }
+
+    @Override
+    public AbstractGroupConfigurationUpdate getAbstractGroupConfigurationUpdate() {
+        return getGroupConfigurationUpdate();
     }
 
     public GroupPluginConfigurationUpdate getGroupConfigurationUpdate() {

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -18,26 +18,26 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.roles;
 
-import java.util.EnumSet;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
-import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import com.smartgwt.client.widgets.grid.events.CellClickEvent;
+import com.smartgwt.client.widgets.grid.events.CellClickHandler;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
+import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
 import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
+import org.rhq.enterprise.gui.coregui.client.components.table.EscapedHtmlCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * A table that lists all roles and provides the ability to view details of or delete those roles and to create new
@@ -52,8 +52,10 @@ public class RolesView extends TableSection<RolesDataSource> implements Bookmark
     public static final String VIEW_PATH = AdministrationView.VIEW_ID + "/"
         + AdministrationView.SECTION_SECURITY_VIEW_ID + "/" + VIEW_ID;
 
-    // TODO: We need a 24x24 version of the Role icon.
-    private static final String HEADER_ICON = "global/Role_16.png";
+    private static final String HEADER_ICON = "global/Role_24.png";
+
+    private boolean hasManageSecurity;
+    private boolean initialized;
 
     public RolesView(String locatorId) {
         super(locatorId, MSG.view_adminSecurity_roles());
@@ -61,73 +63,124 @@ public class RolesView extends TableSection<RolesDataSource> implements Bookmark
         final RolesDataSource datasource = RolesDataSource.getInstance();
         setDataSource(datasource);
         setHeaderIcon(HEADER_ICON);
+        setEscapeHtmlInDetailsLinkColumn(true);
+    }
+
+    @Override
+    protected void onDraw() {
+        fetchManageSecurityPermissionAsync();
     }
 
     @Override
     protected void configureTable() {
-        super.configureTable();
-
-        ListGridField nameField = new ListGridField(RolesDataSource.Field.NAME, 150);
-        nameField.setCellFormatter(new CellFormatter() {
-            public String format(Object value, ListGridRecord record, int i, int i1) {
-                Integer roleId = getId(record);
-                String roleUrl = LinkManager.getRoleLink(roleId);
-                return SeleniumUtility.getLocatableHref(roleUrl, value.toString(), null);
+        updateSelectionStyle();
+        getListGrid().addCellClickHandler(new CellClickHandler() {
+            public void onCellClick(CellClickEvent event) {
+                updateSelectionStyle();
             }
         });
 
-        ListGridField descriptionField = new ListGridField(RolesDataSource.Field.DESCRIPTION);
+        List<ListGridField> fields = createFields();
+        setListGridFields(fields.toArray(new ListGridField[fields.size()]));
 
-        setListGridFields(nameField, descriptionField);
-
+        addTableAction(extendLocatorId("New"), MSG.common_button_new(), createNewAction());
         addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), getDeleteConfirmMessage(),
-            new TableAction() {
-                public boolean isEnabled(ListGridRecord[] selection) {
-                    int count = selection.length;
-                    if (count == 0) {
-                        return false;
-                    }
+                createDeleteAction());
 
-                    for (ListGridRecord record : selection) {
-                        int id = record.getAttributeAsInt(RolesDataSource.Field.ID);
-                        if (id == RolesDataSource.ID_SUPERUSER || id == RolesDataSource.ID_ALL_RESOURCES) {
-                            // The superuser and all-resources roles cannot be deleted.
-                            return false;
-                        }
-                    }
-                    return true;
-                }
+        super.configureTable();
+    }
 
-                public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    deleteSelectedRecords();
-                }
-            });
+    @Override
+    public void refresh() {
+        super.refresh();
 
-        addTableAction(extendLocatorId("New"), MSG.common_button_new(), new TableAction() {
-            private boolean hasManageSecurity = false;
+        updateSelectionStyle();
+    }
 
+    @Override
+    protected boolean isDetailsEnabled() {
+        // Non-superusers cannot view or edit roles.
+        return this.hasManageSecurity;
+    }
+
+    private List<ListGridField> createFields() {
+        List<ListGridField> fields = new ArrayList<ListGridField>();
+
+        ListGridField nameField = new ListGridField(RolesDataSource.Field.NAME, 150);
+        fields.add(nameField);
+
+        ListGridField descriptionField = new ListGridField(RolesDataSource.Field.DESCRIPTION);
+        descriptionField.setCellFormatter(new EscapedHtmlCellFormatter());
+        fields.add(descriptionField);
+
+        return fields;
+    }
+
+    private TableAction createNewAction() {
+        return new TableAction() {
             public boolean isEnabled(ListGridRecord[] selection) {
-                GWTServiceLookup.getAuthorizationService().getExplicitGlobalPermissions(
-                    new AsyncCallback<Set<Permission>>() {
-                        @Override
-                        public void onSuccess(Set<Permission> result) {
-                            hasManageSecurity = result.contains(Permission.MANAGE_SECURITY);
-                        }
-
-                        @Override
-                        public void onFailure(Throwable caught) {
-                            CoreGUI.getMessageCenter().notify(
-                                new Message(MSG.util_userPerm_loadFailGlobal(), caught, Message.Severity.Error, EnumSet
-                                    .of(Message.Option.BackgroundJobResult)));
-                        }
-                    });
                 return hasManageSecurity;
             }
 
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 newDetails();
             }
+        };
+    }
+
+    private TableAction createDeleteAction() {
+        return new TableAction() {
+            public boolean isEnabled(ListGridRecord[] selection) {
+                if (!hasManageSecurity) {
+                    return false;
+                }
+
+                int count = selection.length;
+                if (count == 0) {
+                    return false;
+                }
+
+                for (ListGridRecord record : selection) {
+                    int roleId = record.getAttributeAsInt(RolesDataSource.Field.ID);
+                    if (RolesDataSource.isSystemRoleId(roleId)) {
+                        // The superuser role cannot be deleted.
+                        return false;
+                    }
+                }
+                return true;
+            }
+
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                deleteSelectedRecords();
+            }
+        };
+    }
+
+    private void fetchManageSecurityPermissionAsync() {
+        new PermissionsLoader().loadExplicitGlobalPermissions(new PermissionsLoadedListener() {
+            public void onPermissionsLoaded(Set<Permission> permissions) {
+                if (permissions != null) {
+                    hasManageSecurity = permissions.contains(Permission.MANAGE_SECURITY);
+                    refreshTableInfo();
+                } else {
+                    hasManageSecurity = false;
+                }
+                if (!initialized) {
+                    RolesView.super.onDraw();
+                }
+                initialized = true;
+            }
         });
+    }
+
+    private void updateSelectionStyle() {
+        if (initialized) {
+            if (!hasManageSecurity) {
+                getListGrid().deselectAllRecords();
+            }
+            SelectionStyle selectionStyle = hasManageSecurity ? getDefaultSelectionStyle() : SelectionStyle.NONE;
+            getListGrid().setSelectionType(selectionStyle);
+        }
     }
 
     @Override

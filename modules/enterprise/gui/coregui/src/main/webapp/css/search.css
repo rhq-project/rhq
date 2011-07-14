@@ -30,6 +30,7 @@ div {
   border-color: white;
   border-style: none;
   outline: none;
+  z-index: 999999;
 }
 
 .patternNameLabel {
@@ -41,6 +42,7 @@ div {
   border-style: none;
   font-size: 11px;
   width: 125px;
+  z-index: 999999;
 }
 
 .patternNameField {
@@ -52,43 +54,40 @@ div {
   border-style: dotted;
   border-width: thin;
   outline: none;
+  z-index: 999999;
 }
 
 
 /*
- *
  * search container elements
- *
  */
  
 .searchBarContainer {
   width: 800px;
   position: relative;
-  background-color: rgb(233, 230, 225);
+  background-color: white;
   height: 34px;
   vertical-align: bottom;
+  z-index: 999999;
 }
 
 .searchBarBackgroundContainer {
   position: absolute;
-  top: 5px;
-  left: 5px;
   background-color: white;
   border-style: inset;
-  border-top-color: rgb(222, 222, 222);
-  border-left-color: rgb(222, 222, 222);
-  border-bottom-color: white;
-  border-right-color: white;
+  border-color: gray;
   border-width: 1px 1px 1px 1px;
   padding: 0;
   width: 785px;
   height: 20px;
+  z-index: 999999;
 }
 
 .searchBarComponentsContainer {
   width: 100%;
   margin: 0;
   padding: 0;
+  z-index: 999999;
 }
 
 .searchBarComponentLHS {
@@ -122,6 +121,7 @@ div {
   padding: 0;
   margin: 0;
   width: 785px;
+  z-index: 999999;
 }
 
 .savedSearchesPanel-row {
@@ -184,6 +184,8 @@ div {
   border-bottom-color: gray;
   border-right-color: gray;
   border-width: 1px 1px 1px 1px;
+  
+  z-index: 999999;
 }
 
 .suggestData {
@@ -221,6 +223,7 @@ div.rounded {
 }
 div.rounded2 {
   width: 125px;
+  z-index: 999999;
   background: rgb(192, 236, 207) url(/coregui/images/search/corner-upper-right-8.png) no-repeat top right;
 }
 div.rounded2 div {

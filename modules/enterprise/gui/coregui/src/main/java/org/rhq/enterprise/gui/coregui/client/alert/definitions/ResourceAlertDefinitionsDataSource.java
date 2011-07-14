@@ -33,7 +33,6 @@ import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.fields.DataSourceLinkField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.types.Alignment;
-import com.smartgwt.client.types.AutoFitWidthApproach;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -43,6 +42,7 @@ import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 
 /**
  * @author John Mazzitelli
@@ -66,15 +66,12 @@ public class ResourceAlertDefinitionsDataSource extends AbstractAlertDefinitions
         // add two more columns
         ListGridField parentIdField = new ListGridField(FIELD_PARENT, MSG.view_alerts_field_parent());
         parentIdField.setType(ListGridFieldType.LINK);
-        parentIdField.setWidth("10%");
-        parentIdField.setAutoFitWidth(true);
-        parentIdField.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
+        parentIdField.setTarget("_self");
+        parentIdField.setWidth(100);
         fields.add(parentIdField);
 
         ListGridField readOnlyField = new ListGridField(FIELD_READONLY, MSG.view_alerts_field_protected());
-        readOnlyField.setWidth("5%");
-        readOnlyField.setAutoFitWidth(true);
-        readOnlyField.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
+        readOnlyField.setWidth(60);
         readOnlyField.setAlign(Alignment.CENTER);
         fields.add(readOnlyField);
 
@@ -124,7 +121,7 @@ public class ResourceAlertDefinitionsDataSource extends AbstractAlertDefinitions
     }
 
     @Override
-    protected AlertDefinitionCriteria getCriteria(DSRequest request) {
+    protected AlertDefinitionCriteria getFetchCriteria(DSRequest request) {
         AlertDefinitionCriteria criteria = new AlertDefinitionCriteria();
 
         criteria.fetchGroupAlertDefinition(true);
@@ -145,6 +142,18 @@ public class ResourceAlertDefinitionsDataSource extends AbstractAlertDefinitions
 
         criteria.setPageControl(getPageControl(request));
         return criteria;
+    }
+
+    @Override
+    protected String getSortFieldForColumn(String columnName) {
+        if (AncestryUtil.RESOURCE_ANCESTRY.equals(columnName)) {
+            return "resource.ancestry";
+        }
+        if (FIELD_PARENT.equals(columnName)) {
+            return "parentId";
+        }
+
+        return super.getSortFieldForColumn(columnName);
     }
 
     @Override

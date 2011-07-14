@@ -18,12 +18,20 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.factory;
 
+import java.util.TreeSet;
+
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.form.DynamicForm;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
+import org.rhq.enterprise.gui.coregui.client.components.form.DurationItem;
+import org.rhq.enterprise.gui.coregui.client.components.form.TimeUnit;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.schedule.AbstractOperationScheduleDataSource;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Jay Shaughnessy
@@ -31,27 +39,49 @@ import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardSte
  */
 public class ResourceFactoryConfigurationStep extends AbstractWizardStep {
 
+    private boolean noConfigurationNeeded = false; // if true, it has been determined the user doesn't have to set any config
+    private LocatableVLayout vLayout;
     private ConfigurationEditor editor;
+    private DurationItem timeoutItem;
     AbstractResourceFactoryWizard wizard;
 
     public ResourceFactoryConfigurationStep(AbstractResourceFactoryWizard wizard) {
         this.wizard = wizard;
     }
 
-    public Canvas getCanvas() {
-        if (editor == null) {
+    public Canvas getCanvas(Locatable parent) {
+        if (vLayout == null) {
+            String locatorId = (null == parent) ? "ResourceFactoryConfig" : parent
+                .extendLocatorId("ResourceFactoryConfig");
+            vLayout = new LocatableVLayout(locatorId);
 
             ConfigurationDefinition def = wizard.getNewResourceConfigurationDefinition();
-            Configuration startingConfig = wizard.getNewResourceStartingConfiguration();
+            if (def != null) {
+                Configuration startingConfig = wizard.getNewResourceStartingConfiguration();
+                editor = new ConfigurationEditor(vLayout.extendLocatorId("Editor"), def, startingConfig);
+                vLayout.addMember(editor);
+            }
 
-            editor = new ConfigurationEditor("ResourceFactoryConfig", def, startingConfig);
+            TreeSet<TimeUnit> supportedUnits = new TreeSet<TimeUnit>();
+            supportedUnits.add(TimeUnit.SECONDS);
+            supportedUnits.add(TimeUnit.MINUTES);
+            timeoutItem = new DurationItem(AbstractOperationScheduleDataSource.Field.TIMEOUT, MSG
+                .view_operationScheduleDetails_field_timeout(), TimeUnit.MILLISECONDS, supportedUnits, false, false,
+                vLayout);
+            timeoutItem.setContextualHelp(MSG.widget_resourceFactoryWizard_timeoutHelp());
+
+            DynamicForm timeoutForm = new DynamicForm();
+            timeoutForm.setFields(timeoutItem);
+            timeoutForm.setMargin(10);
+            vLayout.addMember(timeoutForm);
         }
-        return editor;
+        return vLayout;
     }
 
     public boolean nextPage() {
-        if (editor.validate()) {
-            wizard.setNewResourceConfiguration(editor.getConfiguration());
+        if (noConfigurationNeeded == true || (editor != null && editor.validate())) {
+            wizard.setNewResourceConfiguration((noConfigurationNeeded) ? null : editor.getConfiguration());
+            wizard.setNewResourceCreateTimeout(timeoutItem.getValueAsInteger());
             wizard.execute();
             return true;
         }

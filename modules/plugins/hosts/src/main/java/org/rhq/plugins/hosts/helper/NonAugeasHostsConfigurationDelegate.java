@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Date;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.rhq.core.domain.configuration.Configuration;
@@ -37,8 +38,7 @@ import org.rhq.plugins.hosts.HostsComponent;
 /**
  * @author Ian Springer
  */
-public class NonAugeasHostsConfigurationDelegate implements ConfigurationFacet
-{
+public class NonAugeasHostsConfigurationDelegate implements ConfigurationFacet {
     private HostsComponent hostsComponent;
 
     public NonAugeasHostsConfigurationDelegate(HostsComponent hostsComponent) {
@@ -47,7 +47,11 @@ public class NonAugeasHostsConfigurationDelegate implements ConfigurationFacet
 
     public Configuration loadResourceConfiguration() throws Exception {
         Configuration resourceConfig = new Configuration();
-        File hostsFile = (File)this.hostsComponent.getConfigurationFiles().get(0);
+        List configurationFiles = this.hostsComponent.getConfigurationFiles();
+        if (configurationFiles == null || configurationFiles.isEmpty()) {
+            throw new Exception("Cannot find the hosts file on this machine");
+        }
+        File hostsFile = (File) configurationFiles.get(0);
         Hosts hosts = Hosts.load(hostsFile);
         resourceConfig.setNotes("Loaded at " + new Date());
 
@@ -71,15 +75,15 @@ public class NonAugeasHostsConfigurationDelegate implements ConfigurationFacet
             entryProp.put(new PropertySimple("alias", aliasPropValue));
         }
 
-        return  resourceConfig;
+        return resourceConfig;
     }
 
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
-        Configuration resourceConfig = report.getConfiguration();                
+        Configuration resourceConfig = report.getConfiguration();
         Hosts newHosts = new Hosts();
 
         PropertyList entriesProp = resourceConfig.getList(".");
-        for (Property entryProp: entriesProp.getList()) {
+        for (Property entryProp : entriesProp.getList()) {
             PropertyMap entryPropMap = (PropertyMap) entryProp;
             String ipAddress = entryPropMap.getSimple("ipaddr").getStringValue();
             String canonicalName = entryPropMap.getSimple("canonical").getStringValue();
@@ -98,11 +102,10 @@ public class NonAugeasHostsConfigurationDelegate implements ConfigurationFacet
             newHosts.addEntry(entry);
         }
 
-        File hostsFile = (File)this.hostsComponent.getConfigurationFiles().get(0);
+        File hostsFile = (File) this.hostsComponent.getConfigurationFiles().get(0);
         try {
             Hosts.store(newHosts, hostsFile);
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new RuntimeException("Failed to write hosts file [" + hostsFile + "].", e);
         }
 

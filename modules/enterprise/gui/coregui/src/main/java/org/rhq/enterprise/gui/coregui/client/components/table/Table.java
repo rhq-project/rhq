@@ -20,12 +20,15 @@ package org.rhq.enterprise.gui.coregui.client.components.table;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.google.gwt.event.dom.client.KeyCodes;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSCallback;
 import com.smartgwt.client.data.DSRequest;
@@ -33,7 +36,6 @@ import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.SortSpecifier;
-import com.smartgwt.client.types.Autofit;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.SelectionStyle;
@@ -49,8 +51,8 @@ import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
 import com.smartgwt.client.widgets.events.DoubleClickHandler;
-import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.FormItem;
+import com.smartgwt.client.widgets.form.fields.HiddenItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
@@ -65,21 +67,25 @@ import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionEvent;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.LayoutSpacer;
-import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.menu.IMenuButton;
 import com.smartgwt.client.widgets.menu.MenuItem;
 import com.smartgwt.client.widgets.menu.events.MenuItemClickEvent;
-import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
+import org.rhq.core.domain.search.SearchSubsystem;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.RefreshableView;
+import org.rhq.enterprise.gui.coregui.client.components.form.SearchBarItem;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIMenuButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableMenu;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * A tabular view of set of data records from an {@link RPCDataSource}.
@@ -89,10 +95,10 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableMenu;
  */
 public class Table<DS extends RPCDataSource> extends LocatableHLayout implements RefreshableView {
 
-    private static final String FIELD_ID = "id";
-    private static final String FIELD_NAME = "name";
+    protected static final String FIELD_ID = "id";
+    protected static final String FIELD_NAME = "name";
 
-    private VLayout contents;
+    private LocatableVLayout contents;
 
     private HTMLFlow title;
 
@@ -111,19 +117,24 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     private boolean showFilterForm = true;
 
     private String tableTitle;
-    private Criteria criteria;
+    private Criteria initialCriteria;
+    private boolean initialCriteriaFixed = true;
     private SortSpecifier[] sortSpecifiers;
     private String[] excludedFieldNames;
     private boolean autoFetchData;
     private boolean flexRowDisplay = true;
+    private boolean hideSearchBar = false;
+    private String initialSearchBarSearchText = null;
 
     private DS dataSource;
 
     private DoubleClickHandler doubleClickHandler;
     private List<TableActionInfo> tableActions = new ArrayList<TableActionInfo>();
     private boolean tableActionDisableOverride = false;
-    protected List<Canvas> extraWidgets = new ArrayList<Canvas>();
-    private ToolStrip footer;
+    protected List<Canvas> extraWidgetsAboveFooter = new ArrayList<Canvas>();
+    protected List<Canvas> extraWidgetsInMainFooter = new ArrayList<Canvas>();
+    private LocatableToolStrip footer;
+    private LocatableToolStrip footerExtraWidgets;
 
     public Table(String locatorId) {
         this(locatorId, null, null, null, null, true);
@@ -139,6 +150,10 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
 
     public Table(String locatorId, String tableTitle, SortSpecifier[] sortSpecifiers) {
         this(locatorId, tableTitle, null, sortSpecifiers, null, true);
+    }
+
+    protected Table(String locatorId, String tableTitle, SortSpecifier[] sortSpecifiers, Criteria criteria) {
+        this(locatorId, tableTitle, criteria, sortSpecifiers, null, true);
     }
 
     public Table(String locatorId, String tableTitle, boolean autoFetchData) {
@@ -163,10 +178,32 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         setOverflow(Overflow.HIDDEN);
 
         this.tableTitle = tableTitle;
-        this.criteria = criteria;
+        this.initialCriteria = criteria;
         this.sortSpecifiers = sortSpecifiers;
         this.excludedFieldNames = excludedFieldNames;
         this.autoFetchData = autoFetchData;
+    }
+
+    /**
+     * If this returns true, then even if a {@link #getSearchSubsystem() search subsystem}
+     * is defined by the table class, the search bar will not be shown.
+     * 
+     * @return true if the search bar is to be hidden (default is false)
+     */
+    public boolean getHideSearchBar() {
+        return this.hideSearchBar;
+    }
+
+    public void setHideSearchBar(boolean flag) {
+        this.hideSearchBar = flag;
+    }
+
+    public String getInitialSearchBarSearchText() {
+        return this.initialSearchBarSearchText;
+    }
+
+    public void setInitialSearchBarSearchText(String text) {
+        this.initialSearchBarSearchText = text;
     }
 
     public void setFlexRowDisplay(boolean flexRowDisplay) {
@@ -177,14 +214,33 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     protected void onInit() {
         super.onInit();
 
-        filterForm = new TableFilter(this);
-        configureTableFilters();
+        contents = new LocatableVLayout(extendLocatorId("Contents"));
+        contents.setWidth100();
+        contents.setHeight100();
+        //contents.setOverflow(Overflow.AUTO);
+        addMember(contents);
 
-        listGrid = new LocatableListGrid(getLocatorId());
+        filterForm = new TableFilter(this);
+
+        /*
+         * table filters and search bar are currently mutually exclusive
+         */
+
+        if (getSearchSubsystem() == null) {
+            configureTableFilters();
+        } else {
+            if (!this.hideSearchBar) {
+                final SearchBarItem searchFilter = new SearchBarItem("search", MSG.common_button_search(),
+                    getSearchSubsystem(), getInitialSearchBarSearchText());
+                setFilterFormItems(searchFilter);
+            }
+        }
+
+        listGrid = new LocatableListGrid(contents.extendLocatorId("ListGrid"));
         listGrid.setAutoFetchData(autoFetchData);
 
-        if (criteria != null) {
-            listGrid.setInitialCriteria(criteria);
+        if (initialCriteria != null) {
+            listGrid.setInitialCriteria(initialCriteria);
         }
         if (sortSpecifiers != null) {
             listGrid.setInitialSort(sortSpecifiers);
@@ -196,7 +252,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         listGrid.setSelectionType(getDefaultSelectionStyle());
 
         if (flexRowDisplay) {
-            listGrid.setAutoFitData(Autofit.HORIZONTAL);
+            //listGrid.setAutoFitData(Autofit.HORIZONTAL); // do NOT set this - smartgwt appears to have a problem that causes it to eat CPU
             listGrid.setWrapCells(true);
             listGrid.setFixedRecordHeights(false);
         }
@@ -213,11 +269,6 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         if (dataSource != null) {
             listGrid.setDataSource(dataSource);
         }
-
-        contents = new VLayout();
-        contents.setWidth100();
-        contents.setHeight100();
-        addMember(contents);
 
         contents.addMember(listGrid);
     }
@@ -240,7 +291,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             setTableTitle(this.tableTitle);
 
             if (showHeader) {
-                titleLayout = new HLayout();
+                titleLayout = new LocatableHLayout(contents.extendLocatorId("Title"));
                 titleLayout.setAutoHeight();
                 titleLayout.setAlign(VerticalAlignment.BOTTOM);
                 contents.addMember(titleLayout, 0);
@@ -253,7 +304,17 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             contents.addMember(listGrid);
 
             // Footer
-            this.footer = new ToolStrip();
+
+            // A second toolstrip that optionally appears before the main footer - it will contain extra widgets.
+            // This is hidden from view unless extra widgets are actually added to the table above the main footer.
+            this.footerExtraWidgets = new LocatableToolStrip(contents.extendLocatorId("FooterExtraWidgets"));
+            footerExtraWidgets.setPadding(5);
+            footerExtraWidgets.setWidth100();
+            footerExtraWidgets.setMembersMargin(15);
+            footerExtraWidgets.hide();
+            contents.addMember(footerExtraWidgets);
+
+            this.footer = new LocatableToolStrip(contents.extendLocatorId("Footer"));
             footer.setPadding(5);
             footer.setWidth100();
             footer.setMembersMargin(15);
@@ -272,7 +333,11 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
                 }
             });
 
-            setTableInfo(new Label("Total: " + listGrid.getTotalRows()));
+
+            Label tableInfo = new Label();
+            tableInfo.setWrap(false);
+            setTableInfo(tableInfo);
+            refreshRowCount();
 
             // NOTE: It is essential that we wait to hide any excluded fields until after super.onDraw() is called, since
             //       super.onDraw() is what actually adds the fields to the ListGrid (based on what fields are defined in
@@ -283,8 +348,6 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
                 }
             }
 
-            getTableInfo().setWrap(false);
-
             if (showHeader) {
                 drawHeader();
             }
@@ -293,8 +356,35 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
                 drawFooter();
             }
         } catch (Exception e) {
-            CoreGUI.getErrorHandler().handleError("Failed to draw Table [" + this + "].", e);
+            CoreGUI.getErrorHandler().handleError(MSG.view_table_drawFail(this.toString()), e);
         }
+    }
+
+    private void refreshRowCount() {
+        Label tableInfo = getTableInfo();
+        if (tableInfo != null) {
+            boolean lengthIsKnown = (listGrid != null && listGrid.getResultSet().lengthIsKnown() != null)
+                    ? listGrid.getResultSet().lengthIsKnown() : false;
+            String contents;
+            if (lengthIsKnown) {
+                int totalRows = this.listGrid.getTotalRows();
+                int selectedRows = this.listGrid.getSelection().length;
+                contents = MSG.view_table_totalRows(String.valueOf(totalRows), String.valueOf(selectedRows));
+            } else {
+                contents = MSG.view_table_totalRowsUnknown();
+            }
+            tableInfo.setContents(contents);
+        }
+    }
+
+    @Override
+    public void destroy() {
+        // immediately null out the listGrid to stop async refresh requests from executing during the destroy
+        // logic. This happens in selenium testing or when a user navs away prior to the refresh.
+        this.listGrid = null;
+
+        SeleniumUtility.destroyMembers(contents);
+        super.destroy();
     }
 
     private void drawHeader() {
@@ -313,6 +403,15 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     }
 
     private void drawFooter() {
+        // populate the extraWidgets toolstrip
+        footerExtraWidgets.removeMembers(footerExtraWidgets.getMembers());
+        if (!extraWidgetsAboveFooter.isEmpty()) {
+            for (Canvas extraWidgetCanvas : extraWidgetsAboveFooter) {
+                footerExtraWidgets.addMember(extraWidgetCanvas);
+            }
+            footerExtraWidgets.show();
+        }
+
         footer.removeMembers(footer.getMembers());
 
         for (final TableActionInfo tableAction : tableActions) {
@@ -361,19 +460,19 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
                     menu.addItem(item);
                 }
 
-                IMenuButton menuButton = new LocatableIMenuButton(tableAction.getLocatorId(), tableAction.getTitle(),
-                    menu);
+                IMenuButton menuButton = new LocatableIMenuButton(tableAction.getLocatorId(), tableAction.getTitle());
+                menuButton.setMenu(menu);
                 menuButton.setDisabled(true);
-                // this makes it pretty tight, but maybe better than the default, which is pretty wide
-                menuButton.setAutoFit(true);
+                menuButton.setAutoFit(true); // this makes it pretty tight, but maybe better than the default, which is pretty wide
                 menuButton.setOverflow(Overflow.VISIBLE);
+                menuButton.setShowMenuBelow(false);
 
                 tableAction.actionCanvas = menuButton;
                 footer.addMember(menuButton);
             }
         }
 
-        for (Canvas extraWidgetCanvas : extraWidgets) {
+        for (Canvas extraWidgetCanvas : extraWidgetsInMainFooter) {
             footer.addMember(extraWidgetCanvas);
         }
 
@@ -383,7 +482,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             IButton refreshButton = new LocatableIButton(extendLocatorId("Refresh"), MSG.common_button_refresh());
             refreshButton.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
-                    listGrid.invalidateCache();
+                    refresh();
                 }
             });
             footer.addMember(refreshButton);
@@ -400,8 +499,9 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
 
         listGrid.addDataArrivedHandler(new DataArrivedHandler() {
             public void onDataArrived(DataArrivedEvent dataArrivedEvent) {
-                refreshTableInfo();
-                fieldSizes.clear();
+                if (null != listGrid) {
+                    refreshTableInfo();
+                }
             }
         });
 
@@ -419,6 +519,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     }
 
     public void setFilterFormItems(FormItem... formItems) {
+        setShowHeader(false);
         this.filterForm.setItems(formItems);
     }
 
@@ -465,20 +566,94 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         this.showFooter = showFooter;
     }
 
-    private ArrayList<Integer> fieldSizes = new ArrayList<Integer>();
-
-    public void refresh(Criteria criteria) {
-        if (null != this.listGrid) {
-            this.listGrid.invalidateCache();
+    /**
+     * Refreshes the list grid's data, filtered by any fixed criteria, as well as any user-specified filters.
+     */
+    public void refresh() {
+        if (this.listGrid != null) {
+            Criteria criteria = getCurrentCriteria();
             this.listGrid.setCriteria(criteria);
+            this.listGrid.invalidateCache();
             this.listGrid.markForRedraw();
         }
     }
 
-    public void refresh() {
-        if (null != this.listGrid) {
-            this.listGrid.invalidateCache();
-            this.listGrid.markForRedraw();
+    protected boolean isInitialCriteriaFixed() {
+        return initialCriteriaFixed;
+    }
+
+    /**
+     * @param initialCriteriaFixed If true initialCriteria is applied to all subsequent fetch criteria. If false
+     * initialCriteria is used only for the initial autoFetch. Irrelevant if autoFetch is false. Default is true.
+     */
+    protected void setInitialCriteriaFixed(boolean initialCriteriaFixed) {
+        this.initialCriteriaFixed = initialCriteriaFixed;
+    }
+
+    /**
+     *
+     * @return the current criteria, which includes any fixed criteria, as well as any user-specified filters; may be
+     *         null if there are no fixed criteria or user-specified filters
+     */
+    protected Criteria getCurrentCriteria() {
+        Criteria criteria = null;
+
+        // If this table has a filter form (table filters OR search bar),
+        // we need to refresh it as per the filtering, combined with any fixed criteria.
+        if (this.filterForm != null && this.filterForm.hasContent()) {
+
+            criteria = this.filterForm.getValuesAsCriteria();
+
+            if (this.initialCriteriaFixed) {
+                if (criteria != null) {
+                    if (this.initialCriteria != null) {
+                        // There is fixed criteria - add it to the filter form criteria.
+                        addCriteria(criteria, this.initialCriteria);
+                    }
+                } else {
+                    criteria = this.initialCriteria;
+                }
+            }
+        } else if (this.initialCriteriaFixed) {
+
+            criteria = this.initialCriteria;
+        }
+
+        return criteria;
+    }
+
+    // SmartGWT 2.4's version of Criteria.addCriteria for some reason doesn't have else clauses for the array types
+    // and it doesn't handle Object types properly (seeing odd behavior because of this), so this method explicitly
+    // supports adding array types and Objects.
+    // This method takes the src criteria and adds it to the dest criteria.
+    @SuppressWarnings("unchecked")
+    private static void addCriteria(Criteria dest, Criteria src) {
+        Map otherMap = src.getValues();
+        Set otherKeys = otherMap.keySet();
+        for (Iterator i = otherKeys.iterator(); i.hasNext();) {
+            String field = (String) i.next();
+            Object value = otherMap.get(field);
+
+            if (value instanceof Integer) {
+                dest.addCriteria(field, (Integer) value);
+            } else if (value instanceof Float) {
+                dest.addCriteria(field, (Float) value);
+            } else if (value instanceof String) {
+                dest.addCriteria(field, (String) value);
+            } else if (value instanceof Date) {
+                dest.addCriteria(field, (Date) value);
+            } else if (value instanceof Boolean) {
+                dest.addCriteria(field, (Boolean) value);
+            } else if (value instanceof Integer[]) {
+                dest.addCriteria(field, (Integer[]) value);
+            } else if (value instanceof Double[]) {
+                dest.addCriteria(field, (Double[]) value);
+            } else if (value instanceof String[]) {
+                dest.addCriteria(field, (String[]) value);
+            } else {
+                // this is the magic piece - we need to get attrib as an object and set that value
+                dest.setAttribute(field, src.getAttributeAsObject(field));
+            }
         }
     }
 
@@ -560,7 +735,10 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             ListGridField[] newFields = new ListGridField[fields.length + dataSourceFieldNamesSet.size()];
             int destIndex = 0;
             if (dataSourceFieldNamesSet.contains(FIELD_ID)) {
-                listGridIdField = new ListGridField(FIELD_ID, MSG.common_title_id(), 55);
+                String datasourceFieldTitle = this.dataSource.getField(FIELD_ID).getTitle();
+                String listGridFieldTitle = (datasourceFieldTitle != null) ? datasourceFieldTitle : MSG
+                    .common_title_id();
+                listGridIdField = new ListGridField(FIELD_ID, listGridFieldTitle, 55);
                 // Override the DataSource id field metadata for consistent display across all Tables.
                 listGridIdField.setType(ListGridFieldType.INTEGER);
                 listGridIdField.setCanEdit(false);
@@ -597,7 +775,17 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
 
     public void addTableAction(String locatorId, String title, String confirmation,
         LinkedHashMap<String, ? extends Object> valueMap, TableAction tableAction) {
-        TableActionInfo info = new TableActionInfo(locatorId, title, confirmation, valueMap, tableAction);
+        // If the specified locator ID is qualified, strip off the ancestry prefix, so we can make sure its locator ID
+        // extends the footer's locator ID as it should.
+        int underscoreIndex = locatorId.lastIndexOf('_');
+        String unqualifiedLocatorId;
+        if (underscoreIndex >= 0 && underscoreIndex != (locatorId.length() - 1)) {
+            unqualifiedLocatorId = locatorId.substring(underscoreIndex + 1);
+        } else {
+            unqualifiedLocatorId = locatorId;
+        }
+        TableActionInfo info = new TableActionInfo(this.footer.extendLocatorId(unqualifiedLocatorId), title,
+            confirmation, valueMap, tableAction);
         tableActions.add(info);
     }
 
@@ -605,8 +793,21 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         doubleClickHandler = handler;
     }
 
-    public void addExtraWidget(Canvas canvas) {
-        this.extraWidgets.add(canvas);
+    /**
+     * Adds extra widgets to the bottom of the table view.
+     *
+     * @param widget the new widget to add to the table view
+     * @param aboveFooter if true, the widget will be placed in a second toolstrip just above the main footer.
+     *                    if false, the widget will be placed in the main footer toolstrip itself. This is
+     *                    useful if the widget is really big and won't fit in the main footer along with the
+     *                    rest of the main footer members.
+     */
+    public void addExtraWidget(Canvas widget, boolean aboveFooter) {
+        if (aboveFooter) {
+            this.extraWidgetsAboveFooter.add(widget);
+        } else {
+            this.extraWidgetsInMainFooter.add(widget);
+        }
     }
 
     public void setHeaderIcon(String headerIcon) {
@@ -644,14 +845,14 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     }
 
     protected void refreshTableInfo() {
-        if (showFooter) {
+        if (showFooter && null != this.listGrid) {
             if (this.tableActionDisableOverride) {
                 this.listGrid.setSelectionType(SelectionStyle.NONE);
             } else {
                 this.listGrid.setSelectionType(getDefaultSelectionStyle());
             }
 
-            int count = this.listGrid.getSelection().length;
+            int selectionCount = this.listGrid.getSelection().length;
             for (TableActionInfo tableAction : tableActions) {
                 if (tableAction.actionCanvas != null) { // if null, we haven't initialized our buttons yet, so skip this
                     boolean enabled = (!this.tableActionDisableOverride && tableAction.action.isEnabled(this.listGrid
@@ -659,35 +860,49 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
                     tableAction.actionCanvas.setDisabled(!enabled);
                 }
             }
-            for (Canvas extraWidget : extraWidgets) {
+            for (Canvas extraWidget : extraWidgetsAboveFooter) {
                 if (extraWidget instanceof TableWidget) {
                     ((TableWidget) extraWidget).refresh(this.listGrid);
                 }
             }
-            if (getTableInfo() != null) {
-                getTableInfo().setContents(
-                    MSG.view_table_totalRows(String.valueOf(listGrid.getTotalRows()), String.valueOf(count)));
+            for (Canvas extraWidget : extraWidgetsInMainFooter) {
+                if (extraWidget instanceof TableWidget) {
+                    ((TableWidget) extraWidget).refresh(this.listGrid);
+                }
             }
+            refreshRowCount();
         }
     }
 
     protected void deleteSelectedRecords() {
-        getListGrid().removeSelectedData(new DSCallback() {
-            public void execute(DSResponse response, Object rawData, DSRequest request) {
-                Record[] deletedRecords = response.getData();
-                List<String> recordNames = new ArrayList<String>(deletedRecords.length);
-                for (Record deletedRecord : deletedRecords) {
-                    String name = deletedRecord.getAttribute(getTitleFieldName());
-                    recordNames.add(name);
-                }
+        deleteSelectedRecords(null);
+    }
 
-                Message message = new Message(MSG
-                    .widget_recordEditor_info_recordUpdatedConcise(getDataTypeNamePlural()), MSG
-                    .widget_recordEditor_info_recordsDeletedDetailed(String.valueOf(deletedRecords.length),
-                        getDataTypeNamePlural(), recordNames.toString()));
-                CoreGUI.getMessageCenter().notify(message);
+    protected void deleteSelectedRecords(DSRequest requestProperties) {
+        ListGrid listGrid = getListGrid();
+        final int selectedRecordCount = listGrid.getSelection().length;
+        final List<String> deletedRecordNames = new ArrayList<String>(selectedRecordCount);
+        listGrid.removeSelectedData(new DSCallback() {
+            public void execute(DSResponse response, Object rawData, DSRequest request) {
+                if (response.getStatus() == DSResponse.STATUS_SUCCESS) {
+                    Record[] deletedRecords = response.getData();
+                    for (Record deletedRecord : deletedRecords) {
+                        String name = deletedRecord.getAttribute(getTitleFieldName());
+                        deletedRecordNames.add(name);
+                    }
+                    if (deletedRecordNames.size() == selectedRecordCount) {
+                        // all selected schedules were successfully deleted.
+                        Message message = new Message(MSG.widget_recordEditor_info_recordsDeletedConcise(String
+                            .valueOf(deletedRecordNames.size()), getDataTypeNamePlural()), MSG
+                            .widget_recordEditor_info_recordsDeletedDetailed(String.valueOf(deletedRecordNames.size()),
+                                getDataTypeNamePlural(), deletedRecordNames.toString()));
+                        CoreGUI.getMessageCenter().notify(message);
+                        refresh();
+                    }
+                }
+                // TODO: Print error messages for failures or partial failures.
             }
-        }, null);
+        }, requestProperties);
     }
 
     protected String getDataTypeName() {
@@ -706,6 +921,11 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         return MSG.common_msg_deleteConfirm(getDataTypeNamePlural());
     }
 
+    protected void hideField(ListGridField field) {
+        getListGrid().hideField(field.getName());
+        field.setHidden(true);
+    }
+
     // -------------- Inner utility classes ------------- //
 
     /**
@@ -714,37 +934,52 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
      *
      * @author Joseph Marques 
      */
-    private static class TableFilter extends DynamicForm implements KeyPressHandler, ChangedHandler {
+    private static class TableFilter extends LocatableDynamicForm implements KeyPressHandler, ChangedHandler,
+        com.google.gwt.event.dom.client.KeyPressHandler {
 
-        private Table table;
+        private Table<?> table;
+        private SearchBarItem searchBarItem;
+        private HiddenItem hiddenItem;
 
-        public TableFilter(Table table) {
-            super();
+        public TableFilter(Table<?> table) {
+            super(table.extendLocatorId("TableFilter"));
             setWidth100();
+            setPadding(5);
             this.table = table;
             //this.table.setTableTitle(null);
         }
 
         @Override
         public void setItems(FormItem... items) {
-            super.setItems(items);
-            setupFormItems(items);
-        }
-
-        private void setupFormItems(FormItem... formItems) {
-            for (FormItem nextFormItem : formItems) {
+            for (FormItem nextFormItem : items) {
                 nextFormItem.setWrapTitle(false);
                 nextFormItem.setWidth(300); // wider than default
                 if (nextFormItem instanceof TextItem) {
                     nextFormItem.addKeyPressHandler(this);
                 } else if (nextFormItem instanceof SelectItem) {
                     nextFormItem.addChangedHandler(this);
+                } else if (nextFormItem instanceof SearchBarItem) {
+                    searchBarItem = (SearchBarItem) nextFormItem;
+                    searchBarItem.getSearchBar().addKeyPressHandler(this);
+                    String name = searchBarItem.getName();
+                    searchBarItem.setName(name + "_hidden");
+                    hiddenItem = new HiddenItem(name);
+                    hiddenItem.setValue(searchBarItem.getSearchBar().getValue());
                 }
             }
+
+            if (hiddenItem != null) {
+                FormItem[] tmpItems = new FormItem[items.length + 1];
+                System.arraycopy(items, 0, tmpItems, 0, items.length);
+                tmpItems[items.length] = hiddenItem;
+                items = tmpItems;
+            }
+
+            super.setItems(items);
         }
 
         private void fetchFilteredTableData() {
-            table.refresh(getValuesAsCriteria());
+            table.refresh();
         }
 
         public void onKeyPress(KeyPressEvent event) {
@@ -762,6 +997,15 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             return super.getFields().length != 0;
         }
 
+        @Override
+        public void onKeyPress(com.google.gwt.event.dom.client.KeyPressEvent event) {
+            if (event.getCharCode() != KeyCodes.KEY_ENTER) {
+                return;
+            }
+            // TODO: figure out why this event is being sent twice
+            hiddenItem.setValue(searchBarItem.getSearchBar().getValue());
+            fetchFilteredTableData();
+        }
     }
 
     public static class TableActionInfo {
@@ -838,4 +1082,13 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     public void setShowFilterForm(boolean showFilterForm) {
         this.showFilterForm = showFilterForm;
     }
+
+    /*
+     * by default, no search bar is shown above this table.  if this table represents a subsystem that is capable
+     * of search, return the specific object here.
+     */
+    protected SearchSubsystem getSearchSubsystem() {
+        return null;
+    }
+
 }

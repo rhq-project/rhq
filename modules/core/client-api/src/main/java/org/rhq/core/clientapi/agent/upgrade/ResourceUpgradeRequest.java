@@ -26,6 +26,7 @@ package org.rhq.core.clientapi.agent.upgrade;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceUpgradeReport;
 
 /**
@@ -119,6 +120,35 @@ public class ResourceUpgradeRequest extends ResourceUpgradeReport {
         setNewResourceKey(report.getNewResourceKey());
     }
 
+    public void fillInFromResource(Resource resource) {
+        setNewDescription(resource.getDescription());
+        setNewName(resource.getName());
+        setNewResourceKey(resource.getResourceKey());
+    }
+    
+    public void updateResource(Resource resource) {
+        if (getNewResourceKey() != null) {
+            resource.setResourceKey(getNewResourceKey());
+        }
+        
+        if (getNewName() != null) {
+            resource.setName(getNewName());
+        }
+        
+        if (getNewDescription() != null) {
+            resource.setDescription(getNewDescription());
+        }
+    }
+    
+    /**
+     * Clears all the data to be upgraded apart from the error message, stacktrace and timestamp
+     */
+    public void clearUpgradeData() {
+        setNewDescription(null);
+        setNewName(null);
+        setNewResourceKey(null);
+    }
+    
     @Override
     public boolean hasSomethingToUpgrade() {
         return super.hasSomethingToUpgrade() || upgradeErrorMessage != null || upgradeErrorStackTrace != null;

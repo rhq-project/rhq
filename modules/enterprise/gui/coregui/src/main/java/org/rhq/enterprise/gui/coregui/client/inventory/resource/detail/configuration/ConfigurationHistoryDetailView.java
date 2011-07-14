@@ -21,7 +21,6 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configur
 import java.util.EnumSet;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.smartgwt.client.widgets.Window;
 
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
@@ -40,7 +39,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Greg Hinkle
  */
 public class ConfigurationHistoryDetailView extends LocatableVLayout implements BookmarkableView {
-    
+
     public ConfigurationHistoryDetailView(String locatorId) {
         super(locatorId);
 
@@ -59,23 +58,11 @@ public class ConfigurationHistoryDetailView extends LocatableVLayout implements 
                     ConfigurationEditor editor = new ConfigurationEditor("ResConfigHist-"
                         + update.getResource().getName(), definition, update.getConfiguration());
                     editor.setReadOnly(true);
+                    editor.setEditorTitle(MSG.common_title_version() + " - " + update.getId());
                     addMember(editor);
                     markForRedraw();
                 }
             });
-    }
-
-    public void displayInDialog() {
-        Window window = new Window();
-        window.setTitle(MSG.view_configurationHistoryDetails_dialogTitle());
-        window.setWidth(800);
-        window.setHeight(800);
-        window.setIsModal(true);
-        window.setShowModalMask(true);
-        window.setCanDragResize(true);
-        window.centerInPage();
-        window.addItem(this);
-        window.show();
     }
 
     @Override
@@ -96,7 +83,6 @@ public class ConfigurationHistoryDetailView extends LocatableVLayout implements 
                 }
 
                 public void onSuccess(PageList<ResourceConfigurationUpdate> result) {
-
                     ResourceConfigurationUpdate update = result.get(0);
                     displayHistory(update);
                 }

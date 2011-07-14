@@ -36,10 +36,12 @@ public class ConfigDefRecipeCommand implements RecipeCommand {
     }
 
     public void parse(RecipeParser parser, RecipeContext context, String[] args) {
-        String sopts = ":n:";
-        LongOpt[] lopts = { new LongOpt("name", LongOpt.REQUIRED_ARGUMENT, null, 'n') };
+        String sopts = ":n:d:";
+        LongOpt[] lopts = { new LongOpt("default", LongOpt.REQUIRED_ARGUMENT, null, 'd'),
+            new LongOpt("name", LongOpt.REQUIRED_ARGUMENT, null, 'n') };
 
         String replacementVariableName = null;
+        String defaultValue = null;
 
         Getopt getopt = new Getopt(getName(), args, sopts, lopts);
         int code;
@@ -60,6 +62,11 @@ public class ConfigDefRecipeCommand implements RecipeCommand {
                 break;
             }
 
+            case 'd': {
+                defaultValue = getopt.getOptarg();
+                break;
+            }
+
             default: {
                 throw new IllegalArgumentException("Unexpected error in recipe command");
             }
@@ -75,6 +82,9 @@ public class ConfigDefRecipeCommand implements RecipeCommand {
         Set<String> replacementVariableNames = new HashSet<String>(1);
         replacementVariableNames.add(replacementVariableName);
         context.addReplacementVariables(replacementVariableNames);
+        if (defaultValue != null) {
+            context.assignDefaultValueToReplacementVariable(replacementVariableName, defaultValue);
+        }
 
         return;
     }

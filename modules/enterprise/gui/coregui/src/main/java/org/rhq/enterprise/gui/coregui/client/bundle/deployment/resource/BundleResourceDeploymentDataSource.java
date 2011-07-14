@@ -44,7 +44,8 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 /**
  * @author Greg Hinkle
  */
-public class BundleResourceDeploymentDataSource extends RPCDataSource<BundleResourceDeployment> {
+public class BundleResourceDeploymentDataSource extends
+    RPCDataSource<BundleResourceDeployment, BundleResourceDeploymentCriteria> {
     private BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService();
 
     public BundleResourceDeploymentDataSource() {
@@ -71,18 +72,8 @@ public class BundleResourceDeploymentDataSource extends RPCDataSource<BundleReso
     }
 
     @Override
-    protected void executeFetch(final DSRequest request, final DSResponse response) {
-
-        BundleResourceDeploymentCriteria criteria = new BundleResourceDeploymentCriteria();
-        criteria.fetchResource(true);
-        criteria.fetchBundleDeployment(true);
-        criteria.fetchHistories(true);
-
-        if (request.getCriteria().getValues().containsKey("bundleDeploymentId")) {
-            criteria.addFilterBundleDeploymentId(Integer.parseInt(request.getCriteria().getAttribute(
-                "bundleDeploymentId")));
-        }
-
+    protected void executeFetch(final DSRequest request, final DSResponse response,
+        final BundleResourceDeploymentCriteria criteria) {
         bundleService.findBundleResourceDeploymentsByCriteria(criteria,
             new AsyncCallback<PageList<BundleResourceDeployment>>() {
                 public void onFailure(Throwable caught) {
@@ -94,7 +85,20 @@ public class BundleResourceDeploymentDataSource extends RPCDataSource<BundleReso
                     processResponse(request.getRequestId(), response);
                 }
             });
+    }
 
+    @Override
+    protected BundleResourceDeploymentCriteria getFetchCriteria(final DSRequest request) {
+        BundleResourceDeploymentCriteria criteria = new BundleResourceDeploymentCriteria();
+        criteria.fetchResource(true);
+        criteria.fetchBundleDeployment(true);
+        criteria.fetchHistories(true);
+
+        if (request.getCriteria().getValues().containsKey("bundleDeploymentId")) {
+            criteria.addFilterBundleDeploymentId(Integer.parseInt(request.getCriteria().getAttribute(
+                "bundleDeploymentId")));
+        }
+        return criteria;
     }
 
     @Override

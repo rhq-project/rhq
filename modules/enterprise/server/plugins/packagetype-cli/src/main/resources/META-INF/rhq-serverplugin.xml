@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<packagetype-plugin name="packagetype-cli"
+    displayName="PackageType:CLI" xmlns="urn:xmlns:rhq-serverplugin.packagetype"
+    xmlns:c="urn:xmlns:rhq-configuration" xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
+    package="org.rhq.enterprise.server.plugins.packagetypeCli"
+    description="A package type for CLI scripts.">
+
+    <serverplugin:help>
+        This plugin defines the "Server-side CLI Script"
+        package type used
+        by the Alert:CLI plugin to store the scripts in
+        the content subsystem.
+    </serverplugin:help>
+
+    <!-- How does this sender show up in drop downs etc -->
+    <behavior-class>CliPackageTypeBehavior</behavior-class>
+
+
+    <package-type
+        name="org.rhq.enterprise.server.plugins.packagetypeCli.SERVER_SIDE_CLI_SCRIPT"
+        displayName="Server-side CLI Script" description="A CLI script running on the server-side." />
+                
+</packagetype-plugin>

@@ -68,14 +68,14 @@ import org.rhq.core.domain.tagging.Tag;
     + "SELECT bd FROM BundleDeployment bd "),
     @NamedQuery(name = BundleDeployment.QUERY_UPDATE_FOR_DESTINATION_REMOVE, query = "" //
         + "UPDATE BundleDeployment bd " //
-        + "   SET bd.replacedBundleDeployment = NULL " //
-        + " WHERE bd.replacedBundleDeployment.id IN " //
+        + "   SET bd.replacedBundleDeploymentId = NULL " //
+        + " WHERE bd.replacedBundleDeploymentId IN " //
         + "     ( SELECT innerbd.id FROM BundleDeployment innerbd " //
         + "        WHERE innerbd.destination.id  = :destinationId ) "),
     @NamedQuery(name = BundleDeployment.QUERY_UPDATE_FOR_VERSION_REMOVE, query = "" //
         + "UPDATE BundleDeployment bd " //
-        + "   SET bd.replacedBundleDeployment = NULL " //
-        + " WHERE bd.replacedBundleDeployment.id IN " //
+        + "   SET bd.replacedBundleDeploymentId = NULL " //        
+        + " WHERE bd.replacedBundleDeploymentId IN " //        
         + "     ( SELECT innerbd.id FROM BundleDeployment innerbd " //
         + "        WHERE innerbd.bundleVersion.id  = :bundleVersionId ) ") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_BUNDLE_DEPLOYMENT_ID_SEQ")
@@ -118,20 +118,23 @@ public class BundleDeployment implements Serializable {
     @Column(name = "MTIME")
     private Long mtime = System.currentTimeMillis();
 
-    @JoinColumn(name = "REPLACED_BUNDLE_DEPLOYMENT_ID", referencedColumnName = "ID", nullable = true)
-    @OneToOne(fetch = FetchType.LAZY, optional = true)
-    private BundleDeployment replacedBundleDeployment;
+    // This is intentionally not annotated as a OneToOne association for a BundleDeployment field. If done that way
+    // then a fetch could result in a very deep recursive fetch of all replaced deployments (for many deployments
+    // to a single destination), which is typically not what we want.  And, it can cause fits in HibernateDetach
+    // which does not like extreme depth in its recursive scrubbing [BZ 702390].
+    @Column(name = "REPLACED_BUNDLE_DEPLOYMENT_ID", nullable = true)
+    private Integer replacedBundleDeploymentId;
 
     @JoinColumn(name = "CONFIG_ID", referencedColumnName = "ID", nullable = true)
-    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, optional = true)
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY, optional = true)
     private Configuration configuration;
 
     @JoinColumn(name = "BUNDLE_VERSION_ID", referencedColumnName = "ID", nullable = false)
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     private BundleVersion bundleVersion;
 
     @JoinColumn(name = "BUNDLE_DESTINATION_ID", referencedColumnName = "ID", nullable = false)
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     private BundleDestination destination;
 
     @OneToMany(mappedBy = "bundleDeployment", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
@@ -284,12 +287,12 @@ public class BundleDeployment implements Serializable {
     /** 
      * @return The previously "live" BundleDeployment.
      */
-    public BundleDeployment getReplacedBundleDeployment() {
-        return replacedBundleDeployment;
+    public Integer getReplacedBundleDeploymentId() {
+        return replacedBundleDeploymentId;
     }
 
-    public void setReplacedBundleDeployment(BundleDeployment replacedBundleDeployment) {
-        this.replacedBundleDeployment = replacedBundleDeployment;
+    public void setReplacedBundleDeploymentId(Integer replacedBundleDeploymentId) {
+        this.replacedBundleDeploymentId = replacedBundleDeploymentId;
     }
 
     public Configuration getConfiguration() {
@@ -360,6 +363,12 @@ public class BundleDeployment implements Serializable {
         return "BundleDeployment[id=" + id + ", name=" + name + "]";
     }
 
+    /*
+     * These fields make up the natural key but note that some fields are lazy loaded. As such care should
+     * be taken to have properly loaded instances when required.
+     *
+     * @see java.lang.Object#hashCode()
+     */
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -367,10 +376,15 @@ public class BundleDeployment implements Serializable {
         result = prime * result + ((this.bundleVersion == null) ? 0 : this.bundleVersion.hashCode());
         result = prime * result + ((this.destination == null) ? 0 : this.destination.hashCode());
         result = prime * result + ((this.name == null) ? 0 : this.name.hashCode());
-        result = prime * result + ((this.ctime == null) ? 0 : this.ctime.hashCode());
         return result;
     }
 
+    /*
+     * These fields make up the natural key but note that some fields are lazy loaded. As such care should
+     * be taken to have properly loaded instances when required.
+     *
+     * @see java.lang.Object#equals(java.lang.Object)
+     */
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {
@@ -403,14 +417,6 @@ public class BundleDeployment implements Serializable {
                 return false;
             }
         } else if (!this.name.equals(other.name)) {
-            return false;
-        }
-
-        if (this.ctime == null) {
-            if (other.ctime != null) {
-                return false;
-            }
-        } else if (!this.ctime.equals(other.ctime)) {
             return false;
         }
 

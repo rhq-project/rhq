@@ -25,31 +25,37 @@ package org.rhq.core.domain.operation.composite;
 import java.io.Serializable;
 import java.util.Date;
 
-import org.rhq.core.domain.operation.ScheduleJobId;
+import org.rhq.core.domain.operation.JobId;
 
 public abstract class OperationScheduleComposite implements Serializable {
 
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L;
 
-    private ScheduleJobId operationJobId;
+    private int id;
+    private JobId jobId;
     private String operationName;
     private long operationNextFireTime;
 
     //no args constructor for serialization purposes not to be used.
     protected OperationScheduleComposite() {
         this.operationNextFireTime = -1;
-        this.operationJobId = null;
+        this.id = 0;
         this.operationName = "(uninitialized)";
     }
 
-    public OperationScheduleComposite(ScheduleJobId operationJobId, String operationName, long operationNextFireTime) {
-        this.operationJobId = operationJobId;
+    public OperationScheduleComposite(int id, String jobName, String jobGroup, String operationName, long operationNextFireTime) {
+        this.id = id;
+        this.jobId = new JobId(jobName, jobGroup);
         this.operationName = operationName;
         this.operationNextFireTime = operationNextFireTime;
     }
 
-    public ScheduleJobId getOperationJobId() {
-        return operationJobId;
+    public int getId() {
+        return id;
+    }
+
+    public JobId getJobId() {
+        return jobId;
     }
 
     public String getOperationName() {
@@ -72,7 +78,7 @@ public abstract class OperationScheduleComposite implements Serializable {
     @Override
     public String toString() {
         StringBuilder str = new StringBuilder();
-        str.append("operation-job-id=[" + operationJobId);
+        str.append("operation-job-id=[" + id);
         str.append("], operation-name=[" + operationName);
         str.append("], operation-next-fire-time=[" + new Date(operationNextFireTime));
         str.append("]");

@@ -50,6 +50,8 @@ import org.jetbrains.annotations.NotNull;
 
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.content.Repo;
+import org.rhq.core.domain.dashboard.Dashboard;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 
 /**
@@ -57,20 +59,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
  */
 @Entity
 @NamedQueries( {
-    @NamedQuery(name = Subject.QUERY_FIND_BY_IDS, query = "" //
-        + "SELECT s " //
-        + "  FROM Subject s " //
-        + " WHERE s.id IN ( :ids ) " //
-        + "   AND s.fsystem = FALSE " //
-        + "   AND s.factive = TRUE"),
-    @NamedQuery(name = Subject.QUERY_FIND_ALL, query = "" //
-        + "SELECT s " //
-        + "  FROM Subject s " //
-        + " WHERE s.fsystem = false"),
-    @NamedQuery(name = Subject.QUERY_FIND_BY_NAME, query = "" //
-        + "SELECT s " //
-        + "  FROM Subject s " //
-        + " WHERE s.name = :name"),
+
     @NamedQuery(name = Subject.QUERY_GET_SUBJECTS_ASSIGNED_TO_ROLE, query = "" //
         + "SELECT s " //
         + "  FROM Subject s " //
@@ -94,17 +83,40 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + "FROM Role r JOIN r.subjects s JOIN r.permissions p "
         + "WHERE "
         + "  ("
-        + "    r in (SELECT r2 from ResourceGroup g JOIN g.roles r2 WHERE g.id = :groupId) "
+        + "       r in (SELECT r2 from ResourceGroup g JOIN g.roles r2 WHERE g.id = :groupId) "
         + "    OR r in (SELECT r3 from ResourceGroup g JOIN g.clusterResourceGroup crg JOIN crg.roles r3 WHERE g.id = :groupId AND crg.recursive = true) "
         + "  ) " + "  AND s = :subject"),
+
+    @NamedQuery(name = Subject.QUERY_GET_PERMISSIONS_BY_PRIVATE_GROUP_ID, query = "" //
+        + "SELECT p, count(distinct res.id) " //
+        + "     FROM ResourceGroup rg, IN (rg.explicitResources) res, IN (res.implicitGroups) g, IN (g.roles) r, IN (r.permissions) p " //
+        + "    WHERE rg.id = :privateGroupId " //
+        + "      AND rg.subject.id = :subjectId " //
+        + " GROUP BY p " //
+        + "   HAVING count(distinct res.id) = " //
+        + "          ( SELECT count(*) " //
+        + "              FROM ResourceGroup g2 JOIN g2.explicitResources res2 " //
+        + "             WHERE g2.id = :privateGroupId )"),
 
     @NamedQuery(name = Subject.QUERY_HAS_GROUP_PERMISSION, query = "SELECT count(r) "
         + "FROM Role r JOIN r.subjects s JOIN r.permissions p "
         + "WHERE "
         + "  ("
-        + "    r in (SELECT r2 from ResourceGroup g JOIN g.roles r2 WHERE g.id = :groupId) "
+        + "       r in (SELECT r2 from ResourceGroup g JOIN g.roles r2 WHERE g.id = :groupId) "
         + "    OR r in (SELECT r3 from ResourceGroup g JOIN g.clusterResourceGroup crg JOIN crg.roles r3 WHERE g.id = :groupId AND crg.recursive = true) "
         + "  ) " + "  AND s = :subject " + "  AND p = :permission"),
+
+    @NamedQuery(name = Subject.QUERY_HAS_PRIVATE_GROUP_PERMISSION, query = "" //
+        + "SELECT p, count(distinct res.id) " //
+        + "     FROM ResourceGroup rg, IN (rg.explicitResources) res, IN (res.implicitGroups) g, IN (g.roles) r, IN (r.permissions) p " //
+        + "    WHERE rg.id = :privateGroupId " //
+        + "      AND rg.subject.id = :subjectId " // 
+        + "      AND p = :permission " //
+        + " GROUP BY p " //
+        + "   HAVING count(distinct res.id) = " //
+        + "          ( SELECT count(*) " //
+        + "              FROM ResourceGroup g2 JOIN g2.explicitResources res2 " //
+        + "             WHERE g2.id = :privateGroupId )"),
 
     @NamedQuery(name = Subject.QUERY_GET_PERMISSIONS_BY_RESOURCE_ID, query = "SELECT distinct p "
         + "FROM Resource res, IN (res.implicitGroups) g, IN (g.roles) r, IN (r.subjects) s, IN (r.permissions) p "
@@ -114,6 +126,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + "FROM Resource res, IN (res.implicitGroups) g, IN (g.roles) r, IN (r.subjects) s, IN (r.permissions) p "
         + "WHERE s = :subject AND res.id = :resourceId AND p = :permission"),
 
+    //@Deprecated
     @NamedQuery(name = Subject.QUERY_HAS_AUTO_GROUP_PERMISSION, query = "" //
         + "SELECT COUNT(res.id) " //
         + "  FROM Resource res " //
@@ -126,31 +139,31 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + "                                          JOIN r.permissions p " //
         + "                                          JOIN r.subjects s " //
         + "                                         WHERE s.id = :subjectId and p = :permission ) ) "),
-
     @NamedQuery(name = Subject.QUERY_CAN_VIEW_RESOURCE, query = "SELECT COUNT(res) "
         + "FROM Resource res, IN (res.implicitGroups) g, IN (g.roles) r, IN (r.subjects) s "
         + "WHERE s = :subject AND res.id = :resourceId"),
 
-    @NamedQuery(name = Subject.QUERY_CAN_VIEW_RESOURCES, query = "SELECT DISTINCT COUNT(res) "
+    @NamedQuery(name = Subject.QUERY_CAN_VIEW_RESOURCES, query = "SELECT COUNT(DISTINCT res) "
         + "FROM Resource res, IN (res.implicitGroups) g, IN (g.roles) r, IN (r.subjects) s "
         + "WHERE s = :subject AND res.id IN (:resourceIds)"),
 
     @NamedQuery(name = Subject.QUERY_CAN_VIEW_GROUP, query = "" //
         + "SELECT count(g) " //
         + "  FROM ResourceGroup g " //
-        + " WHERE (g.id IN (SELECT rg.id " //
-        + "                   FROM ResourceGroup rg " //
-        + "                   JOIN rg.roles r " //
-        + "                   JOIN r.subjects s " //
-        + "                  WHERE s = :subject) " //
-        + "    OR g.id IN (SELECT rg.id " //
-        + "                  FROM ResourceGroup rg " //
-        + "                  JOIN rg.clusterResourceGroup crg " //
-        + "                  JOIN crg.roles r " //
-        + "                  JOIN r.subjects s " //
-        + "                 WHERE crg.recursive = true AND s = :subject)) " //
-        + "   AND g.id = :groupId"),
-
+        + " WHERE g.id = :groupId " //  
+        + "   AND (   g.subject = :subject " // private group case (autogroup backing group)
+        + "        OR g.id IN (SELECT rg.id " // role-associated group case
+        + "                       FROM ResourceGroup rg " //
+        + "                       JOIN rg.roles r " //
+        + "                       JOIN r.subjects s " //
+        + "                      WHERE s = :subject) " //        
+        + "        OR g.id IN (SELECT rg.id " // autocluster backing group case
+        + "                      FROM ResourceGroup rg " //
+        + "                      JOIN rg.clusterResourceGroup crg " //
+        + "                      JOIN crg.roles r " //
+        + "                      JOIN r.subjects s " //
+        + "                     WHERE crg.recursive = true AND s = :subject))"),
+    // @Deprecated
     @NamedQuery(name = Subject.QUERY_CAN_VIEW_AUTO_GROUP, query = "" //
         + "SELECT COUNT(res.id) " //
         + "  FROM Resource res " //
@@ -201,21 +214,22 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 @Table(name = "RHQ_SUBJECT")
 /*@Cache(usage= CacheConcurrencyStrategy.TRANSACTIONAL)*/
 public class Subject implements Serializable {
-    public static final String QUERY_FIND_ALL = "Subject.findAll";
-    public static final String QUERY_FIND_BY_IDS = "Subject.findByIds";
-    public static final String QUERY_FIND_BY_NAME = "Subject.findByName";
 
     public static final String QUERY_GET_SUBJECTS_ASSIGNED_TO_ROLE = "Subject.getSubjectsAssignedToRole";
 
     public static final String QUERY_GET_GLOBAL_PERMISSIONS = "Subject.getGlobalPermissions";
     public static final String QUERY_GET_PERMISSIONS_BY_GROUP_ID = "Subject.getPermissionsByGroup";
+    public static final String QUERY_GET_PERMISSIONS_BY_PRIVATE_GROUP_ID = "Subject.getPermissionsByPrivateGroup";
     public static final String QUERY_GET_PERMISSIONS_BY_RESOURCE_ID = "Subject.getPermissionsByResource";
+    public static final String QUERY_ROLES_BY_RESOURCE_IDS = "Subject.getRolesByResources";
 
     public static final String QUERY_HAS_GLOBAL_PERMISSION = "Subject.hasGlobalPermission";
     public static final String QUERY_HAS_GROUP_PERMISSION = "Subject.hasGroupPermission";
+    public static final String QUERY_HAS_PRIVATE_GROUP_PERMISSION = "Subject.hasPrivateGroupPermission";
     public static final String QUERY_HAS_RESOURCE_PERMISSION = "Subject.hasResourcePermission";
     public static final String QUERY_HAS_AUTO_GROUP_PERMISSION = "Subject.hasAutoGroupPermission";
 
+    /** This query can return more than 1 if the resource is accessible via separate groups */
     public static final String QUERY_CAN_VIEW_RESOURCE = "Subject.canViewResource";
     public static final String QUERY_CAN_VIEW_RESOURCES = "Subject.canViewResources";
     public static final String QUERY_CAN_VIEW_GROUP = "Subject.canViewGroup";
@@ -274,9 +288,16 @@ public class Subject implements Serializable {
     @ManyToMany
     private java.util.Set<Role> ldapRoles;
 
-    // When a subject is removed any owned groups should also be removed
+    // When a subject is removed any owned groups are removed manually, no cascade delete for groups
     @OneToMany(mappedBy = "subject", fetch = FetchType.LAZY)
     private List<ResourceGroup> ownedGroups = null;
+
+    @OneToMany(mappedBy = "owner", fetch = FetchType.LAZY)
+    private Set<Repo> ownedRepos;
+
+    // When a subject is removed any owned dashboards are removed automatically
+    @OneToMany(mappedBy = "owner", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
+    private List<Dashboard> ownedDashboards = null;
 
     @Transient
     private Integer sessionId = null;
@@ -409,6 +430,9 @@ public class Subject implements Serializable {
     }
 
     public java.util.Set<Role> getRoles() {
+        if (this.roles == null) {
+            this.roles = new HashSet<Role>();
+        }
         return this.roles;
     }
 
@@ -441,6 +465,9 @@ public class Subject implements Serializable {
     }
 
     public java.util.Set<Role> getLdapRoles() {
+        if (this.ldapRoles == null) {
+            this.ldapRoles = new HashSet<Role>();
+        }
         return this.ldapRoles;
     }
 
@@ -464,6 +491,22 @@ public class Subject implements Serializable {
 
     public void setOwnedGroups(List<ResourceGroup> ownedGroups) {
         this.ownedGroups = ownedGroups;
+    }
+
+    protected Set<Repo> getOwnedrepos() {
+        return ownedRepos;
+    }
+
+    protected void setOwnedRepos(Set<Repo> repos) {
+        ownedRepos = repos;
+    }
+
+    protected List<Dashboard> getOwnedDashboards() {
+        return ownedDashboards;
+    }
+
+    protected void setOwnedDashboards(List<Dashboard> ownedDashboards) {
+        this.ownedDashboards = ownedDashboards;
     }
 
     @Override

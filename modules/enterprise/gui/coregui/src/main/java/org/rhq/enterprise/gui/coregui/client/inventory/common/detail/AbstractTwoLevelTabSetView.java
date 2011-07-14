@@ -18,13 +18,12 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common.detail;
 
-import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.History;
-import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Side;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.layout.Layout;
@@ -32,6 +31,8 @@ import com.smartgwt.client.widgets.layout.Layout;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
+import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
 import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.tab.SubTab;
@@ -39,8 +40,7 @@ import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTab;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedEvent;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedHandler;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSet;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.components.view.ViewFactory;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -106,69 +106,77 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
     }
 
     protected boolean updateTab(TwoLevelTab tab, boolean visible, boolean enabled) {
-        TwoLevelTab attachedTab = getTabSet().getTabByLocatorId(tab.getLocatorId());
         if (visible) {
-            if (attachedTab == null) {
-                getTabSet().addTab(tab);
-                attachedTab = getTabSet().getTabByLocatorId(tab.getLocatorId());
-            }
-            getTabSet().setTabEnabled(attachedTab, enabled);
+            getTabSet().setTabHidden(tab, false);
+            getTabSet().setTabEnabled(tab, enabled);
         } else {
-            if (attachedTab != null) {
-                getTabSet().removeTab(attachedTab);
-            }
+            getTabSet().setTabHidden(tab, true);
         }
 
         return (visible && enabled);
     }
 
-    protected void updateSubTab(TwoLevelTab tab, SubTab subTab, Canvas canvas, boolean visible, boolean enabled) {
+    protected void updateSubTab(TwoLevelTab tab, SubTab subTab, boolean visible, boolean enabled,
+        ViewFactory viewFactory) {
+        updateSubTab(tab, subTab, null, visible, enabled, viewFactory);
+    }
+
+    protected void updateSubTab(TwoLevelTab tab, SubTab subTab, Canvas canvas, boolean visible, boolean enabled,
+        ViewFactory viewFactory) {
         tab.setVisible(subTab, visible);
         if (visible) {
             tab.setSubTabEnabled(subTab, enabled);
             if (enabled) {
                 subTab.setCanvas(canvas);
+                subTab.setViewFactory(viewFactory);
             }
         }
     }
 
+    // This is invoked by events fired in TwoLevelTabSet whenever a tab/subtab combo has been selected. 
     public void onTabSelected(TwoLevelTabSelectedEvent tabSelectedEvent) {
+
+        // Establishing the proper tabbed view may involve tab add/remove and async loading of content. While doing this 
+        // we want to prevent user initiation of another tab change. To block users from clicking tabs we 
+        // disable the tab set.  We re-enable the tabset when safe. (see this method and also selectTab()). 
+
         if (getSelectedItemId() == null) {
+            this.tabSet.disable();
             CoreGUI.goToView(History.getToken());
+
         } else {
-            String tabPath = "/" + tabSelectedEvent.getId() + "/" + tabSelectedEvent.getSubTabId();
+            String tabId = tabSelectedEvent.getId();
+            String subTabId = tabSelectedEvent.getSubTabId();
+            String tabPath = "/" + tabId + "/" + subTabId;
             String path = this.baseViewPath + "/" + getSelectedItemId() + tabPath;
 
             // If the selected tab or subtab is not already the current history item, the user clicked on the tab, rather
             // than going directly to the tab's URL. In this case, fire a history event to go to the tab and make it the
             // current history item.
             if (!(History.getToken().equals(path) || History.getToken().startsWith(path + "/"))) {
+                this.tabSet.disable();
                 CoreGUI.goToView(path);
+
+            } else {
+                // ensure the tabset is enabled if we're not going to be doing any further tab selection
+                this.tabSet.enable();
             }
         }
-        // TODO?: Switch tabs directly, rather than letting the history framework do it, to avoid redrawing the outer views.
     }
 
     public void renderView(final ViewPath viewPath) {
-        GWTServiceLookup.getAuthorizationService().getExplicitGlobalPermissions(new AsyncCallback<Set<Permission>>() {
-            @Override
-            public void onSuccess(Set<Permission> result) {
-                globalPermissions = result;
-                renderTabs(viewPath);
-            }
 
+        new PermissionsLoader().loadExplicitGlobalPermissions(new PermissionsLoadedListener() {
             @Override
-            public void onFailure(Throwable caught) {
-                CoreGUI.getMessageCenter().notify(
-                    new Message(MSG.util_userPerm_loadFailGlobal(), caught, Message.Severity.Error, EnumSet
-                        .of(Message.Option.BackgroundJobResult)));
-                globalPermissions = new HashSet<Permission>();
+            public void onPermissionsLoaded(Set<Permission> permissions) {
+                globalPermissions = (permissions != null) ? permissions : new HashSet<Permission>();
                 renderTabs(viewPath);
             }
         });
     }
 
     private void renderTabs(final ViewPath viewPath) {
+
         // e.g. #Resource/10010/Summary/Overview
         //                ^ current path
         final int id = Integer.parseInt(viewPath.getCurrent().getPath());
@@ -192,10 +200,19 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
         }
 
         if (getSelectedItemId() == null || getSelectedItemId() != id) {
-            loadSelectedItem(id, viewPath);
+            // A different entity (resource or group), load it and try to navigate to the same tabs if possible.
+            // Changing entities may change the available tabs as the same tab set may not be supported by the
+            // new entity's type. To maintain a valid tab selection for the TabSet, smartgwt will generate an
+            // events if the current tab is removed (which can happen say, when navigating from a resource of type A
+            // to a resource of type B). We need to ignore tab selection events generated by smartgwt because we
+            // handle this at a higher level. To do this we explicitly set events to be be ignored. We re-enable
+            // the event handling when safe. (see selectTab()). 
+            this.tabSet.setIgnoreSelectEvents(true);
+            this.loadSelectedItem(id, viewPath);
+
         } else {
             // Same Resource - just switch tabs.
-            selectTab(this.tabName, this.subTabName, viewPath);
+            this.selectTab(this.tabName, this.subTabName, viewPath);
         }
     }
 
@@ -208,41 +225,87 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
      */
     public void selectTab(String tabName, String subtabName, ViewPath viewPath) {
         try {
-            TwoLevelTab tab = (tabName != null) ? this.tabSet.getTabByName(tabName) : this.tabSet.getDefaultTab();
+            TwoLevelTab tab = (tabName != null) ? this.tabSet.getTabByName(tabName) : null;
+            SubTab subtab = null;
+
+            // if the requested tab is not available for the tabset then select the default tab/subtab. Fire
+            // an event in order to navigate to the new path 
             if (tab == null || tab.getDisabled()) {
-                CoreGUI.getErrorHandler().handleError(MSG.view_tabs_invalidTab(tabName));
-                // TODO: Should we fire a history event here to redirect to a valid bookmark?
-                tab = this.tabSet.getDefaultTab();
-                if (tab == null) {
-                    throw new IllegalStateException("No default tab is defined.");
-                }
-                subtabName = null;
+                this.tabSet.setIgnoreSelectEvents(false);
+                subtab = selectDefaultTabAndSubTab();
+                return;
             }
-            // Do *not* select the tab and trigger the tab selected event until the subtab has been selected first.
 
-            SubTab subtab = (subtabName != null) ? tab.getSubTabByName(subtabName) : tab.getDefaultSubTab();
+            // the tab is available, now get the subtab
+            subtab = (subtabName != null) ? tab.getSubTabByName(subtabName) : tab.getDefaultSubTab();
+
+            // due to our attempt to perform sticky tabbing we may request an invalid subtab when
+            // switching resources. If the requested subtab is not available the select the default subtab
+            // for the tab. Fire an event in order to navigate to the new path. 
             if (subtab == null || tab.getLayout().isSubTabDisabled(subtab)) {
-                CoreGUI.getErrorHandler().handleError(MSG.view_tabs_invalidSubTab(subtabName));
-                // TODO: Should we fire a history event here to redirect to a valid bookmark?
-                subtab = tab.getLayout().getDefaultSubTab();
+                this.tabSet.setIgnoreSelectEvents(false);
+                subtab = selectDefaultSubTab(tab);
+                return;
             }
-            tab.getLayout().selectSubTab(subtab);
 
-            // Now that the subtab has been selected, select the tab (this will cause a tab selected event to fire).
+            // the requested tab/subtab are valid, continue with this path
+
+            // select the tab and subTab (no event fired, we're already dealing with the correct path)
             this.tabSet.selectTab(tab);
+            // this call adds the subtab canvas as a member of the subtablayout
+            // don't show the subtab canvas until after we perform any necessary rendering.
+            tab.getLayout().selectSubTab(subtab, false);
 
-            // Handle any remaining view items (e.g. id of a selected item in a subtab that contains a Master-Details view).
+            // get the target canvas
             Canvas subView = subtab.getCanvas();
+
+            // if this is a bookmarkable view then further rendering is deferred to its renderView method. This
+            // will set the basePath as well as handle any remaining view items (e.g. id of a selected item in
+            // a subtab that contains a Master-Details view). Otherwise, make sure we perform any required
+            // refresh.
             if (subView instanceof BookmarkableView) {
                 ((BookmarkableView) subView).renderView(viewPath);
-            } else if (subView instanceof RefreshableView) {
+            } else if (subView instanceof RefreshableView && subView.isDrawn()) {
+                // Refresh the data on the subtab, so it's not stale.
+                Log.debug("Refreshing data for [" + subView.getClass().getName() + "]...");
                 ((RefreshableView) subView).refresh();
             }
+            subView.setVisible(true);
 
+            // ensure the tabset is enabled (disabled in onTabSelected), and redraw
+            this.tabSet.setIgnoreSelectEvents(false);
+            this.tabSet.enable();
             this.tabSet.markForRedraw();
+
         } catch (Exception e) {
-            com.allen_sauer.gwt.log.client.Log.info("Failed to select tab " + tabName + "/" + subtabName + ": " + e);
+            this.tabSet.enable();
+            Log.info("Failed to select tab " + tabName + "/" + subtabName + ": " + e);
         }
+    }
+
+    private SubTab selectDefaultTabAndSubTab() {
+        TwoLevelTab tab = this.tabSet.getDefaultTab();
+        if (tab == null) {
+            throw new IllegalStateException("No default tab is defined.");
+        }
+
+        return selectDefaultSubTab(tab);
+    }
+
+    private SubTab selectDefaultSubTab(TwoLevelTab tab) {
+
+        SubTab subTab = tab.getDefaultSubTab();
+        if (subTab == null || tab.getLayout().isSubTabDisabled(subTab)) {
+            CoreGUI.getErrorHandler().handleError(MSG.view_tabs_invalidSubTab(subTab.getName()));
+            subTab = tab.getLayout().getDefaultSubTab();
+        }
+
+        tab.getLayout().selectSubTab(subTab, true);
+
+        // Now that the subtab has been selected, select the tab (this will cause a tab selected event to fire).
+        this.tabSet.selectTab(tab);
+
+        return subTab;
     }
 
     protected abstract T getSelectedItem();
@@ -261,6 +324,12 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
 
     public String getBaseViewPath() {
         return baseViewPath;
+    }
+
+    @Override
+    public void destroy() {
+        tabSet.destroy();
+        super.destroy();
     }
 
 }

@@ -128,6 +128,10 @@ public interface ResourceTypeManagerLocal {
 
     List<ResourceType> getResourceTypesByPlugin(String pluginName);
 
+    List<Integer> getResourceTypeIdsByPlugin(String plugin);
+
+    Integer getResourceTypeCountByPlugin(String plugin);
+
     PageList<ResourceType> findResourceTypesByCriteria(Subject subject, ResourceTypeCriteria criteria);
 
     List<String> getDuplicateTypeNames();

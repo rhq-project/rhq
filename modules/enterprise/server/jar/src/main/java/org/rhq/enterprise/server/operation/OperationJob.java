@@ -30,6 +30,7 @@ import org.rhq.core.domain.operation.GroupOperationHistory;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.operation.ScheduleJobId;
+import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -38,6 +39,8 @@ public abstract class OperationJob implements Job {
     public static final String DATAMAP_STRING_OPERATION_DISPLAY_NAME = "operationDisplayName";
     public static final String DATAMAP_INT_PARAMETERS_ID = "parametersId"; // the configuration ID
     public static final String DATAMAP_INT_SUBJECT_ID = "subjectId";
+    // id of the associated OperationScheduleEntity - may be null for jobs created prior to upgrading to RHQ 4.0
+    public static final String DATAMAP_INT_ENTITY_ID = "entityId";
 
     /**
      * For security purposes, we need to provide a subject with a valid login session. This creates such a subject by
@@ -51,10 +54,10 @@ public abstract class OperationJob implements Job {
      *
      * @throws Exception
      *
-     * @see    SubjectManagerLocal#loginUnauthenticated(String, boolean)
+     * @see    SubjectManagerLocal#loginUnauthenticated(String)
      */
-    protected Subject getUserWithSession(Subject user, boolean reattach) throws Exception {
-        return LookupUtil.getSubjectManager().loginUnauthenticated(user.getName(), reattach);
+    protected Subject getUserWithSession(Subject user) throws Exception {
+        return LookupUtil.getSubjectManager().loginUnauthenticated(user.getName());
     }
 
     protected void updateOperationScheduleEntity(JobDetail jobDetail, Date nextFireTime,
@@ -96,14 +99,11 @@ public abstract class OperationJob implements Job {
         history = new ResourceOperationHistory(jobName, jobGroup, schedule.getSubject().getName(), op, parameters,
             schedule.getResource(), groupHistory);
 
-        // resource-level ops can start immediately, group ops will be started as appropriate by the GroupOperationJob
-        if (groupHistory == null) {
-            history.setStartedTime();
-        }
-
         // persist the results of the initial create
-        history = (ResourceOperationHistory) operationManager.updateOperationHistory(schedule.getSubject(), history);
+        ResourceOperationHistory persisted;
+        persisted = (ResourceOperationHistory) operationManager.updateOperationHistory(schedule.getSubject(), history);
+        history.setId(persisted.getId()); // we need this - this enables the server to successfully update the group history later
 
-        return history;
+        return persisted;
     }
 }

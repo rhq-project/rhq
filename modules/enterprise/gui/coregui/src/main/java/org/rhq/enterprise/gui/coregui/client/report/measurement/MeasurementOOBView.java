@@ -22,8 +22,10 @@
  */
 package org.rhq.enterprise.gui.coregui.client.report.measurement;
 
-import com.smartgwt.client.widgets.grid.CellFormatter;
-import com.smartgwt.client.widgets.grid.ListGridRecord;
+import java.util.ArrayList;
+
+import com.smartgwt.client.types.SelectionStyle;
+import com.smartgwt.client.widgets.grid.ListGridField;
 
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
@@ -31,7 +33,7 @@ import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 /**
  * @author Greg Hinkle
  */
-public class MeasurementOOBView extends Table {
+public class MeasurementOOBView extends Table<MeasurementOOBDataSource> {
 
     public static final ViewName VIEW_ID = new ViewName("SuspectMetrics", MSG.view_measurementOob_title());
 
@@ -43,15 +45,25 @@ public class MeasurementOOBView extends Table {
 
     @Override
     protected void configureTable() {
-        getListGrid().setAlternateRecordStyles(false);
+        ArrayList<ListGridField> dataSourceFields = getDataSource().getListGridFields();
+        getListGrid().setFields(dataSourceFields.toArray(new ListGridField[dataSourceFields.size()]));
 
-        getListGrid().getField("resourceName").setCellFormatter(new CellFormatter() {
-            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                return "<a href=\"#Resource/" + listGridRecord.getAttribute("resourceId") + "\">" + o + "</a>";
-            }
-        });
-
-
+        super.configureTable();
     }
 
+    /*        
+            ListGrid grid = getListGrid();
+            grid.setAlternateRecordStyles(false);
+            grid.getField("resourceName").setCellFormatter(new CellFormatter() {
+                public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
+                    return "<a href=\"#Resource/" + listGridRecord.getAttribute("resourceId") + "\">" + o + "</a>";
+                }
+            });
+        }
+        */
+
+    @Override
+    protected SelectionStyle getDefaultSelectionStyle() {
+        return SelectionStyle.NONE;
+    }
 }

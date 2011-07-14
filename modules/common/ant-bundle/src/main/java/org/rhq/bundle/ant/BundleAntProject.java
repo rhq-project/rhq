@@ -23,6 +23,7 @@
 package org.rhq.bundle.ant;
 
 import java.io.File;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -42,11 +43,18 @@ import org.rhq.core.util.updater.DeployDifferences;
  * This project object is to be used by either the bundle {@link AntLauncher} or custom
  * bundle Ant tasks. The launcher or tasks can inform this project object of things that
  * are happening as the Ant script is being parsed and/or executed.
+ *
+ * Also provides a common method for any task to invoke to send an audit message.
  * 
  * @author John Mazzitelli
  * @author Ian Springer
  */
 public class BundleAntProject extends Project {
+    // these statuses should match those of see BundleResourceDeploymentHistory.Status
+    public enum AuditStatus {
+        SUCCESS, FAILURE, WARN, INFO
+    };
+
     // Bundle-level attributes
     private boolean parseOnly;
 
@@ -61,8 +69,11 @@ public class BundleAntProject extends Project {
     private final Set<String> bundleFileNames = new HashSet<String>();
     private int deploymentId;
     private DeploymentPhase deploymentPhase;
-    private DeployDifferences deployDiffs = new DeployDifferences();
     private boolean dryRun;
+
+    // results of project execution
+    private DeployDifferences deployDiffs = new DeployDifferences();
+    private Set<File> downloadedFiles = new HashSet<File>();
 
     public BundleAntProject() {
         this(false);
@@ -142,15 +153,58 @@ public class BundleAntProject extends Project {
         this.deploymentPhase = deploymentPhase;
     }
 
-    public DeployDifferences getDeployDifferences() {
-        return deployDiffs;
-    }
-
     public void setDryRun(boolean dryRun) {
         this.dryRun = dryRun;
     }
 
     public boolean isDryRun() {
         return dryRun;
+    }
+
+    public DeployDifferences getDeployDifferences() {
+        return deployDiffs;
+    }
+
+    /**
+     * If there were url-file or url-archives, this returns the set of files
+     * that were downloaded from the URLs.
+     * 
+     * @return downloaded files from remote URLs that contain our bundle content
+     */
+    public Set<File> getDownloadedFiles() {
+        return downloadedFiles;
+    }
+
+    /**
+     * Logs a message in a format that our audit task/agent-side audit log listener knows about.
+     * When running in the agent, this audit log will be sent to the server.
+     * It is always logged at part of the normal Ant logger mechanism.
+     * 
+     * @param status SUCCESS, FAILURE, WARN, INFO
+     * @param action audit action, a short summary easily displayed (e.g "File Download")
+     * @param info information about the action target, easily displayed (e.g. "myfile.zip")
+     * @param message Optional, brief (one or two lines) information message
+     * @param details Optional, verbose data, such as full file text or long error messages/stack traces  
+     */
+    public void auditLog(AuditStatus status, String action, String info, String message, String details) {
+        if (status == null) {
+            status = AuditStatus.SUCCESS;
+        }
+
+        // this will log a message with a very specific format that is understood
+        // by the agent-side build listener's messageLogged method:
+        // org.rhq.plugins.ant.DeploymentAuditorBuildListener.messageLogged(BuildEvent)
+        // RHQ_AUDIT_MESSAGE___<status>___<action>___<info>___<message>___<details>
+        StringBuilder str = new StringBuilder("RHQ_AUDIT_MESSAGE___");
+        str.append(status.name());
+        str.append("___");
+        str.append((action != null) ? action : "Audit Message");
+        str.append("___");
+        str.append((info != null) ? info : "Timestamp: " + new Date().toString());
+        str.append("___");
+        str.append((message != null) ? message : "");
+        str.append("___");
+        str.append((details != null) ? details : "");
+        this.log(str.toString(), Project.MSG_INFO);
     }
 }

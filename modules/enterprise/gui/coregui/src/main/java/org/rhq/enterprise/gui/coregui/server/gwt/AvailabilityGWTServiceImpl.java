@@ -36,12 +36,12 @@ public class AvailabilityGWTServiceImpl extends AbstractGWTServiceImpl implement
 
     private AvailabilityManagerLocal availabilityManager = LookupUtil.getAvailabilityManager();
 
-    public PageList<Availability> findAvailabilityForResource(int resourceId, PageControl pc) {
+    public PageList<Availability> findAvailabilityForResource(int resourceId, PageControl pc) throws RuntimeException {
         try {
             return SerialUtility.prepare(availabilityManager.findAvailabilityForResource(getSessionSubject(),
                 resourceId, pc), "AvailabilityService.findAvailabilityForResource");
-        } catch (Exception e) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
         }
     }
 }

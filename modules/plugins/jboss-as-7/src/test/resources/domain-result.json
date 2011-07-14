@@ -1,0 +1,2113 @@
+{
+  "outcome" : "success",
+  "result" : {
+    "host" : {
+      "local" : {
+        "name" : "local",
+        "namespaces" : [ {
+          "xsi" : "http://www.w3.org/2001/XMLSchema-instance"
+        } ],
+        "schema-locations" : [ {
+          "urn:jboss:domain:1.0" : "jboss_7_0.xsd"
+        } ],
+        "extension" : null,
+        "system-property" : null,
+        "path" : null,
+        "management" : {
+          "security-realms" : {
+            "security-realm" : null
+          },
+          "connections" : {
+            "connection" : null
+          }
+        },
+        "management-interface" : {
+          "native-interface" : {
+            "interface" : "public",
+            "port" : 9999
+          },
+          "http-interface" : {
+            "interface" : "public",
+            "port" : 9990
+          }
+        },
+        "server-config" : {
+          "server-one" : {
+            "path" : null,
+            "system-property" : null,
+            "interface" : null,
+            "jvm" : {
+              "default" : {
+                "type" : null,
+                "agent-lib" : null,
+                "agent-path" : null,
+                "env-classpath-ignored" : null,
+                "environment-variables" : null,
+                "heap-size" : null,
+                "max-heap-size" : null,
+                "java-agent" : null,
+                "java-home" : null,
+                "jvm-options" : null,
+                "permgen-size" : null,
+                "max-permgen-size" : null,
+                "stack-size" : null
+              }
+            },
+            "socket-binding-group" : null,
+            "socket-binding-port-offset" : null,
+            "name" : "server-one",
+            "group" : "main-server-group",
+            "auto-start" : true
+          },
+          "server-two" : {
+            "path" : null,
+            "system-property" : null,
+            "interface" : null,
+            "jvm" : {
+              "default" : {
+                "type" : null,
+                "agent-lib" : null,
+                "agent-path" : null,
+                "env-classpath-ignored" : null,
+                "environment-variables" : null,
+                "heap-size" : "64m",
+                "max-heap-size" : "256m",
+                "java-agent" : null,
+                "java-home" : null,
+                "jvm-options" : null,
+                "permgen-size" : null,
+                "max-permgen-size" : null,
+                "stack-size" : null
+              }
+            },
+            "socket-binding-group" : "standard-sockets",
+            "socket-binding-port-offset" : 150,
+            "name" : "server-two",
+            "group" : "main-server-group",
+            "auto-start" : true
+          },
+          "server-three" : {
+            "path" : null,
+            "system-property" : null,
+            "interface" : null,
+            "jvm" : null,
+            "socket-binding-group" : "standard-sockets",
+            "socket-binding-port-offset" : 250,
+            "name" : "server-three",
+            "group" : "other-server-group",
+            "auto-start" : false
+          }
+        },
+        "domain-controller" : {
+          "local" : {
+          }
+        },
+        "interface" : {
+          "loopback" : {
+            "name" : "loopback",
+            "criteria" : [ {
+              "inet-address" : "127.0.0.1"
+            } ]
+          },
+          "public" : {
+            "name" : "public",
+            "criteria" : "any-ipv4-address"
+          }
+        },
+        "jvm" : {
+          "default" : {
+            "type" : null,
+            "agent-lib" : null,
+            "agent-path" : null,
+            "env-classpath-ignored" : null,
+            "environment-variables" : null,
+            "heap-size" : "64m",
+            "max-heap-size" : "128m",
+            "java-agent" : null,
+            "java-home" : null,
+            "jvm-options" : null,
+            "permgen-size" : null,
+            "max-permgen-size" : null,
+            "stack-size" : null
+          }
+        },
+        "server" : {
+          "server-one" : {
+            "namespaces" : [ {
+              "xsi" : "http://www.w3.org/2001/XMLSchema-instance"
+            } ],
+            "schema-locations" : [ {
+              "urn:jboss:domain:1.0" : "jboss_7_0.xsd"
+            }, {
+              "urn:jboss:domain:arquillian:1.0" : "jboss-arquillian.xsd"
+            }, {
+              "urn:jboss:domain:connector:1.0" : "jboss-connector.xsd"
+            }, {
+              "urn:jboss:domain:datasources:1.0" : "jboss-datasources.xsd"
+            }, {
+              "urn:jboss:domain:ejb3:1.0" : "jboss-ejb3.xsd"
+            }, {
+              "urn:jboss:domain:ee:1.0" : "jboss-ee.xsd"
+            }, {
+              "urn:jboss:domain:jaxrs:1.0" : "jboss-jaxrs.xsd"
+            }, {
+              "urn:jboss:domain:jmx:1.0" : "jboss-jmx.xsd"
+            }, {
+              "urn:jboss:domain:jpa:1.0" : "jboss-jpa.xsd"
+            }, {
+              "urn:jboss:domain:messaging:1.0" : "jboss-messaging.xsd"
+            }, {
+              "urn:jboss:domain:naming:1.0" : "jboss-naming.xsd"
+            }, {
+              "urn:jboss:domain:osgi:1.0" : "jboss-osgi.xsd"
+            }, {
+              "urn:jboss:domain:remoting:1.0" : "jboss-remoting.xsd"
+            }, {
+              "urn:jboss:domain:resourceadapters:1.0" : "jboss-resource-adapters.xsd"
+            }, {
+              "urn:jboss:domain:sar:1.0" : "jboss-sar.xsd"
+            }, {
+              "urn:jboss:domain:threads:1.0" : "jboss-threads.xsd"
+            }, {
+              "urn:jboss:domain:transactions:1.0" : "jboss-txn.xsd"
+            }, {
+              "urn:jboss:domain:web:1.0" : "jboss-web.xsd"
+            }, {
+              "urn:jboss:domain:security:1.0" : "jboss-security.xsd"
+            }, {
+              "urn:jboss:domain:webservices:1.0" : "jboss-webservices.xsd"
+            }, {
+              "urn:jboss:domain:weld:1.0" : "jboss-weld.xsd"
+            } ],
+            "name" : "server-one",
+            "management" : {
+              "security-realms" : {
+                "security-realm" : null
+              },
+              "connections" : {
+                "connection" : null
+              }
+            },
+            "management-interface" : null,
+            "profile-name" : null,
+            "extension" : {
+              "org.jboss.as.arquillian.service" : {
+                "module" : "org.jboss.as.arquillian.service"
+              },
+              "org.jboss.as.connector" : {
+                "module" : "org.jboss.as.connector"
+              },
+              "org.jboss.as.jmx" : {
+                "module" : "org.jboss.as.jmx"
+              },
+              "org.jboss.as.jpa" : {
+                "module" : "org.jboss.as.jpa"
+              },
+              "org.jboss.as.logging" : {
+                "module" : "org.jboss.as.logging"
+              },
+              "org.jboss.as.ee" : {
+                "module" : "org.jboss.as.ee"
+              },
+              "org.jboss.as.ejb3" : {
+                "module" : "org.jboss.as.ejb3"
+              },
+              "org.jboss.as.jaxrs" : {
+                "module" : "org.jboss.as.jaxrs"
+              },
+              "org.jboss.as.messaging" : {
+                "module" : "org.jboss.as.messaging"
+              },
+              "org.jboss.as.naming" : {
+                "module" : "org.jboss.as.naming"
+              },
+              "org.jboss.as.osgi" : {
+                "module" : "org.jboss.as.osgi"
+              },
+              "org.jboss.as.remoting" : {
+                "module" : "org.jboss.as.remoting"
+              },
+              "org.jboss.as.sar" : {
+                "module" : "org.jboss.as.sar"
+              },
+              "org.jboss.as.security" : {
+                "module" : "org.jboss.as.security"
+              },
+              "org.jboss.as.threads" : {
+                "module" : "org.jboss.as.threads"
+              },
+              "org.jboss.as.transactions" : {
+                "module" : "org.jboss.as.transactions"
+              },
+              "org.jboss.as.web" : {
+                "module" : "org.jboss.as.web"
+              },
+              "org.jboss.as.weld" : {
+                "module" : "org.jboss.as.weld"
+              },
+              "org.jboss.as.webservices" : {
+                "module" : "org.jboss.as.webservices"
+              }
+            },
+            "system-property" : {
+              "java.net.preferIPv4Stack" : {
+                "value" : "true"
+              }
+            },
+            "path" : null,
+            "subsystem" : {
+              "logging" : {
+                "logger" : {
+                },
+                "async-handler" : {
+                },
+                "console-handler" : {
+                  "CONSOLE" : {
+                    "autoflush" : true,
+                    "encoding" : null,
+                    "formatter" : "%d{HH:mm:ss,SSS} %-5p [%c] (%t) %s%E%n",
+                    "level" : "INFO",
+                    "queue-length" : null
+                  }
+                },
+                "file-handler" : {
+                },
+                "periodic-rotating-file-handler" : {
+                  "FILE" : {
+                    "autoflush" : true,
+                    "encoding" : null,
+                    "formatter" : "%d{HH:mm:ss,SSS} %-5p [%c] (%t) %s%E%n",
+                    "level" : "INFO",
+                    "file" : {
+                      "path" : "server.log",
+                      "relative-to" : "jboss.server.log.dir"
+                    },
+                    "suffix" : ".yyyy-MM-dd"
+                  }
+                },
+                "size-rotating-file-handler" : {
+                },
+                "root-logger" : {
+                  "level" : "INFO",
+                  "handlers" : [ "CONSOLE", "FILE" ]
+                }
+              },
+              "threads" : {
+                "bounded-queue-thread-pool" : {
+                  "jca-short-running" : {
+                    "name" : "jca-short-running",
+                    "max-threads" : {
+                      "count" : 10,
+                      "per-cpu" : 20
+                    },
+                    "keepalive-time" : {
+                      "time" : 10,
+                      "unit" : "SECONDS"
+                    },
+                    "blocking" : true,
+                    "allow-core-timeout" : false,
+                    "queue-length" : {
+                      "count" : 10,
+                      "per-cpu" : 20
+                    },
+                    "core-threads" : {
+                      "count" : 10,
+                      "per-cpu" : 20
+                    }
+                  },
+                  "jca-long-running" : {
+                    "name" : "jca-long-running",
+                    "max-threads" : {
+                      "count" : 10,
+                      "per-cpu" : 20
+                    },
+                    "keepalive-time" : {
+                      "time" : 10,
+                      "unit" : "SECONDS"
+                    },
+                    "blocking" : true,
+                    "allow-core-timeout" : false,
+                    "queue-length" : {
+                      "count" : 10,
+                      "per-cpu" : 20
+                    },
+                    "core-threads" : {
+                      "count" : 10,
+                      "per-cpu" : 20
+                    }
+                  },
+                  "ejb3-async" : {
+                    "name" : "ejb3-async",
+                    "max-threads" : {
+                      "count" : 10,
+                      "per-cpu" : 20
+                    },
+                    "keepalive-time" : {
+                      "time" : 10,
+                      "unit" : "SECONDS"
+                    },
+                    "blocking" : true,
+                    "allow-core-timeout" : false,
+                    "queue-length" : {
+                      "count" : 10,
+                      "per-cpu" : 20
+                    },
+                    "core-threads" : {
+                      "count" : 10,
+                      "per-cpu" : 20
+                    }
+                  }
+                },
+                "queueless-thread-pool" : {
+                },
+                "scheduled-thread-pool" : {
+                  "remoting" : {
+                    "name" : "remoting",
+                    "max-threads" : {
+                      "count" : 10,
+                      "per-cpu" : 20
+                    },
+                    "keepalive-time" : {
+                      "time" : 10,
+                      "unit" : "SECONDS"
+                    }
+                  }
+                },
+                "thread-factory" : {
+                },
+                "unbounded-queue-thread-pool" : {
+                }
+              },
+              "arquillian" : {
+              },
+              "ee" : null,
+              "ejb3" : {
+              },
+              "naming" : {
+              },
+              "security" : {
+                "security-domain" : {
+                  "other" : {
+                    "authentication" : [ {
+                      "code" : "UsersRoles",
+                      "flag" : "required"
+                    } ]
+                  }
+                }
+              },
+              "transactions" : {
+                "core-environment" : {
+                  "process-id" : {
+                    "uuid" : "uuid"
+                  },
+                  "node-identifier" : null,
+                  "relative-to" : null,
+                  "path" : null
+                },
+                "recovery-environment" : {
+                  "socket-binding" : "txn-recovery-environment",
+                  "status-socket-binding" : "txn-status-manager"
+                },
+                "coordinator-environment" : {
+                  "enable-statistics" : null,
+                  "default-timeout" : null
+                },
+                "object-store" : {
+                  "relative-to" : null,
+                  "path" : null
+                }
+              },
+              "remoting" : {
+                "thread-pool" : "remoting",
+                "connector" : {
+                }
+              },
+              "jmx" : {
+                "server-binding" : "jmx-connector-server",
+                "registry-binding" : "jmx-connector-registry"
+              },
+              "jpa" : {
+                "default-datasource" : ""
+              },
+              "sar" : {
+              },
+              "weld" : {
+              },
+              "connector" : {
+                "default-workmanager-short-running-thread-pool" : "jca-short-running",
+                "default-workmanager-long-running-thread-pool" : "jca-long-running",
+                "bean-validation-enabled" : true,
+                "archive-validation-enabled" : true
+              },
+              "datasources" : {
+                "data-source" : {
+                  "java:/H2DS" : {
+                    "connection-url" : "jdbc:h2:mem:test;DB_CLOSE_DELAY=-1",
+                    "jndi-name" : "java:/H2DS",
+                    "driver-name" : "h2",
+                    "pool-name" : "H2DS",
+                    "use-java-context" : true,
+                    "enabled" : true,
+                    "pool-prefill" : false,
+                    "pool-use-strict-min" : false,
+                    "user-name" : "sa",
+                    "password" : "sa",
+                    "background-validation" : false,
+                    "use-fast-fail" : false,
+                    "validate-on-match" : false
+                  }
+                },
+                "xa-data-source" : null,
+                "jdbc-driver" : {
+                  "h2" : {
+                    "driver-name" : "h2",
+                    "driver-module-name" : "com.h2database.h2",
+                    "driver-xa-datasource-class-name" : "org.h2.jdbcx.JdbcDataSource"
+                  }
+                }
+              },
+              "resource-adapters" : {
+                "resource-adapter" : null
+              },
+              "osgi" : {
+                "activation" : "lazy",
+                "configuration" : {
+                  "pid" : "org.apache.felix.webconsole.internal.servlet.OsgiManager",
+                  "configuration_properties" : {
+                    "manager.root" : "jboss-osgi"
+                  }
+                },
+                "properties" : {
+                  "org.jboss.osgi.system.modules" : "org.apache.commons.logging,\n                                                                                            org.apache.log4j,\n                                                                                            org.jboss.as.osgi,\n                                                                                            org.slf4j,",
+                  "org.osgi.framework.system.packages.extra" : "org.apache.commons.logging;version=1.1.1,\n                                                                                            org.apache.log4j;version=1.2,\n                                                                                            org.jboss.as.osgi.service;version=7.0,\n                                                                                            org.jboss.osgi.deployment.interceptor;version=1.0,\n                                                                                            org.jboss.osgi.spi.capability;version=1.0,\n                                                                                            org.jboss.osgi.spi.util;version=1.0,\n                                                                                            org.jboss.osgi.testing;version=1.0,\n                                                                                            org.jboss.osgi.vfs;version=1.0,\n                                                                                            org.slf4j;version=1.5.10,",
+                  "org.osgi.framework.startlevel.beginning" : "1"
+                },
+                "modules" : {
+                  "javaee.api" : null,
+                  "org.jboss.as.arquillian.aggregate" : null,
+                  "org.jboss.logging" : null,
+                  "org.apache.aries.util" : null,
+                  "org.jboss.osgi.webconsole" : null,
+                  "org.osgi.compendium" : null,
+                  "org.apache.felix.log" : {
+                    "start" : "1"
+                  },
+                  "org.jboss.osgi.logging" : {
+                    "start" : "1"
+                  },
+                  "org.apache.aries.jmx" : {
+                    "start" : "2"
+                  },
+                  "org.apache.felix.configadmin" : {
+                    "start" : "2"
+                  },
+                  "org.apache.felix.eventadmin" : {
+                    "start" : "2"
+                  },
+                  "org.apache.felix.metatype" : {
+                    "start" : "2"
+                  },
+                  "org.apache.felix.webconsole" : {
+                    "start" : "2"
+                  },
+                  "org.jboss.as.osgi.configadmin" : {
+                    "start" : "2"
+                  },
+                  "org.jboss.osgi.jmx" : {
+                    "start" : "2"
+                  },
+                  "org.jboss.osgi.http" : {
+                    "start" : "2"
+                  },
+                  "org.jboss.osgi.blueprint" : {
+                    "start" : "3"
+                  },
+                  "org.jboss.osgi.webapp" : {
+                    "start" : "3"
+                  },
+                  "org.jboss.osgi.xerces" : {
+                    "start" : "3"
+                  }
+                }
+              },
+              "messaging" : {
+                "acceptor" : {
+                  "in-vm" : {
+                    "type" : "InVM",
+                    "server-id" : 0,
+                    "param" : null
+                  },
+                  "netty" : {
+                    "type" : "Remote",
+                    "socket-binding" : "messaging",
+                    "param" : null
+                  },
+                  "netty-throughput" : {
+                    "type" : "Remote",
+                    "socket-binding" : "messaging-throughput",
+                    "param" : [ {
+                      "batch-delay" : "50"
+                    }, {
+                      "direct-deliver" : "false"
+                    } ]
+                  }
+                },
+                "address-setting" : {
+                  "#" : {
+                    "dead-letter-address" : "jms.queue.DLQ",
+                    "expiry-address" : "jms.queue.ExpiryQueue",
+                    "redelivery-delay" : "0",
+                    "max-size-bytes" : "10485760",
+                    "message-counter-history-day-limit" : "10",
+                    "address-full-policy" : "BLOCK"
+                  }
+                },
+                "connector" : {
+                  "in-vm" : {
+                    "type" : "InVM",
+                    "server-id" : 0,
+                    "param" : null
+                  },
+                  "netty" : {
+                    "type" : "Remote",
+                    "socket-binding" : "messaging",
+                    "param" : null
+                  },
+                  "netty-throughput" : {
+                    "type" : "Remote",
+                    "socket-binding" : "messaging-throughput",
+                    "param" : [ {
+                      "batch-delay" : "50"
+                    } ]
+                  }
+                },
+                "journal-min-files" : "2",
+                "journal-type" : "NIO",
+                "journal-file-size" : "102400",
+                "persistence-enabled" : false,
+                "security-setting" : {
+                  "#" : {
+                    "guest" : {
+                      "send" : true,
+                      "consume" : true,
+                      "createDurableQueue" : false,
+                      "deleteDurableQueue" : false,
+                      "createNonDurableQueue" : true,
+                      "deleteNonDurableQueue" : true,
+                      "manage" : false
+                    }
+                  }
+                },
+                "queue" : null
+              },
+              "jaxrs" : {
+              },
+              "jms" : {
+                "connection-factory" : {
+                  "InVmConnectionFactory" : {
+                    "connector" : {
+                      "in-vm" : {
+                        "backup-connector-name" : "netty"
+                      }
+                    },
+                    "entries" : [ "java:/ConnectionFactory" ]
+                  },
+                  "RemoteConnectionFactory" : {
+                    "connector" : {
+                      "netty" : {
+                        "backup-connector-name" : "in-vm"
+                      }
+                    },
+                    "entries" : [ "RemoteConnectionFactory" ]
+                  }
+                },
+                "queue" : {
+                  "testQueue" : {
+                    "entries" : [ "queue/test" ]
+                  }
+                },
+                "topic" : {
+                  "testTopic" : {
+                    "entries" : [ "topic/test" ]
+                  }
+                }
+              },
+              "web" : {
+                "configuration" : null,
+                "connector" : {
+                  "http" : {
+                    "protocol" : "HTTP/1.1",
+                    "socket-binding" : "http",
+                    "scheme" : "http",
+                    "virtual-server" : null,
+                    "ssl" : null
+                  }
+                },
+                "virtual-server" : {
+                  "localhost" : {
+                    "alias" : [ "example.com" ],
+                    "access-log" : null,
+                    "rewrite" : null,
+                    "default-web-module" : null,
+                    "enable-welcome-root" : false
+                  }
+                }
+              },
+              "webservices" : {
+                "modify-wsdl-address" : true,
+                "wsdl-host" : "localhost",
+                "endpoint" : {
+                }
+              }
+            },
+            "interface" : {
+              "loopback" : {
+                "name" : "loopback",
+                "criteria" : [ {
+                  "inet-address" : "127.0.0.1"
+                } ]
+              },
+              "external" : {
+                "name" : "external",
+                "criteria" : "any-ipv4-address"
+              },
+              "public" : {
+                "name" : "public",
+                "criteria" : "any-ipv4-address"
+              }
+            },
+            "socket-binding-group" : {
+              "standard-sockets" : {
+                "name" : "standard-sockets",
+                "default-interface" : "external",
+                "port-offset" : 0,
+                "socket-binding" : {
+                  "jmx-connector-registry" : {
+                    "name" : "jmx-connector-registry",
+                    "interface" : null,
+                    "port" : 1090,
+                    "fixed-port" : null,
+                    "multicast-address" : null,
+                    "multicast-port" : null
+                  },
+                  "jmx-connector-server" : {
+                    "name" : "jmx-connector-server",
+                    "interface" : null,
+                    "port" : 1091,
+                    "fixed-port" : null,
+                    "multicast-address" : null,
+                    "multicast-port" : null
+                  },
+                  "jndi" : {
+                    "name" : "jndi",
+                    "interface" : null,
+                    "port" : 1099,
+                    "fixed-port" : null,
+                    "multicast-address" : null,
+                    "multicast-port" : null
+                  },
+                  "http" : {
+                    "name" : "http",
+                    "interface" : null,
+                    "port" : 8080,
+                    "fixed-port" : null,
+                    "multicast-address" : null,
+                    "multicast-port" : null
+                  },
+                  "https" : {
+                    "name" : "https",
+                    "interface" : null,
+                    "port" : 8447,
+                    "fixed-port" : null,
+                    "multicast-address" : null,
+                    "multicast-port" : null
+                  },
+                  "osgi-http" : {
+                    "name" : "osgi-http",
+                    "interface" : null,
+                    "port" : 8090,
+                    "fixed-port" : null,
+                    "multicast-address" : null,
+                    "multicast-port" : null
+                  },
+                  "remoting" : {
+                    "name" : "remoting",
+                    "interface" : null,
+                    "port" : 4447,
+                    "fixed-port" : null,
+                    "multicast-address" : null,
+                    "multicast-port" : null
+                  },
+                  "txn-recovery-environment" : {
+                    "name" : "txn-recovery-environment",
+                    "interface" : null,
+                    "port" : 4712,
+                    "fixed-port" : null,
+                    "multicast-address" : null,
+                    "multicast-port" : null
+                  },
+                  "txn-status-manager" : {
+                    "name" : "txn-status-manager",
+                    "interface" : null,
+                    "port" : 4713,
+                    "fixed-port" : null,
+                    "multicast-address" : null,
+                    "multicast-port" : null
+                  },
+                  "messaging" : {
+                    "name" : "messaging",
+                    "interface" : null,
+                    "port" : 5445,
+                    "fixed-port" : null,
+                    "multicast-address" : null,
+                    "multicast-port" : null
+                  },
+                  "messaging-throughput" : {
+                    "name" : "messaging-throughput",
+                    "interface" : null,
+                    "port" : 5455,
+                    "fixed-port" : null,
+                    "multicast-address" : null,
+                    "multicast-port" : null
+                  }
+                }
+              }
+            },
+            "deployment" : null
+          },
+          "server-two" : {
+            "namespaces" : [ {
+              "xsi" : "http://www.w3.org/2001/XMLSchema-instance"
+            } ],
+            "schema-locations" : [ {
+              "urn:jboss:domain:1.0" : "jboss_7_0.xsd"
+            }, {
+              "urn:jboss:domain:arquillian:1.0" : "jboss-arquillian.xsd"
+            }, {
+              "urn:jboss:domain:connector:1.0" : "jboss-connector.xsd"
+            }, {
+              "urn:jboss:domain:datasources:1.0" : "jboss-datasources.xsd"
+            }, {
+              "urn:jboss:domain:ejb3:1.0" : "jboss-ejb3.xsd"
+            }, {
+              "urn:jboss:domain:ee:1.0" : "jboss-ee.xsd"
+            }, {
+              "urn:jboss:domain:jaxrs:1.0" : "jboss-jaxrs.xsd"
+            }, {
+              "urn:jboss:domain:jmx:1.0" : "jboss-jmx.xsd"
+            }, {
+              "urn:jboss:domain:jpa:1.0" : "jboss-jpa.xsd"
+            }, {
+              "urn:jboss:domain:messaging:1.0" : "jboss-messaging.xsd"
+            }, {
+              "urn:jboss:domain:naming:1.0" : "jboss-naming.xsd"
+            }, {
+              "urn:jboss:domain:osgi:1.0" : "jboss-osgi.xsd"
+            }, {
+              "urn:jboss:domain:remoting:1.0" : "jboss-remoting.xsd"
+            }, {
+              "urn:jboss:domain:resourceadapters:1.0" : "jboss-resource-adapters.xsd"
+            }, {
+              "urn:jboss:domain:sar:1.0" : "jboss-sar.xsd"
+            }, {
+              "urn:jboss:domain:threads:1.0" : "jboss-threads.xsd"
+            }, {
+              "urn:jboss:domain:transactions:1.0" : "jboss-txn.xsd"
+            }, {
+              "urn:jboss:domain:web:1.0" : "jboss-web.xsd"
+            }, {
+              "urn:jboss:domain:security:1.0" : "jboss-security.xsd"
+            }, {
+              "urn:jboss:domain:webservices:1.0" : "jboss-webservices.xsd"
+            }, {
+              "urn:jboss:domain:weld:1.0" : "jboss-weld.xsd"
+            } ],
+            "name" : "server-two",
+            "management" : {
+              "security-realms" : {
+                "security-realm" : null
+              },
+              "connections" : {
+                "connection" : null
+              }
+            },
+            "management-interface" : null,
+            "profile-name" : null,
+            "extension" : {
+              "org.jboss.as.arquillian.service" : {
+                "module" : "org.jboss.as.arquillian.service"
+              },
+              "org.jboss.as.connector" : {
+                "module" : "org.jboss.as.connector"
+              },
+              "org.jboss.as.jmx" : {
+                "module" : "org.jboss.as.jmx"
+              },
+              "org.jboss.as.jpa" : {
+                "module" : "org.jboss.as.jpa"
+              },
+              "org.jboss.as.logging" : {
+                "module" : "org.jboss.as.logging"
+              },
+              "org.jboss.as.ee" : {
+                "module" : "org.jboss.as.ee"
+              },
+              "org.jboss.as.ejb3" : {
+                "module" : "org.jboss.as.ejb3"
+              },
+              "org.jboss.as.jaxrs" : {
+                "module" : "org.jboss.as.jaxrs"
+              },
+              "org.jboss.as.messaging" : {
+                "module" : "org.jboss.as.messaging"
+              },
+              "org.jboss.as.naming" : {
+                "module" : "org.jboss.as.naming"
+              },
+              "org.jboss.as.osgi" : {
+                "module" : "org.jboss.as.osgi"
+              },
+              "org.jboss.as.remoting" : {
+                "module" : "org.jboss.as.remoting"
+              },
+              "org.jboss.as.sar" : {
+                "module" : "org.jboss.as.sar"
+              },
+              "org.jboss.as.security" : {
+                "module" : "org.jboss.as.security"
+              },
+              "org.jboss.as.threads" : {
+                "module" : "org.jboss.as.threads"
+              },
+              "org.jboss.as.transactions" : {
+                "module" : "org.jboss.as.transactions"
+              },
+              "org.jboss.as.web" : {
+                "module" : "org.jboss.as.web"
+              },
+              "org.jboss.as.weld" : {
+                "module" : "org.jboss.as.weld"
+              },
+              "org.jboss.as.webservices" : {
+                "module" : "org.jboss.as.webservices"
+              }
+            },
+            "system-property" : {
+              "java.net.preferIPv4Stack" : {
+                "value" : "true"
+              }
+            },
+            "path" : null,
+            "subsystem" : {
+              "logging" : {
+                "logger" : {
+                },
+                "async-handler" : {
+                },
+                "console-handler" : {
+                  "CONSOLE" : {
+                    "autoflush" : true,
+                    "encoding" : null,
+                    "formatter" : "%d{HH:mm:ss,SSS} %-5p [%c] (%t) %s%E%n",
+                    "level" : "INFO",
+                    "queue-length" : null
+                  }
+                },
+                "file-handler" : {
+                },
+                "periodic-rotating-file-handler" : {
+                  "FILE" : {
+                    "autoflush" : true,
+                    "encoding" : null,
+                    "formatter" : "%d{HH:mm:ss,SSS} %-5p [%c] (%t) %s%E%n",
+                    "level" : "INFO",
+                    "file" : {
+                      "path" : "server.log",
+                      "relative-to" : "jboss.server.log.dir"
+                    },
+                    "suffix" : ".yyyy-MM-dd"
+                  }
+                },
+                "size-rotating-file-handler" : {
+                },
+                "root-logger" : {
+                  "level" : "INFO",
+                  "handlers" : [ "CONSOLE", "FILE" ]
+                }
+              },
+              "threads" : {
+                "bounded-queue-thread-pool" : {
+                  "jca-short-running" : {
+                    "name" : "jca-short-running",
+                    "max-threads" : {
+                      "count" : 10,
+                      "per-cpu" : 20
+                    },
+                    "keepalive-time" : {
+                      "time" : 10,
+                      "unit" : "SECONDS"
+                    },
+                    "blocking" : true,
+                    "allow-core-timeout" : false,
+                    "queue-length" : {
+                      "count" : 10,
+                      "per-cpu" : 20
+                    },
+                    "core-threads" : {
+                      "count" : 10,
+                      "per-cpu" : 20
+                    }
+                  },
+                  "jca-long-running" : {
+                    "name" : "jca-long-running",
+                    "max-threads" : {
+                      "count" : 10,
+                      "per-cpu" : 20
+                    },
+                    "keepalive-time" : {
+                      "time" : 10,
+                      "unit" : "SECONDS"
+                    },
+                    "blocking" : true,
+                    "allow-core-timeout" : false,
+                    "queue-length" : {
+                      "count" : 10,
+                      "per-cpu" : 20
+                    },
+                    "core-threads" : {
+                      "count" : 10,
+                      "per-cpu" : 20
+                    }
+                  },
+                  "ejb3-async" : {
+                    "name" : "ejb3-async",
+                    "max-threads" : {
+                      "count" : 10,
+                      "per-cpu" : 20
+                    },
+                    "keepalive-time" : {
+                      "time" : 10,
+                      "unit" : "SECONDS"
+                    },
+                    "blocking" : true,
+                    "allow-core-timeout" : false,
+                    "queue-length" : {
+                      "count" : 10,
+                      "per-cpu" : 20
+                    },
+                    "core-threads" : {
+                      "count" : 10,
+                      "per-cpu" : 20
+                    }
+                  }
+                },
+                "queueless-thread-pool" : {
+                },
+                "scheduled-thread-pool" : {
+                  "remoting" : {
+                    "name" : "remoting",
+                    "max-threads" : {
+                      "count" : 10,
+                      "per-cpu" : 20
+                    },
+                    "keepalive-time" : {
+                      "time" : 10,
+                      "unit" : "SECONDS"
+                    }
+                  }
+                },
+                "thread-factory" : {
+                },
+                "unbounded-queue-thread-pool" : {
+                }
+              },
+              "arquillian" : {
+              },
+              "ee" : null,
+              "ejb3" : {
+              },
+              "naming" : {
+              },
+              "security" : {
+                "security-domain" : {
+                  "other" : {
+                    "authentication" : [ {
+                      "code" : "UsersRoles",
+                      "flag" : "required"
+                    } ]
+                  }
+                }
+              },
+              "transactions" : {
+                "core-environment" : {
+                  "process-id" : {
+                    "uuid" : "uuid"
+                  },
+                  "node-identifier" : null,
+                  "relative-to" : null,
+                  "path" : null
+                },
+                "recovery-environment" : {
+                  "socket-binding" : "txn-recovery-environment",
+                  "status-socket-binding" : "txn-status-manager"
+                },
+                "coordinator-environment" : {
+                  "enable-statistics" : null,
+                  "default-timeout" : null
+                },
+                "object-store" : {
+                  "relative-to" : null,
+                  "path" : null
+                }
+              },
+              "remoting" : {
+                "thread-pool" : "remoting",
+                "connector" : {
+                }
+              },
+              "jmx" : {
+                "server-binding" : "jmx-connector-server",
+                "registry-binding" : "jmx-connector-registry"
+              },
+              "jpa" : {
+                "default-datasource" : ""
+              },
+              "sar" : {
+              },
+              "weld" : {
+              },
+              "connector" : {
+                "default-workmanager-short-running-thread-pool" : "jca-short-running",
+                "default-workmanager-long-running-thread-pool" : "jca-long-running",
+                "bean-validation-enabled" : true,
+                "archive-validation-enabled" : true
+              },
+              "datasources" : {
+                "data-source" : {
+                  "java:/H2DS" : {
+                    "connection-url" : "jdbc:h2:mem:test;DB_CLOSE_DELAY=-1",
+                    "jndi-name" : "java:/H2DS",
+                    "driver-name" : "h2",
+                    "pool-name" : "H2DS",
+                    "use-java-context" : true,
+                    "enabled" : true,
+                    "pool-prefill" : false,
+                    "pool-use-strict-min" : false,
+                    "user-name" : "sa",
+                    "password" : "sa",
+                    "background-validation" : false,
+                    "use-fast-fail" : false,
+                    "validate-on-match" : false
+                  }
+                },
+                "xa-data-source" : null,
+                "jdbc-driver" : {
+                  "h2" : {
+                    "driver-name" : "h2",
+                    "driver-module-name" : "com.h2database.h2",
+                    "driver-xa-datasource-class-name" : "org.h2.jdbcx.JdbcDataSource"
+                  }
+                }
+              },
+              "resource-adapters" : {
+                "resource-adapter" : null
+              },
+              "osgi" : {
+                "activation" : "lazy",
+                "configuration" : {
+                  "pid" : "org.apache.felix.webconsole.internal.servlet.OsgiManager",
+                  "configuration_properties" : {
+                    "manager.root" : "jboss-osgi"
+                  }
+                },
+                "properties" : {
+                  "org.jboss.osgi.system.modules" : "org.apache.commons.logging,\n                                                                                            org.apache.log4j,\n                                                                                            org.jboss.as.osgi,\n                                                                                            org.slf4j,",
+                  "org.osgi.framework.system.packages.extra" : "org.apache.commons.logging;version=1.1.1,\n                                                                                            org.apache.log4j;version=1.2,\n                                                                                            org.jboss.as.osgi.service;version=7.0,\n                                                                                            org.jboss.osgi.deployment.interceptor;version=1.0,\n                                                                                            org.jboss.osgi.spi.capability;version=1.0,\n                                                                                            org.jboss.osgi.spi.util;version=1.0,\n                                                                                            org.jboss.osgi.testing;version=1.0,\n                                                                                            org.jboss.osgi.vfs;version=1.0,\n                                                                                            org.slf4j;version=1.5.10,",
+                  "org.osgi.framework.startlevel.beginning" : "1"
+                },
+                "modules" : {
+                  "javaee.api" : null,
+                  "org.jboss.as.arquillian.aggregate" : null,
+                  "org.jboss.logging" : null,
+                  "org.apache.aries.util" : null,
+                  "org.jboss.osgi.webconsole" : null,
+                  "org.osgi.compendium" : null,
+                  "org.apache.felix.log" : {
+                    "start" : "1"
+                  },
+                  "org.jboss.osgi.logging" : {
+                    "start" : "1"
+                  },
+                  "org.apache.aries.jmx" : {
+                    "start" : "2"
+                  },
+                  "org.apache.felix.configadmin" : {
+                    "start" : "2"
+                  },
+                  "org.apache.felix.eventadmin" : {
+                    "start" : "2"
+                  },
+                  "org.apache.felix.metatype" : {
+                    "start" : "2"
+                  },
+                  "org.apache.felix.webconsole" : {
+                    "start" : "2"
+                  },
+                  "org.jboss.as.osgi.configadmin" : {
+                    "start" : "2"
+                  },
+                  "org.jboss.osgi.jmx" : {
+                    "start" : "2"
+                  },
+                  "org.jboss.osgi.http" : {
+                    "start" : "2"
+                  },
+                  "org.jboss.osgi.blueprint" : {
+                    "start" : "3"
+                  },
+                  "org.jboss.osgi.webapp" : {
+                    "start" : "3"
+                  },
+                  "org.jboss.osgi.xerces" : {
+                    "start" : "3"
+                  }
+                }
+              },
+              "messaging" : {
+                "acceptor" : {
+                  "in-vm" : {
+                    "type" : "InVM",
+                    "server-id" : 0,
+                    "param" : null
+                  },
+                  "netty" : {
+                    "type" : "Remote",
+                    "socket-binding" : "messaging",
+                    "param" : null
+                  },
+                  "netty-throughput" : {
+                    "type" : "Remote",
+                    "socket-binding" : "messaging-throughput",
+                    "param" : [ {
+                      "batch-delay" : "50"
+                    }, {
+                      "direct-deliver" : "false"
+                    } ]
+                  }
+                },
+                "address-setting" : {
+                  "#" : {
+                    "dead-letter-address" : "jms.queue.DLQ",
+                    "expiry-address" : "jms.queue.ExpiryQueue",
+                    "redelivery-delay" : "0",
+                    "max-size-bytes" : "10485760",
+                    "message-counter-history-day-limit" : "10",
+                    "address-full-policy" : "BLOCK"
+                  }
+                },
+                "connector" : {
+                  "in-vm" : {
+                    "type" : "InVM",
+                    "server-id" : 0,
+                    "param" : null
+                  },
+                  "netty" : {
+                    "type" : "Remote",
+                    "socket-binding" : "messaging",
+                    "param" : null
+                  },
+                  "netty-throughput" : {
+                    "type" : "Remote",
+                    "socket-binding" : "messaging-throughput",
+                    "param" : [ {
+                      "batch-delay" : "50"
+                    } ]
+                  }
+                },
+                "journal-min-files" : "2",
+                "journal-type" : "NIO",
+                "journal-file-size" : "102400",
+                "persistence-enabled" : false,
+                "security-setting" : {
+                  "#" : {
+                    "guest" : {
+                      "send" : true,
+                      "consume" : true,
+                      "createDurableQueue" : false,
+                      "deleteDurableQueue" : false,
+                      "createNonDurableQueue" : true,
+                      "deleteNonDurableQueue" : true,
+                      "manage" : false
+                    }
+                  }
+                },
+                "queue" : null
+              },
+              "jaxrs" : {
+              },
+              "jms" : {
+                "connection-factory" : {
+                  "InVmConnectionFactory" : {
+                    "connector" : {
+                      "in-vm" : {
+                        "backup-connector-name" : "netty"
+                      }
+                    },
+                    "entries" : [ "java:/ConnectionFactory" ]
+                  },
+                  "RemoteConnectionFactory" : {
+                    "connector" : {
+                      "netty" : {
+                        "backup-connector-name" : "in-vm"
+                      }
+                    },
+                    "entries" : [ "RemoteConnectionFactory" ]
+                  }
+                },
+                "queue" : {
+                  "testQueue" : {
+                    "entries" : [ "queue/test" ]
+                  }
+                },
+                "topic" : {
+                  "testTopic" : {
+                    "entries" : [ "topic/test" ]
+                  }
+                }
+              },
+              "web" : {
+                "configuration" : null,
+                "connector" : {
+                  "http" : {
+                    "protocol" : "HTTP/1.1",
+                    "socket-binding" : "http",
+                    "scheme" : "http",
+                    "virtual-server" : null,
+                    "ssl" : null
+                  }
+                },
+                "virtual-server" : {
+                  "localhost" : {
+                    "alias" : [ "example.com" ],
+                    "access-log" : null,
+                    "rewrite" : null,
+                    "default-web-module" : null,
+                    "enable-welcome-root" : false
+                  }
+                }
+              },
+              "webservices" : {
+                "modify-wsdl-address" : true,
+                "wsdl-host" : "localhost",
+                "endpoint" : {
+                }
+              }
+            },
+            "interface" : {
+              "loopback" : {
+                "name" : "loopback",
+                "criteria" : [ {
+                  "inet-address" : "127.0.0.1"
+                } ]
+              },
+              "external" : {
+                "name" : "external",
+                "criteria" : "any-ipv4-address"
+              },
+              "public" : {
+                "name" : "public",
+                "criteria" : "any-ipv4-address"
+              }
+            },
+            "socket-binding-group" : {
+              "standard-sockets" : {
+                "name" : "standard-sockets",
+                "default-interface" : "external",
+                "port-offset" : 150,
+                "socket-binding" : {
+                  "jmx-connector-registry" : {
+                    "name" : "jmx-connector-registry",
+                    "interface" : null,
+                    "port" : 1090,
+                    "fixed-port" : null,
+                    "multicast-address" : null,
+                    "multicast-port" : null
+                  },
+                  "jmx-connector-server" : {
+                    "name" : "jmx-connector-server",
+                    "interface" : null,
+                    "port" : 1091,
+                    "fixed-port" : null,
+                    "multicast-address" : null,
+                    "multicast-port" : null
+                  },
+                  "jndi" : {
+                    "name" : "jndi",
+                    "interface" : null,
+                    "port" : 1099,
+                    "fixed-port" : null,
+                    "multicast-address" : null,
+                    "multicast-port" : null
+                  },
+                  "http" : {
+                    "name" : "http",
+                    "interface" : null,
+                    "port" : 8080,
+                    "fixed-port" : null,
+                    "multicast-address" : null,
+                    "multicast-port" : null
+                  },
+                  "https" : {
+                    "name" : "https",
+                    "interface" : null,
+                    "port" : 8447,
+                    "fixed-port" : null,
+                    "multicast-address" : null,
+                    "multicast-port" : null
+                  },
+                  "osgi-http" : {
+                    "name" : "osgi-http",
+                    "interface" : null,
+                    "port" : 8090,
+                    "fixed-port" : null,
+                    "multicast-address" : null,
+                    "multicast-port" : null
+                  },
+                  "remoting" : {
+                    "name" : "remoting",
+                    "interface" : null,
+                    "port" : 4447,
+                    "fixed-port" : null,
+                    "multicast-address" : null,
+                    "multicast-port" : null
+                  },
+                  "txn-recovery-environment" : {
+                    "name" : "txn-recovery-environment",
+                    "interface" : null,
+                    "port" : 4712,
+                    "fixed-port" : null,
+                    "multicast-address" : null,
+                    "multicast-port" : null
+                  },
+                  "txn-status-manager" : {
+                    "name" : "txn-status-manager",
+                    "interface" : null,
+                    "port" : 4713,
+                    "fixed-port" : null,
+                    "multicast-address" : null,
+                    "multicast-port" : null
+                  },
+                  "messaging" : {
+                    "name" : "messaging",
+                    "interface" : null,
+                    "port" : 5445,
+                    "fixed-port" : null,
+                    "multicast-address" : null,
+                    "multicast-port" : null
+                  },
+                  "messaging-throughput" : {
+                    "name" : "messaging-throughput",
+                    "interface" : null,
+                    "port" : 5455,
+                    "fixed-port" : null,
+                    "multicast-address" : null,
+                    "multicast-port" : null
+                  }
+                }
+              }
+            },
+            "deployment" : null
+          }
+        }
+      }
+    },
+    "namespaces" : [ {
+      "xsi" : "http://www.w3.org/2001/XMLSchema-instance"
+    } ],
+    "schema-locations" : [ {
+      "urn:jboss:domain:1.0" : "jboss_7_0.xsd"
+    }, {
+      "urn:jboss:domain:arquillian:1.0" : "jboss-arquillian.xsd"
+    }, {
+      "urn:jboss:domain:connector:1.0" : "jboss-connector.xsd"
+    }, {
+      "urn:jboss:domain:datasources:1.0" : "jboss-datasources.xsd"
+    }, {
+      "urn:jboss:domain:ejb3:1.0" : "jboss-ejb3.xsd"
+    }, {
+      "urn:jboss:domain:ee:1.0" : "jboss-ee.xsd"
+    }, {
+      "urn:jboss:domain:jaxrs:1.0" : "jboss-jaxrs.xsd"
+    }, {
+      "urn:jboss:domain:jmx:1.0" : "jboss-jmx.xsd"
+    }, {
+      "urn:jboss:domain:jpa:1.0" : "jboss-jpa.xsd"
+    }, {
+      "urn:jboss:domain:messaging:1.0" : "jboss-messaging.xsd"
+    }, {
+      "urn:jboss:domain:naming:1.0" : "jboss-naming.xsd"
+    }, {
+      "urn:jboss:domain:osgi:1.0" : "jboss-osgi.xsd"
+    }, {
+      "urn:jboss:domain:remoting:1.0" : "jboss-remoting.xsd"
+    }, {
+      "urn:jboss:domain:resourceadapters:1.0" : "jboss-resource-adapters.xsd"
+    }, {
+      "urn:jboss:domain:sar:1.0" : "jboss-sar.xsd"
+    }, {
+      "urn:jboss:domain:threads:1.0" : "jboss-threads.xsd"
+    }, {
+      "urn:jboss:domain:transactions:1.0" : "jboss-txn.xsd"
+    }, {
+      "urn:jboss:domain:web:1.0" : "jboss-web.xsd"
+    }, {
+      "urn:jboss:domain:security:1.0" : "jboss-security.xsd"
+    }, {
+      "urn:jboss:domain:webservices:1.0" : "jboss-webservices.xsd"
+    }, {
+      "urn:jboss:domain:weld:1.0" : "jboss-weld.xsd"
+    } ],
+    "extension" : {
+      "org.jboss.as.arquillian.service" : {
+        "module" : "org.jboss.as.arquillian.service"
+      },
+      "org.jboss.as.connector" : {
+        "module" : "org.jboss.as.connector"
+      },
+      "org.jboss.as.jmx" : {
+        "module" : "org.jboss.as.jmx"
+      },
+      "org.jboss.as.jpa" : {
+        "module" : "org.jboss.as.jpa"
+      },
+      "org.jboss.as.logging" : {
+        "module" : "org.jboss.as.logging"
+      },
+      "org.jboss.as.ee" : {
+        "module" : "org.jboss.as.ee"
+      },
+      "org.jboss.as.ejb3" : {
+        "module" : "org.jboss.as.ejb3"
+      },
+      "org.jboss.as.jaxrs" : {
+        "module" : "org.jboss.as.jaxrs"
+      },
+      "org.jboss.as.messaging" : {
+        "module" : "org.jboss.as.messaging"
+      },
+      "org.jboss.as.naming" : {
+        "module" : "org.jboss.as.naming"
+      },
+      "org.jboss.as.osgi" : {
+        "module" : "org.jboss.as.osgi"
+      },
+      "org.jboss.as.remoting" : {
+        "module" : "org.jboss.as.remoting"
+      },
+      "org.jboss.as.sar" : {
+        "module" : "org.jboss.as.sar"
+      },
+      "org.jboss.as.security" : {
+        "module" : "org.jboss.as.security"
+      },
+      "org.jboss.as.threads" : {
+        "module" : "org.jboss.as.threads"
+      },
+      "org.jboss.as.transactions" : {
+        "module" : "org.jboss.as.transactions"
+      },
+      "org.jboss.as.web" : {
+        "module" : "org.jboss.as.web"
+      },
+      "org.jboss.as.weld" : {
+        "module" : "org.jboss.as.weld"
+      },
+      "org.jboss.as.webservices" : {
+        "module" : "org.jboss.as.webservices"
+      }
+    },
+    "path" : null,
+    "system-property" : {
+      "java.net.preferIPv4Stack" : {
+        "value" : "true",
+        "boot-time" : true
+      }
+    },
+    "profile" : {
+      "default" : {
+        "includes" : null,
+        "subsystem" : {
+          "logging" : {
+            "logger" : {
+            },
+            "async-handler" : {
+            },
+            "console-handler" : {
+              "CONSOLE" : {
+                "autoflush" : true,
+                "encoding" : null,
+                "formatter" : "%d{HH:mm:ss,SSS} %-5p [%c] (%t) %s%E%n",
+                "level" : "INFO",
+                "queue-length" : null
+              }
+            },
+            "file-handler" : {
+            },
+            "periodic-rotating-file-handler" : {
+              "FILE" : {
+                "autoflush" : true,
+                "encoding" : null,
+                "formatter" : "%d{HH:mm:ss,SSS} %-5p [%c] (%t) %s%E%n",
+                "level" : "INFO",
+                "file" : {
+                  "path" : "server.log",
+                  "relative-to" : "jboss.server.log.dir"
+                },
+                "suffix" : ".yyyy-MM-dd"
+              }
+            },
+            "size-rotating-file-handler" : {
+            },
+            "root-logger" : {
+              "level" : "INFO",
+              "handlers" : [ "CONSOLE", "FILE" ]
+            }
+          },
+          "threads" : {
+            "bounded-queue-thread-pool" : {
+              "jca-short-running" : {
+                "name" : "jca-short-running",
+                "max-threads" : {
+                  "count" : 10,
+                  "per-cpu" : 20
+                },
+                "keepalive-time" : {
+                  "time" : 10,
+                  "unit" : "SECONDS"
+                },
+                "blocking" : true,
+                "allow-core-timeout" : false,
+                "queue-length" : {
+                  "count" : 10,
+                  "per-cpu" : 20
+                },
+                "core-threads" : {
+                  "count" : 10,
+                  "per-cpu" : 20
+                }
+              },
+              "jca-long-running" : {
+                "name" : "jca-long-running",
+                "max-threads" : {
+                  "count" : 10,
+                  "per-cpu" : 20
+                },
+                "keepalive-time" : {
+                  "time" : 10,
+                  "unit" : "SECONDS"
+                },
+                "blocking" : true,
+                "allow-core-timeout" : false,
+                "queue-length" : {
+                  "count" : 10,
+                  "per-cpu" : 20
+                },
+                "core-threads" : {
+                  "count" : 10,
+                  "per-cpu" : 20
+                }
+              },
+              "ejb3-async" : {
+                "name" : "ejb3-async",
+                "max-threads" : {
+                  "count" : 10,
+                  "per-cpu" : 20
+                },
+                "keepalive-time" : {
+                  "time" : 10,
+                  "unit" : "SECONDS"
+                },
+                "blocking" : true,
+                "allow-core-timeout" : false,
+                "queue-length" : {
+                  "count" : 10,
+                  "per-cpu" : 20
+                },
+                "core-threads" : {
+                  "count" : 10,
+                  "per-cpu" : 20
+                }
+              }
+            },
+            "queueless-thread-pool" : {
+            },
+            "scheduled-thread-pool" : {
+              "remoting" : {
+                "name" : "remoting",
+                "max-threads" : {
+                  "count" : 10,
+                  "per-cpu" : 20
+                },
+                "keepalive-time" : {
+                  "time" : 10,
+                  "unit" : "SECONDS"
+                }
+              }
+            },
+            "thread-factory" : {
+            },
+            "unbounded-queue-thread-pool" : {
+            }
+          },
+          "arquillian" : {
+          },
+          "ee" : null,
+          "ejb3" : {
+          },
+          "naming" : {
+          },
+          "security" : {
+            "security-domain" : {
+              "other" : {
+                "authentication" : [ {
+                  "code" : "UsersRoles",
+                  "flag" : "required"
+                } ]
+              }
+            }
+          },
+          "transactions" : {
+            "core-environment" : {
+              "process-id" : {
+                "uuid" : "uuid"
+              },
+              "node-identifier" : null,
+              "relative-to" : null,
+              "path" : null
+            },
+            "recovery-environment" : {
+              "socket-binding" : "txn-recovery-environment",
+              "status-socket-binding" : "txn-status-manager"
+            },
+            "coordinator-environment" : {
+              "enable-statistics" : null,
+              "default-timeout" : null
+            },
+            "object-store" : {
+              "relative-to" : null,
+              "path" : null
+            }
+          },
+          "remoting" : {
+            "thread-pool" : "remoting",
+            "connector" : {
+            }
+          },
+          "jmx" : {
+            "server-binding" : "jmx-connector-server",
+            "registry-binding" : "jmx-connector-registry"
+          },
+          "jpa" : {
+            "default-datasource" : ""
+          },
+          "sar" : {
+          },
+          "weld" : {
+          },
+          "connector" : {
+            "default-workmanager-short-running-thread-pool" : "jca-short-running",
+            "default-workmanager-long-running-thread-pool" : "jca-long-running",
+            "bean-validation-enabled" : true,
+            "archive-validation-enabled" : true
+          },
+          "datasources" : {
+            "data-source" : {
+              "java:/H2DS" : {
+                "connection-url" : "jdbc:h2:mem:test;DB_CLOSE_DELAY=-1",
+                "jndi-name" : "java:/H2DS",
+                "driver-name" : "h2",
+                "pool-name" : "H2DS",
+                "use-java-context" : true,
+                "enabled" : true,
+                "pool-prefill" : false,
+                "pool-use-strict-min" : false,
+                "user-name" : "sa",
+                "password" : "sa",
+                "background-validation" : false,
+                "use-fast-fail" : false,
+                "validate-on-match" : false
+              }
+            },
+            "xa-data-source" : null,
+            "jdbc-driver" : {
+              "h2" : {
+                "driver-name" : "h2",
+                "driver-module-name" : "com.h2database.h2",
+                "driver-xa-datasource-class-name" : "org.h2.jdbcx.JdbcDataSource"
+              }
+            }
+          },
+          "resource-adapters" : {
+            "resource-adapter" : null
+          },
+          "osgi" : {
+            "activation" : "lazy",
+            "configuration" : {
+              "pid" : "org.apache.felix.webconsole.internal.servlet.OsgiManager",
+              "configuration_properties" : {
+                "manager.root" : "jboss-osgi"
+              }
+            },
+            "properties" : {
+              "org.jboss.osgi.system.modules" : "org.apache.commons.logging,\n                                                                                            org.apache.log4j,\n                                                                                            org.jboss.as.osgi,\n                                                                                            org.slf4j,",
+              "org.osgi.framework.system.packages.extra" : "org.apache.commons.logging;version=1.1.1,\n                                                                                            org.apache.log4j;version=1.2,\n                                                                                            org.jboss.as.osgi.service;version=7.0,\n                                                                                            org.jboss.osgi.deployment.interceptor;version=1.0,\n                                                                                            org.jboss.osgi.spi.capability;version=1.0,\n                                                                                            org.jboss.osgi.spi.util;version=1.0,\n                                                                                            org.jboss.osgi.testing;version=1.0,\n                                                                                            org.jboss.osgi.vfs;version=1.0,\n                                                                                            org.slf4j;version=1.5.10,",
+              "org.osgi.framework.startlevel.beginning" : "1"
+            },
+            "modules" : {
+              "javaee.api" : null,
+              "org.jboss.as.arquillian.aggregate" : null,
+              "org.jboss.logging" : null,
+              "org.apache.aries.util" : null,
+              "org.jboss.osgi.webconsole" : null,
+              "org.osgi.compendium" : null,
+              "org.apache.felix.log" : {
+                "start" : "1"
+              },
+              "org.jboss.osgi.logging" : {
+                "start" : "1"
+              },
+              "org.apache.aries.jmx" : {
+                "start" : "2"
+              },
+              "org.apache.felix.configadmin" : {
+                "start" : "2"
+              },
+              "org.apache.felix.eventadmin" : {
+                "start" : "2"
+              },
+              "org.apache.felix.metatype" : {
+                "start" : "2"
+              },
+              "org.apache.felix.webconsole" : {
+                "start" : "2"
+              },
+              "org.jboss.as.osgi.configadmin" : {
+                "start" : "2"
+              },
+              "org.jboss.osgi.jmx" : {
+                "start" : "2"
+              },
+              "org.jboss.osgi.http" : {
+                "start" : "2"
+              },
+              "org.jboss.osgi.blueprint" : {
+                "start" : "3"
+              },
+              "org.jboss.osgi.webapp" : {
+                "start" : "3"
+              },
+              "org.jboss.osgi.xerces" : {
+                "start" : "3"
+              }
+            }
+          },
+          "messaging" : {
+            "acceptor" : {
+              "in-vm" : {
+                "type" : "InVM",
+                "server-id" : 0,
+                "param" : null
+              },
+              "netty" : {
+                "type" : "Remote",
+                "socket-binding" : "messaging",
+                "param" : null
+              },
+              "netty-throughput" : {
+                "type" : "Remote",
+                "socket-binding" : "messaging-throughput",
+                "param" : [ {
+                  "batch-delay" : "50"
+                }, {
+                  "direct-deliver" : "false"
+                } ]
+              }
+            },
+            "address-setting" : {
+              "#" : {
+                "dead-letter-address" : "jms.queue.DLQ",
+                "expiry-address" : "jms.queue.ExpiryQueue",
+                "redelivery-delay" : "0",
+                "max-size-bytes" : "10485760",
+                "message-counter-history-day-limit" : "10",
+                "address-full-policy" : "BLOCK"
+              }
+            },
+            "connector" : {
+              "in-vm" : {
+                "type" : "InVM",
+                "server-id" : 0,
+                "param" : null
+              },
+              "netty" : {
+                "type" : "Remote",
+                "socket-binding" : "messaging",
+                "param" : null
+              },
+              "netty-throughput" : {
+                "type" : "Remote",
+                "socket-binding" : "messaging-throughput",
+                "param" : [ {
+                  "batch-delay" : "50"
+                } ]
+              }
+            },
+            "journal-min-files" : "2",
+            "journal-type" : "NIO",
+            "journal-file-size" : "102400",
+            "persistence-enabled" : false,
+            "security-setting" : {
+              "#" : {
+                "guest" : {
+                  "send" : true,
+                  "consume" : true,
+                  "createDurableQueue" : false,
+                  "deleteDurableQueue" : false,
+                  "createNonDurableQueue" : true,
+                  "deleteNonDurableQueue" : true,
+                  "manage" : false
+                }
+              }
+            },
+            "queue" : null
+          },
+          "jaxrs" : {
+          },
+          "jms" : {
+            "connection-factory" : {
+              "InVmConnectionFactory" : {
+                "connector" : {
+                  "in-vm" : {
+                    "backup-connector-name" : "netty"
+                  }
+                },
+                "entries" : [ "java:/ConnectionFactory" ]
+              },
+              "RemoteConnectionFactory" : {
+                "connector" : {
+                  "netty" : {
+                    "backup-connector-name" : "in-vm"
+                  }
+                },
+                "entries" : [ "RemoteConnectionFactory" ]
+              }
+            },
+            "queue" : {
+              "testQueue" : {
+                "entries" : [ "queue/test" ]
+              }
+            },
+            "topic" : {
+              "testTopic" : {
+                "entries" : [ "topic/test" ]
+              }
+            }
+          },
+          "web" : {
+            "configuration" : null,
+            "connector" : {
+              "http" : {
+                "protocol" : "HTTP/1.1",
+                "socket-binding" : "http",
+                "scheme" : "http",
+                "virtual-server" : null,
+                "ssl" : null
+              }
+            },
+            "virtual-server" : {
+              "localhost" : {
+                "alias" : [ "example.com" ],
+                "access-log" : null,
+                "rewrite" : null,
+                "default-web-module" : null,
+                "enable-welcome-root" : false
+              }
+            }
+          },
+          "webservices" : {
+            "modify-wsdl-address" : true,
+            "wsdl-host" : "localhost",
+            "endpoint" : {
+            }
+          }
+        }
+      }
+    },
+    "interface" : {
+      "loopback" : {
+        "name" : "loopback",
+        "criteria" : [ {
+          "inet-address" : "127.0.0.1"
+        } ]
+      },
+      "external" : {
+        "name" : "external",
+        "criteria" : "any-ipv4-address"
+      }
+    },
+    "socket-binding-group" : {
+      "standard-sockets" : {
+        "name" : "standard-sockets",
+        "default-interface" : "external",
+        "includes" : [ "messaging-sockets" ],
+        "socket-binding" : {
+          "jmx-connector-registry" : {
+            "name" : "jmx-connector-registry",
+            "interface" : null,
+            "port" : 1090,
+            "fixed-port" : null,
+            "multicast-address" : null,
+            "multicast-port" : null
+          },
+          "jmx-connector-server" : {
+            "name" : "jmx-connector-server",
+            "interface" : null,
+            "port" : 1091,
+            "fixed-port" : null,
+            "multicast-address" : null,
+            "multicast-port" : null
+          },
+          "jndi" : {
+            "name" : "jndi",
+            "interface" : null,
+            "port" : 1099,
+            "fixed-port" : null,
+            "multicast-address" : null,
+            "multicast-port" : null
+          },
+          "http" : {
+            "name" : "http",
+            "interface" : null,
+            "port" : 8080,
+            "fixed-port" : null,
+            "multicast-address" : null,
+            "multicast-port" : null
+          },
+          "https" : {
+            "name" : "https",
+            "interface" : null,
+            "port" : 8447,
+            "fixed-port" : null,
+            "multicast-address" : null,
+            "multicast-port" : null
+          },
+          "osgi-http" : {
+            "name" : "osgi-http",
+            "interface" : null,
+            "port" : 8090,
+            "fixed-port" : null,
+            "multicast-address" : null,
+            "multicast-port" : null
+          },
+          "remoting" : {
+            "name" : "remoting",
+            "interface" : null,
+            "port" : 4447,
+            "fixed-port" : null,
+            "multicast-address" : null,
+            "multicast-port" : null
+          },
+          "txn-recovery-environment" : {
+            "name" : "txn-recovery-environment",
+            "interface" : null,
+            "port" : 4712,
+            "fixed-port" : null,
+            "multicast-address" : null,
+            "multicast-port" : null
+          },
+          "txn-status-manager" : {
+            "name" : "txn-status-manager",
+            "interface" : null,
+            "port" : 4713,
+            "fixed-port" : null,
+            "multicast-address" : null,
+            "multicast-port" : null
+          }
+        }
+      },
+      "messaging-sockets" : {
+        "name" : "messaging-sockets",
+        "default-interface" : "external",
+        "includes" : [ ],
+        "socket-binding" : {
+          "messaging" : {
+            "name" : "messaging",
+            "interface" : null,
+            "port" : 5445,
+            "fixed-port" : null,
+            "multicast-address" : null,
+            "multicast-port" : null
+          },
+          "messaging-throughput" : {
+            "name" : "messaging-throughput",
+            "interface" : null,
+            "port" : 5455,
+            "fixed-port" : null,
+            "multicast-address" : null,
+            "multicast-port" : null
+          }
+        }
+      }
+    },
+    "deployment" : null,
+    "server-group" : {
+      "main-server-group" : {
+        "profile" : "default",
+        "jvm" : {
+          "default" : {
+            "type" : null,
+            "agent-lib" : null,
+            "agent-path" : null,
+            "env-classpath-ignored" : null,
+            "environment-variables" : null,
+            "heap-size" : "64m",
+            "max-heap-size" : "512m",
+            "java-agent" : null,
+            "java-home" : null,
+            "jvm-options" : null,
+            "permgen-size" : null,
+            "max-permgen-size" : null,
+            "stack-size" : null
+          }
+        },
+        "system-property" : null,
+        "deployment" : null,
+        "socket-binding-group" : "standard-sockets"
+      },
+      "other-server-group" : {
+        "profile" : "default",
+        "jvm" : {
+          "default" : {
+            "type" : null,
+            "agent-lib" : null,
+            "agent-path" : null,
+            "env-classpath-ignored" : null,
+            "environment-variables" : null,
+            "heap-size" : "64m",
+            "max-heap-size" : "512m",
+            "java-agent" : null,
+            "java-home" : null,
+            "jvm-options" : null,
+            "permgen-size" : null,
+            "max-permgen-size" : null,
+            "stack-size" : null
+          }
+        },
+        "system-property" : null,
+        "deployment" : null,
+        "socket-binding-group" : "standard-sockets"
+      }
+    }
+  },
+  "compensating-operation" : null
+}

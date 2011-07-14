@@ -25,8 +25,8 @@ import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.events.FormSubmitFailedEvent;
 import com.smartgwt.client.widgets.form.events.FormSubmitFailedHandler;
+import com.smartgwt.client.widgets.form.fields.ButtonItem;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
-import com.smartgwt.client.widgets.form.fields.LinkItem;
 import com.smartgwt.client.widgets.form.fields.TextAreaItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
@@ -36,6 +36,7 @@ import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.components.form.RadioGroupWithComponentsItem;
 import org.rhq.enterprise.gui.coregui.client.components.upload.BundleDistributionFileUploadForm;
 import org.rhq.enterprise.gui.coregui.client.components.upload.DynamicCallbackForm;
@@ -45,8 +46,10 @@ import org.rhq.enterprise.gui.coregui.client.components.upload.TextFileRetriever
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 public class BundleUploadDistroFileStep extends AbstractWizardStep {
@@ -67,14 +70,19 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
         this.wizard = bundleCreationWizard;
     }
 
-    public Canvas getCanvas() {
+    public Canvas getCanvas(Locatable parent) {
         if (mainCanvasForm == null) {
             LinkedHashMap<String, DynamicForm> radioItems = new LinkedHashMap<String, DynamicForm>();
             radioItems.put(URL_OPTION, createUrlForm());
             radioItems.put(UPLOAD_OPTION, createUploadForm());
             radioItems.put(RECIPE_OPTION, createRecipeForm());
 
-            mainCanvasForm = new DynamicForm();
+            if (parent != null) {
+                mainCanvasForm = new RadioDynamicForm(parent.extendLocatorId("mainCanvasForm"));
+            } else {
+                mainCanvasForm = new RadioDynamicForm("mainCanvasForm");
+            }
+
             radioGroup = new RadioGroupWithComponentsItem("bundleDistRadioGroup", MSG
                 .view_bundle_createWizard_bundleDistro(), radioItems, mainCanvasForm);
             radioGroup.setShowTitle(false);
@@ -124,7 +132,7 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
     }
 
     public String getName() {
-        return MSG.view_bundle_createWizard_uploadStepName();
+        return MSG.view_bundle_createWizard_provideBundleDistro();
     }
 
     private DynamicForm createUrlForm() {
@@ -160,9 +168,9 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
         recipeForm.setMargin(Integer.valueOf(20));
         recipeForm.setShowInlineErrors(false);
 
-        final LinkItem showUpload = new LinkItem("recipeUploadLink");
-        showUpload.setValue(MSG.view_bundle_createWizard_clickToUploadRecipe());
-        showUpload.setShowTitle(false);
+        final ButtonItem showUpload = new ButtonItem("recipeUploadLink", MSG
+            .view_bundle_createWizard_clickToUploadRecipe());
+        showUpload.setIcon(ImageManager.getUploadIcon());
 
         final CanvasItem upload = new CanvasItem("recipeUploadCanvas");
         upload.setShowTitle(false);
@@ -173,8 +181,9 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
 
         showUpload.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                recipeForm.hideItem(showUpload.getName());
-                recipeForm.showItem(upload.getName());
+                showUpload.hide();
+                upload.show();
+                recipeForm.markForRedraw();
             }
         });
 
@@ -190,8 +199,9 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
                 wizard.setRecipe(event.getResults());
                 recipe.setValue(event.getResults());
                 textFileRetrieverForm.retrievalStatus(true);
-                recipeForm.showItem(showUpload.getName());
-                recipeForm.hideItem(upload.getName());
+                showUpload.show();
+                upload.hide();
+                recipeForm.markForRedraw();
             }
         });
 
@@ -203,7 +213,14 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
     private void processUrl() {
         String urlString = (String) this.urlTextItem.getValue();
 
-        BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
+        if (urlString == null || urlString.trim().length() == 0) {
+            wizard.getView().showMessage(MSG.view_bundle_createWizard_enterUrl());
+            wizard.setBundleVersion(null);
+            setButtonsDisableMode(false);
+            return;
+        }
+
+        BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService(10 * 60 * 1000); // if upload takes more than 10m, you have other things to worry about
         bundleServer.createBundleVersionViaURL(urlString, new AsyncCallback<BundleVersion>() {
             public void onSuccess(BundleVersion result) {
                 CoreGUI.getMessageCenter().notify(
@@ -215,7 +232,9 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
             }
 
             public void onFailure(Throwable caught) {
-                wizard.getView().showMessage(caught.getMessage());
+                // Escape it, since it contains the URL, which the user entered.
+                String message = StringUtility.escapeHtml(caught.getMessage());
+                wizard.getView().showMessage(message);
                 CoreGUI.getErrorHandler().handleError(MSG.view_bundle_createWizard_createFailure(), caught);
                 wizard.setBundleVersion(null);
                 setButtonsDisableMode(false);
@@ -257,7 +276,16 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
     }
 
     private void processRecipe() {
-        this.wizard.setRecipe((String) this.recipeForm.getItem("recipeText").getValue());
+        String recipeString = (String) this.recipeForm.getItem("recipeText").getValue();
+
+        if (recipeString == null || recipeString.trim().length() == 0) {
+            wizard.getView().showMessage(MSG.view_bundle_createWizard_enterRecipe());
+            wizard.setBundleVersion(null);
+            setButtonsDisableMode(false);
+            return;
+        }
+
+        this.wizard.setRecipe(recipeString);
         BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
         bundleServer.createBundleVersionViaRecipe(this.wizard.getRecipe(), new AsyncCallback<BundleVersion>() {
             public void onSuccess(BundleVersion result) {
@@ -293,8 +321,21 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
 
         if (sendToMessageCenter) {
             CoreGUI.getMessageCenter().notify(
-                new Message(MSG.view_bundle_createWizard_failedToUploadDistroFile() + ": " + errorMessage,
-                    Severity.Error));
+                new Message(MSG.view_bundle_createWizard_failedToUploadDistroFile(), errorMessage, Severity.Error));
         }
+    }
+
+    private class RadioDynamicForm extends LocatableDynamicForm {
+
+        public RadioDynamicForm(String locatorId) {
+            super(locatorId);
+        }
+
+        @Override
+        public void destroy() {
+            radioGroup.destroyComponents();
+            super.destroy();
+        }
+
     }
 }

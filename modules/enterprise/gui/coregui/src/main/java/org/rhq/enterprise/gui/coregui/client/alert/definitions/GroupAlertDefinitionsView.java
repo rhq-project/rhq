@@ -53,7 +53,7 @@ public class GroupAlertDefinitionsView extends AbstractAlertDefinitionsView {
     private ResourcePermission permissions;
 
     public GroupAlertDefinitionsView(String locatorId, ResourceGroupComposite groupComposite) {
-        super(locatorId, MSG.view_alert_definitions_table_title_group());
+        super(locatorId, MSG.view_alert_definitions_table_title_group(), getCriteria(groupComposite));
         this.group = groupComposite.getResourceGroup();
         this.permissions = groupComposite.getResourcePermission();
 
@@ -81,10 +81,9 @@ public class GroupAlertDefinitionsView extends AbstractAlertDefinitionsView {
         return group.getResourceType();
     }
 
-    @Override
-    protected Criteria getCriteria() {
+    private static Criteria getCriteria(ResourceGroupComposite composite) {
         Criteria criteria = new Criteria();
-        criteria.addCriteria(CRITERIA_GROUP_ID, group.getId());
+        criteria.addCriteria(CRITERIA_GROUP_ID, composite.getResourceGroup().getId());
         return criteria;
     }
 
@@ -104,7 +103,7 @@ public class GroupAlertDefinitionsView extends AbstractAlertDefinitionsView {
     }
 
     @Override
-    protected boolean isAllowedToModifyAlertDefinitions() {
+    protected boolean isAuthorizedToModifyAlertDefinitions() {
         return this.permissions.isAlert();
     }
 
@@ -208,6 +207,7 @@ public class GroupAlertDefinitionsView extends AbstractAlertDefinitionsView {
                         CoreGUI.getMessageCenter().notify(
                             new Message(MSG.view_alert_definitions_create_success(), Severity.Info));
                         alertDefinition.setId(result.intValue());
+                        GroupAlertDefinitionsView.this.refresh();
                     }
 
                     @Override
@@ -222,6 +222,7 @@ public class GroupAlertDefinitionsView extends AbstractAlertDefinitionsView {
                     public void onSuccess(AlertDefinition result) {
                         CoreGUI.getMessageCenter().notify(
                             new Message(MSG.view_alert_definitions_update_success(), Severity.Info));
+                        GroupAlertDefinitionsView.this.refresh();
                     }
 
                     @Override

@@ -106,7 +106,7 @@ public class AntBundleServerPluginComponent implements ServerPluginComponent, Bu
 
             // parse, but do not execute, the Ant script
             AntLauncher antLauncher = new AntLauncher();
-            BundleAntProject project = antLauncher.parseBundleDeployFile(recipeFile);
+            BundleAntProject project = antLauncher.parseBundleDeployFile(recipeFile, null);
 
             // obtain the parse results
             deploymentProps = new DeploymentProperties(0, project.getBundleName(), project.getBundleVersion(), project

@@ -406,7 +406,8 @@
                        displayName="Query Timeout"
                        type="integer"
                        units="seconds"
-                       required="false">
+                       required="false"
+                       defaultValue="0">
         <c:description>
             Any configured query timeout in seconds. A value of 0 means no timeout. The default is 0.
         </c:description>
@@ -1018,6 +1019,18 @@
                                               this property must be set in order for the Start operation to work,
                                               or for the Shutdown operation to work when the shutdown method is set
                                               to 'shutdown script'."/>
+               <c:simple-property name="startWaitMax" required="false"
+                                 description="The time, in minutes,(e.g. 1 or 8) that must elapse before the server is considered to have failed to start up. The default is 5 minutes.">
+                         <c:constraint>
+                             <c:integer-constraint minimum="1"/>
+                         </c:constraint>
+               </c:simple-property>
+               <c:simple-property name="stopWaitMax" required="false"
+                                 description="The time, in minutes,(e.g. 1 or 8) that must elapse before the server is considered to have failed to stop. The default is 2.5 minutes.">
+                         <c:constraint>
+                             <c:integer-constraint minimum="1"/>
+                         </c:constraint>
+               </c:simple-property>
              </c:group>
 
              <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
@@ -1177,6 +1190,17 @@
                 <c:simple-property name="instructionCompatibilityVersion"/>
              </configuration>
           </content>
+
+          <bundle-target>
+             <destination-base-dir name="Install Directory" description="The top directory where the JBossAS Server is installed. (i.e. the value found in the 'JBoss Home Directory' connection property)">
+                <value-context>pluginConfiguration</value-context>
+                <value-name>homeDir</value-name>
+             </destination-base-dir>
+             <destination-base-dir name="Profile Directory" description="The profile configuration directory such as 'default', 'minimal', 'production' or similar location. (i.e. the value found in the 'Server Home Dir' connection property)">
+                <value-context>pluginConfiguration</value-context>
+                <value-name>serverHomeDir</value-name>
+             </destination-base-dir>
+          </bundle-target>
 
           <server name="JBoss AS JVM"
                   description="JVM of the JBossAS"

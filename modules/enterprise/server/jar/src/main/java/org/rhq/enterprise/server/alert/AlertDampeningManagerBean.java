@@ -40,7 +40,6 @@ import org.rhq.enterprise.server.RHQConstants;
 /**
  * @author Joseph Marques
  */
-
 @Stateless
 public class AlertDampeningManagerBean implements AlertDampeningManagerLocal {
 

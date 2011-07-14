@@ -38,26 +38,19 @@ public class ResourceGroupTopView extends LocatableHLayout implements Bookmarkab
     private Canvas contentCanvas;
     private ResourceGroupTreeView treeView;
     private ResourceGroupDetailView detailView;
+    private boolean isAutoClusterView = false;
 
     public ResourceGroupTopView(String locatorId) {
         super(locatorId);
-    }
-
-    @Override
-    protected void onInit() {
-        super.onInit();
 
         setWidth100();
         setHeight100();
 
         treeView = new ResourceGroupTreeView(extendLocatorId("Tree"));
-        detailView = new ResourceGroupDetailView(extendLocatorId("Detail"), ResourceGroupTopView.VIEW_ID.getName());
         addMember(treeView);
 
         contentCanvas = new Canvas();
         addMember(contentCanvas);
-
-        setContent(detailView);
     }
 
     public void setContent(Canvas newContent) {
@@ -69,6 +62,23 @@ public class ResourceGroupTopView extends LocatableHLayout implements Bookmarkab
     }
 
     public void renderView(final ViewPath viewPath) {
+        boolean isAutoClusterPath = "AutoCluster".equals(viewPath.getCurrent().getPath());
+
+        if (isAutoClusterPath != isAutoClusterView) {
+            detailView = null;
+        }
+
+        if (null == detailView) {
+            if (isAutoClusterPath) {
+                detailView = new ResourceGroupDetailView(this.extendLocatorId("AutoClusterDetail"),
+                    ResourceGroupDetailView.AUTO_CLUSTER_VIEW);
+            } else {
+                detailView = new ResourceGroupDetailView(this.extendLocatorId("groupDetail"), this.VIEW_ID.getName());
+            }
+            isAutoClusterView = isAutoClusterPath;
+            this.setContent(detailView);
+        }
+
         treeView.renderView(viewPath);
         detailView.renderView(viewPath);
     }

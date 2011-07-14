@@ -23,6 +23,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
+import java.util.HashMap;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
@@ -31,6 +32,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.enterprise.server.content.ContentManagerLocal;
+import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -42,6 +44,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * 
  * @author Jay Shaughnessy
  * @author John Mazzitelli
+ * @author Lukas Krejci
  */
 public class PackageVersionFileUploadServlet extends FileUploadServlet {
     private static final long serialVersionUID = 1L;
@@ -65,11 +68,26 @@ public class PackageVersionFileUploadServlet extends FileUploadServlet {
             String archIdField = getFormField(formFields, "archId", null);
             int architectureId = (null != archIdField) ? Integer.parseInt(archIdField) : contentManager
                 .getNoArchitecture().getId();
+            Integer repoId = null;
+            String repoIdS = getFormField(formFields, "repoId", null);
+            if (repoIdS != null) {
+                repoId = Integer.parseInt(repoIdS);
+            }
+            
             InputStream fileStream = new FileInputStream(file);
 
-            PackageVersion packageVersion = contentManager.createPackageVersion(packageName, packageTypeId, version,
-                architectureId, fileStream);
-            successMsg = "success [" + packageVersion.getId() + "]";
+            //use getUploadedPackageVersion instead of createPackageVersion here
+            //because createPackageVersion successfully returns an already existing
+            //package version with the provided "location". This is not what we want
+            //here since we want to make sure that the uploaded file actually gets
+            //persisted.
+            Map<String, String> metaData = new HashMap<String, String>();
+            metaData.put(ContentManagerLocal.UPLOAD_FILE_INSTALL_DATE, Long.toString(file.lastModified()));
+            metaData.put(ContentManagerLocal.UPLOAD_FILE_NAME, packageName);
+            PackageVersion packageVersion = contentManager.getUploadedPackageVersion(subject, packageName,
+                packageTypeId, version, architectureId, fileStream, metaData, repoId);
+            
+            successMsg = "success [packageVersionId=" + packageVersion.getId() + ",packageId=" + packageVersion.getGeneralPackage().getId() + "]";
         } catch (Exception e) {
             writeExceptionResponse(response, "Failed to upload file", e); // clients will look for this string!
             return;

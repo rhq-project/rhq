@@ -23,7 +23,6 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.smartgwt.client.widgets.tree.TreeNode;
 
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.resource.group.ClusterKey;
@@ -31,6 +30,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupTreeView.ResourceGroupEnhancedTreeNode;
 
 /**
  * @author Greg Hinkle
@@ -41,16 +41,16 @@ public class ResourceGroupTreeContextMenu extends ResourceGroupContextMenu {
         super(locatorId);
     }
 
-    public void showContextMenu(TreeNode node) {
+    public void showContextMenu(ResourceGroupEnhancedTreeNode node) {
 
-        final ClusterKey clusterKey = (ClusterKey) node.getAttributeAsObject("key");
-        if (clusterKey != null) {
+        if (node.isAutoClusterNode()) {
+            final ClusterKey clusterKey = (ClusterKey) node.getAttributeAsObject("key");
             GWTServiceLookup.getClusterService().createAutoClusterBackingGroup(clusterKey, true,
                 new AsyncCallback<ResourceGroup>() {
                     @Override
                     public void onFailure(Throwable caught) {
                         CoreGUI.getErrorHandler().handleError(
-                            "Failed to create or update auto-cluster group: " + clusterKey, caught);
+                            MSG.view_tree_group_error_updateAutoCluster(clusterKey.getKey()), caught);
                     }
 
                     @Override
@@ -58,14 +58,16 @@ public class ResourceGroupTreeContextMenu extends ResourceGroupContextMenu {
                         showContextMenu(result);
                     }
                 });
-        } else {
+
+        } else if (node.isCompatibleGroupTopNode()) {
             ResourceGroupCriteria criteria = new ResourceGroupCriteria();
             criteria.addFilterId(Integer.parseInt(node.getAttribute("id")));
             GWTServiceLookup.getResourceGroupService().findResourceGroupsByCriteria(criteria,
                 new AsyncCallback<PageList<ResourceGroup>>() {
                     @Override
                     public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("Failed to load group for context menu", caught);
+                        CoreGUI.getErrorHandler()
+                            .handleError(MSG.view_tree_common_contextMenu_loadFail_group(), caught);
                     }
 
                     @Override

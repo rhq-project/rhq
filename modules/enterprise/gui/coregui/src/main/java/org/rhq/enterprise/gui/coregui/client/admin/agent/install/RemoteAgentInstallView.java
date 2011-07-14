@@ -47,6 +47,7 @@ import org.rhq.core.domain.install.remote.AgentInstallStep;
 import org.rhq.core.domain.install.remote.RemoteAccessInfo;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.RemoteInstallGWTServiceAsync;
@@ -62,7 +63,7 @@ public class RemoteAgentInstallView extends LocatableVLayout {
     public static final ViewName VIEW_ID = new ViewName("RemoteAgentInstall", MSG
         .view_adminTopology_remoteAgentInstall());
 
-    private RemoteInstallGWTServiceAsync remoteInstallService = GWTServiceLookup.getRemoteInstallService();
+    private RemoteInstallGWTServiceAsync remoteInstallService = GWTServiceLookup.getRemoteInstallService(600000);
 
     private DynamicForm connectionForm;
     private DynamicForm buttonsForm;
@@ -82,6 +83,9 @@ public class RemoteAgentInstallView extends LocatableVLayout {
     protected void onInit() {
         super.onInit();
 
+        TitleBar titleBar = new TitleBar(this, MSG.view_adminTopology_remoteAgentInstall(), "global/Agent_24.png");
+        addMember(titleBar);
+
         addMember(getConnectionForm());
         addMember(getButtons());
 
@@ -99,7 +103,7 @@ public class RemoteAgentInstallView extends LocatableVLayout {
         connectionForm.setNumCols(3);
         connectionForm.setWrapItemTitles(false);
         connectionForm.setColWidths("25%", "50%", "25%");
-        connectionForm.setMargin(20);
+        connectionForm.setMargin(10);
 
         HeaderItem connectionHeader = new HeaderItem();
         connectionHeader.setDefaultValue(MSG.view_remoteAgentInstall_connInfo());
@@ -108,30 +112,35 @@ public class RemoteAgentInstallView extends LocatableVLayout {
         host.setRequired(true);
         host.setWidth("100%");
         host.setPrompt(MSG.view_remoteAgentInstall_promptHost());
+        host.setHoverWidth(300);
         host.setColSpan(2);
 
         TextItem port = new TextItem("port", MSG.common_title_port());
         port.setRequired(false);
         port.setWidth("90");
         port.setPrompt(MSG.view_remoteAgentInstall_promptPort());
+        port.setHoverWidth(300);
         port.setColSpan(1);
 
         TextItem username = new TextItem("username", MSG.common_title_user());
         username.setRequired(true);
         username.setWidth("100%");
         username.setPrompt(MSG.view_remoteAgentInstall_promptUser());
+        username.setHoverWidth(300);
         username.setColSpan(2);
 
         PasswordItem password = new PasswordItem("password", MSG.common_title_password());
         password.setRequired(false);
         password.setWidth("100%");
         password.setPrompt(MSG.view_remoteAgentInstall_promptPassword());
+        password.setHoverWidth(300);
         password.setColSpan(2);
 
         TextItem agentInstallPath = new TextItem("agentInstallPath", MSG.view_remoteAgentInstall_installPath());
         agentInstallPath.setRequired(true);
         agentInstallPath.setWidth("100%");
         agentInstallPath.setPrompt(MSG.view_remoteAgentInstall_promptInstallPath());
+        agentInstallPath.setHoverWidth(300);
         agentInstallPath.setStartRow(true);
         agentInstallPath.setEndRow(false);
 
@@ -176,7 +185,7 @@ public class RemoteAgentInstallView extends LocatableVLayout {
         buttonsForm = new LocatableDynamicForm(this.extendLocatorId("ButtonForm"));
         buttonsForm.setWidth("75%");
         buttonsForm.setNumCols(4);
-        buttonsForm.setMargin(20);
+        buttonsForm.setMargin(10);
         buttonsForm.setColWidths("10%", "30%", "30%", "30%");
 
         HeaderItem buttonsHeader = new HeaderItem();
@@ -346,7 +355,7 @@ public class RemoteAgentInstallView extends LocatableVLayout {
     }
 
     private void buildInstallInfoCanvas(VLayout installInfo, AgentInstallInfo info) {
-        DynamicForm infoForm = new DynamicForm();
+        DynamicForm infoForm = new LocatableDynamicForm(extendLocatorId("infoForm"));
         infoForm.setMargin(20);
         infoForm.setWidth100();
         infoForm.setHeight100();

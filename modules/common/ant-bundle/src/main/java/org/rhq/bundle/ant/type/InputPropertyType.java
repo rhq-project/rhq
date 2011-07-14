@@ -19,6 +19,7 @@ package org.rhq.bundle.ant.type;
 
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
@@ -48,7 +49,8 @@ public class InputPropertyType extends AbstractBundleType {
         ConfigurationDefinition configDef = getProject().getConfigurationDefinition();
         PropertySimpleType propType = PropertySimpleType.fromXmlName(this.type);
         PropertyDefinitionSimple propDef = new PropertyDefinitionSimple(this.name, this.description, this.required,
-                propType);
+            propType);
+        propDef.setDefaultValue(this.defaultValue);
         configDef.put(propDef);
 
         String value = getProject().getProperty(this.name);
@@ -61,7 +63,7 @@ public class InputPropertyType extends AbstractBundleType {
         if (!parseOnly) {
             if (value == null && this.required) {
                 throw new BuildException("No value was specified for required input property '" + this.name
-                          + "', and no default is defined for the property.");
+                    + "', and no default is defined for the property.");
             }
             validateValue(value, propType);
             String valueString = (value != null) ? "'" + value + "'" : "<null>";
@@ -74,7 +76,7 @@ public class InputPropertyType extends AbstractBundleType {
 
         return;
     }
-    
+
     public String getDescription() {
         return description;
     }
@@ -145,7 +147,7 @@ public class InputPropertyType extends AbstractBundleType {
                 validateValue(this.defaultValue, propType);
             } catch (RuntimeException e) {
                 throw new BuildException("Default value '" + this.defaultValue
-                        + "' is not valid according to 'type' attribute: " + this.type, e);
+                    + "' is not valid according to 'type' attribute: " + this.type, e);
             }
         }
     }
@@ -154,28 +156,28 @@ public class InputPropertyType extends AbstractBundleType {
         if (value != null) {
             try {
                 switch (propType) {
-                    case BOOLEAN:
-                        if (!value.equals(Boolean.TRUE.toString()) && !value.equals(Boolean.FALSE.toString())) {
-                            throw new RuntimeException("Illegal value for boolean property - value must be 'true' or 'false'." 
-                                    + value);
-                        }
-                        break;
-                    case DOUBLE:
-                        Double.valueOf(value);
-                        break;
-                    case FLOAT:
-                        Float.valueOf(value);
-                        break;
-                    case INTEGER:
-                        Integer.valueOf(value);
-                        break;
-                    case LONG:
-                        Long.valueOf(value);
-                        break;
+                case BOOLEAN:
+                    if (!value.equals(Boolean.TRUE.toString()) && !value.equals(Boolean.FALSE.toString())) {
+                        throw new RuntimeException(
+                            "Illegal value for boolean property - value must be 'true' or 'false'." + value);
+                    }
+                    break;
+                case DOUBLE:
+                    Double.valueOf(value);
+                    break;
+                case FLOAT:
+                    Float.valueOf(value);
+                    break;
+                case INTEGER:
+                    Integer.valueOf(value);
+                    break;
+                case LONG:
+                    Long.valueOf(value);
+                    break;
                 }
             } catch (RuntimeException e) {
                 throw new BuildException("'" + value + "' is not a legal value for input property '" + this.name
-                        + "', which has type '" + this.type + "'.", e);
+                    + "', which has type '" + this.type + "'.", e);
             }
         }
     }

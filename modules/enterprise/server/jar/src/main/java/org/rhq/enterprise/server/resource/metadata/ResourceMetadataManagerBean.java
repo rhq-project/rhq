@@ -18,15 +18,7 @@
  */
 package org.rhq.enterprise.server.resource.metadata;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -44,46 +36,25 @@ import javax.persistence.NoResultException;
 import javax.persistence.NonUniqueResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
-import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.core.clientapi.agent.metadata.PluginDependencyGraph;
 import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
 import org.rhq.core.clientapi.agent.metadata.SubCategoriesMetadataParser;
-import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
-import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
-import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.Property;
-import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
-import org.rhq.core.domain.configuration.definition.PropertyDefinition;
-import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.criteria.ResourceCriteria;
-import org.rhq.core.domain.event.EventDefinition;
-import org.rhq.core.domain.measurement.MeasurementDefinition;
-import org.rhq.core.domain.measurement.MeasurementSchedule;
-import org.rhq.core.domain.operation.OperationDefinition;
-import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.resource.ProcessScan;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceSubCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
-import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.RequiredPermission;
-import org.rhq.enterprise.server.configuration.metadata.ConfigurationDefinitionUpdateReport;
-import org.rhq.enterprise.server.configuration.metadata.ConfigurationMetadataManagerLocal;
-import org.rhq.enterprise.server.event.EventManagerLocal;
-import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
-import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupDeleteException;
@@ -103,22 +74,8 @@ import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal {
     private final Log log = LogFactory.getLog(ResourceMetadataManagerBean.class);
 
-    @javax.annotation.Resource(name = "RHQ_DS")
-    private DataSource dataSource;
-
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
-
-    private static final PluginMetadataManager PLUGIN_METADATA_MANAGER = new PluginMetadataManager();
-
-    @EJB
-    private MeasurementDefinitionManagerLocal measurementDefinitionManager;
-
-    @EJB
-    private MeasurementScheduleManagerLocal scheduleManager;
-
-    @EJB
-    private ConfigurationMetadataManagerLocal configurationMetadataManager;
 
     @EJB
     private SubjectManagerLocal subjectManager;
@@ -133,306 +90,30 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
     private ResourceTypeManagerLocal resourceTypeManager;
 
     @EJB
-    private EventManagerLocal eventManager;
-
-    @EJB
     private ResourceMetadataManagerLocal resourceMetadataManager; // self
 
-    @SuppressWarnings("unchecked")
-    public List<Plugin> getAllPluginsById(List<Integer> pluginIds) {
-        if (pluginIds == null || pluginIds.size() == 0) {
-            return new ArrayList<Plugin>(); // nothing to do
-        }
-        Query query = entityManager.createNamedQuery(Plugin.QUERY_FIND_ALL_BY_IDS);
-        query.setParameter("ids", pluginIds);
-        return query.getResultList();
-    }
+    @EJB
+    private ContentMetadataManagerLocal contentMetadataMgr;
 
-    @RequiredPermission(Permission.MANAGE_SETTINGS)
-    public void enablePlugins(Subject subject, List<Integer> pluginIds) throws Exception {
-        if (pluginIds == null || pluginIds.size() == 0) {
-            return; // nothing to do
-        }
+    @EJB
+    private OperationMetadataManagerLocal operationMetadataMgr;
 
-        // we need to make sure that if a plugin is enabled, all of its dependencies are enabled
-        PluginDependencyGraph graph = PLUGIN_METADATA_MANAGER.buildDependencyGraph();
-        List<Plugin> allPlugins = getPlugins();
-        Set<String> pluginsThatNeedToBeEnabled = new HashSet<String>();
+    @EJB
+    private EventMetdataManagerLocal eventMetadataMgr;
 
-        for (Integer pluginId : pluginIds) {
-            Plugin plugin = getPluginFromListById(allPlugins, pluginId.intValue());
-            if (plugin != null) {
-                Collection<String> dependencyNames = graph.getAllDependencies(plugin.getName());
-                for (String dependencyName : dependencyNames) {
-                    Plugin dependencyPlugin = getPluginFromListByName(allPlugins, dependencyName);
-                    if (dependencyPlugin != null && !dependencyPlugin.isEnabled()
-                        && !pluginIds.contains(Integer.valueOf(dependencyPlugin.getId()))) {
-                        pluginsThatNeedToBeEnabled.add(dependencyPlugin.getDisplayName()); // this isn't enabled and isn't getting enabled, but it needs to be
-                    }
-                }
-            }
-        }
+    @EJB
+    private MeasurementMetadataManagerLocal measurementMetadataMgr;
 
-        if (!pluginsThatNeedToBeEnabled.isEmpty()) {
-            throw new IllegalArgumentException("You must enable the following plugin dependencies also: "
-                + pluginsThatNeedToBeEnabled);
-        }
+    @EJB
+    private AlertMetadataManagerLocal alertMetadataMgr;
 
-        // everything is OK, we can enable them 
-        for (Integer pluginId : pluginIds) {
-            resourceMetadataManager.setPluginEnabledFlag(subject, pluginId, true);
-        }
+    @EJB
+    private ResourceConfigurationMetadataManagerLocal resourceConfigMetadataMgr;
 
-        return;
-    }
+    @EJB
+    private PluginConfigurationMetadataManagerLocal pluginConfigMetadataMgr;
 
-    @RequiredPermission(Permission.MANAGE_SETTINGS)
-    public void disablePlugins(Subject subject, List<Integer> pluginIds) throws Exception {
-        if (pluginIds == null || pluginIds.size() == 0) {
-            return; // nothing to do
-        }
-
-        // we need to make sure that if a plugin is disabled, no other plugins that depend on it are enabled
-        PluginDependencyGraph graph = PLUGIN_METADATA_MANAGER.buildDependencyGraph();
-        List<Plugin> allPlugins = getPlugins();
-        Set<String> pluginsThatNeedToBeDisabled = new HashSet<String>();
-
-        for (Integer pluginId : pluginIds) {
-            Plugin plugin = getPluginFromListById(allPlugins, pluginId.intValue());
-            if (plugin != null) {
-                Collection<String> dependentNames = graph.getAllDependents(plugin.getName());
-                for (String dependentName : dependentNames) {
-                    Plugin dependentPlugin = getPluginFromListByName(allPlugins, dependentName);
-                    if (dependentPlugin != null && dependentPlugin.isEnabled()
-                        && !pluginIds.contains(Integer.valueOf(dependentPlugin.getId()))) {
-                        pluginsThatNeedToBeDisabled.add(dependentPlugin.getDisplayName()); // this isn't disabled and isn't getting disabled, but it needs to be
-                    }
-                }
-            }
-        }
-
-        if (!pluginsThatNeedToBeDisabled.isEmpty()) {
-            throw new IllegalArgumentException("You must disable the following dependent plugins also: "
-                + pluginsThatNeedToBeDisabled);
-        }
-
-        // everything is OK, we can disable them 
-        for (Integer pluginId : pluginIds) {
-            resourceMetadataManager.setPluginEnabledFlag(subject, pluginId, false);
-        }
-
-        return;
-    }
-
-    private Plugin getPluginFromListByName(List<Plugin> plugins, String name) {
-        for (Plugin plugin : plugins) {
-            if (name.equals(plugin.getName())) {
-                return plugin;
-            }
-        }
-        return null;
-    }
-
-    private Plugin getPluginFromListById(List<Plugin> plugins, int id) {
-        for (Plugin plugin : plugins) {
-            if (id == plugin.getId()) {
-                return plugin;
-            }
-        }
-        return null;
-    }
-
-    @RequiredPermission(Permission.MANAGE_SETTINGS)
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public void setPluginEnabledFlag(Subject subject, int pluginId, boolean enabled) throws Exception {
-        Query q = entityManager.createNamedQuery(Plugin.UPDATE_PLUGIN_ENABLED_BY_ID);
-        q.setParameter("id", pluginId);
-        q.setParameter("enabled", Boolean.valueOf(enabled));
-        q.executeUpdate();
-        log.info((enabled ? "Enabling" : "Disabling") + " plugin [" + pluginId + "]");
-        return;
-    }
-
-    /**
-     * Returns the information on the given plugin as found in the database.
-     * @param  name the name of a plugin
-     * @return the plugin with the specified name
-     * @throws NoResultException when no plugin with that name exists
-     */
-    public Plugin getPlugin(String name) {
-        Query query = entityManager.createNamedQuery(Plugin.QUERY_FIND_BY_NAME);
-        query.setParameter("name", name);
-        Plugin plugin = (Plugin) query.getSingleResult();
-        return plugin;
-    }
-
-    /**
-     * Returns the information on all agent plugins as found in the database.
-     */
-    @SuppressWarnings("unchecked")
-    public List<Plugin> getPlugins() {
-        Query q = entityManager.createNamedQuery(Plugin.QUERY_FIND_ALL_INSTALLED);
-        return q.getResultList();
-    }
-
-    @SuppressWarnings("unchecked")
-    public List<Plugin> getPluginsByResourceTypeAndCategory(String resourceTypeName, ResourceCategory resourceCategory) {
-        Query query = entityManager.createNamedQuery(Plugin.QUERY_FIND_BY_RESOURCE_TYPE_AND_CATEGORY);
-        query.setParameter("resourceTypeName", resourceTypeName);
-        query.setParameter("resourceCategory", resourceCategory);
-        List<Plugin> results = query.getResultList();
-        return results;
-    }
-
-    // Start with no transaction so we can control the transactional boundaries. This is important for a
-    // few reasons. Registering the plugin and removing obsolete types are perfromed in different, subsequent,
-    // transactions. The register may update types, and that locks various rows of the database. Those rows
-    // must be unlocked before obsolete type removal.  Type removal executes (resource) bulk delete under the covers,
-    // and that will deadlock with the rows locked by the type update (at least in oracle) if performed in the same
-    // transaction.  Furthermore, as mentioned, obsolete type removal removes resources of the obsolete type. We
-    // need to avoid an umbrella transaction for the type removal because large inventories of obsolete resources
-    // will generate very large transactions. Potentially resulting in timeouts or other issues.    
-    @RequiredPermission(Permission.MANAGE_SETTINGS)
-    @TransactionAttribute(TransactionAttributeType.NEVER)
-    public void registerPlugin(Subject subject, Plugin plugin, PluginDescriptor pluginDescriptor, File pluginFile,
-        boolean forceUpdate) throws Exception {
-
-        boolean typesUpdated = resourceMetadataManager.registerPluginTypes(subject, plugin, pluginDescriptor,
-            pluginFile, forceUpdate);
-
-        if (typesUpdated) {
-            removeObsoleteTypes(subject, plugin.getName());
-        }
-    }
-
-    @RequiredPermission(Permission.MANAGE_SETTINGS)
-    public boolean registerPluginTypes(Subject subject, Plugin plugin, PluginDescriptor pluginDescriptor,
-        File pluginFile, boolean forceUpdate) throws Exception {
-
-        // TODO GH: Consider how to remove features from plugins in updates without breaking everything
-
-        Plugin existingPlugin = null;
-        boolean newOrUpdated = false;
-        boolean typesUpdated = false;
-
-        try {
-            existingPlugin = getPlugin(plugin.getName());
-        } catch (NoResultException nre) {
-            newOrUpdated = true; // this is expected for new plugins
-        }
-
-        if (existingPlugin != null) {
-            Plugin obsolete = AgentPluginDescriptorUtil.determineObsoletePlugin(plugin, existingPlugin);
-            if (obsolete == existingPlugin) { // yes, use == for reference equality
-                newOrUpdated = true;
-            }
-            plugin.setId(existingPlugin.getId());
-            plugin.setEnabled(existingPlugin.isEnabled());
-        }
-
-        // If this is a brand new plugin, it gets "updated" too.
-        if (newOrUpdated) {
-            if (plugin.getDisplayName() == null) {
-                plugin.setDisplayName(plugin.getName());
-            }
-
-            plugin = updatePluginExceptContent(plugin);
-            if (pluginFile != null) {
-                entityManager.flush();
-                streamPluginFileContentToDatabase(plugin.getId(), pluginFile);
-            }
-            log.debug("Updated plugin entity [" + plugin + "]");
-        }
-
-        if (newOrUpdated || forceUpdate || !PLUGIN_METADATA_MANAGER.getPluginNames().contains(plugin.getName())) {
-            Set<ResourceType> rootResourceTypes = PLUGIN_METADATA_MANAGER.loadPlugin(pluginDescriptor);
-            if (rootResourceTypes == null) {
-                throw new Exception("Failed to load plugin [" + plugin.getName() + "].");
-            }
-            if (newOrUpdated || forceUpdate) {
-                // Only merge the plugin's ResourceTypes into the DB if the plugin is new or updated or we were forced to
-                updateTypes(rootResourceTypes);
-                typesUpdated = true;
-            }
-        }
-
-        // TODO GH: JBNADM-1310/JBNADM-1630 - Push updated plugins to running agents and have them reboot their PCs
-        // We probably want to be smart about this - perhaps have the agents periodically poll their server to see
-        // if there are new plugins and if so download them - this of course would be configurable/disableable
-
-        return typesUpdated;
-    }
-
-    private Plugin updatePluginExceptContent(Plugin plugin) throws Exception {
-        // this method is here because we need a way to update the plugin's information
-        // without blowing away the content data. Because we do not want to load the
-        // content blob in memory, the plugin's content field will be null - if we were
-        // to entityManager.merge that plugin POJO, it would null out that blob column.
-        if (plugin.getId() == 0) {
-            entityManager.persist(plugin);
-        } else {
-            // update all the fields except content
-            Plugin pluginEntity = entityManager.getReference(Plugin.class, plugin.getId());
-            pluginEntity.setName(plugin.getName());
-            pluginEntity.setPath(plugin.getPath());
-            pluginEntity.setDisplayName(plugin.getDisplayName());
-            pluginEntity.setEnabled(plugin.isEnabled());
-            pluginEntity.setStatus(plugin.getStatus());
-            pluginEntity.setMd5(plugin.getMD5());
-            pluginEntity.setVersion(plugin.getVersion());
-            pluginEntity.setAmpsVersion(plugin.getAmpsVersion());
-            pluginEntity.setDeployment(plugin.getDeployment());
-            pluginEntity.setDescription(plugin.getDescription());
-            pluginEntity.setHelp(plugin.getHelp());
-            pluginEntity.setMtime(plugin.getMtime());
-
-            try {
-                entityManager.flush(); // make sure we push this out to the DB now
-            } catch (Exception e) {
-                throw new Exception("Failed to update a plugin that matches [" + plugin + "]");
-            }
-        }
-        return plugin;
-    }
-
-    /**
-     * This will write the contents of the given plugin file to the database.
-     * This will assume the MD5 in the database is already correct, so this
-     * method will not take the time to calculate the MD5 again.
-     *
-     * @param id the id of the plugin whose content is being updated
-     * @param file the plugin file whose content will be streamed to the database
-     *
-     * @throws Exception on failure to update the plugin's content
-     */
-    private void streamPluginFileContentToDatabase(int id, File file) throws Exception {
-        Connection conn = null;
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-
-        FileInputStream fis = new FileInputStream(file);
-
-        try {
-            conn = this.dataSource.getConnection();
-            ps = conn.prepareStatement("UPDATE " + Plugin.TABLE_NAME + " SET CONTENT = ? WHERE ID = ?");
-            ps.setBinaryStream(1, new BufferedInputStream(fis), (int) file.length());
-            ps.setInt(2, id);
-            int updateResults = ps.executeUpdate();
-            if (updateResults != 1) {
-                throw new Exception("Failed to update content for plugin [" + id + "] from [" + file + "]");
-            }
-        } finally {
-            JDBCUtil.safeClose(conn, ps, rs);
-
-            try {
-                fis.close();
-            } catch (Throwable t) {
-            }
-        }
-        return;
-    }
-
-    private void updateTypes(Set<ResourceType> resourceTypes) throws Exception {
+    public void updateTypes(Set<ResourceType> resourceTypes) throws Exception {
         // Only process the type if it is a non-runs-inside type (i.e. not a child of some other type X at this same
         // level in the type hierarchy). runs-inside types which we skip here will get processed at the next level down
         // when we recursively process type X's children.
@@ -456,7 +137,12 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         }
         Set<ResourceType> legitimateChildren = new HashSet<ResourceType>();
         for (ResourceType resourceType : nonRunsInsideResourceTypes) {
+            long startTime = System.currentTimeMillis();
             updateType(resourceType);
+            long endTime = System.currentTimeMillis();
+            log.debug("Updated resource type [" + toConciseString(resourceType) + "] in " + (endTime - startTime)
+                + " ms");
+
             legitimateChildren.addAll(resourceType.getChildResourceTypes());
         }
         // Only recurse if there are actually children - this prevents infinite recursion.
@@ -469,27 +155,34 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
     // Start with no transaction so we can control the transactional boundaries. Obsolete type removal removes
     // resources of the obsolete type. We need to avoid an umbrella transaction for the type removal because large
     // inventories of obsolete resources will generate very large transactions. Potentially resulting in timeouts
-    // or other issues.    
-    private void removeObsoleteTypes(Subject subject, String pluginName) {
+    // or other issues.
+    @TransactionAttribute(TransactionAttributeType.NEVER)
+    public void removeObsoleteTypes(Subject subject, String pluginName, PluginMetadataManager metadataCache) {
 
         Set<ResourceType> obsoleteTypes = new HashSet<ResourceType>();
         Set<ResourceType> legitTypes = new HashSet<ResourceType>();
 
         try {
-            resourceMetadataManager.getPluginTypes(subject, pluginName, legitTypes, obsoleteTypes);
+            resourceMetadataManager.getPluginTypes(subject, pluginName, legitTypes, obsoleteTypes, metadataCache);
 
             if (!obsoleteTypes.isEmpty()) {
-                // TODO: Log this at DEBUG instead.
-                log.info("Removing " + obsoleteTypes.size() + " obsolete types: " + obsoleteTypes + "...");
+                log.debug("Removing " + obsoleteTypes.size() + " obsolete types: " + obsoleteTypes + "...");
                 removeResourceTypes(subject, obsoleteTypes, new HashSet<ResourceType>(obsoleteTypes));
             }
 
             // Now it's safe to remove any obsolete subcategories on the legit types.
             for (ResourceType legitType : legitTypes) {
-                ResourceType updateType = PLUGIN_METADATA_MANAGER.getType(legitType.getName(), legitType.getPlugin());
+                ResourceType updateType = metadataCache.getType(legitType.getName(), legitType.getPlugin());
 
                 // If we've got a type from the descriptor which matches an existing one,
                 // then let's see if we need to remove any subcategories from the existing one.
+
+                // NOTE: I don't think updateType will ever be null here because we have previously verified
+                // its existence above when we called resourceMetadataManager.getPluginTypes. All of the types contained
+                // in legitTypes are all types found to exist in metadataCache. Therefore, I think that this null
+                // check can be removed.
+                //
+                // jsanda - 11/11/2010
                 if (updateType != null) {
                     try {
                         resourceMetadataManager.removeObsoleteSubCategories(subject, updateType, legitType);
@@ -507,7 +200,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     @SuppressWarnings("unchecked")
     public void getPluginTypes(Subject subject, String pluginName, Set<ResourceType> legitTypes,
-        Set<ResourceType> obsoleteTypes) {
+        Set<ResourceType> obsoleteTypes, PluginMetadataManager metadataCache) {
         try {
             Query query = entityManager.createNamedQuery(ResourceType.QUERY_FIND_BY_PLUGIN);
             query.setParameter("plugin", pluginName);
@@ -516,7 +209,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
             if (existingTypes != null) {
 
                 for (ResourceType existingType : existingTypes) {
-                    if (PLUGIN_METADATA_MANAGER.getType(existingType.getName(), existingType.getPlugin()) == null) {
+                    if (metadataCache.getType(existingType.getName(), existingType.getPlugin()) == null) {
                         // The type is obsolete - (i.e. it's no longer defined by the plugin).
                         obsoleteTypes.add(existingType);
                     } else {
@@ -530,7 +223,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         }
     }
 
-    // NO TRANSACTION SHOULD BE ACTIVE ON ENTRY 
+    // NO TRANSACTION SHOULD BE ACTIVE ON ENTRY
     private void removeResourceTypes(Subject subject, Set<ResourceType> candidateTypes,
         Set<ResourceType> typesToBeRemoved) throws Exception {
         for (ResourceType candidateType : candidateTypes) {
@@ -591,6 +284,20 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         removeFromChildren(existingType);
         entityManager.merge(existingType);
 
+        contentMetadataMgr.deleteMetadata(subject, existingType);
+
+        entityManager.flush();
+        existingType = entityManager.find(existingType.getClass(), existingType.getId());
+
+        try {
+            alertMetadataMgr.deleteAlertTemplates(subject, existingType);
+        } catch (Exception e) {
+            throw new RuntimeException("Alert template deletion failed. Cannot finish deleting " + existingType, e);
+        }
+
+        entityManager.flush();
+        existingType = entityManager.find(existingType.getClass(), existingType.getId());
+
         // Remove all compatible groups that are of the type.
         List<ResourceGroup> compatGroups = existingType.getResourceGroups();
         if (compatGroups != null) {
@@ -607,21 +314,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         }
         entityManager.flush();
 
-        // Remove the type's metric definitions. We do this separately, rather than just relying on cascade
-        // upon deletion of the ResourceType, because the removeMeasurementDefinition() will also take care
-        // of removing any associated schedules and those schedules' OOBs.
-        Set<MeasurementDefinition> definitions = existingType.getMetricDefinitions();
-        if (definitions != null) {
-            Iterator<MeasurementDefinition> defIter = definitions.iterator();
-            while (defIter.hasNext()) {
-                MeasurementDefinition def = defIter.next();
-                if (entityManager.contains(def)) {
-                    entityManager.refresh(def);
-                    measurementDefinitionManager.removeMeasurementDefinition(def);
-                }
-                defIter.remove();
-            }
-        }
+        measurementMetadataMgr.deleteMetadata(existingType);
         entityManager.flush();
 
         // TODO: Clean out event definitions?
@@ -697,20 +390,23 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         // child types which may still be referencing these sub categories
 
         // Update the rest of these related resources
-        updatePluginConfiguration(resourceType, existingType);
-        entityManager.flush();
+        long startTime = System.currentTimeMillis();
+        pluginConfigMetadataMgr.updatePluginConfigurationDefinition(existingType, resourceType);
+        long endTime = System.currentTimeMillis();
+        log.debug("Updated plugin configuration definition for ResourceType[" + toConciseString(existingType) + "] in "
+            + (endTime - startTime) + " ms");
 
-        updateResourceConfiguration(resourceType, existingType);
+        resourceConfigMetadataMgr.updateResourceConfigurationDefinition(existingType, resourceType);
 
-        updateMeasurementDefinitions(resourceType, existingType);
+        measurementMetadataMgr.updateMetadata(existingType, resourceType);
+        contentMetadataMgr.updateMetadata(existingType, resourceType);
+        operationMetadataMgr.updateMetadata(existingType, resourceType);
 
-        updateContentDefinitions(resourceType, existingType);
-
-        updateOperationDefinitions(resourceType, existingType);
+        resourceMetadataManager.updateDriftMetadata(existingType, resourceType);
 
         updateProcessScans(resourceType, existingType);
 
-        updateEventDefinitions(resourceType, existingType);
+        eventMetadataMgr.updateMetadata(existingType, resourceType);
 
         // Update the type itself
         existingType.setDescription(resourceType.getDescription());
@@ -748,6 +444,79 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
 
         existingType = entityManager.merge(existingType);
         entityManager.flush();
+    }
+
+    @Override
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public void updateDriftMetadata(ResourceType existingType, ResourceType resourceType) {
+        boolean isSame = true;
+
+        existingType = entityManager.find(ResourceType.class, existingType.getId());
+
+        //
+        // First, we need to see if the drift configs have changed. If the existing and new drift configs
+        // are the same, then we can skip the update and do nothing. Only if one or more drift configs
+        // are different do we have to do anything to the persisted metadata.
+        //
+
+        Set<ConfigurationTemplate> existingDriftTemplates = existingType.getDriftConfigurationTemplates();
+        Set<ConfigurationTemplate> newDriftTemplates = resourceType.getDriftConfigurationTemplates();
+        if (existingDriftTemplates.size() != newDriftTemplates.size()) {
+            isSame = false;
+        } else {
+            // note: the size of the sets are typically really small (usually between 0 and 3),
+            // so iterating through them is fast.
+
+            // look at all the configs to ensure we detect any changes to individual settings on the templates
+            Set<String> existingNames = new HashSet<String>(existingDriftTemplates.size());
+            Set<String> newNames = new HashSet<String>(newDriftTemplates.size());
+            for (ConfigurationTemplate existingCT : existingDriftTemplates) {
+                String existingName = existingCT.getName();
+                Configuration existingConfig = existingCT.getConfiguration();
+
+                existingNames.add(existingName); // for later
+
+                for (ConfigurationTemplate newCT : newDriftTemplates) {
+                    String newName = newCT.getName();
+                    newNames.add(newName); // for later, do this here, not in the if-stmt below, so we can catch if new has names not in existing
+                    if (newName.equals(existingName)) {
+                        Configuration newConfig = newCT.getConfiguration();
+                        if (!existingConfig.equals(newConfig)) {
+                            isSame = false;
+                        }
+                        break;
+                    }
+                }
+
+                if (!isSame) {
+                    break;
+                }
+            }
+
+            if (isSame) {
+                // make sure they all have the same names and no duplicate names existed
+                isSame = existingNames.equals(newNames) && existingNames.size() == existingDriftTemplates.size();
+            }
+        }
+
+        //
+        // If one or more drift configs are different between new and existing,
+        // then we need to remove the old drift config and persist the new drift config.
+        //
+
+        if (!isSame) {
+            for (ConfigurationTemplate doomed : existingDriftTemplates) {
+                entityManager.remove(doomed);
+            }
+            existingType.getDriftConfigurationTemplates().clear();
+
+            for (ConfigurationTemplate toPersist : newDriftTemplates) {
+                entityManager.persist(toPersist);
+                existingType.addDriftConfigurationTemplate(toPersist);
+            }
+        }
+
+        return;
     }
 
     private void persistNewType(ResourceType resourceType) {
@@ -872,6 +641,9 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
                     resource.getParentResource().removeChildResource(resource);
                 }
                 newParent.addChildResource(resource);
+                // Assigning a new parent changes the ancestry for the resource and its children. Since the
+                // children are not handled in this method, update their ancestry now.
+                resourceManager.updateAncestry(subjectManager.getOverlord(), resource.getId());
             } else {
                 log.debug("We were unable to move " + resource + " from invalid parent " + resource.getParentResource()
                     + " to a new valid parent with one of the following types: " + newParentTypes);
@@ -906,122 +678,6 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         return result;
     }
 
-    /* Update the <event> tags */
-    private void updateEventDefinitions(ResourceType newType, ResourceType existingType) {
-        Set<EventDefinition> newEventDefs = newType.getEventDefinitions();
-        // Loop over the newEventDefs and set the resourceTypeId, so equals() will work
-        for (EventDefinition def : newEventDefs) {
-            def.setResourceTypeId(existingType.getId());
-        }
-
-        Set<EventDefinition> existingEventDefs = existingType.getEventDefinitions();
-        for (EventDefinition def : existingEventDefs) {
-            entityManager.refresh(def);
-        }
-
-        Set<EventDefinition> toDelete = missingInFirstSet(newEventDefs, existingEventDefs);
-        Set<EventDefinition> newOnes = missingInFirstSet(existingEventDefs, newEventDefs);
-        Set<EventDefinition> toUpdate = intersection(newEventDefs, existingEventDefs);
-
-        // update existing ones
-        for (EventDefinition eDef : existingEventDefs) {
-            for (EventDefinition nDef : toUpdate) {
-                if (eDef.equals(nDef)) {
-                    eDef.setDescription(nDef.getDescription());
-                    eDef.setDisplayName(nDef.getDisplayName());
-                }
-            }
-        }
-
-        // Persist new definitions
-        for (EventDefinition eDef : newOnes) {
-            EventDefinition e2 = new EventDefinition(existingType, eDef.getName());
-            e2.setDescription(eDef.getDescription());
-            e2.setDisplayName(eDef.getDisplayName());
-            entityManager.persist(e2);
-            existingType.addEventDefinition(e2);
-        }
-
-        // and finally remove deleted ones. First flush the EM to be on the save side
-        // for a bulk delete.
-        existingEventDefs.removeAll(toDelete);
-        entityManager.flush();
-        for (EventDefinition eDef : toDelete) {
-            // remove EventSources and events on it.
-            eventManager.deleteEventSourcesForDefinition(eDef);
-            entityManager.remove(eDef);
-        }
-    }
-
-    /**
-     * Update the stuff below a <plugin-configuration>
-     */
-    private void updatePluginConfiguration(ResourceType resourceType, ResourceType existingType) {
-        ConfigurationDefinition existingConfigurationDefinition = existingType.getPluginConfigurationDefinition();
-        if (resourceType.getPluginConfigurationDefinition() != null) {
-            // all new
-            if (existingConfigurationDefinition == null) {
-                entityManager.persist(resourceType.getPluginConfigurationDefinition());
-                existingType.setPluginConfigurationDefinition(resourceType.getPluginConfigurationDefinition());
-            } else // update the configuration
-            {
-                ConfigurationDefinitionUpdateReport updateReport = configurationMetadataManager
-                    .updateConfigurationDefinition(resourceType.getPluginConfigurationDefinition(),
-                        existingConfigurationDefinition);
-
-                if (updateReport.getNewPropertyDefinitions().size() > 0 ||
-                    updateReport.getUpdatedPropertyDefinitions().size() > 0) {
-                    Subject overlord = subjectManager.getOverlord();
-                    ResourceCriteria criteria = new ResourceCriteria();
-                    criteria.addFilterResourceTypeId(existingType.getId());
-                    List<Resource> resources = resourceManager.findResourcesByCriteria(overlord, criteria);
-
-                    for (Resource resource : resources) {
-                        updateResourcePluginConfiguration(resource, updateReport);
-                    }
-                }
-            }
-        } else {
-            // resourceType.getPlu... is null -> remove the existing config
-            if (existingConfigurationDefinition != null) {
-                existingType.setPluginConfigurationDefinition(null);
-                entityManager.remove(existingConfigurationDefinition);
-            }
-        }
-    }
-
-    private void updateResourcePluginConfiguration(Resource resource, ConfigurationDefinitionUpdateReport updateReport) {
-        Configuration pluginConfiguration = resource.getPluginConfiguration();
-        boolean modified = false;
-        int numberOfProperties = pluginConfiguration.getProperties().size();
-        ConfigurationTemplate template = updateReport.getConfigurationDefinition().getDefaultTemplate();
-        Configuration templateConfiguration = template.getConfiguration();
-
-        for (PropertyDefinition propertyDef : updateReport.getNewPropertyDefinitions()) {
-            if (propertyDef.isRequired()) {
-                Property templateProperty = templateConfiguration.get(propertyDef.getName());
-                pluginConfiguration.put(templateProperty.deepCopy(false));
-                modified = true;
-            }
-        }
-
-        for (PropertyDefinition propertyDef : updateReport.getUpdatedPropertyDefinitions()) {
-            if (propertyDef.isRequired()) {
-                String propertyValue = pluginConfiguration.getSimpleValue(propertyDef.getName(), null);
-                if (propertyValue == null) {
-                    Property templateProperty = templateConfiguration.get(propertyDef.getName());
-                    pluginConfiguration.put(templateProperty.deepCopy(false));
-                    modified = true;
-                }
-            }
-        }
-
-//        if (pluginConfiguration.getProperties().size() > numberOfProperties) {
-        if (modified) {
-            resource.setMtime(new Date().getTime());
-        }
-    }
-
     /**
      * Update the set of process scans for a given resource type
      *
@@ -1032,10 +688,10 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         Set<ProcessScan> existingScans = existingType.getProcessScans();
         Set<ProcessScan> newScans = resourceType.getProcessScans();
 
-        Set<ProcessScan> scansToPersist = missingInFirstSet(existingScans, newScans);
-        Set<ProcessScan> scansToDelete = missingInFirstSet(newScans, existingScans);
+        Set<ProcessScan> scansToPersist = CollectionsUtil.missingInFirstSet(existingScans, newScans);
+        Set<ProcessScan> scansToDelete = CollectionsUtil.missingInFirstSet(newScans, existingScans);
 
-        Set<ProcessScan> scansToUpdate = intersection(existingScans, newScans);
+        Set<ProcessScan> scansToUpdate = CollectionsUtil.intersection(existingScans, newScans);
 
         // update scans that may have changed
         for (ProcessScan scan : scansToUpdate) {
@@ -1055,209 +711,6 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         for (ProcessScan scan : scansToDelete) {
             existingScans.remove(scan);
             entityManager.remove(scan);
-        }
-    }
-
-    /**
-     * Update the operation definitions of existingType with the ones from resource type.
-     *
-     * @param resourceType New resourceType definition with operationDefinitions
-     * @param existingType The existing resource type with operation Definitions
-     */
-    private void updateOperationDefinitions(ResourceType resourceType, ResourceType existingType) {
-        Set<OperationDefinition> existingDefinitions = existingType.getOperationDefinitions();
-        Set<OperationDefinition> newDefinitions = resourceType.getOperationDefinitions();
-
-        Set<OperationDefinition> newOps = missingInFirstSet(existingDefinitions, newDefinitions);
-        Set<OperationDefinition> opsToRemove = missingInFirstSet(newDefinitions, existingDefinitions);
-
-        existingDefinitions.retainAll(newDefinitions);
-
-        // loop over the OperationDefinitions that are neither new nor deleted
-        // and update them from the resourceType
-        for (OperationDefinition def : existingDefinitions) {
-            for (OperationDefinition nDef : newDefinitions) {
-                if (def.equals(nDef)) {
-                    def.setDescription(nDef.getDescription());
-                    def.setDisplayName(nDef.getDisplayName());
-                    def.setParametersConfigurationDefinition(nDef.getParametersConfigurationDefinition());
-                    def.setResourceVersionRange(nDef.getResourceVersionRange());
-                    def.setResultsConfigurationDefinition(nDef.getResultsConfigurationDefinition());
-                    def.setTimeout(nDef.getTimeout());
-                }
-            }
-        }
-
-        for (OperationDefinition newOp : newOps) {
-            existingType.addOperationDefinition(newOp); // does the back link as well
-        }
-
-        existingDefinitions.removeAll(opsToRemove);
-        for (OperationDefinition opToDelete : opsToRemove) {
-            entityManager.remove(opToDelete);
-        }
-    }
-
-    private void updateMeasurementDefinitions(ResourceType newType, ResourceType existingType) {
-        if (newType.getMetricDefinitions() != null) {
-            Set<MeasurementDefinition> existingDefinitions = existingType.getMetricDefinitions();
-            if (existingDefinitions.isEmpty()) {
-                // They're all new.
-                for (MeasurementDefinition newDefinition : newType.getMetricDefinitions()) {
-                    if (newDefinition.getDefaultInterval() < MeasurementSchedule.MINIMUM_INTERVAL) {
-                        newDefinition.setDefaultInterval(MeasurementSchedule.MINIMUM_INTERVAL);
-                        log.info("Definition [" + newDefinition
-                            + "] has too short of a default interval, setting to minimum");
-                    }
-                    existingType.addMetricDefinition(newDefinition);
-                    entityManager.persist(newDefinition);
-
-                    // Now create schedules for already existing resources
-                    scheduleManager.createSchedulesForExistingResources(existingType, newDefinition);
-                }
-            } else {
-                // Update existing or add new metrics
-                for (MeasurementDefinition newDefinition : newType.getMetricDefinitions()) {
-                    boolean found = false;
-                    for (MeasurementDefinition existingDefinition : existingDefinitions) {
-                        if (existingDefinition.getName().equals(newDefinition.getName())
-                            && (existingDefinition.isPerMinute() == newDefinition.isPerMinute())) {
-                            found = true;
-
-                            existingDefinition.update(newDefinition, false);
-
-                            // we normally do not want to touch interval in case a user changed it,
-                            // but we cannot allow too-short of an interval, so override it if necessary
-                            if (existingDefinition.getDefaultInterval() < MeasurementSchedule.MINIMUM_INTERVAL) {
-                                existingDefinition.setDefaultInterval(MeasurementSchedule.MINIMUM_INTERVAL);
-                                log.info("Definition [" + existingDefinition
-                                    + "] has too short of a default interval, setting to minimum");
-                            }
-
-                            entityManager.merge(existingDefinition);
-
-                            // There is nothing in the schedules that need to be updated.
-                            // We do not want to change schedules (such as collection interval)
-                            // because the user might have customized them. So leave them be.
-
-                            break;
-                        }
-                    }
-
-                    if (!found) {
-                        // Its new, create it
-                        existingType.addMetricDefinition(newDefinition);
-                        entityManager.persist(newDefinition);
-
-                        // Now create schedules for already existing resources
-                        scheduleManager.createSchedulesForExistingResources(existingType, newDefinition);
-                    }
-                }
-
-                /*
-                 * Now delete outdated measurement definitions. First find them ...
-                 */
-                List<MeasurementDefinition> definitionsToDelete = new ArrayList<MeasurementDefinition>();
-                for (MeasurementDefinition existingDefinition : existingDefinitions) {
-                    if (!newType.getMetricDefinitions().contains(existingDefinition)) {
-                        definitionsToDelete.add(existingDefinition);
-                    }
-                }
-
-                // ... and remove them
-                existingDefinitions.removeAll(definitionsToDelete);
-                for (MeasurementDefinition definitionToDelete : definitionsToDelete) {
-                    measurementDefinitionManager.removeMeasurementDefinition(definitionToDelete);
-                }
-                if (!definitionsToDelete.isEmpty() && log.isDebugEnabled()) {
-                    log.debug("Metadata update: Measurement definitions deleted from resource type ["
-                        + existingType.getName() + "]:" + definitionsToDelete);
-                }
-
-                entityManager.flush();
-            }
-        }
-        // TODO what if they are null? --> delete everything from existingType
-        // not needed see JBNADM-1639
-    }
-
-    /**
-     * Updates the database with new package definitions found in the new resource type. Any definitions not found in
-     * the new type but were previously in the existing resource type will be removed. Any definitions common to both
-     * will be merged.
-     *
-     * @param newType      new resource type containing updated package definitions
-     * @param existingType old resource type with existing package definitions
-     */
-    private void updateContentDefinitions(ResourceType newType, ResourceType existingType) {
-
-        // set the bundle type if one is defined
-        BundleType newBundleType = newType.getBundleType();
-        if (newBundleType != null) {
-            BundleType existingBundleType = existingType.getBundleType();
-            newBundleType.setResourceType(existingType);
-            if (existingBundleType != null) {
-                newBundleType.setId(existingBundleType.getId());
-                newBundleType = entityManager.merge(newBundleType);
-            }
-            existingType.setBundleType(newBundleType);
-        } else {
-            existingType.setBundleType(null);
-        }
-
-        // Easy case: If there are no package definitions in the new type, null out any in the existing and return
-        if ((newType.getPackageTypes() == null) || (newType.getPackageTypes().size() == 0)) {
-            existingType.setPackageTypes(null);
-            return;
-        }
-
-        // The new type has package definitions
-
-        // Easy case: If the existing type did not have any package definitions, simply use the new type defs and return
-        if ((existingType.getPackageTypes() == null) || (existingType.getPackageTypes().size() == 0)) {
-            for (PackageType newPackageType : newType.getPackageTypes()) {
-                newPackageType.setResourceType(existingType);
-                entityManager.persist(newPackageType);
-            }
-
-            existingType.setPackageTypes(newType.getPackageTypes());
-            return;
-        }
-
-        // Both the new and existing types have definitions, so merge
-        Set<PackageType> existingPackageTypes = existingType.getPackageTypes();
-        Map<String, PackageType> newPackageTypeDefinitions = new HashMap<String, PackageType>(newType.getPackageTypes()
-            .size());
-        for (PackageType newPackageType : newType.getPackageTypes()) {
-            newPackageTypeDefinitions.put(newPackageType.getName(), newPackageType);
-        }
-
-        // Remove all definitions that are in the existing type but not in the new type
-        List<PackageType> removedPackageTypes = new ArrayList<PackageType>(existingType.getPackageTypes());
-        removedPackageTypes.removeAll(newType.getPackageTypes());
-        for (PackageType removedPackageType : removedPackageTypes) {
-            existingType.removePackageType(removedPackageType);
-            entityManager.remove(removedPackageType);
-        }
-
-        // Merge definitions that were already in the existing type and again in the new type
-        List<PackageType> mergedPackageTypes = new ArrayList<PackageType>(existingType.getPackageTypes());
-        mergedPackageTypes.retainAll(newType.getPackageTypes());
-
-        for (PackageType mergedPackageType : mergedPackageTypes) {
-            updatePackageConfigurations(newPackageTypeDefinitions.get(mergedPackageType.getName()), mergedPackageType);
-            mergedPackageType.update(newPackageTypeDefinitions.get(mergedPackageType.getName()));
-            entityManager.merge(mergedPackageType);
-        }
-
-        // Persist all new definitions
-        List<PackageType> newPackageTypes = new ArrayList<PackageType>(newType.getPackageTypes());
-        newPackageTypes.removeAll(existingType.getPackageTypes());
-
-        for (PackageType newPackageType : newPackageTypes) {
-            newPackageType.setResourceType(existingType);
-            entityManager.persist(newPackageType);
-            existingPackageTypes.add(newPackageType);
         }
     }
 
@@ -1415,141 +868,4 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         }
     }
 
-    /**
-     * updates both configuration definitions on PackageType
-     */
-    private void updatePackageConfigurations(PackageType newType, PackageType existingType) {
-        ConfigurationDefinition newConfigurationDefinition = newType.getDeploymentConfigurationDefinition();
-        if (newConfigurationDefinition != null) {
-            if (existingType.getDeploymentConfigurationDefinition() == null) {
-                // everything new
-                entityManager.persist(newConfigurationDefinition);
-                existingType.setDeploymentConfigurationDefinition(newConfigurationDefinition);
-            } else {
-                // update existing
-                ConfigurationDefinition existingDefinition = existingType.getDeploymentConfigurationDefinition();
-                configurationMetadataManager.updateConfigurationDefinition(newConfigurationDefinition,
-                    existingDefinition);
-            }
-        } else {
-            // newDefinition == null
-            if (existingType.getDeploymentConfigurationDefinition() != null) {
-                existingType.setDeploymentConfigurationDefinition(null);
-            }
-        }
-
-        newConfigurationDefinition = newType.getPackageExtraPropertiesDefinition();
-        if (newConfigurationDefinition != null) {
-            if (existingType.getPackageExtraPropertiesDefinition() == null) {
-                // everything new
-                entityManager.persist(newConfigurationDefinition);
-                existingType.setPackageExtraPropertiesDefinition(newConfigurationDefinition);
-            } else {
-                // update existing
-                ConfigurationDefinition existingDefinition = existingType.getPackageExtraPropertiesDefinition();
-                configurationMetadataManager.updateConfigurationDefinition(newConfigurationDefinition,
-                    existingDefinition);
-            }
-        } else {
-            // newDefinition == null
-            if (existingType.getPackageExtraPropertiesDefinition() != null) {
-                existingType.setPackageExtraPropertiesDefinition(null);
-            }
-        }
-    }
-
-    /**
-     * deals with the content of <resource-configuration>
-     */
-    private void updateResourceConfiguration(ResourceType newType, ResourceType existingType) {
-        ConfigurationDefinition newResourceConfigurationDefinition = newType.getResourceConfigurationDefinition();
-        if (newResourceConfigurationDefinition != null) {
-            if (existingType.getResourceConfigurationDefinition() == null) // everything new
-            {
-                entityManager.persist(newResourceConfigurationDefinition);
-                existingType.setResourceConfigurationDefinition(newResourceConfigurationDefinition);
-            } else {
-                ConfigurationDefinition existingDefinition = existingType.getResourceConfigurationDefinition();
-                configurationMetadataManager.updateConfigurationDefinition(newResourceConfigurationDefinition,
-                    existingDefinition);
-            }
-        } else // newDefinition == null
-        {
-            if (existingType.getResourceConfigurationDefinition() != null) {
-                existingType.setResourceConfigurationDefinition(null);
-            }
-        }
-    }
-
-    /**
-     * Return a set containing those element that are in reference, but not in first. Both input sets are not modified
-     *
-     * @param  <T>
-     * @param  first
-     * @param  reference
-     *
-     * @return
-     */
-    private <T> Set<T> missingInFirstSet(Set<T> first, Set<T> reference) {
-        Set<T> result = new HashSet<T>();
-
-        if (reference != null) {
-            // First collection is null -> everything is missing
-            if (first == null) {
-                result.addAll(reference);
-                return result;
-            }
-
-            // else loop over the set and sort out the right items.
-            for (T item : reference) {
-                //                if (!first.contains(item)) {
-                //                    result.add(item);
-                //                }
-                boolean found = false;
-                Iterator<T> iter = first.iterator();
-                while (iter.hasNext()) {
-                    T f = iter.next();
-                    if (f.equals(item)) {
-                        found = true;
-                        break;
-                    }
-                }
-                if (!found)
-                    result.add(item);
-            }
-        }
-
-        return result;
-    }
-
-    /**
-     * Return a new Set with elements that are in the first and second passed collection.
-     * If one set is null, an empty Set will be returned.
-     * @param  <T>    Type of set
-     * @param  first  First set
-     * @param  second Second set
-     *
-     * @return a new set (depending on input type) with elements in first and second
-     */
-    private <T> Set<T> intersection(Set<T> first, Set<T> second) {
-        Set<T> result = new HashSet<T>();
-        if ((first != null) && (second != null)) {
-            result.addAll(first);
-            //            result.retainAll(second);
-            Iterator<T> iter = result.iterator();
-            boolean found;
-            while (iter.hasNext()) {
-                T item = iter.next();
-                found = false;
-                for (T s : second) {
-                    if (s.equals(item))
-                        found = true;
-                }
-                if (!found)
-                    iter.remove();
-            }
-        }
-
-        return result;
-    }
 }

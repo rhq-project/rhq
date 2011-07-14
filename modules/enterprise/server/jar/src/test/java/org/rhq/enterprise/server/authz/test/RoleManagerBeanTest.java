@@ -72,8 +72,8 @@ public class RoleManagerBeanTest extends AbstractEJB3Test {
         getTransactionManager().begin();
 
         try {
-            PageList<Role> roles = roleManager.findRolesBySubject(subjectManager.getOverlord().getId(),
-                PageControl.getUnlimitedInstance());
+            PageList<Role> roles = roleManager.findRolesBySubject(subjectManager.getOverlord().getId(), PageControl
+                .getUnlimitedInstance());
             assert roles.size() == 1;
 
             Role role = roles.get(0);
@@ -95,12 +95,12 @@ public class RoleManagerBeanTest extends AbstractEJB3Test {
         getTransactionManager().begin();
 
         try {
-            PageList<Role> roles = roleManager.findRolesBySubject(subjectManager.getOverlord().getId(),
-                PageControl.getUnlimitedInstance());
+            PageList<Role> roles = roleManager.findRolesBySubject(subjectManager.getOverlord().getId(), PageControl
+                .getUnlimitedInstance());
 
             for (Role role : roles) {
-                PageList<Subject> subjects = roleManager.findSubjectsByRole(role.getId(),
-                    PageControl.getUnlimitedInstance());
+                PageList<Subject> subjects = roleManager.findSubjectsByRole(role.getId(), PageControl
+                    .getUnlimitedInstance());
                 if (role.getName().equals("Super User Role")) {
                     assert subjects.size() >= 1 : "At least rhqadmin must have super user role: " + subjects;
 
@@ -130,8 +130,8 @@ public class RoleManagerBeanTest extends AbstractEJB3Test {
                 role_id_list.add(role.getId());
             }
 
-            PageList<Role> roles = roleManager.findRolesByIds(role_id_list.toArray(new Integer[0]),
-                PageControl.getUnlimitedInstance());
+            PageList<Role> roles = roleManager.findRolesByIds(role_id_list.toArray(new Integer[0]), PageControl
+                .getUnlimitedInstance());
             assert roles.size() == all_roles.size();
             assert roles.containsAll(all_roles);
         } finally {
@@ -148,12 +148,12 @@ public class RoleManagerBeanTest extends AbstractEJB3Test {
         getTransactionManager().begin();
         try {
             Subject superuser = subjectManager.getOverlord();
-            createSession(superuser);
+            superuser = createSession(superuser);
 
             Subject subject = new Subject();
             subject.setName("dummy-subject");
             subject = subjectManager.createSubject(superuser, subject);
-            createSession(subject);
+            subject = createSession(subject);
 
             Role new_role = new Role("dummy-role");
             Role new_role2 = new Role("dummy-role2");
@@ -165,39 +165,39 @@ public class RoleManagerBeanTest extends AbstractEJB3Test {
 
             PageList<Role> roles;
 
-            roles = roleManager.findAvailableRolesForSubject(superuser, subject.getId(), new Integer[0],
-                PageControl.getUnlimitedInstance());
+            roles = roleManager.findAvailableRolesForSubject(superuser, subject.getId(), new Integer[0], PageControl
+                .getUnlimitedInstance());
 
             assert roles.size() == all_roles.size() : "All roles should be available for this subject";
             assert roles.containsAll(all_roles);
 
-            roles = roleManager.findAvailableRolesForSubject(superuser, subject.getId(),
-                new Integer[] { new_role.getId() }, PageControl.getUnlimitedInstance());
+            roles = roleManager.findAvailableRolesForSubject(superuser, subject.getId(), new Integer[] { new_role
+                .getId() }, PageControl.getUnlimitedInstance());
             assert (roles.size() + 1) == all_roles.size() : "All roles but one should be available for this subject";
             assert !roles.contains(new_role);
 
-            roles = roleManager.findAvailableRolesForSubject(superuser, subject.getId(),
-                new Integer[] { new_role.getId(), new_role2.getId() }, PageControl.getUnlimitedInstance());
+            roles = roleManager.findAvailableRolesForSubject(superuser, subject.getId(), new Integer[] {
+                new_role.getId(), new_role2.getId() }, PageControl.getUnlimitedInstance());
             assert (roles.size() + 2) == all_roles.size() : "All roles but two should be available for this subject";
             assert !roles.contains(new_role);
             assert !roles.contains(new_role2);
 
             roleManager.addRolesToSubject(superuser, subject.getId(), new int[] { new_role.getId() });
-            roles = roleManager.findAvailableRolesForSubject(superuser, subject.getId(), new Integer[0],
-                PageControl.getUnlimitedInstance());
+            roles = roleManager.findAvailableRolesForSubject(superuser, subject.getId(), new Integer[0], PageControl
+                .getUnlimitedInstance());
             assert (roles.size() + 1) == all_roles.size() : "All but one role should be available for this subject";
             assert !roles.contains(new_role) : "We already assigned this new role to the subject - it isn't available";
 
-            roles = roleManager.findAvailableRolesForSubject(superuser, subject.getId(),
-                new Integer[] { new_role2.getId() }, PageControl.getUnlimitedInstance());
+            roles = roleManager.findAvailableRolesForSubject(superuser, subject.getId(), new Integer[] { new_role2
+                .getId() }, PageControl.getUnlimitedInstance());
             assert (roles.size() + 2) == all_roles.size() : "One is already assigned and one is excluded so all but two roles should be available for this subject";
             assert !roles.contains(new_role) : "We already assigned this new role to the subject - it isn't available";
             assert !roles.contains(new_role2) : "We excluded this new role - it isn't available";
 
             try {
                 // dummy user doesn't have the permission for this
-                roles = roleManager.findAvailableRolesForSubject(subject, subject.getId(), new Integer[0],
-                    PageControl.getUnlimitedInstance());
+                roles = roleManager.findAvailableRolesForSubject(subject, subject.getId(), new Integer[0], PageControl
+                    .getUnlimitedInstance());
             } catch (PermissionException s) {
                 // to be expected, this rolls the transaction back for us
             }
@@ -218,31 +218,43 @@ public class RoleManagerBeanTest extends AbstractEJB3Test {
         getTransactionManager().begin();
 
         try {
-            Subject new_subject = new Subject();
-            new_subject.setName("role-manager-subject");
-            new_subject.setFsystem(false);
+            Subject newSubject1 = new Subject();
+            newSubject1.setName("role-manager-subject");
+            newSubject1.setFsystem(false);
+
+            Subject newSubject2 = new Subject();
+            newSubject2.setName("secondary-role-manager");
+            newSubject2.setFsystem(false);
 
             Role role = new Role("role-manager-role");
             role.setFsystem(false);
-            role.addSubject(new_subject);
+            role.addSubject(newSubject1);
 
             Subject superuser = subjectManager.getOverlord();
-            subjectManager.createSubject(superuser, new_subject);
-            createSession(new_subject);
+            subjectManager.createSubject(superuser, newSubject1);
+            newSubject1 = createSession(newSubject1);
 
-            assert roleManager.findRolesBySubject(new_subject.getId(), PageControl.getUnlimitedInstance()).size() == 0 : "Role should not be created or assigned yet";
+            subjectManager.createSubject(superuser, newSubject2);
+            newSubject2 = createSession(newSubject2);
+
+            assertEquals("Role should not be created or assigned yet", 0, roleManager.findRolesBySubject(
+                newSubject1.getId(), PageControl.getUnlimitedInstance()).size());
 
             role = roleManager.createRole(superuser, role);
-            assert roleManager.findRolesBySubject(new_subject.getId(), PageControl.getUnlimitedInstance()).size() == 0 : "Role should not be assigned yet";
+            assertEquals("Role should be assigned at the time the role is created", 1, roleManager.findRolesBySubject(
+                newSubject1.getId(), PageControl.getUnlimitedInstance()).size());
 
-            roleManager.addRolesToSubject(superuser, new_subject.getId(), new int[] { role.getId() });
-            assert roleManager.findRolesBySubject(new_subject.getId(), PageControl.getUnlimitedInstance()).size() == 1 : "Role should be assigned";
+            roleManager.addRolesToSubject(superuser, newSubject2.getId(), new int[] { role.getId() });
+            assertEquals("Role should be assigned", 1, roleManager.findRolesBySubject(newSubject2.getId(),
+                PageControl.getUnlimitedInstance()).size());
 
-            roleManager.removeRolesFromSubject(superuser, new_subject.getId(), new int[] { role.getId() });
-            assert roleManager.findRolesBySubject(new_subject.getId(), PageControl.getUnlimitedInstance()).size() == 0 : "Role should have been unassigned";
+            roleManager.removeRolesFromSubject(superuser, newSubject1.getId(), new int[] { role.getId() });
+            assertEquals("Role should have been unassigned", 0, roleManager.findRolesBySubject(newSubject1.getId(),
+                PageControl.getUnlimitedInstance()).size());
 
             roleManager.deleteRoles(superuser, new int[] { role.getId() });
-            assert !roleManager.findRoles(PageControl.getUnlimitedInstance()).contains(role) : "Role should have been deleted";
+            assertFalse("Roles should have been deleted", roleManager.findRoles(PageControl.getUnlimitedInstance())
+                .contains(role));
         } finally {
             getTransactionManager().rollback();
         }
@@ -258,7 +270,7 @@ public class RoleManagerBeanTest extends AbstractEJB3Test {
 
         try {
             Subject superuser = subjectManager.getOverlord();
-            createSession(superuser);
+            superuser = createSession(superuser);
 
             Role role = new Role("role-manager-role");
             role.setFsystem(false);

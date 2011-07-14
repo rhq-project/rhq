@@ -31,12 +31,15 @@ import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.IPickTreeItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
+import com.smartgwt.client.widgets.grid.HoverCustomizer;
+import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.components.selector.AbstractSelector;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDatasource;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypePluginTreeDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
@@ -45,7 +48,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 /**
  * @author Greg Hinkle
  */
-public class ResourceSelector extends AbstractSelector<Resource> {
+public class ResourceSelector extends AbstractSelector<Resource, ResourceCriteria> {
 
     private ResourceType resourceTypeFilter;
     private boolean forceResourceTypeFilter;
@@ -64,7 +67,7 @@ public class ResourceSelector extends AbstractSelector<Resource> {
 
     protected DynamicForm getAvailableFilterForm() {
         if (null == availableFilterForm) {
-            availableFilterForm = new LocatableDynamicForm("ResSelectAvailFilterForm");
+            availableFilterForm = new LocatableDynamicForm(extendLocatorId("ResSelectAvailFilterForm"));
             availableFilterForm.setNumCols(6);
             availableFilterForm.setWidth("75%");
             final TextItem search = new TextItem("search", MSG.common_title_search());
@@ -105,7 +108,7 @@ public class ResourceSelector extends AbstractSelector<Resource> {
         return valueMap;
     }
 
-    protected RPCDataSource<Resource> getDataSource() {
+    protected RPCDataSource<Resource, ResourceCriteria> getDataSource() {
         if (null == datasource) {
             datasource = new SelectedResourceDataSource();
         }
@@ -140,19 +143,6 @@ public class ResourceSelector extends AbstractSelector<Resource> {
         return criteria;
     }
 
-    @Override
-    protected String getItemTitle() {
-        return "resource";
-    }
-
-    /** transfers selected data to the assigned grid.  This operation mimics button click from ResourceSelection.
-     */
-    public void addAvailableGridSelectionsToAssignedGrid() {
-        assignedGrid.transferSelectedData(availableGrid);
-        select(assignedGrid.getSelection());
-        updateButtonEnablement();
-    }
-
     //  protected Criteria getLatestCriteria(DynamicForm availableFilterForm) {
     //  String search = (String) availableFilterForm.getValue("search");
     //  String type = availableFilterForm.getValueAsString("type");
@@ -178,6 +168,25 @@ public class ResourceSelector extends AbstractSelector<Resource> {
     //
     //  return latestCriteria;
     //}
+
+    @Override
+    protected String getItemTitle() {
+        return "resource";
+    }
+
+    @Override
+    protected HoverCustomizer getNameHoverCustomizer() {
+        return new HoverCustomizer() {
+            public String hoverHTML(Object value, ListGridRecord listGridRecord, int rowNum, int colNum) {
+                return AncestryUtil.getAncestryHoverHTML(listGridRecord, 0);
+            }
+        };
+    }
+
+    @Override
+    protected boolean supportsNameHoverCustomizer() {
+        return true;
+    }
 
     private class SelectedResourceDataSource extends ResourceDatasource {
 

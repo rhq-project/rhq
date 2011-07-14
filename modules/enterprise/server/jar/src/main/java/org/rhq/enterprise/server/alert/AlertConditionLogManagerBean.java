@@ -44,7 +44,6 @@ import org.rhq.enterprise.server.RHQConstants;
 /**
  * @author Joseph Marques
  */
-
 @Stateless
 public class AlertConditionLogManagerBean implements AlertConditionLogManagerLocal {
     private final Log log = LogFactory.getLog(AlertConditionLogManagerBean.class);

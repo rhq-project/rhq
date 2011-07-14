@@ -134,6 +134,23 @@ import javax.persistence.NamedQuery;
         + "   FROM Plugin AS p " //
         + "  WHERE p.name=:name "), //
 
+    @NamedQuery(name = Plugin.QUERY_FIND_ALL, query =
+          " SELECT new org.rhq.core.domain.plugin.Plugin( "
+        + "        p.id, "
+        + "        p.name, "
+        + "        p.path, "
+        + "        p.displayName, "
+        + "        p.enabled, "
+        + "        p.status, "
+        + "        p.description, "
+        + "        p.help, "
+        + "        p.md5, "
+        + "        p.version, "
+        + "        p.ampsVersion, "
+        + "        p.ctime, "
+        + "        p.mtime) "
+        + "   FROM Plugin AS p "),
+
     // finds all installed - ignores those plugins marked as deleted
     // this query does not load the content blob, but loads everything else
     @NamedQuery(name = Plugin.QUERY_FIND_ALL_INSTALLED, query = "" //
@@ -153,6 +170,24 @@ import javax.persistence.NamedQuery;
         + "        p.mtime) " //
         + "   FROM Plugin AS p " //
         + "   WHERE p.status = 'INSTALLED' "), //
+
+    @NamedQuery(name = Plugin.QUERY_FIND_ALL_DELETED, query =
+          " SELECT new org.rhq.core.domain.plugin.Plugin( "
+        + "        p.id, "
+        + "        p.name, "
+        + "        p.path, "
+        + "        p.displayName, "
+        + "        p.enabled, "
+        + "        p.status, "
+        + "        p.description, "
+        + "        p.help, "
+        + "        p.md5, "
+        + "        p.version, "
+        + "        p.ampsVersion, "
+        + "        p.ctime, "
+        + "        p.mtime) "
+        + "   FROM Plugin AS p "
+        + "   WHERE p.status = 'DELETED'"),
 
     // this query is how you enable and disable plugins
     @NamedQuery(name = Plugin.UPDATE_PLUGINS_ENABLED_BY_IDS, query = "" //
@@ -183,7 +218,29 @@ import javax.persistence.NamedQuery;
         + "                       JOIN res.resourceType rt " //
         + "                      WHERE ( rt.category = :resourceCategory OR :resourceCategory IS NULL ) " //
         + "                        AND ( rt.name = :resourceTypeName OR :resourceTypeName IS NULL ) ) " //
-        + " ORDER BY p.name") //
+        + " ORDER BY p.name"), //
+
+    @NamedQuery(name = Plugin.QUERY_FIND_ALL_TO_PURGE, query = ""
+        + "  SELECT new org.rhq.core.domain.plugin.Plugin( " //
+        + "         p.id, "
+        + "         p.name, "
+        + "         p.path, "
+        + "         p.displayName, "
+        + "         p.enabled, "
+        + "         p.status, "
+        + "         p.description, "
+        + "         p.help, "
+        + "         p.md5, "
+        + "         p.version, "
+        + "         p.ampsVersion, "
+        + "         p.ctime, "
+        + "         p.mtime) "
+        + "    FROM Plugin p "
+        + "    WHERE p.ctime = -1 AND p.status = 'DELETED'"
+    ),
+
+    @NamedQuery(name = Plugin.PURGE_PLUGINS, query = ""
+        + " DELETE FROM Plugin p WHERE p IN (:plugins)")
 })
 @Entity
 public class Plugin extends AbstractPlugin {
@@ -195,10 +252,16 @@ public class Plugin extends AbstractPlugin {
     public static final String QUERY_FIND_ALL_BY_IDS = "Plugin.findAllByIds";
     public static final String QUERY_FIND_BY_NAME = "Plugin.findByName";
     public static final String QUERY_FIND_ANY_BY_NAME = "Plugin.findAnyByName";
+    public static final String QUERY_FIND_ALL = "Plugin.findAll";
     public static final String QUERY_FIND_ALL_INSTALLED = "Plugin.findAllInstalled";
+    public static final String QUERY_FIND_ALL_DELETED = "Plugin.findAllDeleted";
+    public static final String QUERY_FIND_ALL_TO_PURGE = "Plugin.findAllToPurge";
     public static final String UPDATE_PLUGINS_ENABLED_BY_IDS = "Plugin.updatePluginsEnabledByIds";
     public static final String QUERY_FIND_BY_RESOURCE_TYPE_AND_CATEGORY = "Plugin.findByResourceType";
     public static final String UPDATE_PLUGIN_ENABLED_BY_ID = "Plugin.updatePluginEnabledById";
+    public static final String PURGE_PLUGINS = "Plugin.purgePlugins";
+
+    public static final long PURGED = -1;
 
     public Plugin() {
         super();

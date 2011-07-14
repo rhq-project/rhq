@@ -26,6 +26,8 @@ import java.beans.Introspector;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -52,6 +54,7 @@ import org.rhq.core.pc.bundle.BundleManager;
 import org.rhq.core.pc.configuration.ConfigurationManager;
 import org.rhq.core.pc.configuration.ConfigurationManagerInitializer;
 import org.rhq.core.pc.content.ContentManager;
+import org.rhq.core.pc.drift.DriftManager;
 import org.rhq.core.pc.event.EventManager;
 import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.inventory.ResourceContainer;
@@ -80,6 +83,23 @@ public class PluginContainer implements ContainerService {
 
     private final Log log = LogFactory.getLog(PluginContainer.class);
 
+    private static final class NullRebootRequestListener implements RebootRequestListener {
+        @Override
+        public void reboot() {
+        }
+    }
+
+    /**
+     * Invoked by the plugin container immediately after it is initialized
+     */
+    public static interface InitializationListener {
+        /**
+         * Notifies the listener that the plugin container has been initialized. This method executes in the same
+         * thread in which {@link PluginContainer#initialize()} is executing.
+         */
+        void initialized();
+    }
+
     // our management interface
     private PluginContainerMBeanImpl mbean;
 
@@ -98,13 +118,19 @@ public class PluginContainer implements ContainerService {
     private EventManager eventManager;
     private SupportManager supportManager;
     private BundleManager bundleManager;
+    private DriftManager driftManager;
 
     private Collection<AgentServiceLifecycleListener> agentServiceListeners = new LinkedHashSet<AgentServiceLifecycleListener>();
     private AgentServiceStreamRemoter agentServiceStreamRemoter = null;
     private AgentRegistrar agentRegistrar = null;
 
+    private RebootRequestListener rebootListener = new NullRebootRequestListener();
+
     // this is to prevent race conditions on startup between components from all the different managers
     private ReadWriteLock rwLock = new ReentrantReadWriteLock();
+
+    private List<InitializationListener> initListeners;
+    private Object initListenersLock = new Object();
 
     /**
      * Returns the singleton instance.
@@ -220,6 +246,7 @@ public class PluginContainer implements ContainerService {
      * <p>If the plugin container has already been initialized, this method does nothing and returns.</p>
      */
     public void initialize() {
+        initListeners = new LinkedList<InitializationListener>();
         Lock lock = obtainWriteLock();
         try {
             if (!started) {
@@ -248,6 +275,7 @@ public class PluginContainer implements ContainerService {
                 eventManager = new EventManager();
                 supportManager = new SupportManager();
                 bundleManager = new BundleManager();
+                driftManager = new DriftManager();
 
                 startContainerService(pluginManager);
                 startContainerService(pluginComponentFactory);
@@ -260,6 +288,7 @@ public class PluginContainer implements ContainerService {
                 startContainerService(eventManager);
                 startContainerService(supportManager);
                 startContainerService(bundleManager);
+                startContainerService(driftManager);
 
                 started = true;
 
@@ -268,7 +297,16 @@ public class PluginContainer implements ContainerService {
         } finally {
             releaseLock(lock);
         }
-        
+
+        synchronized (initListenersLock) {
+            if (started) {
+                for (InitializationListener listener : initListeners) {
+                    listener.initialized();
+                }
+            }
+            initListeners.clear();
+        }
+
         return;
     }
 
@@ -290,6 +328,7 @@ public class PluginContainer implements ContainerService {
 
                 boolean isInsideAgent = configuration.isInsideAgent();
 
+                driftManager.shutdown();
                 bundleManager.shutdown();
                 supportManager.shutdown();
                 eventManager.shutdown();
@@ -311,6 +350,7 @@ public class PluginContainer implements ContainerService {
 
                 ResourceContainer.shutdown();
 
+                driftManager = null;
                 bundleManager = null;
                 supportManager = null;
                 eventManager = null;
@@ -543,6 +583,15 @@ public class PluginContainer implements ContainerService {
         }
     }
 
+    public DriftManager getDriftManager() {
+        Lock lock = obtainReadLock();
+        try {
+            return driftManager;
+        } finally {
+            releaseLock(lock);
+        }
+    }
+
     // The methods below return the manager implementations wrapped in their remote client interfaces.
     // External clients to the plugin container should probably use these rather than the getXXXManager() methods.
 
@@ -581,4 +630,28 @@ public class PluginContainer implements ContainerService {
     public boolean isInsideAgent() {
         return (this.configuration != null && this.configuration.isInsideAgent());
     }
+
+    public void setRebootRequestListener(RebootRequestListener listener) {
+        rebootListener = listener;
+    }
+
+    public void notifyRebootRequestListener() {
+        rebootListener.reboot();
+    }
+
+    /**
+     * Add the callback listener to notify when the plugin container is initialized. If this method is invoked and
+     * the PC is already initialized, then <code>listener</code> will be invoked immediately.
+     * @param listener The callback object to notify
+     */
+    public void addInitializationListener(InitializationListener listener) {
+        synchronized (initListenersLock) {
+            if (started) {
+                listener.initialized();
+            } else {
+                initListeners.add(listener);
+            }
+        }
+    }
+
 }

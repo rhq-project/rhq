@@ -68,8 +68,9 @@ import org.rhq.core.domain.configuration.Configuration;
         + "    ro.createdTime, "
         + "    ro.status, "
         + "    ro.resource.id, "
+        + "    ro.resource.resourceType.id, "
         + "    ro.resource.name, "
-        + "    ro.resource.resourceType.name) "
+        + "    ro.resource.ancestry) "
         + " FROM ResourceOperationHistory ro "
         + " WHERE ro.status != 'INPROGRESS' "
         + "   AND ( ro.resource.id = :resourceId OR :resourceId IS NULL )"),
@@ -79,8 +80,9 @@ import org.rhq.core.domain.configuration.Configuration;
         + "    ro.createdTime, "
         + "    ro.status, "
         + "    ro.resource.id, "
+        + "    ro.resource.resourceType.id, "
         + "    ro.resource.name, "
-        + "    ro.resource.resourceType.name) "
+        + "    ro.resource.ancestry) "
         + " FROM ResourceOperationHistory ro JOIN ro.resource.implicitGroups g JOIN g.roles r JOIN r.subjects s "
         + " WHERE ro.status != 'INPROGRESS' AND s = :subject "
         + "   AND ( ro.resource.id = :resourceId OR :resourceId IS NULL )"),
@@ -166,8 +168,8 @@ public abstract class OperationHistory implements Serializable {
     @ManyToOne(fetch = FetchType.EAGER)
     private OperationDefinition operationDefinition;
 
-    @JoinColumn(name = "PARAMETERS_CONFIG_ID", referencedColumnName = "ID")
-    @OneToOne(cascade = { CascadeType.REMOVE }, fetch = FetchType.LAZY)
+    @JoinColumn(name = "PARAMETERS_CONFIG_ID", referencedColumnName = "ID", nullable = true)
+    @OneToOne(cascade = { CascadeType.REMOVE }, fetch = FetchType.LAZY, optional = true)
     private Configuration parameters;
 
     protected OperationHistory() {

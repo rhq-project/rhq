@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -36,4 +36,11 @@ public interface BundleAgentService {
      * @return the results of the immediate scheduling
      */
     BundleScheduleResponse schedule(BundleScheduleRequest request);
+
+    /**
+     * Purges the live deployment off the local filesystem.
+     * @param request
+     * @return the results of the purge
+     */
+    BundlePurgeResponse purge(BundlePurgeRequest request);
 }

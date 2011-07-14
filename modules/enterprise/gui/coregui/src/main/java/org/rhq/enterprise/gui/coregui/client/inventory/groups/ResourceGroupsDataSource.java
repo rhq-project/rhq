@@ -49,7 +49,7 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 /**
  * @author Greg Hinkle
  */
-public class ResourceGroupsDataSource extends RPCDataSource<ResourceGroup> {
+public class ResourceGroupsDataSource extends RPCDataSource<ResourceGroup, ResourceGroupCriteria> {
 
     private ResourceGroupGWTServiceAsync groupService = GWTServiceLookup.getResourceGroupService();
 
@@ -77,12 +77,10 @@ public class ResourceGroupsDataSource extends RPCDataSource<ResourceGroup> {
         fields.add(idDataField);
 
         DataSourceTextField nameDataField = new DataSourceTextField(NAME.propertyName(), NAME.title(), 200);
-        nameDataField.setCanEdit(false);
         fields.add(nameDataField);
 
         DataSourceTextField descriptionDataField = new DataSourceTextField(DESCRIPTION.propertyName(), DESCRIPTION
             .title());
-        descriptionDataField.setCanEdit(false);
         fields.add(descriptionDataField);
 
         DataSourceTextField typeNameDataField = new DataSourceTextField(TYPE.propertyName(), TYPE.title());
@@ -97,12 +95,11 @@ public class ResourceGroupsDataSource extends RPCDataSource<ResourceGroup> {
         return fields;
     }
 
-    public void executeFetch(final DSRequest request, final DSResponse response) {
-        ResourceGroupCriteria criteria = getFetchCriteria(request);
-
+    @Override
+    public void executeFetch(final DSRequest request, final DSResponse response, final ResourceGroupCriteria criteria) {
         groupService.findResourceGroupsByCriteria(criteria, new AsyncCallback<PageList<ResourceGroup>>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to fetch groups data", caught);
+                CoreGUI.getErrorHandler().handleError(MSG.dataSource_resourceGroups_loadFailed(), caught);
                 response.setStatus(RPCResponse.STATUS_FAILURE);
                 processResponse(request.getRequestId(), response);
             }
@@ -115,6 +112,7 @@ public class ResourceGroupsDataSource extends RPCDataSource<ResourceGroup> {
         });
     }
 
+    @Override
     protected ResourceGroupCriteria getFetchCriteria(final DSRequest request) {
         ResourceGroupCriteria criteria = new ResourceGroupCriteria();
         criteria.setPageControl(getPageControl(request));
@@ -124,6 +122,7 @@ public class ResourceGroupsDataSource extends RPCDataSource<ResourceGroup> {
         criteria.addFilterDownMemberCount(getFilter(request, "downMemberCount", Long.class));
         criteria.addFilterExplicitResourceIds(getFilter(request, "explicitResourceId", Integer.class));
         criteria.addFilterGroupDefinitionId(getFilter(request, "groupDefinitionId", Integer.class));
+        criteria.setSearchExpression(getFilter(request, "search", String.class));
 
         return criteria;
     }

@@ -48,7 +48,6 @@ import org.rhq.enterprise.server.authz.PermissionException;
 /**
  * @author Joseph Marques
  */
-
 @Stateless
 public class AlertConditionManagerBean implements AlertConditionManagerLocal {
 

@@ -22,30 +22,34 @@
  */
 package org.rhq.core.domain.operation.composite;
 
-import org.rhq.core.domain.operation.ScheduleJobId;
-
 public class ResourceOperationScheduleComposite extends OperationScheduleComposite {
 
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 3L;
 
     private int resourceId;
+    private int resourceTypeId;
     private String resourceName;
-    private String resourceTypeName;
+    private String ancestry;
 
     //private no args constructor for serialization. Not to be used.
     private ResourceOperationScheduleComposite() {
         super();
-        this.resourceTypeName = "(unitialized type)";
-        this.resourceName = "(uninitialized)";
+
         this.resourceId = 0;
+        this.resourceTypeId = 0;
+        this.resourceName = "(unitialized)";
+        this.ancestry = "(unitialized)";
     }
 
-    public ResourceOperationScheduleComposite(String jobName, String jobGroup, String operationName,
-        long operationNextFireTime, int resourceId, String resourceName, String resourceTypeName) {
-        super(new ScheduleJobId(jobName, jobGroup), operationName, operationNextFireTime);
+    public ResourceOperationScheduleComposite(int id, String jobName, String jobGroup, String operationName,
+        long operationNextFireTime, int resourceId, int resourceTypeId, String resourceName, String ancestry) {
+
+        super(id, jobName, jobGroup, operationName, operationNextFireTime);
+
         this.resourceId = resourceId;
+        this.resourceTypeId = resourceTypeId;
         this.resourceName = resourceName;
-        this.resourceTypeName = resourceTypeName;
+        this.ancestry = ancestry;
     }
 
     public int getResourceId() {
@@ -56,8 +60,12 @@ public class ResourceOperationScheduleComposite extends OperationScheduleComposi
         return resourceName;
     }
 
-    public String getResourceTypeName() {
-        return resourceTypeName;
+    public int getResourceTypeId() {
+        return resourceTypeId;
+    }
+
+    public String getAncestry() {
+        return ancestry;
     }
 
     @Override
@@ -65,7 +73,7 @@ public class ResourceOperationScheduleComposite extends OperationScheduleComposi
         StringBuilder str = new StringBuilder("ResourceOperationScheduleComposite: " + super.toString());
         str.append(", resource-id=[" + resourceId);
         str.append("], resource-name=[" + resourceName);
-        str.append("], resource-type-name=[" + resourceTypeName);
+        str.append("], resource-type-id=[" + resourceTypeId);
         str.append("]");
         return str.toString();
     }

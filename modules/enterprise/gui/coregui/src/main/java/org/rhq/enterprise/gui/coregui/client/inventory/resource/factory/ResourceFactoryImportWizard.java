@@ -25,6 +25,7 @@ import java.util.Map;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
@@ -46,16 +47,21 @@ public class ResourceFactoryImportWizard extends AbstractResourceFactoryWizard {
     public ResourceFactoryImportWizard(Resource parentResource, ResourceType childType) {
 
         super(parentResource, childType);
-        this.setNewResourceConfigurationDefinition(getChildType().getPluginConfigurationDefinition());
+
+        ConfigurationDefinition childTypePluginConfigDef = getChildType().getPluginConfigurationDefinition();
+
+        this.setNewResourceConfigurationDefinition(childTypePluginConfigDef);
 
         ArrayList<WizardStep> steps = new ArrayList<WizardStep>();
 
-        // skip the info step if the type has only the default template to offer for user selection.
-        Map<String, ConfigurationTemplate> templates = childType.getPluginConfigurationDefinition().getTemplates();
-        if (templates.size() > 1) {
-            this.infoStep = new ResourceFactoryInfoStep(this, null, MSG.widget_resourceFactoryWizard_templatePrompt(),
-                templates);
-            steps.add(infoStep);
+        // skip the info step if the type has only the default template to offer for user selection or no plugin config
+        if (childTypePluginConfigDef != null) {
+            Map<String, ConfigurationTemplate> templates = childTypePluginConfigDef.getTemplates();
+            if (templates.size() > 1) {
+                this.infoStep = new ResourceFactoryInfoStep(this, null, MSG
+                    .widget_resourceFactoryWizard_templatePrompt(), templates);
+                steps.add(infoStep);
+            }
         }
 
         configurationStep = new ResourceFactoryConfigurationStep(this);
@@ -79,8 +85,8 @@ public class ResourceFactoryImportWizard extends AbstractResourceFactoryWizard {
         int createTypeId = getChildType().getId();
         Configuration newConfiguration = this.getNewResourceConfiguration();
 
-        GWTServiceLookup.getResourceService().manuallyAddResource(createTypeId, parentResourceId, newConfiguration,
-            new AsyncCallback<Resource>() {
+        GWTServiceLookup.getResourceService(300000).manuallyAddResource(createTypeId, parentResourceId,
+            newConfiguration, new AsyncCallback<Resource>() {
                 public void onFailure(Throwable caught) {
                     CoreGUI.getErrorHandler().handleError(MSG.widget_resourceFactoryWizard_importFailure(), caught);
                     getView().closeDialog();

@@ -111,11 +111,11 @@ public class BundleVersion implements Serializable {
     private String recipe;
 
     @JoinColumn(name = "BUNDLE_ID", referencedColumnName = "ID", nullable = false)
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     private Bundle bundle;
 
     @JoinColumn(name = "CONFIG_DEF_ID", referencedColumnName = "ID", nullable = true)
-    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY, optional = true)
     private ConfigurationDefinition configurationDefinition;
 
     @OneToMany(mappedBy = "bundleVersion", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
@@ -261,7 +261,8 @@ public class BundleVersion implements Serializable {
 
     @Override
     public String toString() {
-        return "BundleVersion[id=" + id + ",name=" + name + ",version=" + version + ",bundle=" + bundle.getName() + "]";
+        return "BundleVersion[id=" + id + ",name=" + name + ",version=" + version
+            + ((null != bundle) ? (",bundle=" + bundle.getName()) : "") + "]";
     }
 
     @Override

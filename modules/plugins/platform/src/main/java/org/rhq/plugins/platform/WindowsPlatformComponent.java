@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -27,13 +27,18 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.transfer.DeployPackageStep;
+import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
 import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
+import org.rhq.core.domain.measurement.MeasurementDataTrait;
+import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.pluginapi.content.ContentFacet;
 import org.rhq.core.pluginapi.content.ContentServices;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
@@ -44,6 +49,11 @@ import org.rhq.plugins.platform.win.WindowsSoftwareDelegate;
  * @author Greg Hinkle
  */
 public class WindowsPlatformComponent extends PlatformComponent implements ContentFacet {
+
+    private static final String OS_NAME_WIN32 = "Win32";
+    private static final String OS_NAME_WIN64 = "Win64";
+    private final Log log = LogFactory.getLog(WindowsPlatformComponent.class);
+
     private Win32EventLogDelegate eventLogDelegate;
     private boolean enableContentDiscovery = false;
 
@@ -51,9 +61,21 @@ public class WindowsPlatformComponent extends PlatformComponent implements Conte
         super.start(context);
         Configuration pluginConfiguration = context.getPluginConfiguration();
         if (pluginConfiguration.getSimple("eventTrackingEnabled").getBooleanValue()) {
-            eventLogDelegate = new Win32EventLogDelegate(pluginConfiguration);
-            eventLogDelegate.open();
-            context.getEventContext().registerEventPoller(eventLogDelegate, 60);
+            try {
+                eventLogDelegate = new Win32EventLogDelegate(pluginConfiguration);
+                eventLogDelegate.open();
+                context.getEventContext().registerEventPoller(eventLogDelegate, 60);
+            } catch (Throwable t) {
+                log.error("Failed to start the event logger. Will not be able to capture Windows events", t);
+                if (eventLogDelegate != null) {
+                    try {
+                        eventLogDelegate.close();
+                    } catch (Throwable t2) {
+                    } finally {
+                        eventLogDelegate = null;
+                    }
+                }
+            }
         }
 
         PropertySimple contentProp = pluginConfiguration.getSimple("enableContentDiscovery");
@@ -96,4 +118,18 @@ public class WindowsPlatformComponent extends PlatformComponent implements Conte
     public InputStream retrievePackageBits(ResourcePackageDetails packageDetails) {
         return null;
     }
+
+    @Override
+    protected MeasurementDataTrait getMeasurementDataTrait(MeasurementScheduleRequest request) {
+        MeasurementDataTrait trait = super.getMeasurementDataTrait(request);
+        // SIGAR returns "Win32" as the OS name for all Windows systems, even 64-bit ones, so add some special code
+        // to instead return "Win64" for 64-bit systems.
+        if (trait.getName().equals(TRAIT_OSNAME) && trait.getValue().equals(OS_NAME_WIN32)) {
+            if ("x64".equals(getSysinfo().getSystemArchitecture())) {
+                trait.setValue(OS_NAME_WIN64);
+            }
+        }
+        return trait;
+    }
+
 }

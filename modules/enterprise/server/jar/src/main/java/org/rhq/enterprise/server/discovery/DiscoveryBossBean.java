@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -19,6 +19,8 @@
 package org.rhq.enterprise.server.discovery;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -47,6 +49,7 @@ import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeRequest;
 import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeResponse;
 import org.rhq.core.clientapi.server.discovery.InvalidInventoryReportException;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
+import org.rhq.core.clientapi.server.discovery.StaleTypeException;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.configuration.Configuration;
@@ -78,6 +81,7 @@ import org.rhq.enterprise.server.resource.ResourceAvailabilityManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
+import org.rhq.enterprise.server.resource.metadata.PluginManagerLocal;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 
 /**
@@ -88,6 +92,7 @@ import org.rhq.enterprise.server.system.SystemManagerLocal;
  */
 @Stateless
 public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemote {
+
     private final Log log = LogFactory.getLog(DiscoveryBossBean.class.getName());
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
@@ -98,7 +103,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
     @EJB
     private AuthorizationManagerLocal authorizationManager;
     @EJB
-    private DiscoveryBossLocal discoveryBoss; // ourself for Tx purposes
+    private DiscoveryBossLocal discoveryBoss; // ourselves for Tx purposes
     @EJB
     private ResourceGroupManagerLocal groupManager;
     @EJB
@@ -114,18 +119,27 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
     @EJB
     private SystemManagerLocal systemManager;
 
+    @EJB
+    private PluginManagerLocal pluginManager;
+
     public ResourceSyncInfo mergeInventoryReport(InventoryReport report) throws InvalidInventoryReportException {
         validateInventoryReport(report);
+
+        InventoryReportFilter filter = new DeletedResourceTypeFilter(subjectManager, resourceTypeManager, pluginManager);
+        if (!filter.accept(report)) {
+            throw new StaleTypeException("The report contains one or more resource types that have been marked for "
+                + "deletion.");
+        }
+
         Agent agent = report.getAgent();
         long start = System.currentTimeMillis();
 
         Agent knownAgent = agentManager.getAgentByName(agent.getName());
         if (knownAgent == null) {
             throw new InvalidInventoryReportException("Unknown Agent named [" + agent.getName()
-                + "] sent an inventory report - that report will be ignored. " 
+                + "] sent an inventory report - that report will be ignored. "
                 + "This error is harmless and should stop appearing after a short while if the platform of the agent ["
-                + agent.getName() 
-                + "] was recently removed from the inventory. In any other case this is a bug.");
+                + agent.getName() + "] was recently removed from the inventory. In any other case this is a bug.");
         }
 
         if (log.isDebugEnabled()) {
@@ -212,14 +226,19 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
 
         Query queryCount = PersistenceUtility.createCountQuery(entityManager,
             Resource.QUERY_FIND_QUEUED_PLATFORMS_BY_INVENTORY_STATUS);
-        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
-            Resource.QUERY_FIND_QUEUED_PLATFORMS_BY_INVENTORY_STATUS, pc);
 
         queryCount.setParameter("inventoryStatuses", statuses);
         long count = (Long) queryCount.getSingleResult();
 
-        query.setParameter("inventoryStatuses", statuses);
-        List<Resource> results = query.getResultList();
+        List<Resource> results;
+        if (count > 0) {
+            Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
+                Resource.QUERY_FIND_QUEUED_PLATFORMS_BY_INVENTORY_STATUS, pc);
+
+            query.setParameter("inventoryStatuses", statuses);
+            results = query.getResultList();
+        } else
+            results = Collections.emptyList();
 
         return new PageList<Resource>(results, (int) count, pc);
     }
@@ -258,7 +277,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
 
         // on status change request an agent sync on the affected resources.  The agent will sync status and determine
         // what other sync work needs to be performed. Synchronize the platforms, then the servers, omitting servers
-        // under synced platforms since they will have been handled already.        
+        // under synced platforms since they will have been handled already.
         for (Resource platform : platforms) {
             AgentClient agentClient = agentManager.getAgentClient(platform.getAgent());
             try {
@@ -322,16 +341,12 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
 
         Resource result = null;
 
-        try {
-            ResourceType resourceType = this.resourceTypeManager.getResourceTypeById(subject, resourceTypeId);
-            // the subsequent call to manuallyAddResource requires a detached ResourceType param so clear 
-            entityManager.clear();
-            MergeResourceResponse response = manuallyAddResource(subject, resourceType, parentResourceId,
-                pluginConfiguration);
-            result = this.resourceManager.getResourceById(subject, response.getResourceId());
-        } catch (Exception e) {
-            throw new Exception(e.getMessage());
-        }
+        ResourceType resourceType = this.resourceTypeManager.getResourceTypeById(subject, resourceTypeId);
+        // the subsequent call to manuallyAddResource requires a detached ResourceType param so clear
+        entityManager.clear();
+        MergeResourceResponse response = manuallyAddResource(subject, resourceType, parentResourceId,
+            pluginConfiguration);
+        result = this.resourceManager.getResourceById(subject, response.getResourceId());
 
         return result;
     }
@@ -378,7 +393,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         } else {
             Subject creator = this.subjectManager.getSubjectById(creatorSubjectId);
             try {
-                creator = this.subjectManager.loginUnauthenticated(creator.getName(), true);
+                creator = this.subjectManager.loginUnauthenticated(creator.getName());
             } catch (LoginException e) {
                 throw new IllegalStateException(
                     "Unable to temporarily login to provided resource creator user for resource creation", e);
@@ -420,8 +435,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
     public Set<ResourceUpgradeResponse> upgradeResources(Set<ResourceUpgradeRequest> upgradeRequests) {
         Set<ResourceUpgradeResponse> result = new HashSet<ResourceUpgradeResponse>();
 
-        boolean allowGenericPropertiesUpgrade = Boolean.parseBoolean(systemManager.getSystemConfiguration()
-            .getProperty(RHQConstants.AllowResourceGenericPropertiesUpgrade, "false"));
+        boolean allowGenericPropertiesUpgrade = Boolean.parseBoolean(systemManager.getSystemConfiguration(
+            subjectManager.getOverlord()).getProperty(RHQConstants.AllowResourceGenericPropertiesUpgrade, "false"));
 
         for (ResourceUpgradeRequest request : upgradeRequests) {
             Resource existingResource = this.entityManager.find(Resource.class, request.getResourceId());
@@ -445,10 +460,10 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
      * the same as <code>newVersion</code>, its version string will be set to it. If
      * the resource's version was different and was changed by this method, <code>true</code>
      * will be returned.
-     * 
+     *
      * @param resource the resource whose version is to be checked
      * @param newVersion what the version of the resource should be
-     * 
+     *
      * @return <code>true</code> if the resource's version was not <code>newVersion</code> and was
      *         changed to it. <code>false</code> if the version was already the same as <code>newVersion</code>
      *         or <code>resource</code> was <code>null</code>. In other words, this returns <code>true</code>
@@ -494,9 +509,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
     private ResourceUpgradeResponse upgradeResource(@NotNull Resource resource, ResourceUpgradeRequest upgradeRequest,
         boolean allowGenericPropertiesUpgrade) {
         if (upgradeRequest.getUpgradeErrorMessage() != null) {
-            ResourceError error = new ResourceError(resource, ResourceErrorType.UPGRADE,
-                upgradeRequest.getUpgradeErrorMessage(), upgradeRequest.getUpgradeErrorStackTrace(),
-                upgradeRequest.getTimestamp());
+            ResourceError error = new ResourceError(resource, ResourceErrorType.UPGRADE, upgradeRequest
+                .getUpgradeErrorMessage(), upgradeRequest.getUpgradeErrorStackTrace(), upgradeRequest.getTimestamp());
             resourceManager.addResourceError(error);
             return null;
         }
@@ -593,7 +607,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         Resource existingResource = getExistingResource(resource);
 
         if (existingResource != null) {
-            updatePreviouslyInventoriedResource(resource, existingResource, parentResource);
+            updatePreviouslyInventoriedResource(resource, existingResource);
         } else {
             presetAgent(resource, agent);
             addResourceToInventory(resource, parentResource);
@@ -674,8 +688,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
                         continue;
                     }
                 }
-                existingResource = resourceManager.getResourceByParentAndKey(overlord, existingParent,
-                    resource.getResourceKey(), resourceType.getPlugin(), resourceType.getName());
+                existingResource = resourceManager.getResourceByParentAndKey(overlord, existingParent, resource
+                    .getResourceKey(), resourceType.getPlugin(), resourceType.getName());
             }
 
             if (existingResource != null) {
@@ -703,8 +717,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         return existingResource;
     }
 
-    private void updatePreviouslyInventoriedResource(Resource resource, Resource existingResource,
-        Resource parentResource) throws InvalidInventoryReportException {
+    private void updatePreviouslyInventoriedResource(Resource updatedResource, Resource existingResource)
+        throws InvalidInventoryReportException {
         /*
          * there exists a small window of time after the synchronous part of the uninventory and before the async
          * quartz job comes along to perform the actual removal of the resource from the database, that an inventory
@@ -713,66 +727,74 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
          * the quartz job has not yet come along to remove this resource from the database) we should stop all
          * processing from this node and return immediately.  this short-cuts the processing for the entire sub-tree
          * under this resource, but that's OK because the in-band uninventory logic will have marked entire sub-tree
-         * for uninventory atomically.  in other words, all of the descendants under a resource would also be marked 
+         * for uninventory atomically.  in other words, all of the descendants under a resource would also be marked
          * for async uninventory too.
          */
         if (existingResource.getInventoryStatus() == InventoryStatus.UNINVENTORIED) {
             return;
         }
 
-        assert (parentResource == null) || (parentResource.getId() != 0);
-
-        ResourceType existingResourceParentType = (existingResource.getParentResource() != null) ? existingResource
-            .getParentResource().getResourceType() : null;
-        ResourceType resourceParentType = (resource.getParentResource() != null) ? resource.getParentResource()
+        Resource existingParent = existingResource.getParentResource();
+        Resource updatedParent = updatedResource.getParentResource();
+        ResourceType existingResourceParentType = (existingParent != null) ? existingResource.getParentResource()
+            .getResourceType() : null;
+        ResourceType updatedResourceParentType = (updatedParent != null) ? updatedResource.getParentResource()
             .getResourceType() : null;
         Set<ResourceType> validParentTypes = existingResource.getResourceType().getParentResourceTypes();
+
         if (validParentTypes != null && !validParentTypes.isEmpty()
             && !validParentTypes.contains(existingResourceParentType)) {
+
             // The existing Resource has an invalid parent ResourceType. This may be because its ResourceType was moved
             // to a new parent ResourceType, but its new parent was not yet discovered at the time of the type move. See
             // if the Resource reported by the Agent has a valid parent type, and, if so, update the existing Resource's
             // parent to that type.
 
-            if (validParentTypes.contains(resourceParentType)) {
+            if (validParentTypes.contains(updatedResourceParentType)) {
                 if (existingResource.getParentResource() != null) {
                     existingResource.getParentResource().removeChildResource(existingResource);
                 }
-                if (resource.getParentResource() != null) {
-                    parentResource = getExistingResource(resource.getParentResource());
-                    parentResource.addChildResource(existingResource);
+                if (updatedParent != Resource.ROOT) {
+                    updatedParent = getExistingResource(updatedParent);
+                    updatedParent.addChildResource(existingResource);
+                } else {
+                    existingResource.setParentResource(Resource.ROOT);
                 }
-                existingResource.setParentResource(resource.getParentResource());
+                // now that the parent has been established, update the lineage. Note that this method will
+                // recurse on the children, so update only this resource and let the children be handled by
+                // the recursion.
+                // TODO: this can be removed, I think, as the ancestry should be handled under the covers.
+                //existingResource.setLineageForResource();
             } else {
                 log.debug("Existing Resource " + existingResource + " has invalid parent type ("
-                    + existingResourceParentType + ") and so does plugin-reported Resource " + resource + " ("
-                    + resourceParentType + ") - valid parent types are [" + validParentTypes + "].");
+                    + existingResourceParentType + ") and so does plugin-reported Resource " + updatedResource + " ("
+                    + updatedResourceParentType + ") - valid parent types are [" + validParentTypes + "].");
             }
         }
 
         // The below block is for Resources that were created via the RHQ GUI, whose descriptions will be null.
-        if (existingResource.getDescription() == null && resource.getDescription() != null) {
+        if (existingResource.getDescription() == null && updatedResource.getDescription() != null) {
             log.debug("Setting description of existing resource with id " + existingResource.getId() + " to '"
-                + resource.getDescription() + "' (as reported by agent)...");
-            existingResource.setDescription(resource.getDescription());
+                + updatedResource.getDescription() + "' (as reported by agent)...");
+            existingResource.setDescription(updatedResource.getDescription());
         }
 
         // Log a warning if the agent says the Resource key has changed (should rarely happen).
         if ((existingResource.getResourceKey() != null)
-            && !existingResource.getResourceKey().equals(resource.getResourceKey())) {
+            && !existingResource.getResourceKey().equals(updatedResource.getResourceKey())) {
             log.warn("Agent reported that key for " + existingResource + " has changed from '"
-                + existingResource.getResourceKey() + "' to '" + resource.getResourceKey() + "'.");
+                + existingResource.getResourceKey() + "' to '" + updatedResource.getResourceKey() + "'.");
         }
 
-        updateResourceVersion(existingResource, resource.getVersion());
+        updateResourceVersion(existingResource, updatedResource.getVersion());
 
         // If the resource was marked as deleted, reactivate it again.
         if (existingResource.getInventoryStatus() == InventoryStatus.DELETED) {
             existingResource.setInventoryStatus(InventoryStatus.COMMITTED);
-            existingResource.setPluginConfiguration(resource.getPluginConfiguration());
+            existingResource.setPluginConfiguration(updatedResource.getPluginConfiguration());
         }
 
-        for (Resource childResource : resource.getChildResources()) {
+        for (Resource childResource : updatedResource.getChildResources()) {
             // It's important to specify the existing Resource, which is an attached entity bean, as the parent.
             mergeResource(childResource, existingResource, existingResource.getAgent());
         }
@@ -894,26 +916,55 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             + "    FROM Resource res " //
             + "   WHERE res.id IN ( :resourceIds ) " //
             + "GROUP BY res.inventoryStatus ");
-        query.setParameter("resourceIds", ArrayUtils.wrapInList(resourceIds));
-        List<InventoryStatus> results = query.getResultList();
+        List<Integer> resourceIdList = ArrayUtils.wrapInList(resourceIds);
 
-        for (InventoryStatus expected : validStatuses) {
-            results.remove(expected);
-        }
-        if (results.size() > 0) {
-            throw new IllegalArgumentException("Can only commit resources with status: " + results);
+        // Do one query per 1000 Resource id's to prevent Oracle from failing because of an IN clause with more
+        // than 1000 items.
+        // After the below while loop completes, this Set will contain the statuses represented by the Resources with
+        // the passed in id's.
+        Set<InventoryStatus> statuses = EnumSet.noneOf(InventoryStatus.class);
+        int fromIndex = 0;
+        while (fromIndex < resourceIds.length) {
+            int toIndex = (resourceIds.length < (fromIndex + 1000)) ? resourceIds.length : (fromIndex + 1000);
+
+            List<Integer> resourceIdSubList = resourceIdList.subList(fromIndex, toIndex);
+            query.setParameter("resourceIds", resourceIdSubList);
+            List<InventoryStatus> batchStatuses = query.getResultList();
+            statuses.addAll(batchStatuses);
+
+            fromIndex = toIndex;
         }
 
-        PageList<Resource> resources = resourceManager.findResourceByIds(subject, resourceIds, false,
-            PageControl.getUnlimitedInstance());
+        if (!validStatuses.containsAll(statuses)) {
+            throw new IllegalArgumentException("Can only set inventory status to [" + target
+                + "] for Resources with current inventory status of one of [" + validStatuses + "].");
+        }
+
+        // Do one query per 1000 Resource id's to prevent Oracle from failing because of an IN clause with more
+        // than 1000 items.
+        List<Resource> resources = new ArrayList(resourceIds.length);
+        fromIndex = 0;
+        while (fromIndex < resourceIds.length) {
+            int toIndex = (resourceIds.length < (fromIndex + 1000)) ? resourceIds.length : (fromIndex + 1000);
+
+            int[] resourceIdSubArray = Arrays.copyOfRange(resourceIds, fromIndex, toIndex);
+            PageList<Resource> batchResources = resourceManager.findResourceByIds(subject, resourceIdSubArray, false,
+                    PageControl.getUnlimitedInstance());
+            resources.addAll(batchResources);
+
+            fromIndex = toIndex;
+        }
+
+        // Split the Resources into two lists - one for platforms and one for servers, since that's what
+        // updateInventoryStatus() expects.
         List<Resource> platforms = new ArrayList<Resource>();
         List<Resource> servers = new ArrayList<Resource>();
-        for (Resource res : resources) {
-            ResourceCategory category = res.getResourceType().getCategory();
+        for (Resource resource : resources) {
+            ResourceCategory category = resource.getResourceType().getCategory();
             if (category == ResourceCategory.PLATFORM) {
-                platforms.add(res);
+                platforms.add(resource);
             } else if (category == ResourceCategory.SERVER) {
-                servers.add(res);
+                servers.add(resource);
             } else {
                 throw new IllegalArgumentException("Can not directly change the inventory status of a service");
             }
@@ -925,4 +976,5 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
     private static <T> boolean needsUpgrade(T oldValue, T newValue) {
         return newValue != null && (oldValue == null || !newValue.equals(oldValue));
     }
+
 }

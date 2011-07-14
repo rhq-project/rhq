@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -22,6 +22,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components.table;
 
+import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.History;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.SortSpecifier;
@@ -29,9 +30,12 @@ import com.smartgwt.client.types.AnimationEffect;
 import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.AnimationCallback;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.events.DoubleClickEvent;
+import com.smartgwt.client.widgets.events.DoubleClickHandler;
+import com.smartgwt.client.widgets.grid.CellFormatter;
+import com.smartgwt.client.widgets.grid.ListGrid;
+import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-import com.smartgwt.client.widgets.grid.events.CellDoubleClickEvent;
-import com.smartgwt.client.widgets.grid.events.CellDoubleClickHandler;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
@@ -40,6 +44,9 @@ import org.rhq.enterprise.gui.coregui.client.DetailsView;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author Greg Hinkle
@@ -50,6 +57,8 @@ public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> i
     private VLayout detailsHolder;
     private Canvas detailsView;
     private String basePath;
+    private boolean escapeHtmlInDetailsLinkColumn;
+    private boolean initialDisplay;
 
     protected TableSection(String locatorId, String tableTitle) {
         super(locatorId, tableTitle);
@@ -61,6 +70,10 @@ public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> i
 
     protected TableSection(String locatorId, String tableTitle, SortSpecifier[] sortSpecifiers) {
         super(locatorId, tableTitle, sortSpecifiers);
+    }
+
+    protected TableSection(String locatorId, String tableTitle, Criteria criteria, SortSpecifier[] sortSpecifiers) {
+        super(locatorId, tableTitle, sortSpecifiers, criteria);
     }
 
     protected TableSection(String locatorId, String tableTitle, boolean autoFetchData) {
@@ -86,7 +99,9 @@ public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> i
     protected void onInit() {
         super.onInit();
 
-        detailsHolder = new VLayout();
+        this.initialDisplay = true;
+
+        detailsHolder = new LocatableVLayout(extendLocatorId("tableSection"));
         detailsHolder.setAlign(VerticalAlignment.TOP);
         //detailsHolder.setWidth100();
         //detailsHolder.setHeight100();
@@ -102,15 +117,73 @@ public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> i
         }
     }
 
+    /**
+     * The default implementation wraps the {@link #getDetailsLinkColumnCellFormatter()} column with the
+     * {@link #getDetailsLinkColumnCellFormatter()}. This is typically the 'name' column linking to the detail
+     * view, given the 'id'. Also, establishes a double click handler for the row which invokes
+     * {@link #showDetails(com.smartgwt.client.widgets.grid.ListGridRecord)}</br>
+     * </br>
+     * In general, in overrides, call super.configureTable *after* manipulating the ListGrid fields.
+     * 
+     * @see org.rhq.enterprise.gui.coregui.client.components.table.Table#configureTable()
+     */
     @Override
-    protected void onDraw() {
-        super.onDraw();
-        getListGrid().addCellDoubleClickHandler(new CellDoubleClickHandler() {
-            @Override
-            public void onCellDoubleClick(CellDoubleClickEvent event) {
-                showDetails(event.getRecord());
+    protected void configureTable() {
+        if (isDetailsEnabled()) {
+            ListGrid grid = getListGrid();
+
+            // Make the value of some specific field a link to the details view for the corresponding record.
+            ListGridField field = (grid != null) ? grid.getField(getDetailsLinkColumnName()) : null;
+            if (field != null) {
+                field.setCellFormatter(getDetailsLinkColumnCellFormatter());
             }
-        });
+
+            setListGridDoubleClickHandler(new DoubleClickHandler() {
+                @Override
+                public void onDoubleClick(DoubleClickEvent event) {
+                    ListGrid listGrid = (ListGrid) event.getSource();
+                    ListGridRecord[] selectedRows = listGrid.getSelection();
+                    if (selectedRows != null && selectedRows.length == 1) {
+                        showDetails(selectedRows[0]);
+                    }
+                }
+            });
+        }
+    }
+
+    protected boolean isDetailsEnabled() {
+        return true;
+    }
+
+    public void setEscapeHtmlInDetailsLinkColumn(boolean escapeHtmlInDetailsLinkColumn) {
+        this.escapeHtmlInDetailsLinkColumn = escapeHtmlInDetailsLinkColumn;
+    }
+
+    /**
+     * Override if you don't want FIELD_NAME to be wrapped ina link.
+     * @return the name of the field to be wrapped, or null if no field should be wrapped. 
+     */
+    protected String getDetailsLinkColumnName() {
+        return FIELD_NAME;
+    }
+
+    /**
+     * Override if you don't want the detailsLinkColumn to have the default link wrapper.
+     * @return the desired CellFormatter. 
+     */
+    protected CellFormatter getDetailsLinkColumnCellFormatter() {
+        return new CellFormatter() {
+            public String format(Object value, ListGridRecord record, int i, int i1) {
+                if (value == null) {
+                    return "";
+                }
+                Integer recordId = getId(record);
+                String detailsUrl = "#" + getBasePath() + "/" + recordId;
+                String formattedValue = (escapeHtmlInDetailsLinkColumn) ? StringUtility.escapeHtml(value.toString())
+                    : value.toString();
+                return SeleniumUtility.getLocatableHref(detailsUrl, formattedValue, null);
+            }
+        };
     }
 
     /**
@@ -257,9 +330,7 @@ public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> i
                  * therefore, we need to explicitly destroy what's already there (presumably the detailsView
                  * in create-mode), and then rebuild it (presumably the detailsView in edit-mode).
                  */
-                for (Canvas child : detailsHolder.getMembers()) {
-                    child.destroy();
-                }
+                SeleniumUtility.destroyMembers(detailsHolder);
 
                 buildDetailsView();
             }
@@ -277,7 +348,7 @@ public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> i
             BackButton backButton = new BackButton(extendLocatorId("BackButton"), MSG.view_tableSection_backButton(),
                 basePath);
             detailsHolder.addMember(backButton);
-            VLayout verticalSpacer = new VLayout();
+            VLayout verticalSpacer = new LocatableVLayout(extendLocatorId("verticalSpacer"));
             verticalSpacer.setHeight(8);
             detailsHolder.addMember(verticalSpacer);
         }
@@ -292,14 +363,19 @@ public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> i
     protected void switchToTableView() {
         final Canvas contents = getTableContents();
         if (contents != null) {
-
+            // If this is not the initial display of the table, refresh the table's data. Otherwise, a refresh would be
+            // redundant, since the data was just loaded when the table was drawn.
+            if (this.initialDisplay) {
+                this.initialDisplay = false;
+            } else {
+                Log.debug("Refreshing data for Table [" + getClass().getName() + "]...");
+                refresh();
+            }
             if (detailsHolder != null && detailsHolder.isVisible()) {
                 detailsHolder.animateHide(AnimationEffect.WIPE, new AnimationCallback() {
                     @Override
                     public void execute(boolean b) {
-                        for (Canvas child : detailsHolder.getMembers()) {
-                            child.destroy();
-                        }
+                        SeleniumUtility.destroyMembers(detailsHolder);
 
                         contents.animateShow(AnimationEffect.WIPE);
                     }
@@ -309,4 +385,5 @@ public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> i
             }
         }
     }
+
 }

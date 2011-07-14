@@ -1,0 +1,328 @@
+<dataset>
+   <rhq_config_def/>
+   <rhq_config_prop_grp_def/>
+   <rhq_config_prop_def/>
+   <rhq_config_pd_osrc/>
+   <rhq_conf_prop_def_enum/>
+   <rhq_config_prop_constr/>
+   <rhq_config/>
+   <rhq_config_property/>
+   <rhq_config_template/>
+   <rhq_raw_config/>
+   <rhq_affinity_group/>
+   <rhq_server/>
+   <rhq_agent/>
+   <rhq_partition_event/>
+   <rhq_partition_details/>
+   <rhq_failover_list/>
+   <rhq_failover_details/>
+   <rhq_principal id="2" PRINCIPAL="rhqadmin" PASSWORD="x1XwrxKuPvYUILiOnOZTLg=="/>
+   <rhq_subject
+        ID="1"
+        NAME="admin"
+        FIRST_NAME="Super"
+        LAST_NAME="User"
+        FSYSTEM="1"/>
+   <rhq_subject
+        ID="2"
+        NAME="rhqadmin"
+        FIRST_NAME="RHQ"
+        LAST_NAME="Administrator"
+        EMAIL_ADDRESS="nobody@localhost"
+        FSYSTEM="0"/>
+   <rhq_resource_type/>
+   <rhq_resource_subcat/>
+   <rhq_resource_type_parents/>
+   <rhq_process_scan/>
+   <rhq_prd_ver/>
+   <rhq_resource/>
+   <rhq_resource_error/>
+   <rhq_group_def/>
+   <rhq_resource_group/>
+   <rhq_resource_group_res_imp_map/>
+   <rhq_resource_group_res_exp_map/>
+   <rhq_config_group_update/>
+   <rhq_config_update/>
+   <rhq_tagging/>
+   <rhq_tagging_resource_map/>
+   <rhq_tagging_res_group_map/>
+   <rhq_role
+         ID="1"
+         NAME="Super User Role"
+         FSYSTEM="1"
+         DESCRIPTION="System superuser role that provides full access to everything. This role cannot be modified."/>
+   <rhq_role
+         ID="2"
+         NAME="All Resources Role"
+         FSYSTEM="0"
+         DESCRIPTION="Provides full access to all resources in inventory. Cannot modify users, roles or server settings."/>
+   <rhq_role_resource_group_map/>
+   <rhq_role_ldap_group/>
+   <rhq_permission ROLE_ID="1" OPERATION="0"/>        <!-- Permission.MANAGE_SECURITY -->
+     <rhq_permission ROLE_ID="1" OPERATION="1"/>        <!-- Permission.MANAGE_INVENTORY -->
+     <rhq_permission ROLE_ID="1" OPERATION="2"/>        <!-- Permission.MANAGE_SETTINGS -->
+     <rhq_permission ROLE_ID="1" OPERATION="12"/>       <!-- Permission.MANAGE_BUNDLE -->
+     <rhq_permission ROLE_ID="1" OPERATION="15"/>       <!-- Permission.MANAGE_REPOSITORIES -->
+     <!-- resource permissions start here-->
+     <rhq_permission ROLE_ID="1" OPERATION="3"/>        <!-- Permission.VIEW_RESOURCE -->
+     <rhq_permission ROLE_ID="1" OPERATION="4"/>        <!-- Permission.MODIFY_RESOURCE -->
+     <rhq_permission ROLE_ID="1" OPERATION="5"/>        <!-- Permission.DELETE_RESOURCE -->
+     <rhq_permission ROLE_ID="1" OPERATION="6"/>        <!-- Permission.CREATE_CHILD_RESOURCES -->
+     <rhq_permission ROLE_ID="1" OPERATION="7"/>        <!-- Permission.MANAGE_ALERTS -->
+     <rhq_permission ROLE_ID="1" OPERATION="8"/>        <!-- Permission.MANAGE_MEASUREMENTS -->
+     <rhq_permission ROLE_ID="1" OPERATION="9"/>        <!-- Permission.MANAGE_CONTENT -->
+     <rhq_permission ROLE_ID="1" OPERATION="10"/>       <!-- Permission.CONTROL -->
+     <rhq_permission ROLE_ID="1" OPERATION="11"/>       <!-- Permission.CONFIGURE -->
+     <rhq_permission ROLE_ID="1" OPERATION="14"/>       <!-- Permission.MANAGE_EVENTS -->
+
+     <!-- give all-resources-role all permissions (resource perms is mainly just to show on view-role page) -->
+     <rhq_permission ROLE_ID="2" OPERATION="1"/>        <!-- Permission.MANAGE_INVENTORY -->
+     <rhq_permission ROLE_ID="2" OPERATION="12"/>       <!-- Permission.MANAGE_BUNDLE -->
+     <!-- resource permissions start here-->
+     <rhq_permission ROLE_ID="2" OPERATION="3"/>        <!-- Permission.VIEW_RESOURCE -->
+     <rhq_permission ROLE_ID="2" OPERATION="4"/>        <!-- Permission.MODIFY_RESOURCE -->
+     <rhq_permission ROLE_ID="2" OPERATION="5"/>        <!-- Permission.DELETE_RESOURCE -->
+     <rhq_permission ROLE_ID="2" OPERATION="6"/>        <!-- Permission.CREATE_CHILD_RESOURCES -->
+     <rhq_permission ROLE_ID="2" OPERATION="7"/>        <!-- Permission.MANAGE_ALERTS -->
+     <rhq_permission ROLE_ID="2" OPERATION="8"/>        <!-- Permission.MANAGE_MEASUREMENTS -->
+     <rhq_permission ROLE_ID="2" OPERATION="9"/>        <!-- Permission.MANAGE_CONTENT -->
+     <rhq_permission ROLE_ID="2" OPERATION="10"/>       <!-- Permission.CONTROL -->
+     <rhq_permission ROLE_ID="2" OPERATION="11"/>       <!-- Permission.CONFIGURE -->
+     <rhq_permission ROLE_ID="2" OPERATION="14"/>       <!-- Permission.MANAGE_EVENTS -->
+   <rhq_subject_role_map SUBJECT_ID="1" ROLE_ID="1"/>
+   <rhq_subject_role_map SUBJECT_ID="2" ROLE_ID="1"/>
+   <rhq_subject_role_ldap_map/>
+   <rhq_saved_search/>
+   <rhq_dashboard/>
+   <rhq_dashboard_portlet/>
+   <rhq_operation_def/>
+   <rhq_operation_history/>
+   <rhq_operation_schedule/>
+   <rhq_event_def/>
+   <rhq_event_source/>
+   <rhq_event/>
+   <rhq_alert_definition/>
+   <rhq_alert_dampen_event/>
+   <rhq_alert_condition/>
+   <rhq_alert/>
+   <rhq_alert_notif_log/>
+   <rhq_alert_condition_log/>
+   <rhq_alert_notification/>
+   <rhq_system_config ID="1" PROPERTY_KEY="SERVER_VERSION" PROPERTY_VALUE="4.1.0-SNAPSHOT"
+         DEFAULT_PROPERTY_VALUE="4.1.0-SNAPSHOT" FREAD_ONLY="1"/>
+      <rhq_system_config ID="2" PROPERTY_KEY="DB_SCHEMA_VERSION" PROPERTY_VALUE="2.107"
+           DEFAULT_PROPERTY_VALUE="2.107" FREAD_ONLY="1"/>
+      <rhq_system_config ID="3" PROPERTY_KEY="CAM_JAAS_PROVIDER" PROPERTY_VALUE="JDBC"
+           DEFAULT_PROPERTY_VALUE="JDBC" FREAD_ONLY="0"/>
+      <rhq_system_config ID="4" PROPERTY_KEY="CAM_BASE_URL" PROPERTY_VALUE="http://localhost:7080/"
+           DEFAULT_PROPERTY_VALUE="http://localhost:7080/" FREAD_ONLY="0"/>
+      <rhq_system_config ID="9" PROPERTY_KEY="CAM_HELP_USER" PROPERTY_VALUE="web"
+           DEFAULT_PROPERTY_VALUE="web" FREAD_ONLY="0"/>
+      <rhq_system_config ID="10" PROPERTY_KEY="CAM_HELP_PASSWORD" PROPERTY_VALUE="user"
+           DEFAULT_PROPERTY_VALUE="user" FREAD_ONLY="0"/>
+     <rhq_system_config ID="32" PROPERTY_KEY="CAM_DATA_MAINTENANCE"
+           PROPERTY_VALUE="3600000" DEFAULT_PROPERTY_VALUE="3600000" FREAD_ONLY="0"/>
+     <rhq_system_config ID="34" PROPERTY_KEY="RT_DATA_PURGE" PROPERTY_VALUE="2678400000"
+           DEFAULT_PROPERTY_VALUE="2678400000" FREAD_ONLY="0"/>
+     <rhq_system_config ID="35" PROPERTY_KEY="DATA_REINDEX_NIGHTLY" PROPERTY_VALUE="1"
+           DEFAULT_PROPERTY_VALUE="1" FREAD_ONLY="0"/>
+     <rhq_system_config ID="36" PROPERTY_KEY="ALERT_PURGE" PROPERTY_VALUE="2678400000"
+           DEFAULT_PROPERTY_VALUE="2678400000" FREAD_ONLY="0"/>
+     <rhq_system_config ID="51" PROPERTY_KEY="EVENT_PURGE" PROPERTY_VALUE="1209600000"
+           DEFAULT_PROPERTY_VALUE="1209600000" FREAD_ONLY="0"/>
+     <rhq_system_config ID="52" PROPERTY_KEY="AGENT_MAX_QUIET_TIME_ALLOWED" PROPERTY_VALUE="900000"
+           DEFAULT_PROPERTY_VALUE="900000" FREAD_ONLY="0"/>
+     <rhq_system_config ID="53" PROPERTY_KEY="ENABLE_AGENT_AUTO_UPDATE" PROPERTY_VALUE="1"
+           DEFAULT_PROPERTY_VALUE="1" FREAD_ONLY="0"/>
+     <rhq_system_config ID="54" PROPERTY_KEY="TRAIT_PURGE" PROPERTY_VALUE="31536000000"
+           DEFAULT_PROPERTY_VALUE="31536000000" FREAD_ONLY="0"/>
+     <rhq_system_config ID="55" PROPERTY_KEY="AVAILABILITY_PURGE" PROPERTY_VALUE="31536000000"
+           DEFAULT_PROPERTY_VALUE="31536000000" FREAD_ONLY="0"/>
+     <rhq_system_config ID="56" PROPERTY_KEY="RESOURCE_GENERIC_PROPERTIES_UPGRADE" PROPERTY_VALUE="0"
+           DEFAULT_PROPERTY_VALUE="0" FREAD_ONLY="0"/>
+   <rhq_plugin/>
+   <rhq_measurement_def/>
+   <rhq_measurement_sched/>
+   <rhq_measurement_bline/>
+   <rhq_measurement_data_num_1h/>
+   <rhq_measurement_data_num_6h/>
+   <rhq_measurement_data_num_1d/>
+   <rhq_measurement_data_trait/>
+   <rhq_calltime_data_key/>
+   <rhq_calltime_data_value/>
+   <rhq_availability/>
+   <rhq_resource_avail/>
+   <rhq_measurement_oob/>
+   <rhq_measurement_oob_tmp/>
+   <rhq_numbers i="0"/>
+     <rhq_numbers i="1"/>
+     <rhq_numbers i="2"/>
+     <rhq_numbers i="3"/>
+     <rhq_numbers i="4"/>
+     <rhq_numbers i="5"/>
+     <rhq_numbers i="6"/>
+     <rhq_numbers i="7"/>
+     <rhq_numbers i="8"/>
+     <rhq_numbers i="9"/>
+     <rhq_numbers i="10"/>
+     <rhq_numbers i="11"/>
+     <rhq_numbers i="12"/>
+     <rhq_numbers i="13"/>
+     <rhq_numbers i="14"/>
+     <rhq_numbers i="15"/>
+     <rhq_numbers i="16"/>
+     <rhq_numbers i="17"/>
+     <rhq_numbers i="18"/>
+     <rhq_numbers i="19"/>
+     <rhq_numbers i="20"/>
+     <rhq_numbers i="21"/>
+     <rhq_numbers i="22"/>
+     <rhq_numbers i="23"/>
+     <rhq_numbers i="24"/>
+     <rhq_numbers i="25"/>
+     <rhq_numbers i="26"/>
+     <rhq_numbers i="27"/>
+     <rhq_numbers i="28"/>
+     <rhq_numbers i="29"/>
+     <rhq_numbers i="30"/>
+     <rhq_numbers i="31"/>
+     <rhq_numbers i="32"/>
+     <rhq_numbers i="33"/>
+     <rhq_numbers i="34"/>
+     <rhq_numbers i="35"/>
+     <rhq_numbers i="36"/>
+     <rhq_numbers i="37"/>
+     <rhq_numbers i="38"/>
+     <rhq_numbers i="39"/>
+     <rhq_numbers i="40"/>
+     <rhq_numbers i="41"/>
+     <rhq_numbers i="42"/>
+     <rhq_numbers i="43"/>
+     <rhq_numbers i="44"/>
+     <rhq_numbers i="45"/>
+     <rhq_numbers i="46"/>
+     <rhq_numbers i="47"/>
+     <rhq_numbers i="48"/>
+     <rhq_numbers i="49"/>
+     <rhq_numbers i="50"/>
+     <rhq_numbers i="51"/>
+     <rhq_numbers i="52"/>
+     <rhq_numbers i="53"/>
+     <rhq_numbers i="54"/>
+     <rhq_numbers i="55"/>
+     <rhq_numbers i="56"/>
+     <rhq_numbers i="57"/>
+     <rhq_numbers i="58"/>
+     <rhq_numbers i="59"/>
+   <rhq_meas_data_num_r00/>
+   <rhq_meas_data_num_r01/>
+   <rhq_meas_data_num_r02/>
+   <rhq_meas_data_num_r03/>
+   <rhq_meas_data_num_r04/>
+   <rhq_meas_data_num_r05/>
+   <rhq_meas_data_num_r06/>
+   <rhq_meas_data_num_r07/>
+   <rhq_meas_data_num_r08/>
+   <rhq_meas_data_num_r09/>
+   <rhq_meas_data_num_r10/>
+   <rhq_meas_data_num_r11/>
+   <rhq_meas_data_num_r12/>
+   <rhq_meas_data_num_r13/>
+   <rhq_meas_data_num_r14/>
+   <rhq_architecture id="1" name="noarch"/>
+     <rhq_architecture id="2" name="i386"/>
+     <rhq_architecture id="3" name="i486"/>
+     <rhq_architecture id="4" name="i586"/>
+     <rhq_architecture id="5" name="i686"/>
+     <rhq_architecture id="6" name="alpha"/>
+     <rhq_architecture id="7" name="alphaev6"/>
+     <rhq_architecture id="8" name="ia64"/>
+     <rhq_architecture id="9" name="sparc"/>
+     <rhq_architecture id="10" name="sparcv9"/>
+     <rhq_architecture id="11" name="sparc64"/>
+     <rhq_architecture id="12" name="src"/>
+     <rhq_architecture id="13" name="s390"/>
+     <rhq_architecture id="14" name="athlon"/>
+     <rhq_architecture id="15" name="s390x"/>
+     <rhq_architecture id="16" name="ppc"/>
+     <rhq_architecture id="17" name="ppc64"/>
+     <rhq_architecture id="18" name="pSeries"/>
+     <rhq_architecture id="19" name="iSeries"/>
+     <rhq_architecture id="20" name="x86_64"/>
+     <rhq_architecture id="21" name="ppc64iseries"/>
+     <rhq_architecture id="22" name="ppc64pseries"/>
+     <rhq_architecture id="23" name="sparc-solaris"/>
+     <rhq_architecture id="24" name="sparc.sun4u-solaris"/>
+     <rhq_architecture id="25" name="tar"/>
+     <rhq_architecture id="26" name="ia32e"/>
+     <rhq_architecture id="27" name="amd64"/>
+     <rhq_architecture id="28" name="i386-solaris"/>
+     <rhq_architecture id="29" name="nosrc"/>
+     <rhq_architecture id="30" name="sparc-solaris-patch"/>
+     <rhq_architecture id="31" name="i386-solaris-patch"/>
+     <rhq_architecture id="32" name="sparc-solaris-patch-cluster"/>
+     <rhq_architecture id="33" name="i386-solaris-patch-cluster"/>
+     <rhq_architecture id="34" name="noarch-solaris"/>
+     <rhq_architecture id="35" name="noarch-solaris-patch"/>
+     <rhq_architecture id="36" name="noarch-solaris-patch-cluster"/>
+     <rhq_architecture id="37" name="solaris-patch"/>
+     <rhq_architecture id="38" name="solaris-patch-cluster"/>
+   <rhq_repo_group_type id="1" name="family"/>
+   <rhq_repo_group/>
+   <rhq_content_source_type/>
+   <rhq_content_source/>
+   <rhq_repo/>
+   <rhq_repo_relation_type id="1" name="parent"/>
+      <rhq_repo_relation_type id="2" name="clone"/>
+   <rhq_repo_relation/>
+   <rhq_package_type/>
+   <rhq_package/>
+   <rhq_package_bits/>
+   <rhq_package_version/>
+   <rhq_content_req/>
+   <rhq_installed_package/>
+   <rhq_installed_pkg_hist/>
+   <rhq_content_src_sync/>
+   <rhq_repo_sync/>
+   <rhq_package_inst_step/>
+   <rhq_repo_resource_map/>
+   <rhq_repo_content_src_map/>
+   <rhq_repo_repo_group_map/>
+   <rhq_repo_repo_relation_map/>
+   <rhq_repo_pkg_version_map/>
+   <rhq_pkg_ver_content_src_map/>
+   <rhq_pkg_prd_map/>
+   <rhq_distribution_type id="1" name="kickstart" description="Linux kickstart distribution"/>
+   <rhq_distribution_type id="2" name="jumpstart" description="solaris jumpstart distribution"/>
+   <rhq_distribution/>
+   <rhq_repo_distribution/>
+   <rhq_distribution_file/>
+   <rhq_advisory/>
+   <rhq_advisory_package/>
+   <rhq_cve/>
+   <rhq_advisory_cve/>
+   <rhq_advisory_buglist/>
+   <rhq_repo_advisory/>
+   <rhq_bundle_type/>
+   <rhq_bundle/>
+   <rhq_bundle_version/>
+   <rhq_bundle_version_repo/>
+   <rhq_bundle_file/>
+   <rhq_bundle_destination/>
+   <rhq_bundle_deployment/>
+   <rhq_bundle_res_deploy/>
+   <rhq_bundle_res_dep_hist/>
+   <rhq_tagging_bundle_map/>
+   <rhq_tagging_bundle_version_map/>
+   <rhq_tagging_bundle_deploy_map/>
+   <rhq_tagging_bundle_dest_map/>
+   <rhq_create_res_hist/>
+   <rhq_delete_res_hist/>
+   <rhq_drift_template_map/>
+   <jms_messages/>
+   <jms_transactions/>
+   <jms_users/>
+   <jms_roles/>
+   <jms_subscriptions/>
+</dataset>
+

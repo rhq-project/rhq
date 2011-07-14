@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.server.content;
 
+import java.util.Comparator;
 import java.util.List;
 
 import javax.ejb.Local;
@@ -109,6 +110,16 @@ public interface RepoManagerLocal {
     PageList<PackageVersion> findPackageVersionsInRepo(Subject subject, int repoId, String filter, PageControl pc);
 
     /**
+     * @see RepoManagerRemote#deletePackageVersionsFromRepo(Subject, int, int) 
+     */
+    boolean deletePackageVersionsFromRepo(Subject subject, int repoId, int[] packageVersionId);
+    
+    /**
+     * @see RepoManagerRemote#getLatestPackageVersion(Subject, int, int) 
+     */
+    PackageVersion getLatestPackageVersion(Subject subject, int packageId, int repoId);
+    
+    /**
      * Get the overall sync status of this Repository.  This is a summation of all the syncs.
      *
      * There is a weight to the status since this returns the most 'relevant' status:
@@ -191,6 +202,17 @@ public interface RepoManagerLocal {
      */
     void importCandidateRepo(Subject subject, List<Integer> repoIds) throws RepoException;
 
+    /**
+     * When a user gets deleted, all of his/her repos remain intact but become
+     * unassigned to any user. This way no links to packages are broken upon user deletion
+     * and repository manager can then decide what to do with the leftover repos.
+     * <p> 
+     * This method therefore sets the owner of all repos owned by provided subject to null.
+     * 
+     * @param subjectId
+     */
+    void removeOwnershipOfSubject(int subjectId);
+    
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //
     // The following are shared with the Remote Interface

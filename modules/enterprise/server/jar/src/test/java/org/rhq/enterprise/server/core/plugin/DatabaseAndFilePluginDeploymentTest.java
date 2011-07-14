@@ -47,11 +47,13 @@ import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
-import org.rhq.enterprise.server.resource.metadata.ResourceMetadataManagerLocal;
+import org.rhq.enterprise.server.resource.metadata.PluginManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
 
-@Test
+//make sure we run this after the plugins.metadata tests are done so that
+//the db contents don't interfere
+@Test(dependsOnGroups = "plugin.metadata")
 public class DatabaseAndFilePluginDeploymentTest extends AbstractEJB3Test {
 
     private static final String PLUGIN_NAME = "DeployTest"; // as defined in our test descriptors
@@ -67,7 +69,7 @@ public class DatabaseAndFilePluginDeploymentTest extends AbstractEJB3Test {
     private final Map<String, Plugin> testPlugins = new HashMap<String, Plugin>();
     private final Map<String, Date> testTimestamps = new HashMap<String, Date>();
     private final Map<String, PluginDescriptor> testPluginDescriptors = new HashMap<String, PluginDescriptor>();
-    private ResourceMetadataManagerLocal metadataManager;
+    private PluginManagerLocal pluginMgr;
     private SubjectManagerLocal subjectManager;
 
     // Here is a matrix of scenarios we are going to test.
@@ -340,7 +342,7 @@ public class DatabaseAndFilePluginDeploymentTest extends AbstractEJB3Test {
         testTimestamps.put(TESTPLUGIN_1_1_JUN, juneDate);
         testTimestamps.put(TESTPLUGIN_1_0_FEB2, febDate);
 
-        metadataManager = LookupUtil.getResourceMetadataManager();
+        pluginMgr = LookupUtil.getPluginManager();
         subjectManager = LookupUtil.getSubjectManager();
 
         File deployDir = new File(DEPLOY_LOCATION);
@@ -501,8 +503,7 @@ public class DatabaseAndFilePluginDeploymentTest extends AbstractEJB3Test {
             pluginDup.setVersion(plugin.getVersion());
             PluginDescriptor pluginDescriptor = this.testPluginDescriptors.get(pluginId);
             File localPluginFile = this.testPluginFiles.get(pluginId);
-            metadataManager.registerPlugin(subjectManager.getOverlord(), pluginDup, pluginDescriptor, localPluginFile,
-                false);
+            pluginMgr.registerPlugin(subjectManager.getOverlord(), pluginDup, pluginDescriptor, localPluginFile, false);
         }
         return;
     }

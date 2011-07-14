@@ -55,6 +55,7 @@ public class ResourceManagerBeanTest extends UpdateSubsytemTestBase {
     @Override
     @BeforeClass
     public void beforeClass() {
+        super.beforeClass();
         agentServiceContainer = prepareForTestAgents();
         agentServiceContainer.measurementService = new MockAgentService();
 

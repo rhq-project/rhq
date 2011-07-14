@@ -65,11 +65,6 @@
       </td>
    </tr>
    <tr>
-      <td width="20%" class="BlockLabel"><fmt:message key="admin.home.License"/></td>
-      <td width="30%" class="BlockContent"><html:link page="/admin/license/LicenseAdmin.do?mode=view"><fmt:message key="admin.home.LicenseManager"/></html:link></td>
-   </tr>
-
-   <tr>
       <td width="20%" class="BlockLabel"><fmt:message key="admin.home.Plugins"/></td>
       <td width="30%" class="BlockContent"><html:link page="/rhq/admin/plugin/plugin-list.xhtml"><fmt:message key="admin.home.PluginsLink"/></html:link></td>
    </tr>

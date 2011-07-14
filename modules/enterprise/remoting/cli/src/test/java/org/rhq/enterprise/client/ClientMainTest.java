@@ -1,41 +1,7 @@
 package org.rhq.enterprise.client;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import org.testng.AssertJUnit;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.authz.Role;
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.content.Architecture;
-import org.rhq.core.domain.content.Repo;
-import org.rhq.core.domain.content.PackageType;
-import org.rhq.core.domain.content.PackageVersion;
-import org.rhq.core.domain.measurement.AvailabilityType;
-import org.rhq.core.domain.operation.ResourceOperationHistory;
-import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceCategory;
-import org.rhq.core.domain.resource.ResourceSubCategory;
-import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.resource.composite.ResourceComposite;
-import org.rhq.core.domain.util.PageControl;
-import org.rhq.enterprise.server.auth.SubjectManagerRemote;
-import org.rhq.enterprise.server.authz.RoleManagerRemote;
-import org.rhq.enterprise.server.configuration.ConfigurationManagerRemote;
-import org.rhq.enterprise.server.content.RepoManagerRemote;
-import org.rhq.enterprise.server.content.ContentManagerRemote;
-import org.rhq.enterprise.server.operation.OperationManagerRemote;
-import org.rhq.enterprise.server.operation.ResourceOperationSchedule;
-import org.rhq.enterprise.server.resource.ResourceManagerRemote;
 
 /**
  * These tests can not be executed in our standard unit test fashion as they require a running RHQ

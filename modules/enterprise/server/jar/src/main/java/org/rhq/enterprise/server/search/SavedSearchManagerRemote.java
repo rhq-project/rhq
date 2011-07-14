@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -63,12 +63,13 @@ public interface SavedSearchManagerRemote {
      * @param subject       the logged in user requesting the {@link SavedSearch} persisted modification
      * @param savedSearch   the {@link SavedSearch} which will have its modifications persisted
      *.
+     * @return whether or not the {@link SavedSearch} had any edits that needed to be persisted
      * @throws PermissionException if the user is not authorized to modify the {@link SavedSearch}.  Only inventory
      *         managers can update global saved searches.  Regular users can only update {@link SavedSearch}es from
      *         their own accounts.
      */
     @WebMethod
-    public void updateSavedSearch( //
+    public boolean updateSavedSearch( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "savedSearch") SavedSearch savedSearch);
 

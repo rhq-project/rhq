@@ -20,7 +20,11 @@ package org.rhq.enterprise.server.content;
 
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -74,8 +78,11 @@ import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
+import org.rhq.enterprise.server.plugin.pc.content.ContentProvider;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderManager;
 import org.rhq.enterprise.server.plugin.pc.content.ContentServerPluginContainer;
+import org.rhq.enterprise.server.plugin.pc.content.PackageSource;
+import org.rhq.enterprise.server.plugin.pc.content.PackageTypeBehavior;
 import org.rhq.enterprise.server.plugin.pc.content.RepoDetails;
 import org.rhq.enterprise.server.plugin.pc.content.RepoGroupDetails;
 import org.rhq.enterprise.server.plugin.pc.content.RepoImportReport;
@@ -113,9 +120,13 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
     @EJB
     private RepoManagerLocal repoManager;
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
     public void deleteRepo(Subject subject, int repoId) {
-        log.debug("User [" + subject + "] is deleting repository with id [" + repoId + "]...");
+        
+        if (!authzManager.canUpdateRepo(subject, repoId)) {
+            throw new PermissionException("User [" + subject + "] cannot delete repository with id " + repoId);
+        }
+        
+        log.info("User [" + subject + "] is deleting repository with id [" + repoId + "]...");
 
         // bulk delete m-2-m mappings to the doomed repo
         // get ready for bulk delete by clearing entity manager
@@ -142,28 +153,80 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         contentSourceManager.purgeOrphanedPackageVersions(subject);
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     public void deleteRepoGroup(Subject subject, int repoGroupId) {
         RepoGroup deleteMe = getRepoGroup(subject, repoGroupId);
         entityManager.remove(deleteMe);
     }
 
+    public boolean deletePackageVersionsFromRepo(Subject subject, int repoId, int[] packageVersionIds) {
+        if (packageVersionIds == null || packageVersionIds.length == 0) {
+            return true;
+        }
+        
+        if (!authzManager.canUpdateRepo(subject, repoId)) {
+            throw new PermissionException("User [" + subject + "] cannot update the repo with id " + repoId + " and therefore cannot delete package versions from it.");
+        }
+        
+        ArrayList<Integer> ids = new ArrayList<Integer>();
+        for(int id : packageVersionIds) {
+            ids.add(id);
+        }
+
+        Query deleteable = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_DELETEABLE_IDS_IN_REPO);
+        deleteable.setParameter("repoId", repoId);
+        deleteable.setParameter("packageVersionIds", ids);
+        
+        @SuppressWarnings("unchecked")
+        List<Integer> deleteableIds = (List<Integer>) deleteable.getResultList();
+        
+        if (deleteableIds.isEmpty()) {
+            return false;
+        }
+        
+        Query deleteRepoPackageVersions = entityManager.createNamedQuery(RepoPackageVersion.DELETE_MULTIPLE_WHEN_NO_PROVIDER);
+        deleteRepoPackageVersions.setParameter("repoId", repoId);            
+        deleteRepoPackageVersions.setParameter("packageVersionIds", deleteableIds);
+        
+        deleteRepoPackageVersions.executeUpdate();
+        
+        Query deletePackageVersions = entityManager.createNamedQuery(PackageVersion.DELETE_MULTIPLE_IF_NO_CONTENT_SOURCES_OR_REPOS);
+        deletePackageVersions.setParameter("packageVersionIds", deleteableIds);
+        
+        int deleted = deletePackageVersions.executeUpdate();
+        
+        return deleted == packageVersionIds.length;
+    }
+    
     @SuppressWarnings("unchecked")
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
     public PageList<Repo> findRepos(Subject subject, PageControl pc) {
         pc.initDefaultOrderingField("c.name");
 
-        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, Repo.QUERY_FIND_ALL_IMPORTED_REPOS, pc);
-        Query countQuery = PersistenceUtility.createCountQuery(entityManager, Repo.QUERY_FIND_ALL_IMPORTED_REPOS);
-
+        Query query = null;
+        Query countQuery = null;
+        
+        if (authzManager.hasGlobalPermission(subject, Permission.MANAGE_REPOSITORIES)) {
+            query = PersistenceUtility.createQueryWithOrderBy(entityManager, Repo.QUERY_FIND_ALL_IMPORTED_REPOS_ADMIN, pc);
+            countQuery = PersistenceUtility.createCountQuery(entityManager, Repo.QUERY_FIND_ALL_IMPORTED_REPOS_ADMIN);
+        } else {
+            query = PersistenceUtility.createQueryWithOrderBy(entityManager, Repo.QUERY_FIND_ALL_IMPORTED_REPOS, pc);
+            countQuery = PersistenceUtility.createCountQuery(entityManager, Repo.QUERY_FIND_ALL_IMPORTED_REPOS);
+            
+            query.setParameter("subject", subject);
+            countQuery.setParameter("subject", subject);
+        }
+        
         List<Repo> results = query.getResultList();
         long count = (Long) countQuery.getSingleResult();
 
         return new PageList<Repo>(results, (int) count, pc);
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
     public Repo getRepo(Subject subject, int repoId) {
+        if (!authzManager.canViewRepo(subject, repoId)) {
+            throw new PermissionException("User [" + subject + "] cannot access the repo with id " + repoId);
+        }
+        
         Repo repo = entityManager.find(Repo.class, repoId);
 
         if ((repo != null) && (repo.getRepoContentSources() != null)) {
@@ -175,14 +238,14 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         return repo;
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     public RepoGroup getRepoGroup(Subject subject, int repoGroupId) {
         RepoGroup repoGroup = entityManager.find(RepoGroup.class, repoGroupId);
         return repoGroup;
     }
 
     @SuppressWarnings("unchecked")
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     public PageList<ContentSource> findAssociatedContentSources(Subject subject, int repoId, PageControl pc) {
         pc.initDefaultOrderingField("cs.id");
 
@@ -203,6 +266,10 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
     public PageList<Resource> findSubscribedResources(Subject subject, int repoId, PageControl pc) {
         pc.initDefaultOrderingField("rc.resource.id");
 
+        if (!authzManager.canViewRepo(subject, repoId)) {
+            throw new PermissionException("User [" + subject + "] can't access repository with id " + repoId);
+        }
+        
         Query query = PersistenceUtility
             .createQueryWithOrderBy(entityManager, Repo.QUERY_FIND_SUBSCRIBER_RESOURCES, pc);
         Query countQuery = PersistenceUtility.createCountQuery(entityManager, Repo.QUERY_FIND_SUBSCRIBER_RESOURCES);
@@ -219,6 +286,10 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
     @SuppressWarnings("unchecked")
     // current resource subscriptions should be viewing, but perhaps available ones shouldn't
     public PageList<RepoComposite> findResourceSubscriptions(Subject subject, int resourceId, PageControl pc) {
+        if (!authzManager.canViewResource(subject, resourceId)) {
+            throw new PermissionException("User [" + subject + "] can't view resource with id " + resourceId);
+        }
+        
         pc.initDefaultOrderingField("c.id");
 
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
@@ -234,8 +305,11 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         return new PageList<RepoComposite>(results, (int) count, pc);
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
     public List<SubscribedRepo> findSubscriptions(Subject subject, int resourceId) {
+        if (!authzManager.canViewResource(subject, resourceId)) {
+            throw new PermissionException("User [" + subject + "] can't view resource with id " + resourceId);
+        }
+        
         List<SubscribedRepo> list = new ArrayList<SubscribedRepo>();
         PageControl pc = new PageControl();
         for (RepoComposite repoComposite : findResourceSubscriptions(subject, resourceId, pc)) {
@@ -251,11 +325,24 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
     public PageList<RepoComposite> findAvailableResourceSubscriptions(Subject subject, int resourceId, PageControl pc) {
         pc.initDefaultOrderingField("c.id");
 
-        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
-            Repo.QUERY_FIND_AVAILABLE_REPO_COMPOSITES_BY_RESOURCE_ID, pc);
-        Query countQuery = entityManager
-            .createNamedQuery(Repo.QUERY_FIND_AVAILABLE_REPO_COMPOSITES_BY_RESOURCE_ID_COUNT);
-
+        Query query = null;
+        Query countQuery = null;
+        
+        if (authzManager.hasGlobalPermission(subject, Permission.MANAGE_REPOSITORIES)) {
+            query = PersistenceUtility.createQueryWithOrderBy(entityManager,
+                Repo.QUERY_FIND_AVAILABLE_REPO_COMPOSITES_BY_RESOURCE_ID_ADMIN, pc);
+            countQuery = entityManager
+                .createNamedQuery(Repo.QUERY_FIND_AVAILABLE_REPO_COMPOSITES_BY_RESOURCE_ID_ADMIN_COUNT);
+        } else {
+            query = PersistenceUtility.createQueryWithOrderBy(entityManager,
+                Repo.QUERY_FIND_AVAILABLE_REPO_COMPOSITES_BY_RESOURCE_ID, pc);
+            countQuery = entityManager
+                .createNamedQuery(Repo.QUERY_FIND_AVAILABLE_REPO_COMPOSITES_BY_RESOURCE_ID_COUNT);
+            
+            query.setParameter("subject", subject);
+            countQuery.setParameter("subject", subject);
+        }
+         
         query.setParameter("resourceId", resourceId);
         countQuery.setParameter("resourceId", resourceId);
 
@@ -277,7 +364,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
 
     @SuppressWarnings("unchecked")
     public List<RepoComposite> findAvailableResourceSubscriptions(int resourceId) {
-        Query query = entityManager.createNamedQuery(Repo.QUERY_FIND_AVAILABLE_REPO_COMPOSITES_BY_RESOURCE_ID);
+        Query query = entityManager.createNamedQuery(Repo.QUERY_FIND_AVAILABLE_REPO_COMPOSITES_BY_RESOURCE_ID_ADMIN);
 
         query.setParameter("resourceId", resourceId);
 
@@ -286,8 +373,11 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
     }
 
     @SuppressWarnings("unchecked")
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
     public PageList<PackageVersion> findPackageVersionsInRepo(Subject subject, int repoId, PageControl pc) {
+        if (!authzManager.canViewRepo(subject, repoId)) {
+            throw new PermissionException("User [" + subject + "] can't access repo with id " + repoId);
+        }
+        
         pc.initDefaultOrderingField("pv.generalPackage.name, pv.version");
 
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
@@ -302,8 +392,11 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
     }
 
     @SuppressWarnings("unchecked")
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
     public PageList<PackageVersion> findPackageVersionsInRepo(Subject subject, int repoId, String filter, PageControl pc) {
+        if (!authzManager.canViewRepo(subject, repoId)) {
+            throw new PermissionException("User [" + subject + "] can't access repo with id " + repoId);
+        }
+        
         pc.initDefaultOrderingField("pv.generalPackage.name, pv.version");
 
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
@@ -319,9 +412,64 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         return new PageList<PackageVersion>(results, (int) count, pc);
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public PackageVersion getLatestPackageVersion(Subject subject, int packageId, int repoId) {
+        if (!authzManager.canViewRepo(subject, repoId)) {
+            throw new PermissionException("User [" + subject + "] cannot access the repo with id " + repoId);
+        }
+        
+        Query q = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_AND_REPO_ID);
+        q.setParameter("packageId", packageId);
+        q.setParameter("repoId", repoId);
+        
+        @SuppressWarnings("unchecked")
+        List<PackageVersion> results = (List<PackageVersion>) q.getResultList();
+        
+        if (results.size() == 0) {
+            return null;
+        } else if (results.size() == 1) {
+            return results.get(0);
+        }
+        
+        PackageVersion latest = results.get(0);
+        String packageTypeName = latest.getGeneralPackage().getPackageType().getName();
+
+        Comparator<PackageVersion> versionComparator = null;
+        try {
+            PackageTypeBehavior behavior = ContentManagerHelper.getPackageTypeBehavior(packageTypeName);
+            versionComparator = behavior.getPackageVersionComparator(packageTypeName);
+        } catch (Exception e) {
+            log.error("Could not get the package type behavior for package type '" + packageTypeName + "'. This should not happen.", e);
+        }
+        
+        if (versionComparator == null) {
+            versionComparator = PackageVersion.DEFAULT_COMPARATOR;
+        }
+        
+        Iterator<PackageVersion> it = results.iterator();
+        it.next(); //skip the first element, we don't have to compare it with itself
+        while(it.hasNext()) {
+            PackageVersion current = it.next();
+            if (versionComparator.compare(latest, current) < 0) {
+                latest = current;
+            }
+        }
+        
+        return latest;                    
+    }
+    
     public Repo updateRepo(Subject subject, Repo repo) throws RepoException {
         validateFields(repo);
+
+        if (!authzManager.hasGlobalPermission(subject, Permission.MANAGE_REPOSITORIES)) {
+            if (!authzManager.canUpdateRepo(subject, repo.getId())) {
+                throw new PermissionException("User [" + subject + "] can't update repo with id " + repo.getId());
+            }
+            
+            //only the repo manager can update the owner of a repo.
+            //make sure that's the case.
+            repo.setOwner(subject);
+        }
+        
         // HHH-2864 - Leave this in until we move to hibernate > 3.2.r14201-2
         getRepo(subject, repo.getId());
 
@@ -341,13 +489,18 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         return repo;
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
     public Repo createRepo(Subject subject, Repo repo) throws RepoException {
         validateRepo(repo);
-
+        
+        if (!authzManager.hasGlobalPermission(subject, Permission.MANAGE_REPOSITORIES)) {
+            //only the repo manager can update the owner of a repo.
+            //make sure that's the case.
+            repo.setOwner(subject);
+        }
+        
         log.debug("User [" + subject + "] is creating [" + repo + "]...");
         entityManager.persist(repo);
-        log.debug("User [" + subject + "] created [" + repo + "].");
+        log.info("User [" + subject + "] created [" + repo + "].");
 
         // If this repo is imported, schedule the repo sync job.
         if (!repo.isCandidate()) {
@@ -364,7 +517,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
     }
 
     @SuppressWarnings("unchecked")
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     public void deleteCandidatesWithOnlyContentSource(Subject subject, int contentSourceId) {
         Query query = entityManager.createNamedQuery(Repo.QUERY_FIND_CANDIDATES_WITH_ONLY_CONTENT_SOURCE);
 
@@ -377,7 +530,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         }
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     public void processRepoImportReport(Subject subject, RepoImportReport report, int contentSourceId,
         StringBuilder result) {
 
@@ -497,7 +650,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         }
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     public void importCandidateRepo(Subject subject, List<Integer> repoIds) throws RepoException {
         for (Integer repoId : repoIds) {
             Repo repo = entityManager.find(Repo.class, repoId);
@@ -515,7 +668,14 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         }
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public void removeOwnershipOfSubject(int subjectId) {
+        Query q = entityManager.createNamedQuery(Repo.QUERY_UPDATE_REMOVE_OWNER_FROM_REPOS_OWNED_BY_SUBJECT);
+        q.setParameter("ownerId", subjectId);
+        
+        q.executeUpdate();
+    }
+    
+    @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     public RepoGroup createRepoGroup(Subject subject, RepoGroup repoGroup) throws RepoException {
         validateRepoGroup(repoGroup);
 
@@ -563,7 +723,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
     }
 
     @SuppressWarnings("unchecked")
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     public void addContentSourcesToRepo(Subject subject, int repoId, int[] contentSourceIds) throws Exception {
         Repo repo = entityManager.find(Repo.class, repoId);
         if (repo == null) {
@@ -627,8 +787,11 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         }
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
     public void addPackageVersionsToRepo(Subject subject, int repoId, int[] packageVersionIds) {
+        if (!authzManager.canUpdateRepo(subject, repoId)) {
+            throw new PermissionException("User [" + subject + "] can't update repo with id " + repoId);
+        }
+                
         Repo repo = entityManager.find(Repo.class, repoId);
 
         for (int packageVersionId : packageVersionIds) {
@@ -639,7 +802,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         }
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     public void removeContentSourcesFromRepo(Subject subject, int repoId, int[] contentSourceIds) throws RepoException {
         Repo repo = getRepo(subject, repoId);
 
@@ -703,6 +866,13 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
             throw new RuntimeException("One or more of the repos do not exist [" + idList + "]->[" + repos + "]");
         }
 
+        //authz check
+        for(Repo repo : repos) {
+            if (!authzManager.canViewRepo(subject, repo.getId())) {
+                throw new PermissionException("User [" + subject + "] cannot access a repo with id " + repo.getId());
+            }
+        }
+        
         for (Repo repo : repos) {
             ResourceRepo mapping = repo.addResource(resource);
             entityManager.persist(mapping);
@@ -749,8 +919,11 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         }
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
     public long getPackageVersionCountFromRepo(Subject subject, String filter, int repoId) {
+        if (!authzManager.canViewRepo(subject, repoId)) {
+            throw new PermissionException("User [" + subject + "] can't access repo with id " + repoId);
+        }
+        
         Query countQuery = PersistenceUtility.createCountQuery(entityManager,
             PackageVersion.QUERY_FIND_BY_REPO_ID_FILTERED);
 
@@ -760,29 +933,33 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         return ((Long) countQuery.getSingleResult()).longValue();
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
     public long getPackageVersionCountFromRepo(Subject subject, int repoId) {
         return getPackageVersionCountFromRepo(subject, null, repoId);
     }
 
     @SuppressWarnings("unchecked")
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
     public PageList<Repo> findReposByCriteria(Subject subject, RepoCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
         ;
-
+        
+        //TODO this needs the authz applied somehow
+        
         CriteriaQueryRunner<Repo> queryRunner = new CriteriaQueryRunner(criteria, generator, entityManager);
         return queryRunner.execute();
     }
 
     @SuppressWarnings("unchecked")
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
     public PageList<PackageVersion> findPackageVersionsInRepoByCriteria(Subject subject, PackageVersionCriteria criteria) {
         Integer repoId = criteria.getFilterRepoId();
 
         if ((null == repoId) || (repoId < 1)) {
             throw new IllegalArgumentException("Illegal filterResourceId: " + repoId);
         }
+
+        if (!authzManager.canViewRepo(subject, repoId)) {
+            throw new PermissionException("User [" + subject + "] can't access repo with id " + repoId);
+        }
+        
 
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
         ;
@@ -792,7 +969,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         return queryRunner.execute();
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void addRepoRelationship(Subject subject, int repoId, int relatedRepoId, String relationshipTypeName) {
 
@@ -943,7 +1120,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         }
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     public long getDistributionCountFromRepo(Subject subject, int repoId) {
         Query countQuery = PersistenceUtility.createCountQuery(entityManager, RepoDistribution.QUERY_FIND_BY_REPO_ID);
 
@@ -952,7 +1129,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         return (Long) countQuery.getSingleResult();
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     @SuppressWarnings("unchecked")
     public PageList<Distribution> findAssociatedDistributions(Subject subject, int repoid, PageControl pc) {
         pc.setPrimarySort("rkt.id", PageOrdering.ASC);
@@ -974,7 +1151,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
 
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     @SuppressWarnings("unchecked")
     public PageList<Advisory> findAssociatedAdvisory(Subject subject, int repoid, PageControl pc) {
         pc.setPrimarySort("rkt.id", PageOrdering.ASC);
@@ -995,7 +1172,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
 
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     public long getAdvisoryCountFromRepo(Subject subject, int repoId) {
         Query countQuery = PersistenceUtility.createCountQuery(entityManager, RepoAdvisory.QUERY_FIND_BY_REPO_ID);
 
@@ -1030,7 +1207,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         }
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     public int synchronizeRepos(Subject subject, int[] repoIds) throws Exception {
         int syncCount = 0;
 
@@ -1073,6 +1250,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         return syncCount;
     }
 
+    @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     public void cancelSync(Subject subject, int repoId) throws ContentException {
         ContentServerPluginContainer pc;
         try {
@@ -1106,7 +1284,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
     }
 
     @SuppressWarnings("unchecked")
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @RequiredPermission(Permission.MANAGE_REPOSITORIES)
     public PageList<RepoSyncResults> getRepoSyncResults(Subject subject, int repoId, PageControl pc) {
         pc.initDefaultOrderingField("cssr.startTime", PageOrdering.DESC);
 

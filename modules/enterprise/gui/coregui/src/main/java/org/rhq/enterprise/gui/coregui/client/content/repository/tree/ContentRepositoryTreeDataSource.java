@@ -44,7 +44,7 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 /**
  * @author Greg Hinkle
  */
-public class ContentRepositoryTreeDataSource extends RPCDataSource<Repo> {
+public class ContentRepositoryTreeDataSource extends RPCDataSource<Repo, RepoCriteria> {
 
     private RepoGWTServiceAsync repoService = GWTServiceLookup.getRepoService();
 
@@ -75,10 +75,7 @@ public class ContentRepositoryTreeDataSource extends RPCDataSource<Repo> {
     }
 
     @Override
-    protected void executeFetch(final DSRequest request, final DSResponse response) {
-
-        RepoCriteria criteria = new RepoCriteria();
-
+    protected void executeFetch(final DSRequest request, final DSResponse response, final RepoCriteria criteria) {
         repoService.findReposByCriteria(criteria, new AsyncCallback<PageList<Repo>>() {
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError(MSG.dataSource_ContentRepoTree_error_load(), caught);
@@ -89,7 +86,12 @@ public class ContentRepositoryTreeDataSource extends RPCDataSource<Repo> {
                 processResponse(request.getRequestId(), response);
             }
         });
+    }
 
+    @Override
+    protected RepoCriteria getFetchCriteria(final DSRequest request) {
+        RepoCriteria criteria = new RepoCriteria();
+        return criteria;
     }
 
     @Override

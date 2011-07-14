@@ -80,7 +80,9 @@
         <column name="LAST_MODIFIED_TIME" type="LONG" required="true"/>
         <column name="IS_CANDIDATE" type="BOOLEAN" required="true"/>
         <column name="SYNC_SCHEDULE" size="64" type="VARCHAR2" required="false"/>
-
+        <column name="OWNER_ID" type="INTEGER" required="false" references="RHQ_SUBJECT" />
+        <column name="IS_PRIVATE" type="BOOLEAN" required="true" />
+        
         <index name="RHQ_REPO_IDX" unique="true">
             <field ref="NAME"/>
         </index>
@@ -112,7 +114,7 @@
         <column name="IS_CREATION_DATA" type="BOOLEAN" required="true"/>
         <column name="SUPPORTS_ARCHITECTURE" type="BOOLEAN" required="true"/>
 
-        <column name="RESOURCE_TYPE_ID" type="INTEGER" references="RHQ_RESOURCE_TYPE" required="true"/>
+        <column name="RESOURCE_TYPE_ID" type="INTEGER" references="RHQ_RESOURCE_TYPE" required="false"/>
         <column name="DEPLOYMENT_CONFIG_DEF_ID" type="INTEGER" references="RHQ_CONFIG_DEF" required="false"/>
         <column name="PACKAGE_EXTRA_CONFIG_ID" type="INTEGER" references="RHQ_CONFIG_DEF" required="false"/>
 
@@ -546,6 +548,7 @@
         <column name="BUNDLE_ID" type="INTEGER" required="true" references="RHQ_BUNDLE"/>        
         <column name="GROUP_ID" type="INTEGER" required="true" references="RHQ_RESOURCE_GROUP"/>        
         <column name="DEPLOY_DIR" size="256" type="VARCHAR2" required="true"/>
+        <column name="DEST_BASE_DIR_NAME" size="200" type="VARCHAR2" required="true"/>
 
         <!--  This index is for constraint, not performance -->
         <index name="RHQ_BUNDLE_DESTINATION_UNIQUE" unique="true">
@@ -643,6 +646,57 @@
             </primaryKey>
         </constraint>
     </table>
+
+    <!--  Drift Management Tables -->
     
+    <!--  Content of a file being managed for drift. Used for diff and/or remediation -->    
+    <table name="RHQ_DRIFT_FILE">
+        <column name="HASH_ID" type="VARCHAR2" size="64" primarykey="true" required="true"/>        
+        <column name="CTIME" type="LONG" required="true"/>
+        <column name="DATA" type="LARGEOBJECT" required="false"/>
+        <column name="DATA_SIZE" type="LONG" required="false"/>
+        <column name="STATUS" type="VARCHAR2" size="20" required="true"/>
+    </table>
+
+    <!--  A drift change-set report for a resource -->
+    <table name="RHQ_DRIFT_CHANGE_SET">
+        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+        <column name="CTIME" type="LONG" required="true"/>
+        <!-- Version 0 is initial change-set -->
+        <column name="VERSION" type="INTEGER" required="true"/>
+        <column name="CATEGORY" type="VARCHAR2" size="20" required="true"/>                         
+        <column name="RESOURCE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE"/>        
+    </table>
+    
+    <!--  A single occurence of drift for a resource -->
+    <table name="RHQ_DRIFT">
+        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+        <column name="CTIME" type="LONG" required="true"/>
+        <column name="CATEGORY" type="VARCHAR2" size="20" required="true"/>        
+        <column name="DRIFT_CHANGE_SET_ID" type="INTEGER" required="true" references="RHQ_DRIFT_CHANGE_SET"/>
+        <column name="PATH" type="VARCHAR2" size="512" required="true"/>        
+        <column name="OLD_DRIFT_FILE" type="VARCHAR2" size="64" required="false" references="RHQ_DRIFT_FILE"/>        
+        <column name="NEW_DRIFT_FILE" type="VARCHAR2" size="64" required="false" references="RHQ_DRIFT_FILE"/>        
+    </table>
+    
+    <!--
+        A resource type can have zero or more drift templates which correspond to <drift>
+        elements declared in the plugin descriptor. A drift template is represented as a
+        config template.
+    -->
+    <table name="RHQ_DRIFT_TEMPLATE_MAP">
+        <column name="RESOURCE_TYPE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE_TYPE"/>
+        <column name="CONFIG_TEMPLATE_ID" type="INTEGER" required="true" references="RHQ_CONFIG_TEMPLATE"/>
+    </table>
+
+    <!--
+        A resource can have zero or more drift configurations used for guiding drift
+        detection for the resource.
+    -->
+    <table name="RHQ_DRIFT_CONFIG_MAP">
+        <column name="RESOURCE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE"/>
+        <column name="CONFIG_ID" type="INTEGER" required="true" references="RHQ_CONFIG"/>
+    </table>
+
 </dbsetup>
 

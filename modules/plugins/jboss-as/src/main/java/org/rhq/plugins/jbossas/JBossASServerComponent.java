@@ -133,6 +133,8 @@ public class JBossASServerComponent implements MeasurementFacet, OperationFacet,
     public static final String SCRIPT_PREFIX_CONFIG_PROP = "scriptPrefix";
     public static final String CONFIGURATION_SET_CONFIG_PROP = "configurationSet";
     public static final String START_SCRIPT_CONFIG_PROP = "startScript";
+    public static final String START_WAIT_MAX_PROP = "startWaitMax";
+    public static final String STOP_WAIT_MAX_PROP = "stopWaitMax";
     public static final String SHUTDOWN_SCRIPT_CONFIG_PROP = "shutdownScript";
     public static final String SHUTDOWN_MBEAN_CONFIG_PROP = "shutdownMbeanName";
     public static final String SHUTDOWN_MBEAN_OPERATION_CONFIG_PROP = "shutdownMbeanOperation";

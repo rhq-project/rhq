@@ -23,18 +23,26 @@
 package org.rhq.enterprise.gui.coregui.client.bundle.deployment;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.AnimationEffect;
+import com.smartgwt.client.types.AutoFitWidthApproach;
+import com.smartgwt.client.types.ListGridFieldType;
+import com.smartgwt.client.util.BooleanCallback;
+import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
+import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.LinkItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
+import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
+import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 import com.smartgwt.client.widgets.grid.CellFormatter;
+import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
@@ -49,44 +57,59 @@ import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
 import org.rhq.core.domain.criteria.BundleResourceDeploymentCriteria;
+import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.tagging.Tag;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
-import org.rhq.enterprise.gui.coregui.client.Breadcrumb;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ErrorMessageWindow;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
+import org.rhq.enterprise.gui.coregui.client.bundle.revert.BundleRevertWizard;
 import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
 import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
+import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagEditorView;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagsChangedCallback;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Greg Hinkle
  */
 public class BundleDeploymentView extends LocatableVLayout implements BookmarkableView {
-    private BundleGWTServiceAsync bundleService;
-
     private BundleDeployment deployment;
     private BundleVersion version;
     private Bundle bundle;
 
     private VLayout detail;
+    private boolean canManageBundles;
 
-    public BundleDeploymentView(String locatorId) {
+    private final HashMap<String, String> statusIcons;
+
+    public BundleDeploymentView(String locatorId, boolean canManageBundles) {
         super(locatorId);
+        this.canManageBundles = canManageBundles;
         setWidth100();
         setHeight100();
-        setMargin(10);
+        //setMargin(10); // do not set margin, we already have our margin set outside of us
+
+        statusIcons = new HashMap<String, String>();
+        statusIcons.put(BundleDeploymentStatus.PENDING.name(), "subsystems/bundle/install-loader.gif");
+        statusIcons.put(BundleDeploymentStatus.IN_PROGRESS.name(), "subsystems/bundle/install-loader.gif");
+        statusIcons.put(BundleDeploymentStatus.FAILURE.name(), "subsystems/bundle/Error_11.png");
+        statusIcons.put(BundleDeploymentStatus.MIXED.name(), "subsystems/bundle/Warning_11.png");
+        statusIcons.put(BundleDeploymentStatus.SUCCESS.name(), "subsystems/bundle/Ok_11.png");
     }
 
     private void viewBundleDeployment(BundleDeployment bundleDeployment, ViewId current) {
@@ -98,23 +121,195 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
         this.bundle = bundleDeployment.getBundleVersion().getBundle();
 
         addMember(new BackButton(extendLocatorId("BackButton"), MSG.view_bundle_deploy_backButton() + ": "
-            + deployment.getDestination().getName(), "Bundles/Bundle/" + version.getBundle().getId() + "/destinations/"
-            + deployment.getDestination().getId()));
-
+            + deployment.getDestination().getName(), LinkManager.getBundleDestinationLink(version.getBundle().getId(),
+            deployment.getDestination().getId())));
         addMember(new HeaderLabel(Canvas.getImgURL("subsystems/bundle/BundleDeployment_24.png"), deployment.getName()));
+        addMember(createTagEditor());
+        addMember(createSummaryForm());
+        addMemberDeploymentsTable();
 
+        detail = new VLayout();
+        detail.setAutoHeight();
+        detail.hide();
+        addMember(detail);
+    }
+
+    private LocatableDynamicForm createSummaryForm() {
         LocatableDynamicForm form = new LocatableDynamicForm(extendLocatorId("Summary"));
-        form.setNumCols(4);
+        form.setWidth100();
+        form.setAutoHeight();
+        form.setNumCols(5);
+        form.setWrapItemTitles(false);
+        form.setExtraSpace(10);
+        form.setIsGroup(true);
+        form.setGroupTitle(MSG.common_title_summary());
+        form.setPadding(5);
 
         LinkItem bundleName = new LinkItem("bundle");
         bundleName.setTitle(MSG.view_bundle_bundle());
-        bundleName.setValue("#Bundles/Bundle/" + bundle.getId());
-        bundleName.setLinkTitle(bundle.getName());
+        bundleName.setValue(LinkManager.getBundleLink(bundle.getId()));
+        bundleName.setLinkTitle(StringUtility.escapeHtml(bundle.getName()));
         bundleName.setTarget("_self");
 
-        CanvasItem tagItem = new CanvasItem("tag");
-        tagItem.setShowTitle(false);
-        TagEditorView tagEditor = new TagEditorView(form.getLocatorId(), version.getTags(), false,
+        CanvasItem actionItem = new CanvasItem("actions");
+        actionItem.setColSpan(1);
+        actionItem.setRowSpan(4);
+        actionItem.setShowTitle(false);
+        actionItem.setCanvas(getActionLayout(form.extendLocatorId("actions")));
+
+        LinkItem bundleVersionName = new LinkItem("bundleVersion");
+        bundleVersionName.setTitle(MSG.view_bundle_bundleVersion());
+        bundleVersionName.setValue(LinkManager.getBundleVersionLink(bundle.getId(), deployment.getBundleVersion()
+            .getId()));
+        bundleVersionName.setLinkTitle(deployment.getBundleVersion().getVersion());
+        bundleVersionName.setTarget("_self");
+
+        StaticTextItem deployed = new StaticTextItem("deployed", MSG.view_bundle_deployed());
+        deployed.setValue(TimestampCellFormatter.format(deployment.getCtime(),
+            TimestampCellFormatter.DATE_TIME_FORMAT_FULL));
+
+        StaticTextItem deployedBy = new StaticTextItem("deployedBy", MSG.view_bundle_deploy_deployedBy());
+        deployedBy.setValue(deployment.getSubjectName());
+
+        LinkItem destinationGroup = new LinkItem("group");
+        destinationGroup.setTitle(MSG.common_title_resource_group());
+        destinationGroup.setValue(LinkManager.getResourceGroupLink(deployment.getDestination().getGroup().getId()));
+        destinationGroup.setLinkTitle(StringUtility.escapeHtml((deployment.getDestination().getGroup().getName())));
+        destinationGroup.setTarget("_self");
+
+        StaticTextItem destBaseDir = new StaticTextItem("destBaseDir", MSG.view_bundle_dest_baseDirName());
+        destBaseDir.setValue(deployment.getDestination().getDestinationBaseDirectoryName());
+
+        StaticTextItem path = new StaticTextItem("path", MSG.view_bundle_deployDir());
+        path.setValue(deployment.getDestination().getDeployDir());
+
+        StaticTextItem description = new StaticTextItem("description", MSG.common_title_description());
+        description.setValue(StringUtility.escapeHtml(deployment.getDescription()));
+
+        StaticTextItem status = new StaticTextItem("status", MSG.common_title_status());
+        status.setValue(deployment.getStatus().name());
+        status.setValueIcons(statusIcons);
+        status.setValueIconHeight(11);
+        status.setValueIconWidth(11);
+        status.setShowValueIconOnly(true);
+        if (deployment.getErrorMessage() != null) {
+            status.setTooltip(MSG.view_bundle_deploy_clickForError());
+            status.addClickHandler(new ClickHandler() {
+                @Override
+                public void onClick(ClickEvent event) {
+                    ErrorMessageWindow win = new ErrorMessageWindow(extendLocatorId("errWin"),
+                        MSG.common_title_error(), "<pre>" + deployment.getErrorMessage() + "</pre>");
+                    win.show();
+                }
+            });
+        }
+
+        form.setFields(bundleName, bundleVersionName, actionItem, deployed, deployedBy, destinationGroup, destBaseDir,
+            description, path, status);
+
+        return form;
+    }
+
+    private Canvas getActionLayout(String locatorId) {
+        LocatableVLayout actionLayout = new LocatableVLayout(locatorId, 10);
+
+        // we can only revert the live deployments, only show revert button when appropriate
+        // in addition, we provide a purge button if you are viewing the live deployment, so
+        // they can be shown an option to purge the platform content (since only the "live"
+        // deployment represents content on the remote machines, showing purge only for live
+        // deployments makes sense).
+        if (deployment.isLive()) {
+            IButton revertButton = new LocatableIButton(actionLayout.extendLocatorId("Revert"), MSG
+                .view_bundle_revert());
+            revertButton.setIcon("subsystems/bundle/BundleAction_Revert_16.png");
+            revertButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
+                public void onClick(com.smartgwt.client.widgets.events.ClickEvent event) {
+                    new BundleRevertWizard(deployment.getDestination()).startWizard();
+                }
+            });
+            actionLayout.addMember(revertButton);
+
+            IButton purgeButton = new LocatableIButton(actionLayout.extendLocatorId("Purge"), MSG.view_bundle_purge());
+            purgeButton.setIcon("subsystems/bundle/BundleDestinationAction_Purge_16.png");
+            purgeButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
+                public void onClick(com.smartgwt.client.widgets.events.ClickEvent clickEvent) {
+                    SC.ask(MSG.view_bundle_dest_purgeConfirm(), new BooleanCallback() {
+                        public void execute(Boolean aBoolean) {
+                            if (aBoolean) {
+                                final int destinationId = deployment.getDestination().getId();
+                                final String destinationName = deployment.getDestination().getName();
+                                BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService(600000); // 10m should be enough right?
+                                bundleService.purgeBundleDestination(destinationId, new AsyncCallback<Void>() {
+                                    @Override
+                                    public void onFailure(Throwable caught) {
+                                        CoreGUI.getErrorHandler().handleError(
+                                            MSG.view_bundle_dest_purgeFailure(destinationName), caught);
+                                    }
+
+                                    @Override
+                                    public void onSuccess(Void result) {
+                                        CoreGUI.getMessageCenter().notify(
+                                            new Message(MSG.view_bundle_dest_purgeSuccessful(destinationName),
+                                                Message.Severity.Info));
+                                        // Bundle destination is purged, go back to bundle deployment view - it is not live anymore
+                                        CoreGUI.goToView(LinkManager.getBundleDeploymentLink(bundle.getId(), deployment
+                                            .getId()), true);
+                                    }
+                                });
+                            }
+                        }
+                    });
+                }
+            });
+            actionLayout.addMember(purgeButton);
+
+            if (!canManageBundles) {
+                revertButton.setDisabled(true);
+                purgeButton.setDisabled(true);
+            }
+        }
+
+        IButton deleteButton = new LocatableIButton(actionLayout.extendLocatorId("Delete"), MSG.common_button_delete());
+        deleteButton.setIcon("subsystems/bundle/BundleDeploymentAction_Delete_16.png");
+        deleteButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
+            @Override
+            public void onClick(com.smartgwt.client.widgets.events.ClickEvent event) {
+                SC.ask(MSG.view_bundle_deploy_deleteConfirm(), new BooleanCallback() {
+                    public void execute(Boolean aBoolean) {
+                        if (aBoolean) {
+                            BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService();
+                            bundleService.deleteBundleDeployment(deployment.getId(), new AsyncCallback<Void>() {
+                                public void onFailure(Throwable caught) {
+                                    CoreGUI.getErrorHandler().handleError(
+                                        MSG.view_bundle_deploy_deleteFailure(deployment.getName()), caught);
+                                }
+
+                                public void onSuccess(Void result) {
+                                    CoreGUI.getMessageCenter().notify(
+                                        new Message(MSG.view_bundle_deploy_deleteSuccessful(deployment.getName()),
+                                            Message.Severity.Info));
+                                    // Bundle deployment is deleted, go back to main bundle destinations view
+                                    CoreGUI.goToView(LinkManager.getBundleDestinationLink(bundle.getId(), deployment
+                                        .getDestination().getId()), true);
+                                }
+                            });
+                        }
+                    }
+                });
+            }
+        });
+        actionLayout.addMember(deleteButton);
+
+        if (!canManageBundles) {
+            deleteButton.setDisabled(true);
+        }
+
+        return actionLayout;
+    }
+
+    private TagEditorView createTagEditor() {
+        boolean readOnly = !this.canManageBundles;
+        TagEditorView tagEditor = new TagEditorView(extendLocatorId("tagEditor"), version.getTags(), readOnly,
             new TagsChangedCallback() {
                 public void tagsChanged(HashSet<Tag> tags) {
                     GWTServiceLookup.getTagService().updateBundleDeploymentTags(deployment.getId(), tags,
@@ -131,103 +326,82 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
                         });
                 }
             });
-        tagEditor.setVertical(true);
-        tagItem.setCanvas(tagEditor);
-        tagItem.setRowSpan(4);
-
-        StaticTextItem deployed = new StaticTextItem("deployed", MSG.view_bundle_deployed());
-        deployed.setValue(new Date(deployment.getCtime()));
-
-        LinkItem destinationGroup = new LinkItem("group");
-        destinationGroup.setTitle(MSG.common_title_resource_group());
-        destinationGroup.setValue(LinkManager.getResourceGroupLink(deployment.getDestination().getGroup().getId()));
-        destinationGroup.setLinkTitle(deployment.getDestination().getGroup().getName());
-        destinationGroup.setTarget("_self");
-
-        StaticTextItem path = new StaticTextItem("path", MSG.view_bundle_deployDir());
-        path.setValue(deployment.getDestination().getDeployDir());
-
-        form.setFields(bundleName, tagItem, deployed, destinationGroup, path);
-
-        addMember(form);
-
-        addMemberDeploymentsTable();
-
-        detail = new VLayout();
-        detail.setAutoHeight();
-        detail.hide();
-        addMember(detail);
+        tagEditor.setAutoHeight();
+        tagEditor.setExtraSpace(10);
+        return tagEditor;
     }
 
+    @SuppressWarnings("unchecked")
     private Table addMemberDeploymentsTable() {
         Table table = new Table(extendLocatorId("Deployments"), MSG.view_bundle_deploy_deploymentPlatforms());
 
         table.setTitleComponent(new HTMLFlow(MSG.view_bundle_deploy_selectARow()));
 
-        ListGridField resourceIcon = new ListGridField("resourceAvailability", "");
+        // resource icon field
+        ResourceCategory resourceCategory = deployment.getDestination().getGroup().getResourceType().getCategory();
+        ListGridField resourceIcon = new ListGridField("resourceAvailability");
         HashMap<String, String> icons = new HashMap<String, String>();
-        icons.put("UP", ImageManager.getResourceIcon(ResourceCategory.PLATFORM, Boolean.TRUE));
-        icons.put("DOWN", ImageManager.getResourceIcon(ResourceCategory.PLATFORM, Boolean.FALSE));
+        icons.put(AvailabilityType.UP.name(), ImageManager.getResourceIcon(resourceCategory, Boolean.TRUE));
+        icons.put(AvailabilityType.DOWN.name(), ImageManager.getResourceIcon(resourceCategory, Boolean.FALSE));
         resourceIcon.setValueIcons(icons);
         resourceIcon.setValueIconSize(16);
-        resourceIcon.setCellFormatter(new CellFormatter() {
-            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                return "";
-            }
-        });
-        resourceIcon.setWidth(30);
+        resourceIcon.setType(ListGridFieldType.ICON);
+        resourceIcon.setWidth(40);
 
-        ListGridField resource = new ListGridField("resource", MSG.common_title_platform());
+        // resource field
+        ListGridField resource = new ListGridField("resource", MSG.common_title_resource());
+        resource.setWidth("*");
         resource.setCellFormatter(new CellFormatter() {
-            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
+            public String format(Object value, ListGridRecord listGridRecord, int i, int i1) {
                 return "<a href=\"" + LinkManager.getResourceLink(listGridRecord.getAttributeAsInt("resourceId"))
-                    + "\">" + o + "</a>";
+                    + "\">" + StringUtility.escapeHtml(String.valueOf(value)) + "</a>";
 
             }
         });
-        ListGridField resourceVersion = new ListGridField("resourceVersion", MSG.view_bundle_deploy_operatingSystem());
+
+        // resource version field
+        ListGridField resourceVersion = new ListGridField("resourceVersion", MSG.common_title_version());
+        resourceVersion.setAutoFitWidth(true);
+        resourceVersion.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
+
+        // status icon field
         ListGridField status = new ListGridField("status", MSG.common_title_status());
-        HashMap<String, String> statusIcons = new HashMap<String, String>();
-        statusIcons.put(BundleDeploymentStatus.IN_PROGRESS.name(), "subsystems/bundle/install-loader.gif");
-        statusIcons.put(BundleDeploymentStatus.FAILURE.name(), "subsystems/bundle/Warning_11.png");
-        statusIcons.put(BundleDeploymentStatus.MIXED.name(), "subsystems/bundle/Warning_11.png");
-        statusIcons.put(BundleDeploymentStatus.WARN.name(), "subsystems/bundle/Warning_11.png");
-        statusIcons.put(BundleDeploymentStatus.SUCCESS.name(), "subsystems/bundle/Ok_11.png");
         status.setValueIcons(statusIcons);
         status.setValueIconHeight(11);
-        status.setWidth(80);
+        status.setValueIconWidth(11);
+        status.setShowValueIconOnly(true);
+        status.setWidth(60);
 
-        ArrayList<ListGridRecord> records = new ArrayList<ListGridRecord>();
+        List<ListGridRecord> records = new ArrayList<ListGridRecord>();
         for (BundleResourceDeployment rd : deployment.getResourceDeployments()) {
             ListGridRecord record = new ListGridRecord();
-            record.setAttribute("resource", rd.getResource().getName());
-
-            record.setAttribute("resourceAvailability", rd.getResource().getCurrentAvailability().getAvailabilityType()
-                .name());
-            record.setAttribute("resourceId", rd.getResource().getId());
-            record.setAttribute("resourceVersion", rd.getResource().getVersion());
+            Resource rr = rd.getResource();
+            record.setAttribute("resource", rr.getName());
+            record.setAttribute("resourceAvailability", rr.getCurrentAvailability().getAvailabilityType().name());
+            record.setAttribute("resourceId", rr.getId());
+            record.setAttribute("resourceVersion", rr.getVersion());
             record.setAttribute("status", rd.getStatus().name());
             record.setAttribute("id", rd.getId());
-            record.setAttribute("entity", rd);
+            record.setAttribute("object", rd);
             records.add(record);
         }
 
         // To get the ListGrid the Table must be initialized (via onInit()) by adding to the Canvas
         table.setHeight("30%");
+        table.setWidth100();
         table.setShowResizeBar(true);
         table.setResizeBarTarget("next");
         addMember(table);
 
-        table.getListGrid().setFields(resourceIcon, resource, resourceVersion, status);
-
-        table.getListGrid().setData(records.toArray(new ListGridRecord[records.size()]));
-
-        table.getListGrid().addSelectionChangedHandler(new SelectionChangedHandler() {
+        ListGrid listGrid = table.getListGrid();
+        listGrid.setFields(resourceIcon, resource, resourceVersion, status);
+        listGrid.setData(records.toArray(new ListGridRecord[records.size()]));
+        listGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
             public void onSelectionChanged(SelectionEvent selectionEvent) {
                 if (selectionEvent.getState()) {
 
                     BundleResourceDeployment bundleResourceDeployment = (BundleResourceDeployment) selectionEvent
-                        .getRecord().getAttributeAsObject("entity");
+                        .getRecord().getAttributeAsObject("object");
                     BundleResourceDeploymentHistoryListView detailView = new BundleResourceDeploymentHistoryListView(
                         "Detail", bundleResourceDeployment);
 
@@ -235,24 +409,6 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
                     detail.addMember(detailView);
                     detail.setHeight("50%");
                     detail.animateShow(AnimationEffect.SLIDE);
-
-                    /*
-                                        BundleResourceDeploymentCriteria criteria = new BundleResourceDeploymentCriteria();
-                                        criteria.addFilterId(selectionEvent.getRecord().getAttributeAsInt("id"));
-                                        criteria.fetchHistories(true);
-                                        criteria.fetchResource(true);
-                                        criteria.fetchBundleDeployment(true);
-                                        bundleService.findBundleResourceDeploymentsByCriteria(criteria, new AsyncCallback<PageList<BundleResourceDeployment>>() {
-                                            public void onFailure(Throwable caught) {
-                                                CoreGUI.getErrorHandler().handleError("Failed to load resource deployment history details",caught);
-                                            }
-
-                                            public void onSuccess(PageList<BundleResourceDeployment> result) {
-
-                                            }
-                                        });
-                    */
-
                 } else {
                     detail.animateHide(AnimationEffect.SLIDE);
                 }
@@ -265,8 +421,6 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
     public void renderView(final ViewPath viewPath) {
         int bundleDeploymentId = Integer.parseInt(viewPath.getCurrent().getPath());
 
-        final ViewId viewId = viewPath.getCurrent();
-
         BundleDeploymentCriteria criteria = new BundleDeploymentCriteria();
         criteria.addFilterId(bundleDeploymentId);
         criteria.fetchBundleVersion(true);
@@ -275,16 +429,14 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
         criteria.fetchDestination(true);
         criteria.fetchTags(true);
 
-        bundleService = GWTServiceLookup.getBundleService();
+        final BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService();
         bundleService.findBundleDeploymentsByCriteria(criteria, new AsyncCallback<PageList<BundleDeployment>>() {
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError(MSG.view_bundle_deploy_loadFailure(), caught);
             }
 
             public void onSuccess(PageList<BundleDeployment> result) {
-
                 final BundleDeployment deployment = result.get(0);
-
                 BundleCriteria bundleCriteria = new BundleCriteria();
                 bundleCriteria.addFilterId(deployment.getBundleVersion().getBundle().getId());
                 bundleService.findBundlesByCriteria(bundleCriteria, new AsyncCallback<PageList<Bundle>>() {
@@ -293,11 +445,8 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
                     }
 
                     public void onSuccess(PageList<Bundle> result) {
-
                         final Bundle bundle = result.get(0);
-
                         deployment.getBundleVersion().setBundle(bundle);
-
                         BundleResourceDeploymentCriteria criteria = new BundleResourceDeploymentCriteria();
                         criteria.addFilterBundleDeploymentId(deployment.getId());
                         criteria.fetchHistories(true);
@@ -305,32 +454,19 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
                         criteria.fetchBundleDeployment(true);
                         bundleService.findBundleResourceDeploymentsByCriteria(criteria,
                             new AsyncCallback<PageList<BundleResourceDeployment>>() {
-
                                 public void onFailure(Throwable caught) {
                                     CoreGUI.getErrorHandler().handleError(MSG.view_bundle_deploy_loadFailure(), caught);
                                 }
 
                                 public void onSuccess(PageList<BundleResourceDeployment> result) {
-
                                     deployment.setResourceDeployments(result);
-
-                                    viewPath.getViewForIndex(2).getBreadcrumbs().set(0,
-                                        new Breadcrumb(String.valueOf(bundle.getId()), bundle.getName()));
-                                    viewId.getBreadcrumbs().set(0,
-                                        new Breadcrumb(String.valueOf(deployment.getId()), deployment.getName()));
-                                    CoreGUI.refreshBreadCrumbTrail();
-
                                     viewBundleDeployment(deployment, viewPath.getCurrent());
-
                                 }
                             });
-
                     }
                 });
-
             }
         });
-
     }
 
 }

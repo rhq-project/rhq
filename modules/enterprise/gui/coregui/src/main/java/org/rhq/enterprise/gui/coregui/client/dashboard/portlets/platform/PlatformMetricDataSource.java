@@ -35,9 +35,9 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDatasour
 public class PlatformMetricDataSource extends ResourceDatasource {
     private static final Messages MSG = CoreGUI.getMessages();
 
-    PlatformPortletView view;
+    PlatformSummaryPortlet view;
 
-    public PlatformMetricDataSource(PlatformPortletView view) {
+    public PlatformMetricDataSource(PlatformSummaryPortlet view) {
         super();
         this.view = view;
 
@@ -55,7 +55,7 @@ public class PlatformMetricDataSource extends ResourceDatasource {
         fields.add(memoryField);
 
         DataSourceTextField swapField = new DataSourceTextField("swap", MSG.dataSource_platforms_field_swap());
-        // todo swap
+        fields.add(swapField);
 
         return fields;
     }

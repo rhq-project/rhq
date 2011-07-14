@@ -37,6 +37,8 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
@@ -50,6 +52,7 @@ import javax.xml.bind.annotation.XmlTransient;
 
 import org.jetbrains.annotations.NotNull;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.Resource;
 
 /**
@@ -59,10 +62,13 @@ import org.rhq.core.domain.resource.Resource;
  *
  * @author Jason Dobies
  * @author John Mazzitelli
+ * @author Lukas Krejci
  */
 @Entity
 @NamedQueries( {
-    @NamedQuery(name = Repo.QUERY_FIND_ALL_IMPORTED_REPOS, query = "SELECT c FROM Repo c WHERE c.candidate = false"),
+    @NamedQuery(name = Repo.QUERY_FIND_ALL_IMPORTED_REPOS_ADMIN, query = "SELECT c FROM Repo c WHERE c.candidate = false"),
+    @NamedQuery(name = Repo.QUERY_FIND_ALL_IMPORTED_REPOS, query = "SELECT c FROM Repo c" //
+        + " WHERE c.isPrivate = false OR c.owner = :subject"),
     @NamedQuery(name = Repo.QUERY_FIND_BY_IDS, query = "SELECT c FROM Repo c WHERE c.id IN ( :ids )"),
     @NamedQuery(name = Repo.QUERY_FIND_BY_NAME, query = "SELECT c FROM Repo c WHERE c.name = :name"),
     @NamedQuery(name = Repo.QUERY_FIND_IMPORTED_BY_CONTENT_SOURCE_ID_FETCH_CCS, query = "SELECT c FROM Repo c LEFT JOIN FETCH c.repoContentSources ccs WHERE ccs.contentSource.id = :id AND c.candidate = false"),
@@ -82,31 +88,56 @@ import org.rhq.core.domain.resource.Resource;
     @NamedQuery(name = Repo.QUERY_FIND_REPO_COMPOSITES_BY_RESOURCE_ID_COUNT, query = "SELECT COUNT( rc.repo ) "
         + "FROM ResourceRepo rc WHERE rc.resource.id = :resourceId "),
 
+    @NamedQuery(name = Repo.QUERY_FIND_AVAILABLE_REPO_COMPOSITES_BY_RESOURCE_ID_ADMIN, query = "SELECT new org.rhq.core.domain.content.composite.RepoComposite( "
+        + "c, "
+        + "(SELECT COUNT(cpv.packageVersion) FROM RepoPackageVersion cpv WHERE cpv.repo.id = c.id) "
+        + ") "
+        + "FROM Repo AS c "
+        + "WHERE c.id NOT IN ( SELECT rc.repo.id FROM ResourceRepo rc WHERE rc.resource.id = :resourceId ) "
+        + "AND c.candidate = false " 
+        + "GROUP BY c, c.name, c.description, c.creationDate, c.lastModifiedDate"),
+    @NamedQuery(name = Repo.QUERY_FIND_AVAILABLE_REPO_COMPOSITES_BY_RESOURCE_ID_ADMIN_COUNT, query = "SELECT COUNT( c ) "
+        + "FROM Repo AS c "
+        + "WHERE c.id NOT IN ( SELECT rc.repo.id FROM ResourceRepo rc WHERE rc.resource.id = :resourceId ) "
+        + "AND c.candidate = false "),
     @NamedQuery(name = Repo.QUERY_FIND_AVAILABLE_REPO_COMPOSITES_BY_RESOURCE_ID, query = "SELECT new org.rhq.core.domain.content.composite.RepoComposite( "
         + "c, "
         + "(SELECT COUNT(cpv.packageVersion) FROM RepoPackageVersion cpv WHERE cpv.repo.id = c.id) "
         + ") "
         + "FROM Repo AS c "
         + "WHERE c.id NOT IN ( SELECT rc.repo.id FROM ResourceRepo rc WHERE rc.resource.id = :resourceId ) "
-        + "AND c.candidate = false " + "GROUP BY c, c.name, c.description, c.creationDate, c.lastModifiedDate"),
+        + "AND c.candidate = false " 
+        + "AND c.owner = :subject "
+        + "GROUP BY c, c.name, c.description, c.creationDate, c.lastModifiedDate"),
     @NamedQuery(name = Repo.QUERY_FIND_AVAILABLE_REPO_COMPOSITES_BY_RESOURCE_ID_COUNT, query = "SELECT COUNT( c ) "
         + "FROM Repo AS c "
         + "WHERE c.id NOT IN ( SELECT rc.repo.id FROM ResourceRepo rc WHERE rc.resource.id = :resourceId ) "
-        + "AND c.candidate = false "),
+        + "AND c.candidate = false AND c.owner = :subject"),
     @NamedQuery(name = Repo.QUERY_FIND_CANDIDATES_WITH_ONLY_CONTENT_SOURCE, query = "SELECT r FROM Repo r " //
         + "WHERE r.candidate = true " //
         + "AND 1 = (SELECT COUNT(rcs.repo) FROM RepoContentSource rcs " //
         + "     WHERE rcs.repo.id = r.id " //
         + "     AND rcs.contentSource.id = :contentSourceId) " //
         + "AND 1 = (SELECT COUNT(rcs.repo) FROM RepoContentSource rcs" //
-        + "     WHERE rcs.repo.id = r.id) ") })
+        + "     WHERE rcs.repo.id = r.id) "), 
+    @NamedQuery(name = Repo.QUERY_CHECK_REPO_VISIBLE_BY_SUBJECT_ID, query = "SELECT COUNT(r) FROM Repo r" //
+        + " WHERE r.id = :repoId"
+        + "     AND r.isPrivate = false OR r.owner.id = :subjectId"),
+        
+    @NamedQuery(name = Repo.QUERY_CHECK_REPO_OWNED_BY_SUBJECT_ID, query = "SELECT COUNT(r) FROM Repo r" //
+        + " WHERE r.id = :repoId"
+        + "    AND r.owner.id = :subjectId"),
+    @NamedQuery(name = Repo.QUERY_UPDATE_REMOVE_OWNER_FROM_REPOS_OWNED_BY_SUBJECT, query = "" +
+        "UPDATE Repo r SET r.owner = null WHERE r.owner.id = :ownerId")
+    })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_REPO_ID_SEQ")
 @Table(name = "RHQ_REPO")
 public class Repo implements Serializable {
 
     // Constants  --------------------------------------------
 
-    public static final String QUERY_FIND_ALL_IMPORTED_REPOS = "Repo.findAll";
+    public static final String QUERY_FIND_ALL_IMPORTED_REPOS_ADMIN = "Repo.findAllImportedReposAdmin";
+    public static final String QUERY_FIND_ALL_IMPORTED_REPOS = "Repo.findAllImportedRepos";
     public static final String QUERY_FIND_BY_IDS = "Repo.findByIds";
     public static final String QUERY_FIND_BY_NAME = "Repo.findByName";
     public static final String QUERY_FIND_IMPORTED_BY_CONTENT_SOURCE_ID_FETCH_CCS = "Repo.findByContentSourceIdFetchCCS";
@@ -116,10 +147,15 @@ public class Repo implements Serializable {
     public static final String QUERY_FIND_REPOS_BY_RESOURCE_ID = "Repo.findReposByResourceId";
     public static final String QUERY_FIND_REPO_COMPOSITES_BY_RESOURCE_ID = "Repo.findRepoCompositesByResourceId";
     public static final String QUERY_FIND_REPO_COMPOSITES_BY_RESOURCE_ID_COUNT = "Repo.findRepoCompositesByResourceId_count";
+    public static final String QUERY_FIND_AVAILABLE_REPO_COMPOSITES_BY_RESOURCE_ID_ADMIN = "Repo.findAvailableRepoCompositesByResourceIdAdmin";
+    public static final String QUERY_FIND_AVAILABLE_REPO_COMPOSITES_BY_RESOURCE_ID_ADMIN_COUNT = "Repo.findAvailableRepoCompositesByResourceIdAdmin_count";
     public static final String QUERY_FIND_AVAILABLE_REPO_COMPOSITES_BY_RESOURCE_ID = "Repo.findAvailableRepoCompositesByResourceId";
     public static final String QUERY_FIND_AVAILABLE_REPO_COMPOSITES_BY_RESOURCE_ID_COUNT = "Repo.findAvailableRepoCompositesByResourceId_count";
     public static final String QUERY_FIND_CANDIDATES_WITH_ONLY_CONTENT_SOURCE = "Repo.findCandidatesWithOnlyContentSource";
-
+    public static final String QUERY_CHECK_REPO_VISIBLE_BY_SUBJECT_ID = "Repo.findVisibleReposBySubjectId";
+    public static final String QUERY_CHECK_REPO_OWNED_BY_SUBJECT_ID = "Repo.isRepoOwnedBySubjectId";
+    public static final String QUERY_UPDATE_REMOVE_OWNER_FROM_REPOS_OWNED_BY_SUBJECT = "Repo.removeOwnerFromReposOwnerBySubject";
+    
     private static final long serialVersionUID = 1L;
 
     // Attributes  --------------------------------------------
@@ -179,10 +215,17 @@ public class Repo implements Serializable {
     @XmlTransient
     @OneToMany(mappedBy = "repo", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<RepoAdvisory> repoAdvisories;
-
+    
     @Transient
     private String syncStatus;
 
+    @ManyToOne
+    @JoinColumn(name = "OWNER_ID", referencedColumnName = "ID", nullable = true)
+    private Subject owner;
+    
+    @Column(name = "IS_PRIVATE", nullable = false)
+    private boolean isPrivate = true;
+    
     // Constructor ----------------------------------------
 
     public Repo() {
@@ -793,4 +836,37 @@ public class Repo implements Serializable {
         return syncResults;
     }
 
+    /**
+     * @return the owner
+     */
+    public Subject getOwner() {
+        return owner;
+    }
+    
+    /**
+     * @param owner the owner to set
+     */
+    public void setOwner(Subject owner) {
+        this.owner = owner;
+    }
+    
+    /**
+     * Private repositories are only accessible by their owners or 
+     * {@link org.rhq.core.domain.authz.Permission#MANAGE_REPOSITORIES RepositoryManagers}. 
+     * Private repositories without an owner are only accessible by the RepositoryManagers.
+     * <p>
+     * A public repository (whether owned by a specific user or not) is accessible by anyone.
+     * 
+     * @return whether this repository is private
+     */
+    public boolean isPrivate() {
+        return isPrivate;
+    }
+    
+    /**
+     * @see #isPrivate()
+     */
+    public void setPrivate(boolean priv) {
+        this.isPrivate = priv;
+    }
 }

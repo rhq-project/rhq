@@ -41,6 +41,7 @@ public class ChangesFileHashcodeMap extends FileHashcodeMap {
     private final Map<String, String> additions = new HashMap<String, String>();
     private final Map<String, String> changes = new HashMap<String, String>();
     private final Set<String> ignored = new HashSet<String>();
+    private final Set<String> skipped = new HashSet<String>();
 
     /**
      * Creates an file/hashcode map populated with a map of original file data.
@@ -86,5 +87,13 @@ public class ChangesFileHashcodeMap extends FileHashcodeMap {
      */
     public Set<String> getIgnored() {
         return ignored;
+    }
+
+    /**
+     * @return the files and directories located directly under the root deploy dir that were skipped.
+     *         These are files/directories that are considered unrelated to the deployment and should be left alone.
+     */
+    public Set<String> getSkipped() {
+        return skipped;
     }
 }

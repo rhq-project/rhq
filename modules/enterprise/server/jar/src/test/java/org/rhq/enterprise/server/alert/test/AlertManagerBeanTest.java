@@ -18,30 +18,25 @@
  */
 package org.rhq.enterprise.server.alert.test;
 
-import java.util.Random;
+import java.sql.Connection;
+import java.util.List;
 
-import javax.persistence.EntityManager;
-
-import org.testng.annotations.AfterMethod;
+import org.dbunit.database.DatabaseConnection;
+import org.dbunit.database.IDatabaseConnection;
+import org.dbunit.dataset.IDataSet;
+import org.dbunit.dataset.xml.FlatXmlDataSet;
+import org.dbunit.dataset.xml.FlatXmlProducer;
+import org.dbunit.operation.DatabaseOperation;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+import org.xml.sax.InputSource;
 
-import org.rhq.core.domain.alert.Alert;
-import org.rhq.core.domain.alert.AlertCondition;
-import org.rhq.core.domain.alert.AlertConditionCategory;
 import org.rhq.core.domain.alert.AlertConditionLog;
-import org.rhq.core.domain.alert.AlertDampening;
-import org.rhq.core.domain.alert.AlertDefinition;
-import org.rhq.core.domain.alert.AlertPriority;
-import org.rhq.core.domain.alert.BooleanExpression;
 import org.rhq.core.domain.alert.notification.AlertNotificationLog;
-import org.rhq.core.domain.alert.notification.ResultState;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
-import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceCategory;
-import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -49,7 +44,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
 /**
  * Test for {@link AlertManagerLocal} SLSB.
  */
-@Test
+@Test(enabled = false)
 public class AlertManagerBeanTest extends AbstractEJB3Test {
     private AlertManagerLocal alertManager;
     private Subject superuser;
@@ -59,109 +54,74 @@ public class AlertManagerBeanTest extends AbstractEJB3Test {
     public void beforeMethod() throws Exception {
         alertManager = LookupUtil.getAlertManager();
         superuser = LookupUtil.getSubjectManager().getOverlord();
-        newResource = createNewResource();
+
+        Connection connection = null;
+
+        try {
+            connection = getConnection();
+            IDatabaseConnection dbUnitConnection = new DatabaseConnection(connection);
+            DatabaseOperation.CLEAN_INSERT.execute(dbUnitConnection, getDataSet());
+        } finally {
+            if (connection != null) {
+                connection.close();
+            }
+        }
+
+        newResource = getEntityManager().find(Resource.class, 1);
     }
 
-    @AfterMethod
-    public void afterMethod() throws Exception {
-        deleteNewResource(newResource);
+    @AfterClass
+    public void cleanupDB() throws Exception {
+        if ("true".equals(System.getProperty("clean.db"))) {
+            Connection connection = null;
+
+            try {
+                connection = getConnection();
+                IDatabaseConnection dbUnitConnection = new DatabaseConnection(connection);
+                DatabaseOperation.DELETE_ALL.execute(dbUnitConnection, getDataSet());
+            } finally {
+                if (connection != null) {
+                    connection.close();
+                }
+            }
+        }
     }
 
-    public void testAlertDelete() {
+    IDataSet getDataSet() throws Exception {
+        FlatXmlProducer xmlProducer = new FlatXmlProducer(new InputSource(getClass()
+            .getResourceAsStream("AlertManagerBeanTest.xml")));
+        xmlProducer.setColumnSensing(true);
+        return new FlatXmlDataSet(xmlProducer);
+    }
+
+    public void deleteAlertsForResource() {
         assert 1 == alertManager.deleteAlertsByContext(superuser, EntityContext.forResource(newResource.getId()));
     }
 
+    @SuppressWarnings("unchecked")
+    public void deleteAlertsForResourceTemplate() {
+        int resourceTypeId = 1;
+        int deletedCount = alertManager.deleteAlertsByContext(superuser, EntityContext.forTemplate(resourceTypeId));
+
+        List<AlertConditionLog> alertConditionLogs = getEntityManager().createQuery(
+            "from AlertConditionLog log where log.id = :id")
+            .setParameter("id", 2)
+            .getResultList();
+
+        List<AlertNotificationLog> notificationLogs = getEntityManager().createQuery(
+            "from AlertNotificationLog log where log.id = :id")
+            .setParameter("id", 2)
+            .getResultList();
+
+        assertEquals("Failed to delete alerts by template", 1, deletedCount);
+        assertEquals("Failed to delete alert condition logs when deleting alerts by template", 0,
+            alertConditionLogs.size());
+        assertEquals("Failed to delete alert notification logs when deleting alerts by template", 0,
+            notificationLogs.size());
+    }
+
     public void testAlertDeleteInRange() {
-        assert 1 == alertManager.deleteAlerts(0L, System.currentTimeMillis() + 600000L); // go out into the future to make sure we get our alert
+        assert 2 == alertManager.deleteAlerts(0L, System.currentTimeMillis() + 600000L); // go out into the future to make sure we get our alert
     }
 
-    private Resource createNewResource() throws Exception {
-        getTransactionManager().begin();
-        EntityManager em = getEntityManager();
-
-        Resource resource;
-
-        try {
-            try {
-                long now = System.currentTimeMillis();
-                ResourceType resourceType = new ResourceType("plat" + now, "test", ResourceCategory.PLATFORM, null);
-
-                em.persist(resourceType);
-
-                Agent agent = new Agent("testagent", "testaddress", 1, "", "testtoken");
-                em.persist(agent);
-                em.flush();
-
-                resource = new Resource("reskey" + now, "resname", resourceType);
-                resource.setAgent(agent);
-                resource.setUuid("" + new Random().nextInt());
-                em.persist(resource);
-
-                AlertDefinition ad = new AlertDefinition();
-                ad.setName("alertTest");
-                ad.setEnabled(true);
-                ad.setPriority(AlertPriority.HIGH);
-                ad.setResource(resource);
-                ad.setAlertDampening(new AlertDampening(AlertDampening.Category.NONE));
-                ad.setConditionExpression(BooleanExpression.ALL);
-                ad.setRecoveryId(0);
-                em.persist(ad);
-
-                AlertCondition ac = new AlertCondition(ad, AlertConditionCategory.AVAILABILITY);
-                ac.setComparator("==");
-                em.persist(ac);
-
-                AlertConditionLog acl = new AlertConditionLog(ac, now);
-                acl.setValue("dummy value");
-                em.persist(acl);
-
-                Alert a = new Alert(ad, now);
-                em.persist(a);
-
-                AlertNotificationLog anl = new AlertNotificationLog(a, "dummy", ResultState.SUCCESS, "message");
-                em.persist(anl);
-
-            } catch (Exception e) {
-                System.out.println("CANNOT PREPARE TEST: " + e);
-                getTransactionManager().rollback();
-                throw e;
-            }
-
-            getTransactionManager().commit();
-        } finally {
-            em.close();
-        }
-
-        return resource;
-    }
-
-    private void deleteNewResource(Resource resource) throws Exception {
-        if (resource != null) {
-            getTransactionManager().begin();
-            EntityManager em = getEntityManager();
-            try {
-                ResourceType type = em.find(ResourceType.class, resource.getResourceType().getId());
-                Resource res = em.find(Resource.class, resource.getId());
-                Agent agent = em.find(Agent.class, resource.getAgent().getId());
-
-                for (AlertDefinition ad : res.getAlertDefinitions()) {
-                    em.remove(ad);
-                }
-
-                em.remove(res);
-                em.remove(agent);
-                em.remove(type);
-
-                getTransactionManager().commit();
-            } catch (Exception e) {
-                try {
-                    System.out.println("CANNOT CLEAN UP TEST: Cause: " + e);
-                    getTransactionManager().rollback();
-                } catch (Exception ignore) {
-                }
-            } finally {
-                em.close();
-            }
-        }
-    }
 }

@@ -23,6 +23,7 @@
 package org.rhq.enterprise.gui.coregui.client.gwt;
 
 import java.util.List;
+import java.util.Map;
 
 import com.google.gwt.user.client.rpc.RemoteService;
 
@@ -39,18 +40,25 @@ import org.rhq.core.domain.util.PageList;
  */
 public interface EventGWTService extends RemoteService {
 
-    EventSeverity[] getSeverityBuckets(int resourceId, long begin, long end, int numBuckets);
+    EventSeverity[] getSeverityBuckets(int resourceId, long begin, long end, int numBuckets) throws RuntimeException;
 
     EventSeverity[] getSeverityBucketsForAutoGroup(int parentResourceId, int resourceTypeId, long begin, long end,
-        int numBuckets);
+        int numBuckets) throws RuntimeException;
 
-    EventSeverity[] getSeverityBucketsForCompGroup(int resourceGroupId, long begin, long end, int numBuckets);
+    EventSeverity[] getSeverityBucketsForCompGroup(int resourceGroupId, long begin, long end, int numBuckets)
+        throws RuntimeException;
 
-    PageList<Event> findEventsByCriteria(EventCriteria criteria);
+    PageList<Event> findEventsByCriteria(EventCriteria criteria) throws RuntimeException;
 
-    PageList<EventComposite> findEventCompositesByCriteria(EventCriteria criteria);
+    PageList<EventComposite> findEventCompositesByCriteria(EventCriteria criteria) throws RuntimeException;
 
-    int deleteEventsForContext(EntityContext context, List<Integer> eventIds);
+    int deleteEventsForContext(EntityContext context, List<Integer> eventIds) throws RuntimeException;
 
-    int purgeEventsForContext(EntityContext context);
+    int purgeEventsForContext(EntityContext context) throws RuntimeException;
+
+    Map<EventSeverity, Integer> getEventCountsBySeverity(int resourceId, long startDate, long endDate)
+        throws RuntimeException;
+
+    Map<EventSeverity, Integer> getEventCountsBySeverityForGroup(int groupId, long startDate, long endDate)
+        throws RuntimeException;
 }

@@ -46,7 +46,9 @@ public class TrackingRequestCallback implements RequestCallback {
     }
 
     public void onError(Request request, Throwable exception) {
-        Log.trace(toString() + ": onError " + exception.getMessage());
+        if (Log.isTraceEnabled()) {
+            Log.trace(toString() + ": onError " + exception.getMessage());
+        }
 
         RemoteServiceStatistics.record(getName(), getAge());
         RPCTracker.getInstance().failCall(this);
@@ -56,7 +58,9 @@ public class TrackingRequestCallback implements RequestCallback {
     }
 
     public void onResponseReceived(Request request, Response response) {
-        Log.trace(toString() + ": " + response.getStatusCode() + "/" + response.getStatusText());
+        if (Log.isTraceEnabled()) {
+            Log.trace(toString() + ": " + response.getStatusCode() + "/" + response.getStatusText());
+        }
 
         RemoteServiceStatistics.record(getName(), getAge());
         if (STATUS_CODE_OK == response.getStatusCode()) {

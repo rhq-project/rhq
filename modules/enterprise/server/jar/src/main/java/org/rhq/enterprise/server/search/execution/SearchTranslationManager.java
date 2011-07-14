@@ -1,3 +1,21 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2010 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
 package org.rhq.enterprise.server.search.execution;
 
 import java.util.ArrayList;
@@ -24,8 +42,10 @@ import org.rhq.enterprise.server.search.translation.antlr.RHQLSimpleTerm;
 import org.rhq.enterprise.server.search.translation.antlr.RHQLTerm;
 import org.rhq.enterprise.server.search.translation.antlr.RHQLTreeOperator;
 import org.rhq.enterprise.server.search.translation.jpql.SearchFragment;
-import org.rhq.enterprise.server.search.translation.jpql.SearchFragmentType;
 
+/**
+ * @author Joseph Marques
+ */
 public class SearchTranslationManager {
 
     private SearchSubsystem context;
@@ -42,11 +62,11 @@ public class SearchTranslationManager {
 
     private Subject subject;
 
-    public SearchTranslationManager(Subject subject, SearchSubsystem context) {
+    public SearchTranslationManager(String alias, Subject subject, SearchSubsystem context) {
         this.subject = subject;
         this.context = context;
         this.entity = this.context.getEntityClass().getSimpleName();
-        this.alias = this.entity.toLowerCase();
+        this.alias = alias;
     }
 
     public void setExpression(String expression) {
@@ -128,8 +148,8 @@ public class SearchTranslationManager {
                 }
 
                 SearchFragment searchFragment = translator.getSearchFragment(alias, advancedTerm);
-                String jpqlFragment = searchFragment.getFragment();
-                if (searchFragment.getType() == SearchFragmentType.PRIMARY_KEY_SUBQUERY) {
+                String jpqlFragment = searchFragment.getJPQLFragment();
+                if (searchFragment.getType() == SearchFragment.Type.PRIMARY_KEY_SUBQUERY) {
                     jpqlFragment = " " + alias + ".id IN (" + jpqlFragment + ")";
                 }
 

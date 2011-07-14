@@ -54,7 +54,7 @@ import org.rhq.core.util.exception.ThrowableUtil;
  * Use this to explicitly test any of our named queries with any set of parameters. Useful to make sure these run on
  * both postgres and oracle, specifically those that try to do select distinct queries while retrieve LOB columns.
  */
-@Test
+@Test(groups = "integration.ejb3")
 public class QueriesTest extends AbstractEJB3Test {
     private Map<String, Map<String, Object>> queries; // here just so we dont have to pass it to the add()
 
@@ -79,7 +79,7 @@ public class QueriesTest extends AbstractEJB3Test {
         add(PackageVersion.QUERY_FIND_BY_REPO_ID_WITH_PACKAGE, new Object[] { "repoId", 1 });
         add(MeasurementOOB.COUNT_FOR_DATE, new Object[] { "timestamp", 1L });
 
-        add(Repo.QUERY_FIND_AVAILABLE_REPO_COMPOSITES_BY_RESOURCE_ID, new Object[] { "resourceId", 1 });
+        add(Repo.QUERY_FIND_AVAILABLE_REPO_COMPOSITES_BY_RESOURCE_ID_ADMIN, new Object[] { "resourceId", 1 });
 
         add(PackageBits.QUERY_PACKAGE_BITS_LOADED_STATUS_PACKAGE_VERSION_ID, new Object[] { "id", 1 });
         add(CreateResourceHistory.QUERY_FIND_BY_PARENT_RESOURCE_ID, new Object[] { "id", 1, "startTime", null,

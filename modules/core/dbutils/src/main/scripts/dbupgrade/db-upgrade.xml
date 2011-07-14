@@ -3130,6 +3130,14 @@
                 <schema-alterColumn table="RHQ_PARTITION_EVENT" column="SUBJECT_NAME" columnType="VARCHAR2" precision="100" />
             </schemaSpec>
 
+            <schemaSpec version="2.92.4">
+                <schema-directSQL>
+                    <statement desc="Add index on measurement data 1d table timestamp">
+                        CREATE INDEX RHQ_MEAS_DATA_1D_TIME_IDX ON RHQ_MEASUREMENT_DATA_NUM_1D (time_stamp)
+                    </statement>
+                </schema-directSQL>
+            </schemaSpec>
+
             <schemaSpec version="2.93">
                 <!-- the customizable dashboard storage system -->
 
@@ -3196,7 +3204,7 @@
                 <!-- give the 'SUPER USER' and 'ALL RESOURCES' roles permission to delete/purge events (this permission
                      previously did not exist, and event deletion/purging could be performed by any user with authz to
                      view the resource/group in question).
-                     
+
                      a user with MANAGE_SECURITY must explicitly grant this permission to other roles after upgrade-->
                 <schema-directSQL>
                     <statement desc="Inserting MANAGE_EVENTS permission for 'Super User' role">
@@ -3227,7 +3235,7 @@
                     </statement>
                 </schema-directSQL>
             </schemaSpec>
-            
+
             <schemaSpec version="2.97">
                 <!-- Support subject-owned groups (e.g. autogroups) -->
                 <schema-addColumn table="RHQ_RESOURCE_GROUP" column="SUBJECT_ID" columnType="INTEGER" />
@@ -3269,6 +3277,221 @@
                 </schema-directSQL>
                 <schema-alterColumn table="RHQ_RESOURCE_TYPE" column="DELETED" nullable="FALSE" />
             </schemaSpec>
+
+            <schemaSpec version="2.102">
+                <!-- Create the ID column nullable. -->
+                <schema-addColumn table="RHQ_OPERATION_SCHEDULE" column="ID" columnType="INTEGER" />
+                <!-- Set values for ID column on all existing rows. -->
+                <schema-javaTask className="OperationScheduleIdSetterUpgradeTask" />
+                <!-- Now that all existing rows have IDs, switch the column to non-nullable. -->
+                <schema-alterColumn table="RHQ_OPERATION_SCHEDULE" column="ID" nullable="FALSE"  />
+                <!-- Finally, make ID the primary key, rather than (JOB_NAME, JOB_GROUP), and make
+                     (JOB_NAME, JOB_GROUP) a unique index instead. -->
+                <schema-directSQL>
+                    <statement desc="Changing primary key of RHQ_OPERATION_SCHEDULE to ID. Step1/3...">
+                        ALTER TABLE RHQ_OPERATION_SCHEDULE DROP CONSTRAINT RHQ_OPERATION_SCHEDULE_KEY
+                    </statement>
+                    <statement desc="Changing primary key of RHQ_OPERATION_SCHEDULE to ID. Step2/3...">
+                        ALTER TABLE RHQ_OPERATION_SCHEDULE ADD PRIMARY KEY (ID)
+                    </statement>
+                    <statement desc="Changing primary key of RHQ_OPERATION_SCHEDULE to ID. Step3/3...">
+                        CREATE UNIQUE INDEX RHQ_OPERATION_SCHEDULE_KEY_IDX ON RHQ_OPERATION_SCHEDULE (JOB_NAME, JOB_GROUP)
+                    </statement>
+                </schema-directSQL>
+            </schemaSpec>
+
+            <schemaSpec version="2.103">
+                <!-- add FK for owning Subject -->
+                <schema-directSQL>
+                    <statement desc="Creating RHQ_DASHBOARD foreign key relation to RHQ_SUBJECT for resource dashboards">
+                        ALTER TABLE RHQ_DASHBOARD
+                        ADD CONSTRAINT RHQ_DB_SUBJECT_ID_FK
+                        FOREIGN KEY (SUBJECT_ID)
+                        REFERENCES RHQ_SUBJECT (ID)
+                    </statement>
+                </schema-directSQL>
+
+                <!-- Support resource specific dashboards -->
+                <schema-addColumn table="RHQ_DASHBOARD" column="RESOURCE_ID" columnType="INTEGER" />
+                <schema-directSQL>
+                    <statement desc="Creating RHQ_DASHBOARD foreign key relation to RHQ_RESOURCE for resource dashboards">
+                        ALTER TABLE RHQ_DASHBOARD
+                        ADD CONSTRAINT RHQ_DB_RESOURCE_ID_FK
+                        FOREIGN KEY (RESOURCE_ID)
+                        REFERENCES RHQ_RESOURCE (ID)
+                    </statement>
+                </schema-directSQL>
+
+                <!-- Support group specific dashboards -->
+                <schema-addColumn table="RHQ_DASHBOARD" column="GROUP_ID" columnType="INTEGER" />
+                <schema-directSQL>
+                    <statement desc="Creating RHQ_DASHBOARD foreign key relation to RHQ_RESOURCE_GROUP for group dashboards">
+                        ALTER TABLE RHQ_DASHBOARD
+                        ADD CONSTRAINT RHQ_DB_RG_ID_FK
+                        FOREIGN KEY (GROUP_ID)
+                        REFERENCES RHQ_RESOURCE_GROUP (ID)
+                    </statement>
+                </schema-directSQL>
+
+                <!-- Add category for distinguishing what kind of dashboard this is -->
+                <schema-addColumn table="RHQ_DASHBOARD" column="CATEGORY" columnType="VARCHAR2" precision="20"/>
+                <schema-directSQL>
+                    <statement desc="Set dashboard category for existing dashboards to INVENTORY">
+                        UPDATE RHQ_DASHBOARD
+                        SET CATEGORY = 'INVENTORY'
+                    </statement>
+                </schema-directSQL>
+                <schema-alterColumn table="RHQ_DASHBOARD" column="CATEGORY" nullable="FALSE" />
+            </schemaSpec>
+
+            <schemaSpec version="2.104">
+                <!-- package types no longer require to be coupled with a resource type. They can exist on their own. -->
+                <schema-alterColumn table="RHQ_PACKAGE_TYPE" column="RESOURCE_TYPE_ID" nullable="true"/>
+            </schemaSpec>
+
+            <schemaSpec version="2.105">
+                <schema-addColumn table="RHQ_REPO" column="OWNER_ID" columnType="INTEGER" />
+                <schema-addColumn table="RHQ_REPO" column="IS_PRIVATE" columnType="BOOLEAN" />
+            	<schema-directSQL>
+                    <statement targetDBVendor="postgresql" desc="Set is_private flag for existing repos to false">
+                        UPDATE RHQ_REPO SET IS_PRIVATE = false
+                    </statement>
+                    <statement targetDBVendor="oracle" desc="Set is_private flag for existing repos to false">
+                        UPDATE RHQ_REPO SET IS_PRIVATE = 0
+                    </statement>
+            	</schema-directSQL>
+                <schema-alterColumn table="RHQ_REPO" column="IS_PRIVATE" nullable="FALSE"/>
+                <schema-directSQL>
+                    <statement desc="Creating OWNER_ID foreign key relation on RHQ_REPO">
+                        ALTER TABLE RHQ_REPO
+                        ADD CONSTRAINT RHQ_REPO_OWNER_ID_FK
+                        FOREIGN KEY (OWNER_ID)
+                        REFERENCES RHQ_SUBJECT (ID)
+                    </statement>
+                </schema-directSQL>
+
+                <!-- Now add modify the permissions to give all the roles with MANAGE_INVENTORY
+                the new  MANAGE_REPOSITORIES privilege so that people's privs remain unchanged. -->
+                <schema-directSQL>
+                    <statement>
+                        INSERT INTO RHQ_PERMISSION (role_id, operation)
+                            SELECT role_id, 15 FROM RHQ_PERMISSION WHERE operation = 1
+                    </statement>
+                </schema-directSQL>
+            </schemaSpec>
+
+            <schemaSpec version="2.106">
+                <!-- add pre-computed disambiguated name for Resource -->
+                <schema-addColumn table="RHQ_RESOURCE" column="ANCESTRY" columnType="VARCHAR2" precision="4000" />
+                <schema-javaTask className="ResourceAncestryUpgradeTask" />
+            </schemaSpec>
+
+            <schemaSpec version="2.107">
+                <schema-createSequence name="RHQ_OPERATION_SCHEDULE_ID_SEQ" initial="10001"/>
+            </schemaSpec>
+                
+            <!-- BZ 644328 -->
+            <schemaSpec version="2.108">
+                <schema-addColumn table="RHQ_RESOURCE_TYPE" column="BUNDLE_CONFIG_ID" columnType="INTEGER" />
+                <schema-directSQL>
+                    <statement desc="Creating RHQ_RESOURCE_TYPE foreign key relation to RHQ_CONFIG for bundle config">
+                        ALTER TABLE RHQ_RESOURCE_TYPE
+                        ADD CONSTRAINT RHQ_RT_BUNDLE_CONFIG_ID_FK
+                        FOREIGN KEY (BUNDLE_CONFIG_ID)
+                        REFERENCES RHQ_CONFIG (ID)
+                    </statement>
+                </schema-directSQL>
+            </schemaSpec>
+
+            <!-- BZ 644328 -->
+            <schemaSpec version="2.109">
+                <schema-addColumn table="RHQ_BUNDLE_DESTINATION" column="DEST_BASE_DIR_NAME" columnType="VARCHAR2" precision="200" />
+                <schema-directSQL>
+                    <statement desc="Pointing all bundle destinations to the platform type's Root File System dest base dir">
+                        UPDATE RHQ_BUNDLE_DESTINATION SET DEST_BASE_DIR_NAME = 'Root File System'
+                    </statement>
+                </schema-directSQL>
+                <schema-alterColumn table="RHQ_BUNDLE_DESTINATION" column="DEST_BASE_DIR_NAME" nullable="FALSE"/>
+            </schemaSpec>
+
+            <schemaSpec version="2.110">
+                <schema-directSQL>
+                    <statement desc="Creating table RHQ_CONFIG_PD_OSRC">
+                        CREATE TABLE RHQ_CONFIG_PD_OSRC ( ID INTEGER PRIMARY KEY )
+                    </statement>
+                </schema-directSQL>
+                <schema-addColumn table="RHQ_CONFIG_PD_OSRC" column="LINK_TO_TARGET" columnType="BOOLEAN"/>
+
+                <schema-addColumn table="RHQ_CONFIG_PD_OSRC" column="FILTER" columnType="VARCHAR2" precision="40"/>
+
+                <schema-addColumn table="RHQ_CONFIG_PD_OSRC" column="EXPRESSION" columnType="VARCHAR2" precision="400"/>
+                <schema-alterColumn table="RHQ_CONFIG_PD_OSRC" column="EXPRESSION" nullable="FALSE"/>
+
+                <schema-addColumn table="RHQ_CONFIG_PD_OSRC" column="TARGET_TYPE" columnType="VARCHAR2" precision="20"/>
+                <schema-alterColumn table="RHQ_CONFIG_PD_OSRC" column="TARGET_TYPE" nullable="FALSE"/>
+
+                <schema-addColumn table="RHQ_CONFIG_PD_OSRC" column="PROPERTY_DEF_ID" columnType="INTEGER"/>
+                <schema-directSQL>
+                    <statement desc="Adding a foreign key constraint to RHQ_CONFIG_PD_OSRC">
+                        ALTER TABLE RHQ_CONFIG_PD_OSRC
+                        ADD CONSTRAINT RHQ_CONFIG_PD_OSRC_ID_FK
+                        FOREIGN KEY (PROPERTY_DEF_ID)
+                        REFERENCES RHQ_CONFIG_PROP_DEF (ID)
+                    </statement>
+                </schema-directSQL>
+                <schema-createSequence name="rhq_config_pd_osrc_id_seq" initial="10001" />
+            </schemaSpec>
+
+            <schemaSpec version="2.111">
+                <schema-directSQL>
+                    <statement desc="Creating table RHQ_DRIFT_TEMPLATE">
+                        CREATE TABLE RHQ_DRIFT_TEMPLATE (
+                            RESOURCE_TYPE_ID INTEGER,
+                            CONFIG_TEMPLATE_ID INTEGER)
+                    </statement>
+                </schema-directSQL>
+                <schema-alterColumn table="RHQ_DRIFT_TEMPLATE" column="RESOURCE_TYPE_ID" nullable="false"/>
+                <schema-alterColumn table="RHQ_DRIFT_TEMPLATE" column="CONFIG_TEMPLATE_ID" nullable="false"/>
+                <schema-directSQL>
+                    <statement desc="Creating RHQ_DRIFT_TEMPLATE foreign key to RHQ_RESOURCE_TYPE">
+                        ALTER TABLE RHQ_DRIFT_TEMPLATE
+                        ADD CONSTRAINT RESOURCE_TYPE_ID_FK
+                        FOREIGN KEY (RESOURCE_TYPE_ID)
+                        REFERENCES RHQ_RESOURCE_TYPE (ID)
+                    </statement>
+                    <statement desc="Creating RHQ_DRIFT_TEMPLATE foreign key to RHQ_CONFIG_TEMPLATE">
+                        ALTER TABLE RHQ_DRIFT_TEMPLATE
+                        ADD CONSTRAINT CONFIG_TEMPLATE_ID_FK
+                        FOREIGN KEY (CONFIG_TEMPLATE_ID)
+                        REFERENCES RHQ_CONFIG_TEMPLATE (ID)
+                    </statement>
+                </schema-directSQL>
+                
+                <schema-directSQL>
+                    <statement desc="Creating table RHQ_DRIFT_CONFIG">
+                        CREATE TABLE RHQ_DRIFT_CONFIG (
+                            RESOURCE_ID INTEGER,
+                            CONFIG_ID INTEGER)
+                    </statement>
+                </schema-directSQL>
+                <schema-alterColumn table="RHQ_DRIFT_CONFIG" column="RESOURCE_ID" nullable="false"/>
+                <schema-alterColumn table="RHQ_DRIFT_CONFIG" column="CONFIG_ID" nullable="false"/>
+                <schema-directSQL>
+                    <statement desc="Creating RHQ_DRIFT_CONFIG foreign key to RHQ_RESOURCE">
+                        ALTER TABLE RHQ_DRIFT_CONFIG
+                        ADD CONSTRAINT RESOURCE_ID_FK
+                        FOREIGN KEY (RESOURCE_ID)
+                        REFERENCES RHQ_RESOURCE (ID)
+                    </statement>
+                    <statement desc="Creating RHQ_DRIFT_CONFIG foreign key to RHQ_CONFIG">
+                        ALTER TABLE RHQ_DRIFT_CONFIG
+                        ADD CONSTRAINT CONFIG_ID_FK
+                        FOREIGN KEY (CONFIG_ID)
+                        REFERENCES RHQ_CONFIG (ID)
+                    </statement>
+                </schema-directSQL>
+            </schemaSpec>
+
         </dbupgrade>
     </target>
 </project>

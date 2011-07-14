@@ -29,7 +29,6 @@ import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Alignment;
-import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.fields.ButtonItem;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
@@ -39,6 +38,7 @@ import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
+import com.smartgwt.client.widgets.layout.Layout;
 
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.notification.AlertNotification;
@@ -47,6 +47,7 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author John Mazzitelli
@@ -60,9 +61,10 @@ public class NewNotificationEditor extends LocatableDynamicForm {
 
     private SelectItem notificationSenderSelectItem;
     private CanvasItem senderCanvasItem;
+    private boolean senderCanvasInitialized = false;
 
-    public NewNotificationEditor(String locatorId, AlertDefinition alertDefinition,
-        List<AlertNotification> notifs, AlertNotification notifToEdit, Runnable closeFunc) {
+    public NewNotificationEditor(String locatorId, AlertDefinition alertDefinition, List<AlertNotification> notifs,
+        AlertNotification notifToEdit, Runnable closeFunc) {
 
         super(locatorId);
         this.alertDefinition = alertDefinition;
@@ -114,6 +116,7 @@ public class NewNotificationEditor extends LocatableDynamicForm {
                         notificationSenderSelectItem.setValueMap(senders);
                         notificationSenderSelectItem.setDisabled(false);
                         notificationSenderSelectItem.redraw();
+
                         switchToAlertSender(result[0]);
                         senderCanvasItem.show();
                     } else {
@@ -155,10 +158,18 @@ public class NewNotificationEditor extends LocatableDynamicForm {
                 if (validate(false)) {
                     AbstractNotificationSenderForm senderForm = (AbstractNotificationSenderForm) senderCanvasItem
                         .getCanvas();
-                    if (senderForm.validate()) {
-                        saveNewNotification();
-                        closeFunction.run();
-                    }
+                    senderForm.validate(new AsyncCallback<Void>() {
+                        public void onSuccess(Void o) {
+                            saveNewNotification();
+                            closeFunction.run();
+                        }
+                        
+                        public void onFailure(Throwable t) {
+                            //do nothing
+                            //the sender form is supposed to warn the user about what is wrong
+                            //with the supplied values.
+                        }
+                    });
                 }
             }
         });
@@ -203,17 +214,21 @@ public class NewNotificationEditor extends LocatableDynamicForm {
     }
 
     private void switchToAlertSender(String newAlertSender) {
-        Canvas oldCanvas = senderCanvasItem.getCanvas();
-        if (oldCanvas != null) {
-            oldCanvas.markForDestroy();
-        }
         AbstractNotificationSenderForm newCanvas = createNotificationSenderForm(newAlertSender);
+        // wipe existing DOM to avoid id conflicts. Use this flag to avoid having getCanvas() general a default
+        // Canvas on the first "switch".
+        if (senderCanvasInitialized) {
+            Layout senderLayout = (Layout) senderCanvasItem.getCanvas();
+            SeleniumUtility.destroyMembers(senderLayout);
+            senderLayout.destroy();
+        }
+        senderCanvasInitialized = true;
         senderCanvasItem.setCanvas(newCanvas);
         markForRedraw();
     }
 
     private AbstractNotificationSenderForm createNotificationSenderForm(String sender) {
-        String newLocatorId = extendLocatorId(sender);
+        String newLocatorId = extendLocatorId(SeleniumUtility.getSafeId(sender));
         AbstractNotificationSenderForm newCanvas;
 
         // NOTE: today there is no way for an alert server plugin developer
@@ -239,6 +254,8 @@ public class NewNotificationEditor extends LocatableDynamicForm {
                 rt = res.getResourceType();
             }
             newCanvas = new ResourceOperationNotificationSenderForm(newLocatorId, notificationToEdit, sender, rt, res);
+        } else if ("CLI Script".equals(sender)) {
+            newCanvas = new CliNotificationSenderForm(newLocatorId, notificationToEdit, sender);
         } else {
             // catch all - all other senders are assumed to just have simple configuration definition
             // that can be used by our configuration editor UI component to ask for config values.

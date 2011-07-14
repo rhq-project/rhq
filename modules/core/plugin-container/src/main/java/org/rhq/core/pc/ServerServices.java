@@ -27,6 +27,7 @@ import org.rhq.core.clientapi.server.configuration.ConfigurationServerService;
 import org.rhq.core.clientapi.server.content.ContentServerService;
 import org.rhq.core.clientapi.server.core.CoreServerService;
 import org.rhq.core.clientapi.server.discovery.DiscoveryServerService;
+import org.rhq.core.clientapi.server.drift.DriftServerService;
 import org.rhq.core.clientapi.server.event.EventServerService;
 import org.rhq.core.clientapi.server.inventory.ResourceFactoryServerService;
 import org.rhq.core.clientapi.server.measurement.MeasurementServerService;
@@ -51,6 +52,7 @@ public class ServerServices {
     private ContentServerService contentServerService;
     private EventServerService eventServerService;
     private BundleServerService bundleServerService;
+    private DriftServerService driftServerService;
 
     public CoreServerService getCoreServerService() {
         return coreServerService;
@@ -122,6 +124,14 @@ public class ServerServices {
 
     public void setBundleServerService(BundleServerService bundleServerService) {
         this.bundleServerService = bundleServerService;
+    }
+
+    public DriftServerService getDriftServerService() {
+        return driftServerService;
+    }
+
+    public void setDriftServerService(DriftServerService service) {
+        driftServerService = service;
     }
 
 }

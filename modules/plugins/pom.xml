@@ -5,7 +5,8 @@
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-parent</artifactId>
-      <version>4.0.0-SNAPSHOT</version>
+      <version>4.1.0-SNAPSHOT</version>
+      <relativePath>../../pom.xml</relativePath>
    </parent>
 
    <groupId>org.rhq</groupId>
@@ -54,6 +55,21 @@
          <scope>test</scope>
       </dependency>
 
+      <dependency>
+         <groupId>${rhq.groupId}</groupId>
+         <artifactId>rhq-core-plugin-container</artifactId>
+         <version>${project.version}</version>
+         <type>test-jar</type>
+         <scope>test</scope>
+      </dependency>
+      
+      <dependency>
+         <groupId>${rhq.groupId}</groupId>
+         <artifactId>test-utils</artifactId>
+         <version>${project.version}</version>
+         <scope>test</scope>
+      </dependency>
+      
       <!--
          TODO: This is a fix for the Javac bug requiring annotations to be available when compiling dependent classes.
          It is fixed in JDK 6.
@@ -79,7 +95,7 @@
       <dependency>
          <groupId>net.sourceforge.cobertura</groupId>
          <artifactId>cobertura</artifactId>
-         <version>1.9.4.1</version>       
+         <version>${cobertura.version}</version>
       </dependency>
    </dependencies>
 
@@ -114,6 +130,7 @@
            <module>rhq-server</module>
            <module>jboss-cache</module>
            <module>jboss-as-5</module>
+           <module>jboss-as-7</module>
            <module>jboss-cache-v3</module>
            <!--  was not in Jopr build at merge time <module>jbossOSGi</module>  -->
            <module>database</module>
@@ -190,6 +207,7 @@
            <module>twitter</module>
            <module>virt</module>
            <module>kickstart</module>
+           <module>pattern-generator</module>
 
         </modules>
     </profile>
@@ -210,5 +228,20 @@
 
   </profiles>
 
+    <build>
+        <plugins>
+           <!-- a lot of tests need <if> from ant-contrib, so let's define it in here -->
+           <plugin>
+              <artifactId>maven-antrun-plugin</artifactId>
+              <dependencies>
+                 <dependency>
+                     <groupId>ant-contrib</groupId>
+                     <artifactId>ant-contrib</artifactId>
+                     <version>20020829</version>
+                 </dependency>
+              </dependencies>                  
+           </plugin>
+        </plugins>
+     </build> 
 </project>
 

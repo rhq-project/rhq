@@ -27,6 +27,8 @@ import org.rhq.core.clientapi.descriptor.DescriptorPackages;
 /**
  * Defines constants related to the server-side XML Schemas, including their JAXB generated package names
  * and their .xsd files, as found in the server's classpath.
+ * 
+ * See also: http://rhq-project.org/display/RHQ/Design-Server+Side+Plugins#Design-ServerSidePlugins-xmlschemas
  *
  * @author John Mazzitelli
  */
@@ -62,6 +64,10 @@ public interface XmlSchemas {
     public static final String XSD_SERVERPLUGIN_BUNDLE = "rhq-serverplugin-bundle.xsd";
     public static final String PKG_SERVERPLUGIN_BUNDLE = "org.rhq.enterprise.server.xmlschema.generated.serverplugin.bundle";
 
+    // the server plugin descriptor for the package type plugin type
+    public static final String XSD_SERVERPLUGIN_PACKAGETYPE = "rhq-serverplugin-packagetype.xsd";
+    public static final String PKG_SERVERPLUGIN_PACKAGETYPE = "org.rhq.enterprise.server.xmlschema.generated.serverplugin.packagetype";
+
     // the configuration schema that can be reused in any other server-side schema to define normal configuration properties
     public static final String XSD_CONFIGURATION = "rhq-configuration.xsd";
     public static final String PKG_CONFIGURATION = DescriptorPackages.CONFIGURATION;
@@ -69,4 +75,8 @@ public interface XmlSchemas {
     // the schema used to define content source metadata which is used by content plugins like the URL or Disk plugins
     public static final String XSD_CONTENTSOURCE_PACKAGEDETAILS = "rhq-contentsource-packagedetails.xsd";
     public static final String PKG_CONTENTSOURCE_PACKAGEDETAILS = "org.rhq.enterprise.server.xmlschema.generated.contentsource.packagedetails";
+
+    // the schema used to define content source metadata which is used by content plugins like the URL or Disk plugins
+    public static final String XSD_SERVERPLUGIN_DRIFT = "rhq-serverplugin-drift.xsd";
+    public static final String PKG_SERVERPLUGIN_DRIFT = "org.rhq.enterprise.server.xmlschema.generated.serverplugin.drift";
 }

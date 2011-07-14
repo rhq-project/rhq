@@ -24,16 +24,14 @@
 package org.rhq.enterprise.gui.coregui.client.gwt;
 
 import com.google.gwt.user.client.rpc.RemoteService;
-import org.rhq.core.domain.auth.Subject;
+
 import org.rhq.core.domain.resource.InventorySummary;
 
 /**
  * @author John Sanda
  */
 public interface ResourceBossGWTService extends RemoteService {
-    
-    InventorySummary getInventorySummaryForLoggedInUser();
 
-    InventorySummary getInventorySummary(Subject user);
+    InventorySummary getInventorySummary() throws RuntimeException;
 
 }

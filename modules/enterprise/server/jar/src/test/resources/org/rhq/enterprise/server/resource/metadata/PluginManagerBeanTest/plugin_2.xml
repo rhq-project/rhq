@@ -1,0 +1,10 @@
+<plugin name="PluginManagerBeanTestPlugin2"
+        package="org.rhq.plugins.test"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+    <depends plugin="PluginManagerBeanTestPlugin1" useClasses="true"/>
+
+    <server name="TestServer2"/>
+</plugin>

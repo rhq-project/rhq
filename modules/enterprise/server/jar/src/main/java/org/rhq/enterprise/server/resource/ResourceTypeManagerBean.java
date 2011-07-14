@@ -377,7 +377,7 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
         query.setParameter("resourceTypeId", resourceTypeId);
         List<ResourceFacets> facets = query.getResultList();
         if (facets.size() != 1) {
-            return new ResourceFacets(resourceTypeId, false, false, false, false, false, false, false, false);
+            return new ResourceFacets(resourceTypeId, false, false, false, false, false, false, false, false, false);
         }
         return facets.get(0);
     }
@@ -391,49 +391,57 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
         ResourceFacetsCache.getSingleton().reload(facets);
     }
 
-    @SuppressWarnings("unchecked")
     public Map<Integer, ResourceTypeTemplateCountComposite> getTemplateCountCompositeMap() {
         Query templateCountQuery = entityManager.createNamedQuery(ResourceType.FIND_ALL_TEMPLATE_COUNT_COMPOSITES);
-        // the weirdness here is because we needed to JOIN FETCH the parent types, but hibernate bombs when you do that
-        // and try to use a composite constructor in the query itself. We need to build the composites here.
-        // Our results will be a list of arrays that we'll build into the composite below
-        List<?> results = templateCountQuery.getResultList();
 
-        // we don't need to send all the data in resource types over the wire, so we'll be scrubbing the types
+        @SuppressWarnings("unchecked")
+        List<ResourceTypeTemplateCountComposite> results = (List<ResourceTypeTemplateCountComposite>) templateCountQuery
+            .getResultList();
+
+        for (ResourceTypeTemplateCountComposite result : results) {
+            ResourceType type = result.getType();
+
+            // TODO (ips, 01/24/11): I tried to fetch the parents via the
+            //                       ResourceType.FIND_ALL_TEMPLATE_COUNT_COMPOSITES named query,
+            //                       but was unable to get it working. This will suffice for the time being.
+            type.getParentResourceTypes().size();
+        }
+
+        // we don't need to send all the data in resource types over the wire, so we'll be scrubbing the types;
         // to avoid the scrubbed types getting persisted back to the db, let's clear the persistence context
         entityManager.clear();
 
         Map<Integer, ResourceTypeTemplateCountComposite> compositeMap = new HashMap<Integer, ResourceTypeTemplateCountComposite>();
-        for (Object result : results) {
-            Object[] array = (Object[]) result;
+        for (ResourceTypeTemplateCountComposite result : results) {
+            ResourceType type = result.getType();
 
-            ResourceType type = (ResourceType) array[0];
-
-            // scrub it to avoid sending data over the wire we don't need
+            // scrub it to avoid sending data over the wire we don't need;
             // some of these are eagerly loaded, but my paranoia says assume everything is eagerly loaded to purge it all
-            type.setBundleType(null);
-            type.setChildResourceTypes(null);
-            type.setChildSubCategories(null);
-            type.setClassLoaderType(null);
-            type.setEventDefinitions(null);
-            type.setMetricDefinitions(null);
-            type.setOperationDefinitions(null);
-            type.setPackageTypes(null);
-            type.setPluginConfigurationDefinition(null);
-            type.setProcessScans(null);
-            type.setProductVersions(null);
-            type.setResourceConfigurationDefinition(null);
-            type.setResourceGroups(null);
-            type.setResources(null);
-            type.setSubCategory(null);
+            scrubType(type);
 
-            ResourceTypeTemplateCountComposite composite = new ResourceTypeTemplateCountComposite(type,
-                ((Number) array[1]).longValue(), ((Number) array[2]).longValue(), ((Number) array[3]).longValue(),
-                ((Number) array[4]).longValue());
-            compositeMap.put(composite.getType().getId(), composite);
+            compositeMap.put(type.getId(), result);
         }
 
         return compositeMap;
+    }
+
+    private void scrubType(ResourceType type) {
+        type.setResourceTypeBundleConfiguration(null);
+        type.setBundleType(null);
+        type.setChildResourceTypes(null);
+        type.setChildSubCategories(null);
+        type.setClassLoaderType(null);
+        type.setEventDefinitions(null);
+        type.setMetricDefinitions(null);
+        type.setOperationDefinitions(null);
+        type.setPackageTypes(null);
+        type.setPluginConfigurationDefinition(null);
+        type.setProcessScans(null);
+        type.setProductVersions(null);
+        type.setResourceConfigurationDefinition(null);
+        type.setResourceGroups(null);
+        type.setResources(null);
+        type.setSubCategory(null);
     }
 
     @SuppressWarnings("unchecked")
@@ -445,6 +453,18 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
 
         List<ResourceType> results = query.getResultList();
         return results;
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<Integer> getResourceTypeIdsByPlugin(String plugin) {
+        return entityManager.createNamedQuery(ResourceType.QUERY_FIND_IDS_BY_PLUGIN).setParameter("plugin", plugin)
+            .getResultList();
+    }
+
+    @Override
+    public Integer getResourceTypeCountByPlugin(String plugin) {
+        return (Integer) entityManager.createNamedQuery(ResourceType.QUERY_FIND_COUNT_BY_PLUGIN).setParameter("plugin",
+            plugin).getSingleResult();
     }
 
     @SuppressWarnings("unchecked")

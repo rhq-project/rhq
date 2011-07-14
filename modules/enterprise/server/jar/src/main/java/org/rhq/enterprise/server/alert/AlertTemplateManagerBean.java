@@ -232,7 +232,7 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public AlertDefinition updateAlertTemplate(Subject user, AlertDefinition alertTemplate, boolean purgeInternals)
-        throws InvalidAlertDefinitionException, AlertDefinitionUpdateException {
+        throws InvalidAlertDefinitionException, AlertDefinitionUpdateException, AlertNotificationValidationException {
         if (LOG.isDebugEnabled()) {
             LOG.debug("updateAlertTemplate: " + alertTemplate);
         }

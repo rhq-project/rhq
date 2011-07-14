@@ -20,6 +20,7 @@ package org.rhq.enterprise.server.content;
 
 import java.io.OutputStream;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -632,5 +633,5 @@ public interface ContentSourceManagerLocal {
      * @throws ContentSourceException if the content source cannot be created, such as if the data in
      *                                the given object are not valid
      */
-    ContentSource simpleCreateContentSource(Subject subject, ContentSource contentSource) throws ContentSourceException;
+    ContentSource simpleCreateContentSource(Subject subject, ContentSource contentSource) throws ContentSourceException;    
 } 

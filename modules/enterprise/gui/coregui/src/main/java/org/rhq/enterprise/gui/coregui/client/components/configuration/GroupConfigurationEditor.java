@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright 2010, Red Hat Middleware LLC, and individual contributors
+ * Copyright 2010-2011, Red Hat Middleware LLC, and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -54,6 +54,7 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
@@ -64,9 +65,11 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Ian Springer
  */
 public class GroupConfigurationEditor extends ConfigurationEditor {
+
+    private static final String RHQ_STATIC_ITEM_NAME_ATTRIBUTE = "rhq:staticItemName";
+    private static final String RHQ_UNSET_ITEM_NAME_ATTRIBUTE = "rhq:unsetItemName";
+
     private List<GroupMemberConfiguration> memberConfigurations;
-    private Map<String, FormItem> valueItemNameToStaticItemMap = new HashMap<String, FormItem>();
-    private Map<String, FormItem> valueItemNameToUnsetItemMap = new HashMap<String, FormItem>();
 
     public GroupConfigurationEditor(String locatorId, ConfigurationDefinition configurationDefinition,
         List<GroupMemberConfiguration> memberConfigurations) {
@@ -93,7 +96,7 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
 
         if (isAggregateProperty(propertySimple)) {
             // Create the "MEMBER VALUES DIFFER" label that is displayed when member values are heterogeneous.
-            final StaticTextItem staticItem = new StaticTextItem();
+            final StaticTextItem staticItem = new StaticTextItem("static-" + propertySimple.getName());
             staticItem.setValue(MSG.view_groupConfigEdit_valsDiff());
             staticItem.setTextBoxStyle("InlineNote");
             staticItem.setShowTitle(false);
@@ -105,7 +108,7 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
             FormItemIcon icon = buildEditMemberValuesIcon(propertyDefinitionSimple, propertySimple, valueItem);
             staticItem.setIcons(icon);
 
-            this.valueItemNameToStaticItemMap.put(valueItem.getName(), staticItem);
+            valueItem.setAttribute(RHQ_STATIC_ITEM_NAME_ATTRIBUTE, staticItem.getName());
             fields.add(3, staticItem);
         }
 
@@ -146,7 +149,7 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
             item.addChangedHandler(new ChangedHandler() {
                 public void onChanged(ChangedEvent changedEvent) {
                     Object value = changedEvent.getValue();
-                    updateMemberProperties(propertyDefinitionSimple, propertySimple, value);
+                    updateMemberProperties(propertySimple, value);
                 }
             });
 
@@ -158,10 +161,10 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
     }
 
     private FormItemIcon buildEditMemberValuesIcon(final PropertyDefinitionSimple propertyDefinitionSimple,
-        final PropertySimple propertySimple, final FormItem dynamicItem) {
+                                                   final PropertySimple propertySimple, final FormItem dynamicItem) {
         FormItemIcon icon = new FormItemIcon();
 
-        icon.setSrc("[SKIN]/actions/edit.png");
+        icon.setSrc(ImageManager.getEditIcon());
         icon.setName("Edit Member Values");
         icon.setNeverDisable(true);
         icon.addFormItemClickHandler(new FormItemClickHandler() {
@@ -177,8 +180,7 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
         return icon;
     }
 
-    private void updateMemberProperties(PropertyDefinitionSimple propertyDefinitionSimple,
-        PropertySimple propertySimple, Object value) {
+    private void updateMemberProperties(PropertySimple propertySimple, Object value) {
         for (GroupMemberConfiguration memberConfiguration : this.memberConfigurations) {
             Configuration configuration = memberConfiguration.getConfiguration();
             PropertySimple memberPropertySimple = (PropertySimple) getProperty(configuration, propertySimple, null);
@@ -195,12 +197,13 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
             unsetItem.setValue(false);
             unsetItem.setDisabled(true);
         }
-        this.valueItemNameToUnsetItemMap.put(valueItem.getName(), unsetItem);
+        valueItem.setAttribute(RHQ_UNSET_ITEM_NAME_ATTRIBUTE, unsetItem.getName());
         return unsetItem;
     }
 
     private void displayMemberValuesEditor(String locatorId, final PropertyDefinitionSimple propertyDefinitionSimple,
-        final PropertySimple aggregatePropertySimple, Integer index, final FormItem aggregateValueItem) {
+                                           final PropertySimple aggregatePropertySimple, Integer index,
+                                           final FormItem aggregateValueItem) {
         final Window popup = new Window();
         popup.setTitle(MSG.view_groupConfigEdit_valsDiffForProp(propertyDefinitionSimple.getName()));
         popup.setWidth(800);
@@ -214,103 +217,11 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
         layout.setHeight100();
         layout.setMargin(11);
 
-        final DynamicForm setAllForm = new DynamicForm();
-        setAllForm.setNumCols(4);
-        setAllForm.setColWidths(175, 25, 200, 100);
-        setAllForm.setCellPadding(5);
-
-        List<FormItem> setAllItems = new ArrayList<FormItem>();
-
-        // Header Row
-        SpacerItem spacerItem = new SpacerItem();
-        setAllItems.add(spacerItem);
-
-        StaticTextItem unsetAllHeader = new StaticTextItem();
-        unsetAllHeader.setShowTitle(false);
-        if (!propertyDefinitionSimple.isRequired()) {
-            unsetAllHeader.setDefaultValue("<h4>" + MSG.view_groupConfigEdit_unset() + "</h4>");
-        }
-        setAllItems.add(unsetAllHeader);
-
-        StaticTextItem valueAllHeader = new StaticTextItem();
-        valueAllHeader.setShowTitle(false);
-        valueAllHeader.setDefaultValue("<h4>" + MSG.common_title_value() + "</h4>");
-
-        setAllItems.add(valueAllHeader);
-
-        spacerItem = new SpacerItem();
-        //spacerItem.setEndRow(true);
-        setAllItems.add(spacerItem);
-
-        // Input Row
-        StaticTextItem setAllValuesToItem = new StaticTextItem();
-        setAllValuesToItem.setShowTitle(false);
-        setAllValuesToItem.setDefaultValue("<b>" + MSG.view_groupConfigEdit_setAll() + "</b>");
-        setAllValuesToItem.setAlign(Alignment.RIGHT);
-        setAllItems.add(setAllValuesToItem);
-
-        PropertySimple masterPropertySimple = new PropertySimple(aggregatePropertySimple.getName(), null);
-        final FormItem masterValueItem = super.buildSimpleField(propertyDefinitionSimple, masterPropertySimple);
-        masterValueItem.setDisabled(false);
-
-        FormItem masterUnsetItem = buildUnsetItem(propertyDefinitionSimple, masterPropertySimple, masterValueItem);
-        if (masterUnsetItem instanceof CheckboxItem) {
-            masterUnsetItem.setValue(false);
-        }
-
-        setAllItems.add(masterUnsetItem);
-        setAllItems.add(masterValueItem);
-
-        //ButtonItem applyButtonItem = new ButtonItem();
-        //applyButtonItem.setTitle("Apply");
-        //applyButtonItem.setEndRow(true);
-        //setAllItems.add(applyButtonItem);
-
-        // NOTE (ips, 10/27/10): Using a ButtonItem didn't work out, because SmartGWT would always display it in a new
-        //                       table row, rather than in the next column in the current row (most likely a bug). So
-        //                       we use an IButton wrapped in a CanvasItem instead.
-        CanvasItem canvasItem = new CanvasItem();
-        canvasItem.setShowTitle(false);
-        HLayout buttonCanvas = new HLayout();
-        buttonCanvas.setWidth(90);
-        buttonCanvas.setHeight100();
-        buttonCanvas.setAlign(Alignment.LEFT);
-        final IButton applyButton = new LocatableIButton(layout.extendLocatorId("Apply"), MSG.common_button_apply());
-        applyButton.setDisabled(true);
-        buttonCanvas.addMember(applyButton);
-        canvasItem.setCanvas(buttonCanvas);
-        canvasItem.setEndRow(true);
-        setAllItems.add(canvasItem);
-
-        masterValueItem.addChangedHandler(new ChangedHandler() {
-            @Override
-            public void onChanged(ChangedEvent changedEvent) {
-                applyButton.enable();
-                applyButton.focus();
-            }
-        });
-
-        masterUnsetItem.addChangedHandler(new ChangedHandler() {
-            @Override
-            public void onChanged(ChangedEvent changedEvent) {
-                applyButton.enable();
-                applyButton.focus();
-            }
-        });
-
-        setAllForm.setFields(setAllItems.toArray(new FormItem[setAllItems.size()]));
-        layout.addMember(setAllForm);
-
-        VLayout spacerLayout = new VLayout();
-        spacerLayout.setHeight(20);
-        layout.addMember(spacerLayout);
-
         final DynamicForm membersForm = new DynamicForm();
         membersForm.setHeight100();
         membersForm.setNumCols(3);
         membersForm.setColWidths("52%", "8%", "40%");
         membersForm.setHiliteRequiredFields(true);
-        layout.addMember(membersForm);
 
         // Add header row.
         List<FormItem> items = new ArrayList<FormItem>();
@@ -333,7 +244,9 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
         // Add data rows.
         final List<FormItem> valueItems = new ArrayList<FormItem>(this.memberConfigurations.size());
         final Map<String, PropertySimple> valueItemNameToPropertySimpleMap = new HashMap<String, PropertySimple>();
-        for (GroupMemberConfiguration memberConfiguration : this.memberConfigurations) {
+        List<GroupMemberConfiguration> memberConfigurations1 = this.memberConfigurations;
+        for (int i = 0, memberConfigurations1Size = memberConfigurations1.size(); i < memberConfigurations1Size; i++) {
+            GroupMemberConfiguration memberConfiguration = memberConfigurations1.get(i);
             String memberName = memberConfiguration.getLabel();
             StaticTextItem memberItem = new StaticTextItem();
             memberItem.setShowTitle(false);
@@ -341,8 +254,11 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
             items.add(memberItem);
             Configuration configuration = memberConfiguration.getConfiguration();
             PropertySimple memberPropertySimple = (PropertySimple) getProperty(configuration, aggregatePropertySimple,
-                index);
+                    index);
             FormItem valueItem = buildSimpleField(propertyDefinitionSimple, memberPropertySimple);
+            // All of the member props have the same name, so add an index to the item name to ensure it's unique
+            // to the form.
+            valueItem.setName(propertyDefinitionSimple.getName() + "-" + i);
             valueItems.add(valueItem);
             valueItemNameToPropertySimpleMap.put(valueItem.getName(), memberPropertySimple);
             FormItem unsetItem = buildUnsetItem(propertyDefinitionSimple, memberPropertySimple, valueItem);
@@ -358,57 +274,72 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
             valueItem.setDisabled(false);
         }
 
+        // TODO: Anchor the button bar at the bottom of the modal window, so it's always visible.
+        HLayout buttonBar = new HLayout();
+        buttonBar.setAlign(Alignment.CENTER);
+        buttonBar.setMembersMargin(7);
+
         final IButton okButton = new LocatableIButton(layout.extendLocatorId("OK"), MSG.common_button_ok());
-        okButton.disable();
+        final boolean propertyIsReadOnly = isReadOnly(propertyDefinitionSimple, aggregatePropertySimple);
+        if (!propertyIsReadOnly) {
+            okButton.disable();
+        }
         okButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                boolean valuesHomogeneous = true;
-                boolean isValid = true;
+                if (!propertyIsReadOnly) {
+                    boolean valuesHomogeneous = true;
+                    boolean isValid = true;
 
-                Object firstValue = valueItems.get(0).getValue();
-                for (FormItem valueItem : valueItems) {
-                    Object value = valueItem.getValue();
-                    if ((value != null && !value.equals(firstValue)) || (value == null && firstValue != null)) {
-                        valuesHomogeneous = false;
+                    Object firstValue = valueItems.get(0).getValue();
+                    for (FormItem valueItem : valueItems) {
+                        Object value = valueItem.getValue();
+                        if ((value != null && !value.equals(firstValue)) || (value == null && firstValue != null)) {
+                            valuesHomogeneous = false;
+                        }
+                        isValid = isValid && valueItem.validate();
+                        PropertySimple memberPropertySimple = valueItemNameToPropertySimpleMap.get(valueItem.getName());
+                        memberPropertySimple.setValue(value);
+                        memberPropertySimple.setErrorMessage(null);
                     }
-                    isValid = isValid && valueItem.validate();
-                    PropertySimple memberPropertySimple = valueItemNameToPropertySimpleMap.get(valueItem.getName());
-                    memberPropertySimple.setValue(value);
-                    memberPropertySimple.setErrorMessage(null);
+
+                    String aggregateStaticItemName = aggregateValueItem.getAttribute(RHQ_STATIC_ITEM_NAME_ATTRIBUTE);
+                    FormItem aggregateStaticItem = aggregateValueItem.getForm().getField(aggregateStaticItemName);
+
+                    String aggregateUnsetItemName = aggregateValueItem.getAttribute(RHQ_UNSET_ITEM_NAME_ATTRIBUTE);
+                    FormItem aggregateUnsetItem = aggregateValueItem.getForm().getField(aggregateUnsetItemName);
+                    aggregateUnsetItem.setDisabled(!valuesHomogeneous);
+
+                    if (valuesHomogeneous) {
+                        // Update the value of the aggregate property and set its override flag to true.
+                        aggregatePropertySimple.setValue(firstValue);
+                        aggregatePropertySimple.setOverride(true);
+
+                        boolean isUnset = (firstValue == null);
+                        aggregateUnsetItem.setValue(isUnset);
+
+                        // Set the aggregate value item's value to the homogeneous value, unhide it, and enable it
+                        // unless it's unset.
+                        setValue(aggregateValueItem, firstValue);
+                        aggregateValueItem.show();
+                        aggregateValueItem.setDisabled(isUnset);
+
+                        aggregateStaticItem.hide();
+                    } else {
+                        aggregatePropertySimple.setValue(null);
+                        aggregatePropertySimple.setOverride(false);
+
+                        aggregateValueItem.hide();
+
+                        aggregateStaticItem.show();
+                    }
+
+                    firePropertyChangedEvent(aggregatePropertySimple, propertyDefinitionSimple, isValid);
                 }
-
-                FormItem aggregateStaticItem = valueItemNameToStaticItemMap.get(aggregateValueItem.getName());
-
-                FormItem aggregateUnsetItem = valueItemNameToUnsetItemMap.get(aggregateValueItem.getName());
-                aggregateUnsetItem.setDisabled(!valuesHomogeneous);
-
-                if (valuesHomogeneous) {
-                    // Update the value of the aggregate property and set its override flag to true.
-                    aggregatePropertySimple.setValue(firstValue);
-                    aggregatePropertySimple.setOverride(true);
-
-                    aggregateUnsetItem.setValue(firstValue == null);
-
-                    // Set the aggregate value item's value to the homogeneous value, unhide it, and enable it.
-                    setValue(aggregateValueItem, firstValue);
-                    aggregateValueItem.show();
-                    aggregateValueItem.setDisabled(false);
-
-                    aggregateStaticItem.hide();
-                } else {
-                    aggregatePropertySimple.setValue(null);
-                    aggregatePropertySimple.setOverride(false);
-
-                    aggregateValueItem.hide();
-
-                    aggregateStaticItem.show();
-                }
-
-                firePropertyChangedEvent(aggregatePropertySimple, propertyDefinitionSimple, isValid);
 
                 popup.destroy();
             }
         });
+        buttonBar.addMember(okButton);
 
         // Only enable the OK button if all properties are valid.
         membersForm.addItemChangedHandler(new ItemChangedHandler() {
@@ -417,63 +348,158 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
             }
         });
 
-        applyButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
-            @Override
-            public void onClick(ClickEvent clickEvent) {
-                Object value = masterValueItem.getValue();
-                for (FormItem valueItem : valueItems) {
-                    setValue(valueItem, value);
+        if (!propertyIsReadOnly) {
+            final DynamicForm setAllForm = new DynamicForm();
+            setAllForm.setNumCols(4);
+            setAllForm.setColWidths(175, 25, 200, 100);
+            setAllForm.setCellPadding(5);
 
-                    FormItem unsetItem = valueItemNameToUnsetItemMap.get(valueItem.getName());
-                    if (unsetItem instanceof CheckboxItem) {
-                        unsetItem.setValue((value == null));
-                        valueItem.setDisabled((value == null));
+            List<FormItem> setAllItems = new ArrayList<FormItem>();
+
+            // Header Row
+            SpacerItem spacerItem = new SpacerItem();
+            setAllItems.add(spacerItem);
+
+            StaticTextItem unsetAllHeader = new StaticTextItem();
+            unsetAllHeader.setShowTitle(false);
+            if (!propertyDefinitionSimple.isRequired()) {
+                unsetAllHeader.setDefaultValue("<h4>" + MSG.view_groupConfigEdit_unset() + "</h4>");
+            }
+            setAllItems.add(unsetAllHeader);
+
+            StaticTextItem valueAllHeader = new StaticTextItem();
+            valueAllHeader.setShowTitle(false);
+            valueAllHeader.setDefaultValue("<h4>" + MSG.common_title_value() + "</h4>");
+
+            setAllItems.add(valueAllHeader);
+
+            spacerItem = new SpacerItem();
+            //spacerItem.setEndRow(true);
+            setAllItems.add(spacerItem);
+
+            // Input Row
+            StaticTextItem setAllValuesToItem = new StaticTextItem();
+            setAllValuesToItem.setShowTitle(false);
+            setAllValuesToItem.setDefaultValue("<b>" + MSG.view_groupConfigEdit_setAll() + "</b>");
+            setAllValuesToItem.setAlign(Alignment.RIGHT);
+            setAllItems.add(setAllValuesToItem);
+
+            PropertySimple masterPropertySimple = new PropertySimple(propertyDefinitionSimple.getName(), null);
+            final FormItem masterValueItem = super.buildSimpleField(propertyDefinitionSimple, masterPropertySimple);
+            masterValueItem.setName("master-" + masterValueItem.getName());
+            masterValueItem.setDisabled(false);
+
+            FormItem masterUnsetItem = buildUnsetItem(propertyDefinitionSimple, masterPropertySimple, masterValueItem);
+            if (masterUnsetItem instanceof CheckboxItem) {
+                masterUnsetItem.setValue(false);
+            }
+
+            setAllItems.add(masterUnsetItem);
+            setAllItems.add(masterValueItem);
+
+            //ButtonItem applyButtonItem = new ButtonItem();
+            //applyButtonItem.setTitle("Apply");
+            //applyButtonItem.setEndRow(true);
+            //setAllItems.add(applyButtonItem);
+
+            // NOTE (ips, 10/27/10): Using a ButtonItem didn't work out, because SmartGWT would always display it in a new
+            //                       table row, rather than in the next column in the current row (most likely a bug). So
+            //                       we use an IButton wrapped in a CanvasItem instead.
+            CanvasItem canvasItem = new CanvasItem();
+            canvasItem.setShowTitle(false);
+            HLayout buttonCanvas = new HLayout();
+            buttonCanvas.setWidth(90);
+            buttonCanvas.setHeight100();
+            buttonCanvas.setAlign(Alignment.LEFT);
+            final IButton applyButton = new LocatableIButton(layout.extendLocatorId("Apply"), MSG.common_button_apply());
+            applyButton.setDisabled(true);
+
+            applyButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
+                @Override
+                public void onClick(ClickEvent clickEvent) {
+                    Object value = masterValueItem.getValue();
+
+                    // Update the member property value items.
+                    for (FormItem valueItem : valueItems) {
+                        setValue(valueItem, value);
+
+                        String unsetItemName = valueItem.getAttribute(RHQ_UNSET_ITEM_NAME_ATTRIBUTE);
+                        FormItem unsetItem = valueItem.getForm().getField(unsetItemName);
+                        if (unsetItem instanceof CheckboxItem) {
+                            unsetItem.setValue((value == null));
+                            valueItem.setDisabled((value == null));
+                        }
+
+                        okButton.setDisabled(!membersForm.validate());
                     }
-
-                    okButton.setDisabled(!membersForm.validate());
                 }
-            }
-        });
+            });
 
-        final IButton cancelButton = new LocatableIButton(layout.extendLocatorId("Cancel"), MSG.common_button_cancel());
-        cancelButton.focus();
-        cancelButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
-            public void onClick(ClickEvent clickEvent) {
-                popup.destroy();
-            }
-        });
+            buttonCanvas.addMember(applyButton);
+            canvasItem.setCanvas(buttonCanvas);
+            canvasItem.setEndRow(true);
+            setAllItems.add(canvasItem);
 
-        // TODO: Anchor the button bar at the bottom of the modal window, so it's always visible.
-        HLayout buttons = new HLayout();
-        buttons.setAlign(Alignment.CENTER);
-        buttons.setMembersMargin(7);
-        buttons.setMembers(okButton, cancelButton);
-        layout.addMember(buttons);
+            masterValueItem.addChangedHandler(new ChangedHandler() {
+                public void onChanged(ChangedEvent changedEvent) {
+                    applyButton.enable();
+                }
+            });
+
+            masterUnsetItem.addChangedHandler(new ChangedHandler() {
+                public void onChanged(ChangedEvent changedEvent) {
+                    applyButton.enable();
+                    applyButton.focus();
+                }
+            });
+
+            setAllForm.setFields(setAllItems.toArray(new FormItem[setAllItems.size()]));
+            layout.addMember(setAllForm);
+
+            VLayout spacerLayout = new VLayout();
+            spacerLayout.setHeight(20);
+            layout.addMember(spacerLayout);
+
+            final IButton cancelButton = new LocatableIButton(layout.extendLocatorId("Cancel"), MSG.common_button_cancel());
+            cancelButton.focus();
+            cancelButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
+                public void onClick(ClickEvent clickEvent) {
+                    popup.destroy();
+                }
+            });
+            buttonBar.addMember(cancelButton);
+        }
+
+        layout.addMember(membersForm);
+        layout.addMember(buttonBar);
 
         popup.addItem(layout);
         popup.show();
     }
 
     @Override
-    protected boolean updatePropertyValueOnChange(PropertyDefinitionSimple propertyDefinitionSimple,
-        PropertySimple propertySimple) {
+    protected boolean fireEventOnPropertyValueChange(PropertyDefinitionSimple propertyDefinitionSimple,
+                                                     PropertySimple propertySimple) {
         return isAggregateProperty(propertySimple)
-            && super.updatePropertyValueOnChange(propertyDefinitionSimple, propertySimple);
+            && super.fireEventOnPropertyValueChange(propertyDefinitionSimple, propertySimple);
     }
 
     @Override
     protected void updatePropertySimpleValue(Object value, PropertySimple propertySimple,
         PropertyDefinitionSimple propertyDefinitionSimple) {
-        // Update the aggregate property
-        super.updatePropertySimpleValue(value, propertySimple, propertyDefinitionSimple);
-        propertySimple.setOverride(true);
+        if ((propertySimple.getConfiguration() != null) || (propertySimple.getParentMap() != null) ||
+                (propertySimple.getParentList() != null)) {
+            // Update the aggregate property.
+            super.updatePropertySimpleValue(value, propertySimple, propertyDefinitionSimple);
+            propertySimple.setOverride(true);
 
-        // Update all the member properties.
-        for (GroupMemberConfiguration memberConfiguration : this.memberConfigurations) {
-            Configuration configuration = memberConfiguration.getConfiguration();
-            PropertySimple memberPropertySimple = (PropertySimple) getProperty(configuration, propertySimple, null);
-            memberPropertySimple.setErrorMessage(null);
-            memberPropertySimple.setValue(value);
+            // Update all the member properties.
+            for (GroupMemberConfiguration memberConfiguration : this.memberConfigurations) {
+                Configuration configuration = memberConfiguration.getConfiguration();
+                PropertySimple memberPropertySimple = (PropertySimple) getProperty(configuration, propertySimple, null);
+                memberPropertySimple.setErrorMessage(null);
+                memberPropertySimple.setValue(value);
+            }
         }
     }
 
@@ -556,4 +582,5 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
         Property topLevelProperty = getTopLevelProperty(property);
         return topLevelProperty.getConfiguration();
     }
+
 }

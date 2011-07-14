@@ -64,12 +64,12 @@ import org.rhq.core.domain.search.SearchSuggestion;
 import org.rhq.core.domain.search.SearchSuggestion.Kind;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.SearchGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.search.SearchBar;
+import org.rhq.enterprise.gui.coregui.client.search.AbstractSearchBar;
 
 public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocusHandlers, HasValue<String>,
     HasSelectionHandlers<Suggestion> {
 
-    private final SearchBar searchBar;
+    private final AbstractSearchBar searchBar;
     private final SearchSuggestOracle oracle;
 
     private int limit = 20;
@@ -86,13 +86,14 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
     private final String STYLE_NAME_TEXT_BOX = "patternField";
     private final String STYLE_NAME_POPUP_PANEL = "suggestPanel";
 
-    public SuggestTextBox_v3(SearchBar searchBar, TextBoxBase box) {
+    public SuggestTextBox_v3(AbstractSearchBar searchBar, TextBoxBase box) {
         super();
 
         this.searchBar = searchBar;
         this.oracle = new SearchSuggestOracle();
 
         this.box = box;
+        this.box.setName("SearchPatternField");
         initWidget(box);
 
         getElement().setAttribute("autocomplete", "off"); // we're producing completion suggestions, not the browser
@@ -699,11 +700,6 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
     protected void complete(Suggestion suggestion, int cursorPosition) {
         SearchSuggestion searchSuggestion = extraSearchSuggestion(suggestion);
         String currentText = getText().toLowerCase();
-
-        if (searchBar.welcomeMessage.equals(currentText)) {
-            setValue("", true);
-            return;
-        }
 
         if (searchSuggestion.getKind() == SearchSuggestion.Kind.GlobalSavedSearch
             || searchSuggestion.getKind() == SearchSuggestion.Kind.UserSavedSearch) {

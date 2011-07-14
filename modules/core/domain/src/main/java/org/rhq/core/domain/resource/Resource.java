@@ -39,6 +39,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
@@ -68,6 +69,7 @@ import org.rhq.core.domain.content.InstalledPackage;
 import org.rhq.core.domain.content.InstalledPackageHistory;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.ResourceRepo;
+import org.rhq.core.domain.dashboard.Dashboard;
 import org.rhq.core.domain.event.EventSource;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
@@ -85,7 +87,7 @@ import org.rhq.core.domain.util.Summary;
     @NamedQuery(name = Resource.QUERY_FIND_PROBLEM_RESOURCES_ALERT_ADMIN, query = "" //
         + "  SELECT DISTINCT new org.rhq.core.domain.resource.composite.ProblemResourceComposite"
         + "         ( "
-        + "         res.id, res.name, res.currentAvailability.availabilityType, COUNT(DISTINCT alert.id)"
+        + "         res.id, res.resourceType.id, res.name, res.ancestry, COUNT(DISTINCT alert.id), res.currentAvailability.availabilityType"
         + "         ) "
         + "    FROM Resource res "
         + "         LEFT JOIN res.alertDefinitions alertDef "
@@ -93,11 +95,11 @@ import org.rhq.core.domain.util.Summary;
         + "   WHERE res.inventoryStatus = 'COMMITTED' "
         + "     AND (( res.currentAvailability.availabilityType = 0) " //
         + "          OR (alert.ctime >= :oldest)) "
-        + "GROUP BY res.id, res.name, res.currentAvailability.availabilityType "),
+        + "GROUP BY res.id, res.resourceType.id, res.name, res.ancestry, res.currentAvailability.availabilityType "),
     @NamedQuery(name = Resource.QUERY_FIND_PROBLEM_RESOURCES_ALERT, query = "" //
         + "  SELECT DISTINCT new org.rhq.core.domain.resource.composite.ProblemResourceComposite"
         + "         ( "
-        + "         res.id, res.name, res.currentAvailability.availabilityType, COUNT(DISTINCT alert.id)"
+        + "         res.id, res.resourceType.id, res.name, res.ancestry, COUNT(DISTINCT alert.id), res.currentAvailability.availabilityType"
         + "         ) "
         + "    FROM Resource res "
         + "         LEFT JOIN res.alertDefinitions alertDef "
@@ -106,7 +108,7 @@ import org.rhq.core.domain.util.Summary;
         + "     AND res.inventoryStatus = 'COMMITTED' "
         + "     AND (( res.currentAvailability.availabilityType = 0) " //
         + "          OR (alert.ctime >= :oldest)) "
-        + "GROUP BY res.id, res.name, res.currentAvailability.availabilityType "),
+        + "GROUP BY res.id, res.resourceType.id, res.name, res.ancestry, res.currentAvailability.availabilityType "),
     @NamedQuery(name = Resource.QUERY_FIND_PROBLEM_RESOURCES_ALERT_COUNT_ADMIN, query = "" //
         + "  SELECT COUNT( DISTINCT res.id ) "
         + "    FROM Resource res "
@@ -307,6 +309,17 @@ import org.rhq.core.domain.util.Summary;
         + "  FROM Resource res " //
         + " WHERE res.resourceType.category = :category " //
         + "   AND (:inventoryStatus = res.inventoryStatus OR :inventoryStatus is null) "),
+    @NamedQuery(name = Resource.QUERY_FIND_RESOURCE_SUMMARY_BY_INVENTORY_STATUS, query = "" //
+        + "SELECT res.resourceType.category, count(*) " //
+        + "     FROM Resource res " //
+        + "    WHERE res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)"
+        + "      AND (:inventoryStatus = res.inventoryStatus OR :inventoryStatus is null) " //
+        + " GROUP BY res.resourceType.category "),
+    @NamedQuery(name = Resource.QUERY_FIND_RESOURCE_SUMMARY_BY_INVENTORY_STATUS_ADMIN, query = "" //
+        + "SELECT res.resourceType.category, count(*) " //
+        + "     FROM Resource res " //
+        + "    WHERE (:inventoryStatus = res.inventoryStatus OR :inventoryStatus is null) " //
+        + " GROUP BY res.resourceType.category "),
 
     // Returns all platforms that is either of a given inventory status itself or
     // one of its top level servers have one of the inventory statuses (for auto-discovery queue).
@@ -347,6 +360,9 @@ import org.rhq.core.domain.util.Summary;
         + " WHERE res.resourceType = :type " //
         + "   AND res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)"
         + "   AND res.id IN ( :ids ) "),
+    @NamedQuery(name = Resource.QUERY_FIND_IDS_BY_TYPE_IDS, query = "SELECT r.id " + "FROM Resource r "
+        + "WHERE r.resourceType.id IN (:resourceTypeIds)"),
+    @NamedQuery(name = Resource.QUERY_FIND_COUNT_BY_TYPES, query = "SELECT COUNT(r) FROM Resource r WHERE r.resourceType.id IN (:resourceTypeIds)"),
     @NamedQuery(name = Resource.QUERY_FIND_BY_TYPE_AND_IDS_ADMIN, query = "" //
         + "SELECT res " //
         + "  FROM Resource res " //
@@ -573,7 +589,8 @@ import org.rhq.core.domain.util.Summary;
         + " (SELECT count(p) FROM res.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s = :subject AND p = 11), " // we want CONFIGURE_WRITE, 11
         + " (SELECT count(p) FROM res.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s = :subject AND p = 9), " // we want MANAGE_CONTENT, 9
         + " (SELECT count(p) FROM res.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s = :subject AND p = 6), " // we want CREATE_CHILD_RESOURCES, 6
-        + " (SELECT count(p) FROM res.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s = :subject AND p = 5)) " // we want DELETE_RESOURCES, 5
+        + " (SELECT count(p) FROM res.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s = :subject AND p = 5), " // we want DELETE_RESOURCES, 5
+        + " (SELECT count(p) FROM res.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s = :subject AND p = 16)) " // we want MANAGE_DRIFT, 16
         + "FROM Resource res " //
         + "     LEFT JOIN res.currentAvailability a " //
         + "WHERE res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)"
@@ -596,7 +613,8 @@ import org.rhq.core.domain.util.Summary;
         + " (SELECT count(p) FROM res.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s = :subject AND p = 11), " // we want CONFIGURE_WRITE, 11
         + " (SELECT count(p) FROM res.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s = :subject AND p = 9), " // we want MANAGE_CONTENT, 9
         + " (SELECT count(p) FROM res.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s = :subject AND p = 6), " // we want CREATE_CHILD_RESOURCES, 6
-        + " (SELECT count(p) FROM res.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s = :subject AND p = 5)) " // we want DELETE_RESOURCES, 5
+        + " (SELECT count(p) FROM res.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s = :subject AND p = 5), " // we want DELETE_RESOURCES, 5
+        + " (SELECT count(p) FROM res.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s = :subject AND p = 16)) " // we want MANAGE_DRIFT, 16        
         + "FROM Resource res " //
         + "     LEFT JOIN res.parentResource parent " //
         + "     LEFT JOIN res.currentAvailability a " //
@@ -714,18 +732,20 @@ import org.rhq.core.domain.util.Summary;
         + "SELECT r.id FROM Resource AS r WHERE r.agent IS NULL"),
 
     @NamedQuery(name = Resource.QUERY_RESOURCE_REPORT, query = ""
-        + "SELECT new org.rhq.core.domain.resource.composite.ResourceInstallCount(  "
-        + "r.resourceType.name, r.resourceType.plugin, r.resourceType.category, r.resourceType.id, count(r))\n "
-        + "FROM Resource r\n "
-        + "GROUP BY r.resourceType.name, r.resourceType.plugin, r.resourceType.category, r.resourceType.id\n "
-        + "ORDER BY r.resourceType.category, r.resourceType.plugin, r.resourceType.name"),
+        + "SELECT new org.rhq.core.domain.resource.composite.ResourceInstallCount( " //
+        + "r.resourceType.name, r.resourceType.plugin, r.resourceType.category, r.resourceType.id, count(r)) " //
+        + "FROM Resource r " //
+        + "WHERE r.inventoryStatus = 'COMMITTED' " //
+        + "GROUP BY r.resourceType.name, r.resourceType.plugin, r.resourceType.category, r.resourceType.id " //
+        + "ORDER BY r.resourceType.category, r.resourceType.plugin, r.resourceType.name "),
 
-    @NamedQuery(name = Resource.QUERY_RESOURCE_VERSION_REPORT, query = ""
-        + "SELECT new org.rhq.core.domain.resource.composite.ResourceInstallCount( "
-        + "r.resourceType.name, r.resourceType.plugin, r.resourceType.category, r.resourceType.id, count(r), r.version)\n "
-        + "FROM Resource r\n "
-        + "GROUP BY r.resourceType.name, r.resourceType.plugin, r.resourceType.category, r.resourceType.id, r.version\n "
-        + "ORDER BY r.resourceType.category, r.resourceType.plugin, r.resourceType.name, r.version")
+    @NamedQuery(name = Resource.QUERY_RESOURCE_VERSION_REPORT, query = "" //
+        + "SELECT new org.rhq.core.domain.resource.composite.ResourceInstallCount( " //
+        + "r.resourceType.name, r.resourceType.plugin, r.resourceType.category, r.resourceType.id, count(r), r.version) " //
+        + "FROM Resource r " //
+        + "WHERE r.inventoryStatus = 'COMMITTED' " //
+        + "GROUP BY r.resourceType.name, r.resourceType.plugin, r.resourceType.category, r.resourceType.id, r.version " //
+        + "ORDER BY r.resourceType.category, r.resourceType.plugin, r.resourceType.name, r.version ")
 
 })
 @SequenceGenerator(name = "RHQ_RESOURCE_SEQ", sequenceName = "RHQ_RESOURCE_ID_SEQ")
@@ -782,10 +802,16 @@ public class Resource implements Comparable<Resource>, Serializable {
     public static final String QUERY_FIND_BY_CATEGORY_AND_INVENTORY_STATUS = "Resource.findByCategoryAndInventoryStatus";
     public static final String QUERY_FIND_BY_CATEGORY_AND_INVENTORY_STATUS_ADMIN = "Resource.findByCategoryAndInventoryStatus_admin";
 
+    public static final String QUERY_FIND_RESOURCE_SUMMARY_BY_INVENTORY_STATUS = "Resource.findResourceSummaryByInventoryStatus";
+    public static final String QUERY_FIND_RESOURCE_SUMMARY_BY_INVENTORY_STATUS_ADMIN = "Resource.findResourceSummaryByInventoryStatus_admin";
+
     public static final String QUERY_FIND_QUEUED_PLATFORMS_BY_INVENTORY_STATUS = "Resource.findQueuedPlatformsByInventoryStatus";
 
     public static final String QUERY_FIND_BY_TYPE = "Resource.findByType";
     public static final String QUERY_FIND_BY_TYPE_ADMIN = "Resource.findByType_admin";
+
+    public static final String QUERY_FIND_IDS_BY_TYPE_IDS = "Resource.findIDsByType";
+    public static final String QUERY_FIND_COUNT_BY_TYPES = "Resource.findCountByTypes";
 
     public static final String QUERY_FIND_BY_TYPE_AND_IDS = "Resource.findByTypeAndIds";
     public static final String QUERY_FIND_BY_TYPE_AND_IDS_ADMIN = "Resource.findByTypeAndIds_admin";
@@ -862,6 +888,9 @@ public class Resource implements Comparable<Resource>, Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    public static final String ANCESTRY_ENTRY_DELIM = "_:_"; // delimiter separating entry fields
+    public static final String ANCESTRY_DELIM = "_::_"; // delimiter seperating ancestry entries
+
     public static final Resource ROOT = null;
     public static final int ROOT_ID = -1;
 
@@ -881,6 +910,9 @@ public class Resource implements Comparable<Resource>, Serializable {
     @Column(name = "NAME", nullable = false)
     @Summary(index = 1)
     private String name;
+
+    @Column(name = "ANCESTRY", nullable = true)
+    private String ancestry;
 
     @Column(name = "INVENTORY_STATUS")
     @Enumerated(EnumType.STRING)
@@ -912,12 +944,11 @@ public class Resource implements Comparable<Resource>, Serializable {
     private String location;
 
     @JoinColumn(name = "RESOURCE_TYPE_ID", referencedColumnName = "ID", nullable = false)
-    @ManyToOne
+    @ManyToOne(optional = false)
     // TODO GH: It would be preferable for this to be lazy, but will need cleanup throughout the app (fetch = FetchType.LAZY)
     @Summary(index = 4)
     private ResourceType resourceType;
 
-    // LAZY fetch otherwise this will recursively call all parents until null is found
     // do not cascade remove - would take forever to delete a full platform hierarchy
     // we will manually delete the children ourselves
     @OneToMany(mappedBy = "parentResource", fetch = FetchType.LAZY, cascade = { CascadeType.PERSIST })
@@ -925,21 +956,22 @@ public class Resource implements Comparable<Resource>, Serializable {
     // primary key
     private Set<Resource> childResources = new LinkedHashSet<Resource>();
 
-    @JoinColumn(name = "PARENT_RESOURCE_ID")
-    @ManyToOne(fetch = FetchType.LAZY)
+    // LAZY fetch otherwise this will recursively call all parents until null is found
+    @JoinColumn(name = "PARENT_RESOURCE_ID", nullable = true)
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
     @XmlTransient
     private Resource parentResource;
 
-    @JoinColumn(name = "RES_CONFIGURATION_ID", referencedColumnName = "ID")
-    @OneToOne(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
+    @JoinColumn(name = "RES_CONFIGURATION_ID", referencedColumnName = "ID", nullable = true)
+    @OneToOne(cascade = { CascadeType.ALL }, optional = true)
     private Configuration resourceConfiguration = new Configuration();
 
-    @JoinColumn(name = "PLUGIN_CONFIGURATION_ID", referencedColumnName = "ID")
-    @OneToOne(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
+    @JoinColumn(name = "PLUGIN_CONFIGURATION_ID", referencedColumnName = "ID", nullable = true)
+    @OneToOne(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY, optional = true)
     private Configuration pluginConfiguration = new Configuration();
 
-    @JoinColumn(name = "AGENT_ID", referencedColumnName = "ID")
-    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "AGENT_ID", referencedColumnName = "ID", nullable = true)
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
     private Agent agent;
 
     // bulk delete @OneToMany(mappedBy = "resource", cascade = { CascadeType.ALL })
@@ -1021,8 +1053,8 @@ public class Resource implements Comparable<Resource>, Serializable {
     @OneToMany(mappedBy = "resource", fetch = FetchType.LAZY)
     private Set<EventSource> eventSources = new HashSet<EventSource>();
 
-    @JoinColumn(name = "PRODUCT_VERSION_ID", referencedColumnName = "ID")
-    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "PRODUCT_VERSION_ID", referencedColumnName = "ID", nullable = true)
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
     private ProductVersion productVersion;
 
     // not currently needed, but could be added if we find a need to get deployment info via the resource
@@ -1038,8 +1070,16 @@ public class Resource implements Comparable<Resource>, Serializable {
     @OneToMany(mappedBy = "autoGroupParentResource", fetch = FetchType.LAZY)
     private List<ResourceGroup> autoGroupBackingGroups = null;
 
-    public Resource() {
+    // When a group is removed any owned dashboards are removed automatically
+    @OneToMany(mappedBy = "resource", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
+    private Set<Dashboard> dashboards = null;
 
+    @JoinTable(name = "RHQ_DRIFT_CONFIG_MAP", joinColumns = { @JoinColumn(name = "RESOURCE_ID") }, inverseJoinColumns = { @JoinColumn(name = "CONFIG_ID") })
+    @OneToMany(fetch = FetchType.LAZY, cascade = { CascadeType.ALL })
+    @org.hibernate.annotations.Cascade(org.hibernate.annotations.CascadeType.DELETE_ORPHAN)
+    private Set<Configuration> driftConfigurations = null;
+
+    public Resource() {
     }
 
     /**
@@ -1101,6 +1141,60 @@ public class Resource implements Comparable<Resource>, Serializable {
 
     public void setName(@NotNull String name) {
         this.name = name;
+    }
+
+    public String getAncestry() {
+        return ancestry;
+    }
+
+    /**
+     * In general this method should not be called by application code. At least not for any Resource that will be
+     * persisted or merged.  The ancestry string is maintained internally. {@link #updateAncestryForResource()}.
+     * 
+     * @param ancestry
+     */
+    public void setAncestry(String ancestry) {
+        this.ancestry = ancestry;
+    }
+
+    /**
+     * Using the current settings for resource field set the encoded ancestry string. This method
+     * is called automatically from {@link #setParentResource(Resource)} because the parent defines the ancestry.
+     * The parent should be an attached entity to ensure access to all necessary information. If the parent is
+     * not a persisted entity, or if it lacks the required information, the update will be skipped.<br/><br.>
+     * It can also be called at any time the ancestry has changed, for example, if a resource name has
+     * been updated.
+     *  
+     * @return the built ancestry string
+     */
+    public String updateAncestryForResource() {
+
+        Resource parentResource = this.getParentResource();
+
+        if (parentResource == null || // 
+            parentResource.getId() <= 0 || //
+            parentResource.getResourceType() == null) {
+            return null;
+        }
+
+        StringBuilder ancestry = new StringBuilder();
+        ancestry.append(parentResource.getResourceType().getId());
+        ancestry.append(ANCESTRY_ENTRY_DELIM);
+        ancestry.append(parentResource.getId());
+        ancestry.append(ANCESTRY_ENTRY_DELIM);
+        ancestry.append(parentResource.getName());
+        String parentAncestry = parentResource.getAncestry();
+        if (null != parentAncestry) {
+            ancestry.append(ANCESTRY_DELIM);
+            ancestry.append(parentAncestry);
+        }
+
+        // protect against the *very* unlikely case that this value is too big for the db 
+        if (ancestry.length() < 4000) {
+            this.setAncestry(ancestry.toString());
+        }
+
+        return this.getAncestry();
     }
 
     public String getResourceKey() {
@@ -1171,6 +1265,7 @@ public class Resource implements Comparable<Resource>, Serializable {
     @PrePersist
     void onPersist() {
         this.mtime = this.ctime = System.currentTimeMillis();
+        updateAncestryForResource();
     }
 
     @PostPersist
@@ -1270,6 +1365,7 @@ public class Resource implements Comparable<Resource>, Serializable {
 
     public void setParentResource(@Nullable Resource parentResource) {
         this.parentResource = parentResource;
+        updateAncestryForResource();
     }
 
     public Configuration getResourceConfiguration() {
@@ -1644,6 +1740,22 @@ public class Resource implements Comparable<Resource>, Serializable {
         this.autoGroupBackingGroups = autoGroupBackingGroups;
     }
 
+    protected Set<Dashboard> getDashboards() {
+        return dashboards;
+    }
+
+    protected void setDashboards(Set<Dashboard> dashboards) {
+        this.dashboards = dashboards;
+    }
+
+    public Set<Configuration> getDriftConfigurations() {
+        return driftConfigurations;
+    }
+
+    public void setDriftConfigurations(Set<Configuration> driftConfigurations) {
+        this.driftConfigurations = driftConfigurations;
+    }
+
     public int compareTo(Resource that) {
         return this.name.compareTo(that.getName());
     }
@@ -1696,10 +1808,6 @@ public class Resource implements Comparable<Resource>, Serializable {
             buffer.append(", version=").append(this.version);
         buffer.append("]");
         return buffer.toString();
-    }
-
-    public void afterUnmarshal(Object u, Object parent) {
-        this.parentResource = (Resource) parent;
     }
 
     // this should only ever be called once, during initial persistence

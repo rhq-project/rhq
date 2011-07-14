@@ -67,17 +67,35 @@ public class ResourceGroupComposite implements Serializable {
             (double) explicitUp / (explicitUp + explicitDown), //
             implicitUp + implicitDown, //
             (double) implicitUp / (implicitUp + implicitDown), //
-            resourceGroup, null);
+            resourceGroup, null, new ResourcePermission());
     }
 
     public ResourceGroupComposite(Long explicitCount, Double explicitAvailability, Long implicitCount,
         Double implicitAvailability, ResourceGroup resourceGroup) {
-        this(explicitCount, explicitAvailability, implicitCount, implicitAvailability, resourceGroup, null);
+        this(explicitCount, explicitAvailability, implicitCount, implicitAvailability, resourceGroup, null,
+            new ResourcePermission());
+    }
+
+    public ResourceGroupComposite(Long explicitCount, Double explicitAvailability, Long implicitCount,
+        Double implicitAvailability, ResourceGroup resourceGroup, Number measure, Number inventory, Number control,
+        Number alert, Number event, Number configureRead, Number configureWrite, Number content,
+        Number createChildResources, Number deleteResources, Number drift) {
+        this(explicitCount, explicitAvailability, implicitCount, implicitAvailability, resourceGroup, null,
+            new ResourcePermission(measure.intValue() > 0, inventory.intValue() > 0, control.intValue() > 0, alert
+                .intValue() > 0, event.intValue() > 0, configureRead.intValue() > 0, configureWrite.intValue() > 0,
+                content.intValue() > 0, createChildResources.intValue() > 0, deleteResources.intValue() > 0, drift
+                    .intValue() > 0));
     }
 
     public ResourceGroupComposite(Long explicitCount, Double explicitAvailability, Long implicitCount,
         Double implicitAvailability, ResourceGroup resourceGroup, ResourceFacets facets) {
+        this(explicitCount, explicitAvailability, implicitCount, implicitAvailability, resourceGroup, facets,
+            new ResourcePermission());
+    }
 
+    // Private constructor that all public constructors delegate to
+    public ResourceGroupComposite(Long explicitCount, Double explicitAvailability, Long implicitCount,
+        Double implicitAvailability, ResourceGroup resourceGroup, ResourceFacets facets, ResourcePermission permissions) {
         long expCount = (explicitCount == null ? 0 : explicitCount);
         double expAvail = (explicitAvailability == null ? 0 : explicitAvailability);
         long impCount = (implicitCount == null ? 0 : implicitCount);
@@ -113,6 +131,7 @@ public class ResourceGroupComposite implements Serializable {
         }
 
         this.resourceFacets = facets;
+        this.resourcePermission = permissions;
     }
 
     public Double getImplicitAvail() {
@@ -147,6 +166,18 @@ public class ResourceGroupComposite implements Serializable {
         return this.explicitDown;
     }
 
+    // remove once the old UI is killed, for now this is still needed
+    @Deprecated
+    public String getExplicitFormatted() {
+        return getAlignedAvailabilityResults(getExplicitUp(), getExplicitDown());
+    }
+
+    // remove once the old UI is killed, for now this is still needed
+    @Deprecated
+    public String getImplicitFormatted() {
+        return getAlignedAvailabilityResults(getImplicitUp(), getImplicitDown());
+    }
+
     @XmlTransient
     public void setResourceFacets(ResourceFacets facets) {
         this.resourceFacets = facets;
@@ -172,6 +203,58 @@ public class ResourceGroupComposite implements Serializable {
      */
     public String getGroupQueryString() {
         return "groupId=" + getResourceGroup().getId();
+    }
+
+    // remove once the old UI is killed, for now this is still needed
+    @Deprecated
+    private String getAlignedAvailabilityResults(long up, long down) {
+        StringBuilder results = new StringBuilder();
+        results.append("<table width=\"120px\"><tr>");
+        if (up == 0 && down == 0) {
+            results.append(getColumn(false, "<img src=\""
+                + "/coregui/images/subsystems/availability/availability_grey_16.png" + "\" /> 0"));
+            results.append(getColumn(true));
+            results.append(getColumn(false));
+        } else {
+            if (up > 0) {
+                results.append(getColumn(false, " <img src=\""
+                    + "/coregui/images/subsystems/availability/availability_green_16.png" + "\" />", up));
+            }
+
+            if (up > 0 && down > 0) {
+                results.append(getColumn(true)); // , " / ")); // use a vertical separator image if we want a separator
+            }
+
+            if (down > 0) {
+                results.append(getColumn(false, " <img src=\""
+                    + "/coregui/images/subsystems/availability/availability_red_16.png" + "\" />", down));
+            } else {
+                results.append(getColumn(false,
+                    "&nbsp;&nbsp;<img src=\"/coregui/images/blank.png\" width=\"16px\" height=\"16px\" />"));
+            }
+        }
+        results.append("</tr></table>");
+        return results.toString();
+    }
+
+    // remove once the old UI is killed, for now this is still needed
+    @Deprecated
+    private String getColumn(boolean isSpacerColumn, Object... data) {
+        StringBuilder results = new StringBuilder();
+        if (isSpacerColumn) {
+            results.append("<td nowrap=\"nowrap\" style=\"white-space:nowrap;\" width=\"10px\" align=\"left\" >");
+        } else {
+            results.append("<td nowrap=\"nowrap\" style=\"white-space:nowrap;\" width=\"55px\" align=\"left\" >");
+        }
+        if (data == null) {
+            results.append("&nbsp;");
+        } else {
+            for (Object datum : data) {
+                results.append(datum == null ? "&nbsp;" : datum);
+            }
+        }
+        results.append("</td>");
+        return results.toString();
     }
 
     @Override

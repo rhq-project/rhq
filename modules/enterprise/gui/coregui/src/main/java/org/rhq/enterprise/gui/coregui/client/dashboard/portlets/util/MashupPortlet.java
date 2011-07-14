@@ -41,7 +41,10 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHTMLPane;
  */
 public class MashupPortlet extends LocatableHTMLPane implements ConfigurablePortlet {
 
-    public static final String KEY = MSG.common_title_mashup();
+    // A non-displayed, persisted identifier for the portlet
+    public static final String KEY = "Mashup";
+    // A default displayed, persisted name for the portlet    
+    public static final String NAME = MSG.view_portlet_defaultName_mashup();
 
     public MashupPortlet(String locatorId) {
         super(locatorId);
@@ -58,17 +61,17 @@ public class MashupPortlet extends LocatableHTMLPane implements ConfigurablePort
         if (url != null) {
             setContentsURL(url);
         } else {
-            setContents("<i>" + MSG.view_portlet_mashup_unconfigured());
+            setContents("<br/><i>" + MSG.view_portlet_configure_needed() + "</i>");
         }
     }
 
     public Canvas getHelpCanvas() {
-        return new HTMLFlow(MSG.view_portlet_mashup_help());
+        return new HTMLFlow(MSG.view_portlet_help_mashup());
     }
 
     public ConfigurationDefinition getConfigurationDefinition() {
-        ConfigurationDefinition definition = new ConfigurationDefinition(MSG.view_portlet_mashup_config_title(), MSG
-            .view_portlet_mashup_config_title_desc());
+        ConfigurationDefinition definition = new ConfigurationDefinition(MSG.view_portlet_configure_definitionTitle(),
+            MSG.view_portlet_configure_definitionDesc());
 
         definition.put(new PropertyDefinitionSimple("address", MSG.common_title_web_address(), true,
             PropertySimpleType.STRING));
@@ -80,7 +83,7 @@ public class MashupPortlet extends LocatableHTMLPane implements ConfigurablePort
         public static PortletViewFactory INSTANCE = new Factory();
 
         public final Portlet getInstance(String locatorId) {
-            //return GWT.create(MashupPortlet.class);
+
             return new MashupPortlet(locatorId);
         }
     }

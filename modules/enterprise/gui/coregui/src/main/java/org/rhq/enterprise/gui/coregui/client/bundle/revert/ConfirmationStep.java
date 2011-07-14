@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.coregui.client.bundle.revert;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Alignment;
+import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.form.DynamicForm;
@@ -27,13 +28,17 @@ import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.bundle.BundleDeployment;
+import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
+import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -55,37 +60,81 @@ public class ConfirmationStep extends AbstractWizardStep {
         return MSG.view_bundle_revertWizard_confirmStep_name();
     }
 
-    public Canvas getCanvas() {
+    public Canvas getCanvas(Locatable parent) {
         if (layout == null) {
-            layout = new LocatableVLayout("BundleRevertConfirmation");
+            if (parent != null) {
+                layout = new LocatableVLayout(parent.extendLocatorId("BundleRevertConfirmation"));
+            } else {
+                layout = new LocatableVLayout("BundleRevertConfirmation");
+            }
             layout.setMembersMargin(10);
 
+            // Get the Live Deployment
             BundleDeploymentCriteria c = new BundleDeploymentCriteria();
             c.addFilterDestinationId(this.wizard.getDestination().getId());
             c.addFilterIsLive(true);
-            c.fetchReplacedBundleDeployment(true);
             c.fetchBundleVersion(true);
             bundleServer.findBundleDeploymentsByCriteria(c, //
                 new AsyncCallback<PageList<BundleDeployment>>() {
+
                     public void onSuccess(PageList<BundleDeployment> liveDeployments) {
                         if (1 != liveDeployments.size()) {
                             nextPage = false;
+                            String messageConcise = MSG.view_bundle_revertWizard_confirmStep_noLiveDeployment_concise();
                             String message = MSG.view_bundle_revertWizard_confirmStep_noLiveDeployment(wizard
                                 .getDestination().toString());
                             wizard.getView().showMessage(message);
-                            CoreGUI.getMessageCenter().notify(new Message(message, Message.Severity.Warning));
+                            CoreGUI.getMessageCenter().notify(
+                                new Message(messageConcise, message, Message.Severity.Warning));
                         }
+
                         wizard.setLiveDeployment(liveDeployments.get(0));
-                        wizard.setPreviousDeployment(wizard.getLiveDeployment().getReplacedBundleDeployment());
-                        if (null == wizard.getPreviousDeployment()) {
+                        Integer replacedBundleDeploymentId = wizard.getLiveDeployment().getReplacedBundleDeploymentId();
+
+                        if (null == replacedBundleDeploymentId) {
                             nextPage = false;
+                            String messageConcise = MSG
+                                .view_bundle_revertWizard_confirmStep_noPriorDeployment_concise();
                             String message = MSG.view_bundle_revertWizard_confirmStep_noPriorDeployment(wizard
                                 .getLiveDeployment().toString(), wizard.getDestination().toString());
                             wizard.getView().showMessage(message);
-                            CoreGUI.getMessageCenter().notify(new Message(message, Message.Severity.Warning));
+                            CoreGUI.getMessageCenter().notify(
+                                new Message(messageConcise, message, Message.Severity.Warning));
                         }
 
-                        setLayout();
+                        // Get the Replaced Deployment (the one we want to revert to_
+                        BundleDeploymentCriteria c = new BundleDeploymentCriteria();
+                        c.addFilterId(replacedBundleDeploymentId);
+                        bundleServer.findBundleDeploymentsByCriteria(c, //
+                            new AsyncCallback<PageList<BundleDeployment>>() {
+
+                                public void onSuccess(PageList<BundleDeployment> replacedBundleDeployments) {
+                                    if (1 != replacedBundleDeployments.size()) {
+                                        nextPage = false;
+                                        String messageConcise = MSG
+                                            .view_bundle_revertWizard_confirmStep_noPriorDeployment_concise();
+                                        String message = MSG.view_bundle_revertWizard_confirmStep_noPriorDeployment(
+                                            wizard.getLiveDeployment().toString(), wizard.getDestination().toString());
+                                        wizard.getView().showMessage(message);
+                                        CoreGUI.getMessageCenter().notify(
+                                            new Message(messageConcise, message, Message.Severity.Warning));
+                                    }
+
+                                    wizard.setPreviousDeployment(replacedBundleDeployments.get(0));
+                                    setLayout();
+                                }
+
+                                public void onFailure(Throwable caught) {
+                                    nextPage = false;
+                                    String messageConcise = MSG
+                                        .view_bundle_revertWizard_confirmStep_noPriorDeployment_concise();
+                                    String message = MSG.view_bundle_revertWizard_confirmStep_noPriorDeployment(wizard
+                                        .getLiveDeployment().toString(), wizard.getDestination().toString());
+                                    wizard.getView().showMessage(message);
+                                    CoreGUI.getMessageCenter().notify(
+                                        new Message(messageConcise, message, Message.Severity.Warning));
+                                }
+                            });
                     }
 
                     public void onFailure(Throwable caught) {
@@ -93,7 +142,8 @@ public class ConfirmationStep extends AbstractWizardStep {
                         String message = MSG.view_bundle_revertWizard_confirmStep_failedToFindLiveDeployment() + ": "
                             + caught.getMessage();
                         wizard.getView().showMessage(message);
-                        CoreGUI.getErrorHandler().handleError(message, caught);
+                        CoreGUI.getErrorHandler().handleError(
+                            MSG.view_bundle_revertWizard_confirmStep_failedToFindLiveDeployment(), caught);
                     }
                 });
         }
@@ -103,8 +153,8 @@ public class ConfirmationStep extends AbstractWizardStep {
 
     private void setLayout() {
 
-        BundleDeployment live = this.wizard.getLiveDeployment();
-        BundleDeployment prev = this.wizard.getPreviousDeployment();
+        final BundleDeployment live = this.wizard.getLiveDeployment();
+        final BundleDeployment prev = this.wizard.getPreviousDeployment();
 
         Label liveHeader = new Label();
         liveHeader.setContents("<b>" + MSG.view_bundle_revertWizard_confirmStep_liveDeployment() + ":<b>");
@@ -112,13 +162,14 @@ public class ConfirmationStep extends AbstractWizardStep {
         liveHeader.setWidth100();
         layout.addMember(liveHeader);
 
-        DynamicForm liveForm = new DynamicForm();
+        DynamicForm liveForm = new LocatableDynamicForm(this.wizard.getView().extendLocatorId("liveForm"));
         liveForm.setNumCols(2);
 
         StaticTextItem liveNameItem = new StaticTextItem("liveName", MSG.common_title_name());
         liveNameItem.setTitleAlign(Alignment.LEFT);
         liveNameItem.setAlign(Alignment.LEFT);
         liveNameItem.setWrap(false);
+        liveNameItem.setWrapTitle(false);
         liveNameItem.setValue(live.getName());
         liveNameItem.setLeft(20);
 
@@ -126,12 +177,15 @@ public class ConfirmationStep extends AbstractWizardStep {
         liveDescItem.setTitleAlign(Alignment.LEFT);
         liveDescItem.setAlign(Alignment.LEFT);
         liveDescItem.setWrap(false);
-        liveDescItem.setValue((null != live.getName()) ? live.getName() : MSG.common_val_none());
+        liveDescItem.setWrapTitle(false);
+        liveDescItem.setTitleVAlign(VerticalAlignment.TOP);
+        liveDescItem.setValue((null != live.getDescription()) ? live.getDescription() : MSG.common_val_none());
 
         StaticTextItem liveVersionItem = new StaticTextItem("liveVersion", MSG.view_bundle_bundleVersion());
         liveVersionItem.setTitleAlign(Alignment.LEFT);
         liveVersionItem.setAlign(Alignment.LEFT);
         liveVersionItem.setWrap(false);
+        liveVersionItem.setWrapTitle(false);
         liveVersionItem.setValue(live.getBundleVersion().getVersion());
 
         liveForm.setItems(liveNameItem, liveDescItem, liveVersionItem);
@@ -143,23 +197,56 @@ public class ConfirmationStep extends AbstractWizardStep {
         prevHeader.setWidth100();
         layout.addMember(prevHeader);
 
-        DynamicForm prevForm = new DynamicForm();
-        prevForm.setNumCols(2);
+        if (prev != null) {
+            final DynamicForm prevForm = new LocatableDynamicForm(this.wizard.getView().extendLocatorId("previousForm"));
+            prevForm.setNumCols(2);
 
-        StaticTextItem prevNameItem = new StaticTextItem("prevName", MSG.common_title_name());
-        prevNameItem.setTitleAlign(Alignment.LEFT);
-        prevNameItem.setAlign(Alignment.LEFT);
-        prevNameItem.setWrap(false);
-        prevNameItem.setValue(prev.getName());
+            StaticTextItem prevNameItem = new StaticTextItem("prevName", MSG.common_title_name());
+            prevNameItem.setTitleAlign(Alignment.LEFT);
+            prevNameItem.setAlign(Alignment.LEFT);
+            prevNameItem.setWrap(false);
+            prevNameItem.setWrapTitle(false);
+            prevNameItem.setValue(prev.getName());
 
-        StaticTextItem prevDescItem = new StaticTextItem("prevDesc", MSG.common_title_description());
-        prevDescItem.setTitleAlign(Alignment.LEFT);
-        prevDescItem.setAlign(Alignment.LEFT);
-        prevDescItem.setWrap(false);
-        prevDescItem.setValue((null != prev.getName()) ? prev.getName() : MSG.common_val_none());
+            StaticTextItem prevDescItem = new StaticTextItem("prevDesc", MSG.common_title_description());
+            prevDescItem.setTitleAlign(Alignment.LEFT);
+            prevDescItem.setAlign(Alignment.LEFT);
+            prevDescItem.setWrap(false);
+            prevDescItem.setWrapTitle(false);
+            prevDescItem.setTitleVAlign(VerticalAlignment.TOP);
+            prevDescItem.setValue((null != prev.getDescription()) ? prev.getDescription() : MSG.common_val_none());
 
-        prevForm.setItems(prevNameItem, prevDescItem);
-        layout.addMember(prevForm);
+            final StaticTextItem prevVersionItem = new StaticTextItem("prevVersion", MSG.view_bundle_bundleVersion());
+            prevVersionItem.setTitleAlign(Alignment.LEFT);
+            prevVersionItem.setAlign(Alignment.LEFT);
+            prevVersionItem.setWrap(false);
+            prevVersionItem.setWrapTitle(false);
+            if (prev.getBundleVersion().getVersion() == null) {
+                BundleVersionCriteria c = new BundleVersionCriteria();
+                c.addFilterId(prev.getBundleVersion().getId());
+                bundleServer.findBundleVersionsByCriteria(c, new AsyncCallback<PageList<BundleVersion>>() {
+
+                    @Override
+                    public void onSuccess(PageList<BundleVersion> result) {
+                        if (result != null && result.size() == 1) {
+                            prevVersionItem.setValue(result.get(0).getVersion());
+                            prevForm.markForRedraw();
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Throwable caught) {
+                        prevVersionItem.setValue("?");
+                        prevForm.markForRedraw();
+                    }
+                });
+            } else {
+                prevVersionItem.setValue(prev.getBundleVersion().getVersion());
+            }
+
+            prevForm.setItems(prevNameItem, prevDescItem, prevVersionItem);
+            layout.addMember(prevForm);
+        }
 
         Label confirmation = new Label();
         confirmation.setContents("<b>" + MSG.view_bundle_revertWizard_confirmStep_confirmation() + "</b>");

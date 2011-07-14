@@ -28,7 +28,6 @@ import javax.persistence.EntityManager;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.hibernate.stat.QueryStatistics;
 import org.hibernate.stat.Statistics;
 
 import org.rhq.core.server.PersistenceUtility;
@@ -51,8 +50,12 @@ public class HibernatePerformanceMonitor {
         return singleton;
     }
 
+    public static boolean isLoggingEnabled() {
+        return log.isDebugEnabled();
+    }
+
     public void zeroStats() {
-        if (log.isDebugEnabled()) {
+        if (isLoggingEnabled()) {
             EntityManager entityManager = LookupUtil.getEntityManager();
             MBeanServer platformMBeanServer = ManagementFactory.getPlatformMBeanServer();
             Statistics stats = PersistenceUtility.getStatisticsService(entityManager, platformMBeanServer);
@@ -61,7 +64,7 @@ public class HibernatePerformanceMonitor {
     }
 
     public long start() {
-        if (log.isDebugEnabled()) {
+        if (isLoggingEnabled()) {
             EntityManager entityManager = LookupUtil.getEntityManager();
             HibernateStatisticsStopWatch watch = new HibernateStatisticsStopWatch(entityManager);
             long id = idGenerator.incrementAndGet();
@@ -73,7 +76,7 @@ public class HibernatePerformanceMonitor {
     }
 
     public void stop(long id, String logPrefix) {
-        if (log.isDebugEnabled()) {
+        if (isLoggingEnabled()) {
             HibernateStatisticsStopWatch watch = watches.remove(id);
             if (watch == null) {
                 return; // could happen if debugging was turned on and the start() call was already skipped
@@ -83,31 +86,32 @@ public class HibernatePerformanceMonitor {
             String cause = "";
             if (watch.getQueryExecutions() != 0) {
                 if ((watch.getConnects() / (double) (watch.getEntityLoads() + watch.getQueryExecutions())) >= 5.0) {
-                    cause = "(N+1 issue?) ";// might indicate need for LEFT JOIN FETCHes
+                    cause = "(perf: N+1 issue?) ";// might indicate need for LEFT JOIN FETCHes
                 }
                 if ((watch.getTransations() / (double) watch.getQueryExecutions()) >= 5.0) {
-                    cause = "(xaction nesting?) "; // might indicate excessive @REQUIRES_NEW
+                    cause = "(perf: xaction nesting?) "; // might indicate excessive @REQUIRES_NEW
                 } else if (watch.getTransations() > 10) {
-                    cause = "(too many xactions?";
+                    cause = "(perf: too many xactions?)";
                 }
             }
             if (watch.getTime() > 3000) {
-                cause = "(slowness?) "; // might indicate inefficient query or table contention
+                cause = "(perf: slowness?) "; // might indicate inefficient query or table contention
             }
 
             String callingContext = " for " + (logPrefix == null ? "(unknown)" : logPrefix);
             log.debug(watch.toString() + cause + callingContext);
 
-            if (logPrefix!=null && logPrefix.contains("URL")) {
+            /* these queries are global, not per transaction
+            if (logPrefix != null && (logPrefix.contains("URL") || logPrefix.contains("GWT:"))) {
                 String[] queries = watch.getStats().getQueries();
                 for (int i = 0; i < queries.length; i++) {
                     String query = queries[i];
                     QueryStatistics queryStats = watch.getStats().getQueryStatistics(query);
-                    log.debug("queryString[" + i + "]=" + queries[i]);
-                    log.debug("queryStats[" + i + "=" + queryStats);
+                    log.debug("query[" + i + "] " + queryStats);
+                    log.debug("query[" + i + "] " + queries[i].replaceAll("\\s+", " "));
                 }
-                //watch.getStats().logSummary();
             }
+            */
         }
     }
 

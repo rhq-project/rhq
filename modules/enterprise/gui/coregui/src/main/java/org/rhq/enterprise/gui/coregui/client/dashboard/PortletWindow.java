@@ -22,6 +22,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.dashboard;
 
+import java.util.Set;
+
 import com.smartgwt.client.types.DragAppearance;
 import com.smartgwt.client.types.HeaderControls;
 import com.smartgwt.client.types.Overflow;
@@ -34,21 +36,33 @@ import com.smartgwt.client.widgets.events.CloseClickHandler;
 import com.smartgwt.client.widgets.events.CloseClientEvent;
 import com.smartgwt.client.widgets.events.DragResizeStopEvent;
 import com.smartgwt.client.widgets.events.DragResizeStopHandler;
+import com.smartgwt.client.widgets.events.MouseOverEvent;
+import com.smartgwt.client.widgets.events.MouseOverHandler;
 
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
+import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHeaderControl;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 
 /**
  * @author Greg Hinkle
+ * @author Jay Shaughnessy
  */
 public class PortletWindow extends LocatableWindow {
 
-    private DashboardView dashboardView;
-    private DashboardPortlet dashboardPortlet;
-    private static String RSS = "Rss";
+    private static final String RSS = "Rss";
 
+    // The dashboard in which this window is diplayed
+    private DashboardView dashboardView;
+
+    // A reference to the stored/persisted DashboardPortlet, so changes made to this will
+    // get persisted when the dashboard is persisted.
+    private DashboardPortlet storedPortlet;
+    private HeaderControl headerIcon;
+
+    // The actual portlet content view
     private Portlet view;
 
     private static final ClickHandler NO_OP_HANDLER = new ClickHandler() {
@@ -81,8 +95,12 @@ public class PortletWindow extends LocatableWindow {
     };
 
     private ClickHandler refreshHandler = new ClickHandler() {
+
+        @SuppressWarnings("unchecked")
         public void onClick(ClickEvent clickEvent) {
-            if (PortletWindow.this.view instanceof Table) {
+            if (PortletWindow.this.view instanceof AutoRefreshPortlet) {
+                ((AutoRefreshPortlet) PortletWindow.this.view).refresh();
+            } else if (PortletWindow.this.view instanceof Table) {
                 ((Table) PortletWindow.this.view).refresh();
             } else {
                 ((Canvas) PortletWindow.this.view).redraw();
@@ -94,7 +112,7 @@ public class PortletWindow extends LocatableWindow {
         super(locatorId);
 
         this.dashboardView = dashboardView;
-        this.dashboardPortlet = dashboardPortlet;
+        this.storedPortlet = dashboardPortlet;
         setEdgeSize(2);
 
         //        if (!showFrame) {
@@ -106,27 +124,51 @@ public class PortletWindow extends LocatableWindow {
             "[SKIN]/headerIcons/clipboard.png"), rssHandler);
         RssHeader.setTooltip(RSS);
 
-        // customize the appearance and order of the controls in the window header
-        setHeaderControls(HeaderControls.MINIMIZE_BUTTON, HeaderControls.HEADER_LABEL, new LocatableHeaderControl(
-            extendLocatorId("Refresh"), HeaderControl.REFRESH, refreshHandler), new LocatableHeaderControl(
-            extendLocatorId("Settings"), HeaderControl.SETTINGS, settingsHandler), new LocatableHeaderControl(
-            extendLocatorId("Help"), HeaderControl.HELP, helpHandler), HeaderControls.CLOSE_BUTTON);
+        //detect customized Header icon
+        headerIcon = null;
+        String portletKey = storedPortlet.getPortletKey();
+        final String iconUrl = PortletFactory.getRegisteredPortletIcon(portletKey);
+        if ((iconUrl != null) && (!iconUrl.trim().isEmpty())) {
+            HeaderIcon icon = new HeaderIcon(iconUrl);
+            headerIcon = new HeaderControl(icon);
+            headerIcon.addMouseOverHandler(new MouseOverHandler() {
+                @Override
+                public void onMouseOver(MouseOverEvent event) {
+                    headerIcon.setIcon(iconUrl);
+                }
+            });
+        }
 
-        // show either a shadow, or translucency, when dragging a portlet
-        // (could do both at the same time, but these are not visually compatible effects)
-        // setShowDragShadow(true);
-        setDragOpacity(30);
+        // customize the appearance and order of the controls in the window header
+        if (headerIcon != null) {
+            setHeaderControls(HeaderControls.MINIMIZE_BUTTON, headerIcon, HeaderControls.HEADER_LABEL,
+                new LocatableHeaderControl(extendLocatorId("Refresh"), HeaderControl.REFRESH, refreshHandler),
+                new LocatableHeaderControl(extendLocatorId("Settings"), HeaderControl.SETTINGS, settingsHandler),
+                new LocatableHeaderControl(extendLocatorId("Help"), HeaderControl.HELP, helpHandler),
+                HeaderControls.CLOSE_BUTTON);
+        } else {
+            setHeaderControls(HeaderControls.MINIMIZE_BUTTON, HeaderControls.HEADER_LABEL, new LocatableHeaderControl(
+                extendLocatorId("Refresh"), HeaderControl.REFRESH, refreshHandler), new LocatableHeaderControl(
+                extendLocatorId("Settings"), HeaderControl.SETTINGS, settingsHandler), new LocatableHeaderControl(
+                extendLocatorId("Help"), HeaderControl.HELP, helpHandler), HeaderControls.CLOSE_BUTTON);
+        }
 
         // enable predefined component animation
         setAnimateMinimize(true);
 
         // Window is draggable with "outline" appearance by default.
         // "target" is the solid appearance.
+        setCanDrag(true);
         setDragAppearance(DragAppearance.TARGET);
+        // show either a shadow, or translucency, when dragging a portlet
+        // (could do both at the same time, but these are not visually compatible effects)
+        // setShowDragShadow(true);
+        setDragOpacity(30);
+        // can be dropped on a column        
         setCanDrop(true);
 
         setCanDragResize(true);
-        //        setResizeFrom("B");
+        setResizeFrom("T", "B");
 
         setShowShadow(false);
 
@@ -138,7 +180,7 @@ public class PortletWindow extends LocatableWindow {
         addDragResizeStopHandler(new DragResizeStopHandler() {
             public void onDragResizeStop(DragResizeStopEvent dragResizeStopEvent) {
 
-                PortletWindow.this.dashboardPortlet.setHeight(((Canvas) dragResizeStopEvent.getSource()).getHeight());
+                PortletWindow.this.storedPortlet.setHeight(((Canvas) dragResizeStopEvent.getSource()).getHeight());
 
                 PortletWindow.this.dashboardView.resize();
                 save();
@@ -148,36 +190,34 @@ public class PortletWindow extends LocatableWindow {
 
         addCloseClickHandler(new CloseClickHandler() {
             public void onCloseClick(CloseClientEvent closeClientEvent) {
-                PortletWindow.this.dashboardPortlet.getDashboard().removePortlet(PortletWindow.this.dashboardPortlet);
-                save();
+                PortletWindow.this.dashboardView.removePortlet(PortletWindow.this.storedPortlet);
                 destroy();
             }
         });
 
         setSettingsClickHandler(settingsHandler);
         setHelpClickHandler(helpHandler);
-
     }
 
     @Override
     protected void onInit() {
         super.onInit();
 
-        view = PortletFactory.buildPortlet(this, dashboardPortlet);
+        // each portletWindow wraps a single portlet view, so just extend the window's locatorId with a static id
+        view = PortletFactory.buildPortlet(extendLocatorId("View"), this, storedPortlet);
 
         Canvas canvas = (Canvas) view;
         addItem(canvas);
 
         settingsHandlerDelegate = new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                new PortletSettingsWindow(extendLocatorId("Settings"), PortletWindow.this, dashboardPortlet, view)
-                    .show();
+                new PortletSettingsWindow(extendLocatorId("Settings"), PortletWindow.this, storedPortlet, view).show();
             }
         };
 
         helpHandlerDelegate = new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                new PortletHelpWindow(dashboardPortlet, view).show();
+                new PortletHelpWindow(storedPortlet, view).show();
             }
         };
     }
@@ -190,15 +230,37 @@ public class PortletWindow extends LocatableWindow {
         helpHandlerDelegate = handler;
     }
 
-    public DashboardPortlet getDashboardPortlet() {
-        return dashboardPortlet;
+    public Portlet getView() {
+        return view;
     }
 
-    public void setDashboardPortlet(DashboardPortlet dashboardPortlet) {
-        this.dashboardPortlet = dashboardPortlet;
+    public DashboardPortlet getStoredPortlet() {
+        return storedPortlet;
+    }
+
+    public void setStoredPortlet(DashboardPortlet storedPortlet) {
+        this.storedPortlet = storedPortlet;
     }
 
     public void save() {
         this.dashboardView.save();
     }
+
+    public Set<Permission> getGlobalPermissions() {
+        return dashboardView.getGlobalPermissions();
+    }
+
+    public ResourcePermission getResourcePermissions() {
+
+        ResourcePermission result = null;
+
+        if (null != dashboardView.getResourceComposite()) {
+            result = dashboardView.getResourceComposite().getResourcePermission();
+        } else if (null != dashboardView.getGroupComposite()) {
+            result = dashboardView.getGroupComposite().getResourcePermission();
+        }
+
+        return result;
+    }
+
 }

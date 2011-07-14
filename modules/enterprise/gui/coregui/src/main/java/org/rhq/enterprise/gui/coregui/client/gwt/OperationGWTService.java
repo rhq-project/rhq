@@ -27,11 +27,12 @@ import org.rhq.core.domain.criteria.GroupOperationHistoryCriteria;
 import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
 import org.rhq.core.domain.operation.GroupOperationHistory;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
+import org.rhq.core.domain.operation.bean.GroupOperationSchedule;
+import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.rhq.core.domain.operation.composite.ResourceOperationLastCompletedComposite;
 import org.rhq.core.domain.operation.composite.ResourceOperationScheduleComposite;
-import org.rhq.core.domain.resource.composite.DisambiguationReport;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.create.ExecutionSchedule;
 
 /**
  * @author Greg Hinkle
@@ -39,15 +40,38 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation
 public interface OperationGWTService extends RemoteService {
 
     PageList<ResourceOperationHistory> findResourceOperationHistoriesByCriteria(
-        ResourceOperationHistoryCriteria criteria);
+        ResourceOperationHistoryCriteria criteria) throws RuntimeException;
 
-    PageList<GroupOperationHistory> findGroupOperationHistoriesByCriteria(GroupOperationHistoryCriteria criteria);
+    PageList<GroupOperationHistory> findGroupOperationHistoriesByCriteria(GroupOperationHistoryCriteria criteria)
+        throws RuntimeException;
 
-    List<DisambiguationReport<ResourceOperationLastCompletedComposite>> findRecentCompletedOperations(int pageSize);
+    void deleteOperationHistory(int operationHistoryId, boolean deleteEvenIfInProgress) throws RuntimeException;
 
-    List<DisambiguationReport<ResourceOperationScheduleComposite>> findScheduledOperations(int pageSize);
+    PageList<ResourceOperationLastCompletedComposite> findRecentCompletedOperations(int resourceId,
+        PageControl pageControl) throws RuntimeException;
 
-    void scheduleResourceOperation(int resourceId, String operationName, Configuration parameters,
-        ExecutionSchedule schedule, String description, int timeout) throws RuntimeException;
+    PageList<ResourceOperationScheduleComposite> findScheduledOperations(int pageSize) throws RuntimeException;
+
+    void invokeResourceOperation(int resourceId, String operationName, Configuration parameters, String description,
+        int timeout) throws RuntimeException;
+
+    int scheduleResourceOperation(ResourceOperationSchedule resourceOperationSchedule) throws RuntimeException;
+
+    int scheduleGroupOperation(GroupOperationSchedule groupOperationSchedule) throws RuntimeException;
+
+    ResourceOperationSchedule getResourceOperationSchedule(int scheduleId) throws RuntimeException;
+
+    GroupOperationSchedule getGroupOperationSchedule(int scheduleId) throws RuntimeException;
+
+    void unscheduleResourceOperation(ResourceOperationSchedule resourceOperationSchedule) throws RuntimeException;
+
+    void unscheduleGroupOperation(GroupOperationSchedule groupOperationSchedule) throws RuntimeException;
+
+    void scheduleResourceOperation(int resourceId, String operationName, Configuration parameters, String description,
+        int timeout, String cronString) throws RuntimeException;
+
+    List<ResourceOperationSchedule> findScheduledResourceOperations(int resourceId) throws RuntimeException;
+
+    List<GroupOperationSchedule> findScheduledGroupOperations(int groupId) throws RuntimeException;
 
 }

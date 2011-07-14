@@ -59,6 +59,8 @@ public class ResourceGroupCriteria extends TaggedCriteria {
     private Integer filterGroupDefinitionId; // requires overrides
     private Boolean filterPrivate; /* if true, show only private groups for the calling user */
     private Boolean filterVisible = true; /* only show visible groups by default */
+    private List<Integer> filterIds; // requires overrides
+    private NonBindingOverrideFilter filterBundleTargetableOnly; // requires overrides - finds only those that have bundle config - that is, can be targeted for bundle deployment
 
     private boolean fetchExplicitResources;
     private boolean fetchImplicitResources;
@@ -114,6 +116,8 @@ public class ResourceGroupCriteria extends TaggedCriteria {
             + "   JOIN res.explicitGroups explicitGroup " //
             + "   WHERE resourcegroup.id = explicitGroup.id AND NOT res.resourceType.name = ? )");
         filterOverrides.put("groupDefinitionId", "groupDefinition.id = ?");
+        filterOverrides.put("ids", "id IN ( ? )");
+        filterOverrides.put("bundleTargetableOnly", "resourceType.bundleConfiguration IS NOT NULL");
 
         sortOverrides.put("resourceTypeName", "resourceType.name");
         sortOverrides.put("pluginName", "resourceType.plugin");
@@ -218,8 +222,36 @@ public class ResourceGroupCriteria extends TaggedCriteria {
         return (Boolean.TRUE.equals(this.filterPrivate));
     }
 
+    /**
+     * @param filterVisible not null. A single fetch may be for visible or invisible groups, but not both.
+     */
     public void addFilterVisible(Boolean filterVisible) {
+        if (null == filterVisible) {
+            throw new IllegalArgumentException("A single fetch may be for visible or invisible groups, but not both.");
+        }
         this.filterVisible = filterVisible;
+    }
+
+    public boolean isFilterVisible() {
+        return (Boolean.TRUE.equals(this.filterVisible));
+    }
+
+    public void addFilterIds(Integer... filterIds) {
+        this.filterIds = CriteriaUtils.getListIgnoringNulls(filterIds);
+    }
+
+    /**
+     * If true is passed in, only those groups that can be targeted for bundle deployments will
+     * be fetched. By definition, this means no mixed groups are ever fetched and only
+     * compatible groups with resource types that support bundle deployments are fetched.
+     * Technically, what this means is only those compatible groups whose
+     * resource types have non-null bundle configurations are fetched.
+     * 
+     * @param filterBundleTargetableOnly
+     */
+    public void addFilterBundleTargetableOnly(boolean filterBundleTargetableOnly) {
+        this.filterBundleTargetableOnly = (filterBundleTargetableOnly ? NonBindingOverrideFilter.ON
+            : NonBindingOverrideFilter.OFF);
     }
 
     public void fetchExplicitResources(boolean fetchExplicitResources) {

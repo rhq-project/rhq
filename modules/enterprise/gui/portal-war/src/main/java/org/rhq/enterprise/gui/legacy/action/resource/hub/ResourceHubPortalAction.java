@@ -190,7 +190,7 @@ public class ResourceHubPortalAction extends BaseAction {
 
         // Set the first entry in the menu to the label "All Plugins Types"
         hubForm.addPlugin(new LabelValueBean(messages.getMessage("resource.hub.filter.AllPlugins"), ""));
-        List<Plugin> plugins = LookupUtil.getResourceMetadataManager().getPluginsByResourceTypeAndCategory(typeName,
+        List<Plugin> plugins = LookupUtil.getPluginManager().getPluginsByResourceTypeAndCategory(typeName,
             resourceCategory);
         for (Plugin plugin : plugins) {
             hubForm.addPlugin(new LabelValueBean(plugin.getDisplayName(), encode(plugin.getName())));

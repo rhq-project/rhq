@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+
+<project name="test-bundle" default="main" xmlns:rhq="antlib:org.rhq.bundle">
+
+    <rhq:bundle name="test compressed archive files" version="1.0">
+
+        <rhq:input-property name="listener.port" type="integer"/>
+
+        <rhq:deployment-unit name="appserver">
+            <rhq:archive name="file.zip" exploded="false">
+                <rhq:replace>
+                    <rhq:fileset includes="**/*.foo"/>
+                    <rhq:fileset includes="**/*.properties"/>
+                </rhq:replace>
+            </rhq:archive>
+        </rhq:deployment-unit>
+
+    </rhq:bundle>
+
+    <target name="main"/>
+</project>

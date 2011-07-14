@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -27,6 +28,7 @@ import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
+import com.smartgwt.client.data.fields.DataSourceDateTimeField;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
@@ -45,7 +47,8 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
  *
  * @author Ian Springer
  */
-public abstract class AbstractMeasurementDataTraitDataSource extends RPCDataSource<MeasurementDataTrait> {
+public abstract class AbstractMeasurementDataTraitDataSource extends
+    RPCDataSource<MeasurementDataTrait, MeasurementDataTraitCriteria> {
     private MeasurementDataGWTServiceAsync measurementService = GWTServiceLookup.getMeasurementDataService();
 
     protected AbstractMeasurementDataTraitDataSource() {
@@ -78,21 +81,20 @@ public abstract class AbstractMeasurementDataTraitDataSource extends RPCDataSour
             .common_title_value());
         fields.add(valueField);
 
-        DataSourceIntegerField timestampField = new DataSourceIntegerField(
+        DataSourceDateTimeField timestampField = new DataSourceDateTimeField(
             MeasurementDataTraitCriteria.SORT_FIELD_TIMESTAMP, MSG.dataSource_traits_field_lastChanged());
         fields.add(timestampField);
 
         return fields;
     }
 
-    protected void executeFetch(final DSRequest request, final DSResponse response) {
+    protected void executeFetch(final DSRequest request, final DSResponse response,
+        final MeasurementDataTraitCriteria criteria) {
         final long startTime = System.currentTimeMillis();
-
-        final MeasurementDataTraitCriteria criteria = getCriteria(request);
 
         this.measurementService.findTraitsByCriteria(criteria, new AsyncCallback<PageList<MeasurementDataTrait>>() {
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError("Failed to fetch traits for criteria " + criteria, caught);
+                CoreGUI.getErrorHandler().handleError(MSG.dataSource_traits_failFetch(criteria.toString()), caught);
                 response.setStatus(RPCResponse.STATUS_FAILURE);
                 processResponse(request.getRequestId(), response);
             }
@@ -101,15 +103,21 @@ public abstract class AbstractMeasurementDataTraitDataSource extends RPCDataSour
                 long fetchDuration = System.currentTimeMillis() - startTime;
                 com.allen_sauer.gwt.log.client.Log.info(result.size() + " traits fetched in: " + fetchDuration + "ms");
 
-                response.setData(buildRecords(result));
-                // For paging to work, we have to specify size of full result set.
-                response.setTotalRows(result.getTotalSize());
-                processResponse(request.getRequestId(), response);
+                dataRetrieved(result, response, request);
             }
         });
     }
 
-    protected MeasurementDataTraitCriteria getCriteria(DSRequest request) {
+    protected void dataRetrieved(final PageList<MeasurementDataTrait> result, final DSResponse response,
+        final DSRequest request) {
+        response.setData(buildRecords(result));
+        // For paging to work, we have to specify size of full result set.
+        response.setTotalRows(result.getTotalSize());
+        processResponse(request.getRequestId(), response);
+    }
+
+    @Override
+    protected MeasurementDataTraitCriteria getFetchCriteria(DSRequest request) {
         MeasurementDataTraitCriteria criteria = new MeasurementDataTraitCriteria();
 
         Criteria requestCriteria = request.getCriteria();
@@ -147,7 +155,7 @@ public abstract class AbstractMeasurementDataTraitDataSource extends RPCDataSour
 
         record.setAttribute("primaryKey", from.getScheduleId() + ":" + from.getTimestamp());
         record.setAttribute("id", from.getSchedule().getDefinition().getId()); // used for detail view
-        record.setAttribute(MeasurementDataTraitCriteria.SORT_FIELD_TIMESTAMP, from.getTimestamp());
+        record.setAttribute(MeasurementDataTraitCriteria.SORT_FIELD_TIMESTAMP, new Date(from.getTimestamp()));
         record.setAttribute(MeasurementDataTraitCriteria.SORT_FIELD_DISPLAY_NAME, from.getSchedule().getDefinition()
             .getDisplayName());
         record.setAttribute(MeasurementDataTraitCriteria.SORT_FIELD_VALUE, from.getValue());

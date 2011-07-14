@@ -27,7 +27,7 @@ public abstract class UserPreferenceNames {
     /**
      * Default is true.
      */
-    public static final String OPERATIONS_ = ".dashContent.operations.useLastCompleted";
+    //public static final String OPERATIONS_ = ".dashContent.operations.useLastCompleted";
 
     /**
      * Default is true.
@@ -226,10 +226,14 @@ public abstract class UserPreferenceNames {
     public static final String LAST_URL = ".last.url";
 
     /**
-     * List of recently visited Resources and Groups. Entries are delimited by commas. The format of each entry is
-     * id|type|name (e.g. 10001|platform|MyPlatform).
-     */
+     * List of recently visited {@link org.rhq.core.domain.resource.Resource} id's, delimited by '|' characters. Default is "".
+     *      */
     public static final String RECENT_RESOURCES = ".recent.resources";
+
+    /**
+     * List of recently visited {@link org.rhq.core.domain.resource.group.ResourceGroup} id's, delimited by '|' characters. Default is "".
+     *      */
+    public static final String RECENT_RESOURCE_GROUPS = ".recent.resourceGroups";
 
     /**
      * View mode for Browse Resource page - "CHART" or "LIST". This is most likely obsolete if we switch to GWT, since

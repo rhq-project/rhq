@@ -260,7 +260,7 @@ public class WsResourceManagerTest extends AssertJUnit implements TestProperties
         // lookup the first platform resource and use that name. More stable
         // than hard coding. Almost always one.
         ResourceCriteria platCriteria = new ResourceCriteria();
-        platCriteria.setFilterResourceCategory(ResourceCategory.PLATFORM);
+        platCriteria.getFilterResourceCategories().add(ResourceCategory.PLATFORM);
         List<Resource> platformList = WEBSERVICE_REMOTE.findResourcesByCriteria(subject, platCriteria);
         assertNotNull("Platform list should not be null.", platformList);
         assertEquals("Should be only one in list for testing.", 1, platformList.size());

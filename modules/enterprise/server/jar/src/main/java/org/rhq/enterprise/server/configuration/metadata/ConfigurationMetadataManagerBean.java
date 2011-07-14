@@ -89,7 +89,7 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
             // somewhere else.
         }
 
-        entityManager.flush();
+//        entityManager.flush();
 
         /*
          * Now update / delete contained groups We need to be careful here, as groups are present in PropertyDefinition
@@ -119,7 +119,7 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
             entityManager.remove(group);
         }
 
-        entityManager.flush();
+//        entityManager.flush();
 
         // update existing groups that stay
         for (PropertyGroupDefinition group : toUpdate) {
@@ -143,7 +143,7 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
                 .getPropertiesInGroup(groupName));
         }
 
-        entityManager.flush();
+//        entityManager.flush();
 
         // persist new groups
         for (PropertyGroupDefinition group : toPersist) {
@@ -174,29 +174,29 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
         Map<String, ConfigurationTemplate> existingTemplates = existingDefinition.getTemplates();
         Map<String, ConfigurationTemplate> newTemplates = newDefinition.getTemplates();
         List<String> toRemove = new ArrayList<String>();
+        List<String> templatesToUpdate = new ArrayList<String>();
+
         for (String name : existingTemplates.keySet()) {
-            ConfigurationTemplate exTemplate = existingTemplates.get(name);
             if (newTemplates.containsKey(name)) {
-                //                System.out.println("updating template with name " + name);
-                updateTemplate(exTemplate, newTemplates.get(name));
+                templatesToUpdate.add(name);
             } else {
-                // template in newTemplates not there -> delete old stuff
-                //                System.out.println("Deleting template with name " + name);
-                entityManager.remove(exTemplate);
                 toRemove.add(name);
             }
         }
-        // Remove the deleted ones from the existing templates map
+
         for (String name : toRemove) {
-            existingTemplates.remove(name);
+            ConfigurationTemplate template = existingTemplates.remove(name);
+            entityManager.remove(template);
         }
-        entityManager.flush();
+
+        for (String name : templatesToUpdate) {
+            updateTemplate(existingDefinition.getTemplate(name), newTemplates.get(name));
+        }
 
         for (String name : newTemplates.keySet()) {
             // add completely new templates
             if (!existingTemplates.containsKey(name)) {
 
-                //                System.out.println("Persisting new template with name " + name);
                 ConfigurationTemplate newTemplate = newTemplates.get(name);
 
                 // we need to set a valid configurationDefinition, where we will live on.
@@ -206,8 +206,6 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
                 existingTemplates.put(name, newTemplate);
             }
         }
-
-        entityManager.flush();
 
         return updateReport;
     }
@@ -403,7 +401,7 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
 
                 // handle <constraint> [0..*]
 
-                entityManager.flush();
+//                entityManager.flush();
                 Set<Constraint> exCon = existingPDS.getConstraints();
                 if (exCon.size() > 0) {
                     for (Constraint con : exCon) {
@@ -420,6 +418,9 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
 
                 // handle <defaultValue> [0..1]
                 existingPDS.setDefaultValue(newPDS.getDefaultValue());
+
+                // handle <c:source>
+                existingPDS.setOptionsSource(newPDS.getOptionsSource());
             } else {
                 // other type
                 replaceProperty(existingProperty, newProperty);
@@ -442,7 +443,7 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
 
         entityManager.remove(existingProperty);
         entityManager.merge(configDef);
-        entityManager.flush();
+//        entityManager.flush();
     }
 
     /**
@@ -450,15 +451,23 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
      * the member prop def for the list.  If the member prop def is a nested structure the whole thing
      * is replaced from the top.
      *
-     * @param exList the existing prop def list 
+     * @param exList the existing prop def list
      * @param newList the new prop def list
      */
     private void replaceListProperty(PropertyDefinitionList exList, PropertyDefinitionList newList) {
         PropertyDefinition doomedMemberDef = null;
 
+        if (newList.getMemberDefinition()==null) {
+            log.error("\n\n!! Member definition for new list property [" + newList.getName() + "] is null - check and fix the plugin descriptor\n");
+            return;
+        }
+
+        // We did not have a member definition before (which is wrong )
+        // we need to add it now
         // only remove the existing member if it is a different entity
-        if (exList.getMemberDefinition().getId() != newList.getMemberDefinition().getId()) {
-            doomedMemberDef = exList.getMemberDefinition();
+        PropertyDefinition exListMemberDefinition = exList.getMemberDefinition();
+        if (exListMemberDefinition !=null && exListMemberDefinition.getId() != newList.getMemberDefinition().getId()) {
+            doomedMemberDef = exListMemberDefinition;
         }
 
         exList.setMemberDefinition(newList.getMemberDefinition());
@@ -477,7 +486,7 @@ public class ConfigurationMetadataManagerBean implements ConfigurationMetadataMa
         }
 
         entityManager.merge(exList);
-        entityManager.flush();
+//        entityManager.flush();
     }
 
     /**

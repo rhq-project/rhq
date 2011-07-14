@@ -1,25 +1,25 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2011 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.plugins.platform.win;
 
 import java.util.HashSet;
@@ -31,7 +31,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hyperic.sigar.win32.EventLog;
 import org.hyperic.sigar.win32.EventLogRecord;
-import org.hyperic.sigar.win32.Win32Exception;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -85,36 +84,35 @@ public class Win32EventLogDelegate implements EventPoller {
 
         eventLogs = new EventLog[logNames.length];
         lastCollectedEventId = new int[logNames.length];
-
-        for (int i = 0; (i < logNames.length); ++i) {
-            eventLogs[i] = new EventLog();
-        }
     }
 
     public void open() {
-        try {
-            int i = 0;
-            for (String logName : logNames) {
+        for (int i = 0; i < eventLogs.length; i++) {
+            try {
+                if (eventLogs[i] == null) {
+                    eventLogs[i] = new EventLog();
+                    eventLogs[i].open(logNames[i]);
 
-                eventLogs[i].open(logName);
-
-                // note, the first processed event will be the next one generated, this one
-                // was generated in the past, prior to this call to open(). 
-                lastCollectedEventId[i] = eventLogs[i].getNewestRecord();
-
-                i++;
+                    // note, the first processed event will be the next one generated, this one
+                    // was generated in the past, prior to this call to open(). 
+                    lastCollectedEventId[i] = eventLogs[i].getNewestRecord();
+                }
+            } catch (Exception e) {
+                log.warn("Failed to open Windows Event Log [" + logNames[i] + "]; will not collect its events", e);
+                eventLogs[i] = null;
             }
-        } catch (Win32Exception e) {
-            log.warn("Failed to open Windows Event Log, log tracking will not return events", e);
         }
     }
 
     public void close() {
-        for (EventLog eventLog : eventLogs) {
+        for (int i = 0; i < eventLogs.length; i++) {
             try {
-                eventLog.close();
-            } catch (Win32Exception e) {
-                log.warn("Failed to close Windows Event Log", e);
+                if (eventLogs[i] != null) {
+                    eventLogs[i].close();
+                    eventLogs[i] = null;
+                }
+            } catch (Exception e) {
+                log.warn("Failed to close Windows Event Log [" + logNames[i] + "]", e);
             }
         }
     }
@@ -124,41 +122,43 @@ public class Win32EventLogDelegate implements EventPoller {
         Set<Event> convertedEvents = null;
         for (int i = 0; i < eventLogs.length; i++) {
             try {
-                int newest = eventLogs[i].getNewestRecord();
-                if (newest > lastCollectedEventId[i]) {
-                    for (int eventId = lastCollectedEventId[i] + 1; eventId <= newest; eventId++) {
-                        eventsChecked++;
+                if (eventLogs[i] != null) {
+                    int newest = eventLogs[i].getNewestRecord();
+                    if (newest > lastCollectedEventId[i]) {
+                        for (int eventId = lastCollectedEventId[i] + 1; eventId <= newest; eventId++) {
+                            eventsChecked++;
 
-                        EventLogRecord event = eventLogs[i].read(eventId);
-                        Event convertedEvent = handleEvent(event);
+                            EventLogRecord event = eventLogs[i].read(eventId);
+                            Event convertedEvent = handleEvent(event);
 
-                        if (null != convertedEvent) {
-                            if (null == convertedEvents) {
-                                convertedEvents = new HashSet<Event>();
+                            if (null != convertedEvent) {
+                                if (null == convertedEvents) {
+                                    convertedEvents = new HashSet<Event>();
+                                }
+
+                                convertedEvents.add(convertedEvent);
                             }
-
-                            convertedEvents.add(convertedEvent);
                         }
+                        lastCollectedEventId[i] = newest;
                     }
-                    lastCollectedEventId[i] = newest;
                 }
-            } catch (Win32Exception e) {
-                log.info("An error occurred while reading the Windows Event Log", e);
+            } catch (Exception e) {
+                log.info("An error occurred while reading the Windows Event Log [" + logNames[i] + "]", e);
             }
         }
         return convertedEvents;
     }
 
     public Event handleEvent(EventLogRecord event) {
-        eventsChecked++;
-
         if (regularExpression != null) {
-            if (!regularExpression.matcher(event.getMessage()).find())
+            if (!regularExpression.matcher(event.getMessage()).find()) {
                 return null;
+            }
         }
 
-        if (!convertSeverity(event.getEventType()).isAtLeastAsSevereAs(minimumSeverity))
+        if (!convertSeverity(event.getEventType()).isAtLeastAsSevereAs(minimumSeverity)) {
             return null;
+        }
 
         Event convertedEvent = new Event(EVENT_TYPE, event.getLogName(), event.getTimeGenerated() * 1000,
             convertSeverity(event.getEventType()), event.getMessage());

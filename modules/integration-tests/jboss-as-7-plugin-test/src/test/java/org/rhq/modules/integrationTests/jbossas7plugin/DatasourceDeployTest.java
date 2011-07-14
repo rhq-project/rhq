@@ -411,7 +411,7 @@ public class DatasourceDeployTest extends AbstractIntegrationTest {
         op.addAdditionalProperty("enabled",true);
         res = conn.execute(op);
         assert res != null;
-        assert res.isSuccess() : "Was not able to add the driver to the serer-group: " + res.getFailureDescription();
+        assert res.isSuccess() : "Was not able to add the driver to the server-group: " + res.getFailureDescription();
         return sgAddress;
     }
 

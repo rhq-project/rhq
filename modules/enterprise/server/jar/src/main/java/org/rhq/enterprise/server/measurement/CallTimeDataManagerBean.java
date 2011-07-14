@@ -90,13 +90,12 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
 
     private static final String CALLTIME_VALUE_INSERT_STATEMENT = "INSERT /*+ APPEND */ INTO " + DATA_VALUE_TABLE_NAME
         + "(id, key_id, begin_time, end_time, minimum, maximum, total, count) "
-        + "SELECT %s, key.id, ?, ?, ?, ?, ?, ? FROM RHQ_numbers num, RHQ_calltime_data_key key WHERE num.i = 42 "
-        + "AND key.id = (SELECT id FROM " + DATA_KEY_TABLE_NAME + " WHERE schedule_id = ? AND call_destination = ?)";
+        + "SELECT %s, key.id, ?, ?, ?, ?, ?, ? FROM " + DATA_KEY_TABLE_NAME
+        + " key WHERE key.schedule_id = ? AND key.call_destination = ?";
 
     private static final String CALLTIME_VALUE_INSERT_STATEMENT_AUTOINC = "INSERT INTO " + DATA_VALUE_TABLE_NAME
-        + "(key_id, begin_time, end_time, minimum, maximum, total, count) "
-        + "SELECT key.id, ?, ?, ?, ?, ?, ? FROM RHQ_numbers num, RHQ_calltime_data_key key WHERE num.i = 42 "
-        + "AND key.id = (SELECT id FROM " + DATA_KEY_TABLE_NAME + " WHERE schedule_id = ? AND call_destination = ?)";
+        + "(key_id, begin_time, end_time, minimum, maximum, total, count) SELECT key.id, ?, ?, ?, ?, ?, ? FROM "
+        + DATA_KEY_TABLE_NAME + " key WHERE key.schedule_id = ? AND key.call_destination = ?";
 
     private static final String CALLTIME_VALUE_PURGE_STATEMENT = "DELETE FROM " + DATA_VALUE_TABLE_NAME
         + " WHERE end_time < ?";
@@ -330,7 +329,7 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
                         + results[i] + "] for batch command [" + i + "] is less than 0 or greater than 1.");
                 }
 
-                insertedRowCount += results[i]==-2 ? 1 : results[i]  ; // If Oracle returns -2, just count 1 row
+                insertedRowCount += results[i] == -2 ? 1 : results[i]; // If Oracle returns -2, just count 1 row
             }
 
             log.debug("Inserted new call-time data key rows for " + ((insertedRowCount >= 0) ? insertedRowCount : "?")
@@ -406,7 +405,7 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
                         + results[i] + "] for batch command [" + i + "] does not equal 1.");
                 }
 
-                insertedRowCount += results[i]==-2 ? 1 : results[i]  ; // If Oracle returns -2, just count 1 row;
+                insertedRowCount += results[i] == -2 ? 1 : results[i]; // If Oracle returns -2, just count 1 row;
             }
 
             notifyAlertConditionCacheManager("insertCallTimeDataValues", callTimeDataSet

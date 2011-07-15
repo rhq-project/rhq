@@ -371,6 +371,8 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
                     if (flag != null) {
                         lengthIsKnown = flag.booleanValue();
                     }
+                } else {
+                    lengthIsKnown = (listGrid.getDataSource() == null); // not bound by a datasource, assume we know
                 }
             }
 

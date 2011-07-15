@@ -346,27 +346,9 @@ public class ConfigurationDelegate implements ConfigurationFacet {
     }
 
     private void updateHandlePropertyMap(CompositeOperation cop, PropertyMap prop, PropertyDefinitionMap propDef) {
-        Map<String,PropertyDefinition> memberDefinitions = propDef.getPropertyDefinitions();
-
-        Map<String,Object> results = new HashMap<String,Object>();
-        for (String name : memberDefinitions.keySet()) {
-            PropertyDefinition memberDefinition = memberDefinitions.get(name);
-
-            if (memberDefinition.isReadOnly())
-                continue;
-
-            if (memberDefinition instanceof PropertyDefinitionSimple) {
-                PropertyDefinitionSimple pds = (PropertyDefinitionSimple) memberDefinition;
-                PropertySimple ps = (PropertySimple) prop.get(name);
-                if ((ps==null || ps.getStringValue()==null ) && !pds.isRequired())
-                    continue;
-                if (ps!=null)
-                    results.put(name,ps.getStringValue());
-            }
-        }
+        Map<String,Object> results = updateHandleMap(prop,propDef);
         Operation writeAttribute = new WriteAttribute(address,prop.getName(),results);
         cop.addStep(writeAttribute);
-
     }
 
     private void updateHandlePropertyList(CompositeOperation cop, PropertyList prop, PropertyDefinitionList propDef) {
@@ -375,7 +357,7 @@ public class ConfigurationDelegate implements ConfigurationFacet {
         // We need to collect the list members, create an array and attach this to the cop
 
         List<Property> embeddedProps = prop.getList();
-        List<String> values = new ArrayList<String>();
+        List<Object> values = new ArrayList<Object>();
         for (Property inner : embeddedProps) {
             if (memberDef instanceof PropertyDefinitionSimple) {
                 PropertySimple ps = (PropertySimple) inner;
@@ -383,10 +365,15 @@ public class ConfigurationDelegate implements ConfigurationFacet {
                     values.add(ps.getStringValue()); // TODO handling of optional vs required
 
             }
+            if (memberDef instanceof PropertyDefinitionMap) {
+                Map<String,Object> mapResult = updateHandleMap((PropertyMap) inner,(PropertyDefinitionMap)memberDef);
+                values.add(mapResult);
+            }
         }
         Operation writeAttribute = new WriteAttribute(address,prop.getName(),values);
         cop.addStep(writeAttribute);
     }
+
 
     private void updateHandlePropertySimple(CompositeOperation cop, PropertySimple propertySimple, PropertyDefinitionSimple propDef) {
 
@@ -398,4 +385,30 @@ public class ConfigurationDelegate implements ConfigurationFacet {
                 address, propertySimple.getName(),propertySimple.getStringValue());
         cop.addStep(writeAttribute);
     }
+
+    private Map<String, Object> updateHandleMap(PropertyMap map, PropertyDefinitionMap mapDef) {
+        Map<String,PropertyDefinition> memberDefinitions = mapDef.getPropertyDefinitions();
+
+        Map<String,Object> results = new HashMap<String,Object>();
+        for (String name : memberDefinitions.keySet()) {
+            PropertyDefinition memberDefinition = memberDefinitions.get(name);
+
+            if (memberDefinition.isReadOnly())
+                continue;
+
+            if (memberDefinition instanceof PropertyDefinitionSimple) {
+                PropertyDefinitionSimple pds = (PropertyDefinitionSimple) memberDefinition;
+                PropertySimple ps = (PropertySimple) map.get(name);
+                if ((ps==null || ps.getStringValue()==null ) && !pds.isRequired())
+                    continue;
+                if (ps!=null)
+                    results.put(name,ps.getStringValue());
+            }
+            else {
+                log.error(" *** not yet supported *** : " + memberDefinition.getName());
+            }
+        }
+        return results;
+    }
+
 }

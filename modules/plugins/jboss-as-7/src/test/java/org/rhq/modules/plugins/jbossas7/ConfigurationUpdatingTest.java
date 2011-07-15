@@ -189,4 +189,37 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
         String result = mapper.writeValueAsString(cop);
 
     }
+
+    public void test6() throws Exception {
+
+        ConfigurationDefinition definition = loadDescriptor("listOfMaps1");
+
+        FakeConnection connection = new FakeConnection();
+
+        ConfigurationDelegate delegate = new ConfigurationDelegate(definition,connection,null);
+
+        Configuration conf = new Configuration();
+        PropertyMap propertyMap = new PropertyMap("theMap",
+                new PropertySimple("needed","Hello"),
+                new PropertySimple("optional","World"));
+
+        PropertyList propertyList = new PropertyList("foo",propertyMap);
+
+        conf.put(propertyList);
+
+        CompositeOperation cop = delegate.updateGenerateOperationFromProperties(conf);
+
+        assert cop.numberOfSteps() == 1 : "#Steps should be 1 but were " + cop.numberOfSteps();
+        Operation step1 = cop.step(0);
+        assert step1.getOperation().equals("write-attribute");
+        Map<String,Object> props = step1.getAdditionalProperties();
+        assert props.size()==2;
+        List<Map<String,Object>> values = (List<Map<String, Object>>) props.get("value");
+        assert values.size()==1 : "Values had "+ values.size() + " entries instead of 1"; // The optional null must not be present
+        Map<String,Object> map = values.get(0);
+        assert map.size()==2 : "Map had " + map.size() + " entries instead of two";
+
+        String result = mapper.writeValueAsString(cop);
+
+    }
 }

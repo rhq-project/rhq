@@ -29,7 +29,6 @@ import com.smartgwt.client.types.TitleOrientation;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
-import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 
@@ -63,24 +62,6 @@ public class DriftAddConfigWizardInfoStep extends AbstractWizardStep {
             }
             form.setNumCols(1);
             List<FormItem> formItems = new ArrayList<FormItem>(2);
-
-            TextItem nameItem = new TextItem("configName", MSG.view_drift_wizard_addConfig_namePrompt());
-            nameItem.setRequired(true);
-            nameItem.setTitleOrientation(TitleOrientation.TOP);
-            nameItem.setAlign(Alignment.LEFT);
-            nameItem.setWidth(300);
-            FormUtility.addContextualHelp(nameItem, MSG.view_drift_wizard_addConfig_nameHelp());
-
-            nameItem.addChangedHandler(new ChangedHandler() {
-                public void onChanged(ChangedEvent event) {
-                    Object value = event.getValue();
-                    if (value == null) {
-                        value = "";
-                    }
-                    wizard.setNewConfigName(value.toString());
-                }
-            });
-            formItems.add(nameItem);
 
             SelectItem templateSelect = new SelectItem("template", MSG.view_drift_wizard_addConfig_templatePrompt());
             templateSelect.setTitleOrientation(TitleOrientation.TOP);
@@ -127,10 +108,6 @@ public class DriftAddConfigWizardInfoStep extends AbstractWizardStep {
 
     public String getName() {
         return MSG.view_drift_wizard_addConfig_infoStepName();
-    }
-
-    public String getConfigName() {
-        return form.getValueAsString("configName");
     }
 
     public Configuration getStartingConfiguration() {

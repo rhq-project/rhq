@@ -38,6 +38,7 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.drift.DriftCategory;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.form.EnumSelectItem;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
@@ -120,13 +121,14 @@ public class DriftHistoryView extends TableSection<DriftDataSource> {
         categories.put(DriftCategory.FILE_ADDED.name(), MSG.view_drift_category_fileAdded());
         categories.put(DriftCategory.FILE_CHANGED.name(), MSG.view_drift_category_fileChanged());
         categories.put(DriftCategory.FILE_REMOVED.name(), MSG.view_drift_category_fileRemoved());
-        // TODO icons needed ?
-        //LinkedHashMap<String, String> priorityIcons = new LinkedHashMap<String, String>(3);
-        //priorityIcons.put(AlertPriority.HIGH.name(), ImageManager.getAlertIcon(AlertPriority.HIGH));
-        //priorityIcons.put(AlertPriority.MEDIUM.name(), ImageManager.getAlertIcon(AlertPriority.MEDIUM));
-        //priorityIcons.put(AlertPriority.LOW.name(), ImageManager.getAlertIcon(AlertPriority.LOW));
+        LinkedHashMap<String, String> categoryIcons = new LinkedHashMap<String, String>(3);
+        categoryIcons.put(DriftCategory.FILE_ADDED.name(), ImageManager.getDriftCategoryIcon(DriftCategory.FILE_ADDED));
+        categoryIcons.put(DriftCategory.FILE_CHANGED.name(), ImageManager
+            .getDriftCategoryIcon(DriftCategory.FILE_CHANGED));
+        categoryIcons.put(DriftCategory.FILE_REMOVED.name(), ImageManager
+            .getDriftCategoryIcon(DriftCategory.FILE_REMOVED));
         SelectItem categoryFilter = new EnumSelectItem(DriftDataSource.FILTER_CATEGORIES, MSG.common_title_category(),
-            DriftCategory.class, categories, null);
+            DriftCategory.class, categories, categoryIcons);
 
         if (isShowFilterForm()) {
             setFilterFormItems(categoryFilter);

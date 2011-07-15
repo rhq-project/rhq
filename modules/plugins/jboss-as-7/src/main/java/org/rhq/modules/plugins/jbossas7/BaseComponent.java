@@ -49,6 +49,7 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
 import org.rhq.modules.plugins.jbossas7.json.CompositeOperation;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
@@ -219,7 +220,7 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
 
         List<PROPERTY_VALUE> address = pathToAddress(path);
         ConfigurationDefinition configDef = context.getResourceType().getResourceConfigurationDefinition();
-        ConfigurationDelegate delegate = new ConfigurationDelegate(configDef,connection,address);
+        ConfigurationDelegate delegate = new ConfigurationDelegate(configDef,connection,new Address(address));
         return delegate.loadResourceConfiguration();
     }
 
@@ -228,7 +229,7 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
 
         List<PROPERTY_VALUE> address = pathToAddress(path);
         ConfigurationDefinition configDef = context.getResourceType().getResourceConfigurationDefinition();
-        ConfigurationDelegate delegate = new ConfigurationDelegate(configDef,connection,address);
+        ConfigurationDelegate delegate = new ConfigurationDelegate(configDef,connection,new Address(address));
         delegate.updateResourceConfiguration(report);
     }
 

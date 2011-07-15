@@ -144,7 +144,6 @@ public class OperationJsonTest {
         assert result != null;
         assert result.getOutcome().equals("success");
         assert result.isSuccess();
-        assert result.getFailureDescription() == null;
     }
     public void simpleResultWithFailure() throws Exception {
 
@@ -294,7 +293,7 @@ public class OperationJsonTest {
 
         ComplexResult result = mapper.readValue(resultString,ComplexResult.class);
         assert !result.isSuccess() : "Result should be 'failed', but was not";
-        assert result.getFailureDescription().equals("Operation was not applied successfully to any servers");
+        assert result.getFailureDescription().startsWith("Operation was not applied successfully to any servers");
 
         assert result.getResult().containsKey("server-groups");
         Map<String,Object> sgs = (Map<String, Object>) result.getResult().get("server-groups");

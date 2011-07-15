@@ -25,6 +25,7 @@ import org.codehaus.jackson.annotate.JsonValue;
  *
  * @author Heiko W. Rupp
  */
+@Deprecated
 public class NameValuePair {
 
     public String name;

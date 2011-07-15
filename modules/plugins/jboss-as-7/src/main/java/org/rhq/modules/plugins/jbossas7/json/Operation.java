@@ -79,7 +79,8 @@ public class Operation {
 
     public Operation(String operation, Address address) {
         this.operation = operation;
-        this.address = address.path;
+        if (address!=null)
+            this.address = address.path;
     }
 
     public Operation() {

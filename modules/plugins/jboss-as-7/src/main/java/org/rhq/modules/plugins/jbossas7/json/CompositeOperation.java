@@ -61,4 +61,17 @@ public class CompositeOperation extends Operation {
         @JsonProperty("rollback-across-groups")
         boolean rollbackAcrossGroups;
     }
+
+    public int numberOfSteps() {
+        return steps.size();
+    }
+
+    public Operation step(int i) {
+        return steps.get(i);
+    }
+
+    @Override
+    public String toString() {
+        return "CompositeOperation{steps=" + steps.size()+ "}";
+    }
 }

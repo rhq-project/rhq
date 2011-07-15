@@ -19,13 +19,14 @@
 package org.rhq.modules.plugins.jbossas7;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.codehaus.jackson.JsonNode;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
@@ -41,22 +42,20 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertyGroupDefinition;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
+import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.CompositeOperation;
-import org.rhq.modules.plugins.jbossas7.json.NameValuePair;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
-import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
 import org.rhq.modules.plugins.jbossas7.json.ReadAttribute;
 import org.rhq.modules.plugins.jbossas7.json.ReadChildrenResources;
 import org.rhq.modules.plugins.jbossas7.json.ReadResource;
 import org.rhq.modules.plugins.jbossas7.json.Result;
+import org.rhq.modules.plugins.jbossas7.json.WriteAttribute;
 
 public class ConfigurationDelegate implements ConfigurationFacet {
 
-    private static final String SUB_PATH = "_subPath";
-
     final Log log = LogFactory.getLog(this.getClass());
 
-    private List<PROPERTY_VALUE> address;
+    private Address address;
     private ASConnection connection;
     private ConfigurationDefinition configurationDefinition;
 
@@ -66,7 +65,7 @@ public class ConfigurationDelegate implements ConfigurationFacet {
      * @param connection asConnection to use
      * @param address address of the resource.
      */
-    public ConfigurationDelegate(ConfigurationDefinition configDef,ASConnection connection, List<PROPERTY_VALUE> address) {
+    public ConfigurationDelegate(ConfigurationDefinition configDef,ASConnection connection, Address address) {
         this.configurationDefinition = configDef;
         this.connection = connection;
         this.address = address;
@@ -111,7 +110,7 @@ public class ConfigurationDelegate implements ConfigurationFacet {
      * @throws Exception If anything goes wrong
      */
     private void loadHandleGroup(Configuration config, PropertyGroupDefinition groupDefinition) throws Exception{
-        Operation operation = null;
+        Operation operation;
         String groupName = groupDefinition.getName();
         if (groupName.startsWith("attribute:")) {
             String attr = groupName.substring("attribute:".length());
@@ -307,28 +306,7 @@ public class ConfigurationDelegate implements ConfigurationFacet {
 
         Configuration conf = report.getConfiguration();
 
-        CompositeOperation cop = new CompositeOperation();
-
-        for (Property prop  : conf.getProperties()) {
-            PropertyDefinition propDef = configurationDefinition.get(prop.getName());
-            // Skip over read-only properties, the AS can not use them anyway
-            if (propDef.isReadOnly())
-                continue;
-
-
-            if (prop instanceof PropertySimple) {
-                PropertySimple propertySimple = (PropertySimple) prop;
-
-                // If the property value is null and the property is optional, skip too
-                if (propertySimple.getStringValue()==null && !propDef.isRequired())
-                    continue;
-
-                NameValuePair nvp = new NameValuePair(propertySimple.getName(), propertySimple.getStringValue());
-                Operation writeAttribute = new Operation("write-attribute",
-                        address, nvp); // TODO test path
-                cop.addStep(writeAttribute);
-            }
-        }
+        CompositeOperation cop = updateGenerateOperationFromProperties(conf);
 
         Result result = connection.execute(cop);
         if (!result.isSuccess()) {
@@ -340,5 +318,84 @@ public class ConfigurationDelegate implements ConfigurationFacet {
             // TODO how to signal "need reload"
         }
 
+    }
+
+    protected CompositeOperation updateGenerateOperationFromProperties(Configuration conf) {
+
+        CompositeOperation cop = new CompositeOperation();
+
+        for (Property prop  : conf.getProperties()) {
+            PropertyDefinition propDef = configurationDefinition.get(prop.getName());
+            // Skip over read-only properties, the AS can not use them anyway
+            if (propDef.isReadOnly())
+                continue;
+
+
+            if (prop instanceof PropertySimple) {
+                updateHandlePropertySimple(cop, (PropertySimple)prop, (PropertyDefinitionSimple) propDef);
+            }
+            else if (prop instanceof PropertyList) {
+                updateHandlePropertyList(cop,(PropertyList)prop, (PropertyDefinitionList) propDef);
+            }
+            else {
+                updateHandlePropertyMap(cop,(PropertyMap)prop,(PropertyDefinitionMap)propDef);
+            }
+        }
+
+        return cop;
+    }
+
+    private void updateHandlePropertyMap(CompositeOperation cop, PropertyMap prop, PropertyDefinitionMap propDef) {
+        Map<String,PropertyDefinition> memberDefinitions = propDef.getPropertyDefinitions();
+
+        Map<String,Object> results = new HashMap<String,Object>();
+        for (String name : memberDefinitions.keySet()) {
+            PropertyDefinition memberDefinition = memberDefinitions.get(name);
+
+            if (memberDefinition.isReadOnly())
+                continue;
+
+            if (memberDefinition instanceof PropertyDefinitionSimple) {
+                PropertyDefinitionSimple pds = (PropertyDefinitionSimple) memberDefinition;
+                PropertySimple ps = (PropertySimple) prop.get(name);
+                if ((ps==null || ps.getStringValue()==null ) && !pds.isRequired())
+                    continue;
+                if (ps!=null)
+                    results.put(name,ps.getStringValue());
+            }
+        }
+        Operation writeAttribute = new WriteAttribute(address,prop.getName(),results);
+        cop.addStep(writeAttribute);
+
+    }
+
+    private void updateHandlePropertyList(CompositeOperation cop, PropertyList prop, PropertyDefinitionList propDef) {
+        PropertyDefinition memberDef = propDef.getMemberDefinition();
+
+        // We need to collect the list members, create an array and attach this to the cop
+
+        List<Property> embeddedProps = prop.getList();
+        List<String> values = new ArrayList<String>();
+        for (Property inner : embeddedProps) {
+            if (memberDef instanceof PropertyDefinitionSimple) {
+                PropertySimple ps = (PropertySimple) inner;
+                if (ps.getStringValue()!=null)
+                    values.add(ps.getStringValue()); // TODO handling of optional vs required
+
+            }
+        }
+        Operation writeAttribute = new WriteAttribute(address,prop.getName(),values);
+        cop.addStep(writeAttribute);
+    }
+
+    private void updateHandlePropertySimple(CompositeOperation cop, PropertySimple propertySimple, PropertyDefinitionSimple propDef) {
+
+        // If the property value is null and the property is optional, skip too
+        if (propertySimple.getStringValue()==null && !propDef.isRequired())
+            return;
+
+        Operation writeAttribute = new WriteAttribute(
+                address, propertySimple.getName(),propertySimple.getStringValue());
+        cop.addStep(writeAttribute);
     }
 }

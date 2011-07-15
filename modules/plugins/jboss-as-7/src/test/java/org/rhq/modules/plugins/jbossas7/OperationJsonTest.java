@@ -29,11 +29,12 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.SerializationConfig;
 import org.testng.annotations.Test;
 
+import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
 import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
-import org.rhq.modules.plugins.jbossas7.json.NameValuePair;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.Result;
+import org.rhq.modules.plugins.jbossas7.json.WriteAttribute;
 
 /**
  * @author Heiko W. Rupp
@@ -50,8 +51,7 @@ public class OperationJsonTest {
         part = new PROPERTY_VALUE("connector","http");
         address.add(part);
 
-        NameValuePair payload = new NameValuePair("socket-binding","jndi");
-        Operation operation = new Operation("write-attribute",address,payload);
+        Operation operation = new WriteAttribute(new Address(address),"socket-binding","jndi");
 
 
         ObjectMapper mapper = new ObjectMapper();

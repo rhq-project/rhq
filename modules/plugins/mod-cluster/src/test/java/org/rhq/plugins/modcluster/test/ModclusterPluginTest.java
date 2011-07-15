@@ -87,7 +87,6 @@ public class ModclusterPluginTest {
         PluginEnvironment pluginEnvironment = pluginManager.getPlugin(PLUGIN_NAME);
         assert (pluginEnvironment != null) : "Null environment, plugin not loaded";
         assert (pluginEnvironment.getPluginName().equals(PLUGIN_NAME));
-
     }
 
     @Test(dependsOnMethods = "testPluginLoad")
@@ -96,6 +95,14 @@ public class ModclusterPluginTest {
         assert report != null;
         System.out.println("Discovery took: " + (report.getEndTime() - report.getStartTime()) + "ms");
 
+        Thread.sleep(10000);
+
+        report = PluginContainer.getInstance().getInventoryManager().executeServiceScanImmediately();
+        assert report != null;
+        System.out.println("Discovery took: " + (report.getEndTime() - report.getStartTime()) + "ms");
+
+        Thread.sleep(10000);
+
         report = PluginContainer.getInstance().getInventoryManager().executeServiceScanImmediately();
         assert report != null;
         System.out.println("Discovery took: " + (report.getEndTime() - report.getStartTime()) + "ms");
@@ -103,7 +110,7 @@ public class ModclusterPluginTest {
         List<String> typeNames = new ArrayList<String>() {
             {
                 add(PLUGIN_NAME);
-                add(PLUGIN_NAME + "_context");
+                add(PLUGIN_NAME + " Webapp Context");
             }
         };
 

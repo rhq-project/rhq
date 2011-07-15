@@ -34,4 +34,9 @@ public class ReadChildrenResources extends Operation {
     public ReadChildrenResources(List<PROPERTY_VALUE> address, String childType) {
         super("read-children-resources",address,"child-type",childType);
     }
+
+    public ReadChildrenResources(Address address, String childType) {
+        super("read-children-resources",address);
+        addAdditionalProperty("child-type",childType);
+    }
 }

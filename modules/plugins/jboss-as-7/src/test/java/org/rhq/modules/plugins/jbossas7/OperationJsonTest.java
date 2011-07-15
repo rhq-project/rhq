@@ -29,11 +29,12 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.SerializationConfig;
 import org.testng.annotations.Test;
 
+import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
 import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
-import org.rhq.modules.plugins.jbossas7.json.NameValuePair;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.Result;
+import org.rhq.modules.plugins.jbossas7.json.WriteAttribute;
 
 /**
  * @author Heiko W. Rupp
@@ -50,8 +51,7 @@ public class OperationJsonTest {
         part = new PROPERTY_VALUE("connector","http");
         address.add(part);
 
-        NameValuePair payload = new NameValuePair("socket-binding","jndi");
-        Operation operation = new Operation("write-attribute",address,payload);
+        Operation operation = new WriteAttribute(new Address(address),"socket-binding","jndi");
 
 
         ObjectMapper mapper = new ObjectMapper();
@@ -144,7 +144,6 @@ public class OperationJsonTest {
         assert result != null;
         assert result.getOutcome().equals("success");
         assert result.isSuccess();
-        assert result.getFailureDescription() == null;
     }
     public void simpleResultWithFailure() throws Exception {
 
@@ -294,7 +293,7 @@ public class OperationJsonTest {
 
         ComplexResult result = mapper.readValue(resultString,ComplexResult.class);
         assert !result.isSuccess() : "Result should be 'failed', but was not";
-        assert result.getFailureDescription().equals("Operation was not applied successfully to any servers");
+        assert result.getFailureDescription().startsWith("Operation was not applied successfully to any servers");
 
         assert result.getResult().containsKey("server-groups");
         Map<String,Object> sgs = (Map<String, Object>) result.getResult().get("server-groups");

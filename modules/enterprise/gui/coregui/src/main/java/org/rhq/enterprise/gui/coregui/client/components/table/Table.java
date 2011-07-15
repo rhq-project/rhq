@@ -35,6 +35,7 @@ import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
+import com.smartgwt.client.data.ResultSet;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.Overflow;
@@ -333,7 +334,6 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
                 }
             });
 
-
             Label tableInfo = new Label();
             tableInfo.setWrap(false);
             setTableInfo(tableInfo);
@@ -363,8 +363,17 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     private void refreshRowCount() {
         Label tableInfo = getTableInfo();
         if (tableInfo != null) {
-            boolean lengthIsKnown = (listGrid != null && listGrid.getResultSet().lengthIsKnown() != null)
-                    ? listGrid.getResultSet().lengthIsKnown() : false;
+            boolean lengthIsKnown = false;
+            if (listGrid != null) {
+                ResultSet results = listGrid.getResultSet();
+                if (results != null) {
+                    Boolean flag = results.lengthIsKnown();
+                    if (flag != null) {
+                        lengthIsKnown = flag.booleanValue();
+                    }
+                }
+            }
+
             String contents;
             if (lengthIsKnown) {
                 int totalRows = this.listGrid.getTotalRows();

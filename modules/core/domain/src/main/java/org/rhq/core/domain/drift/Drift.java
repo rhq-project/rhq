@@ -40,6 +40,8 @@ import javax.persistence.PrePersist;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
+import org.hibernate.annotations.Type;
+
 /**
  * An occurrence of drifty to be reported and managed by the user.
  
@@ -57,10 +59,11 @@ public class Drift implements Serializable {
 
     public static final String QUERY_DELETE_BY_RESOURCES = "Drift.deleteByResources";
 
+    @Type(type = "org.rhq.core.domain.hibernate.types.IntegerString")
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
     @Id
-    private int id;
+    private String id;
 
     @Column(name = "CTIME", nullable = false)
     private Long ctime = -1L;
@@ -103,11 +106,11 @@ public class Drift implements Serializable {
         this.newDriftFile = newDriftFile;
     }
 
-    public int getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(String id) {
         this.id = id;
     }
 

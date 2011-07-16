@@ -70,7 +70,7 @@ public interface DriftManagerLocal extends DriftManagerRemote {
      * 
      * @return the number of Drift records deleted
      */
-    int deleteDriftsInNewTransaction(Subject subject, int... driftIds);
+    int deleteDriftsInNewTransaction(Subject subject, String... driftIds);
 
     /**
      * Remove the specified drifts.  Ids not identifying an actual drift record will be ignored.
@@ -81,7 +81,7 @@ public interface DriftManagerLocal extends DriftManagerRemote {
      *
      * @return the number of Drift records deleted
      */
-    int deleteDrifts(Subject subject, int[] driftIds);
+    int deleteDrifts(Subject subject, String[] driftIds);
 
     /**
      * Remove all drifts on the specified entity context.

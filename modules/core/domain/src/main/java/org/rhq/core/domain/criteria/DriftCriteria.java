@@ -39,9 +39,9 @@ import org.rhq.core.domain.util.PageOrdering;
 public class DriftCriteria extends Criteria {
     private static final long serialVersionUID = 1L;
 
-    private Integer filterId;
+    private String filterId;
     private List<DriftCategory> filterCategories;
-    private Integer filterChangeSetId; // needs override
+    private String filterChangeSetId; // needs override
     private String filterPath;
     private List<Integer> filterResourceIds; // requires overrides    
     private Long filterStartTime; // requires overrides
@@ -64,7 +64,7 @@ public class DriftCriteria extends Criteria {
         return Drift.class;
     }
 
-    public void addFilterId(Integer filterId) {
+    public void addFilterId(String filterId) {
         this.filterId = filterId;
     }
 
@@ -72,7 +72,7 @@ public class DriftCriteria extends Criteria {
         this.filterCategories = CriteriaUtils.getListIgnoringNulls(filterCategories);
     }
 
-    public void addFilterChangeSetId(Integer filterChangeSetId) {
+    public void addFilterChangeSetId(String filterChangeSetId) {
         this.filterChangeSetId = filterChangeSetId;
     }
 

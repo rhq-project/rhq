@@ -325,10 +325,10 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
 
     @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public int deleteDriftsInNewTransaction(Subject subject, int... driftIds) {
+    public int deleteDriftsInNewTransaction(Subject subject, String... driftIds) {
         int result = 0;
 
-        for (int driftId : driftIds) {
+        for (String driftId : driftIds) {
             Drift doomed = entityManager.find(Drift.class, driftId);
             if (null != doomed) {
                 entityManager.remove(doomed);
@@ -340,11 +340,11 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     }
 
     @Override
-    public int deleteDrifts(Subject subject, int[] driftIds) {
+    public int deleteDrifts(Subject subject, String[] driftIds) {
         // avoid big transactions by doing this one at a time. if this is too slow we can chunk in bigger increments.
         int result = 0;
 
-        for (int driftId : driftIds) {
+        for (String driftId : driftIds) {
             result += driftManager.deleteDriftsInNewTransaction(subject, driftId);
         }
 
@@ -371,7 +371,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
 
         List<Drift> drifts = driftManager.findDriftsByCriteria(subject, criteria);
         if (!drifts.isEmpty()) {
-            int[] driftIds = new int[drifts.size()];
+            String[] driftIds = new String[drifts.size()];
             int i = 0;
             for (Drift drift : drifts) {
                 driftIds[i++] = drift.getId();

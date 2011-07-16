@@ -45,50 +45,6 @@ import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
 
 public class DriftChangeSetTest extends AbstractEJB3Test {
 
-    static Class[] entities = new Class[]{
-        ResourceRepo.class,
-        MeasurementBaseline.class, // baseline BEFORE schedules
-        MeasurementDataTrait.class, // traits BEFORE schedules
-        CallTimeDataValue.class, // call time data values BEFORE schedules & call time data keys
-        CallTimeDataKey.class, // call time data keys BEFORE schedules
-        MeasurementOOB.class, //
-        MeasurementSchedule.class, // schedules AFTER baselines, traits, and calltime data
-        Availability.class,
-        ResourceError.class,
-        Event.class,
-        EventSource.class,
-        BundleResourceDeploymentHistory.class,
-        // resource deployment history BEFORE resource deployment
-        BundleResourceDeployment.class, //
-        PackageInstallationStep.class, // steps BEFORE installed package history
-        InstalledPackageHistory.class,
-        // history BEFORE installed packages & content service requests
-        InstalledPackage.class,
-        ContentServiceRequest.class,
-        ResourceOperationScheduleEntity.class,
-        ResourceOperationHistory.class,
-        DeleteResourceHistory.class,
-        CreateResourceHistory.class,
-        ResourceConfigurationUpdate.class,
-        // orphan parent list or maps (execute only on non selfRefCascade dbs)
-        ResourceConfigurationUpdate.class, // first, delete the raw configs for the config
-        ResourceConfigurationUpdate.class, // then delete the config objects
-        ResourceConfigurationUpdate.class, // then the history objects wrapping those configs
-        PluginConfigurationUpdate.class,
-        // orphan parent list or maps (execute only on non selfRefCascade dbs)
-        PluginConfigurationUpdate.class, // first, delete the raw configs for the config
-        PluginConfigurationUpdate.class, // then delete the config objects
-        PluginConfigurationUpdate.class, // then the history objects wrapping those configs
-        AlertConditionLog.class, //    Don't
-        AlertNotificationLog.class, // alter
-        Alert.class, //                order
-        AlertCondition.class, //       of
-        AlertDampeningEvent.class, //  alert-
-        AlertNotification.class, //    related
-        AlertDefinition.class, //      deletes
-        Drift.class, //       drift before changeset
-        DriftChangeSet.class};
-
     static interface TransactionCallback {
         void execute() throws Exception;
     }
@@ -131,7 +87,7 @@ public class DriftChangeSetTest extends AbstractEJB3Test {
         });
     }
 
-    @Test(groups = {"integration.ejb3", "drift.changeset"})
+    @Test(groups = {"integration.ejb3", "drift.changeset"}, enabled = false)
     public void insertAndLoad() throws Exception {
         final DriftChangeSet changeSet = new DriftChangeSet();
 

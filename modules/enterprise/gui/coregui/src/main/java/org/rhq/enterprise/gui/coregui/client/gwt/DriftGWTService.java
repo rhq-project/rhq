@@ -44,7 +44,7 @@ public interface DriftGWTService extends RemoteService {
      * @param driftIds the ids of the drifts to be deleted
      * @return the number of drifts deleted
      */
-    int deleteDrifts(int[] driftIds) throws RuntimeException;
+    int deleteDrifts(String[] driftIds) throws RuntimeException;
 
     /**
      * Delete all drifts for the specified context if the current user has permission to do so (i.e. either

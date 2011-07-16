@@ -210,10 +210,10 @@ public class DriftHistoryView extends TableSection<DriftDataSource> {
     }
 
     void delete(ListGridRecord[] records) {
-        final int[] driftIds = new int[records.length];
+        final String[] driftIds = new String[records.length];
         for (int i = 0, selectionLength = records.length; i < selectionLength; i++) {
             ListGridRecord record = records[i];
-            Integer driftId = record.getAttributeAsInt("id");
+            String driftId = record.getAttributeAsString("id");
             driftIds[i] = driftId;
         }
 

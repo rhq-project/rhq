@@ -43,7 +43,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  */
 public class DriftDetailsView extends LocatableVLayout implements BookmarkableView {
 
-    private int driftId;
+    private String driftId;
 
     private static DriftDetailsView INSTANCE = new DriftDetailsView("DriftDetailsView");
 
@@ -56,7 +56,7 @@ public class DriftDetailsView extends LocatableVLayout implements BookmarkableVi
         super(id);
     }
 
-    private void show(int driftId) {
+    private void show(String driftId) {
         DriftCriteria criteria = new DriftCriteria();
         criteria.addFilterId(driftId);
         criteria.fetchChangeSet(true);
@@ -124,7 +124,7 @@ public class DriftDetailsView extends LocatableVLayout implements BookmarkableVi
 
     @Override
     public void renderView(ViewPath viewPath) {
-        driftId = viewPath.getCurrentAsInt();
+        driftId = Integer.toString(viewPath.getCurrentAsInt());
         show(driftId);
     }
 

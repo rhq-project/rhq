@@ -43,6 +43,8 @@ import javax.persistence.PrePersist;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
+import org.hibernate.annotations.Type;
+
 import org.rhq.core.domain.resource.Resource;
 
 /**
@@ -60,10 +62,11 @@ public class DriftChangeSet implements Serializable {
 
     public static final String QUERY_DELETE_BY_RESOURCES = "DriftChangeSet.deleteByResources";
 
+    @Type(type = "org.rhq.core.domain.hibernate.types.IntegerString")
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
     @Id
-    private int id;
+    private String id;
 
     @Column(name = "CTIME", nullable = false)
     private Long ctime = -1L;
@@ -92,11 +95,11 @@ public class DriftChangeSet implements Serializable {
         this.category = category;
     }
 
-    public int getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(String id) {
         this.id = id;
     }
 

@@ -36,7 +36,7 @@ import org.rhq.core.domain.util.PageOrdering;
 public class DriftChangeSetCriteria extends Criteria {
     private static final long serialVersionUID = 1L;
 
-    private Integer filterId;
+    private String filterId;
     private Integer filterInitial; // needs override
     private Integer filterResourceId; // needs override        
     private String filterVersion;
@@ -56,7 +56,7 @@ public class DriftChangeSetCriteria extends Criteria {
         return DriftChangeSet.class;
     }
 
-    public void addFilterId(Integer filterId) {
+    public void addFilterId(String filterId) {
         this.filterId = filterId;
     }
 

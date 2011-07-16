@@ -59,7 +59,7 @@ public class DriftFilesSender implements Runnable {
 
             for (DriftFile driftFile : driftFiles) {
                 File file = find(driftFile);
-                if (file == null) {
+                if (file == null || !file.exists()) {
                     log.warn("Unable to find file for " + driftFile);
                 } else {
                     copyFile(file, new File(contentDir, driftFile.getHashId()));

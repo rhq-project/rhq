@@ -112,6 +112,38 @@ public class DriftFilesSenderTest extends DriftTest {
         assertFileCopiedToContentDir(contentDir, "92c4abb");
     }
 
+    @Test
+    public void checkForFilesThatHaveBeenRemoved() throws Exception {
+        // It is possible that the server can request a file that has been deleted since it
+        // it was initially detected during drift detection.
+
+        String driftConfigName = "file-exists-test";
+
+        File confDir = mkdir(resourceDir, "conf");
+        touch(new File(confDir, "server-2.conf"));
+
+        File changeSetDir = changeSetDir(driftConfigName);
+
+        writeChangeSet(changeSetDir,
+            driftConfigName,
+            resourceDir.getAbsolutePath(),
+            COVERAGE.code(),
+            "conf 2",
+            "a34fcc 0 server-1.conf A",  // The file is listed but does not exist
+            "f319d5 0 server-2.conf A",
+            ""
+        );
+
+        sender.setDriftFiles(driftFiles("a34fcc", "f319d5"));
+        sender.setHeaders(new Headers(driftConfigName, resourceDir.getAbsolutePath(), COVERAGE));
+        sender.run();
+
+        File contentDir = mkdir(changeSetDir, "content");
+
+        assertEquals(contentDir.list().length, 1, "Expected to find one file in " + contentDir.getAbsolutePath());
+        assertFileCopiedToContentDir(contentDir, "f319d5");
+    }
+
     /**
      * This method only verifies that a file having a particular hash or SHA-256 has been
      * copied to the specified content directory.

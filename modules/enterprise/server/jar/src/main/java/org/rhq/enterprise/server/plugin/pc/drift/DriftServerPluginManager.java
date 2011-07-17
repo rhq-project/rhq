@@ -38,63 +38,8 @@ public class DriftServerPluginManager extends ServerPluginManager {
         super(pc);
     }
 
-    @Override
-    public void initialize() throws Exception {
-        super.initialize();
-    }
-
-    @Override
-    public void shutdown() {
-        super.shutdown();
-    }
-
-    @Override
-    public synchronized void loadPlugin(ServerPluginEnvironment env, boolean enabled) throws Exception {
-        super.loadPlugin(env, enabled);
-
-    }
-
-    @Override
-    protected void startPlugin(String pluginName) {
-        super.startPlugin(pluginName);
-
-    }
-
-    /**
-     * All of the plugins have been loaded, so now let the metadata manager sort through the definitions.
-     *
-     * @see org.rhq.enterprise.server.plugin.pc.ServerPluginManager#startPlugins()
-     */
-    @Override
-    public synchronized void startPlugins() {
-        super.startPlugins();
-
-    }
-
-    @Override
-    protected void stopPlugin(String pluginName) {
-
-        super.stopPlugin(pluginName);
-    }
-
-    /* (non-Javadoc)
-     * @see org.rhq.enterprise.server.plugin.pc.ServerPluginManager#stopPlugins()
-     */
-    @Override
-    public synchronized void stopPlugins() {
-
-        super.stopPlugins();
-    }
-
-    /* At unload-time ensure that any WAR files packaged with the server plugin are un-deployed on
-     * the RHQ Server.
-     * 
-     * @see org.rhq.enterprise.server.plugin.pc.AbstractTypeServerPluginContainer#unloadPlugin(org.rhq.enterprise.server.plugin.pc.ServerPluginEnvironment)
-     */
-    @Override
-    public synchronized void unloadPlugin(String pluginName) throws Exception {
-        // ServerPluginEnvironment env = getPluginEnvironment(pluginName);
-
-        super.unloadPlugin(pluginName);
+    public DriftServerPluginFacet getDriftServerPluginComponent() {
+        // TODO The name of the drift server plugin probably will need to be obtained from the system config
+        return (DriftServerPluginFacet) getServerPluginComponent("drift-rhq");
     }
 }

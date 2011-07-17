@@ -19,16 +19,22 @@
  */
 package org.rhq.enterprise.server.plugins.drift;
 
+import java.io.File;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.drift.DriftFile;
+import org.rhq.enterprise.server.drift.DriftManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.ControlFacet;
 import org.rhq.enterprise.server.plugin.pc.ControlResults;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginContext;
 import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginFacet;
+import org.rhq.enterprise.server.util.LookupUtil;
+
+import static org.rhq.enterprise.server.util.LookupUtil.getDriftManager;
 
 /**
  * A drift server-side plugin component that the server uses to process drift files.
@@ -36,7 +42,7 @@ import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginFacet;
  * @author Jay Shaughnessy
  * @author John Sanda
  */
-public class DriftServerPluginComponent implements ServerPluginComponent, DriftServerPluginFacet, ControlFacet {
+public class DriftServerPluginComponent implements DriftServerPluginFacet {
 
     private final Log log = LogFactory.getLog(DriftServerPluginComponent.class);
 
@@ -61,21 +67,14 @@ public class DriftServerPluginComponent implements ServerPluginComponent, DriftS
     }
 
     @Override
-    public DriftFile fetchDriftFile(String sha256) throws Exception {
-        // TODO Auto-generated method stub
-        return null;
+    public void saveChangeSet(int resourceId, File changeSetZip) throws Exception {
+        DriftManagerLocal driftMgr = getDriftManager();
+        driftMgr.storeChangeSet(resourceId, changeSetZip);
     }
 
     @Override
-    public void storeDriftFile(DriftFile driftFile) throws Exception {
-        // TODO Auto-generated method stub
-
+    public void saveChangeSetFiles(File changeSetFilesZip) throws Exception {
+        DriftManagerLocal driftMgr = getDriftManager();
+        driftMgr.storeFiles(changeSetFilesZip);
     }
-
-    @Override
-    public ControlResults invoke(String name, Configuration parameters) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
 }

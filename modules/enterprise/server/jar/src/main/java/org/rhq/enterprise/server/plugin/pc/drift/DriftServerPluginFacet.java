@@ -19,7 +19,10 @@
  */
 package org.rhq.enterprise.server.plugin.pc.drift;
 
+import java.io.File;
+
 import org.rhq.core.domain.drift.DriftFile;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
 
 /**
  * All drift server plugins must implement this facet.
@@ -27,9 +30,9 @@ import org.rhq.core.domain.drift.DriftFile;
  * @author Jay Shaughnessy
  * @author John Sanda
  */
-public interface DriftServerPluginFacet {
+public interface DriftServerPluginFacet extends ServerPluginComponent {
 
-    public void storeDriftFile(DriftFile driftFile) throws Exception;
+    void saveChangeSet(int resourceId, File changeSetZip) throws Exception;
 
-    public DriftFile fetchDriftFile(String sha256) throws Exception;
+    void saveChangeSetFiles(File changeSetFilesZip) throws Exception;
 }

@@ -119,57 +119,10 @@
 
            <activation>
               <property>
-                 <name>apache.integration.tests</name>
+                 <name>maven.test.skip</name>
+                 <value>!true</value>
               </property>
            </activation>
-
-            <properties>
-                <httpd.version>2.2.17</httpd.version>
-                <httpd.install.dir>${basedir}/target/itest/httpd</httpd.install.dir>
-            </properties>
-            
-            <repositories>
-                <repository>
-                    <id>Httpd binary repo</id>
-                    <name>Repository containing a binaries of httpd to be used with the tests</name>
-                    <url>http://jon01.mw.lab.eng.bos.redhat.com:8042/m2-repo</url>
-                </repository>
-            </repositories>
-            
-            <dependencies>
-                <!-- The expected layout of the httpd zip is:
-                    
-                    httpd-${httpd.version}.zip
-                    |-httpd-${httpd.version}
-                      |- x86
-                      |  |- ( ... the x86 build of apache configured as suggested below ... )
-                      |- x86_64
-                         |- ( ... the x86_64 build of apache configured as suggested below ... )
-                
-                    the httpd is expected to be built with most of the modules not built in:
-                    
-                    (the '- -' below is in reality a double hypen which is not allowed in XML
-                     comments)
-                    cd $HTTPD_CHECKOUT
-                    ./configure - -enable-modules=all - -enable-mods-shared=most - -prefix='somewhere' 
-                    
-                    after the build successfully finishes, it is necessary to update the apachectl
-                    script and envvars and envvars-std files in the bin directory of the build target
-                    (configured using the "prefix" option to the configure script)
-                    Those files contain the hardcoded path to the build target directory which needs
-                    to be replaced by the literal ${server.root} so that the tests can update the files
-                    with the actual server root before the tests get executed.
-                    
-                 -->
-                <dependency>
-                    <groupId>org.apache</groupId>
-                    <artifactId>httpd</artifactId>
-                    <version>${httpd.version}</version>
-                    <scope>test</scope>
-                    <type>zip</type>
-                </dependency>
-            </dependencies>
-            
          <build>
             <plugins>
                <!-- Integration testing voodoo to load and test this plugin with its plugin dependencies -->
@@ -253,30 +206,7 @@
                                       </move>
                                   </then>
                               </if> 
-                              <delete dir="target/itest/lib/augeas-native-${augeas.zip.version}" />   
-                              
-                              <!-- Now deploy the httpd binaries -->
-                              <unzip dest="target/itest/httpd">
-                                <fileset dir="${settings.localRepository}/org/apache/httpd/${httpd.version}" includes="*.zip" />
-                              </unzip>
-                              <move todir="target/itest/httpd">
-                                 <fileset dir="target/itest/httpd/httpd-${httpd.version}/x86" />
-                              </move>
-                              <if>
-                                  <or>
-                                     <os family="unix" arch="x86_64" />
-                                     <os family="unix" arch="amd64" />
-                                  </or>
-                                  <then>
-                                     <move todir="target/itest/httpd">
-                                        <fileset dir="target/itest/httpd/httpd-${httpd.version}/x86_64" />
-                                     </move>
-                                  </then>
-                              </if>     
-                              <delete dir="target/itest/httpd/httpd-${httpd.version}" />   
-                              <chmod perm="ugo+rx">
-                                 <fileset dir="target/itest/httpd/bin" />
-                              </chmod>                                                 
+                              <delete dir="target/itest/lib/augeas-native-${augeas.zip.version}" />                                 
                            </tasks>
                         </configuration>
                         <goals>
@@ -309,46 +239,7 @@
                            <systemPropertyVariables>
                               <org.hyperic.sigar.path>${basedir}/target/itest/lib</org.hyperic.sigar.path>
                               <project.artifactId>${project.artifactId}</project.artifactId>
-                              <project.version>${project.version}</project.version>
-                              
-                              <apache2.install.dir>${httpd.install.dir}</apache2.install.dir>
-                              <apache2.exe.path>${httpd.install.dir}/bin/httpd</apache2.exe.path>
-                              
-                              <!-- generic configurations -->
-                              <!-- 
-                              <port1>defaults to 11675</port1>
-                              <port2>defaults to 11676</port2>
-                              <port3>defaults to 11677</port3>
-                              <port4>defaults to 11678</port4>
-                              <localhost>defaults to the actual localhost hostname</localhost>
-                              <localhost.ip>defaults to the actual localhost ip</localhost.ip>
-                              <unresolvable.host>defaults to 'unreachable.host.com'</unresolvable.host>
-                              -->
-                               
-                              <!-- configuration of individual upgrade tests -->
-                              <!-- 
-                              <*.server.root>defaults to whatever path is passed to the tests - i.e. either apache2.install.dir or apache1.install.dir</*.server.root>
-                              <*.document.root>defaults to 'htdocs'</*.document.root>
-                              <*.listen1>defaults to ${port1}</*.listen1>
-                              <*.listen2>defaults to ${port2}</*.listen2>
-                              <*.listen3>defaults to ${port3}</*.listen3>
-                              <*.listen4>defaults to ${port4}</*.listen4>
-                              <*.servername.directive>defaults to ''</*.servername.directive>
-                              <*.additional.directives>defaults to ''</*.additional.directives>
-                              <*.vhost1.urls>defaults to '${localhost}:${port1}'</*.vhost1.urls>
-                              <*.vhost1.servername.directive>defaults to 'ServerName ${localhost}:${port1}'</*.vhost1.servername.directive>
-                              <*.vhost1.additional.directives>defaults to ''</*.vhost1.additional.directives>
-                              <*.vhost2.urls>defaults to '${localhost}:${port2}'</*.vhost2.urls>
-                              <*.vhost2.servername.directive>defaults to 'ServerName ${localhost}:${port2}'</*.vhost2.servername.directive>
-                              <*.vhost2.additional.directives>defaults to ''</*.vhost2.additional.directives>
-                              <*.vhost3.urls>defaults to '${localhost}:${port3}'</*.vhost3.urls>
-                              <*.vhost3.servername.directive>defaults to 'ServerName ${localhost}:${port3}'</*.vhost3.servername.directive>
-                              <*.vhost3.additional.directives>defaults to ''</*.vhost3.additional.directives>
-                              <*.vhost4.urls>defaults to '${localhost}:${port4}'</*.vhost4.urls>
-                              <*.vhost4.servername.directive>defaults to 'ServerName ${localhost}:${port4}'</*.vhost4.servername.directive>
-                              <*.vhost4.additional.directives>defaults to ''</*.vhost4.additional.directives>
-                              -->
-                              
+                              <project.version>${project.version}</project.version>                              
                            </systemPropertyVariables>
                         </configuration>
                      </execution>

@@ -77,8 +77,8 @@ public class Result {
         this.compensatingOperation = compensatingOperation;
     }
 
-    public Object getFailureDescription() {
-        return failureDescription;
+    public String getFailureDescription() {
+        return failureDescription + ", rolled-back=" + rolledBack;
     }
 
     public void setFailureDescription(/*List<Map<String, String>>*/Object failureDescription) {
@@ -91,5 +91,12 @@ public class Result {
 
     public void setRolledBack(boolean rolledBack) {
         this.rolledBack = rolledBack;
+    }
+
+    @Override
+    public String toString() {
+        return "Result{" +
+                "success=" + success +
+                '}';
     }
 }

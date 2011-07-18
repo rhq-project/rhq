@@ -41,15 +41,6 @@ public class Operation {
     private Map<String,Object> additionalProperties;
 
 
-    public Operation(String operation, List<PROPERTY_VALUE> address, NameValuePair payload) {
-        this.operation = operation;
-        this.address = address;
-        additionalProperties = new HashMap<String,Object>(2);
-        additionalProperties.put("name",payload.name);
-        additionalProperties.put("value",payload.value);
-
-    }
-
     public Operation(String operation, List<PROPERTY_VALUE> address, Map<String,Object> payload) {
         this.operation = operation;
         this.address = address;
@@ -79,7 +70,8 @@ public class Operation {
 
     public Operation(String operation, Address address) {
         this.operation = operation;
-        this.address = address.path;
+        if (address!=null)
+            this.address = address.path;
     }
 
     public Operation() {

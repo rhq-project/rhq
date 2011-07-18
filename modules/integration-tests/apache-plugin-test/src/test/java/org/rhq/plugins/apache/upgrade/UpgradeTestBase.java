@@ -77,6 +77,7 @@ import org.rhq.plugins.apache.parser.ApacheParserImpl;
 import org.rhq.plugins.apache.upgrade.UpgradeTestBase.ResourceKeyFormat;
 import org.rhq.plugins.apache.util.ApacheDeploymentUtil;
 import org.rhq.plugins.apache.util.ApacheDeploymentUtil.DeploymentConfig;
+import org.rhq.plugins.apache.util.ApacheExecutionUtil.ExpectedApacheState;
 import org.rhq.plugins.apache.util.ApacheExecutionUtil;
 import org.rhq.plugins.apache.util.HttpdAddressUtility;
 import org.rhq.plugins.apache.util.RuntimeApacheConfiguration;
@@ -205,32 +206,8 @@ public class UpgradeTestBase extends PluginContainerTest {
             }
     
             private void doSetup() throws Exception {
-                init();
-                
-                int i = 0;
-                while (i < 10) {
-                    execution.invokeOperation("start");
-                    
-                    //wait for max 30s for the httpd to start up                    
-                    int w = 0;
-                    ProcessInfo pi;
-                    while (w < 30) {
-                        pi = execution.getResourceContext().getNativeProcess();
-                        if (pi != null && pi.isRunning()) {
-                            //all is well, we have an apache process to test with
-                            return;
-                        }
-                        
-                        Thread.sleep(1000);
-                        ++w;
-                    }
-                    
-                    ++i;
-                    
-                    LOG.warn("Could not detect the httpd process after invoking the start operation but the operation didn't throw any exception. I will retry at most ten times and then fail loudly. This has been attempt no. " + i);
-                }
-                
-                throw new IllegalStateException("Failed to start the httpd process even after 10 retries without the apache component complaining. This is super strange.");
+                init();                
+                execution.invokeOperation(ExpectedApacheState.RUNNING, "start");
             }
     
             public TestSetup setup() throws Exception {
@@ -600,7 +577,7 @@ public class UpgradeTestBase extends PluginContainerTest {
             throw t;
         } finally {
             try {
-                setup.withApacheSetup().getExecutionUtil().invokeOperation("stop");
+                setup.withApacheSetup().getExecutionUtil().invokeOperation(ExpectedApacheState.STOPPED, "stop");
             } catch (Exception e) {
                 if (testFailed) {
                     LOG.error("Failed to stop apache.", e);

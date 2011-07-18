@@ -63,9 +63,9 @@ public class DriftConfigurationView extends TableSection<DriftConfigurationDataS
 
     private static final Criteria INITIAL_CRITERIA = new Criteria();
 
-    EntityContext context;
-    boolean hasWriteAccess;
-    DriftConfigurationDataSource dataSource;
+    private EntityContext context;
+    private boolean hasWriteAccess;
+    private DriftConfigurationDataSource dataSource;
 
     static {
         DriftCategory[] categoryValues = DriftCategory.values();
@@ -122,7 +122,7 @@ public class DriftConfigurationView extends TableSection<DriftConfigurationDataS
         super.configureTable();
     }
 
-    protected void setupTableInteractions(final boolean hasWriteAccess) {
+    private void setupTableInteractions(final boolean hasWriteAccess) {
         TableActionEnablement deleteEnablement = hasWriteAccess ? TableActionEnablement.ANY
             : TableActionEnablement.NEVER;
         TableActionEnablement detectNowEnablement = hasWriteAccess ? TableActionEnablement.SINGLE
@@ -166,11 +166,11 @@ public class DriftConfigurationView extends TableSection<DriftConfigurationDataS
         });
     }
 
-    void add() {
+    private void add() {
         DriftAddConfigWizard.showWizard(context);
     }
 
-    void delete(ListGridRecord[] records) {
+    private void delete(ListGridRecord[] records) {
         final int[] driftConfigIds = new int[records.length];
         for (int i = 0, selectionLength = records.length; i < selectionLength; i++) {
             ListGridRecord record = records[i];
@@ -193,7 +193,7 @@ public class DriftConfigurationView extends TableSection<DriftConfigurationDataS
         });
     }
 
-    void deleteAll() {
+    private void deleteAll() {
         GWTServiceLookup.getDriftService().deleteDriftConfigurationsByContext(context, new AsyncCallback<Integer>() {
             public void onSuccess(Integer resultCount) {
                 CoreGUI.getMessageCenter().notify(
@@ -207,7 +207,7 @@ public class DriftConfigurationView extends TableSection<DriftConfigurationDataS
         });
     }
 
-    void detectDrift(ListGridRecord[] records) {
+    private void detectDrift(ListGridRecord[] records) {
         DriftConfiguration driftConfig = (DriftConfiguration) records[0]
             .getAttributeAsObject(DriftConfigurationDataSource.ATTR_ENTITY);
         GWTServiceLookup.getDriftService().detectDrift(context, driftConfig, new AsyncCallback<Void>() {

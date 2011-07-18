@@ -83,7 +83,15 @@ public class DriftAddConfigWizardInfoStep extends AbstractWizardStep {
                     "At least one drift configuration template should exist for the resource type");
             }
 
-            templateSelect.setValueMap(templatesMap.keySet().toArray(new String[templatesMap.size()]));
+            Set<String> templatesMapKeySet = templatesMap.keySet();
+            String[] templatesMapKeySetArray = templatesMapKeySet.toArray(new String[templatesMap.size()]);
+            templateSelect.setValueMap(templatesMapKeySetArray);
+            if (templatesMapKeySetArray.length == 1) {
+                // there is only one, select it for the user
+                String theOne = templatesMapKeySetArray[0];
+                templateSelect.setValue(theOne);
+                wizard.setNewStartingConfiguration(templatesMap.get(theOne).createConfiguration());
+            }
             templateSelect.addChangedHandler(new ChangedHandler() {
                 public void onChanged(ChangedEvent event) {
                     Object value = event.getValue();

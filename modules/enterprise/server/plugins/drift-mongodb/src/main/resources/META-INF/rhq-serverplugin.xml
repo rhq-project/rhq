@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<drift-plugin
+   version="1.0"
+   apiVersion="1.0"
+   description="The Drift Management MongoDB Persistence Store"
+   displayName="Drift:RHQ"
+   name="drift-mongodb"
+   package="org.rhq.enterprise.server.plugins.drift.MorphiaTest"
+   xmlns="urn:xmlns:rhq-serverplugin.drift"
+   xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+    <serverplugin:help><![CDATA[
+        Provides back-end store and retrieve for drift files.
+    ]]></serverplugin:help>
+    
+    <serverplugin:plugin-component class="MongoDBDriftServer"/>
+
+    <drift diff-support="false" />
+    
+</drift-plugin>

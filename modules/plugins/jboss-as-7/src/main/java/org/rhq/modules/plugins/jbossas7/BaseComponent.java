@@ -284,7 +284,9 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
         if (!res.isSuccess())
             throw new IllegalArgumentException("Delete for [" + path + "] failed: " + res.getFailureDescription());
         if (path.contains("server-group")) {
-            // This was a server group level deployment - we also need to remove the entry in /deployments
+            // This was a server group level deployment - TODO do we also need to remove the entry in /deployments ?
+/*
+
             for (PROPERTY_VALUE val : address) {
                 if (val.getKey().equals("deployment")) {
                     ComplexResult res2 = connection.executeComplex(new Operation("remove",val.getKey(),val.getValue()));
@@ -292,6 +294,7 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
                         throw new IllegalArgumentException("Removal of [" + path + "] falied : " + res2.getFailureDescription());
                 }
             }
+*/
         }
         log.info("   ... done");
 
@@ -514,7 +517,13 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
                     ((CompositeOperation)operation).addStep(step);
                 }
             }
+        } else if (what.equals("naming")) {
+            if (op.equals("jndi-view")) {
+                address.addAll(pathToAddress(getPath()));
+                operation = new Operation("jndi-view",address);
+            }
         }
+
 
         OperationResult operationResult = new OperationResult();
         if (operation!=null) {

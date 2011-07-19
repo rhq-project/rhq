@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           targetNamespace="urn:xmlns:rhq-configuration-export"
+           xmlns:ce="urn:xmlns:rhq-configuration-export"
+           elementFormDefault="qualified"
+           jaxb:version="2.0"
+           xmlns:jaxb="http://java.sun.com/xml/ns/jaxb">
+
+    <xs:annotation>
+        <xs:documentation>
+            A schema for RHQ server configuration export files.
+        </xs:documentation>
+    </xs:annotation>
+    
+    <xs:element name="configuration-export" type="ce:ConfigurationExport" />
+
+    <xs:complexType name="ConfigurationExport">
+        <xs:sequence>
+            <xs:element type="ce:EntitiesExport" name="entities"/>
+        </xs:sequence>
+    </xs:complexType>
+    
+    <xs:complexType name="EntitiesExport">
+        <xs:choice>
+            <xs:sequence>
+                <xs:element minOccurs="0" maxOccurs="unbounded" type="ce:EntityExport" name="entity" />
+                <xs:element type="xs:string" name="notes" />
+            </xs:sequence>
+            <xs:element type="xs:string" name="error-message" />
+        </xs:choice>
+        <xs:attribute name="id" type="xs:ID">
+            <xs:annotation>
+                <xs:documentation>
+                    The ID of the exporter that exports these entities.
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+    
+    <xs:complexType name="EntityExport">
+        <xs:choice>
+            <xs:sequence>
+                <xs:element name="data" />
+                <xs:element type="xs:string" name="notes"/>
+            </xs:sequence>
+            <xs:element type="xs:string" name="error-message" />
+        </xs:choice>
+    </xs:complexType>
+</xs:schema>

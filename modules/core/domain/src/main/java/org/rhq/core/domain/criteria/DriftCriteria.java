@@ -1,11 +1,12 @@
 package org.rhq.core.domain.criteria;
 
+import java.io.Serializable;
 import java.util.List;
 
 import org.rhq.core.domain.drift.DriftCategory;
 import org.rhq.core.domain.util.PageOrdering;
 
-public interface DriftCriteria {
+public interface DriftCriteria extends Serializable {
 
     void addFilterId(String filterId);
 

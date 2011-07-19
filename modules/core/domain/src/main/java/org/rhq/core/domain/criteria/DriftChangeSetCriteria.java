@@ -1,9 +1,11 @@
 package org.rhq.core.domain.criteria;
 
+import java.io.Serializable;
+
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.util.PageOrdering;
 
-public interface DriftChangeSetCriteria {
+public interface DriftChangeSetCriteria extends Serializable {
 
     void addFilterId(String filterId);
 

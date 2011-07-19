@@ -62,7 +62,7 @@ public class RhqDriftCriteria extends Criteria implements DriftCriteria {
     }
 
     @Override
-    public Class<? extends Drift> getPersistentClass() {
+    public Class<RhqDrift> getPersistentClass() {
         return RhqDrift.class;
     }
 

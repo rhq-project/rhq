@@ -53,7 +53,7 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
- * A view that displays a paginated table of {@link org.rhq.core.domain.drift.Drift}s, along with the
+ * A view that displays a paginated table of {@link org.rhq.core.domain.drift.RhqDrift}s, along with the
  * ability to filter those drifts, sort those drifts, double-click a row to view full details a drift, and perform
  * various actions on the the drifts: delete selected, delete all from source, etc.
  * This view full respects the user's authorization, and will not allow acttions on the drifts unless the user is

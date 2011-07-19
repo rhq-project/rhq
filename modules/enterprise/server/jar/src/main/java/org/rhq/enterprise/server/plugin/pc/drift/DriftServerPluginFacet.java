@@ -21,7 +21,12 @@ package org.rhq.enterprise.server.plugin.pc.drift;
 
 import java.io.File;
 
-import org.rhq.core.domain.drift.DriftFile;
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
+import org.rhq.core.domain.criteria.DriftCriteria;
+import org.rhq.core.domain.drift.Drift;
+import org.rhq.core.domain.drift.DriftChangeSet;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
 
 /**
@@ -31,6 +36,10 @@ import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
  * @author John Sanda
  */
 public interface DriftServerPluginFacet extends ServerPluginComponent {
+
+    PageList<DriftChangeSet> findDriftChangeSetsByCriteria(Subject subject, DriftChangeSetCriteria criteria);
+
+    PageList<Drift> findDriftsByCriteria(Subject subject, DriftCriteria criteria);
 
     void saveChangeSet(int resourceId, File changeSetZip) throws Exception;
 

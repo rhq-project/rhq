@@ -18,8 +18,13 @@ import org.rhq.core.clientapi.agent.drift.DriftAgentService;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
+import org.rhq.core.domain.criteria.DriftCriteria;
+import org.rhq.core.domain.drift.Drift;
+import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
@@ -45,6 +50,18 @@ public class DriftServerBean implements DriftServerLocal {
 
     @EJB
     private AgentManagerLocal agentMgr;
+
+    @Override
+    public PageList<DriftChangeSet> findDriftChangeSetsByCriteria(Subject subject, DriftChangeSetCriteria criteria) {
+        DriftServerPluginFacet driftServerPlugin = getServerPlugin();
+        return driftServerPlugin.findDriftChangeSetsByCriteria(subject, criteria);
+    }
+
+    @Override
+    public PageList<Drift> findDriftsByCriteria(Subject subject, DriftCriteria criteria) {
+        DriftServerPluginFacet driftServerPlugin = getServerPlugin();
+        return driftServerPlugin.findDriftsByCriteria(subject, criteria);
+    }
 
     @Override
     @TransactionAttribute(NOT_SUPPORTED)

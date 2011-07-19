@@ -91,12 +91,10 @@ public class DriftGWTServiceImpl extends AbstractGWTServiceImpl implements Drift
     }
 
     @Override
-    public PageList<DriftChangeSet> findDriftChangeSetsByCriteria(DriftChangeSetCriteria criteria)
-        throws RuntimeException {
+    public PageList<DriftChangeSet> findDriftChangeSetsByCriteria(DriftChangeSetCriteria criteria) {
         try {
-            PageList<DriftChangeSet> result = driftManager.findDriftChangeSetsByCriteria(getSessionSubject(),
-                criteria);
-            return SerialUtility.prepare(result, "DriftService.findDriftChangeSetsByCriteria");
+            PageList<DriftChangeSet> results = driftServer.findDriftChangeSetsByCriteria(getSessionSubject(), criteria);
+            return SerialUtility.prepare(results, "DriftService.findDriftChangeSetsByCriteria");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
@@ -105,8 +103,8 @@ public class DriftGWTServiceImpl extends AbstractGWTServiceImpl implements Drift
     @Override
     public PageList<Drift> findDriftsByCriteria(DriftCriteria criteria) throws RuntimeException {
         try {
-            PageList<Drift> result = driftManager.findDriftsByCriteria(getSessionSubject(), criteria);
-            return SerialUtility.prepare(result, "DriftService.findDriftsByCriteria");
+            PageList<Drift> results = driftServer.findDriftsByCriteria(getSessionSubject(), criteria);
+            return SerialUtility.prepare(results, "DriftService.findDriftsByCriteria");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

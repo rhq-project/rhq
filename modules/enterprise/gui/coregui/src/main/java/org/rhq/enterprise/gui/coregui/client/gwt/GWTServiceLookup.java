@@ -216,6 +216,11 @@ public class GWTServiceLookup {
 
             this.timeout = (timeout <= 0) ? DEFAULT_RPC_TIMEOUT : timeout;
 
+            int rpcTimeout = CoreGUI.get().getRpcTimeout();
+            if (rpcTimeout > -1) {
+                this.timeout = rpcTimeout;
+            }
+
             if (CoreGUI.isDebugMode()) {
                 // debug mode is slow, so give requests more time to complete otherwise you'll get
                 // weird exceptions whose messages are extremely unhelpful in finding root cause

@@ -108,6 +108,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
     private RootCanvas rootCanvas;
     private MenuBarView menuBarView;
     private Footer footer;
+    private int rpcTimeout;
 
     public void onModuleLoad() {
         String hostPageBaseURL = GWT.getHostPageBaseURL();
@@ -119,6 +120,12 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
         String enableLocators = Location.getParameter("enableLocators");
         if ((null != enableLocators) && Boolean.parseBoolean(enableLocators)) {
             SeleniumUtility.setUseDefaultIds(false);
+        }
+
+        rpcTimeout = -1;
+        String rpcTimeoutParam =  Location.getParameter("rpcTimeout");
+        if (rpcTimeoutParam != null) {
+            rpcTimeout = Integer.parseInt(rpcTimeoutParam) * 1000;
         }
 
         coreGUI = this;
@@ -149,6 +156,10 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
         // Remove loading image, which can be seen if LoginView doesn't completely cover it.
         Element loadingPanel = DOM.getElementById("Loading-Panel");
         loadingPanel.removeFromParent();
+    }
+
+    public int getRpcTimeout() {
+        return rpcTimeout;
     }
 
     public void onPreviewNativeEvent(Event.NativePreviewEvent event) {

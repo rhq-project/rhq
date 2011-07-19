@@ -19,16 +19,15 @@
 
 package org.rhq.core.domain.criteria;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 
-import org.rhq.core.domain.drift.Drift;
-import org.rhq.core.domain.drift.RhqDrift;
 import org.rhq.core.domain.drift.DriftCategory;
+import org.rhq.core.domain.drift.RhqDrift;
 import org.rhq.core.domain.util.CriteriaUtils;
 import org.rhq.core.domain.util.PageOrdering;
 
@@ -42,10 +41,10 @@ public class RhqDriftCriteria extends Criteria implements DriftCriteria {
     private static final long serialVersionUID = 1L;
 
     private Integer filterId;
-    private List<DriftCategory> filterCategories = Collections.emptyList();
+    private List<DriftCategory> filterCategories = new ArrayList<DriftCategory>();
     private Integer filterChangeSetId; // needs override
     private String filterPath;
-    private List<Integer> filterResourceIds = Collections.emptyList(); // requires overrides
+    private List<Integer> filterResourceIds = new ArrayList<Integer>();
     private Long filterStartTime; // requires overrides
     private Long filterEndTime; // requires overrides    
 

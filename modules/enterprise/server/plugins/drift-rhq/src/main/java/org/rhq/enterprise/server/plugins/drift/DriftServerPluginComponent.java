@@ -24,15 +24,18 @@ import java.io.File;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.drift.DriftFile;
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
+import org.rhq.core.domain.criteria.DriftCriteria;
+import org.rhq.core.domain.criteria.RhqDriftChangeSetCriteria;
+import org.rhq.core.domain.criteria.RhqDriftCriteria;
+import org.rhq.core.domain.drift.Drift;
+import org.rhq.core.domain.drift.DriftCategory;
+import org.rhq.core.domain.drift.DriftChangeSet;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.drift.DriftManagerLocal;
-import org.rhq.enterprise.server.plugin.pc.ControlFacet;
-import org.rhq.enterprise.server.plugin.pc.ControlResults;
-import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginContext;
 import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginFacet;
-import org.rhq.enterprise.server.util.LookupUtil;
 
 import static org.rhq.enterprise.server.util.LookupUtil.getDriftManager;
 
@@ -64,6 +67,37 @@ public class DriftServerPluginComponent implements DriftServerPluginFacet {
 
     public void shutdown() {
         log.debug("The RHQ Drift plugin has been shut down!!! : " + this);
+    }
+
+    @Override
+    public PageList<DriftChangeSet> findDriftChangeSetsByCriteria(Subject subject, DriftChangeSetCriteria criteria) {
+        RhqDriftChangeSetCriteria rhqCriteria = new RhqDriftChangeSetCriteria();
+        rhqCriteria.addFilterId(criteria.getFilterId());
+        rhqCriteria.addFilterResourceId(criteria.getFilterResourceId());
+        rhqCriteria.addFilterVersion(criteria.getFilterVersion());
+        rhqCriteria.addFilterCategory(criteria.getFilterCategory());
+        rhqCriteria.fetchDrifts(criteria.isFetchDrifts());
+
+        PageList<? extends DriftChangeSet> results = getDriftManager().findDriftChangeSetsByCriteria(subject,
+            rhqCriteria);
+        return (PageList<DriftChangeSet>) results;
+    }
+
+    @Override
+    public PageList<Drift> findDriftsByCriteria(Subject subject, DriftCriteria criteria) {
+        RhqDriftCriteria rhqCriteria = new RhqDriftCriteria();
+        rhqCriteria.addFilterId(criteria.getFilterId());
+        rhqCriteria.addFilterCategories(criteria.getFilterCategories().toArray(new DriftCategory[] {}));
+        rhqCriteria.addFilterChangeSetId(criteria.getFilterChangeSetId());
+        rhqCriteria.addFilterEndTime(criteria.getFilterEndTime());
+        rhqCriteria.addFilterPath(criteria.getFilterPath());
+        rhqCriteria.addFilterResourceIds(criteria.getFilterResourceIds().toArray(new Integer[] {}));
+        rhqCriteria.addFilterStartTime(criteria.getFilterStartTime());
+        rhqCriteria.fetchChangeSet(criteria.isFetchChangeSet());
+        rhqCriteria.addSortCtime(criteria.getSortCtime());
+
+        PageList<? extends Drift> results = getDriftManager().findDriftsByCriteria(subject, rhqCriteria);
+        return (PageList<Drift>) results;
     }
 
     @Override

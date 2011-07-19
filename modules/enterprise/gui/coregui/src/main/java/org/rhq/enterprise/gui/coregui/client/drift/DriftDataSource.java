@@ -38,9 +38,10 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.DriftCriteria;
+import org.rhq.core.domain.criteria.RhqDriftCriteria;
 import org.rhq.core.domain.drift.Drift;
-import org.rhq.core.domain.drift.DriftCategory;
 import org.rhq.core.domain.drift.DriftChangeSet;
+import org.rhq.core.domain.drift.DriftCategory;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
@@ -60,7 +61,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * @author Jay Shaughnessy
  * @author John Mazzitelli
  */
-public class DriftDataSource extends RPCDataSource<Drift, DriftCriteria> {
+public class DriftDataSource extends RPCDataSource<Drift, RhqDriftCriteria> {
 
     public static final String CATEGORY_ICON_ADD = ImageManager.getDriftCategoryIcon(DriftCategory.FILE_ADDED);
     public static final String CATEGORY_ICON_CHANGE = ImageManager.getDriftCategoryIcon(DriftCategory.FILE_CHANGED);
@@ -161,7 +162,7 @@ public class DriftDataSource extends RPCDataSource<Drift, DriftCriteria> {
     }
 
     @Override
-    protected void executeFetch(final DSRequest request, final DSResponse response, final DriftCriteria criteria) {
+    protected void executeFetch(final DSRequest request, final DSResponse response, final RhqDriftCriteria criteria) {
         if (criteria == null) {
             // the user selected no categories in the filter - it makes sense from the UI perspective to show 0 rows
             response.setTotalRows(0);
@@ -200,7 +201,7 @@ public class DriftDataSource extends RPCDataSource<Drift, DriftCriteria> {
         default:
             Set<Integer> typesSet = new HashSet<Integer>();
             Set<String> ancestries = new HashSet<String>();
-            for (Drift drift : result) {
+             for (Drift drift : result) {
                 Resource resource = drift.getChangeSet().getResource();
                 typesSet.add(resource.getResourceType().getId());
                 ancestries.add(resource.getAncestry());
@@ -247,14 +248,14 @@ public class DriftDataSource extends RPCDataSource<Drift, DriftCriteria> {
     }
 
     @Override
-    protected DriftCriteria getFetchCriteria(DSRequest request) {
+    protected RhqDriftCriteria getFetchCriteria(DSRequest request) {
         DriftCategory[] categoriesFilter = getArrayFilter(request, FILTER_CATEGORIES, DriftCategory.class);
 
         if (categoriesFilter == null || categoriesFilter.length == 0) {
             return null; // user didn't select any priorities - return null to indicate no data should be displayed
         }
 
-        DriftCriteria criteria = new DriftCriteria();
+        RhqDriftCriteria criteria = new RhqDriftCriteria();
         criteria.fetchChangeSet(true);
         criteria.addFilterCategories(categoriesFilter);
 

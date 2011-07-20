@@ -665,7 +665,8 @@
         <!-- Version 0 is initial change-set -->
         <column name="VERSION" type="INTEGER" required="true"/>
         <column name="CATEGORY" type="VARCHAR2" size="20" required="true"/>                         
-        <column name="RESOURCE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE"/>        
+        <column name="RESOURCE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE"/>
+        <column name="CONFIG_ID" type="INTEGER" required="true" references="RHQ_CONFIG"/>
     </table>
     
     <!--  A single occurence of drift for a resource -->

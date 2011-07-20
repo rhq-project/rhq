@@ -54,12 +54,13 @@ import org.rhq.common.drift.ChangeSetReader;
 import org.rhq.common.drift.ChangeSetReaderImpl;
 import org.rhq.common.drift.DirectoryEntry;
 import org.rhq.common.drift.FileEntry;
+import org.rhq.common.drift.Headers;
 import org.rhq.core.clientapi.agent.drift.DriftAgentService;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.criteria.DriftJPACriteria;
 import org.rhq.core.domain.criteria.DriftChangeSetJPACriteria;
+import org.rhq.core.domain.criteria.DriftJPACriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.drift.DriftConfiguration;
@@ -159,9 +160,16 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
                         ChangeSetReader reader = new ChangeSetReaderImpl(new BufferedReader(new InputStreamReader(
                             stream)));
 
-                        // store the new change set info (not the actual blob) 
+                        // store the new change set info (not the actual blob)
+                        DriftConfiguration config = findDriftConfiguration(resource, reader.getHeaders());
+                        if (config == null) {
+                            log.error("Unable to locate " + config.getClass().getSimpleName() + "[id: " +
+                                config.getId() + ", name: " + config.getName() + "]. Change set cannot be saved.");
+                            return false;
+                        }
+
                         DriftChangeSetCategory category = reader.getHeaders().getType();
-                        driftChangeSet = new RhqDriftChangeSet(resource, version, category);
+                        driftChangeSet = new RhqDriftChangeSet(resource, version, category, config.getId());
                         entityManager.persist(driftChangeSet);
 
                         for (DirectoryEntry dir = reader.readDirectoryEntry(); null != dir; dir = reader
@@ -224,6 +232,16 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
         } finally {
             // delete the changeSetFile?
         }
+    }
+
+    DriftConfiguration findDriftConfiguration(Resource resource, Headers headers) {
+        for (Configuration config : resource.getDriftConfigurations()) {
+            DriftConfiguration driftConfig = new DriftConfiguration(config);
+            if (driftConfig.getName().equals(headers.getDriftConfigurationName())) {
+                return driftConfig;
+            }
+        }
+        return null;
     }
 
     private abstract class ChangeSetFileVisitor implements ZipUtil.ZipEntryVisitor {

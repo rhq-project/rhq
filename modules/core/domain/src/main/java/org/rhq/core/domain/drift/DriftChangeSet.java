@@ -19,6 +19,10 @@ public interface DriftChangeSet<D extends Drift> {
 
     void setCategory(DriftChangeSetCategory category);
 
+    int getDriftConfigurationId();
+
+    void setDriftConfigurationId(int id);
+
     Resource getResource();
 
     void setResource(Resource resource);

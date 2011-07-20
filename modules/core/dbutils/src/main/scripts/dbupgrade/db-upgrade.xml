@@ -3473,6 +3473,7 @@
                 <schema-addColumn   table="RHQ_DRIFT_CHANGE_SET" column="CATEGORY" columnType="VARCHAR2" precision="20" />
                 <schema-alterColumn table="RHQ_DRIFT_CHANGE_SET" column="CATEGORY" nullable="FALSE" />
                 <schema-addColumn   table="RHQ_DRIFT_CHANGE_SET" column="RESOURCE_ID" columnType="INTEGER" />
+                <schema-addColumn   table="RHQ_DRIFT_CHANGE_SET" column="CONFIG_ID" columnType="INTEGER" />
                 <schema-directSQL>
                     <statement desc="Creating RHQ_DRIFT_CHANGE_SET foreign key relation to RHQ_RESOURCE">
                         ALTER TABLE RHQ_DRIFT_CHANGE_SET
@@ -3481,7 +3482,16 @@
                         REFERENCES RHQ_RESOURCE (ID)
                     </statement>
                 </schema-directSQL>
+                <schema-directSQL>
+                    <statement desc="Creating RHQ_DRIFT_CHANGE_SET foreign key relation to RHQ_CONFIG">
+                        ALTER TABLE RHQ_DRIFT_CHANGE_SET
+                        ADD CONSTRAINT RHQ_DCS_CONFIG_ID_FK
+                        FOREIGN KEY (CONFIG_ID)
+                        REFERENCES RHQ_CONFIG (ID)
+                    </statement>
+                </schema-directSQL>
                 <schema-alterColumn table="RHQ_DRIFT_CHANGE_SET" column="RESOURCE_ID" nullable="FALSE" />
+                <schema-alterColumn table="RHQ_DRIFT_CHANGE_SET" column="CONFIG_ID" nullable="FALSE" />
 
                 <!-- RHQ_DRIFT -->
                 <schema-createSequence name="RHQ_DRIFT_ID_SEQ" initial="10001" />

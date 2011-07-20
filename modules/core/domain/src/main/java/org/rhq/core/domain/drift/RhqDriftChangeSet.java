@@ -78,6 +78,9 @@ public class RhqDriftChangeSet implements Serializable, DriftChangeSet<RhqDrift>
     @Enumerated(EnumType.STRING)
     private DriftChangeSetCategory category;
 
+    @Column(name = "CONFIG_ID", nullable = false)
+    private int driftConfigurationId;
+
     @JoinColumn(name = "RESOURCE_ID", referencedColumnName = "ID", nullable = false)
     @ManyToOne(optional = false)
     private Resource resource;
@@ -88,10 +91,11 @@ public class RhqDriftChangeSet implements Serializable, DriftChangeSet<RhqDrift>
     protected RhqDriftChangeSet() {
     }
 
-    public RhqDriftChangeSet(Resource resource, int version, DriftChangeSetCategory category) {
+    public RhqDriftChangeSet(Resource resource, int version, DriftChangeSetCategory category, int configId) {
         this.resource = resource;
         this.version = version;
         this.category = category;
+        driftConfigurationId = configId;
     }
 
     @Override
@@ -142,6 +146,16 @@ public class RhqDriftChangeSet implements Serializable, DriftChangeSet<RhqDrift>
     @Override
     public void setResource(Resource resource) {
         this.resource = resource;
+    }
+
+    @Override
+    public int getDriftConfigurationId() {
+        return driftConfigurationId;
+    }
+
+    @Override
+    public void setDriftConfigurationId(int id) {
+        driftConfigurationId = id;
     }
 
     @Override

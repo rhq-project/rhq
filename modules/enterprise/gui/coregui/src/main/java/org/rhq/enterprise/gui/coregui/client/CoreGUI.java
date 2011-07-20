@@ -125,7 +125,11 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
         rpcTimeout = -1;
         String rpcTimeoutParam =  Location.getParameter("rpcTimeout");
         if (rpcTimeoutParam != null) {
-            rpcTimeout = Integer.parseInt(rpcTimeoutParam) * 1000;
+            try {
+                rpcTimeout = Integer.parseInt(rpcTimeoutParam) * 1000;
+            } catch (NumberFormatException ignored) {
+                // nada
+            }
         }
 
         coreGUI = this;

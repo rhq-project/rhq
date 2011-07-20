@@ -40,8 +40,6 @@ import javax.persistence.PrePersist;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
-import org.hibernate.annotations.Type;
-
 /**
  * An occurrence of drifty to be reported and managed by the user.
  
@@ -54,7 +52,7 @@ import org.hibernate.annotations.Type;
     + " WHERE d.changeSet IN ( SELECT dcs FROM RhqDriftChangeSet dcs WHERE dcs.resource.id IN ( :resourceIds ) ) )") })
 @Table(name = "RHQ_DRIFT")
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_DRIFT_ID_SEQ")
-public class RhqDrift implements Serializable, Drift<RhqDriftChangeSet> {
+public class RhqDrift implements Serializable, Drift<RhqDriftChangeSet, RhqDriftFile> {
     private static final long serialVersionUID = 1L;
 
     public static final String QUERY_DELETE_BY_RESOURCES = "RhqDrift.deleteByResources";
@@ -81,11 +79,11 @@ public class RhqDrift implements Serializable, Drift<RhqDriftChangeSet> {
 
     @JoinColumn(name = "OLD_DRIFT_FILE", referencedColumnName = "HASH_ID", nullable = true)
     @ManyToOne(fetch = FetchType.EAGER, optional = true)
-    private DriftFile oldDriftFile;
+    private RhqDriftFile oldDriftFile;
 
     @JoinColumn(name = "NEW_DRIFT_FILE", referencedColumnName = "HASH_ID", nullable = true)
     @ManyToOne(fetch = FetchType.EAGER, optional = true)
-    private DriftFile newDriftFile;
+    private RhqDriftFile newDriftFile;
 
     protected RhqDrift() {
     }
@@ -96,8 +94,8 @@ public class RhqDrift implements Serializable, Drift<RhqDriftChangeSet> {
      * @param oldDriftFile required for FILE_CHANGED and FILE_REMOVED, null for FILE_ADDED
      * @param newDriftFile required for FILE_CHANGED and FILE_ADDED, null for FILE_REMOVED
      */
-    public RhqDrift(RhqDriftChangeSet changeSet, String path, DriftCategory category, DriftFile oldDriftFile,
-                    DriftFile newDriftFile) {
+    public RhqDrift(RhqDriftChangeSet changeSet, String path, DriftCategory category, RhqDriftFile oldDriftFile,
+                    RhqDriftFile newDriftFile) {
         this.changeSet = changeSet;
         this.path = path;
         this.category = category;
@@ -156,22 +154,22 @@ public class RhqDrift implements Serializable, Drift<RhqDriftChangeSet> {
     }
 
     @Override
-    public DriftFile getOldDriftFile() {
+    public RhqDriftFile getOldDriftFile() {
         return oldDriftFile;
     }
 
     @Override
-    public void setOldDriftFile(DriftFile oldDriftFile) {
+    public void setOldDriftFile(RhqDriftFile oldDriftFile) {
         this.oldDriftFile = oldDriftFile;
     }
 
     @Override
-    public DriftFile getNewDriftFile() {
+    public RhqDriftFile getNewDriftFile() {
         return newDriftFile;
     }
 
     @Override
-    public void setNewDriftFile(DriftFile newDriftFile) {
+    public void setNewDriftFile(RhqDriftFile newDriftFile) {
         this.newDriftFile = newDriftFile;
     }
 

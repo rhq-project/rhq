@@ -33,9 +33,9 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
 /**
- * A DriftFile represents one unique piece of content used for drift tracking.  Because the bits are supported
+ * A RhqDriftFile represents one unique piece of content used for drift tracking.  Because the bits are supported
  * by java.sql.Blob and java.io streaming, we must hide the bits from entities used on the gwt client. This base
- * class is used as the superclass for both DriftFile (no blob) and DriftFileBits (blob).
+ * class is used as the superclass for both RhqDriftFile (no blob) and DriftFileBits (blob).
  *  
  * @author Jay Shaughnessy
  * @author John Mazzitelli
@@ -72,12 +72,8 @@ public class AbstractDriftFile implements Serializable {
         this.dataSize = dataSize;
     }
 
-    public long getDataSize() {
+    public Long getDataSize() {
         return dataSize;
-    }
-
-    public void setDataSize(long size) {
-        dataSize = size;
     }
 
     public DriftFileStatus getStatus() {

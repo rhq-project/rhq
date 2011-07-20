@@ -22,30 +22,25 @@
  */
 package org.rhq.core.domain.drift;
 
-import java.io.InputStream;
 import java.io.Serializable;
-import java.sql.Blob;
-import java.sql.SQLException;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
-import javax.persistence.Lob;
 import javax.persistence.Table;
 
 /**
- * A RhqDriftFile represents one unique piece of content used for drift tracking.  Note that DriftFileBits provides
- * access to the bits through java.sql.Blob. This entity can not be used client-side (gwt) whereas its sister class,
- * RhqDriftFile, can.  Both enities share the same table and abstract superclass. See RHQDomain.gwt.xml for how to
- * exclude unwanted domain classes from the gwt compile.
- *
+ * A RhqDriftFile represents one unique piece of content used for drift tracking.  Note that RhqDriftFile does not
+ * include the actual bits, and therefore can be used freely client-side (gwt).  The bits are stored via the
+ * DriftFileBits class, which is like this one but adds the Blob field. 
+ *  
  * @author Jay Shaughnessy
  * @author John Mazzitelli
  * @author John Sanda 
  */
 @Entity
 @Table(name = "RHQ_DRIFT_FILE")
-public class DriftFileBits extends AbstractDriftFile implements Serializable {
+public class RhqDriftFile extends AbstractDriftFile implements DriftFile {
     private static final long serialVersionUID = 1L;
 
     // this is a hash/digest that should uniquely identify the content
@@ -53,42 +48,28 @@ public class DriftFileBits extends AbstractDriftFile implements Serializable {
     @Column(name = "HASH_ID", nullable = false)
     private String hashId;
 
-    protected DriftFileBits() {
+    protected RhqDriftFile() {
         super();
     }
 
-    public DriftFileBits(String hashId) {
+    public RhqDriftFile(String hashId) {
         super();
         this.hashId = hashId;
     }
 
+    @Override
     public String getHashId() {
         return hashId;
     }
 
+    @Override
     public void setHashId(String hashId) {
         this.hashId = hashId;
     }
 
-    @Lob
-    @Column(name = "DATA", nullable = true)
-    private Blob data;
-
-    public Blob getBlob() {
-        return data;
-    }
-
-    public InputStream getData() throws SQLException {
-        return data.getBinaryStream();
-    }
-
-    public void setData(Blob blob) {
-        this.data = blob;
-    }
-
     @Override
     public String toString() {
-        return "DriftFileContent [hashId=" + hashId + ", status=" + status + "]";
+        return "RhqDriftFile [hashId=" + hashId + ", status=" + status + "]";
     }
 
 }

@@ -65,6 +65,7 @@ import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.domain.drift.DriftFile;
+import org.rhq.core.domain.drift.RhqDriftFile;
 import org.rhq.core.domain.drift.DriftFileBits;
 import org.rhq.core.domain.drift.DriftFileStatus;
 import org.rhq.core.domain.drift.RhqDrift;
@@ -153,7 +154,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
 
                 @Override
                 public boolean visit(ZipEntry zipEntry, ZipInputStream stream) throws Exception {
-                    List<DriftFile> emptyDriftFiles = new ArrayList<DriftFile>();
+                    List<? extends DriftFile> emptyDriftFiles = new ArrayList<RhqDriftFile>();
                     RhqDriftChangeSet driftChangeSet = null;
 
                     try {
@@ -177,8 +178,10 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
 
                             for (Iterator<FileEntry> i = dir.iterator(); i.hasNext();) {
                                 FileEntry entry = i.next();
-                                DriftFile oldDriftFile = getDriftFile(entry.getOldSHA(), emptyDriftFiles);
-                                DriftFile newDriftFile = getDriftFile(entry.getNewSHA(), emptyDriftFiles);
+                                RhqDriftFile oldDriftFile = getDriftFile(entry.getOldSHA(),
+                                    (List<RhqDriftFile>) emptyDriftFiles);
+                                RhqDriftFile newDriftFile = getDriftFile(entry.getNewSHA(),
+                                    (List<RhqDriftFile>) emptyDriftFiles);
 
                                 // TODO Figure out an efficient way to save coverage change sets.
                                 // The initial/coverage change set could contain hundreds or even thousands
@@ -189,20 +192,21 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
                                 // use a path with only forward slashing to ensure consistent paths across reports
                                 String path = new File(dir.getDirectory(), entry.getFile()).getPath();
                                 path = FileUtil.useForwardSlash(path);
-                                Drift drift = new RhqDrift(driftChangeSet, path, entry.getType(), oldDriftFile,
+                                RhqDrift drift = new RhqDrift(driftChangeSet, path, entry.getType(), oldDriftFile,
                                     newDriftFile);
                                 entityManager.persist(drift);
 
                             }
                         }
-                        // send a message to the agent requesting the empty DriftFile content
+                        // send a message to the agent requesting the empty RhqDriftFile content
                         if (!emptyDriftFiles.isEmpty()) {
 
                             AgentClient agentClient = agentManager.getAgentClient(subjectManager.getOverlord(),
                                 resourceId);
                             DriftAgentService service = agentClient.getDriftAgentService();
                             try {
-                                if (service.requestDriftFiles(resourceId, reader.getHeaders(), emptyDriftFiles)) {
+                                if (service.requestDriftFiles(resourceId, reader.getHeaders(),
+                                    (List<DriftFile>) emptyDriftFiles)) {
                                     for (DriftFile driftFile : emptyDriftFiles) {
                                         driftFile.setStatus(DriftFileStatus.REQUESTED);
                                     }
@@ -247,17 +251,17 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     private abstract class ChangeSetFileVisitor implements ZipUtil.ZipEntryVisitor {
     }
 
-    private DriftFile getDriftFile(String sha256, List<DriftFile> emptyDriftFiles) {
-        DriftFile result = null;
+    private RhqDriftFile getDriftFile(String sha256, List<RhqDriftFile> emptyDriftFiles) {
+        RhqDriftFile result = null;
 
         if (null == sha256 || "0".equals(sha256)) {
             return result;
         }
 
-        result = entityManager.find(DriftFile.class, sha256);
-        // if the DriftFile is not yet in the db, then it needs to be fetched from the agent
+        result = entityManager.find(RhqDriftFile.class, sha256);
+        // if the RhqDriftFile is not yet in the db, then it needs to be fetched from the agent
         if (null == result) {
-            result = persistDriftFile(new DriftFile(sha256));
+            result = persistDriftFile(new RhqDriftFile(sha256));
             emptyDriftFiles.add(result);
         }
 
@@ -265,7 +269,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     }
 
     @Override
-    public DriftFile persistDriftFile(DriftFile driftFile) {
+    public RhqDriftFile persistDriftFile(RhqDriftFile driftFile) {
 
         entityManager.persist(driftFile);
         return driftFile;
@@ -273,11 +277,11 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
 
     @Override
     @TransactionAttribute(REQUIRES_NEW)
-    public void persistDriftFileData(DriftFile driftFile, InputStream data) throws Exception {
+    public void persistDriftFileData(RhqDriftFile driftFile, InputStream data) throws Exception {
 
         DriftFileBits df = entityManager.find(DriftFileBits.class, driftFile.getHashId());
         if (null == df) {
-            throw new IllegalArgumentException("DriftFile not found [" + driftFile.getHashId() + "]");
+            throw new IllegalArgumentException("RhqDriftFile not found [" + driftFile.getHashId() + "]");
         }
         df.setData(Hibernate.createBlob(new BufferedInputStream(data)));
         df.setStatus(DriftFileStatus.LOADED);
@@ -300,7 +304,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
 
         ZipUtil.unzipFile(filesZip, dir);
         for (File file : dir.listFiles()) {
-            DriftFile driftFile = new DriftFile(file.getName());
+            RhqDriftFile driftFile = new RhqDriftFile(file.getName());
             try {
                 driftManager.persistDriftFileData(driftFile, new FileInputStream(file));
             } catch (Exception e) {
@@ -332,7 +336,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
 
         public boolean visit(ZipEntry entry, ZipInputStream stream) throws Exception {
             String sha256 = entry.getName();
-            DriftFile driftFile = new DriftFile(sha256);
+            RhqDriftFile driftFile = new RhqDriftFile(sha256);
 
             // TODO use server plugin
             try {
@@ -531,8 +535,8 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     }
 
     @Override
-    public DriftFile getDriftFile(Subject subject, String sha256) {
-        DriftFile result = entityManager.find(DriftFile.class, sha256);
+    public RhqDriftFile getDriftFile(Subject subject, String sha256) {
+        RhqDriftFile result = entityManager.find(RhqDriftFile.class, sha256);
         return result;
     }
 

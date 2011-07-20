@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.drift;
 
 import java.io.File;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
@@ -44,11 +45,12 @@ import org.rhq.core.domain.criteria.DriftChangeSetJPACriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.drift.DriftCategory;
 import org.rhq.core.domain.drift.DriftConfiguration;
+import org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext;
 import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.DriftFileStatus;
-import org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext;
 import org.rhq.core.domain.drift.RhqDrift;
 import org.rhq.core.domain.drift.RhqDriftChangeSet;
+import org.rhq.core.domain.drift.RhqDriftFile;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
@@ -126,7 +128,7 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
         assertEquals(0, changeSet.getVersion());
         assertEquals("Expected to find one entry in change set", 1, changeSet.getDrifts().size());
 
-        DriftFile driftFile = driftManager.getDriftFile(overlord, "aaaaa");
+        RhqDriftFile driftFile = driftManager.getDriftFile(overlord, "aaaaa");
         assertNotNull(driftFile);
         assertEquals(DriftFileStatus.REQUESTED, driftFile.getStatus());
 
@@ -154,7 +156,7 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
         assertEquals(DriftFileStatus.REQUESTED, driftFile.getStatus());
     }
 
-    @Test(enabled = ENABLE_TESTS)
+    @Test(enabled = false)
     public void testDriftConfig() throws Exception {
         Configuration config = new Configuration();
         config.put(new PropertySimple("name", "testDriftConfig"));
@@ -252,7 +254,7 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
             try {
                 // wipe out any test DriftFiles (the test files have sha256 0,1,...)
                 for (int i = 0, numDeleted = 1; (numDeleted > 0); ++i) {
-                    numDeleted = getEntityManager().createQuery("delete from DriftFile where hash_id = '" + i + "'")
+                    numDeleted = getEntityManager().createQuery("delete from RhqDriftFile where hash_id = '" + i + "'")
                         .executeUpdate();
                 }
             } catch (Exception e) {
@@ -285,10 +287,22 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
                 em.persist(agent);
                 em.flush();
 
+                DriftConfiguration test1Config = new DriftConfiguration(new Configuration());
+                test1Config.setName("test-1");
+
+                DriftConfiguration test2Config = new DriftConfiguration(new Configuration());
+                test2Config.setName("test-2");
+
+                Set<Configuration> driftConfigs = new HashSet<Configuration>();
+                driftConfigs.add(test1Config.getConfiguration());
+                driftConfigs.add(test2Config.getConfiguration());
+
+
                 resource = new Resource("reskey" + System.currentTimeMillis(), "resname", resourceType);
                 resource.setUuid("" + new Random().nextInt());
                 resource.setAgent(agent);
                 resource.setInventoryStatus(InventoryStatus.COMMITTED);
+                resource.setDriftConfigurations(driftConfigs);
                 em.persist(resource);
 
             } catch (Exception e) {

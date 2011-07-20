@@ -1,6 +1,6 @@
 package org.rhq.core.domain.drift;
 
-public interface Drift<C extends DriftChangeSet> {
+public interface Drift<C extends DriftChangeSet, F extends DriftFile> {
     String getId();
 
     void setId(String id);
@@ -19,11 +19,11 @@ public interface Drift<C extends DriftChangeSet> {
 
     void setPath(String path);
 
-    DriftFile getOldDriftFile();
+    F getOldDriftFile();
 
-    void setOldDriftFile(DriftFile oldDriftFile);
+    void setOldDriftFile(F oldDriftFile);
 
-    DriftFile getNewDriftFile();
+    F getNewDriftFile();
 
-    void setNewDriftFile(DriftFile newDriftFile);
+    void setNewDriftFile(F newDriftFile);
 }

@@ -27,8 +27,8 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
 import org.rhq.core.domain.criteria.DriftCriteria;
-import org.rhq.core.domain.criteria.RhqDriftChangeSetCriteria;
-import org.rhq.core.domain.criteria.RhqDriftCriteria;
+import org.rhq.core.domain.criteria.DriftJPACriteria;
+import org.rhq.core.domain.criteria.DriftChangeSetJPACriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftCategory;
 import org.rhq.core.domain.drift.DriftChangeSet;
@@ -71,7 +71,7 @@ public class DriftServerPluginComponent implements DriftServerPluginFacet {
 
     @Override
     public PageList<DriftChangeSet> findDriftChangeSetsByCriteria(Subject subject, DriftChangeSetCriteria criteria) {
-        RhqDriftChangeSetCriteria rhqCriteria = new RhqDriftChangeSetCriteria();
+        DriftChangeSetJPACriteria rhqCriteria = new DriftChangeSetJPACriteria();
         rhqCriteria.addFilterId(criteria.getFilterId());
         rhqCriteria.addFilterResourceId(criteria.getFilterResourceId());
         rhqCriteria.addFilterVersion(criteria.getFilterVersion());
@@ -85,7 +85,7 @@ public class DriftServerPluginComponent implements DriftServerPluginFacet {
 
     @Override
     public PageList<Drift> findDriftsByCriteria(Subject subject, DriftCriteria criteria) {
-        RhqDriftCriteria rhqCriteria = new RhqDriftCriteria();
+        DriftJPACriteria rhqCriteria = new DriftJPACriteria();
         rhqCriteria.addFilterId(criteria.getFilterId());
         rhqCriteria.addFilterCategories(criteria.getFilterCategories().toArray(new DriftCategory[] {}));
         rhqCriteria.addFilterChangeSetId(criteria.getFilterChangeSetId());

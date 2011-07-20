@@ -26,8 +26,8 @@ import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
-import org.rhq.core.domain.criteria.RhqDriftChangeSetCriteria;
-import org.rhq.core.domain.criteria.RhqDriftCriteria;
+import org.rhq.core.domain.criteria.DriftChangeSetJPACriteria;
+import org.rhq.core.domain.criteria.DriftJPACriteria;
 import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.RhqDrift;
@@ -116,7 +116,7 @@ public interface DriftManagerLocal extends DriftManagerRemote {
      * @param criteria
      * @return The DriftChangeSets matching the criteria
      */
-    PageList<RhqDriftChangeSet> findDriftChangeSetsByCriteria(Subject subject, RhqDriftChangeSetCriteria criteria);
+    PageList<RhqDriftChangeSet> findDriftChangeSetsByCriteria(Subject subject, DriftChangeSetJPACriteria criteria);
 
     /**
      * Standard criteria based fetch method
@@ -124,7 +124,7 @@ public interface DriftManagerLocal extends DriftManagerRemote {
      * @param criteria
      * @return The Drifts matching the criteria
      */
-    PageList<RhqDrift> findDriftsByCriteria(Subject subject, RhqDriftCriteria criteria);
+    PageList<RhqDrift> findDriftsByCriteria(Subject subject, DriftJPACriteria criteria);
 
     /**
      * Get the specified drift configuration for the specified context.

@@ -40,7 +40,7 @@ import org.rhq.core.domain.util.PageList;
  * @author Joseph Marques
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-public abstract class Criteria implements Serializable {
+public abstract class Criteria implements Serializable, BaseCriteria {
     public enum Type {
         FILTER, FETCH, SORT;
     }
@@ -150,6 +150,7 @@ public abstract class Criteria implements Serializable {
      * which is useful from a server-side calling context where the PageControl object
      * will already have been created for you by the extensions at the JSF layer.
      */
+    @Override
     public void setPageControl(PageControl pageControl) {
         this.pageControlOverrides = pageControl;
     }

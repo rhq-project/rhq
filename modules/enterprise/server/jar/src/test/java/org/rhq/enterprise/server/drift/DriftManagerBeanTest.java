@@ -40,7 +40,7 @@ import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.criteria.RhqDriftChangeSetCriteria;
+import org.rhq.core.domain.criteria.DriftChangeSetJPACriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.drift.DriftCategory;
 import org.rhq.core.domain.drift.DriftConfiguration;
@@ -118,7 +118,7 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
         assertTrue(changeset1.exists());
         driftManager.storeChangeSet(newResource.getId(), changeset1);
 
-        RhqDriftChangeSetCriteria c = new RhqDriftChangeSetCriteria();
+        DriftChangeSetJPACriteria c = new DriftChangeSetJPACriteria();
         c.addFilterResourceId(newResource.getId());
         c.fetchDrifts(true);
         List<RhqDriftChangeSet> changeSets = driftManager.findDriftChangeSetsByCriteria(overlord, c);

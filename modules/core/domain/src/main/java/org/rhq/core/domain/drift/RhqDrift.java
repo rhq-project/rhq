@@ -54,7 +54,7 @@ import org.hibernate.annotations.Type;
     + " WHERE d.changeSet IN ( SELECT dcs FROM RhqDriftChangeSet dcs WHERE dcs.resource.id IN ( :resourceIds ) ) )") })
 @Table(name = "RHQ_DRIFT")
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_DRIFT_ID_SEQ")
-public class RhqDrift implements Serializable, Drift {
+public class RhqDrift implements Serializable, Drift<RhqDriftChangeSet> {
     private static final long serialVersionUID = 1L;
 
     public static final String QUERY_DELETE_BY_RESOURCES = "RhqDrift.deleteByResources";
@@ -126,7 +126,7 @@ public class RhqDrift implements Serializable, Drift {
     }
 
     @Override
-    public DriftChangeSet getChangeSet() {
+    public RhqDriftChangeSet getChangeSet() {
         return changeSet;
     }
 

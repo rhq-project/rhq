@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2009 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -339,13 +339,19 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
     }
 
     protected Augeas createAugeas() {
-        Augeas augeas;
+        Augeas augeas = null;
         try {
             augeas = new Augeas(this.augeasRootPath, AUGEAS_LOAD_PATH, Augeas.NO_MODL_AUTOLOAD);
             setupAugeasModules(augeas);
             loadConfigurationFiles(augeas);
         } catch (RuntimeException e) {
-            augeas = null;
+            if (augeas != null) {
+                try {
+                    augeas.close();
+                } catch (Exception e2) {
+                }
+                augeas = null;
+            }
             log.error("Failed to initialize Augeas Java API.", e);
         }
         return augeas;

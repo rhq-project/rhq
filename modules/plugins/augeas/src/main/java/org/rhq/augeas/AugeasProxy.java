@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2009 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -113,8 +113,22 @@ public class AugeasProxy {
             }
             augeas.load();
         } catch (NoClassDefFoundError e) {
+            if (augeas != null) {
+                try {
+                    augeas.close();
+                } catch (Exception e2) {
+                }
+                augeas = null;
+            }
             throw new AugeasException("Failed to initialize Augeas. It is probably not installed.", e);
         } catch (Exception e) {
+            if (augeas != null) {
+                try {
+                    augeas.close();
+                } catch (Exception e2) {
+                }
+                augeas = null;
+            }
             throw new AugeasException(e);
         }
     }

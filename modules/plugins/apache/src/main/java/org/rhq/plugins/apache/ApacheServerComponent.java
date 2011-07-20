@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -955,13 +955,22 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
             }
         
         String val = prop.getStringValue();
-        
-        if (val.equals("yes")){
-            try {                         
-               Augeas ag = new Augeas();                        
-            }catch(Exception e){
+
+        if (val.equals("yes")) {
+            Augeas ag = null;
+            try {
+                ag = new Augeas();
+            } catch (Exception e) {
                 log.error("Augeas is enabled in configuration but was not found on the system.");
-                throw new RuntimeException(CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);                
+                throw new RuntimeException(CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
+            } finally {
+                if (ag != null) {
+                    try {
+                        ag.close();
+                    } catch (Exception e) {
+                    }
+                    ag = null;
+                }
             }
             String version = getVersion();
             

@@ -21,7 +21,6 @@ package org.rhq.modules.plugins.jbossas7;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonNode;
-import org.hibernate.cfg.CollectionSecondPass;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -220,7 +219,7 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
 
         List<PROPERTY_VALUE> address = pathToAddress(path);
         ConfigurationDefinition configDef = context.getResourceType().getResourceConfigurationDefinition();
-        ConfigurationDelegate delegate = new ConfigurationDelegate(configDef,connection,new Address(address));
+        ConfigurationLoadDelegate delegate = new ConfigurationLoadDelegate(configDef,connection,new Address(address));
         return delegate.loadResourceConfiguration();
     }
 
@@ -229,7 +228,7 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
 
         List<PROPERTY_VALUE> address = pathToAddress(path);
         ConfigurationDefinition configDef = context.getResourceType().getResourceConfigurationDefinition();
-        ConfigurationDelegate delegate = new ConfigurationDelegate(configDef,connection,new Address(address));
+        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(configDef,connection,new Address(address));
         delegate.updateResourceConfiguration(report);
     }
 

@@ -56,7 +56,7 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
 
         FakeConnection connection = new FakeConnection();
 
-        ConfigurationDelegate delegate = new ConfigurationDelegate(definition,connection,null);
+        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(definition,connection,null);
 
         Configuration conf = new Configuration();
         conf.put(new PropertySimple("needed","test"));
@@ -79,7 +79,7 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
 
         FakeConnection connection = new FakeConnection();
 
-        ConfigurationDelegate delegate = new ConfigurationDelegate(definition,connection,null);
+        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(definition,connection,null);
 
         Configuration conf = new Configuration();
         PropertyList propertyList = new PropertyList("foo",
@@ -111,7 +111,7 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
 
         FakeConnection connection = new FakeConnection();
 
-        ConfigurationDelegate delegate = new ConfigurationDelegate(definition,connection,null);
+        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(definition,connection,null);
 
         Configuration conf = new Configuration();
         PropertyMap propertyMap = new PropertyMap("foo",
@@ -139,7 +139,7 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
 
         FakeConnection connection = new FakeConnection();
 
-        ConfigurationDelegate delegate = new ConfigurationDelegate(definition,connection,null);
+        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(definition,connection,null);
 
         Configuration conf = new Configuration();
         PropertyMap propertyMap = new PropertyMap("foo",
@@ -168,7 +168,7 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
 
         FakeConnection connection = new FakeConnection();
 
-        ConfigurationDelegate delegate = new ConfigurationDelegate(definition,connection,null);
+        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(definition,connection,null);
 
         Configuration conf = new Configuration();
         PropertyMap propertyMap = new PropertyMap("foo",
@@ -196,7 +196,7 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
 
         FakeConnection connection = new FakeConnection();
 
-        ConfigurationDelegate delegate = new ConfigurationDelegate(definition,connection,null);
+        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(definition,connection,null);
 
         Configuration conf = new Configuration();
         PropertyMap propertyMap = new PropertyMap("theMap",

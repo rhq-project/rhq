@@ -27,12 +27,48 @@
        <scm.module.path>modules/integration-tests/jboss-as-7-plugin-test</scm.module.path>
     </properties>
 
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>2.0</version>
+                <executions>
+                    <execution>
+                        <id>copy-postgres-driver</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>postgresql</groupId>
+                                    <artifactId>postgresql</artifactId>
+                                    <version>9.0-801.jdbc4</version>
+                                </artifactItem>
+                            </artifactItems>
+                            <outputDirectory>${project.build.directory}/test-classes</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+
+            </plugin>
+
+        </plugins>
+    </build>
 
     <dependencies>
         <dependency>
             <groupId>org.rhq</groupId>
             <artifactId>rhq-jboss-as-7-plugin</artifactId>
             <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>9.0-801.jdbc4</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 

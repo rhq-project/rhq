@@ -309,14 +309,14 @@
    <!-- used to perftest measurement collection -->
    <server name="server-d" class="PerfTestComponent" discovery="PerfTestDiscoveryComponent" description="Test Server D">
       <service name="service-d-metrics" class="PerfTestComponent" discovery="PerfTestDiscoveryComponent" description="Nested Service D With Metrics">
-         <metric property="metric000" defaultOn="true" displayType="summary" defaultInterval="540000"/>
-         <metric property="metric001" defaultOn="true" displayType="summary" defaultInterval="600000"/>
-         <metric property="metric002" defaultOn="true" displayType="summary" defaultInterval="720000"/>
-         <metric property="metric003" defaultOn="true" displayType="summary" defaultInterval="600000"/>
+         <metric property="metric000" defaultOn="true" displayType="summary" defaultInterval="200000"/>
+         <metric property="metric001" defaultOn="true" displayType="summary" defaultInterval="300000"/>
+         <metric property="metric002" defaultOn="true" displayType="summary" defaultInterval="400000"/>
+         <metric property="metric003" defaultOn="true" displayType="summary" defaultInterval="500000"/>
          <metric property="metric004" defaultOn="true" displayType="summary" defaultInterval="600000"/>
-         <metric property="trait001"  defaultOn="true" dataType="trait" displayType="summary" defaultInterval="3600000"/>
-         <metric property="trait002"  defaultOn="true" dataType="trait" displayType="summary" defaultInterval="2400000"/>
-         <metric displayName="CallTime" property="calltime" defaultOn="true" dataType="calltime" defaultInterval="2400000" units="milliseconds"/>
+         <metric property="trait001"  defaultOn="true" dataType="trait" displayType="summary" defaultInterval="2000000"/>
+         <metric property="trait002"  defaultOn="true" dataType="trait" displayType="summary" defaultInterval="3000000"/>
+         <metric displayName="CallTime" property="calltime" defaultOn="false" dataType="calltime" defaultInterval="2400000" units="milliseconds"/>
          <event name="PerfTestEventType" description="a test event type"/>
       </service>
    </server>

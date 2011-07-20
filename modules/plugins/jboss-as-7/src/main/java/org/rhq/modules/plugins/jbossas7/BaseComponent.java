@@ -49,6 +49,7 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
 import org.rhq.modules.plugins.jbossas7.json.CompositeOperation;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
@@ -219,7 +220,7 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
 
         List<PROPERTY_VALUE> address = pathToAddress(path);
         ConfigurationDefinition configDef = context.getResourceType().getResourceConfigurationDefinition();
-        ConfigurationDelegate delegate = new ConfigurationDelegate(configDef,connection,address);
+        ConfigurationDelegate delegate = new ConfigurationDelegate(configDef,connection,new Address(address));
         return delegate.loadResourceConfiguration();
     }
 
@@ -228,7 +229,7 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
 
         List<PROPERTY_VALUE> address = pathToAddress(path);
         ConfigurationDefinition configDef = context.getResourceType().getResourceConfigurationDefinition();
-        ConfigurationDelegate delegate = new ConfigurationDelegate(configDef,connection,address);
+        ConfigurationDelegate delegate = new ConfigurationDelegate(configDef,connection,new Address(address));
         delegate.updateResourceConfiguration(report);
     }
 
@@ -350,20 +351,24 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
 
         String resourceKey;
         JsonNode result ;
+
+        CompositeOperation cop = new CompositeOperation();
+        cop.addStep(step1);
         /*
          * We need to check here if this is an upload to /deployment only
          * or if this should be deployed to a server group too
          */
 
         if (!toServerGroup) {
+            // if standalone, then :deploy the deployment anyway
+            Operation step2 = new Operation("deploy",step1.getAddress());
+            cop.addStep(step2);
 
-            result = connection.executeRaw(step1);
+            result = connection.executeRaw(cop);
             resourceKey = addressToPath(step1.getAddress());
 
         }
         else {
-            CompositeOperation cop = new CompositeOperation();
-            cop.addStep(step1);
 
             List<PROPERTY_VALUE> serverGroupAddress = new ArrayList<PROPERTY_VALUE>();
             serverGroupAddress.addAll(pathToAddress(context.getResourceKey()));

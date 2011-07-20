@@ -23,7 +23,7 @@ import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.criteria.DriftCriteria;
+import org.rhq.core.domain.criteria.DriftJPACriteria;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftCategory;
@@ -355,8 +355,8 @@ public abstract class AbstractRecentDriftsPortlet extends DriftHistoryView imple
         }
 
         @Override
-        protected DriftCriteria getFetchCriteria(DSRequest request) {
-            DriftCriteria criteria = new DriftCriteria();
+        protected DriftJPACriteria getFetchCriteria(DSRequest request) {
+            DriftJPACriteria criteria = new DriftJPACriteria();
 
             // result count
             String currentSetting = this.configuration.getSimpleValue(Constant.RESULT_COUNT,

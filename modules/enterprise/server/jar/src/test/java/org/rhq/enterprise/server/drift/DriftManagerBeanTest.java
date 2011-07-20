@@ -40,15 +40,15 @@ import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
+import org.rhq.core.domain.criteria.DriftChangeSetJPACriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
-import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftCategory;
-import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.DriftFileStatus;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext;
+import org.rhq.core.domain.drift.RhqDrift;
+import org.rhq.core.domain.drift.RhqDriftChangeSet;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
@@ -118,12 +118,12 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
         assertTrue(changeset1.exists());
         driftManager.storeChangeSet(newResource.getId(), changeset1);
 
-        DriftChangeSetCriteria c = new DriftChangeSetCriteria();
+        DriftChangeSetJPACriteria c = new DriftChangeSetJPACriteria();
         c.addFilterResourceId(newResource.getId());
         c.fetchDrifts(true);
-        List<DriftChangeSet> changeSets = driftManager.findDriftChangeSetsByCriteria(overlord, c);
+        List<RhqDriftChangeSet> changeSets = driftManager.findDriftChangeSetsByCriteria(overlord, c);
         assertEquals(1, changeSets.size());
-        DriftChangeSet changeSet = changeSets.get(0);
+        RhqDriftChangeSet changeSet = changeSets.get(0);
         assertEquals(0, changeSet.getVersion());
         assertEquals(0, changeSet.getDrifts().size());
 
@@ -144,7 +144,7 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
         changeSet = changeSets.get(1);
         assertEquals(1, changeSet.getVersion());
         assertEquals(1, changeSet.getDrifts().size());
-        Drift drift = changeSet.getDrifts().iterator().next();
+        RhqDrift drift = changeSet.getDrifts().iterator().next();
         assertEquals("dir/filename.ext", drift.getPath());
         assertEquals("aaaaa", drift.getOldDriftFile().getHashId());
         assertEquals("bbbbb", drift.getNewDriftFile().getHashId());

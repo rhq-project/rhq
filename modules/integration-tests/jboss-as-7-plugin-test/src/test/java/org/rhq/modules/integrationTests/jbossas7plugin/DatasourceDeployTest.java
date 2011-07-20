@@ -330,8 +330,8 @@ public class DatasourceDeployTest extends AbstractIntegrationTest {
 
         // Now invoke the operation
         DatasourceComponent dc = new DatasourceComponent();
-        dc.path="profile=default,subsystem=datasources,data-source=" + POSTGRES;
-        dc.connection = conn;
+        dc.setPath("profile=default,subsystem=datasources,data-source=" + POSTGRES);
+        dc.setConnection(conn);
 
         Configuration parameters = new Configuration();
         // Operation takes no parameters
@@ -411,7 +411,7 @@ public class DatasourceDeployTest extends AbstractIntegrationTest {
         op.addAdditionalProperty("enabled",true);
         res = conn.execute(op);
         assert res != null;
-        assert res.isSuccess() : "Was not able to add the driver to the serer-group: " + res.getFailureDescription();
+        assert res.isSuccess() : "Was not able to add the driver to the server-group: " + res.getFailureDescription();
         return sgAddress;
     }
 

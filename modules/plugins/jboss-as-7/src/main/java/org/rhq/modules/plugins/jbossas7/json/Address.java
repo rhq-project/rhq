@@ -44,6 +44,12 @@ public class Address {
         path.addAll(other.path);
     }
 
+    public Address(List<PROPERTY_VALUE> other) {
+        this();
+        if (other!=null)
+            path.addAll(other);
+    }
+
     public void add(String key, String value) {
         path.add(new PROPERTY_VALUE(key,value));
     }
@@ -52,12 +58,17 @@ public class Address {
     public String toString() {
         StringBuilder builder = new StringBuilder( "Address{" +
             "path: " );
-        Iterator<PROPERTY_VALUE> iterator = path.iterator();
-        while (iterator.hasNext()) {
-            PROPERTY_VALUE pv = iterator.next();
-            builder.append(pv.getKey()).append('=').append(pv.getValue());
-            if (iterator.hasNext())
-                builder.append(',');
+        if (path!=null) {
+            Iterator<PROPERTY_VALUE> iterator = path.iterator();
+            while (iterator.hasNext()) {
+                PROPERTY_VALUE pv = iterator.next();
+                builder.append(pv.getKey()).append('=').append(pv.getValue());
+                if (iterator.hasNext())
+                    builder.append(',');
+            }
+        }
+        else {
+            builder.append("-empty-");
         }
 
         builder.append('}');

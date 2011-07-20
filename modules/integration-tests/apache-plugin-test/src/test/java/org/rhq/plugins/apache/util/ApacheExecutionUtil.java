@@ -23,6 +23,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.resource.ProcessScan;
@@ -49,6 +52,8 @@ import org.rhq.plugins.platform.PlatformComponent;
  */
 public class ApacheExecutionUtil {
 
+    private static final Log LOG = LogFactory.getLog(ApacheExecutionUtil.class);
+    
     private ResourceType apacheServerResourceType;
     private ApacheServerComponent serverComponent;
     private ResourceContext<PlatformComponent> resourceContext;
@@ -59,6 +64,10 @@ public class ApacheExecutionUtil {
     private int snmpPort;
     private String pingUrl;
 
+    public enum ExpectedApacheState {
+        RUNNING, STOPPED
+    };
+    
     public ApacheExecutionUtil(ResourceType apacheServerResourceType, String serverRootPath, String exePath,
         String httpdConfPath, String pingUrl, String snmpHost, int snmpPort) {
 
@@ -100,18 +109,39 @@ public class ApacheExecutionUtil {
         serverComponent.start(resourceContext);
     }
 
-    public void invokeOperation(String... operationAndBackupOpsInCaseOfFailure) throws Exception {
-        Exception lastError = null;
-        for (String op : operationAndBackupOpsInCaseOfFailure) {
-            try {
-                serverComponent.invokeOperation(op, new Configuration());
-                return;
-            } catch (Exception e) {
-                lastError = e;
+    public void invokeOperation(ExpectedApacheState desiredState, String operation) throws Exception {
+        int i = 0;
+        while (i < 10) {
+            serverComponent.invokeOperation(operation, new Configuration());
+            
+            //wait for max 30s for the operation to "express" itself                 
+            int w = 0;
+            ProcessInfo pi;
+            while (w < 30) {
+                pi = getResourceContext().getNativeProcess();
+                
+                switch (desiredState) {
+                case RUNNING:
+                    if (pi != null && pi.isRunning()) {
+                        return;
+                    }
+                    break;
+                case STOPPED:
+                    if (pi == null || !pi.isRunning()) {
+                        return;
+                    }
+                }
+                
+                Thread.sleep(1000);
+                ++w;
             }
+            
+            ++i;
+            
+            LOG.warn("Could not detect the httpd process after invoking the start operation but the operation didn't throw any exception. I will retry at most ten times and then fail loudly. This has been attempt no. " + i);
         }
-
-        throw lastError;
+        
+        throw new IllegalStateException("Failed to start the httpd process even after 10 retries without the apache component complaining. This is super strange.");
     }
 
     public ResourceContext<PlatformComponent> getResourceContext() {

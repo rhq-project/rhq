@@ -35,7 +35,6 @@ import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
-import com.smartgwt.client.data.RecordList;
 import com.smartgwt.client.data.ResultSet;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.ListGridFieldType;
@@ -63,7 +62,6 @@ import com.smartgwt.client.widgets.form.fields.events.KeyPressEvent;
 import com.smartgwt.client.widgets.form.fields.events.KeyPressHandler;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
-import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.DataArrivedEvent;
 import com.smartgwt.client.widgets.grid.events.DataArrivedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
@@ -367,22 +365,21 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         if (tableInfo != null) {
             boolean lengthIsKnown = false;
             if (listGrid != null) {
-                RecordList results = listGrid.getRecordList();
+                ResultSet results = listGrid.getResultSet();
                 if (results != null) {
-                    if (results instanceof ResultSet) {
-                        Boolean flag = ((ResultSet) results).lengthIsKnown();
-                        lengthIsKnown = (flag != null) ? flag.booleanValue() : false;
-                    } else {
-                        lengthIsKnown = true;
+                    Boolean flag = results.lengthIsKnown();
+                    if (flag != null) {
+                        lengthIsKnown = flag.booleanValue();
                     }
+                } else {
+                    lengthIsKnown = (listGrid.getDataSource() == null); // not bound by a datasource, assume we know
                 }
             }
 
             String contents;
             if (lengthIsKnown) {
                 int totalRows = this.listGrid.getTotalRows();
-                ListGridRecord[] selection = this.listGrid.getSelection();
-                int selectedRows = (selection == null) ? 0 : selection.length;
+                int selectedRows = this.listGrid.getSelection().length;
                 contents = MSG.view_table_totalRows(String.valueOf(totalRows), String.valueOf(selectedRows));
             } else {
                 contents = MSG.view_table_totalRowsUnknown();
@@ -866,6 +863,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
                 this.listGrid.setSelectionType(getDefaultSelectionStyle());
             }
 
+            int selectionCount = this.listGrid.getSelection().length;
             for (TableActionInfo tableAction : tableActions) {
                 if (tableAction.actionCanvas != null) { // if null, we haven't initialized our buttons yet, so skip this
                     boolean enabled = (!this.tableActionDisableOverride && tableAction.action.isEnabled(this.listGrid

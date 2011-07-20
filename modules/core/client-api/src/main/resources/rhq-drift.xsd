@@ -37,7 +37,7 @@
         </xs:appinfo>
     </xs:annotation>
 
-    <xs:complexType name="Drift">
+    <xs:complexType name="RhqDrift">
         <xs:annotation>
             <xs:appinfo>
                 <jaxb:class name="DriftDescriptor" />

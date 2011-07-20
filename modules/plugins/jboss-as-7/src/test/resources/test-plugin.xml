@@ -89,4 +89,40 @@
 
     </server>
 
+    <server class="foo" discovery="foo" name="simple1">
+
+        <resource-configuration>
+
+            <c:simple-property name="readOnly" readOnly="true" />
+            <c:simple-property name="optional" readOnly="false" required="false"/>
+            <c:simple-property name="needed" readOnly="false" required="true"/>
+
+       </resource-configuration>
+    </server>
+
+    <server class="foo" discovery="foo" name="listOfSimple1">
+
+        <resource-configuration>
+
+            <c:list-property name="foo">
+                <c:simple-property name="optional" readOnly="false" required="false"/>
+            </c:list-property>
+
+       </resource-configuration>
+    </server>
+
+    <server class="foo" discovery="foo" name="mapOfSimple1">
+
+        <resource-configuration>
+
+            <c:map-property name="foo">
+                <c:simple-property name="readOnly" readOnly="true" />
+                <c:simple-property name="optional" readOnly="false" required="false"/>
+                <c:simple-property name="needed" readOnly="false" required="true"/>
+            </c:map-property>
+
+       </resource-configuration>
+    </server>
+
+
 </plugin>

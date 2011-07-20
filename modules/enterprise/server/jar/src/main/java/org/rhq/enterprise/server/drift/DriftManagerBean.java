@@ -19,8 +19,6 @@
  */
 package org.rhq.enterprise.server.drift;
 
-import static javax.ejb.TransactionAttributeType.REQUIRES_NEW;
-
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
@@ -60,15 +58,16 @@ import org.rhq.core.clientapi.agent.drift.DriftAgentService;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
-import org.rhq.core.domain.criteria.DriftCriteria;
+import org.rhq.core.domain.criteria.DriftJPACriteria;
+import org.rhq.core.domain.criteria.DriftChangeSetJPACriteria;
 import org.rhq.core.domain.drift.Drift;
-import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.DriftFileBits;
 import org.rhq.core.domain.drift.DriftFileStatus;
+import org.rhq.core.domain.drift.RhqDrift;
+import org.rhq.core.domain.drift.RhqDriftChangeSet;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.ZipUtil;
@@ -79,6 +78,8 @@ import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
+
+import static javax.ejb.TransactionAttributeType.REQUIRES_NEW;
 
 @Stateless
 public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
@@ -142,9 +143,9 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
         }
 
         try {
-            DriftChangeSetCriteria c = new DriftChangeSetCriteria();
+            DriftChangeSetJPACriteria c = new DriftChangeSetJPACriteria();
             c.addFilterResourceId(resourceId);
-            List<DriftChangeSet> changeSets = findDriftChangeSetsByCriteria(subjectManager.getOverlord(), c);
+            List<RhqDriftChangeSet> changeSets = findDriftChangeSetsByCriteria(subjectManager.getOverlord(), c);
             final int version = changeSets.size();
 
             ZipUtil.walkZipFile(changeSetZip, new ChangeSetFileVisitor() {
@@ -152,7 +153,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
                 @Override
                 public boolean visit(ZipEntry zipEntry, ZipInputStream stream) throws Exception {
                     List<DriftFile> emptyDriftFiles = new ArrayList<DriftFile>();
-                    DriftChangeSet driftChangeSet = null;
+                    RhqDriftChangeSet driftChangeSet = null;
 
                     try {
                         ChangeSetReader reader = new ChangeSetReaderImpl(new BufferedReader(new InputStreamReader(
@@ -160,7 +161,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
 
                         // store the new change set info (not the actual blob) 
                         DriftChangeSetCategory category = reader.getHeaders().getType();
-                        driftChangeSet = new DriftChangeSet(resource, version, category);
+                        driftChangeSet = new RhqDriftChangeSet(resource, version, category);
                         entityManager.persist(driftChangeSet);
 
                         for (DirectoryEntry dir = reader.readDirectoryEntry(); null != dir; dir = reader
@@ -177,7 +178,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
                                     // use a path with only forward slashing to ensure consistent paths across reports
                                     String path = new File(dir.getDirectory(), entry.getFile()).getPath();
                                     path = FileUtil.useForwardSlash(path);
-                                    Drift drift = new Drift(driftChangeSet, path, entry.getType(), oldDriftFile,
+                                    Drift drift = new RhqDrift(driftChangeSet, path, entry.getType(), oldDriftFile,
                                         newDriftFile);
                                     entityManager.persist(drift);
                                 }
@@ -329,7 +330,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
         int result = 0;
 
         for (String driftId : driftIds) {
-            Drift doomed = entityManager.find(Drift.class, driftId);
+            Drift doomed = entityManager.find(RhqDrift.class, driftId);
             if (null != doomed) {
                 entityManager.remove(doomed);
                 ++result;
@@ -354,7 +355,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     @Override
     public int deleteDriftsByContext(Subject subject, EntityContext entityContext) throws RuntimeException {
         int result = 0;
-        DriftCriteria criteria = new DriftCriteria();
+        DriftJPACriteria criteria = new DriftJPACriteria();
 
         switch (entityContext.getType()) {
         case Resource:
@@ -369,7 +370,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
             throw new IllegalArgumentException("Entity Context Type not supported [" + entityContext + "]");
         }
 
-        List<Drift> drifts = driftManager.findDriftsByCriteria(subject, criteria);
+        List<RhqDrift> drifts = driftManager.findDriftsByCriteria(subject, criteria);
         if (!drifts.isEmpty()) {
             String[] driftIds = new String[drifts.size()];
             int i = 0;
@@ -456,21 +457,21 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     }
 
     @Override
-    public PageList<DriftChangeSet> findDriftChangeSetsByCriteria(Subject subject, DriftChangeSetCriteria criteria) {
+    public PageList<RhqDriftChangeSet> findDriftChangeSetsByCriteria(Subject subject, DriftChangeSetJPACriteria criteria) {
 
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
-        CriteriaQueryRunner<DriftChangeSet> queryRunner = new CriteriaQueryRunner<DriftChangeSet>(criteria, generator,
+        CriteriaQueryRunner<RhqDriftChangeSet> queryRunner = new CriteriaQueryRunner<RhqDriftChangeSet>(criteria, generator,
             entityManager);
-        PageList<DriftChangeSet> result = queryRunner.execute();
+        PageList<RhqDriftChangeSet> result = queryRunner.execute();
         return result;
     }
 
     @Override
-    public PageList<Drift> findDriftsByCriteria(Subject subject, DriftCriteria criteria) {
+    public PageList<RhqDrift> findDriftsByCriteria(Subject subject, DriftJPACriteria criteria) {
 
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
-        CriteriaQueryRunner<Drift> queryRunner = new CriteriaQueryRunner<Drift>(criteria, generator, entityManager);
-        PageList<Drift> result = queryRunner.execute();
+        CriteriaQueryRunner<RhqDrift> queryRunner = new CriteriaQueryRunner<RhqDrift>(criteria, generator, entityManager);
+        PageList<RhqDrift> result = queryRunner.execute();
         return result;
     }
 
@@ -501,7 +502,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
         }
 
         if (null == result) {
-            throw new IllegalArgumentException("Drift Configuration Id [" + driftConfigId
+            throw new IllegalArgumentException("RhqDrift Configuration Id [" + driftConfigId
                 + "] not found for entityContext [" + entityContext + "]");
         }
 

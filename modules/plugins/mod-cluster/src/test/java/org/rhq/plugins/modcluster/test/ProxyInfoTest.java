@@ -50,8 +50,19 @@ public class ProxyInfoTest {
                     + ProxyInfo.Context.class.getCanonicalName();
             }
 
-            assert (proxyInfo.getAvailableContexts().size() != 0) : "Raw proxy info parsing failed!";
+            assert (proxyInfo.getAvailableContexts().size() != 0) : "Raw proxy info parsing failed to parse application contexts!";
+            assert (proxyInfo.getAvailableVhosts().size() != 0) : "Raw proxy info parsing failed to parse vhosts!";
         }
+    }
+
+    @Test
+    public void testProxyInfoWithEmptyConfig() throws IOException {
+        String testConfigurationFile = "/proxy_config/proxy_config_empty.txt";
+        String testConfiguration = readConfigFile(testConfigurationFile);
+        ProxyInfo proxyInfo = new ProxyInfo(testConfiguration);
+
+        assert (proxyInfo.getAvailableContexts().size() == 0) : "Raw proxy info parsing failed to parse an empty proxy config.";
+        assert (proxyInfo.getAvailableVhosts().size() == 0) : "Raw proxy info parsing failed to parse an empty proxy config.";
     }
 
     private String readConfigFile(String filePath) throws IOException {

@@ -72,7 +72,7 @@ public class ModclusterPluginTest {
                 log.info("...Loaded plugin: " + plugin);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.info("Error initializing the context", e);
         }
     }
 
@@ -93,19 +93,13 @@ public class ModclusterPluginTest {
     public void testDiscovery() throws Exception {
         InventoryReport report = PluginContainer.getInstance().getInventoryManager().executeServerScanImmediately();
         assert report != null;
-        System.out.println("Discovery took: " + (report.getEndTime() - report.getStartTime()) + "ms");
+        log.info("Discovery took: " + (report.getEndTime() - report.getStartTime()) + "ms");
 
-        Thread.sleep(10000);
-
-        report = PluginContainer.getInstance().getInventoryManager().executeServiceScanImmediately();
-        assert report != null;
-        System.out.println("Discovery took: " + (report.getEndTime() - report.getStartTime()) + "ms");
-
-        Thread.sleep(10000);
+        Thread.sleep(1000);
 
         report = PluginContainer.getInstance().getInventoryManager().executeServiceScanImmediately();
         assert report != null;
-        System.out.println("Discovery took: " + (report.getEndTime() - report.getStartTime()) + "ms");
+        log.info("Discovery took: " + (report.getEndTime() - report.getStartTime()) + "ms");
 
         List<String> typeNames = new ArrayList<String>() {
             {

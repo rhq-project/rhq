@@ -34,7 +34,7 @@ import java.util.regex.Pattern;
 public class ProxyInfo {
 
     private List<Context> availableContexts = new ArrayList<ProxyInfo.Context>();
-    private Map<String, Vhost> availableVHosts = new HashMap<String, Vhost>();
+    private Map<String, Vhost> availableVhosts = new HashMap<String, Vhost>();
 
     public ProxyInfo(String rawProxyInfo) {
         Pattern vhostPattern = Pattern.compile("Vhost.*\n");
@@ -50,7 +50,7 @@ public class ProxyInfo {
             String host = vhostPieces[1].trim();
             host = host.substring(host.indexOf(":") + 1).trim();
 
-            availableVHosts.put(identifier, new Vhost(identifier, host));
+            availableVhosts.put(identifier, new Vhost(identifier, host));
         }
 
         Pattern contextPattern = Pattern.compile("Context.*[\n|}]");
@@ -68,7 +68,7 @@ public class ProxyInfo {
             rawIsEnabled = rawIsEnabled.substring(rawIsEnabled.indexOf(':') + 1).trim();
             boolean isEnabled = rawIsEnabled.equals("ENABLED") ? true : false;
 
-            Vhost relatedVhost = availableVHosts.get(identifier);
+            Vhost relatedVhost = availableVhosts.get(identifier);
 
             availableContexts.add(new Context(relatedVhost.getHost(), actualContext, isEnabled));
         }
@@ -76,6 +76,10 @@ public class ProxyInfo {
 
     public List<Context> getAvailableContexts() {
         return Collections.unmodifiableList(availableContexts);
+    }
+
+    public List<Vhost> getAvailableVhosts() {
+        return Collections.unmodifiableList(new ArrayList<Vhost>(availableVhosts.values()));
     }
 
     private static class Vhost {

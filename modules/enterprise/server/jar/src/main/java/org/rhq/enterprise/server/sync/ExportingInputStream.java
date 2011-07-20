@@ -93,6 +93,7 @@ public class ExportingInputStream extends InputStream {
         this.messagesPerExporter = messagesPerExporter;
         inputStream = new PipedInputStream(size);
         exportOutput = new PipedOutputStream(inputStream);
+        zipOutput = zip;
     }
 
     @Override
@@ -240,7 +241,8 @@ public class ExportingInputStream extends InputStream {
             messages.setErrorMessage(message);
             wrt.writeStartElement(ERROR_MESSAGE_ELEMENT);
             wrt.writeCharacters(message);
-            wrt.writeEndElement();
+            wrt.writeEndElement(); // error-message
+            wrt.writeEndElement(); //entities
             return;
         }
 
@@ -292,6 +294,8 @@ public class ExportingInputStream extends InputStream {
             wrt.writeCharacters(notes);
             wrt.writeEndElement();
         }
+        
+        wrt.writeEndElement(); //entities
     }
 
     private static void safeClose(OutputStream str) {

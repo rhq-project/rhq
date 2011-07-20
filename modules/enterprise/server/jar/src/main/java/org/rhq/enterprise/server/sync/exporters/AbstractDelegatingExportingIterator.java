@@ -21,34 +21,35 @@ package org.rhq.enterprise.server.sync.exporters;
 
 import java.util.Iterator;
 
-import javax.xml.stream.XMLStreamException;
-
-import org.rhq.enterprise.server.sync.ExportWriter;
-
 /**
- * 
+ * An abstract base class that delegates the {@link Iterator} functionality to a provided
+ * "ordinary" iterator while leaving the exporting functionality to the subclasses.
  *
  * @author Lukas Krejci
  */
-public interface ExportingIterator<E> extends Iterator<E> {
+public abstract class AbstractDelegatingExportingIterator<E> implements ExportingIterator<E> {
 
-    /**
-     * Exports the current entity using the provided writer.
-     * <p>
-     * Can throw a runtime exception to denote a failure.
-     * 
-     * @param output
-     */
-    void export(ExportWriter output) throws XMLStreamException;
+    private Iterator<E> inner;
+    private E current;
     
-    /**
-     * This is the opportunity for the exporter to submit some
-     * messages that will be transfered to the export file. This
-     * is to submit some human understandable information that is 
-     * not otherwise formalized or to convey some other information
-     * about otherwise successful export of the single entity.
-     *  
-     * @return
-     */
-    String getNotes();
+    public AbstractDelegatingExportingIterator(Iterator<E> wrapped) {
+        inner = wrapped;
+    }
+    
+    public boolean hasNext() {
+        return inner.hasNext();
+    }
+
+    public E next() {  
+        current = inner.next();
+        return current;
+    }
+
+    public void remove() {
+        inner.remove();
+    }
+
+    protected E getCurrent() {
+        return current;
+    }
 }

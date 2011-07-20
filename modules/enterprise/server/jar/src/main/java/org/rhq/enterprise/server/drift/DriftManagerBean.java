@@ -172,16 +172,19 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
                                 DriftFile oldDriftFile = getDriftFile(entry.getOldSHA(), emptyDriftFiles);
                                 DriftFile newDriftFile = getDriftFile(entry.getNewSHA(), emptyDriftFiles);
 
-                                // We don't generate Drift occurrences off of a coverage changeset. It is used only
-                                // to give us a starting point and to tell us what files we need to pull down. 
-                                if (DriftChangeSetCategory.DRIFT.equals(category)) {
-                                    // use a path with only forward slashing to ensure consistent paths across reports
-                                    String path = new File(dir.getDirectory(), entry.getFile()).getPath();
-                                    path = FileUtil.useForwardSlash(path);
-                                    Drift drift = new RhqDrift(driftChangeSet, path, entry.getType(), oldDriftFile,
-                                        newDriftFile);
-                                    entityManager.persist(drift);
-                                }
+                                // TODO Figure out an efficient way to save coverage change sets.
+                                // The initial/coverage change set could contain hundreds or even thousands
+                                // of entries. We probably want to consider doing some kind of batch insert
+                                //
+                                // jsanda
+
+                                // use a path with only forward slashing to ensure consistent paths across reports
+                                String path = new File(dir.getDirectory(), entry.getFile()).getPath();
+                                path = FileUtil.useForwardSlash(path);
+                                Drift drift = new RhqDrift(driftChangeSet, path, entry.getType(), oldDriftFile,
+                                    newDriftFile);
+                                entityManager.persist(drift);
+
                             }
                         }
                         // send a message to the agent requesting the empty DriftFile content

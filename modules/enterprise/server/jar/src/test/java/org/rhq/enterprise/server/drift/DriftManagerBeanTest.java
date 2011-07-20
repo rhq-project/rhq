@@ -113,7 +113,6 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
 
     @Test(enabled = ENABLE_TESTS)
     public void testStoreChangeSet() throws Exception {
-        // the initial changeset should not create any drift, just should request a drift file "0"
         File changeset1 = new File("./src/test/resources/org/rhq/enterprise/server/drift/changeset-1.zip");
         assertTrue(changeset1.exists());
         driftManager.storeChangeSet(newResource.getId(), changeset1);
@@ -125,7 +124,7 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
         assertEquals(1, changeSets.size());
         RhqDriftChangeSet changeSet = changeSets.get(0);
         assertEquals(0, changeSet.getVersion());
-        assertEquals(0, changeSet.getDrifts().size());
+        assertEquals("Expected to find one entry in change set", 1, changeSet.getDrifts().size());
 
         DriftFile driftFile = driftManager.getDriftFile(overlord, "aaaaa");
         assertNotNull(driftFile);
@@ -140,7 +139,7 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
         assertEquals(2, changeSets.size());
         changeSet = changeSets.get(0);
         assertEquals(0, changeSet.getVersion());
-        assertEquals(0, changeSet.getDrifts().size());
+        assertEquals("Expected to find one entry in change set", 1, changeSet.getDrifts().size());
         changeSet = changeSets.get(1);
         assertEquals(1, changeSet.getVersion());
         assertEquals(1, changeSet.getDrifts().size());

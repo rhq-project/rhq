@@ -33,7 +33,7 @@ import org.rhq.core.domain.util.PageOrdering;
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
 @SuppressWarnings("unused")
-public class RhqDriftChangeSetCriteria extends Criteria implements DriftChangeSetCriteria {
+public class DriftChangeSetJPACriteria extends Criteria implements DriftChangeSetCriteria {
     private static final long serialVersionUID = 1L;
 
     private Integer filterId;
@@ -45,7 +45,7 @@ public class RhqDriftChangeSetCriteria extends Criteria implements DriftChangeSe
 
     private PageOrdering sortVersion;
 
-    public RhqDriftChangeSetCriteria() {
+    public DriftChangeSetJPACriteria() {
         filterOverrides.put("initial", "version = 0");
         filterOverrides.put("resourceId", "resource.id = ?");
     }

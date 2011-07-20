@@ -28,7 +28,7 @@ import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 
 import org.rhq.core.domain.criteria.DriftCriteria;
-import org.rhq.core.domain.criteria.RhqDriftCriteria;
+import org.rhq.core.domain.criteria.DriftJPACriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
@@ -58,7 +58,7 @@ public class DriftDetailsView extends LocatableVLayout implements BookmarkableVi
     }
 
     private void show(String driftId) {
-        DriftCriteria criteria = new RhqDriftCriteria();
+        DriftCriteria criteria = new DriftJPACriteria();
         criteria.addFilterId(driftId);
         criteria.fetchChangeSet(true);
         GWTServiceLookup.getDriftService().findDriftsByCriteria(criteria, new AsyncCallback<PageList<Drift>>() {

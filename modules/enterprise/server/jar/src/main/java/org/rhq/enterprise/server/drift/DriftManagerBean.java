@@ -58,8 +58,8 @@ import org.rhq.core.clientapi.agent.drift.DriftAgentService;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.criteria.RhqDriftChangeSetCriteria;
-import org.rhq.core.domain.criteria.RhqDriftCriteria;
+import org.rhq.core.domain.criteria.DriftJPACriteria;
+import org.rhq.core.domain.criteria.DriftChangeSetJPACriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.drift.DriftConfiguration;
@@ -143,7 +143,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
         }
 
         try {
-            RhqDriftChangeSetCriteria c = new RhqDriftChangeSetCriteria();
+            DriftChangeSetJPACriteria c = new DriftChangeSetJPACriteria();
             c.addFilterResourceId(resourceId);
             List<RhqDriftChangeSet> changeSets = findDriftChangeSetsByCriteria(subjectManager.getOverlord(), c);
             final int version = changeSets.size();
@@ -355,7 +355,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     @Override
     public int deleteDriftsByContext(Subject subject, EntityContext entityContext) throws RuntimeException {
         int result = 0;
-        RhqDriftCriteria criteria = new RhqDriftCriteria();
+        DriftJPACriteria criteria = new DriftJPACriteria();
 
         switch (entityContext.getType()) {
         case Resource:
@@ -457,7 +457,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     }
 
     @Override
-    public PageList<RhqDriftChangeSet> findDriftChangeSetsByCriteria(Subject subject, RhqDriftChangeSetCriteria criteria) {
+    public PageList<RhqDriftChangeSet> findDriftChangeSetsByCriteria(Subject subject, DriftChangeSetJPACriteria criteria) {
 
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
         CriteriaQueryRunner<RhqDriftChangeSet> queryRunner = new CriteriaQueryRunner<RhqDriftChangeSet>(criteria, generator,
@@ -467,7 +467,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     }
 
     @Override
-    public PageList<RhqDrift> findDriftsByCriteria(Subject subject, RhqDriftCriteria criteria) {
+    public PageList<RhqDrift> findDriftsByCriteria(Subject subject, DriftJPACriteria criteria) {
 
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
         CriteriaQueryRunner<RhqDrift> queryRunner = new CriteriaQueryRunner<RhqDrift>(criteria, generator, entityManager);

@@ -37,7 +37,7 @@ import org.rhq.core.domain.util.PageOrdering;
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
 @SuppressWarnings("unused")
-public class RhqDriftCriteria extends Criteria implements DriftCriteria {
+public class DriftJPACriteria extends Criteria implements DriftCriteria {
     private static final long serialVersionUID = 1L;
 
     private Integer filterId;
@@ -52,7 +52,7 @@ public class RhqDriftCriteria extends Criteria implements DriftCriteria {
 
     private PageOrdering sortCtime;
 
-    public RhqDriftCriteria() {
+    public DriftJPACriteria() {
         filterOverrides.put("changeSetId", "changeSet.id = ?");
         filterOverrides.put("categories", "category IN ( ? )");
         filterOverrides.put("resourceIds", "changeSet.resource.id IN ( ? )");

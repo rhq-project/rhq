@@ -34,14 +34,24 @@ public class Result {
     public static final String SUCCESS = "success";
     private String outcome;
     private Object result;
-    @JsonProperty("compensating-operation")
-    private Operation compensatingOperation;
     @JsonProperty("failure-description")
     private /*List<Map<String, String>>*/Object failureDescription;
     @JsonIgnore
     private boolean success = false;
     @JsonProperty("rolled-back")
     private boolean rolledBack = false;
+
+    public Object getResponseHeaders() {
+        return responseHeaders;
+    }
+
+    public void setResponseHeaders(Object responseHeaders) {
+        this.responseHeaders = responseHeaders;
+        System.err.println("Response headers: " + responseHeaders);
+    }
+
+    @JsonProperty("response-headers")
+    private Object responseHeaders;
 
     public Result() {
 
@@ -67,14 +77,6 @@ public class Result {
 
     public void setResult(Object result) {
         this.result = result;
-    }
-
-    public Operation getCompensatingOperation() {
-        return compensatingOperation;
-    }
-
-    public void setCompensatingOperation(Operation compensatingOperation) {
-        this.compensatingOperation = compensatingOperation;
     }
 
     public String getFailureDescription() {

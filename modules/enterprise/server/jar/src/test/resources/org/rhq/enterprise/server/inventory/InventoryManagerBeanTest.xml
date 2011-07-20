@@ -96,6 +96,13 @@
 
     <rhq_resource_subcat/>
     <rhq_resource_group/>
+    <rhq_resource_group_res_imp_map/>
+    <rhq_resource_group_res_exp_map/>
+    <rhq_config_group_update/>
+    <rhq_config_update/>
+    <rhq_tagging/>
+    <rhq_tagging_resource_map/>
+    <rhq_tagging_res_group_map/>
     <rhq_prd_ver/>
     <rhq_alert_definition/>
     <rhq_alert_condition/>
@@ -108,5 +115,7 @@
     <rhq_package/>
     <rhq_bundle/>
     <rhq_drift_template_map/>
+    <rhq_drift_change_set/>
+    <rhq_drift_config_map/>
     <rhq_plugin/>
 </dataset>

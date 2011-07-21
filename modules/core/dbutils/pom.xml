@@ -34,6 +34,13 @@
       <artifactId>ant</artifactId>
       <version>1.6.5</version>
     </dependency>
+    
+   <dependency>
+    	<groupId>commons-logging</groupId>
+    	<artifactId>commons-logging</artifactId>
+    	<version>1.1.1</version>
+	</dependency>
+
 
     <dependency>
       <groupId>ant</groupId>
@@ -50,9 +57,7 @@
 
     <dependency>
       <groupId>postgresql</groupId>
-      <artifactId>postgresql</artifactId>
-      <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-      <scope>test</scope>
+      <artifactId>postgresql</artifactId>      
     </dependency>
 
     <dependency>
@@ -74,65 +79,29 @@
   <build>
     <plugins>
       <plugin>
-        <groupId>org.codehaus.groovy.maven</groupId>
-        <artifactId>gmaven-plugin</artifactId>
-        <version>1.0</version>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>1.2</version>
         <dependencies>
           <dependency>
             <groupId>postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <version>${postgresql.version}</version>
           </dependency>
+           <dependency>
+    			<groupId>commons-logging</groupId>
+    			<artifactId>commons-logging</artifactId>
+    			<version>1.1.1</version>
+			</dependency>
         </dependencies>
         <executions>
           <execution>
-            <phase>compile</phase>
+            <phase>process-classes</phase>
             <goals>
-              <goal>execute</goal>
+              <goal>java</goal>
             </goals>
             <configuration>
-              <source>
-                import org.postgresql.Driver
-                import groovy.sql.Sql
-
-                if (!project.properties.dbreset) {
-                  return
-                }
-
-                db = project.properties.db
-                if (db == 'dev') {
-                  database = project.properties['rhq.dev.ds.db-name']
-                  server = project.properties['rhq.dev.ds.server-name'] ?: '127.0.0.1'
-                  rhqUser = project.properties['rhq.dev.ds.user-name'] ?: 'rhqadmin'
-		}
-		else {
-                  database = project.properties['rhq.test.ds.db-name']
-                  server = project.properties['rhq.test.ds.server-name'] ?: '127.0.0.1'
-                  rhqUser = project.properties['rhq.test.ds.user-name'] ?: 'rhqadmin'
-                }
-
-                // The upgrade.db property should be set for local builds when you
-                // need to test upgrade changes. Hudson builds will specify the
-                // database to use in settings.xml
-                if (project.properties['upgrade.db']) {
-                  database = 'rhqupgrade'
-                }
-
-                adminUsername = project.properties['rhq.db.admin.username'] ?: 'postgres'
-                adminPassword = project.properties['rhq.db.admin.password'] ?: 'postgres'
-                project.properties.dbsetup = 'true'
-
-                sql = Sql.newInstance(
-                     "jdbc:postgresql://${server}:5432/postgres",
-                     adminUsername,
-                     adminPassword,
-                     "org.postgresql.Driver")
-
-                sql.execute("drop database if exists ${Sql.expand(database)};")
-                log.info("dropped database $database")
-                sql.execute("create database ${Sql.expand(database)} with owner ${Sql.expand(rhqUser)};")
-                log.info("created database $database")
-              </source>
+            	<mainClass>org.rhq.core.db.reset.DBReset</mainClass>            
             </configuration>
           </execution>
         </executions>
@@ -201,22 +170,10 @@
                    <configuration>
                       <tasks>
                          <property name="settings.localRepository" location="${user.home}/.m2/repository}" />
-
-                         <condition property="rhq.ds.type-mapping" value="${rhq.dev.ds.type-mapping}" else="${rhq.test.ds.type-mapping}">
-                            <equals arg1="${db}" arg2="dev" />
-                         </condition>
-
-                         <condition property="rhq.ds.connection-url" value="${rhq.dev.ds.connection-url}" else="${rhq.test.ds.connection-url}">
-                            <equals arg1="${db}" arg2="dev" />
-                         </condition>
-
-                         <condition property="rhq.ds.user-name" value="${rhq.dev.ds.user-name}" else="${rhq.test.ds.user-name}">
-                            <equals arg1="${db}" arg2="dev" />
-                         </condition>
-
-                         <condition property="rhq.ds.password" value="${rhq.dev.ds.password}" else="${rhq.test.ds.password}">
-                            <equals arg1="${db}" arg2="dev" />
-                         </condition>
+                         <property name="rhq.ds.type-mapping" value="${rhq.ds.type-mapping}" />
+                         <property name="rhq.ds.connection-url" value="${rhq.ds.connection-url}"/>
+                         <property name="rhq.ds.user-name" value="${rhq.ds.user-name}"/>
+                         <property name="rhq.ds.password" value="${rhq.ds.password}"/>
 
                          <ant antfile="${basedir}/src/main/scripts/dbsetup-build.xml">
                             <property name="settings.localRepository" value="${settings.localRepository}" />

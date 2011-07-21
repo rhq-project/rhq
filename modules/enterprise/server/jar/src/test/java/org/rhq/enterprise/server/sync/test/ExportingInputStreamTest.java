@@ -20,8 +20,13 @@
 package org.rhq.enterprise.server.sync.test;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -32,9 +37,13 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.stream.XMLStreamException;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.testng.annotations.Test;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import org.rhq.core.domain.sync.ExporterMessages;
 import org.rhq.enterprise.server.sync.ExportException;
@@ -53,6 +62,8 @@ import org.rhq.enterprise.server.sync.exporters.ExportingIterator;
 @Test
 public class ExportingInputStreamTest {
 
+    private static final Log LOG = LogFactory.getLog(ExportingInputStreamTest.class);
+    
     private static class FailingExporter1 extends Exporters.DummyExporter<Void> {
         public FailingExporter1() {
             super(Void.class);
@@ -70,6 +81,8 @@ public class ExportingInputStreamTest {
         List<T> valuesToExport;
         Class<T> clazz;
         
+        public static final String NOTE_PREFIX = "Wow, I just exported an item from a list: ";
+        
         private class Iterator extends AbstractDelegatingExportingIterator<T> {
             public Iterator() {
                 super(valuesToExport.iterator());
@@ -82,7 +95,7 @@ public class ExportingInputStreamTest {
             }
             
             public String getNotes() {
-                return null;
+                return NOTE_PREFIX + getCurrent();
             }
         }
         
@@ -153,12 +166,21 @@ public class ExportingInputStreamTest {
     }
     
     public void testWithFullyWorkingExporters() throws Exception {
-        StringListExporter ex1 = new StringListExporter(Arrays.asList("a", "b", "c"));
-        IntegerListExporter ex2 = new IntegerListExporter(Arrays.asList(1, 2, 3));
+        List<String> list1 = Arrays.asList("a", "b", "c");
+        List<Integer> list2 = Arrays.asList(1, 2, 3);
+        
+        StringListExporter ex1 = new StringListExporter(list1);
+        IntegerListExporter ex2 = new IntegerListExporter(list2);
         
         Set<Exporter<?>> exporters = this.<Exporter<?>>asSet(ex1, ex2);
         
         InputStream export = new ExportingInputStream(exporters, new HashMap<String, ExporterMessages>(), 1024, false);
+        
+//        String exportContents = readAll(new InputStreamReader(export, "UTF-8"));
+//        
+//        LOG.info("Export contents:\n" + exportContents);
+//        
+//        export = new ByteArrayInputStream(exportContents.getBytes("UTF-8"));
         
         DocumentBuilder bld = DocumentBuilderFactory.newInstance().newDocumentBuilder();
         
@@ -176,12 +198,44 @@ public class ExportingInputStreamTest {
         assertEquals(export1.getAttribute("id"), StringListExporter.class.getName());
         assertEquals(export2.getAttribute("id"), IntegerListExporter.class.getName());
 
+        String[] expectedNotes = new String[] {list1.toString(), list2.toString()};
+        
         for(int i = 0; i < root.getChildNodes().getLength(); ++i) {
             Element entitiesElement = (Element) root.getChildNodes().item(i);
             
             assertEquals(entitiesElement.getNodeName(), ExportingInputStream.ENTITIES_EXPORT_ELEMENT);
             
-            //TODO finish this
+            NodeList errorMessages = entitiesElement.getElementsByTagName(ExportingInputStream.ERROR_MESSAGE_ELEMENT);
+            assertEquals(errorMessages.getLength(), 0, "Unexpected number of error message elements in an entities export.");
+            
+            Node note = getDirectChildByTagName(entitiesElement, ExportingInputStream.NOTES_ELEMENT);
+            
+            assertNotNull(note, "Couldn't find exporter notes.");
+            
+            String notesText = ((Element)note).getTextContent();
+            assertEquals(notesText, expectedNotes[i], "Unexpected notes for entities.");
+            
+            NodeList entityElements = entitiesElement.getElementsByTagName(ExportingInputStream.ENTITY_EXPORT_ELEMENT);
+            
+            assertEquals(entityElements.getLength(), 3, "Unexpected number of exported entities.");
+            
+            for(int j = 0; j < entityElements.getLength(); ++j) {
+                Element entityElement = (Element) entityElements.item(j);
+                
+                errorMessages = entityElement.getElementsByTagName(ExportingInputStream.ERROR_MESSAGE_ELEMENT);
+                assertEquals(errorMessages.getLength(), 0, "Unexpected number of error message elements in an entity.");
+                
+                note = getDirectChildByTagName(entityElement, ExportingInputStream.NOTES_ELEMENT);
+                assertNotNull(note, "Could not find notes for an exported entity.");
+                
+                Node data = getDirectChildByTagName(entityElement, ExportingInputStream.DATA_ELEMENT);
+                assertNotNull(data, "Could not find data element in the entity.");
+                
+                String dataText = ((Element)data).getTextContent();                
+                notesText = ((Element)note).getTextContent();
+                 
+                assertEquals(notesText, ListToStringExporter.NOTE_PREFIX + dataText, "Unexpected discrepancy between data and notes in the export.");
+            }
         }
     }
     
@@ -192,5 +246,30 @@ public class ExportingInputStreamTest {
         }
         
         return ret;
+    }
+    
+    private static String readAll(Reader rdr) throws IOException {
+        try {
+            StringBuilder bld = new StringBuilder();
+            int c;
+            while((c = rdr.read()) != -1) {
+                bld.append((char) c);
+            }
+            
+            return bld.toString();
+        } finally {
+            rdr.close();
+        }
+    }
+    
+    private static Node getDirectChildByTagName(Node node, String tagName) {
+        for(int i = 0; i < node.getChildNodes().getLength(); ++i) {
+            Node n = node.getChildNodes().item(i);
+            if (n.getNodeName().equals(tagName)) {
+                return n;
+            }
+        }
+        
+        return null;
     }
 }

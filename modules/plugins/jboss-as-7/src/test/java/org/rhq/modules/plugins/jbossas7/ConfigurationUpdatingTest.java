@@ -222,4 +222,48 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
         String result = mapper.writeValueAsString(cop);
 
     }
+
+    public void test7() throws Exception {
+        ConfigurationDefinition definition = loadDescriptor("SocketBindingGroupStandalone");
+
+        FakeConnection connection = new FakeConnection();
+
+        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(definition,connection,null);
+
+        Configuration conf = new Configuration();
+        PropertyMap propertyMap = new PropertyMap("http");
+        propertyMap.put(new PropertySimple("name","http"));
+        propertyMap.put(new PropertySimple("port",18080));
+        propertyMap.put(new PropertySimple("fixed-port",false));
+        PropertyList propertyList = new PropertyList("*");
+        propertyList.add(propertyMap);
+        conf.put(propertyList);
+        conf.put(new PropertySimple("port-offset",0));
+
+        CompositeOperation cop = delegate.updateGenerateOperationFromProperties(conf);
+
+        assert cop.numberOfSteps() == 3 : "#Steps should be 3 but were " + cop.numberOfSteps();
+        Operation step1 = cop.step(0);
+        Operation step2 = cop.step(1);
+        Operation step3 = cop.step(2);
+
+        // As we do not specify a base address when creating the delegate 0 or 1 address element is ok.
+        assert step1.getAddress().isEmpty();
+        assert step2.getAddress().size()==1;
+        assert step3.getAddress().size()==1;
+
+        assert step1.getAdditionalProperties().get("name").equals("port-offset");
+        assert step1.getAdditionalProperties().get("value").equals("0");
+
+        assert step2.getAdditionalProperties().get("name").equals("port");
+        assert step2.getAdditionalProperties().get("value").equals("18080");
+
+        assert step3.getAdditionalProperties().get("name").equals("fixed-port");
+        assert step3.getAdditionalProperties().get("value").equals("false");
+
+        assert step2.getAddress().get(0).getKey().equals("socket-binding");
+        assert step2.getAddress().get(0).getValue().equals("http");
+        assert step3.getAddress().get(0).getKey().equals("socket-binding");
+        assert step3.getAddress().get(0).getValue().equals("http");
+    }
 }

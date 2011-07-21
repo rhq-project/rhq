@@ -45,6 +45,5 @@
         }, {
             "urn:jboss:domain:weld:1.0" : "jboss-weld.xsd"
         } ]
-    },
-    "compensating-operation" : null
+    }
 }

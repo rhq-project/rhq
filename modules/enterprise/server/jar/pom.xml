@@ -471,13 +471,10 @@
    <build>
       <finalName>${project.artifactId}</finalName>
 
-      <!-- point to new source code directory that has been filtered.  -->
-      <sourceDirectory>target/filtered-sources/java</sourceDirectory>
-
       <resources>
          <!-- Redefine which directories to treat like resources(which are filtered). -->
          <resource>
-           <directory>src/main/java</directory>
+           <directory>src/main/filtered-sources/java</directory>
            <filtering>true</filtering>
            <targetPath>../filtered-sources/java</targetPath>
          </resource>
@@ -604,6 +601,25 @@ Build-OS-Version=${os.version}
                      <verbose>true</verbose>
                   </configuration>
                </execution>
+            </executions>
+         </plugin>
+      
+         <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>build-helper-maven-plugin</artifactId>
+            <executions>
+                <execution>
+                    <id>add-filtered-sources</id>
+                    <phase>generate-sources</phase>
+                    <goals>
+                        <goal>add-source</goal>
+                    </goals>
+                    <configuration>
+                        <sources>
+                            <source>target/filtered-sources/java</source>
+                        </sources>
+                    </configuration>
+                </execution>
             </executions>
          </plugin>
       </plugins>

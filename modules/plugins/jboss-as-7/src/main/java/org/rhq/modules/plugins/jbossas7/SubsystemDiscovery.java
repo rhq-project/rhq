@@ -26,6 +26,7 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
 import org.rhq.modules.plugins.jbossas7.json.ReadChildrenNames;
 import org.rhq.modules.plugins.jbossas7.json.ReadResource;
+import org.rhq.modules.plugins.jbossas7.json.Result;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -105,27 +106,20 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
                 log.info("total path: [" + path + "]");
 
 
-            JsonNode json ;
+            Result result ;
             if (!recursive)
-                json = connection.executeRaw(new ReadResource(parentComponent.pathToAddress(path)));
+                result = connection.execute(new ReadResource(parentComponent.pathToAddress(path)));
             else {
                 List<PROPERTY_VALUE> addr ;
                 addr = parentComponent.pathToAddress(parentPath);
-                json = connection.executeRaw(new ReadChildrenNames(addr, childType));
+                result = connection.execute(new ReadChildrenNames(addr, childType));
             }
-            if (!ASConnection.isErrorReply(json)) {
+            if (result.isSuccess()) {
                 if (recursive) {
 
-                    JsonNode subNode = json.findPath("result");
+                    List<String> subsystems = (List<String>) result.getResult();
 
-                    if (subNode!=null && subNode.isContainerNode()){
-
-                        Iterator<JsonNode> iter = subNode.getElements();
-                        while (iter.hasNext()) {
-
-                            JsonNode node = iter.next();
-                            String val = node.getTextValue();
-
+                    for (String val : subsystems) {
 
                             String newPath = cpath + "=" + val;
                             Configuration config2 = context.getDefaultPluginConfiguration();
@@ -155,16 +149,6 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
                             details.add(detail);
                         }
                     }
-                    else {
-
-                        if (subNode==null) {
-                            log.error("subNode was null for " + path + " and type " + context.getResourceType().getName());
-                        }
-                        else if (!subNode.isNull())
-                            log.info("subnode was no container");
-                    }
-
-                }
                 else {
                     if (path.startsWith(","))
                         path = path.substring(1);

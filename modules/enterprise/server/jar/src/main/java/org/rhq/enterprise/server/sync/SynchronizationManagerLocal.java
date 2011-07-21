@@ -32,9 +32,32 @@ import org.rhq.core.domain.sync.ExportReport;
 @Local
 public interface SynchronizationManagerLocal {
 
+    /**
+     * This method returns an export wrapper that contains the structure to contain
+     * the future messages from the export process and an input stream that is going
+     * to create the export (and fill in the messages) while it is being read.
+     * <p>
+     * This minimizes the memory needed to hold the export data to just 64K (the size of the buffer
+     * to hold the data). The memory consumption will of course be also determined by the amount of
+     * data being read from the database but the point is that not all the data will be held in memory
+     * (because the exporters for various subsystems will be called in sequence) and that the data doesn't
+     * have to reside in the memory in two forms - the internal datastructures AND the serialized form
+     * of the export file that it is going to be transfered as.
+     * 
+     * @return a wrapper using which one can read the export file "lazily".
+     */
     ExportWrapper exportAllSubsystemsLocally();
     
     //-------- THE FOLLOWING METHODS ARE SHARED WITH THE REMOTE INTERFACE ------------
     
+    /**
+     * Don't use this method if you access it from the same JVM.
+     * The {@link #exportAllSubsystemsLocally()} is more memory efficient.
+     * <p>
+     * This method executes the export of all subsystems and serializes the data
+     * into an byte array.
+     * 
+     * @see SynchronizationManagerRemote#exportAllSubsystems()
+     */
     ExportReport exportAllSubsystems();
 }

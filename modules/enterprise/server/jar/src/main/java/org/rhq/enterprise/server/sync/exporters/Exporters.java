@@ -36,37 +36,37 @@ public enum Exporters {
     
     SUBJECT {
         @Override
-        public Exporter<?> getExporter() {            
+        public Exporter<?> getExporter(Subject subject) {            
             return DummyExporter.create(Subject.class);
         }
     },
     ROLE {
         @Override
-        public Exporter<?> getExporter() {
+        public Exporter<?> getExporter(Subject subject) {
             return DummyExporter.create(Role.class);
         }
     },
     GROUP {
         @Override
-        public Exporter<?> getExporter() {
+        public Exporter<?> getExporter(Subject subject) {
             return DummyExporter.create(Group.class);
         }
     },
     ALERT_TEMPLATE {
         @Override
-        public Exporter<?> getExporter() {
+        public Exporter<?> getExporter(Subject subject) {
             return DummyExporter.create(AlertDefinition.class);
         }
     },
     METRIC_TEMPLATE {
         @Override
-        public Exporter<?> getExporter() {
-            return DummyExporter.create(MeasurementDefinition.class);
+        public Exporter<?> getExporter(Subject subject) {
+            return new MetricTemplatesExporter(subject);
         }
     },
     SYSTEM_SETTINGS {
         @Override
-        public Exporter<?> getExporter() {
+        public Exporter<?> getExporter(Subject subject) {
             return DummyExporter.create(SystemSettings.class);
         }  
     };
@@ -105,5 +105,11 @@ public enum Exporters {
         
     }
     
-    public abstract Exporter<?> getExporter();
+    /**
+     * Gets an exporter for given subsystem.
+     * 
+     * @param subject the currently logged on user.
+     * @return
+     */
+    public abstract Exporter<?> getExporter(Subject subject);
 }

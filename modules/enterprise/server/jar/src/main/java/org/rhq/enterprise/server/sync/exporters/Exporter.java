@@ -23,16 +23,35 @@ import org.rhq.enterprise.server.sync.ExportException;
 
 
 /**
- * 
+ * This is the interface a subsytem export must implement.
  *
+ * @param <T> the type of entities exported by the exporter
+ * 
  * @author Lukas Krejci
  */
 public interface Exporter<T> {
 
+    /**
+     * The type of the exported entities.
+     */
     Class<T> exportedEntityType();
         
+    /**
+     * Initializes the exporter.
+     * 
+     * @throws ExportException
+     */
     void init() throws ExportException;
     
+    /**
+     * Creates an iterator that is able to traverse the exported data and serialize them
+     * one by one.
+     * <p>
+     * The implementation is free to preload the exported entities or to somehow load them
+     * one by one as the callers request by calling {@link ExportingIterator#next()}.
+     * 
+     * @return
+     */
     ExportingIterator<T> getExportingIterator();
 
     /**

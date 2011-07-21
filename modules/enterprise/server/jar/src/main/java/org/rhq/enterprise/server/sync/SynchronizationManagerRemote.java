@@ -31,5 +31,18 @@ import org.rhq.core.domain.sync.ExportReport;
 @Remote
 public interface SynchronizationManagerRemote {
 
+    /**
+     * This exports the configuration data of all supported subsystems in RHQ.
+     * <p>
+     * The returned report contains the data bytes themselves as well as a map of 
+     * messages and notes produced by the different subsystem exporters so that
+     * the caller of this method is able to determine possible problems of the export
+     * file without needing to deserialize and read it (the same messages are also included
+     * in the export data).
+     * <p>
+     * The export data is a zipped XML.
+     * 
+     * @return the export report
+     */
     ExportReport exportAllSubsystems();
 }

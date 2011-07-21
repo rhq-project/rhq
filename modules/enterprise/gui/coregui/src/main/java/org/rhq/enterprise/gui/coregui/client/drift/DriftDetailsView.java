@@ -22,6 +22,8 @@ package org.rhq.enterprise.gui.coregui.client.drift;
 
 import static org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter.DATE_TIME_FORMAT_FULL;
 
+import java.util.LinkedHashMap;
+
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
@@ -95,24 +97,37 @@ public class DriftDetailsView extends LocatableVLayout implements BookmarkableVi
         timestamp.setValue(TimestampCellFormatter.format(drift.getCtime(), DATE_TIME_FORMAT_FULL));
 
         StaticTextItem category = new StaticTextItem("category", MSG.common_title_category());
+
+        LinkedHashMap<String, String> catIconsMap = new LinkedHashMap<String, String>(3);
+        catIconsMap.put(DriftDataSource.CATEGORY_ICON_ADD, DriftDataSource.CATEGORY_ICON_ADD);
+        catIconsMap.put(DriftDataSource.CATEGORY_ICON_CHANGE, DriftDataSource.CATEGORY_ICON_CHANGE);
+        catIconsMap.put(DriftDataSource.CATEGORY_ICON_REMOVE, DriftDataSource.CATEGORY_ICON_REMOVE);
+        LinkedHashMap<String, String> catValueMap = new LinkedHashMap<String, String>(3);
+        catValueMap.put(DriftDataSource.CATEGORY_ICON_ADD, MSG.view_drift_category_fileAdded());
+        catValueMap.put(DriftDataSource.CATEGORY_ICON_CHANGE, MSG.view_drift_category_fileChanged());
+        catValueMap.put(DriftDataSource.CATEGORY_ICON_REMOVE, MSG.view_drift_category_fileRemoved());
+        category.setValueMap(catValueMap);
+        category.setValueIcons(catIconsMap);
+        category.setShowIcons(true);
+
         StaticTextItem oldFile = new StaticTextItem("oldFile", MSG.view_drift_table_oldFile());
         StaticTextItem newFile = new StaticTextItem("newFile", MSG.view_drift_table_newFile());
 
         switch (drift.getCategory()) {
         case FILE_ADDED:
-            category.setValue(MSG.view_drift_category_fileAdded());
+            category.setValue(DriftDataSource.CATEGORY_ICON_ADD);
             oldFile.setValue(MSG.common_label_none());
             newFile.setValue(drift.getNewDriftFile().getHashId());
             break;
 
         case FILE_CHANGED:
-            category.setValue(MSG.view_drift_category_fileChanged());
+            category.setValue(DriftDataSource.CATEGORY_ICON_CHANGE);
             oldFile.setValue(drift.getOldDriftFile().getHashId());
             newFile.setValue(drift.getNewDriftFile().getHashId());
             break;
 
         case FILE_REMOVED:
-            category.setValue(MSG.view_drift_category_fileRemoved());
+            category.setValue(DriftDataSource.CATEGORY_ICON_REMOVE);
             oldFile.setValue(drift.getOldDriftFile().getHashId());
             newFile.setValue(MSG.common_label_none());
             break;

@@ -57,6 +57,8 @@ public class DriftDetailsView extends LocatableVLayout implements BookmarkableVi
     private DriftDetailsView(String id) {
         // access through the static singleton only (see renderView)
         super(id);
+
+        setMembersMargin(10);
     }
 
     private void show(String driftId) {
@@ -82,10 +84,29 @@ public class DriftDetailsView extends LocatableVLayout implements BookmarkableVi
             removeChild(child);
         }
 
-        DynamicForm form = new LocatableDynamicForm(extendLocatorId("form"));
-        form.setWidth100();
-        form.setHeight100();
-        form.setWrapItemTitles(false);
+        // the change set to which the drift belongs
+
+        DynamicForm changeSetForm = new LocatableDynamicForm(extendLocatorId("changeSetForm"));
+        changeSetForm.setIsGroup(true);
+        changeSetForm.setGroupTitle(MSG.view_drift_table_changeSet());
+        changeSetForm.setWrapItemTitles(false);
+
+        StaticTextItem changeSetId = new StaticTextItem("changeSetId", MSG.common_title_id());
+        changeSetId.setValue(drift.getChangeSet().getId());
+        StaticTextItem changeSetCategory = new StaticTextItem("changeSetCategory", MSG.common_title_category());
+        changeSetCategory.setValue(drift.getChangeSet().getCategory().name());
+        StaticTextItem changeSetVersion = new StaticTextItem("changeSetVersion", MSG.common_title_version());
+        changeSetVersion.setValue(drift.getChangeSet().getVersion());
+        changeSetForm.setItems(changeSetId, changeSetCategory, changeSetVersion);
+
+        addMember(changeSetForm);
+
+        // the drift history item itself
+
+        DynamicForm driftForm = new LocatableDynamicForm(extendLocatorId("form"));
+        driftForm.setIsGroup(true);
+        driftForm.setGroupTitle(MSG.view_drift());
+        driftForm.setWrapItemTitles(false);
 
         StaticTextItem id = new StaticTextItem("id", MSG.common_title_id());
         id.setValue(drift.getId());
@@ -133,9 +154,9 @@ public class DriftDetailsView extends LocatableVLayout implements BookmarkableVi
             break;
         }
 
-        form.setItems(id, path, category, timestamp, oldFile, newFile);
+        driftForm.setItems(id, path, category, timestamp, oldFile, newFile);
 
-        addMember(form);
+        addMember(driftForm);
     }
 
     @Override

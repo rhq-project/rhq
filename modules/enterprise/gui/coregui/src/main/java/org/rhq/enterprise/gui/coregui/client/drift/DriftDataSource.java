@@ -39,6 +39,7 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.DriftCriteria;
 import org.rhq.core.domain.criteria.DriftJPACriteria;
+import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftCategory;
 import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.resource.Resource;
@@ -70,6 +71,7 @@ public class DriftDataSource extends RPCDataSource<DriftComposite, DriftCriteria
     public static final String ATTR_CTIME = "ctime";
     public static final String ATTR_CATEGORY = "category";
     public static final String ATTR_PATH = "path";
+    public static final String ATTR_CHANGESET_VERSION = "changeSetVersion";
 
     public static final String FILTER_CATEGORIES = "categories";
 
@@ -93,13 +95,17 @@ public class DriftDataSource extends RPCDataSource<DriftComposite, DriftCriteria
      * @return list grid fields used to display the datasource data
      */
     public ArrayList<ListGridField> getListGridFields() {
-        ArrayList<ListGridField> fields = new ArrayList<ListGridField>(6);
+        ArrayList<ListGridField> fields = new ArrayList<ListGridField>(7);
 
         ListGridField ctimeField = new ListGridField(ATTR_CTIME, MSG.common_title_createTime());
         ctimeField.setCellFormatter(new TimestampCellFormatter());
         ctimeField.setShowHover(true);
         ctimeField.setHoverCustomizer(TimestampCellFormatter.getHoverCustomizer(ATTR_CTIME));
         fields.add(ctimeField);
+
+        ListGridField changeSetVersionField = new ListGridField(ATTR_CHANGESET_VERSION, MSG
+            .view_drift_table_changeSet());
+        fields.add(changeSetVersionField);
 
         ListGridField categoryField = new ListGridField(ATTR_CATEGORY, MSG.common_title_category());
         categoryField.setType(ListGridFieldType.IMAGE);
@@ -146,6 +152,7 @@ public class DriftDataSource extends RPCDataSource<DriftComposite, DriftCriteria
             fields.add(ancestryField);
 
             ctimeField.setWidth(100);
+            changeSetVersionField.setWidth(100);
             categoryField.setWidth(100);
             pathField.setWidth("*");
             resourceNameField.setWidth("25%");
@@ -153,6 +160,7 @@ public class DriftDataSource extends RPCDataSource<DriftComposite, DriftCriteria
 
         } else {
             ctimeField.setWidth(200);
+            changeSetVersionField.setWidth(100);
             categoryField.setWidth(100);
             pathField.setWidth("*");
         }
@@ -293,10 +301,12 @@ public class DriftDataSource extends RPCDataSource<DriftComposite, DriftCriteria
 
     public static ListGridRecord convert(DriftComposite from) {
         ListGridRecord record = new ListGridRecord();
-        record.setAttribute(ATTR_ID, Integer.valueOf(from.getDrift().getId()));
-        record.setAttribute(ATTR_CTIME, new Date(from.getDrift().getCtime()));
-        record.setAttribute(ATTR_CATEGORY, ImageManager.getDriftCategoryIcon(from.getDrift().getCategory()));
-        record.setAttribute(ATTR_PATH, from.getDrift().getPath());
+        Drift drift = from.getDrift();
+        record.setAttribute(ATTR_ID, Integer.valueOf(drift.getId()));
+        record.setAttribute(ATTR_CTIME, new Date(drift.getCtime()));
+        record.setAttribute(ATTR_CATEGORY, ImageManager.getDriftCategoryIcon(drift.getCategory()));
+        record.setAttribute(ATTR_PATH, drift.getPath());
+        record.setAttribute(ATTR_CHANGESET_VERSION, drift.getChangeSet().getVersion());
 
         // for ancestry handling     
         Resource resource = from.getResource();

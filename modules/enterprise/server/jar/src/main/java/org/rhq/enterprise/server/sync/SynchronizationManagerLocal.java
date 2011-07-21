@@ -22,6 +22,7 @@ package org.rhq.enterprise.server.sync;
 import javax.ejb.Local;
 
 import org.rhq.core.domain.sync.ExportWrapper;
+import org.rhq.core.domain.sync.ExportReport;
 
 /**
  * 
@@ -32,4 +33,8 @@ import org.rhq.core.domain.sync.ExportWrapper;
 public interface SynchronizationManagerLocal {
 
     ExportWrapper exportAllSubsystemsLocally();
+    
+    //-------- THE FOLLOWING METHODS ARE SHARED WITH THE REMOTE INTERFACE ------------
+    
+    ExportReport exportAllSubsystems();
 }

@@ -34,7 +34,7 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.sync.ExportWrapper;
 import org.rhq.core.domain.sync.ExporterMessages;
-import org.rhq.core.domain.sync.RemotableExportWrapper;
+import org.rhq.core.domain.sync.ExportReport;
 import org.rhq.enterprise.server.sync.exporters.Exporter;
 import org.rhq.enterprise.server.sync.exporters.Exporters;
 
@@ -49,7 +49,7 @@ public class SynchronizationManagerBean implements SynchronizationManagerLocal, 
     
     @Override
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
-    public RemotableExportWrapper exportAllSubsystems() {
+    public ExportReport exportAllSubsystems() {
         ExportWrapper localExport = exportAllSubsystemsLocally();
         
         byte[] buffer = new byte[65536];
@@ -62,9 +62,9 @@ public class SynchronizationManagerBean implements SynchronizationManagerLocal, 
                 out.write(buffer, 0, cnt);
             }
             
-            return new RemotableExportWrapper(localExport.getMessagesPerExporter(), out.toByteArray());
+            return new ExportReport(localExport.getMessagesPerExporter(), out.toByteArray());
         } catch (Exception e) {
-            return new RemotableExportWrapper(e.getMessage());
+            return new ExportReport(e.getMessage());
         } finally {
             try {
                 out.close();

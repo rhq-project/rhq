@@ -28,7 +28,7 @@ import java.util.Map;
  *
  * @author Lukas Krejci
  */
-public class RemotableExportWrapper implements Serializable {
+public class ExportReport implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -42,13 +42,13 @@ public class RemotableExportWrapper implements Serializable {
      * @param messagesPerExporter
      * @param exportFile
      */
-    public RemotableExportWrapper(Map<String, ExporterMessages> messagesPerExporter, byte[] exportFile) {
+    public ExportReport(Map<String, ExporterMessages> messagesPerExporter, byte[] exportFile) {
         super();
         this.messagesPerExporter = messagesPerExporter;
         this.exportFile = exportFile;
     }
 
-    public RemotableExportWrapper(String errorMessage) {
+    public ExportReport(String errorMessage) {
         this.errorMessage = errorMessage;
     }
     

@@ -21,7 +21,7 @@ package org.rhq.enterprise.server.sync;
 
 import javax.ejb.Remote;
 
-import org.rhq.core.domain.sync.RemotableExportWrapper;
+import org.rhq.core.domain.sync.ExportReport;
 
 /**
  * 
@@ -31,5 +31,5 @@ import org.rhq.core.domain.sync.RemotableExportWrapper;
 @Remote
 public interface SynchronizationManagerRemote {
 
-    RemotableExportWrapper exportAllSubsystems();
+    ExportReport exportAllSubsystems();
 }

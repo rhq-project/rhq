@@ -183,6 +183,8 @@ import org.rhq.enterprise.server.subsystem.OperationHistorySubsystemManagerBean;
 import org.rhq.enterprise.server.subsystem.OperationHistorySubsystemManagerLocal;
 import org.rhq.enterprise.server.support.SupportManagerBean;
 import org.rhq.enterprise.server.support.SupportManagerLocal;
+import org.rhq.enterprise.server.sync.SynchronizationManagerBean;
+import org.rhq.enterprise.server.sync.SynchronizationManagerLocal;
 import org.rhq.enterprise.server.system.SystemManagerBean;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.tagging.TagManagerBean;
@@ -584,6 +586,10 @@ public final class LookupUtil {
         return lookupLocal(DashboardManagerBean.class);
     }
 
+    public static SynchronizationManagerLocal getSynchronizationManager() {
+        return lookupLocal(SynchronizationManagerBean.class);
+    }
+    
     public static CoreServerMBean getCoreServer() {
         MBeanServer jBossMBeanServer = MBeanServerLocator.locateJBoss();
         CoreServerMBean jonServer = (CoreServerMBean) MBeanProxyExt.create(CoreServerMBean.class,

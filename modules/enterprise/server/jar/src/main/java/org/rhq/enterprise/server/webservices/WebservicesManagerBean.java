@@ -122,6 +122,7 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ProblemResourceComposite;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
+import org.rhq.core.domain.sync.ExportReport;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
@@ -161,6 +162,7 @@ import org.rhq.enterprise.server.resource.group.ResourceGroupDeleteException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupNotFoundException;
 import org.rhq.enterprise.server.support.SupportManagerLocal;
+import org.rhq.enterprise.server.sync.SynchronizationManagerLocal;
 import org.rhq.enterprise.server.system.ServerVersion;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -207,7 +209,8 @@ public class WebservicesManagerBean implements WebservicesRemote {
     private SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
     private SupportManagerLocal supportManager = LookupUtil.getSupportManager();
     private SystemManagerLocal systemManager = LookupUtil.getSystemManager();
-
+    private SynchronizationManagerLocal synchronizationmanager = LookupUtil.getSynchronizationManager();
+    
     //ALERTMANAGER: BEGIN ------------------------------------------
     public PageList<Alert> findAlertsByCriteria(Subject subject, AlertCriteria criteria) {
         return alertManager.findAlertsByCriteria(subject, criteria);
@@ -1195,6 +1198,13 @@ public class WebservicesManagerBean implements WebservicesRemote {
 
     //SYSTEMMANAGER: END ------------------------------------
 
+    //SYNCHRONIZATIONMANANGER: BEGIN -------------------------
+    
+    public ExportReport exportAllSubsystems() {
+        return synchronizationmanager.exportAllSubsystems();
+    }
+    
+    //SYNCHRONIZATIONMANANGER: END -------------------------
     private void checkParametersPassedIn(Subject subject, Criteria criteria) {
         if (subject == null) {
             throw new IllegalArgumentException("Subject cannot be null.");

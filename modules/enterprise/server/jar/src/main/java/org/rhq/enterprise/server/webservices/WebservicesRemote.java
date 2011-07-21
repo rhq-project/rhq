@@ -28,6 +28,7 @@ import org.rhq.enterprise.server.resource.ResourceManagerRemote;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerRemote;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerRemote;
 import org.rhq.enterprise.server.support.SupportManagerRemote;
+import org.rhq.enterprise.server.sync.SynchronizationManagerRemote;
 import org.rhq.enterprise.server.system.ServerVersion;
 import org.rhq.enterprise.server.system.SystemManagerRemote;
 
@@ -67,5 +68,6 @@ public interface WebservicesRemote extends //
     RoleManagerRemote,//
     SubjectManagerRemote,//
     SupportManagerRemote,//
-    SystemManagerRemote {
+    SystemManagerRemote,
+    SynchronizationManagerRemote {
 }

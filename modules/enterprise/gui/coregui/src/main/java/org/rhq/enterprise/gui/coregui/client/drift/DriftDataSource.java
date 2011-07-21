@@ -40,7 +40,6 @@ import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.DriftCriteria;
 import org.rhq.core.domain.criteria.DriftJPACriteria;
 import org.rhq.core.domain.drift.DriftCategory;
-import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
@@ -186,7 +185,8 @@ public class DriftDataSource extends RPCDataSource<DriftComposite, DriftCriteria
     /**
      * Additional processing to support entity-specific or cross-resource views, and something that can be overidden.
      */
-    protected void dataRetrieved(final PageList<DriftComposite> result, final DSResponse response, final DSRequest request) {
+    protected void dataRetrieved(final PageList<DriftComposite> result, final DSResponse response,
+        final DSRequest request) {
         switch (entityContext.type) {
 
         // no need to disambiguate, the drifts are for a single resource
@@ -201,7 +201,7 @@ public class DriftDataSource extends RPCDataSource<DriftComposite, DriftCriteria
         default:
             Set<Integer> typesSet = new HashSet<Integer>();
             Set<String> ancestries = new HashSet<String>();
-             for (DriftComposite driftComposite : result) {
+            for (DriftComposite driftComposite : result) {
                 Resource resource = driftComposite.getResource();
                 typesSet.add(resource.getResourceType().getId());
                 ancestries.add(resource.getAncestry());
@@ -298,7 +298,6 @@ public class DriftDataSource extends RPCDataSource<DriftComposite, DriftCriteria
         record.setAttribute(ATTR_CATEGORY, ImageManager.getDriftCategoryIcon(from.getDrift().getCategory()));
         record.setAttribute(ATTR_PATH, from.getDrift().getPath());
 
-        DriftChangeSet changeSet = from.getDrift().getChangeSet();
         Resource resource = from.getResource();
 
         // for ancestry handling       

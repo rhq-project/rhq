@@ -59,7 +59,8 @@ public class DriftConfigurationView extends TableSection<DriftConfigurationDataS
 
     public static final ViewName SUBSYSTEM_VIEW_ID = new ViewName("DriftConfigs", MSG.common_title_configuration());
 
-    private static SortSpecifier DEFAULT_SORT_SPECIFIER = new SortSpecifier("name", SortDirection.ASCENDING);
+    private static SortSpecifier DEFAULT_SORT_SPECIFIER = new SortSpecifier(DriftConfigurationDataSource.ATTR_NAME,
+        SortDirection.ASCENDING);
 
     private static final Criteria INITIAL_CRITERIA = new Criteria();
 
@@ -167,7 +168,7 @@ public class DriftConfigurationView extends TableSection<DriftConfigurationDataS
     }
 
     private void add() {
-        DriftAddConfigWizard.showWizard(context);
+        DriftAddConfigWizard.showWizard(context, this);
     }
 
     private void delete(ListGridRecord[] records) {
@@ -208,6 +209,7 @@ public class DriftConfigurationView extends TableSection<DriftConfigurationDataS
     }
 
     private void detectDrift(ListGridRecord[] records) {
+        // why only the [0] item?
         DriftConfiguration driftConfig = (DriftConfiguration) records[0]
             .getAttributeAsObject(DriftConfigurationDataSource.ATTR_ENTITY);
         GWTServiceLookup.getDriftService().detectDrift(context, driftConfig, new AsyncCallback<Void>() {

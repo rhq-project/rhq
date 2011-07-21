@@ -298,13 +298,14 @@ public class DriftDataSource extends RPCDataSource<DriftComposite, DriftCriteria
         record.setAttribute(ATTR_CATEGORY, ImageManager.getDriftCategoryIcon(from.getDrift().getCategory()));
         record.setAttribute(ATTR_PATH, from.getDrift().getPath());
 
+        // for ancestry handling     
         Resource resource = from.getResource();
-
-        // for ancestry handling       
-        record.setAttribute(AncestryUtil.RESOURCE_ID, resource.getId());
-        record.setAttribute(AncestryUtil.RESOURCE_NAME, resource.getName());
-        record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY, resource.getAncestry());
-        record.setAttribute(AncestryUtil.RESOURCE_TYPE_ID, resource.getResourceType().getId());
+        if (resource != null) {
+            record.setAttribute(AncestryUtil.RESOURCE_ID, resource.getId());
+            record.setAttribute(AncestryUtil.RESOURCE_NAME, resource.getName());
+            record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY, resource.getAncestry());
+            record.setAttribute(AncestryUtil.RESOURCE_TYPE_ID, resource.getResourceType().getId());
+        }
 
         return record;
     }

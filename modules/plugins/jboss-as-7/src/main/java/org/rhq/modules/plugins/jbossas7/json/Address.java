@@ -41,7 +41,8 @@ public class Address {
 
     public Address(Address other) {
         this();
-        path.addAll(other.path);
+        if (other!=null && other.path!=null)
+            path.addAll(other.path);
     }
 
     public Address(List<PROPERTY_VALUE> other) {

@@ -139,11 +139,14 @@ public class RhqDriftChangeSet implements Serializable, DriftChangeSet<RhqDrift>
     }
 
     @Override
+    public int getResourceId() {
+        return resource.getId();
+    }
+
     public Resource getResource() {
         return resource;
     }
 
-    @Override
     public void setResource(Resource resource) {
         this.resource = resource;
     }

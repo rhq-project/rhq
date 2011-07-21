@@ -2,8 +2,6 @@ package org.rhq.core.domain.drift;
 
 import java.util.Set;
 
-import org.rhq.core.domain.resource.Resource;
-
 public interface DriftChangeSet<D extends Drift> {
     String getId();
 
@@ -23,9 +21,7 @@ public interface DriftChangeSet<D extends Drift> {
 
     void setDriftConfigurationId(int id);
 
-    Resource getResource();
-
-    void setResource(Resource resource);
+    int getResourceId();
 
     Set<D> getDrifts();
 

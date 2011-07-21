@@ -1,0 +1,194 @@
+[INFO] 
+NOTE: Maven is executing in offline mode. Any artifacts not already in your local
+repository will be inaccessible.
+
+[INFO] Scanning for projects...
+[INFO] ------------------------------------------------------------------------
+[INFO] Building RHQ Domain Model
+[INFO]    task-segment: [clean, test]
+[INFO] ------------------------------------------------------------------------
+[INFO] [clean:clean {execution: default-clean}]
+[INFO] Deleting /home/jsanda/Development/redhat/rhq/modules/core/domain/target
+[INFO] [enforcer:enforce {execution: enforce-versions}]
+[INFO] [build-helper:maven-version {execution: default}]
+[WARNING] DEPRECATED [tasks]: Use target instead
+[INFO] [antrun:run {execution: write-build-properties-file}]
+[WARNING] Parameter tasks is deprecated, use target instead
+[INFO] Executing tasks
+
+main:
+[INFO] Executed tasks
+[INFO] [properties:read-project-properties {execution: read-build-properties-file}]
+[INFO] [resources:resources {execution: default-resources}]
+[INFO] Using 'ISO-8859-1' encoding to copy filtered resources.
+[INFO] Copying 393 resources
+[INFO] Copying 2 resources
+[INFO] [compiler:compile {execution: default-compile}]
+[INFO] Compiling 391 source files to /home/jsanda/Development/redhat/rhq/modules/core/domain/target/classes
+[WARNING] DEPRECATED [tasks]: Use target instead
+[INFO] [antrun:run {execution: echo-build-properties}]
+[WARNING] Parameter tasks is deprecated, use target instead
+[INFO] Executing tasks
+
+main:
+[INFO] Executed tasks
+[INFO] [resources:testResources {execution: default-testResources}]
+[INFO] Using 'ISO-8859-1' encoding to copy filtered resources.
+[INFO] Copying 13 resources
+[INFO] [compiler:testCompile {execution: default-testCompile}]
+[INFO] Compiling 54 source files to /home/jsanda/Development/redhat/rhq/modules/core/domain/target/test-classes
+[WARNING] /home/jsanda/Development/redhat/rhq/modules/core/domain/src/test/java/org/rhq/core/domain/test/AbstractEJB3Test.java:[116,70] [deprecation] connection() in org.hibernate.Session has been deprecated
+[WARNING] /home/jsanda/Development/redhat/rhq/modules/core/domain/src/test/java/org/rhq/core/domain/content/test/PackageVersionContentSourceTest.java:[118,71] [unchecked] unchecked conversion
+found   : java.util.List
+required: java.util.List<org.rhq.core.domain.content.PackageVersionContentSource>
+[WARNING] /home/jsanda/Development/redhat/rhq/modules/core/domain/src/test/java/org/rhq/core/domain/content/test/PackageVersionContentSourceTest.java:[157,80] [unchecked] unchecked conversion
+found   : java.util.List
+required: java.util.List<org.rhq.core.domain.content.composite.PackageVersionMetadataComposite>
+[WARNING] /home/jsanda/Development/redhat/rhq/modules/core/domain/src/test/java/org/rhq/core/domain/configuration/TestUtil.java:[42,37] [unchecked] unchecked cast
+found   : java.lang.Object
+required: T
+[WARNING] /home/jsanda/Development/redhat/rhq/modules/core/domain/src/test/java/org/rhq/core/domain/configuration/test/ConfigurationTest.java:[198,26] [unchecked] unchecked conversion
+found   : java.util.List
+required: java.util.List<org.rhq.core.domain.configuration.Configuration>
+[WARNING] /home/jsanda/Development/redhat/rhq/modules/core/domain/src/test/java/org/rhq/core/domain/resource/test/AgentTest.java:[67,37] [unchecked] unchecked conversion
+found   : java.util.List
+required: java.util.List<org.rhq.core.domain.resource.composite.AgentLastAvailabilityReportComposite>
+[WARNING] /home/jsanda/Development/redhat/rhq/modules/core/domain/src/test/java/org/rhq/core/domain/resource/test/AgentTest.java:[90,37] [unchecked] unchecked conversion
+found   : java.util.List
+required: java.util.List<org.rhq.core.domain.resource.composite.AgentLastAvailabilityReportComposite>
+[WARNING] /home/jsanda/Development/redhat/rhq/modules/core/domain/src/test/java/org/rhq/core/domain/resource/test/AgentTest.java:[112,37] [unchecked] unchecked conversion
+found   : java.util.List
+required: java.util.List<org.rhq.core.domain.resource.composite.AgentLastAvailabilityReportComposite>
+[WARNING] /home/jsanda/Development/redhat/rhq/modules/core/domain/src/test/java/org/rhq/core/domain/resource/test/AgentTest.java:[117,37] [unchecked] unchecked conversion
+found   : java.util.List
+required: java.util.List<org.rhq.core.domain.resource.composite.AgentLastAvailabilityReportComposite>
+[WARNING] /home/jsanda/Development/redhat/rhq/modules/core/domain/src/test/java/org/rhq/core/domain/test/SerializableTest.java:[177,19] [unchecked] unchecked cast
+found   : java.lang.Object
+required: T
+[WARNING] /home/jsanda/Development/redhat/rhq/modules/core/domain/src/test/java/org/rhq/core/domain/configuration/test/ConfigurationDefinitionTest.java:[98,105] [unchecked] unchecked conversion
+found   : java.util.List
+required: java.util.List<org.rhq.core.domain.configuration.definition.ConfigurationDefinition>
+[WARNING] /home/jsanda/Development/redhat/rhq/modules/core/domain/src/test/java/org/rhq/core/domain/configuration/test/ConfigurationDefinitionTest.java:[135,30] [unchecked] unchecked conversion
+found   : java.util.List
+required: java.util.List<org.rhq.core.domain.configuration.definition.ConfigurationDefinition>
+[WARNING] /home/jsanda/Development/redhat/rhq/modules/core/domain/src/test/java/org/rhq/core/domain/configuration/test/ConfigurationDefinitionTest.java:[184,26] [unchecked] unchecked conversion
+found   : java.util.List
+required: java.util.List<org.rhq.core.domain.configuration.definition.ConfigurationDefinition>
+[WARNING] /home/jsanda/Development/redhat/rhq/modules/core/domain/src/test/java/org/rhq/core/domain/resource/ResourceTypeTest.java:[41,26] [unchecked] unchecked conversion
+found   : java.util.List
+required: java.util.List<org.rhq.core.domain.resource.ResourceType>
+[WARNING] /home/jsanda/Development/redhat/rhq/modules/core/domain/src/test/java/org/rhq/core/domain/resource/test/PluginTest.java:[332,50] [unchecked] unchecked conversion
+found   : java.util.List
+required: java.util.List<org.rhq.core.domain.plugin.Plugin>
+[WARNING] DEPRECATED [systemProperties]: Use systemPropertyVariables instead.
+[INFO] [surefire:test {execution: default-test}]
+[INFO] Surefire report directory: /home/jsanda/Development/redhat/rhq/modules/core/domain/target/surefire-reports
+
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running TestSuite
+Starting ejb3...
+Loading EJB3 classes from directory: target/classes
+log4j: Threshold ="null".
+log4j: Class name: [org.apache.log4j.ConsoleAppender]
+log4j: Setting property [target] to [System.out].
+log4j: Setting property [threshold] to [WARN].
+log4j: Parsing layout of class: "org.apache.log4j.PatternLayout"
+log4j: Setting property [conversionPattern] to [%-5p %d{dd-MM HH:mm:ss,SSS} (%F:%M:%L)  -%m%n].
+log4j: Adding appender named [CONSOLE] to category [root].
+WARN  13-07 15:00:21,151 (Ejb3Configuration.java:addXMLEntities:422)  -Persistence provider caller does not implements the EJB3 spec correctly. PersistenceUnitInfo.getNewTempClassLoader() is null.
+lookup 
+  UserTransaction: org.jboss.ejb3.embedded.UserTransactionImpl
+...... embedded-jboss-beans deployed....
+...... deploying MM ejb3.....
+...... ejb3 deployed....
+...... deployer created....
+WARN  13-07 15:00:29,804 (Ejb3Configuration.java:addXMLEntities:422)  -Persistence provider caller does not implements the EJB3 spec correctly. PersistenceUnitInfo.getNewTempClassLoader() is null.
+lookup 
+  UserTransaction: org.jboss.ejb3.embedded.UserTransactionImpl
+...... deployer started....
+Configuration definition: CONFIG_ENUM_VAL_TEST (test data)
+	SimpleProperty[EnumeratedProperty] (Type: STRING)
+Before: [PropertyDefinitionEnumeration{id=10871, name='A', value='a', orderIndex=0}, PropertyDefinitionEnumeration{id=10872, name='B', value='b', orderIndex=1}]
+After: [PropertyDefinitionEnumeration{id=10872, name='B', value='b', orderIndex=1}, PropertyDefinitionEnumeration{id=10871, name='A', value='a', orderIndex=0}]
+Configuration definition: CONFIG_CONSTRAINT_TEST (test data)
+	SimpleProperty[ConstrainedProperty] (Type: FLOAT)
+Constraint: FloatRangeConstraint[details=1.0#3.0]
+Configuration definition: TEST_CONFIG (Config definition for the thing)
+	SimpleProperty[SimpleProp] (Type: STRING)
+	Map Property [MapProp]
+		SimpleProperty[IntInMap] (Type: INTEGER)
+	SimpleProperty[ConnectionType] (Type: STRING)(Group: Basic Group)
+	SimpleProperty[SimpleBool] (Type: BOOLEAN)(Group: Basic Group)
+Serialized version of config was 1367 bytes
+WARN  13-07 15:01:20,904 (JDBCExceptionReporter.java:logExceptions:77)  -SQL Error: 0, SQLState: 23505
+ERROR 13-07 15:01:20,905 (JDBCExceptionReporter.java:logExceptions:78)  -Batch entry 0 insert into RHQ_DRIFT_FILE (CTIME, DATA_SIZE, STATUS, DATA, HASH_ID) values ('1310583680392', '10485760', 'EMPTY', '1489397', '6486d7a1e0f8a97387e1f1f8780ea7dd1ab212a4b862bcefdfb0f1d1480f9996') was aborted.  Call getNextException to see the cause.
+WARN  13-07 15:01:20,906 (JDBCExceptionReporter.java:logExceptions:77)  -SQL Error: 0, SQLState: 23505
+ERROR 13-07 15:01:20,906 (JDBCExceptionReporter.java:logExceptions:78)  -ERROR: duplicate key value violates unique constraint "rhq_drift_file_pkey"
+ERROR 13-07 15:01:20,907 (AbstractFlushingEventListener.java:performExecutions:301)  -Could not synchronize database state with session
+org.hibernate.exception.ConstraintViolationException: Could not execute JDBC batch update
+	at org.hibernate.exception.SQLStateConverter.convert(SQLStateConverter.java:71)
+	at org.hibernate.exception.JDBCExceptionHelper.convert(JDBCExceptionHelper.java:43)
+	at org.hibernate.jdbc.AbstractBatcher.executeBatch(AbstractBatcher.java:254)
+	at org.hibernate.engine.ActionQueue.executeActions(ActionQueue.java:237)
+	at org.hibernate.engine.ActionQueue.executeActions(ActionQueue.java:141)
+	at org.hibernate.event.def.AbstractFlushingEventListener.performExecutions(AbstractFlushingEventListener.java:298)
+	at org.hibernate.event.def.DefaultFlushEventListener.onFlush(DefaultFlushEventListener.java:27)
+	at org.hibernate.impl.SessionImpl.flush(SessionImpl.java:1000)
+	at org.hibernate.impl.SessionImpl.managedFlush(SessionImpl.java:338)
+	at org.hibernate.ejb.AbstractEntityManagerImpl$1.beforeCompletion(AbstractEntityManagerImpl.java:515)
+	at org.jboss.tm.TransactionImpl.doBeforeCompletion(TransactionImpl.java:3074)
+	at org.jboss.tm.TransactionImpl.beforePrepare(TransactionImpl.java:2632)
+	at org.jboss.tm.TransactionImpl.commit(TransactionImpl.java:1194)
+	at org.jboss.tm.TxManager.commit(TxManager.java:588)
+	at org.rhq.core.domain.drift.DriftFileTest.executeInTransaction(DriftFileTest.java:187)
+	at org.rhq.core.domain.drift.DriftFileTest.loadSameFile(DriftFileTest.java:152)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:39)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:25)
+	at java.lang.reflect.Method.invoke(Method.java:597)
+	at org.testng.internal.MethodHelper.invokeMethod(MethodHelper.java:640)
+	at org.testng.internal.Invoker.invokeMethod(Invoker.java:627)
+	at org.testng.internal.Invoker.invokeTestMethod(Invoker.java:798)
+	at org.testng.internal.Invoker.invokeTestMethods(Invoker.java:1102)
+	at org.testng.internal.TestMethodWorker.invokeTestMethods(TestMethodWorker.java:137)
+	at org.testng.internal.TestMethodWorker.run(TestMethodWorker.java:121)
+	at org.testng.TestRunner.runWorkers(TestRunner.java:1009)
+	at org.testng.TestRunner.privateRun(TestRunner.java:683)
+	at org.testng.TestRunner.run(TestRunner.java:553)
+	at org.testng.SuiteRunner.runTest(SuiteRunner.java:311)
+	at org.testng.SuiteRunner.runSequentially(SuiteRunner.java:306)
+	at org.testng.SuiteRunner.privateRun(SuiteRunner.java:268)
+	at org.testng.SuiteRunner.run(SuiteRunner.java:217)
+	at org.testng.TestNG.runSuite(TestNG.java:1062)
+	at org.testng.TestNG.runSuitesLocally(TestNG.java:956)
+	at org.testng.TestNG.run(TestNG.java:874)
+	at org.apache.maven.surefire.testng.TestNGExecutor.run(TestNGExecutor.java:61)
+	at org.apache.maven.surefire.testng.TestNGDirectoryTestSuite.execute(TestNGDirectoryTestSuite.java:144)
+	at org.apache.maven.surefire.Surefire.run(Surefire.java:169)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:39)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:25)
+	at java.lang.reflect.Method.invoke(Method.java:597)
+	at org.apache.maven.surefire.booter.SurefireBooter.runSuitesInProcess(SurefireBooter.java:350)
+	at org.apache.maven.surefire.booter.SurefireBooter.main(SurefireBooter.java:1021)
+Caused by: java.sql.BatchUpdateException: Batch entry 0 insert into RHQ_DRIFT_FILE (CTIME, DATA_SIZE, STATUS, DATA, HASH_ID) values ('1310583680392', '10485760', 'EMPTY', '1489397', '6486d7a1e0f8a97387e1f1f8780ea7dd1ab212a4b862bcefdfb0f1d1480f9996') was aborted.  Call getNextException to see the cause.
+	at org.postgresql.jdbc2.AbstractJdbc2Statement$BatchResultHandler.handleError(AbstractJdbc2Statement.java:2598)
+	at org.postgresql.core.v3.QueryExecutorImpl.processResults(QueryExecutorImpl.java:1836)
+	at org.postgresql.core.v3.QueryExecutorImpl.execute(QueryExecutorImpl.java:407)
+	at org.postgresql.jdbc2.AbstractJdbc2Statement.executeBatch(AbstractJdbc2Statement.java:2737)
+	at org.jboss.resource.adapter.jdbc.WrappedStatement.executeBatch(WrappedStatement.java:518)
+	at org.hibernate.jdbc.BatchingBatcher.doExecuteBatch(BatchingBatcher.java:48)
+	at org.hibernate.jdbc.AbstractBatcher.executeBatch(AbstractBatcher.java:247)
+	... 42 more
+testTraitQuery ...
+testTraitQuery: found 1 item(s)
+  and it is MeasurementDataTrait[value=[Hello World], MeasurementData [MeasurementDataPK: timestamp=[Wed Jul 13 15:01:21 EDT 2011], scheduleId=[12011]]] and name Fake display name
+Created resource with id 13617
+Created resource with id 13618
+Took [5092]ms to create [2000] resources
+Took [853]ms to remove [2000] resources
+Destroying 1 processes
+Destroying process..
+Destroyed 1 processes

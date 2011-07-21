@@ -10,6 +10,7 @@ import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
 import org.rhq.core.domain.criteria.DriftCriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
+import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.domain.util.PageList;
 
@@ -29,5 +30,7 @@ public interface DriftServerLocal {
     PageList<DriftChangeSet> findDriftChangeSetsByCriteria(Subject subject, DriftChangeSetCriteria criteria);
 
     PageList<Drift> findDriftsByCriteria(Subject subject, DriftCriteria criteria);
+
+    PageList<DriftComposite> findDriftCompositesByCriteria(Subject subject, DriftCriteria criteria);
 
 }

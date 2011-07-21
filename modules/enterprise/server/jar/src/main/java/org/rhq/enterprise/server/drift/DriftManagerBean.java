@@ -63,6 +63,7 @@ import org.rhq.core.domain.criteria.DriftChangeSetJPACriteria;
 import org.rhq.core.domain.criteria.DriftJPACriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
+import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.RhqDriftFile;
@@ -489,6 +490,17 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
             entityManager);
         PageList<RhqDriftChangeSet> result = queryRunner.execute();
         return result;
+    }
+
+    @Override
+    public PageList<DriftComposite> findDriftCompositesByCriteria(Subject subject, DriftJPACriteria criteria) {
+        //
+        PageList<RhqDrift> drifts = findDriftsByCriteria(subject, criteria);
+        PageList<DriftComposite> composites = new PageList<DriftComposite>();
+        for (RhqDrift drift : drifts) {
+            composites.add(new DriftComposite(drift, drift.getChangeSet().getResource()));
+        }
+        return composites;
     }
 
     @Override

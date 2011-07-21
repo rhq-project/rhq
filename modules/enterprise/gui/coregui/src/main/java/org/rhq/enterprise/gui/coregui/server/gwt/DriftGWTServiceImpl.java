@@ -23,6 +23,7 @@ import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
 import org.rhq.core.domain.criteria.DriftCriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
+import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.gwt.DriftGWTService;
@@ -105,6 +106,16 @@ public class DriftGWTServiceImpl extends AbstractGWTServiceImpl implements Drift
         try {
             PageList<Drift> results = driftServer.findDriftsByCriteria(getSessionSubject(), criteria);
             return SerialUtility.prepare(results, "DriftService.findDriftsByCriteria");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    @Override
+    public PageList<DriftComposite> findDriftCompositesByCriteria(DriftCriteria criteria) {
+        try {
+            PageList<DriftComposite> results = driftServer.findDriftCompositesByCriteria(getSessionSubject(), criteria);
+            return SerialUtility.prepare(results, "DriftService.findDriftCompositesByCriteria");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

@@ -28,11 +28,11 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.DriftChangeSetJPACriteria;
 import org.rhq.core.domain.criteria.DriftJPACriteria;
+import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.drift.DriftConfiguration;
-import org.rhq.core.domain.drift.DriftFile;
-import org.rhq.core.domain.drift.RhqDriftFile;
 import org.rhq.core.domain.drift.RhqDrift;
 import org.rhq.core.domain.drift.RhqDriftChangeSet;
+import org.rhq.core.domain.drift.RhqDriftFile;
 import org.rhq.core.domain.util.PageList;
 
 @Local
@@ -118,6 +118,8 @@ public interface DriftManagerLocal extends DriftManagerRemote {
      * @return The DriftChangeSets matching the criteria
      */
     PageList<RhqDriftChangeSet> findDriftChangeSetsByCriteria(Subject subject, DriftChangeSetJPACriteria criteria);
+
+    PageList<DriftComposite> findDriftCompositesByCriteria(Subject subject, DriftJPACriteria criteria);
 
     /**
      * Standard criteria based fetch method

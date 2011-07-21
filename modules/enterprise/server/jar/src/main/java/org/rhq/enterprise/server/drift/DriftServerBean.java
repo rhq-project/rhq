@@ -22,6 +22,7 @@ import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
 import org.rhq.core.domain.criteria.DriftCriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
+import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
@@ -52,15 +53,24 @@ public class DriftServerBean implements DriftServerLocal {
     private AgentManagerLocal agentMgr;
 
     @Override
+    @TransactionAttribute(NOT_SUPPORTED)
     public PageList<DriftChangeSet> findDriftChangeSetsByCriteria(Subject subject, DriftChangeSetCriteria criteria) {
         DriftServerPluginFacet driftServerPlugin = getServerPlugin();
         return driftServerPlugin.findDriftChangeSetsByCriteria(subject, criteria);
     }
 
     @Override
+    @TransactionAttribute(NOT_SUPPORTED)
     public PageList<Drift> findDriftsByCriteria(Subject subject, DriftCriteria criteria) {
         DriftServerPluginFacet driftServerPlugin = getServerPlugin();
         return driftServerPlugin.findDriftsByCriteria(subject, criteria);
+    }
+
+    @Override
+    @TransactionAttribute(NOT_SUPPORTED)
+    public PageList<DriftComposite> findDriftCompositesByCriteria(Subject subject, DriftCriteria criteria) {
+        DriftServerPluginFacet driftServerPlugin = getServerPlugin();
+        return driftServerPlugin.findDriftCompositesByCriteria(subject, criteria);
     }
 
     @Override

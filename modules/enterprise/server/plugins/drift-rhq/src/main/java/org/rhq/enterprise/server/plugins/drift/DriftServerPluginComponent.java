@@ -32,6 +32,7 @@ import org.rhq.core.domain.criteria.DriftChangeSetJPACriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftCategory;
 import org.rhq.core.domain.drift.DriftChangeSet;
+import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.drift.DriftManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginContext;
@@ -71,33 +72,27 @@ public class DriftServerPluginComponent implements DriftServerPluginFacet {
 
     @Override
     public PageList<DriftChangeSet> findDriftChangeSetsByCriteria(Subject subject, DriftChangeSetCriteria criteria) {
-        DriftChangeSetJPACriteria rhqCriteria = new DriftChangeSetJPACriteria();
-        rhqCriteria.addFilterId(criteria.getFilterId());
-        rhqCriteria.addFilterResourceId(criteria.getFilterResourceId());
-        rhqCriteria.addFilterVersion(criteria.getFilterVersion());
-        rhqCriteria.addFilterCategory(criteria.getFilterCategory());
-        rhqCriteria.fetchDrifts(criteria.isFetchDrifts());
+        DriftChangeSetJPACriteria jpaCriteria = new DriftChangeSetJPACriteria();
+        jpaCriteria.addFilterId(criteria.getFilterId());
+        jpaCriteria.addFilterResourceId(criteria.getFilterResourceId());
+        jpaCriteria.addFilterVersion(criteria.getFilterVersion());
+        jpaCriteria.addFilterCategory(criteria.getFilterCategory());
+        jpaCriteria.fetchDrifts(criteria.isFetchDrifts());
 
         PageList<? extends DriftChangeSet> results = getDriftManager().findDriftChangeSetsByCriteria(subject,
-            rhqCriteria);
+            jpaCriteria);
         return (PageList<DriftChangeSet>) results;
     }
 
     @Override
     public PageList<Drift> findDriftsByCriteria(Subject subject, DriftCriteria criteria) {
-        DriftJPACriteria rhqCriteria = new DriftJPACriteria();
-        rhqCriteria.addFilterId(criteria.getFilterId());
-        rhqCriteria.addFilterCategories(criteria.getFilterCategories().toArray(new DriftCategory[] {}));
-        rhqCriteria.addFilterChangeSetId(criteria.getFilterChangeSetId());
-        rhqCriteria.addFilterEndTime(criteria.getFilterEndTime());
-        rhqCriteria.addFilterPath(criteria.getFilterPath());
-        rhqCriteria.addFilterResourceIds(criteria.getFilterResourceIds().toArray(new Integer[] {}));
-        rhqCriteria.addFilterStartTime(criteria.getFilterStartTime());
-        rhqCriteria.fetchChangeSet(criteria.isFetchChangeSet());
-        rhqCriteria.addSortCtime(criteria.getSortCtime());
-
-        PageList<? extends Drift> results = getDriftManager().findDriftsByCriteria(subject, rhqCriteria);
+        PageList<? extends Drift> results = getDriftManager().findDriftsByCriteria(subject, toJPACriteria(criteria));
         return (PageList<Drift>) results;
+    }
+
+    @Override
+    public PageList<DriftComposite> findDriftCompositesByCriteria(Subject subject, DriftCriteria criteria) {
+        return getDriftManager().findDriftCompositesByCriteria(subject, toJPACriteria(criteria));
     }
 
     @Override
@@ -110,5 +105,20 @@ public class DriftServerPluginComponent implements DriftServerPluginFacet {
     public void saveChangeSetFiles(File changeSetFilesZip) throws Exception {
         DriftManagerLocal driftMgr = getDriftManager();
         driftMgr.storeFiles(changeSetFilesZip);
+    }
+
+    private DriftJPACriteria toJPACriteria(DriftCriteria criteria) {
+        DriftJPACriteria jpaCriteria = new DriftJPACriteria();
+        jpaCriteria.addFilterId(criteria.getFilterId());
+        jpaCriteria.addFilterCategories(criteria.getFilterCategories().toArray(new DriftCategory[]{}));
+        jpaCriteria.addFilterChangeSetId(criteria.getFilterChangeSetId());
+        jpaCriteria.addFilterEndTime(criteria.getFilterEndTime());
+        jpaCriteria.addFilterPath(criteria.getFilterPath());
+        jpaCriteria.addFilterResourceIds(criteria.getFilterResourceIds().toArray(new Integer[]{}));
+        jpaCriteria.addFilterStartTime(criteria.getFilterStartTime());
+        jpaCriteria.fetchChangeSet(criteria.isFetchChangeSet());
+        jpaCriteria.addSortCtime(criteria.getSortCtime());
+
+        return jpaCriteria;
     }
 }

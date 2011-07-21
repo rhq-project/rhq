@@ -42,6 +42,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.criteria.DriftChangeSetJPACriteria;
+import org.rhq.core.domain.criteria.DriftJPACriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.drift.DriftCategory;
 import org.rhq.core.domain.drift.DriftConfiguration;
@@ -68,7 +69,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
 @Test(groups = "drift-manager")
 public class DriftManagerBeanTest extends AbstractEJB3Test {
 
-    private static final boolean ENABLE_TESTS = true;
+    private static final boolean ENABLE_TESTS = false;
 
     private DriftManagerLocal driftManager;
     private Subject overlord;

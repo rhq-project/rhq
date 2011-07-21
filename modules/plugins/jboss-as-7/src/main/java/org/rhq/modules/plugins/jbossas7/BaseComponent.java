@@ -318,9 +318,9 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
         if (verbose)
             log.info(uploadResult);
 
-        if (ASConnection.isErrorReply(uploadResult)) {
+        if (ASUploadConnection.isErrorReply(uploadResult)) {
             report.setStatus(CreateResourceStatus.FAILURE);
-            report.setErrorMessage(ASConnection.getFailureDescription(uploadResult));
+            report.setErrorMessage(ASUploadConnection.getFailureDescription(uploadResult));
 
             return report;
         }
@@ -352,7 +352,7 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
         step1.addAdditionalProperty("runtime-name", fileName);
 
         String resourceKey;
-        JsonNode result ;
+        Result result ;
 
         CompositeOperation cop = new CompositeOperation();
         cop.addStep(step1);
@@ -366,7 +366,7 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
             Operation step2 = new Operation("deploy",step1.getAddress());
             cop.addStep(step2);
 
-            result = connection.executeRaw(cop);
+            result = connection.execute(cop);
             resourceKey = addressToPath(step1.getAddress());
 
         }
@@ -387,11 +387,11 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
             if (verbose)
                 log.info("Deploy operation: " + cop);
 
-            result = connection.executeRaw(cop);
+            result = connection.execute(cop);
         }
 
-        if (ASConnection.isErrorReply(result)) {
-            String failureDescription = ASConnection.getFailureDescription(result);
+        if ((!result.isSuccess())) {
+            String failureDescription = result.getFailureDescription();
             report.setErrorMessage(failureDescription);
             report.setStatus(CreateResourceStatus.FAILURE);
             log.warn(" ... done with failure: " + failureDescription);
@@ -526,13 +526,13 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
 
         OperationResult operationResult = new OperationResult();
         if (operation!=null) {
-            JsonNode result = connection.executeRaw(operation);
+            Result result = connection.execute(operation);
 
-            if (ASConnection.isErrorReply(result)) {
-                operationResult.setErrorMessage(ASConnection.getFailureDescription(result));
+            if (!result.isSuccess()) {
+                operationResult.setErrorMessage(result.getFailureDescription());
             }
             else {
-                operationResult.setSimpleResult(ASConnection.getSuccessDescription(result));
+                operationResult.setSimpleResult(result.getResult().toString());
             }
         }
         else {

@@ -28,8 +28,8 @@
       <!--  Profile to use to point test runs at a different db -->
       <id>test.bugfixes</id>
       <properties>
-        <rhq.test.ds.db-name>rhqbugfixes</rhq.test.ds.db-name>
-        <rhq.test.ds.connection-url>jdbc:postgresql://127.0.0.1:5432/rhqbugfixes</rhq.test.ds.connection-url>
+        <rhq.ds.db-name>rhqbugfixes</rhq.ds.db-name>
+        <rhq.ds.connection-url>jdbc:postgresql://127.0.0.1:5432/rhqbugfixes</rhq.ds.connection-url>
         <DatabaseTest.nofail>true</DatabaseTest.nofail>
         
         <!-- comm and agent config properties -->

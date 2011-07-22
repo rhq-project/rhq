@@ -559,7 +559,7 @@ Build-OS-Version=${os.version}
                <systemPropertyVariables>
                   <embeddedDeployment>true</embeddedDeployment>
                   <deploymentDirectory>target/classes</deploymentDirectory>
-                  <hibernate.dialect>${rhq.test.ds.hibernate-dialect}</hibernate.dialect>
+                  <hibernate.dialect>${rhq.ds.hibernate-dialect}</hibernate.dialect>
                   <clean.db>${clean.db}</clean.db>
                </systemPropertyVariables>
                <additionalClasspathElements>

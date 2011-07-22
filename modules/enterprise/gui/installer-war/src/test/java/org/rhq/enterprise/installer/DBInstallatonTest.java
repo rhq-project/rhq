@@ -46,11 +46,11 @@ import java.util.Properties;
 public class DBInstallatonTest {
 
     private final String LOG_DIRECTORY = System.getProperty("java.io.tmpdir", "rhq/installer-test");
-    private final String TEST_DB = System.getProperty("rhq.test.ds.db-name","rhq_installer_test_db");
-    private final String USERNAME = System.getProperty("rhq.test.ds.user-name", "rhqadmin");
-    private final String PASSWORD = System.getProperty("rhq.test.ds.password", "rhqadmin");
-    private final String SERVER = System.getProperty("rhq.test.ds.server-name", "127.0.0.1");
-    private final String DB_URL = System.getProperty("rhq.test.ds.connection-url", "jdbc:postgresql://" + SERVER + ":5432/"+TEST_DB);
+    private final String TEST_DB = System.getProperty("rhq.ds.db-name","rhq_installer_test_db");
+    private final String USERNAME = System.getProperty("rhq.ds.user-name", "rhqadmin");
+    private final String PASSWORD = System.getProperty("rhq.ds.password", "rhqadmin");
+    private final String SERVER = System.getProperty("rhq.ds.server-name", "127.0.0.1");
+    private final String DB_URL = System.getProperty("rhq.ds.connection-url", "jdbc:postgresql://" + SERVER + ":5432/"+TEST_DB);
     private final String ADMIN_USERNAME = System.getProperty("rhq.db.admin.username", "postgres");
     private final String ADMIN_PASSWORD = System.getProperty("rhq.db.admin.password", "postgres");
 

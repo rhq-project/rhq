@@ -226,16 +226,16 @@ cat <<EOF >${SETTINGS}
       <profile>
          <id>release</id>
          <properties>
-            <rhq.test.ds.connection-url>jdbc:postgresql://jon03.qa.atl2.redhat.com:5432/rhq_release</rhq.test.ds.connection-url>
-            <rhq.test.ds.user-name>rhqadmin</rhq.test.ds.user-name>
-            <rhq.test.ds.password>rhqadmin</rhq.test.ds.password>
-            <rhq.test.ds.type-mapping>PostgreSQL</rhq.test.ds.type-mapping>
-            <rhq.test.ds.driver-class>org.postgresql.Driver</rhq.test.ds.driver-class>
-            <rhq.test.ds.xa-datasource-class>org.postgresql.xa.PGXADataSource</rhq.test.ds.xa-datasource-class>
-            <rhq.test.ds.server-name>jon03.qa.atl2.redhat.com</rhq.test.ds.server-name>
-            <rhq.test.ds.port>5432</rhq.test.ds.port>
-            <rhq.test.ds.db-name>rhq_release</rhq.test.ds.db-name>
-            <rhq.test.ds.hibernate-dialect>org.hibernate.dialect.PostgreSQLDialect</rhq.test.ds.hibernate-dialect>
+            <rhq.ds.connection-url>jdbc:postgresql://jon03.qa.atl2.redhat.com:5432/rhq_release</rhq.ds.connection-url>
+            <rhq.ds.user-name>rhqadmin</rhq.ds.user-name>
+            <rhq.ds.password>rhqadmin</rhq.ds.password>
+            <rhq.ds.type-mapping>PostgreSQL</rhq.ds.type-mapping>
+            <rhq.ds.driver-class>org.postgresql.Driver</rhq.ds.driver-class>
+            <rhq.ds.xa-datasource-class>org.postgresql.xa.PGXADataSource</rhq.ds.xa-datasource-class>
+            <rhq.ds.server-name>jon03.qa.atl2.redhat.com</rhq.ds.server-name>
+            <rhq.ds.port>5432</rhq.ds.port>
+            <rhq.ds.db-name>rhq_release</rhq.ds.db-name>
+            <rhq.ds.hibernate-dialect>org.hibernate.dialect.PostgreSQLDialect</rhq.ds.hibernate-dialect>
             <!-- quartz properties -->
             <rhq.test.quartz.driverDelegateClass>org.quartz.impl.jdbcjobstore.PostgreSQLDelegate</rhq.test.quartz.driverDelegateClass>
             <rhq.test.quartz.selectWithLockSQL>SELECT * FROM {0}LOCKS ROWLOCK WHERE LOCK_NAME = ? FOR UPDATE</rhq.test.quartz.selectWithLockSQL>

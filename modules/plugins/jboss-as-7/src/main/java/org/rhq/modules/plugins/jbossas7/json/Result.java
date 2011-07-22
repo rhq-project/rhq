@@ -41,13 +41,16 @@ public class Result {
     @JsonProperty("rolled-back")
     private boolean rolledBack = false;
 
+    /** Record throwsables during low level processing */
+    @JsonIgnore
+    private Throwable throwable;
+
     public Object getResponseHeaders() {
         return responseHeaders;
     }
 
     public void setResponseHeaders(Object responseHeaders) {
         this.responseHeaders = responseHeaders;
-        System.err.println("Response headers: " + responseHeaders);
     }
 
     @JsonProperty("response-headers")
@@ -94,6 +97,15 @@ public class Result {
     public void setRolledBack(boolean rolledBack) {
         this.rolledBack = rolledBack;
     }
+
+    public Throwable getThrowable() {
+        return throwable;
+    }
+
+    public void setThrowable(Throwable throwable) {
+        this.throwable = throwable;
+    }
+
 
     @Override
     public String toString() {

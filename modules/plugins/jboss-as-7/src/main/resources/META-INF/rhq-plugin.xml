@@ -286,7 +286,7 @@
 
     <server name="JBossAS7-Standalone"
             discovery="BaseProcessDiscovery"
-            class="BaseComponent"
+            class="StandaloneASComponent"
             >
 
         <plugin-configuration>
@@ -302,6 +302,18 @@
         </plugin-configuration>
 
         <process-scan name="StandaloneAS" query="process|basename|match=^java.*,arg|org.jboss.as.standalone|match=.*"/>
+
+        <operation name="reload" description="Make the server load the (changed) configuration." displayName="Reload">
+            <results>
+                <c:simple-property name="operationResult"/>
+            </results>
+        </operation>
+        <operation name="shutdown" description="Shut down the server." displayName="Shutdown">
+            <results>
+                <c:simple-property name="operationResult"/>
+            </results>
+        </operation>
+
 
         <metric property="_internal:mgmtRequests" category="performance" dataType="measurement" defaultInterval="120000"
                 displayType="summary" measurementType="trendsup" description="Number of requests sent to the controller"

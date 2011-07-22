@@ -455,6 +455,9 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
 
                 operation = new Operation(op,address,props);
             }
+            else {
+                operation = new Operation(op,address);
+            }
         } else if (what.equals("destination")) {
             address.addAll(pathToAddress(getPath()));
             String newName = parameters.getSimpleValue("name","");
@@ -532,7 +535,12 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
                 operationResult.setErrorMessage(result.getFailureDescription());
             }
             else {
-                operationResult.setSimpleResult(result.getResult().toString());
+                String tmp;
+                if (result.getResult()==null)
+                    tmp = "-none provided by the server-";
+                else
+                    tmp = result.getResult().toString();
+                operationResult.setSimpleResult(tmp);
             }
         }
         else {

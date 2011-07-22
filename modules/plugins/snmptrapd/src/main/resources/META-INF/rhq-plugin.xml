@@ -17,6 +17,9 @@
          <c:simple-property name="port"
             description="The port to listen on (Note: ports less than 1024 require root access on unixoids)"
             required="true" default="11162" type="integer"/>
+         <c:simple-property name="pollInterval"
+            description="Number of seconds between waiting for SNMP trap events and sending them upstream"
+            required="true" default="10" type="integer"/>
          <c:simple-property name="community" description="The community string for SNMP v1 and v2c"
             required="false"/>
          <c:simple-property name="eventSeverityOid"

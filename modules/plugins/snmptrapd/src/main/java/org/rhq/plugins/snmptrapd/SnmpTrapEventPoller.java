@@ -27,21 +27,21 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.Vector;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.rhq.core.domain.event.Event;
+import org.rhq.core.domain.event.EventSeverity;
+import org.rhq.core.pluginapi.event.EventPoller;
 import org.snmp4j.CommandResponder;
 import org.snmp4j.CommandResponderEvent;
 import org.snmp4j.PDU;
 import org.snmp4j.PDUv1;
-import org.snmp4j.ScopedPDU;
 import org.snmp4j.smi.Address;
 import org.snmp4j.smi.IpAddress;
 import org.snmp4j.smi.OID;
 import org.snmp4j.smi.TimeTicks;
 import org.snmp4j.smi.Variable;
 import org.snmp4j.smi.VariableBinding;
-
-import org.rhq.core.domain.event.Event;
-import org.rhq.core.domain.event.EventSeverity;
-import org.rhq.core.pluginapi.event.EventPoller;
 
 /**
  * Polls the individual traps
@@ -50,9 +50,10 @@ import org.rhq.core.pluginapi.event.EventPoller;
  */
 public class SnmpTrapEventPoller implements EventPoller, CommandResponder {
 
-    List<Event> events = new Vector<Event>();
-    OID severityOid;
-    Properties translation;
+    private final List<Event> events = new Vector<Event>();
+    private OID severityOid;
+    private Properties translation;
+    private Log log = LogFactory.getLog(SnmpTrapEventPoller.class);
 
     public SnmpTrapEventPoller() {
         severityOid = null;
@@ -68,8 +69,7 @@ public class SnmpTrapEventPoller implements EventPoller, CommandResponder {
                 in.close();
             }
         } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
     }
 
@@ -79,16 +79,10 @@ public class SnmpTrapEventPoller implements EventPoller, CommandResponder {
             severityOid = new OID(severityOidString);
     }
 
-    /* (non-Javadoc)
-     * @see org.rhq.core.pluginapi.event.EventPoller#getEventType()
-     */
     public String getEventType() {
         return SnmpTrapdComponent.TRAP_TYPE;
     }
 
-    /* (non-Javadoc)
-     * @see org.rhq.core.pluginapi.event.EventPoller#poll()
-     */
     public Set<Event> poll() {
         Set<Event> eventSet = new HashSet<Event>();
         synchronized (events) {
@@ -103,6 +97,8 @@ public class SnmpTrapEventPoller implements EventPoller, CommandResponder {
      */
     public void processPdu(CommandResponderEvent cre) {
 
+        if (log.isDebugEnabled())
+            log.debug("recv: " + cre);
         PDU pdu = cre.getPDU();
         String sourceAddr;
         Address addr = cre.getPeerAddress();
@@ -117,7 +113,6 @@ public class SnmpTrapEventPoller implements EventPoller, CommandResponder {
         }
         if (pdu != null) {
             StringBuffer payload = new StringBuffer();
-            //            System.out.println("=>PDU: " + pdu);
             // SNMP v1
             if (pdu instanceof PDUv1) {
                 PDUv1 v1pdu = (PDUv1) pdu;
@@ -126,10 +121,6 @@ public class SnmpTrapEventPoller implements EventPoller, CommandResponder {
                 payload.append(v1pdu.getGenericTrap()).append(", ").append(v1pdu.getSpecificTrap()).append("\n");
                 payload.append("Timestamp: " + new TimeTicks(timeTicks).toString());
                 payload.append("\n");
-            }
-            // SNMP v3
-            else if (pdu instanceof ScopedPDU) {
-                ScopedPDU spdu = (ScopedPDU) pdu;
             }
 
             SnmpTrapdComponent.trapCount++;
@@ -168,6 +159,8 @@ public class SnmpTrapEventPoller implements EventPoller, CommandResponder {
 
             Event event = new Event(getEventType(), sourceAddr, System.currentTimeMillis(), severity, payload
                 .toString());
+            if (log.isDebugEnabled())
+                log.debug("queue event " + event);
 
             synchronized (events) {
                 events.add(event);

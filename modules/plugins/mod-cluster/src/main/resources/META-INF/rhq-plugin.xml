@@ -2,6 +2,7 @@
 
 <plugin name="mod_cluster"
         displayName="mod_cluster"
+        description="Monitoring and management of mod_cluster plugin."
         version="1.0"
         package="org.rhq.plugins.modcluster"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -77,7 +78,7 @@
       	<c:simple-property name="workerTimeout" type="integer" description="Timeout to wait for an available worker (default is no wait)" />
       	<c:simple-property name="stickySession" type="boolean" description="Enables sticky session for the cluster."/>
       	<c:simple-property name="stickySessionRemove" type="boolean" description="Remove session when the request cannot be routed to the right node."/>
-      	<c:simple-property name="advertise" type="boolean" description="Enable autodiscovery of httpd servers."/>
+      	<!-- c:simple-property name="advertise" type="boolean" description="Enable autodiscovery of httpd servers."/-->
       	<c:simple-property name="smax" type="integer" description="Maximum time on seconds for idle connections above smax."/>
       	<c:simple-property name="maxAttempts" type="integer" description="Maximum number of attempts to send the request to the backend server."/>
       	<c:simple-property name="advertiseSecurityKey" type="string" required="false" description="Security key for discovery."/>
@@ -95,7 +96,7 @@
        <service name="mod_cluster Webapp Context"
          discovery="ContextDiscoveryComponent"
          class="ContextComponent"
-         description="A mod_cluster context">
+         description="mod_cluster webapp context">
 
       	<operation name="disableContext" displayName="Disable webapp" description="Disable this webapp.">
       		<results>
@@ -110,7 +111,9 @@
                         <c:option value="MICROSECONDS" name="MICROSECONDS"/>
                         <c:option value="MILLISECONDS" name="MILLISECONDS"/>
                         <c:option value="NANOSECONDS" name="NANOSECONDS"/>
-                        <c:option value="SECONDS" name="SECONDS"/>                        
+                        <c:option value="SECONDS" name="SECONDS"/>
+                        <c:option value="HOURS" name="HOURS"/>
+                        <c:option value="DAYS" name="DAYS"/>
                     </c:property-options>
                 </c:simple-property>
             </parameters>

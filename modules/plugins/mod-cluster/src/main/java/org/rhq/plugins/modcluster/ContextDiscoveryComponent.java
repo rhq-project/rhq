@@ -52,7 +52,8 @@ public class ContextDiscoveryComponent implements ResourceDiscoveryComponent<MBe
 
         for (ProxyInfo.Context availableContext : proxyInfo.getAvailableContexts()) {
             DiscoveredResourceDetails detail = new DiscoveredResourceDetails(context.getResourceType(),
-                availableContext.toString(), availableContext.toString(), null, "mod_cluster Context", null, null);
+                availableContext.toString(), availableContext.toString(), null, "mod_cluster Webapp Context", null,
+                null);
             entities.add(detail);
         }
 

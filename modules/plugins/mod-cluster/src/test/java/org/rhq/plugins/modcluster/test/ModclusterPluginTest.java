@@ -33,6 +33,8 @@ import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementReport;
@@ -159,11 +161,23 @@ public class ModclusterPluginTest {
             try {
                 OperationResult result = ((OperationFacet) resourceComponent).invokeOperation("enableContext", null);
                 log.info("Result of operation " + "enableContext" + " was: " + result.getSimpleResult());
+
+                Configuration config = new Configuration();
+                config.put(new PropertySimple("timeout", "1000"));
+                config.put(new PropertySimple("unit", java.util.concurrent.TimeUnit.SECONDS));
+                result = ((OperationFacet) resourceComponent).invokeOperation("stopContext", config);
+                log.info("Result of operation stopContext was: " + result.getSimpleResult());
+
+                result = ((OperationFacet) resourceComponent).invokeOperation("enableContext", null);
+                log.info("Result of operation enableContext was: " + result.getSimpleResult());
+
+                result = ((OperationFacet) resourceComponent).invokeOperation("disableContext", null);
+                log.info("Result of operation disableContext was: " + result.getSimpleResult());
+
             } catch (Exception e) {
-                log.info("Operation failed");
+                log.info("Operation failed. ", e);
             }
-            /*result = ((OperationFacet) resourceComponent).invokeOperation("disable", null);
-            log.info("Result of operation test was: " + result.getSimpleResult());*/
+
         }
     }
 

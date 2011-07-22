@@ -18,6 +18,8 @@
  */
 package org.rhq.plugins.modcluster;
 
+import java.util.concurrent.TimeUnit;
+
 import org.mc4j.ems.connection.bean.EmsBean;
 
 import org.rhq.core.domain.configuration.Configuration;
@@ -75,10 +77,13 @@ public class ContextComponent extends MBeanResourceComponent<MBeanResourceCompon
             Object[] configuration = null;
             if ("stopContext".equals(name)) {
                 configuration = new Object[] { context.getHost(), context.getPath(),
-                    parameters.getSimple("timeout").getLongValue(), parameters.getSimple("unit").getStringValue() };
+                    parameters.getSimple("timeout").getLongValue(),
+                    TimeUnit.valueOf(parameters.getSimple("unit").getStringValue()) };
             } else {
                 configuration = new Object[] { context.getHost(), context.getPath() };
             }
+
+            log.info(name + " - " + context.getHost() + " " + context.getPath());
 
             ClassLoader cl = Thread.currentThread().getContextClassLoader();
             try {

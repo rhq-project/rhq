@@ -1,5 +1,6 @@
 package org.rhq.enterprise.server.drift;
 
+import java.io.Serializable;
 import java.util.Comparator;
 import java.util.Set;
 import java.util.TreeSet;
@@ -7,7 +8,11 @@ import java.util.TreeSet;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
 
-public class Snapshot {
+import static org.rhq.core.domain.drift.DriftCategory.FILE_REMOVED;
+
+public class Snapshot implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private int version;
 
@@ -29,7 +34,9 @@ public class Snapshot {
     public <D extends Drift> Snapshot add(DriftChangeSet<D> changeSet) {
         for (Drift entry : changeSet.getDrifts()) {
             entries.remove(entry);
-            entries.add(entry);
+            if (entry.getCategory() != FILE_REMOVED) {
+                entries.add(entry);
+            }
         }
         version = changeSet.getVersion();
         return this;

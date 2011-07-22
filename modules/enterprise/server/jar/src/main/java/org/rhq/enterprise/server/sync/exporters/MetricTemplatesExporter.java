@@ -21,7 +21,6 @@ package org.rhq.enterprise.server.sync.exporters;
 
 import java.util.Iterator;
 import java.util.List;
-import java.util.NoSuchElementException;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -31,10 +30,9 @@ import javax.xml.stream.XMLStreamException;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.MeasurementDefinitionCriteria;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
-import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.sync.entity.MetricTemplate;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
-import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.sync.ExportException;
 import org.rhq.enterprise.server.sync.ExportWriter;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -46,19 +44,14 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 public class MetricTemplatesExporter implements Exporter<MetricTemplate> {
 
-    private MeasurementDefinitionManagerLocal measurementDefinitionManager = LookupUtil.getMeasurementDefinitionManager();
-    private ResourceTypeManagerLocal resourceTypeManager = LookupUtil.getResourceTypeManager();
-    private Subject subject;
+    private static class MetricTemplateIterator implements ExportingIterator<MetricTemplate> {
 
-    private class MetricTemplateIterator implements ExportingIterator<MetricTemplate> {
-
-        private Iterator<ResourceType> allResourceTypesIterator;
-        private Iterator<MeasurementDefinition> currentResourceTypeDefinitionsIterator;
+        private Iterator<MeasurementDefinition> definitionsIterator;
         private MetricTemplate current;
         private Marshaller marshaller;
 
-        public MetricTemplateIterator(Iterator<ResourceType> allResourceTypesIterator) {
-            this.allResourceTypesIterator = allResourceTypesIterator;
+        public MetricTemplateIterator(Iterator<MeasurementDefinition> definitionsIterator) {
+            this.definitionsIterator = definitionsIterator;
             try {
                 JAXBContext jaxbContext = JAXBContext.newInstance(MetricTemplate.class);
                 marshaller = jaxbContext.createMarshaller();
@@ -70,25 +63,12 @@ public class MetricTemplatesExporter implements Exporter<MetricTemplate> {
 
         @Override
         public boolean hasNext() {
-            if (currentResourceTypeDefinitionsIterator != null && currentResourceTypeDefinitionsIterator.hasNext()) {
-                return true;
-            } else {
-                readNextSchedules();
-                return currentResourceTypeDefinitionsIterator != null && currentResourceTypeDefinitionsIterator.hasNext();
-            }
+            return definitionsIterator.hasNext();
         }
 
         @Override
         public MetricTemplate next() {
-            if (currentResourceTypeDefinitionsIterator == null) {
-                readNextSchedules();
-            }
-
-            if (currentResourceTypeDefinitionsIterator == null) {
-                throw new NoSuchElementException();
-            }
-
-            current = new MetricTemplate(currentResourceTypeDefinitionsIterator.next());
+            current = new MetricTemplate(definitionsIterator.next());
 
             return current;
         }
@@ -111,22 +91,11 @@ public class MetricTemplatesExporter implements Exporter<MetricTemplate> {
         public String getNotes() {
             return null;
         }
-
-        private void readNextSchedules() {
-            if (!allResourceTypesIterator.hasNext()) {
-                currentResourceTypeDefinitionsIterator = null;
-                return;
-            }
-
-            ResourceType resourceType = allResourceTypesIterator.next();
-
-            MeasurementDefinitionCriteria criteria = new MeasurementDefinitionCriteria();
-            criteria.addFilterResourceTypeId(resourceType.getId());
-            List<MeasurementDefinition> defs = measurementDefinitionManager.findMeasurementDefinitionsByCriteria(subject, criteria);
-
-            currentResourceTypeDefinitionsIterator = defs.iterator();
-        }
     };
+
+    private MeasurementDefinitionManagerLocal measurementDefinitionManager = LookupUtil
+        .getMeasurementDefinitionManager();
+    private Subject subject;
 
     public MetricTemplatesExporter(Subject subject) {
         this.subject = subject;
@@ -143,11 +112,13 @@ public class MetricTemplatesExporter implements Exporter<MetricTemplate> {
 
     @Override
     public ExportingIterator<MetricTemplate> getExportingIterator() {
-        List<ResourceType> allResourceTypes = null;
+        MeasurementDefinitionCriteria criteria = new MeasurementDefinitionCriteria();
+        criteria.setPageControl(PageControl.getUnlimitedInstance());
 
-        //TODO find all the resource types
+        List<MeasurementDefinition> defs = measurementDefinitionManager.findMeasurementDefinitionsByCriteria(subject,
+            criteria);
 
-        return new MetricTemplateIterator(allResourceTypes.iterator());
+        return new MetricTemplateIterator(defs.iterator());
     }
 
     @Override

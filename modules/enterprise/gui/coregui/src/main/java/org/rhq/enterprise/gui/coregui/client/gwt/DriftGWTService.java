@@ -25,6 +25,7 @@ import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
 import org.rhq.core.domain.criteria.DriftCriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
+import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.domain.util.PageList;
 
@@ -44,7 +45,7 @@ public interface DriftGWTService extends RemoteService {
      * @param driftIds the ids of the drifts to be deleted
      * @return the number of drifts deleted
      */
-    int deleteDrifts(int[] driftIds) throws RuntimeException;
+    int deleteDrifts(String[] driftIds) throws RuntimeException;
 
     /**
      * Delete all drifts for the specified context if the current user has permission to do so (i.e. either
@@ -111,6 +112,8 @@ public interface DriftGWTService extends RemoteService {
      * @return all drifts that match the specified criteria
      */
     PageList<Drift> findDriftsByCriteria(DriftCriteria criteria) throws RuntimeException;
+
+    PageList<DriftComposite> findDriftCompositesByCriteria(DriftCriteria criteria);
 
     /**
      * Get the specified drift configuration for the specified context.

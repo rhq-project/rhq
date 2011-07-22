@@ -1,7 +1,5 @@
 package org.rhq.core.domain.drift;
 
-import static org.apache.commons.io.IOUtils.toInputStream;
-
 import java.io.BufferedInputStream;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -23,6 +21,8 @@ import org.testng.annotations.Test;
 import org.rhq.core.domain.test.AbstractEJB3Test;
 import org.rhq.core.util.MessageDigestGenerator;
 
+import static org.apache.commons.io.IOUtils.toInputStream;
+
 public class DriftFileTest extends AbstractEJB3Test {
 
     static private final MessageDigestGenerator digestGen = new MessageDigestGenerator(MessageDigestGenerator.SHA_256);
@@ -36,12 +36,12 @@ public class DriftFileTest extends AbstractEJB3Test {
         executeInTransaction(new TransactionCallback() {
             @Override
             public void execute() throws Exception {
-                getEntityManager().createQuery("delete from DriftFile").executeUpdate();
+                getEntityManager().createQuery("delete from RhqDriftFile").executeUpdate();
             }
         });
     }
 
-    // Note, this test is more of a general Blob handling test. A real DriftFile never has its content updated.
+    // Note, this test is more of a general Blob handling test. A real RhqDriftFile never has its content updated.
     // But this is a useful test to just ensure Blob handling is working as expected.
     @Test(groups = { "integration.ejb3", "driftFile" })
     public void updateDriftFileData() throws Exception {
@@ -51,7 +51,7 @@ public class DriftFileTest extends AbstractEJB3Test {
         // Create the initial driftFile
         final DriftFileBits df1 = new DriftFileBits();
         df1.setHashId(hashId);
-        df1.setDataSize(content.length());
+        df1.setDataSize((long) content.length());
         df1.setData(Hibernate.createBlob(toInputStream(content), content.length()));
 
         executeInTransaction(new TransactionCallback() {
@@ -159,7 +159,7 @@ public class DriftFileTest extends AbstractEJB3Test {
             } catch (Exception e) {
                 // expected for file 2 or higher
                 if (driftFileNum == 0) {
-                    fail("Should not be able to store DriftFile with same hashId more than once.");
+                    fail("Should not be able to store RhqDriftFile with same hashId more than once.");
                 }
             }
         }

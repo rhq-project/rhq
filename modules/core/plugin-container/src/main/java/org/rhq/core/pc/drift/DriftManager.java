@@ -1,7 +1,5 @@
 package org.rhq.core.pc.drift;
 
-import static org.rhq.core.util.ZipUtil.zipFileOrDirectory;
-
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -32,6 +30,8 @@ import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.core.pc.measurement.MeasurementManager;
 import org.rhq.core.util.stream.StreamUtil;
+
+import static org.rhq.core.util.ZipUtil.zipFileOrDirectory;
 
 public class DriftManager extends AgentService implements DriftAgentService, DriftClient, ContainerService {
 

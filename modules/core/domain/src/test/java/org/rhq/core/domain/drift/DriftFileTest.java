@@ -96,11 +96,11 @@ public class DriftFileTest extends AbstractEJB3Test {
     // running and should be moved to an integration test suite.
     @Test(groups = { "integration.ejb3", "driftFile" })
     public void loadMultipleDriftFilesWithoutLoadingData() throws Exception {
-        int numDriftFiles = 10;
+        int numDriftFiles = 3;
         final List<String> driftFileHashIds = new ArrayList<String>();
 
         for (int i = 0; i < numDriftFiles; ++i) {
-            File dataFile = createDataFile("test_data.txt", 10, (char) ('a' + i));
+            File dataFile = createDataFile("test_data.txt", 1, (char) ('a' + i));
             final DriftFileBits driftFile = new DriftFileBits();
             driftFile.setDataSize(dataFile.length());
             driftFile.setHashId(digestGen.calcDigestString(dataFile));

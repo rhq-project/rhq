@@ -28,7 +28,7 @@ import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.Result;
 
 /**
- * Component class for stanalone AS7 servers
+ * Component class for standalone AS7 servers
  * @author Heiko W. Rupp
  */
 public class StandaloneASComponent extends BaseComponent implements OperationFacet {

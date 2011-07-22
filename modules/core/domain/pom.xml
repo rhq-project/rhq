@@ -282,7 +282,7 @@
                 </property>
                 <property>
                   <name>hibernate.dialect</name>
-                  <value>${rhq.test.ds.hibernate-dialect}</value>
+                  <value>${rhq.ds.hibernate-dialect}</value>
                 </property>
               </systemProperties>
               <excludes>

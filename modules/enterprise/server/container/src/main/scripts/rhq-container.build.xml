@@ -33,16 +33,16 @@
 
    <target name="set-dev-server-props" if="predeploy">
       <echo>*** Using dev database settings in rhq-server.properties...</echo>
-      <property name="rhq.server.database.hibernate-dialect" value="${rhq.dev.ds.hibernate-dialect}" />
-      <property name="rhq.server.database.connection-url" value="${rhq.dev.ds.connection-url}" />
-      <property name="rhq.server.database.driver-class" value="${rhq.dev.ds.driver-class}" />
-      <property name="rhq.server.database.xa-datasource-class" value="${rhq.dev.ds.xa-datasource-class}" />
-      <property name="rhq.server.database.user-name" value="${rhq.dev.ds.user-name}" />
-      <property name="rhq.server.database.password" value="${rhq.dev.ds.password.encrypted}" />
-      <property name="rhq.server.database.type-mapping" value="${rhq.dev.ds.type-mapping}" />
-      <property name="rhq.server.database.server-name" value="${rhq.dev.ds.server-name}" />
-      <property name="rhq.server.database.port" value="${rhq.dev.ds.port}" />
-      <property name="rhq.server.database.db-name" value="${rhq.dev.ds.db-name}" />
+      <property name="rhq.server.database.hibernate-dialect" value="${rhq.ds.hibernate-dialect}" />
+      <property name="rhq.server.database.connection-url" value="${rhq.ds.connection-url}" />
+      <property name="rhq.server.database.driver-class" value="${rhq.ds.driver-class}" />
+      <property name="rhq.server.database.xa-datasource-class" value="${rhq.ds.xa-datasource-class}" />
+      <property name="rhq.server.database.user-name" value="${rhq.ds.user-name}" />
+      <property name="rhq.server.database.password" value="${rhq.ds.password.encrypted}" />
+      <property name="rhq.server.database.type-mapping" value="${rhq.ds.type-mapping}" />
+      <property name="rhq.server.database.server-name" value="${rhq.ds.server-name}" />
+      <property name="rhq.server.database.port" value="${rhq.ds.port}" />
+      <property name="rhq.server.database.db-name" value="${rhq.ds.db-name}" />
       <property name="rhq.server.quartz.driverDelegateClass" value="${rhq.dev.quartz.driverDelegateClass}" />
       <property name="rhq.server.quartz.selectWithLockSQL" value="${rhq.dev.quartz.selectWithLockSQL}" />
       <property name="rhq.server.quartz.lockHandlerClass" value="${rhq.dev.quartz.lockHandlerClass}" />

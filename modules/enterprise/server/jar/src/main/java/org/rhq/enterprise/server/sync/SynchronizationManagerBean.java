@@ -32,9 +32,12 @@ import javax.ejb.TransactionAttributeType;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.sync.ExportWrapper;
 import org.rhq.core.domain.sync.ExporterMessages;
 import org.rhq.core.domain.sync.ExportReport;
+import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.sync.exporters.Exporter;
 import org.rhq.enterprise.server.sync.exporters.Exporters;
 
@@ -49,8 +52,9 @@ public class SynchronizationManagerBean implements SynchronizationManagerLocal, 
     
     @Override
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
-    public ExportReport exportAllSubsystems() {
-        ExportWrapper localExport = exportAllSubsystemsLocally();
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public ExportReport exportAllSubsystems(Subject subject) {
+        ExportWrapper localExport = exportAllSubsystemsLocally(subject);
         
         byte[] buffer = new byte[65536];
         
@@ -83,12 +87,13 @@ public class SynchronizationManagerBean implements SynchronizationManagerLocal, 
     
     @Override
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
-    public ExportWrapper exportAllSubsystemsLocally() {
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public ExportWrapper exportAllSubsystemsLocally(Subject subject) {
         Set<Exporter<?>> allExporters = new HashSet<Exporter<?>>();
         Map<String, ExporterMessages> messages = new HashMap<String, ExporterMessages>();
         
         for(Exporters e : Exporters.values()) {
-            allExporters.add(e.getExporter());
+            allExporters.add(e.getExporter(subject));
         }
         
         try {

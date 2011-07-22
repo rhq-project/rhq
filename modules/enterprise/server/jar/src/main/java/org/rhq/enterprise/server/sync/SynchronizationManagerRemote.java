@@ -21,6 +21,8 @@ package org.rhq.enterprise.server.sync;
 
 import javax.ejb.Remote;
 
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.sync.ExportReport;
 
 /**
@@ -41,8 +43,11 @@ public interface SynchronizationManagerRemote {
      * in the export data).
      * <p>
      * The export data is a zipped XML.
+     * <p>
+     * The export requires the user to have {@link Permission#MANAGE_INVENTORY} permission.
      * 
+     * @param subject the logged in user
      * @return the export report
      */
-    ExportReport exportAllSubsystems();
+    ExportReport exportAllSubsystems(Subject subject);
 }

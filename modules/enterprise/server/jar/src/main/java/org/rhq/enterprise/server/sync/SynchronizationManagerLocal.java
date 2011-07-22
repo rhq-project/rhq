@@ -21,6 +21,8 @@ package org.rhq.enterprise.server.sync;
 
 import javax.ejb.Local;
 
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.sync.ExportWrapper;
 import org.rhq.core.domain.sync.ExportReport;
 
@@ -44,9 +46,11 @@ public interface SynchronizationManagerLocal {
      * have to reside in the memory in two forms - the internal datastructures AND the serialized form
      * of the export file that it is going to be transfered as.
      * 
+     * @param subject the logged in user that has {@link Permission#MANAGE_INVENTORY} permission
+     * 
      * @return a wrapper using which one can read the export file "lazily".
      */
-    ExportWrapper exportAllSubsystemsLocally();
+    ExportWrapper exportAllSubsystemsLocally(Subject subject);
     
     //-------- THE FOLLOWING METHODS ARE SHARED WITH THE REMOTE INTERFACE ------------
     
@@ -59,5 +63,5 @@ public interface SynchronizationManagerLocal {
      * 
      * @see SynchronizationManagerRemote#exportAllSubsystems()
      */
-    ExportReport exportAllSubsystems();
+    ExportReport exportAllSubsystems(Subject subject);
 }

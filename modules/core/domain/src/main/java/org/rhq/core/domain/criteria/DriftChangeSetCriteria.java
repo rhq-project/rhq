@@ -15,6 +15,22 @@ public interface DriftChangeSetCriteria extends Serializable {
 
     String getFilterVersion();
 
+    void addFilterStartVersion(String filterStartVersion);
+
+    String getFilterStartVersion();
+
+    void addFilterEndVersion(String filterEndVersion);
+
+    String getFilterEndVersion();
+
+    void addFilterCreatedAfter(Long filterCreatedAfter);
+
+    Long getFilterCreatedAfter();
+
+    void addFilterCreatedBefore(Long filterCreatedBefore);
+
+    Long getFilterCreatedBefore();
+
     void addFilterResourceId(Integer filterResourceId);
 
     Integer getFilterResourceId();

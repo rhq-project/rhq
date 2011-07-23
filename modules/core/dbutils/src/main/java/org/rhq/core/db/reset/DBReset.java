@@ -20,6 +20,7 @@
 package org.rhq.core.db.reset;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.Statement;
 
 import org.apache.commons.logging.Log;
@@ -45,6 +46,8 @@ public class DBReset {
     private final String DB_URL = System.getProperty("rhq.ds.connection-url", "jdbc:postgresql://" + SERVER + ":5432/"
         + DB);
 
+    private final String DB_TYPE_MAPPING = System.getProperty("rhq.ds.type-mapping", "PostgreSQL");
+
     /**
      * @param args
      */
@@ -66,29 +69,66 @@ public class DBReset {
 
         System.setProperty("dbsetup", "true");
 
-        Connection connection = null;
-        Statement dropDB = null;
-        Statement createDB = null;
+        if (DB_TYPE_MAPPING.equals("PostgreSQL")) {
+            Connection connection = null;
+            Statement dropDB = null;
+            Statement createDB = null;
 
-        try {
-            connection = DbUtil.getConnection(DB_URL.replace(DB, "postgres"), ADMIN_USER, ADMIN_PASSWORD);
+            try {
+                connection = DbUtil.getConnection(DB_URL.replace(DB, "postgres"), ADMIN_USER, ADMIN_PASSWORD);
 
-            dropDB = connection.createStatement();
-            dropDB.execute("drop database if exists " + DB);
+                dropDB = connection.createStatement();
+                dropDB.execute("drop database if exists " + DB);
 
-            createDB = connection.createStatement();
-            createDB.execute("create database " + DB + " with owner " + USER);
+                createDB = connection.createStatement();
+                createDB.execute("create database " + DB + " with owner " + USER);
 
-            log.info("created database $database");
-        } finally {
-            if (connection != null) {
-                connection.close();
+                log.info("Dropped and created database " + DB +".");
+            } finally {
+                if (dropDB != null) {
+                    dropDB.close();
+                }
+                if (createDB != null) {
+                    createDB.close();
+                }
+                if (connection != null) {
+                    connection.close();
+                }
+              
             }
-            if (dropDB != null) {
-                dropDB.close();
-            }
-            if (createDB != null) {
-                createDB.close();
+        } else if (DB_TYPE_MAPPING.equals("Oracle10g")) {
+            Connection connection = null;
+            PreparedStatement cleanUserStatement = null;
+
+            try {
+                connection = DbUtil.getConnection(DB_URL, ADMIN_USER, ADMIN_PASSWORD);
+                connection.setAutoCommit(false);
+
+                String plsql = "declare cursor all_objects_to_drop is"
+                    + "select *  from user_objects where object_type in ('TABLE', 'VIEW', 'FUNCTION', 'SEQUENCE');"
+                    + "begin"
+                    + "  for obj in all_objects_to_drop loop"
+                    + "    begin"
+                    + "      if obj.object_type = 'TABLE' THEN"
+                    + "        execute immediate('DROP '||obj.object_type||' '||obj.object_name||' CASCADE CONSTRAINTS PURGE');"
+                    + "      else"
+                    + "        execute immediate('DROP '||obj.object_type||' '||obj.object_name);"
+                    + "      end if;"
+                    + "      exception when others then null;"
+                    + "    end;"
+                    + "  end loop;"
+                    + "end;";
+                cleanUserStatement = connection.prepareStatement(plsql);
+                cleanUserStatement.execute();
+                
+                log.info("Cleand database " + DB +".");
+            } finally {
+                if (cleanUserStatement != null) {
+                    cleanUserStatement.close();
+                }
+                if (connection != null) {
+                    connection.close();
+                }
             }
         }
     }

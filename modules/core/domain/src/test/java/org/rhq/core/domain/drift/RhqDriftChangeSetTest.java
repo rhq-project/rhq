@@ -38,24 +38,6 @@ public class RhqDriftChangeSetTest extends AbstractEJB3Test {
 
         resource.setDriftConfigurations(driftConfigs);
 
-//        executeInTransaction(new TransactionCallback() {
-//            @Override
-//            public void execute() throws Exception {
-//                getEntityManager().createQuery("delete from RhqDriftChangeSet").executeUpdate();
-//
-//                // Cascading deletes for Resource.driftConfigurations does not work, nor does it
-//                // appear the orphan deletes work either. I came across https://hibernate.onjira.com/browse/HHH-1917
-//                // and https://hibernate.onjira.com/browse/HHH-1917 which led me to using
-//                // native SQL to perform the delete on the join table rhq_drift_config_map.
-//                //
-//                // jsanda
-//                getEntityManager().createNativeQuery("delete from rhq_drift_config_map").executeUpdate();
-//
-//                getEntityManager().createQuery("delete from Resource").executeUpdate();
-//                getEntityManager().createQuery("delete from ResourceType").executeUpdate();
-//            }
-//        });
-
         executeInTransaction(new TransactionCallback() {
             @Override
             public void execute() throws Exception {

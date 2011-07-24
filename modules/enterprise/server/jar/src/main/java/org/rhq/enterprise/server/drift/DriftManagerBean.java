@@ -581,4 +581,17 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
             throw new IllegalArgumentException("Entity Context Type not supported [" + context + "]");
         }
     }
+
+    @Override
+    public Snapshot createSnapshot(Subject subject, DriftChangeSetJPACriteria criteria) {
+        // TODO security checks
+        Snapshot snapshot = new Snapshot();
+        PageList<RhqDriftChangeSet> changeSets = findDriftChangeSetsByCriteria(subject, criteria);
+
+        for (RhqDriftChangeSet changeSet : changeSets) {
+            snapshot.add(changeSet);
+        }
+
+        return snapshot;
+    }
 }

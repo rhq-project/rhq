@@ -177,7 +177,7 @@ public interface DriftManagerLocal extends DriftManagerRemote {
      * @return
      * @throws Exception
      */
-    public RhqDriftFile persistDriftFile(RhqDriftFile driftFile) throws Exception;
+    RhqDriftFile persistDriftFile(RhqDriftFile driftFile) throws Exception;
 
     /**
      * SUPPORTS DRIFT RHQ SERVER PLUGIN
@@ -185,6 +185,8 @@ public interface DriftManagerLocal extends DriftManagerRemote {
      * @param data
      * @throws Exception
      */
-    public void persistDriftFileData(RhqDriftFile driftFile, InputStream data) throws Exception;
+    void persistDriftFileData(RhqDriftFile driftFile, InputStream data) throws Exception;
+
+    Snapshot createSnapshot(Subject subject, DriftChangeSetJPACriteria criteria);
 
 }

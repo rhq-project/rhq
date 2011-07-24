@@ -3,10 +3,6 @@ package org.rhq.core.domain.drift;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.persistence.EntityManager;
-import javax.transaction.SystemException;
-
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeGroups;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -16,6 +12,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.shared.ResourceBuilder;
 import org.rhq.core.domain.test.AbstractEJB3Test;
+import org.rhq.test.TransactionCallback;
 
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
 

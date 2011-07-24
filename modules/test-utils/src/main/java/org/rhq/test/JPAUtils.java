@@ -143,7 +143,7 @@ public class JPAUtils {
                 em.createNativeQuery("delete from rhq_measurement_sched");
                 em.createNativeQuery("delete from rhq_measurement_def");
                 em.createNativeQuery("delete from rhq_plugin");
-                em.createNativeQuery("delete from rhq_system_config where id not in (1, 2, 3, 4, 9, 10, 32, 34, 35, 36, 51, 52, 53, 54, 55, 56, 57)");
+                em.createNativeQuery("delete from rhq_system_config where id not in (1, 2, 3, 4, 9, 10, 32, 34, 35, 36, 51, 52, 53, 54, 55, 56)");
                 em.createNativeQuery("delete from rhq_alert_notification");
                 em.createNativeQuery("delete from rhq_alert_condition_log");
                 em.createNativeQuery("delete from rhq_alert");

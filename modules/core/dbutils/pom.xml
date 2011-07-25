@@ -104,6 +104,10 @@
                 <mainClass>org.rhq.core.db.reset.DBReset</mainClass>
                 <systemProperties>
                     <systemProperty>
+                        <key>rhq.ds.type-mapping</key>
+                        <value>${rhq.ds.type-mapping}</value>
+                    </systemProperty>
+                    <systemProperty>
                         <key>rhq.ds.server-name</key>
                         <value>${rhq.ds.server-name}</value>
                     </systemProperty>
@@ -502,7 +506,34 @@
           </plugins>
        </build>
      </profile>
-   </profiles>
+     
+    <profile>
+        <id>ojdbc-driver</id>
+        <dependencies>
+            <dependency>
+                <groupId>com.oracle</groupId>
+                <artifactId>ojdbc5</artifactId>
+                <version>${ojdbc5.version}</version>
+            </dependency>
+        </dependencies>
+        <build>
+            <plugins>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>exec-maven-plugin</artifactId>
+                    <version>1.2</version>
+                    <dependencies>
+                        <dependency>
+                            <groupId>com.oracle</groupId>
+                            <artifactId>ojdbc5</artifactId>
+                            <version>${ojdbc5.version}</version>
+                        </dependency>
+                    </dependencies>
+                </plugin>
+            </plugins>
+        </build>
+    </profile>
+    </profiles>
 
    <pluginRepositories>
       <pluginRepository>

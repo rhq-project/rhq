@@ -101,7 +101,37 @@
               <goal>java</goal>
             </goals>
             <configuration>
-            	<mainClass>org.rhq.core.db.reset.DBReset</mainClass>            
+                <mainClass>org.rhq.core.db.reset.DBReset</mainClass>
+                <systemProperties>
+                    <systemProperty>
+                        <key>rhq.ds.server-name</key>
+                        <value>${rhq.ds.server-name}</value>
+                    </systemProperty>
+                    <systemProperty>
+                        <key>rhq.ds.db-name</key>
+                        <value>${rhq.ds.db-name}</value>
+                    </systemProperty>
+                    <systemProperty>
+                        <key>rhq.ds.connection-url</key>
+                        <value>${rhq.ds.connection-url}</value>
+                    </systemProperty>
+                    <systemProperty>
+                        <key>rhq.db.admin.username</key>
+                        <value>${rhq.db.admin.username}</value>
+                    </systemProperty>
+                    <systemProperty>
+                        <key>rhq.db.admin.password</key>
+                        <value>${rhq.db.admin.password}</value>
+                    </systemProperty>
+                    <systemProperty>
+                        <key>rhq.ds.user-name</key>
+                        <value>${rhq.ds.user-name}</value>
+                    </systemProperty>
+                    <systemProperty>
+                        <key>rhq.ds.password</key>
+                        <value>${rhq.ds.password}</value>
+                    </systemProperty>
+                </systemProperties>
             </configuration>
           </execution>
         </executions>
@@ -171,6 +201,7 @@
                       <tasks>
                          <property name="settings.localRepository" location="${user.home}/.m2/repository}" />
                          <property name="rhq.ds.type-mapping" value="${rhq.ds.type-mapping}" />
+                         <property name="rhq.ds.db-name" value="${rhq.ds.db-name}" />
                          <property name="rhq.ds.connection-url" value="${rhq.ds.connection-url}"/>
                          <property name="rhq.ds.user-name" value="${rhq.ds.user-name}"/>
                          <property name="rhq.ds.password" value="${rhq.ds.password}"/>
@@ -183,6 +214,7 @@
                             <property name="jtds.version" value="${jtds.version}" />
                             <property name="task.classpath.property" refid="maven.test.classpath" />
                             <property name="rhq.ds.type-mapping" value="${rhq.ds.type-mapping}" />
+                            <property name="rhq.ds.db-name" value="${rhq.ds.db-name}" />
                             <property name="rhq.ds.connection-url" value="${rhq.ds.connection-url}" />
                             <property name="rhq.ds.user-name" value="${rhq.ds.user-name}" />
                             <property name="rhq.ds.password" value="${rhq.ds.password}" />
@@ -207,6 +239,7 @@
                      <tasks>
                         <property name="settings.localRepository" location="${user.home}/.m2/repository}"/>
                         <property name="rhq.ds.type-mapping" value="${rhq.ds.type-mapping}"/>
+                        <property name="rhq.ds.db-name" value="${rhq.ds.db-name}"/>
                         <property name="rhq.ds.connection-url" value="${rhq.ds.connection-url}"/>
                         <property name="rhq.ds.user-name" value="${rhq.ds.user-name}"/>
                         <property name="rhq.ds.password" value="${rhq.ds.password}"/>
@@ -219,6 +252,7 @@
                            <property name="jtds.version" value="${jtds.version}" />
                            <property name="task.classpath.property" refid="maven.test.classpath" />
                            <property name="rhq.ds.type-mapping" value="${rhq.ds.type-mapping}" />
+                           <property name="rhq.ds.db-name" value="${rhq.ds.db-name}" />
                            <property name="rhq.ds.connection-url" value="${rhq.ds.connection-url}" />
                            <property name="rhq.ds.user-name" value="${rhq.ds.user-name}" />
                            <property name="rhq.ds.password" value="${rhq.ds.password}" />
@@ -244,6 +278,7 @@
                 <tasks>
                 <property name="settings.localRepository" location="${user.home}/.m2/repository}" />
                 <property name="rhq.ds.type-mapping" value="${rhq.ds.type-mapping}" />
+                <property name="rhq.ds.db-name" value="${rhq.ds.db-name}" />
                 <property name="rhq.ds.connection-url" value="${rhq.ds.connection-url}" />
                 <property name="rhq.ds.user-name" value="${rhq.ds.user-name}" />
                 <property name="rhq.ds.password" value="${rhq.ds.password}" />
@@ -256,6 +291,7 @@
                   <property name="h2.version" value="${h2.version}" />
                   <property name="jtds.version" value="${jtds.version}" />
                   <property name="task.classpath.property" refid="maven.test.classpath" />
+                  <property name="rhq.ds.db-name" value="${rhq.ds.db-name}" />
                   <property name="rhq.ds.type-mapping" value="${rhq.ds.type-mapping}" />
                   <property name="rhq.ds.connection-url" value="${rhq.ds.connection-url}" />
                   <property name="rhq.ds.user-name" value="${rhq.ds.user-name}" />
@@ -296,6 +332,7 @@
                           <tasks>
                             <property name="settings.localRepository" location="${user.home}/.m2/repository}" />
                             <property name="rhq.ds.type-mapping" value="${rhq.ds.type-mapping}" />
+                            <property name="rhq.ds.db-name" value="${rhq.ds.db-name}" />
                             <property name="rhq.ds.connection-url" value="${rhq.ds.connection-url}" />
                             <property name="rhq.ds.user-name" value="${rhq.ds.user-name}" />
                             <property name="rhq.ds.password" value="${rhq.ds.password}" />
@@ -308,6 +345,7 @@
                                 <property name="jtds.version" value="${jtds.version}" />
                                 <property name="task.classpath.property" refid="maven.test.classpath" />
                                 <property name="rhq.ds.type-mapping" value="${rhq.ds.type-mapping}" />
+                                <property name="rhq.ds.db-name" value="${rhq.ds.db-name}" />
                                 <property name="rhq.ds.connection-url" value="${rhq.ds.connection-url}" />
                                 <property name="rhq.ds.user-name" value="${rhq.ds.user-name}" />
                                 <property name="rhq.ds.password" value="${rhq.ds.password}" />

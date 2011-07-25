@@ -38,6 +38,13 @@ public class DriftChangeSetsView extends LocatableVLayout {
         this.hasWriteAccess = hasWriteAccess;
     }
 
+    @Override
+    protected void onDraw() {
+        super.onDraw();
+
+        addMember(new ResourceDriftChangeSetsTreeView(extendLocatorId("Tree"), this.hasWriteAccess, this.context));
+    }
+
     public EntityContext getContext() {
         return context;
     }

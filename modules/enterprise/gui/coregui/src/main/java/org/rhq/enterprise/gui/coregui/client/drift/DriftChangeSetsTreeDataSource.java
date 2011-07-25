@@ -95,7 +95,7 @@ public class DriftChangeSetsTreeDataSource extends RPCDataSource<Object, BaseCri
             // Get the top nodes (the change sets) but to be as fast as possible don't load their drifts.
             // We will lazily load drifts when the these changeset tree nodes are opened
             DriftChangeSetCriteria criteria = new DriftChangeSetJPACriteria();
-            criteria.addSortVersion(PageOrdering.ASC);
+            criteria.addSortVersion(PageOrdering.DESC);
             criteria.setPageControl(getPageControl(request));
 
             driftService.findDriftChangeSetsByCriteria(criteria, new AsyncCallback<PageList<DriftChangeSet>>() {

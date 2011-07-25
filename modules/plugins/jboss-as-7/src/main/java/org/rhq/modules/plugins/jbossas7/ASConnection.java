@@ -44,13 +44,18 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
 public class ASConnection {
 
     public static final String MANAGEMENT = "/management";
-//    public static final String MANAGEMENT = "/domain-api"; // Old one - leave it here for the moment for tests.
     private final Log log = LogFactory.getLog(ASConnection.class);
     URL url;
     String urlString;
     private ObjectMapper mapper;
     public static boolean verbose = false; // This is a variable on purpose, so devs can switch it on in the debugger or in the agent
 
+    /**
+     * Construct an ASConnection object. The real "physical" connection is done in
+     * #executeRaw.
+     * @param host Host of the DomainController or standalone server
+     * @param port Port of the JSON api.
+     */
     public ASConnection(String host, int port) {
 
         try {
@@ -67,37 +72,17 @@ public class ASConnection {
         mapper = new ObjectMapper();
     }
 
-
-
-    static boolean isErrorReply(JsonNode in) {
-        if (in == null)
-            return true;
-
-        if (in.has("outcome")) {
-            String outcome = null;
-            try {
-                JsonNode outcomeNode = in.findValue("outcome");
-                outcome = outcomeNode.getTextValue();
-                if (outcome.equals("failed")) {
-                    JsonNode reasonNode = in.findValue("failure-description");
-
-                    String reason = reasonNode.getTextValue();
-                    return true;
-                }
-
-            } catch (Exception e) {
-                e.printStackTrace(); // TODO
-                return true;
-            }
-        }
-        return false;
-    }
-
     /**
      * Execute an operation against the domain api. This method is doing the
-     * real work by talking to the remote server.
+     * real work by talking to the remote server and sending JSON data, that
+     * is obtained by serializing the operation.
+     *
+     * Please do not use this API , but execute()
      * @return JsonNode that describes the result
      * @param operation an Operation that should be run on the domain controller
+     * @see #execute(org.rhq.modules.plugins.jbossas7.json.Operation)
+     * @see #execute(org.rhq.modules.plugins.jbossas7.json.Operation, boolean)
+     * @see #executeComplex(org.rhq.modules.plugins.jbossas7.json.Operation)
      */
     public JsonNode executeRaw(Operation operation) {
 
@@ -169,6 +154,7 @@ public class ASConnection {
             Result failure = new Result();
             failure.setFailureDescription(e.getMessage());
             failure.setOutcome("failure");
+            failure.setThrowable(e);
 
             JsonNode ret = mapper.valueToTree(failure);
             return ret;
@@ -189,16 +175,35 @@ public class ASConnection {
         return null;
     }
 
-
-
+    /**
+     * Execute the passed Operation and return its Result. This is a shortcut of
+     * #execute(Operation, false)
+     * @param op Operation to execute
+     * @return Result of the execution
+     * @see #execute(org.rhq.modules.plugins.jbossas7.json.Operation, boolean)
+     */
     public Result execute(Operation op) {
         return execute(op,false);
     }
 
+    /**
+     * Execute the passed Operation and return its ComplexResult. This is a shortcut of
+     * #execute(Operation, true)
+     * @param op Operation to execute
+     * @return ComplexResult of the execution
+     * @see #execute(org.rhq.modules.plugins.jbossas7.json.Operation, boolean)
+     */
     public ComplexResult executeComplex(Operation op) {
         return (ComplexResult) execute(op,true);
     }
 
+    /**
+     * Execute the passed Operation and return its Result. Depending on <i>isComplex</i>
+     * the return type is a simple Result or a ComplexResult
+     * @param op Operation to execute
+     * @param isComplex should a complex result be returned?
+     * @return ComplexResult of the execution
+     */
     public Result execute(Operation op, boolean isComplex){
         JsonNode node = executeRaw(op);
 
@@ -215,18 +220,4 @@ public class ASConnection {
         }
     }
 
-
-    public static String getFailureDescription(JsonNode jsonNode) {
-        if (jsonNode==null)
-            return "getFailureDescription: -input was null-";
-        JsonNode node = jsonNode.findValue("failure-description");
-        return node.getValueAsText();
-    }
-
-    public static String getSuccessDescription(JsonNode jsonNode) {
-        if (jsonNode==null)
-            return "No message found";
-        JsonNode node = jsonNode.findValue("result");
-        return node.getValueAsText();
-    }
 }

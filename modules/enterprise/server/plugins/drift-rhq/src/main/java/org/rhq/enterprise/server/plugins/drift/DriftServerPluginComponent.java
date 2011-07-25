@@ -19,16 +19,26 @@
  */
 package org.rhq.enterprise.server.plugins.drift;
 
+import java.io.File;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.drift.DriftFile;
-import org.rhq.enterprise.server.plugin.pc.ControlFacet;
-import org.rhq.enterprise.server.plugin.pc.ControlResults;
-import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
+import org.rhq.core.domain.criteria.DriftCriteria;
+import org.rhq.core.domain.criteria.DriftJPACriteria;
+import org.rhq.core.domain.criteria.DriftChangeSetJPACriteria;
+import org.rhq.core.domain.drift.Drift;
+import org.rhq.core.domain.drift.DriftCategory;
+import org.rhq.core.domain.drift.DriftChangeSet;
+import org.rhq.core.domain.drift.DriftComposite;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.drift.DriftManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginContext;
 import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginFacet;
+
+import static org.rhq.enterprise.server.util.LookupUtil.getDriftManager;
 
 /**
  * A drift server-side plugin component that the server uses to process drift files.
@@ -36,7 +46,7 @@ import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginFacet;
  * @author Jay Shaughnessy
  * @author John Sanda
  */
-public class DriftServerPluginComponent implements ServerPluginComponent, DriftServerPluginFacet, ControlFacet {
+public class DriftServerPluginComponent implements DriftServerPluginFacet {
 
     private final Log log = LogFactory.getLog(DriftServerPluginComponent.class);
 
@@ -61,21 +71,54 @@ public class DriftServerPluginComponent implements ServerPluginComponent, DriftS
     }
 
     @Override
-    public DriftFile fetchDriftFile(String sha256) throws Exception {
-        // TODO Auto-generated method stub
-        return null;
+    public PageList<DriftChangeSet> findDriftChangeSetsByCriteria(Subject subject, DriftChangeSetCriteria criteria) {
+        DriftChangeSetJPACriteria jpaCriteria = new DriftChangeSetJPACriteria();
+        jpaCriteria.addFilterId(criteria.getFilterId());
+        jpaCriteria.addFilterResourceId(criteria.getFilterResourceId());
+        jpaCriteria.addFilterVersion(criteria.getFilterVersion());
+        jpaCriteria.addFilterCategory(criteria.getFilterCategory());
+        jpaCriteria.fetchDrifts(criteria.isFetchDrifts());
+
+        PageList<? extends DriftChangeSet> results = getDriftManager().findDriftChangeSetsByCriteria(subject,
+            jpaCriteria);
+        return (PageList<DriftChangeSet>) results;
     }
 
     @Override
-    public void storeDriftFile(DriftFile driftFile) throws Exception {
-        // TODO Auto-generated method stub
-
+    public PageList<Drift> findDriftsByCriteria(Subject subject, DriftCriteria criteria) {
+        PageList<? extends Drift> results = getDriftManager().findDriftsByCriteria(subject, toJPACriteria(criteria));
+        return (PageList<Drift>) results;
     }
 
     @Override
-    public ControlResults invoke(String name, Configuration parameters) {
-        // TODO Auto-generated method stub
-        return null;
+    public PageList<DriftComposite> findDriftCompositesByCriteria(Subject subject, DriftCriteria criteria) {
+        return getDriftManager().findDriftCompositesByCriteria(subject, toJPACriteria(criteria));
     }
 
+    @Override
+    public void saveChangeSet(int resourceId, File changeSetZip) throws Exception {
+        DriftManagerLocal driftMgr = getDriftManager();
+        driftMgr.storeChangeSet(resourceId, changeSetZip);
+    }
+
+    @Override
+    public void saveChangeSetFiles(File changeSetFilesZip) throws Exception {
+        DriftManagerLocal driftMgr = getDriftManager();
+        driftMgr.storeFiles(changeSetFilesZip);
+    }
+
+    private DriftJPACriteria toJPACriteria(DriftCriteria criteria) {
+        DriftJPACriteria jpaCriteria = new DriftJPACriteria();
+        jpaCriteria.addFilterId(criteria.getFilterId());
+        jpaCriteria.addFilterCategories(criteria.getFilterCategories().toArray(new DriftCategory[]{}));
+        jpaCriteria.addFilterChangeSetId(criteria.getFilterChangeSetId());
+        jpaCriteria.addFilterEndTime(criteria.getFilterEndTime());
+        jpaCriteria.addFilterPath(criteria.getFilterPath());
+        jpaCriteria.addFilterResourceIds(criteria.getFilterResourceIds().toArray(new Integer[]{}));
+        jpaCriteria.addFilterStartTime(criteria.getFilterStartTime());
+        jpaCriteria.fetchChangeSet(criteria.isFetchChangeSet());
+        jpaCriteria.addSortCtime(criteria.getSortCtime());
+
+        return jpaCriteria;
+    }
 }

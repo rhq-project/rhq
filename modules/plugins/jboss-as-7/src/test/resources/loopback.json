@@ -5,6 +5,5 @@
     "criteria" : [ {
       "inet-address" : "127.0.0.1"
     } ]
-  },
-  "compensating-operation" : null
+  }
 }

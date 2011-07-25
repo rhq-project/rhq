@@ -3,6 +3,7 @@ package org.rhq.enterprise.gui.coregui.client;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.alert.notification.ResultState;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
+import org.rhq.core.domain.drift.DriftCategory;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.ResourceAvailability;
@@ -76,6 +77,18 @@ public class ImageManager {
      */
     public static String getCancelIcon() {
         return "[SKIN]/actions/undo.png";
+    }
+
+    public static String getDriftCategoryIcon(DriftCategory category) {
+        switch (category) {
+        case FILE_ADDED:
+            return "subsystems/drift/Drift_add_16.png";
+        case FILE_CHANGED:
+            return "subsystems/drift/Drift_change_16.png";
+        case FILE_REMOVED:
+            return "subsystems/drift/Drift_remove_16.png";
+        }
+        return null; // should never happen
     }
 
     /**

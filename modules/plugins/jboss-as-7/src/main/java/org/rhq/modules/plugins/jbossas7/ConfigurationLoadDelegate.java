@@ -51,13 +51,14 @@ import org.rhq.modules.plugins.jbossas7.json.ReadResource;
 import org.rhq.modules.plugins.jbossas7.json.Result;
 import org.rhq.modules.plugins.jbossas7.json.WriteAttribute;
 
-public class ConfigurationDelegate implements ConfigurationFacet {
+public class ConfigurationLoadDelegate implements ConfigurationFacet {
 
     final Log log = LogFactory.getLog(this.getClass());
 
     private Address address;
     private ASConnection connection;
     private ConfigurationDefinition configurationDefinition;
+    private String namePropLocator;
 
     /**
      * Create a new configuration delegate, that reads the attributes for the resource at address.
@@ -65,7 +66,7 @@ public class ConfigurationDelegate implements ConfigurationFacet {
      * @param connection asConnection to use
      * @param address address of the resource.
      */
-    public ConfigurationDelegate(ConfigurationDefinition configDef,ASConnection connection, Address address) {
+    public ConfigurationLoadDelegate(ConfigurationDefinition configDef, ASConnection connection, Address address) {
         this.configurationDefinition = configDef;
         this.connection = connection;
         this.address = address;
@@ -93,7 +94,7 @@ public class ConfigurationDelegate implements ConfigurationFacet {
          */
         List<PropertyDefinition> nonGroupdedDefs = configurationDefinition.getNonGroupedProperties();
         Operation op = new ReadResource(address);
-        op.addAdditionalProperty("recursive", "true");
+//        op.addAdditionalProperty("recursive", "true"); // Also get sub-resources
         loadHandleProperties(config, nonGroupdedDefs, op);
 
         return config;
@@ -118,6 +119,10 @@ public class ConfigurationDelegate implements ConfigurationFacet {
         }
         else if (groupName.startsWith("children:")) {
             String type = groupName.substring("children:".length());
+            if (type.contains(":")) {
+                // We only need the type for reading
+                type = type.substring(0,type.indexOf(":"));
+            }
             operation = new ReadChildrenResources(address,type);
             operation.addAdditionalProperty("recursive", "true");
         }
@@ -151,37 +156,59 @@ public class ConfigurationDelegate implements ConfigurationFacet {
 
         Map<String,Object> results = (Map<String, Object>) operationResult.getResult();
 
-
         for (PropertyDefinition propDef :definitions ) {
-            String propertyName = propDef.getName();
-/*
-            if (!results.containsKey(propertyName)) {
-                log.warn(
-                        "No value for property [" + propertyName + "] found - check the descriptor (may be valid, \n"+
-                                "as some attributes are different in domain vs standalone mode");
-                continue;
-            }
-*/
-            Object valueObject = results.get(propertyName);
 
-            if (propDef instanceof PropertyDefinitionSimple) {
+            /*
+             * We may have a mismatch for groups where the <c:group name="children:*"> child is a list of maps
+             * but the result is actually the contained map
+             */
+            if (propDef instanceof PropertyDefinitionList && (propDef.getName().equals("*"))) {
+                propDef = ((PropertyDefinitionList) propDef).getMemberDefinition();
 
-                PropertySimple value = loadHandlePropertySimple((PropertyDefinitionSimple) propDef, valueObject);
-                if (value!=null)
-                    config.put(value);
-            }
+                if (!(propDef instanceof PropertyDefinitionMap)) {
+                    log.error("Embedded child is not a map");
+                    return;
+                }
+                // Now we are at map level which matches the operations results
 
-            else if (propDef instanceof PropertyDefinitionList) {
-                PropertyList propertyList = loadHandlePropertyList((PropertyDefinitionList) propDef, valueObject);
+                PropertyList list = new PropertyList("*");
 
-                if (propertyList!=null)
-                    config.put(propertyList);
-            }
-            else if (propDef instanceof PropertyDefinitionMap) {
-                PropertyMap propertyMap = loadHandlePropertyMap((PropertyDefinitionMap) propDef, valueObject);
+                for (Map.Entry<String,Object> entry : results.entrySet()) {
+                    Object val = entry.getValue();
 
-                if (propertyMap!=null)
-                    config.put(propertyMap);
+                    PropertyMap propertyMap = loadHandlePropertyMap((PropertyDefinitionMap) propDef, val);
+
+                    if (propertyMap!=null)
+                        list.add(propertyMap);
+                    }
+
+                config.put(list);
+
+            } else { // standard case
+                String propertyName = propDef.getName();
+
+
+                Object valueObject = results.get(propertyName);
+
+                if (propDef instanceof PropertyDefinitionSimple) {
+
+                    PropertySimple value = loadHandlePropertySimple((PropertyDefinitionSimple) propDef, valueObject);
+                    if (value!=null)
+                        config.put(value);
+                }
+
+                else if (propDef instanceof PropertyDefinitionList) {
+                    PropertyList propertyList = loadHandlePropertyList((PropertyDefinitionList) propDef, valueObject);
+
+                    if (propertyList!=null)
+                        config.put(propertyList);
+                }
+                else if (propDef instanceof PropertyDefinitionMap) {
+                    PropertyMap propertyMap = loadHandlePropertyMap((PropertyDefinitionMap) propDef, valueObject);
+
+                    if (propertyMap!=null)
+                        config.put(propertyMap);
+                }
             }
         }
     }
@@ -304,98 +331,7 @@ public class ConfigurationDelegate implements ConfigurationFacet {
      */
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
 
-        Configuration conf = report.getConfiguration();
+        throw new IllegalArgumentException("Please use ConfigurationWriteDelegate");
 
-        CompositeOperation cop = updateGenerateOperationFromProperties(conf);
-
-        Result result = connection.execute(cop);
-        if (!result.isSuccess()) {
-            report.setStatus(ConfigurationUpdateStatus.FAILURE);
-            report.setErrorMessage(result.getFailureDescription());
-        }
-        else {
-            report.setStatus(ConfigurationUpdateStatus.SUCCESS);
-            // TODO how to signal "need reload"
-        }
-
-    }
-
-    protected CompositeOperation updateGenerateOperationFromProperties(Configuration conf) {
-
-        CompositeOperation cop = new CompositeOperation();
-
-        for (Property prop  : conf.getProperties()) {
-            PropertyDefinition propDef = configurationDefinition.get(prop.getName());
-            // Skip over read-only properties, the AS can not use them anyway
-            if (propDef.isReadOnly())
-                continue;
-
-
-            if (prop instanceof PropertySimple) {
-                updateHandlePropertySimple(cop, (PropertySimple)prop, (PropertyDefinitionSimple) propDef);
-            }
-            else if (prop instanceof PropertyList) {
-                updateHandlePropertyList(cop,(PropertyList)prop, (PropertyDefinitionList) propDef);
-            }
-            else {
-                updateHandlePropertyMap(cop,(PropertyMap)prop,(PropertyDefinitionMap)propDef);
-            }
-        }
-
-        return cop;
-    }
-
-    private void updateHandlePropertyMap(CompositeOperation cop, PropertyMap prop, PropertyDefinitionMap propDef) {
-        Map<String,PropertyDefinition> memberDefinitions = propDef.getPropertyDefinitions();
-
-        Map<String,Object> results = new HashMap<String,Object>();
-        for (String name : memberDefinitions.keySet()) {
-            PropertyDefinition memberDefinition = memberDefinitions.get(name);
-
-            if (memberDefinition.isReadOnly())
-                continue;
-
-            if (memberDefinition instanceof PropertyDefinitionSimple) {
-                PropertyDefinitionSimple pds = (PropertyDefinitionSimple) memberDefinition;
-                PropertySimple ps = (PropertySimple) prop.get(name);
-                if ((ps==null || ps.getStringValue()==null ) && !pds.isRequired())
-                    continue;
-                if (ps!=null)
-                    results.put(name,ps.getStringValue());
-            }
-        }
-        Operation writeAttribute = new WriteAttribute(address,prop.getName(),results);
-        cop.addStep(writeAttribute);
-
-    }
-
-    private void updateHandlePropertyList(CompositeOperation cop, PropertyList prop, PropertyDefinitionList propDef) {
-        PropertyDefinition memberDef = propDef.getMemberDefinition();
-
-        // We need to collect the list members, create an array and attach this to the cop
-
-        List<Property> embeddedProps = prop.getList();
-        List<String> values = new ArrayList<String>();
-        for (Property inner : embeddedProps) {
-            if (memberDef instanceof PropertyDefinitionSimple) {
-                PropertySimple ps = (PropertySimple) inner;
-                if (ps.getStringValue()!=null)
-                    values.add(ps.getStringValue()); // TODO handling of optional vs required
-
-            }
-        }
-        Operation writeAttribute = new WriteAttribute(address,prop.getName(),values);
-        cop.addStep(writeAttribute);
-    }
-
-    private void updateHandlePropertySimple(CompositeOperation cop, PropertySimple propertySimple, PropertyDefinitionSimple propDef) {
-
-        // If the property value is null and the property is optional, skip too
-        if (propertySimple.getStringValue()==null && !propDef.isRequired())
-            return;
-
-        Operation writeAttribute = new WriteAttribute(
-                address, propertySimple.getName(),propertySimple.getStringValue());
-        cop.addStep(writeAttribute);
     }
 }

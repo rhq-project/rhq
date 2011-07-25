@@ -50,7 +50,7 @@ public class DriftFileBean implements MessageListener {
     private final Log log = LogFactory.getLog(DriftFileBean.class);
 
     @EJB
-    private DriftManagerLocal driftManager;
+    private DriftServerLocal driftServer;
 
     @Override
     public void onMessage(Message message) {
@@ -76,7 +76,7 @@ public class DriftFileBean implements MessageListener {
                         + "]");
                 }
 
-                driftManager.storeFiles(tempFile);
+                driftServer.saveChangeSetFiles(tempFile);
 
             } catch (IOException e) {
                 log.error(e);

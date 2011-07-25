@@ -21,7 +21,6 @@ package org.rhq.modules.plugins.jbossas7;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonNode;
-import org.hibernate.cfg.CollectionSecondPass;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -220,7 +219,7 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
 
         List<PROPERTY_VALUE> address = pathToAddress(path);
         ConfigurationDefinition configDef = context.getResourceType().getResourceConfigurationDefinition();
-        ConfigurationDelegate delegate = new ConfigurationDelegate(configDef,connection,new Address(address));
+        ConfigurationLoadDelegate delegate = new ConfigurationLoadDelegate(configDef,connection,new Address(address));
         return delegate.loadResourceConfiguration();
     }
 
@@ -229,7 +228,7 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
 
         List<PROPERTY_VALUE> address = pathToAddress(path);
         ConfigurationDefinition configDef = context.getResourceType().getResourceConfigurationDefinition();
-        ConfigurationDelegate delegate = new ConfigurationDelegate(configDef,connection,new Address(address));
+        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(configDef,connection,new Address(address));
         delegate.updateResourceConfiguration(report);
     }
 
@@ -284,7 +283,9 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
         if (!res.isSuccess())
             throw new IllegalArgumentException("Delete for [" + path + "] failed: " + res.getFailureDescription());
         if (path.contains("server-group")) {
-            // This was a server group level deployment - we also need to remove the entry in /deployments
+            // This was a server group level deployment - TODO do we also need to remove the entry in /deployments ?
+/*
+
             for (PROPERTY_VALUE val : address) {
                 if (val.getKey().equals("deployment")) {
                     ComplexResult res2 = connection.executeComplex(new Operation("remove",val.getKey(),val.getValue()));
@@ -292,6 +293,7 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
                         throw new IllegalArgumentException("Removal of [" + path + "] falied : " + res2.getFailureDescription());
                 }
             }
+*/
         }
         log.info("   ... done");
 
@@ -316,9 +318,9 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
         if (verbose)
             log.info(uploadResult);
 
-        if (ASConnection.isErrorReply(uploadResult)) {
+        if (ASUploadConnection.isErrorReply(uploadResult)) {
             report.setStatus(CreateResourceStatus.FAILURE);
-            report.setErrorMessage(ASConnection.getFailureDescription(uploadResult));
+            report.setErrorMessage(ASUploadConnection.getFailureDescription(uploadResult));
 
             return report;
         }
@@ -336,6 +338,8 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
 
         JsonNode resultNode = uploadResult.get("result");
         String hash = resultNode.get("BYTES_VALUE").getTextValue();
+
+
         ASConnection connection = getASConnection();
 
         Operation step1 = new Operation("add","deployment",tmpName);
@@ -350,7 +354,7 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
         step1.addAdditionalProperty("runtime-name", fileName);
 
         String resourceKey;
-        JsonNode result ;
+        Result result ;
 
         CompositeOperation cop = new CompositeOperation();
         cop.addStep(step1);
@@ -360,11 +364,14 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
          */
 
         if (!toServerGroup) {
-            // if standalone, then :deploy the deployment anyway
-            Operation step2 = new Operation("deploy",step1.getAddress());
-            cop.addStep(step2);
 
-            result = connection.executeRaw(cop);
+            // if standalone, then :deploy the deployment anyway
+            if (context.getResourceType().getName().contains("Standalone")) {
+                Operation step2 = new Operation("deploy",step1.getAddress());
+                cop.addStep(step2);
+            }
+
+            result = connection.execute(cop);
             resourceKey = addressToPath(step1.getAddress());
 
         }
@@ -385,11 +392,11 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
             if (verbose)
                 log.info("Deploy operation: " + cop);
 
-            result = connection.executeRaw(cop);
+            result = connection.execute(cop);
         }
 
-        if (ASConnection.isErrorReply(result)) {
-            String failureDescription = ASConnection.getFailureDescription(result);
+        if ((!result.isSuccess())) {
+            String failureDescription = result.getFailureDescription();
             report.setErrorMessage(failureDescription);
             report.setStatus(CreateResourceStatus.FAILURE);
             log.warn(" ... done with failure: " + failureDescription);
@@ -453,6 +460,9 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
 
                 operation = new Operation(op,address,props);
             }
+            else {
+                operation = new Operation(op,address);
+            }
         } else if (what.equals("destination")) {
             address.addAll(pathToAddress(getPath()));
             String newName = parameters.getSimpleValue("name","");
@@ -514,17 +524,28 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
                     ((CompositeOperation)operation).addStep(step);
                 }
             }
+        } else if (what.equals("naming")) {
+            if (op.equals("jndi-view")) {
+                address.addAll(pathToAddress(getPath()));
+                operation = new Operation("jndi-view",address);
+            }
         }
+
 
         OperationResult operationResult = new OperationResult();
         if (operation!=null) {
-            JsonNode result = connection.executeRaw(operation);
+            Result result = connection.execute(operation);
 
-            if (ASConnection.isErrorReply(result)) {
-                operationResult.setErrorMessage(ASConnection.getFailureDescription(result));
+            if (!result.isSuccess()) {
+                operationResult.setErrorMessage(result.getFailureDescription());
             }
             else {
-                operationResult.setSimpleResult(ASConnection.getSuccessDescription(result));
+                String tmp;
+                if (result.getResult()==null)
+                    tmp = "-none provided by the server-";
+                else
+                    tmp = result.getResult().toString();
+                operationResult.setSimpleResult(tmp);
             }
         }
         else {

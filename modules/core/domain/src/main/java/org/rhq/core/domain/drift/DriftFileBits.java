@@ -34,9 +34,9 @@ import javax.persistence.Lob;
 import javax.persistence.Table;
 
 /**
- * A DriftFile represents one unique piece of content used for drift tracking.  Note that DriftFileBits provides
+ * A RhqDriftFile represents one unique piece of content used for drift tracking.  Note that DriftFileBits provides
  * access to the bits through java.sql.Blob. This entity can not be used client-side (gwt) whereas its sister class,
- * DriftFile, can.  Both enities share the same table and abstract superclass. See RHQDomain.gwt.xml for how to
+ * RhqDriftFile, can.  Both enities share the same table and abstract superclass. See RHQDomain.gwt.xml for how to
  * exclude unwanted domain classes from the gwt compile.
  *
  * @author Jay Shaughnessy

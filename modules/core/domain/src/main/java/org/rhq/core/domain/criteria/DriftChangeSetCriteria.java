@@ -5,7 +5,7 @@ import java.io.Serializable;
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.util.PageOrdering;
 
-public interface DriftChangeSetCriteria extends Serializable {
+public interface DriftChangeSetCriteria extends BaseCriteria, Serializable {
 
     void addFilterId(String filterId);
 

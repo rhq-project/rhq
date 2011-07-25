@@ -79,7 +79,7 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
     final Log log = LogFactory.getLog(this.getClass());
 
     ResourceContext context;
-    Configuration conf;
+    Configuration pluginConfiguration;
     String myServerName;
     ASConnection connection;
     String path;
@@ -107,16 +107,16 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
      */
     public void start(ResourceContext context) throws InvalidPluginConfigurationException, Exception {
         this.context = context;
-        conf = context.getPluginConfiguration();
+        pluginConfiguration = context.getPluginConfiguration();
 
         String typeName = context.getResourceType().getName();
         // TODO can we use parent's connection and only set this up for top level base component?
-        host = conf.getSimpleValue("hostname", LOCALHOST);
-        String portString = conf.getSimpleValue("port", DEFAULT_HTTP_MANAGEMENT_PORT);
+        host = pluginConfiguration.getSimpleValue("hostname", LOCALHOST);
+        String portString = pluginConfiguration.getSimpleValue("port", DEFAULT_HTTP_MANAGEMENT_PORT);
         port = Integer.parseInt(portString);
         connection = new ASConnection(host,port);
 
-        path = conf.getSimpleValue("path", null);
+        path = pluginConfiguration.getSimpleValue("path", null);
         key = context.getResourceKey();
 
         myServerName = context.getResourceKey().substring(context.getResourceKey().lastIndexOf("/")+1);
@@ -445,16 +445,15 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
         List<PROPERTY_VALUE> address = new ArrayList<PROPERTY_VALUE>();
 
         if (what.equals("server-group")) {
-            String groupName = parameters.getSimpleValue("name",null);
+            String groupName = parameters.getSimpleValue("name","");
             String profile = parameters.getSimpleValue("profile","default");
 
             address.add(new PROPERTY_VALUE("server-group",groupName));
 
             operation = new Operation(op,address,"profile",profile);
         } else if (what.equals("server")) {
-
             if (context.getResourceType().getName().equals("JBossAS-Managed")) {
-                String host = conf.getSimpleValue("domainHost","local");
+                String host = pluginConfiguration.getSimpleValue("domainHost","local");
                 address.add(new PROPERTY_VALUE("host",host));
                 address.add(new PROPERTY_VALUE("server-config",myServerName));
                 operation = new Operation(op,address);

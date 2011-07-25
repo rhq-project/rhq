@@ -70,7 +70,7 @@ public class ManagedASDiscovery extends AbstractBaseDiscovery
             // Now we have the host controller, lets get the host.xml file
             // and obtain the servers from there.
             ProcessInfo processInfo = psr.getProcessInfo();
-            readHostXml(processInfo,true);
+            readStandaloneOrHostXml(processInfo, true);
             String hostName = findHostName();
             HostPort managementHostPort = getManagementPortFromHostXml();
 
@@ -105,13 +105,16 @@ public class ManagedASDiscovery extends AbstractBaseDiscovery
 
                 // TODO this fails for the downed servers.
                 // get from the domain or other place as soon as the domain provides it.
-                initLogFile(scans, serverInfo.name, config, getHomeDirFromCommandLine(processInfo.getCommandLine()));
+                String homeDir = getHomeDirFromCommandLine(processInfo.getCommandLine());
+                initLogFile(scans, serverInfo.name, config, homeDir);
+
+                String version = homeDir.substring(homeDir.lastIndexOf("-")+1);
 
                 DiscoveredResourceDetails detail = new DiscoveredResourceDetails(
                     discoveryContext.getResourceType(), // ResourceType
                     hostName + "/" + serverInfo.name, // key
                     serverInfo.name,  // Name
-                    null,  // TODO real version - get from Domain as soon as it is provided
+                    version,  // TODO  get from Domain as soon as it is provided
                     "Managed AS 7 instance", // Description
                     config,
                     null

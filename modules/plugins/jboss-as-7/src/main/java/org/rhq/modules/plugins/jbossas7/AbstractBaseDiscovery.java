@@ -46,9 +46,15 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent> impleme
     protected Document hostXml;
     protected final Log log = LogFactory.getLog(this.getClass());
 
-//    private final Log log = LogFactory.getLog(AbstractBaseDiscovery.class);
 
-    protected void readHostXml(ProcessInfo processInfo,boolean isDomainMode) {
+    /**
+     * Read the host.xml or standalone.xml file depending on isDomainMode. If isDomainMode is true,
+     * host.xml is read, otherwise standalone.xml.
+     * The xml file content is stored in the variable hostXml for future use.
+     * @param processInfo Process info to determine the base file location
+     * @param isDomainMode Indiates if host.xml should be read (true) or standalone.xml (false)
+     */
+    protected void readStandaloneOrHostXml(ProcessInfo processInfo, boolean isDomainMode) {
         String hostXmlFile = getHostXmlFileLocation(processInfo,isDomainMode);
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         try {
@@ -61,7 +67,11 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent> impleme
         }
     }
 
-
+    /**
+     * Determine the server home (=base) directory by parsing the passed command line
+     * @param commandLine command line arguments of the process
+     * @return The home dir if found or empty string otherwise
+     */
     String getHomeDirFromCommandLine(String[] commandLine) {
             for (String line: commandLine) {
                 if (line.startsWith(DJBOSS_SERVER_HOME_DIR))
@@ -70,6 +80,11 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent> impleme
             return "";
     }
 
+    /**
+     * Determine the location of the boot log file of the server by parsing the command line
+     * @param commandLine command line arguments of the process
+     * @return The log file location or empty string otherwise
+     */
     String getLogFileFromCommandLine(String[] commandLine) {
 
         for (String line: commandLine) {
@@ -79,7 +94,14 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent> impleme
         return "";
     }
 
+    /**
+     * Try to obtain the management IP and port from the already parsed host.xml or standalone.xml
+     * @return an Object containing host and port
+     * @see #readStandaloneOrHostXml(org.rhq.core.system.ProcessInfo, boolean) on how to obtain the parsed xml
+     */
     protected HostPort getManagementPortFromHostXml() {
+        if (hostXml==null)
+            throw new IllegalArgumentException("hostXml is null. You need to call 'readStandaloneOrHostXml' first.");
         Element host =  hostXml.getDocumentElement();
         NodeList interfaceParent = host.getElementsByTagName("management-interfaces");
         if (interfaceParent ==null || interfaceParent.getLength()==0) {
@@ -112,7 +134,15 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent> impleme
         return new HostPort();
     }
 
+    /**
+     * Try to obtain the management interface IP from the host/standalone.xml files
+     * @param nIf Interface to look for
+     * @return IP address to use
+     */
     private String getInterface(String nIf) {
+        if (hostXml==null)
+            throw new IllegalArgumentException("hostXml is null. You need to call 'readStandaloneOrHostXml' first.");
+
         Element host =  hostXml.getDocumentElement();
         NodeList interfaceParent = host.getElementsByTagName("interfaces");
         if (interfaceParent ==null || interfaceParent.getLength()==0) {
@@ -155,12 +185,26 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent> impleme
         return null;  // TODO: Customise this generated block
     }
 
+    /**
+     * Try to determine the host name - that is the name of a standalone server or a
+     * host in domain mode by looking at the standalone/host.xml files
+     * @return server name
+     */
     protected String findHostName() {
+        if (hostXml==null)
+            throw new IllegalArgumentException("hostXml is null. You need to call 'readStandaloneOrHostXml' first.");
+
         String hostName = hostXml.getDocumentElement().getAttribute("name");
         return hostName;
     }
 
+    /**
+     * Try to obtain the domain controller's location from looking at host.xml
+     * @return host and port of the domain controller
+     */
     protected HostPort getDomainControllerFromHostXml() {
+        if (hostXml==null)
+            throw new IllegalArgumentException("hostXml is null. You need to call 'readStandaloneOrHostXml' first.");
 
         Element host =  hostXml.getDocumentElement();
         NodeList dcParent = host.getElementsByTagName("domain-controller");
@@ -211,6 +255,9 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent> impleme
 
     }
 
+    /**
+     * Helper class that holds information about the host,port tuple
+     */
     protected static class HostPort {
         String host;
         int port;

@@ -19,16 +19,9 @@
 package org.rhq.modules.plugins.jbossas7;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-import org.codehaus.jackson.JsonNode;
-
-import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.measurement.AvailabilityType;
-import org.rhq.core.pluginapi.operation.OperationFacet;
-import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
 import org.rhq.modules.plugins.jbossas7.json.Result;
@@ -38,14 +31,20 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  * @author Heiko W. Rupp
  */
 @SuppressWarnings("unused")
-public class DomainComponent extends BaseComponent implements OperationFacet{
+public class ManagedASComponent extends BaseComponent {
 
+    /**
+     * Get the availability of the managed AS server. We can't just check if
+     * a connection succeeds, as the check runs against the API/HostController
+     * and the managed server may still be down even if the connection succeeds.
+     * @return Availability of the managed AS instance.
+     */
     @Override
     public AvailabilityType getAvailability() {
 
         if (context.getResourceType().getName().equals("JBossAS-Managed")) {
             List<PROPERTY_VALUE> address = new ArrayList<PROPERTY_VALUE>(2);
-            String host = conf.getSimpleValue("domainHost","local");
+            String host = pluginConfiguration.getSimpleValue("domainHost","local");
             address.add(new PROPERTY_VALUE("host",host));
             address.add(new PROPERTY_VALUE("server-config",myServerName));
             Operation getStatus = new Operation("read-attribute",address,"name","status");
@@ -66,7 +65,6 @@ public class DomainComponent extends BaseComponent implements OperationFacet{
                 return AvailabilityType.DOWN;
         }
 
-        return super.getAvailability();    // TODO: Customise this generated block
+        return super.getAvailability();
     }
-
 }

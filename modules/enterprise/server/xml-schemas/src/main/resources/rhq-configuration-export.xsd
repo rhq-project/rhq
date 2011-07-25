@@ -17,8 +17,16 @@
 
     <xs:complexType name="ConfigurationExport">
         <xs:sequence>
-            <xs:element type="ce:EntitiesExport" name="entities"/>
+            <xs:element type="ce:Validator" name="validator" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element type="ce:EntitiesExport" name="entities" minOccurs="0" maxOccurs="unbounded"/>
         </xs:sequence>
+    </xs:complexType>
+    
+    <xs:complexType name="Validator">
+        <xs:sequence>
+            <xs:element minOccurs="0" maxOccurs="unbounded" />
+        </xs:sequence>
+        <xs:attribute name="id" type="xs:ID" />
     </xs:complexType>
     
     <xs:complexType name="EntitiesExport">

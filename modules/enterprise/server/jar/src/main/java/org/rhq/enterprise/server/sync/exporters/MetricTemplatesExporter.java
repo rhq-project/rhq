@@ -19,8 +19,10 @@
 
 package org.rhq.enterprise.server.sync.exporters;
 
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.MeasurementDefinitionCriteria;
@@ -28,7 +30,10 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.sync.entity.MetricTemplate;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
+import org.rhq.enterprise.server.resource.metadata.PluginManagerLocal;
 import org.rhq.enterprise.server.sync.ExportException;
+import org.rhq.enterprise.server.sync.validators.ConsistencyValidator;
+import org.rhq.enterprise.server.sync.validators.DeployedAgentPluginsValidator;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -53,22 +58,34 @@ public class MetricTemplatesExporter implements Exporter<MeasurementDefinition, 
         protected MetricTemplate convert(MeasurementDefinition object) {
             return new MetricTemplate(object);
         }
-        
+
     }
-    
-    private MeasurementDefinitionManagerLocal measurementDefinitionManager = LookupUtil
-        .getMeasurementDefinitionManager();
+
+    private MeasurementDefinitionManagerLocal measurementDefinitionManager;
+    private PluginManagerLocal pluginManager;
     private Subject subject;
 
     public MetricTemplatesExporter(Subject subject) {
+        this(subject, LookupUtil.getMeasurementDefinitionManager(), LookupUtil.getPluginManager());
         this.subject = subject;
     }
 
+    public MetricTemplatesExporter(Subject subject, MeasurementDefinitionManagerLocal measurementDefinitionManager, PluginManagerLocal pluginManager) {
+        this.subject = subject;
+        this.measurementDefinitionManager = measurementDefinitionManager;
+        this.pluginManager = pluginManager;
+    }
+
+    @Override
+    public Set<ConsistencyValidator> getRequiredValidators() {
+        return Collections.<ConsistencyValidator>singleton(new DeployedAgentPluginsValidator(pluginManager));
+    }
+    
     @Override
     public Class<MeasurementDefinition> getExportedEntityType() {
         return MeasurementDefinition.class;
     }
-    
+
     @Override
     public void init() throws ExportException {
     }

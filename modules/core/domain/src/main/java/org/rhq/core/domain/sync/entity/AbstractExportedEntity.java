@@ -36,19 +36,19 @@ public abstract class AbstractExportedEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    Serializable referencedEntityId;
+    int referencedEntityId;
     
-    public Serializable getReferencedEntityId() {
+    public int getReferencedEntityId() {
         return referencedEntityId;
     }
 
-    public void setReferencedEntityId(Serializable referencedEntityId) {
+    public void setReferencedEntityId(int referencedEntityId) {
         this.referencedEntityId = referencedEntityId;
     }
     
     @Override
     public int hashCode() {
-        return referencedEntityId != null ? referencedEntityId.hashCode() : 0;
+        return referencedEntityId;
     }
     
     @Override
@@ -69,6 +69,6 @@ public abstract class AbstractExportedEntity implements Serializable {
             return false;
         }
         
-        return referencedEntityId.equals(((AbstractExportedEntity)other).getReferencedEntityId());
+        return referencedEntityId == ((AbstractExportedEntity)other).getReferencedEntityId();
     }
 }

@@ -42,10 +42,18 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 public class DeployedAgentPluginsValidator implements ConsistencyValidator {
 
-    private PluginManagerLocal pluginManager = LookupUtil.getPluginManager();
+    private PluginManagerLocal pluginManager;
 
     private Set<Plugin> pluginsToValidate;
 
+    public DeployedAgentPluginsValidator() {
+        this(LookupUtil.getPluginManager());        
+    }
+    
+    public DeployedAgentPluginsValidator(PluginManagerLocal pluginManager) {
+        this.pluginManager = pluginManager;
+    }
+    
     @Override
     public void exportState(ExportWriter writer) throws XMLStreamException {
         List<Plugin> plugins = pluginManager.getInstalledPlugins();

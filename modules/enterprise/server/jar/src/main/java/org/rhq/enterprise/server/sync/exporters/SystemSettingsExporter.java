@@ -21,10 +21,12 @@ package org.rhq.enterprise.server.sync.exporters;
 
 import java.util.Collections;
 import java.util.Properties;
+import java.util.Set;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.sync.entity.SystemSettings;
 import org.rhq.enterprise.server.sync.ExportException;
+import org.rhq.enterprise.server.sync.validators.ConsistencyValidator;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -36,7 +38,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class SystemSettingsExporter implements Exporter<SystemSettings, SystemSettings> {
 
     private Subject subject;
-    private SystemManagerLocal systemManager = LookupUtil.getSystemManager();
+    private SystemManagerLocal systemManager;
     
     private static class SystemSettingsExportingIterator extends JAXBExportingIterator<SystemSettings, SystemSettings> {
         public SystemSettingsExportingIterator(SystemSettings settings) {
@@ -55,7 +57,17 @@ public class SystemSettingsExporter implements Exporter<SystemSettings, SystemSe
     }
     
     public SystemSettingsExporter(Subject subject) {
+        this(subject, LookupUtil.getSystemManager());
+    }
+    
+    public SystemSettingsExporter(Subject subject, SystemManagerLocal systemManager) {
         this.subject = subject;
+        this.systemManager = systemManager;        
+    }
+    
+    @Override
+    public Set<ConsistencyValidator> getRequiredValidators() {
+        return Collections.emptySet();
     }
     
     @Override

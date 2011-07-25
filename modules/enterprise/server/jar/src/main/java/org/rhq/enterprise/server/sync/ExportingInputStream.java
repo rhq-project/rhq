@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.zip.GZIPOutputStream;
 import java.util.zip.ZipOutputStream;
 
 import javax.xml.stream.XMLOutputFactory;
@@ -185,8 +186,8 @@ public class ExportingInputStream extends InputStream {
 
             try {
                 OutputStream out = exportOutput;
-                if (zipOutput) {
-                    out = new ZipOutputStream(out);
+                if (zipOutput) {                    
+                    out = new GZIPOutputStream(out);
                 }
                 wrt = ofactory.createXMLStreamWriter(out, "UTF-8");
             } catch (XMLStreamException e) {

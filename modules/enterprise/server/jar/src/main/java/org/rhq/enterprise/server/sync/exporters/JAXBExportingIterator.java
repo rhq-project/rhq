@@ -44,8 +44,11 @@ public abstract class JAXBExportingIterator<T, E> extends AbstractDelegatingExpo
         try {
             JAXBContext context = JAXBContext.newInstance(jaxbBoundClasses);
             marshaller = context.createMarshaller();
+            marshaller.setProperty(Marshaller.JAXB_FRAGMENT, true);
+            marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+            marshaller.setProperty(Marshaller.JAXB_ENCODING, "UTF-8");            
         } catch (JAXBException e) {
-            throw new IllegalStateException("Could not create JAXB serializer for classes " + Arrays.asList(jaxbBoundClasses));
+            throw new IllegalStateException("Could not create JAXB serializer for classes " + Arrays.asList(jaxbBoundClasses), e);
         }
     }
     

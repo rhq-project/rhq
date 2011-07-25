@@ -28,6 +28,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -53,6 +54,7 @@ import org.rhq.enterprise.server.sync.exporters.AbstractDelegatingExportingItera
 import org.rhq.enterprise.server.sync.exporters.Exporter;
 import org.rhq.enterprise.server.sync.exporters.Exporters;
 import org.rhq.enterprise.server.sync.exporters.ExportingIterator;
+import org.rhq.enterprise.server.sync.validators.ConsistencyValidator;
 
 /**
  * 
@@ -108,6 +110,10 @@ public class ExportingInputStreamTest {
             this.valuesToExport = valuesToExport;
         }
                 
+        public Set<ConsistencyValidator> getRequiredValidators() {
+            return Collections.emptySet();
+        }
+        
         public Class<T> getExportedEntityType() {
             return clazz;
         }

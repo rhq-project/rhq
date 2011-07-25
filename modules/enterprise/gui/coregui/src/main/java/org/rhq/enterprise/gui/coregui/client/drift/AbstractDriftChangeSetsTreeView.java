@@ -27,14 +27,24 @@ import com.google.gwt.core.client.RunAsyncCallback;
 import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.widgets.grid.events.DataArrivedEvent;
 import com.smartgwt.client.widgets.grid.events.DataArrivedHandler;
+import com.smartgwt.client.widgets.menu.Menu;
+import com.smartgwt.client.widgets.menu.MenuItem;
+import com.smartgwt.client.widgets.menu.MenuItemSeparator;
+import com.smartgwt.client.widgets.menu.events.ClickHandler;
+import com.smartgwt.client.widgets.menu.events.MenuItemClickEvent;
 import com.smartgwt.client.widgets.tree.Tree;
 import com.smartgwt.client.widgets.tree.TreeNode;
-import com.smartgwt.client.widgets.tree.events.NodeClickEvent;
-import com.smartgwt.client.widgets.tree.events.NodeClickHandler;
+import com.smartgwt.client.widgets.tree.events.NodeContextClickEvent;
+import com.smartgwt.client.widgets.tree.events.NodeContextClickHandler;
 
+import org.rhq.core.domain.drift.Drift;
+import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
+import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTreeGrid;
 
 /**
@@ -56,18 +66,9 @@ public abstract class AbstractDriftChangeSetsTreeView extends LocatableTreeGrid 
         setAnimateFolders(false);
         setSelectionType(SelectionStyle.SINGLE);
         setShowRollOver(false);
-        setSortField(DriftChangeSetsTreeDataSource.ATTR_NAME);
         setShowHeader(false);
 
         setDataSource(new DriftChangeSetsTreeDataSource(canManageDrift));
-
-        addNodeClickHandler(new NodeClickHandler() {
-            public void onNodeClick(NodeClickEvent event) {
-                TreeNode node = event.getNode();
-                String link = getNodeTargetLink(node);
-                CoreGUI.goToView(link);
-            }
-        });
     }
 
     @Override
@@ -76,13 +77,30 @@ public abstract class AbstractDriftChangeSetsTreeView extends LocatableTreeGrid 
 
         // We may need to wait for tree data to be fetched before we can complete processing the selected path.
         // When the datasource pulls data keep processing the selectedPath if necessary.
-        this.addDataArrivedHandler(new DataArrivedHandler() {
+        addDataArrivedHandler(new DataArrivedHandler() {
             public void onDataArrived(DataArrivedEvent dataArrivedEvent) {
                 if (null != pendingPath) {
                     selectPath(pendingPath);
                 }
             }
         });
+
+        addNodeContextClickHandler(new NodeContextClickHandler() {
+            public void onNodeContextClick(final NodeContextClickEvent event) {
+                // stop the browser right-click menu
+                event.cancel();
+
+                TreeNode eventNode = event.getNode();
+
+                if (eventNode instanceof ChangeSetTreeNode) {
+                    CoreGUI.getMessageCenter().notify(new Message("TODO [this will popup the changeset menu]"));
+                } else if (eventNode instanceof DriftTreeNode) {
+                    Menu menu = buildContextMenu((DriftTreeNode) eventNode);
+                    menu.showContextMenu();
+                }
+            }
+        });
+
     }
 
     public void selectPath(ViewPath viewPath) {
@@ -144,4 +162,76 @@ public abstract class AbstractDriftChangeSetsTreeView extends LocatableTreeGrid 
      * @return the node's link
      */
     protected abstract String getNodeTargetLink(TreeNode node);
+
+    /**
+     * Builds the right-mouse-click context menu for the given drift node
+     * @param node the drift node whose menu is to be displayed
+     * @return the context menu to display
+     */
+    protected Menu buildContextMenu(final DriftTreeNode node) {
+
+        Menu contextMenu = new Menu();
+
+        // title
+        String titleName = node.getName();
+        if (titleName.length() > 50) {
+            // make sure the title isn't really long so the menu is not abnormally wide
+            titleName = "..." + titleName.substring(titleName.length() - 50);
+        }
+        MenuItem titleItem = new MenuItem(titleName);
+        titleItem.setEnabled(false);
+        contextMenu.setItems(titleItem);
+
+        // separator
+        contextMenu.addItem(new MenuItemSeparator());
+
+        // item that links to the history details
+        MenuItem detailsItem = new MenuItem(MSG.common_title_details());
+        detailsItem.addClickHandler(new ClickHandler() {
+            public void onClick(MenuItemClickEvent event) {
+                String link = getNodeTargetLink(node);
+                if (link != null) {
+                    CoreGUI.goToView(link);
+                }
+            }
+        });
+        contextMenu.addItem(detailsItem);
+
+        return contextMenu;
+    }
+
+    @SuppressWarnings("unchecked")
+    static class ChangeSetTreeNode extends TreeNode {
+        public ChangeSetTreeNode(DriftChangeSet changeset) {
+            setIsFolder(true);
+            setIcon("subsystems/drift/ChangeSet_16.png");
+            setShowOpenIcon(true);
+            setID(changeset.getId());
+            setName(buildDriftChangeSetNodeName(changeset));
+        }
+
+        private String buildDriftChangeSetNodeName(DriftChangeSet changeset) {
+            StringBuilder str = new StringBuilder();
+            str.append(MSG.common_title_version());
+            str.append(' ');
+            str.append(changeset.getVersion());
+            str.append(" (");
+            str.append(TimestampCellFormatter.format(changeset.getCtime(),
+                TimestampCellFormatter.DATE_TIME_FORMAT_SHORT));
+            str.append(')');
+            return str.toString();
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    static class DriftTreeNode extends TreeNode {
+        public DriftTreeNode(Drift drift) {
+            setIsFolder(false);
+            setIcon(ImageManager.getDriftCategoryIcon(drift.getCategory()));
+            String parentID = drift.getChangeSet().getId();
+            setParentID(parentID);
+            setID(parentID + '_' + drift.getId());
+            setName(drift.getPath());
+        }
+    }
 }

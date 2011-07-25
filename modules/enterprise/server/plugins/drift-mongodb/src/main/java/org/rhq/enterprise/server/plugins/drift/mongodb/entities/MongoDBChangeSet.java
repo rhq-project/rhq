@@ -1,5 +1,6 @@
 package org.rhq.enterprise.server.plugins.drift.mongodb.entities;
 
+import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -13,7 +14,9 @@ import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
 
 @Entity("changesets")
-public class MongoDBChangeSet implements DriftChangeSet<MongoDBChangeSetEntry> {
+public class MongoDBChangeSet implements DriftChangeSet<MongoDBChangeSetEntry>, Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     @Id
     private ObjectId id;

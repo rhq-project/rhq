@@ -1,18 +1,30 @@
 package org.rhq.enterprise.server.plugins.drift.mongodb.entities;
 
+import java.io.Serializable;
+
 import com.google.code.morphia.annotations.Embedded;
 
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftCategory;
 
 @Embedded
-public class MongoDBChangeSetEntry implements Drift<MongoDBChangeSet, MongoDBFile> {
+public class MongoDBChangeSetEntry implements Drift<MongoDBChangeSet, MongoDBFile>, Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private Long ctime = System.currentTimeMillis();
 
     private DriftCategory category;
 
     private String path;
+
+    public MongoDBChangeSetEntry() {
+    }
+
+    public MongoDBChangeSetEntry(String path, DriftCategory category) {
+        this.path = path;
+        this.category = category;
+    }
 
     @Override
     public String getId() {

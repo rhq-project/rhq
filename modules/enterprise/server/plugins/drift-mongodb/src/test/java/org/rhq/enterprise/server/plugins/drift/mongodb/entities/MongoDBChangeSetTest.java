@@ -9,6 +9,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import static org.rhq.core.domain.drift.DriftCategory.FILE_ADDED;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
 import static org.rhq.test.AssertUtils.assertCollectionMatchesNoOrder;
 import static org.rhq.test.AssertUtils.assertPropertiesMatch;
@@ -57,7 +58,8 @@ public class MongoDBChangeSetTest {
     @Test
     public void saveAndLoadChangeSetWithOneEntry() throws Exception {
         MongoDBChangeSet expected = new MongoDBChangeSet();
-        expected.getDrifts().add(new MongoDBChangeSetEntry());
+        expected.setResourceId(10001);
+        expected.getDrifts().add(new MongoDBChangeSetEntry("foo", FILE_ADDED));
 
         ds.save(expected);
 

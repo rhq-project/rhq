@@ -18,38 +18,47 @@
  */
 package org.rhq.modules.plugins.jbossas7;
 
-import java.net.ConnectException;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
-import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.Result;
 
 /**
- * Component class for standalone AS7 servers
+ * Component class for host- and domain controller
  * @author Heiko W. Rupp
  */
-public class StandaloneASComponent extends BaseServerComponent implements OperationFacet {
+public class HostControllerComponent extends BaseServerComponent implements OperationFacet {
+
+    private final Log log = LogFactory.getLog(HostControllerComponent.class);
 
     @Override
     public OperationResult invokeOperation(String name,
-                                           Configuration parameters) throws Exception {
+                                           Configuration parameters) throws InterruptedException, Exception {
 
         if (name.equals("start")) {
-            return startServer(Mode.STANDALONE);
+            return startServer(Mode.DOMAIN);
         } else if (name.equals("restart")) {
-            return restartServer(parameters, Mode.STANDALONE);
+            return restartServer(parameters, Mode.DOMAIN);
 
+        } else if (name.equals("shutdown")) {
+            // This is a bit trickier, as it needs to be executed on the level on /host=xx
+            String domainHost = pluginConfiguration.getSimpleValue("domainHost","");
+            if (domainHost.isEmpty()) {
+                OperationResult result = new OperationResult();
+                result.setErrorMessage("No domain host found - can not continue");
+                return result;
+            }
+            Operation op = new Operation("shutdown","host",domainHost);
+            Result res = getASConnection().execute(op);
+
+            postProcessResult(name,res);
         }
 
-        // reload, shutdown go to the remote server
-        Operation op = new Operation(name,new Address());
-        Result res = getASConnection().execute(op);
-
-        OperationResult operationResult = postProcessResult(name, res);
-        return operationResult;
+        // Defer other stuff to the base component for now
+        return super.invokeOperation(name, parameters);
     }
-
 }

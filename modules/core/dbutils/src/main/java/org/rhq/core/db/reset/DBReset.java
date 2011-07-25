@@ -104,17 +104,24 @@ public class DBReset {
                 connection = DbUtil.getConnection(DB_URL, ADMIN_USER, ADMIN_PASSWORD);
                 connection.setAutoCommit(false);
 
-                String plsql = "declare cursor all_objects_to_drop is"
-                    + "select *  from user_objects where object_type in ('TABLE', 'VIEW', 'FUNCTION', 'SEQUENCE');"
-                    + "begin"
-                    + "  for obj in all_objects_to_drop loop"
-                    + "    begin"
-                    + "      if obj.object_type = 'TABLE' THEN"
-                    + "        execute immediate('DROP '||obj.object_type||' '||obj.object_name||' CASCADE CONSTRAINTS PURGE');"
-                    + "      else" + "        execute immediate('DROP '||obj.object_type||' '||obj.object_name);"
-                    + "      end if;" + "      exception when others then null;" + "    end;" + "  end loop;" + "end;";
+                String plsql = "declare cursor all_objects_to_drop is\n"
+                    + "select *  from user_objects where object_type in ('TABLE', 'VIEW', 'FUNCTION', 'SEQUENCE');\n"
+                    + "begin\n"
+                    + "  for obj in all_objects_to_drop loop\n"
+                    + "    begin\n"
+                    + "      if obj.object_type = 'TABLE' then\n"
+                    + "        execute immediate('DROP '||obj.object_type||' '||obj.object_name||' CASCADE CONSTRAINTS PURGE');\n"
+                    + "      else\n" 
+                    + "        execute immediate('DROP '||obj.object_type||' '||obj.object_name);\n"
+                    + "      end if;\n" 
+                    + "      exception when others then null;\n" 
+                    + "    end;\n" 
+                    + "  end loop;\n"
+                    + " end;\n";
+                log.info(plsql);
                 cleanUserStatement = connection.prepareStatement(plsql);
                 cleanUserStatement.execute();
+                connection.commit();
 
                 log.info("Cleand database " + DB + ".");
             } finally {

@@ -4,9 +4,9 @@
    version="1.0"
    apiVersion="1.0"
    description="The Drift Management MongoDB Persistence Store"
-   displayName="Drift:RHQ"
+   displayName="Drift:MongoDB"
    name="drift-mongodb"
-   package="org.rhq.enterprise.server.plugins.drift.MorphiaTest"
+   package="org.rhq.enterprise.server.plugins.drift.mongodb"
    xmlns="urn:xmlns:rhq-serverplugin.drift"
    xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">

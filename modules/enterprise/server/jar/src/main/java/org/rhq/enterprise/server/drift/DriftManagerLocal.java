@@ -33,6 +33,7 @@ import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.domain.drift.RhqDrift;
 import org.rhq.core.domain.drift.RhqDriftChangeSet;
 import org.rhq.core.domain.drift.RhqDriftFile;
+import org.rhq.core.domain.drift.Snapshot;
 import org.rhq.core.domain.util.PageList;
 
 @Local

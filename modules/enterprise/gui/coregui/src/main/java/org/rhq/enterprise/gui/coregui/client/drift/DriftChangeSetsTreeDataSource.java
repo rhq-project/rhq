@@ -39,9 +39,8 @@ import org.rhq.core.domain.criteria.DriftJPACriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.ImageManager;
-import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.DriftGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
@@ -96,6 +95,7 @@ public class DriftChangeSetsTreeDataSource extends RPCDataSource<Object, BaseCri
             // Get the top nodes (the change sets) but to be as fast as possible don't load their drifts.
             // We will lazily load drifts when the these changeset tree nodes are opened
             DriftChangeSetCriteria criteria = new DriftChangeSetJPACriteria();
+            criteria.addSortVersion(PageOrdering.ASC);
             criteria.setPageControl(getPageControl(request));
 
             driftService.findDriftChangeSetsByCriteria(criteria, new AsyncCallback<PageList<DriftChangeSet>>() {
@@ -233,38 +233,18 @@ public class DriftChangeSetsTreeDataSource extends RPCDataSource<Object, BaseCri
     }
 
     public ListGridRecord copyValuesForKnownDriftChangeSet(Object from, Integer changeSetId) {
-        String parentID;
-        TreeNode node = new TreeNode();
+        TreeNode node;
         if (from instanceof DriftChangeSet) {
             DriftChangeSet changeset = (DriftChangeSet) from;
-            node.setIsFolder(true);
-            node.setIcon("subsystems/drift/ChangeSet_16.png");
-            node.setShowOpenIcon(true);
-            node.setID(changeset.getId());
-            node.setName(buildDriftChangeSetNodeName(changeset));
-
+            node = new AbstractDriftChangeSetsTreeView.ChangeSetTreeNode(changeset);
         } else if (from instanceof Drift) {
             Drift drift = (Drift) from;
-            node.setIsFolder(false);
-            node.setIcon(ImageManager.getDriftCategoryIcon(drift.getCategory()));
-            parentID = drift.getChangeSet().getId();
-            node.setParentID(parentID);
-            node.setID(parentID + '_' + drift.getId());
-            node.setName(drift.getPath());
+            node = new AbstractDriftChangeSetsTreeView.DriftTreeNode(drift);
+        } else {
+            throw new IllegalArgumentException("please report this bug - bad value: " + from);
         }
         // if, in the future, we add more node types, we'll add more else-if statements here
 
         return node;
-    }
-
-    private String buildDriftChangeSetNodeName(DriftChangeSet changeset) {
-        StringBuilder str = new StringBuilder();
-        str.append(MSG.common_title_version());
-        str.append(' ');
-        str.append(changeset.getVersion());
-        str.append(" (");
-        str.append(TimestampCellFormatter.format(changeset.getCtime(), TimestampCellFormatter.DATE_TIME_FORMAT_SHORT));
-        str.append(')');
-        return str.toString();
     }
 }

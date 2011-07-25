@@ -43,9 +43,12 @@ public class ResourceDriftChangeSetsTreeView extends AbstractDriftChangeSetsTree
     }
 
     protected String getNodeTargetLink(TreeNode node) {
-        String driftIdStr = node.getAttribute(DriftChangeSetsTreeDataSource.ATTR_ID).split("_")[1];
-        String path = LinkManager.getDriftHistoryLink(this.context.resourceId, Integer.valueOf(driftIdStr));
-        return path;
+        if (node instanceof DriftTreeNode) {
+            String driftIdStr = node.getAttribute(DriftChangeSetsTreeDataSource.ATTR_ID).split("_")[1];
+            String path = LinkManager.getDriftHistoryLink(this.context.resourceId, Integer.valueOf(driftIdStr));
+            return path;
+        }
+        return null;
     }
 
 }

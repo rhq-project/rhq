@@ -1,5 +1,10 @@
 package org.rhq.core.domain.drift;
 
+import java.util.HashSet;
+import java.util.Set;
+
+import org.testng.annotations.Test;
+
 import static java.util.Arrays.asList;
 import static org.rhq.core.domain.drift.DriftCategory.FILE_ADDED;
 import static org.rhq.core.domain.drift.DriftCategory.FILE_CHANGED;
@@ -10,24 +15,19 @@ import static org.rhq.core.domain.drift.DriftFileStatus.LOADED;
 import static org.rhq.test.AssertUtils.assertCollectionMatchesNoOrder;
 import static org.testng.Assert.assertEquals;
 
-import java.util.HashSet;
-import java.util.Set;
-
-import org.testng.annotations.Test;
-
 public class SnapshotTest {
 
     @Test
     public void addChangeSetWithAddedFile() {
         int configId = 1;
 
-        FakeDriftChangeSet changeSet = new FakeDriftChangeSet(0, COVERAGE, configId).add(new FakeDrift(FILE_ADDED,
-            null, new FakeDriftFile("a1b2c3", 1024, LOADED), "/drift/1.txt"));
+        FakeDriftChangeSet changeSet = new FakeDriftChangeSet(0, COVERAGE, configId)
+            .add(new FakeDrift(FILE_ADDED, null, new FakeDriftFile("a1b2c3", 1024, LOADED), "/drift/1.txt"));
 
         Snapshot snapshot = new Snapshot().add(changeSet);
 
-        assertCollectionMatchesNoOrder(changeSet.getDrifts(), snapshot.getEntries(), "Failed to build "
-            + "a snapshot that contains a single change set");
+        assertCollectionMatchesNoOrder(changeSet.getDrifts(), snapshot.getEntries(), "Failed to build " +
+            "a snapshot that contains a single change set");
         assertEquals(snapshot.getVersion(), changeSet.getVersion(), "Snapshot version is wrong");
     }
 
@@ -43,8 +43,8 @@ public class SnapshotTest {
 
         Snapshot snapshot = new Snapshot().add(changeSet1).add(changeSet2);
 
-        assertCollectionMatchesNoOrder(asSet(entry1, entry2), snapshot.getEntries(), "Failed to build snapshot "
-            + "with two change sets and file added in second change set");
+        assertCollectionMatchesNoOrder(asSet(entry1, entry2), snapshot.getEntries(), "Failed to build snapshot " +
+            "with two change sets and file added in second change set");
         assertEquals(snapshot.getVersion(), changeSet2.getVersion(), "Snapshot version is wrong");
     }
 
@@ -55,8 +55,8 @@ public class SnapshotTest {
         Drift entry1 = new FakeDrift(FILE_ADDED, null, new FakeDriftFile("a1b2c3", 1024, LOADED), "/drift/1.txt");
         FakeDriftChangeSet changeSet1 = new FakeDriftChangeSet(0, COVERAGE, configId).add(entry1);
 
-        Drift entry2 = new FakeDrift(FILE_CHANGED, new FakeDriftFile("a1b2c3", 1024, LOADED), new FakeDriftFile(
-            "4d5e6f", 1024, LOADED), "/drift/1.txt");
+        Drift entry2 = new FakeDrift(FILE_CHANGED, new FakeDriftFile("a1b2c3", 1024, LOADED),
+            new FakeDriftFile("4d5e6f", 1024, LOADED), "/drift/1.txt");
         FakeDriftChangeSet changeSet2 = new FakeDriftChangeSet(1, DRIFT, configId).add(entry2);
 
         Snapshot snapshot = new Snapshot().add(changeSet1).add(changeSet2);
@@ -78,8 +78,9 @@ public class SnapshotTest {
 
         Snapshot snapshot = new Snapshot().add(changeSet1).add(changeSet2);
 
-        assertCollectionMatchesNoOrder(asSet(entry2), snapshot.getEntries(), "Failed to build snapshot with a file "
-            + "removed.");
+        assertCollectionMatchesNoOrder(asSet(entry2), snapshot.getEntries(),
+            "Failed to build snapshot with a file " +
+                "removed.");
     }
 
     @Test
@@ -96,8 +97,9 @@ public class SnapshotTest {
 
         DiffReport diff = left.diff(right);
 
-        assertCollectionMatchesNoOrder(asList(entry2), diff.getElementsNotInRight(), "Diff report does not contain " +
-            "elements that are in the left but not in the right.");
+        assertCollectionMatchesNoOrder(asList(entry2), diff.getElementsNotInRight(),
+            "Diff report does not contain " +
+                "elements that are in the left but not in the right.");
     }
 
     @Test
@@ -114,8 +116,9 @@ public class SnapshotTest {
 
         DiffReport diff = left.diff(right);
 
-        assertCollectionMatchesNoOrder(asList(entry1), diff.getElementsNotInLeft(), "Diff report does not contain " +
-            "elements that are in the left but not in the right");
+        assertCollectionMatchesNoOrder(asList(entry1), diff.getElementsNotInLeft(),
+            "Diff report does not contain " +
+                "elements that are in the left but not in the right");
     }
 
     @Test
@@ -132,8 +135,9 @@ public class SnapshotTest {
 
         DiffReport diff = left.diff(right);
 
-        assertCollectionMatchesNoOrder(asList(entry2), diff.getElementsInConflict(), "Diff report does not contain " +
-            "element that are in both left and right and are in conflict");
+        assertCollectionMatchesNoOrder(asList(entry2), diff.getElementsInConflict(),
+            "Diff report does not contain " +
+                "element that are in both left and right and are in conflict");
     }
 
     <E> Set<E> asSet(E... elements) {
@@ -314,8 +318,8 @@ public class SnapshotTest {
 
         @Override
         public String toString() {
-            return "Drift[category: " + category.code() + ", oldFile: " + oldFile + ", newFile: " + newFile
-                + ", path: " + path + "]";
+            return "Drift[category: " + category.code() + ", oldFile: " + oldFile + ", newFile: " + newFile +
+                ", path: " + path + "]";
         }
     }
 

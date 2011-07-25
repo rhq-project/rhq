@@ -331,18 +331,34 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
             fileName=fileName.substring("C:\\fakepath\\".length());
         }
 
-        boolean toServerGroup = context.getResourceKey().contains("server-group=");
-        log.info("Deploying [" + fileName + "] to domain only= " + !toServerGroup + " ...");
 
         String tmpName = fileName; // TODO figure out the tmp-name biz with the AS guys
 
         JsonNode resultNode = uploadResult.get("result");
         String hash = resultNode.get("BYTES_VALUE").getTextValue();
 
+        return runDeploymentMagicOnServer(report, fileName, tmpName, hash);
+
+    }
+
+    /**
+     * Do the actual fumbling with the domain api to deploy the uploaded content
+     * @param report CreateResourceReport to report the result
+     * @param runtimeName File name to use as runtime name
+     * @param deploymentName Name of the deployment
+     * @param hash Hash of the content bytes
+     * @return the passed report with success or failure settings
+     */
+    public CreateResourceReport runDeploymentMagicOnServer(CreateResourceReport report, String runtimeName,
+                                                           String deploymentName, String hash) {
+
+        boolean toServerGroup = context.getResourceKey().contains("server-group=");
+        log.info("Deploying [" + runtimeName + "] to domain only= " + !toServerGroup + " ...");
+
 
         ASConnection connection = getASConnection();
 
-        Operation step1 = new Operation("add","deployment",tmpName);
+        Operation step1 = new Operation("add","deployment",deploymentName);
 //        step1.addAdditionalProperty("hash", new PROPERTY_VALUE("BYTES_VALUE", hash));
         List<Object> content = new ArrayList<Object>(1);
         Map<String,Object> contentValues = new HashMap<String,Object>();
@@ -350,8 +366,8 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
         content.add(contentValues);
         step1.addAdditionalProperty("content",content);
 
-        step1.addAdditionalProperty("name", tmpName);
-        step1.addAdditionalProperty("runtime-name", fileName);
+        step1.addAdditionalProperty("name", deploymentName);
+        step1.addAdditionalProperty("runtime-name", runtimeName);
 
         String resourceKey;
         Result result ;
@@ -379,7 +395,7 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
 
             List<PROPERTY_VALUE> serverGroupAddress = new ArrayList<PROPERTY_VALUE>();
             serverGroupAddress.addAll(pathToAddress(context.getResourceKey()));
-            serverGroupAddress.add(new PROPERTY_VALUE("deployment", tmpName));
+            serverGroupAddress.add(new PROPERTY_VALUE("deployment", deploymentName));
             Operation step2 = new Operation("add",serverGroupAddress);
 
             cop.addStep(step2);
@@ -403,13 +419,12 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
         }
         else {
             report.setStatus(CreateResourceStatus.SUCCESS);
-            report.setResourceName(fileName);
+            report.setResourceName(runtimeName);
             report.setResourceKey(resourceKey);
             log.info(" ... with success and key [" + resourceKey + "]" );
         }
 
         return report;
-
     }
 
     @Override

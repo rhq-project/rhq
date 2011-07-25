@@ -243,13 +243,13 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
 
         driftTab = new TwoLevelTab(getTabSet().extendLocatorId(Tab.DRIFT), new ViewName(Tab.DRIFT, MSG
             .view_tabs_common_drift()), "subsystems/drift/Drift_16.png");
-        this.driftHistory = new SubTab(driftTab.extendLocatorId(DriftSubTab.HISTORY), new ViewName(DriftSubTab.HISTORY,
-            MSG.view_tabs_common_history()), null);
         this.driftChangeSets = new SubTab(driftTab.extendLocatorId(DriftSubTab.CHANGE_SETS), new ViewName(
             DriftSubTab.CHANGE_SETS, MSG.view_drift_changeSets()), null);
+        this.driftHistory = new SubTab(driftTab.extendLocatorId(DriftSubTab.HISTORY), new ViewName(DriftSubTab.HISTORY,
+            MSG.view_tabs_common_history()), null);
         this.driftConfig = new SubTab(driftTab.extendLocatorId(DriftSubTab.CONFIGURATION), new ViewName(
             DriftSubTab.CONFIGURATION, MSG.view_tabs_common_configuration()), null);
-        driftTab.registerSubTabs(driftHistory, driftChangeSets, driftConfig);
+        driftTab.registerSubTabs(driftChangeSets, driftHistory, driftConfig);
         tabs.add(driftTab);
 
         contentTab = new TwoLevelTab(getTabSet().extendLocatorId("Content"), new ViewName("Content", MSG
@@ -519,17 +519,17 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         ResourcePermission resourcePermissions, Set<ResourceTypeFacet> facets) {
         if (updateTab(this.driftTab, facets.contains(ResourceTypeFacet.DRIFT), resourcePermissions.isDrift())) {
 
-            updateSubTab(this.driftTab, this.driftHistory, true, true, new ViewFactory() {
-                @Override
-                public Canvas createView() {
-                    return ResourceDriftHistoryView.get(driftHistory.extendLocatorId("View"), resourceComposite);
-                }
-            });
-
             updateSubTab(this.driftTab, this.driftChangeSets, true, true, new ViewFactory() {
                 @Override
                 public Canvas createView() {
                     return ResourceDriftChangeSetsView.get(driftChangeSets.extendLocatorId("View"), resourceComposite);
+                }
+            });
+
+            updateSubTab(this.driftTab, this.driftHistory, true, true, new ViewFactory() {
+                @Override
+                public Canvas createView() {
+                    return ResourceDriftHistoryView.get(driftHistory.extendLocatorId("View"), resourceComposite);
                 }
             });
 

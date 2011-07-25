@@ -59,7 +59,7 @@ public class ExportingInputStream extends InputStream {
     public static final String NOTES_ELEMENT = "notes";
     public static final String DATA_ELEMENT = "data";
     
-    private Set<Exporter<?>> exporters;
+    private Set<Exporter<?, ?>> exporters;
     private Map<String, ExporterMessages> messagesPerExporter;
     private PipedInputStream inputStream;
     private PipedOutputStream exportOutput;
@@ -73,7 +73,7 @@ public class ExportingInputStream extends InputStream {
      * 
      * @see #ExportingInputStream(Set, Map, int, boolean)
      */
-    public ExportingInputStream(Set<Exporter<?>> exportersToUse, Map<String, ExporterMessages> messagesPerExporter)
+    public ExportingInputStream(Set<Exporter<?, ?>> exportersToUse, Map<String, ExporterMessages> messagesPerExporter)
         throws IOException {
         this(exportersToUse, messagesPerExporter, 65536, true);
     }
@@ -87,7 +87,7 @@ public class ExportingInputStream extends InputStream {
      * @param zip whether to zip the export data
      * @throws IOException on failure
      */
-    public ExportingInputStream(Set<Exporter<?>> exportersToUse, Map<String, ExporterMessages> messagesPerExporter,
+    public ExportingInputStream(Set<Exporter<?, ?>> exportersToUse, Map<String, ExporterMessages> messagesPerExporter,
         int size, boolean zip) throws IOException {
         exporters = exportersToUse;
         this.messagesPerExporter = messagesPerExporter;
@@ -192,7 +192,7 @@ public class ExportingInputStream extends InputStream {
 
             exportPrologue(wrt);
             
-            for (Exporter<?> exp : exporters) {
+            for (Exporter<?, ?> exp : exporters) {
                 exportSingle(wrt, exp);
             }
             
@@ -229,7 +229,7 @@ public class ExportingInputStream extends InputStream {
      * @return
      * @throws XMLStreamException 
      */
-    private void exportSingle(XMLStreamWriter wrt, Exporter<?> exp) throws XMLStreamException {
+    private void exportSingle(XMLStreamWriter wrt, Exporter<?, ?> exp) throws XMLStreamException {
         ExporterMessages messages = new ExporterMessages();
 
         messagesPerExporter.put(exp.getClass().getName(), messages);

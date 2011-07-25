@@ -27,10 +27,10 @@ import java.util.Iterator;
  *
  * @author Lukas Krejci
  */
-public abstract class AbstractDelegatingExportingIterator<E> implements ExportingIterator<E> {
+public abstract class AbstractDelegatingExportingIterator<T, E> implements ExportingIterator<T> {
 
     private Iterator<E> inner;
-    private E current;
+    private T current;
     
     public AbstractDelegatingExportingIterator(Iterator<E> wrapped) {
         inner = wrapped;
@@ -40,8 +40,8 @@ public abstract class AbstractDelegatingExportingIterator<E> implements Exportin
         return inner.hasNext();
     }
 
-    public E next() {  
-        current = inner.next();
+    public T next() {  
+        current = convert(inner.next());
         return current;
     }
 
@@ -49,7 +49,9 @@ public abstract class AbstractDelegatingExportingIterator<E> implements Exportin
         inner.remove();
     }
 
-    protected E getCurrent() {
+    protected T getCurrent() {
         return current;
     }
+    
+    protected abstract T convert(E object);
 }

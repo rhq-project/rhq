@@ -76,14 +76,14 @@ public class ExportingInputStreamTest {
         }
     }
     
-    private static class ListToStringExporter<T> implements Exporter<T> {
+    private static class ListToStringExporter<T> implements Exporter<T, T> {
 
         List<T> valuesToExport;
         Class<T> clazz;
         
         public static final String NOTE_PREFIX = "Wow, I just exported an item from a list: ";
         
-        private class Iterator extends AbstractDelegatingExportingIterator<T> {
+        private class Iterator extends AbstractDelegatingExportingIterator<T, T> {
             public Iterator() {
                 super(valuesToExport.iterator());
             }
@@ -97,14 +97,18 @@ public class ExportingInputStreamTest {
             public String getNotes() {
                 return NOTE_PREFIX + getCurrent();
             }
+            
+            protected T convert(T object) {
+                return object;
+            }
         }
         
         public ListToStringExporter(Class<T> clz, List<T> valuesToExport) {
             clazz = clz;
             this.valuesToExport = valuesToExport;
         }
-        
-        public Class<T> exportedEntityType() {
+                
+        public Class<T> getExportedEntityType() {
             return clazz;
         }
 
@@ -133,7 +137,7 @@ public class ExportingInputStreamTest {
     }
     
     public void testWithExportersFailingToInit() throws Exception {
-        Set<Exporter<?>> exporters = this.<Exporter<?>>asSet(new FailingExporter1(), new FailingExporter2());
+        Set<Exporter<?, ?>> exporters = this.<Exporter<?, ?>>asSet(new FailingExporter1(), new FailingExporter2());
         
         InputStream export = new ExportingInputStream(exporters, new HashMap<String, ExporterMessages>(), 1024, false);
         
@@ -172,7 +176,7 @@ public class ExportingInputStreamTest {
         StringListExporter ex1 = new StringListExporter(list1);
         IntegerListExporter ex2 = new IntegerListExporter(list2);
         
-        Set<Exporter<?>> exporters = this.<Exporter<?>>asSet(ex1, ex2);
+        Set<Exporter<?, ?>> exporters = this.<Exporter<?, ?>>asSet(ex1, ex2);
         
         InputStream export = new ExportingInputStream(exporters, new HashMap<String, ExporterMessages>(), 1024, false);
         

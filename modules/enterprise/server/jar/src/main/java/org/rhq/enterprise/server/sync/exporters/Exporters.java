@@ -22,7 +22,6 @@ package org.rhq.enterprise.server.sync.exporters;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Role;
-import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.resource.group.Group;
 import org.rhq.core.domain.sync.entity.SystemSettings;
 import org.rhq.enterprise.server.sync.ExportException;
@@ -36,42 +35,42 @@ public enum Exporters {
     
     SUBJECT {
         @Override
-        public Exporter<?> getExporter(Subject subject) {            
+        public Exporter<?, ?> getExporter(Subject subject) {            
             return DummyExporter.create(Subject.class);
         }
     },
     ROLE {
         @Override
-        public Exporter<?> getExporter(Subject subject) {
+        public Exporter<?, ?> getExporter(Subject subject) {
             return DummyExporter.create(Role.class);
         }
     },
     GROUP {
         @Override
-        public Exporter<?> getExporter(Subject subject) {
+        public Exporter<?, ?> getExporter(Subject subject) {
             return DummyExporter.create(Group.class);
         }
     },
     ALERT_TEMPLATE {
         @Override
-        public Exporter<?> getExporter(Subject subject) {
+        public Exporter<?, ?> getExporter(Subject subject) {
             return DummyExporter.create(AlertDefinition.class);
         }
     },
     METRIC_TEMPLATE {
         @Override
-        public Exporter<?> getExporter(Subject subject) {
+        public Exporter<?, ?> getExporter(Subject subject) {
             return new MetricTemplatesExporter(subject);
         }
     },
     SYSTEM_SETTINGS {
         @Override
-        public Exporter<?> getExporter(Subject subject) {
+        public Exporter<?, ?> getExporter(Subject subject) {
             return DummyExporter.create(SystemSettings.class);
         }  
     };
     
-    public static class DummyExporter<T> implements Exporter<T> {
+    public static class DummyExporter<T> implements Exporter<T, T> {
 
         private Class<T> clazz;
         
@@ -83,11 +82,14 @@ public enum Exporters {
             this.clazz = clazz;
         }
         
+        /* (non-Javadoc)
+         * @see org.rhq.enterprise.server.sync.exporters.Exporter#getExportedEntityType()
+         */
         @Override
-        public Class<T> exportedEntityType() {
+        public Class<T> getExportedEntityType() {            
             return clazz;
         }
-
+        
         @Override
         public void init() throws ExportException {
             throw new ExportException("Export not implemented for type " + clazz.getName());
@@ -111,5 +113,5 @@ public enum Exporters {
      * @param subject the currently logged on user.
      * @return
      */
-    public abstract Exporter<?> getExporter(Subject subject);
+    public abstract Exporter<?, ?> getExporter(Subject subject);
 }

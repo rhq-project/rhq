@@ -22,11 +22,6 @@ package org.rhq.enterprise.server.sync.exporters;
 import java.util.Iterator;
 import java.util.List;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Marshaller;
-import javax.xml.stream.XMLStreamException;
-
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.MeasurementDefinitionCriteria;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
@@ -34,7 +29,6 @@ import org.rhq.core.domain.sync.entity.MetricTemplate;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
 import org.rhq.enterprise.server.sync.ExportException;
-import org.rhq.enterprise.server.sync.ExportWriter;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -42,57 +36,26 @@ import org.rhq.enterprise.server.util.LookupUtil;
  *
  * @author Lukas Krejci
  */
-public class MetricTemplatesExporter implements Exporter<MetricTemplate> {
+public class MetricTemplatesExporter implements Exporter<MeasurementDefinition, MetricTemplate> {
 
-    private static class MetricTemplateIterator implements ExportingIterator<MetricTemplate> {
+    private static class MetricTemplateIterator extends JAXBExportingIterator<MetricTemplate, MeasurementDefinition> {
 
-        private Iterator<MeasurementDefinition> definitionsIterator;
-        private MetricTemplate current;
-        private Marshaller marshaller;
-
-        public MetricTemplateIterator(Iterator<MeasurementDefinition> definitionsIterator) {
-            this.definitionsIterator = definitionsIterator;
-            try {
-                JAXBContext jaxbContext = JAXBContext.newInstance(MetricTemplate.class);
-                marshaller = jaxbContext.createMarshaller();
-            } catch (JAXBException e) {
-                throw new IllegalStateException("Could not create a JAXB marshaller for serializing metric templates.",
-                    e);
-            }
-        }
-
-        @Override
-        public boolean hasNext() {
-            return definitionsIterator.hasNext();
-        }
-
-        @Override
-        public MetricTemplate next() {
-            current = new MetricTemplate(definitionsIterator.next());
-
-            return current;
-        }
-
-        @Override
-        public void remove() {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void export(ExportWriter output) throws XMLStreamException {
-            try {
-                marshaller.marshal(current, output);
-            } catch (JAXBException e) {
-                throw new XMLStreamException("Failed to export a metric template.", e);
-            }
+        public MetricTemplateIterator(Iterator<MeasurementDefinition> sourceIterator) {
+            super(sourceIterator, MetricTemplate.class);
         }
 
         @Override
         public String getNotes() {
             return null;
         }
-    };
 
+        @Override
+        protected MetricTemplate convert(MeasurementDefinition object) {
+            return new MetricTemplate(object);
+        }
+        
+    }
+    
     private MeasurementDefinitionManagerLocal measurementDefinitionManager = LookupUtil
         .getMeasurementDefinitionManager();
     private Subject subject;
@@ -102,10 +65,10 @@ public class MetricTemplatesExporter implements Exporter<MetricTemplate> {
     }
 
     @Override
-    public Class<MetricTemplate> exportedEntityType() {
-        return MetricTemplate.class;
+    public Class<MeasurementDefinition> getExportedEntityType() {
+        return MeasurementDefinition.class;
     }
-
+    
     @Override
     public void init() throws ExportException {
     }

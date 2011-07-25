@@ -83,7 +83,7 @@ public class DBReset {
                 createDB = connection.createStatement();
                 createDB.execute("create database " + DB + " with owner " + USER);
 
-                log.info("Dropped and created database " + DB +".");
+                log.info("Dropped and created database " + DB + ".");
             } finally {
                 if (dropDB != null) {
                     dropDB.close();
@@ -94,7 +94,7 @@ public class DBReset {
                 if (connection != null) {
                     connection.close();
                 }
-              
+
             }
         } else if (DB_TYPE_MAPPING.equals("Oracle10g")) {
             Connection connection = null;
@@ -111,17 +111,12 @@ public class DBReset {
                     + "    begin"
                     + "      if obj.object_type = 'TABLE' THEN"
                     + "        execute immediate('DROP '||obj.object_type||' '||obj.object_name||' CASCADE CONSTRAINTS PURGE');"
-                    + "      else"
-                    + "        execute immediate('DROP '||obj.object_type||' '||obj.object_name);"
-                    + "      end if;"
-                    + "      exception when others then null;"
-                    + "    end;"
-                    + "  end loop;"
-                    + "end;";
+                    + "      else" + "        execute immediate('DROP '||obj.object_type||' '||obj.object_name);"
+                    + "      end if;" + "      exception when others then null;" + "    end;" + "  end loop;" + "end;";
                 cleanUserStatement = connection.prepareStatement(plsql);
                 cleanUserStatement.execute();
-                
-                log.info("Cleand database " + DB +".");
+
+                log.info("Cleand database " + DB + ".");
             } finally {
                 if (cleanUserStatement != null) {
                     cleanUserStatement.close();

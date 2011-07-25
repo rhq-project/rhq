@@ -38,6 +38,10 @@ public class ExportReport implements Serializable {
     
     private byte[] exportFile;
 
+    protected ExportReport() {
+        
+    }
+    
     /**
      * @param messagesPerExporter
      * @param exportFile

@@ -40,6 +40,10 @@ public class DriftChangeSetJPACriteria extends Criteria implements DriftChangeSe
     private Integer filterInitial; // needs override
     private Integer filterResourceId; // needs override
     private String filterVersion;
+    private String filterStartVersion;
+    private String filterEndVersion;
+    private Long filterCreatedAfter;
+    private Long filterCreatedBefore;
     private DriftChangeSetCategory filterCategory;
     private boolean fetchDrifts;
 
@@ -48,6 +52,10 @@ public class DriftChangeSetJPACriteria extends Criteria implements DriftChangeSe
     public DriftChangeSetJPACriteria() {
         filterOverrides.put("initial", "version = 0");
         filterOverrides.put("resourceId", "resource.id = ?");
+        filterOverrides.put("filterStartVersion", "version >= ?");
+        filterOverrides.put("filterEndVersion", "version <= ?");
+        filterOverrides.put("filterCreatedAfter", "ctime >= ?");
+        filterOverrides.put("filterCreatedBefore", "ctime <= ?");
     }
 
     @Override
@@ -73,6 +81,46 @@ public class DriftChangeSetJPACriteria extends Criteria implements DriftChangeSe
     @Override
     public String getFilterVersion() {
         return filterVersion;
+    }
+
+    @Override
+    public void addFilterStartVersion(String filterStartVersion) {
+        this.filterStartVersion = filterStartVersion;
+    }
+
+    @Override
+    public String getFilterStartVersion() {
+        return filterStartVersion;
+    }
+
+    @Override
+    public void addFilterEndVersion(String filterEndVersion) {
+        this.filterEndVersion = filterEndVersion;
+    }
+
+    @Override
+    public String getFilterEndVersion() {
+        return filterEndVersion;
+    }
+
+    @Override
+    public void addFilterCreatedAfter(Long filterCreatedAfter) {
+        this.filterCreatedAfter = filterCreatedAfter;
+    }
+
+    @Override
+    public Long getFilterCreatedAfter() {
+        return filterCreatedAfter;
+    }
+
+    @Override
+    public void addFilterCreatedBefore(Long filterCreatedBefore) {
+        this.filterCreatedBefore = filterCreatedBefore;
+    }
+
+    @Override
+    public Long getFilterCreatedBefore() {
+        return filterCreatedBefore;
     }
 
     public void addFilterResourceId(Integer filterResourceId) {

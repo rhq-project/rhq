@@ -31,6 +31,7 @@ import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
+import org.rhq.modules.plugins.jbossas7.json.Result;
 
 /**
  * Common stuff for the Domain
@@ -48,17 +49,17 @@ public class DomainComponent extends BaseComponent implements OperationFacet{
             address.add(new PROPERTY_VALUE("host",host));
             address.add(new PROPERTY_VALUE("server-config",myServerName));
             Operation getStatus = new Operation("read-attribute",address,"name","status");
-            JsonNode result = null;
+            Result result = null;
             try {
-                result = connection.executeRaw(getStatus);
+                result = connection.execute(getStatus);
             } catch (Exception e) {
                 log.warn(e.getMessage());
                 return AvailabilityType.DOWN;
             }
-            if (ASConnection.isErrorReply(result))
+            if (!result.isSuccess())
                 return AvailabilityType.DOWN;
 
-            String msg = ASConnection.getSuccessDescription(result);
+            String msg = result.getResult().toString();
             if (msg.contains("STARTED"))
                 return AvailabilityType.UP;
             else

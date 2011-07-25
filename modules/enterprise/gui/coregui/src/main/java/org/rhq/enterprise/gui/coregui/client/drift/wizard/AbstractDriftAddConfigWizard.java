@@ -39,11 +39,16 @@ public abstract class AbstractDriftAddConfigWizard extends AbstractWizard {
     private WizardView view;
 
     public AbstractDriftAddConfigWizard(final EntityContext context, ResourceType type) {
-        this.context = context;
-        assert context != null;
+        if (context == null) {
+            throw new NullPointerException("context == null");
+        }
 
+        if (type == null) {
+            throw new NullPointerException("type == null");
+        }
+
+        this.context = context;
         this.type = type;
-        assert type != null;
     }
 
     public String getSubtitle() {

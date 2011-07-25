@@ -12,7 +12,6 @@ import org.rhq.common.drift.DirectoryEntry;
 import org.rhq.common.drift.FileEntry;
 import org.rhq.common.drift.Headers;
 import org.rhq.core.domain.drift.DriftFile;
-import org.rhq.core.util.file.FileUtil;
 
 import static org.rhq.core.util.file.FileUtil.copyFile;
 

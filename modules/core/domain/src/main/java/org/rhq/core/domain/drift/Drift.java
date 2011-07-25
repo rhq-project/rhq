@@ -1,15 +1,15 @@
 package org.rhq.core.domain.drift;
 
-public interface Drift {
+public interface Drift<C extends DriftChangeSet, F extends DriftFile> {
     String getId();
 
     void setId(String id);
 
     Long getCtime();
 
-    DriftChangeSet getChangeSet();
+    C getChangeSet();
 
-    void setChangeSet(RhqDriftChangeSet changeSet);
+    void setChangeSet(C changeSet);
 
     DriftCategory getCategory();
 
@@ -19,11 +19,11 @@ public interface Drift {
 
     void setPath(String path);
 
-    DriftFile getOldDriftFile();
+    F getOldDriftFile();
 
-    void setOldDriftFile(DriftFile oldDriftFile);
+    void setOldDriftFile(F oldDriftFile);
 
-    DriftFile getNewDriftFile();
+    F getNewDriftFile();
 
-    void setNewDriftFile(DriftFile newDriftFile);
+    void setNewDriftFile(F newDriftFile);
 }

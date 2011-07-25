@@ -48,6 +48,7 @@ import org.rhq.modules.plugins.jbossas7.json.CompositeOperation;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
 import org.rhq.modules.plugins.jbossas7.json.ReadChildrenNames;
+import org.rhq.modules.plugins.jbossas7.json.Result;
 
 /**
  * Component dealing with server group specific things
@@ -110,8 +111,8 @@ public class ServerGroupComponent extends DomainComponent implements ContentFace
                     cop.addStep(step2);
                     cop.addStep(step3);
 
-                    JsonNode result = connection.executeRaw(cop);
-                    if (ASConnection.isErrorReply(result)) // TODO get failure message into response
+                    Result result = connection.execute(cop);
+                    if (!result.isSuccess()) // TODO get failure message into response
                         response.addPackageResponse(new DeployIndividualPackageResponse(details.getKey(),ContentResponseResult.FAILURE));
                     else {
                         DeployIndividualPackageResponse individualPackageResponse = new DeployIndividualPackageResponse(
@@ -143,17 +144,14 @@ public class ServerGroupComponent extends DomainComponent implements ContentFace
 
         List<PROPERTY_VALUE> serverGroupAddress = pathToAddress(path);
 
-        Operation op = new ReadChildrenNames(serverGroupAddress,"deployment"); // TODO read full packages not onyl names
-        JsonNode node = connection.executeRaw(op);
-        if (ASConnection.isErrorReply(node))
+        Operation op = new ReadChildrenNames(serverGroupAddress,"deployment"); // TODO read full packages not only names
+        Result node = connection.execute(op);
+        if (!node.isSuccess())
             return null;
 
-        JsonNode result = node.get("result");
-        Iterator<JsonNode> iter = result.getElements();
+        List<String> resultList = (List<String>) node.getResult(); // TODO needs checking
         Set<ResourcePackageDetails> details = new HashSet<ResourcePackageDetails>();
-        while (iter.hasNext()) {
-            JsonNode jNode = iter.next();
-            String file = jNode.getTextValue();
+        for (String file : resultList) {
             String t;
             if (file.contains("."))
                 t = file.substring(file.lastIndexOf(".")+1);

@@ -25,8 +25,8 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.criteria.DriftJPACriteria;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
-import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftCategory;
+import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.core.domain.util.OrderingField;
 import org.rhq.core.domain.util.PageControl;
@@ -349,7 +349,7 @@ public abstract class AbstractRecentDriftsPortlet extends DriftHistoryView imple
          * the portlet. This sets the counter appropriately and stops further queries to the server.
          */
         @Override
-        protected int getTotalRows(final PageList<Drift> result, final DSResponse response, final DSRequest request) {
+        protected int getTotalRows(final PageList<DriftComposite> result, final DSResponse response, final DSRequest request) {
 
             return result.size();
         }

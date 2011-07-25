@@ -4,5 +4,5 @@
     "name" : "public",
     "criteria" : "any-ipv4-address"
   },
-  "compensating-operation" : null
+  "response-headers" : null
 }

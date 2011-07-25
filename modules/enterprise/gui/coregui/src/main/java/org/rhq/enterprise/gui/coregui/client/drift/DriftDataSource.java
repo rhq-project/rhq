@@ -40,8 +40,8 @@ import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.DriftCriteria;
 import org.rhq.core.domain.criteria.DriftJPACriteria;
 import org.rhq.core.domain.drift.Drift;
-import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftCategory;
+import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
@@ -61,7 +61,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * @author Jay Shaughnessy
  * @author John Mazzitelli
  */
-public class DriftDataSource extends RPCDataSource<Drift, DriftCriteria> {
+public class DriftDataSource extends RPCDataSource<DriftComposite, DriftCriteria> {
 
     public static final String CATEGORY_ICON_ADD = ImageManager.getDriftCategoryIcon(DriftCategory.FILE_ADDED);
     public static final String CATEGORY_ICON_CHANGE = ImageManager.getDriftCategoryIcon(DriftCategory.FILE_CHANGED);
@@ -71,6 +71,7 @@ public class DriftDataSource extends RPCDataSource<Drift, DriftCriteria> {
     public static final String ATTR_CTIME = "ctime";
     public static final String ATTR_CATEGORY = "category";
     public static final String ATTR_PATH = "path";
+    public static final String ATTR_CHANGESET_VERSION = "changeSetVersion";
 
     public static final String FILTER_CATEGORIES = "categories";
 
@@ -94,13 +95,17 @@ public class DriftDataSource extends RPCDataSource<Drift, DriftCriteria> {
      * @return list grid fields used to display the datasource data
      */
     public ArrayList<ListGridField> getListGridFields() {
-        ArrayList<ListGridField> fields = new ArrayList<ListGridField>(6);
+        ArrayList<ListGridField> fields = new ArrayList<ListGridField>(7);
 
         ListGridField ctimeField = new ListGridField(ATTR_CTIME, MSG.common_title_createTime());
         ctimeField.setCellFormatter(new TimestampCellFormatter());
         ctimeField.setShowHover(true);
         ctimeField.setHoverCustomizer(TimestampCellFormatter.getHoverCustomizer(ATTR_CTIME));
         fields.add(ctimeField);
+
+        ListGridField changeSetVersionField = new ListGridField(ATTR_CHANGESET_VERSION, MSG
+            .view_drift_table_changeSet());
+        fields.add(changeSetVersionField);
 
         ListGridField categoryField = new ListGridField(ATTR_CATEGORY, MSG.common_title_category());
         categoryField.setType(ListGridFieldType.IMAGE);
@@ -147,6 +152,7 @@ public class DriftDataSource extends RPCDataSource<Drift, DriftCriteria> {
             fields.add(ancestryField);
 
             ctimeField.setWidth(100);
+            changeSetVersionField.setWidth(100);
             categoryField.setWidth(100);
             pathField.setWidth("*");
             resourceNameField.setWidth("25%");
@@ -154,6 +160,7 @@ public class DriftDataSource extends RPCDataSource<Drift, DriftCriteria> {
 
         } else {
             ctimeField.setWidth(200);
+            changeSetVersionField.setWidth(100);
             categoryField.setWidth(100);
             pathField.setWidth("*");
         }
@@ -170,14 +177,14 @@ public class DriftDataSource extends RPCDataSource<Drift, DriftCriteria> {
             return;
         }
 
-        this.driftService.findDriftsByCriteria(criteria, new AsyncCallback<PageList<Drift>>() {
+        this.driftService.findDriftCompositesByCriteria(criteria, new AsyncCallback<PageList<DriftComposite>>() {
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError(MSG.view_drift_failure_load(), caught);
                 response.setStatus(RPCResponse.STATUS_FAILURE);
                 processResponse(request.getRequestId(), response);
             }
 
-            public void onSuccess(PageList<Drift> result) {
+            public void onSuccess(PageList<DriftComposite> result) {
                 dataRetrieved(result, response, request);
             }
         });
@@ -186,7 +193,8 @@ public class DriftDataSource extends RPCDataSource<Drift, DriftCriteria> {
     /**
      * Additional processing to support entity-specific or cross-resource views, and something that can be overidden.
      */
-    protected void dataRetrieved(final PageList<Drift> result, final DSResponse response, final DSRequest request) {
+    protected void dataRetrieved(final PageList<DriftComposite> result, final DSResponse response,
+        final DSRequest request) {
         switch (entityContext.type) {
 
         // no need to disambiguate, the drifts are for a single resource
@@ -201,8 +209,8 @@ public class DriftDataSource extends RPCDataSource<Drift, DriftCriteria> {
         default:
             Set<Integer> typesSet = new HashSet<Integer>();
             Set<String> ancestries = new HashSet<String>();
-             for (Drift drift : result) {
-                Resource resource = drift.getChangeSet().getResource();
+            for (DriftComposite driftComposite : result) {
+                Resource resource = driftComposite.getResource();
                 typesSet.add(resource.getResourceType().getId());
                 ancestries.add(resource.getAncestry());
             }
@@ -243,7 +251,7 @@ public class DriftDataSource extends RPCDataSource<Drift, DriftCriteria> {
      * 
      * @return should not exceed result.getTotalSize(). 
      */
-    protected int getTotalRows(final PageList<Drift> result, final DSResponse response, final DSRequest request) {
+    protected int getTotalRows(final PageList<DriftComposite> result, final DSResponse response, final DSRequest request) {
         return result.getTotalSize();
     }
 
@@ -282,30 +290,32 @@ public class DriftDataSource extends RPCDataSource<Drift, DriftCriteria> {
     }
 
     @Override
-    public Drift copyValues(Record from) {
+    public DriftComposite copyValues(Record from) {
         return null; // if we need to later, just have convert() put the 'from' drift object in an attribute on the record
     }
 
     @Override
-    public ListGridRecord copyValues(Drift from) {
+    public ListGridRecord copyValues(DriftComposite from) {
         return convert(from);
     }
 
-    public static ListGridRecord convert(Drift from) {
+    public static ListGridRecord convert(DriftComposite from) {
         ListGridRecord record = new ListGridRecord();
-        record.setAttribute(ATTR_ID, Integer.valueOf(from.getId()));
-        record.setAttribute(ATTR_CTIME, new Date(from.getCtime()));
-        record.setAttribute(ATTR_CATEGORY, ImageManager.getDriftCategoryIcon(from.getCategory()));
-        record.setAttribute(ATTR_PATH, from.getPath());
+        Drift drift = from.getDrift();
+        record.setAttribute(ATTR_ID, Integer.valueOf(drift.getId()));
+        record.setAttribute(ATTR_CTIME, new Date(drift.getCtime()));
+        record.setAttribute(ATTR_CATEGORY, ImageManager.getDriftCategoryIcon(drift.getCategory()));
+        record.setAttribute(ATTR_PATH, drift.getPath());
+        record.setAttribute(ATTR_CHANGESET_VERSION, drift.getChangeSet().getVersion());
 
-        DriftChangeSet changeSet = from.getChangeSet();
-        Resource resource = changeSet.getResource();
-
-        // for ancestry handling       
-        record.setAttribute(AncestryUtil.RESOURCE_ID, resource.getId());
-        record.setAttribute(AncestryUtil.RESOURCE_NAME, resource.getName());
-        record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY, resource.getAncestry());
-        record.setAttribute(AncestryUtil.RESOURCE_TYPE_ID, resource.getResourceType().getId());
+        // for ancestry handling     
+        Resource resource = from.getResource();
+        if (resource != null) {
+            record.setAttribute(AncestryUtil.RESOURCE_ID, resource.getId());
+            record.setAttribute(AncestryUtil.RESOURCE_NAME, resource.getName());
+            record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY, resource.getAncestry());
+            record.setAttribute(AncestryUtil.RESOURCE_TYPE_ID, resource.getResourceType().getId());
+        }
 
         return record;
     }

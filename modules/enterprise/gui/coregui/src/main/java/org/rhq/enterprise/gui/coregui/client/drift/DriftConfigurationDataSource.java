@@ -28,6 +28,8 @@ import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.rpc.RPCResponse;
+import com.smartgwt.client.types.Alignment;
+import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGridField;
@@ -41,6 +43,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
@@ -87,14 +90,19 @@ public class DriftConfigurationDataSource extends RPCDataSource<DriftConfigurati
         ListGridField nameField = new ListGridField(ATTR_NAME, MSG.common_title_name());
         fields.add(nameField);
 
+        ListGridField enabledField = new ListGridField(ATTR_ENABLED, MSG.common_title_enabled());
+        enabledField.setType(ListGridFieldType.IMAGE);
+        enabledField.setAlign(Alignment.CENTER);
+        enabledField.setCanSort(false);
+        fields.add(enabledField);
+
         ListGridField intervalField = new ListGridField(ATTR_INTERVAL, MSG.common_title_interval());
+        intervalField.setCanSort(false);
         fields.add(intervalField);
 
         ListGridField baseDirField = new ListGridField(ATTR_BASE_DIR_STRING, MSG.view_drift_table_baseDir());
+        baseDirField.setCanSort(false);
         fields.add(baseDirField);
-
-        ListGridField enabledField = new ListGridField(ATTR_ENABLED, MSG.common_title_enabled());
-        fields.add(enabledField);
 
         if (this.entityContext.type != EntityContext.Type.Resource) {
             ListGridField resourceNameField = new ListGridField(AncestryUtil.RESOURCE_NAME, MSG.common_title_resource());
@@ -116,16 +124,16 @@ public class DriftConfigurationDataSource extends RPCDataSource<DriftConfigurati
             ListGridField ancestryField = AncestryUtil.setupAncestryListGridField();
             fields.add(ancestryField);
 
-            nameField.setWidth("15%");
+            nameField.setWidth("20%");
+            enabledField.setWidth(60);
             intervalField.setWidth(100);
-            enabledField.setWidth("5%");
             baseDirField.setWidth("20%");
             resourceNameField.setWidth("20%");
             ancestryField.setWidth("40%");
         } else {
-            nameField.setWidth("15%");
+            nameField.setWidth("20%");
+            enabledField.setWidth(60);
             intervalField.setWidth(100);
-            enabledField.setWidth("5%");
             baseDirField.setWidth("80%");
         }
 
@@ -274,15 +282,14 @@ public class DriftConfigurationDataSource extends RPCDataSource<DriftConfigurati
         record.setAttribute(ATTR_NAME, from.getName());
         record.setAttribute(ATTR_INTERVAL, String.valueOf(from.getInterval()));
         record.setAttribute(ATTR_BASE_DIR_STRING, getBaseDirString(from.getBasedir()));
-        record.setAttribute(ATTR_ENABLED, from.getEnabled());
+        record.setAttribute(ATTR_ENABLED, ImageManager.getAvailabilityIcon(from.getEnabled()));
 
-        //        Resource resource = from.getResource();
-        //
-        //        // for ancestry handling       
-        //        record.setAttribute(AncestryUtil.RESOURCE_ID, resource.getId());
-        //        record.setAttribute(AncestryUtil.RESOURCE_NAME, resource.getName());
-        //        record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY, resource.getAncestry());
-        //        record.setAttribute(AncestryUtil.RESOURCE_TYPE_ID, resource.getResourceType().getId());
+        // // for ancestry handling       
+        // Resource resource = ...
+        // record.setAttribute(AncestryUtil.RESOURCE_ID, resource.getId());
+        // record.setAttribute(AncestryUtil.RESOURCE_NAME, resource.getName());
+        // record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY, resource.getAncestry());
+        // record.setAttribute(AncestryUtil.RESOURCE_TYPE_ID, resource.getResourceType().getId());
 
         return record;
     }

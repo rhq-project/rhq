@@ -28,10 +28,12 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.DriftChangeSetJPACriteria;
 import org.rhq.core.domain.criteria.DriftJPACriteria;
+import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.drift.DriftConfiguration;
-import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.RhqDrift;
 import org.rhq.core.domain.drift.RhqDriftChangeSet;
+import org.rhq.core.domain.drift.RhqDriftFile;
+import org.rhq.core.domain.drift.Snapshot;
 import org.rhq.core.domain.util.PageList;
 
 @Local
@@ -98,17 +100,17 @@ public interface DriftManagerLocal extends DriftManagerRemote {
      * Agents, if available, will be notified of the change. 
      * @param subject
      * @param entityContext
-     * @param driftConfig
+     * @param driftConfigName
      */
     void deleteDriftConfiguration(Subject subject, EntityContext entityContext, String driftConfigName);
 
     /**
-     * Simple get method for a DriftFile. Does not return the content.
+     * Simple get method for a RhqDriftFile. Does not return the content.
      * @param subject
      * @param sha256
-     * @return The DriftFile sans content.
+     * @return The RhqDriftFile sans content.
      */
-    DriftFile getDriftFile(Subject subject, String sha256);
+    RhqDriftFile getDriftFile(Subject subject, String sha256);
 
     /**
      * Standard criteria based fetch method
@@ -117,6 +119,8 @@ public interface DriftManagerLocal extends DriftManagerRemote {
      * @return The DriftChangeSets matching the criteria
      */
     PageList<RhqDriftChangeSet> findDriftChangeSetsByCriteria(Subject subject, DriftChangeSetJPACriteria criteria);
+
+    PageList<DriftComposite> findDriftCompositesByCriteria(Subject subject, DriftJPACriteria criteria);
 
     /**
      * Standard criteria based fetch method
@@ -174,7 +178,7 @@ public interface DriftManagerLocal extends DriftManagerRemote {
      * @return
      * @throws Exception
      */
-    public DriftFile persistDriftFile(DriftFile driftFile) throws Exception;
+    RhqDriftFile persistDriftFile(RhqDriftFile driftFile) throws Exception;
 
     /**
      * SUPPORTS DRIFT RHQ SERVER PLUGIN
@@ -182,6 +186,8 @@ public interface DriftManagerLocal extends DriftManagerRemote {
      * @param data
      * @throws Exception
      */
-    public void persistDriftFileData(DriftFile driftFile, InputStream data) throws Exception;
+    void persistDriftFileData(RhqDriftFile driftFile, InputStream data) throws Exception;
+
+    Snapshot createSnapshot(Subject subject, DriftChangeSetJPACriteria criteria);
 
 }

@@ -1,8 +1,6 @@
 package org.rhq.core.pc.drift;
 
-import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,8 +9,8 @@ import org.testng.annotations.Test;
 
 import org.rhq.common.drift.Headers;
 import org.rhq.core.domain.drift.DriftFile;
+import org.rhq.core.domain.drift.RhqDriftFile;
 
-import static java.util.Arrays.asList;
 import static org.apache.commons.io.FileUtils.touch;
 import static org.apache.commons.io.IOUtils.writeLines;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
@@ -162,7 +160,7 @@ public class DriftFilesSenderTest extends DriftTest {
     List<DriftFile> driftFiles(String... hashes) {
         List<DriftFile> files = new ArrayList<DriftFile>();
         for (String hash : hashes) {
-            files.add(new DriftFile(hash));
+            files.add(new RhqDriftFile(hash));
         }
         return files;
     }

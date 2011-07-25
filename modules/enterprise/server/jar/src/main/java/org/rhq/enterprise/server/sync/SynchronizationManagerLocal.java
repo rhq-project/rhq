@@ -19,12 +19,16 @@
 
 package org.rhq.enterprise.server.sync;
 
+import java.io.InputStream;
+
 import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.sync.ExportValidationReport;
 import org.rhq.core.domain.sync.ExportWrapper;
 import org.rhq.core.domain.sync.ExportReport;
+import org.rhq.core.domain.sync.ImportReport;
 
 /**
  * 
@@ -52,6 +56,10 @@ public interface SynchronizationManagerLocal {
      */
     ExportWrapper exportAllSubsystemsLocally(Subject subject);
     
+    ExportValidationReport validate(Subject subject, InputStream exportFile);
+    
+    ImportReport importAllSubsystems(Subject subject, InputStream exportFile);
+    
     //-------- THE FOLLOWING METHODS ARE SHARED WITH THE REMOTE INTERFACE ------------
     
     /**
@@ -64,4 +72,8 @@ public interface SynchronizationManagerLocal {
      * @see SynchronizationManagerRemote#exportAllSubsystems()
      */
     ExportReport exportAllSubsystems(Subject subject);
+
+    ExportValidationReport validate(Subject subject, byte[] exportFile);
+    
+    ImportReport importAllSubsystems(Subject subject, byte[] exportFile);
 }

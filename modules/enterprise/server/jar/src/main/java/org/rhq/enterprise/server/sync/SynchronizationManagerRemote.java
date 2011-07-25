@@ -24,6 +24,8 @@ import javax.ejb.Remote;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.sync.ExportReport;
+import org.rhq.core.domain.sync.ExportValidationReport;
+import org.rhq.core.domain.sync.ImportReport;
 
 /**
  * 
@@ -50,4 +52,8 @@ public interface SynchronizationManagerRemote {
      * @return the export report
      */
     ExportReport exportAllSubsystems(Subject subject);
+    
+    ExportValidationReport validate(Subject subject, byte[] exportFile);
+    
+    ImportReport importAllSubsystems(Subject subject, byte[] exportFile);
 }

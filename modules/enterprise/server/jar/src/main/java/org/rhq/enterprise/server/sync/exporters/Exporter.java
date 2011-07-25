@@ -19,7 +19,10 @@
 
 package org.rhq.enterprise.server.sync.exporters;
 
+import java.util.Set;
+
 import org.rhq.enterprise.server.sync.ExportException;
+import org.rhq.enterprise.server.sync.validators.ConsistencyValidator;
 
 
 /**
@@ -32,6 +35,12 @@ import org.rhq.enterprise.server.sync.ExportException;
  */
 public interface Exporter<Entity, ExportedType> {
 
+    /**
+     * @return a possibly empty set of validators that will record the state
+     * needed by this exporter to exist in the target RHQ installation.
+     */
+    Set<ConsistencyValidator> getRequiredValidators();
+    
     Class<Entity> getExportedEntityType();
     
     /**

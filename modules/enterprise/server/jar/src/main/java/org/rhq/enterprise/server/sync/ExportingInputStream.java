@@ -26,6 +26,7 @@ import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.zip.ZipOutputStream;
@@ -41,6 +42,7 @@ import org.rhq.core.domain.sync.ExporterMessages;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.server.sync.exporters.Exporter;
 import org.rhq.enterprise.server.sync.exporters.ExportingIterator;
+import org.rhq.enterprise.server.sync.validators.ConsistencyValidator;
 
 /**
  * Reading from this input stream produces the export file in a lazy (and therefore memory efficient)
@@ -58,6 +60,8 @@ public class ExportingInputStream extends InputStream {
     public static final String ERROR_MESSAGE_ELEMENT = "error-message";
     public static final String NOTES_ELEMENT = "notes";
     public static final String DATA_ELEMENT = "data";
+    public static final String VALIDATOR_ELEMENT = "validator";
+    public static final String ID_ATTRIBUTE = "id";
     
     private Set<Exporter<?, ?>> exporters;
     private Map<String, ExporterMessages> messagesPerExporter;
@@ -213,6 +217,25 @@ public class ExportingInputStream extends InputStream {
         wrt.setDefaultNamespace("urn:xmlns:rhq-configuration-export");
         wrt.writeStartDocument();
         wrt.writeStartElement(CONFIGURATION_EXPORT_ELEMENT);
+        writeValidators(wrt);
+    }
+
+    /**
+     * @param wrt
+     */
+    private void writeValidators(XMLStreamWriter wrt) throws XMLStreamException {
+        Set<ConsistencyValidator> allValidators = new HashSet<ConsistencyValidator>();
+        
+        for(Exporter<?, ?> exp : exporters) {
+            allValidators.addAll(exp.getRequiredValidators());
+        }
+        
+        for(ConsistencyValidator cv : allValidators) {
+            wrt.writeStartElement(VALIDATOR_ELEMENT);
+            wrt.writeAttribute(ID_ATTRIBUTE, cv.getClass().getName());
+            cv.exportState(new ExportWriter(wrt));
+            wrt.writeEndElement();
+        }
     }
 
     /**
@@ -235,7 +258,7 @@ public class ExportingInputStream extends InputStream {
         messagesPerExporter.put(exp.getClass().getName(), messages);
         
         wrt.writeStartElement(ENTITIES_EXPORT_ELEMENT);
-        wrt.writeAttribute("id", exp.getClass().getName());
+        wrt.writeAttribute(ID_ATTRIBUTE, exp.getClass().getName());
         
         try {
             exp.init();

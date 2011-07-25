@@ -19,12 +19,16 @@
 
 package org.rhq.enterprise.server.sync.exporters;
 
+import java.util.Collections;
+import java.util.Set;
+
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.resource.group.Group;
 import org.rhq.core.domain.sync.entity.SystemSettings;
 import org.rhq.enterprise.server.sync.ExportException;
+import org.rhq.enterprise.server.sync.validators.ConsistencyValidator;
 
 /**
  * 
@@ -81,10 +85,12 @@ public enum Exporters {
         public DummyExporter(Class<T> clazz) {
             this.clazz = clazz;
         }
+
+        @Override
+        public Set<ConsistencyValidator> getRequiredValidators() {
+            return Collections.emptySet();
+        }
         
-        /* (non-Javadoc)
-         * @see org.rhq.enterprise.server.sync.exporters.Exporter#getExportedEntityType()
-         */
         @Override
         public Class<T> getExportedEntityType() {            
             return clazz;

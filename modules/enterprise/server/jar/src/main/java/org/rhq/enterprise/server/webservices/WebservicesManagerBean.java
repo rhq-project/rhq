@@ -123,6 +123,8 @@ import org.rhq.core.domain.resource.composite.ProblemResourceComposite;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.sync.ExportReport;
+import org.rhq.core.domain.sync.ExportValidationReport;
+import org.rhq.core.domain.sync.ImportReport;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
@@ -209,7 +211,7 @@ public class WebservicesManagerBean implements WebservicesRemote {
     private SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
     private SupportManagerLocal supportManager = LookupUtil.getSupportManager();
     private SystemManagerLocal systemManager = LookupUtil.getSystemManager();
-    private SynchronizationManagerLocal synchronizationmanager = LookupUtil.getSynchronizationManager();
+    private SynchronizationManagerLocal synchronizationManager = LookupUtil.getSynchronizationManager();
     
     //ALERTMANAGER: BEGIN ------------------------------------------
     public PageList<Alert> findAlertsByCriteria(Subject subject, AlertCriteria criteria) {
@@ -1200,8 +1202,16 @@ public class WebservicesManagerBean implements WebservicesRemote {
 
     //SYNCHRONIZATIONMANANGER: BEGIN -------------------------
     
-    public ExportReport exportAllSubsystems() {
-        return synchronizationmanager.exportAllSubsystems();
+    public ExportReport exportAllSubsystems(Subject subject) {
+        return synchronizationManager.exportAllSubsystems(subject);
+    }
+    
+    public ImportReport importAllSubsystems(Subject subject, byte[] exportFile) {
+        return synchronizationManager.importAllSubsystems(subject, exportFile);
+    }
+    
+    public ExportValidationReport validate(Subject subject, byte[] exportFile) {
+        return synchronizationManager.validate(subject, exportFile);
     }
     
     //SYNCHRONIZATIONMANANGER: END -------------------------

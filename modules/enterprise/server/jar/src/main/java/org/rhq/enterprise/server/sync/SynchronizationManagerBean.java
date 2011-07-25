@@ -19,24 +19,31 @@
 
 package org.rhq.enterprise.server.sync;
 
+import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
+import javax.xml.stream.XMLStreamException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.sync.ExportValidationReport;
 import org.rhq.core.domain.sync.ExportWrapper;
 import org.rhq.core.domain.sync.ExporterMessages;
 import org.rhq.core.domain.sync.ExportReport;
+import org.rhq.core.domain.sync.ImportReport;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.sync.exporters.Exporter;
 import org.rhq.enterprise.server.sync.exporters.Exporters;
@@ -46,6 +53,7 @@ import org.rhq.enterprise.server.sync.exporters.Exporters;
  *
  * @author Lukas Krejci
  */
+@Stateless
 public class SynchronizationManagerBean implements SynchronizationManagerLocal, SynchronizationManagerRemote {
 
     private static final Log LOG = LogFactory.getLog(SynchronizationManagerBean.class);
@@ -89,7 +97,7 @@ public class SynchronizationManagerBean implements SynchronizationManagerLocal, 
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public ExportWrapper exportAllSubsystemsLocally(Subject subject) {
-        Set<Exporter<?>> allExporters = new HashSet<Exporter<?>>();
+        Set<Exporter<?, ?>> allExporters = new HashSet<Exporter<?, ?>>();
         Map<String, ExporterMessages> messages = new HashMap<String, ExporterMessages>();
         
         for(Exporters e : Exporters.values()) {
@@ -101,5 +109,30 @@ public class SynchronizationManagerBean implements SynchronizationManagerLocal, 
         } catch (IOException e) {
             throw new IllegalStateException("Failed to initialize the export.", e);
         }
+    }
+
+    @Override
+    public ImportReport importAllSubsystems(Subject subject, InputStream exportFile) {
+        return null;
+    }
+
+    @Override
+    public ImportReport importAllSubsystems(Subject subject, byte[] exportFile) {
+        return importAllSubsystems(subject, new ByteArrayInputStream(exportFile));
+    }
+    
+    @Override
+    public ExportValidationReport validate(Subject subject, InputStream exportFile) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public ExportValidationReport validate(Subject subject, byte[] exportFile) {
+        return validate(subject, new ByteArrayInputStream(exportFile));
+    }
+    
+    private void writePluginEnvironment(ExportWriter writer) throws XMLStreamException {
+        
     }
 }

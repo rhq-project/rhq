@@ -1,16 +1,9 @@
-package org.rhq.enterprise.server.drift;
+package org.rhq.core.domain.drift;
 
 import java.util.HashSet;
 import java.util.Set;
 
 import org.testng.annotations.Test;
-
-import org.rhq.core.domain.drift.Drift;
-import org.rhq.core.domain.drift.DriftCategory;
-import org.rhq.core.domain.drift.DriftChangeSet;
-import org.rhq.core.domain.drift.DriftChangeSetCategory;
-import org.rhq.core.domain.drift.DriftFile;
-import org.rhq.core.domain.drift.DriftFileStatus;
 
 import static java.util.Arrays.asList;
 import static org.rhq.core.domain.drift.DriftCategory.FILE_ADDED;
@@ -68,7 +61,8 @@ public class SnapshotTest {
 
         Snapshot snapshot = new Snapshot().add(changeSet1).add(changeSet2);
 
-        assertCollectionMatchesNoOrder(asSet(entry2), snapshot.getEntries(), "Failed to build snapshot with file changed");
+        assertCollectionMatchesNoOrder(asSet(entry2), snapshot.getEntries(),
+            "Failed to build snapshot with file changed");
     }
 
     @Test
@@ -84,8 +78,9 @@ public class SnapshotTest {
 
         Snapshot snapshot = new Snapshot().add(changeSet1).add(changeSet2);
 
-        assertCollectionMatchesNoOrder(asSet(entry2), snapshot.getEntries(), "Failed to build snapshot with a file " +
-            "removed.");
+        assertCollectionMatchesNoOrder(asSet(entry2), snapshot.getEntries(),
+            "Failed to build snapshot with a file " +
+                "removed.");
     }
 
     @Test
@@ -102,8 +97,9 @@ public class SnapshotTest {
 
         DiffReport diff = left.diff(right);
 
-        assertCollectionMatchesNoOrder(asList(entry2), diff.getElementsNotInRight(), "Diff report does not contain " +
-            "elements that are in the left but not in the right.");
+        assertCollectionMatchesNoOrder(asList(entry2), diff.getElementsNotInRight(),
+            "Diff report does not contain " +
+                "elements that are in the left but not in the right.");
     }
 
     @Test
@@ -120,8 +116,9 @@ public class SnapshotTest {
 
         DiffReport diff = left.diff(right);
 
-        assertCollectionMatchesNoOrder(asList(entry1), diff.getElementsNotInLeft(), "Diff report does not contain " +
-            "elements that are in the left but not in the right");
+        assertCollectionMatchesNoOrder(asList(entry1), diff.getElementsNotInLeft(),
+            "Diff report does not contain " +
+                "elements that are in the left but not in the right");
     }
 
     @Test
@@ -138,8 +135,9 @@ public class SnapshotTest {
 
         DiffReport diff = left.diff(right);
 
-        assertCollectionMatchesNoOrder(asList(entry2), diff.getElementsInConflict(), "Diff report does not contain " +
-            "element that are in both left and right and are in conflict");
+        assertCollectionMatchesNoOrder(asList(entry2), diff.getElementsInConflict(),
+            "Diff report does not contain " +
+                "element that are in both left and right and are in conflict");
     }
 
     <E> Set<E> asSet(E... elements) {

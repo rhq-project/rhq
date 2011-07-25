@@ -1,13 +1,9 @@
-package org.rhq.enterprise.server.drift;
+package org.rhq.core.domain.drift;
 
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Map;
 import java.util.TreeMap;
-
-import org.rhq.core.domain.drift.Drift;
-import org.rhq.core.domain.drift.DriftChangeSet;
-import org.rhq.core.domain.drift.DriftFile;
 
 import static org.rhq.core.domain.drift.DriftCategory.FILE_REMOVED;
 

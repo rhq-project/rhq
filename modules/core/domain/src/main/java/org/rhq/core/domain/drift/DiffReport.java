@@ -1,4 +1,4 @@
-package org.rhq.enterprise.server.drift;
+package org.rhq.core.domain.drift;
 
 import java.util.ArrayList;
 import java.util.List;

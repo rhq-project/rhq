@@ -33,6 +33,7 @@ import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftCategory;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftComposite;
+import org.rhq.core.domain.drift.Snapshot;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.drift.DriftManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginContext;
@@ -105,6 +106,12 @@ public class DriftServerPluginComponent implements DriftServerPluginFacet {
     public void saveChangeSetFiles(File changeSetFilesZip) throws Exception {
         DriftManagerLocal driftMgr = getDriftManager();
         driftMgr.storeFiles(changeSetFilesZip);
+    }
+
+    @Override
+    public Snapshot createSnapshot(Subject subject, DriftChangeSetJPACriteria criteria) {
+        DriftManagerLocal driftMgr = getDriftManager();
+        return driftMgr.createSnapshot(subject, criteria);
     }
 
     private DriftJPACriteria toJPACriteria(DriftCriteria criteria) {

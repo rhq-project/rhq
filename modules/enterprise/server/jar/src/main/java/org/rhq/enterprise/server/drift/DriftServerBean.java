@@ -19,11 +19,13 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
+import org.rhq.core.domain.criteria.DriftChangeSetJPACriteria;
 import org.rhq.core.domain.criteria.DriftCriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.drift.DriftConfiguration;
+import org.rhq.core.domain.drift.Snapshot;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.RHQConstants;
@@ -40,6 +42,13 @@ import static javax.ejb.TransactionAttributeType.NOT_SUPPORTED;
 
 @Stateless
 public class DriftServerBean implements DriftServerLocal {
+
+    // TODO Should security checks be handled here instead of delegating to the drift plugin?
+    // Currently any security checks that need to be performed are delegated to the plugin.
+    // This is fine *so far* since the only plugin is the default which is our existing SLSB
+    // layer backed by the RHQ database. If the plugins are only supposed to be responsible
+    // for persistence management of drift entities and content, then they should not be
+    // responsible for other concerns like security.
 
     private Log log = LogFactory.getLog(DriftServerBean.class);
 
@@ -85,6 +94,13 @@ public class DriftServerBean implements DriftServerLocal {
     public void saveChangeSetFiles(File changeSetFilesZip) throws Exception {
         DriftServerPluginFacet driftServerPlugin = getServerPlugin();
         driftServerPlugin.saveChangeSetFiles(changeSetFilesZip);
+    }
+
+    @Override
+    @TransactionAttribute(NOT_SUPPORTED)
+    public Snapshot createSnapshot(Subject subject, DriftChangeSetJPACriteria criteria) {
+        DriftServerPluginFacet driftServerPlugin = getServerPlugin();
+        return driftServerPlugin.createSnapshot(subject, criteria);
     }
 
     DriftServerPluginFacet getServerPlugin() {
@@ -201,4 +217,5 @@ public class DriftServerBean implements DriftServerLocal {
             throw new IllegalArgumentException("Entity Context Type not supported [" + context + "]");
         }
     }
+
 }

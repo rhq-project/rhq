@@ -57,10 +57,12 @@ public class ContextDiscoveryComponent implements ResourceDiscoveryComponent<MBe
         Set<DiscoveredResourceDetails> entities = new HashSet<DiscoveredResourceDetails>();
 
         for (ProxyInfo.Context availableContext : proxyInfo.getAvailableContexts()) {
-            DiscoveredResourceDetails detail = new DiscoveredResourceDetails(context.getResourceType(),
-                availableContext.createKey(), availableContext.createName(), null, "mod_cluster Webapp Context", null,
-                null);
-            entities.add(detail);
+            if (availableContext.getJvmRoute().equals(jvmRoute)) {
+                DiscoveredResourceDetails detail = new DiscoveredResourceDetails(context.getResourceType(),
+                    availableContext.createKey(), availableContext.createName(), null, "mod_cluster Webapp Context",
+                    null, null);
+                entities.add(detail);
+            }
         }
 
         return entities;

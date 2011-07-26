@@ -21,8 +21,6 @@ package org.rhq.plugins.modcluster.test;
 import java.io.IOException;
 import java.io.InputStream;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.testng.annotations.Test;
 
 import org.rhq.plugins.modcluster.ProxyInfo;
@@ -32,7 +30,6 @@ import org.rhq.plugins.modcluster.ProxyInfo;
  */
 @Test(groups = "modcluster-plugin")
 public class ProxyInfoTest {
-    private Log log = LogFactory.getLog(this.getClass());
 
     @Test
     public void testProxyInfo() throws Exception {

@@ -141,14 +141,14 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
             DriftDetectionSchedule schedule;
 
             @Override
-            public DriftDetectionSchedule dequeue() {
+            public DriftDetectionSchedule getNextSchedule() {
                 DriftDetectionSchedule removedSchedule = schedule;
                 schedule = null;
                 return removedSchedule;
             }
 
             @Override
-            public boolean enqueue(DriftDetectionSchedule schedule) {
+            public boolean addSchedule(DriftDetectionSchedule schedule) {
                 this.schedule = schedule;
                 return true;
             }
@@ -157,8 +157,23 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
             public void clear() {
                 schedule = null;
             }
+
+            @Override
+            public void deactivateSchedule() {
+                schedule = null;
+            }
+
+            @Override
+            public boolean update(int resourceId, DriftConfiguration config) {
+                return false;
+            }
+
+            @Override
+            public DriftDetectionSchedule remove(int resourceId, DriftConfiguration config) {
+                return null;
+            }
         };
-        queue.enqueue(new DriftDetectionSchedule(resourceId, driftConfiguration));
+        queue.addSchedule(new DriftDetectionSchedule(resourceId, driftConfiguration));
 
         DriftDetector driftDetector = new DriftDetector();
         driftDetector.setChangeSetManager(changeSetMgr);
@@ -170,7 +185,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
 
     @Override
     public void scheduleDriftDetection(int resourceId, DriftConfiguration driftConfiguration) {
-        schedulesQueue.enqueue(new DriftDetectionSchedule(resourceId, driftConfiguration));
+        schedulesQueue.addSchedule(new DriftDetectionSchedule(resourceId, driftConfiguration));
     }
 
     @Override
@@ -193,6 +208,10 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
 
     @Override
     public void updateDriftDetection(int resourceId, DriftConfiguration driftConfiguration) {
+        boolean updated = schedulesQueue.update(resourceId, driftConfiguration);
+        if (!updated) {
+            schedulesQueue.addSchedule(new DriftDetectionSchedule(resourceId, driftConfiguration));
+        }
     }
 
     /**

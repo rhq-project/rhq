@@ -132,8 +132,11 @@ public class ExportingInputStream extends InputStream {
 
     @Override
     public int available() throws IOException {
-        checkState();
-        return super.available();
+        //the lack of checkState() is intentional here
+        //because the return value is only dependent
+        //on the PipedInputStream and no interaction
+        //with the PipedOutputStream is necessary
+        return inputStream.available();
     }
 
     @Override

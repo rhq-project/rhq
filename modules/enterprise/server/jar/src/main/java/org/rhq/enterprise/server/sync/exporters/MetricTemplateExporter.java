@@ -32,6 +32,8 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
 import org.rhq.enterprise.server.resource.metadata.PluginManagerLocal;
 import org.rhq.enterprise.server.sync.ExportException;
+import org.rhq.enterprise.server.sync.importers.Importer;
+import org.rhq.enterprise.server.sync.importers.MetricTemplateImporter;
 import org.rhq.enterprise.server.sync.validators.ConsistencyValidator;
 import org.rhq.enterprise.server.sync.validators.DeployedAgentPluginsValidator;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -41,7 +43,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  *
  * @author Lukas Krejci
  */
-public class MetricTemplatesExporter implements Exporter<MeasurementDefinition, MetricTemplate> {
+public class MetricTemplateExporter implements Exporter<MeasurementDefinition, MetricTemplate> {
 
     private static class MetricTemplateIterator extends JAXBExportingIterator<MetricTemplate, MeasurementDefinition> {
 
@@ -65,13 +67,11 @@ public class MetricTemplatesExporter implements Exporter<MeasurementDefinition, 
     private PluginManagerLocal pluginManager;
     private Subject subject;
 
-    public MetricTemplatesExporter(Subject subject) {
-        this(subject, LookupUtil.getMeasurementDefinitionManager(), LookupUtil.getPluginManager());
-        this.subject = subject;
+    public MetricTemplateExporter() {
+        this(LookupUtil.getMeasurementDefinitionManager(), LookupUtil.getPluginManager());
     }
 
-    public MetricTemplatesExporter(Subject subject, MeasurementDefinitionManagerLocal measurementDefinitionManager, PluginManagerLocal pluginManager) {
-        this.subject = subject;
+    public MetricTemplateExporter(MeasurementDefinitionManagerLocal measurementDefinitionManager, PluginManagerLocal pluginManager) {
         this.measurementDefinitionManager = measurementDefinitionManager;
         this.pluginManager = pluginManager;
     }
@@ -82,12 +82,13 @@ public class MetricTemplatesExporter implements Exporter<MeasurementDefinition, 
     }
     
     @Override
-    public Class<MeasurementDefinition> getExportedEntityType() {
-        return MeasurementDefinition.class;
+    public Class<? extends Importer<MeasurementDefinition, MetricTemplate>> getImporterType() {
+        return MetricTemplateImporter.class;
     }
 
     @Override
-    public void init() throws ExportException {
+    public void init(Subject subject) throws ExportException {
+        this.subject = subject;
     }
 
     @Override

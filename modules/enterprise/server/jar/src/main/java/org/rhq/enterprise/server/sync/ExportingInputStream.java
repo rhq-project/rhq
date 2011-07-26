@@ -262,20 +262,8 @@ public class ExportingInputStream extends InputStream {
         messagesPerExporter.put(exp.getClass().getName(), messages);
         
         wrt.writeStartElement(ENTITIES_EXPORT_ELEMENT);
-        wrt.writeAttribute(ID_ATTRIBUTE, exp.getClass().getName());
+        wrt.writeAttribute(ID_ATTRIBUTE, exp.getImporterType().getName());
         
-        try {
-            exp.init();
-        } catch (ExportException e) {
-            String message = ThrowableUtil.getStackAsString(e);
-            messages.setErrorMessage(message);
-            wrt.writeStartElement(ERROR_MESSAGE_ELEMENT);
-            wrt.writeCharacters(message);
-            wrt.writeEndElement(); // error-message
-            wrt.writeEndElement(); //entities
-            return;
-        }
-
         ExportingIterator<?> it = exp.getExportingIterator();
 
         messages.setPerEntityErrorMessages(new ArrayList<String>());

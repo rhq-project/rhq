@@ -17,7 +17,7 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.enterprise.server.sync;
+package org.rhq.enterprise.server.sync.importers;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Role;
@@ -28,7 +28,7 @@ import org.rhq.enterprise.server.plugin.pc.alert.AlertSender;
  * in the inventory.
  * <p>
  * This is used during the configuration synchronization where different types of entities are 
- * being obtained from the export file and it is necessary to find matches of the in the database
+ * being obtained from the export file and it is necessary to find matches of them in the database
  * that is being imported to.
  * <p>
  * There is a default set of matchers defined in the server for basic types of entitites like {@link Subject}s,
@@ -37,7 +37,7 @@ import org.rhq.enterprise.server.plugin.pc.alert.AlertSender;
  * 
  * @author Lukas Krejci
  */
-public interface ExportedEntityMatcher<U, T> {
+public interface ExportedEntityMatcher<Entity, ExportedType> {
 
     /**
      * Tries to find a match for given object in the data available in the database.
@@ -48,17 +48,5 @@ public interface ExportedEntityMatcher<U, T> {
      * @param object
      * @return
      */
-    U findMatch(T object);
-    
-    /**
-     * For the workflow to be able to make sense what matcher can be used for, this method
-     * designates what kind of data this matcher finds.
-     */
-    Class<U> getFoundObjectsType();
-    
-    /**
-     * For the workflow to be able to make sense what matcher can be used for, this method
-     * designates what kind of data this matcher looks for.
-     */
-    Class<T> getSearchedObjectsType();
+    Entity findMatch(ExportedType object);
 }

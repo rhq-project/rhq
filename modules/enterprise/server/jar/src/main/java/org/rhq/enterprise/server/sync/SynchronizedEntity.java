@@ -22,12 +22,16 @@ package org.rhq.enterprise.server.sync;
 import java.util.Collections;
 import java.util.Set;
 
+import javax.persistence.EntityManager;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.sync.entity.SystemSettings;
 import org.rhq.enterprise.server.sync.exporters.Exporter;
 import org.rhq.enterprise.server.sync.exporters.ExportingIterator;
-import org.rhq.enterprise.server.sync.exporters.MetricTemplatesExporter;
+import org.rhq.enterprise.server.sync.exporters.MetricTemplateExporter;
 import org.rhq.enterprise.server.sync.exporters.SystemSettingsExporter;
+import org.rhq.enterprise.server.sync.importers.ExportedEntityMatcher;
+import org.rhq.enterprise.server.sync.importers.Importer;
 import org.rhq.enterprise.server.sync.validators.ConsistencyValidator;
 
 /**
@@ -65,27 +69,27 @@ public enum SynchronizedEntity {
     */
     METRIC_TEMPLATE {
         @Override
-        public Exporter<?, ?> getExporter(Subject subject) {
-            return new MetricTemplatesExporter(subject);
+        public Exporter<?, ?> getExporter() {
+            return new MetricTemplateExporter();
         }
     },
     SYSTEM_SETTINGS {
         @Override
-        public Exporter<?, ?> getExporter(Subject subject) {
-            return new SystemSettingsExporter(subject);
+        public Exporter<?, ?> getExporter() {
+            return new SystemSettingsExporter();
         }  
     };
     
     public static class DummyExporter<T> implements Exporter<T, T> {
 
-        private Class<T> clazz;
+        private Class<? extends Importer<T, T>> importerClass;
         
-        public static <U> DummyExporter<U> create(Class<U> clazz) {
+        public static <U> DummyExporter<U> create(Class<? extends Importer<U, U>> clazz) {
             return new DummyExporter<U>(clazz);
         }
         
-        public DummyExporter(Class<T> clazz) {
-            this.clazz = clazz;
+        public DummyExporter(Class<? extends Importer<T, T>> clazz) {
+            this.importerClass = clazz;
         }
 
         @Override
@@ -94,13 +98,13 @@ public enum SynchronizedEntity {
         }
         
         @Override
-        public Class<T> getExportedEntityType() {            
-            return clazz;
+        public Class<? extends Importer<T, T>> getImporterType() {            
+            return importerClass;
         }
         
         @Override
-        public void init() throws ExportException {
-            throw new ExportException("Export not implemented for type " + clazz.getName());
+        public void init(Subject subject) throws ExportException {
+            throw new ExportException("Export not implemented for type " + importerClass.getName());
         }
 
         @Override
@@ -115,11 +119,24 @@ public enum SynchronizedEntity {
         
     }
     
+    public static class DummyImporter<T> implements Importer<T, T> {
+
+        @Override
+        public void init(Subject subject) {
+        }
+
+        @Override
+        public ExportedEntityMatcher<T, T> getExportedEntityMatcher(EntityManager entityManager) {
+            return null;
+        }
+
+        @Override
+        public void update(T entity, T exportedEntity, EntityManager entityManager) {
+        }        
+    }
+    
     /**
-     * Gets an exporter for given subsystem.
-     * 
-     * @param subject the currently logged on user.
-     * @return
+     * Returns an exporter for given subsystem.
      */
-    public abstract Exporter<?, ?> getExporter(Subject subject);
+    public abstract Exporter<?, ?> getExporter();
 }

@@ -52,8 +52,9 @@ import org.rhq.core.domain.sync.ExporterMessages;
 import org.rhq.core.domain.sync.entity.SystemSettings;
 import org.rhq.enterprise.server.sync.ExportingInputStream;
 import org.rhq.enterprise.server.sync.exporters.Exporter;
-import org.rhq.enterprise.server.sync.exporters.MetricTemplatesExporter;
+import org.rhq.enterprise.server.sync.exporters.MetricTemplateExporter;
 import org.rhq.enterprise.server.sync.exporters.SystemSettingsExporter;
+import org.rhq.enterprise.server.sync.importers.SystemSettingsImporter;
 import org.rhq.enterprise.server.sync.validators.ConsistencyValidator;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 
@@ -159,7 +160,7 @@ public class SystemSettingsExporterTest {
     };
 
     public void testCanExport() throws Exception {
-        SystemSettingsExporter exporter = new SystemSettingsExporter(null, systemManagerStub);
+        SystemSettingsExporter exporter = new SystemSettingsExporter(systemManagerStub);
 
         Set<Exporter<?, ?>> exporters = new HashSet<Exporter<?, ?>>();
         exporters.add(exporter);
@@ -174,7 +175,7 @@ public class SystemSettingsExporterTest {
 
 //         <?xml version="1.0" ?>
 //        <configuration-export>
-//            <entities id="org.rhq.enterprise.server.sync.exporters.SystemSettingsExporter">
+//            <entities id="org.rhq.enterprise.server.sync.importers.SystemSettingsImporter">
 //                <entity>
 //                    <data>
 //                        <systemSettings referencedEntityId="0">
@@ -221,7 +222,7 @@ public class SystemSettingsExporterTest {
 
         Element entities = (Element) getFirstDirectChildByTagName(root, ExportingInputStream.ENTITIES_EXPORT_ELEMENT);
 
-        assertEquals(entities.getAttribute(ExportingInputStream.ID_ATTRIBUTE), SystemSettingsExporter.class.getName(),
+        assertEquals(entities.getAttribute(ExportingInputStream.ID_ATTRIBUTE), SystemSettingsImporter.class.getName(),
             "Unexpected id of the entities element.");
 
         NodeList systemSettings = entities.getElementsByTagName("systemSettings");

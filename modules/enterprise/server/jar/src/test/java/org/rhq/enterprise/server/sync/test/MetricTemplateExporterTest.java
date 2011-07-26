@@ -61,7 +61,8 @@ import org.rhq.enterprise.server.resource.metadata.PluginManagerLocal;
 import org.rhq.enterprise.server.resource.metadata.PluginStats;
 import org.rhq.enterprise.server.sync.ExportingInputStream;
 import org.rhq.enterprise.server.sync.exporters.Exporter;
-import org.rhq.enterprise.server.sync.exporters.MetricTemplatesExporter;
+import org.rhq.enterprise.server.sync.exporters.MetricTemplateExporter;
+import org.rhq.enterprise.server.sync.importers.MetricTemplateImporter;
 import org.rhq.enterprise.server.sync.validators.ConsistencyValidator;
 
 /**
@@ -205,7 +206,7 @@ public class MetricTemplateExporterTest {
     };
 
     public void testCanExport() throws Exception {
-        MetricTemplatesExporter exporter = new MetricTemplatesExporter(null, measurementDefManagerStub,
+        MetricTemplateExporter exporter = new MetricTemplateExporter(measurementDefManagerStub,
             pluginManagerStub);
 
         Set<Exporter<?, ?>> exporters = new HashSet<Exporter<?, ?>>();
@@ -272,7 +273,7 @@ public class MetricTemplateExporterTest {
 
         Element entities = (Element) getFirstDirectChildByTagName(root, ExportingInputStream.ENTITIES_EXPORT_ELEMENT);
         
-        assertEquals(entities.getAttribute(ExportingInputStream.ID_ATTRIBUTE), MetricTemplatesExporter.class.getName(), "Unexpected id of the entities element.");
+        assertEquals(entities.getAttribute(ExportingInputStream.ID_ATTRIBUTE), MetricTemplateImporter.class.getName(), "Unexpected id of the entities element.");
         
         NodeList metricTemplates = entities.getElementsByTagName("metricTemplate");
         

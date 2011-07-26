@@ -46,6 +46,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.sync.ExporterMessages;
 import org.rhq.enterprise.server.sync.ExportException;
 import org.rhq.enterprise.server.sync.ExportWriter;
@@ -54,6 +55,7 @@ import org.rhq.enterprise.server.sync.SynchronizedEntity;
 import org.rhq.enterprise.server.sync.exporters.AbstractDelegatingExportingIterator;
 import org.rhq.enterprise.server.sync.exporters.Exporter;
 import org.rhq.enterprise.server.sync.exporters.ExportingIterator;
+import org.rhq.enterprise.server.sync.importers.Importer;
 import org.rhq.enterprise.server.sync.validators.ConsistencyValidator;
 
 /**
@@ -66,22 +68,16 @@ public class ExportingInputStreamTest {
 
     private static final Log LOG = LogFactory.getLog(ExportingInputStreamTest.class);
     
-    private static class FailingExporter1 extends SynchronizedEntity.DummyExporter<Void> {
-        public FailingExporter1() {
-            super(Void.class);
-        }
+    private static class IntegerImporter extends SynchronizedEntity.DummyImporter<Integer> {        
     }
     
-    private static class FailingExporter2 extends SynchronizedEntity.DummyExporter<Integer> {
-        public FailingExporter2() {
-            super(Integer.class);
-        }
+    private static class StringImporter extends SynchronizedEntity.DummyImporter<String> {
     }
     
     private static class ListToStringExporter<T> implements Exporter<T, T> {
 
         List<T> valuesToExport;
-        Class<T> clazz;
+        Class<? extends Importer<T, T>> importerClass;
         
         public static final String NOTE_PREFIX = "Wow, I just exported an item from a list: ";
         
@@ -105,8 +101,8 @@ public class ExportingInputStreamTest {
             }
         }
         
-        public ListToStringExporter(Class<T> clz, List<T> valuesToExport) {
-            clazz = clz;
+        public ListToStringExporter(Class<? extends Importer<T, T>> importerClass, List<T> valuesToExport) {
+            this.importerClass = importerClass;
             this.valuesToExport = valuesToExport;
         }
                 
@@ -114,11 +110,11 @@ public class ExportingInputStreamTest {
             return Collections.emptySet();
         }
         
-        public Class<T> getExportedEntityType() {
-            return clazz;
+        public Class<? extends Importer<T, T>> getImporterType() {
+            return importerClass;
         }
 
-        public void init() throws ExportException {
+        public void init(Subject subject) throws ExportException {
         }
 
         public ExportingIterator<T> getExportingIterator() {
@@ -132,50 +128,17 @@ public class ExportingInputStreamTest {
     
     private class StringListExporter extends ListToStringExporter<String> {
         public StringListExporter(List<String> list) {
-            super(String.class, list);
+            super(StringImporter.class, list);
         }
     }
     
     private class IntegerListExporter extends ListToStringExporter<Integer> {
         public IntegerListExporter(List<Integer> list) {
-            super(Integer.class, list);
+            super(IntegerImporter.class, list);
         }
     }
     
-    public void testWithExportersFailingToInit() throws Exception {
-        Set<Exporter<?, ?>> exporters = this.<Exporter<?, ?>>asSet(new FailingExporter1(), new FailingExporter2());
-        
-        InputStream export = new ExportingInputStream(exporters, new HashMap<String, ExporterMessages>(), 1024, false);
-        
-        DocumentBuilder bld = DocumentBuilderFactory.newInstance().newDocumentBuilder();
-        
-        Document doc = bld.parse(export);
-        
-        Element root = doc.getDocumentElement();
-        
-        assertEquals(ExportingInputStream.CONFIGURATION_EXPORT_ELEMENT, root.getNodeName());
-        
-        assertEquals(root.getChildNodes().getLength(), 2, "Unexpected number of entities elements");
-        
-        Element export1 = (Element) root.getChildNodes().item(0);
-        Element export2 = (Element) root.getChildNodes().item(1);
-        
-        assertEquals(export1.getAttribute("id"), FailingExporter1.class.getName());
-        assertEquals(export2.getAttribute("id"), FailingExporter2.class.getName());
-
-        for(int i = 0; i < root.getChildNodes().getLength(); ++i) {
-            Element entitiesElement = (Element) root.getChildNodes().item(i);
-            
-            assertEquals(entitiesElement.getNodeName(), ExportingInputStream.ENTITIES_EXPORT_ELEMENT);            
-            assertEquals(entitiesElement.getChildNodes().getLength(), 1, "Unexpected number of elements in the entities export on index " + i);
-            
-            Element errorMessageElement = (Element) entitiesElement.getChildNodes().item(0);
-            
-            assertEquals(errorMessageElement.getNodeName(), ExportingInputStream.ERROR_MESSAGE_ELEMENT);
-        }
-    }
-    
-    public void testWithFullyWorkingExporters() throws Exception {
+    public void testCanExport() throws Exception {
         List<String> list1 = Arrays.asList("a", "b", "c");
         List<Integer> list2 = Arrays.asList(1, 2, 3);
         
@@ -205,8 +168,8 @@ public class ExportingInputStreamTest {
         Element export1 = (Element) root.getChildNodes().item(0);
         Element export2 = (Element) root.getChildNodes().item(1);
         
-        assertEquals(export1.getAttribute("id"), StringListExporter.class.getName());
-        assertEquals(export2.getAttribute("id"), IntegerListExporter.class.getName());
+        assertEquals(export1.getAttribute("id"), StringImporter.class.getName());
+        assertEquals(export2.getAttribute("id"), IntegerImporter.class.getName());
 
         String[] expectedNotes = new String[] {list1.toString(), list2.toString()};
         

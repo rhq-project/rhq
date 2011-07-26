@@ -26,6 +26,9 @@ import java.util.Set;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.sync.entity.SystemSettings;
 import org.rhq.enterprise.server.sync.ExportException;
+import org.rhq.enterprise.server.sync.NoSingleEntity;
+import org.rhq.enterprise.server.sync.importers.Importer;
+import org.rhq.enterprise.server.sync.importers.SystemSettingsImporter;
 import org.rhq.enterprise.server.sync.validators.ConsistencyValidator;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -35,7 +38,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  *
  * @author Lukas Krejci
  */
-public class SystemSettingsExporter implements Exporter<SystemSettings, SystemSettings> {
+public class SystemSettingsExporter implements Exporter<NoSingleEntity, SystemSettings> {
 
     private Subject subject;
     private SystemManagerLocal systemManager;
@@ -56,12 +59,11 @@ public class SystemSettingsExporter implements Exporter<SystemSettings, SystemSe
         }
     }
     
-    public SystemSettingsExporter(Subject subject) {
-        this(subject, LookupUtil.getSystemManager());
+    public SystemSettingsExporter() {
+        this(LookupUtil.getSystemManager());
     }
     
-    public SystemSettingsExporter(Subject subject, SystemManagerLocal systemManager) {
-        this.subject = subject;
+    public SystemSettingsExporter(SystemManagerLocal systemManager) {
         this.systemManager = systemManager;        
     }
     
@@ -71,12 +73,13 @@ public class SystemSettingsExporter implements Exporter<SystemSettings, SystemSe
     }
     
     @Override
-    public Class<SystemSettings> getExportedEntityType() {
-        return SystemSettings.class;
+    public Class<? extends Importer<NoSingleEntity, SystemSettings>> getImporterType() {
+        return SystemSettingsImporter.class;
     }
     
     @Override
-    public void init() throws ExportException {
+    public void init(Subject subject) throws ExportException {
+        this.subject = subject;
     }
 
     @Override

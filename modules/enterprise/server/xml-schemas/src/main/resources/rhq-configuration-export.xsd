@@ -30,13 +30,10 @@
     </xs:complexType>
     
     <xs:complexType name="EntitiesExport">
-        <xs:choice>
-            <xs:sequence>
-                <xs:element minOccurs="0" maxOccurs="unbounded" type="ce:EntityExport" name="entity" />
-                <xs:element type="xs:string" name="notes" />
-            </xs:sequence>
-            <xs:element type="xs:string" name="error-message" />
-        </xs:choice>
+        <xs:sequence>
+            <xs:element minOccurs="0" maxOccurs="unbounded" type="ce:EntityExport" name="entity" />
+            <xs:element type="xs:string" name="notes" />
+        </xs:sequence>
         <xs:attribute name="id" type="xs:ID">
             <xs:annotation>
                 <xs:documentation>

@@ -1,7 +1,6 @@
 package org.rhq.core.pc.drift;
 
 import java.util.PriorityQueue;
-import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class ScheduleQueueImpl implements ScheduleQueue {

@@ -54,6 +54,18 @@ public class DriftDetector implements Runnable {
 
         if (schedule.getNextScan() > (System.currentTimeMillis() + 100L)) {
             scheduleQueue.enqueue(schedule);
+            // TODO should we grab the schedule from the queue?
+            // Maybe we should continue pulling schedules off the queue until
+            // we find one that is ready to be processed.
+            return;
+        }
+
+        if (!schedule.getDriftConfiguration().getEnabled()) {
+            schedule.updateShedule();
+            scheduleQueue.enqueue(schedule);
+            // TODO should we grab the schedule from the queue?
+            // Maybe we should continue pulling schedules off the queue until
+            // we find one that is ready to be processed.
             return;
         }
 

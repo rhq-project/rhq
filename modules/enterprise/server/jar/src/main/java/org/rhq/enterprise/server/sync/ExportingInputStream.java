@@ -30,7 +30,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.zip.GZIPOutputStream;
-import java.util.zip.ZipOutputStream;
 
 import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
@@ -63,6 +62,7 @@ public class ExportingInputStream extends InputStream {
     public static final String DATA_ELEMENT = "data";
     public static final String VALIDATOR_ELEMENT = "validator";
     public static final String ID_ATTRIBUTE = "id";
+    public static final String CLASS_ATTRIBUTE = "class";
     
     private Set<Exporter<?, ?>> exporters;
     private Map<String, ExporterMessages> messagesPerExporter;
@@ -236,7 +236,7 @@ public class ExportingInputStream extends InputStream {
         
         for(ConsistencyValidator cv : allValidators) {
             wrt.writeStartElement(VALIDATOR_ELEMENT);
-            wrt.writeAttribute(ID_ATTRIBUTE, cv.getClass().getName());
+            wrt.writeAttribute(CLASS_ATTRIBUTE, cv.getClass().getName());
             cv.exportState(new ExportWriter(wrt));
             wrt.writeEndElement();
         }

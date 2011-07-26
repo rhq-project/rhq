@@ -35,7 +35,7 @@ public class ProxyInfoTest {
     private Log log = LogFactory.getLog(this.getClass());
 
     @Test
-    public void testProxyInfo() throws IOException {
+    public void testProxyInfo() throws Exception {
         String[] availableFiles = new String[] { "/proxy_config/proxy_config_1.txt", "/proxy_config/proxy_config_2.txt" };
 
         for (String testConfigurationFile : availableFiles) {

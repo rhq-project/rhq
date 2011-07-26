@@ -614,6 +614,78 @@
             <c:simple-property name="path" readOnly="true" default="subsystem=web"/>
         </plugin-configuration>
 
+        <resource-configuration>
+            <c:simple-property name="default-virtual-server" required="false" type="string" readOnly="true" defaultValue="localhost"
+                               description="The web container's default virtual server."/>
+            <c:simple-property name="native" required="false" type="boolean" readOnly="true" defaultValue="true"
+                               description="Add the native initialization listener to the web container."/>
+            <c:map-property name="configuration" description="The common web container configuration." >
+                <c:map-property name="static-resources" description="Configuration for static resources" >
+                    <c:simple-property name="listings" required="false" type="boolean" readOnly="true" defaultValue="false"
+                                       description="Enable folder listings."/>
+                    <c:simple-property name="sendfile" required="false" type="integer" readOnly="true" defaultValue="49152"
+                                       description="Enable sendfile if possible, for files bigger than the specified byte size."/>
+                    <c:simple-property name="read-only" required="false" type="boolean" readOnly="true" defaultValue="true"
+                                        description="Allow write HTTP methods (PUT, DELETE)."/>
+                    <c:simple-property name="webdav" required="false" type="boolean" readOnly="true" defaultValue="false"
+                                       description="Enable WebDAV functionality."/>
+                    <c:simple-property name="secret" required="false" type="string" readOnly="true" description="Secret for WebDAV locking operations."/>
+                    <c:simple-property name="max-depth" required="false" type="integer" readOnly="true" defaultValue="3"
+                                       description="Maximum recursion for PROPFIND."/>
+                    <c:simple-property name="disabled" required="false" type="boolean" readOnly="true" defaultValue="false"
+                                       description="Enable the JSP container."/>
+                </c:map-property>
+                <c:map-property name="jsp-configuration" description="JSP container configuration">
+                    <c:simple-property name="development" required="false" type="boolean" readOnly="true" defaultValue="false"
+                                       description="Enable the development mode, which gives more information when an error occurs."/>
+                    <c:simple-property name="file-encoding" required="false" type="string" readOnly="true" description="Force a file encoding."/>
+                    <c:simple-property name="keep-generated" required="false" type="boolean" readOnly="true" defaultValue="true"
+                                       description="Keep the generated Servlets."/>
+                    <c:simple-property name="trim-spaces" required="false" type="boolean" readOnly="true" defaultValue="true"
+                                       description="Trim some spaces from the generated Servlet."/>
+                    <c:simple-property name="tag-pooling" required="false" type="boolean" readOnly="true" defaultValue="true"
+                                       description="Enable tag pooling."/>
+                    <c:simple-property name="mapped-file" required="false" type="boolean" readOnly="true" defaultValue="true"
+                                       description="Map to the JSP source."/>
+                    <c:simple-property name="check-interval" required="false" type="integer" readOnly="true" defaultValue="0"
+                                       description="Check interval for JSP updates using a background thread."/>
+                    <c:simple-property name="modification-test-interval" required="false" type="integer" readOnly="true" defaultValue="4"
+                                       description="Minimum amount of time between two tests for updates, in seconds."/>
+                    <c:simple-property name="recompile-on-fail" required="false" type="boolean" readOnly="true" defaultValue="false"
+                                       description="Retry failed JSP compilations on each request."/>
+                    <c:simple-property name="smap" required="false" type="boolean" readOnly="true" defaultValue="false"
+                                       description="Enable SMAP."/>
+                    <c:simple-property name="dump-smap" required="false" type="boolean" readOnly="true" defaultValue="false"
+                                       description="Write SMAP data to a file."/>
+                    <c:simple-property name="generate-strings-as-char-arrays" required="false" type="boolean" readOnly="true"
+                                       defaultValue="false"
+                                       description="Generate String constants as char arrays."/>
+                    <c:simple-property name="error-on-use-bean-invalid-class-attribute" required="false" type="boolean" readOnly="true" defaultValue="false"
+                                       description="Enable errors when using a bad class in useBean."/>
+                    <c:simple-property name="scratch-dir" required="false" type="string" readOnly="true" description="Specify a different work directory."/>
+                    <c:simple-property name="source-vm" required="false" type="string" readOnly="true" defaultValue="1.5"
+                                       description="Source VM level for compilation."/>
+                    <c:simple-property name="target-vm" required="false" type="string" readOnly="true" defaultValue="1.5"
+                                       description="Target VM level for compilation."/>
+                    <c:simple-property name="java-encoding" required="false" type="string" readOnly="true" defaultValue="UTF-8"
+                                       description="Specify the encoding used for Java sources."/>
+                    <c:simple-property name="x-powered-by" required="false" type="boolean" readOnly="true" defaultValue="true"
+                                       description="Enable advertising the JSP engine in x-powered-by."/>
+                    <c:simple-property name="display-source-fragment" required="false" type="boolean" readOnly="true" defaultValue="true"
+                                       description="When a runtime error occurs, attempts to display corresponding JSP source fragment."/>
+                </c:map-property>
+                <c:list-property name="mime-mapping" description="A mime-mapping definition." >
+                    <c:map-property name="mime-mapping" >
+                            <c:simple-property name="name" description="A MIME mapping name"/>
+                            <c:simple-property name="value" description="A MIME mapping value"/>
+                    </c:map-property>
+                </c:list-property>
+                <c:list-property name="welcome-file" description="A welcome file declaration." >
+                    <c:simple-property name="welcome-file" />
+                </c:list-property>
+            </c:map-property>
+        </resource-configuration>
+
         <service name="Connector"
                  discovery="SubsystemDiscovery"
                  class="BaseComponent"

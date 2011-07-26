@@ -50,9 +50,9 @@ import org.rhq.core.domain.sync.ExporterMessages;
 import org.rhq.enterprise.server.sync.ExportException;
 import org.rhq.enterprise.server.sync.ExportWriter;
 import org.rhq.enterprise.server.sync.ExportingInputStream;
+import org.rhq.enterprise.server.sync.SynchronizedEntity;
 import org.rhq.enterprise.server.sync.exporters.AbstractDelegatingExportingIterator;
 import org.rhq.enterprise.server.sync.exporters.Exporter;
-import org.rhq.enterprise.server.sync.exporters.Exporters;
 import org.rhq.enterprise.server.sync.exporters.ExportingIterator;
 import org.rhq.enterprise.server.sync.validators.ConsistencyValidator;
 
@@ -66,13 +66,13 @@ public class ExportingInputStreamTest {
 
     private static final Log LOG = LogFactory.getLog(ExportingInputStreamTest.class);
     
-    private static class FailingExporter1 extends Exporters.DummyExporter<Void> {
+    private static class FailingExporter1 extends SynchronizedEntity.DummyExporter<Void> {
         public FailingExporter1() {
             super(Void.class);
         }
     }
     
-    private static class FailingExporter2 extends Exporters.DummyExporter<Integer> {
+    private static class FailingExporter2 extends SynchronizedEntity.DummyExporter<Integer> {
         public FailingExporter2() {
             super(Integer.class);
         }

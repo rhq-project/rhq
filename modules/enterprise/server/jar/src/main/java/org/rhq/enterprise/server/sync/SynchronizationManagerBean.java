@@ -46,7 +46,6 @@ import org.rhq.core.domain.sync.ExportReport;
 import org.rhq.core.domain.sync.ImportReport;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.sync.exporters.Exporter;
-import org.rhq.enterprise.server.sync.exporters.Exporters;
 
 /**
  * 
@@ -100,7 +99,7 @@ public class SynchronizationManagerBean implements SynchronizationManagerLocal, 
         Set<Exporter<?, ?>> allExporters = new HashSet<Exporter<?, ?>>();
         Map<String, ExporterMessages> messages = new HashMap<String, ExporterMessages>();
         
-        for(Exporters e : Exporters.values()) {
+        for(SynchronizedEntity e : SynchronizedEntity.values()) {
             allExporters.add(e.getExporter(subject));
         }
         

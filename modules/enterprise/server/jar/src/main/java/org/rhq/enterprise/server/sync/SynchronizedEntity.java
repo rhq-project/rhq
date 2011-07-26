@@ -17,17 +17,17 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.enterprise.server.sync.exporters;
+package org.rhq.enterprise.server.sync;
 
 import java.util.Collections;
 import java.util.Set;
 
-import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.authz.Role;
-import org.rhq.core.domain.resource.group.Group;
 import org.rhq.core.domain.sync.entity.SystemSettings;
-import org.rhq.enterprise.server.sync.ExportException;
+import org.rhq.enterprise.server.sync.exporters.Exporter;
+import org.rhq.enterprise.server.sync.exporters.ExportingIterator;
+import org.rhq.enterprise.server.sync.exporters.MetricTemplatesExporter;
+import org.rhq.enterprise.server.sync.exporters.SystemSettingsExporter;
 import org.rhq.enterprise.server.sync.validators.ConsistencyValidator;
 
 /**
@@ -35,8 +35,9 @@ import org.rhq.enterprise.server.sync.validators.ConsistencyValidator;
  *
  * @author Lukas Krejci
  */
-public enum Exporters {
+public enum SynchronizedEntity {
     
+    /*
     SUBJECT {
         @Override
         public Exporter<?, ?> getExporter(Subject subject) {            
@@ -61,6 +62,7 @@ public enum Exporters {
             return DummyExporter.create(AlertDefinition.class);
         }
     },
+    */
     METRIC_TEMPLATE {
         @Override
         public Exporter<?, ?> getExporter(Subject subject) {
@@ -70,7 +72,7 @@ public enum Exporters {
     SYSTEM_SETTINGS {
         @Override
         public Exporter<?, ?> getExporter(Subject subject) {
-            return DummyExporter.create(SystemSettings.class);
+            return new SystemSettingsExporter(subject);
         }  
     };
     

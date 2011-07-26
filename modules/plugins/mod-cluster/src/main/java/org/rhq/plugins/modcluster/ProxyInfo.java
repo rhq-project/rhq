@@ -54,9 +54,9 @@ public class ProxyInfo {
             identifier = identifier.substring(identifier.indexOf("[") + 1, identifier.indexOf("]"));
 
             String jvmRoute = nodePieces[1];
-            jvmRoute = jvmRoute.substring(jvmRoute.indexOf(':')).trim();
+            jvmRoute = jvmRoute.substring(jvmRoute.indexOf(':') + 1).trim();
 
-            availableNodes.put(jvmRoute, new Node(jvmRoute, identifier));
+            availableNodes.put(identifier, new Node(jvmRoute, identifier));
         }
     }
 
@@ -90,13 +90,18 @@ public class ProxyInfo {
             identifier = identifier.substring(identifier.indexOf("[") + 1, identifier.indexOf("]"));
             identifier = identifier.substring(0, identifier.lastIndexOf(":"));
 
+            String nodeIdentifier = contextPieces[0];
+            nodeIdentifier = nodeIdentifier.substring(nodeIdentifier.indexOf("[") + 1, nodeIdentifier.indexOf("]"));
+            nodeIdentifier = nodeIdentifier.substring(0, nodeIdentifier.indexOf(":"));
+            String jvmRoute = availableNodes.get(nodeIdentifier).getJvmRoute();
+
             String rawIsEnabled = contextPieces[2];
             rawIsEnabled = rawIsEnabled.substring(rawIsEnabled.indexOf(':') + 1).trim();
             boolean isEnabled = rawIsEnabled.equals("ENABLED") ? true : false;
 
             Vhost relatedVhost = availableVhosts.get(identifier);
 
-            availableContexts.add(new Context("", relatedVhost.getHost(), actualContext, isEnabled));
+            availableContexts.add(new Context(jvmRoute, relatedVhost.getHost(), actualContext, isEnabled));
         }
     }
 

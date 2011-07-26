@@ -53,6 +53,7 @@ import org.rhq.core.pluginapi.operation.OperationResult;
 /**
  * @author Stefan Negrea
  */
+@SuppressWarnings("rawtypes")
 @Test(groups = "modcluster-plugin")
 public class ModclusterPluginTest {
     private Log log = LogFactory.getLog(this.getClass());
@@ -104,6 +105,8 @@ public class ModclusterPluginTest {
         log.info("Discovery took: " + (report.getEndTime() - report.getStartTime()) + "ms");
 
         List<String> typeNames = new ArrayList<String>() {
+            private static final long serialVersionUID = 1L;
+
             {
                 add(PLUGIN_NAME);
                 add(PLUGIN_NAME + " Webapp Context");

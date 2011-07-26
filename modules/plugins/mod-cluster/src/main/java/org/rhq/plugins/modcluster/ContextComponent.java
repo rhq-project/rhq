@@ -32,6 +32,7 @@ import org.rhq.plugins.jmx.MBeanResourceComponent;
  * 
  * @author Stefan Negrea
  */
+@SuppressWarnings({ "rawtypes", "deprecation" })
 public class ContextComponent extends MBeanResourceComponent<MBeanResourceComponent> {
     @Override
     protected EmsBean loadBean() {

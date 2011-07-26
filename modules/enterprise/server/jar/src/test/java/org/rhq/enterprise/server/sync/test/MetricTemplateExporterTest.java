@@ -19,11 +19,12 @@
 
 package org.rhq.enterprise.server.sync.test;
 
-import java.io.ByteArrayInputStream;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -40,6 +41,8 @@ import org.apache.commons.logging.LogFactory;
 import org.testng.annotations.Test;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.auth.Subject;
@@ -59,6 +62,7 @@ import org.rhq.enterprise.server.resource.metadata.PluginStats;
 import org.rhq.enterprise.server.sync.ExportingInputStream;
 import org.rhq.enterprise.server.sync.exporters.Exporter;
 import org.rhq.enterprise.server.sync.exporters.MetricTemplatesExporter;
+import org.rhq.enterprise.server.sync.validators.ConsistencyValidator;
 
 /**
  * 
@@ -209,18 +213,82 @@ public class MetricTemplateExporterTest {
 
         InputStream eis = new ExportingInputStream(exporters, new HashMap<String, ExporterMessages>(), 65536, false);
 
-        String exportContents = readAll(new InputStreamReader(eis, "UTF-8"));
+        //        String exportContents = readAll(new InputStreamReader(eis, "UTF-8"));
+        //
+        //        LOG.warn("Export contents:\n" + exportContents);
+        //
+        //        eis = new ByteArrayInputStream(exportContents.getBytes("UTF-8"));
 
-        LOG.warn("Export contents:\n" + exportContents);
+        //        <?xml version="1.0" ?>
+        //        <configuration-export>
+        //            <validator class="org.rhq.enterprise.server.sync.validators.DeployedAgentPluginsValidator">
+        //                <plugin name="fakePlugin" hash="12345" version="1.0.0.test"></plugin>
+        //            </validator>
+        //            <entities id="org.rhq.enterprise.server.sync.exporters.MetricTemplatesExporter">
+        //                <entity>
+        //                    <data>
+        //                        <metricTemplate referencedEntityId="0" enabled="false" defaultInterval="0" metricName="m1" resourceTypePlugin="fakePlugin" resourceTypeName="fakeType"></metricTemplate>
+        //                    </data>
+        //                </entity>
+        //                <entity>
+        //                    <data>
+        //                        <metricTemplate referencedEntityId="0" enabled="false" defaultInterval="0" metricName="m2" resourceTypePlugin="fakePlugin" resourceTypeName="fakeType"></metricTemplate>
+        //                    </data>
+        //                </entity>
+        //                <entity>
+        //                    <data>
+        //                        <metricTemplate referencedEntityId="0" enabled="false" defaultInterval="0" metricName="m3" resourceTypePlugin="fakePlugin" resourceTypeName="fakeType"></metricTemplate>
+        //                    </data>
+        //                </entity>
+        //            </entities>
+        //        </configuration-export>        
 
-//        eis = new ByteArrayInputStream(exportContents.getBytes("UTF-8"));
-//
-//        DocumentBuilder bld = DocumentBuilderFactory.newInstance().newDocumentBuilder();
-//
-//        Document doc = bld.parse(eis);
-//
-//        Element root = doc.getDocumentElement();
+        DocumentBuilder bld = DocumentBuilderFactory.newInstance().newDocumentBuilder();
 
+        Document doc = bld.parse(eis);
+
+        Element root = doc.getDocumentElement();
+
+        List<Node> validators = getDirectChildrenByTagName(root, ExportingInputStream.VALIDATOR_ELEMENT);
+        Set<ConsistencyValidator> declaredValidators = exporter.getRequiredValidators();
+        assertEquals(validators.size(), declaredValidators.size(), "Unexpected number of validators in the export xml");
+
+        for (Node v : validators) {
+            Element validator = (Element) v;
+
+            String cls = validator.getAttribute(ExportingInputStream.CLASS_ATTRIBUTE);
+
+            boolean found = false;
+            for (ConsistencyValidator dv : declaredValidators) {
+                if (cls.equals(dv.getClass().getName())) {
+                    found = true;
+                    break;
+                }
+            }
+
+            assertTrue(found, "The metric template exporter doesn't seem to declare a validator with class: " + cls
+                + ", but one such appeared in the export");
+        }
+
+        Element entities = (Element) getFirstDirectChildByTagName(root, ExportingInputStream.ENTITIES_EXPORT_ELEMENT);
+        
+        assertEquals(entities.getAttribute(ExportingInputStream.ID_ATTRIBUTE), MetricTemplatesExporter.class.getName(), "Unexpected id of the entities element.");
+        
+        NodeList metricTemplates = entities.getElementsByTagName("metricTemplate");
+        
+        assertEquals(metricTemplates.getLength(), 3, "Unexpected number of exported metric templates.");
+        
+        for(int i = 0; i < metricTemplates.getLength(); ++i) {
+            Element m = (Element) metricTemplates.item(i);
+            String expectedName = "m" + (i + 1);
+            
+            assertEquals(m.getAttribute("referencedEntityId"), "0", "Unexpected referencedEntityId value");
+            assertEquals(m.getAttribute("enabled"), "false", "Unexpected enabled value");
+            assertEquals(m.getAttribute("defaultInterval"), "0", "Unexpected defaultInterval value");
+            assertEquals(m.getAttribute("metricName"), expectedName, "Unexpected metricName value");
+            assertEquals(m.getAttribute("resourceTypePlugin"), "fakePlugin", "Unexpected resourceTypePlugin value");
+            assertEquals(m.getAttribute("resourceTypeName"), "fakeType", "Unexpected resourceTypeName value");
+        }
     }
 
     private static String readAll(Reader rdr) throws IOException {
@@ -235,5 +303,28 @@ public class MetricTemplateExporterTest {
         } finally {
             rdr.close();
         }
+    }
+
+    private static Node getFirstDirectChildByTagName(Node node, String tagName) {
+        for (int i = 0; i < node.getChildNodes().getLength(); ++i) {
+            Node n = node.getChildNodes().item(i);
+            if (n.getNodeName().equals(tagName)) {
+                return n;
+            }
+        }
+
+        return null;
+    }
+
+    private static List<Node> getDirectChildrenByTagName(Node node, String tagName) {
+        List<Node> ret = new ArrayList<Node>();
+        for (int i = 0; i < node.getChildNodes().getLength(); ++i) {
+            Node n = node.getChildNodes().item(i);
+            if (n.getNodeName().equals(tagName)) {
+                ret.add(n);
+            }
+        }
+
+        return ret;
     }
 }

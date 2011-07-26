@@ -67,8 +67,6 @@ public abstract class AbstractDriftChangeSetsTreeView extends LocatableTreeGrid 
         setSelectionType(SelectionStyle.SINGLE);
         setShowRollOver(false);
         setShowHeader(false);
-
-        setDataSource(new DriftChangeSetsTreeDataSource(canManageDrift));
     }
 
     @Override

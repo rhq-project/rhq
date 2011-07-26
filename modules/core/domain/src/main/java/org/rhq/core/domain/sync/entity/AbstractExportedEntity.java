@@ -23,6 +23,7 @@ import java.io.Serializable;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
 
 /**
@@ -36,6 +37,7 @@ public abstract class AbstractExportedEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    @XmlAttribute
     int referencedEntityId;
     
     public int getReferencedEntityId() {

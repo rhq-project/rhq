@@ -19,38 +19,33 @@
 
 package org.rhq.enterprise.gui.coregui.client.drift;
 
-import com.smartgwt.client.widgets.tree.TreeNode;
+import com.smartgwt.client.data.DSRequest;
 
 import org.rhq.core.domain.common.EntityContext;
-import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
 
 /**
  * @author John Mazzitelli
  */
-public class ResourceDriftChangeSetsTreeView extends AbstractDriftChangeSetsTreeView {
+public class ResourceDriftChangeSetsTreeDataSource extends AbstractDriftChangeSetsTreeDataSource {
 
     private final EntityContext context;
 
-    public ResourceDriftChangeSetsTreeView(String locatorId, boolean canManageDrift, EntityContext context) {
-
-        super(locatorId, canManageDrift);
+    public ResourceDriftChangeSetsTreeDataSource(boolean canManageDrift, EntityContext context) {
+        super(canManageDrift);
 
         if (context.type != EntityContext.Type.Resource) {
             throw new IllegalArgumentException("wrong context: " + context);
         }
 
         this.context = context;
-
-        setDataSource(new ResourceDriftChangeSetsTreeDataSource(canManageDrift, context));
     }
 
-    protected String getNodeTargetLink(TreeNode node) {
-        if (node instanceof DriftTreeNode) {
-            String driftIdStr = node.getAttribute(AbstractDriftChangeSetsTreeDataSource.ATTR_ID).split("_")[1];
-            String path = LinkManager.getDriftHistoryLink(this.context.resourceId, Integer.valueOf(driftIdStr));
-            return path;
-        }
-        return null;
+    @Override
+    protected DriftChangeSetCriteria getDriftChangeSetCriteria(final DSRequest request) {
+        DriftChangeSetCriteria criteria = super.getDriftChangeSetCriteria(request);
+        criteria.addFilterResourceId(this.context.resourceId);
+        return criteria;
     }
 
 }

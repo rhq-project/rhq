@@ -49,16 +49,16 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
  * @author John Mazzitelli
  */
 @SuppressWarnings("unchecked")
-public class DriftChangeSetsTreeDataSource extends RPCDataSource<Object, BaseCriteria> {
+public abstract class AbstractDriftChangeSetsTreeDataSource extends RPCDataSource<Object, BaseCriteria> {
 
-    private static final String ATTR_PARENT_ID = "parentId";
+    public static final String ATTR_PARENT_ID = "parentId";
     public static final String ATTR_ID = "id";
     public static final String ATTR_NAME = "name";
 
     private DriftGWTServiceAsync driftService = GWTServiceLookup.getDriftService();
     private final boolean canManageDrift;
 
-    public DriftChangeSetsTreeDataSource(boolean canManageDrift) {
+    public AbstractDriftChangeSetsTreeDataSource(boolean canManageDrift) {
         super();
         this.canManageDrift = canManageDrift;
         List<DataSourceField> fields = addDataSourceFields();
@@ -94,9 +94,7 @@ public class DriftChangeSetsTreeDataSource extends RPCDataSource<Object, BaseCri
             // There is no parent - we are at the root of the tree.
             // Get the top nodes (the change sets) but to be as fast as possible don't load their drifts.
             // We will lazily load drifts when the these changeset tree nodes are opened
-            DriftChangeSetCriteria criteria = new DriftChangeSetJPACriteria();
-            criteria.addSortVersion(PageOrdering.DESC);
-            criteria.setPageControl(getPageControl(request));
+            DriftChangeSetCriteria criteria = getDriftChangeSetCriteria(request);
 
             driftService.findDriftChangeSetsByCriteria(criteria, new AsyncCallback<PageList<DriftChangeSet>>() {
                 public void onSuccess(PageList<DriftChangeSet> result) {
@@ -165,6 +163,24 @@ public class DriftChangeSetsTreeDataSource extends RPCDataSource<Object, BaseCri
         }
 
         return;
+    }
+
+    /**
+     * Returns a criteria that will be used to obtain the root nodes for the tree - that is,
+     * the top level change set entries.
+     * 
+     * Subclasses can override this method, or modify the returned criteria to further
+     * filter the change sets that are to be returned.
+     * 
+     * @param request the request being made of the tree
+     * 
+     * @return the criteria to use when querying for change setss 
+     */
+    protected DriftChangeSetCriteria getDriftChangeSetCriteria(final DSRequest request) {
+        DriftChangeSetCriteria criteria = new DriftChangeSetJPACriteria();
+        criteria.addSortVersion(PageOrdering.DESC);
+        criteria.setPageControl(getPageControl(request));
+        return criteria;
     }
 
     @Override

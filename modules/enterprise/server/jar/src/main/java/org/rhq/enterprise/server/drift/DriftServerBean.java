@@ -145,7 +145,7 @@ public class DriftServerBean implements DriftServerLocal {
             AgentClient agentClient = agentMgr.getAgentClient(subjectMgr.getOverlord(), resourceId);
             DriftAgentService service = agentClient.getDriftAgentService();
             try {
-                service.scheduleDriftDetection(resourceId, driftConfig);
+                service.updateDriftDetection(resourceId, driftConfig);
             } catch (Exception e) {
                 log.warn(" Unable to inform agent of unscheduled drift detection  [" + driftConfig + "]", e);
             }

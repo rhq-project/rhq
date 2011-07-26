@@ -32,6 +32,13 @@ public class DriftDetectionSchedule implements Comparable<DriftDetectionSchedule
         nextScan = System.currentTimeMillis() + (driftConfig.getInterval() * 1000);
     }
 
+    public DriftDetectionSchedule copy() {
+        DriftDetectionSchedule copy = new DriftDetectionSchedule(resourceId,
+            new DriftConfiguration(driftConfig.getConfiguration().deepCopyWithoutProxies()));
+        copy.nextScan = nextScan;
+        return copy;
+    }
+
     @Override
     public int compareTo(DriftDetectionSchedule other) {
         if (this.nextScan < other.nextScan) {

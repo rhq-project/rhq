@@ -25,7 +25,9 @@
       
       <plugin-configuration>        
          <c:simple-property name="objectName" readOnly="true" default="Catalina:type=ModClusterListener,*"/>
-         <c:simple-property name="nameTemplate" default="mod_cluster"/>         
+         <c:simple-property name="additionalConfigurationObjectName" readOnly="true" default="jboss.web:type=Engine"/>
+         <c:simple-property name="jvmRoute" readOnly="false"/>
+         <c:simple-property name="nameTemplate" default="mod_cluster"/>
       </plugin-configuration>
       
       <operation name="stop" displayName="Stop all webapps" description="Gracefully stops all webapps for all engines.">
@@ -128,7 +130,6 @@
       	</operation>
 
       </service>
-      
       
    </service>
 </plugin>

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2009 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -122,13 +122,25 @@ public class AugeasRawConfigHelper {
     }
 
     private Augeas createAugeas(String lens, String contents) throws Exception {
-        Augeas aug = new Augeas(rootPath, loadPath, Augeas.NO_MODL_AUTOLOAD);
-        File fl = File.createTempFile("_rhq", null);
-        //write the 'to' file to disk
-        FileUtils.writeStringToFile(fl, contents);
-        aug.set(transformPrefix + "/lens", lens);
-        aug.set(transformPrefix + "/incl", fl.getAbsolutePath());
-        aug.load();
+        Augeas aug = null;
+        try {
+            aug = new Augeas(rootPath, loadPath, Augeas.NO_MODL_AUTOLOAD);
+            File fl = File.createTempFile("_rhq", null);
+            //write the 'to' file to disk
+            FileUtils.writeStringToFile(fl, contents);
+            aug.set(transformPrefix + "/lens", lens);
+            aug.set(transformPrefix + "/incl", fl.getAbsolutePath());
+            aug.load();
+        } catch (Exception e) {
+            if (aug != null) {
+                try {
+                    aug.close();
+                } catch (Exception e2) {
+                }
+                aug = null;
+            }
+            throw e;
+        }
         return aug;
     }
 

@@ -34,6 +34,7 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.rhq.augeas.AugeasComponent;
 import org.rhq.augeas.node.AugeasNode;
 import org.rhq.augeas.tree.AugeasTree;
 import org.rhq.core.domain.configuration.Configuration;
@@ -84,7 +85,7 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
     public static final String RESPONSE_TIME_URL_TRANSFORMS_CONFIG_PROP = ResponseTimeConfiguration.RESPONSE_TIME_URL_TRANSFORMS_CONFIG_PROP;
 
     public static final String SERVER_NAME_CONFIG_PROP = "ServerName";
-    
+
     private static final String RESPONSE_TIME_METRIC = "ResponseTime";
     /** Multiply by 1/1000 to convert logged response times, which are in microseconds, to milliseconds. */
     private static final double RESPONSE_TIME_LOG_TIME_MULTIPLIER = 0.001;
@@ -97,7 +98,7 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
     private int snmpWwwServiceIndex = -1;
 
     public static final String RESOURCE_TYPE_NAME = "Apache Virtual Host";
-    
+
     public void start(ResourceContext<ApacheServerComponent> resourceContext) throws Exception {
         this.resourceContext = resourceContext;
         Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
@@ -117,7 +118,7 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
                     + "') is not a valid URL.");
             }
         }
-        
+
         ResponseTimeConfiguration responseTimeConfig = new ResponseTimeConfiguration(pluginConfig);
         File logFile = responseTimeConfig.getLogFile();
         if (logFile != null) {
@@ -139,20 +140,29 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
     public Configuration loadResourceConfiguration() throws Exception {
         ApacheServerComponent parent = resourceContext.getParentResourceComponent();
         if (!parent.isAugeasEnabled())
-           throw new Exception(ApacheServerComponent.CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
-        
-        AugeasTree tree = getServerConfigurationTree();
-        ConfigurationDefinition resourceConfigDef = resourceContext.getResourceType()
-            .getResourceConfigurationDefinition();
+            throw new Exception(ApacheServerComponent.CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
 
-        ApacheAugeasMapping mapping = new ApacheAugeasMapping(tree);
-        return mapping.updateConfiguration(getNode(tree), resourceConfigDef);
+        AugeasComponent comp = null;
+        try {
+            comp = getAugeas();
+            AugeasTree tree = comp.getAugeasTree(ApacheServerComponent.AUGEAS_HTTP_MODULE_NAME);
+            ConfigurationDefinition resourceConfigDef = resourceContext.getResourceType()
+                .getResourceConfigurationDefinition();
+
+            ApacheAugeasMapping mapping = new ApacheAugeasMapping(tree);
+            return mapping.updateConfiguration(getNode(tree), resourceConfigDef);
+        } finally {
+            if (comp != null)
+                comp.close();
+        }
     }
 
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
+        AugeasComponent comp = null;
         AugeasTree tree = null;
         try {
-            tree = getServerConfigurationTree();
+            comp = getAugeas();
+            tree = comp.getAugeasTree(ApacheServerComponent.AUGEAS_HTTP_MODULE_NAME);
             ConfigurationDefinition resourceConfigDef = resourceContext.getResourceType()
                 .getResourceConfigurationDefinition();
             ApacheAugeasMapping mapping = new ApacheAugeasMapping(tree);
@@ -162,7 +172,7 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
 
             report.setStatus(ConfigurationUpdateStatus.SUCCESS);
             log.info("Apache configuration was updated");
-            
+
             finishConfigurationUpdate(report);
         } catch (Exception e) {
             if (tree != null)
@@ -170,31 +180,40 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
             else
                 log.error("Augeas failed to save configuration", e);
             report.setStatus(ConfigurationUpdateStatus.FAILURE);
+        } finally {
+            if (comp != null)
+                comp.close();
         }
     }
 
     public void deleteResource() throws Exception {
         ApacheServerComponent parent = resourceContext.getParentResourceComponent();
         if (!parent.isAugeasEnabled())
-           throw new Exception(ApacheServerComponent.CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
-        
+            throw new Exception(ApacheServerComponent.CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
+
         if (MAIN_SERVER_RESOURCE_KEY.equals(resourceContext.getResourceKey())) {
-            throw new IllegalArgumentException("Cannot delete the virtual host representing the main server configuration.");
+            throw new IllegalArgumentException(
+                "Cannot delete the virtual host representing the main server configuration.");
         }
-        
-        AugeasTree tree = getServerConfigurationTree();
-        
+
+        AugeasComponent comp = null;
+
         try {
-            AugeasNode myNode = getNode(getServerConfigurationTree());
-    
+            comp = getAugeas();
+            AugeasTree tree = comp.getAugeasTree(ApacheServerComponent.AUGEAS_HTTP_MODULE_NAME);
+            AugeasNode myNode = getNode(tree);
+
             tree.removeNode(myNode, true);
             tree.save();
-            
+
             deleteEmptyFile(tree, myNode);
             conditionalRestart();
         } catch (IllegalStateException e) {
             //this means we couldn't find the augeas node for this vhost.
             //that error can be safely ignored in this situation.
+        } finally {
+            if (comp != null)
+                comp.close();
         }
     }
 
@@ -245,82 +264,106 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
     }
 
     public CreateResourceReport createResource(CreateResourceReport report) {
-        if (!isAugeasEnabled()){
+        if (!isAugeasEnabled()) {
             report.setStatus(CreateResourceStatus.FAILURE);
             report.setErrorMessage("Resources can be created only when augeas is enabled.");
             return report;
         }
         ResourceType resourceType = report.getResourceType();
-        
-        if (resourceType.equals(getDirectoryResourceType())) {
-            Configuration resourceConfiguration = report.getResourceConfiguration();
-            Configuration pluginConfiguration = report.getPluginConfiguration();
-        
-            String directoryName = report.getUserSpecifiedResourceName();
-            
-            //fill in the plugin configuration
-            
-            //get the directive index
-            AugeasTree tree = getServerConfigurationTree();
-            AugeasNode myNode = getNode(tree);
-            List<AugeasNode> directories = myNode.getChildByLabel("<Directory");
-            int seq = 1;
-            /*
-             * myNode will be parent node of the new Directory node.
-             * We need to create a new node for directory node which will contain child nodes.
-             * To create a node we can call method from AugeasTree which will create a node. In this method is 
-             * parameter sequence, if we will leave this parameter empty and there will be more nodes with 
-             * the same label, new node will be created but the method createNode will return node with index 0 resp 1.
-             * If that will happen we can not update the node anymore because we are updating wrong node.
-             * To avoid this situation we need to know what is the last sequence nr. of virtual host's child (directory) nodes.
-             * We can not just count child nodes with the same label because some of the child nodes
-             * could be stored in another file. So that in httpd configurationstructure they are child nodes of virtual host,
-             *  but in augeas configuration structure they can be child nodes of node Include[];. 
-             */
-           
-            for (AugeasNode n : directories) {
-                String param = n.getFullPath();
-                int end = param.lastIndexOf(File.separatorChar);
-                if (end != -1)
-                  if (myNode.getFullPath().equals(param.substring(0,end)))
-                      seq++;
+        AugeasComponent comp = null;
+        try {
+            comp = getAugeas();
+            if (resourceType.equals(getDirectoryResourceType())) {
+                Configuration resourceConfiguration = report.getResourceConfiguration();
+                Configuration pluginConfiguration = report.getPluginConfiguration();
+
+                String directoryName = report.getUserSpecifiedResourceName();
+
+                //fill in the plugin configuration
+
+                //get the directive index
+                AugeasTree tree = comp.getAugeasTree(ApacheServerComponent.AUGEAS_HTTP_MODULE_NAME);
+                AugeasNode myNode = getNode(tree);
+                List<AugeasNode> directories = myNode.getChildByLabel("<Directory");
+                int seq = 1;
+                /*
+                 * myNode will be parent node of the new Directory node.
+                 * We need to create a new node for directory node which will contain child nodes.
+                 * To create a node we can call method from AugeasTree which will create a node. In this method is 
+                 * parameter sequence, if we will leave this parameter empty and there will be more nodes with 
+                 * the same label, new node will be created but the method createNode will return node with index 0 resp 1.
+                 * If that will happen we can not update the node anymore because we are updating wrong node.
+                 * To avoid this situation we need to know what is the last sequence nr. of virtual host's child (directory) nodes.
+                 * We can not just count child nodes with the same label because some of the child nodes
+                 * could be stored in another file. So that in httpd configurationstructure they are child nodes of virtual host,
+                 *  but in augeas configuration structure they can be child nodes of node Include[];. 
+                 */
+
+                for (AugeasNode n : directories) {
+                    String param = n.getFullPath();
+                    int end = param.lastIndexOf(File.separatorChar);
+                    if (end != -1)
+                        if (myNode.getFullPath().equals(param.substring(0, end)))
+                            seq++;
                 }
-            
-            //pluginConfiguration.put(new PropertySimple(ApacheDirectoryComponent.DIRECTIVE_INDEX_PROP, seq));
-            //we don't support this yet... need to figure out how...
-            pluginConfiguration.put(new PropertySimple(ApacheDirectoryComponent.REGEXP_PROP, false));
-            String dirNameToSet = AugeasNodeValueUtil.escape(directoryName);
-                        
-            //now actually create the data in augeas
-            try {
-                ApacheAugeasMapping mapping = new ApacheAugeasMapping(tree);
-                AugeasNode directoryNode = tree.createNode(myNode, "<Directory", null, seq);
-                tree.createNode(directoryNode, "param", dirNameToSet, 0);
-                mapping.updateAugeas(directoryNode, resourceConfiguration, resourceType.getResourceConfigurationDefinition());
-                tree.save();
-                
-                
-                tree = getServerConfigurationTree();
-                String key = AugeasNodeSearch.getNodeKey(myNode, directoryNode);
-                report.setResourceKey(key); 
-                report.setResourceName(directoryName);
-    
-                report.setStatus(CreateResourceStatus.SUCCESS);
-                
-                resourceContext.getParentResourceComponent().finishChildResourceCreate(report);
-            } catch (Exception e) {
-                report.setException(e);
+
+                //pluginConfiguration.put(new PropertySimple(ApacheDirectoryComponent.DIRECTIVE_INDEX_PROP, seq));
+                //we don't support this yet... need to figure out how...
+                pluginConfiguration.put(new PropertySimple(ApacheDirectoryComponent.REGEXP_PROP, false));
+                String dirNameToSet = AugeasNodeValueUtil.escape(directoryName);
+
+                //now actually create the data in augeas
+                try {
+                    ApacheAugeasMapping mapping = new ApacheAugeasMapping(tree);
+                    AugeasNode directoryNode = tree.createNode(myNode, "<Directory", null, seq);
+                    String myNodeKey = AugeasNodeSearch.getNodeKey(myNode, tree.getRootNode());
+                    tree.createNode(directoryNode, "param", dirNameToSet, 0);
+                    mapping.updateAugeas(directoryNode, resourceConfiguration,
+                        resourceType.getResourceConfigurationDefinition());
+
+                    tree.save();
+                    comp.close();
+                    tree = comp.getAugeasTree(ApacheServerComponent.AUGEAS_HTTP_MODULE_NAME);
+
+                    AugeasNode parentNode;
+                    if (myNodeKey.equals("")) {
+                        parentNode = tree.getRootNode();
+                    } else
+                        parentNode = AugeasNodeSearch.findNodeById(tree.getRootNode(), myNodeKey);
+
+                    List<AugeasNode> nodes = parentNode.getChildByLabel("<Directory");
+                    if (nodes.size() < seq) {
+                        report.setStatus(CreateResourceStatus.FAILURE);
+                        report.setErrorMessage("Could not create directory node.");
+                    }
+
+                    AugeasNode nd = nodes.get(seq - 1);
+                    String key = AugeasNodeSearch.getNodeKey(nd, parentNode);
+
+                    report.setResourceKey(key);
+                    report.setResourceName(directoryName);
+
+                    report.setStatus(CreateResourceStatus.SUCCESS);
+
+                    resourceContext.getParentResourceComponent().finishChildResourceCreate(report);
+                } catch (Exception e) {
+                    log.error("Could not create httpd virtual host child resource.", e);
+                    report.setException(e);
+                    report.setStatus(CreateResourceStatus.FAILURE);
+                }
+            } else {
+                report.setErrorMessage("Unable to create resources of type " + resourceType.getName());
                 report.setStatus(CreateResourceStatus.FAILURE);
             }
-        } else {
-            report.setErrorMessage("Unable to create resources of type " + resourceType.getName());
-            report.setStatus(CreateResourceStatus.FAILURE);
+        } finally {
+            if (comp != null)
+                comp.close();
         }
         return report;
     }
-    
-    public AugeasTree getServerConfigurationTree() {
-        return resourceContext.getParentResourceComponent().getAugeasTree();
+
+    public AugeasComponent getAugeas() {
+        return resourceContext.getParentResourceComponent().getAugeas();
     }
 
     /**
@@ -348,54 +391,54 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
         List<AugeasNode> virtualHosts = new ArrayList<AugeasNode>();
         boolean updated = false;
 
-//BZ 612189 - uncomment this algo once the resource upgrade is in place        
-//        for (AugeasNode node : nodes) {
-//               updated = false;
-//            List<AugeasNode> serverNameNodes = tree.matchRelative(node, "ServerName/param");
-//            String tempServerName = null;
-//
-//            if (!(serverNameNodes.isEmpty())) {
-//                tempServerName = serverNameNodes.get(0).getValue();
-//            }
-//                if (tempServerName == null & serverName == null)
-//                   updated = true;
-//                if (tempServerName != null & serverName != null)
-//                    if (tempServerName.equals(serverName)){
-//                            updated = true;
-//                     }
-//                
-//
-//               if (updated){ 
-//                    updated = false;
-//                    List<AugeasNode> params = node.getChildByLabel("param");
-//                    for (AugeasNode nd : params) {
-//                        updated = false;
-//                        for (String adr : addrs) {
-//                            if (adr.equals(nd.getValue()))
-//                                updated = true;
-//                        }
-//                        if (!updated)
-//                            break;
-//                      }
-//
-//                    if (updated) 
-//                        virtualHosts.add(node);                    
-//                }
-//           }
-       
+        //BZ 612189 - uncomment this algo once the resource upgrade is in place        
+        //        for (AugeasNode node : nodes) {
+        //               updated = false;
+        //            List<AugeasNode> serverNameNodes = tree.matchRelative(node, "ServerName/param");
+        //            String tempServerName = null;
+        //
+        //            if (!(serverNameNodes.isEmpty())) {
+        //                tempServerName = serverNameNodes.get(0).getValue();
+        //            }
+        //                if (tempServerName == null & serverName == null)
+        //                   updated = true;
+        //                if (tempServerName != null & serverName != null)
+        //                    if (tempServerName.equals(serverName)){
+        //                            updated = true;
+        //                     }
+        //                
+        //
+        //               if (updated){ 
+        //                    updated = false;
+        //                    List<AugeasNode> params = node.getChildByLabel("param");
+        //                    for (AugeasNode nd : params) {
+        //                        updated = false;
+        //                        for (String adr : addrs) {
+        //                            if (adr.equals(nd.getValue()))
+        //                                updated = true;
+        //                        }
+        //                        if (!updated)
+        //                            break;
+        //                      }
+        //
+        //                    if (updated) 
+        //                        virtualHosts.add(node);                    
+        //                }
+        //           }
+
         //BZ 612189 - remove this once resource upgrade is in place
-        HttpdAddressUtility.Address resourceKeyAddress = HttpdAddressUtility.Address.parse(resourceKey); 
-        
+        HttpdAddressUtility.Address resourceKeyAddress = HttpdAddressUtility.Address.parse(resourceKey);
+
         AugeasNode bestNode = null;
         int bestMatch = 0;
-        for(AugeasNode node : nodes) {
+        for (AugeasNode node : nodes) {
             List<AugeasNode> vhostAddressNodes = node.getChildByLabel("param");
-            
+
             List<HttpdAddressUtility.Address> vhostAddresses = new ArrayList<HttpdAddressUtility.Address>();
             for (AugeasNode vhostAddressNode : vhostAddressNodes) {
                 vhostAddresses.add(HttpdAddressUtility.Address.parse(vhostAddressNode.getValue()));
             }
-            
+
             int matchRate = matchRate(vhostAddresses, resourceKeyAddress);
             if (bestMatch < matchRate) {
                 bestNode = node;
@@ -405,24 +448,24 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
         if (bestNode != null) {
             return bestNode;
         }
-        
+
         //BZ 612189 - remove this once we have resource upgrade
         //ok, one final attempt... the legacy resource key format for the MainServer is just a host:port as with the rest of the vhosts, let's try that
         try {
             String serverUrl = resourceContext.getParentResourceComponent().getServerUrl();
             URI serverUri = new URI(serverUrl);
             String expectedResourceKey = serverUri.getHost() + ":" + serverUri.getPort();
-            
+
             HttpdAddressUtility.Address expectedAddress = HttpdAddressUtility.Address.parse(expectedResourceKey);
             HttpdAddressUtility.Address actualAddress = HttpdAddressUtility.Address.parse(resourceKey);
-            
+
             if (matchRate(Collections.singletonList(expectedAddress), actualAddress) > 0) {
                 return tree.getRootNode();
             }
         } catch (URISyntaxException e) {
             log.warn("Failed to parse the server URL when trying to match the vhost with the main server.", e);
         }
-        
+
         throw new IllegalStateException("Could not find virtual host configuration in augeas for virtual host: "
             + resourceKey);
     }
@@ -433,7 +476,7 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
     public void finishConfigurationUpdate(ConfigurationUpdateReport report) {
         resourceContext.getParentResourceComponent().finishConfigurationUpdate(report);
     }
-    
+
     /**
      * @see ApacheServerComponent#conditionalRestart()
      * 
@@ -442,11 +485,11 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
     public void conditionalRestart() throws Exception {
         resourceContext.getParentResourceComponent().conditionalRestart();
     }
-    
+
     public void deleteEmptyFile(AugeasTree tree, AugeasNode deletedNode) {
         resourceContext.getParentResourceComponent().deleteEmptyFile(tree, deletedNode);
     }
-    
+
     private void collectSnmpMetric(MeasurementReport report, int primaryIndex, SNMPSession snmpSession,
         MeasurementScheduleRequest schedule) throws SNMPException {
         SNMPValue snmpValue = null;
@@ -508,7 +551,8 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
         return oid;
     }
 
-    public static int getMatchingWwwServiceIndex(ApacheServerComponent parent, String resourceKey, List<SNMPValue> names, List<SNMPValue> ports) {
+    public static int getMatchingWwwServiceIndex(ApacheServerComponent parent, String resourceKey,
+        List<SNMPValue> names, List<SNMPValue> ports) {
         int ret = -1;
         Iterator<SNMPValue> namesIterator = names.iterator();
         Iterator<SNMPValue> portsIterator = ports.iterator();
@@ -523,21 +567,22 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
         }
         vhostAddressStrings = resourceKey.substring(pipeIdx + 1).split(" ");
 
-        ApacheDirectiveTree tree = parent.loadParser(); 
-        
+        ApacheDirectiveTree tree = parent.loadParser();
+
         //convert the vhost addresses into fully qualified ip/port addresses
         List<HttpdAddressUtility.Address> vhostAddresses = new ArrayList<HttpdAddressUtility.Address>(
             vhostAddressStrings.length);
 
         if (vhostAddressStrings.length == 1 && MAIN_SERVER_RESOURCE_KEY.equals(vhostAddressStrings[0])) {
-            HttpdAddressUtility.Address serverAddr = parent.getAddressUtility().getMainServerSampleAddress(tree, null, 0);
+            HttpdAddressUtility.Address serverAddr = parent.getAddressUtility().getMainServerSampleAddress(tree, null,
+                0);
             if (serverAddr != null) {
                 vhostAddresses.add(serverAddr);
             }
         } else {
             for (int i = 0; i < vhostAddressStrings.length; ++i) {
-                HttpdAddressUtility.Address vhostAddr = parent.getAddressUtility().getVirtualHostSampleAddress(tree, vhostAddressStrings[i],
-                    vhostServerName, true);
+                HttpdAddressUtility.Address vhostAddr = parent.getAddressUtility().getVirtualHostSampleAddress(tree,
+                    vhostAddressStrings[i], vhostServerName, true);
                 if (vhostAddr != null) {
                     vhostAddresses.add(vhostAddr);
                 } else {
@@ -559,7 +604,7 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
         //and possibly multiple IP addresses.
         SNMPValue bestMatch = null;
         int bestMatchRate = 0;
-        
+
         while (namesIterator.hasNext()) {
             SNMPValue nameValue = namesIterator.next();
             SNMPValue portValue = portsIterator.next();
@@ -568,36 +613,38 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
             String fullPort = portValue.toString();
 
             int snmpPort = Integer.parseInt(fullPort.substring(fullPort.lastIndexOf(".") + 1));
-            
+
             HttpdAddressUtility.Address snmpAddress = new HttpdAddressUtility.Address(snmpHost, snmpPort);
-        
+
             int matchRate = matchRate(vhostAddresses, snmpAddress);
             if (matchRate > bestMatchRate) {
                 bestMatch = nameValue;
                 bestMatchRate = matchRate;
             }
         }
-        
+
         if (bestMatch != null) {
             String nameOID = bestMatch.getOID();
             ret = Integer.parseInt(nameOID.substring(nameOID.lastIndexOf(".") + 1));
         } else {
-            log.warn("Unable to match the Virtual Host [" + resourceKey + "] with any of the SNMP advertised vhosts: " + names + ". It won't be possible to monitor the Virtual Host.");
+            log.warn("Unable to match the Virtual Host [" + resourceKey + "] with any of the SNMP advertised vhosts: "
+                + names + ". It won't be possible to monitor the Virtual Host.");
         }
         return ret;
     }
-    
+
     /**
      * @return the index of the virtual host that identifies it in SNMP
      * @throws Exception on SNMP error
      */
     private int getWwwServiceIndex() throws Exception {
-        ConfigurationTimestamp currentTimestamp = resourceContext.getParentResourceComponent().getConfigurationTimestamp();
+        ConfigurationTimestamp currentTimestamp = resourceContext.getParentResourceComponent()
+            .getConfigurationTimestamp();
         if (!lastConfigurationTimeStamp.equals(currentTimestamp)) {
             snmpWwwServiceIndex = -1;
             //don't go through this configuration again even if we fail further below.. we'd fail again.
             lastConfigurationTimeStamp = currentTimestamp;
-            
+
             //configuration has changed. re-read the service index of this virtual host
 
             //we have to scan the SNMP to find the entry corresponding to this vhost.
@@ -608,54 +655,56 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
 
             names = snmpSession.getColumn(SNMPConstants.COLUMN_VHOST_NAME);
             ports = snmpSession.getColumn(SNMPConstants.COLUMN_VHOST_PORT);
-            
-            snmpWwwServiceIndex = getMatchingWwwServiceIndex(resourceContext.getParentResourceComponent(), resourceContext.getResourceKey(), names, ports);
+
+            snmpWwwServiceIndex = getMatchingWwwServiceIndex(resourceContext.getParentResourceComponent(),
+                resourceContext.getResourceKey(), names, ports);
         }
         return snmpWwwServiceIndex;
     }
 
     private static int matchRate(List<HttpdAddressUtility.Address> addresses, HttpdAddressUtility.Address addressToCheck) {
-        for(HttpdAddressUtility.Address a : addresses) {
+        for (HttpdAddressUtility.Address a : addresses) {
             if (HttpdAddressUtility.isAddressConforming(addressToCheck, a.host, a.port, true)) {
                 return 3;
             }
         }
-        
+
         //try to get the IP of the address to check
         InetAddress[] ipAddresses;
         try {
             ipAddresses = InetAddress.getAllByName(addressToCheck.host);
-            for(InetAddress ip : ipAddresses) {
-                HttpdAddressUtility.Address newCheck = new HttpdAddressUtility.Address(ip.getHostAddress(), addressToCheck.port);
-                
-                for(HttpdAddressUtility.Address a : addresses) {
+            for (InetAddress ip : ipAddresses) {
+                HttpdAddressUtility.Address newCheck = new HttpdAddressUtility.Address(ip.getHostAddress(),
+                    addressToCheck.port);
+
+                for (HttpdAddressUtility.Address a : addresses) {
                     if (HttpdAddressUtility.isAddressConforming(newCheck, a.host, a.port, true)) {
                         return 2;
                     }
                 }
-            }            
+            }
         } catch (UnknownHostException e) {
             log.debug("Unknown host encountered in the httpd configuration: " + addressToCheck.host);
             return 0;
         }
-        
+
         //this stupid 80 = 0 rule is to conform with snmp module
         //the problem is that snmp module represents both 80 and * port defs as 0, 
         //so whatever we do, we might mismatch the vhost. But there's no working around that
         //but to modify the snmp module itself.
-        
+
         int addressPort = addressToCheck.port;
         if (addressPort == 80) {
             addressPort = 0;
         }
-        
+
         //ok, try the hardest...
-        for(HttpdAddressUtility.Address listAddress: addresses) {
+        for (HttpdAddressUtility.Address listAddress : addresses) {
             int listPort = listAddress.port;
             if (listPort == 80) {
                 listPort = 0;
             }
-            
+
             InetAddress[] listAddresses;
             try {
                 listAddresses = InetAddress.getAllByName(listAddress.host);
@@ -663,7 +712,7 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
                 log.debug("Unknown host encountered in the httpd configuration: " + listAddress.host);
                 return 0;
             }
-            
+
             for (InetAddress listInetAddr : listAddresses) {
                 for (InetAddress ip : ipAddresses) {
                     if (ip.equals(listInetAddr) && addressPort == listPort) {
@@ -672,20 +721,20 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
                 }
             }
         }
-        
+
         return 0;
     }
-    
+
     private ResourceType getDirectoryResourceType() {
         return resourceContext.getResourceType().getChildResourceTypes().iterator().next();
     }
-    
-    public ApacheDirectiveTree loadParser() throws Exception{
+
+    public ApacheDirectiveTree loadParser() throws Exception {
         return resourceContext.getParentResourceComponent().loadParser();
     }
-    
-    public boolean isAugeasEnabled(){
+
+    public boolean isAugeasEnabled() {
         ApacheServerComponent parent = resourceContext.getParentResourceComponent();
-        return parent.isAugeasEnabled();          
+        return parent.isAugeasEnabled();
     }
 }

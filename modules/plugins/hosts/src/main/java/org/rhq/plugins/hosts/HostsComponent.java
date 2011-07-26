@@ -78,7 +78,7 @@ public class HostsComponent extends AugeasConfigurationComponent {
     @Override
     public Configuration loadResourceConfiguration() throws Exception {
         Configuration resourceConfig;
-        if (getAugeas() != null) {
+        if (isAugeasAvailable()) {
             resourceConfig = super.loadResourceConfiguration();
         } else {
             resourceConfig = new NonAugeasHostsConfigurationDelegate(this).loadResourceConfiguration();
@@ -90,7 +90,7 @@ public class HostsComponent extends AugeasConfigurationComponent {
 
     @Override
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
-        if (getAugeas() != null) {
+        if (isAugeasAvailable()) {
             super.updateResourceConfiguration(report);
         } else {
             if (!validateResourceConfiguration(report)) {

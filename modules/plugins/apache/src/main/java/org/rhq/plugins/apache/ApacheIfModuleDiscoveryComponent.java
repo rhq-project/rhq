@@ -26,6 +26,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.rhq.augeas.AugeasComponent;
 import org.rhq.augeas.node.AugeasNode;
 import org.rhq.augeas.tree.AugeasTree;
 import org.rhq.core.domain.resource.ResourceType;
@@ -35,41 +36,48 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.plugins.apache.util.AugeasNodeSearch;
 
-public class ApacheIfModuleDiscoveryComponent  implements ResourceDiscoveryComponent<ApacheVirtualHostServiceComponent> {
+public class ApacheIfModuleDiscoveryComponent implements ResourceDiscoveryComponent<ApacheVirtualHostServiceComponent> {
 
-    private static final String [] parentRes = {"<IfModule"};
+    private static final String[] parentRes = { "<IfModule" };
     private static final String IFMODULE_NODE_NAME = "<IfModule";
     private AugeasTree tree;
     private AugeasNode parentNode;
-    
+
     public Set<DiscoveredResourceDetails> discoverResources(
         ResourceDiscoveryContext<ApacheVirtualHostServiceComponent> context)
         throws InvalidPluginConfigurationException, Exception {
-   
-    Set<DiscoveredResourceDetails> discoveredResources = new LinkedHashSet<DiscoveredResourceDetails>();    
-    ApacheVirtualHostServiceComponent virtualHost = context.getParentResourceComponent();
-    
-    if (!virtualHost.isAugeasEnabled()){
-        return discoveredResources;
-    }
-    
-    tree = virtualHost.getServerConfigurationTree();
-    parentNode = virtualHost.getNode(tree);
-    
-    List<AugeasNode> ifModuleNodes = AugeasNodeSearch.searchNode(parentRes, IFMODULE_NODE_NAME, parentNode);
-    
-    
-    ResourceType resourceType = context.getResourceType();
 
-    for (AugeasNode node : ifModuleNodes) {
-        
-        String resourceKey = AugeasNodeSearch.getNodeKey(node,parentNode);
-        String [] paramArray = resourceKey.split("\\|");
-        String resourceName = paramArray[1];
+        Set<DiscoveredResourceDetails> discoveredResources = new LinkedHashSet<DiscoveredResourceDetails>();
+        ApacheVirtualHostServiceComponent virtualHost = context.getParentResourceComponent();
 
-        discoveredResources.add(new DiscoveredResourceDetails(resourceType, resourceKey, resourceName, null, null,
-        null, null));
+        if (!virtualHost.isAugeasEnabled()) {
+            return discoveredResources;
         }
-    return discoveredResources;
-   }
+        AugeasComponent comp = null;
+        AugeasTree tree = null;
+        try {
+            comp = virtualHost.getAugeas();
+            tree = comp.getAugeasTree(ApacheServerComponent.AUGEAS_HTTP_MODULE_NAME);
+
+            parentNode = virtualHost.getNode(tree);
+
+            List<AugeasNode> ifModuleNodes = AugeasNodeSearch.searchNode(parentRes, IFMODULE_NODE_NAME, parentNode);
+
+            ResourceType resourceType = context.getResourceType();
+
+            for (AugeasNode node : ifModuleNodes) {
+
+                String resourceKey = AugeasNodeSearch.getNodeKey(node, parentNode);
+                String[] paramArray = resourceKey.split("\\|");
+                String resourceName = paramArray[1];
+
+                discoveredResources.add(new DiscoveredResourceDetails(resourceType, resourceKey, resourceName, null,
+                    null, null, null));
+            }
+            return discoveredResources;
+        } finally {
+            if (comp != null)
+                comp.close();
+        }
+    }
 }

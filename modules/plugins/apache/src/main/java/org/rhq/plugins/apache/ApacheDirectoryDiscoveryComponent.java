@@ -29,6 +29,7 @@ import java.util.Set;
 
 import net.augeas.AugeasException;
 
+import org.rhq.augeas.AugeasComponent;
 import org.rhq.augeas.node.AugeasNode;
 import org.rhq.augeas.tree.AugeasTree;
 import org.rhq.core.domain.configuration.Configuration;
@@ -52,8 +53,8 @@ public class ApacheDirectoryDiscoveryComponent implements ResourceDiscoveryCompo
      * @see org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent#discoverResources(org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext)
      */
     public static final String DIRECTORY_DIRECTIVE = "<Directory";
-    public static final String [] PARENT_DIRECTIVES = {"<IfModule"};
-    
+    public static final String[] PARENT_DIRECTIVES = { "<IfModule" };
+
     public Set<DiscoveredResourceDetails> discoverResources(
         ResourceDiscoveryContext<ApacheVirtualHostServiceComponent> context)
         throws InvalidPluginConfigurationException, Exception {
@@ -63,47 +64,55 @@ public class ApacheDirectoryDiscoveryComponent implements ResourceDiscoveryCompo
         if (!context.getParentResourceComponent().isAugeasEnabled())
             return discoveredResources;
 
-
+        AugeasComponent comp;
         AugeasTree tree = null;
-        
+
         try {
-            tree = context.getParentResourceComponent().getServerConfigurationTree();
+            comp = context.getParentResourceComponent().getAugeas();
+            tree = comp.getAugeasTree(ApacheServerComponent.AUGEAS_HTTP_MODULE_NAME);
         } catch (AugeasException e) {
             //we depend on Augeas to do anything useful with directories.
             //give up, if Augeas isn't there.
             return discoveredResources;
         }
 
-        AugeasNode parentNode = context.getParentResourceComponent().getNode(tree);
-        List<AugeasNode> directories = AugeasNodeSearch.searchNode(PARENT_DIRECTIVES, DIRECTORY_DIRECTIVE, parentNode);
+        try {
+            AugeasNode parentNode = context.getParentResourceComponent().getNode(tree);
+            List<AugeasNode> directories = AugeasNodeSearch.searchNode(PARENT_DIRECTIVES, DIRECTORY_DIRECTIVE,
+                parentNode);
 
-        ResourceType resourceType = context.getResourceType();
+            ResourceType resourceType = context.getResourceType();
 
-        for (AugeasNode node : directories) {
-            Configuration pluginConfiguration = new Configuration();
-                     
-            String ifmoduleParams = AugeasNodeSearch.getNodeKey(node, parentNode);           
-            List<AugeasNode> params = node.getChildByLabel("param");
-            
-            String directoryParam;
-            boolean isRegexp;
-            
-            if (params.size() > 1) {
-                directoryParam = params.get(1).getValue();
-                isRegexp = true;
-            } else {
-                directoryParam = params.get(0).getValue();
-                isRegexp = false;
+            for (AugeasNode node : directories) {
+                Configuration pluginConfiguration = new Configuration();
+
+                String ifmoduleParams = AugeasNodeSearch.getNodeKey(node, parentNode);
+                List<AugeasNode> params = node.getChildByLabel("param");
+
+                String directoryParam;
+                boolean isRegexp;
+
+                if (params.size() > 1) {
+                    directoryParam = params.get(1).getValue();
+                    isRegexp = true;
+                } else {
+                    directoryParam = params.get(0).getValue();
+                    isRegexp = false;
+                }
+
+                pluginConfiguration.put(new PropertySimple(ApacheDirectoryComponent.REGEXP_PROP, isRegexp));
+
+                String resourceKey = ifmoduleParams;
+                String resourceName = AugeasNodeValueUtil.unescape(directoryParam);
+
+                discoveredResources.add(new DiscoveredResourceDetails(resourceType, resourceKey, resourceName, null,
+                    null, pluginConfiguration, null));
             }
-            
-            pluginConfiguration.put(new PropertySimple(ApacheDirectoryComponent.REGEXP_PROP, isRegexp));
-            
-            String resourceKey = ifmoduleParams;
-            String resourceName = AugeasNodeValueUtil.unescape(directoryParam);
+            return discoveredResources;
 
-            discoveredResources.add(new DiscoveredResourceDetails(resourceType, resourceKey, resourceName, null, null,
-                pluginConfiguration, null));
+        } finally {
+            if (comp != null)
+                comp.close();
         }
-        return discoveredResources;
     }
 }

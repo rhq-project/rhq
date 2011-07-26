@@ -24,6 +24,7 @@ package org.rhq.plugins.apache;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.rhq.augeas.AugeasComponent;
 import org.rhq.augeas.node.AugeasNode;
 import org.rhq.augeas.tree.AugeasTree;
 import org.rhq.core.domain.configuration.Configuration;
@@ -38,51 +39,60 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.plugins.apache.mapping.ApacheAugeasMapping;
 import org.rhq.plugins.apache.util.AugeasNodeSearch;
 
-public class ApacheIfModuleDirectoryComponent implements ResourceComponent<ApacheDirectoryComponent>, ConfigurationFacet { 
+public class ApacheIfModuleDirectoryComponent implements ResourceComponent<ApacheDirectoryComponent>,
+    ConfigurationFacet {
 
     private ResourceContext<ApacheDirectoryComponent> context;
-    private ApacheDirectoryComponent parentComponent; 
+    private ApacheDirectoryComponent parentComponent;
     private final Log log = LogFactory.getLog(this.getClass());
-    private static final String IFMODULE_DIRECTIVE_NAME="<IfModule"; 
-    
-    public void start(ResourceContext<ApacheDirectoryComponent> context)
-        throws InvalidPluginConfigurationException, Exception {
-        
-      this.context = context;    
-      parentComponent = context.getParentResourceComponent();
+    private static final String IFMODULE_DIRECTIVE_NAME = "<IfModule";
 
+    public void start(ResourceContext<ApacheDirectoryComponent> context) throws InvalidPluginConfigurationException,
+        Exception {
+
+        this.context = context;
+        parentComponent = context.getParentResourceComponent();
     }
 
     public void stop() {
     }
 
     public AvailabilityType getAvailability() {
-       return parentComponent.getAvailability();
+        return parentComponent.getAvailability();
     }
 
-    public Configuration loadResourceConfiguration() throws Exception {       
+    public Configuration loadResourceConfiguration() throws Exception {
         ConfigurationDefinition resourceConfigDef = context.getResourceType().getResourceConfigurationDefinition();
-        
-        AugeasNode directoryNode = parentComponent.getNode();
-        AugeasTree tree = parentComponent.getServerConfigurationTree();
-        ApacheAugeasMapping mapping = new ApacheAugeasMapping(tree);
-        return mapping.updateConfiguration(getNode(directoryNode), resourceConfigDef);
+        AugeasComponent comp = null;
+        AugeasTree tree = null;
+        try {
+            comp = parentComponent.getAugeas();
+            tree = comp.getAugeasTree(ApacheServerComponent.AUGEAS_HTTP_MODULE_NAME);
+            AugeasNode directoryNode = parentComponent.getNode(tree);
+
+            ApacheAugeasMapping mapping = new ApacheAugeasMapping(tree);
+            return mapping.updateConfiguration(getNode(directoryNode), resourceConfigDef);
+        } finally {
+            if (comp != null)
+                comp.close();
+        }
     }
 
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
+        AugeasComponent comp = null;
         AugeasTree tree = null;
         try {
-            tree = parentComponent.getServerConfigurationTree();
-            ConfigurationDefinition resourceConfigDef = context.getResourceType()
-                .getResourceConfigurationDefinition();
+            comp = parentComponent.getAugeas();
+            tree = comp.getAugeasTree(ApacheServerComponent.AUGEAS_HTTP_MODULE_NAME);
+            ConfigurationDefinition resourceConfigDef = context.getResourceType().getResourceConfigurationDefinition();
             ApacheAugeasMapping mapping = new ApacheAugeasMapping(tree);
-            AugeasNode directoryNode = getNode(parentComponent.getNode());
+            AugeasNode directoryNode = getNode(parentComponent.getNode(tree));
             mapping.updateAugeas(directoryNode, report.getConfiguration(), resourceConfigDef);
             tree.save();
 
             report.setStatus(ConfigurationUpdateStatus.SUCCESS);
             log.info("Apache configuration was updated");
-            
+
             context.getParentResourceComponent().finishConfigurationUpdate(report);
         } catch (Exception e) {
             if (tree != null)
@@ -90,16 +100,18 @@ public class ApacheIfModuleDirectoryComponent implements ResourceComponent<Apach
             else
                 log.error("Augeas failed to save configuration", e);
             report.setStatus(ConfigurationUpdateStatus.FAILURE);
+        } finally {
+            if (comp != null)
+                comp.close();
         }
-   }
-    
+    }
+
     private AugeasNode getNode(AugeasNode virtualHost) {
         AugeasNode directory = AugeasNodeSearch.findNodeById(virtualHost, context.getResourceKey());
         return directory;
-      }
-    
-    public boolean isAugeasEnabled(){
-        return parentComponent.isAugeasEnabled();          
+    }
+
+    public boolean isAugeasEnabled() {
+        return parentComponent.isAugeasEnabled();
     }
 }
-

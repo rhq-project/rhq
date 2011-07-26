@@ -26,6 +26,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.rhq.augeas.AugeasComponent;
 import org.rhq.augeas.node.AugeasNode;
 import org.rhq.augeas.tree.AugeasTree;
 import org.rhq.core.domain.resource.ResourceType;
@@ -36,39 +37,46 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.plugins.apache.util.AugeasNodeSearch;
 
 public class ApacheIfModuleDirectoryDiscoveryComponent implements ResourceDiscoveryComponent<ApacheDirectoryComponent> {
-    
-    private static final String [] parentRes = {"<IfModule"};
+
+    private static final String[] parentRes = { "<IfModule" };
     private static final String IFMODULE_NODE_NAME = "<IfModule";
     private AugeasTree tree;
     private AugeasNode parentNode;
-    
-    public Set<DiscoveredResourceDetails> discoverResources(
-        ResourceDiscoveryContext<ApacheDirectoryComponent> context)
+
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<ApacheDirectoryComponent> context)
         throws InvalidPluginConfigurationException, Exception {
-   
-    ApacheDirectoryComponent directory = context.getParentResourceComponent();
-    Set<DiscoveredResourceDetails> discoveredResources = new LinkedHashSet<DiscoveredResourceDetails>();
-   
-    if (!directory.isAugeasEnabled())
-        return discoveredResources;
-    
-    parentNode = directory.getNode();
-    
-    List<AugeasNode> ifModuleNodes = AugeasNodeSearch.searchNode(parentRes, IFMODULE_NODE_NAME, parentNode);
-    
 
-    ResourceType resourceType = context.getResourceType();
+        ApacheDirectoryComponent directory = context.getParentResourceComponent();
+        Set<DiscoveredResourceDetails> discoveredResources = new LinkedHashSet<DiscoveredResourceDetails>();
 
-    for (AugeasNode node : ifModuleNodes) {
-        
-        
-        String resourceKey = AugeasNodeSearch.getNodeKey(node,parentNode);
-        String [] paramArray = resourceKey.split("\\|");
-        String resourceName = paramArray[1];
+        if (!directory.isAugeasEnabled())
+            return discoveredResources;
 
-        discoveredResources.add(new DiscoveredResourceDetails(resourceType, resourceKey, resourceName, null, null,
-        null, null));
+        AugeasComponent comp = null;
+        AugeasTree tree = null;
+        try {
+            comp = directory.getAugeas();
+            tree = comp.getAugeasTree(ApacheServerComponent.AUGEAS_HTTP_MODULE_NAME);
+
+            parentNode = directory.getNode(tree);
+
+            List<AugeasNode> ifModuleNodes = AugeasNodeSearch.searchNode(parentRes, IFMODULE_NODE_NAME, parentNode);
+
+            ResourceType resourceType = context.getResourceType();
+
+            for (AugeasNode node : ifModuleNodes) {
+
+                String resourceKey = AugeasNodeSearch.getNodeKey(node, parentNode);
+                String[] paramArray = resourceKey.split("\\|");
+                String resourceName = paramArray[1];
+
+                discoveredResources.add(new DiscoveredResourceDetails(resourceType, resourceKey, resourceName, null,
+                    null, null, null));
+            }
+            return discoveredResources;
+        } finally {
+            if (comp != null)
+                comp.close();
         }
-    return discoveredResources;
-   }
+    }
 }

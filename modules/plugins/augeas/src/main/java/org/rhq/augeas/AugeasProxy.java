@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2009 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,7 +23,6 @@
 package org.rhq.augeas;
 
 import java.io.File;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,7 +37,6 @@ import org.rhq.augeas.tree.AugeasTree;
 import org.rhq.augeas.tree.AugeasTreeBuilder;
 import org.rhq.augeas.tree.AugeasTreeException;
 import org.rhq.augeas.tree.impl.DefaultAugeasTreeBuilder;
-import org.rhq.plugins.augeas.AugeasPluginLifecycleListener;
 
 /**
  * This is the main entry point for interfacing with Augeas.
@@ -53,13 +51,13 @@ import org.rhq.plugins.augeas.AugeasPluginLifecycleListener;
  *
  */
 public class AugeasProxy {
-	
-	private final Log log = LogFactory.getLog(this.getClass());
+
+    private final Log log = LogFactory.getLog(this.getClass());
     private AugeasConfiguration config;
     private Augeas augeas;
     private List<String> modules;
     private AugeasTreeBuilder augeasTreeBuilder;
-    
+
     /**
      * Instantiates new proxy with supplied configuration and
      * {@link DefaultAugeasTreeBuilder} as the tree builder.
@@ -99,13 +97,20 @@ public class AugeasProxy {
     public void load() throws AugeasTreeException {
         try {
             config.loadFiles();
+            if (augeas != null) {
+                try {
+                    augeas.close();
+                } catch (Exception e) {
+                }
+                augeas = null;
+            }
             augeas = new Augeas(config.getRootPath(), config.getLoadPath(), config.getMode());
-    
+
             for (AugeasModuleConfig module : config.getModules()) {
-    
+
                 modules.add(module.getModuletName());
                 augeas.set("/augeas/load/" + module.getModuletName() + "/lens", module.getLensPath());
-    
+
                 int idx = 1;
                 for (String incl : module.getConfigFiles()) {
                     augeas.set("/augeas/load/" + module.getModuletName() + "/incl[" + (idx++) + "]", incl);
@@ -113,13 +118,25 @@ public class AugeasProxy {
             }
             augeas.load();
         } catch (NoClassDefFoundError e) {
+            if (augeas != null) {
+                try {
+                    augeas.close();
+                } catch (Exception e2) {
+                }
+                augeas = null;
+            }
             throw new AugeasException("Failed to initialize Augeas. It is probably not installed.", e);
         } catch (Exception e) {
+            if (augeas != null) {
+                try {
+                    augeas.close();
+                } catch (Exception e2) {
+                }
+                augeas = null;
+            }
             throw new AugeasException(e);
         }
     }
-    
- 
 
     /**
      * Produces the Augeas tree by loading it from augeas (if {@link #load()} wasn't called already)
@@ -177,5 +194,30 @@ public class AugeasProxy {
      */
     public Augeas getAugeas() {
         return augeas;
+    }
+
+    /* (non-Javadoc)
+     * @see java.lang.Object#finalize()
+     */
+    @Override
+    protected void finalize() throws Throwable {
+        if (augeas != null) {
+            try {
+                augeas.close();
+            } catch (Exception e) {
+            }
+            augeas = null;
+        }
+        super.finalize();
+    }
+
+    public void close() {
+        if (augeas != null) {
+            try {
+                augeas.close();
+            } catch (Exception e) {
+            }
+            augeas = null;
+        }
     }
 }

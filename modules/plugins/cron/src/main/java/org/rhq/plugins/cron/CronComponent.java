@@ -25,6 +25,7 @@ import java.util.List;
 import net.augeas.Augeas;
 import net.augeas.AugeasException;
 
+import org.rhq.augeas.util.GlobFilter;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.Property;
@@ -41,7 +42,6 @@ import org.rhq.core.pluginapi.inventory.CreateResourceReport;
 import org.rhq.plugins.augeas.AugeasConfigurationComponent;
 import org.rhq.plugins.augeas.AugeasConfigurationDiscoveryComponent;
 import org.rhq.plugins.augeas.helper.AugeasNode;
-import org.rhq.augeas.util.GlobFilter;
 import org.rhq.plugins.platform.PlatformComponent;
 
 /**
@@ -53,7 +53,7 @@ import org.rhq.plugins.platform.PlatformComponent;
 public class CronComponent extends AugeasConfigurationComponent<PlatformComponent> implements CreateChildResourceFacet {
 
     private static final String HOURLY_JOBS_PROP = "hourlyJobs";
-    private static final String HOURLY_JOBS_NODE = "entry[time/minute != \"*\" and time/hour = \"*\" and time/dayofmonth = \"*\" and time/month = \"*\" and time/dayofweek = \"*\"]";    
+    private static final String HOURLY_JOBS_NODE = "entry[time/minute != \"*\" and time/hour = \"*\" and time/dayofmonth = \"*\" and time/month = \"*\" and time/dayofweek = \"*\"]";
     private static final String DAILY_JOBS_PROP = "dailyJobs";
     private static final String DAILY_JOBS_NODE = "entry[time/minute != \"*\" and time/hour != \"*\" and time/dayofmonth = \"*\" and time/month = \"*\" and time/dayofweek = \"*\"]";
     private static final String WEEKLY_JOBS_PROP = "weeklyJobs";
@@ -67,7 +67,7 @@ public class CronComponent extends AugeasConfigurationComponent<PlatformComponen
     private static final String AUGEAS_FILES_PREFIX = "/files";
     private static final int AUGEAS_FILES_PREFIX_LENGTH = AUGEAS_FILES_PREFIX.length();
     private static final String CRONTAB_RESOURCE_TYPE_NAME = "Cron Tab";
-    
+
     @Override
     protected String getResourceConfigurationRootPath() {
         return "/files/"; //the trailing slash is intentional so that we can get the
@@ -77,7 +77,8 @@ public class CronComponent extends AugeasConfigurationComponent<PlatformComponen
     public CreateResourceReport createResource(CreateResourceReport report) {
         if (CRONTAB_RESOURCE_TYPE_NAME.equals(report.getResourceType().getName())) {
             try {
-                String resourceKey = createCrontab(report.getUserSpecifiedResourceName(), report.getResourceType().getResourceConfigurationDefinition(), report.getResourceConfiguration());
+                String resourceKey = createCrontab(report.getUserSpecifiedResourceName(), report.getResourceType()
+                    .getResourceConfigurationDefinition(), report.getResourceConfiguration());
                 report.setResourceName(resourceKey);
                 report.setResourceKey(resourceKey);
                 report.setStatus(CreateResourceStatus.SUCCESS);
@@ -130,7 +131,7 @@ public class CronComponent extends AugeasConfigurationComponent<PlatformComponen
     private String getEntryCrontabPath(AugeasNode crontabNode) {
         //the node's path is /files/blah/blah/entry/..
         //we want the /blah/blah part
-        return crontabNode.getParent().getParent().getPath().substring(AUGEAS_FILES_PREFIX_LENGTH);        
+        return crontabNode.getParent().getParent().getPath().substring(AUGEAS_FILES_PREFIX_LENGTH);
     }
 
     /**
@@ -139,65 +140,71 @@ public class CronComponent extends AugeasConfigurationComponent<PlatformComponen
      * @param resourceConfiguration
      * @return the resource key of the crontab
      */
-    private String createCrontab(String resourceName, ConfigurationDefinition configurationDefinition, Configuration resourceConfiguration) {
+    private String createCrontab(String resourceName, ConfigurationDefinition configurationDefinition,
+        Configuration resourceConfiguration) {
         File crontabFile = new File(resourceName);
-        
+
         try {
             if (!crontabFile.createNewFile()) {
-                throw new RuntimeException("File " + resourceName + " already exists. Creating the crontab would overwrite it.");
+                throw new RuntimeException("File " + resourceName
+                    + " already exists. Creating the crontab would overwrite it.");
             }
         } catch (IOException e) {
             throw new RuntimeException("Failed to create the crontab file named: " + resourceName);
         }
-        
+
         //check that the crontab's name passes the glob filters
         Configuration pluginConfiguration = getResourceContext().getPluginConfiguration();
-        
-        List<String> includeGlobs = AugeasConfigurationDiscoveryComponent.getGlobList(pluginConfiguration.getSimple(AugeasConfigurationComponent.INCLUDE_GLOBS_PROP));
-        List<String> excludeGlobs = AugeasConfigurationDiscoveryComponent.getGlobList(pluginConfiguration.getSimple(AugeasConfigurationComponent.EXCLUDE_GLOBS_PROP));
+
+        List<String> includeGlobs = AugeasConfigurationDiscoveryComponent.getGlobList(pluginConfiguration
+            .getSimple(AugeasConfigurationComponent.INCLUDE_GLOBS_PROP));
+        List<String> excludeGlobs = AugeasConfigurationDiscoveryComponent.getGlobList(pluginConfiguration
+            .getSimple(AugeasConfigurationComponent.EXCLUDE_GLOBS_PROP));
 
         boolean isIncluded = false;
-        
-        for(String include : includeGlobs) {
+
+        for (String include : includeGlobs) {
             if (new GlobFilter(include).accept(crontabFile)) {
                 isIncluded = true;
                 break;
             }
         }
-        
-        String errorText = "Given Cron tab file name would be created outside of mapped filters. See the Cron resource connection properties for the inclusion and exclusion filters set up."; 
+
+        String errorText = "Given Cron tab file name would be created outside of mapped filters. See the Cron resource connection properties for the inclusion and exclusion filters set up.";
         if (!isIncluded) {
             throw new IllegalArgumentException(errorText);
         }
-        
-        for(String exclude : excludeGlobs) {
+
+        for (String exclude : excludeGlobs) {
             if (new GlobFilter(exclude).accept(crontabFile)) {
                 throw new IllegalArgumentException(errorText);
             }
         }
-        
+
         updateCrontab(resourceName, configurationDefinition, resourceConfiguration);
-        
+
         return resourceName;
     }
-    
-    protected void updateCrontab(String crontabPath, ConfigurationDefinition crontabConfigurationDefinition, Configuration crontabConfiguration) {
-        Augeas augeas = getAugeas();
+
+    protected void updateCrontab(String crontabPath, ConfigurationDefinition crontabConfigurationDefinition,
+        Configuration crontabConfiguration) {
+        Augeas augeas = null;
         try {
-            augeas.load();
-            
+            augeas = getAugeas();
+
             File crontabFile = new File(crontabPath);
             String basePath = AUGEAS_FILES_PREFIX + crontabFile.getAbsolutePath();
             AugeasNode baseNode = new AugeasNode(basePath);
-            
+
             PropertyList entries = crontabConfiguration.getList(CronTabComponent.ENTRIES_PROP);
-            PropertyDefinitionList entriesDef = crontabConfigurationDefinition.getPropertyDefinitionList(CronTabComponent.ENTRIES_PROP);
+            PropertyDefinitionList entriesDef = crontabConfigurationDefinition
+                .getPropertyDefinitionList(CronTabComponent.ENTRIES_PROP);
             setNodeFromPropertyList(entriesDef, entries, augeas, baseNode);
-            
+
             PropertyList settings = crontabConfiguration.getList(CronTabComponent.ENVIRONMENT_SETTINGS_PROP);
             if (settings != null) {
-                for(Property p : settings.getList()) {
-                    PropertyMap setting = (PropertyMap)p;
+                for (Property p : settings.getList()) {
+                    PropertyMap setting = (PropertyMap) p;
                     String name = setting.getSimpleValue(CronTabComponent.NAME_PROP, null);
                     String value = setting.getSimpleValue(CronTabComponent.VALUE_PROP, "");
                     if (name != null) {
@@ -206,10 +213,15 @@ public class CronComponent extends AugeasConfigurationComponent<PlatformComponen
                     }
                 }
             }
-            
+
             augeas.save();
         } catch (AugeasException e) {
-            throw new RuntimeException(summarizeAugeasError(augeas), e);
+            if (augeas != null)
+                throw new RuntimeException(summarizeAugeasError(augeas), e);
+            else
+                throw new RuntimeException(e);
+        } finally {
+            close();
         }
-    }    
+    }
 }

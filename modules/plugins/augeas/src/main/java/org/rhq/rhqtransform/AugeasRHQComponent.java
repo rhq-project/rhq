@@ -23,11 +23,8 @@
 
 package org.rhq.rhqtransform;
 
-import org.rhq.augeas.AugeasProxy;
-import org.rhq.augeas.tree.AugeasTree;
+import org.rhq.augeas.AugeasComponent;
 import org.rhq.augeas.tree.AugeasTreeException;
-import org.rhq.core.pluginapi.inventory.ResourceComponent;
-
 
 /**
  * An interface the RHQ resource components can implement to provide access 
@@ -36,20 +33,7 @@ import org.rhq.core.pluginapi.inventory.ResourceComponent;
  * @author Filip Drabek
  *
  */
-public interface AugeasRHQComponent<T extends ResourceComponent> extends ResourceComponent<T> {
+public interface AugeasRHQComponent {
 
-    /**
-     * @return the augeas tree for the component
-     * @throws AugeasTreeException
-     */
-    public AugeasTree getAugeasTree() throws AugeasTreeException;
-
-    /**
-     * Provides access to the Augeas proxy configured in the way this component needs
-     * so that users are able to perform non-trivial operations on it.
-     * 
-     * @return
-     * @throws AugeasTreeException
-     */
-    public AugeasProxy getAugeasProxy() throws AugeasTreeException;
+    public AugeasComponent getAugeas() throws AugeasTreeException;
 }

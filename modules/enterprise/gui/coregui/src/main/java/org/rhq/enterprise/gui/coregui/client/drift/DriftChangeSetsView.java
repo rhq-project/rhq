@@ -19,7 +19,14 @@
  */
 package org.rhq.enterprise.gui.coregui.client.drift;
 
+import com.smartgwt.client.widgets.IButton;
+import com.smartgwt.client.widgets.events.ClickEvent;
+import com.smartgwt.client.widgets.events.ClickHandler;
+import com.smartgwt.client.widgets.toolbar.ToolStrip;
+
 import org.rhq.core.domain.common.EntityContext;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -42,7 +49,23 @@ public class DriftChangeSetsView extends LocatableVLayout {
     protected void onDraw() {
         super.onDraw();
 
-        addMember(new ResourceDriftChangeSetsTreeView(extendLocatorId("Tree"), this.hasWriteAccess, this.context));
+        final ResourceDriftChangeSetsTreeView tree = new ResourceDriftChangeSetsTreeView(extendLocatorId("Tree"),
+            this.hasWriteAccess, this.context);
+        addMember(tree);
+
+        ToolStrip toolStrip = new LocatableToolStrip(extendLocatorId("toolstrip"));
+        toolStrip.setBackgroundImage(null);
+        toolStrip.setWidth100();
+        toolStrip.setMembersMargin(3);
+        toolStrip.setPadding(3);
+        IButton refreshButton = new LocatableIButton(extendLocatorId("refreshButton"), MSG.common_button_refresh());
+        refreshButton.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent event) {
+                tree.refresh();
+            }
+        });
+        toolStrip.addMember(refreshButton);
+        addMember(toolStrip);
     }
 
     public EntityContext getContext() {

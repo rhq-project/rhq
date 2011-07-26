@@ -58,7 +58,7 @@ public class DriftDetectorTest extends DriftTest {
 
         DriftConfiguration driftConfig = driftConfiguration("coverage-test", resourceDir.getAbsolutePath());
 
-        scheduleQueue.enqueue(new DriftDetectionSchedule(resourceId(), driftConfig));
+        scheduleQueue.addSchedule(new DriftDetectionSchedule(resourceId(), driftConfig));
         detector.run();
 
         File changeSet = changeSet(driftConfig.getName(), COVERAGE);
@@ -77,12 +77,12 @@ public class DriftDetectorTest extends DriftTest {
 
         DriftConfiguration driftConfig = driftConfiguration("basedir-entry-test", resourceDir.getAbsolutePath());
 
-        scheduleQueue.enqueue(new DriftDetectionSchedule(resourceId(), driftConfig));
+        scheduleQueue.addSchedule(new DriftDetectionSchedule(resourceId(), driftConfig));
         detector.run();
 
         DriftDetectionSchedule schedule = new DriftDetectionSchedule(resourceId(), driftConfig);
 
-        scheduleQueue.enqueue(schedule);
+        scheduleQueue.addSchedule(schedule);
         detector.run();
 
         assertChangeSetContainsDirEntry(changeSet(driftConfig.getName(), COVERAGE),
@@ -102,7 +102,7 @@ public class DriftDetectorTest extends DriftTest {
 
         DriftConfiguration config = driftConfiguration("multiple-files-test", resourceDir.getAbsolutePath());
 
-        scheduleQueue.enqueue(new DriftDetectionSchedule(resourceId(), config));
+        scheduleQueue.addSchedule(new DriftDetectionSchedule(resourceId(), config));
         detector.run();
 
         File changeSet = changeSet(config.getName(), COVERAGE);
@@ -127,7 +127,7 @@ public class DriftDetectorTest extends DriftTest {
 
         DriftConfiguration config = driftConfiguration("sibling-dirs-test", resourceDir.getAbsolutePath());
 
-        scheduleQueue.enqueue(new DriftDetectionSchedule(resourceId(), config));
+        scheduleQueue.addSchedule(new DriftDetectionSchedule(resourceId(), config));
         detector.run();
 
         File changeSet = changeSet(config.getName(), COVERAGE);
@@ -153,7 +153,7 @@ public class DriftDetectorTest extends DriftTest {
 
         DriftConfiguration config = driftConfiguration("nested-dirs-test", resourceDir.getAbsolutePath());
 
-        scheduleQueue.enqueue(new DriftDetectionSchedule(resourceId(), config));
+        scheduleQueue.addSchedule(new DriftDetectionSchedule(resourceId(), config));
         detector.run();
 
         File changeSet = changeSet(config.getName(), COVERAGE);
@@ -188,7 +188,7 @@ public class DriftDetectorTest extends DriftTest {
         File server1Conf = new File(confDir, "server-1.conf");
         touch(server1Conf);
 
-        scheduleQueue.enqueue(new DriftDetectionSchedule(resourceId(), config));
+        scheduleQueue.addSchedule(new DriftDetectionSchedule(resourceId(), config));
         detector.run();
     }
 
@@ -217,7 +217,7 @@ public class DriftDetectorTest extends DriftTest {
         File server2Conf = new File(confDir, "server-2.conf");
         touch(server2Conf);
 
-        scheduleQueue.enqueue(new DriftDetectionSchedule(resourceId(), config));
+        scheduleQueue.addSchedule(new DriftDetectionSchedule(resourceId(), config));
         detector.run();
 
         File driftChangeSet = changeSet(config.getName(), DRIFT);
@@ -266,7 +266,7 @@ public class DriftDetectorTest extends DriftTest {
         // create some drift
         server2Conf.delete();
 
-        scheduleQueue.enqueue(new DriftDetectionSchedule(resourceId(), config));
+        scheduleQueue.addSchedule(new DriftDetectionSchedule(resourceId(), config));
         detector.run();
 
         File driftChangeSet = changeSet(config.getName(), DRIFT);

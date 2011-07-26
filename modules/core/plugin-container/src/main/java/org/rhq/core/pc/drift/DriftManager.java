@@ -67,34 +67,9 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
         driftDetector.setChangeSetManager(changeSetMgr);
         driftDetector.setDriftClient(this);
 
-        InventoryManager inventoryMgr = PluginContainer.getInstance().getInventoryManager();
-        initSchedules(inventoryMgr.getPlatform(), inventoryMgr);
-
         driftThreadPool = new ScheduledThreadPoolExecutor(5);
         // TODO Make the drift detection rate configurable
         driftThreadPool.scheduleAtFixedRate(driftDetector, 30, 60, TimeUnit.SECONDS);
-    }
-
-    private void initSchedules(Resource r, InventoryManager inventoryMgr) {
-        if (r.getId() == 0) {
-            log.debug("Will not reschedule drift detection schedules for " + r + ". It is not sync'ed yet.");
-            return;
-        }
-
-        ResourceContainer container = inventoryMgr.getResourceContainer(r.getId());
-        if (container == null) {
-            log.debug("No resource container found for " + r + ". Unable to reschedule drift detection schedules.");
-            return;
-        }
-
-        log.debug("Rescheduling drift detection schedules for " + r);
-        for (DriftDetectionSchedule schedule : container.getDriftSchedules()) {
-            schedulesQueue.addSchedule(schedule);
-        }
-
-        for (Resource child : r.getChildResources()) {
-            initSchedules(child, inventoryMgr);
-        }
     }
 
     @Override
@@ -189,8 +164,8 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
             }
 
             @Override
-            public DriftDetectionSchedule update(int resourceId, DriftConfiguration config) {
-                return schedule;
+            public boolean update(int resourceId, DriftConfiguration config) {
+                return false;
             }
 
             @Override
@@ -233,16 +208,9 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
 
     @Override
     public void updateDriftDetection(int resourceId, DriftConfiguration driftConfiguration) {
-        DriftDetectionSchedule updatedSchedule = schedulesQueue.update(resourceId, driftConfiguration);
-        if (updatedSchedule == null) {
-            updatedSchedule = new DriftDetectionSchedule(resourceId, driftConfiguration);
-            schedulesQueue.addSchedule(updatedSchedule);
-        }
-
-        InventoryManager inventoryMgr = PluginContainer.getInstance().getInventoryManager();
-        ResourceContainer container = inventoryMgr.getResourceContainer(resourceId);
-        if (container != null) {
-            container.getDriftSchedules().add(updatedSchedule);
+        boolean updated = schedulesQueue.update(resourceId, driftConfiguration);
+        if (!updated) {
+            schedulesQueue.addSchedule(new DriftDetectionSchedule(resourceId, driftConfiguration));
         }
     }
 

@@ -38,7 +38,7 @@ public interface ScheduleQueue {
      * Adds a schedule to the queue for processing by the drift detector
      *
      * @param schedule A {@link DriftDetectionSchedule} object
-     * @return true if the schedule is added, false otherwise
+     * @return true if the schedule is added, falsed otherwise
      */
     boolean addSchedule(DriftDetectionSchedule schedule);
 
@@ -52,9 +52,9 @@ public interface ScheduleQueue {
      *
      * @param resourceId The resource id
      * @param config A {@link DriftConfiguration} belonging the resource with the specified id
-     * @return A copy of the updated schedule or null if no update was performed
+     * @return true if the schedule is updated, false otherwise.
      */
-    DriftDetectionSchedule update(int resourceId, DriftConfiguration config);
+    boolean update(int resourceId, DriftConfiguration config);
 
     /**
      * Removes the schedule identified by the resource id and the drift configuration. More

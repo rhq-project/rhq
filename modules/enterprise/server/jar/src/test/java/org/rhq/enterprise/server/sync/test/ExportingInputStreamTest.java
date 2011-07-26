@@ -51,7 +51,7 @@ import org.rhq.core.domain.sync.ExporterMessages;
 import org.rhq.enterprise.server.sync.ExportException;
 import org.rhq.enterprise.server.sync.ExportWriter;
 import org.rhq.enterprise.server.sync.ExportingInputStream;
-import org.rhq.enterprise.server.sync.SynchronizedEntity;
+import org.rhq.enterprise.server.sync.NoSingleEntity;
 import org.rhq.enterprise.server.sync.exporters.AbstractDelegatingExportingIterator;
 import org.rhq.enterprise.server.sync.exporters.Exporter;
 import org.rhq.enterprise.server.sync.exporters.ExportingIterator;
@@ -68,16 +68,16 @@ public class ExportingInputStreamTest {
 
     private static final Log LOG = LogFactory.getLog(ExportingInputStreamTest.class);
     
-    private static class IntegerImporter extends SynchronizedEntity.DummyImporter<Integer> {        
+    private static class IntegerImporter extends DummyImporter<Integer> {        
     }
     
-    private static class StringImporter extends SynchronizedEntity.DummyImporter<String> {
+    private static class StringImporter extends DummyImporter<String> {
     }
     
-    private static class ListToStringExporter<T> implements Exporter<T, T> {
+    private static class ListToStringExporter<T> implements Exporter<NoSingleEntity, T> {
 
         List<T> valuesToExport;
-        Class<? extends Importer<T, T>> importerClass;
+        Class<? extends Importer<NoSingleEntity, T>> importerClass;
         
         public static final String NOTE_PREFIX = "Wow, I just exported an item from a list: ";
         
@@ -101,7 +101,7 @@ public class ExportingInputStreamTest {
             }
         }
         
-        public ListToStringExporter(Class<? extends Importer<T, T>> importerClass, List<T> valuesToExport) {
+        public ListToStringExporter(Class<? extends Importer<NoSingleEntity, T>> importerClass, List<T> valuesToExport) {
             this.importerClass = importerClass;
             this.valuesToExport = valuesToExport;
         }
@@ -110,7 +110,7 @@ public class ExportingInputStreamTest {
             return Collections.emptySet();
         }
         
-        public Class<? extends Importer<T, T>> getImporterType() {
+        public Class<? extends Importer<NoSingleEntity, T>> getImporterType() {
             return importerClass;
         }
 

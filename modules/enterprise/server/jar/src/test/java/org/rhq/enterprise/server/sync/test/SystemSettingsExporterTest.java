@@ -230,7 +230,6 @@ public class SystemSettingsExporterTest {
 
         for (int i = 0; i < systemSettings.getLength(); ++i) {
             Element m = (Element) systemSettings.item(i);
-            String expectedName = "m" + (i + 1);
 
             assertEquals(m.getAttribute("referencedEntityId"), "0", "Unexpected referencedEntityId value");
             

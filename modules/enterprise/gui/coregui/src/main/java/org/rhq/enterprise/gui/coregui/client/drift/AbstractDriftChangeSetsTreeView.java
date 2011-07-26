@@ -26,6 +26,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.RunAsyncCallback;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.SelectionStyle;
+import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.events.DataArrivedEvent;
 import com.smartgwt.client.widgets.grid.events.DataArrivedHandler;
@@ -70,6 +71,7 @@ public abstract class AbstractDriftChangeSetsTreeView extends LocatableTreeGrid 
         setShowRollOver(false);
         setShowHeader(false);
         setSortField(AbstractDriftChangeSetsTreeDataSource.ATTR_NAME);
+        setSortDirection(SortDirection.DESCENDING);
     }
 
     @Override

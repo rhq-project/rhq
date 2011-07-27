@@ -49,6 +49,10 @@ public class RHQConstants {
     public static final String LDAPBindDN = "CAM_LDAP_BIND_DN";
     public static final String LDAPBindPW = "CAM_LDAP_BIND_PW";
 
+    // DRIFT Server properties
+    public static final String ACTIVE_DRIFT_PLUGIN = "ACTIVE_DRIFT_PLUGIN";
+    public static final String DRIFT_PLUGINS = "DRIFT_PLUGINS";
+
     // Base URL for the application - (i think this is only used for alert emails)
     public static final String BaseURL = "CAM_BASE_URL";
 

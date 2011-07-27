@@ -52,6 +52,7 @@ import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.pc.drift.DriftDetectionSchedule;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pc.util.LoggingThreadFactory;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
@@ -88,6 +89,7 @@ public class ResourceContainer implements Serializable {
     private SynchronizationState synchronizationState = SynchronizationState.NEW;
     private Set<MeasurementScheduleRequest> measurementSchedule = new HashSet<MeasurementScheduleRequest>();
     private Set<ResourcePackageDetails> installedPackages = new HashSet<ResourcePackageDetails>();
+    private Set<DriftDetectionSchedule> driftSchedules = new HashSet<DriftDetectionSchedule>();
 
     // transient fields
     private transient ResourceComponent resourceComponent;
@@ -240,6 +242,16 @@ public class ResourceContainer implements Serializable {
             // then add the new versions
             return this.measurementSchedule.addAll(measurementScheduleUpdate);
         }
+    }
+
+    public Set<DriftDetectionSchedule> getDriftSchedules() {
+        synchronized (this) {
+            return driftSchedules;
+        }
+    }
+
+    public void setDriftSchedules(Set<DriftDetectionSchedule> schedules) {
+        driftSchedules = schedules;
     }
 
     public ResourceComponentState getResourceComponentState() {

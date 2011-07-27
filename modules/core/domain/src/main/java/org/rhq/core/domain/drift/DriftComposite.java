@@ -24,7 +24,15 @@ public class DriftComposite implements Serializable {
         return drift;
     }
 
+    public void setDrift(Drift drift) {
+        this.drift = drift;
+    }
+
     public Resource getResource() {
         return resource;
+    }
+
+    public void setResource(Resource resource) {
+        this.resource = resource;
     }
 }

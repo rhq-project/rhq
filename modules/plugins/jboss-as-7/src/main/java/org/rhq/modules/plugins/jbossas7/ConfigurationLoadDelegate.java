@@ -269,8 +269,10 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
 
             if (property!=null)
                 propertyMap.put(property);
-            else
-                System.out.println("Property " + key + " was null");
+            else {
+                if (log.isDebugEnabled())
+                    log.debug("Property " + key + " was null");
+            }
 
         }
 

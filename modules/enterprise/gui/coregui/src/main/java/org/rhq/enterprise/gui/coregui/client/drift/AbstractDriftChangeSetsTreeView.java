@@ -47,7 +47,6 @@ import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTreeGrid;
 
 /**
@@ -67,7 +66,7 @@ public abstract class AbstractDriftChangeSetsTreeView extends LocatableTreeGrid 
         // fetch the top nodes at the inital onDraw()
         setAutoFetchData(true);
         setAnimateFolders(false);
-        setSelectionType(SelectionStyle.SINGLE);
+        setSelectionType(SelectionStyle.MULTIPLE);
         setShowRollOver(false);
         setShowHeader(false);
         setSortField(AbstractDriftChangeSetsTreeDataSource.ATTR_NAME);
@@ -96,9 +95,10 @@ public abstract class AbstractDriftChangeSetsTreeView extends LocatableTreeGrid 
                 TreeNode eventNode = event.getNode();
 
                 if (eventNode instanceof ChangeSetTreeNode) {
-                    CoreGUI.getMessageCenter().notify(new Message("TODO [this will popup the changeset menu]"));
+                    Menu menu = buildChangeSetTreeNodeContextMenu((ChangeSetTreeNode) eventNode);
+                    menu.showContextMenu();
                 } else if (eventNode instanceof DriftTreeNode) {
-                    Menu menu = buildContextMenu((DriftTreeNode) eventNode);
+                    Menu menu = buildDriftTreeNodeContextMenu((DriftTreeNode) eventNode);
                     menu.showContextMenu();
                 }
             }
@@ -171,12 +171,12 @@ public abstract class AbstractDriftChangeSetsTreeView extends LocatableTreeGrid 
      * @param node the drift node whose menu is to be displayed
      * @return the context menu to display
      */
-    protected Menu buildContextMenu(final DriftTreeNode node) {
+    protected Menu buildDriftTreeNodeContextMenu(final DriftTreeNode node) {
 
         Menu contextMenu = new Menu();
 
         // title
-        String titleName = node.getName();
+        String titleName = node.getTitle();
         if (titleName.length() > 50) {
             // make sure the title isn't really long so the menu is not abnormally wide
             titleName = "..." + titleName.substring(titleName.length() - 50);
@@ -199,6 +199,36 @@ public abstract class AbstractDriftChangeSetsTreeView extends LocatableTreeGrid 
             }
         });
         contextMenu.addItem(detailsItem);
+
+        return contextMenu;
+    }
+
+    /**
+     * Builds the right-mouse-click context menu for the given change set node
+     * @param node the change set node whose menu is to be displayed
+     * @return the context menu to display
+     */
+    protected Menu buildChangeSetTreeNodeContextMenu(final ChangeSetTreeNode node) {
+
+        Menu contextMenu = new Menu();
+
+        // title
+        String titleName = node.getTitle();
+        MenuItem titleItem = new MenuItem(titleName);
+        titleItem.setEnabled(false);
+        contextMenu.setItems(titleItem);
+
+        // separator
+        contextMenu.addItem(new MenuItemSeparator());
+
+        // item that links to the history details
+        MenuItem deleteItem = new MenuItem(MSG.common_button_delete());
+        deleteItem.addClickHandler(new ClickHandler() {
+            public void onClick(MenuItemClickEvent event) {
+                // TODO: delete the change set
+            }
+        });
+        contextMenu.addItem(deleteItem);
 
         return contextMenu;
     }

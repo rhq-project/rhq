@@ -112,20 +112,26 @@ public class ScheduleQueueImpl implements ScheduleQueue {
     }
 
     @Override
-    public boolean update(int resourceId, DriftConfiguration config) {
+    public DriftDetectionSchedule update(int resourceId, DriftConfiguration config) {
         try {
             lock.writeLock().lock();
             if (isActiveSchedule(resourceId, config)) {
                 update(activeSchedule, config);
-            } else {
-                DriftDetectionSchedule schedule = remove(resourceId, config);
-                if (schedule == null) {
-                    return false;
-                }
-                update(schedule, config);
-                queue.offer(schedule);
+                return activeSchedule.copy();
             }
-            return true;
+
+            DriftDetectionSchedule schedule = remove(resourceId, config);
+            if (schedule == null) {
+                return null;
+            }
+
+            update(schedule, config);
+
+            if (queue.offer(schedule)) {
+               return schedule.copy();
+            }
+
+            return null;
         } finally {
             lock.writeLock().unlock();
         }

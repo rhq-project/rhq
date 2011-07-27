@@ -112,7 +112,7 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/dbunit/dbunit/2.4.8/dbunit-2.4.8.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/apache/poi/poi/3.7/poi-3.7.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/bsh/bsh/1.3.0/bsh-1.3.0.jar"/>
-    <classpathentry exported="true" kind="var" path="M2_REPO/org/unitils/unitils-core/3.1/unitils-core-3.1.jar"/>   
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/unitils/unitils-core/3.1/unitils-core-3.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/unitils/unitils-dbunit/3.1/unitils-dbunit-3.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/unitils/unitils-orm/3.1/unitils-orm-3.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/unitils/unitils-testng/3.1/unitils-testng-3.1.jar"/>
@@ -273,5 +273,7 @@
 	<classpathentry excluding="**" kind="src" path="modules/enterprise/agent/src/test/resources"/>
 	<classpathentry kind="src" path="modules/plugins/mod-cluster/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/mod-cluster/src/test/java"/>
+	<classpathentry kind="src" path="modules/plugins/jboss-as-7/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/jboss-as-7/src/test/java"/>
 	<classpathentry kind="output" path="eclipse-classes"/>
 </classpath>

@@ -1,6 +1,6 @@
 /*
  * Jopr Management Platform
- * Copyright (C) 2005-2009 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -50,34 +50,16 @@ public abstract class AbstractPropertySimpleAdapter implements PropertyAdapter<P
     {
         if (metaValue == null)
             throw new IllegalArgumentException("MetaValue to be populated is null.");
-        String value;
-        if (propSimple == null || propSimple.getStringValue() == null)
-        {
-            // Value is null (i.e. prop is unset) - figure out what to use as a default value.
-            String defaultValue = propDefSimple.getDefaultValue();
-            if (defaultValue != null)
-            {
-                log.debug("Simple property '" + propDefSimple.getName()
-                        + "' has a null value - setting inner value of corresponding ManagedProperty's MetaValue to plugin-specified default ('"
-                        + defaultValue + "')...");
-                value = defaultValue;
+        String value = (propSimple != null) ? propSimple.getStringValue() : null;
+        if (value == null && metaValue.getMetaType().isPrimitive()) {
+            // For primitive types, if we set the value to null, the Profile Service will set the value to 0, which
+            // is not good, so for such properties, we make sure to define a default value in the plugin descriptor, so
+            // we can explicitly set the value to that default, rather than null, here.
+            value = propDefSimple.getDefaultValue();
+            if (value == null) {
+                log.warn("Plugin error: Managed property [" + propDefSimple.getName()
+                        + "] has a primitive type, but the corresponding RHQ property definition does not provide a default value.");
             }
-            else
-            {
-                if (metaValue.getMetaType().isPrimitive())
-                    // If it's a primitive, don't mess with the MetaValue - just let it keep whatever inner value it
-                    // currently has.
-                    return;
-                // It's a non-primitive - set its value to null. In most cases, this should tell the managed resource
-                // to use its internal default.
-                log.debug("Simple property '" + propDefSimple.getName()
-                        + "' has a null value - setting inner value of corresponding ManagedProperty's MetaValue to null...");
-                value = null;
-            }
-        }
-        else
-        {
-            value = propSimple.getStringValue();
         }
         setInnerValue(value, metaValue, propDefSimple);
     }

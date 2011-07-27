@@ -1,6 +1,6 @@
 /*
 * Jopr Management Platform
-* Copyright (C) 2005-2009 Red Hat, Inc.
+* Copyright (C) 2005-2011 Red Hat, Inc.
 * All rights reserved.
 *
 * This program is free software; you can redistribute it and/or modify
@@ -22,7 +22,6 @@
 */
 package org.rhq.plugins.jbossas5.util;
 
-import java.io.Serializable;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -62,9 +61,7 @@ import org.jboss.managed.api.annotation.ViewUse;
 import org.jboss.metatype.api.types.MapCompositeMetaType;
 import org.jboss.metatype.api.types.MetaType;
 import org.jboss.metatype.api.types.SimpleMetaType;
-import org.jboss.metatype.api.values.EnumValue;
 import org.jboss.metatype.api.values.MetaValue;
-import org.jboss.metatype.api.values.SimpleValue;
 
 /**
  * Utility class to convert some basic Profile Service objects to JON objects, and some basic manipulation and data
@@ -83,8 +80,6 @@ public class ConversionUtils
     private static final Map<String, ComponentType> COMPONENT_TYPE_CACHE = new HashMap<String, ComponentType>();
     private static final Map<String, KnownDeploymentTypes> DEPLOYMENT_TYPE_CACHE = new HashMap<String, KnownDeploymentTypes>();
     private static final Map<String, Configuration> DEFAULT_PLUGIN_CONFIG_CACHE = new HashMap<String, Configuration>();
-
-    protected static final String PLUGIN = "ProfileService";
 
     public static ComponentType getComponentType(@NotNull ResourceType resourceType)
     {
@@ -224,20 +219,6 @@ public class ConversionUtils
                                                             @NotNull ManagedProperty managedProperty,
                                                             @Nullable PropertySimple customProperty)
     {
-        if (property == null ||
-                (property instanceof PropertySimple && ((PropertySimple)property).getStringValue() == null))
-        {
-            // The property is unset, which translates to "removed" in Profile Service lingo.
-            // We will also set the ManagedProperty's MetaValue to a default value - this will be handled by the
-            // conversion performed below by the property's adapter.
-            managedProperty.setRemoved(true);
-        }
-        // If the ManagedProperty defines a default value, assume it's more definitive than any default value that may
-        // have been defined in the plugin descriptor, and update the PropertyDefinition to use that as its default
-        // value.
-        MetaValue defaultValue = managedProperty.getDefaultValue();
-        if (defaultValue != null)
-            updateDefaultValueOnPropertyDefinition(propertyDefinition, defaultValue);
         // See if there is a custom adapter defined for this property.
         PropertyAdapter propertyAdapter = PropertyAdapterFactory.getCustomPropertyAdapter(customProperty);
         MetaValue metaValue = managedProperty.getValue();
@@ -258,37 +239,6 @@ public class ConversionUtils
                     + " to MetaValue of type " + metaType + "...");
             metaValue = propertyAdapter.convertToMetaValue(property, propertyDefinition, metaType);
             managedProperty.setValue(metaValue);
-        }
-    }
-
-    private static void updateDefaultValueOnPropertyDefinition(PropertyDefinition propertyDefinition,
-                                                               @NotNull MetaValue defaultValue)
-    {
-        if (!(propertyDefinition instanceof PropertyDefinitionSimple))
-        {
-            LOG.debug("Cannot update default value on non-simple property definition " + propertyDefinition
-                    + "(default value is " + defaultValue + ").");
-            return;
-        }
-        MetaType metaType = defaultValue.getMetaType();
-        if (!metaType.isSimple() && !metaType.isEnum())
-        {
-            LOG.debug("Cannot update default value on " + propertyDefinition
-                    + ", because default value's type (" + metaType + ") is not simple or enum.");
-            return;
-        }
-        PropertyDefinitionSimple propertyDefinitionSimple = (PropertyDefinitionSimple)propertyDefinition;
-        if (metaType.isSimple())
-        {
-            SimpleValue defaultSimpleValue = (SimpleValue)defaultValue;
-            Serializable value = defaultSimpleValue.getValue();
-            propertyDefinitionSimple.setDefaultValue((value != null) ? value.toString() : null);
-        }
-        else
-        { // defaultValueMetaType.isEnum()
-            EnumValue defaultEnumValue = (EnumValue)defaultValue;
-            Serializable value = defaultEnumValue.getValue();
-            propertyDefinitionSimple.setDefaultValue((value != null) ? value.toString() : null);
         }
     }
 

@@ -116,6 +116,8 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/unitils/unitils-dbunit/3.1/unitils-dbunit-3.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/unitils/unitils-orm/3.1/unitils-orm-3.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/unitils/unitils-testng/3.1/unitils-testng-3.1.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/codehaus/jackson/jackson-core-asl/1.7.4/jackson-core-asl-1.7.4.jar"/>
+        <classpathentry exported="true" kind="var" path="M2_REPO/org/codehaus/jackson/jackson-mapper-asl/1.7.4/jackson-mapper-asl-1.7.4.jar"/>
 	<classpathentry exported="true" kind="lib" path="modules/enterprise/remoting/webservices/target/rhq-remoting-webservices-4.1.0-SNAPSHOT/wsconsume-output"/>
 	<classpathentry kind="src" path="modules/common/ant-bundle/src/main/java"/>
 	<classpathentry kind="src" path="modules/common/drift/src/main/java"/>

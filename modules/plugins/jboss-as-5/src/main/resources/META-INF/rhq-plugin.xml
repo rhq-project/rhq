@@ -37,7 +37,7 @@
         </results>
     </operation>
 
-    <operation name="testConnection" displayName="Test Connection" description="Test if a connection can be obtained">
+    <operation name="testConnection" displayName="Test Connection" description="Test if a connection can be obtained - returns true if a connection was obtained, or false if not; NOTE: this operation will always return a status of Successful - the results of the operation must be inspected to see whether or not a connection was obtained">
         <results>
             <c:notes>Test if a connection can be obtained</c:notes>
             <c:simple-property type="boolean" name="result" description="Was a connection obtained?"/>

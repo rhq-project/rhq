@@ -463,6 +463,10 @@ public class ClassLoaderManager {
         return new HashMap<CanonicalResourceKey, ClassLoader>(this.resourceClassLoaders);
     }
 
+    public boolean isCreateResourceClassLoaders() {
+        return createResourceClassLoaders;
+    }
+
     private Set<ClassLoader> getUniquePluginClassLoaders() {
         HashSet<ClassLoader> uniqueClassLoaders = new HashSet<ClassLoader>(this.pluginClassLoaders.values());
         return uniqueClassLoaders;

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -181,7 +181,12 @@ public class PluginComponentFactory implements ContainerService {
             }
 
             // get the classloader the resource should use
-            List<URL> additionalJars = askDiscoveryComponentForAdditionalClasspathUrls(resource, parentContainer);
+            List<URL> additionalJars;
+            if (classLoaderMgr.isCreateResourceClassLoaders()) {
+                additionalJars = askDiscoveryComponentForAdditionalClasspathUrls(resource, parentContainer);
+            } else {
+                additionalJars = null;
+            }
             ClassLoader cl = classLoaderMgr.obtainResourceClassLoader(resource, parentContainer, additionalJars);
             return cl;
         } catch (Throwable t) {

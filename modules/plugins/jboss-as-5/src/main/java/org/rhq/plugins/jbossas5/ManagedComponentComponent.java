@@ -1,6 +1,6 @@
 /*
 * Jopr Management Platform
-* Copyright (C) 2005-2009 Red Hat, Inc.
+* Copyright (C) 2005-2011 Red Hat, Inc.
 * All rights reserved.
 *
 * This program is free software; you can redistribute it and/or modify
@@ -104,18 +104,19 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
     // ResourceComponent Implementation  --------------------------------------------
 
     public AvailabilityType getAvailability() {
-        RunState runState = null;
+        RunState runState;
         try {
             runState = getManagedComponent().getRunState();
         } catch (Throwable t) {
-            log.debug("Could not get component state, cause: ", t);
+            log.debug("Could not get component state for " + this.componentType + " component '"
+                    + this.componentName + "', cause: ", t);
             return AvailabilityType.DOWN;
         }
-
         if (runState == RunState.RUNNING) {
             return AvailabilityType.UP;
         } else {
-            log.debug("Component was not running, state was: " + runState);
+            log.debug(this.componentType + " component '" + this.componentName + "' was not running, state" +
+                       " was: "   + runState);
             return AvailabilityType.DOWN;
         }
     }

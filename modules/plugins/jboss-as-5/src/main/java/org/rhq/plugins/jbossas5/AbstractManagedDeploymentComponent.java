@@ -1,6 +1,6 @@
 /*
  * Jopr Management Platform
- * Copyright (C) 2005-2009 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -107,19 +107,17 @@ public abstract class AbstractManagedDeploymentComponent extends AbstractManaged
         DeploymentState deploymentState = null;
         try {
             deploymentState = getManagedDeployment().getDeploymentState();
-        } catch (NoSuchDeploymentException e) {
-            log.warn(this.deploymentType + " deployment '" + this.deploymentName + "' not found. Cause: "
-                + e.getLocalizedMessage());
-            return AvailabilityType.DOWN;
         } catch (Throwable t) {
-            log.debug("Could not get deployment state, cause: ", t);
+            log.debug("Could not get deployment state for " + this.deploymentType + " deployment '"
+                    + this.deploymentName + "', cause: ", t);
             return AvailabilityType.DOWN;
         }
 
         if (deploymentState == DeploymentState.STARTED) {
             return AvailabilityType.UP;
         } else {
-            log.debug("Deployment was not STARTED, state was: " + deploymentState);
+            log.debug(this.deploymentType + " deployment '" + this.deploymentName +
+                    "' was not running, state was: " + deploymentState);
             return AvailabilityType.DOWN;
         }
     }

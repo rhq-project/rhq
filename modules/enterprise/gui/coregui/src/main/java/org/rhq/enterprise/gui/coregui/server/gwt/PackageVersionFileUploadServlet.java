@@ -32,7 +32,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.enterprise.server.content.ContentManagerLocal;
-import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -73,8 +72,6 @@ public class PackageVersionFileUploadServlet extends FileUploadServlet {
             if (repoIdS != null) {
                 repoId = Integer.parseInt(repoIdS);
             }
-            
-            InputStream fileStream = new FileInputStream(file);
 
             //use getUploadedPackageVersion instead of createPackageVersion here
             //because createPackageVersion successfully returns an already existing
@@ -84,10 +81,15 @@ public class PackageVersionFileUploadServlet extends FileUploadServlet {
             Map<String, String> metaData = new HashMap<String, String>();
             metaData.put(ContentManagerLocal.UPLOAD_FILE_INSTALL_DATE, Long.toString(file.lastModified()));
             metaData.put(ContentManagerLocal.UPLOAD_FILE_NAME, packageName);
-            PackageVersion packageVersion = contentManager.getUploadedPackageVersion(subject, packageName,
-                packageTypeId, version, architectureId, fileStream, metaData, repoId);
-            
-            successMsg = "success [packageVersionId=" + packageVersion.getId() + ",packageId=" + packageVersion.getGeneralPackage().getId() + "]";
+            InputStream fileStream = new FileInputStream(file);
+            try {
+                PackageVersion packageVersion = contentManager.getUploadedPackageVersion(subject, packageName,
+                    packageTypeId, version, architectureId, fileStream, metaData, repoId);
+                successMsg = "success [packageVersionId=" + packageVersion.getId() + ",packageId="
+                    + packageVersion.getGeneralPackage().getId() + "]";
+            } finally {
+                fileStream.close();
+            }
         } catch (Exception e) {
             writeExceptionResponse(response, "Failed to upload file", e); // clients will look for this string!
             return;

@@ -58,11 +58,14 @@ public class BundleFileUploadServlet extends FileUploadServlet {
             String version = getFormField(formFields, "version", Integer.toString(bundleVersionId));
             Architecture architecture = new Architecture(getFormField(formFields, "arch", "noarch"));
             InputStream fileStream = new FileInputStream(file);
-
-            BundleManagerLocal bundleManager = LookupUtil.getBundleManager();
-            BundleFile bundleFile = bundleManager.addBundleFile(subject, bundleVersionId, name, version, architecture,
-                fileStream);
-            successMsg = "success [" + bundleFile.getId() + "]";
+            try {
+                BundleManagerLocal bundleManager = LookupUtil.getBundleManager();
+                BundleFile bundleFile = bundleManager.addBundleFile(subject, bundleVersionId, name, version,
+                    architecture, fileStream);
+                successMsg = "success [" + bundleFile.getId() + "]";
+            } finally {
+                fileStream.close(); // I don't think this is necessary (seems BundleManager closes it for us) but do it anyway just in case 
+            }
         } catch (Exception e) {
             writeExceptionResponse(response, "Failed to upload bundle file", e); // clients will look for this string!
             return;

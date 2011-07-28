@@ -444,7 +444,7 @@
     <server name="Messaging"
             discovery="SubsystemDiscovery"
             class="BaseComponent"
-            description="The underlying HornetQ based messaging subsystem"
+            description="The HornetQ based messaging subsystem"
             singleton="true"
             >
         <runs-inside>
@@ -459,15 +459,16 @@
         <operation name="destination:add" displayName="Add destination" description="Add a Queue or Topic">
             <parameters>
                 <c:simple-property name="name" description="Name of the Destination" required="true"/>
-                <c:simple-property name="queue-address" description="The queue address defines what address is used for routing messages." required="true"/>
+                <c:list-property name="entries" description="The JNDI names the destination should be bound to." required="true">
+                    <c:simple-property name="entry" description="A single JNDI name. Note, this is relative to java:jboss/jms/"/>
+                </c:list-property>
                 <c:simple-property name="type" description="Type of Destination to create" default="Queue">
                     <c:property-options>
-                        <c:option value="Queue"/>
-                        <c:option value="Topic"/>
+                        <c:option value="jms-queue" name="Queue"/>
+                        <c:option value="jms-topic" name="Topic"/>
                     </c:property-options>
                 </c:simple-property>
-                <c:simple-property name="filter" description="The queue message filter definition."/>
-                <c:simple-property name="durable" description="Defines whether the queue is durable." type="boolean" default="false"/>
+                <c:simple-property name="durable" description="Defines whether the queue is durable (for Queues only)." type="boolean" default="false"/>
             </parameters>
             <results>
                 <c:simple-property name="operationResult"/>
@@ -487,73 +488,23 @@
             <c:simple-property name="journal-type" />
         </resource-configuration>
 
-        <!-- this is no child resource TODO
-
-        <service name="Acceptor"
-                 discovery="SubsystemDiscovery"
-                 class="BaseComponent"
-                >
-            <plugin-configuration>
-                <c:simple-property name="path" readOnly="true" default="acceptor"/>
-            </plugin-configuration>
-        </service>
-        <service name="MessagingConnector"
-                 discovery="SubsystemDiscovery"
-                 class="BaseComponent"
-                >
-            <plugin-configuration>
-                <c:simple-property name="path" readOnly="true" default="connector"/>
-            </plugin-configuration>
-        </service>
-        <service name="HQueue"
-                 discovery="SubsystemDiscovery"
-                 class="BaseComponent"
-                >
-            <plugin-configuration>
-                <c:simple-property name="path" readOnly="true" default="queue"/>
-            </plugin-configuration>
-            <resource-configuration>
-                <c:simple-property name="queue-address" required="true"/>
-                <c:simple-property name="filter" />
-                <c:simple-property name="durable" type="boolean"/>
-            </resource-configuration>
-
-        </service>
--->
-    </server>
-
-    <server name="JMS"
+        <service name="JMS Queue"
             discovery="SubsystemDiscovery"
             class="JmsComponent"
-            description="The JMS messaging subsystem"
-            singleton="true"
-            >
-        <runs-inside>
-            <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
-            <parent-resource-type name="JBossAS7-Standalone"  plugin="jboss-as-7"/>
-        </runs-inside>
-
-        <plugin-configuration>
-            <c:simple-property name="path" readOnly="true" default="subsystem=jms"/>
-        </plugin-configuration>
-
-        <service name="Queue"
-            discovery="SubsystemDiscovery"
-            class="JmsComponent"
-            createDeletePolicy="both"
+            createDeletePolicy="delete-only"
             >
             <plugin-configuration>
-                <c:simple-property name="path" readOnly="true" default="queue"/>
+                <c:simple-property name="path" readOnly="true" default="jms-queue"/>
             </plugin-configuration>
 
             <resource-configuration> <!-- See BZ 705713 TODO -->
-                <c:simple-property name="durable" required="false" type="boolean" readOnly="false" default="false"
+                <c:simple-property name="durable" required="false" type="boolean" readOnly="true" default="false"
                                    description="Whether the queue is durable or not."/>
-                <c:list-property name="entries" required="false"  readOnly="false"
+                <c:list-property name="entries" required="false"  readOnly="true"
                                  description="The jndi names the queue will be bound to.">
                     <c:simple-property name="entries" type="string"/>
                 </c:list-property>
-                <c:simple-property name="selector" required="false" type="string" readOnly="false" description="The queue selector."/>
+                <c:simple-property name="selector" required="false" type="string" readOnly="true" description="The queue selector."/>
                 <c:template name="add" description="Properties when adding a new queue" >
                     <c:simple-property name="durable" required="false" type="boolean" default="false"
                                        description="Whether the queue is durable or not."/>
@@ -565,16 +516,16 @@
                 </c:template>
             </resource-configuration>
         </service>
-        <service name="Topic"
+        <service name="JMS Topic"
             discovery="SubsystemDiscovery"
             class="JmsComponent"
-            createDeletePolicy="both"
+            createDeletePolicy="delete-only"
             >
             <plugin-configuration>
-                <c:simple-property name="path" readOnly="true" default="topic"/>
+                <c:simple-property name="path" readOnly="true" default="jms-topic"/>
             </plugin-configuration>
             <resource-configuration> <!-- See BZ 705713 TODO -->
-                <c:list-property name="entries" required="false"  readOnly="false"
+                <c:list-property name="entries" required="false"  readOnly="true"
                                  description="The jndi names the queue will be bound to.">
                     <c:simple-property name="entries" type="string"/>
                 </c:list-property>

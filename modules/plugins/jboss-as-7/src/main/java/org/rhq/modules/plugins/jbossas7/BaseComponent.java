@@ -23,6 +23,8 @@ import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonNode;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
@@ -480,12 +482,34 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
         } else if (what.equals("destination")) {
             address.addAll(pathToAddress(getPath()));
             String newName = parameters.getSimpleValue("name","");
-//            String type = parameters.getSimpleValue("type","Queue").toLowerCase();
-//            address.add(new PROPERTY_VALUE(type,newName));
-            String queueName = parameters.getSimpleValue("queue-address","");
-            Map<String,Object> props = new HashMap<String, Object>();
-            props.put("queue-address",queueName);
+            String type = parameters.getSimpleValue("type","jms-queue").toLowerCase();
+            address.add(new PROPERTY_VALUE(type,newName));
+            PropertyList jndiNamesProp = parameters.getList("entries");
+            if (jndiNamesProp==null || jndiNamesProp.getList().isEmpty()) {
+                OperationResult fail = new OperationResult();
+                fail.setErrorMessage("No jndi bindings given");
+                return fail;
+            }
+            List<String> jndiNames = new ArrayList<String>();
+            for (Property p : jndiNamesProp.getList()) {
+                PropertySimple ps = (PropertySimple) p;
+                jndiNames.add(ps.getStringValue());
+            }
+
             operation = new Operation(op,address);
+            operation.addAdditionalProperty("entries",jndiNames);
+            if (type.equals("jms-queue")) {
+                PropertySimple ps = (PropertySimple) parameters.get("durable");
+                if (ps!=null) {
+                    boolean durable = ps.getBooleanValue();
+                    operation.addAdditionalProperty("durable",durable);
+                }
+                String selector = parameters.getSimpleValue("selector","");
+                if (!selector.isEmpty())
+                    operation.addAdditionalProperty("selector",selector);
+            }
+
+
         } else if (what.equals("managed-server")) {
             String chost = parameters.getSimpleValue("hostname","");
             String serverName = parameters.getSimpleValue("servername","");

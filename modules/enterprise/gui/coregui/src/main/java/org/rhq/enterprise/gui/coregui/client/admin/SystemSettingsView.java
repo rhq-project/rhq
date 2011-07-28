@@ -19,8 +19,10 @@
 
 package org.rhq.enterprise.gui.coregui.client.admin;
 
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -34,10 +36,12 @@ import com.smartgwt.client.widgets.toolbar.ToolStrip;
 import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.core.domain.common.ServerDetails;
 import org.rhq.core.domain.common.ServerDetails.Detail;
+import org.rhq.core.domain.common.composite.SystemSettings;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionEnumeration;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertyGroupDefinition;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
@@ -99,6 +103,9 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
         String LDAPBaseDN = "CAM_LDAP_BASE_DN";
         String LDAPBindDN = "CAM_LDAP_BIND_DN";
         String LDAPBindPW = "CAM_LDAP_BIND_PW";
+
+        String ACTIVE_DRIFT_PLUGIN = "ACTIVE_DRIFT_PLUGIN";
+        String DRIFT_PLUGINS = "DRIFT_PLUGINS";
     }
 
     public SystemSettingsView(String locatorId) {
@@ -121,14 +128,14 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
     protected void onDraw() {
         super.onDraw();
 
-        GWTServiceLookup.getSystemService().getSystemConfiguration(new AsyncCallback<HashMap<String, String>>() {
+        GWTServiceLookup.getSystemService().getSystemSettings(new AsyncCallback<SystemSettings>() {
             @Override
-            public void onSuccess(HashMap<String, String> result) {
+            public void onSuccess(SystemSettings result) {
 
                 canvas.addMember(getServerDetails());
 
                 Configuration config = new Configuration();
-                for (Map.Entry<String, String> entry : result.entrySet()) {
+                for (Map.Entry<String, String> entry : result.getSystemConfiguration().entrySet()) {
                     String name = entry.getKey();
                     String value = (entry.getValue() == null) ? "" : entry.getValue();
 
@@ -173,8 +180,8 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
                 }
 
                 // build our config definition and populate our config editor
-                editor = new ConfigurationEditor(extendLocatorId("configEditor"), getSystemSettingsDefinition(config),
-                    config);
+                editor = new ConfigurationEditor(extendLocatorId("configEditor"), getSystemSettingsDefinition(config,
+                    result.getDriftPlugins()), config);
                 editor.addPropertyValueChangeListener(SystemSettingsView.this);
                 canvas.addMember(editor);
 
@@ -305,7 +312,8 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
      *
      * @return system settings config def
      */
-    private ConfigurationDefinition getSystemSettingsDefinition(Configuration config) {
+    private ConfigurationDefinition getSystemSettingsDefinition(Configuration config,
+        Map<String, String> driftPlugins) {
         ConfigurationDefinition def = new ConfigurationDefinition("sysset", MSG.view_adminConfig_systemSettings());
 
         ///////////////////////////////////
@@ -518,6 +526,29 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
         ldapBindPW.setPropertyGroupDefinition(ldapGroup);
         ldapBindPW.setDefaultValue("");
         def.put(ldapBindPW);
+
+        ///////////////////////////////////////////
+        // Drift Server Configuration Properties //
+        ///////////////////////////////////////////
+        PropertyGroupDefinition driftGroup = new PropertyGroupDefinition("drift server");
+        driftGroup.setDisplayName("Drift Server Configuration Settings");
+        driftGroup.setOrder(4);
+        driftGroup.setDefaultHidden(false);
+
+        PropertyDefinitionSimple activeDriftServer = new PropertyDefinitionSimple("ACTIVE_DRIFT_PLUGIN",
+            "The drift server plugin that manages the persistence of drift-related entities and content", true,
+            PropertySimpleType.STRING);
+        activeDriftServer.setDisplayName("Active Drift Server Plugin");
+        activeDriftServer.setPropertyGroupDefinition(driftGroup);
+
+        List<PropertyDefinitionEnumeration> options = new ArrayList<PropertyDefinitionEnumeration>();
+        for (Map.Entry<String, String> entry : driftPlugins.entrySet()) {
+            options.add(new PropertyDefinitionEnumeration(entry.getValue(), entry.getKey())) ;
+        }
+
+        activeDriftServer.setEnumeratedValues(options, false);
+
+        def.put(activeDriftServer);
 
         //
         // if the config is missing any properties for which we have defaults, set them to their defaults

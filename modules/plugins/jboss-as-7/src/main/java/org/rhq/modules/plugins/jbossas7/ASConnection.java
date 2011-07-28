@@ -154,6 +154,7 @@ public class ASConnection {
             Result failure = new Result();
             failure.setFailureDescription(e.getMessage());
             failure.setOutcome("failure");
+            failure.setThrowable(e);
 
             JsonNode ret = mapper.valueToTree(failure);
             return ret;

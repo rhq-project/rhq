@@ -338,6 +338,8 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
 
         JsonNode resultNode = uploadResult.get("result");
         String hash = resultNode.get("BYTES_VALUE").getTextValue();
+
+
         ASConnection connection = getASConnection();
 
         Operation step1 = new Operation("add","deployment",tmpName);
@@ -362,9 +364,12 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
          */
 
         if (!toServerGroup) {
+
             // if standalone, then :deploy the deployment anyway
-            Operation step2 = new Operation("deploy",step1.getAddress());
-            cop.addStep(step2);
+            if (context.getResourceType().getName().contains("Standalone")) {
+                Operation step2 = new Operation("deploy",step1.getAddress());
+                cop.addStep(step2);
+            }
 
             result = connection.execute(cop);
             resourceKey = addressToPath(step1.getAddress());
@@ -455,6 +460,9 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
 
                 operation = new Operation(op,address,props);
             }
+            else {
+                operation = new Operation(op,address);
+            }
         } else if (what.equals("destination")) {
             address.addAll(pathToAddress(getPath()));
             String newName = parameters.getSimpleValue("name","");
@@ -532,7 +540,12 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
                 operationResult.setErrorMessage(result.getFailureDescription());
             }
             else {
-                operationResult.setSimpleResult(result.getResult().toString());
+                String tmp;
+                if (result.getResult()==null)
+                    tmp = "-none provided by the server-";
+                else
+                    tmp = result.getResult().toString();
+                operationResult.setSimpleResult(tmp);
             }
         }
         else {

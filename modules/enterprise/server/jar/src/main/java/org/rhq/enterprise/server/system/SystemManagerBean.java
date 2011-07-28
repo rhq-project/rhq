@@ -60,8 +60,9 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.core.domain.common.ServerDetails;
-import org.rhq.core.domain.common.SystemConfiguration;
 import org.rhq.core.domain.common.ServerDetails.Detail;
+import org.rhq.core.domain.common.SystemConfiguration;
+import org.rhq.core.domain.common.composite.SystemSettings;
 import org.rhq.core.server.PersistenceUtility;
 import org.rhq.core.util.ObjectNameFactory;
 import org.rhq.core.util.StopWatch;
@@ -70,6 +71,10 @@ import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.core.CoreServerMBean;
 import org.rhq.enterprise.server.core.CustomJaasDeploymentServiceMBean;
+import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginEnvironment;
+import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginContainer;
+import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginManager;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.SystemDatabaseInformation;
 
@@ -180,6 +185,46 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
         Properties copy = new Properties();
         copy.putAll(systemConfigurationCache);
         return copy;
+    }
+
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    public SystemSettings getSystemSettings(Subject subject) {
+        return new SystemSettings(toMap(getSystemConfiguration(subject)), getDriftServerPlugins());
+    }
+
+    private Map<String, String> toMap(Properties props) {
+        HashMap<String, String> map = new HashMap<String, String>(props.size());
+        for (Map.Entry<Object, Object> entry : props.entrySet()) {
+            map.put(String.valueOf(entry.getKey()), String.valueOf(entry.getValue()));
+        }
+        return map;
+    }
+
+    private Map<String, String> getDriftServerPlugins() {
+        DriftServerPluginManager pluginMgr = getDriftSererPluginManager();
+        Map<String, String> plugins = new HashMap<String, String>();
+
+        for (ServerPluginEnvironment env : pluginMgr.getPluginEnvironments()) {
+            plugins.put(env.getPluginKey().getPluginName(), env.getPluginDescriptor().getDisplayName());
+        }
+
+        return plugins;
+    }
+
+    private DriftServerPluginManager getDriftSererPluginManager() {
+        MasterServerPluginContainer masterPC = LookupUtil.getServerPluginService().getMasterPluginContainer();
+        if (masterPC == null) {
+            log.warn(MasterServerPluginContainer.class.getSimpleName() + " is not started yet");
+            return null;
+        }
+
+        DriftServerPluginContainer pc = masterPC.getPluginContainerByClass(DriftServerPluginContainer.class);
+        if (pc == null) {
+            log.warn(DriftServerPluginContainer.class + " has not been loaded by the " + masterPC.getClass() + " yet");
+            return null;
+        }
+
+        return (DriftServerPluginManager) pc.getPluginManager();
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)

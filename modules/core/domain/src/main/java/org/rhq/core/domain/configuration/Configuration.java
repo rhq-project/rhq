@@ -228,6 +228,26 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
         public void clear() {
             properties.clear();
         }
+        
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            
+            if (!(obj instanceof Collection)) {
+                return false;
+            }
+            
+            return properties.values().equals(obj);
+        }
+        
+        public int hashCode() {
+            return properties.values().hashCode();
+        }
+        
+        public String toString() {
+            return properties.values().toString();
+        }
     }
     
     private transient PropertiesProxy propertiesProxy;

@@ -355,8 +355,24 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
         return baseline;
     }
 
+    @TransactionAttribute(TransactionAttributeType.NEVER)
     public MeasurementBaseline calculateAutoBaseline(Subject subject, Integer measurementScheduleId, long startDate,
         long endDate, boolean save) throws BaselineCreationException, MeasurementNotFoundException {
+
+        MeasurementBaseline result = measurementBaselineManager.calculateAutoBaselineInNewTransaction(subject,
+            measurementScheduleId, startDate, endDate, save);
+
+        if (save) {
+            // note, this executes in a new transaction so the baseline must already be committed to the database
+            agentStatusManager.updateByMeasurementBaseline(result.getId());
+        }
+
+        return result;
+    }
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public MeasurementBaseline calculateAutoBaselineInNewTransaction(Subject subject, Integer measurementScheduleId,
+        long startDate, long endDate, boolean save) throws BaselineCreationException, MeasurementNotFoundException {
 
         MeasurementBaseline baseline;
         MeasurementSchedule sched = entityManager.find(MeasurementSchedule.class, measurementScheduleId);
@@ -391,12 +407,25 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
         return baseline;
     }
 
-    //calculateAutoBaseline(LookupUtil.getSubjectManager().getOverlord(),
-    //chartForm.getGroupId(), chartForm.getM()[0], chartForm.getStartDate().getTime(), chartForm
-    //.getEndDate().getTime(), false);
-
+    @TransactionAttribute(TransactionAttributeType.NEVER)
     public MeasurementBaseline calculateAutoBaseline(Subject subject, int groupId, int definitionId, long startDate,
         long endDate, boolean save) throws BaselineCreationException, MeasurementNotFoundException {
+
+        MeasurementBaseline result = measurementBaselineManager.calculateAutoBaselineForGroupInNewTransaction(subject,
+            groupId, definitionId, startDate, endDate, save);
+
+        if (save) {
+            // note, this executes in a new transaction so the baseline must already be committed to the database
+            agentStatusManager.updateByMeasurementBaseline(result.getId());
+        }
+
+        return result;
+    }
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public MeasurementBaseline calculateAutoBaselineForGroupInNewTransaction(Subject subject, int groupId,
+        int definitionId, long startDate, long endDate, boolean save) throws BaselineCreationException,
+        MeasurementNotFoundException {
 
         if (save && !authorizationManager.hasGroupPermission(subject, Permission.MANAGE_MEASUREMENTS, groupId)) {
             throw new PermissionException("User[" + subject.getName()
@@ -405,7 +434,7 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
 
         MeasurementBaseline baseline;
         try {
-            baseline = calculateBaseline(groupId, definitionId, true, startDate, endDate, save);
+            baseline = calculateBaselineForGroup(groupId, definitionId, true, startDate, endDate, save);
             if (save) {
                 // We have changed the baseline information for the schedule, so remove the now outdated OOB info.
                 oobManager.removeOOBsForGroupAndDefinition(subject, groupId, definitionId);
@@ -433,43 +462,6 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
 
             bl.setUserEntered(false);
         }
-    }
-
-    public MeasurementBaseline findBaselineForResourceAndMeasurementDefinition(Subject subject, Integer resourceId,
-        Integer measurementDefinitionId) {
-        if (!authorizationManager.canViewResource(subject, resourceId)) {
-            throw new PermissionException("Cannot view the baseline for resourceId=" + resourceId
-                + "] - you do not have permission");
-        }
-
-        List<MeasurementBaseline> baselines = getBaselinesForResourcesAndDefinitionIds(new Integer[] { resourceId },
-            new Integer[] { measurementDefinitionId });
-        if ((baselines != null) && (baselines.size() > 0)) {
-            return baselines.get(0);
-        }
-
-        Subject overlord = subjectManager.getOverlord();
-        try {
-            MeasurementSchedule schedule = measurementScheduleManager.getSchedule(overlord, resourceId,
-                measurementDefinitionId, true);
-
-            /*
-             * Use all available data from the epoch until now to calculate the baseline (we don't need to start from
-             * the epoch, because the baseline should have been auto-calculated after a few days, but it's a catch-all)
-             */
-            MeasurementBaseline baseline = calculateAutoBaseline(overlord, schedule.getId(), 0, System
-                .currentTimeMillis(), true);
-
-            return baseline;
-        } catch (MeasurementNotFoundException mnfe) {
-            log.error("Could not find measurement schedule for " + "resourceId=" + resourceId + ", "
-                + "measurementDefinitionId=" + measurementDefinitionId, mnfe);
-        } catch (BaselineCreationException bce) {
-            log.error("Could not calculate baseline for " + "resourceId=" + resourceId + ", "
-                + "measurementDefinitionId=" + measurementDefinitionId, bce);
-        }
-
-        return null;
     }
 
     @SuppressWarnings("unchecked")
@@ -531,15 +523,13 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
         if (save) {
             entityManager.persist(baseline);
             entityManager.merge(schedule);
-
-            notifyAlertConditionCacheManager("calculateBaseline", baseline);
         }
 
         return baseline;
     }
 
-    public MeasurementBaseline calculateBaseline(int groupId, int definitionId, boolean userEntered, long startDate,
-        long endDate, boolean save) throws DataNotAvailableException, BaselineCreationException {
+    private MeasurementBaseline calculateBaselineForGroup(int groupId, int definitionId, boolean userEntered,
+        long startDate, long endDate, boolean save) throws DataNotAvailableException, BaselineCreationException {
 
         MeasurementAggregate agg = dataManager.getAggregate(subjectManager.getOverlord(), groupId, definitionId,
             startDate, endDate);
@@ -583,19 +573,11 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
             if (save) {
                 entityManager.persist(baseline);
                 entityManager.merge(schedule);
-
-                notifyAlertConditionCacheManager("calculateBaseline", baseline);
             }
         }
 
         // all baselines should be the same
         return baseline;
-    }
-
-    private void notifyAlertConditionCacheManager(String callingMethod, MeasurementBaseline baseline) {
-        agentStatusManager.updateByMeasurementBaseline(baseline.getId());
-
-        log.debug("Invoking... " + callingMethod);
     }
 
     @SuppressWarnings("unchecked")

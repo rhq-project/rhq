@@ -182,6 +182,9 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
 
     private void updateHandlePropertyMapSpecial(CompositeOperation cop, PropertyMap prop, PropertyDefinitionMap propDef) {
         Map<String,Object> results = updateHandleMap(prop,propDef);
+        if (prop.get(namePropLocator)==null) {
+            throw new IllegalArgumentException("There is no element in the map with the name " + namePropLocator);
+        }
         String addrVal= ((PropertySimple)prop.get(namePropLocator)).getStringValue();
         Address addr = new Address(address);
         addr.add(type,addrVal);

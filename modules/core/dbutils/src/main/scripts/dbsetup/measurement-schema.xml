@@ -53,6 +53,9 @@
          <field ref="RESOURCE_ID"/>
          <field ref="DEFINITION"/>
       </index>
+       <index name="RHQ_MEAS_SCHED_RESID_IDX">
+          <field ref="RESOURCE_ID"/>
+       </index>
    </table>
 
 

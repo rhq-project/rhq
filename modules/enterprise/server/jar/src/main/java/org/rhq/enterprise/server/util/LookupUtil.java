@@ -266,6 +266,7 @@ public final class LookupUtil {
         try {
             InitialContext context = new InitialContext();
             EntityManagerFactory factory = (EntityManagerFactory) context.lookup(RHQConstants.ENTITY_MANAGER_JNDI_NAME);
+            context.close();
             return factory.createEntityManager();
         } catch (Exception e) {
             throw new RuntimeException("Failed to create an entity manager", e);
@@ -653,7 +654,8 @@ public final class LookupUtil {
             localJNDIName = getLocalJNDIName(type);
             return (T) lookup(localJNDIName);
         } catch (NamingException e) {
-            throw new RuntimeException("Failed to lookup local interface to EJB " + type + ", localJNDI=[" + localJNDIName + "]", e);
+            throw new RuntimeException("Failed to lookup local interface to EJB " + type + ", localJNDI=["
+                + localJNDIName + "]", e);
         }
     }
 

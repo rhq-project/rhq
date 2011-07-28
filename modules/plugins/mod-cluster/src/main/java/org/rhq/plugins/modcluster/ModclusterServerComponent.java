@@ -25,7 +25,7 @@ import org.rhq.plugins.jmx.MBeanResourceComponent;
  * @author Stefan Negrea
  *
  */
-@SuppressWarnings("rawtypes")
+@SuppressWarnings({ "rawtypes" })
 public class ModclusterServerComponent extends MBeanResourceComponent {
 
     /* (non-Javadoc)

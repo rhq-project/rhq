@@ -25,9 +25,7 @@
       
       <plugin-configuration>
          <c:simple-property name="objectName" readOnly="true" default="Catalina:type=ModClusterListener,*"/>
-         <c:simple-property name="additionalConfigurationObjectName" readOnly="true" default="jboss.web:type=Engine"/>
-         <c:simple-property name="jvmRoute" readOnly="false"/>
-         <c:simple-property name="nameTemplate" default="mod_cluster"/>
+         <c:simple-property name="engineObjectName" readOnly="true" default="jboss.web:type=Engine"/>
       </plugin-configuration>
       
       <operation name="stop" displayName="Stop all webapps" description="Gracefully stops all webapps for all engines.">
@@ -76,12 +74,12 @@
       <metric property="proxyConfiguration" displayName="Proxy Configuration" displayType="summary" dataType="trait" />
       <metric property="modelerType" displayName="Type of the modeled resource" displayType="summary" dataType="trait" />
       <metric property="className" displayName="Fully qualified class name of the managed object" displayType="summary" dataType="trait" />
+      <metric property="advertise" displayName="Enable autodiscovery of httpd servers." displayType="summary" dataType="trait" />
       
       <resource-configuration>
       	<c:simple-property name="workerTimeout" type="integer" description="Timeout to wait for an available worker (default is no wait)" />
       	<c:simple-property name="stickySession" type="boolean" description="Enables sticky session for the cluster."/>
       	<c:simple-property name="stickySessionRemove" type="boolean" description="Remove session when the request cannot be routed to the right node."/>
-      	<!-- c:simple-property name="advertise" type="boolean" description="Enable autodiscovery of httpd servers."/-->
       	<c:simple-property name="smax" type="integer" description="Maximum time on seconds for idle connections above smax."/>
       	<c:simple-property name="maxAttempts" type="integer" description="Maximum number of attempts to send the request to the backend server."/>
       	<c:simple-property name="advertiseSecurityKey" type="string" required="false" description="Security key for discovery."/>
@@ -89,7 +87,6 @@
       	<c:simple-property name="balancer" type="string" required="false" description="Name of the balancer."/>
       	<c:simple-property name="flushPackets" type="boolean" description="Allows controlling flusing of packets."/>
       	<c:simple-property name="socketTimeout" type="integer" description="Connection timeout for communication with the proxy." />
-      	<c:simple-property name="domain" type="string" required="false" description="Domain parameter, which allows tying a jvmRoute to a particular domain."/>
       	<c:simple-property name="advertisePort" type="integer" required="false" description="Multicast port for discovery" />
       	<c:simple-property name="advertiseGroupAddress" type="string" required="false" description="Multicast address for discovery."/>
       	<c:simple-property name="flushWait" type="integer" description="Time in ms to wait before flushing packets."/>

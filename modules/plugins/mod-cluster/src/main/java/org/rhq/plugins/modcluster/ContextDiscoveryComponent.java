@@ -42,9 +42,9 @@ import org.rhq.plugins.jmx.MBeanResourceComponent;
 @SuppressWarnings("rawtypes")
 public class ContextDiscoveryComponent implements ResourceDiscoveryComponent<MBeanResourceComponent> {
 
-    private final String JVM_ROUTE_PROPERTY = "jvmRoute";
-    private final String PROXY_INFO_PROPERTY = "proxyInfo";
-    private final String ADDITIONAL_CONFIG_BEAN_PROPERTY = "additionalConfigurationObjectName";
+    private static final String JVM_ROUTE_PROPERTY = "jvmRoute";
+    private static final String PROXY_INFO_PROPERTY = "proxyInfo";
+    private static final String ENGINE_OBJECT_NAME = "engineObjectName";
 
     /* (non-Javadoc)
      * @see org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent#discoverResources(org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext)
@@ -76,8 +76,8 @@ public class ContextDiscoveryComponent implements ResourceDiscoveryComponent<MBe
      */
     private String getJvmRoute(ResourceDiscoveryContext<MBeanResourceComponent> context) {
         Configuration pluginConfig = context.getParentResourceComponent().getResourceContext().getPluginConfiguration();
-        String objectName = pluginConfig.getSimple(ADDITIONAL_CONFIG_BEAN_PROPERTY).getStringValue();
-        EmsBean engineBean = this.loadBean(objectName, context.getParentResourceComponent());
+        String engineObjectName = pluginConfig.getSimple(ENGINE_OBJECT_NAME).getStringValue();
+        EmsBean engineBean = this.loadBean(engineObjectName, context.getParentResourceComponent());
 
         return (String) engineBean.getAttribute(JVM_ROUTE_PROPERTY).refresh().toString();
     }

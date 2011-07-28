@@ -18,18 +18,6 @@
  */
 package org.rhq.plugins.mysql;
 
-import org.rhq.core.domain.measurement.AvailabilityType;
-import org.rhq.core.domain.measurement.DataType;
-import org.rhq.core.domain.measurement.MeasurementDataNumeric;
-import org.rhq.core.domain.measurement.MeasurementReport;
-import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
-import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
-import org.rhq.core.pluginapi.inventory.ResourceComponent;
-import org.rhq.core.pluginapi.inventory.ResourceContext;
-import org.rhq.core.pluginapi.measurement.MeasurementFacet;
-import org.rhq.core.util.jdbc.JDBCUtil;
-import org.rhq.plugins.database.DatabaseComponent;
-
 import java.io.File;
 import java.io.FileReader;
 import java.sql.Connection;
@@ -43,8 +31,19 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.measurement.DataType;
+import org.rhq.core.domain.measurement.MeasurementDataNumeric;
+import org.rhq.core.domain.measurement.MeasurementReport;
+import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
+import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
+import org.rhq.core.pluginapi.inventory.ResourceComponent;
+import org.rhq.core.pluginapi.inventory.ResourceContext;
+import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.system.AggregateProcessInfo;
 import org.rhq.core.system.ProcessInfo;
+import org.rhq.plugins.database.DatabaseComponent;
 import org.rhq.plugins.database.DatabaseQueryUtility;
 
 /**
@@ -129,7 +128,7 @@ public class MySqlComponent implements DatabaseComponent, ResourceComponent, Mea
                 } else if ("Process.aggregateMemory.size".equals(requestName)) {
                     long value = aggregateProcessInfo.getAggregateMemory().getSize();
                     report.addData(new MeasurementDataNumeric(request, new Double((double) value)));
-                }else if ("Process.aggregateMemory.pageFaults".equals(requestName)) {
+                } else if ("Process.aggregateMemory.pageFaults".equals(requestName)) {
                     long value = aggregateProcessInfo.getAggregateMemory().getPageFaults();
                     report.addData(new MeasurementDataNumeric(request, new Double((double) value)));
                 } else if ("Process.aggregateCpu.user".equals(requestName)) {
@@ -141,12 +140,12 @@ public class MySqlComponent implements DatabaseComponent, ResourceComponent, Mea
                 } else if ("Process.aggregateCpu.percent".equals(requestName)) {
                     double value = aggregateProcessInfo.getAggregateCpu().getPercent();
                     report.addData(new MeasurementDataNumeric(request, new Double(value)));
-                }  else if ("Process.aggregateCpu.total".equals(requestName)) {
+                } else if ("Process.aggregateCpu.total".equals(requestName)) {
                     long value = aggregateProcessInfo.getAggregateCpu().getTotal();
-                    report.addData(new MeasurementDataNumeric(request, new Double((double)value)));
-                }else if ("Process.aggregateFileDescriptor.total".equals(requestName)) {
+                    report.addData(new MeasurementDataNumeric(request, new Double((double) value)));
+                } else if ("Process.aggregateFileDescriptor.total".equals(requestName)) {
                     long value = aggregateProcessInfo.getAggregateFileDescriptor().getTotal();
-                    report.addData(new MeasurementDataNumeric(request, new Double((double)value)));
+                    report.addData(new MeasurementDataNumeric(request, new Double((double) value)));
                 }
             } else {
                 if (request.getDataType() == DataType.MEASUREMENT) {
@@ -202,11 +201,15 @@ public class MySqlComponent implements DatabaseComponent, ResourceComponent, Mea
         if (file.canRead()) {
             try {
                 FileReader pidFileReader = new FileReader(file);
-                char pidData[] = new char[(int)file.length()];
-                pidFileReader.read(pidData);
-                String pidString = new String(pidData);
-                pidString = pidString.trim();
-                result = Long.valueOf(pidString);
+                try {
+                    char pidData[] = new char[(int) file.length()];
+                    pidFileReader.read(pidData);
+                    String pidString = new String(pidData);
+                    pidString = pidString.trim();
+                    result = Long.valueOf(pidString);
+                } finally {
+                    pidFileReader.close();
+                }
             } catch (Exception ex) {
                 log.warn("Unable to read MySQL pid file " + pidFile);
             }

@@ -79,11 +79,8 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
             String psName = psr.getProcessScan().getName();
             String description = discoveryContext.getResourceType().getDescription();
             String version = null;
-            String startScript;
-            if (psName.equals("ProcessController")) {
-                serverNameFull = "ProcessController";
-                serverName = "ProcessController";
-            } else if (psName.equals("HostController")) {
+
+            if (psName.equals("HostController")) {
                 readStandaloneOrHostXml(psr.getProcessInfo(), true);
                 HostPort hp = getDomainControllerFromHostXml();
                 if (hp.isLocal) {
@@ -118,11 +115,10 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
                     tmp = tmp.substring( i + 8);
                     tmp = tmp.substring(0,tmp.indexOf("/"));
                     serverNameFull = tmp;
-
-                    String host = findHost(psr.getProcessInfo(),true);
-                    config.put(new PropertySimple("domainHost",host));
-
                 }
+                String host = findHost(psr.getProcessInfo(),true);
+                config.put(new PropertySimple("domainHost",host));
+
                 config.put(new PropertySimple("baseDir",serverNameFull));
                 serverName = findHostName();
                 if (serverName.isEmpty())
@@ -139,6 +135,11 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
             }
             String logFile = getLogFileFromCommandLine(commandLine);
             initLogEventSourcesConfigProp(logFile,config);
+
+            HostPort managmentPort = getManagementPortFromHostXml();
+            config.put(new PropertySimple("hostname",managmentPort.host));
+            config.put(new PropertySimple("port",managmentPort.port));
+
 //            String javaClazz = psr.getProcessInfo().getName();
 
 

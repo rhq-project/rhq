@@ -111,12 +111,15 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
         this.context = context;
         pluginConfiguration = context.getPluginConfiguration();
 
-        String typeName = context.getResourceType().getName();
-        // TODO can we use parent's connection and only set this up for top level base component?
-        host = pluginConfiguration.getSimpleValue("hostname", LOCALHOST);
-        String portString = pluginConfiguration.getSimpleValue("port", DEFAULT_HTTP_MANAGEMENT_PORT);
-        port = Integer.parseInt(portString);
-        connection = new ASConnection(host,port);
+        if (!(context.getParentResourceComponent() instanceof BaseComponent)) {
+            host = pluginConfiguration.getSimpleValue("hostname", LOCALHOST);
+            String portString = pluginConfiguration.getSimpleValue("port", DEFAULT_HTTP_MANAGEMENT_PORT);
+            port = Integer.parseInt(portString);
+            connection = new ASConnection(host,port);
+        }
+        else {
+            connection = ((BaseComponent)context.getParentResourceComponent()).getASConnection();
+        }
 
         path = pluginConfiguration.getSimpleValue("path", null);
         key = context.getResourceKey();

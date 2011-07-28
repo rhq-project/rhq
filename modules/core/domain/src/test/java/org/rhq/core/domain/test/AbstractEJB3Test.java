@@ -109,12 +109,20 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
     }
 
     public EntityManager getEntityManager() {
+        InitialContext initialContext = null;
         try {
-            return ((EntityManagerFactory) getInitialContext().lookup("java:/RHQEntityManagerFactory"))
+            initialContext = getInitialContext();
+            return ((EntityManagerFactory) initialContext.lookup("java:/RHQEntityManagerFactory"))
                 .createEntityManager();
         } catch (NamingException e) {
             e.printStackTrace();
             throw new RuntimeException("Failed to load entity manager", e);
+        } finally {
+            try {
+                initialContext.close();
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to close the initial context - why did this happen?", e);
+            }
         }
     }
 

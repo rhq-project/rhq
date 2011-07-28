@@ -20,8 +20,6 @@
 
 package org.rhq.enterprise.gui.coregui.client.drift;
 
-import static org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter.DATE_TIME_FORMAT_FULL;
-
 import java.util.LinkedHashMap;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -40,6 +38,8 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellForma
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+
+import static org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter.DATE_TIME_FORMAT_FULL;
 
 /**
  * @author Jay Shaughnessy
@@ -161,7 +161,7 @@ public class DriftDetailsView extends LocatableVLayout implements BookmarkableVi
 
     @Override
     public void renderView(ViewPath viewPath) {
-        driftId = Integer.toString(viewPath.getCurrentAsInt());
+        driftId = viewPath.getCurrent().getPath();
         show(driftId);
     }
 

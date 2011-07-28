@@ -112,6 +112,9 @@
         <index name="RHQ_ALERT_COND_LOG_IDX_ALERT">
             <field ref="ALERT_ID"/>
         </index>
+        <index name="RHQ_ALERT_COND_LOG_COND_IDX">
+            <field ref="CONDITION_ID"/>
+        </index>
     </table>
 
     <table name="RHQ_ALERT_NOTIFICATION" tablespace="@@@LARGE_TABLESPACE_FOR_DATA@@@"

@@ -27,7 +27,7 @@ import javax.ejb.Remote;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.sync.ExportReport;
-import org.rhq.core.domain.sync.ExportValidationReport;
+import org.rhq.core.domain.sync.ConsistencyValidatorFailureReport;
 import org.rhq.core.domain.sync.ImportReport;
 import org.rhq.core.domain.sync.ImporterConfiguration;
 import org.rhq.core.domain.sync.ImporterConfigurationDefinition;
@@ -58,7 +58,7 @@ public interface SynchronizationManagerRemote {
      */
     ExportReport exportAllSubsystems(Subject subject);
     
-    ExportValidationReport validate(Subject subject, byte[] exportFile);
+    void validate(Subject subject, byte[] exportFile) throws ValidationException;
 
     /**
      * Returns the configuration definition of the importer with given type.
@@ -82,5 +82,5 @@ public interface SynchronizationManagerRemote {
      *        
      * @return the report describing the result of the export
      */
-    ImportReport importAllSubsystems(Subject subject, byte[] exportFile, List<ImporterConfiguration> importerConfigurations);
+    void importAllSubsystems(Subject subject, byte[] exportFile, List<ImporterConfiguration> importerConfigurations) throws ValidationException, ImportException;
 }

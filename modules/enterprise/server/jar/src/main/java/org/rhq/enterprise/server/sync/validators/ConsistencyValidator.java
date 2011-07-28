@@ -88,7 +88,7 @@ public interface ConsistencyValidator {
     
     /**
      * The {@link ConsistencyValidator} interface mandates a certain behavior of
-     * the {@link #equals(Object)} method and therefore the <code>hashChode</code>
+     * the {@link #equals(Object)} method and therefore the <code>hashCode</code>
      * should be reimplemented accordingly.
      *  
      * @return

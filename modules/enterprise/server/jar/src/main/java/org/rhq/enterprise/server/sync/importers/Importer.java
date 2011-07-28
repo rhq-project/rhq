@@ -65,7 +65,7 @@ public interface Importer<Entity, ExportedType> {
      * This method is responsible for persisting the entity in the database
      * using the provided entityManager.
      * 
-     * @param entity the entity to persist (may be null if the {@link #getExportedEntityMatcher(EntityManager)} returned null of if the entity matcher didn't find a match)
+     * @param entity the entity to persist (may be null if the {@link #getExportedEntityMatcher()} returned null of if the entity matcher didn't find a match)
      * @param exportedEntity the entity found in the export file that should be used to update the entity in the database
      */
     void update(Entity entity, ExportedType exportedEntity);

@@ -27,7 +27,7 @@ import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
-import org.rhq.core.domain.sync.ExportValidationReport;
+import org.rhq.core.domain.sync.ConsistencyValidatorFailureReport;
 import org.rhq.core.domain.sync.ExportWrapper;
 import org.rhq.core.domain.sync.ExportReport;
 import org.rhq.core.domain.sync.ImportReport;
@@ -60,9 +60,9 @@ public interface SynchronizationManagerLocal {
      */
     ExportWrapper exportAllSubsystemsLocally(Subject subject);
     
-    ExportValidationReport validate(Subject subject, InputStream exportFile);
+    void validate(Subject subject, InputStream exportFile) throws ValidationException;
     
-    ImportReport importAllSubsystems(Subject subject, InputStream exportFile, List<ImporterConfiguration> importerConfigurations);
+    void importAllSubsystems(Subject subject, InputStream exportFile, List<ImporterConfiguration> importerConfigurations) throws ValidationException, ImportException;
     
     //-------- THE FOLLOWING METHODS ARE SHARED WITH THE REMOTE INTERFACE ------------
     
@@ -80,7 +80,7 @@ public interface SynchronizationManagerLocal {
     /**
      * @see SynchronizationManagerRemote#validate(Subject, byte[]) 
      */
-    ExportValidationReport validate(Subject subject, byte[] exportFile);
+    void validate(Subject subject, byte[] exportFile) throws ValidationException;
 
     /**
      * @see SynchronizationManagerRemote#getImporterConfigurationDefinition(String) 
@@ -95,5 +95,5 @@ public interface SynchronizationManagerLocal {
     /**
      * @see SynchronizationManagerRemote#importAllSubsystems(Subject, byte[], Set)
      */
-    ImportReport importAllSubsystems(Subject subject, byte[] exportFile, List<ImporterConfiguration> importerConfigurations);
+    void importAllSubsystems(Subject subject, byte[] exportFile, List<ImporterConfiguration> importerConfigurations) throws ValidationException, ImportException;
 }

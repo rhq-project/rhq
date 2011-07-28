@@ -123,7 +123,7 @@ import org.rhq.core.domain.resource.composite.ProblemResourceComposite;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.sync.ExportReport;
-import org.rhq.core.domain.sync.ExportValidationReport;
+import org.rhq.core.domain.sync.ConsistencyValidatorFailureReport;
 import org.rhq.core.domain.sync.ImportReport;
 import org.rhq.core.domain.sync.ImporterConfiguration;
 import org.rhq.core.domain.sync.ImporterConfigurationDefinition;
@@ -166,7 +166,9 @@ import org.rhq.enterprise.server.resource.group.ResourceGroupDeleteException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupNotFoundException;
 import org.rhq.enterprise.server.support.SupportManagerLocal;
+import org.rhq.enterprise.server.sync.ImportException;
 import org.rhq.enterprise.server.sync.SynchronizationManagerLocal;
+import org.rhq.enterprise.server.sync.ValidationException;
 import org.rhq.enterprise.server.system.ServerVersion;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -1208,8 +1210,8 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return synchronizationManager.exportAllSubsystems(subject);
     }
     
-    public ExportValidationReport validate(Subject subject, byte[] exportFile) {
-        return synchronizationManager.validate(subject, exportFile);
+    public void validate(Subject subject, byte[] exportFile) throws ValidationException {
+        synchronizationManager.validate(subject, exportFile);
     }
     
     public List<ImporterConfigurationDefinition> getConfigurationDefinitionOfAllImporters() {
@@ -1220,9 +1222,9 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return synchronizationManager.getImporterConfigurationDefinition(importerClass);
     }
     
-    public ImportReport importAllSubsystems(Subject subject, byte[] exportFile,
-        List<ImporterConfiguration> importerConfigurations) {
-        return synchronizationManager.importAllSubsystems(subject, exportFile, importerConfigurations);
+    public void importAllSubsystems(Subject subject, byte[] exportFile,
+        List<ImporterConfiguration> importerConfigurations) throws ValidationException, ImportException {
+        synchronizationManager.importAllSubsystems(subject, exportFile, importerConfigurations);
     }
     
     //SYNCHRONIZATIONMANANGER: END -------------------------

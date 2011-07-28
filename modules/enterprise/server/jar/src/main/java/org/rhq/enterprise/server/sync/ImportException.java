@@ -17,13 +17,31 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.core.domain.sync;
+package org.rhq.enterprise.server.sync;
 
 /**
  * 
  *
  * @author Lukas Krejci
  */
-public class ImportReport {
-    //TODO implement
+public class ImportException extends SynchronizationException {
+
+    private static final long serialVersionUID = 1L;
+
+    public ImportException() {
+    }
+
+    public ImportException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public ImportException(String message) {
+        super(message);
+    }
+
+    public ImportException(Throwable cause) {
+        super(cause);
+    }
+
+    
 }

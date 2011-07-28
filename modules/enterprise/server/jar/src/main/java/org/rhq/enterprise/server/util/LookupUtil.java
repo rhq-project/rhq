@@ -233,6 +233,7 @@ public final class LookupUtil {
         try {
             InitialContext context = new InitialContext();
             DataSource ds = (DataSource) context.lookup(RHQConstants.DATASOURCE_JNDI_NAME);
+            context.close();
             return ds;
         } catch (Exception e) {
             throw new RuntimeException("Failed to get the data source", e);
@@ -249,6 +250,7 @@ public final class LookupUtil {
         try {
             InitialContext context = new InitialContext();
             TransactionManager tm = (TransactionManager) context.lookup(RHQConstants.TRANSACTION_MANAGER_JNDI_NAME);
+            context.close();
             return tm;
         } catch (Exception e) {
             throw new RuntimeException("Failed to get the transaction manager", e);
@@ -678,7 +680,12 @@ public final class LookupUtil {
      * @throws NamingException when resource not found
      */
     private static Object lookup(String name) throws NamingException {
-        return new InitialContext().lookup(name);
+        InitialContext initialContext = new InitialContext();
+        try {
+            return initialContext.lookup(name);
+        } finally {
+            initialContext.close();
+        }
     }
 
     public static DataAccessManagerLocal getDataAccessManager() {

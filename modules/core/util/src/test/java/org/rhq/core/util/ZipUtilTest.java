@@ -74,7 +74,9 @@ public class ZipUtilTest {
                         destFile.mkdirs();
                     } else {
                         destFile.getParentFile().mkdirs();
-                        StreamUtil.copy(stream, new FileOutputStream(destFile), false);
+                        FileOutputStream fos = new FileOutputStream(destFile);
+                        StreamUtil.copy(stream, fos, false);
+                        fos.close();
                     }
                     return true;
                 }

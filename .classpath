@@ -82,7 +82,6 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/seam/jboss-seam-ui/2.1.0.SP1/jboss-seam-ui-2.1.0.SP1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/hibernate/hibernate3/3.2.r14201-2/hibernate3-3.2.r14201-2.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/jline/jline/0.9.94/jline-0.9.94.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/com/ettrema/milton-api/1.4.1/milton-api-1.4.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/jboss/javassist/3.8.0.GA/javassist-3.8.0.GA.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/net/sf/opencsv/opencsv/1.8/opencsv-1.8.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/bouncycastle/bcpg-jdk15/140/bcpg-jdk15-140.jar"/>
@@ -117,7 +116,7 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/unitils/unitils-orm/3.1/unitils-orm-3.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/unitils/unitils-testng/3.1/unitils-testng-3.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/codehaus/jackson/jackson-core-asl/1.7.4/jackson-core-asl-1.7.4.jar"/>
-        <classpathentry exported="true" kind="var" path="M2_REPO/org/codehaus/jackson/jackson-mapper-asl/1.7.4/jackson-mapper-asl-1.7.4.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/codehaus/jackson/jackson-mapper-asl/1.7.4/jackson-mapper-asl-1.7.4.jar"/>
 	<classpathentry exported="true" kind="lib" path="modules/enterprise/remoting/webservices/target/rhq-remoting-webservices-4.1.0-SNAPSHOT/wsconsume-output"/>
 	<classpathentry kind="src" path="modules/common/ant-bundle/src/main/java"/>
 	<classpathentry kind="src" path="modules/common/drift/src/main/java"/>

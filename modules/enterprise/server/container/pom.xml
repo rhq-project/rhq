@@ -183,16 +183,16 @@
                   <property name="quartz.version" value="${quartz.version}" />
 
                   <!-- dev DB settings (used to init rhq-server.properties if dev profile is active or developer prop is set) -->
-                  <property name="rhq.ds.connection-url" value="${rhq.ds.connection-url}" />
-                  <property name="rhq.ds.driver-class" value="${rhq.ds.driver-class}" />
-                  <property name="rhq.ds.xa-datasource-class" value="${rhq.ds.xa-datasource-class}" />
-                  <property name="rhq.ds.user-name" value="${rhq.ds.user-name}" />
-                  <property name="rhq.ds.password.encrypted" value="${rhq.ds.password.encrypted}" />
-                  <property name="rhq.ds.type-mapping" value="${rhq.ds.type-mapping}" />
-                  <property name="rhq.ds.server-name" value="${rhq.ds.server-name}" />
-                  <property name="rhq.ds.port" value="${rhq.ds.port}" />
-                  <property name="rhq.ds.db-name" value="${rhq.ds.db-name}" />
-                  <property name="rhq.ds.hibernate-dialect" value="${rhq.ds.hibernate-dialect}" />
+                  <property name="rhq.dev.ds.connection-url" value="${rhq.dev.ds.connection-url}" />
+                  <property name="rhq.dev.ds.driver-class" value="${rhq.dev.ds.driver-class}" />
+                  <property name="rhq.dev.ds.xa-datasource-class" value="${rhq.dev.ds.xa-datasource-class}" />
+                  <property name="rhq.dev.ds.user-name" value="${rhq.dev.ds.user-name}" />
+                  <property name="rhq.dev.ds.password.encrypted" value="${rhq.dev.ds.password.encrypted}" />
+                  <property name="rhq.dev.ds.type-mapping" value="${rhq.dev.ds.type-mapping}" />
+                  <property name="rhq.dev.ds.server-name" value="${rhq.dev.ds.server-name}" />
+                  <property name="rhq.dev.ds.port" value="${rhq.dev.ds.port}" />
+                  <property name="rhq.dev.ds.db-name" value="${rhq.dev.ds.db-name}" />
+                  <property name="rhq.dev.ds.hibernate-dialect" value="${rhq.dev.ds.hibernate-dialect}" />
                   <property name="rhq.dev.quartz.driverDelegateClass" value="${rhq.dev.quartz.driverDelegateClass}" />
                   <property name="rhq.dev.quartz.selectWithLockSQL" value="${rhq.dev.quartz.selectWithLockSQL}" />
                   <property name="rhq.dev.quartz.lockHandlerClass" value="${rhq.dev.quartz.lockHandlerClass}" />
@@ -233,7 +233,8 @@
                   <property name="rhq.earName" value="${rhq.earName}" />
 
                   <!-- dev/test DB type (needed to init rhq-ds.xml) -->
-                  <property name="rhq.ds.type-mapping" value="${rhq.ds.type-mapping}" />
+                  <property name="rhq.test.ds.type-mapping" value="${rhq.test.ds.type-mapping}" />
+                  <property name="rhq.dev.ds.type-mapping" value="${rhq.dev.ds.type-mapping}" />
                   <property name="rhq.server.enable.web.services" value="${rhq.server.enable.ws}" />
                 </ant>
               </tasks>

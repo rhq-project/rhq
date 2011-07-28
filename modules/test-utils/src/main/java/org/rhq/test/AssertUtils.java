@@ -23,12 +23,13 @@
 
 package org.rhq.test;
 
-import static org.testng.Assert.*;
-
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
 
 public class AssertUtils {
 
@@ -117,6 +118,18 @@ public class AssertUtils {
         CollectionMatchesChecker<T> checker = new CollectionMatchesChecker<T>();
         checker.setExpected(expected);
         checker.setActual(actual);
+
+        MatchResult result = checker.execute();
+
+        assertTrue(result.isMatch(), msg + " -- " + result.getDetails());
+    }
+
+    public static <T> void assertCollectionMatchesNoOrder(String msg, Collection<T> expected, Collection<T> actual,
+        String... ignoredProperties) {
+        CollectionMatchesChecker<T> checker = new CollectionMatchesChecker<T>();
+        checker.setExpected(expected);
+        checker.setActual(actual);
+        checker.setIgnoredProperties(ignoredProperties);
 
         MatchResult result = checker.execute();
 

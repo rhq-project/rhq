@@ -9,7 +9,8 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import static org.rhq.core.domain.drift.DriftCategory.FILE_ADDED;
+import org.rhq.core.domain.drift.DriftCategory;
+
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
 import static org.rhq.test.AssertUtils.assertCollectionMatchesNoOrder;
 import static org.rhq.test.AssertUtils.assertPropertiesMatch;
@@ -32,7 +33,7 @@ public class MongoDBChangeSetTest {
             .map(MongoDBChangeSetEntry.class)
             .map(MongoDBFile.class);
 
-        ds = morphia.createDatastore(connection, "rhq");
+        ds = morphia.createDatastore(connection, "rhqtest");
     }
 
     @BeforeMethod
@@ -59,7 +60,7 @@ public class MongoDBChangeSetTest {
     public void saveAndLoadChangeSetWithOneEntry() throws Exception {
         MongoDBChangeSet expected = new MongoDBChangeSet();
         expected.setResourceId(10001);
-        expected.getDrifts().add(new MongoDBChangeSetEntry("foo", FILE_ADDED));
+        expected.add(new MongoDBChangeSetEntry("foo", DriftCategory.FILE_ADDED));
 
         ds.save(expected);
 
@@ -67,7 +68,8 @@ public class MongoDBChangeSetTest {
 
         assertNotNull(expected, "Failed to load change set");
         assertPropertiesMatch("Failed to save change set", expected, actual, "drifts");
-        assertCollectionMatchesNoOrder(expected.getDrifts(), actual.getDrifts(), "Failed to save change set entries");
+        assertCollectionMatchesNoOrder("Failed to save change set entries", expected.getDrifts(), actual.getDrifts(),
+            "changeSet");
     }
 
 }

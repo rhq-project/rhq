@@ -2,7 +2,11 @@ package org.rhq.test;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+
+import static junitx.util.Converter.asList;
 
 public class CollectionMatchesChecker<T> {
 
@@ -10,12 +14,18 @@ public class CollectionMatchesChecker<T> {
 
     private Collection<T> actual;
 
+    private Set<String> ignoredProperties = new HashSet<String>();
+
     public void setExpected(Collection<T> expected) {
         this.expected = expected;
     }
 
     public void setActual(Collection<T> actual) {
         this.actual = actual;
+    }
+
+    public void setIgnoredProperties(String... ignoredProperties) {
+        this.ignoredProperties.addAll(asList(ignoredProperties));
     }
 
     public MatchResult execute() {
@@ -63,6 +73,7 @@ public class CollectionMatchesChecker<T> {
             PropertyMatcher<T> matcher = new PropertyMatcher<T>();
             matcher.setExpected(elementToSearchFor);
             matcher.setActual(actual);
+            matcher.setIgnoredProperties(ignoredProperties);
             MatchResult result = matcher.execute();
 
             if (result.isMatch()) {

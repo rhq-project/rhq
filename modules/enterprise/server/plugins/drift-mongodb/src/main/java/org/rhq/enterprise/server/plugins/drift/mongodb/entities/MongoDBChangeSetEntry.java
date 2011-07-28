@@ -3,6 +3,7 @@ package org.rhq.enterprise.server.plugins.drift.mongodb.entities;
 import java.io.Serializable;
 
 import com.google.code.morphia.annotations.Embedded;
+import com.google.code.morphia.annotations.Transient;
 
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftCategory;
@@ -18,6 +19,9 @@ public class MongoDBChangeSetEntry implements Drift<MongoDBChangeSet, MongoDBFil
 
     private String path;
 
+    @Transient
+    private MongoDBChangeSet changeSet;
+
     public MongoDBChangeSetEntry() {
     }
 
@@ -28,7 +32,7 @@ public class MongoDBChangeSetEntry implements Drift<MongoDBChangeSet, MongoDBFil
 
     @Override
     public String getId() {
-        return null;
+        return changeSet.getId() + ":" + path;
     }
 
     @Override
@@ -37,16 +41,17 @@ public class MongoDBChangeSetEntry implements Drift<MongoDBChangeSet, MongoDBFil
 
     @Override
     public Long getCtime() {
-        return null;
+        return ctime;
     }
 
     @Override
     public MongoDBChangeSet getChangeSet() {
-        return null;
+        return changeSet;
     }
 
     @Override
     public void setChangeSet(MongoDBChangeSet changeSet) {
+        this.changeSet = changeSet;
     }
 
     @Override

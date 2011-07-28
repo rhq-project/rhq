@@ -1,12 +1,15 @@
 package org.rhq.core.domain.drift.dto;
 
+import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
 
-public class DriftChangeSetDTO implements DriftChangeSet<DriftDTO> {
+public class DriftChangeSetDTO implements DriftChangeSet<DriftDTO>, Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private String id;
 
@@ -35,6 +38,10 @@ public class DriftChangeSetDTO implements DriftChangeSet<DriftDTO> {
     @Override
     public Long getCtime() {
         return ctime;
+    }
+
+    public void setCtime(Long ctime) {
+        this.ctime = ctime;
     }
 
     @Override

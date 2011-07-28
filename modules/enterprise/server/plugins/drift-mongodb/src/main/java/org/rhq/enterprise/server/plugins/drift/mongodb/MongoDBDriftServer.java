@@ -31,6 +31,8 @@ import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.drift.Snapshot;
+import org.rhq.core.domain.drift.dto.DriftChangeSetDTO;
+import org.rhq.core.domain.drift.dto.DriftDTO;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.ZipUtil;
@@ -135,9 +137,9 @@ public class MongoDBDriftServer implements DriftServerPluginFacet {
         Map<Integer, Resource> resources = loadResourceMap(subject, criteria.getFilterResourceIds());
 
         for (MongoDBChangeSet changeSet : query) {
+            DriftChangeSetDTO changeSetDTO = toDTO(changeSet);
             for (MongoDBChangeSetEntry entry : changeSet.getDrifts()) {
-                entry.setChangeSet(changeSet);
-                results.add(new DriftComposite(entry, resources.get(changeSet.getResourceId())));
+                results.add(new DriftComposite(toDTO(entry, changeSetDTO), resources.get(changeSet.getResourceId())));
             }
         }
 
@@ -162,5 +164,27 @@ public class MongoDBDriftServer implements DriftServerPluginFacet {
         }
 
         return map;
+    }
+
+    DriftChangeSetDTO toDTO(MongoDBChangeSet changeSet) {
+        DriftChangeSetDTO dto = new DriftChangeSetDTO();
+        dto.setId(changeSet.getId());
+        dto.setDriftConfigurationId(changeSet.getDriftConfigurationId());
+        dto.setVersion(changeSet.getVersion());
+        dto.setCtime(changeSet.getCtime());
+        dto.setCategory(changeSet.getCategory());
+
+        return dto;
+    }
+
+    DriftDTO toDTO(MongoDBChangeSetEntry entry, DriftChangeSetDTO changeSetDTO) {
+        DriftDTO dto = new DriftDTO();
+        dto.setChangeSet(changeSetDTO);
+        dto.setId(entry.getId());
+        dto.setCtime(entry.getCtime());
+        dto.setPath(entry.getPath());
+        dto.setCategory(entry.getCategory());
+
+        return dto;
     }
 }

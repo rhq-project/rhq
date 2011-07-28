@@ -7,6 +7,7 @@ import java.util.Set;
 import com.google.code.morphia.annotations.Embedded;
 import com.google.code.morphia.annotations.Entity;
 import com.google.code.morphia.annotations.Id;
+import com.google.code.morphia.annotations.PostLoad;
 
 import org.bson.types.ObjectId;
 
@@ -103,11 +104,19 @@ public class MongoDBChangeSet implements DriftChangeSet<MongoDBChangeSetEntry>, 
 
     public MongoDBChangeSet add(MongoDBChangeSetEntry entry) {
         entries.add(entry);
+        entry.setChangeSet(this);
         return this;
     }
 
     @Override
     public void setDrifts(Set<MongoDBChangeSetEntry> drifts) {
         entries = drifts;
+    }
+
+    @PostLoad
+    void initEntries() {
+        for (MongoDBChangeSetEntry entry : entries) {
+            entry.setChangeSet(this);
+        }
     }
 }

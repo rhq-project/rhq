@@ -1,9 +1,13 @@
 package org.rhq.core.domain.drift.dto;
 
+import java.io.Serializable;
+
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftCategory;
 
-public class DriftDTO implements Drift<DriftChangeSetDTO, DriftFileDTO> {
+public class DriftDTO implements Drift<DriftChangeSetDTO, DriftFileDTO>, Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private String id;
 
@@ -32,6 +36,10 @@ public class DriftDTO implements Drift<DriftChangeSetDTO, DriftFileDTO> {
     @Override
     public Long getCtime() {
         return ctime;
+    }
+
+    public void setCtime(Long ctime) {
+        this.ctime = ctime;
     }
 
     @Override

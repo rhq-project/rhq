@@ -439,12 +439,12 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
             try {
                 ClientCommandSenderConfiguration sender_config = getSenderConfiguration(agent);
                 if (sender_config.commandSpoolFileName != null) {
-	                spool_file = new File(sender_config.dataDirectory, sender_config.commandSpoolFileName);
-	                if (spool_file.exists()) {
-	                    // first truncate it, in case Windows is locking it; then try to delete
-	                    new FileOutputStream(spool_file, false).close();
-	                    spool_file.delete();
-	                }
+                    spool_file = new File(sender_config.dataDirectory, sender_config.commandSpoolFileName);
+                    if (spool_file.exists()) {
+                        // first truncate it, in case Windows is locking it; then try to delete
+                        new FileOutputStream(spool_file, false).close();
+                        spool_file.delete();
+                    }
                 }
             } catch (Exception e) {
                 LOG.warn("Failed to truncate/delete spool for deleted agent [" + agent + "]"
@@ -907,36 +907,41 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
         // But first we need to backup these original preferences in case the config file fails to load -
         // we'll restore the original values in that case.
 
-        Preferences preferences_node = getPreferencesNode();
-        ByteArrayOutputStream backup = new ByteArrayOutputStream();
-        preferences_node.exportSubtree(backup);
-        preferences_node.clear();
-
-        // now load in the preferences
         try {
-            Preferences.importPreferences(config_file_input_stream);
+            Preferences preferences_node = getPreferencesNode();
+            ByteArrayOutputStream backup = new ByteArrayOutputStream();
+            preferences_node.exportSubtree(backup);
+            preferences_node.clear();
 
-            if (new ServerConfiguration(preferences_node).getServerConfigurationVersion() == 0) {
-                throw new IllegalArgumentException(LOG.getMsgString(
-                    ServerI18NResourceKeys.BAD_NODE_NAME_IN_CONFIG_FILE, file_name, preferences_node_name));
-            }
-        } catch (Exception e) {
-            // a problem occurred importing the config file; let's restore our original values
+            // now load in the preferences
             try {
-                Preferences.importPreferences(new ByteArrayInputStream(backup.toByteArray()));
-            } catch (Exception e1) {
-                // its conceivable the same problem occurred here as with the original exception (backing store problem?)
-                // let's throw the original exception, not this one
+                Preferences.importPreferences(config_file_input_stream);
+
+                if (new ServerConfiguration(preferences_node).getServerConfigurationVersion() == 0) {
+                    throw new IllegalArgumentException(LOG.getMsgString(
+                        ServerI18NResourceKeys.BAD_NODE_NAME_IN_CONFIG_FILE, file_name, preferences_node_name));
+                }
+            } catch (Exception e) {
+                // a problem occurred importing the config file; let's restore our original values
+                try {
+                    Preferences.importPreferences(new ByteArrayInputStream(backup.toByteArray()));
+                } catch (Exception e1) {
+                    // its conceivable the same problem occurred here as with the original exception (backing store problem?)
+                    // let's throw the original exception, not this one
+                }
+
+                throw e;
             }
 
-            throw e;
+            ServerConfiguration server_configuration = new ServerConfiguration(preferences_node);
+
+            LOG.debug(ServerI18NResourceKeys.LOADED_CONFIG_FILE, file_name);
+
+            return server_configuration;
+        } finally {
+            // we know this isn't non-null; if it was, we would have thrown the IOException earlier.
+            config_file_input_stream.close();
         }
-
-        ServerConfiguration server_configuration = new ServerConfiguration(preferences_node);
-
-        LOG.debug(ServerI18NResourceKeys.LOADED_CONFIG_FILE, file_name);
-
-        return server_configuration;
     }
 
     /**

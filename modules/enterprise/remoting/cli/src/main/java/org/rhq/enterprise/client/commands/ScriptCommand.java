@@ -58,7 +58,7 @@ public class ScriptCommand implements ClientCommand {
 
     private ScriptEngine jsEngine;
     private StandardBindings bindings;
-    
+
     private final Log log = LogFactory.getLog(ScriptCommand.class);
 
     private StringBuilder script = new StringBuilder();
@@ -85,7 +85,15 @@ public class ScriptCommand implements ClientCommand {
                 bindScriptArgs(scriptCmdLine);
                 executeUtilScripts();
 
-                return executeScriptFile(new FileReader(scriptCmdLine.getScriptFileName()), client);
+                FileReader reader = new FileReader(scriptCmdLine.getScriptFileName());
+                try {
+                    return executeScriptFile(reader, client);
+                } finally {
+                    try {
+                        reader.close();
+                    } catch (IOException ignore) {
+                    }
+                }
             } catch (FileNotFoundException e) {
                 client.getPrintWriter().println(e.getMessage());
                 if (log.isDebugEnabled()) {
@@ -97,8 +105,7 @@ public class ScriptCommand implements ClientCommand {
                     if (log.isDebugEnabled()) {
                         log.debug("A parse error occurred.", e);
                     }
-                }
-                else {
+                } else {
                     throw new CLIScriptException(e);
                 }
             }
@@ -143,8 +150,8 @@ public class ScriptCommand implements ClientCommand {
         } catch (ScriptException e) {
 
             String message = e.getCause() != null ? e.getCause().getMessage() : e.getMessage();
-            message = message.replace("sun.org.mozilla.javascript.internal.EcmaError: ","");
-            message = message.replace("(<Unknown source>#1) in <Unknown source> at line number 1","");
+            message = message.replace("sun.org.mozilla.javascript.internal.EcmaError: ", "");
+            message = message.replace("(<Unknown source>#1) in <Unknown source> at line number 1", "");
 
             client.getPrintWriter().println(message);
             client.getPrintWriter().println(script);
@@ -162,9 +169,10 @@ public class ScriptCommand implements ClientCommand {
     public void initBindings(ClientMain client) {
         if (jsEngine == null) {
             bindings = new StandardBindings(client.getPrintWriter(), client.getRemoteClient());
-            
+
             try {
-                jsEngine = ScriptEngineFactory.getScriptEngine("JavaScript", new PackageFinder(Arrays.asList(getLibDir())), bindings);
+                jsEngine = ScriptEngineFactory.getScriptEngine("JavaScript", new PackageFinder(Arrays
+                    .asList(getLibDir())), bindings);
                 jsEngine.eval("1+1");
             } catch (ScriptException e) {
                 e.printStackTrace();
@@ -172,19 +180,20 @@ public class ScriptCommand implements ClientCommand {
                 e.printStackTrace();
             }
         }
-        
+
         bindings.getSubject().setValue(client.getSubject());
         bindings.getPretty().getValue().setWidth(client.getConsoleWidth());
         bindings.getProxyFactory().setValue(new EditableResourceClientFactory(client));
-        
+
         //non-standard bindings        
         bindings.put("configurationEditor", new ConfigurationEditor(client));
         bindings.put("rhq", new Controller(client));
 
         ScriptEngineFactory.injectStandardBindings(jsEngine, bindings, false);
-        
-        ScriptEngineFactory.bindIndirectionMethods(jsEngine, "configurationEditor", bindings.get("configurationEditor"));
-        ScriptEngineFactory.bindIndirectionMethods(jsEngine, "rhq", bindings.get("rhq"));                
+
+        ScriptEngineFactory
+            .bindIndirectionMethods(jsEngine, "configurationEditor", bindings.get("configurationEditor"));
+        ScriptEngineFactory.bindIndirectionMethods(jsEngine, "rhq", bindings.get("rhq"));
     }
 
     private void executeUtilScripts() {
@@ -253,8 +262,7 @@ public class ScriptCommand implements ClientCommand {
             if (client.isInteractiveMode()) {
                 client.getPrintWriter().println(e.getMessage());
                 client.getPrintWriter().println("^");
-            }
-            else {
+            } else {
                 throw new CLIScriptException(e);
             }
         }
@@ -270,8 +278,8 @@ public class ScriptCommand implements ClientCommand {
     }
 
     public String getDetailedHelp() {
-        return "Execute a statement or a script. The following services managers are available: " +
-                RhqManagers.values();
+        return "Execute a statement or a script. The following services managers are available: "
+            + RhqManagers.values();
     }
 
     public ScriptContext getContext() {

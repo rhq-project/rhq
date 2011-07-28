@@ -296,7 +296,8 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
 
         SubTab subTab = tab.getDefaultSubTab();
         if (subTab == null || tab.getLayout().isSubTabDisabled(subTab)) {
-            CoreGUI.getErrorHandler().handleError(MSG.view_tabs_invalidSubTab(subTab.getName()));
+            CoreGUI.getErrorHandler().handleError(
+                MSG.view_tabs_invalidSubTab((subTab != null ? subTab.getName() : "null")));
             subTab = tab.getLayout().getDefaultSubTab();
         }
 

@@ -125,10 +125,11 @@
            <module>augeas</module>
            <module>apache</module>
            <module>tomcat</module>
-           <module>jboss-as</module>
            <module>hibernate</module>
+           <module>mod-cluster</module>
            <module>rhq-server</module>
            <module>jboss-cache</module>
+           <module>jboss-as</module>
            <module>jboss-as-5</module>
            <module>jboss-as-7</module>
            <module>jboss-cache-v3</module>

@@ -271,5 +271,7 @@
 	<classpathentry excluding="**" kind="src" path="modules/enterprise/comm/src/test/resources"/>
 	<classpathentry excluding="**" kind="src" path="modules/enterprise/agent/src/main/resources"/>
 	<classpathentry excluding="**" kind="src" path="modules/enterprise/agent/src/test/resources"/>
+	<classpathentry kind="src" path="modules/plugins/mod-cluster/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/mod-cluster/src/test/java"/>
 	<classpathentry kind="output" path="eclipse-classes"/>
 </classpath>

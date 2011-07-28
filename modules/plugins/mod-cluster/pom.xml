@@ -1,0 +1,271 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+   <modelVersion>4.0.0</modelVersion>
+
+   <parent>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-plugins-parent</artifactId>
+      <version>4.1.0-SNAPSHOT</version>
+   </parent>
+
+   <groupId>org.rhq.plugins.modcluster</groupId>
+   <artifactId>modcluster-plugin</artifactId>
+   <packaging>jar</packaging>
+
+   <name>RHQ mod_cluster Plugin</name>
+   <description>mod_cluster RHQ Agent plugin</description>
+
+   <dependencies>
+
+      <dependency>
+         <groupId>${rhq.groupId}</groupId>
+         <artifactId>rhq-jmx-plugin</artifactId>
+         <version>${project.version}</version>
+         <scope>provided</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>log4j</groupId>
+         <artifactId>log4j</artifactId>
+         <version>1.2.14</version>
+         <scope>provided</scope>
+      </dependency>
+
+   </dependencies>
+
+   <profiles>
+
+      <profile>
+         <id>integration-tests</id>
+         <activation>
+            <property>
+               <name>maven.test.skip</name>
+               <value>!true</value>
+            </property>
+         </activation>
+
+         <properties>
+            <rhq.rootDir>../../..</rhq.rootDir>
+            <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
+            <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/deploy/${rhq.earName}/rhq-downloads/rhq-plugins</rhq.deploymentDir>
+         </properties>
+
+         <build>
+            <plugins>
+
+               <plugin>
+                  <artifactId>maven-antrun-plugin</artifactId>
+                  <executions>
+                     <execution>
+                        <phase>process-test-resources</phase>
+                        <configuration>
+                           <tasks>
+                              <echo>Setting up plugin dependencies...</echo>
+                              <property name="settings.localRepository" location="${user.home}/.m2/repository" />
+                              <mkdir dir="target/testsetup" />
+                              
+                              <mkdir dir="target/testsetup/plugins" />
+                              <copy toDir="target/testsetup/plugins" flatten="true">
+                                 <fileset dir="${settings.localRepository}/">
+                                    <include name="org/rhq/rhq-platform-plugin/${project.version}/rhq-platform-plugin-${project.version}.jar" />
+                                    <include name="org/rhq/rhq-jmx-plugin/${project.version}/rhq-jmx-plugin-${project.version}.jar" />
+                                    <include name="org/jboss/on/jopr-jboss-as-plugin/${project.version}/jopr-jboss-as-plugin-${project.version}.jar" />
+                                    <include name="org/jboss/on/jopr-jboss-as-5-plugin/${project.version}/jopr-jboss-as-5-plugin-${project.version}.jar" />
+                                 </fileset>
+                                 <fileset dir="${rhq.deploymentDir}">
+                                    <include name="${project.artifactId}-${project.version}.jar" />
+                                 </fileset>
+                              </copy>
+                              
+                              <mkdir dir="target/testsetup/lib" />                              
+                              <unzip dest="target/testsetup/lib">
+                                 <fileset dir="${settings.localRepository}/org/hyperic/sigar-dist/${sigar.version}" includes="*.zip" />
+                                 <patternset>
+                                    <include name="**/lib/sigar.jar" />
+                                    <include name="**/lib/bcel*.jar" />
+                                    <include name="**/lib/*.so" />
+                                    <include name="**/lib/*.sl" />
+                                    <include name="**/lib/*.dll" />
+                                    <include name="**/lib/*.dylib" />
+                                 </patternset>
+                              </unzip>
+                              <move todir="target/testsetup/lib" flatten="true">
+                                 <fileset dir="target/testsetup/lib">
+                                    <include name="**/lib/*" />
+                                 </fileset>
+                              </move>
+                              <delete dir="target/testsetup/lib/hyperic-sigar-${sigar.version}" />
+                           </tasks>
+                        </configuration>
+                        <goals>
+                           <goal>run</goal>
+                        </goals>
+                     </execution>
+
+                     <execution>
+                        <id>deploy</id>
+                        <phase>compile</phase>
+                        <configuration>
+                          <tasks>
+                            <mkdir dir="${rhq.deploymentDir}" />
+                            <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
+                            <echo>*** Updating ${deployment.file}...</echo>
+                            <jar destfile="${deployment.file}" basedir="${project.build.outputDirectory}" />
+                          </tasks>
+                        </configuration>
+                        <goals>
+                          <goal>run</goal>
+                        </goals>
+                     </execution>
+
+                     <execution>
+                        <id>deploy-jar-meta-inf</id>
+                        <phase>package</phase>
+                        <configuration>
+                          <tasks>
+                             <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
+                             <echo>*** Updating META-INF dir in ${deployment.file}...</echo>
+                             <unjar src="${project.build.directory}/${project.build.finalName}.jar" dest="${project.build.outputDirectory}">
+                               <patternset><include name="META-INF/**" /></patternset>
+                             </unjar>
+                             <jar destfile="${deployment.file}" manifest="${project.build.outputDirectory}/META-INF/MANIFEST.MF" update="true">
+                             </jar>
+                          </tasks>
+                        </configuration>
+                        <goals>
+                          <goal>run</goal>
+                        </goals>
+                     </execution>
+
+                     <execution>
+                        <id>undeploy</id>
+                        <phase>clean</phase>
+                        <configuration>
+                          <tasks>
+                            <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
+                            <echo>*** Deleting ${deployment.file}...</echo>
+                            <delete file="${deployment.file}" />
+                          </tasks>
+                        </configuration>
+                        <goals>
+                          <goal>run</goal>
+                        </goals>
+                     </execution>
+
+                   </executions>
+               </plugin>
+               
+                 <plugin>
+                  <artifactId>maven-surefire-plugin</artifactId>
+                  <configuration>
+                     <skip>true</skip>
+                  </configuration>
+                  <executions>
+                     <execution>
+                        <id>surefire-it</id>
+                        <phase>integration-test</phase>
+                        <goals>
+                           <goal>test</goal>
+                        </goals>
+                        <configuration>
+                           <skip>${maven.test.skip}</skip>
+                           <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
+                           <useSystemClassLoader>false</useSystemClassLoader>
+                           <argLine>-Dorg.hyperic.sigar.path=${basedir}/target/testsetup/lib</argLine>                           
+                           <systemProperties>
+                              <property>
+                                 <name>project.artifactId</name>
+                                 <value>${project.artifactId}</value>
+                              </property>
+                              <property>
+                                 <name>project.version</name>
+                                 <value>${project.version}</value>
+                              </property>
+                           </systemProperties>
+                        </configuration>
+                     </execution>
+                  </executions>
+               </plugin>
+
+            </plugins>
+         </build>
+      </profile>
+      
+      
+       <profile>
+         <id>dev</id>
+
+         <properties>
+            <rhq.rootDir>../../..</rhq.rootDir>
+            <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
+            <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/deploy/${rhq.earName}/rhq-downloads/rhq-plugins</rhq.deploymentDir>
+         </properties>
+
+         <build>
+            <plugins>
+
+               <plugin>
+                 <artifactId>maven-antrun-plugin</artifactId>
+                 <version>1.1</version>
+                 <executions>
+
+                     <execution>
+                        <id>deploy</id>
+                        <phase>compile</phase>
+                        <configuration>
+                          <tasks>
+                            <mkdir dir="${rhq.deploymentDir}" />
+                            <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
+                            <echo>*** Updating ${deployment.file}...</echo>
+                            <jar destfile="${deployment.file}" basedir="${project.build.outputDirectory}" />
+                          </tasks>
+                        </configuration>
+                        <goals>
+                          <goal>run</goal>
+                        </goals>
+                     </execution>
+
+                     <execution>
+                        <id>deploy-jar-meta-inf</id>
+                        <phase>package</phase>
+                        <configuration>
+                          <tasks>
+                             <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
+                             <echo>*** Updating META-INF dir in ${deployment.file}...</echo>
+                             <unjar src="${project.build.directory}/${project.build.finalName}.jar" dest="${project.build.outputDirectory}">
+                               <patternset><include name="META-INF/**" /></patternset>
+                             </unjar>
+                             <jar destfile="${deployment.file}" manifest="${project.build.outputDirectory}/META-INF/MANIFEST.MF" update="true">
+                             </jar>
+                          </tasks>
+                        </configuration>
+                        <goals>
+                          <goal>run</goal>
+                        </goals>
+                     </execution>
+
+                     <execution>
+                        <id>undeploy</id>
+                        <phase>clean</phase>
+                        <configuration>
+                          <tasks>
+                            <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
+                            <echo>*** Deleting ${deployment.file}...</echo>
+                            <delete file="${deployment.file}" />
+                          </tasks>
+                        </configuration>
+                        <goals>
+                          <goal>run</goal>
+                        </goals>
+                     </execution>
+
+                   </executions>
+               </plugin>
+
+            </plugins>
+         </build>
+      </profile>
+      
+   </profiles>
+
+</project>

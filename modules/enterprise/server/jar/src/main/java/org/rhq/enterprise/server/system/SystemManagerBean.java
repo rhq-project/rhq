@@ -201,7 +201,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
     }
 
     private Map<String, String> getDriftServerPlugins() {
-        DriftServerPluginManager pluginMgr = getDriftSererPluginManager();
+        DriftServerPluginManager pluginMgr = getDriftServerPluginManager();
         Map<String, String> plugins = new HashMap<String, String>();
 
         for (ServerPluginEnvironment env : pluginMgr.getPluginEnvironments()) {
@@ -211,7 +211,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
         return plugins;
     }
 
-    private DriftServerPluginManager getDriftSererPluginManager() {
+    private DriftServerPluginManager getDriftServerPluginManager() {
         MasterServerPluginContainer masterPC = LookupUtil.getServerPluginService().getMasterPluginContainer();
         if (masterPC == null) {
             log.warn(MasterServerPluginContainer.class.getSimpleName() + " is not started yet");

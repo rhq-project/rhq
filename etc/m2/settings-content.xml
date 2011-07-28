@@ -33,7 +33,7 @@
       <!--  Profile to use to point test runs at a different db -->
       <id>test.content</id>
       <properties>
-        <rhq.ds.connection-url>jdbc:postgresql://127.0.0.1:5432/rhqcontent</rhq.ds.connection-url>
+        <rhq.test.ds.connection-url>jdbc:postgresql://127.0.0.1:5432/rhqcontent</rhq.test.ds.connection-url>
         <DatabaseTest.nofail>true</DatabaseTest.nofail>
 
         <!-- comm and agent config properties -->

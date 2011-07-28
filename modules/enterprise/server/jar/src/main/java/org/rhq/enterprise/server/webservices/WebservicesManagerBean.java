@@ -125,6 +125,8 @@ import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.sync.ExportReport;
 import org.rhq.core.domain.sync.ExportValidationReport;
 import org.rhq.core.domain.sync.ImportReport;
+import org.rhq.core.domain.sync.ImporterConfiguration;
+import org.rhq.core.domain.sync.ImporterConfigurationDefinition;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
@@ -1206,12 +1208,21 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return synchronizationManager.exportAllSubsystems(subject);
     }
     
-    public ImportReport importAllSubsystems(Subject subject, byte[] exportFile) {
-        return synchronizationManager.importAllSubsystems(subject, exportFile);
-    }
-    
     public ExportValidationReport validate(Subject subject, byte[] exportFile) {
         return synchronizationManager.validate(subject, exportFile);
+    }
+    
+    public List<ImporterConfigurationDefinition> getConfigurationDefinitionOfAllImporters() {
+        return synchronizationManager.getConfigurationDefinitionOfAllImporters();
+    }
+    
+    public ImporterConfigurationDefinition getImporterConfigurationDefinition(String importerClass) {
+        return synchronizationManager.getImporterConfigurationDefinition(importerClass);
+    }
+    
+    public ImportReport importAllSubsystems(Subject subject, byte[] exportFile,
+        List<ImporterConfiguration> importerConfigurations) {
+        return synchronizationManager.importAllSubsystems(subject, exportFile, importerConfigurations);
     }
     
     //SYNCHRONIZATIONMANANGER: END -------------------------

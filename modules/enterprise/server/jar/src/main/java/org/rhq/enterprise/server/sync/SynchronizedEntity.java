@@ -22,6 +22,9 @@ package org.rhq.enterprise.server.sync;
 import org.rhq.enterprise.server.sync.exporters.Exporter;
 import org.rhq.enterprise.server.sync.exporters.MetricTemplateExporter;
 import org.rhq.enterprise.server.sync.exporters.SystemSettingsExporter;
+import org.rhq.enterprise.server.sync.importers.Importer;
+import org.rhq.enterprise.server.sync.importers.MetricTemplateImporter;
+import org.rhq.enterprise.server.sync.importers.SystemSettingsImporter;
 
 /**
  * The enum of all possible synchronized entities. 
@@ -61,16 +64,32 @@ public enum SynchronizedEntity {
         public Exporter<?, ?> getExporter() {
             return new MetricTemplateExporter();
         }
+        
+        @Override
+        public Importer<?, ?> getImporter() {
+            return new MetricTemplateImporter();
+        }
     },
     SYSTEM_SETTINGS {
         @Override
         public Exporter<?, ?> getExporter() {
             return new SystemSettingsExporter();
         }  
+        
+        @Override
+        public Importer<?, ?> getImporter() {
+            return new SystemSettingsImporter();
+        }
     };
     
     /**
      * Returns an exporter for given subsystem.
      */
     public abstract Exporter<?, ?> getExporter();
+    
+    /**
+     * Returns the importer for given subsystem.
+     * @return
+     */
+    public abstract Importer<?, ?> getImporter();
 }

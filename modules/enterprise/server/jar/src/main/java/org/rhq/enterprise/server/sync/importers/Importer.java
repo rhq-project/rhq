@@ -20,8 +20,12 @@
 package org.rhq.enterprise.server.sync.importers;
 
 import javax.persistence.EntityManager;
+import javax.xml.stream.XMLStreamException;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.enterprise.server.sync.ExportReader;
 
 /**
  * Implementations of this interface are used to import entities into the database.
@@ -33,21 +37,27 @@ import org.rhq.core.domain.auth.Subject;
 public interface Importer<Entity, ExportedType> {
 
     /**
+     * A configuration definition describing the configuration of the importer and
+     * the default values for individual properties.
+     */
+    ConfigurationDefinition getImportConfigurationDefinition();
+    
+    /**
      * Initializes the importer.
      * 
      * @param subject the current user
-     */
-    void init(Subject subject);
+     * @param entityManager the entity manager the importer can use to persist entities
+     * @param importConfiguration the configuration of the import as defined by the {@link #getImportConfigurationDefinition()}
+     */    
+    void init(Subject subject, EntityManager entityManager, Configuration importConfiguration);
 
     /**
      * Returns an entity matcher that can match the entities from the export file
      * with the real entities in the database.
-     *  
-     * @param entityManager the entity manager the matcher can use to find the entities in the database.
      * 
      * @return
      */
-    ExportedEntityMatcher<Entity, ExportedType> getExportedEntityMatcher(EntityManager entityManager);
+    ExportedEntityMatcher<Entity, ExportedType> getExportedEntityMatcher();
 
     /**
      * Updates the entity with the data from the export.
@@ -57,7 +67,23 @@ public interface Importer<Entity, ExportedType> {
      * 
      * @param entity the entity to persist (may be null if the {@link #getExportedEntityMatcher(EntityManager)} returned null of if the entity matcher didn't find a match)
      * @param exportedEntity the entity found in the export file that should be used to update the entity in the database
-     * @param entityManager the entity manager to use to persist the entity to the database
      */
-    void update(Entity entity, ExportedType exportedEntity, EntityManager entityManager);
+    void update(Entity entity, ExportedType exportedEntity);
+    
+    /**
+     * Unmarshalls an entity from the provided reader.
+     * 
+     * @param reader
+     * @return
+     * @throws XMLStreamException
+     */
+    ExportedType unmarshallExportedEntity(ExportReader reader) throws XMLStreamException;
+    
+    /**
+     * Finishes the import. This method is called after all entities from the export file
+     * have been {@link #update(Object, Object) updated}.
+     * <p>
+     * This is useful for importers that need to batch the updates to the database.
+     */
+    void finishImport();
 }

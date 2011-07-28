@@ -20,8 +20,12 @@
 package org.rhq.enterprise.server.sync.test;
 
 import javax.persistence.EntityManager;
+import javax.xml.stream.XMLStreamException;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.enterprise.server.sync.ExportReader;
 import org.rhq.enterprise.server.sync.NoSingleEntity;
 import org.rhq.enterprise.server.sync.importers.ExportedEntityMatcher;
 import org.rhq.enterprise.server.sync.importers.Importer;
@@ -30,15 +34,29 @@ import org.rhq.enterprise.server.sync.importers.NoSingleEntityMatcher;
 public class DummyImporter<T> implements Importer<NoSingleEntity, T> {
 
     @Override
-    public void init(Subject subject) {
+    public ConfigurationDefinition getImportConfigurationDefinition() {
+        return new ConfigurationDefinition("dummy", "dummy");
+    }
+    
+    @Override
+    public void init(Subject subject, EntityManager entityManager, Configuration configuration) {
     }
 
     @Override
-    public ExportedEntityMatcher<NoSingleEntity, T> getExportedEntityMatcher(EntityManager entityManager) {
+    public ExportedEntityMatcher<NoSingleEntity, T> getExportedEntityMatcher() {
         return new NoSingleEntityMatcher<T>();
     }
 
     @Override
-    public void update(NoSingleEntity entity, T exportedEntity, EntityManager entityManager) {
+    public void update(NoSingleEntity entity, T exportedEntity) {
     }        
+    
+    @Override
+    public void finishImport() {
+    }
+    
+    @Override
+    public T unmarshallExportedEntity(ExportReader reader) throws XMLStreamException {
+        return null;
+    }
 }

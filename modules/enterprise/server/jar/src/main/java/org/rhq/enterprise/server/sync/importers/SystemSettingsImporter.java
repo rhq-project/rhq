@@ -20,9 +20,13 @@
 package org.rhq.enterprise.server.sync.importers;
 
 import javax.persistence.EntityManager;
+import javax.xml.stream.XMLStreamException;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.sync.entity.SystemSettings;
+import org.rhq.enterprise.server.sync.ExportReader;
 import org.rhq.enterprise.server.sync.NoSingleEntity;
 
 /**
@@ -33,30 +37,58 @@ import org.rhq.enterprise.server.sync.NoSingleEntity;
 public class SystemSettingsImporter implements Importer<NoSingleEntity, SystemSettings> {
 
     /* (non-Javadoc)
-     * @see org.rhq.enterprise.server.sync.importers.Importer#init(org.rhq.core.domain.auth.Subject)
+     * @see org.rhq.enterprise.server.sync.importers.Importer#getImportConfigurationDefinition()
      */
     @Override
-    public void init(Subject subject) {
+    public ConfigurationDefinition getImportConfigurationDefinition() {
+        return new ConfigurationDefinition("SystemSettingsConfiguration", "TBD");
+    }
+
+    /* (non-Javadoc)
+     * @see org.rhq.enterprise.server.sync.importers.Importer#init(org.rhq.core.domain.auth.Subject, javax.persistence.EntityManager, org.rhq.core.domain.configuration.Configuration)
+     */
+    @Override
+    public void init(Subject subject, EntityManager entityManager, Configuration importConfiguration) {
         // TODO Auto-generated method stub
         
     }
 
     /* (non-Javadoc)
-     * @see org.rhq.enterprise.server.sync.importers.Importer#getExportedEntityMatcher(javax.persistence.EntityManager)
+     * @see org.rhq.enterprise.server.sync.importers.Importer#getExportedEntityMatcher()
      */
     @Override
-    public ExportedEntityMatcher<NoSingleEntity, SystemSettings> getExportedEntityMatcher(EntityManager entityManager) {
-        return new NoSingleEntityMatcher<SystemSettings>();
+    public ExportedEntityMatcher<NoSingleEntity, SystemSettings> getExportedEntityMatcher() {
+        // TODO Auto-generated method stub
+        return null;
     }
 
     /* (non-Javadoc)
-     * @see org.rhq.enterprise.server.sync.importers.Importer#update(java.lang.Object, java.lang.Object, javax.persistence.EntityManager)
+     * @see org.rhq.enterprise.server.sync.importers.Importer#update(java.lang.Object, java.lang.Object)
      */
     @Override
-    public void update(NoSingleEntity entity, SystemSettings exportedEntity, EntityManager entityManager) {
+    public void update(NoSingleEntity entity, SystemSettings exportedEntity) {
         // TODO Auto-generated method stub
         
     }
+
+    /* (non-Javadoc)
+     * @see org.rhq.enterprise.server.sync.importers.Importer#unmarshallExportedEntity(org.rhq.enterprise.server.sync.ExportReader)
+     */
+    @Override
+    public SystemSettings unmarshallExportedEntity(ExportReader reader) throws XMLStreamException {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    /* (non-Javadoc)
+     * @see org.rhq.enterprise.server.sync.importers.Importer#finishImport()
+     */
+    @Override
+    public void finishImport() {
+        // TODO Auto-generated method stub
+        
+    }
+
 
     
 }

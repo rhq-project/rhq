@@ -73,7 +73,13 @@ import org.rhq.core.domain.resource.ResourceType;
         + " WHERE md.id IN ( :ids )"), //
     @NamedQuery(name = MeasurementDefinition.DISABLE_ALL, query = "" //
         + "UPDATE MeasurementDefinition md " //
-        + "   SET md.defaultOn = false") })
+        + "   SET md.defaultOn = false"),
+    @NamedQuery(name = MeasurementDefinition.FIND_BY_NAME_AND_RESOURCE_TYPE_NAME, query = "" //
+        + " SELECT md FROM MeasurementDefinition md"
+        + " WHERE md.name = :name " 
+        + " AND md.resourceType.name = :resourceTypeName"
+        + " AND md.resourceType.plugin = :resourceTypePlugin")
+})
 @SequenceGenerator(name = "id", sequenceName = "RHQ_MEASUREMENT_DEF_ID_SEQ")
 @Table(name = "RHQ_MEASUREMENT_DEF")
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -103,7 +109,8 @@ public class MeasurementDefinition implements Serializable {
     public static final String FIND_SCHEDULE_COMPOSITE_FOR_RESOURCE_TYPE = "MeasurementDefinition.findScheduleCompositeForResourceType";
     public static final String FIND_BY_IDS = "MeasurementDefinition.findByIds";
     public static final String DISABLE_ALL = "MeasurementDefinition.disableAll";
-
+    public static final String FIND_BY_NAME_AND_RESOURCE_TYPE_NAME = "MeasurementDefinition.findByNameAndResourceTypeName";
+    
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "id")
     @Id

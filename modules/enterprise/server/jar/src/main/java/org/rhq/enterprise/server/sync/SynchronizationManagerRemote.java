@@ -19,6 +19,9 @@
 
 package org.rhq.enterprise.server.sync;
 
+import java.util.List;
+import java.util.Set;
+
 import javax.ejb.Remote;
 
 import org.rhq.core.domain.auth.Subject;
@@ -26,6 +29,8 @@ import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.sync.ExportReport;
 import org.rhq.core.domain.sync.ExportValidationReport;
 import org.rhq.core.domain.sync.ImportReport;
+import org.rhq.core.domain.sync.ImporterConfiguration;
+import org.rhq.core.domain.sync.ImporterConfigurationDefinition;
 
 /**
  * 
@@ -54,6 +59,28 @@ public interface SynchronizationManagerRemote {
     ExportReport exportAllSubsystems(Subject subject);
     
     ExportValidationReport validate(Subject subject, byte[] exportFile);
+
+    /**
+     * Returns the configuration definition of the importer with given type.
+     * @param importerClass
+     * @return
+     */
+    ImporterConfigurationDefinition getImporterConfigurationDefinition(String importerClass);
     
-    ImportReport importAllSubsystems(Subject subject, byte[] exportFile);
+    /**
+     * Returns the configuration definitions of all known importers.
+     * @return
+     */
+    List<ImporterConfigurationDefinition> getConfigurationDefinitionOfAllImporters();
+    
+    /**
+     * Imports everything from the export file.
+     * 
+     * @param subject the authenticated user
+     * @param exportFile the contents of the export file
+     * @param importerConfigurations the configurations of individual importers to be used when importing
+     *        
+     * @return the report describing the result of the export
+     */
+    ImportReport importAllSubsystems(Subject subject, byte[] exportFile, List<ImporterConfiguration> importerConfigurations);
 }

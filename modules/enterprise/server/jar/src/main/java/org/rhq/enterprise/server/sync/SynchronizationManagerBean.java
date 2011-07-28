@@ -23,8 +23,10 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -42,8 +44,11 @@ import org.rhq.core.domain.sync.ExportValidationReport;
 import org.rhq.core.domain.sync.ExportWrapper;
 import org.rhq.core.domain.sync.ExporterMessages;
 import org.rhq.core.domain.sync.ImportReport;
+import org.rhq.core.domain.sync.ImporterConfiguration;
+import org.rhq.core.domain.sync.ImporterConfigurationDefinition;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.sync.exporters.Exporter;
+import org.rhq.enterprise.server.sync.importers.Importer;
 
 /**
  * 
@@ -111,14 +116,14 @@ public class SynchronizationManagerBean implements SynchronizationManagerLocal, 
     }
 
     @Override
-    public ImportReport importAllSubsystems(Subject subject, InputStream exportFile) {
+    public ImportReport importAllSubsystems(Subject subject, InputStream exportFile, List<ImporterConfiguration> configurations) {
         //TODO implement
         return null;
     }
 
     @Override
-    public ImportReport importAllSubsystems(Subject subject, byte[] exportFile) {
-        return importAllSubsystems(subject, new ByteArrayInputStream(exportFile));
+    public ImportReport importAllSubsystems(Subject subject, byte[] exportFile, List<ImporterConfiguration> configurations) {
+        return importAllSubsystems(subject, new ByteArrayInputStream(exportFile), configurations);
     }
     
     @Override
@@ -130,5 +135,38 @@ public class SynchronizationManagerBean implements SynchronizationManagerLocal, 
     @Override
     public ExportValidationReport validate(Subject subject, byte[] exportFile) {
         return validate(subject, new ByteArrayInputStream(exportFile));
+    }
+    
+    @Override
+    public ImporterConfigurationDefinition getImporterConfigurationDefinition(String importerClass) {
+        try {
+            Class<?> cls = Class.forName(importerClass);
+            if (!Importer.class.isAssignableFrom(cls)) {
+                LOG.debug("Supplied importer class does not implement the importer interface: '" + importerClass + "'.");
+                return null;
+            }
+            
+            Importer<?, ?> imp = (Importer<?, ?>) cls.newInstance();
+            
+            return new ImporterConfigurationDefinition(importerClass, imp.getImportConfigurationDefinition());
+        } catch (ClassNotFoundException e) {
+            LOG.debug("Supplied importer class is invalid: '" + importerClass + "'.", e);
+            return null;
+        } catch (Exception e) {
+            LOG.error("Failed to instantiate the importer '" + importerClass + "'. This should not happen.");
+            throw new IllegalStateException("Failed to instantiate importer '" + importerClass + ".", e);
+        }
+    }
+
+    @Override
+    public List<ImporterConfigurationDefinition> getConfigurationDefinitionOfAllImporters() {
+        List<ImporterConfigurationDefinition> ret = new ArrayList<ImporterConfigurationDefinition>();
+        
+        for(SynchronizedEntity e : SynchronizedEntity.values()) {
+            Importer<?, ?> imp = e.getImporter();
+            ret.add(new ImporterConfigurationDefinition(imp.getClass().getName(), imp.getImportConfigurationDefinition()));
+        }
+        
+        return ret;
     }
 }

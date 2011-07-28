@@ -20,6 +20,8 @@
 package org.rhq.enterprise.server.sync;
 
 import java.io.InputStream;
+import java.util.List;
+import java.util.Set;
 
 import javax.ejb.Local;
 
@@ -29,6 +31,8 @@ import org.rhq.core.domain.sync.ExportValidationReport;
 import org.rhq.core.domain.sync.ExportWrapper;
 import org.rhq.core.domain.sync.ExportReport;
 import org.rhq.core.domain.sync.ImportReport;
+import org.rhq.core.domain.sync.ImporterConfiguration;
+import org.rhq.core.domain.sync.ImporterConfigurationDefinition;
 
 /**
  * 
@@ -58,7 +62,7 @@ public interface SynchronizationManagerLocal {
     
     ExportValidationReport validate(Subject subject, InputStream exportFile);
     
-    ImportReport importAllSubsystems(Subject subject, InputStream exportFile);
+    ImportReport importAllSubsystems(Subject subject, InputStream exportFile, List<ImporterConfiguration> importerConfigurations);
     
     //-------- THE FOLLOWING METHODS ARE SHARED WITH THE REMOTE INTERFACE ------------
     
@@ -73,7 +77,23 @@ public interface SynchronizationManagerLocal {
      */
     ExportReport exportAllSubsystems(Subject subject);
 
+    /**
+     * @see SynchronizationManagerRemote#validate(Subject, byte[]) 
+     */
     ExportValidationReport validate(Subject subject, byte[] exportFile);
+
+    /**
+     * @see SynchronizationManagerRemote#getImporterConfigurationDefinition(String) 
+     */
+    ImporterConfigurationDefinition getImporterConfigurationDefinition(String importerClass);
     
-    ImportReport importAllSubsystems(Subject subject, byte[] exportFile);
+    /**
+     * @see SynchronizationManagerRemote#getConfigurationDefinitionOfAllImporters()
+     */
+    List<ImporterConfigurationDefinition> getConfigurationDefinitionOfAllImporters();
+    
+    /**
+     * @see SynchronizationManagerRemote#importAllSubsystems(Subject, byte[], Set)
+     */
+    ImportReport importAllSubsystems(Subject subject, byte[] exportFile, List<ImporterConfiguration> importerConfigurations);
 }

@@ -167,9 +167,13 @@ public class DumpBytes {
         int num_bytes;
 
         try {
-            fis = new FileInputStream(file);
             file_contents = new byte[(int) file.length()];
-            num_bytes = fis.read(file_contents);
+            fis = new FileInputStream(file);
+            try {
+                num_bytes = fis.read(file_contents);
+            } finally {
+                fis.close();
+            }
 
             if (num_bytes != file_contents.length) {
                 throw new IllegalStateException(num_bytes + "!=" + file_contents.length);

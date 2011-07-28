@@ -20,6 +20,7 @@ package org.rhq.core.db.ant.dbupgrade;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -28,9 +29,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+
 import mazz.i18n.Msg;
+
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Task;
+
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.db.DbUtil;
@@ -70,16 +74,16 @@ public class DBUpgrader extends Task {
 
     private Connection connection;
     private boolean doCloseConnection;
-    
+
     public DBUpgrader() {
         doCloseConnection = true;
     }
-    
+
     public DBUpgrader(Connection connection) {
         this.connection = connection;
         doCloseConnection = false;
     }
-    
+
     /**
      * The URL to the database that is to be upgraded.
      *
@@ -339,12 +343,20 @@ public class DBUpgrader extends Task {
         if (typeMapFile == null) {
             typeMaps = TypeMap.loadKnownTypeMaps();
         } else {
+            FileInputStream fis = null;
             try {
-                FileInputStream fis = new FileInputStream(typeMapFile);
+                fis = new FileInputStream(typeMapFile);
                 typeMaps = TypeMap.loadTypeMapsFromStream(fis);
             } catch (Exception e) {
                 throw new BuildException(MSG.getMsg(DbAntI18NResourceKeys.DBUPGRADE_TYPE_MAP_FILE_ERROR, typeMapFile
                     .getAbsolutePath(), e), e);
+            } finally {
+                if (fis != null) {
+                    try {
+                        fis.close();
+                    } catch (IOException e) {
+                    }
+                }
             }
         }
 
@@ -461,7 +473,7 @@ public class DBUpgrader extends Task {
         if (connection == null) {
             connection = DbUtil.getConnection(jdbcUrl, jdbcUser, jdbcPassword);
         }
-        return connection; 
+        return connection;
     }
 
     /**
@@ -474,7 +486,7 @@ public class DBUpgrader extends Task {
         this.connection = connection;
         doCloseConnection = connection == null;
     }
-    
+
     /**
      * Returns the type of database that is being upgraded.
      *

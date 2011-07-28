@@ -190,7 +190,11 @@ public class Version {
             try {
                 URL jarUrl = Version.class.getProtectionDomain().getCodeSource().getLocation();
                 JarFile jarFile = new JarFile(new File(jarUrl.toURI()));
-                manifest = jarFile.getManifest();
+                try {
+                    manifest = jarFile.getManifest();
+                } finally {
+                    jarFile.close();
+                }
             } catch (Exception e) {
                 return new Properties();
             }

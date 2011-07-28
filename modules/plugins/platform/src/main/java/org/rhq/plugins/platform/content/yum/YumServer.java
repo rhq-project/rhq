@@ -178,15 +178,18 @@ public class YumServer {
         File file = new File(yumconf);
         try {
             PrintWriter writer = new PrintWriter(file);
-            writer.println("[rhq]");
-            writer.println("name=RHQ");
-            writer.printf("baseurl=%s\n", context.baseurl());
-            writer.printf("metadata_expire=%d\n", context.getMetadataCacheTimeout());
-            writer.println("enabled=1");
-            writer.println("gpgcheck=0");
-            writer.println("keepalive=0");
-            writer.println("timeout=90");
-            writer.close();
+            try {
+                writer.println("[rhq]");
+                writer.println("name=RHQ");
+                writer.printf("baseurl=%s\n", context.baseurl());
+                writer.printf("metadata_expire=%d\n", context.getMetadataCacheTimeout());
+                writer.println("enabled=1");
+                writer.println("gpgcheck=0");
+                writer.println("keepalive=0");
+                writer.println("timeout=90");
+            } finally {
+                writer.close();
+            }
         } catch (Exception e) {
             String msg = "The yum repo configuration file '" + file + "' could not be created/updated!";
             log.error(msg, e);

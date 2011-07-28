@@ -184,7 +184,11 @@ public class Version {
             Properties newProps = new Properties();
 
             try {
-                newProps.load(stream);
+                try {
+                    newProps.load(stream);
+                } finally {
+                    stream.close();
+                }
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }

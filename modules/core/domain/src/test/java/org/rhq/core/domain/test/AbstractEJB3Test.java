@@ -35,15 +35,13 @@ import javax.transaction.TransactionManager;
 
 import org.testng.AssertJUnit;
 import org.testng.annotations.AfterGroups;
-import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeGroups;
-import org.testng.annotations.BeforeSuite;
 
 import org.jboss.ejb3.embedded.EJB3StandaloneBootstrap;
 import org.jboss.ejb3.embedded.EJB3StandaloneDeployer;
 
 public abstract class AbstractEJB3Test extends AssertJUnit {
-//    @BeforeSuite(groups = "integration.ejb3")
+    //    @BeforeSuite(groups = "integration.ejb3")
     @BeforeGroups(groups = "integration.ejb3")
     public static void startupEmbeddedJboss() {
         System.out.println("Starting ejb3...");
@@ -84,7 +82,7 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
         }
     }
 
-//    @AfterSuite
+    //    @AfterSuite
     @AfterGroups(groups = "integration.ejb3")
     public static void shutdownEmbeddedJboss() {
         EJB3StandaloneBootstrap.shutdown();
@@ -93,12 +91,20 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
     private TransactionManager tm;
 
     public TransactionManager getTransactionManager() {
+        InitialContext initialContext = null;
         try {
-            tm = (TransactionManager) getInitialContext().lookup("java:/TransactionManager");
+            initialContext = getInitialContext();
+            tm = (TransactionManager) initialContext.lookup("java:/TransactionManager");
             return tm;
         } catch (NamingException e) {
             e.printStackTrace();
             throw new RuntimeException("Failed to load transaction manager", e);
+        } finally {
+            try {
+                initialContext.close();
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to close the initial context - why did this happen?", e);
+            }
         }
     }
 

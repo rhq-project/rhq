@@ -939,7 +939,7 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
 
             return server_configuration;
         } finally {
-            // we know this isn't non-null; if it was, we would have thrown the IOException earlier.
+            // we know this is not null; if it was, we would have thrown the IOException earlier.
             config_file_input_stream.close();
         }
     }

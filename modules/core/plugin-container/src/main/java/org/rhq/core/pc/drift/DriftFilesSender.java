@@ -12,7 +12,6 @@ import org.rhq.common.drift.DirectoryEntry;
 import org.rhq.common.drift.FileEntry;
 import org.rhq.common.drift.Headers;
 import org.rhq.core.domain.drift.DriftFile;
-import org.rhq.core.util.file.FileUtil;
 
 import static org.rhq.core.util.file.FileUtil.copyFile;
 
@@ -59,7 +58,7 @@ public class DriftFilesSender implements Runnable {
 
             for (DriftFile driftFile : driftFiles) {
                 File file = find(driftFile);
-                if (file == null) {
+                if (file == null || !file.exists()) {
                     log.warn("Unable to find file for " + driftFile);
                 } else {
                     copyFile(file, new File(contentDir, driftFile.getHashId()));

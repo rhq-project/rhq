@@ -49,6 +49,7 @@ import com.smartgwt.client.widgets.form.validator.LengthRangeValidator;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.alert.AlertPriority;
+import org.rhq.core.domain.criteria.BaseCriteria;
 import org.rhq.core.domain.drift.DriftCategory;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.operation.OperationRequestStatus;
@@ -72,7 +73,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * @author Greg Hinkle
  * @author Ian Springer
  */
-public abstract class RPCDataSource<T, C extends org.rhq.core.domain.criteria.Criteria> extends DataSource {
+public abstract class RPCDataSource<T, C extends BaseCriteria> extends DataSource {
 
     protected static final Messages MSG = CoreGUI.getMessages();
 

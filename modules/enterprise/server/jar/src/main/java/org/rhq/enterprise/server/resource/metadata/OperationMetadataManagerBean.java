@@ -2,18 +2,22 @@ package org.rhq.enterprise.server.resource.metadata;
 
 import java.util.Set;
 
+import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.operation.OperationDefinition;
+import org.rhq.core.domain.operation.OperationHistory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.operation.OperationManagerLocal;
 
 @Stateless
 public class OperationMetadataManagerBean implements OperationMetadataManagerLocal {
@@ -65,6 +69,11 @@ public class OperationMetadataManagerBean implements OperationMetadataManagerLoc
 
         existingDefinitions.removeAll(opsToRemove);
         for (OperationDefinition opToDelete : opsToRemove) {
+            // First delete history items that hang on the definition
+            Query q = entityMgr.createNamedQuery(OperationHistory.QUERY_DELETE_BY_DEFINITION);
+            q.setParameter("definition",opToDelete);
+            q.executeUpdate();
+
             entityMgr.remove(opToDelete);
         }
     }

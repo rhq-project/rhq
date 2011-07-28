@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.drift.wizard;
 
+import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
 
 import org.rhq.core.domain.configuration.Configuration;
@@ -42,10 +43,13 @@ public class DriftAddConfigWizardConfigStep extends AbstractWizardStep {
     }
 
     public Canvas getCanvas(Locatable parent) {
-        // This VLayout isn't really necessary at the moment, but provides for easier expansion if we add more items
+        // This VLayout allows us to set overflow on it and be able to scroll the config editor but always
+        // be able to see the wizard's next/cancel buttons. This vlayout also provides for easier expansion if we add more items.
         if (vLayout == null) {
             String locatorId = (null == parent) ? "DriftConfig" : parent.extendLocatorId("DriftConfig");
             vLayout = new LocatableVLayout(locatorId);
+
+            vLayout.setOverflow(Overflow.AUTO);
 
             ConfigurationDefinition def = DriftConfigurationDefinition.getInstance();
             Configuration startingConfig = wizard.getNewStartingConfiguration();

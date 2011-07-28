@@ -106,8 +106,14 @@ public class PluginConfigurationMetadataManagerBean implements PluginConfigurati
         for (PropertyDefinition propertyDef : updateReport.getNewPropertyDefinitions()) {
             if (propertyDef.isRequired()) {
                 Property templateProperty = templateConfiguration.get(propertyDef.getName());
-                pluginConfiguration.put(templateProperty.deepCopy(false));
-                modified = true;
+                if (templateProperty==null) {
+                    throw new IllegalArgumentException("The property [" + propertyDef.getName()
+                            + "] marked as required in the configuration definition of [" + propertyDef.getConfigurationDefinition().getName()
+                            + "] has no attribute 'default'");
+                } else {
+                    pluginConfiguration.put(templateProperty.deepCopy(false));
+                    modified = true;
+                }
             }
         }
 

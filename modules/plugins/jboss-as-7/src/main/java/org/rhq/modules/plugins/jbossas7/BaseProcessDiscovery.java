@@ -79,7 +79,12 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
             String description = discoveryContext.getResourceType().getDescription();
             String version = null;
 
+            //retrieve specific boot log file. Override for Standalone as server.log is more appropriate
+            String bootLogFile = getLogFileFromCommandLine(commandLine);
+            String logFile = bootLogFile;
+
             if (psName.equals("HostController")) {
+
                 readStandaloneOrHostXml(psr.getProcessInfo(), true);
                 HostPort hp = getDomainControllerFromHostXml();
                 if (hp.isLocal) {
@@ -132,12 +137,10 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
 
                 fillUserPassFromFile(config, "standalone", serverNameFull);
 
+                //preload server.log file for event log monitoring
+                logFile = bootLogFile.substring(0, bootLogFile.lastIndexOf("/")) + File.separator + "server.log";
             }
 
-            //            String logFile = getLogFileFromCommandLine(commandLine);
-            //monitor the server.log instead of the boot.log
-            String bootLogFile = getLogFileFromCommandLine(commandLine);
-            String logFile = bootLogFile.substring(0, bootLogFile.lastIndexOf("/")) + File.separator + "server.log";
             initLogEventSourcesConfigProp(logFile, config);
 
             HostPort managmentPort = getManagementPortFromHostXml();

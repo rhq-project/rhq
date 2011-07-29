@@ -50,7 +50,7 @@
         xmlns:c="urn:xmlns:rhq-configuration"
         >
 
-<!--    <depends plugin="JMX" useClasses="true"/> -->
+    <depends plugin="JMX" useClasses="true"/> 
 
 
     <!-- TODO I think we should introduce an abstract AS7 plugin that contains some base functionality and then
@@ -92,6 +92,40 @@
             <c:simple-property name="domainHost" type="string" readOnly="true" required="false" description="Host name within the AS7 domain"/>
 
             &logSources;
+         <c:group name="event" displayName="Events">
+             <c:list-property name="logEventSources">
+                 <c:map-property name="logEventSource">
+                     <c:simple-property name="logFilePath" type="file" summary="true"
+                                        description="The absolute path to the source log file."/>
+                     <c:simple-property name="enabled" type="boolean" summary="true"
+                                        description="A flag indicating whether of not this log Event source is currently
+                                                     enabled (i.e. whether the associated log file should be tailed for
+                                                     new entries)."/>
+                     <c:simple-property name="dateFormat" required="false"
+                                        description="The date format to use when parsing the dates in log entries. The
+                                                     format must be in the syntax defined by the Java SimpleDateFormat
+                                                     class. If not specified, the three date formats that are predefined
+                                                     by Log4J (ISO8601, DATE, and ABSOLUTE) will be tried."/>
+                     <c:simple-property name="includesPattern" required="false"
+                                        description="A regular expression against which a log entry's detail is matched
+                                                     to determine if an Event should be fired for that entry. If not
+                                                     specified, no filtering of log entries will be done based on their
+                                                     detail."/>
+                     <c:simple-property name="minimumSeverity" required="false" default="error"
+                                        description="The minimum severity of Events that should be collected for this
+                                                     source. If not specified, there is no minimum severity (i.e. all
+                                                     events will be collected).">
+                         <c:property-options>
+                            <c:option name="debug" value="debug"/>
+                            <c:option name="info"  value="info"/>
+                            <c:option name="warn"  value="warn"/>
+                            <c:option name="error" value="error"/>
+                            <c:option name="fatal" value="fatal"/>
+                         </c:property-options>
+                     </c:simple-property>
+                 </c:map-property>
+             </c:list-property>
+         </c:group>
         </plugin-configuration>
 
         <process-scan name="HostController" query="process|basename|match=^java.*,arg|org.jboss.as.host-controller|match=.*"/>
@@ -172,6 +206,7 @@
                 displayType="summary" measurementType="dynamic" description="Max time for a request since last metric get" units="milliseconds"
                 displayName="Maximum request time"/>
 
+        <event name="logEntry" description="an entry in a log file"/>
 
         <resource-configuration>
             <c:group name="attribute:schema-locations" displayName="Schema locations">
@@ -319,6 +354,41 @@
                 </c:map-property>
             </c:list-property>
             &logSources;
+
+         <c:group name="event" displayName="Events">
+             <c:list-property name="logEventSources">
+                 <c:map-property name="logEventSource">
+                     <c:simple-property name="logFilePath" type="file" summary="true"
+                                        description="The absolute path to the source log file."/>
+                     <c:simple-property name="enabled" type="boolean" summary="true"
+                                        description="A flag indicating whether of not this log Event source is currently
+                                                     enabled (i.e. whether the associated log file should be tailed for
+                                                     new entries)."/>
+                     <c:simple-property name="dateFormat" required="false"
+                                        description="The date format to use when parsing the dates in log entries. The
+                                                     format must be in the syntax defined by the Java SimpleDateFormat
+                                                     class. If not specified, the three date formats that are predefined
+                                                     by Log4J (ISO8601, DATE, and ABSOLUTE) will be tried."/>
+                     <c:simple-property name="includesPattern" required="false"
+                                        description="A regular expression against which a log entry's detail is matched
+                                                     to determine if an Event should be fired for that entry. If not
+                                                     specified, no filtering of log entries will be done based on their
+                                                     detail."/>
+                     <c:simple-property name="minimumSeverity" required="false" default="error"
+                                        description="The minimum severity of Events that should be collected for this
+                                                     source. If not specified, there is no minimum severity (i.e. all
+                                                     events will be collected).">
+                         <c:property-options>
+                            <c:option name="debug" value="debug"/>
+                            <c:option name="info"  value="info"/>
+                            <c:option name="warn"  value="warn"/>
+                            <c:option name="error" value="error"/>
+                            <c:option name="fatal" value="fatal"/>
+                         </c:property-options>
+                     </c:simple-property>
+                 </c:map-property>
+             </c:list-property>
+         </c:group>
         </plugin-configuration>
 
         <process-scan name="StandaloneAS" query="process|basename|match=^java.*,arg|org.jboss.as.standalone|match=.*"/>
@@ -356,6 +426,7 @@
                 displayType="summary" measurementType="dynamic" description="Max time for a request since last metric get" units="milliseconds"
                 displayName="Maximum request time"/>
 
+        <event name="logEntry" description="an entry in a log file"/>
 
         <resource-configuration>
 
@@ -396,6 +467,40 @@
             <c:simple-property name="path" readOnly="true" />
 
             &logSources;
+         <c:group name="event" displayName="Events">
+             <c:list-property name="logEventSources">
+                 <c:map-property name="logEventSource">
+                     <c:simple-property name="logFilePath" type="file" summary="true"
+                                        description="The absolute path to the source log file."/>
+                     <c:simple-property name="enabled" type="boolean" summary="true"
+                                        description="A flag indicating whether of not this log Event source is currently
+                                                     enabled (i.e. whether the associated log file should be tailed for
+                                                     new entries)."/>
+                     <c:simple-property name="dateFormat" required="false"
+                                        description="The date format to use when parsing the dates in log entries. The
+                                                     format must be in the syntax defined by the Java SimpleDateFormat
+                                                     class. If not specified, the three date formats that are predefined
+                                                     by Log4J (ISO8601, DATE, and ABSOLUTE) will be tried."/>
+                     <c:simple-property name="includesPattern" required="false"
+                                        description="A regular expression against which a log entry's detail is matched
+                                                     to determine if an Event should be fired for that entry. If not
+                                                     specified, no filtering of log entries will be done based on their
+                                                     detail."/>
+                     <c:simple-property name="minimumSeverity" required="false" default="error"
+                                        description="The minimum severity of Events that should be collected for this
+                                                     source. If not specified, there is no minimum severity (i.e. all
+                                                     events will be collected).">
+                         <c:property-options>
+                            <c:option name="debug" value="debug"/>
+                            <c:option name="info"  value="info"/>
+                            <c:option name="warn"  value="warn"/>
+                            <c:option name="error" value="error"/>
+                            <c:option name="fatal" value="fatal"/>
+                         </c:property-options>
+                     </c:simple-property>
+                 </c:map-property>
+             </c:list-property>
+         </c:group>
         </plugin-configuration>
 
         <!-- Scan for host controller is intentional -->
@@ -421,10 +526,12 @@
         <metric property="status" dataType="trait" displayName="Server state" description="Detailed server state"
                 displayType="summary"/>
 
+         <event name="logEntry" description="an entry in a log file"/>
+
     </server>
 
 
-<!--
+
     <server name="JBoss AS JVM"
             description="JVM of the standalone JBossAS"
             sourcePlugin="JMX"
@@ -439,7 +546,7 @@
             <parent-resource-type name="ProcessController"  plugin="jboss-as-7"/>
         </runs-inside>
     </server>
--->
+
 
     <server name="Messaging"
             discovery="SubsystemDiscovery"

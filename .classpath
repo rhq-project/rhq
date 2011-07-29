@@ -154,6 +154,7 @@
 	<classpathentry kind="src" path="modules/enterprise/server/xml-schemas/target/generated-sources/xjc"/>
 	<classpathentry kind="src" path="modules/enterprise/server/jar/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/jar/src/test/java"/>
+	<classpathentry kind="src" path="modules/enterprise/server/jar/src/main/filtered-sources/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/jar/target/generated-sources/antlr3"/>
 	<classpathentry kind="src" path="modules/enterprise/binding/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/gui/coregui/src/main/java"/>
@@ -270,5 +271,7 @@
 	<classpathentry excluding="**" kind="src" path="modules/enterprise/comm/src/test/resources"/>
 	<classpathentry excluding="**" kind="src" path="modules/enterprise/agent/src/main/resources"/>
 	<classpathentry excluding="**" kind="src" path="modules/enterprise/agent/src/test/resources"/>
+	<classpathentry kind="src" path="modules/plugins/mod-cluster/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/mod-cluster/src/test/java"/>
 	<classpathentry kind="output" path="eclipse-classes"/>
 </classpath>

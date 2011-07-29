@@ -21,9 +21,10 @@ package org.rhq.modules.plugins.jbossas7;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonNode;
-import org.hibernate.cfg.CollectionSecondPass;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
@@ -49,6 +50,7 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
 import org.rhq.modules.plugins.jbossas7.json.CompositeOperation;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
@@ -79,7 +81,7 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
     final Log log = LogFactory.getLog(this.getClass());
 
     ResourceContext context;
-    Configuration conf;
+    Configuration pluginConfiguration;
     String myServerName;
     ASConnection connection;
     String path;
@@ -107,16 +109,19 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
      */
     public void start(ResourceContext context) throws InvalidPluginConfigurationException, Exception {
         this.context = context;
-        conf = context.getPluginConfiguration();
+        pluginConfiguration = context.getPluginConfiguration();
 
-        String typeName = context.getResourceType().getName();
-        // TODO can we use parent's connection and only set this up for top level base component?
-        host = conf.getSimpleValue("hostname", LOCALHOST);
-        String portString = conf.getSimpleValue("port", DEFAULT_HTTP_MANAGEMENT_PORT);
-        port = Integer.parseInt(portString);
-        connection = new ASConnection(host,port);
+        if (!(context.getParentResourceComponent() instanceof BaseComponent)) {
+            host = pluginConfiguration.getSimpleValue("hostname", LOCALHOST);
+            String portString = pluginConfiguration.getSimpleValue("port", DEFAULT_HTTP_MANAGEMENT_PORT);
+            port = Integer.parseInt(portString);
+            connection = new ASConnection(host,port);
+        }
+        else {
+            connection = ((BaseComponent)context.getParentResourceComponent()).getASConnection();
+        }
 
-        path = conf.getSimpleValue("path", null);
+        path = pluginConfiguration.getSimpleValue("path", null);
         key = context.getResourceKey();
 
         myServerName = context.getResourceKey().substring(context.getResourceKey().lastIndexOf("/")+1);
@@ -219,7 +224,7 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
 
         List<PROPERTY_VALUE> address = pathToAddress(path);
         ConfigurationDefinition configDef = context.getResourceType().getResourceConfigurationDefinition();
-        ConfigurationDelegate delegate = new ConfigurationDelegate(configDef,connection,address);
+        ConfigurationLoadDelegate delegate = new ConfigurationLoadDelegate(configDef,connection,new Address(address));
         return delegate.loadResourceConfiguration();
     }
 
@@ -228,7 +233,7 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
 
         List<PROPERTY_VALUE> address = pathToAddress(path);
         ConfigurationDefinition configDef = context.getResourceType().getResourceConfigurationDefinition();
-        ConfigurationDelegate delegate = new ConfigurationDelegate(configDef,connection,address);
+        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(configDef,connection,new Address(address));
         delegate.updateResourceConfiguration(report);
     }
 
@@ -283,7 +288,9 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
         if (!res.isSuccess())
             throw new IllegalArgumentException("Delete for [" + path + "] failed: " + res.getFailureDescription());
         if (path.contains("server-group")) {
-            // This was a server group level deployment - we also need to remove the entry in /deployments
+            // This was a server group level deployment - TODO do we also need to remove the entry in /deployments ?
+/*
+
             for (PROPERTY_VALUE val : address) {
                 if (val.getKey().equals("deployment")) {
                     ComplexResult res2 = connection.executeComplex(new Operation("remove",val.getKey(),val.getValue()));
@@ -291,6 +298,7 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
                         throw new IllegalArgumentException("Removal of [" + path + "] falied : " + res2.getFailureDescription());
                 }
             }
+*/
         }
         log.info("   ... done");
 
@@ -315,9 +323,9 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
         if (verbose)
             log.info(uploadResult);
 
-        if (ASConnection.isErrorReply(uploadResult)) {
+        if (ASUploadConnection.isErrorReply(uploadResult)) {
             report.setStatus(CreateResourceStatus.FAILURE);
-            report.setErrorMessage(ASConnection.getFailureDescription(uploadResult));
+            report.setErrorMessage(ASUploadConnection.getFailureDescription(uploadResult));
 
             return report;
         }
@@ -328,16 +336,34 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
             fileName=fileName.substring("C:\\fakepath\\".length());
         }
 
-        boolean toServerGroup = context.getResourceKey().contains("server-group=");
-        log.info("Deploying [" + fileName + "] to domain only= " + !toServerGroup + " ...");
 
         String tmpName = fileName; // TODO figure out the tmp-name biz with the AS guys
 
         JsonNode resultNode = uploadResult.get("result");
         String hash = resultNode.get("BYTES_VALUE").getTextValue();
+
+        return runDeploymentMagicOnServer(report, fileName, tmpName, hash);
+
+    }
+
+    /**
+     * Do the actual fumbling with the domain api to deploy the uploaded content
+     * @param report CreateResourceReport to report the result
+     * @param runtimeName File name to use as runtime name
+     * @param deploymentName Name of the deployment
+     * @param hash Hash of the content bytes
+     * @return the passed report with success or failure settings
+     */
+    public CreateResourceReport runDeploymentMagicOnServer(CreateResourceReport report, String runtimeName,
+                                                           String deploymentName, String hash) {
+
+        boolean toServerGroup = context.getResourceKey().contains("server-group=");
+        log.info("Deploying [" + runtimeName + "] to domain only= " + !toServerGroup + " ...");
+
+
         ASConnection connection = getASConnection();
 
-        Operation step1 = new Operation("add","deployment",tmpName);
+        Operation step1 = new Operation("add","deployment",deploymentName);
 //        step1.addAdditionalProperty("hash", new PROPERTY_VALUE("BYTES_VALUE", hash));
         List<Object> content = new ArrayList<Object>(1);
         Map<String,Object> contentValues = new HashMap<String,Object>();
@@ -345,11 +371,14 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
         content.add(contentValues);
         step1.addAdditionalProperty("content",content);
 
-        step1.addAdditionalProperty("name", tmpName);
-        step1.addAdditionalProperty("runtime-name", fileName);
+        step1.addAdditionalProperty("name", deploymentName);
+        step1.addAdditionalProperty("runtime-name", runtimeName);
 
         String resourceKey;
-        JsonNode result ;
+        Result result ;
+
+        CompositeOperation cop = new CompositeOperation();
+        cop.addStep(step1);
         /*
          * We need to check here if this is an upload to /deployment only
          * or if this should be deployed to a server group too
@@ -357,17 +386,21 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
 
         if (!toServerGroup) {
 
-            result = connection.executeRaw(step1);
+            // if standalone, then :deploy the deployment anyway
+            if (context.getResourceType().getName().contains("Standalone")) {
+                Operation step2 = new Operation("deploy",step1.getAddress());
+                cop.addStep(step2);
+            }
+
+            result = connection.execute(cop);
             resourceKey = addressToPath(step1.getAddress());
 
         }
         else {
-            CompositeOperation cop = new CompositeOperation();
-            cop.addStep(step1);
 
             List<PROPERTY_VALUE> serverGroupAddress = new ArrayList<PROPERTY_VALUE>();
             serverGroupAddress.addAll(pathToAddress(context.getResourceKey()));
-            serverGroupAddress.add(new PROPERTY_VALUE("deployment", tmpName));
+            serverGroupAddress.add(new PROPERTY_VALUE("deployment", deploymentName));
             Operation step2 = new Operation("add",serverGroupAddress);
 
             cop.addStep(step2);
@@ -380,24 +413,23 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
             if (verbose)
                 log.info("Deploy operation: " + cop);
 
-            result = connection.executeRaw(cop);
+            result = connection.execute(cop);
         }
 
-        if (ASConnection.isErrorReply(result)) {
-            String failureDescription = ASConnection.getFailureDescription(result);
+        if ((!result.isSuccess())) {
+            String failureDescription = result.getFailureDescription();
             report.setErrorMessage(failureDescription);
             report.setStatus(CreateResourceStatus.FAILURE);
             log.warn(" ... done with failure: " + failureDescription);
         }
         else {
             report.setStatus(CreateResourceStatus.SUCCESS);
-            report.setResourceName(fileName);
+            report.setResourceName(runtimeName);
             report.setResourceKey(resourceKey);
             log.info(" ... with success and key [" + resourceKey + "]" );
         }
 
         return report;
-
     }
 
     @Override
@@ -418,16 +450,15 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
         List<PROPERTY_VALUE> address = new ArrayList<PROPERTY_VALUE>();
 
         if (what.equals("server-group")) {
-            String groupName = parameters.getSimpleValue("name",null);
+            String groupName = parameters.getSimpleValue("name","");
             String profile = parameters.getSimpleValue("profile","default");
 
             address.add(new PROPERTY_VALUE("server-group",groupName));
 
             operation = new Operation(op,address,"profile",profile);
         } else if (what.equals("server")) {
-
             if (context.getResourceType().getName().equals("JBossAS-Managed")) {
-                String host = conf.getSimpleValue("domainHost","local");
+                String host = pluginConfiguration.getSimpleValue("domainHost","local");
                 address.add(new PROPERTY_VALUE("host",host));
                 address.add(new PROPERTY_VALUE("server-config",myServerName));
                 operation = new Operation(op,address);
@@ -448,15 +479,40 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
 
                 operation = new Operation(op,address,props);
             }
+            else {
+                operation = new Operation(op,address);
+            }
         } else if (what.equals("destination")) {
             address.addAll(pathToAddress(getPath()));
             String newName = parameters.getSimpleValue("name","");
-//            String type = parameters.getSimpleValue("type","Queue").toLowerCase();
-//            address.add(new PROPERTY_VALUE(type,newName));
-            String queueName = parameters.getSimpleValue("queue-address","");
-            Map<String,Object> props = new HashMap<String, Object>();
-            props.put("queue-address",queueName);
+            String type = parameters.getSimpleValue("type","jms-queue").toLowerCase();
+            address.add(new PROPERTY_VALUE(type,newName));
+            PropertyList jndiNamesProp = parameters.getList("entries");
+            if (jndiNamesProp==null || jndiNamesProp.getList().isEmpty()) {
+                OperationResult fail = new OperationResult();
+                fail.setErrorMessage("No jndi bindings given");
+                return fail;
+            }
+            List<String> jndiNames = new ArrayList<String>();
+            for (Property p : jndiNamesProp.getList()) {
+                PropertySimple ps = (PropertySimple) p;
+                jndiNames.add(ps.getStringValue());
+            }
+
             operation = new Operation(op,address);
+            operation.addAdditionalProperty("entries",jndiNames);
+            if (type.equals("jms-queue")) {
+                PropertySimple ps = (PropertySimple) parameters.get("durable");
+                if (ps!=null) {
+                    boolean durable = ps.getBooleanValue();
+                    operation.addAdditionalProperty("durable",durable);
+                }
+                String selector = parameters.getSimpleValue("selector","");
+                if (!selector.isEmpty())
+                    operation.addAdditionalProperty("selector",selector);
+            }
+
+
         } else if (what.equals("managed-server")) {
             String chost = parameters.getSimpleValue("hostname","");
             String serverName = parameters.getSimpleValue("servername","");
@@ -509,17 +565,28 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
                     ((CompositeOperation)operation).addStep(step);
                 }
             }
+        } else if (what.equals("naming")) {
+            if (op.equals("jndi-view")) {
+                address.addAll(pathToAddress(getPath()));
+                operation = new Operation("jndi-view",address);
+            }
         }
+
 
         OperationResult operationResult = new OperationResult();
         if (operation!=null) {
-            JsonNode result = connection.executeRaw(operation);
+            Result result = connection.execute(operation);
 
-            if (ASConnection.isErrorReply(result)) {
-                operationResult.setErrorMessage(ASConnection.getFailureDescription(result));
+            if (!result.isSuccess()) {
+                operationResult.setErrorMessage(result.getFailureDescription());
             }
             else {
-                operationResult.setSimpleResult(ASConnection.getSuccessDescription(result));
+                String tmp;
+                if (result.getResult()==null)
+                    tmp = "-none provided by the server-";
+                else
+                    tmp = result.getResult().toString();
+                operationResult.setSimpleResult(tmp);
             }
         }
         else {

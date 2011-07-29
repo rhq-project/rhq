@@ -89,4 +89,89 @@
 
     </server>
 
+    <server class="foo" discovery="foo" name="simple1">
+
+        <resource-configuration>
+
+            <c:simple-property name="readOnly" readOnly="true" />
+            <c:simple-property name="optional" readOnly="false" required="false"/>
+            <c:simple-property name="needed" readOnly="false" required="true"/>
+
+       </resource-configuration>
+    </server>
+
+    <server class="foo" discovery="foo" name="listOfSimple1">
+
+        <resource-configuration>
+
+            <c:list-property name="foo">
+                <c:simple-property name="optional" readOnly="false" required="false"/>
+            </c:list-property>
+
+       </resource-configuration>
+    </server>
+
+    <server class="foo" discovery="foo" name="mapOfSimple1">
+
+        <resource-configuration>
+
+            <c:map-property name="foo">
+                <c:simple-property name="readOnly" readOnly="true" />
+                <c:simple-property name="optional" readOnly="false" required="false"/>
+                <c:simple-property name="needed" readOnly="false" required="true"/>
+            </c:map-property>
+
+       </resource-configuration>
+    </server>
+
+    <server class="foo" discovery="foo" name="listOfMaps1">
+
+        <resource-configuration>
+            <c:list-property name="foo">
+                <c:map-property name="theMap">
+                    <c:simple-property name="readOnly" readOnly="true" />
+                    <c:simple-property name="optional" readOnly="false" required="false"/>
+                    <c:simple-property name="needed" readOnly="false" required="true"/>
+                </c:map-property>
+            </c:list-property>
+       </resource-configuration>
+    </server>
+
+
+    <server name="SocketBindingGroupStandalone"
+             discovery="SubsystemDiscovery"
+             class="BaseComponent"
+            >
+
+        <resource-configuration>
+            <c:simple-property name="default-interface" readOnly="true" displayName="Default Interface"
+                               description="Default Interface for these bindings. See NetworkInterfaces for its definition"
+                               required="true">
+                <c:option-source target="resource" expression="type=NetworkInterface plugin=jboss-as-7"/>
+            </c:simple-property>
+            <!-- note: at domain level there is no port-offset -->
+            <c:simple-property name="port-offset" readOnly="false" displayName="Port Offset"
+                               description="Offset from standard ports for this group."
+                               required="false"/>
+            <c:group name="children:socket-binding:name" displayName="Individual socket bindings">
+            <c:list-property name="*" displayName="Bindings">
+                <c:map-property name="binding">
+                    <c:simple-property name="name"  readOnly="true"/>
+                    <c:simple-property name="interface"
+                                       required="false">
+                        <c:option-source target="resource" expression="type=NetworkInterface plugin=jboss-as-7"/>
+                    </c:simple-property>
+                    <c:simple-property name="port"  type="integer"/>
+                    <c:simple-property name="fixed-port"
+                                       type="boolean" defaultValue="false"/>
+                    <c:simple-property name="multicast-address"  required="false"/>
+                    <c:simple-property name="multicast-port" type="integer" required="false"/>
+                </c:map-property>
+            </c:list-property>
+            </c:group>
+        </resource-configuration>
+
+    </server>
+
+
 </plugin>

@@ -1,84 +1,50 @@
-/*
- * RHQ Management Platform
- * Copyright (C) 2005-2009 Red Hat, Inc.
- * All rights reserved.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation version 2 of the License.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- */
-
 package org.rhq.core.domain.criteria;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlRootElement;
+import java.io.Serializable;
 
-import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.util.PageOrdering;
 
-/**
- * @author Jay Shaughnessy
- */
-@XmlRootElement
-@XmlAccessorType(XmlAccessType.FIELD)
-@SuppressWarnings("unused")
-public class DriftChangeSetCriteria extends Criteria {
-    private static final long serialVersionUID = 1L;
+public interface DriftChangeSetCriteria extends BaseCriteria, Serializable {
 
-    private Integer filterId;
-    private Integer filterInitial; // needs override
-    private Integer filterResourceId; // needs override        
-    private String filterVersion;
-    private DriftChangeSetCategory filterCategory;
+    void addFilterId(String filterId);
 
-    private boolean fetchDrifts;
+    String getFilterId();
 
-    private PageOrdering sortVersion;
+    void addFilterVersion(String filterVersion);
 
-    public DriftChangeSetCriteria() {
-        filterOverrides.put("initial", "version = 0");
-        filterOverrides.put("resourceId", "resource.id = ?");
-    }
+    String getFilterVersion();
 
-    @Override
-    public Class<DriftChangeSet> getPersistentClass() {
-        return DriftChangeSet.class;
-    }
+    void addFilterStartVersion(String filterStartVersion);
 
-    public void addFilterId(Integer filterId) {
-        this.filterId = filterId;
-    }
+    String getFilterStartVersion();
 
-    public void addFilterVersion(String filterVersion) {
-        this.filterVersion = filterVersion;
-    }
+    void addFilterEndVersion(String filterEndVersion);
 
-    public void addFilterResourceId(Integer filterResourceId) {
-        this.filterResourceId = filterResourceId;
-    }
+    String getFilterEndVersion();
 
-    public void addFilterCategory(DriftChangeSetCategory filterCategory) {
-        this.filterCategory = filterCategory;
-    }
+    void addFilterCreatedAfter(Long filterCreatedAfter);
 
-    public void fetchDrifts(boolean fetchDrifts) {
-        this.fetchDrifts = fetchDrifts;
-    }
+    Long getFilterCreatedAfter();
 
-    public void addSortVersion(PageOrdering sortVersion) {
-        addSortField("version");
-        this.sortVersion = sortVersion;
-    }
+    void addFilterCreatedBefore(Long filterCreatedBefore);
+
+    Long getFilterCreatedBefore();
+
+    void addFilterResourceId(Integer filterResourceId);
+
+    Integer getFilterResourceId();
+
+    void addFilterCategory(DriftChangeSetCategory filterCategory);
+
+    DriftChangeSetCategory getFilterCategory();
+
+    void fetchDrifts(boolean fetchDrifts);
+
+    boolean isFetchDrifts();
+
+    void addSortVersion(PageOrdering sortVersion);
+
+    PageOrdering getSortVersion();
 
 }

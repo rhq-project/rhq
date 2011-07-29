@@ -29,6 +29,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
@@ -38,9 +39,12 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
  */
 public class DriftAddConfigWizard extends AbstractDriftAddConfigWizard {
 
-    public DriftAddConfigWizard(EntityContext context, ResourceType type) {
+    private Table<?> table;
+
+    public DriftAddConfigWizard(EntityContext context, ResourceType type, Table<?> table) {
 
         super(context, type);
+        this.table = table;
 
         final ArrayList<WizardStep> steps = new ArrayList<WizardStep>();
 
@@ -77,6 +81,7 @@ public class DriftAddConfigWizard extends AbstractDriftAddConfigWizard {
                             new Message(MSG.view_drift_wizard_addConfig_success(getNewDriftConfiguration().getName()),
                                 Message.Severity.Info));
                         getView().closeDialog();
+                        DriftAddConfigWizard.this.table.refresh();
                     }
 
                     public void onFailure(Throwable caught) {
@@ -94,7 +99,7 @@ public class DriftAddConfigWizard extends AbstractDriftAddConfigWizard {
 
     }
 
-    public static void showWizard(final EntityContext context) {
+    public static void showWizard(final EntityContext context, final Table<?> table) {
         assert context != null;
 
         switch (context.getType()) {
@@ -123,7 +128,7 @@ public class DriftAddConfigWizard extends AbstractDriftAddConfigWizard {
                                         + resource.getResourceType().getId() + "]");
                                 }
 
-                                DriftAddConfigWizard wizard = new DriftAddConfigWizard(context, result.get(0));
+                                DriftAddConfigWizard wizard = new DriftAddConfigWizard(context, result.get(0), table);
                                 wizard.startWizard();
                             }
 

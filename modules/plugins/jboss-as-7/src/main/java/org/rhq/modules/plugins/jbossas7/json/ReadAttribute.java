@@ -29,4 +29,9 @@ public class ReadAttribute extends Operation {
     public ReadAttribute(List<PROPERTY_VALUE> address, String name) {
         super("read-attribute",address,"name",name);
     }
+
+    public ReadAttribute(Address address, String name) {
+        super("read-attribute",address);
+        addAdditionalProperty("name",name);
+    }
 }

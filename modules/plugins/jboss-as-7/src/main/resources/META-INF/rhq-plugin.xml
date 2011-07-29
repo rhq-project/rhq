@@ -48,7 +48,6 @@
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration"
-        version="4.0.0-SNAPSHOT"
         >
 
 <!--    <depends plugin="JMX" useClasses="true"/> -->
@@ -58,37 +57,39 @@
       ~~      additional 'Personalities' for the kinds of servers (PM, SM, Standalone AS, Managed AS)
       -->
 
+    <!-- TODO do we want to show the process controller at all? We have no benefit from it
     <server name="ProcessController"
             discovery="BaseProcessDiscovery"
             class="BaseComponent"
-            description="Reaper process for other AS7 servicees"
+            description="Reaper process for other AS7 services"
             >
 
         <plugin-configuration>
             <c:simple-property name="hostname" default="localhost" required="true"/>
             <c:simple-property name="port" default="9990" type="integer" required="true"/>
 
-            &logSources;
         </plugin-configuration>
 
         <process-scan name="ProcessController" query="process|basename|match=^java.*,arg|org.jboss.as.process-controller|match=.*"/>
 
 
-        <operation name="dummyOperation">
-            <!-- TODO supply parameters and return values -->
-        </operation>
-
-
     </server>
+    -->
     <server name="HostController"
             discovery="BaseProcessDiscovery"
-            class="BaseComponent"
+            class="HostControllerComponent"
             description="Domain controller (delegate) for this host"
             >
 
         <plugin-configuration>
-            <c:simple-property name="hostname" default="localhost" required="true"/>
-            <c:simple-property name="port" default="9990" type="integer" required="true"/>
+            <c:simple-property name="hostname" default="localhost" required="true" description="Host name of the domain API"/>
+            <c:simple-property name="port" default="9990" type="integer" required="true" description="Port of the domain API"/>
+            <c:simple-property name="user" type="string" description="Management user for a secured Host controller" required="false"/>
+            <c:simple-property name="password" type="password" description="Password for the management user" required="false"/>
+            <c:simple-property name="config" type="string" default="domain.xml" description="Running configuration" displayName="Configuration"/>
+            <c:simple-property name="baseDir" type="file" description="Base directory of the server installation" displayName="Base directory" readOnly="true" required="false"/>
+            <c:simple-property name="startScript" type="file" default="bin/domain.sh" description="Script used to start the server. If the path is not absolute, it is relative to the base directory"/>
+            <c:simple-property name="domainHost" type="string" readOnly="true" required="false" description="Host name within the AS7 domain"/>
 
             &logSources;
         </plugin-configuration>
@@ -96,8 +97,10 @@
         <process-scan name="HostController" query="process|basename|match=^java.*,arg|org.jboss.as.host-controller|match=.*"/>
 
 
+<!-- Currently not provided by AS7
         <operation name="domain:shutdown" displayName="Shutdown Domain" description="Shut this Host-/Domaincontroller down with all managed servers.">
         </operation>
+-->
 
         <operation name="server-group:add" displayName="Add ServerGroup" description="Add a server group to the Domain.">
             <parameters>
@@ -146,6 +149,17 @@
 
         </operation>
 
+        <operation name="start" description="Start this Host-/Domaincontroller" displayName="Start this host controller">
+            <results>
+                <c:simple-property name="operationResult" description="Outcome of the start operation"/>
+            </results>
+        </operation>
+        <operation name="shutdown" description="Stop this Host-/Domaincontroller" displayName="Shut down this host controller">
+            <results>
+                <c:simple-property name="operationResult" description="Outcome of the stop operation"/>
+            </results>
+        </operation>
+
 
         <metric property="_internal:mgmtRequests" category="performance" dataType="measurement" defaultInterval="120000"
                 displayType="summary" measurementType="trendsup" description="Number of requests sent to the controller"
@@ -160,15 +174,23 @@
 
 
         <resource-configuration>
-            <c:list-property name="schema-locations" displayName="Schema locations">
-                <c:map-property name="location">
-                    <c:simple-property name="urn" readOnly="true"/>
-                    <c:simple-property name="location" readOnly="true"/>
-                </c:map-property>
-            </c:list-property>
-            <c:list-property name="extension" displayName="Installed extensions">
-                <c:simple-property name="name" readOnly="true"/>
-            </c:list-property>
+            <c:group name="attribute:schema-locations" displayName="Schema locations">
+
+                <c:list-property name="schema-locations" displayName="Schema locations" readOnly="true" required="false">
+                    <c:map-property name="*">
+                        <c:simple-property name="*" readOnly="true" displayName="Schema name"/>
+                    </c:map-property>
+                </c:list-property>
+            </c:group>
+
+            <c:group name="children:extension" displayName="Installed extensions">
+
+                <c:list-property name="*" displayName="Installed extensions" readOnly="true" required="false">
+                    <c:map-property name="*" displayName="Name">
+                        <c:simple-property name="module" displayName="Module name"/>
+                    </c:map-property>
+                </c:list-property>
+            </c:group>
         </resource-configuration>
 
 
@@ -198,7 +220,7 @@
             <resource-configuration>
                 <c:simple-property name="profile" description="The profile name" required="true"/>
                 <c:simple-property name="socket-binding-group" readOnly="false" required="true">
-                    <c:option-source target="resource" expression="type=SocketBindingGroup"/>
+                    <c:option-source target="resource" expression="type=SocketBindingGroupDomain"/>
                 </c:simple-property>
                 <c:simple-property name="socket-binding-port-offset" required="false" defaultValue="0" type="integer"
                                    description="The default offset to be added to the port values given by the socket binding group."/>
@@ -209,7 +231,7 @@
         <server name="Host"
                 description="Host involved in this domain"
                 discovery="SubsystemDiscovery"
-                class="DomainComponent"
+                class="BaseComponent"
                 >
             <plugin-configuration>
                 <c:simple-property name="path" default="host" readOnly="true"/>
@@ -278,12 +300,18 @@
 
     <server name="JBossAS7-Standalone"
             discovery="BaseProcessDiscovery"
-            class="BaseComponent"
+            class="StandaloneASComponent"
+            description="Standalone AS7 server"
             >
 
         <plugin-configuration>
             <c:simple-property name="hostname" default="localhost" required="true"/>
             <c:simple-property name="port" default="9990" type="integer" required="true"/>
+            <c:simple-property name="user" type="string" description="Management user for a secured AS" required="false"/>
+            <c:simple-property name="password" type="password" description="Password for the management user" required="false"/>
+            <c:simple-property name="config" type="string" default="standalone.xml" description="Running configuration" displayName="Configuration"/>
+            <c:simple-property name="baseDir" type="file" description="Base directory of the server installation" displayName="Base directory" readOnly="true" required="false"/>
+            <c:simple-property name="startScript" type="file" default="bin/standalone.sh" description="Script used to start the server. If the path is not absolute, it is relative to the base directory"/>
             <c:list-property name="system-properties">
                 <c:map-property name="system-property">
                     <c:simple-property name="key" readOnly="true"/>
@@ -294,6 +322,29 @@
         </plugin-configuration>
 
         <process-scan name="StandaloneAS" query="process|basename|match=^java.*,arg|org.jboss.as.standalone|match=.*"/>
+
+
+        <operation name="reload" description="Make the server re-load the (changed) configuration. To load a different startup config use 'restart'" displayName="Reload">
+            <results>
+                <c:simple-property name="operationResult"/>
+            </results>
+        </operation>
+        <operation name="start" description="Start the server by invoking its start script">
+            <results>
+                <c:simple-property name="operationResult"/>
+            </results>
+        </operation>
+        <operation name="restart" description="Restart the server by shutting it down and invoking its start script">
+            <results>
+                <c:simple-property name="operationResult"/>
+            </results>
+        </operation>
+        <operation name="shutdown" description="Shut down the server." displayName="Shutdown">
+            <results>
+                <c:simple-property name="operationResult"/>
+            </results>
+        </operation>
+
 
         <metric property="_internal:mgmtRequests" category="performance" dataType="measurement" defaultInterval="120000"
                 displayType="summary" measurementType="trendsup" description="Number of requests sent to the controller"
@@ -308,9 +359,9 @@
 
         <resource-configuration>
 
-            <c:group name="attribute:schema-locations">
+            <c:group name="attribute:schema-locations" displayName="Schema locations">
 
-                <c:list-property name="schema-locations" displayName="Schema locations">
+                <c:list-property name="schema-locations" displayName="Schema locations" readOnly="true" required="false">
                     <c:map-property name="*">
                         <c:simple-property name="*" readOnly="true" displayName="Schema name"/>
                     </c:map-property>
@@ -319,7 +370,7 @@
 
             <c:group name="children:extension" displayName="Installed extensions">
 
-                <c:list-property name="extension" displayName="Installed extensions">
+                <c:list-property name="*" displayName="Installed extensions" readOnly="true" required="false">
                     <c:map-property name="*" displayName="Name">
                         <c:simple-property name="module" displayName="Module name"/>
                     </c:map-property>
@@ -333,14 +384,14 @@
 
     <server name="JBossAS-Managed"
             discovery="ManagedASDiscovery"
-            class="DomainComponent"
+            class="ManagedASComponent"
             >
         <plugin-configuration>
             <c:simple-property name="hostname" default="localhost" displayName="Management host" required="true"/>
             <c:simple-property name="port" default="9990" type="integer" displayName="Management port" required="true"/>
             <c:simple-property name="domainHost" readOnly="true" description="Hostname in the domain"/>
             <c:simple-property name="group" readOnly="true" displayName="Server Group" description="Server Group this instance belongs to."/>
-            <c:simple-property name="socket-binding-group" readOnly="true" displayName="Socket binding group" description="Socket bindngs to use"/>
+            <c:simple-property name="socket-binding-group" readOnly="true" displayName="Socket binding group" description="Socket bindings to use"/>
             <c:simple-property name="socket-binding-port-offset" readOnly="true" displayName="Port Offset" type="integer" default="0" description="Offset to the base ports"/>
             <c:simple-property name="path" readOnly="true" />
 
@@ -392,8 +443,8 @@
 
     <server name="Messaging"
             discovery="SubsystemDiscovery"
-            class="DomainComponent"
-            description="The underlying HornetQ based messaging subsystem"
+            class="BaseComponent"
+            description="The HornetQ based messaging subsystem"
             singleton="true"
             >
         <runs-inside>
@@ -408,15 +459,16 @@
         <operation name="destination:add" displayName="Add destination" description="Add a Queue or Topic">
             <parameters>
                 <c:simple-property name="name" description="Name of the Destination" required="true"/>
-                <c:simple-property name="queue-address" description="The queue address defines what address is used for routing messages." required="true"/>
+                <c:list-property name="entries" description="The JNDI names the destination should be bound to." required="true">
+                    <c:simple-property name="entry" description="A single JNDI name. Note, this is relative to java:jboss/jms/"/>
+                </c:list-property>
                 <c:simple-property name="type" description="Type of Destination to create" default="Queue">
                     <c:property-options>
-                        <c:option value="Queue"/>
-                        <c:option value="Topic"/>
+                        <c:option value="jms-queue" name="Queue"/>
+                        <c:option value="jms-topic" name="Topic"/>
                     </c:property-options>
                 </c:simple-property>
-                <c:simple-property name="filter" description="The queue message filter definition."/>
-                <c:simple-property name="durable" description="Defines whether the queue is durable." type="boolean" default="false"/>
+                <c:simple-property name="durable" description="Defines whether the queue is durable (for Queues only)." type="boolean" default="false"/>
             </parameters>
             <results>
                 <c:simple-property name="operationResult"/>
@@ -436,73 +488,23 @@
             <c:simple-property name="journal-type" />
         </resource-configuration>
 
-        <!-- this is no child resource TODO
-
-        <service name="Acceptor"
-                 discovery="SubsystemDiscovery"
-                 class="BaseComponent"
-                >
-            <plugin-configuration>
-                <c:simple-property name="path" readOnly="true" default="acceptor"/>
-            </plugin-configuration>
-        </service>
-        <service name="MessagingConnector"
-                 discovery="SubsystemDiscovery"
-                 class="BaseComponent"
-                >
-            <plugin-configuration>
-                <c:simple-property name="path" readOnly="true" default="connector"/>
-            </plugin-configuration>
-        </service>
-        <service name="HQueue"
-                 discovery="SubsystemDiscovery"
-                 class="BaseComponent"
-                >
-            <plugin-configuration>
-                <c:simple-property name="path" readOnly="true" default="queue"/>
-            </plugin-configuration>
-            <resource-configuration>
-                <c:simple-property name="queue-address" required="true"/>
-                <c:simple-property name="filter" />
-                <c:simple-property name="durable" type="boolean"/>
-            </resource-configuration>
-
-        </service>
--->
-    </server>
-
-    <server name="JMS"
+        <service name="JMS Queue"
             discovery="SubsystemDiscovery"
             class="JmsComponent"
-            description="The JMS messaging subsystem"
-            singleton="true"
-            >
-        <runs-inside>
-            <parent-resource-type name="Profile"  plugin="jboss-as-7"/>
-            <parent-resource-type name="JBossAS7-Standalone"  plugin="jboss-as-7"/>
-        </runs-inside>
-
-        <plugin-configuration>
-            <c:simple-property name="path" readOnly="true" default="subsystem=jms"/>
-        </plugin-configuration>
-
-        <service name="Queue"
-            discovery="SubsystemDiscovery"
-            class="JmsComponent"
-            createDeletePolicy="both"
+            createDeletePolicy="delete-only"
             >
             <plugin-configuration>
-                <c:simple-property name="path" readOnly="true" default="queue"/>
+                <c:simple-property name="path" readOnly="true" default="jms-queue"/>
             </plugin-configuration>
 
             <resource-configuration> <!-- See BZ 705713 TODO -->
-                <c:simple-property name="durable" required="false" type="boolean" readOnly="false" default="false"
+                <c:simple-property name="durable" required="false" type="boolean" readOnly="true" default="false"
                                    description="Whether the queue is durable or not."/>
-                <c:list-property name="entries" required="false"  readOnly="false"
+                <c:list-property name="entries" required="false"  readOnly="true"
                                  description="The jndi names the queue will be bound to.">
                     <c:simple-property name="entries" type="string"/>
                 </c:list-property>
-                <c:simple-property name="selector" required="false" type="string" readOnly="false" description="The queue selector."/>
+                <c:simple-property name="selector" required="false" type="string" readOnly="true" description="The queue selector."/>
                 <c:template name="add" description="Properties when adding a new queue" >
                     <c:simple-property name="durable" required="false" type="boolean" default="false"
                                        description="Whether the queue is durable or not."/>
@@ -514,16 +516,16 @@
                 </c:template>
             </resource-configuration>
         </service>
-        <service name="Topic"
+        <service name="JMS Topic"
             discovery="SubsystemDiscovery"
             class="JmsComponent"
-            createDeletePolicy="both"
+            createDeletePolicy="delete-only"
             >
             <plugin-configuration>
-                <c:simple-property name="path" readOnly="true" default="topic"/>
+                <c:simple-property name="path" readOnly="true" default="jms-topic"/>
             </plugin-configuration>
             <resource-configuration> <!-- See BZ 705713 TODO -->
-                <c:list-property name="entries" required="false"  readOnly="false"
+                <c:list-property name="entries" required="false"  readOnly="true"
                                  description="The jndi names the queue will be bound to.">
                     <c:simple-property name="entries" type="string"/>
                 </c:list-property>
@@ -563,6 +565,78 @@
             <c:simple-property name="path" readOnly="true" default="subsystem=web"/>
         </plugin-configuration>
 
+        <resource-configuration>
+            <c:simple-property name="default-virtual-server" required="false" type="string" readOnly="true" defaultValue="localhost"
+                               description="The web container's default virtual server."/>
+            <c:simple-property name="native" required="false" type="boolean" readOnly="true" defaultValue="true"
+                               description="Add the native initialization listener to the web container."/>
+            <c:map-property name="configuration" description="The common web container configuration." >
+                <c:map-property name="static-resources" description="Configuration for static resources" >
+                    <c:simple-property name="listings" required="false" type="boolean" readOnly="true" defaultValue="false"
+                                       description="Enable folder listings."/>
+                    <c:simple-property name="sendfile" required="false" type="integer" readOnly="true" defaultValue="49152"
+                                       description="Enable sendfile if possible, for files bigger than the specified byte size."/>
+                    <c:simple-property name="read-only" required="false" type="boolean" readOnly="true" defaultValue="true"
+                                        description="Allow write HTTP methods (PUT, DELETE)."/>
+                    <c:simple-property name="webdav" required="false" type="boolean" readOnly="true" defaultValue="false"
+                                       description="Enable WebDAV functionality."/>
+                    <c:simple-property name="secret" required="false" type="string" readOnly="true" description="Secret for WebDAV locking operations."/>
+                    <c:simple-property name="max-depth" required="false" type="integer" readOnly="true" defaultValue="3"
+                                       description="Maximum recursion for PROPFIND."/>
+                    <c:simple-property name="disabled" required="false" type="boolean" readOnly="true" defaultValue="false"
+                                       description="Enable the JSP container."/>
+                </c:map-property>
+                <c:map-property name="jsp-configuration" description="JSP container configuration">
+                    <c:simple-property name="development" required="false" type="boolean" readOnly="true" defaultValue="false"
+                                       description="Enable the development mode, which gives more information when an error occurs."/>
+                    <c:simple-property name="file-encoding" required="false" type="string" readOnly="true" description="Force a file encoding."/>
+                    <c:simple-property name="keep-generated" required="false" type="boolean" readOnly="true" defaultValue="true"
+                                       description="Keep the generated Servlets."/>
+                    <c:simple-property name="trim-spaces" required="false" type="boolean" readOnly="true" defaultValue="true"
+                                       description="Trim some spaces from the generated Servlet."/>
+                    <c:simple-property name="tag-pooling" required="false" type="boolean" readOnly="true" defaultValue="true"
+                                       description="Enable tag pooling."/>
+                    <c:simple-property name="mapped-file" required="false" type="boolean" readOnly="true" defaultValue="true"
+                                       description="Map to the JSP source."/>
+                    <c:simple-property name="check-interval" required="false" type="integer" readOnly="true" defaultValue="0"
+                                       description="Check interval for JSP updates using a background thread."/>
+                    <c:simple-property name="modification-test-interval" required="false" type="integer" readOnly="true" defaultValue="4"
+                                       description="Minimum amount of time between two tests for updates, in seconds."/>
+                    <c:simple-property name="recompile-on-fail" required="false" type="boolean" readOnly="true" defaultValue="false"
+                                       description="Retry failed JSP compilations on each request."/>
+                    <c:simple-property name="smap" required="false" type="boolean" readOnly="true" defaultValue="false"
+                                       description="Enable SMAP."/>
+                    <c:simple-property name="dump-smap" required="false" type="boolean" readOnly="true" defaultValue="false"
+                                       description="Write SMAP data to a file."/>
+                    <c:simple-property name="generate-strings-as-char-arrays" required="false" type="boolean" readOnly="true"
+                                       defaultValue="false"
+                                       description="Generate String constants as char arrays."/>
+                    <c:simple-property name="error-on-use-bean-invalid-class-attribute" required="false" type="boolean" readOnly="true" defaultValue="false"
+                                       description="Enable errors when using a bad class in useBean."/>
+                    <c:simple-property name="scratch-dir" required="false" type="string" readOnly="true" description="Specify a different work directory."/>
+                    <c:simple-property name="source-vm" required="false" type="string" readOnly="true" defaultValue="1.5"
+                                       description="Source VM level for compilation."/>
+                    <c:simple-property name="target-vm" required="false" type="string" readOnly="true" defaultValue="1.5"
+                                       description="Target VM level for compilation."/>
+                    <c:simple-property name="java-encoding" required="false" type="string" readOnly="true" defaultValue="UTF-8"
+                                       description="Specify the encoding used for Java sources."/>
+                    <c:simple-property name="x-powered-by" required="false" type="boolean" readOnly="true" defaultValue="true"
+                                       description="Enable advertising the JSP engine in x-powered-by."/>
+                    <c:simple-property name="display-source-fragment" required="false" type="boolean" readOnly="true" defaultValue="true"
+                                       description="When a runtime error occurs, attempts to display corresponding JSP source fragment."/>
+                </c:map-property>
+                <c:list-property name="mime-mapping" description="A mime-mapping definition." >
+                    <c:map-property name="mime-mapping" >
+                            <c:simple-property name="name" description="A MIME mapping name"/>
+                            <c:simple-property name="value" description="A MIME mapping value"/>
+                    </c:map-property>
+                </c:list-property>
+                <c:list-property name="welcome-file" description="A welcome file declaration." >
+                    <c:simple-property name="welcome-file" />
+                </c:list-property>
+            </c:map-property>
+        </resource-configuration>
+
         <service name="Connector"
                  discovery="SubsystemDiscovery"
                  class="BaseComponent"
@@ -583,7 +657,7 @@
             <resource-configuration>
                 <c:simple-property name="protocol" required="true" type="string" readOnly="true" description="The web connector protocol."/>
                 <c:simple-property name="socket-binding" required="true" type="string" readOnly="false"
-                                   description="The web connector socket-binding reference, this connector should be bound to.">
+                                   description="The web connector socket-binding reference, this connector should be bound to."> <!-- TODO read-only -->
                     <c:option-source target="configuration" expression="socket-binding=name:type=SocketBindingGroup"/>
                 </c:simple-property>
                 <c:simple-property name="scheme" type="string" readOnly="true" default="http" description="The web connector scheme."/>
@@ -607,10 +681,10 @@
                                    description="The port for redirection to a secure connector."/>
                 <c:simple-property name="max-connections" type="integer" readOnly="true" required="false"
                                    description="Amount of concurrent connections that can be processed by the connector with optimum performance. The default value depends on the connector used."/>
-                <c:list-property name="virtual-server" description="The list of virtual servers that can be accessed through this connector. The default is to allow all virtual servers.">
+                <c:list-property name="virtual-server" description="The list of virtual servers that can be accessed through this connector. The default is to allow all virtual servers." readOnly="true" required="false">
                     <c:simple-property name="virtual-server" />
                 </c:list-property>
-                <c:map-property name="ssl" description="The SSL configuration of the connector." >
+                <c:map-property name="ssl" description="The SSL configuration of the connector." readOnly="true" required="false">
                     <c:simple-property name="name" type="string" readOnly="true" description="The configuration name."/>
                     <c:simple-property name="key-alias" type="string" readOnly="true" description="The key alias."/>
                     <c:simple-property name="password" type="string" readOnly="true" description="Password."/>
@@ -667,6 +741,7 @@
                         </c:list-property>
                     </c:map-property>
                 </c:list-property>
+                <c:simple-property name="enable-welcome-root" type="boolean" />
             </resource-configuration>
         </service>
 
@@ -740,11 +815,11 @@
         </operation>
 -->
 
-        <operation name="addDatasource" description="Add a datasource to the system. Needs a jdbc-driver that was already added to the domain and promoted to the respective server-group(s) (if in domain mode).">
+        <operation name="addDatasource" description="Add a datasource to the system. Needs a jdbc-driver that was already added to the domain and promoted to the respective server-group(s) for the profile (if in domain mode).">
             <parameters>
                 <c:simple-property name="name" required="true" description="Name of the datasource"/>
                 <c:simple-property name="driver-name" required="true">
-                    <c:option-source target="resource" expression="type=DomainDeployment"/>
+                    <c:option-source target="resource" expression="type=^Deployment$"/>
                 </c:simple-property>
                 <c:simple-property name="jndi-name" description="JNDI-Name of the Datasource" required="true"/>
                 <c:simple-property name="connection-url" description="URL for the connection to the database" required="true"/>
@@ -757,11 +832,11 @@
             </results>
         </operation>
 
-        <operation name="addXADatasource" description="Add a XA datasource to the system. Needs a jdbc-driver that was already added to the domain and promoted to the respective server-group(s) (if in domain mode).">
+        <operation name="addXADatasource" description="Add a XA datasource to the system. Needs a jdbc-driver that was already added to the domain and promoted to the respective server-group(s) for the profile (if in domain mode).">
             <parameters>
                 <c:simple-property name="name" required="true" description="Name of the datasource"/>
                 <c:simple-property name="driver-name" required="true">
-                    <c:option-source target="resource" expression="type=DomainDeployment"/>
+                    <c:option-source target="resource" expression="type=^Deployment$"/>
                 </c:simple-property>
                 <c:simple-property name="xa-data-source-class" required="true" description="xa-data-source-class"/>
                 <c:simple-property name="jndi-name" description="JNDI-Name of the Datasource" required="true"/>
@@ -785,6 +860,7 @@
                  discovery="SubsystemDiscovery"
                  class="DatasourceComponent"
                  description="A non-XA data source"
+                 createDeletePolicy="delete-only"
                 >
 
             <plugin-configuration>
@@ -809,6 +885,12 @@
             </operation>
 
             <operation name="flush-idle-connection-in-pool" description="Flushes the pool for idle connections">
+                <results>
+                    <c:simple-property name="operationResult"/>
+                </results>
+            </operation>
+
+            <operation name="test-connection-in-pool" description="Tests if a connection can be obtained">
                 <results>
                     <c:simple-property name="operationResult"/>
                 </results>
@@ -845,7 +927,7 @@
 
             <resource-configuration>
                 <c:simple-property name="connection-url" required="true" type="string" readOnly="true" description="The JDBC driver connection URL"/>
-                <c:simple-property name="driver-name" required="true" type="string" description="Name of the (existing) JDBC driver to use"/>
+                <c:simple-property name="driver-name" required="true" type="string" description="Name of the (existing) JDBC driver to use" readOnly="true"/>
                 <c:simple-property name="driver-class" required="false" type="string" readOnly="true"
                          description="The fully qualifed name of the JDBC driver class"/>
                 <c:simple-property name="jndi-name" required="true" type="string" readOnly="true"
@@ -873,8 +955,18 @@
                          description="Define if the min-pool-size should be considered a strictly."/>
                 <c:simple-property name="user-name" type="string" readOnly="true" required="false"
                          description="Specify the username used when creating a new connection."/>
-                <c:simple-property name="password" type="password" readOnly="true"
+                <c:simple-property name="password" type="password" readOnly="true" required="false"
                          description="Specify the passwprd used when creating a new connection."/>
+                <c:simple-property name="security-domain" required="false" type="string" readOnly="true" description="Indicates Subject (from security domain) are used to distinguish connections in the pool. The content of the security-domain is the name of the JAAS security manager that will handleauthentication. This name correlates to the JAAS login-config.xml descriptor application-policy/name attribute."/>
+                <c:simple-property name="reauth-plugin-class-name" required="false" type="string" readOnly="true" description="re-authentication plugin implementation provided for specific puropose (i.e vendor)"/>
+<!--
+                <c:map-property name="reauth-plugin-properties" description="properties for reauthentication pluginq passed to the implementation provided for specific puropose (i.e vendor)" >
+                    read-only
+                    configuration
+                </c:map-property>
+-->
+                <c:simple-property name="flush-strategy" required="false" type="string" readOnly="true" description="Specifies how the pool should be flush in case of an error. Valid values are: FailingConnectionOnly (default), IdleConnections, EntirePool"/>
+
                 <c:simple-property name="prepared-statements-cacheSize" type="long" readOnly="true" required="false"
                          description="The number of prepared statements per connection in an LRU cache"/>
                 <c:simple-property name="share-prepared-statements" type="boolean" readOnly="true" required="false"
@@ -923,6 +1015,7 @@
                  discovery="SubsystemDiscovery"
                  class="DatasourceComponent"
                  description="An XA data source"
+                 createDeletePolicy="delete-only"
                 >
 
             <plugin-configuration>
@@ -947,6 +1040,12 @@
             </operation>
 
             <operation name="flush-idle-connection-in-pool" description="Flushes the pool for idle connections">
+                <results>
+                    <c:simple-property name="operationResult"/>
+                </results>
+            </operation>
+
+            <operation name="test-connection-in-pool" description="Tests if a connection can be obtained">
                 <results>
                     <c:simple-property name="operationResult"/>
                 </results>
@@ -1630,14 +1729,40 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
         <operation name="list-proxies" description="Read the list of httpd connected to the nodes.">
         </operation>
 
-        <operation name="validate-address" >
-        </operation>
-
         <resource-configuration>
             <c:simple-property name="advertise-socket" displayName="Advertise Socket" type="string">
                 <c:option-source target="configuration" expression="socket-binding=name:type=SocketBindingGroup"/>
             </c:simple-property>
         </resource-configuration>
+    </server>
+
+    <server name="Naming"
+        discovery="SubsystemDiscovery"
+        class="BaseComponent"
+        singleton="true"
+        >
+
+        <runs-inside>
+            <parent-resource-type name="Host"  plugin="jboss-as-7"/>
+            <parent-resource-type name="JBossAS7-Standalone"  plugin="jboss-as-7"/>
+        </runs-inside>
+
+        <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="subsystem=naming"/>
+        </plugin-configuration>
+
+        <operation name="naming:jndi-view" displayName="JNDIView" description="Peek at the JNDI tree">
+            <results>
+                <c:list-property name="operationResult">
+                    <c:list-property name="innerContext">
+                        <c:map-property name="innerContexts">
+                            <c:simple-property name="class-name"/>
+                            <c:simple-property name="value"/>
+                        </c:map-property>
+                    </c:list-property>
+                </c:list-property>
+            </results>
+        </operation>
     </server>
 
 
@@ -1657,12 +1782,11 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
         </plugin-configuration>
     </service>
 
-    <service name="SocketBindingGroup"
+    <service name="SocketBindingGroupStandalone"
              discovery="SubsystemDiscovery"
              class="BaseComponent"
             >
         <runs-inside>
-            <parent-resource-type name="HostController"  plugin="jboss-as-7"/>
             <parent-resource-type name="JBossAS7-Standalone"  plugin="jboss-as-7"/>
         </runs-inside>
 
@@ -1672,22 +1796,73 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
         </plugin-configuration>
 
         <resource-configuration>
-            <c:simple-property name="default-interface" readOnly="true" displayName="Default Interface" description="Default Interface for these bindings. See NetworkInterfaces for its definition" required="false"/>
+            <c:simple-property name="default-interface" readOnly="true" displayName="Default Interface"
+                               description="Default Interface for these bindings. See NetworkInterfaces for its definition"
+                               required="true">
+                <c:option-source target="resource" expression="type=NetworkInterface plugin=jboss-as-7"/>
+            </c:simple-property>
             <!-- note: at domain level there is no port-offset -->
-            <c:simple-property name="port-offset" readOnly="true" displayName="Port Offset" description="Offset from standard ports for this group (Only relevant in standalone mode)" required="false"/>
-            <c:list-property name="includes">
-                <c:simple-property name="includes" displayName="Included bindings" description="Other bindings that are included in this one"/>
-            </c:list-property>
-            <c:list-property name="socket-binding">
+            <c:simple-property name="port-offset" readOnly="false" displayName="Port Offset"
+                               description="Offset from standard ports for this group."
+                               required="false"/>
+            <c:group name="children:socket-binding:name" displayName="Individual socket bindings">
+            <c:list-property name="*" displayName="Bindings">
                 <c:map-property name="binding">
-                    <c:simple-property name="name" description="The name of the socket. Services which need to access the socket configuration information will find it using this name."/>
-                    <c:simple-property name="interface" description="Name of the interface to which the socket should be bound, or, for multicast sockets, the interface on which it should listen. This should be one of the declared interfaces." required="false"/>
+                    <c:simple-property name="name" description="The name of the socket. Services which need to access the socket configuration information will find it using this name." readOnly="true"/>
+                    <c:simple-property name="interface" description="Name of the interface to which the socket should be bound, or, for multicast sockets, the interface on which it should listen. This should be one of the declared interfaces."
+                                       required="false">
+                        <c:option-source target="resource" expression="type=NetworkInterface plugin=jboss-as-7"/>
+                    </c:simple-property>
                     <c:simple-property name="port" description="Number of the port to which the socket should be bound." type="integer"/>
-                    <c:simple-property name="fixed-port" description="Whether the port value should remain fixed even if numeric offsets are applied to the other sockets in the socket group." type="boolean"/>
+                    <c:simple-property name="fixed-port" description="Whether the port value should remain fixed even if numeric offsets are applied to the other sockets in the socket group."
+                                       type="boolean" defaultValue="false"/>
                     <c:simple-property name="multicast-address" description="Multicast address on which the socket should receive multicast traffic. If unspecified, the socket will not be configured to receive multicast." required="false"/>
                     <c:simple-property name="multicast-port" description="Port on which the socket should receive multicast traffic. Must be configured if 'multicast-address' is configured." type="integer" required="false"/>
                 </c:map-property>
             </c:list-property>
+            </c:group>
+        </resource-configuration>
+
+    </service>
+    <service name="SocketBindingGroupDomain"
+             discovery="SubsystemDiscovery"
+             class="BaseComponent"
+            >
+        <runs-inside>
+            <parent-resource-type name="HostController"  plugin="jboss-as-7"/>
+        </runs-inside>
+
+
+        <plugin-configuration>
+            <c:simple-property name="path" readOnly="true" default="socket-binding-group"/>
+        </plugin-configuration>
+
+        <resource-configuration>
+            <c:simple-property name="default-interface" readOnly="true" displayName="Default Interface"
+                               description="Default Interface for these bindings. See NetworkInterfaces for its definition"
+                               required="true">
+                <c:option-source target="resource" expression="type=NetworkInterface plugin=jboss-as-7"/>
+            </c:simple-property>
+            <c:list-property name="includes" required="false">
+                <c:simple-property name="includes" displayName="Included bindings" description="Other bindings that are included in this one (only needed in Domain Mode)"/>
+            </c:list-property>
+            <c:group name="children:socket-binding:name" displayName="Individual socket bindings">
+            <c:list-property name="*">
+                <c:map-property name="binding">
+                    <c:simple-property name="name" description="The name of the socket. Services which need to access the socket configuration information will find it using this name." readOnly="true"/>
+                    <c:simple-property name="interface" description="Name of the interface to which the socket should be bound, or, for multicast sockets, the interface on which it should listen. This should be one of the declared interfaces."
+                                       required="false">
+                        <c:option-source target="resource" expression="type=NetworkInterface plugin=jboss-as-7"/>
+                    </c:simple-property>
+
+                    <c:simple-property name="port" description="Number of the port to which the socket should be bound." type="integer"/>
+                    <c:simple-property name="fixed-port" description="Whether the port value should remain fixed even if numeric offsets are applied to the other sockets in the socket group."
+                                       type="boolean" defaultValue="false"/>
+                    <c:simple-property name="multicast-address" description="Multicast address on which the socket should receive multicast traffic. If unspecified, the socket will not be configured to receive multicast." required="false"/>
+                    <c:simple-property name="multicast-port" description="Port on which the socket should receive multicast traffic. Must be configured if 'multicast-address' is configured." type="integer" required="false"/>
+                </c:map-property>
+            </c:list-property>
+            </c:group>
         </resource-configuration>
 
     </service>

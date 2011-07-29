@@ -19,17 +19,14 @@
 package org.rhq.modules.plugins.jbossas7;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.omg.CORBA.portable.ValueInputStream;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
@@ -43,27 +40,25 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertyGroupDefinition;
-import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
-import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
-import org.rhq.modules.plugins.jbossas7.json.NameValuePair;
+import org.rhq.modules.plugins.jbossas7.json.Address;
+import org.rhq.modules.plugins.jbossas7.json.CompositeOperation;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
-import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
 import org.rhq.modules.plugins.jbossas7.json.ReadAttribute;
 import org.rhq.modules.plugins.jbossas7.json.ReadChildrenResources;
 import org.rhq.modules.plugins.jbossas7.json.ReadResource;
 import org.rhq.modules.plugins.jbossas7.json.Result;
+import org.rhq.modules.plugins.jbossas7.json.WriteAttribute;
 
-public class ConfigurationDelegate implements ConfigurationFacet {
-
-    private static final String SUB_PATH = "_subPath";
+public class ConfigurationLoadDelegate implements ConfigurationFacet {
 
     final Log log = LogFactory.getLog(this.getClass());
 
-    private List<PROPERTY_VALUE> address;
+    private Address address;
     private ASConnection connection;
     private ConfigurationDefinition configurationDefinition;
+    private String namePropLocator;
 
     /**
      * Create a new configuration delegate, that reads the attributes for the resource at address.
@@ -71,7 +66,7 @@ public class ConfigurationDelegate implements ConfigurationFacet {
      * @param connection asConnection to use
      * @param address address of the resource.
      */
-    public ConfigurationDelegate(ConfigurationDefinition configDef,ASConnection connection, List<PROPERTY_VALUE> address) {
+    public ConfigurationLoadDelegate(ConfigurationDefinition configDef, ASConnection connection, Address address) {
         this.configurationDefinition = configDef;
         this.connection = connection;
         this.address = address;
@@ -92,15 +87,15 @@ public class ConfigurationDelegate implements ConfigurationFacet {
          */
         List<PropertyGroupDefinition> gdef = configurationDefinition.getGroupDefinitions();
         for (PropertyGroupDefinition pgDef : gdef) {
-            handleGroup(config,pgDef);
+            loadHandleGroup(config, pgDef);
         }
         /*
          * Now handle the non-grouped properties
          */
         List<PropertyDefinition> nonGroupdedDefs = configurationDefinition.getNonGroupedProperties();
         Operation op = new ReadResource(address);
-        op.addAdditionalProperty("recursive", "true");
-        handleProperties(config,nonGroupdedDefs,op);
+//        op.addAdditionalProperty("recursive", "true"); // Also get sub-resources
+        loadHandleProperties(config, nonGroupdedDefs, op);
 
         return config;
     }
@@ -115,8 +110,8 @@ public class ConfigurationDelegate implements ConfigurationFacet {
      * @param groupDefinition Definition of this group
      * @throws Exception If anything goes wrong
      */
-    private void handleGroup(Configuration config, PropertyGroupDefinition groupDefinition) throws Exception{
-        Operation operation = null;
+    private void loadHandleGroup(Configuration config, PropertyGroupDefinition groupDefinition) throws Exception{
+        Operation operation;
         String groupName = groupDefinition.getName();
         if (groupName.startsWith("attribute:")) {
             String attr = groupName.substring("attribute:".length());
@@ -124,6 +119,10 @@ public class ConfigurationDelegate implements ConfigurationFacet {
         }
         else if (groupName.startsWith("children:")) {
             String type = groupName.substring("children:".length());
+            if (type.contains(":")) {
+                // We only need the type for reading
+                type = type.substring(0,type.indexOf(":"));
+            }
             operation = new ReadChildrenResources(address,type);
             operation.addAdditionalProperty("recursive", "true");
         }
@@ -131,12 +130,12 @@ public class ConfigurationDelegate implements ConfigurationFacet {
             throw new IllegalArgumentException("Unknown operation in group name [" + groupName + "]");
         }
         List<PropertyDefinition> listedDefs = configurationDefinition.getPropertiesInGroup(groupName);
-        handleProperties(config,listedDefs,operation);
+        loadHandleProperties(config, listedDefs, operation);
 
     }
 
 
-    private void handleProperties(Configuration config, List<PropertyDefinition> definitions, Operation op) throws Exception {
+    private void loadHandleProperties(Configuration config, List<PropertyDefinition> definitions, Operation op) throws Exception {
         if (definitions.size()==0)
             return;
 
@@ -147,7 +146,8 @@ public class ConfigurationDelegate implements ConfigurationFacet {
 
 
         if (operationResult.getResult() instanceof List) {
-            PropertyList propertyList = handlePropertyList((PropertyDefinitionList) definitions.get(0),operationResult.getResult());
+            PropertyList propertyList = loadHandlePropertyList((PropertyDefinitionList) definitions.get(0),
+                    operationResult.getResult());
 
                 if (propertyList!=null)
                     config.put(propertyList);
@@ -156,42 +156,64 @@ public class ConfigurationDelegate implements ConfigurationFacet {
 
         Map<String,Object> results = (Map<String, Object>) operationResult.getResult();
 
-
         for (PropertyDefinition propDef :definitions ) {
-            String propertyName = propDef.getName();
-/*
-            if (!results.containsKey(propertyName)) {
-                log.warn(
-                        "No value for property [" + propertyName + "] found - check the descriptor (may be valid, \n"+
-                                "as some attributes are different in domain vs standalone mode");
-                continue;
-            }
-*/
-            Object valueObject = results.get(propertyName);
 
-            if (propDef instanceof PropertyDefinitionSimple) {
+            /*
+             * We may have a mismatch for groups where the <c:group name="children:*"> child is a list of maps
+             * but the result is actually the contained map
+             */
+            if (propDef instanceof PropertyDefinitionList && (propDef.getName().equals("*"))) {
+                propDef = ((PropertyDefinitionList) propDef).getMemberDefinition();
 
-                PropertySimple value = handlePropertySimple((PropertyDefinitionSimple) propDef, valueObject);
-                if (value!=null)
-                    config.put(value);
-            }
+                if (!(propDef instanceof PropertyDefinitionMap)) {
+                    log.error("Embedded child is not a map");
+                    return;
+                }
+                // Now we are at map level which matches the operations results
 
-            else if (propDef instanceof PropertyDefinitionList) {
-                PropertyList propertyList = handlePropertyList((PropertyDefinitionList) propDef,valueObject);
+                PropertyList list = new PropertyList("*");
 
-                if (propertyList!=null)
-                    config.put(propertyList);
-            }
-            else if (propDef instanceof PropertyDefinitionMap) {
-                PropertyMap propertyMap = handlePropertyMap((PropertyDefinitionMap) propDef,valueObject);
+                for (Map.Entry<String,Object> entry : results.entrySet()) {
+                    Object val = entry.getValue();
 
-                if (propertyMap!=null)
-                    config.put(propertyMap);
+                    PropertyMap propertyMap = loadHandlePropertyMap((PropertyDefinitionMap) propDef, val);
+
+                    if (propertyMap!=null)
+                        list.add(propertyMap);
+                    }
+
+                config.put(list);
+
+            } else { // standard case
+                String propertyName = propDef.getName();
+
+
+                Object valueObject = results.get(propertyName);
+
+                if (propDef instanceof PropertyDefinitionSimple) {
+
+                    PropertySimple value = loadHandlePropertySimple((PropertyDefinitionSimple) propDef, valueObject);
+                    if (value!=null)
+                        config.put(value);
+                }
+
+                else if (propDef instanceof PropertyDefinitionList) {
+                    PropertyList propertyList = loadHandlePropertyList((PropertyDefinitionList) propDef, valueObject);
+
+                    if (propertyList!=null)
+                        config.put(propertyList);
+                }
+                else if (propDef instanceof PropertyDefinitionMap) {
+                    PropertyMap propertyMap = loadHandlePropertyMap((PropertyDefinitionMap) propDef, valueObject);
+
+                    if (propertyMap!=null)
+                        config.put(propertyMap);
+                }
             }
         }
     }
 
-    PropertySimple handlePropertySimple(PropertyDefinitionSimple propDef, Object valueObject) {
+    PropertySimple loadHandlePropertySimple(PropertyDefinitionSimple propDef, Object valueObject) {
         PropertySimple propertySimple;
 
         String name = propDef.getName();
@@ -218,7 +240,7 @@ public class ConfigurationDelegate implements ConfigurationFacet {
      * @param valueObject the objects to put into the map
      * @return the populated map
      */
-    PropertyMap handlePropertyMap(PropertyDefinitionMap propDef, Object valueObject) {
+    PropertyMap loadHandlePropertyMap(PropertyDefinitionMap propDef, Object valueObject) {
         if (valueObject==null)
             return null;
 
@@ -237,18 +259,20 @@ public class ConfigurationDelegate implements ConfigurationFacet {
             Property property;
             PropertyDefinition value = maEntry.getValue();
             if (value instanceof PropertyDefinitionSimple)
-                property = handlePropertySimple((PropertyDefinitionSimple) value,o);
+                property = loadHandlePropertySimple((PropertyDefinitionSimple) value, o);
             else if (value instanceof PropertyDefinitionList)
-                property = handlePropertyList((PropertyDefinitionList) value,o);
+                property = loadHandlePropertyList((PropertyDefinitionList) value, o);
             else if (value instanceof PropertyDefinitionMap)
-                property = handlePropertyMap((PropertyDefinitionMap) value,o);
+                property = loadHandlePropertyMap((PropertyDefinitionMap) value, o);
             else
                 throw new IllegalArgumentException("Unknown property type in map property [" + propDef.getName() +"]");
 
             if (property!=null)
                 propertyMap.put(property);
-            else
-                System.out.println("Property " + key + " was null");
+            else {
+                if (log.isDebugEnabled())
+                    log.debug("Property " + key + " was null");
+            }
 
         }
 
@@ -261,7 +285,7 @@ public class ConfigurationDelegate implements ConfigurationFacet {
      * @param valueObject The objects to put into the list
      * @return the property that describes the list.
      */
-    PropertyList handlePropertyList(PropertyDefinitionList propDef,Object valueObject) {
+    PropertyList loadHandlePropertyList(PropertyDefinitionList propDef, Object valueObject) {
         String propertyName = propDef.getName();
         PropertyList propertyList = new PropertyList(propertyName);
         PropertyDefinition memberDefinition = propDef.getMemberDefinition();
@@ -282,7 +306,7 @@ public class ConfigurationDelegate implements ConfigurationFacet {
 
         if (memberDefinition instanceof PropertyDefinitionSimple) {
             for (Object obj : objects) {
-                PropertySimple property = handlePropertySimple((PropertyDefinitionSimple) memberDefinition,
+                PropertySimple property = loadHandlePropertySimple((PropertyDefinitionSimple) memberDefinition,
                         obj);
                 if (property!=null)
                     propertyList.add(property);
@@ -292,8 +316,8 @@ public class ConfigurationDelegate implements ConfigurationFacet {
             for (Object obj : objects) {
                 Map<String,Object>  map = (Map<String, Object>) obj;
 
-                PropertyMap propertyMap = handlePropertyMap(
-                        (PropertyDefinitionMap) propDef.getMemberDefinition(),map);
+                PropertyMap propertyMap = loadHandlePropertyMap(
+                        (PropertyDefinitionMap) propDef.getMemberDefinition(), map);
                 if (propertyMap!=null)
                     propertyList.add(propertyMap);
             }
@@ -302,22 +326,14 @@ public class ConfigurationDelegate implements ConfigurationFacet {
         return propertyList;
     }
 
-
-
+    /**
+     * Write the configuration back to the AS. Care must be taken, not to send properties that
+     * are read-only, as AS will choke on them.
+     * @param report
+     */
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
 
-        Configuration conf = report.getConfiguration();
-        for (Map.Entry<String, PropertySimple> entry : conf.getSimpleProperties().entrySet()) {
-
-            NameValuePair nvp = new NameValuePair(entry.getKey(), entry.getValue().getStringValue());
-            Operation writeAttribute = new Operation("write-attribute",
-                    address, nvp); // TODO test path
-            JsonNode result = connection.executeRaw(writeAttribute);
-            if (ASConnection.isErrorReply(result)) {
-                report.setStatus(ConfigurationUpdateStatus.FAILURE);
-                report.setErrorMessage(ASConnection.getFailureDescription(result));
-            }
-        }
+        throw new IllegalArgumentException("Please use ConfigurationWriteDelegate");
 
     }
 }

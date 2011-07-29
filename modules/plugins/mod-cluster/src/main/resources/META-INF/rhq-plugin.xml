@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<plugin name="mod_cluster"
+        displayName="mod_cluster"
+        description="Monitoring and management of mod_cluster plugin."
+        version="1.0"
+        package="org.rhq.plugins.modcluster"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+   <depends plugin="JMX" />
+
+   <service name="mod_cluster"
+           discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
+           class="ModclusterServerComponent"
+           supportsManualAdd="true"
+           description="mod_cluster plugin"
+           singleton="true">
+           
+      <runs-inside>
+         <parent-resource-type name="JBossAS Server" plugin="JBossAS"/>
+         <parent-resource-type name="JBossAS5 Server" plugin="JBossAS5"/>
+      </runs-inside>
+      
+      <plugin-configuration>
+         <c:simple-property name="objectName" readOnly="true" default="Catalina:type=ModClusterListener,*"/>
+         <c:simple-property name="engineObjectName" readOnly="true" default="jboss.web:type=Engine"/>
+      </plugin-configuration>
+      
+      <operation name="stop" displayName="Stop all webapps" description="Gracefully stops all webapps for all engines.">
+            <parameters>
+            	<c:simple-property required="true" name="timeout" type="string" displayName="Session draining timeout"/>
+                <c:simple-property required="true" name="unit" default="MILLISECONDS" displayName="Time unit of the timeout parameter">
+	                <c:property-options allowCustomValue="false">
+                    	<c:option value="MICROSECONDS" name="MICROSECONDS"/>
+                        <c:option value="MILLISECONDS" name="MILLISECONDS"/>
+                        <c:option value="NANOSECONDS" name="NANOSECONDS"/>
+                        <c:option value="SECONDS" name="SECONDS"/>
+                        <c:option value="HOURS" name="HOURS"/>
+                        <c:option value="DAYS" name="DAYS"/>
+                	</c:property-options>
+                </c:simple-property>
+            </parameters>
+      		<results>
+	      		<c:simple-property name="result" type="boolean" description="The result of the operation" />
+      		</results>
+   	  </operation>
+   	  <operation name="addProxy" displayName="Add a proxy" description="Add a proxy.">
+		<parameters>
+        	<c:simple-property required="true" name="host" type="string" displayName="Proxy address"/>
+            <c:simple-property required="true" name="port" type="string" displayName="Proxy port"/>
+        </parameters>
+   	  </operation>
+   	  <operation name="enable" displayName="Enable all webapps" description="Enable all webapps for all engines">
+      	<results>
+      		<c:simple-property name="result" type="boolean" description="The result of the operation" />
+      	</results>
+      </operation>
+      <operation name="reset" displayName="Reset the node" description="Move the node out of an error state." />
+      <operation name="disable" displayName="Disable all webpapps" description="Disable all webapps for all engines.">
+      	<results>
+      		<c:simple-property name="result" type="boolean" description="The result of the operation" />
+      	</results>
+      </operation>
+      <operation name="removeProxy" displayName="Remove a proxy" description="Remove a proxy.">
+		<parameters>
+        	<c:simple-property required="true" name="host" type="string" displayName="Proxy address"/>
+            <c:simple-property required="true" name="port" type="string" displayName="Proxy port"/>
+        </parameters>
+   	  </operation>
+      <operation name="refresh" displayName="Refresh configuration" description="Refresh configuration" />
+      
+      <metric property="proxyConfiguration" displayName="Proxy Configuration" displayType="summary" dataType="trait" />
+      <metric property="modelerType" displayName="Type of the modeled resource" displayType="summary" dataType="trait" />
+      <metric property="className" displayName="Fully qualified class name of the managed object" displayType="summary" dataType="trait" />
+      <metric property="advertise" displayName="Enable autodiscovery of httpd servers." displayType="summary" dataType="trait" />
+      
+      <resource-configuration>
+      	<c:simple-property name="workerTimeout" type="integer" description="Timeout to wait for an available worker (default is no wait)" />
+      	<c:simple-property name="stickySession" type="boolean" description="Enables sticky session for the cluster."/>
+      	<c:simple-property name="stickySessionRemove" type="boolean" description="Remove session when the request cannot be routed to the right node."/>
+      	<c:simple-property name="smax" type="integer" description="Maximum time on seconds for idle connections above smax."/>
+      	<c:simple-property name="maxAttempts" type="integer" description="Maximum number of attempts to send the request to the backend server."/>
+      	<c:simple-property name="advertiseSecurityKey" type="string" required="false" description="Security key for discovery."/>
+      	<c:simple-property name="stickySessionForce" type="boolean" description="Return an error when the request cannot be routed to the right node."/>
+      	<c:simple-property name="balancer" type="string" required="false" description="Name of the balancer."/>
+      	<c:simple-property name="flushPackets" type="boolean" description="Allows controlling flusing of packets."/>
+      	<c:simple-property name="socketTimeout" type="integer" description="Connection timeout for communication with the proxy." />
+      	<c:simple-property name="advertisePort" type="integer" required="false" description="Multicast port for discovery" />
+      	<c:simple-property name="advertiseGroupAddress" type="string" required="false" description="Multicast address for discovery."/>
+      	<c:simple-property name="flushWait" type="integer" description="Time in ms to wait before flushing packets."/>
+      	<c:simple-property name="ping" type="integer" description="Time in s to wait for a pong answer to a ping."/>
+      </resource-configuration>
+      
+       <service name="mod_cluster Webapp Context"
+         discovery="ContextDiscoveryComponent"
+         class="ContextComponent"
+         description="mod_cluster webapp context">
+
+      	<operation name="disableContext" displayName="Disable webapp" description="Disable this webapp.">
+      		<results>
+	      		<c:simple-property name="result" type="boolean" description="The result of the operation."/>
+      		</results>
+      	</operation>
+      	<operation name="stopContext" displayName="Stop webapp" description="Gracefully stops this webapp.">
+            <parameters>
+            	<c:simple-property required="true" name="timeout" type="integer" displayName="Session draining timeout"/>
+                <c:simple-property required="true" name="unit" default="MILLISECONDS" displayName="Time unit of the timeout parameter">
+	                 <c:property-options allowCustomValue="false">
+                        <c:option value="MICROSECONDS" name="MICROSECONDS"/>
+                        <c:option value="MILLISECONDS" name="MILLISECONDS"/>
+                        <c:option value="NANOSECONDS" name="NANOSECONDS"/>
+                        <c:option value="SECONDS" name="SECONDS"/>
+                        <c:option value="HOURS" name="HOURS"/>
+                        <c:option value="DAYS" name="DAYS"/>
+                    </c:property-options>
+                </c:simple-property>
+            </parameters>
+      		<results>
+	      		<c:simple-property name="result" type="boolean" description="The result of the operation" />
+      		</results>
+      	</operation>
+      	<operation name="enableContext" displayName="Enable webapp" description="Enable this webapp.">
+      		<results>
+      			<c:simple-property name="result" type="boolean" description="The result of the operation" />
+      		</results>
+      	</operation>
+
+      </service>
+   </service>
+</plugin>

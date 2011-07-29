@@ -21,26 +21,15 @@ package org.rhq.modules.plugins.jbossas7;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.URL;
 import java.util.List;
 import java.util.Map;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.Unmarshaller;
-import javax.xml.bind.util.ValidationEventCollector;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 
-import org.rhq.core.clientapi.agent.metadata.ConfigurationMetadataParser;
-import org.rhq.core.clientapi.agent.metadata.InvalidPluginDescriptorException;
-import org.rhq.core.clientapi.descriptor.DescriptorPackages;
-import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
-import org.rhq.core.clientapi.descriptor.plugin.ServerDescriptor;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
@@ -53,22 +42,19 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
-import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.Result;
 
 /**
- * Tests loading and writing configurations
+ * Tests loading configurations
  * @author Heiko W. Rupp
  */
 @Test
-public class ConfigurationTest {
+public class ConfigurationLoadingTest extends AbstractConfigurationHandlingTest {
 
-    private static final String DESCRIPTOR_FILENAME = "test-plugin.xml";
-    private Log log = LogFactory.getLog(getClass());
-
-    private PluginDescriptor pluginDescriptor;
-
-
+    @BeforeSuite
+    void loadPluginDescriptor() throws Exception {
+        super.loadPluginDescriptor();
+    }
 
     public void test1() throws Exception {
         FakeConnection connection = new FakeConnection();
@@ -80,7 +66,7 @@ public class ConfigurationTest {
         definition.put(new PropertyDefinitionSimple("access-log", "Access-Log", false,
                 PropertySimpleType.STRING));
         definition.put(new PropertyDefinitionSimple("rewrite", "Rewrite", false,
-            PropertySimpleType.BOOLEAN));
+                PropertySimpleType.BOOLEAN));
         definition.put(new PropertyDefinitionSimple("notThere", "NotThere", false,
             PropertySimpleType.STRING));
 
@@ -90,7 +76,7 @@ public class ConfigurationTest {
 
 
         String resultString = " {\"outcome\" : \"success\", \"result\" : {\"alias\" : [\"example.com\",\"example2.com\"],"+
-                " \"access-log\" : \"my.log\", \"rewrite\" : true}, \"compensating-operation\" : null}";
+                " \"access-log\" : \"my.log\", \"rewrite\" : true}}";
 
         ObjectMapper mapper = new ObjectMapper();
         ComplexResult result = mapper.readValue(resultString,ComplexResult.class);
@@ -98,7 +84,7 @@ public class ConfigurationTest {
 
         connection.setContent(json);
 
-        ConfigurationDelegate delegate = new ConfigurationDelegate(definition,connection,null);
+        ConfigurationLoadDelegate delegate = new ConfigurationLoadDelegate(definition,connection,null);
         Configuration config = delegate.loadResourceConfiguration();
 
         assert config.get("alias")!=null;
@@ -143,7 +129,7 @@ public class ConfigurationTest {
                 "    },\n" +
                 "    \"suffix\" : \".yyyy-MM-dd\"\n" +
                 "  },\n" +
-                "  \"compensating-operation\" : null\n" +
+                "  \"response-headers\" : null\n" +
                 "}";
 
         FakeConnection connection = new FakeConnection();
@@ -169,7 +155,7 @@ public class ConfigurationTest {
 
         connection.setContent(json);
 
-        ConfigurationDelegate delegate = new ConfigurationDelegate(definition,connection,null);
+        ConfigurationLoadDelegate delegate = new ConfigurationLoadDelegate(definition,connection,null);
         Configuration config = delegate.loadResourceConfiguration();
 
         assert config!=null;
@@ -235,8 +221,7 @@ public class ConfigurationTest {
                 "        \"multicast-port\" : 18447\n" +
                 "      }"+
                 "    }\n" +
-                "  },\n" +
-                "  \"compensating-operation\" : null\n" +
+                "  }\n" +
                 "}";
 
         ConfigurationDefinition definition = loadDescriptor("socketBinding");
@@ -248,7 +233,7 @@ public class ConfigurationTest {
         FakeConnection connection = new FakeConnection();
         connection.setContent(json);
 
-        ConfigurationDelegate delegate = new ConfigurationDelegate(definition,connection,null);
+        ConfigurationLoadDelegate delegate = new ConfigurationLoadDelegate(definition,connection,null);
         Configuration config = delegate.loadResourceConfiguration();
 
 
@@ -287,7 +272,7 @@ public class ConfigurationTest {
         FakeConnection connection = new FakeConnection();
         connection.setContent(json);
 
-        ConfigurationDelegate delegate = new ConfigurationDelegate(definition,connection,null);
+        ConfigurationLoadDelegate delegate = new ConfigurationLoadDelegate(definition,connection,null);
         Configuration config = delegate.loadResourceConfiguration();
 
         assert config != null;
@@ -321,7 +306,7 @@ public class ConfigurationTest {
         FakeConnection connection = new FakeConnection();
         connection.setContent(json);
 
-        ConfigurationDelegate delegate = new ConfigurationDelegate(definition,connection,null);
+        ConfigurationLoadDelegate delegate = new ConfigurationLoadDelegate(definition,connection,null);
         Configuration config = delegate.loadResourceConfiguration();
 
         assert config != null;
@@ -353,7 +338,7 @@ public class ConfigurationTest {
         FakeConnection connection = new FakeConnection();
         connection.setContent(json);
 
-        ConfigurationDelegate delegate = new ConfigurationDelegate(definition,connection,null);
+        ConfigurationLoadDelegate delegate = new ConfigurationLoadDelegate(definition,connection,null);
         Configuration config = delegate.loadResourceConfiguration();
 
         assert config != null;
@@ -384,7 +369,7 @@ public class ConfigurationTest {
         FakeConnection connection = new FakeConnection();
         connection.setContent(json);
 
-        ConfigurationDelegate delegate = new ConfigurationDelegate(definition,connection,null);
+        ConfigurationLoadDelegate delegate = new ConfigurationLoadDelegate(definition,connection,null);
         Configuration config = delegate.loadResourceConfiguration();
 
         assert config != null;
@@ -416,7 +401,7 @@ public class ConfigurationTest {
         FakeConnection connection = new FakeConnection();
         connection.setContent(json);
 
-        ConfigurationDelegate delegate = new ConfigurationDelegate(definition,connection,null);
+        ConfigurationLoadDelegate delegate = new ConfigurationLoadDelegate(definition,connection,null);
         Configuration config = delegate.loadResourceConfiguration();
         assert config!=null;
         assert config.getAllProperties().size()==8 : "Did not find 8 properties, but " + config.getAllProperties().size();
@@ -429,45 +414,6 @@ public class ConfigurationTest {
         ps = (PropertySimple) prop;
         assert ps.getBooleanValue()==false;
 
-    }
-
-    @BeforeSuite
-    private void loadPluginDescriptor() throws Exception {
-        try {
-            URL descriptorUrl = this.getClass().getClassLoader().getResource(DESCRIPTOR_FILENAME);
-            log.info("Loading plugin descriptor at: " + descriptorUrl);
-
-            JAXBContext jaxbContext = JAXBContext.newInstance(DescriptorPackages.PC_PLUGIN);
-
-            Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-            ValidationEventCollector vec = new ValidationEventCollector();
-            unmarshaller.setEventHandler(vec);
-            pluginDescriptor = (PluginDescriptor) unmarshaller.unmarshal(descriptorUrl.openStream());
-        } catch (Throwable t) {
-            // Catch RuntimeExceptions and Errors and dump their stack trace, because Surefire will completely swallow them
-            // and throw a cryptic NPE (see http://jira.codehaus.org/browse/SUREFIRE-157)!
-            t.printStackTrace();
-            throw new RuntimeException(t);
-        }
-    }
-
-    private ConfigurationDefinition loadDescriptor(String serverName) throws InvalidPluginDescriptorException {
-        List<ServerDescriptor> servers = pluginDescriptor.getServers();
-
-        ServerDescriptor serverDescriptor = findServer(serverName, servers);
-        assert serverDescriptor != null : "Server descriptor not found in test plugin descriptor";
-
-        return ConfigurationMetadataParser.parse("null", serverDescriptor.getResourceConfiguration());
-    }
-
-    private ServerDescriptor findServer(String name, List<ServerDescriptor> servers) {
-        for (ServerDescriptor server : servers) {
-            if (server.getName().equals(name)) {
-                return server;
-            }
-        }
-
-        return null;
     }
 
     private String loadJsonFromFile(String fileName) throws Exception {
@@ -486,30 +432,4 @@ public class ConfigurationTest {
         }
     }
 
-
-
-    /**
-     * Provide a fake connection, that will return the
-     * content we provide via #setContent
-     *
-     */
-    private class FakeConnection extends ASConnection {
-
-        JsonNode content;
-
-        public FakeConnection() {
-            super("localhost", 1234);
-        }
-
-        public void setContent(JsonNode content) {
-            this.content = content;
-        }
-
-        @Override
-        public JsonNode executeRaw(Operation operation) {
-            if (content==null)
-                throw new IllegalStateException("Content not yet set");
-            return content;
-        }
-    }
 }

@@ -57,15 +57,6 @@ public class DatasourceComponent extends BaseComponent implements OperationFacet
             addRequiredToOp(op, parameters, "connection-url");
             addOptionalToOp(op, parameters, "user-name");
             addOptionalToOp(op,parameters,"password");
-
-            Result res = connection.execute(op);
-            if (res.isSuccess()) {
-                result.setSimpleResult("Success");
-            }
-            else {
-                result.setErrorMessage(res.getFailureDescription().toString());
-            }
-
         }
         else if (operationName.equals("addXADatasource")) {
             String name = parameters.getSimpleValue("name",NOTSET);
@@ -85,14 +76,6 @@ public class DatasourceComponent extends BaseComponent implements OperationFacet
             props.put("_foo","_bar"); // TODO AS7-1209
             op.addAdditionalProperty("xa-data-source-properties",props);
 
-            Result res = connection.execute(op);
-            if (res.isSuccess()) {
-                result.setSimpleResult("Success");
-            }
-            else {
-                result.setErrorMessage(res.getFailureDescription().toString());
-            }
-
         }
         else {
             /*
@@ -107,7 +90,7 @@ public class DatasourceComponent extends BaseComponent implements OperationFacet
             result.setSimpleResult("Success");
         }
         else {
-            result.setErrorMessage(res.getFailureDescription().toString());
+            result.setErrorMessage(res.getFailureDescription());
         }
 
 
@@ -123,7 +106,9 @@ public class DatasourceComponent extends BaseComponent implements OperationFacet
         }
         else {
             String tmp = ps.getStringValue();
-            op.addAdditionalProperty(property,tmp);
+            if (tmp!=null) {
+                op.addAdditionalProperty(property,tmp);
+            }
         }
     }
 

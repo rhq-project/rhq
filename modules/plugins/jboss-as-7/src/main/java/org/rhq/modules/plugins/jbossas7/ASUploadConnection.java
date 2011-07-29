@@ -167,6 +167,37 @@ public class ASUploadConnection {
         return builder.toString().getBytes("US-ASCII");
     }
 
+    public static String getFailureDescription(JsonNode jsonNode) {
+        if (jsonNode==null)
+            return "getFailureDescription: -input was null-";
+        JsonNode node = jsonNode.findValue("failure-description");
+        return node.getValueAsText();
+    }
+
+    static boolean isErrorReply(JsonNode in) {
+        if (in == null)
+            return true;
+
+        if (in.has("outcome")) {
+            String outcome = null;
+            try {
+                JsonNode outcomeNode = in.findValue("outcome");
+                outcome = outcomeNode.getTextValue();
+                if (outcome.equals("failed")) {
+                    JsonNode reasonNode = in.findValue("failure-description");
+
+                    String reason = reasonNode.getTextValue();
+                    return true;
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace(); // TODO
+                return true;
+            }
+        }
+        return false;
+    }
+
 
     private void closeQuietly(final Closeable closeable) {
         if(closeable != null) {

@@ -316,12 +316,7 @@ public class ExtensionModelTest {
         URL descriptorUrl = this.getClass().getClassLoader().getResource(file);
         System.out.println("Loading plugin descriptor at: " + descriptorUrl);
 
-        JAXBContext jaxbContext = JAXBContext.newInstance(DescriptorPackages.PC_PLUGIN);
-
-        Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-        ValidationEventCollector vec = new ValidationEventCollector();
-        unmarshaller.setEventHandler(vec);
-        pluginDescriptor = (PluginDescriptor) unmarshaller.unmarshal(descriptorUrl.openStream());
+        pluginDescriptor = (PluginDescriptor) AgentPluginDescriptorUtil.parsePluginDescriptor(descriptorUrl.openStream());
 
         this.metadataManager.loadPlugin(pluginDescriptor);
 

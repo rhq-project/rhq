@@ -26,10 +26,17 @@
     </properties>
 
     <repositories>
+        <!-- This repository contains an artifact for the httpd binary as described below
+             in the dependencies section. It doesn't make sense to push a httpd binary 
+             that is very platform specific into a public maven repository. 
+             If you really want to run this integration test you have to build the artifact 
+             as described below and put it in your own repo. It's not that hard and the RHQ 
+             team is more than happy to help you out with that :)
+        -->
         <repository>
             <id>Httpd binary repo</id>
             <name>Repository containing a binaries of httpd to be used with the tests</name>
-            <url>http://jon01.mw.lab.eng.bos.redhat.com:8042/m2-repo</url>
+            <url>${httpd.binary.maven.repo}</url>
         </repository>
     </repositories>
 

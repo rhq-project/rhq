@@ -19,7 +19,18 @@
  */
 package org.rhq.enterprise.server.plugin.pc.drift;
 
-import org.rhq.core.domain.drift.DriftFile;
+import java.io.File;
+
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
+import org.rhq.core.domain.criteria.DriftChangeSetJPACriteria;
+import org.rhq.core.domain.criteria.DriftCriteria;
+import org.rhq.core.domain.drift.Drift;
+import org.rhq.core.domain.drift.DriftChangeSet;
+import org.rhq.core.domain.drift.DriftComposite;
+import org.rhq.core.domain.drift.Snapshot;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
 
 /**
  * All drift server plugins must implement this facet.
@@ -27,9 +38,17 @@ import org.rhq.core.domain.drift.DriftFile;
  * @author Jay Shaughnessy
  * @author John Sanda
  */
-public interface DriftServerPluginFacet {
+public interface DriftServerPluginFacet extends ServerPluginComponent {
 
-    public void storeDriftFile(DriftFile driftFile) throws Exception;
+    PageList<DriftChangeSet> findDriftChangeSetsByCriteria(Subject subject, DriftChangeSetCriteria criteria);
 
-    public DriftFile fetchDriftFile(String sha256) throws Exception;
+    PageList<Drift> findDriftsByCriteria(Subject subject, DriftCriteria criteria);
+
+    PageList<DriftComposite> findDriftCompositesByCriteria(Subject subject, DriftCriteria criteria);
+
+    void saveChangeSet(int resourceId, File changeSetZip) throws Exception;
+
+    void saveChangeSetFiles(File changeSetFilesZip) throws Exception;
+
+    Snapshot createSnapshot(Subject subject, DriftChangeSetJPACriteria criteria);
 }

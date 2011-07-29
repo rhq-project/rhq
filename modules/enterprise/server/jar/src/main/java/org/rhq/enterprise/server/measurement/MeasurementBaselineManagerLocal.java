@@ -92,8 +92,16 @@ public interface MeasurementBaselineManagerLocal {
     MeasurementBaseline calculateAutoBaseline(Subject subject, Integer measurementScheduleId, long startDate,
         long endDate, boolean save) throws BaselineCreationException, MeasurementNotFoundException;
 
+    // internal use only for transactioning reasons
+    MeasurementBaseline calculateAutoBaselineInNewTransaction(Subject subject, Integer measurementScheduleId,
+        long startDate, long endDate, boolean save) throws BaselineCreationException, MeasurementNotFoundException;
+
     MeasurementBaseline calculateAutoBaseline(Subject subject, int groupId, int definitionId, long startDate,
         long endDate, boolean save) throws BaselineCreationException, MeasurementNotFoundException;
+
+    // internal use only for transactioning reasons
+    MeasurementBaseline calculateAutoBaselineForGroupInNewTransaction(Subject subject, int groupId, int definitionId,
+        long startDate, long endDate, boolean save) throws BaselineCreationException, MeasurementNotFoundException;
 
     /**
      * Unset the {@link MeasurementBaseline#setUserEntered(boolean) user-entered} property in baselines so that we can
@@ -104,19 +112,6 @@ public interface MeasurementBaselineManagerLocal {
      * @param definitionIds measurement definition IDs
      */
     void enableAutoBaselineCalculation(Subject subject, Integer[] resourceIds, Integer[] definitionIds);
-
-    /**
-     * Returns the baseline for a measurement identified by its measurement definition and the resource whose
-     * measurement it is.
-     *
-     * @param  subject
-     * @param  resource
-     * @param  measurementDefinitionId
-     *
-     * @return baseline of the resource's measurement with the given definition
-     */
-    MeasurementBaseline findBaselineForResourceAndMeasurementDefinition(Subject subject, Integer resource,
-        Integer measurementDefinitionId);
 
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //

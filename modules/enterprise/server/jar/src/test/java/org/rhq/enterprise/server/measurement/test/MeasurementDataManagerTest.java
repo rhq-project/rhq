@@ -175,7 +175,7 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
 
             // Do not remove this sleep -- the previous is is asynchronous
             // and the sleep "guarantees" that data is actually hitting the db
-            Thread.sleep(1000);
+            Thread.sleep(10000);
 
             PageList<CallTimeDataComposite> list1 = callTimeDataManager.findCallTimeDataForResource(overlord,schedule1.getId(),
                 now-DELTA,System.currentTimeMillis()+DELTA,new PageControl());
@@ -235,7 +235,7 @@ public class MeasurementDataManagerTest extends AbstractEJB3Test {
 
             // Do not remove this sleep -- the previous is is asynchronous
             // and the sleep "guarantees" that data is actually hitting the db
-            Thread.sleep(1000);
+            Thread.sleep(10000);
 
             PageList<CallTimeDataComposite> list1 = callTimeDataManager.findCallTimeDataForResource(overlord,schedule1.getId(),
                 now- DELTA,System.currentTimeMillis()+ DELTA,new PageControl());

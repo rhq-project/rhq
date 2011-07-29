@@ -178,11 +178,6 @@ public class DriftConfiguration implements Serializable {
         }
     }
 
-    /**
-     * @deprecated this is not to be used and will be removed
-     */
-    private Resource resource;
-
     private Configuration configuration;
 
     // required for jaxb/web services stuff
@@ -190,11 +185,6 @@ public class DriftConfiguration implements Serializable {
     }
 
     public DriftConfiguration(Configuration c) {
-        this(null, c);
-    }
-
-    public DriftConfiguration(Resource resource, Configuration c) {
-        this.resource = resource;
         this.configuration = c;
     }
 
@@ -312,20 +302,6 @@ public class DriftConfiguration implements Serializable {
         return filters;
     }
 
-    /**
-     * @deprecated this is not to be used and will be removed
-     */
-    public Resource getResource() {
-        return resource;
-    }
-
-    /**
-     * @deprecated this is not to be used and will be removed
-     */
-    public void setResource(Resource resource) {
-        this.resource = resource;
-    }
-
     public static Set<DriftConfiguration> valueOf(Resource resource) {
         if (null == resource) {
             return new HashSet<DriftConfiguration>(0);
@@ -339,7 +315,7 @@ public class DriftConfiguration implements Serializable {
         Set<DriftConfiguration> result = new HashSet<DriftConfiguration>(configs.size());
 
         for (Iterator<Configuration> i = configs.iterator(); i.hasNext();) {
-            result.add(new DriftConfiguration(resource, i.next()));
+            result.add(new DriftConfiguration(i.next()));
         }
 
         return result;

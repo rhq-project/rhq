@@ -37,6 +37,7 @@ import org.rhq.core.domain.drift.dto.DriftFileDTO;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.ZipUtil;
+import org.rhq.core.util.file.FileUtil;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginContext;
 import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginFacet;
 import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBChangeSet;
@@ -100,9 +101,11 @@ public class MongoDBDriftServer implements DriftServerPluginFacet {
 
                 for (DirectoryEntry dirEntry : reader) {
                     for (FileEntry fileEntry : dirEntry) {
+                        String path = new File(dirEntry.getDirectory(), fileEntry.getFile()).getPath();
+                        path = FileUtil.useForwardSlash(path);
                         MongoDBChangeSetEntry entry = new MongoDBChangeSetEntry();
                         entry.setCategory(fileEntry.getType());
-                        entry.setPath(fileEntry.getFile());
+                        entry.setPath(path);
                         changeSet.add(entry);
                     }
                 }

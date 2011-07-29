@@ -661,6 +661,13 @@ public class AgentConfiguration {
 
         long[] ret_params = isClientSenderCommandSpoolFileParamsValueValid(value);
 
+        // If the config was invalid, immediately fall back to our default just so we don't bomb out with a NPE later.
+        // We are guaranteed not to get a null returned if we pass in the hardcoded default params.
+        // The above method will have already logged a warning for us.
+        if (ret_params == null) {
+            ret_params = isClientSenderCommandSpoolFileParamsValueValid(AgentConfigurationConstants.DEFAULT_CLIENT_SENDER_COMMAND_SPOOL_FILE_PARAMS);
+        }
+
         return ret_params;
     }
 
@@ -1228,7 +1235,6 @@ public class AgentConfiguration {
 
         return config;
     }
-
 
     /**
      * This returns the agent's security token that it needs to send with its commands to the server. If <code>

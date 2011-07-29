@@ -37,8 +37,8 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.common.EntityContext;
+import org.rhq.core.domain.criteria.BasicDriftCriteria;
 import org.rhq.core.domain.criteria.DriftCriteria;
-import org.rhq.core.domain.criteria.DriftJPACriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftCategory;
 import org.rhq.core.domain.drift.DriftComposite;
@@ -263,7 +263,7 @@ public class DriftDataSource extends RPCDataSource<DriftComposite, DriftCriteria
             return null; // user didn't select any priorities - return null to indicate no data should be displayed
         }
 
-        DriftJPACriteria criteria = new DriftJPACriteria();
+        BasicDriftCriteria criteria = new BasicDriftCriteria();
         criteria.fetchChangeSet(true);
         criteria.addFilterCategories(categoriesFilter);
 

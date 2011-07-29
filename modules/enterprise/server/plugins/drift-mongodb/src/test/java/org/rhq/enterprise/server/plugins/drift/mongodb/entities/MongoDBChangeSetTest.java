@@ -1,5 +1,7 @@
 package org.rhq.enterprise.server.plugins.drift.mongodb.entities;
 
+import java.util.List;
+
 import com.google.code.morphia.Datastore;
 import com.google.code.morphia.Morphia;
 import com.google.code.morphia.query.Query;
@@ -14,6 +16,7 @@ import org.rhq.core.domain.drift.DriftCategory;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
 import static org.rhq.test.AssertUtils.assertCollectionMatchesNoOrder;
 import static org.rhq.test.AssertUtils.assertPropertiesMatch;
+import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 
 public class MongoDBChangeSetTest {
@@ -70,6 +73,23 @@ public class MongoDBChangeSetTest {
         assertPropertiesMatch("Failed to save change set", expected, actual, "drifts");
         assertCollectionMatchesNoOrder("Failed to save change set entries", expected.getDrifts(), actual.getDrifts(),
             "changeSet");
+    }
+
+    @Test
+    public void saveAndFindChangeSetById() throws Exception {
+        MongoDBChangeSet expected = new MongoDBChangeSet();
+        expected.setCategory(COVERAGE);
+        expected.setVersion(1);
+        expected.setDriftConfigurationId(1);
+
+        ds.save(expected);
+
+        List<MongoDBChangeSet> results = ds.createQuery(MongoDBChangeSet.class)
+            .filter("id = ", expected.getObjectId())
+            .asList();
+
+        assertEquals(results.size(), 1, "Expected to get back one change set");
+
     }
 
 }

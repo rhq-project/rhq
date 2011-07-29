@@ -73,15 +73,8 @@ public class DriftServerPluginComponent implements DriftServerPluginFacet {
 
     @Override
     public PageList<DriftChangeSet> findDriftChangeSetsByCriteria(Subject subject, DriftChangeSetCriteria criteria) {
-        DriftChangeSetJPACriteria jpaCriteria = new DriftChangeSetJPACriteria();
-        jpaCriteria.addFilterId(criteria.getFilterId());
-        jpaCriteria.addFilterResourceId(criteria.getFilterResourceId());
-        jpaCriteria.addFilterVersion(criteria.getFilterVersion());
-        jpaCriteria.addFilterCategory(criteria.getFilterCategory());
-        jpaCriteria.fetchDrifts(criteria.isFetchDrifts());
-
         PageList<? extends DriftChangeSet> results = getDriftManager().findDriftChangeSetsByCriteria(subject,
-            jpaCriteria);
+            toJPACriteria(criteria));
         return (PageList<DriftChangeSet>) results;
     }
 
@@ -112,6 +105,21 @@ public class DriftServerPluginComponent implements DriftServerPluginFacet {
     public Snapshot createSnapshot(Subject subject, DriftChangeSetJPACriteria criteria) {
         DriftManagerLocal driftMgr = getDriftManager();
         return driftMgr.createSnapshot(subject, criteria);
+    }
+
+    private DriftChangeSetJPACriteria toJPACriteria(DriftChangeSetCriteria criteria) {
+        DriftChangeSetJPACriteria jpaCriteria = new DriftChangeSetJPACriteria();
+        jpaCriteria.addFilterId(criteria.getFilterId());
+        jpaCriteria.addFilterCategory(criteria.getFilterCategory());
+        jpaCriteria.addFilterCreatedAfter(criteria.getFilterCreatedAfter());
+        jpaCriteria.addFilterCreatedBefore(criteria.getFilterCreatedBefore());
+        jpaCriteria.addFilterEndVersion(criteria.getFilterEndVersion());
+        jpaCriteria.addFilterStartVersion(criteria.getFilterStartVersion());
+        jpaCriteria.addFilterVersion(criteria.getFilterVersion());
+        jpaCriteria.addSortVersion(criteria.getSortVersion());
+        jpaCriteria.fetchDrifts(criteria.isFetchDrifts());
+
+        return jpaCriteria;
     }
 
     private DriftJPACriteria toJPACriteria(DriftCriteria criteria) {

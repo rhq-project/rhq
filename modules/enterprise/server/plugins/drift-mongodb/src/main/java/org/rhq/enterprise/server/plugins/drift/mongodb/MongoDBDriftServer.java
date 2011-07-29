@@ -16,6 +16,7 @@ import com.mongodb.Mongo;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.bson.types.ObjectId;
 
 import org.rhq.common.drift.ChangeSetReader;
 import org.rhq.common.drift.ChangeSetReaderImpl;
@@ -33,6 +34,7 @@ import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.drift.Snapshot;
 import org.rhq.core.domain.drift.dto.DriftChangeSetDTO;
 import org.rhq.core.domain.drift.dto.DriftDTO;
+import org.rhq.core.domain.drift.dto.DriftFileDTO;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.ZipUtil;
@@ -124,7 +126,23 @@ public class MongoDBDriftServer implements DriftServerPluginFacet {
 
     @Override
     public PageList<Drift> findDriftsByCriteria(Subject subject, DriftCriteria criteria) {
-        return new PageList<Drift>();
+        String[] idFields = criteria.getFilterId().split(":");
+        ObjectId changeSetId = new ObjectId(idFields[0]);
+        String path = idFields[1];
+        Query<MongoDBChangeSet> query = ds.createQuery(MongoDBChangeSet.class)
+            .filter("id = ", changeSetId)
+            .filter("files.path = ", path);
+
+        PageList results = new PageList<DriftDTO>();
+
+        for (MongoDBChangeSet changeSet : query) {
+            DriftChangeSetDTO changeSetDTO = toDTO(changeSet);
+            for (MongoDBChangeSetEntry entry : changeSet.getDrifts()) {
+                results.add((toDTO(entry, changeSetDTO)));
+            }
+        }
+
+        return (PageList<Drift>) results;
     }
 
     @Override
@@ -185,6 +203,13 @@ public class MongoDBDriftServer implements DriftServerPluginFacet {
         dto.setPath(entry.getPath());
         dto.setCategory(entry.getCategory());
 
+        DriftFileDTO fileDTO = new DriftFileDTO();
+        fileDTO.setHashId("1a2b3c4e5f");
+
+        dto.setOldDriftFile(fileDTO);
+        dto.setNewDriftFile(fileDTO);
+
         return dto;
     }
+
 }

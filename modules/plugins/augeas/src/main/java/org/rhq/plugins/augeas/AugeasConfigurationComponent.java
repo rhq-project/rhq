@@ -35,6 +35,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
 import org.rhq.augeas.util.Glob;
 import org.rhq.core.domain.configuration.AbstractPropertyMap;
 import org.rhq.core.domain.configuration.Configuration;
@@ -182,6 +183,7 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
             log.debug("Validation of updated Resource configuration for " + this.resourceDescription
                 + " failed with the following errors: " + report.getErrorMessage());
             report.setStatus(ConfigurationUpdateStatus.FAILURE);
+            close();
             return;
         }
 
@@ -332,6 +334,11 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
         return files;
     }
 
+    /**
+     * Returns initialized augeas instance. Augeas instance must be closed by calling method close on the Augeas instance
+     * or by calling method close on AugeasConfigurationComponent instance after use of augeas. 
+     * @return
+     */
     public Augeas getAugeas() {
         if (this.augeas == null)
             initAugeas();
@@ -747,13 +754,7 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
      */
     @Override
     protected void finalize() throws Throwable {
-        if (this.augeas != null) {
-            try {
-                this.augeas.close();
-            } catch (Exception e) {
-            }
-            this.augeas = null;
-        }
+        close();
         super.finalize();
     }
 

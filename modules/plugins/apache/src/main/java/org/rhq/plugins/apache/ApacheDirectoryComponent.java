@@ -25,6 +25,7 @@ package org.rhq.plugins.apache;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.augeas.AugeasComponent;
 import org.rhq.augeas.node.AugeasNode;
 import org.rhq.augeas.tree.AugeasTree;
@@ -71,9 +72,8 @@ public class ApacheDirectoryComponent implements ResourceComponent<ApacheVirtual
     public Configuration loadResourceConfiguration() throws Exception {
         ApacheVirtualHostServiceComponent parentVirtualHost = resourceContext.getParentResourceComponent();
 
-        AugeasComponent comp = null;
+        AugeasComponent comp = getAugeas();
         try {
-            comp = getAugeas();
             AugeasTree tree = comp.getAugeasTree(ApacheServerComponent.AUGEAS_HTTP_MODULE_NAME);
             ConfigurationDefinition resourceConfigDef = resourceContext.getResourceType()
                 .getResourceConfigurationDefinition();
@@ -82,17 +82,15 @@ public class ApacheDirectoryComponent implements ResourceComponent<ApacheVirtual
             ApacheAugeasMapping mapping = new ApacheAugeasMapping(tree);
             return mapping.updateConfiguration(getNode(virtualHostNode), resourceConfigDef);
         } finally {
-            if (comp != null)
-                comp.close();
+            comp.close();
         }
     }
 
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
 
-        AugeasComponent comp = null;
+        AugeasComponent comp = getAugeas();
         AugeasTree tree = null;
         try {
-            comp = getAugeas();
             tree = comp.getAugeasTree(ApacheServerComponent.AUGEAS_HTTP_MODULE_NAME);
             ConfigurationDefinition resourceConfigDef = resourceContext.getResourceType()
                 .getResourceConfigurationDefinition();
@@ -112,8 +110,7 @@ public class ApacheDirectoryComponent implements ResourceComponent<ApacheVirtual
                 log.error("Augeas failed to save configuration", e);
             report.setStatus(ConfigurationUpdateStatus.FAILURE);
         } finally {
-            if (comp != null)
-                comp.close();
+            comp.close();
         }
     }
 
@@ -140,8 +137,7 @@ public class ApacheDirectoryComponent implements ResourceComponent<ApacheVirtual
                     + resourceContext.getResourceKey() + ". Ignoring.");
             }
         } finally {
-            if (comp != null)
-                comp.close();
+            comp.close();
         }
     }
 

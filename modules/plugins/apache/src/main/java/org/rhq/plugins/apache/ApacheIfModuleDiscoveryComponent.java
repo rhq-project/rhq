@@ -53,10 +53,10 @@ public class ApacheIfModuleDiscoveryComponent implements ResourceDiscoveryCompon
         if (!virtualHost.isAugeasEnabled()) {
             return discoveredResources;
         }
-        AugeasComponent comp = null;
+        AugeasComponent comp = virtualHost.getAugeas();
         AugeasTree tree = null;
         try {
-            comp = virtualHost.getAugeas();
+
             tree = comp.getAugeasTree(ApacheServerComponent.AUGEAS_HTTP_MODULE_NAME);
 
             parentNode = virtualHost.getNode(tree);
@@ -76,8 +76,7 @@ public class ApacheIfModuleDiscoveryComponent implements ResourceDiscoveryCompon
             }
             return discoveredResources;
         } finally {
-            if (comp != null)
-                comp.close();
+            comp.close();
         }
     }
 }

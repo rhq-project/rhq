@@ -36,6 +36,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
 import org.rhq.augeas.AugeasComponent;
 import org.rhq.augeas.config.AugeasConfiguration;
 import org.rhq.augeas.config.AugeasModuleConfig;
@@ -306,9 +307,8 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
         if (!isAugeasEnabled())
             throw new RuntimeException(CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
 
-        AugeasComponent comp = null;
+        AugeasComponent comp = getAugeas();
         try {
-            comp = getAugeas();
             ConfigurationDefinition resourceConfigDef = resourceContext.getResourceType()
                 .getResourceConfigurationDefinition();
 
@@ -319,8 +319,7 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
             log.error("Failed to load Apache configuration.", e);
             throw e;
         } finally {
-            if (comp != null)
-                comp.close();
+            comp.close();
         }
     }
 
@@ -330,12 +329,11 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
             return;
         }
 
-        AugeasComponent comp = null;
+        AugeasComponent comp = getAugeas();
 
         Configuration originalConfig = report.getConfiguration().deepCopy(true);
         AugeasTree tree = null;
         try {
-            comp = getAugeas();
             tree = comp.getAugeasTree(AUGEAS_HTTP_MODULE_NAME);
             ConfigurationDefinition resourceConfigDef = resourceContext.getResourceType()
                 .getResourceConfigurationDefinition();
@@ -362,8 +360,7 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
                 log.error("Configuratio has not changed");
             }
         } finally {
-            if (comp != null)
-                comp.close();
+            comp.close();
         }
     }
 
@@ -440,12 +437,12 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
             report.setResourceKey(resourceKey);
             report.setResourceName(resourceName);
 
-            AugeasComponent comp = null;
+            AugeasComponent comp = getAugeas();
             //determine the resource name
 
             AugeasTree tree;
             try {
-                comp = getAugeas();
+
                 tree = comp.getAugeasTree(AUGEAS_HTTP_MODULE_NAME);
                 //fill in the plugin config
                 String url = "http://" + addr.host + ":" + addr.port + "/";
@@ -939,7 +936,7 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
             try {
                 ag = new Augeas();
             } catch (Exception e) {
-                log.error("Augeas is enabled in configuration but was not found on the system.");
+                log.error("Augeas is enabled in configuration but was not found on the system.", e);
                 throw new RuntimeException(CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
             } finally {
                 if (ag != null) {

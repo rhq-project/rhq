@@ -31,6 +31,7 @@ import net.augeas.AugeasException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.augeas.config.AugeasConfiguration;
 import org.rhq.augeas.config.AugeasModuleConfig;
 import org.rhq.augeas.tree.AugeasTree;
@@ -101,8 +102,8 @@ public class AugeasProxy {
                 try {
                     augeas.close();
                 } catch (Exception e) {
+                    log.error("Could not close augeas instance", e);
                 }
-                augeas = null;
             }
             augeas = new Augeas(config.getRootPath(), config.getLoadPath(), config.getMode());
 
@@ -201,13 +202,7 @@ public class AugeasProxy {
      */
     @Override
     protected void finalize() throws Throwable {
-        if (augeas != null) {
-            try {
-                augeas.close();
-            } catch (Exception e) {
-            }
-            augeas = null;
-        }
+        close();
         super.finalize();
     }
 
@@ -216,6 +211,7 @@ public class AugeasProxy {
             try {
                 augeas.close();
             } catch (Exception e) {
+                log.error("Could not close augeas instance", e);
             }
             augeas = null;
         }

@@ -64,15 +64,15 @@ public class ApacheDirectoryDiscoveryComponent implements ResourceDiscoveryCompo
         if (!context.getParentResourceComponent().isAugeasEnabled())
             return discoveredResources;
 
-        AugeasComponent comp;
+        AugeasComponent comp = context.getParentResourceComponent().getAugeas();
         AugeasTree tree = null;
 
         try {
-            comp = context.getParentResourceComponent().getAugeas();
             tree = comp.getAugeasTree(ApacheServerComponent.AUGEAS_HTTP_MODULE_NAME);
         } catch (AugeasException e) {
             //we depend on Augeas to do anything useful with directories.
-            //give up, if Augeas isn't there.
+            //give up, if Augeas isn't there.            
+            comp.close();
             return discoveredResources;
         }
 

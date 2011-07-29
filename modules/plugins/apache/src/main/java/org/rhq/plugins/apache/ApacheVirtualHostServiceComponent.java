@@ -34,6 +34,7 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.augeas.AugeasComponent;
 import org.rhq.augeas.node.AugeasNode;
 import org.rhq.augeas.tree.AugeasTree;
@@ -142,9 +143,8 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
         if (!parent.isAugeasEnabled())
             throw new Exception(ApacheServerComponent.CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
 
-        AugeasComponent comp = null;
+        AugeasComponent comp = getAugeas();
         try {
-            comp = getAugeas();
             AugeasTree tree = comp.getAugeasTree(ApacheServerComponent.AUGEAS_HTTP_MODULE_NAME);
             ConfigurationDefinition resourceConfigDef = resourceContext.getResourceType()
                 .getResourceConfigurationDefinition();
@@ -152,16 +152,14 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
             ApacheAugeasMapping mapping = new ApacheAugeasMapping(tree);
             return mapping.updateConfiguration(getNode(tree), resourceConfigDef);
         } finally {
-            if (comp != null)
-                comp.close();
+            comp.close();
         }
     }
 
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
-        AugeasComponent comp = null;
+        AugeasComponent comp = getAugeas();
         AugeasTree tree = null;
         try {
-            comp = getAugeas();
             tree = comp.getAugeasTree(ApacheServerComponent.AUGEAS_HTTP_MODULE_NAME);
             ConfigurationDefinition resourceConfigDef = resourceContext.getResourceType()
                 .getResourceConfigurationDefinition();
@@ -181,8 +179,7 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
                 log.error("Augeas failed to save configuration", e);
             report.setStatus(ConfigurationUpdateStatus.FAILURE);
         } finally {
-            if (comp != null)
-                comp.close();
+            comp.close();
         }
     }
 
@@ -196,10 +193,9 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
                 "Cannot delete the virtual host representing the main server configuration.");
         }
 
-        AugeasComponent comp = null;
+        AugeasComponent comp = getAugeas();
 
         try {
-            comp = getAugeas();
             AugeasTree tree = comp.getAugeasTree(ApacheServerComponent.AUGEAS_HTTP_MODULE_NAME);
             AugeasNode myNode = getNode(tree);
 
@@ -212,8 +208,7 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
             //this means we couldn't find the augeas node for this vhost.
             //that error can be safely ignored in this situation.
         } finally {
-            if (comp != null)
-                comp.close();
+            comp.close();
         }
     }
 

@@ -52,10 +52,9 @@ public class ApacheIfModuleDirectoryDiscoveryComponent implements ResourceDiscov
         if (!directory.isAugeasEnabled())
             return discoveredResources;
 
-        AugeasComponent comp = null;
+        AugeasComponent comp = directory.getAugeas();
         AugeasTree tree = null;
         try {
-            comp = directory.getAugeas();
             tree = comp.getAugeasTree(ApacheServerComponent.AUGEAS_HTTP_MODULE_NAME);
 
             parentNode = directory.getNode(tree);
@@ -75,8 +74,7 @@ public class ApacheIfModuleDirectoryDiscoveryComponent implements ResourceDiscov
             }
             return discoveredResources;
         } finally {
-            if (comp != null)
-                comp.close();
+            comp.close();
         }
     }
 }

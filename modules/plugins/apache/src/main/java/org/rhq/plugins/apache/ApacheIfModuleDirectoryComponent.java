@@ -24,6 +24,7 @@ package org.rhq.plugins.apache;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.augeas.AugeasComponent;
 import org.rhq.augeas.node.AugeasNode;
 import org.rhq.augeas.tree.AugeasTree;
@@ -63,26 +64,23 @@ public class ApacheIfModuleDirectoryComponent implements ResourceComponent<Apach
 
     public Configuration loadResourceConfiguration() throws Exception {
         ConfigurationDefinition resourceConfigDef = context.getResourceType().getResourceConfigurationDefinition();
-        AugeasComponent comp = null;
+        AugeasComponent comp = parentComponent.getAugeas();
         AugeasTree tree = null;
         try {
-            comp = parentComponent.getAugeas();
             tree = comp.getAugeasTree(ApacheServerComponent.AUGEAS_HTTP_MODULE_NAME);
             AugeasNode directoryNode = parentComponent.getNode(tree);
 
             ApacheAugeasMapping mapping = new ApacheAugeasMapping(tree);
             return mapping.updateConfiguration(getNode(directoryNode), resourceConfigDef);
         } finally {
-            if (comp != null)
-                comp.close();
+            comp.close();
         }
     }
 
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
-        AugeasComponent comp = null;
+        AugeasComponent comp = parentComponent.getAugeas();
         AugeasTree tree = null;
         try {
-            comp = parentComponent.getAugeas();
             tree = comp.getAugeasTree(ApacheServerComponent.AUGEAS_HTTP_MODULE_NAME);
             ConfigurationDefinition resourceConfigDef = context.getResourceType().getResourceConfigurationDefinition();
             ApacheAugeasMapping mapping = new ApacheAugeasMapping(tree);
@@ -101,8 +99,7 @@ public class ApacheIfModuleDirectoryComponent implements ResourceComponent<Apach
                 log.error("Augeas failed to save configuration", e);
             report.setStatus(ConfigurationUpdateStatus.FAILURE);
         } finally {
-            if (comp != null)
-                comp.close();
+            comp.close();
         }
     }
 

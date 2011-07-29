@@ -60,7 +60,7 @@ public class PluginConfigurationHistoryView extends
     }
 
     @Override
-    public Canvas getDetailsView(int id) {
+    public Canvas getDetailsView(Integer id) {
         PluginConfigurationHistoryDetailView detailView = new PluginConfigurationHistoryDetailView(this.getLocatorId());
         return detailView;
     }

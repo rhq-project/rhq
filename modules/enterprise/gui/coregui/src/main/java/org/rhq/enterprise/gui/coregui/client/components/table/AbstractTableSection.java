@@ -39,7 +39,6 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.DetailsView;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
@@ -49,10 +48,16 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
+ * Provides the typical table view with the additional ability of traversing to a "details" view
+ * when double-clicking a individual row in the table - a masters/detail view in effect.
+ *
+ * @param <DS> the datasource used to obtain data for the table
+ * @param <ID> the type used for IDs. This identifies the type used to uniquely refer to a row in the table
+ * 
  * @author Greg Hinkle
  * @author John Mazzitelli
  */
-public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> implements BookmarkableView {
+public abstract class AbstractTableSection<DS extends RPCDataSource, ID> extends Table<DS> implements BookmarkableView {
 
     private VLayout detailsHolder;
     private Canvas detailsView;
@@ -60,38 +65,39 @@ public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> i
     private boolean escapeHtmlInDetailsLinkColumn;
     private boolean initialDisplay;
 
-    protected TableSection(String locatorId, String tableTitle) {
+    protected AbstractTableSection(String locatorId, String tableTitle) {
         super(locatorId, tableTitle);
     }
 
-    protected TableSection(String locatorId, String tableTitle, Criteria criteria) {
+    protected AbstractTableSection(String locatorId, String tableTitle, Criteria criteria) {
         super(locatorId, tableTitle, criteria);
     }
 
-    protected TableSection(String locatorId, String tableTitle, SortSpecifier[] sortSpecifiers) {
+    protected AbstractTableSection(String locatorId, String tableTitle, SortSpecifier[] sortSpecifiers) {
         super(locatorId, tableTitle, sortSpecifiers);
     }
 
-    protected TableSection(String locatorId, String tableTitle, Criteria criteria, SortSpecifier[] sortSpecifiers) {
+    protected AbstractTableSection(String locatorId, String tableTitle, Criteria criteria,
+        SortSpecifier[] sortSpecifiers) {
         super(locatorId, tableTitle, sortSpecifiers, criteria);
     }
 
-    protected TableSection(String locatorId, String tableTitle, boolean autoFetchData) {
+    protected AbstractTableSection(String locatorId, String tableTitle, boolean autoFetchData) {
         super(locatorId, tableTitle, autoFetchData);
     }
 
-    protected TableSection(String locatorId, String tableTitle, SortSpecifier[] sortSpecifiers,
+    protected AbstractTableSection(String locatorId, String tableTitle, SortSpecifier[] sortSpecifiers,
         String[] excludedFieldNames) {
         super(locatorId, tableTitle, null, sortSpecifiers, excludedFieldNames);
     }
 
-    protected TableSection(String locatorId, String tableTitle, Criteria criteria, SortSpecifier[] sortSpecifiers,
-        String[] excludedFieldNames) {
+    protected AbstractTableSection(String locatorId, String tableTitle, Criteria criteria,
+        SortSpecifier[] sortSpecifiers, String[] excludedFieldNames) {
         super(locatorId, tableTitle, criteria, sortSpecifiers, excludedFieldNames);
     }
 
-    protected TableSection(String locatorId, String tableTitle, Criteria criteria, SortSpecifier[] sortSpecifiers,
-        String[] excludedFieldNames, boolean autoFetchData) {
+    protected AbstractTableSection(String locatorId, String tableTitle, Criteria criteria,
+        SortSpecifier[] sortSpecifiers, String[] excludedFieldNames, boolean autoFetchData) {
         super(locatorId, tableTitle, criteria, sortSpecifiers, excludedFieldNames, autoFetchData);
     }
 
@@ -177,8 +183,8 @@ public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> i
                 if (value == null) {
                     return "";
                 }
-                Integer recordId = getId(record);
-                String detailsUrl = "#" + getBasePath() + "/" + recordId;
+                ID recordId = getId(record);
+                String detailsUrl = "#" + getBasePath() + "/" + convertIDToCurrentViewPath(recordId);
                 String formattedValue = (escapeHtmlInDetailsLinkColumn) ? StringUtility.escapeHtml(value.toString())
                     : value.toString();
                 return SeleniumUtility.getLocatableHref(detailsUrl, formattedValue, null);
@@ -190,7 +196,7 @@ public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> i
      * Shows the details view for the given record of the table.
      *
      * The default implementation of this method assumes there is an
-     * id attribute on the record and passes it to {@link #showDetails(int)}.
+     * id attribute on the record and passes it to {@link #showDetails(Object)}.
      * Subclasses are free to override this behavior. Subclasses usually
      * will need to set the {@link #setDetailsView(Canvas) details view}
      * explicitly.
@@ -202,7 +208,7 @@ public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> i
             throw new IllegalArgumentException("'record' parameter is null.");
         }
 
-        Integer id = getId(record);
+        ID id = getId(record);
         showDetails(id);
     }
 
@@ -210,7 +216,7 @@ public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> i
      * Returns the details canvas with information on the item given its list grid record.
      *
      * The default implementation of this method is to assume there is an
-     * id attribute on the record and pass that ID to {@link #getDetailsView(int)}.
+     * id attribute on the record and pass that ID to {@link #getDetailsView(Object)}.
      * Subclasses are free to override this - which you usually want to do
      * if you know the full details of the item are stored in the record attributes
      * and thus help avoid making a round trip to the DB.
@@ -218,66 +224,76 @@ public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> i
      * @param record the record of the item whose details to be shown; ; null if empty details view should be shown.
      */
     public Canvas getDetailsView(ListGridRecord record) {
-        Integer id = getId(record);
+        ID id = getId(record);
         return getDetailsView(id);
     }
 
-    protected Integer getId(ListGridRecord record) {
-        Integer id = (record != null) ? record.getAttributeAsInt("id") : 0;
-        if (id == null) {
-            String msg = MSG.view_tableSection_error_noId(this.getClass().toString());
-            CoreGUI.getErrorHandler().handleError(msg);
-            throw new IllegalStateException(msg);
-        }
-        return id;
-    }
+    /**
+     * Subclasses define how they want to format their identifiers. These uniquely identify
+     * rows in the table. Typical values/types for IDs are Integers or Strings.
+     * 
+     * @param record the individual record that contains the ID to be extracted and returned
+     * 
+     * @return the ID of the given row/record from the table.
+     */
+    protected abstract ID getId(ListGridRecord record);
 
     /**
      * Shows empty details for a new item being created.
      * This method is usually called when a user clicks a 'New' button.
      *
+     * Subclasses are free to override this if they need a custom way to show the details view.
+     * 
      * @see #showDetails(ListGridRecord)
      */
     public void newDetails() {
-        History.newItem(basePath + "/0");
+        History.newItem(basePath + "/0"); // assumes the subclasses will understand "0" means "new details page"
     }
 
     /**
-     * Shows the details for an item has the given ID.
+     * Shows the details for an item that has the given ID.
      * This method is usually called when a user goes to the details
      * page via a bookmark, double-cick on a list view row, or direct link.
      *
-     * @param id the id of the row whose details are to be shown; Should be a valid id, > 0.
+     * @param id the id of the row whose details are to be shown; Must be a valid ID.
      *
      * @see #showDetails(ListGridRecord)
      * 
-     * @throws IllegalArgumentException if id <= 0.
+     * @throws IllegalArgumentException if id is invalid
      */
-    public void showDetails(int id) {
-        if (id > 0) {
-            History.newItem(basePath + "/" + id);
-        } else {
-            String msg = MSG.view_tableSection_error_badId(this.getClass().toString(), Integer.toString(id));
-            CoreGUI.getErrorHandler().handleError(msg);
-            throw new IllegalArgumentException(msg);
-        }
-    }
+    public abstract void showDetails(ID id);
 
     /**
      * Returns the details canvas with information on the item that has the given ID.
      * Note that an empty details view should be returned if the id passed in is 0 (as would
      * be the case if a new item is to be created using the details view).
      *
-     * @param id the id of the details to be shown; will be 0 if an empty details view should be shown.
+     * @param id the id of the details to be shown; will be "0" if an empty details view should be shown.
      */
-    public abstract Canvas getDetailsView(int id);
+    public abstract Canvas getDetailsView(ID id);
+
+    /**
+     * Given the path from the URL that identifies the ID, this returns the ID represented by that path string.
+     * @param path the path as it was found in the current view path (i.e. in the URL)
+     * @return the ID that identifies the item referred to by the URL
+     */
+    protected abstract ID convertCurrentViewPathToID(String path);
+
+    /**
+     * Given the ID of a particular item, this returns a path string suitable for placement in a URL such that that URL will
+     * identify the particular item.
+     * 
+     * @return how the ID can be represented within a view path (i.e. in a URL)
+     * @param id the ID that identifies the item to be referred by in a URL
+     */
+    protected abstract String convertIDToCurrentViewPath(ID id);
 
     @Override
     public void renderView(ViewPath viewPath) {
         this.basePath = viewPath.getPathToCurrent();
 
         if (!viewPath.isEnd()) {
-            int id = Integer.parseInt(viewPath.getCurrent().getPath());
+            ID id = convertCurrentViewPathToID(viewPath.getCurrent().getPath());
             this.detailsView = getDetailsView(id);
             if (this.detailsView instanceof BookmarkableView) {
                 ((BookmarkableView) this.detailsView).renderView(viewPath);
@@ -325,7 +341,7 @@ public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> i
                  * detailsView in edit-mode, the content canvas will already be hidden, which means the
                  * animateHide would be a no-op (the event won't fire).  this causes the detailsHolder 
                  * to keep a reference to the previous detailsView (the one in create-mode) instead of the
-                 * newly returned reference from getDetailsView(int) that was called when the renderView
+                 * newly returned reference from getDetailsView(ID) that was called when the renderView
                  * methods were called hierarchically down to render the new detailsView in edit-mode.
                  * therefore, we need to explicitly destroy what's already there (presumably the detailsView
                  * in create-mode), and then rebuild it (presumably the detailsView in edit-mode).

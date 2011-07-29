@@ -26,9 +26,9 @@ import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-
 import com.smartgwt.client.widgets.grid.events.CellClickEvent;
 import com.smartgwt.client.widgets.grid.events.CellClickHandler;
+
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
 import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
@@ -211,7 +211,8 @@ public class UsersView extends TableSection<UsersDataSource> {
         };
     }
 
-    public Canvas getDetailsView(int subjectId) {
+    @Override
+    public Canvas getDetailsView(Integer subjectId) {
         return new UserEditView(extendLocatorId("Detail"), subjectId);
     }
 

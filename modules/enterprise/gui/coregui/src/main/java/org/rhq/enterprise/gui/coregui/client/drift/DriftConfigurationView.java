@@ -226,7 +226,7 @@ public class DriftConfigurationView extends TableSection<DriftConfigurationDataS
     }
 
     @Override
-    public Canvas getDetailsView(int driftConfigId) {
+    public Canvas getDetailsView(Integer driftConfigId) {
         return new DriftConfigurationEditView(extendLocatorId("ConfigEdit"), context, driftConfigId, hasWriteAccess);
     }
 

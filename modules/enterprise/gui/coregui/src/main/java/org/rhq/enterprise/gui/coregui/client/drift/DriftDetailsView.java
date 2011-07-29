@@ -35,6 +35,8 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
@@ -64,6 +66,12 @@ public class DriftDetailsView extends LocatableVLayout {
         GWTServiceLookup.getDriftService().findDriftsByCriteria(criteria, new AsyncCallback<PageList<Drift>>() {
             @Override
             public void onSuccess(PageList<Drift> result) {
+                if (result.getTotalSize() != 1) {
+                    CoreGUI.getMessageCenter().notify(
+                        new Message("Got [" + result.getTotalSize()
+                            + "] results. Should have been 1. The details shown here might not be correct.",
+                            Severity.Warning));
+                }
                 Drift drift = result.get(0);
                 show(drift);
             }
@@ -78,6 +86,7 @@ public class DriftDetailsView extends LocatableVLayout {
     private void show(Drift drift) {
         for (Canvas child : getMembers()) {
             removeMember(child);
+            child.destroy();
         }
 
         // the change set to which the drift belongs

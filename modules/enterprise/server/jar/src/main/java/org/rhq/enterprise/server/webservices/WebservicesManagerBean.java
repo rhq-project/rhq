@@ -47,6 +47,7 @@ import org.rhq.core.domain.bundle.BundleFile;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
+import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration;
 import org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.common.ProductInfo;
@@ -95,6 +96,7 @@ import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.criteria.RoleCriteria;
 import org.rhq.core.domain.criteria.SubjectCriteria;
+import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.measurement.Availability;
@@ -134,6 +136,7 @@ import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.content.RepoException;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.discovery.DiscoveryBossLocal;
+import org.rhq.enterprise.server.drift.DriftManagerLocal;
 import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.exception.LoginException;
 import org.rhq.enterprise.server.exception.ScheduleException;
@@ -186,6 +189,7 @@ public class WebservicesManagerBean implements WebservicesRemote {
     //removed as it is problematic for WS clients having XMLAny for Object.
     //    private DataAccessManagerLocal dataAccessManager = LookupUtil.getDataAccessManager();
     private DiscoveryBossLocal discoveryBoss = LookupUtil.getDiscoveryBoss();
+    private DriftManagerLocal driftManager = LookupUtil.getDriftManager();
     private EventManagerLocal eventManager = LookupUtil.getEventManager();
     private MeasurementBaselineManagerLocal measurementBaselineManager = LookupUtil.getMeasurementBaselineManager();
     private MeasurementDataManagerLocal measurementDataManager = LookupUtil.getMeasurementDataManager();
@@ -269,6 +273,12 @@ public class WebservicesManagerBean implements WebservicesRemote {
 
     //BUNDLEMANAGER: BEGIN ------------------------------------------
 
+    @Override
+    public ResourceTypeBundleConfiguration getResourceTypeBundleConfiguration(Subject subject, int compatGroupId)
+        throws Exception {
+        return bundleManager.getResourceTypeBundleConfiguration(subject, compatGroupId);
+    }
+
     public BundleFile addBundleFile(Subject subject, int bundleVersionId, String name, String version,
         Architecture architecture, InputStream fileStream) throws Exception {
         return bundleManager.addBundleFile(subject, bundleVersionId, name, version, architecture, fileStream);
@@ -297,8 +307,9 @@ public class WebservicesManagerBean implements WebservicesRemote {
     }
 
     public BundleDestination createBundleDestination(Subject subject, int bundleId, String name, String description,
-        String deployDir, Integer groupId) throws Exception {
-        return bundleManager.createBundleDestination(subject, bundleId, name, description, deployDir, groupId);
+        String destBaseDirName, String deployDir, Integer groupId) throws Exception {
+        return bundleManager.createBundleDestination(subject, bundleId, name, description, destBaseDirName, deployDir,
+            groupId);
     }
 
     public BundleVersion createBundleVersionViaRecipe(Subject subject, String recipe) throws Exception {
@@ -575,6 +586,16 @@ public class WebservicesManagerBean implements WebservicesRemote {
     }
 
     //DISCOVERYBOSS: END ------------------------------------
+
+    // DRIFTMANAGER: BEGIN ----------------------------------
+
+    @Override
+    public void detectDrift(Subject subject, EntityContext entityContext, DriftConfiguration driftConfiguration)
+        throws Exception {
+        driftManager.detectDrift(subject, entityContext, driftConfiguration);
+    }
+
+    // DRIFTMANAGER: END ------------------------------------
 
     //EVENTMANAGER: BEGIN ----------------------------------
     public PageList<Event> findEventsByCriteria(Subject subject, EventCriteria criteria) {
@@ -1182,4 +1203,5 @@ public class WebservicesManagerBean implements WebservicesRemote {
             throw new IllegalArgumentException("Criteria cannot be null.");
         }
     }
+
 }

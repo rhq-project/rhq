@@ -69,6 +69,8 @@ import org.rhq.core.domain.content.PackageInstallationStep;
 import org.rhq.core.domain.content.ResourceRepo;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
+import org.rhq.core.domain.drift.Drift;
+import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventSource;
 import org.rhq.core.domain.measurement.Availability;
@@ -413,6 +415,12 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             log.debug("Overlord is asynchronously deleting resource [" + attachedResource + "]");
         }
 
+        // our unidirectional one-to-many mapping of drift config makes it not possible to easily bulk delete drift config
+        // so remove them here and let cascading of delete_orphan do the work
+        if (attachedResource.getDriftConfigurations() != null) {
+            attachedResource.getDriftConfigurations().clear();
+        }
+
         // one more thing, delete any autogroup backing groups
         if (attachedResource != null) {
             List<ResourceGroup> backingGroups = attachedResource.getAutoGroupBackingGroups();
@@ -494,8 +502,9 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             AlertCondition.QUERY_DELETE_BY_RESOURCES, //       of
             AlertDampeningEvent.QUERY_DELETE_BY_RESOURCES, //  alert-
             AlertNotification.QUERY_DELETE_BY_RESOURCES, //    related
-            AlertDefinition.QUERY_DELETE_BY_RESOURCES //       deletes
-        };
+            AlertDefinition.QUERY_DELETE_BY_RESOURCES, //      deletes
+            Drift.QUERY_DELETE_BY_RESOURCES, //       drift before changeset 
+            DriftChangeSet.QUERY_DELETE_BY_RESOURCES };
 
         List<Integer> resourceIds = new ArrayList<Integer>();
         resourceIds.add(resourceId);
@@ -515,8 +524,9 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                 continue;
             }
 
-            if (debugEnabled)
+            if (debugEnabled) {
                 log.debug("uninv, running query: " + namedQueryToExecute);
+            }
             hasErrors |= resourceManager.bulkNamedQueryDeleteInNewTransaction(overlord, namedQueryToExecute,
                 resourceIds);
         }

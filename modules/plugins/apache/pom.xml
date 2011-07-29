@@ -123,7 +123,6 @@
                  <value>!true</value>
               </property>
            </activation>
-
          <build>
             <plugins>
                <!-- Integration testing voodoo to load and test this plugin with its plugin dependencies -->
@@ -144,6 +143,7 @@
                               <mkdir dir="target/itest" />
                               <mkdir dir="target/itest/plugins" />
                               <mkdir dir="target/itest/lib" />
+                              <mkdir dir="target/itest/httpd" />
                               <copy toDir="target/itest/plugins" flatten="true">
                                  <fileset dir="${settings.localRepository}/">
                                     <include name="org/rhq/rhq-platform-plugin/${project.version}/rhq-platform-plugin-${project.version}.jar" />
@@ -153,6 +153,12 @@
                                     <include name="${project.artifactId}-${project.version}.jar" />
                                  </fileset>
                               </copy>
+                              <!-- We need deterministic names (i.e. that would not change with the project version)
+                                  so that we can statically reference them in the test classes -->
+                              <move todir="target/itest/plugins">
+                                 <fileset dir="target/itest/plugins" />
+                                 <mapper type="regexp" from="^(.*)-${project.version}\.jar$$" to="\1-for-apache-test.jar" />
+                              </move>    
                               <unzip dest="target/itest/lib">
                                  <fileset dir="${settings.localRepository}/org/hyperic/sigar-dist/${sigar.version}" includes="*.zip" />
                                  <patternset>
@@ -200,7 +206,7 @@
                                       </move>
                                   </then>
                               </if> 
-                              <delete dir="target/itest/lib/augeas-native-${augeas.zip.version}" />                                                            
+                              <delete dir="target/itest/lib/augeas-native-${augeas.zip.version}" />                                 
                            </tasks>
                         </configuration>
                         <goals>
@@ -229,11 +235,11 @@
                            <!--<argLine>-Dorg.hyperic.sigar.path=${basedir}/target/itest/lib -Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y</argLine>-->
                            <environmentVariables>
                               <LD_LIBRARY_PATH>${basedir}/target/itest/lib:${env.LD_LIBRARY_PATH}</LD_LIBRARY_PATH>
-                           </environmentVariables>
+                           </environmentVariables>                           
                            <systemPropertyVariables>
                               <org.hyperic.sigar.path>${basedir}/target/itest/lib</org.hyperic.sigar.path>
                               <project.artifactId>${project.artifactId}</project.artifactId>
-                              <project.version>${project.version}</project.version>
+                              <project.version>${project.version}</project.version>                              
                            </systemPropertyVariables>
                         </configuration>
                      </execution>

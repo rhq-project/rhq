@@ -1,0 +1,128 @@
+<plugin name="jboss-as-7"
+        displayName="JBoss-AS-7-Plugin"
+        description="Management of JBossAS 7"
+        package="org.rhq.modules.plugins.jbossas7"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration"
+        version="4.0.0-SNAPSHOT"
+        >
+
+    <server class="foo" discovery="foo" name="socketBinding">
+        <resource-configuration>
+            <c:simple-property name="default-interface" readOnly="true" displayName="Default Interface" />
+            <!-- note: at domain level there is no port-offset -->
+            <c:simple-property name="port-offset" readOnly="true" displayName="Port Offset" required="false"/>
+            <c:list-property name="includes">
+                <c:simple-property name="includes" displayName="Included bindings" />
+            </c:list-property>
+            <c:list-property name="socket-binding">
+                <c:map-property name="binding">
+                    <c:simple-property name="name" />
+                    <c:simple-property name="interface"  required="false"/>
+                    <c:simple-property name="port"  type="integer"/>
+                    <c:simple-property name="fixed-port"  type="boolean"/>
+                    <c:simple-property name="multicast-address"  />
+                    <c:simple-property name="multicast-port" type="integer"/>
+                </c:map-property>
+            </c:list-property>
+        </resource-configuration>
+
+    </server>
+
+    <server class="foo" discovery="foo" name="test4">
+        <resource-configuration>
+            <c:group name="children:extension" displayName="Installed extensions">
+
+                <c:list-property name="extension" displayName="Installed extensions">
+                    <c:map-property name="name">
+                        <c:map-property name="*">
+                            <c:simple-property name="module"/>
+                        </c:map-property>
+                    </c:map-property>
+                </c:list-property>
+            </c:group>
+        </resource-configuration>
+    </server>
+
+    <server class="foo" discovery="foo" name="test5">
+        <resource-configuration>
+            <c:group name="attribute:schema-locations" displayName="Schema-locations">
+
+                <c:list-property name="schema-locations" displayName="Schema locations">
+                    <c:map-property name="*">
+                        <c:simple-property name="*" readOnly="true"/>
+                        <!--<c:simple-property name="location" readOnly="true"/>-->
+                    </c:map-property>
+                </c:list-property>
+            </c:group>
+       </resource-configuration>
+    </server>
+
+    <server class="foo" discovery="foo" name="test6and7">
+        <resource-configuration>
+
+            <c:simple-property name="name" />
+            <c:simple-property name="criteria"/>
+
+       </resource-configuration>
+    </server>
+
+    <server class="foo" discovery="foo" name="test8">
+        <resource-configuration>
+            <c:simple-property name="default-workmanager-short-running-thread-pool" required="true" type="string" readOnly="true"
+                               description="Specify the name of short running thread pool"/>
+            <c:simple-property name="default-workmanager-long-running-thread-pool" required="true" type="string" readOnly="true"
+                               description="Specify the name of long running thread pool"/>
+            <c:simple-property name="bean-validation-enabled" required="true" type="boolean" readOnly="true"
+                               description="Specify whether bean validation is enabled"/>
+            <c:simple-property name="archive-validation-enabled" type="boolean" readOnly="true" description="Enabling the validation"/>
+            <c:simple-property name="archive-validation-fail-on-error" type="boolean" readOnly="true" defaultValue="true"
+                               description="Should an archive validation error report fail the deployment. Default: true"/>
+            <c:simple-property name="archive-validation-fail-on-warn" type="boolean" readOnly="true" defaultValue="false"
+                               description="Should an archive validation warning report fail the deployment. Default: false"/>
+            <c:simple-property name="cached-connection-manager-debug" type="boolean" readOnly="true" defaultValue="false"
+                               description="enable/disable debug information logging for cached connection manager"/>
+            <c:simple-property name="cached-connection-manager-error" type="boolean" readOnly="true" defaultValue="false"
+                               description="enable/disable error information logging for cached connection manager"/>
+        </resource-configuration>
+
+    </server>
+
+    <server class="foo" discovery="foo" name="simple1">
+
+        <resource-configuration>
+
+            <c:simple-property name="readOnly" readOnly="true" />
+            <c:simple-property name="optional" readOnly="false" required="false"/>
+            <c:simple-property name="needed" readOnly="false" required="true"/>
+
+       </resource-configuration>
+    </server>
+
+    <server class="foo" discovery="foo" name="listOfSimple1">
+
+        <resource-configuration>
+
+            <c:list-property name="foo">
+                <c:simple-property name="optional" readOnly="false" required="false"/>
+            </c:list-property>
+
+       </resource-configuration>
+    </server>
+
+    <server class="foo" discovery="foo" name="mapOfSimple1">
+
+        <resource-configuration>
+
+            <c:map-property name="foo">
+                <c:simple-property name="readOnly" readOnly="true" />
+                <c:simple-property name="optional" readOnly="false" required="false"/>
+                <c:simple-property name="needed" readOnly="false" required="true"/>
+            </c:map-property>
+
+       </resource-configuration>
+    </server>
+
+
+</plugin>

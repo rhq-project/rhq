@@ -130,6 +130,7 @@
            <module>rhq-server</module>
            <module>jboss-cache</module>
            <module>jboss-as-5</module>
+           <module>jboss-as-7</module>
            <module>jboss-cache-v3</module>
            <!--  was not in Jopr build at merge time <module>jbossOSGi</module>  -->
            <module>database</module>

@@ -53,6 +53,8 @@ import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
+import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration;
+import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration.BundleDestinationBaseDirectory;
 import org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -83,7 +85,7 @@ import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.core.util.updater.DeploymentProperties;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
-import org.rhq.enterprise.server.resource.metadata.test.UpdateSubsytemTestBase;
+import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TestAgentClient;
 import org.rhq.enterprise.server.test.TestServerCommunicationsService;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -94,11 +96,14 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 @SuppressWarnings( { "unused" })
 @Test
-public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
+public class BundleManagerBeanTest extends AbstractEJB3Test {
 
     private static final boolean TESTS_ENABLED = true;
 
     private static final String TEST_PREFIX = "bundletest";
+    private static final String TEST_BUNDLE_DESTBASEDIR_PROP = TEST_PREFIX + ".destBaseDirProp";
+    private static final String TEST_BUNDLE_DESTBASEDIR_PROP_VALUE = TEST_PREFIX + "/destBaseDir";
+    private static final String TEST_DESTBASEDIR_NAME = TEST_PREFIX + ".destBaseDirName";
 
     private BundleManagerLocal bundleManager;
     private ResourceManagerLocal resourceManager;
@@ -110,12 +115,10 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
     private Subject overlord;
     TestServerCommunicationsService agentServiceContainer;
 
-    @Override
     @BeforeClass
     public void beforeClass() {
-        super.beforeClass();
         agentServiceContainer = prepareForTestAgents();
-        agentServiceContainer.bundleService = new TestAgentClient(null, new TestServerCommunicationsService());
+        agentServiceContainer.bundleService = new TestAgentClient(null, agentServiceContainer);
     }
 
     @AfterClass
@@ -858,7 +861,7 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
     }
 
     @Test(enabled = TESTS_ENABLED)
-    public void testfindBundlesByCriteria() throws Exception {
+    public void testFindBundlesByCriteria() throws Exception {
         Bundle b1 = createBundle("one");
         Bundle b2 = createBundle("two");
         BundleVersion bv1 = createBundleVersion(b1.getName(), "1.0", b1);
@@ -916,7 +919,7 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
     }
 
     @Test(enabled = TESTS_ENABLED)
-    public void testfindBundleVersionsByCriteria() throws Exception {
+    public void testFindBundleVersionsByCriteria() throws Exception {
         Bundle b1 = createBundle("one");
         BundleVersion bv1 = createBundleVersion(b1.getName(), "1.0", b1);
         BundleVersion bv2 = createBundleVersion(b1.getName(), "2.0", b1);
@@ -954,29 +957,9 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
         assertTrue(bvOut.getBundleDeployments().isEmpty());
     }
 
-    @Test(enabled = DISABLED)
-    public void testInsertAndRetrieve() throws Exception {
-        assertNotNull(null);
-    }
-
-    @Test(enabled = DISABLED)
-    public void testFindByPlatformId() throws Exception {
-        assertNotNull(null);
-    }
-
-    @Test(enabled = DISABLED)
-    public void testFindByBundleId() throws Exception {
-        assertNotNull(null);
-    }
-
-    @Test(enabled = DISABLED)
-    public void testFindByBundleResourceDeploymentId() throws Exception {
-        assertNotNull(null);
-    }
-
     private BundleType createBundleType(String name) throws Exception {
         final String fullName = TEST_PREFIX + "-type-" + name;
-        ResourceType rt = createResourceType(name);
+        ResourceType rt = createResourceTypeForBundleType(name);
         BundleType bt = bundleManager.createBundleType(overlord, fullName, rt.getId());
 
         assert bt.getId() > 0;
@@ -1013,10 +996,11 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
         throws Exception {
         final String fullName = TEST_PREFIX + "-bundledestination-" + name;
         BundleDestination bd = bundleManager.createBundleDestination(overlord, bundle.getId(), fullName, fullName,
-            deployDir, group.getId());
+            TEST_DESTBASEDIR_NAME, deployDir, group.getId());
 
         assert bd.getId() > 0;
         assert bd.getName().endsWith(fullName);
+        assert bd.getDestinationBaseDirectoryName().equals(TEST_DESTBASEDIR_NAME);
         return bd;
     }
 
@@ -1031,7 +1015,7 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
         return bd;
     }
 
-    private ResourceType createResourceType(String name) throws Exception {
+    private ResourceType createResourceTypeForBundleType(String name) throws Exception {
         final String fullName = TEST_PREFIX + "-resourcetype-" + name;
         ResourceType rt = new ResourceType(fullName, "BundleManagerBeanTest", ResourceCategory.PLATFORM, null);
 
@@ -1044,7 +1028,7 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
         return rt;
     }
 
-    // lifted from ResourceManagerBeanTest
+    // lifted from ResourceManagerBeanTest, with the addition of adding bundle config to the type
     private ResourceGroup createTestResourceGroup() throws Exception {
         getTransactionManager().begin();
         EntityManager em = getEntityManager();
@@ -1057,20 +1041,51 @@ public class BundleManagerBeanTest extends UpdateSubsytemTestBase {
             // with the bundle resource type
             ResourceType resourceType = new ResourceType(TEST_PREFIX + "-platform-" + System.currentTimeMillis(),
                 "test", ResourceCategory.PLATFORM, null);
+
+            // we need to make this test type bundle targetable
+            ConfigurationDefinition pcDef = new ConfigurationDefinition(TEST_PREFIX + "-testdef", "bundle test");
+            PropertyDefinitionSimple propDef = new PropertyDefinitionSimple(TEST_BUNDLE_DESTBASEDIR_PROP, "", true,
+                PropertySimpleType.STRING);
+            propDef.setDisplayName(TEST_BUNDLE_DESTBASEDIR_PROP);
+            pcDef.put(propDef);
+            em.persist(pcDef);
+
+            ResourceTypeBundleConfiguration rtbc = new ResourceTypeBundleConfiguration(new Configuration());
+            rtbc.addBundleDestinationBaseDirectory(TEST_DESTBASEDIR_NAME,
+                ResourceTypeBundleConfiguration.BundleDestinationBaseDirectory.Context.pluginConfiguration.name(),
+                TEST_BUNDLE_DESTBASEDIR_PROP, null);
+            resourceType.setResourceTypeBundleConfiguration(rtbc);
+            resourceType.setPluginConfigurationDefinition(pcDef);
+
             em.persist(resourceType);
+
+            // make sure the bundle config is ok
+            rtbc = resourceType.getResourceTypeBundleConfiguration();
+            assert rtbc != null;
+            assert rtbc.getBundleDestinationBaseDirectories().size() == 1;
+            BundleDestinationBaseDirectory bdbd = rtbc.getBundleDestinationBaseDirectories().iterator().next();
+            assert bdbd.getName().equals(TEST_DESTBASEDIR_NAME);
+            assert bdbd.getValueContext() == ResourceTypeBundleConfiguration.BundleDestinationBaseDirectory.Context.pluginConfiguration;
+            assert bdbd.getValueName().equals(TEST_BUNDLE_DESTBASEDIR_PROP);
 
             Agent agent = new Agent(TEST_PREFIX + "-testagent", "testaddress", 1, "", "testtoken");
             em.persist(agent);
             em.flush();
 
+            Configuration rc = new Configuration();
+            rc.put(new PropertySimple(TEST_BUNDLE_DESTBASEDIR_PROP, TEST_BUNDLE_DESTBASEDIR_PROP_VALUE));
+            em.persist(rc);
+
             resource = new Resource("reskey" + System.currentTimeMillis(), TEST_PREFIX + "-resname", resourceType);
             resource.setUuid("" + System.currentTimeMillis());
             resource.setInventoryStatus(InventoryStatus.COMMITTED);
             resource.setAgent(agent);
+            resource.setResourceConfiguration(rc);
             em.persist(resource);
 
             resourceGroup = new ResourceGroup(TEST_PREFIX + "-group-" + System.currentTimeMillis());
             resourceGroup.addExplicitResource(resource);
+            resourceGroup.setResourceType(resourceType); // need to tell the group the type it is
             em.persist(resourceGroup);
 
             getTransactionManager().commit();

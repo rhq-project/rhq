@@ -33,7 +33,6 @@ import org.jboss.remoting.transport.http.ssl.HTTPSClientInvoker;
 import org.rhq.bindings.client.RhqFacade;
 import org.rhq.bindings.client.RhqManagers;
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.common.ServerDetails;
 import org.rhq.enterprise.communications.util.SecurityUtil;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerRemote;
 import org.rhq.enterprise.server.alert.AlertManagerRemote;
@@ -44,6 +43,7 @@ import org.rhq.enterprise.server.configuration.ConfigurationManagerRemote;
 import org.rhq.enterprise.server.content.ContentManagerRemote;
 import org.rhq.enterprise.server.content.RepoManagerRemote;
 import org.rhq.enterprise.server.discovery.DiscoveryBossRemote;
+import org.rhq.enterprise.server.drift.DriftManagerRemote;
 import org.rhq.enterprise.server.event.EventManagerRemote;
 import org.rhq.enterprise.server.install.remote.RemoteInstallManagerRemote;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerRemote;
@@ -74,7 +74,7 @@ import org.rhq.enterprise.server.tagging.TagManagerRemote;
 public class RemoteClient implements RhqFacade {
 
     private static final Log LOG = LogFactory.getLog(RemoteClient.class);
-    
+
     public static final String NONSECURE_TRANSPORT = "servlet";
     public static final String SECURE_TRANSPORT = "sslservlet";
 
@@ -273,6 +273,10 @@ public class RemoteClient implements RhqFacade {
 
     public CallTimeDataManagerRemote getCallTimeDataManager() {
         return RemoteClientProxy.getProcessor(this, RhqManagers.CallTimeDataManager);
+    }
+
+    public DriftManagerRemote getDriftManager() {
+        return RemoteClientProxy.getProcessor(this, RhqManagers.DriftManager);
     }
 
     public RepoManagerRemote getRepoManager() {

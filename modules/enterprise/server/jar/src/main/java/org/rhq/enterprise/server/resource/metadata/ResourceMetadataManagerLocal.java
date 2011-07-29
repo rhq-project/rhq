@@ -45,4 +45,7 @@ public interface ResourceMetadataManagerLocal {
     void completeRemoveResourceType(Subject subject, ResourceType existingType);
 
     void updateTypes(Set<ResourceType> resourceTypes) throws Exception;
+
+    /** TODO: do we want to create a driftMetadataManager SLSB and put this in there */
+    void updateDriftMetadata(ResourceType existingType, ResourceType resourceType);
 }

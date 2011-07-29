@@ -4,6 +4,7 @@
         displayName="Cobbler"
         description="Support for cobbler file"
         package="org.rhq.plugins.cobbler"
+        pluginLifecycleListener="org.rhq.plugins.augeas.AugeasPluginLifecycleListener"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin"
          ampsVersion="2.1"

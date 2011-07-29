@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
-           xmlns:perf="urn:xmlns:jboss.org:on-perftest"
-           targetNamespace="urn:xmlns:jboss.org:on-perftest"
+           xmlns:perf="urn:xmlns:jboss.org:rhq-perftest"
+           targetNamespace="urn:xmlns:jboss.org:rhq-perftest"
            elementFormDefault="qualified"
            jaxb:version="2.0"
            xmlns:jaxb="http://java.sun.com/xml/ns/jaxb">

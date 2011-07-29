@@ -106,7 +106,8 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         //                    "resourceErrors                  \n" +
         //                    "eventSources                    \n" +
         //                    "productVersion                  "}
-        "tags" };
+        "tags", //
+        "driftConfigurations" };
 
     public static Set<String> importantFieldsSet = new HashSet<String>(Arrays.asList(importantFields));
 

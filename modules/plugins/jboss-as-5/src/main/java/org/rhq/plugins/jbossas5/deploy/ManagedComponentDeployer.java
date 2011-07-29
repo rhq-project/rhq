@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -34,7 +34,9 @@ import org.apache.commons.logging.LogFactory;
 import org.jboss.deployers.spi.management.KnownDeploymentTypes;
 import org.jboss.deployers.spi.management.ManagementView;
 import org.jboss.deployers.spi.management.deploy.DeploymentManager;
+import org.jboss.managed.api.DeploymentState;
 import org.jboss.managed.api.ManagedDeployment;
+import org.jboss.profileservice.spi.NoSuchDeploymentException;
 import org.jboss.profileservice.spi.ProfileKey;
 
 import org.rhq.core.domain.configuration.Configuration;
@@ -72,7 +74,9 @@ public class ManagedComponentDeployer implements Deployer {
     }
 
     public void deploy(CreateResourceReport createResourceReport, ResourceType resourceType) {
+        createResourceReport.setStatus(null);
         File archiveFile = null;
+
         try {
             ResourcePackageDetails details = createResourceReport.getPackageDetails();
             PackageDetailsKey key = details.getKey();
@@ -163,11 +167,34 @@ public class ManagedComponentDeployer implements Deployer {
                 }
             }
 
-            // Deployment was successful!
+            ManagementView managementView = this.profileServiceConnection.getManagementView();
+            managementView.load();
+            for (String deployedArchive : deployedArchives) {
+                ManagedDeployment managedDeployment;
+                try {
+                    managedDeployment = managementView.getDeployment(deployedArchive);
+                } catch (NoSuchDeploymentException e) {
+                    LOG.error("Failed to find managed deployment '" + deployedArchive + "' after deploying '"
+                            + archiveName + "'.");
+                    continue;
+                }
+                DeploymentState state = managedDeployment.getDeploymentState();
+                if (state != DeploymentState.STARTED) {
+                    // The app failed to start - do not consider this a FAILURE, since it was at least deployed
+                    // successfully. However, set the status to INVALID_ARTIFACT and set an error message, so
+                    // the user is informed of the condition.
+                    createResourceReport.setStatus(CreateResourceStatus.INVALID_ARTIFACT);
+                    createResourceReport.setErrorMessage("Failed to start application '" + deployedArchive + "' after deploying it.");
+                    break;
+                }
+            }
+
             createResourceReport.setResourceName(archiveName);
             createResourceReport.setResourceKey(archiveName);
-            createResourceReport.setStatus(CreateResourceStatus.SUCCESS);
-
+            if (createResourceReport.getStatus() == null) {
+                // Deployment was 100% successful, including starting the app.
+                createResourceReport.setStatus(CreateResourceStatus.SUCCESS);
+            }
         } catch (Throwable t) {
             LOG.error("Error deploying application for request [" + createResourceReport + "].", t);
             createResourceReport.setStatus(CreateResourceStatus.FAILURE);

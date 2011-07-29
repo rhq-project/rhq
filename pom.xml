@@ -74,7 +74,7 @@
 
     <commons-logging.version>1.1.0.jboss</commons-logging.version>
     <concurrent.version>1.3.4-jboss-update1</concurrent.version> <!-- oswego-concurrent compatible with 4.2.3.GA -->
-    <findbugs.version>2.3.1</findbugs.version>
+    <findbugs.version>2.3.2</findbugs.version>
     <getopt.version>1.0.13</getopt.version>
     <hibernate3.version>3.2.r14201-2</hibernate3.version>
     <hibernate-annotations.version>3.2.1.GA</hibernate-annotations.version>
@@ -165,6 +165,7 @@
     <!-- NOTE: The below line is a workaround for a Maven bug, where it does not expand settings.* properties
                used in the distributionManagement section of the POM. -->
     <localRepository>${user.home}/.m2/repository</localRepository>
+      <project.json.version>20080701</project.json.version>
   </properties>
 
 
@@ -509,6 +510,12 @@
                <artifactId>cobertura</artifactId>
                <version>${cobertura.version}</version>
              </dependency>
+             <!-- Just to have more tasks available -->
+             <dependency>
+                <groupId>ant</groupId>
+                <artifactId>ant-nodeps</artifactId>
+                <version>1.6.5</version>
+             </dependency>
            </dependencies>
          </plugin>
          <plugin>
@@ -606,7 +613,7 @@
          <plugin>
            <groupId>org.codehaus.mojo</groupId>
            <artifactId>buildnumber-maven-plugin</artifactId>
-           <version>1.0-beta-4</version>
+           <version>1.0</version>
          </plugin>
          <plugin>
            <groupId>org.codehaus.mojo</groupId>
@@ -841,6 +848,113 @@
         </configuration>
       </plugin>
 
+       <!-- As of v1.0 of the buildnumber plugin, the create goal doesn't work,
+            and the create-timestamp goal doesn't provide a way to specify 
+            a locale or a timezone, so comment this out for now and instead use
+            our own homemade mix of antrun and properties-file plugin executions
+            (just below this commented out block). (ips, 06/28/11)
+       -->
+       <!--
+       <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>buildnumber-maven-plugin</artifactId>
+          <executions>
+
+             <execution>
+                <id>setBuildNumber</id>
+                <phase>validate</phase>
+                <goals>
+                   <goal>create</goal>
+                </goals>
+                <configuration>
+                   <useLastCommittedRevision>true</useLastCommittedRevision>
+                   <getRevisionOnlyOnce>true</getRevisionOnlyOnce>
+                   <revisionOnScmFailure></revisionOnScmFailure>
+                   <doCheck>false</doCheck>
+                   <doUpdate>false</doUpdate>
+                </configuration>
+             </execution>
+
+             <execution>
+                <id>setBuildTime</id>
+                <phase>validate</phase>
+                <goals>
+                   <goal>create-timestamp</goal>
+                </goals>
+                <configuration>
+                   <timestampFormat>MM/dd/yy hh:mm aa z</timestampFormat>
+                   <timestampPropertyName>buildTime</timestampPropertyName>
+                </configuration>
+             </execution>
+
+          </executions>
+       </plugin>
+       -->
+
+        <plugin>
+          <artifactId>maven-antrun-plugin</artifactId>
+          <executions>
+              <execution>
+                  <id>write-build-properties-file</id>
+                  <goals>
+                      <goal>run</goal>
+                  </goals>
+                  <phase>generate-sources</phase>
+                  <configuration>
+                      <tasks>
+                          <mkdir dir="target" />                          
+
+                          <tstamp>
+                              <format property="buildTime" pattern="MM/dd/yy hh:mm aa z" locale="en,US" timezone="GMT" />
+                          </tstamp>                          
+                          <echo file="target/build.properties">buildTime = ${buildTime}${line.separator}</echo>
+
+                          <exec executable="git" outputproperty="buildNumber" failonerror="false" failifexecutionfails="false">
+                             <arg value="log"/>
+                             <arg value="--pretty=format:%h"/>
+                             <arg value="-n1"/>
+                          </exec>
+                          <echo file="target/build.properties" append="true">buildNumber = ${buildNumber}${line.separator}</echo>
+                      </tasks>
+                  </configuration>
+              </execution>
+
+              <execution>
+                  <id>echo-build-properties</id>
+                  <phase>compile</phase>
+                  <goals>
+                      <goal>run</goal>
+                  </goals>
+                  <configuration>
+                      <tasks>
+                          <echo level="debug">buildTime = ${buildTime}</echo>
+                          <echo level="debug">buildNumber = ${buildNumber}</echo>
+                      </tasks>
+                  </configuration>
+              </execution>
+          </executions>
+      </plugin>
+
+      <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>properties-maven-plugin</artifactId>
+          <executions>
+              <execution>
+                  <id>read-build-properties-file</id>
+                  <phase>process-sources</phase>
+                  <goals>
+                      <goal>read-project-properties</goal>
+                  </goals>
+                  <configuration>
+                      <files>
+                          <file>${project.build.directory}/build.properties</file>                                  
+                      </files>
+                      <quiet>true</quiet>
+                  </configuration>
+              </execution>
+          </executions>
+      </plugin>
+
     </plugins>
 
   </build>
@@ -989,7 +1103,9 @@
          </properties>
       </profile>
 
-      <!-- Set the java6.home prop to a Java6 JRE dir to enforce that only Java6 APIs are used. -->
+      <!-- Set the java6.home prop to a Java6 JRE dir to enforce that only Java6 APIs are used.
+           If using Java7 to run the build, this will ensure no APIs introduced in Java7 are 
+           used. -->
       <profile>
          <id>check-java-api</id>
          <activation>
@@ -1025,133 +1141,6 @@
                     <bootclasspath>${java6.home}/lib/rt.jar${path.separator}${java6.home}/lib/jsse.jar${path.separator}${java6.home}/lib/jce.jar</bootclasspath>
                   </compilerArguments>
                 </configuration>
-              </plugin>
-            </plugins>
-          </build>
-      </profile>
-
-      <!-- Use buildnumber plugin only if SVN metadata is present. -->
-      <profile>
-         <id>build-number-generation</id>
-         <activation>
-            <file>
-               <exists>.svn</exists>
-            </file>
-         </activation>
-
-         <build>
-            <plugins>
-               <plugin>
-                  <groupId>org.codehaus.mojo</groupId>
-                  <artifactId>buildnumber-maven-plugin</artifactId>
-                  <executions>
-                     <execution>
-                        <phase>validate</phase>
-                        <goals>
-                           <goal>create</goal>
-                        </goals>
-                     </execution>
-                     </executions>
-                     <configuration>
-                     <getRevisionOnlyOnce>true</getRevisionOnlyOnce>
-                     <revisionOnScmFailure>0</revisionOnScmFailure>
-                     <doCheck>false</doCheck>
-                     <doUpdate>false</doUpdate>
-                  </configuration>
-               </plugin>
-            </plugins>
-         </build>
-      </profile>
-
-      <profile>
-          <id>build-properties</id>
-          <activation>
-              <file>
-                  <exists>.git</exists>
-              </file>
-          </activation>
-
-          <build>
-              <plugins>
-                <plugin>
-                  <artifactId>maven-antrun-plugin</artifactId>
-                  <executions>
-                      <execution>
-                          <id>write-build-time-properties-file</id>
-                          <goals>
-                              <goal>run</goal>
-                          </goals>
-                          <phase>generate-sources</phase>
-                          <configuration>
-                              <tasks>
-                                  <tstamp>
-                                      <format property="buildTime" pattern="MM/dd/yy hh:mm aa z" locale="en,US" timezone="GMT" />
-                                  </tstamp>
-                                  <mkdir dir="target" />
-                                  <echo file="target/build-time.properties" level="error">buildTime = ${buildTime}
-                                  </echo>
-                              </tasks>
-                          </configuration>
-                      </execution>
-
-                      <execution>
-                          <id>echo-build-properties</id>
-                          <phase>compile</phase>
-                          <inherited>false</inherited>
-                          <goals>
-                              <goal>run</goal>
-                          </goals>
-                          <configuration>
-                              <tasks>
-                                  <echo level="debug">buildTime = ${buildTime}</echo>
-                                  <echo level="debug">buildNumber = ${buildNumber}</echo>
-                              </tasks>
-                          </configuration>
-                      </execution>
-                  </executions>
-              </plugin>
-
-              <plugin>
-                  <groupId>org.codehaus.mojo</groupId>
-                  <artifactId>exec-maven-plugin</artifactId>
-                  <executions>
-                      <execution>
-                          <id>generate-build-number-properties</id>
-                          <phase>generate-sources</phase>
-                          <goals>
-                              <goal>exec</goal>
-                          </goals>
-                          <configuration>
-                              <executable>git</executable>
-                              <arguments>
-                                  <argument>log</argument>
-                                  <argument>--pretty=format:buildNumber = %h</argument>
-                                  <argument>-n1</argument>
-                              </arguments>
-                              <outputFile>${project.build.directory}/build-number.properties</outputFile>
-                          </configuration>
-                      </execution>
-                  </executions>
-              </plugin>
-
-              <plugin>
-                  <groupId>org.codehaus.mojo</groupId>
-                  <artifactId>properties-maven-plugin</artifactId>
-                  <executions>
-                      <execution>
-                          <id>read-build-properties</id>
-                          <phase>process-sources</phase>
-                          <goals>
-                              <goal>read-project-properties</goal>
-                          </goals>
-                          <configuration>
-                              <files>
-                                  <file>${project.build.directory}/build-time.properties</file>
-                                  <file>${project.build.directory}/build-number.properties</file>
-                              </files>
-                          </configuration>
-                      </execution>
-                  </executions>
               </plugin>
             </plugins>
           </build>
@@ -1210,10 +1199,9 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>findbugs-maven-plugin</artifactId>
-                <version>2.3.1</version>
+                <version>2.3.2</version>
                 <configuration>
                     <xmlOutput>true</xmlOutput>
-                    <onlyAnalyze>org.rhq.*,org.jboss.jopr.*</onlyAnalyze>
                     <effort>Max</effort>
                     <threshold>Default</threshold>
                 </configuration>
@@ -1262,7 +1250,7 @@
     <licenses>
         <license>
             <name>GPL</name>
-            <url>http://gnu.org</url>
+            <url>http://www.gnu.org/licenses/gpl.html</url>
         </license>
     </licenses>
 

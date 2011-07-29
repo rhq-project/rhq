@@ -39,6 +39,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
@@ -588,7 +589,8 @@ import org.rhq.core.domain.util.Summary;
         + " (SELECT count(p) FROM res.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s = :subject AND p = 11), " // we want CONFIGURE_WRITE, 11
         + " (SELECT count(p) FROM res.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s = :subject AND p = 9), " // we want MANAGE_CONTENT, 9
         + " (SELECT count(p) FROM res.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s = :subject AND p = 6), " // we want CREATE_CHILD_RESOURCES, 6
-        + " (SELECT count(p) FROM res.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s = :subject AND p = 5)) " // we want DELETE_RESOURCES, 5
+        + " (SELECT count(p) FROM res.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s = :subject AND p = 5), " // we want DELETE_RESOURCES, 5
+        + " (SELECT count(p) FROM res.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s = :subject AND p = 16)) " // we want MANAGE_DRIFT, 16
         + "FROM Resource res " //
         + "     LEFT JOIN res.currentAvailability a " //
         + "WHERE res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)"
@@ -611,7 +613,8 @@ import org.rhq.core.domain.util.Summary;
         + " (SELECT count(p) FROM res.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s = :subject AND p = 11), " // we want CONFIGURE_WRITE, 11
         + " (SELECT count(p) FROM res.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s = :subject AND p = 9), " // we want MANAGE_CONTENT, 9
         + " (SELECT count(p) FROM res.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s = :subject AND p = 6), " // we want CREATE_CHILD_RESOURCES, 6
-        + " (SELECT count(p) FROM res.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s = :subject AND p = 5)) " // we want DELETE_RESOURCES, 5
+        + " (SELECT count(p) FROM res.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s = :subject AND p = 5), " // we want DELETE_RESOURCES, 5
+        + " (SELECT count(p) FROM res.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s = :subject AND p = 16)) " // we want MANAGE_DRIFT, 16        
         + "FROM Resource res " //
         + "     LEFT JOIN res.parentResource parent " //
         + "     LEFT JOIN res.currentAvailability a " //
@@ -1071,8 +1074,12 @@ public class Resource implements Comparable<Resource>, Serializable {
     @OneToMany(mappedBy = "resource", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     private Set<Dashboard> dashboards = null;
 
-    public Resource() {
+    @JoinTable(name = "RHQ_DRIFT_CONFIG_MAP", joinColumns = { @JoinColumn(name = "RESOURCE_ID") }, inverseJoinColumns = { @JoinColumn(name = "CONFIG_ID") })
+    @OneToMany(fetch = FetchType.LAZY, cascade = { CascadeType.ALL })
+    @org.hibernate.annotations.Cascade(org.hibernate.annotations.CascadeType.DELETE_ORPHAN)
+    private Set<Configuration> driftConfigurations = null;
 
+    public Resource() {
     }
 
     /**
@@ -1739,6 +1746,14 @@ public class Resource implements Comparable<Resource>, Serializable {
 
     protected void setDashboards(Set<Dashboard> dashboards) {
         this.dashboards = dashboards;
+    }
+
+    public Set<Configuration> getDriftConfigurations() {
+        return driftConfigurations;
+    }
+
+    public void setDriftConfigurations(Set<Configuration> driftConfigurations) {
+        this.driftConfigurations = driftConfigurations;
     }
 
     public int compareTo(Resource that) {

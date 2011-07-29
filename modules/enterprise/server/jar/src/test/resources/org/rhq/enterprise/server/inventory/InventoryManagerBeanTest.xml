@@ -1,63 +1,68 @@
 <dataset>
     <rhq_config_def/>
     <rhq_config_prop_def/>
+    <rhq_config_pd_osrc/>
     <rhq_conf_prop_def_enum/>
     <rhq_config_prop_constr/>
+
+    <rhq_config/>
+    <rhq_config_property/>
+    <rhq_config_template/>
 
     <rhq_resource_type id="1"
                        name="TestServer1"
                        category="SERVER"
                        creation_data_type="CONFIGURATION"
                        create_delete_policy="BOTH"
-                       supports_manual_add="true"
-                       singleton="false"
+                       supports_manual_add="1"
+                       singleton="0"
                        plugin="TestPlugin1"
-                       deleted="false"/>
+                       deleted="0"/>
     <rhq_resource_type id="2"
                        name="TestService1"
                        category="SERVICE"
                        creation_data_type="CONFIGURATION"
                        create_delete_policy="BOTH"
-                       supports_manual_add="true"
-                       singleton="false"
+                       supports_manual_add="1"
+                       singleton="0"
                        plugin="TestPlugin1"
-                       deleted="false"/>
+                       deleted="0"/>
     <rhq_resource_type id="3"
                        name="TestService2"
                        category="SERVICE"
                        creation_data_type="CONFIGURATION"
                        create_delete_policy="BOTH"
-                       supports_manual_add="true"
-                       singleton="false"
+                       supports_manual_add="1"
+                       singleton="0"
                        plugin="TestPlugin1"
-                       deleted="false"/>
+                       deleted="0"/>
     <rhq_resource_type id="4"
                        name="TestServer2"
                        category="SERVER"
                        creation_data_type="CONFIGURATION"
                        create_delete_policy="BOTH"
-                       supports_manual_add="true"
-                       singleton="false"
+                       supports_manual_add="1"
+                       singleton="0"
                        plugin="TestPlugin1"
-                       deleted="false"/>
+                       deleted="0"/>
     <rhq_resource_type id="5"
                        name="TestService3"
                        category="SERVICE"
                        creation_data_type="CONFIGURATION"
                        create_delete_policy="BOTH"
-                       supports_manual_add="true"
-                       singleton="false"
+                       supports_manual_add="1"
+                       singleton="0"
                        plugin="TestPlugin1"
-                       deleted="false"/>
+                       deleted="0"/>
     <rhq_resource_type id="6"
                        name="TestServer3"
                        category="SERVER"
                        creation_data_type="CONFIGURATION"
                        create_delete_policy="BOTH"
-                       supports_manual_add="true"
-                       singleton="false"
+                       supports_manual_add="1"
+                       singleton="0"
                        plugin="TestPlugin1"
-                       deleted="false"/>
+                       deleted="0"/>
 
 
     <rhq_resource_type_parents resource_type_id="2"
@@ -74,22 +79,19 @@
     <rhq_operation_def/>
     <rhq_package_type/>
     <rhq_bundle_type/>
-    <rhq_config/>
-    <rhq_config_property/>
-    <rhq_config_template/>
 
     <rhq_resource id="1"
                   resource_type_id="1"
                   name="TestServer1"
                   uuid="test-server-1"
                   resource_key="test-server-1"
-                  connected="true"/>
+                  connected="1"/>
     <rhq_resource id="2"
                   resource_type_id="2"
                   name="TestService1"
                   uuid="test-service-1"
                   resource_key="test-service-1"
-                  connected="true"
+                  connected="1"
                   parent_resource_id="1"/>
 
     <rhq_resource_subcat/>
@@ -103,8 +105,8 @@
     <rhq_availability/>
     <rhq_measurement_sched/>
     <rhq_content_source/>
-    <rhq_repo_content_src_map/>
     <rhq_package/>
     <rhq_bundle/>
+    <rhq_drift_template_map/>
     <rhq_plugin/>
 </dataset>

@@ -177,6 +177,9 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
         destinationGroup.setLinkTitle(StringUtility.escapeHtml((deployment.getDestination().getGroup().getName())));
         destinationGroup.setTarget("_self");
 
+        StaticTextItem destBaseDir = new StaticTextItem("destBaseDir", MSG.view_bundle_dest_baseDirName());
+        destBaseDir.setValue(deployment.getDestination().getDestinationBaseDirectoryName());
+
         StaticTextItem path = new StaticTextItem("path", MSG.view_bundle_deployDir());
         path.setValue(deployment.getDestination().getDeployDir());
 
@@ -201,8 +204,8 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
             });
         }
 
-        form.setFields(bundleName, deployed, actionItem, bundleVersionName, deployedBy, destinationGroup, path,
-            description, status);
+        form.setFields(bundleName, bundleVersionName, actionItem, deployed, deployedBy, destinationGroup, destBaseDir,
+            description, path, status);
 
         return form;
     }
@@ -335,19 +338,19 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
         table.setTitleComponent(new HTMLFlow(MSG.view_bundle_deploy_selectARow()));
 
         // resource icon field
+        ResourceCategory resourceCategory = deployment.getDestination().getGroup().getResourceType().getCategory();
         ListGridField resourceIcon = new ListGridField("resourceAvailability");
         HashMap<String, String> icons = new HashMap<String, String>();
-        icons.put(AvailabilityType.UP.name(), ImageManager.getResourceIcon(ResourceCategory.PLATFORM, Boolean.TRUE));
-        icons.put(AvailabilityType.DOWN.name(), ImageManager.getResourceIcon(ResourceCategory.PLATFORM, Boolean.FALSE));
+        icons.put(AvailabilityType.UP.name(), ImageManager.getResourceIcon(resourceCategory, Boolean.TRUE));
+        icons.put(AvailabilityType.DOWN.name(), ImageManager.getResourceIcon(resourceCategory, Boolean.FALSE));
         resourceIcon.setValueIcons(icons);
         resourceIcon.setValueIconSize(16);
         resourceIcon.setType(ListGridFieldType.ICON);
         resourceIcon.setWidth(40);
 
         // resource field
-        ListGridField resource = new ListGridField("resource", MSG.common_title_platform());
-        resource.setAutoFitWidth(true);
-        resource.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
+        ListGridField resource = new ListGridField("resource", MSG.common_title_resource());
+        resource.setWidth("*");
         resource.setCellFormatter(new CellFormatter() {
             public String format(Object value, ListGridRecord listGridRecord, int i, int i1) {
                 return "<a href=\"" + LinkManager.getResourceLink(listGridRecord.getAttributeAsInt("resourceId"))
@@ -357,7 +360,7 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
         });
 
         // resource version field
-        ListGridField resourceVersion = new ListGridField("resourceVersion", MSG.view_bundle_deploy_operatingSystem());
+        ListGridField resourceVersion = new ListGridField("resourceVersion", MSG.common_title_version());
         resourceVersion.setAutoFitWidth(true);
         resourceVersion.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
 
@@ -367,7 +370,7 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
         status.setValueIconHeight(11);
         status.setValueIconWidth(11);
         status.setShowValueIconOnly(true);
-        status.setWidth("*");
+        status.setWidth(60);
 
         List<ListGridRecord> records = new ArrayList<ListGridRecord>();
         for (BundleResourceDeployment rd : deployment.getResourceDeployments()) {

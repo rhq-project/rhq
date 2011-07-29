@@ -79,11 +79,12 @@ public class ResourceGroupComposite implements Serializable {
     public ResourceGroupComposite(Long explicitCount, Double explicitAvailability, Long implicitCount,
         Double implicitAvailability, ResourceGroup resourceGroup, Number measure, Number inventory, Number control,
         Number alert, Number event, Number configureRead, Number configureWrite, Number content,
-        Number createChildResources, Number deleteResources) {
+        Number createChildResources, Number deleteResources, Number drift) {
         this(explicitCount, explicitAvailability, implicitCount, implicitAvailability, resourceGroup, null,
             new ResourcePermission(measure.intValue() > 0, inventory.intValue() > 0, control.intValue() > 0, alert
                 .intValue() > 0, event.intValue() > 0, configureRead.intValue() > 0, configureWrite.intValue() > 0,
-                content.intValue() > 0, createChildResources.intValue() > 0, deleteResources.intValue() > 0));
+                content.intValue() > 0, createChildResources.intValue() > 0, deleteResources.intValue() > 0, drift
+                    .intValue() > 0));
     }
 
     public ResourceGroupComposite(Long explicitCount, Double explicitAvailability, Long implicitCount,

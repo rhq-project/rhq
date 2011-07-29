@@ -59,11 +59,18 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.PropertyList;
+import org.rhq.core.domain.configuration.PropertyMap;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.composite.ConfigurationUpdateComposite;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationFormat;
+import org.rhq.core.domain.configuration.definition.PropertyDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionEnumeration;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
+import org.rhq.core.domain.configuration.definition.PropertyOptionsSource;
 import org.rhq.core.domain.configuration.group.AbstractGroupConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.GroupPluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.GroupResourceConfigurationUpdate;
@@ -72,12 +79,15 @@ import org.rhq.core.domain.criteria.GroupPluginConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.GroupResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.PluginConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
+import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.ResourceErrorType;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
@@ -116,7 +126,7 @@ import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 import org.rhq.enterprise.server.util.QuartzUtil;
 
 /**
- * The manager responsible for working with resource and plugin configurations.
+ * The manager responsible for working with Resource and plugin configurations.
  *
  * @author John Mazzitelli
  * @author Ian Springer
@@ -410,14 +420,15 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                 + "]; will assume latest resource configuration update is the current resource configuration.");
         }
 
-        // Mask the configuration before returning the update.
-        Configuration configuration = current.getConfiguration();
-        ConfigurationDefinition configurationDefinition = getResourceConfigurationDefinitionForResourceType(
-                subjectManager.getOverlord(), resource.getResourceType().getId());
-        // We do not want the masked configuration persisted, so detach all entities before masking the configuration.
-        entityManager.clear();
-        ConfigurationMaskingUtility.maskConfiguration(configuration, configurationDefinition);
-
+        if (current!=null) {
+            // Mask the configuration before returning the update.
+            Configuration configuration = current.getConfiguration();
+            ConfigurationDefinition configurationDefinition = getResourceConfigurationDefinitionForResourceType(
+                    subjectManager.getOverlord(), resource.getResourceType().getId());
+            // We do not want the masked configuration persisted, so detach all entities before masking the configuration.
+            entityManager.clear();
+            ConfigurationMaskingUtility.maskConfiguration(configuration, configurationDefinition);
+        }
         return current;
     }
 
@@ -677,7 +688,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         }
 
         Query countQuery = PersistenceUtility.createCountQuery(entityManager,
-            ResourceConfigurationUpdate.QUERY_FIND_BY_GROUP_ID_AND_STATUS);
+                ResourceConfigurationUpdate.QUERY_FIND_BY_GROUP_ID_AND_STATUS);
         countQuery.setParameter("groupId", compatibleGroup.getId());
         countQuery.setParameter("status", ConfigurationUpdateStatus.INPROGRESS);
         long count = (Long) countQuery.getSingleResult();
@@ -928,7 +939,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         for (PluginConfigurationUpdate update : updates) {
             Configuration configuration = update.getConfiguration();
             ConfigurationDefinition configurationDefinition = getPluginConfigurationDefinitionForResourceType(
-                    subjectManager.getOverlord(), update.getResource().getId());
+                    subjectManager.getOverlord(), update.getResource().getResourceType().getId());
             ConfigurationMaskingUtility.maskConfiguration(configuration, configurationDefinition);
         }
 
@@ -990,7 +1001,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         for (ResourceConfigurationUpdate update : updates) {
             Configuration configuration = update.getConfiguration();
             ConfigurationDefinition configurationDefinition = getResourceConfigurationDefinitionForResourceType(
-                    subjectManager.getOverlord(), update.getResource().getId());
+                    subjectManager.getOverlord(), update.getResource().getResourceType().getId());
             ConfigurationMaskingUtility.maskConfiguration(configuration, configurationDefinition);
         }
 
@@ -1619,7 +1630,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
     public Configuration getConfigurationFromDefaultTemplate(ConfigurationDefinition definition) {
         ConfigurationDefinition managedDefinition = entityManager.find(ConfigurationDefinition.class, definition
-            .getId());
+                .getId());
         Configuration configuration = managedDefinition.getDefaultTemplate().getConfiguration();
         ConfigurationMaskingUtility.maskConfiguration(configuration, managedDefinition);
         return configuration;
@@ -1991,7 +2002,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         pc.initDefaultOrderingField("modifiedTime", PageOrdering.DESC);
 
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
-            GroupPluginConfigurationUpdate.QUERY_FIND_BY_GROUP_ID, pc);
+                GroupPluginConfigurationUpdate.QUERY_FIND_BY_GROUP_ID, pc);
         Query countQuery = PersistenceUtility.createCountQuery(entityManager,
             GroupPluginConfigurationUpdate.QUERY_FIND_BY_GROUP_ID);
         query.setParameter("groupId", groupId);
@@ -2272,7 +2283,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         for (ResourceConfigurationUpdate update : updates) {
             Configuration configuration = update.getConfiguration();
             ConfigurationDefinition configurationDefinition = getResourceConfigurationDefinitionForResourceType(
-                    subjectManager.getOverlord(), update.getResource().getId());
+                    subjectManager.getOverlord(), update.getResource().getResourceType().getId());
             ConfigurationMaskingUtility.maskConfiguration(configuration, configurationDefinition);
         }
 
@@ -2299,7 +2310,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         for (PluginConfigurationUpdate update : updates) {
             Configuration configuration = update.getConfiguration();
             ConfigurationDefinition configurationDefinition = getPluginConfigurationDefinitionForResourceType(
-                    subjectManager.getOverlord(), update.getResource().getId());
+                    subjectManager.getOverlord(), update.getResource().getResourceType().getId());
             ConfigurationMaskingUtility.maskConfiguration(configuration, configurationDefinition);
         }
 
@@ -2331,7 +2342,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                 for (ResourceConfigurationUpdate memberUpdate : memberUpdates) {
                     Configuration configuration = memberUpdate.getConfiguration();
                     ConfigurationDefinition configurationDefinition = getResourceConfigurationDefinitionForResourceType(
-                            subjectManager.getOverlord(), memberUpdate.getResource().getId());
+                            subjectManager.getOverlord(), memberUpdate.getResource().getResourceType().getId());
                     ConfigurationMaskingUtility.maskConfiguration(configuration, configurationDefinition);
                 }
             }
@@ -2365,13 +2376,173 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                 for (PluginConfigurationUpdate memberUpdate : memberUpdates) {
                     Configuration configuration = memberUpdate.getConfiguration();
                     ConfigurationDefinition configurationDefinition = getPluginConfigurationDefinitionForResourceType(
-                            subjectManager.getOverlord(), memberUpdate.getResource().getId());
+                            subjectManager.getOverlord(), memberUpdate.getResource().getResourceType().getId());
                     ConfigurationMaskingUtility.maskConfiguration(configuration, configurationDefinition);
                 }
             }
         }
 
         return updates;
+    }
+
+
+    public ConfigurationDefinition getOptionsForConfigurationDefinition(Subject subject, ConfigurationDefinition def) {
+
+
+        for (Map.Entry<String,PropertyDefinition> entry :  def.getPropertyDefinitions().entrySet()) {
+            PropertyDefinition pd = entry.getValue();
+
+            if (pd instanceof PropertyDefinitionSimple) {
+                PropertyDefinitionSimple pds = (PropertyDefinitionSimple) pd;
+                handlePDS(subject, pds);
+
+            }
+            // TODO consider more cases
+        }
+
+        return def; // TODO clone the incoming definition?
+    }
+
+    /**
+     * Determine the dynamic enumeration values for one PropertyDefinitionSimple
+     * @param subject Subject of the caller - may limit search results
+     * @param pds the PropertyDefinitionSimple to work on
+     */
+    private void handlePDS(Subject subject, PropertyDefinitionSimple pds) {
+
+        if (pds.getOptionsSource()!=null) {
+            // evaluate the source parameters
+            PropertyOptionsSource pos = pds.getOptionsSource();
+            PropertyOptionsSource.TargetType tt = pos.getTargetType();
+            String expression = pos.getExpression();
+            if (tt== PropertyOptionsSource.TargetType.RESOURCE || tt== PropertyOptionsSource.TargetType.CONFIGURATION) {
+                ResourceCriteria criteria = new ResourceCriteria();
+
+
+                if (tt==PropertyOptionsSource.TargetType.CONFIGURATION) {
+                    // split out expression part for target=configuration
+                    // return if no property specifier is given
+                    String expr = expression;
+                    if (!expr.contains(":")) {
+                        log.warn("Option source expression for property " + pds.getName() + " and target configuration contains no ':'");
+                        return;
+                    }
+                }
+                else {
+                    criteria.setSearchExpression(expression);
+                }
+
+
+                List<ResourceComposite> composites = resourceManager.findResourceCompositesByCriteria(subject,criteria);
+                for (ResourceComposite composite : composites) {
+
+                    if (tt== PropertyOptionsSource.TargetType.RESOURCE) {
+
+                        PropertyDefinitionEnumeration pde = new PropertyDefinitionEnumeration(composite.getResource().getName(),""+composite.getResource().getName());
+                        // TODO filter -- or leave up to search expression??
+                        pds.getEnumeratedValues().add(pde);
+                    }
+                    else if (tt== PropertyOptionsSource.TargetType.CONFIGURATION) {
+                        //  for configuration we need to drill down into the resource configuration
+                        if (!handleConfigurationTarget(pds, expression, composite.getResource())) return;
+
+                    }
+                }
+            }
+            else if (tt == PropertyOptionsSource.TargetType.GROUP) {
+                // for groups we need to talk to the group manager
+                ResourceGroupCriteria criteria = new ResourceGroupCriteria();
+                criteria.setSearchExpression(expression);
+
+                resourceGroupManager.findResourceGroupCompositesByCriteria(subject,criteria);
+            }
+            // TODO plugin and resourceType
+        }
+
+    }
+
+    /**
+     * Drill down in the case the user set up a target of "configuration". We need to check
+     * that the target property actually exiists and that it has a format we understand
+     * @param pds Propertydefinition to examine
+     * @param expression The whole expression starting with identifier: for the configuration
+     * identifier. This looks like <i>listname</i> for list of
+     * property simple or <i>mapname=mapkey</i> for a map with simple properties
+     * @param resource the
+     * @return false if the property can not be resolved, true otherwise
+     */
+    private boolean handleConfigurationTarget(PropertyDefinitionSimple pds, String expression,
+                                              Resource resource) {
+        Configuration configuration = resource.getResourceConfiguration();
+        Property p;
+        String propName = expression.substring(0, expression.indexOf(":"));
+        boolean isMap = expression.contains("=");
+
+        if (isMap) {
+            String mapPropName = propName.substring(0, propName.indexOf("="));
+            p = configuration.get(mapPropName);
+        } else
+            p = configuration.get(propName);
+
+        if (p == null) {
+            log.warn("Option source expression for property " + pds.getName() + " and target configuration not found");
+            return false;
+        }
+        if (!(p instanceof PropertyList)) {
+            log.warn("Option source expression for property " + pds.getName() + " and target configuration does not point to a list");
+            return false;
+        }
+        PropertyList pl = (PropertyList) p;
+        List<Property> propertyList = pl.getList();
+        if (propertyList.size()==0)
+            return false;
+
+        // Now List of simple or list of maps (of simple) ?
+
+        if (propertyList.get(0) instanceof PropertySimple) {
+            if (isMap) {
+                log.warn(" expected a List of Maps, but got a list of simple");
+                return  false;
+            }
+
+            for (Property tmp : propertyList) {
+                PropertySimple ps= (PropertySimple) tmp;
+                String name = ps.getStringValue();
+                if (name!=null) {
+                    PropertyDefinitionEnumeration pde = new PropertyDefinitionEnumeration(name, name);
+                    pds.getEnumeratedValues().add(pde);
+                }
+            }
+        } else if (propertyList.get(0) instanceof  PropertyMap) {
+            if (!isMap) {
+                log.warn(" expected a List of simple, but got a list of Maps");
+                return false;
+            }
+            String subPropName ;
+            subPropName = propName.substring(propName.indexOf("=") + 1);
+
+            for (Property tmp : propertyList) {
+                PropertyMap pm = (PropertyMap) tmp;
+                Property ps = pm.get(subPropName);
+                if (ps==null) {
+                    log.warn("Option source expression for property " + pds.getName() + " and target configuration does not have a map element " + subPropName);
+                    return false;
+                }
+                if (!(ps instanceof PropertySimple)) {
+                    log.warn("ListOfMapOf!Simple are not supported");
+                    return false;
+                }
+                PropertySimple propertySimple = (PropertySimple) ps;
+                String name = propertySimple.getStringValue();
+                if (name!=null) {
+                    PropertyDefinitionEnumeration pde = new PropertyDefinitionEnumeration(name, name);
+                    pds.getEnumeratedValues().add(pde);
+                }
+            }
+        }
+
+
+        return true;
     }
 
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

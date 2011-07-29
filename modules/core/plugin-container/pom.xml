@@ -58,6 +58,12 @@
          <version>${project.version}</version>
       </dependency>
 
+      <dependency>
+          <groupId>${rhq.groupId}</groupId>
+          <artifactId>rhq-common-drift</artifactId>
+          <version>${project.version}</version>
+      </dependency>
+
       <!-- 3rd Party Deps -->
 
       <dependency>
@@ -115,9 +121,7 @@
          <groupId>commons-io</groupId>
          <artifactId>commons-io</artifactId>
          <version>1.4</version>
-         <scope>test</scope>
-      </dependency>
-
+    </dependency>
    </dependencies>
 
   <build>

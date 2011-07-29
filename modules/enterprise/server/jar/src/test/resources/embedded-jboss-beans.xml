@@ -75,15 +75,6 @@
       </property>
    </bean>
 
-   <!--
-      <bean class="org.jboss.jdbc.HypersonicDatabase"
-        name="jboss:service=Hypersonic,database=localDB">
-        <property name="database">localDB</property>
-        <property name="inProcessMode">true</property>
-        <property name="dbDataDir">.</property>
-      </bean>
-   -->
-
    <bean name="RHQDSBootstrap" class="org.jboss.resource.adapter.jdbc.local.LocalTxDataSource">
       <property name="driverClass">${rhq.test.ds.driver-class}</property>
       <property name="connectionURL">${rhq.test.ds.connection-url}</property>
@@ -166,85 +157,181 @@
       </constructor>
    </bean>
 
-
-   <!--
-   <bean name="TimerServiceFactory" class="org.jboss.ejb3.timerservice.quartz.QuartzTimerServiceFactory">
-      <property name="properties">
-           org.quartz.jobStore.class=org.quartz.impl.jdbcjobstore.JobStoreCMT
-            org.quartz.jobStore.nonManagedTXDataSource=myDS
-            org.quartz.jobStore.driverDelegateClass=org.quartz.impl.jdbcjobstore.HSQLDBDelegate
-            org.quartz.jobStore.tablePrefix=QRTZ_
-            org.quartz.jobStore.dataSource=myDS
-
-           # To get it to work with hypersonic
-           # FIXME: this doesn't lock the row
-            org.quartz.jobStore.selectWithLockSQL=SELECT * FROM qrtz_locks WHERE lock_name = ?
-
-           # from quartz.properties
-            org.quartz.scheduler.instanceName=JBossEJB3QuartzScheduler
-            org.quartz.scheduler.rmi.export=false
-            org.quartz.scheduler.rmi.proxy=false
-            org.quartz.scheduler.wrapJobExecutionInUserTransaction=false
-
-            org.quartz.threadPool.class=org.quartz.simpl.SimpleThreadPool
-            org.quartz.threadPool.threadCount=10
-            org.quartz.threadPool.threadPriority=5
-            org.quartz.threadPool.threadsInheritContextClassLoaderOfInitializingThread=true
-
-           org.quartz.jobStore.misfireThreshold=60000
-      </property>
-      <property name="dataSource">java:/DefaultDS</property>
-      <property name="sqlProperties">
-         CREATE_DB_ON_STARTUP = TRUE
-
-         CREATE_TABLE_JOB_DETAILS = CREATE TABLE qrtz_job_details(JOB_NAME VARCHAR(80) NOT NULL, JOB_GROUP VARCHAR(80) NOT NULL, \
-            DESCRIPTION VARCHAR(120) NULL, JOB_CLASS_NAME VARCHAR(128) NOT NULL, IS_DURABLE VARCHAR(1) NOT NULL, \
-            IS_VOLATILE VARCHAR(1) NOT NULL, IS_STATEFUL VARCHAR(1) NOT NULL, REQUESTS_RECOVERY VARCHAR(1) NOT NULL, \
-            JOB_DATA BINARY NULL, PRIMARY KEY (JOB_NAME,JOB_GROUP))
-         CREATE_TABLE_JOB_LISTENERS = CREATE TABLE qrtz_job_listeners(JOB_NAME VARCHAR(80) NOT NULL, JOB_GROUP VARCHAR(80) NOT NULL, \
-            JOB_LISTENER VARCHAR(80) NOT NULL, PRIMARY KEY (JOB_NAME,JOB_GROUP,JOB_LISTENER), FOREIGN KEY (JOB_NAME,JOB_GROUP) \
-            REFERENCES QRTZ_JOB_DETAILS(JOB_NAME,JOB_GROUP))
-         CREATE_TABLE_TRIGGERS = CREATE TABLE qrtz_triggers(TRIGGER_NAME VARCHAR(80) NOT NULL, TRIGGER_GROUP VARCHAR(80) NOT NULL, \
-            JOB_NAME VARCHAR(80) NOT NULL, JOB_GROUP VARCHAR(80) NOT NULL, IS_VOLATILE VARCHAR(1) NOT NULL, DESCRIPTION VARCHAR(120) NULL, \
-            NEXT_FIRE_TIME NUMERIC(13) NULL, PREV_FIRE_TIME NUMERIC(13) NULL, TRIGGER_STATE VARCHAR(16) NOT NULL, \
-            TRIGGER_TYPE VARCHAR(8) NOT NULL, START_TIME NUMERIC(13) NOT NULL, END_TIME NUMERIC(13) NULL, CALENDAR_NAME VARCHAR(80) NULL, \
-            MISFIRE_INSTR NUMERIC(2) NULL, JOB_DATA BINARY NULL, PRIMARY KEY (TRIGGER_NAME,TRIGGER_GROUP), FOREIGN KEY (JOB_NAME,JOB_GROUP) \
-            REFERENCES QRTZ_JOB_DETAILS(JOB_NAME,JOB_GROUP))
-         CREATE_TABLE_SIMPLE_TRIGGERS = CREATE TABLE qrtz_simple_triggers(TRIGGER_NAME VARCHAR(80) NOT NULL, \
-            TRIGGER_GROUP VARCHAR(80) NOT NULL, REPEAT_COUNT NUMERIC(7) NOT NULL, REPEAT_INTERVAL NUMERIC(12) NOT NULL, \
-            TIMES_TRIGGERED NUMERIC(7) NOT NULL, PRIMARY KEY (TRIGGER_NAME,TRIGGER_GROUP), FOREIGN KEY (TRIGGER_NAME,TRIGGER_GROUP) \
-            REFERENCES QRTZ_TRIGGERS(TRIGGER_NAME,TRIGGER_GROUP))
-         CREATE_TABLE_CRON_TRIGGERS = CREATE TABLE qrtz_cron_triggers(TRIGGER_NAME VARCHAR(80) NOT NULL, \
-            TRIGGER_GROUP VARCHAR(80) NOT NULL, CRON_EXPRESSION VARCHAR(80) NOT NULL, TIME_ZONE_ID VARCHAR(80), \
-            PRIMARY KEY (TRIGGER_NAME,TRIGGER_GROUP), FOREIGN KEY (TRIGGER_NAME,TRIGGER_GROUP) \
-            REFERENCES QRTZ_TRIGGERS(TRIGGER_NAME,TRIGGER_GROUP))
-         CREATE_TABLE_BLOB_TRIGGERS = CREATE TABLE qrtz_blob_triggers(TRIGGER_NAME VARCHAR(80) NOT NULL, \
-            TRIGGER_GROUP VARCHAR(80) NOT NULL, BLOB_DATA BINARY NULL, PRIMARY KEY (TRIGGER_NAME,TRIGGER_GROUP), \
-            FOREIGN KEY (TRIGGER_NAME,TRIGGER_GROUP) REFERENCES QRTZ_TRIGGERS(TRIGGER_NAME,TRIGGER_GROUP))
-         CREATE_TABLE_TRIGGER_LISTENERS = CREATE TABLE qrtz_trigger_listeners(TRIGGER_NAME VARCHAR(80) NOT NULL, \
-            TRIGGER_GROUP VARCHAR(80) NOT NULL, TRIGGER_LISTENER VARCHAR(80) NOT NULL, \
-            PRIMARY KEY (TRIGGER_NAME,TRIGGER_GROUP,TRIGGER_LISTENER), FOREIGN KEY (TRIGGER_NAME,TRIGGER_GROUP) \
-            REFERENCES QRTZ_TRIGGERS(TRIGGER_NAME,TRIGGER_GROUP))
-         CREATE_TABLE_CALENDARS = CREATE TABLE qrtz_calendars(CALENDAR_NAME VARCHAR(80) NOT NULL, CALENDAR BINARY NOT NULL, \
-            PRIMARY KEY (CALENDAR_NAME))
-         CREATE_TABLE_PAUSED_TRIGGER_GRPS = CREATE TABLE qrtz_paused_trigger_grps(TRIGGER_GROUP VARCHAR(80) NOT NULL, \
-            PRIMARY KEY (TRIGGER_GROUP))
-         CREATE_TABLE_FIRED_TRIGGERS = CREATE TABLE qrtz_fired_triggers(ENTRY_ID VARCHAR(95) NOT NULL, TRIGGER_NAME VARCHAR(80) NOT NULL, \
-            TRIGGER_GROUP VARCHAR(80) NOT NULL, IS_VOLATILE VARCHAR(1) NOT NULL, INSTANCE_NAME VARCHAR(80) NOT NULL, \
-            FIRED_TIME NUMERIC(13) NOT NULL, STATE VARCHAR(16) NOT NULL, JOB_NAME VARCHAR(80) NULL, JOB_GROUP VARCHAR(80) NULL, \
-            IS_STATEFUL VARCHAR(1) NULL, REQUESTS_RECOVERY VARCHAR(1) NULL, PRIMARY KEY (ENTRY_ID))
-         CREATE_TABLE_SCHEDULER_STATE = CREATE TABLE qrtz_scheduler_state(INSTANCE_NAME VARCHAR(80) NOT NULL, \
-            LAST_CHECKIN_TIME NUMERIC(13) NOT NULL, CHECKIN_INTERVAL NUMERIC(13) NOT NULL, RECOVERER VARCHAR(80) NULL, \
-            PRIMARY KEY (INSTANCE_NAME))
-         CREATE_TABLE_LOCKS = CREATE TABLE qrtz_locks(LOCK_NAME VARCHAR(40) NOT NULL, PRIMARY KEY (LOCK_NAME))
-         INSERT_TRIGGER_ACCESS = INSERT INTO qrtz_locks values('TRIGGER_ACCESS')
-         INSERT_JOB_ACCESS = INSERT INTO qrtz_locks values('JOB_ACCESS')
-         INSERT_CALENDAR_ACCESS = INSERT INTO qrtz_locks values('CALENDAR_ACCESS')
-         INSERT_STATE_ACCESS = INSERT INTO qrtz_locks values('STATE_ACCESS')
-         INSERT_MISFIRE_ACCESS = INSERT INTO qrtz_locks values('MISFIRE_ACCESS')
+    <!-- JMS configuration -->
+     <bean name="jboss.mq:service=JMSProviderLoader,name=JMSProvider" class="org.jboss.jms.jndi.JNDIProviderAdapter">
+      <property name="factoryRef">java:/XAConnectionFactory</property>
+      <property name="queueFactoryRef">java:/XAConnectionFactory</property>
+      <property name="topicFactoryRef">java:/XAConnectionFactory</property>
+      <property name="properties" class="java.util.Properties">
+               <map keyClass="java.lang.String" valueClass="java.lang.String">
+                  <entry>
+                     <key>java.naming.factory.initial</key>
+                     <value>org.jnp.interfaces.LocalOnlyContextFactory</value>
+                  </entry>
+                  <entry>
+                      <key>java.naming.factory.url.pkgs</key>
+                      <value>org.jboss.naming:org.jnp.interfaces</value>
+                  </entry>
+               </map>
       </property>
    </bean>
 
-   -->
+   <bean name="b1" class="org.jboss.ejb3.embedded.JndiBinder">
+      <property name="jndiProperties"><inject bean="InitialContextProperties"/></property>
+      <property name="target"><inject bean="jboss.mq:service=JMSProviderLoader,name=JMSProvider"/></property>
+      <property name="bindTo">java:/DefaultJMSProvider</property>
+      <property name="serializable">true</property>
+   </bean>
 
+   <bean name="jboss.mq:service=ServerSessionPoolMBean,name=StdJMSPool" class="org.jboss.jms.asf.StdServerSessionPoolFactory">
+      <property name="name">StdJMSPool</property>
+      <property name="xidFactory"><inject bean="XidFactoryMBean"/></property>
+      <property name="transactionManager"><inject bean="TransactionManager"/></property>
+   </bean>
+
+   <bean name="b2" class="org.jboss.ejb3.embedded.JndiBinder">
+      <property name="jndiProperties"><inject bean="InitialContextProperties"/></property>
+      <property name="target"><inject bean="jboss.mq:service=ServerSessionPoolMBean,name=StdJMSPool"/></property>
+      <property name="bindTo">java:/StdJMSPool</property>
+      <property name="serializable">false</property>
+   </bean>
+
+
+   <bean name="jboss.mq:service=PersistenceManager" class="org.jboss.mq.kernel.JDBC2PersistenceManager">
+      <property name="transactionManager">
+         <inject bean="TransactionManager"/>
+      </property>
+      <property name="datasource">
+         <inject bean="RHQDS"/>
+      </property>
+      <property name="sqlProperties">
+
+            BLOB_TYPE=OBJECT_BLOB
+            INSERT_TX = INSERT INTO JMS_TRANSACTIONS (TXID) values(?)
+            INSERT_MESSAGE = INSERT INTO JMS_MESSAGES (MESSAGEID, DESTINATION, MESSAGEBLOB, TXID, TXOP) VALUES(?,?,?,?,?)
+            SELECT_ALL_UNCOMMITED_TXS = SELECT TXID FROM JMS_TRANSACTIONS
+            SELECT_MAX_TX = SELECT MAX(TXID) FROM JMS_MESSAGES
+            SELECT_MESSAGES_IN_DEST = SELECT MESSAGEID, MESSAGEBLOB FROM JMS_MESSAGES WHERE DESTINATION=?
+            SELECT_MESSAGE = SELECT MESSAGEID, MESSAGEBLOB FROM JMS_MESSAGES WHERE MESSAGEID=? AND DESTINATION=?
+            MARK_MESSAGE = UPDATE JMS_MESSAGES SET TXID=?, TXOP=? WHERE MESSAGEID=? AND DESTINATION=?
+            UPDATE_MESSAGE = UPDATE JMS_MESSAGES SET MESSAGEBLOB=? WHERE MESSAGEID=? AND DESTINATION=?
+            UPDATE_MARKED_MESSAGES = UPDATE JMS_MESSAGES SET TXID=?, TXOP=? WHERE TXOP=?
+            UPDATE_MARKED_MESSAGES_WITH_TX = UPDATE JMS_MESSAGES SET TXID=?, TXOP=? WHERE TXOP=? AND TXID=?
+            DELETE_MARKED_MESSAGES_WITH_TX = DELETE FROM JMS_MESSAGES WHERE TXOP=? AND JMS_MESSAGES.TXID IN (SELECT TXID FROM JMS_TRANSACTIONS)
+            DELETE_TX = DELETE FROM JMS_TRANSACTIONS WHERE TXID = ?
+            DELETE_MARKED_MESSAGES = DELETE FROM JMS_MESSAGES WHERE TXID=? AND TXOP=?
+            DELETE_MESSAGE = DELETE FROM JMS_MESSAGES WHERE MESSAGEID=? AND DESTINATION=?
+            CREATE_MESSAGE_TABLE = CREATE CACHED TABLE JMS_MESSAGES ( MESSAGEID INTEGER NOT NULL, \
+               DESTINATION VARCHAR(255) NOT NULL, TXID INTEGER, TXOP CHAR(1), \
+               MESSAGEBLOB OBJECT, PRIMARY KEY (MESSAGEID, DESTINATION) )
+            CREATE_IDX_MESSAGE_TXOP_TXID = CREATE INDEX JMS_MESSAGES_TXOP_TXID ON JMS_MESSAGES (TXOP, TXID)
+            CREATE_IDX_MESSAGE_DESTINATION = CREATE INDEX JMS_MESSAGES_DESTINATION ON JMS_MESSAGES (DESTINATION)
+            CREATE_TX_TABLE = CREATE CACHED TABLE JMS_TRANSACTIONS ( TXID INTEGER, PRIMARY KEY (TXID) )
+            CREATE_TABLES_ON_STARTUP = TRUE
+            DELETE_TEMPORARY_MESSAGES = DELETE FROM JMS_MESSAGES WHERE TXOP='T'
+
+      </property>
+   </bean>
+
+   <bean name="jboss.mq:service=MessageCache" class="org.jboss.mq.kernel.MessageCache">
+      <property name="persistenceManager"><inject bean="jboss.mq:service=PersistenceManager"/></property>
+      <property name="highMemoryMark">50</property>
+      <property name="maxMemoryMark">60</property>
+   </bean>
+
+   <bean name="jboss.mq:service=StateManager" class="org.jboss.mq.kernel.JDBCStateManager">
+      <property name="transactionManager">
+         <inject bean="TransactionManager"/>
+      </property>
+      <property name="datasource">
+         <inject bean="RHQDS"/>
+      </property>
+      <property name="sqlProperties">
+
+            CREATE_TABLES_ON_STARTUP = TRUE
+            CREATE_USER_TABLE = CREATE TABLE JMS_USERS (USERID VARCHAR(32) NOT NULL, PASSWD VARCHAR(32) NOT NULL, \
+                                                       CLIENTID VARCHAR(128), PRIMARY KEY(USERID))
+            CREATE_ROLE_TABLE = CREATE TABLE JMS_ROLES (ROLEID VARCHAR(32) NOT NULL, USERID VARCHAR(32) NOT NULL, \
+                                                       PRIMARY KEY(USERID, ROLEID))
+            CREATE_SUBSCRIPTION_TABLE = CREATE TABLE JMS_SUBSCRIPTIONS (CLIENTID VARCHAR(128) NOT NULL, \
+                                                       SUBNAME VARCHAR(128) NOT NULL, TOPIC VARCHAR(255) NOT NULL, \
+                                                       SELECTOR VARCHAR(255), PRIMARY KEY(CLIENTID, SUBNAME))
+            GET_SUBSCRIPTION = SELECT TOPIC, SELECTOR FROM JMS_SUBSCRIPTIONS WHERE CLIENTID=? AND SUBNAME=?
+            LOCK_SUBSCRIPTION = SELECT TOPIC, SELECTOR FROM JMS_SUBSCRIPTIONS WHERE CLIENTID=? AND SUBNAME=?
+            GET_SUBSCRIPTIONS_FOR_TOPIC = SELECT CLIENTID, SUBNAME, SELECTOR FROM JMS_SUBSCRIPTIONS WHERE TOPIC=?
+            INSERT_SUBSCRIPTION = INSERT INTO JMS_SUBSCRIPTIONS (CLIENTID, SUBNAME, TOPIC, SELECTOR) VALUES(?,?,?,?)
+            UPDATE_SUBSCRIPTION = UPDATE JMS_SUBSCRIPTIONS SET TOPIC=?, SELECTOR=? WHERE CLIENTID=? AND SUBNAME=?
+            REMOVE_SUBSCRIPTION = DELETE FROM JMS_SUBSCRIPTIONS WHERE CLIENTID=? AND SUBNAME=?
+            GET_USER_BY_CLIENTID = SELECT USERID, PASSWD, CLIENTID FROM JMS_USERS WHERE CLIENTID=?
+            GET_USER = SELECT PASSWD, CLIENTID FROM JMS_USERS WHERE USERID=?
+            POPULATE.TABLES.01 = INSERT INTO JMS_USERS (USERID, PASSWD) VALUES ('guest', 'guest')
+            POPULATE.TABLES.02 = INSERT INTO JMS_USERS (USERID, PASSWD) VALUES ('j2ee', 'j2ee')
+            POPULATE.TABLES.03 = INSERT INTO JMS_USERS (USERID, PASSWD, CLIENTID) VALUES ('john', 'needle', 'DurableSubscriberExample')
+            POPULATE.TABLES.04 = INSERT INTO JMS_USERS (USERID, PASSWD) VALUES ('nobody', 'nobody')
+            POPULATE.TABLES.05 = INSERT INTO JMS_USERS (USERID, PASSWD) VALUES ('dynsub', 'dynsub')
+            POPULATE.TABLES.06 = INSERT INTO JMS_ROLES (ROLEID, USERID) VALUES ('guest','guest')
+            POPULATE.TABLES.07 = INSERT INTO JMS_ROLES (ROLEID, USERID) VALUES ('j2ee','guest')
+            POPULATE.TABLES.08 = INSERT INTO JMS_ROLES (ROLEID, USERID) VALUES ('john','guest')
+            POPULATE.TABLES.09 = INSERT INTO JMS_ROLES (ROLEID, USERID) VALUES ('subscriber','john')
+            POPULATE.TABLES.10 = INSERT INTO JMS_ROLES (ROLEID, USERID) VALUES ('publisher','john')
+            POPULATE.TABLES.11 = INSERT INTO JMS_ROLES (ROLEID, USERID) VALUES ('publisher','dynsub')
+            POPULATE.TABLES.12 = INSERT INTO JMS_ROLES (ROLEID, USERID) VALUES ('durpublisher','john')
+            POPULATE.TABLES.13 = INSERT INTO JMS_ROLES (ROLEID, USERID) VALUES ('durpublisher','dynsub')
+            POPULATE.TABLES.14 = INSERT INTO JMS_ROLES (ROLEID, USERID) VALUES ('noacc','nobody')
+
+      </property>
+   </bean>
+
+
+   <bean name="BasicQueueParameters" class="org.jboss.mq.server.BasicQueueParameters"/>
+
+   <bean name="jboss.mq:service=ThreadPool" class="org.jboss.util.threadpool.BasicThreadPool">
+      <property name="name">JMSThread</property>
+      <property name="threadGroupName">JBossMQ Server Threads</property>
+      <!-- The max number of threads in the pool -->
+      <property name="maximumPoolSize">10</property>
+      <!-- The max number of tasks before the queue is full -->
+      <property name="maximumQueueSize">1000</property>
+      <!-- The behavior of the pool when a task is added and the queue is full.
+      abort - a RuntimeException is thrown
+      run - the calling thread executes the task
+      wait - the calling thread blocks until the queue has room
+      discard - the task is silently discarded without being run
+      discardOldest - check to see if a task is about to complete and enque
+         the new task if possible, else run the task in the calling thread
+      -->
+   </bean>
+
+   <bean name="jboss.mq:service=DestinationManager" class="org.jboss.mq.server.JMSDestinationManager">
+      <constructor>
+         <parameter class="org.jboss.mq.server.BasicQueueParameters">
+            <inject bean="BasicQueueParameters"/>
+         </parameter>
+      </constructor>
+      <property name="persistenceManager"><inject bean="jboss.mq:service=PersistenceManager"/></property>
+      <property name="messageCache"><inject bean="jboss.mq:service=MessageCache"/></property>
+      <property name="stateManager"><inject bean="jboss.mq:service=StateManager"/></property>
+      <property name="threadPool"><inject bean="jboss.mq:service=ThreadPool"/></property>
+      <property name="threadGroup"><inject bean="jboss.mq:service=ThreadPool" property="threadGroup"/></property>
+      <start method="startServer"/>
+      <stop method="stopServer"/>
+   </bean>
+
+   <bean name="jboss.mq.destination:service=Queue,name=DLQ" class="org.jboss.mq.kernel.Queue">
+     <property name="destinationManagerPojo"><inject bean="jboss.mq:service=DestinationManager"/></property>
+     <property name="initialContextProperties"><inject bean="InitialContextProperties"/></property>
+      <property name="destinationName">DLQ</property>
+   </bean>
+
+   <bean name="jboss.mq:service=Invoker" class="org.jboss.mq.server.JMSServerInvoker">
+      <property name="next"><inject bean="jboss.mq:service=DestinationManager"/></property>
+   </bean>
+
+   <bean name="jboss.mq:service=invocationlayer,type=JVM" class="org.jboss.mq.kernel.JVMIL">
+      <property name="jmsInvoker"><inject bean="jboss.mq:service=Invoker"/></property>
+     <property name="connectionFactoryJNDIRef">java:/ConnectionFactory</property>
+     <property name="XAConnectionFactoryJNDIRef">java:/JmsXA</property>
+     <property name="pingPeriod">0</property>
+      <property name="initialContextProperties"><inject bean="InitialContextProperties"/></property>
+   </bean>
 </deployment>

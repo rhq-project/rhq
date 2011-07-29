@@ -49,6 +49,13 @@
       <priority value="ERROR"/>
    </category>
 
+   <!-- Hibernate SQL logs -->
+   <!-- 
+   <category name="org.hibernate.SQL">
+      <priority value="DEBUG"/>
+   </category>
+   -->
+
    <root>
       <appender-ref ref="CONSOLE"/>
       <appender-ref ref="FILE"/>

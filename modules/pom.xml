@@ -33,9 +33,9 @@
             <!--     The problem with the below approach is that the default modules are
                      always activated. This causes duplicate module decls when trying to use other
                      profiles, or adds the default modules when they are not wanted.
-                     
+
             <property>
-               <name>java.home</name>                
+               <name>java.home</name>
             </property>
             -->
          </activation>
@@ -57,6 +57,7 @@
          </activation>
          <modules>
             <module>core</module>
+            <module>common/drift</module>            
             <module>enterprise/comm</module>
             <module>enterprise/agent</module>
             <module>enterprise/agentupdate</module>
@@ -126,6 +127,20 @@
           </modules>
        </profile>
 
+       <profile>
+           <id>integration-tests</id>
+           <activation>
+               <property>
+                   <name>integration.tests</name>
+               </property>
+           </activation>
+
+           <modules>
+               <module>core</module>
+               <module>plugins</module>
+               <module>integration-tests</module>
+           </modules>
+       </profile>
    </profiles>
 
    <modules>

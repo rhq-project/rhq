@@ -75,11 +75,11 @@ public class ResourceComposite implements Serializable {
      */
     public ResourceComposite(Resource resource, AvailabilityType availability, Number measure, Number inventory,
         Number control, Number alert, Number event, Number configureRead, Number configureWrite, Number content,
-        Number createChildResources, Number deleteResources) {
+        Number createChildResources, Number deleteResources, Number drift) {
         this(resource, null, availability, new ResourcePermission(measure.intValue() > 0, inventory.intValue() > 0,
             control.intValue() > 0, alert.intValue() > 0, event.intValue() > 0, configureRead.intValue() > 0,
             configureWrite.intValue() > 0, content.intValue() > 0, createChildResources.intValue() > 0, deleteResources
-                .intValue() > 0));
+                .intValue() > 0, drift.intValue() > 0));
     }
 
     /**
@@ -87,11 +87,11 @@ public class ResourceComposite implements Serializable {
      */
     public ResourceComposite(Resource resource, Resource parent, AvailabilityType availability, Number measure,
         Number inventory, Number control, Number alert, Number event, Number configureRead, Number configureWrite,
-        Number content, Number createChildResources, Number deleteResources) {
+        Number content, Number createChildResources, Number deleteResources, Number drift) {
         this(resource, parent, availability, new ResourcePermission(measure.intValue() > 0, inventory.intValue() > 0,
             control.intValue() > 0, alert.intValue() > 0, event.intValue() > 0, configureRead.intValue() > 0,
             configureWrite.intValue() > 0, content.intValue() > 0, createChildResources.intValue() > 0, deleteResources
-                .intValue() > 0));
+                .intValue() > 0, drift.intValue() > 0));
     }
 
     // Private constructor that all public constructors delegate to

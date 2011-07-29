@@ -333,7 +333,11 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
                 }
             });
 
-            setTableInfo(new Label("Total: " + listGrid.getTotalRows()));
+
+            Label tableInfo = new Label();
+            tableInfo.setWrap(false);
+            setTableInfo(tableInfo);
+            refreshRowCount();
 
             // NOTE: It is essential that we wait to hide any excluded fields until after super.onDraw() is called, since
             //       super.onDraw() is what actually adds the fields to the ListGrid (based on what fields are defined in
@@ -344,8 +348,6 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
                 }
             }
 
-            getTableInfo().setWrap(false);
-
             if (showHeader) {
                 drawHeader();
             }
@@ -355,6 +357,23 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             }
         } catch (Exception e) {
             CoreGUI.getErrorHandler().handleError(MSG.view_table_drawFail(this.toString()), e);
+        }
+    }
+
+    private void refreshRowCount() {
+        Label tableInfo = getTableInfo();
+        if (tableInfo != null) {
+            boolean lengthIsKnown = (listGrid != null && listGrid.getResultSet().lengthIsKnown() != null)
+                    ? listGrid.getResultSet().lengthIsKnown() : false;
+            String contents;
+            if (lengthIsKnown) {
+                int totalRows = this.listGrid.getTotalRows();
+                int selectedRows = this.listGrid.getSelection().length;
+                contents = MSG.view_table_totalRows(String.valueOf(totalRows), String.valueOf(selectedRows));
+            } else {
+                contents = MSG.view_table_totalRowsUnknown();
+            }
+            tableInfo.setContents(contents);
         }
     }
 
@@ -833,7 +852,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
                 this.listGrid.setSelectionType(getDefaultSelectionStyle());
             }
 
-            int count = this.listGrid.getSelection().length;
+            int selectionCount = this.listGrid.getSelection().length;
             for (TableActionInfo tableAction : tableActions) {
                 if (tableAction.actionCanvas != null) { // if null, we haven't initialized our buttons yet, so skip this
                     boolean enabled = (!this.tableActionDisableOverride && tableAction.action.isEnabled(this.listGrid
@@ -851,10 +870,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
                     ((TableWidget) extraWidget).refresh(this.listGrid);
                 }
             }
-            if (getTableInfo() != null) {
-                getTableInfo().setContents(
-                    MSG.view_table_totalRows(String.valueOf(listGrid.getTotalRows()), String.valueOf(count)));
-            }
+            refreshRowCount();
         }
     }
 

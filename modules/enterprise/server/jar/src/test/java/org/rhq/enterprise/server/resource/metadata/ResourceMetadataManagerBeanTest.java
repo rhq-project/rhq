@@ -3,6 +3,9 @@ package org.rhq.enterprise.server.resource.metadata;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
+
+import javax.persistence.Query;
 
 import org.apache.commons.beanutils.MethodUtils;
 import org.apache.commons.beanutils.PropertyUtils;
@@ -15,11 +18,20 @@ import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.alert.BooleanExpression;
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleType;
+import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration;
+import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration.BundleDestinationBaseDirectory;
+import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration.BundleDestinationBaseDirectory.Context;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.criteria.OperationDefinitionCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
+import org.rhq.core.domain.drift.DriftConfiguration;
+import org.rhq.core.domain.drift.DriftConfigurationDefinition;
+import org.rhq.core.domain.drift.DriftConfiguration.Filter;
+import org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
@@ -29,6 +41,7 @@ import org.rhq.core.domain.shared.ResourceBuilder;
 import org.rhq.enterprise.server.alert.AlertTemplateManagerLocal;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.bundle.BundleManagerLocal;
+import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
@@ -40,11 +53,78 @@ import static java.util.Arrays.asList;
 
 public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
 
+    @Test(groups = { "plugin.metadata", "NewPlugin" })
+    public void testRemovalOfObsoleteBundleAndDriftConfig() throws Exception {
+        // create the initial type that has bundle and drift configs 
+        createPlugin("test-plugin.jar", "1.0", "remove_bundle_drift_config_v1.xml");
+            
+        // make sure the drift config was persisted, and remember the type
+        ResourceType type1 = assertResourceTypeAssociationEquals(
+            "ServerWithBundleAndDriftConfig",
+            "TestPlugin",
+            "driftConfigurationTemplates",
+            asList("drift1"));
+
+        // sanity check, make sure our queries work and that we did persist these things
+        Query qTemplate;
+        Query qConfig;
+        String qTemplateString = "select ct from ConfigurationTemplate ct where ct.id = :id";
+        String qConfigString = "select c from Configuration c where c.id = :id";
+        ConfigurationTemplate driftTemplate = type1.getDriftConfigurationTemplates().iterator().next();
+        Configuration bundleConfig = type1.getResourceTypeBundleConfiguration().getBundleConfiguration();
+        Configuration driftConfig = driftTemplate.getConfiguration();
+
+        getTransactionManager().begin();
+        try {
+            qTemplate = getEntityManager().createQuery(qTemplateString).setParameter("id", driftTemplate.getId());
+            qConfig = getEntityManager().createQuery(qConfigString).setParameter("id", driftConfig.getId());
+            assertEquals("drift template didn't get persisted", 1, qTemplate.getResultList().size());
+            assertEquals("drift template config didn't get persisted", 1, qConfig.getResultList().size());
+
+            qConfig.setParameter("id", bundleConfig.getId());
+            assertEquals("bundle config didn't get persisted", 1, qConfig.getResultList().size());
+        } finally {
+            getTransactionManager().commit();
+        }
+
+        // make sure the bundle config was also persisted
+        // NOTE: WHY DOES THIS WORK? I DIDN'T ASK TO FETCH IT AND IT IS MARKED AS LAZY LOAD
+        assertNotNull(type1.getResourceTypeBundleConfiguration());
+        assertEquals("destdir1",
+                     type1.getResourceTypeBundleConfiguration().getBundleDestinationBaseDirectories().iterator().next().getName());
+
+            // upgrade the type which removes the bundle config and drift config
+        createPlugin("test-plugin.jar", "2.0", "remove_bundle_drift_config_v2.xml");
+
+        getTransactionManager().begin();
+        try {
+            qTemplate = getEntityManager().createQuery(qTemplateString).setParameter("id", driftTemplate.getId());
+            qConfig = getEntityManager().createQuery(qConfigString).setParameter("id", driftConfig.getId());
+            assertEquals("drift template didn't get purged", 0, qTemplate.getResultList().size());
+            assertEquals("drift template config didn't get purged", 0, qConfig.getResultList().size());
+
+            qConfig.setParameter("id", bundleConfig.getId());
+            assertEquals("bundle config didn't get purged", 0, qConfig.getResultList().size());
+        } finally {
+            getTransactionManager().commit();
+        }
+    }
+
+    @Test(groups = {"plugin.metadata", "NewPlugin"})
+    public void registerPluginWithDuplicateDriftConfigurations() {
+        try {
+            createPlugin("test-plugin.jar", "1.0", "dup_drift.xml");
+            fail("should not have succeeded - the drift config had duplicate names");
+        } catch (Exception e) {
+            // OK, the plugin should have failed to be deployed since it has duplicate drift configs
+        }
+    }
+
     @Test(groups = {"plugin.metadata", "NewPlugin"})
     public void registerPlugin() throws Exception {
         createPlugin("test-plugin.jar", "1.0", "plugin_v1.xml");
     }
-
+    
     @Test(dependsOnMethods = {"registerPlugin"}, groups = {"plugin.metadata", "NewPlugin"})
     public void persistNewTypes() {
         List<String> newTypes = asList("ServerA", "ServerB");
@@ -102,12 +182,90 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
     }
 
     @Test(dependsOnMethods = {"persistNewTypes"}, groups = {"plugin.metadata", "NewPlugin"})
+    public void persistDriftConfigurationTemplates() throws Exception {
+        ResourceType type = assertResourceTypeAssociationEquals(
+            "ServerA",
+            "TestPlugin",
+            "driftConfigurationTemplates",
+            asList("drift-pc", "drift-fs")
+        );
+
+        DriftConfiguration driftConfig = null;
+        Set<ConfigurationTemplate> drifts = type.getDriftConfigurationTemplates();
+        for (ConfigurationTemplate drift : drifts) {
+            if (drift.getName().equals("drift-pc")) {
+                driftConfig = new DriftConfiguration(drift.getConfiguration());
+                assertFalse(driftConfig.getEnabled());
+                assertEquals(BaseDirValueContext.pluginConfiguration, driftConfig.getBasedir().getValueContext());
+                assertEquals("connectionPropertyX", driftConfig.getBasedir().getValueName());
+                assertEquals(Long.valueOf(123456L), driftConfig.getInterval());
+                assertEquals(1, driftConfig.getIncludes().size());
+                assertEquals(2, driftConfig.getExcludes().size());
+                Filter filter = driftConfig.getIncludes().get(0);
+                assertEquals("foo/bar", filter.getPath());
+                assertEquals("**/*.blech", filter.getPattern());
+                filter = driftConfig.getExcludes().get(0);
+                assertEquals("/wot/gorilla", filter.getPath());
+                assertEquals("*.xml", filter.getPattern());
+                filter = driftConfig.getExcludes().get(1);
+                assertEquals("/hello", filter.getPath());
+                assertEquals("", filter.getPattern());
+            } else if (drift.getName().equals("drift-fs")) {
+                driftConfig = new DriftConfiguration(drift.getConfiguration());
+                assertFalse(driftConfig.getEnabled());
+                assertEquals(BaseDirValueContext.fileSystem, driftConfig.getBasedir().getValueContext());
+                assertEquals("/", driftConfig.getBasedir().getValueName());
+                assertEquals(Long.valueOf(DriftConfigurationDefinition.DEFAULT_INTERVAL), driftConfig.getInterval());
+                assertEquals(0, driftConfig.getIncludes().size());
+                assertEquals(0, driftConfig.getExcludes().size());
+            } else {
+                fail("got an unexpected drift config: " + driftConfig);
+            }
+        }
+    }
+
+    @Test(dependsOnMethods = {"persistNewTypes"}, groups = {"plugin.metadata", "NewPlugin"})
+    public void persistBundleTargetConfigurations() throws Exception {
+        String resourceTypeName="ServerA";
+        String plugin = "TestPlugin";
+
+        SubjectManagerLocal subjectMgr = LookupUtil.getSubjectManager();
+        ResourceTypeManagerLocal resourceTypeMgr = LookupUtil.getResourceTypeManager();
+
+        ResourceTypeCriteria criteria = new ResourceTypeCriteria();
+        criteria.addFilterName(resourceTypeName);
+        criteria.addFilterPluginName(plugin);
+        criteria.fetchBundleConfiguration(true);
+        List<ResourceType> resourceTypes = resourceTypeMgr.findResourceTypesByCriteria(subjectMgr.getOverlord(),
+            criteria);
+        ResourceType resourceType = resourceTypes.get(0);
+        
+        ResourceTypeBundleConfiguration rtbc = resourceType.getResourceTypeBundleConfiguration();
+        assertNotNull("missing bundle configuration", rtbc);
+        Set<BundleDestinationBaseDirectory> dirs = rtbc.getBundleDestinationBaseDirectories();
+        assertEquals("Should have persisted 2 bundle dest dirs", 2, dirs.size());
+        for (BundleDestinationBaseDirectory dir : dirs) {
+            if (dir.getName().equals("bundleTarget-pc")) {
+                assertEquals(Context.pluginConfiguration, dir.getValueContext());
+                assertEquals("connectionPropertyY", dir.getValueName());
+                assertEquals("pc-description", dir.getDescription());
+            } else if (dir.getName().equals("bundleTarget-fs")) {
+                assertEquals(Context.fileSystem, dir.getValueContext());
+                assertEquals("/wot/gorilla", dir.getValueName());
+                assertNull(dir.getDescription());                
+            } else {
+                fail("got an unexpected bundle target dest dir: " + dir);
+            }
+        }
+    }
+    
+    @Test(dependsOnMethods = {"persistNewTypes"}, groups = {"plugin.metadata", "NewPlugin"})
     public void persistChildTypes() throws Exception {
         assertResourceTypeAssociationEquals(
             "ServerA",
             "TestPlugin",
             "childResourceTypes",
-            asList("child1", "child2")
+            asList("Child1", "Child2")
         );
     }
 
@@ -180,6 +338,76 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
             "processScans",
             asList("processA", "processB")
         );
+    }
+
+    @Test(dependsOnMethods = {"upgradePlugin"}, groups = {"plugin.metadata", "UpgradePlugin"})
+    public void upgradeDriftConfigurationTemplates() throws Exception {
+        ResourceType type = assertResourceTypeAssociationEquals(
+            "ServerA",
+            "TestPlugin",
+            "driftConfigurationTemplates",
+            asList("drift-rc", "drift-mt")
+        );
+
+
+        DriftConfiguration driftConfig = null;
+        Set<ConfigurationTemplate> drifts = type.getDriftConfigurationTemplates();
+        for (ConfigurationTemplate drift : drifts) {
+            if (drift.getName().equals("drift-rc")) {
+                driftConfig = new DriftConfiguration(drift.getConfiguration());
+                assertFalse(driftConfig.getEnabled());
+                assertEquals(BaseDirValueContext.resourceConfiguration, driftConfig.getBasedir().getValueContext());
+                assertEquals("resourceConfig1", driftConfig.getBasedir().getValueName());
+                assertEquals(Long.valueOf(DriftConfigurationDefinition.DEFAULT_INTERVAL), driftConfig.getInterval());
+                assertEquals(0, driftConfig.getIncludes().size());
+                assertEquals(0, driftConfig.getExcludes().size());
+            } else if (drift.getName().equals("drift-mt")) {
+                driftConfig = new DriftConfiguration(drift.getConfiguration());
+                assertFalse(driftConfig.getEnabled());
+                assertEquals(BaseDirValueContext.measurementTrait, driftConfig.getBasedir().getValueContext());
+                assertEquals("trait1", driftConfig.getBasedir().getValueName());
+                assertEquals(Long.valueOf(DriftConfigurationDefinition.DEFAULT_INTERVAL), driftConfig.getInterval());
+                assertEquals(0, driftConfig.getIncludes().size());
+                assertEquals(0, driftConfig.getExcludes().size());
+            } else {
+                fail("got an unexpected drift config: " + driftConfig);
+            }
+        }
+    }
+
+    @Test(dependsOnMethods = {"upgradePlugin"}, groups = {"plugin.metadata", "UpgradePlugin"})
+    public void upgradeBundleTargetConfigurations() throws Exception {
+        String resourceTypeName="ServerA";
+        String plugin = "TestPlugin";
+
+        SubjectManagerLocal subjectMgr = LookupUtil.getSubjectManager();
+        ResourceTypeManagerLocal resourceTypeMgr = LookupUtil.getResourceTypeManager();
+
+        ResourceTypeCriteria criteria = new ResourceTypeCriteria();
+        criteria.addFilterName(resourceTypeName);
+        criteria.addFilterPluginName(plugin);
+        criteria.fetchBundleConfiguration(true);
+        List<ResourceType> resourceTypes = resourceTypeMgr.findResourceTypesByCriteria(subjectMgr.getOverlord(),
+            criteria);
+        ResourceType resourceType = resourceTypes.get(0);
+        
+        ResourceTypeBundleConfiguration rtbc = resourceType.getResourceTypeBundleConfiguration();
+        assertNotNull("missing bundle configuration", rtbc);
+        Set<BundleDestinationBaseDirectory> dirs = rtbc.getBundleDestinationBaseDirectories();
+        assertEquals("Should have persisted 2 bundle dest dirs", 2, dirs.size());
+        for (BundleDestinationBaseDirectory dir : dirs) {
+            if (dir.getName().equals("bundleTarget-rc")) {
+                assertEquals(Context.resourceConfiguration, dir.getValueContext());
+                assertEquals("resourceConfig1", dir.getValueName());
+                assertEquals("rc-description", dir.getDescription());
+            } else if (dir.getName().equals("bundleTarget-mt")) {
+                assertEquals(Context.measurementTrait, dir.getValueContext());
+                assertEquals("trait1", dir.getValueName());
+                assertEquals("mt-description", dir.getDescription());
+            } else {
+                assertTrue("got an unexpected bundle target dest dir: " + dir, false);
+            }
+        }
     }
 
     @Test(dependsOnMethods = {"upgradePlugin"}, groups = {"plugin.metadata", "UpgradePlugin"})

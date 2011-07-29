@@ -100,6 +100,12 @@
          <scope>test</scope>
       </dependency>
 
+      <dependency>
+         <groupId>org.rhq</groupId>
+         <artifactId>rhq-common-drift</artifactId>
+         <version>${project.version}</version>
+      </dependency>
+
       <!--================ Test Deps ================-->
 
       <!-- Note, the test deps are intentionally placed above the other scoped deps because of classpath

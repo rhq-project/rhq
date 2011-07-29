@@ -13,6 +13,7 @@ import org.rhq.enterprise.server.configuration.ConfigurationManagerRemote;
 import org.rhq.enterprise.server.content.ContentManagerRemote;
 import org.rhq.enterprise.server.content.RepoManagerRemote;
 import org.rhq.enterprise.server.discovery.DiscoveryBossRemote;
+import org.rhq.enterprise.server.drift.DriftManagerRemote;
 import org.rhq.enterprise.server.event.EventManagerRemote;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerRemote;
 import org.rhq.enterprise.server.measurement.CallTimeDataManagerRemote;
@@ -51,6 +52,7 @@ public interface WebservicesRemote extends //
     //Removed as it was problematic for WS clients. Not sure if this well be re-enabled.
     //    DataAccessManagerRemote,//
     DiscoveryBossRemote,//
+    DriftManagerRemote, //
     EventManagerRemote,//
     MeasurementBaselineManagerRemote,//
     MeasurementDataManagerRemote,//

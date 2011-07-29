@@ -636,11 +636,23 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
         return null;
     }
     
-    private static String formatResourceKey(Configuration pluginConfiguration) {
+    public static String formatResourceKey(Configuration pluginConfiguration) {
         String serverRoot = pluginConfiguration.getSimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_SERVER_ROOT).getStringValue();
         String httpdConf = pluginConfiguration.getSimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_HTTPD_CONF).getStringValue();
         
+        return formatResourceKey(serverRoot, httpdConf);
+    }
+    
+    public static String formatResourceKey(String serverRoot, String httpdConf) {
         serverRoot = FileUtils.getCanonicalPath(serverRoot);
+        
+        //we could have inherited the configuration from
+        //RHQ 1.x times, when the httpdConf was relative.
+        File httpdConfF = new File(httpdConf);
+        if (!httpdConfF.isAbsolute()) {
+            httpdConfF = new File(serverRoot, httpdConf);
+            httpdConf = httpdConfF.getAbsolutePath();
+        }
         httpdConf = FileUtils.getCanonicalPath(httpdConf);
         
         return serverRoot + "||" + httpdConf;

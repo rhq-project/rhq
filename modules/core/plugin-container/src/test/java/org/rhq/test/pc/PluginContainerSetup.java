@@ -44,7 +44,8 @@ public @interface PluginContainerSetup {
      * Examples of URIs:
      * <ul>
      * <li> classpath:///test-plugin.jar
-     * <li> file:///some/location/on/the/filesystem.jar
+     * <li> file:///some/absolute/location/on/the/filesystem.jar
+     * <li> file:relative/path/to/current/directory/blah.jar
      * <li> http://www.rhq-project.org/tests/test-plugin.jar
      */
     String[] plugins();

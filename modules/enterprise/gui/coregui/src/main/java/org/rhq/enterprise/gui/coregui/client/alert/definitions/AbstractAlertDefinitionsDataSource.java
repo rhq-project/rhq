@@ -78,7 +78,7 @@ public abstract class AbstractAlertDefinitionsDataSource extends
     public ArrayList<ListGridField> getListGridFields() {
         ArrayList<ListGridField> fields = new ArrayList<ListGridField>(6);
 
-        ListGridField nameField = new ListGridField(FIELD_NAME, MSG.view_alerts_field_name());
+        ListGridField nameField = new ListGridField(FIELD_NAME, MSG.common_title_name());
         nameField.setWidth("20%");
         nameField.setCellFormatter(new EscapedHtmlCellFormatter());
         fields.add(nameField);
@@ -88,7 +88,7 @@ public abstract class AbstractAlertDefinitionsDataSource extends
         descriptionField.setCellFormatter(new EscapedHtmlCellFormatter());
         fields.add(descriptionField);
 
-        ListGridField ctimeField = new ListGridField(FIELD_CTIME, MSG.view_alerts_field_created_time());
+        ListGridField ctimeField = new ListGridField(FIELD_CTIME, MSG.common_title_createTime());
         ctimeField.setType(ListGridFieldType.DATE);
         TimestampCellFormatter.prepareDateField(ctimeField);
         ctimeField.setWidth("15%");
@@ -163,14 +163,14 @@ public abstract class AbstractAlertDefinitionsDataSource extends
     protected List<DataSourceField> addDataSourceFields() {
         List<DataSourceField> fields = super.addDataSourceFields();
 
-        DataSourceTextField nameField = new DataSourceTextField(FIELD_NAME, MSG.view_alerts_field_name());
+        DataSourceTextField nameField = new DataSourceTextField(FIELD_NAME, MSG.common_title_name());
         fields.add(nameField);
 
         DataSourceTextField descriptionField = new DataSourceTextField(FIELD_DESCRIPTION, MSG
             .common_title_description());
         fields.add(descriptionField);
 
-        DataSourceTextField ctimeField = new DataSourceTextField(FIELD_CTIME, MSG.view_alerts_field_created_time());
+        DataSourceTextField ctimeField = new DataSourceTextField(FIELD_CTIME, MSG.common_title_createTime());
         ctimeField.setType(FieldType.DATETIME);
         fields.add(ctimeField);
 

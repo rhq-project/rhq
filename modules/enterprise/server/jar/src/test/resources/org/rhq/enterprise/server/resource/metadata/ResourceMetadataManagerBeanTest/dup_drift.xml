@@ -1,0 +1,19 @@
+<plugin name="TestPlugin" displayName="Test Plugin" package="org.rhq.plugins.test"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+    <server name="ServerWithDupDrift" description="has duplicate drift config names and thus is invalid">
+        <drift-configuration name="drift-one">
+           <basedir>
+              <value-context>fileSystem</value-context>
+              <value-name>/a</value-name>
+           </basedir>
+        </drift-configuration>
+        <drift-configuration name="drift-one">
+           <basedir>
+              <value-context>fileSystem</value-context>
+              <value-name>/b</value-name>
+           </basedir>
+        </drift-configuration>
+    </server>
+</plugin>

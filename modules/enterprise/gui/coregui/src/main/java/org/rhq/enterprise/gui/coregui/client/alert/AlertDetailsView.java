@@ -158,7 +158,7 @@ public class AlertDetailsView extends LocatableVLayout implements BookmarkableVi
         prioTextItem.setValueMap(priorityMap);
         items.add(prioTextItem);
 
-        StaticTextItem createdTextItem = new StaticTextItem("ctime", MSG.view_alerts_field_created_time());
+        StaticTextItem createdTextItem = new StaticTextItem("ctime", MSG.common_title_createTime());
         createdTextItem.setValue(TimestampCellFormatter.format(record.getAttributeAsDate("ctime")));
         items.add(createdTextItem);
 
@@ -188,6 +188,7 @@ public class AlertDetailsView extends LocatableVLayout implements BookmarkableVi
         return form;
     }
 
+    @SuppressWarnings("unchecked")
     private class NotificationLogsTable extends Table {
         private final Record record;
 
@@ -246,12 +247,14 @@ public class AlertDetailsView extends LocatableVLayout implements BookmarkableVi
         }
     }
 
+    @SuppressWarnings("unchecked")
     private Table getNotificationsForAlert(Record record) {
         Table notifTable = new NotificationLogsTable("AlertDetailsNotifications", MSG
             .view_alert_common_tab_notifications(), record);
         return notifTable;
     }
 
+    @SuppressWarnings("unchecked")
     private class ConditionLogsTable extends Table {
         private final Record record;
 
@@ -275,6 +278,7 @@ public class AlertDetailsView extends LocatableVLayout implements BookmarkableVi
         }
     }
 
+    @SuppressWarnings("unchecked")
     private Table getConditionsForAlert(Record record) {
         String mode = record.getAttribute("conditionExpression");
         Table table = new ConditionLogsTable("AlertDetailsConditionLog", MSG.view_alert_common_tab_conditions()

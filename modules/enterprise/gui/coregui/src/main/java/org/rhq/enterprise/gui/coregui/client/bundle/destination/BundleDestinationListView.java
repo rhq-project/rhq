@@ -65,6 +65,8 @@ public class BundleDestinationListView extends Table<BundleDestinationDataSource
             .view_bundle_bundle());
         ListGridField groupNameField = new ListGridField(BundleDestinationDataSource.FIELD_GROUP_NAME, MSG
             .view_bundle_dest_group());
+        ListGridField baseDirNameField = new ListGridField(BundleDestinationDataSource.FIELD_BASE_DIR_NAME, MSG
+            .view_bundle_dest_baseDirName());
         ListGridField deployDirField = new ListGridField(BundleDestinationDataSource.FIELD_DEPLOY_DIR, MSG
             .view_bundle_dest_deployDir());
         ListGridField latestDeploymentVersionField = new ListGridField(
@@ -82,7 +84,7 @@ public class BundleDestinationListView extends Table<BundleDestinationDataSource
                 Integer bundleId = listGridRecord.getAttributeAsInt(BundleDestinationDataSource.FIELD_BUNDLE_ID);
                 Integer bundleDestId = listGridRecord.getAttributeAsInt(BundleDestinationDataSource.FIELD_ID);
                 return "<a href=\"" + LinkManager.getBundleDestinationLink(bundleId, bundleDestId) + "\">"
-                        + StringUtility.escapeHtml(value.toString()) + "</a>";
+                    + StringUtility.escapeHtml(value.toString()) + "</a>";
             }
         });
 
@@ -90,7 +92,7 @@ public class BundleDestinationListView extends Table<BundleDestinationDataSource
             public String format(Object value, ListGridRecord listGridRecord, int i, int i1) {
                 Integer groupId = listGridRecord.getAttributeAsInt(BundleDestinationDataSource.FIELD_GROUP_ID);
                 return "<a href=\"" + LinkManager.getResourceGroupLink(groupId) + "\">"
-                        + StringUtility.escapeHtml(value.toString()) + "</a>";
+                    + StringUtility.escapeHtml(value.toString()) + "</a>";
             }
         });
 
@@ -98,7 +100,7 @@ public class BundleDestinationListView extends Table<BundleDestinationDataSource
             public String format(Object value, ListGridRecord listGridRecord, int i, int i1) {
                 Integer bid = listGridRecord.getAttributeAsInt(BundleDestinationDataSource.FIELD_BUNDLE_ID);
                 return "<a href=\"" + LinkManager.getBundleLink(bid) + "\">"
-                        + StringUtility.escapeHtml(value.toString()) + "</a>";
+                    + StringUtility.escapeHtml(value.toString()) + "</a>";
             }
         });
 
@@ -114,18 +116,19 @@ public class BundleDestinationListView extends Table<BundleDestinationDataSource
         latestDeploymentStatusField.setShowValueIconOnly(true);
 
         idField.setWidth(50);
-        nameField.setWidth("20%");
-        descriptionField.setWidth("25%");
+        nameField.setWidth("15%");
+        descriptionField.setWidth("20%");
         bundleNameField.setHidden(true);
         groupNameField.setWidth("15%");
-        deployDirField.setWidth("20%");
+        baseDirNameField.setWidth("15%");
+        deployDirField.setWidth("15%");
         latestDeploymentVersionField.setWidth("10%");
         latestDeploymentDateField.setWidth("10%");
         latestDeploymentStatusField.setWidth(80);
 
         // XXX there seems to be a bug here - i want to hide the bundle column, but setHidden(true) causes the entire rendering to fail
-        setListGridFields(idField, nameField, descriptionField, /*bundleNameField, */groupNameField, deployDirField,
-            latestDeploymentVersionField, latestDeploymentDateField, latestDeploymentStatusField);
+        setListGridFields(idField, nameField, descriptionField, /*bundleNameField, */groupNameField, baseDirNameField,
+            deployDirField, latestDeploymentVersionField, latestDeploymentDateField, latestDeploymentStatusField);
 
         setListGridDoubleClickHandler(new DoubleClickHandler() {
             @Override

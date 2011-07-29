@@ -29,7 +29,7 @@ import org.rhq.plugins.perftest.configuration.ConfigurationFactory;
 import org.rhq.plugins.perftest.resource.ResourceFactory;
 
 /**
- * JON discovery component for discovering resources defined in the performance test scenario.
+ * RHQ discovery component for discovering resources defined in the performance test scenario.
  *
  * @author Jason Dobies
  */

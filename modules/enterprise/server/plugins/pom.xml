@@ -83,6 +83,7 @@
     <module>alert-cli</module>
     <module>alert-log4j</module>
     <module>cobbler</module>
+    <module>drift-rhq</module>    
     <module>filetemplate-bundle</module>
     <module>ant-bundle</module>
     <module>validate-all-serverplugins</module>

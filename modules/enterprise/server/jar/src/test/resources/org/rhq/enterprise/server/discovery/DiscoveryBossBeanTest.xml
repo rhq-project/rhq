@@ -5,51 +5,56 @@
                port="16163"
                remote_endpoint="http://here"
                agenttoken="tok"
-               backfilled="false"
+               backfilled="0"
                ctime="123456"
                mtime="123456"/>
 
     <rhq_config_def/>
     <rhq_config_prop_def/>
+    <rhq_config_pd_osrc/>
     <rhq_conf_prop_def_enum/>
     <rhq_config_prop_constr/>
+
+    <rhq_config/>
+    <rhq_config_property/>
+    <rhq_config_template/>
 
     <rhq_resource_type id="1"
                        name="test platform"
                        category="PLATFORM"
                        creation_data_type="CONFIGURATION"
                        create_delete_policy="BOTH"
-                       supports_manual_add="true"
-                       singleton="false"
+                       supports_manual_add="1"
+                       singleton="0"
                        plugin="test"
-                       deleted="false"/>
+                       deleted="0"/>
     <rhq_resource_type id="2"
                        name="test server"
                        category="SERVER"
                        creation_data_type="CONFIGURATION"
                        create_delete_policy="BOTH"
-                       supports_manual_add="true"
-                       singleton="false"
+                       supports_manual_add="1"
+                       singleton="0"
                        plugin="test"
-                       deleted="false"/>
+                       deleted="0"/>
     <rhq_resource_type id="3"
                        name="test service 1"
                        category="SERVICE"
                        creation_data_type="CONFIGURATION"
                        create_delete_policy="BOTH"
-                       supports_manual_add="true"
-                       singleton="false"
+                       supports_manual_add="1"
+                       singleton="0"
                        plugin="test"
-                       deleted="false"/>
+                       deleted="0"/>
     <rhq_resource_type id="4"
                        name="test service 2"
                        category="SERVICE"
                        creation_data_type="CONFIGURATION"
                        create_delete_policy="BOTH"
-                       supports_manual_add="true"
-                       singleton="false"
+                       supports_manual_add="1"
+                       singleton="0"
                        plugin="test"
-                       deleted="false"/>
+                       deleted="0"/>
 
     <rhq_resource_type_parents resource_type_id="2"
                                parent_resource_type_id="1"/>
@@ -64,9 +69,6 @@
     <rhq_operation_def/>
     <rhq_package_type/>
     <rhq_bundle_type/>
-    <rhq_config/>
-    <rhq_config_property/>
-    <rhq_config_template/>
     <rhq_resource/>
     <rhq_resource_subcat/>
     <rhq_resource_group/>
@@ -79,15 +81,15 @@
     <rhq_availability/>
     <rhq_measurement_sched/>
     <rhq_content_source/>
-    <rhq_repo_content_src_map/>
     <rhq_package/>
     <rhq_bundle/>
+    <rhq_drift_template_map/>
 
     <rhq_plugin id="1"
                 deployment="AGENT"
                 name="test"
                 display_name="test"
-                enabled="true"
+                enabled="1"
                 status="INSTALLED"
                 path="/plugins/test.jar"
                 md5="1234567"

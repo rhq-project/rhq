@@ -29,6 +29,7 @@ import org.rhq.enterprise.server.content.ContentManagerRemote;
 import org.rhq.enterprise.server.content.RepoManagerRemote;
 import org.rhq.enterprise.server.discovery.DiscoveryBossRemote;
 import org.rhq.enterprise.server.drift.DriftManagerRemote;
+import org.rhq.enterprise.server.drift.DriftServerRemote;
 import org.rhq.enterprise.server.event.EventManagerRemote;
 import org.rhq.enterprise.server.install.remote.RemoteInstallManagerRemote;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerRemote;
@@ -64,6 +65,7 @@ public enum RhqManagers {
     ConfigurationManager(ConfigurationManagerRemote.class), //
     ContentManager(ContentManagerRemote.class), //
     DataAccessManager(DataAccessManagerRemote.class), //
+    DriftServer(DriftServerRemote.class),
     DriftManager(DriftManagerRemote.class), //
     DiscoveryBoss(DiscoveryBossRemote.class), //
     EventManager(EventManagerRemote.class), //

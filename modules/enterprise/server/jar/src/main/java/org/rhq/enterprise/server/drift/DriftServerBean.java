@@ -19,7 +19,6 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
-import org.rhq.core.domain.criteria.DriftChangeSetJPACriteria;
 import org.rhq.core.domain.criteria.DriftCriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
@@ -41,7 +40,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
 import static javax.ejb.TransactionAttributeType.NOT_SUPPORTED;
 
 @Stateless
-public class DriftServerBean implements DriftServerLocal {
+public class DriftServerBean implements DriftServerLocal, DriftServerRemote {
 
     // TODO Should security checks be handled here instead of delegating to the drift plugin?
     // Currently any security checks that need to be performed are delegated to the plugin.

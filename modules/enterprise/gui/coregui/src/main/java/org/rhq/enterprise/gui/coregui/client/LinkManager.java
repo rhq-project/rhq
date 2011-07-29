@@ -25,6 +25,7 @@ package org.rhq.enterprise.gui.coregui.client;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.enterprise.gui.coregui.client.admin.roles.RolesView;
 import org.rhq.enterprise.gui.coregui.client.admin.users.UsersView;
+import org.rhq.enterprise.gui.coregui.client.components.table.StringIDTableSection;
 
 /**
  * @author Greg Hinkle
@@ -216,14 +217,6 @@ public class LinkManager {
         }
 
         return link;
-    }
-
-    public static String getSubsystemDriftHistoryLink(int resourceId, String driftId) {
-        return "#Resource/" + resourceId + "/Drift/History/" + driftId;
-    }
-
-    public static String getSubsystemDriftConfigLink(int resourceId, int driftConfigId) {
-        return "#Resource/" + resourceId + "/Drift/Config/" + driftConfigId;
     }
 
     public static String getAutodiscoveryQueueLink() {
@@ -459,7 +452,14 @@ public class LinkManager {
         return "#Bundles/Bundle/" + bundleId + "/deployments/" + bundleDeploymentId;
     }
 
-    public static String getDriftHistoryLink(int resourceId, int driftId) {
+    public static String getDriftHistoryLink(int resourceId, String driftId) {
+        if (!driftId.startsWith(StringIDTableSection.ID_PREFIX)) {
+            driftId = StringIDTableSection.ID_PREFIX + driftId;
+        }
         return "#Resource/" + resourceId + "/Drift/History/" + driftId;
+    }
+
+    public static String getDriftConfigLink(int resourceId, int driftConfigId) {
+        return "#Resource/" + resourceId + "/Drift/Config/" + driftConfigId;
     }
 }

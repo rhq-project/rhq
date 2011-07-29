@@ -156,7 +156,7 @@ public class DriftHistoryView extends StringIDTableSection<DriftDataSource> {
             public String format(Object value, ListGridRecord record, int i, int i1) {
                 Integer resourceId = record.getAttributeAsInt(AncestryUtil.RESOURCE_ID);
                 String driftId = getId(record);
-                String url = LinkManager.getSubsystemDriftHistoryLink(resourceId, driftId);
+                String url = LinkManager.getDriftHistoryLink(resourceId, driftId);
                 String formattedValue = TimestampCellFormatter.format(value);
                 return SeleniumUtility.getLocatableHref(url, formattedValue, null);
             }
@@ -285,7 +285,7 @@ public class DriftHistoryView extends StringIDTableSection<DriftDataSource> {
 
     @Override
     public Canvas getDetailsView(String driftId) {
-        return DriftDetailsView.getInstance();
+        return new DriftDetailsView(extendLocatorId("Details"), driftId);
     }
 
     public EntityContext getContext() {

@@ -20,6 +20,8 @@
 
 package org.rhq.enterprise.gui.coregui.client.drift;
 
+import static org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter.DATE_TIME_FORMAT_FULL;
+
 import java.util.LinkedHashMap;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -30,34 +32,29 @@ import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import org.rhq.core.domain.criteria.BasicDriftCriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
-import static org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter.DATE_TIME_FORMAT_FULL;
-
 /**
  * @author Jay Shaughnessy
  */
-public class DriftDetailsView extends LocatableVLayout implements BookmarkableView {
+public class DriftDetailsView extends LocatableVLayout {
 
     private String driftId;
 
-    private static DriftDetailsView INSTANCE = new DriftDetailsView("DriftDetailsView");
-
-    public static DriftDetailsView getInstance() {
-        return INSTANCE;
+    public DriftDetailsView(String locatorId, String driftId) {
+        super(locatorId);
+        this.driftId = driftId;
+        setMembersMargin(10);
     }
 
-    private DriftDetailsView(String id) {
-        // access through the static singleton only (see renderView)
-        super(id);
-
-        setMembersMargin(10);
+    @Override
+    protected void onDraw() {
+        super.onDraw();
+        show(this.driftId);
     }
 
     private void show(String driftId) {
@@ -80,7 +77,7 @@ public class DriftDetailsView extends LocatableVLayout implements BookmarkableVi
 
     private void show(Drift drift) {
         for (Canvas child : getMembers()) {
-            removeChild(child);
+            removeMember(child);
         }
 
         // the change set to which the drift belongs
@@ -157,11 +154,4 @@ public class DriftDetailsView extends LocatableVLayout implements BookmarkableVi
 
         addMember(driftForm);
     }
-
-    @Override
-    public void renderView(ViewPath viewPath) {
-        driftId = viewPath.getCurrent().getPath();
-        show(driftId);
-    }
-
 }

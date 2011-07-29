@@ -93,7 +93,7 @@ public abstract class StringIDTableSection<DS extends RPCDataSource> extends Abs
     @Override
     public void showDetails(String id) {
         if (id != null && id.length() > 0) {
-            History.newItem(getBasePath() + "/" + id);
+            History.newItem(getBasePath() + "/" + convertIDToCurrentViewPath(id));
         } else {
             String msg = MSG.view_tableSection_error_badId(this.getClass().toString(), (id == null) ? "null" : id
                 .toString());
@@ -105,18 +105,24 @@ public abstract class StringIDTableSection<DS extends RPCDataSource> extends Abs
     @Override
     public abstract Canvas getDetailsView(String id);
 
-    private static final String ID_PREFIX = "0id_"; // the prefix to be placed in front of the string IDs in URLs
+    // the main CoreGUI class will assume anything with a digit as the first character in a path segment in the URL is an ID.
+    public static final String ID_PREFIX = "0id_"; // the prefix to be placed in front of the string IDs in URLs
 
     @Override
     protected String convertCurrentViewPathToID(String path) {
+        if (!path.startsWith(ID_PREFIX)) {
+            return path; // prefixed has already been stripped
+        }
         return path.substring(ID_PREFIX.length()); // skip the initial "0id_" - see convertIDToCurrentViewPath for what this is all about
     }
 
     @Override
     protected String convertIDToCurrentViewPath(String id) {
-        // the main CoreGUI class will assume anything with a digit as the first character in a path segment in the URL
-        // is an ID. Because we aren't assured the given ID will be a digit, let's prepend the digit here and make it 
+        // Because we aren't assured the given ID will be a digit, let's prepend the digit here and make it 
         // look like an ID to CoreGUI. We will strip this off when we convert this back to an ID - see convertCurrentViewPathToID
+        if (id.startsWith(ID_PREFIX)) {
+            return id; // it is already prefixed
+        }
         return ID_PREFIX + id;
     }
 }

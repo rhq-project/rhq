@@ -102,9 +102,9 @@ public class DriftServerPluginComponent implements DriftServerPluginFacet {
     }
 
     @Override
-    public Snapshot createSnapshot(Subject subject, DriftChangeSetJPACriteria criteria) {
+    public Snapshot createSnapshot(Subject subject, DriftChangeSetCriteria criteria) {
         DriftManagerLocal driftMgr = getDriftManager();
-        return driftMgr.createSnapshot(subject, criteria);
+        return driftMgr.createSnapshot(subject, toJPACriteria(criteria));
     }
 
     private DriftChangeSetJPACriteria toJPACriteria(DriftChangeSetCriteria criteria) {

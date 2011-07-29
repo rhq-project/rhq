@@ -50,5 +50,5 @@ public interface DriftServerPluginFacet extends ServerPluginComponent {
 
     void saveChangeSetFiles(File changeSetFilesZip) throws Exception;
 
-    Snapshot createSnapshot(Subject subject, DriftChangeSetJPACriteria criteria);
+    Snapshot createSnapshot(Subject subject, DriftChangeSetCriteria criteria);
 }

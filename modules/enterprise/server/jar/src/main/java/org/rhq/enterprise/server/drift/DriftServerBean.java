@@ -98,7 +98,7 @@ public class DriftServerBean implements DriftServerLocal {
 
     @Override
     @TransactionAttribute(NOT_SUPPORTED)
-    public Snapshot createSnapshot(Subject subject, DriftChangeSetJPACriteria criteria) {
+    public Snapshot createSnapshot(Subject subject, DriftChangeSetCriteria criteria) {
         DriftServerPluginFacet driftServerPlugin = getServerPlugin();
         return driftServerPlugin.createSnapshot(subject, criteria);
     }

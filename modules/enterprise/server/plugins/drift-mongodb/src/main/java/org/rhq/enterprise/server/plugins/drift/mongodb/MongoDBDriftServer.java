@@ -25,7 +25,6 @@ import org.rhq.common.drift.FileEntry;
 import org.rhq.common.drift.Headers;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
-import org.rhq.core.domain.criteria.DriftChangeSetJPACriteria;
 import org.rhq.core.domain.criteria.DriftCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.drift.Drift;
@@ -165,7 +164,7 @@ public class MongoDBDriftServer implements DriftServerPluginFacet {
     }
 
     @Override
-    public Snapshot createSnapshot(Subject subject, DriftChangeSetJPACriteria criteria) {
+    public Snapshot createSnapshot(Subject subject, DriftChangeSetCriteria criteria) {
         return null;
     }
 

@@ -218,7 +218,7 @@ public class LinkManager {
         return link;
     }
 
-    public static String getSubsystemDriftHistoryLink(int resourceId, int driftId) {
+    public static String getSubsystemDriftHistoryLink(int resourceId, String driftId) {
         return "#Resource/" + resourceId + "/Drift/History/" + driftId;
     }
 

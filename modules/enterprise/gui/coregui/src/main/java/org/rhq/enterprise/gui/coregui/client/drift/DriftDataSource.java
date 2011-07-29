@@ -302,7 +302,7 @@ public class DriftDataSource extends RPCDataSource<DriftComposite, DriftCriteria
     public static ListGridRecord convert(DriftComposite from) {
         ListGridRecord record = new ListGridRecord();
         Drift drift = from.getDrift();
-        record.setAttribute(ATTR_ID, Integer.valueOf(drift.getId()));
+        record.setAttribute(ATTR_ID, drift.getId());
         record.setAttribute(ATTR_CTIME, new Date(drift.getCtime()));
         record.setAttribute(ATTR_CATEGORY, ImageManager.getDriftCategoryIcon(drift.getCategory()));
         record.setAttribute(ATTR_PATH, drift.getPath());

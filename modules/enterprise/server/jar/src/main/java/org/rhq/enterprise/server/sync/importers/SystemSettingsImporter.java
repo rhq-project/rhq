@@ -19,15 +19,28 @@
 
 package org.rhq.enterprise.server.sync.importers;
 
+import java.lang.reflect.Field;
+
+import javassist.Modifier;
+
 import javax.persistence.EntityManager;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Unmarshaller;
 import javax.xml.stream.XMLStreamException;
 
+import org.rhq.core.clientapi.agent.configuration.ConfigurationUtility;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
+import org.rhq.core.domain.configuration.definition.PropertySimpleType;
+import org.rhq.core.domain.sync.entity.MetricTemplate;
 import org.rhq.core.domain.sync.entity.SystemSettings;
 import org.rhq.enterprise.server.sync.ExportReader;
 import org.rhq.enterprise.server.sync.NoSingleEntity;
+import org.rhq.enterprise.server.system.SystemManagerLocal;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * 
@@ -36,59 +49,93 @@ import org.rhq.enterprise.server.sync.NoSingleEntity;
  */
 public class SystemSettingsImporter implements Importer<NoSingleEntity, SystemSettings> {
 
-    /* (non-Javadoc)
-     * @see org.rhq.enterprise.server.sync.importers.Importer#getImportConfigurationDefinition()
-     */
+    private Subject subject;
+    private SystemManagerLocal systemManager = LookupUtil.getSystemManager();
+    private Configuration importConfiguration;
+    private Unmarshaller unmarshaller;
+
+    public SystemSettingsImporter() {
+        try {
+            JAXBContext context = JAXBContext.newInstance(SystemSettings.class);
+            unmarshaller = context.createUnmarshaller();
+        } catch (JAXBException e) {
+            throw new IllegalStateException("Failed to initialize JAXB marshaller for MetricTemplate.", e);
+        }        
+    }
+    
     @Override
     public ConfigurationDefinition getImportConfigurationDefinition() {
-        return new ConfigurationDefinition("SystemSettingsConfiguration", "TBD");
+        ConfigurationDefinition def = new ConfigurationDefinition("SystemSettingsConfiguration", null);
+        
+        addSwitchToConfigDef(def, "importJAASProvider", false);
+        addSwitchToConfigDef(def, "importJDBCJAASProvider", false);
+        addSwitchToConfigDef(def, "importLDAPJAASProvider", false);
+        addSwitchToConfigDef(def, "imoprtLDAPFactory", true);
+        addSwitchToConfigDef(def, "importLDAPUrl", false);
+        addSwitchToConfigDef(def, "importLDAPProtocol", false);
+        addSwitchToConfigDef(def, "imoprtLDAPLoginProperty", false);
+        addSwitchToConfigDef(def, "importLDAPFilter", false);
+        addSwitchToConfigDef(def, "importLDAPGroupFilter", false);
+        addSwitchToConfigDef(def, "importLDAPGroupMember", false);
+        addSwitchToConfigDef(def, "importLDAPBaseDN", false);
+        addSwitchToConfigDef(def, "importLDAPBindDN", false);
+        addSwitchToConfigDef(def, "importLDAPBindPW", false);
+        addSwitchToConfigDef(def, "importBaseURL", false);
+        addSwitchToConfigDef(def, "importAgentMaxQuietTimeAllowed", true);
+        addSwitchToConfigDef(def, "importEnableAgentAutoUpdate", true);
+        addSwitchToConfigDef(def, "importEnableDebugMode", true);
+        addSwitchToConfigDef(def, "importEnableExperimentalFeatures", true);
+        addSwitchToConfigDef(def, "importDataPurge1Hour", true);
+        addSwitchToConfigDef(def, "importDataPurge6Hour", true);
+        addSwitchToConfigDef(def, "importDataPurge1Day", true);
+        addSwitchToConfigDef(def, "importDataMaintenance", true);
+        addSwitchToConfigDef(def, "importDataReindex", true);
+        addSwitchToConfigDef(def, "imoprtRtDataPurge", true);
+        addSwitchToConfigDef(def, "importAlertPurge", true);
+        addSwitchToConfigDef(def, "importEventPurge", true);
+        addSwitchToConfigDef(def, "importTraitPurge", true);
+        addSwitchToConfigDef(def, "importAvailabilityPurge", true);
+        addSwitchToConfigDef(def, "importBaselineFrequency", true);
+        addSwitchToConfigDef(def, "importBaselineDataSet", true);
+        
+        ConfigurationUtility.initializeDefaultTemplate(def);
+        
+        return def;
     }
 
-    /* (non-Javadoc)
-     * @see org.rhq.enterprise.server.sync.importers.Importer#init(org.rhq.core.domain.auth.Subject, javax.persistence.EntityManager, org.rhq.core.domain.configuration.Configuration)
-     */
     @Override
     public void init(Subject subject, EntityManager entityManager, Configuration importConfiguration) {
-        // TODO Auto-generated method stub
-        
+        this.subject = subject;
+        this.importConfiguration = importConfiguration;
     }
 
-    /* (non-Javadoc)
-     * @see org.rhq.enterprise.server.sync.importers.Importer#getExportedEntityMatcher()
-     */
     @Override
     public ExportedEntityMatcher<NoSingleEntity, SystemSettings> getExportedEntityMatcher() {
-        // TODO Auto-generated method stub
-        return null;
+        return new NoSingleEntityMatcher<SystemSettings>();
     }
 
-    /* (non-Javadoc)
-     * @see org.rhq.enterprise.server.sync.importers.Importer#update(java.lang.Object, java.lang.Object)
-     */
     @Override
-    public void update(NoSingleEntity entity, SystemSettings exportedEntity) {
-        // TODO Auto-generated method stub
-        
+    public void update(NoSingleEntity entity, SystemSettings exportedEntity) throws Exception {
+        //TODO implement checking for configuration before applying
+        systemManager.setSystemConfiguration(subject, exportedEntity.toProperties(), false);
     }
 
-    /* (non-Javadoc)
-     * @see org.rhq.enterprise.server.sync.importers.Importer#unmarshallExportedEntity(org.rhq.enterprise.server.sync.ExportReader)
-     */
     @Override
     public SystemSettings unmarshallExportedEntity(ExportReader reader) throws XMLStreamException {
-        // TODO Auto-generated method stub
-        return null;
+        try {
+            return (SystemSettings) unmarshaller.unmarshal(reader);
+        } catch (JAXBException e) {
+            throw new XMLStreamException("Failed to unmarshal system settings.", e);
+        }
     }
 
-    /* (non-Javadoc)
-     * @see org.rhq.enterprise.server.sync.importers.Importer#finishImport()
-     */
     @Override
     public void finishImport() {
-        // TODO Auto-generated method stub
-        
     }
-
-
     
+    private void addSwitchToConfigDef(ConfigurationDefinition def, String name, boolean defaultValue) {
+        PropertyDefinitionSimple prop = new PropertyDefinitionSimple(name, null, true, PropertySimpleType.BOOLEAN);
+        prop.setDefaultValue(Boolean.toString(defaultValue));
+        def.put(prop);
+    }
 }

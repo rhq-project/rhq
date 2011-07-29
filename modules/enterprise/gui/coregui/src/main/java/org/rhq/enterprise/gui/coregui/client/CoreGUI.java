@@ -53,8 +53,8 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceT
 import org.rhq.enterprise.gui.coregui.client.menu.MenuBarView;
 import org.rhq.enterprise.gui.coregui.client.report.ReportTopView;
 import org.rhq.enterprise.gui.coregui.client.report.tag.TaggedView;
-import org.rhq.enterprise.gui.coregui.client.test.TestRemoteServiceStatisticsView;
 import org.rhq.enterprise.gui.coregui.client.test.TestDataSourceResponseStatisticsView;
+import org.rhq.enterprise.gui.coregui.client.test.TestRemoteServiceStatisticsView;
 import org.rhq.enterprise.gui.coregui.client.test.TestTopView;
 import org.rhq.enterprise.gui.coregui.client.util.ErrorHandler;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
@@ -524,10 +524,12 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
                         }
                     }.run(); // fire the timer immediately
                 } else {
-                    if (this.currentCanvas instanceof BookmarkableView) {
-                        ((BookmarkableView) this.currentCanvas).renderView(viewPath.next());
-                    } else {
-                        this.currentCanvas.markForRedraw();
+                    if (this.currentCanvas != null) {
+                        if (this.currentCanvas instanceof BookmarkableView) {
+                            ((BookmarkableView) this.currentCanvas).renderView(viewPath.next());
+                        } else {
+                            this.currentCanvas.markForRedraw();
+                        }
                     }
                 }
             }

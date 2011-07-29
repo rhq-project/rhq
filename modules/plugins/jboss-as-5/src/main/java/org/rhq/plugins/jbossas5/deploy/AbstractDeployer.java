@@ -62,7 +62,6 @@ import org.rhq.plugins.jbossas5.util.DeploymentUtils;
 public abstract class AbstractDeployer implements Deployer {
     private static final ProfileKey FARM_PROFILE_KEY = new ProfileKey("farm");
     private static final ProfileKey APPLICATIONS_PROFILE_KEY = new ProfileKey("applications");
-    public static final String DEPLOYMENT_NAME_PROPERTY = "deploymentName";
 
     private final Log log = LogFactory.getLog(this.getClass());
 
@@ -129,18 +128,21 @@ public abstract class AbstractDeployer implements Deployer {
                 }
             }
 
+            ManagementView managementView = this.profileServiceConnection.getManagementView();
+            managementView.load();
+
             //if deployed exploded, we need to store the sha of source package for correct versioning
             if (deployExploded) {
                 String shaString = new MessageDigestGenerator(MessageDigestGenerator.SHA_256)
                     .getDigestString(archiveFile);
-                String deploymentName = deployTimeConfig.getSimple(DEPLOYMENT_NAME_PROPERTY).getStringValue();
-                URI deployePackageURI = URI.create(deploymentName);
-                // e.g.: foo.war
-                String path = deployePackageURI.getPath();
-                File location = new File(path);
-                //We've located the deployed
-                if ((location != null) && (location.isDirectory())) {
-                    File manifestFile = new File(location, "META-INF/MANIFEST.MF");
+                // e.g.: vfszip:/C:/opt/jboss-6.0.0.Final/server/default/deploy/foo.war
+                String deploymentName = deployedArchives[0];
+                URI deploymentURI = URI.create(deploymentName);
+                // e.g.: /C:/opt/jboss-6.0.0.Final/server/default/deploy/foo.war
+                String deploymentPath = deploymentURI.getPath();
+                File deploymentFile = new File(deploymentPath);
+                if ((deploymentFile != null) && (deploymentFile.isDirectory())) {
+                    File manifestFile = new File(deploymentFile, "META-INF/MANIFEST.MF");
                     Manifest manifest;
                     if (manifestFile.exists()) {
                         FileInputStream inputStream = new FileInputStream(manifestFile);
@@ -157,8 +159,6 @@ public abstract class AbstractDeployer implements Deployer {
                 }
             }
 
-            ManagementView managementView = this.profileServiceConnection.getManagementView();
-            managementView.load();
             for (String deployedArchive : deployedArchives) {
                 ManagedDeployment managedDeployment;
                 try {

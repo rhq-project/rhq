@@ -106,6 +106,7 @@ public class HostControllerComponent extends BaseServerComponent implements Oper
         else {
             report.setErrorMessage(res.getFailureDescription());
             report.setStatus(CreateResourceStatus.FAILURE);
+            report.setException(res.getThrowable());
         }
         return report;
     }

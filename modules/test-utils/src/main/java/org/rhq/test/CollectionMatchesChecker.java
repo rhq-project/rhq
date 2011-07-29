@@ -6,7 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static junitx.util.Converter.asList;
+import static java.util.Arrays.asList;
 
 public class CollectionMatchesChecker<T> {
 

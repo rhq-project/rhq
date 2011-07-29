@@ -18,6 +18,7 @@
  */
 package org.rhq.modules.plugins.jbossas7;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 
@@ -243,14 +244,14 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent> impleme
             home = getHomeDirFromCommandLine(processInfo.getCommandLine());
         StringBuilder builder = new StringBuilder(home);
         if (isDomain)
-            builder.append("/domain");
+            builder.append(File.separator).append(AS7Mode.DOMAIN.getBaseDir());
         else
-            builder.append("/standalone");
-        builder.append("/configuration");
+            builder.append(File.separator).append(AS7Mode.STANDALONE.getBaseDir());
+        builder.append(File.separator).append("configuration");
         if (isDomain)
-            builder.append("/host.xml");
+            builder.append(File.separator).append(AS7Mode.HOST.getDefaultXmlFile());
         else
-            builder.append("/standalone.xml");
+            builder.append(File.separator).append(AS7Mode.STANDALONE.getDefaultXmlFile());
         return builder.toString();
 
     }

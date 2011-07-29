@@ -40,9 +40,9 @@ public class HostControllerComponent extends BaseServerComponent implements Oper
                                            Configuration parameters) throws InterruptedException, Exception {
 
         if (name.equals("start")) {
-            return startServer(Mode.DOMAIN);
+            return startServer(AS7Mode.DOMAIN);
         } else if (name.equals("restart")) {
-            return restartServer(parameters, Mode.DOMAIN);
+            return restartServer(parameters, AS7Mode.DOMAIN);
 
         } else if (name.equals("shutdown")) {
             // This is a bit trickier, as it needs to be executed on the level on /host=xx

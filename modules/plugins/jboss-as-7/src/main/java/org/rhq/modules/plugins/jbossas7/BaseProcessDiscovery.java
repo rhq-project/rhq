@@ -88,23 +88,28 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
                 readStandaloneOrHostXml(psr.getProcessInfo(), true);
                 HostPort hp = getDomainControllerFromHostXml();
                 if (hp.isLocal) {
-                    serverName = "DomainController";
+                    serverName = "DomainController"; // TODO make more unique
                     serverNameFull = "DomainController";
                     description = "Domain controller for an AS7 domain";
-                } else {
-                    serverName = "HostController";
+                }
+                else {
+                    serverName = "HostController"; // TODO make more unique
                     serverNameFull = "HostController";
                 }
                 String homeDir = getHomeDirFromCommandLine(psr.getProcessInfo().getCommandLine());
                 config.put(new PropertySimple("baseDir", homeDir));
                 version = homeDir.substring(homeDir.lastIndexOf("-") + 1);
-                config.put(new PropertySimple("startScript", "bin/domain.sh"));
+                config.put(new PropertySimple("startScript", AS7Mode.DOMAIN.getStartScript()));
                 String host = findHost(psr.getProcessInfo(), true);
                 config.put(new PropertySimple("domainHost", host));
 
                 fillUserPassFromFile(config, "domain", homeDir);
 
-                // TODO provide running config
+                // provide running config
+                String domainConfig = getServerConfigFromCommandLine(commandLine, AS7Mode.DOMAIN);
+                String hostConfig = getServerConfigFromCommandLine(commandLine, AS7Mode.HOST);
+                config.put(new PropertySimple("domainConfig",domainConfig));
+                config.put(new PropertySimple("hostConfig",hostConfig));
 
             } else { // Standalone server
                 serverNameFull = getHomeDirFromCommandLine(commandLine);
@@ -131,9 +136,9 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
 
                 version = serverName.substring(serverName.lastIndexOf("-") + 1);
 
-                String serverConfig = getServerConfigFromCommandLine(commandLine);
-                config.put(new PropertySimple("config", serverConfig));
-                config.put(new PropertySimple("startScript", "bin/standalone.sh"));
+                String serverConfig = getServerConfigFromCommandLine(commandLine, AS7Mode.STANDALONE);
+                config.put(new PropertySimple("config",serverConfig));
+                config.put(new PropertySimple("startScript",AS7Mode.STANDALONE.getStartScript()));
 
                 fillUserPassFromFile(config, "standalone", serverNameFull);
 
@@ -238,12 +243,19 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
         return hostName;
     }
 
-    String getServerConfigFromCommandLine(String[] commandLine) {
-        for (String line : commandLine) {
-            if (line.startsWith(DASH_DASH_SERVER_CONFIG))
-                return line.substring(DASH_DASH_SERVER_CONFIG.length());
+    /**
+     * Obtain the running configuration from the command line if it was passed via --(server,domain,host)-config
+     * @param commandLine Command line to look at
+     * @param mode mode and thus command line switch to look for
+     * @return the config or the default for the mode if no config was passed on the command line.
+     */
+    String getServerConfigFromCommandLine(String[] commandLine, AS7Mode mode) {
+        String configArg = mode.getConfigArg();
+        for (String line: commandLine) {
+            if (line.startsWith(configArg))
+                return line.substring(configArg.length()+1);
         }
-        return "standalone.xml";
+        return mode.getDefaultXmlFile();
     }
 
     //-Dorg.jboss.boot.log.file=/devel/jbas7/jboss-as/build/target/jboss-7.0.0.Alpha2/domain/log/server-manager/boot.log

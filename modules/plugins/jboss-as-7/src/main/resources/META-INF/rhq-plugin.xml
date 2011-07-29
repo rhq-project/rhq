@@ -86,7 +86,8 @@
             <c:simple-property name="port" default="9990" type="integer" required="true" description="Port of the domain API"/>
             <c:simple-property name="user" type="string" description="Management user for a secured Host controller" required="false"/>
             <c:simple-property name="password" type="password" description="Password for the management user" required="false"/>
-            <c:simple-property name="config" type="string" default="domain.xml" description="Running configuration" displayName="Configuration"/>
+            <c:simple-property name="domainConfig" type="string" default="domain.xml" description="Running configuration (domain part)" displayName="Configuration"/>
+            <c:simple-property name="hostConfig" type="string" default="host.xml" description="Running configuration (host part)" displayName="Configuration"/>
             <c:simple-property name="baseDir" type="file" description="Base directory of the server installation" displayName="Base directory" readOnly="true" required="false"/>
             <c:simple-property name="startScript" type="file" default="bin/domain.sh" description="Script used to start the server. If the path is not absolute, it is relative to the base directory"/>
             <c:simple-property name="domainHost" type="string" readOnly="true" required="false" description="Host name within the AS7 domain"/>

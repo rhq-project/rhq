@@ -20,7 +20,6 @@ package org.rhq.enterprise.server.alert;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -307,24 +306,26 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
 
     public boolean finalizeNotifications(Subject subject, List<AlertNotification> notifications) {
         boolean hasErrors = false;
-        
+
         AlertSenderPluginManager pluginManager = alertManager.getAlertPluginManager();
-        
-        for(AlertNotification notification : notifications) {
+
+        for (AlertNotification notification : notifications) {
             AlertSender<?> sender = pluginManager.getAlertSenderForNotification(notification);
-            
-            AlertSenderValidationResults validation = sender.validateAndFinalizeConfiguration(subject);
-            
-            notification.setConfiguration(validation.getAlertParameters());
-            notification.setExtraConfiguration(validation.getExtraParameters());
-            
-            hasErrors = hasErrors || hasErrors(validation.getAlertParameters()) || 
-                hasErrors(validation.getExtraParameters());
-        }   
-        
+
+            if (sender != null) {
+                AlertSenderValidationResults validation = sender.validateAndFinalizeConfiguration(subject);
+
+                notification.setConfiguration(validation.getAlertParameters());
+                notification.setExtraConfiguration(validation.getExtraParameters());
+
+                hasErrors = hasErrors || hasErrors(validation.getAlertParameters())
+                    || hasErrors(validation.getExtraParameters());
+            }
+        }
+
         return !hasErrors;
     }
-    
+
     public int cleanseAlertNotificationBySubject(int subjectId) {
         return cleanseParameterValueForAlertSender("System Users", "subjectId", String.valueOf(subjectId));
     }
@@ -335,17 +336,17 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
 
     public void massReconfigure(List<Integer> alertNotificationIds, Map<String, String> newConfigurationValues) {
         Query query = entityManager.createNamedQuery(AlertNotification.QUERY_UPDATE_PARAMETER_FOR_NOTIFICATIONS);
-        
+
         query.setParameter("alertNotificationIds", alertNotificationIds);
-        
-        for(Map.Entry<String, String> entry : newConfigurationValues.entrySet()) {
+
+        for (Map.Entry<String, String> entry : newConfigurationValues.entrySet()) {
             query.setParameter("propertyName", entry.getKey());
             query.setParameter("propertyValue", entry.getValue());
-            
+
             query.executeUpdate();
         }
     }
-    
+
     private int cleanseParameterValueForAlertSender(String senderName, String propertyName, String valueToCleanse) {
         Query query = entityManager.createNamedQuery(AlertNotification.QUERY_CLEANSE_PARAMETER_VALUE_FOR_ALERT_SENDER);
         query.setParameter("senderName", senderName);
@@ -357,43 +358,43 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
 
     private boolean hasErrors(AbstractPropertyMap configuration) {
         if (configuration instanceof PropertyMap) {
-            if (((PropertyMap)configuration).getErrorMessage() != null) {
+            if (((PropertyMap) configuration).getErrorMessage() != null) {
                 return true;
             }
         }
-        
-        for(Map.Entry<String, Property> entry : configuration.getMap().entrySet()) {
+
+        for (Map.Entry<String, Property> entry : configuration.getMap().entrySet()) {
             if (hasErrors(entry.getValue())) {
                 return true;
             }
         }
-        
+
         return false;
     }
-    
+
     private boolean hasErrors(PropertyList list) {
         if (list.getErrorMessage() != null) {
             return true;
         }
-        
-        for(Property p : list.getList()) {
+
+        for (Property p : list.getList()) {
             if (hasErrors(p)) {
                 return true;
             }
         }
-        
+
         return false;
     }
-    
+
     private boolean hasErrors(Property property) {
         if (property instanceof PropertySimple) {
             return property.getErrorMessage() != null;
         } else if (property instanceof PropertyList) {
             return hasErrors((PropertyList) property);
         } else if (property instanceof PropertyMap) {
-            return hasErrors((AbstractPropertyMap)property);
+            return hasErrors((AbstractPropertyMap) property);
         } else {
             return false;
         }
-    }    
+    }
 }

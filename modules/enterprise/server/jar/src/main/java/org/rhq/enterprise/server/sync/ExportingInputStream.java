@@ -19,6 +19,7 @@
 
 package org.rhq.enterprise.server.sync;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -173,7 +174,9 @@ public class ExportingInputStream extends InputStream {
                     uncaughtExporterException = e;
                 }
             });
-
+            
+            exportRunner.setContextClassLoader(Thread.currentThread().getContextClassLoader());
+            
             exportRunner.start();
         }
 
@@ -183,12 +186,13 @@ public class ExportingInputStream extends InputStream {
     }
 
     private void exporterMain() {
+        XMLStreamWriter wrt = null;
+        OutputStream out = null;
         try {
             XMLOutputFactory ofactory = XMLOutputFactory.newInstance();
-            XMLStreamWriter wrt = null;
 
             try {
-                OutputStream out = exportOutput;
+                out = exportOutput;
                 if (zipOutput) {                    
                     out = new GZIPOutputStream(out);
                 }
@@ -204,12 +208,21 @@ public class ExportingInputStream extends InputStream {
                 exportSingle(wrt, exp);
             }
             
-            exportEpilogue(wrt);            
+            exportEpilogue(wrt);         
+            
+            wrt.flush();
         } catch (Exception e) {
             LOG.error("Error while exporting.", e);
             throw new RuntimeException(e);
         } finally {
-            safeClose(exportOutput);
+            if (wrt != null) {
+                try {
+                    wrt.close();
+                } catch (XMLStreamException e) {
+                    LOG.warn("Failed to close the exporter XML stream.", e);
+                }
+            }
+            safeClose(out);
         }
     }
 
@@ -279,12 +292,10 @@ public class ExportingInputStream extends InputStream {
                 it.export(new ExportWriter(wrt));
                 wrt.writeEndElement();
                 
-                messages.getPerEntityErrorMessages().add(null);
-                
                 String notes = it.getNotes();
-                messages.getPerEntityNotes().add(it.getNotes());
                 
                 if (notes != null) {
+                    messages.getPerEntityNotes().add(notes);
                     wrt.writeStartElement(NOTES_ELEMENT);
                     wrt.writeCharacters(notes);
                     wrt.writeEndElement();
@@ -316,9 +327,11 @@ public class ExportingInputStream extends InputStream {
         wrt.writeEndElement(); //entities
     }
 
-    private static void safeClose(OutputStream str) {
+    private static void safeClose(Closeable str) {
         try {
-            str.close();
+            if (str != null) {
+                str.close();
+            }
         } catch (IOException e) {
             LOG.error("Failed to close an output stream. This shouldn't happen.", e);
         }

@@ -32,13 +32,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import javax.xml.stream.FactoryConfigurationError;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
@@ -50,14 +51,12 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.sync.ExportReport;
 import org.rhq.core.domain.sync.ConsistencyValidatorFailureReport;
+import org.rhq.core.domain.sync.ExportReport;
 import org.rhq.core.domain.sync.ExportWrapper;
 import org.rhq.core.domain.sync.ExporterMessages;
-import org.rhq.core.domain.sync.ImportReport;
 import org.rhq.core.domain.sync.ImporterConfiguration;
 import org.rhq.core.domain.sync.ImporterConfigurationDefinition;
-import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.sync.exporters.Exporter;
@@ -138,9 +137,11 @@ public class SynchronizationManagerBean implements SynchronizationManagerLocal, 
     public void importAllSubsystems(Subject subject, InputStream exportFile,
         List<ImporterConfiguration> configurations) throws ValidationException, ImportException {
         try {
-            processExportFile(subject, exportFile, true, getConfigPerImporter(configurations));
+            processExportFile(subject, new GZIPInputStream(exportFile), true, getConfigPerImporter(configurations));
         } catch (XMLStreamException e) {
             throw new ImportException("Failed import due to XML parsing error.", e);
+        } catch (IOException e) {
+            throw new ImportException("The provided file is not a gzipped XML.", e);
         }
     }
 
@@ -212,13 +213,13 @@ public class SynchronizationManagerBean implements SynchronizationManagerLocal, 
             case XMLStreamReader.START_ELEMENT:
                 String tagName = rdr.getName().getLocalPart();
                 if (ExportingInputStream.VALIDATOR_ELEMENT.equals(tagName)) {
+                    String validatorClass = rdr.getAttributeValue(null, ExportingInputStream.CLASS_ATTRIBUTE);                    
                     try {
                         validateSingle(rdr);
                     } catch (Exception e) {
-                        String validatorClass = rdr.getAttributeValue(null, ExportingInputStream.CLASS_ATTRIBUTE);
                         failures.add(new ConsistencyValidatorFailureReport(validatorClass, printExceptionToString(e)));
                     }
-                } else if (doImport && ExportingInputStream.ENTITIES_EXPORT_ELEMENT.equals(tagName)) {
+                } else if (doImport && failures.isEmpty() && ExportingInputStream.ENTITIES_EXPORT_ELEMENT.equals(tagName)) {
                     try {
                         importSingle(subject, importerConfigs, rdr);
                     } catch (Exception e) {
@@ -233,6 +234,10 @@ public class SynchronizationManagerBean implements SynchronizationManagerLocal, 
                 break;
             }
         }
+        
+        if (!failures.isEmpty()) {
+            throw new ValidationException(failures);
+        }
     }
 
     private void validateSingle(XMLStreamReader rdr) throws Exception {
@@ -242,20 +247,9 @@ public class SynchronizationManagerBean implements SynchronizationManagerLocal, 
             ConsistencyValidator.class,
             "The validator class denoted in the export file ('%s') does not implement the ConsistencyValidator interface. This should not happen.");
 
-        //move into the configuration of the validator 
-        rdr.next();
-
         //perform the validation
         validator.initializeValidation(new ExportReader(rdr));
         validator.validate();
-
-        //now skip everything in the XML until the next element
-        while (rdr.hasNext()) {
-            int state = rdr.nextTag();
-            if (state == XMLStreamReader.START_ELEMENT) {
-                break;
-            }
-        }
     }
 
     private <E, X> void importSingle(Subject subject, Map<String, Configuration> importConfigs, XMLStreamReader rdr) throws Exception {
@@ -316,8 +310,10 @@ public class SynchronizationManagerBean implements SynchronizationManagerLocal, 
     private Map<String, Configuration> getConfigPerImporter(List<ImporterConfiguration> list) {
         Map<String, Configuration> ret = new HashMap<String, Configuration>();
         
-        for(ImporterConfiguration ic : list) {
-            ret.put(ic.getImporterClassName(), ic.getConfiguration());
+        if (list != null) {
+            for(ImporterConfiguration ic : list) {
+                ret.put(ic.getImporterClassName(), ic.getConfiguration());
+            }
         }
         
         return ret;

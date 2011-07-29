@@ -19,6 +19,8 @@
 
 package org.rhq.enterprise.server.sync;
 
+import java.util.NoSuchElementException;
+
 import javax.xml.namespace.NamespaceContext;
 import javax.xml.namespace.QName;
 import javax.xml.stream.Location;
@@ -74,7 +76,7 @@ public class ExportReader implements XMLStreamReader {
             ++depth;
             break;
         case XMLStreamReader.END_ELEMENT:
-            if (depth > 0) {
+            if (depth >= 0) {
                 --depth;
             } else {
                 return XMLStreamReader.END_DOCUMENT;
@@ -119,7 +121,7 @@ public class ExportReader implements XMLStreamReader {
             if (depth > 0) {
                 --depth;
             } else {
-                throw new IllegalStateException("End of the export segment reached.");
+                throw new NoSuchElementException("End of the export segment reached.");
             }
         }
         
@@ -132,7 +134,7 @@ public class ExportReader implements XMLStreamReader {
      * @see javax.xml.stream.XMLStreamReader#hasNext()
      */
     public boolean hasNext() throws XMLStreamException {
-        if (depth == 0 && reader.isEndElement()) {
+        if (depth < 0 && reader.isEndElement()) {
             return false;
         } else {
             return reader.hasNext();

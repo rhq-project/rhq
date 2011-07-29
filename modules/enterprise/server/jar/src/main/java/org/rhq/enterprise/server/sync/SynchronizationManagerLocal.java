@@ -27,10 +27,8 @@ import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
-import org.rhq.core.domain.sync.ConsistencyValidatorFailureReport;
-import org.rhq.core.domain.sync.ExportWrapper;
 import org.rhq.core.domain.sync.ExportReport;
-import org.rhq.core.domain.sync.ImportReport;
+import org.rhq.core.domain.sync.ExportWrapper;
 import org.rhq.core.domain.sync.ImporterConfiguration;
 import org.rhq.core.domain.sync.ImporterConfigurationDefinition;
 

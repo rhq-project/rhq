@@ -123,8 +123,6 @@ import org.rhq.core.domain.resource.composite.ProblemResourceComposite;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.sync.ExportReport;
-import org.rhq.core.domain.sync.ConsistencyValidatorFailureReport;
-import org.rhq.core.domain.sync.ImportReport;
 import org.rhq.core.domain.sync.ImporterConfiguration;
 import org.rhq.core.domain.sync.ImporterConfigurationDefinition;
 import org.rhq.core.domain.util.PageControl;

@@ -46,6 +46,9 @@ public class MetricTemplate extends AbstractExportedEntity {
     
     @XmlAttribute
     private String metricName;
+
+    @XmlAttribute
+    private boolean perMinute;
     
     @XmlAttribute
     private long defaultInterval;
@@ -62,6 +65,7 @@ public class MetricTemplate extends AbstractExportedEntity {
         metricName = definition.getName();
         defaultInterval = definition.getDefaultInterval();
         enabled = definition.isDefaultOn();
+        perMinute = definition.getRawNumericType() != null;
         setReferencedEntityId(definition.getId());
     }
     
@@ -105,4 +109,17 @@ public class MetricTemplate extends AbstractExportedEntity {
         this.enabled = enabled;
     }
 
+    /**
+     * @return the perMinute
+     */
+    public boolean isPerMinute() {
+        return perMinute;
+    }
+    
+    /**
+     * @param perMinute the perMinute to set
+     */
+    public void setPerMinute(boolean perMinute) {
+        this.perMinute = perMinute;
+    }
 }

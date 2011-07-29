@@ -68,4 +68,15 @@ public class ConsistencyValidatorFailureReport implements Serializable {
     public void setErrorMessage(String errorMessage) {
         this.errorMessage = errorMessage;
     }
+    
+    @Override
+    public String toString() {
+        StringBuilder bld = new StringBuilder();
+        
+        bld.append("ConsistencyValidatorFailureReport[validator='")
+            .append(validatorClassName).append("', message='")
+            .append(errorMessage).append("']");
+        
+        return bld.toString();
+    }
 }

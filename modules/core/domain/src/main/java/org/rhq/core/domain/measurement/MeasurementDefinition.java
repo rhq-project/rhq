@@ -74,11 +74,12 @@ import org.rhq.core.domain.resource.ResourceType;
     @NamedQuery(name = MeasurementDefinition.DISABLE_ALL, query = "" //
         + "UPDATE MeasurementDefinition md " //
         + "   SET md.defaultOn = false"),
-    @NamedQuery(name = MeasurementDefinition.FIND_BY_NAME_AND_RESOURCE_TYPE_NAME, query = "" //
+    @NamedQuery(name = MeasurementDefinition.FIND_RAW_OR_PER_MINUTE_BY_NAME_AND_RESOURCE_TYPE_NAME, query = "" //
         + " SELECT md FROM MeasurementDefinition md"
         + " WHERE md.name = :name " 
         + " AND md.resourceType.name = :resourceTypeName"
-        + " AND md.resourceType.plugin = :resourceTypePlugin")
+        + " AND md.resourceType.plugin = :resourceTypePlugin" 
+        + " AND ((:perMinute = 1 AND md.rawNumericType IS NOT NULL) OR (:perMinute = 0 AND md.rawNumericType IS NULL))")
 })
 @SequenceGenerator(name = "id", sequenceName = "RHQ_MEASUREMENT_DEF_ID_SEQ")
 @Table(name = "RHQ_MEASUREMENT_DEF")
@@ -109,7 +110,7 @@ public class MeasurementDefinition implements Serializable {
     public static final String FIND_SCHEDULE_COMPOSITE_FOR_RESOURCE_TYPE = "MeasurementDefinition.findScheduleCompositeForResourceType";
     public static final String FIND_BY_IDS = "MeasurementDefinition.findByIds";
     public static final String DISABLE_ALL = "MeasurementDefinition.disableAll";
-    public static final String FIND_BY_NAME_AND_RESOURCE_TYPE_NAME = "MeasurementDefinition.findByNameAndResourceTypeName";
+    public static final String FIND_RAW_OR_PER_MINUTE_BY_NAME_AND_RESOURCE_TYPE_NAME = "MeasurementDefinition.findRawOrPerMinuteByNameAndResourceTypeName";
     
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "id")

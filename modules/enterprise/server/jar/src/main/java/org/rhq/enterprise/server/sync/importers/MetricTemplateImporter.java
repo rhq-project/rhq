@@ -145,8 +145,12 @@ public class MetricTemplateImporter implements Importer<MeasurementDefinition, M
 
             @Override
             public MeasurementDefinition findMatch(MetricTemplate object) {
-                Query q = entityManager.createNamedQuery(MeasurementDefinition.FIND_BY_NAME_AND_RESOURCE_TYPE_NAME);
-
+                Query q = entityManager.createNamedQuery(MeasurementDefinition.FIND_RAW_OR_PER_MINUTE_BY_NAME_AND_RESOURCE_TYPE_NAME);
+                q.setParameter("name", object.getMetricName());
+                q.setParameter("resourceTypeName", object.getResourceTypeName());
+                q.setParameter("resourceTypePlugin", object.getResourceTypePlugin());
+                q.setParameter("perMinute", object.isPerMinute() ? 1 : 0);
+                
                 List<?> results = q.getResultList();
 
                 if (results.isEmpty()) {

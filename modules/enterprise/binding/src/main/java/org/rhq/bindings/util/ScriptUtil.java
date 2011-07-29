@@ -24,6 +24,7 @@ package org.rhq.bindings.util;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -75,7 +76,16 @@ public class ScriptUtil {
         return resourceManager.findResourcesByCriteria(getSubjectFromEngine(), criteria);
     }
 
-
+    public void saveBytesToFile(byte[] bytes, String filename) throws IOException {
+        FileOutputStream fos = new FileOutputStream(filename);
+        
+        try {
+            fos.write(bytes);
+        } finally {
+            fos.close();
+        }
+    }
+    
     public byte[] getFileBytes(String fileName) {
         File file = new File(fileName);
         long length = file.length();

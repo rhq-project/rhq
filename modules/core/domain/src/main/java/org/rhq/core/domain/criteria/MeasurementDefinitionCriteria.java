@@ -55,6 +55,8 @@ public class MeasurementDefinitionCriteria extends Criteria {
     private Boolean filterDefaultOn;
     private Long filterDefaultInterval;
 
+    private boolean fetchResourceType;
+    
     private PageOrdering sortName;
     private PageOrdering sortDisplayName;
     private PageOrdering sortResourceTypeName; // requires overrides
@@ -180,4 +182,7 @@ public class MeasurementDefinitionCriteria extends Criteria {
         this.sortDefaultInterval = sortDefaultInterval;
     }
 
+    public void fetchResourceType(boolean value) {
+        this.fetchResourceType = value;
+    }
 }

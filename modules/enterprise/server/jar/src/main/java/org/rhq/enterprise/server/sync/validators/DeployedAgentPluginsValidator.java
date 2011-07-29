@@ -42,9 +42,45 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 public class DeployedAgentPluginsValidator implements ConsistencyValidator {
 
+    private static class ConsistentPlugin extends Plugin {
+        
+        private static final long serialVersionUID = 1L;
+
+        public ConsistentPlugin() {
+            
+        }
+        
+        public ConsistentPlugin(Plugin p) {
+            setName(p.getName());
+            setVersion(p.getVersion());
+            setMd5(p.getMd5());
+        }
+        
+        @Override
+        public int hashCode() {
+            return getName().hashCode() * getVersion().hashCode() * getMd5().hashCode();
+        }
+        
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) {
+                return true;
+            }
+            
+            if (!(other instanceof ConsistentPlugin)) {
+                return false;
+            }
+            
+            ConsistentPlugin p = (ConsistentPlugin) other;
+            
+            return getName().equals(p.getName()) && getVersion().equals(p.getVersion())
+                && getMd5().equals(p.getMd5());
+        }
+    }
+    
     private PluginManagerLocal pluginManager;
 
-    private Set<Plugin> pluginsToValidate;
+    private Set<ConsistentPlugin> pluginsToValidate;
 
     public DeployedAgentPluginsValidator() {
         this(LookupUtil.getPluginManager());        
@@ -71,13 +107,13 @@ public class DeployedAgentPluginsValidator implements ConsistencyValidator {
 
     @Override
     public void initializeValidation(ExportReader reader) throws XMLStreamException {
-        pluginsToValidate = new HashSet<Plugin>();
+        pluginsToValidate = new HashSet<ConsistentPlugin>();
 
         while (reader.hasNext()) {
             switch (reader.next()) {
             case XMLStreamReader.START_ELEMENT:
                 if ("plugin".equals(reader.getName().getLocalPart())) {
-                    Plugin p = new Plugin();
+                    ConsistentPlugin p = new ConsistentPlugin();
                     p.setName(reader.getAttributeValue(null, "name"));
                     p.setMd5(reader.getAttributeValue(null, "hash"));
                     p.setVersion(reader.getAttributeValue(null, "version"));
@@ -94,20 +130,20 @@ public class DeployedAgentPluginsValidator implements ConsistencyValidator {
     @Override
     public void validate() throws InconsistentStateException {
         List<Plugin> localPlugins = pluginManager.getInstalledPlugins();
-        Set<Plugin> localAgentPlugins = new HashSet<Plugin>();
+        Set<ConsistentPlugin> localAgentPlugins = new HashSet<ConsistentPlugin>();
         for(Plugin p : localPlugins) {
             if (p.getDeployment() == PluginDeploymentType.AGENT) {
-                localAgentPlugins.add(p);
+                localAgentPlugins.add(new ConsistentPlugin(p));
             }            
         }
         
         if (localAgentPlugins.size() != pluginsToValidate.size()) {
-            throwIncosistentException(localPlugins, pluginsToValidate);
+            throwIncosistentException(localAgentPlugins, pluginsToValidate);
         }
 
-        for (Plugin localPlugin : localAgentPlugins) {
+        for (ConsistentPlugin localPlugin : localAgentPlugins) {
             if (!pluginsToValidate.contains(localPlugin)) {
-                throwIncosistentException(localPlugins, pluginsToValidate);
+                throwIncosistentException(localAgentPlugins, pluginsToValidate);
             }
         }
     }
@@ -135,7 +171,7 @@ public class DeployedAgentPluginsValidator implements ConsistencyValidator {
         return false;
     }
 
-    private static void throwIncosistentException(Collection<Plugin> localPlugins, Collection<Plugin> expectedPlugins)
+    private static void throwIncosistentException(Collection<ConsistentPlugin> localPlugins, Collection<ConsistentPlugin> expectedPlugins)
         throws InconsistentStateException {
         StringBuilder bld = new StringBuilder(
             "Installed plugins are not consistent with the plugins required by the export.");
@@ -148,17 +184,16 @@ public class DeployedAgentPluginsValidator implements ConsistencyValidator {
         throw new InconsistentStateException(bld.toString());
     }
 
-    private static void appendPlugins(StringBuilder bld, Collection<Plugin> plugins) {
+    private static void appendPlugins(StringBuilder bld, Collection<ConsistentPlugin> plugins) {
         bld.append("[");
         int size = plugins.size();
         int i = 0;
         for (Plugin p : plugins) {
+            ++i;
             appendPlugin(bld, p);
             if (i < size) {
                 bld.append(", ");
             }
-
-            ++i;
         }
         bld.append("]");
     }
@@ -166,6 +201,6 @@ public class DeployedAgentPluginsValidator implements ConsistencyValidator {
     private static void appendPlugin(StringBuilder bld, Plugin p) {
         bld.append("Plugin[name='").append(p.getName()).append("'");
         bld.append(", version='").append(p.getVersion()).append("'");
-        bld.append(", hash='").append(p.getMd5()).append("']");
+        bld.append(", md5='").append(p.getMd5()).append("']");
     }
 }

@@ -20,15 +20,12 @@
 package org.rhq.enterprise.server.sync;
 
 import java.util.List;
-import java.util.Set;
 
 import javax.ejb.Remote;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.sync.ExportReport;
-import org.rhq.core.domain.sync.ConsistencyValidatorFailureReport;
-import org.rhq.core.domain.sync.ImportReport;
 import org.rhq.core.domain.sync.ImporterConfiguration;
 import org.rhq.core.domain.sync.ImporterConfigurationDefinition;
 

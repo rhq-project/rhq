@@ -95,10 +95,11 @@ public class MetricTemplateExporter implements Exporter<MeasurementDefinition, M
     public ExportingIterator<MetricTemplate> getExportingIterator() {
         MeasurementDefinitionCriteria criteria = new MeasurementDefinitionCriteria();
         criteria.setPageControl(PageControl.getUnlimitedInstance());
-
+        criteria.fetchResourceType(true);
+        
         List<MeasurementDefinition> defs = measurementDefinitionManager.findMeasurementDefinitionsByCriteria(subject,
             criteria);
-
+        
         return new MetricTemplateIterator(defs.iterator());
     }
 

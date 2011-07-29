@@ -591,8 +591,8 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
 
     public void renderView(ViewPath viewPath) {
         currentViewId = viewPath.getCurrent();
-        String currentViewIdPath = currentViewId.getPath();
         if (this.currentViewId != null) {
+            String currentViewIdPath = currentViewId.getPath();
             if ("AutoCluster".equals(currentViewIdPath)) {
                 // Move the currentViewId to the ID portion to play better with other code
                 currentViewId = viewPath.getNext();

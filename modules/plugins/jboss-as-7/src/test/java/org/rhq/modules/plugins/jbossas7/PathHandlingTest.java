@@ -22,6 +22,7 @@ import java.util.List;
 
 import org.testng.annotations.Test;
 
+import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
 
 /**
@@ -102,5 +103,31 @@ public class PathHandlingTest {
 
         String path2 = bc.addressToPath(list);
         assert path.equals(path2);
+    }
+
+    public void emptyAddress() throws Exception {
+
+        Address a = new Address();
+        assert a.getPath() != null;
+        assert a.getPath().isEmpty();
+    }
+
+    public void emptyAddress2() throws Exception {
+
+        Address a = new Address((String)null);
+        assert a.getPath() != null;
+        assert a.getPath().isEmpty();
+    }
+
+    public void addressPath1() throws Exception {
+        String path = "subsystem=jms,profile=default,queue=foo";
+        Address a = new Address("/"+path);
+        assert a.getPath().equals(path);
+    }
+
+    public void addressPath2() throws Exception {
+        String path = "subsystem=jms,profile=default,queue=foo";
+        Address a = new Address(path);
+        assert a.getPath().equals(path);
     }
 }

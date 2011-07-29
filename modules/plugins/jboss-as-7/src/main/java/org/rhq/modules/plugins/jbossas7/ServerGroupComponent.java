@@ -29,6 +29,8 @@ import java.util.Set;
 
 import org.codehaus.jackson.JsonNode;
 
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.transfer.ContentResponseResult;
@@ -37,10 +39,13 @@ import org.rhq.core.domain.content.transfer.DeployPackageStep;
 import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
 import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
+import org.rhq.core.domain.resource.CreateResourceStatus;
 import org.rhq.core.pluginapi.content.ContentContext;
 import org.rhq.core.pluginapi.content.ContentFacet;
 import org.rhq.core.pluginapi.content.ContentServices;
 import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
+import org.rhq.core.pluginapi.inventory.CreateResourceReport;
+import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.CompositeOperation;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;

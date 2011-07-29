@@ -50,7 +50,7 @@
         xmlns:c="urn:xmlns:rhq-configuration"
         >
 
-    <depends plugin="JMX" useClasses="true"/> 
+    <depends plugin="JMX" useClasses="true"/>
 
 
     <!-- TODO I think we should introduce an abstract AS7 plugin that contains some base functionality and then
@@ -137,21 +137,6 @@
         </operation>
 -->
 
-        <operation name="server-group:add" displayName="Add ServerGroup" description="Add a server group to the Domain.">
-            <parameters>
-                <c:simple-property name="name" description="Name of Group to add"/>
-                <c:simple-property name="profile" description="Profile to add this group to">
-                    <c:option-source target="resource" expression="type=Profile plugin=jboss-as-7"/>
-                </c:simple-property>
-            </parameters>
-        </operation>
-        <operation name="server-group:remove" displayName="Remove ServerGroup" description="Remove a server group from the Domain.">
-            <parameters>
-                <c:simple-property name="name" description="Name of Group to remove">
-                    <c:option-source target="resource" expression="type=ServerGroup"/>
-                </c:simple-property>
-            </parameters>
-        </operation>
         <operation name="managed-server:add" displayName="Add managed server" description="Add a new managed server">
             <parameters>
                 <c:simple-property name="servername" displayName="Name of the new server" required="true"/>
@@ -245,8 +230,8 @@
                 description="Server groups on this domain"
                 discovery="SubsystemDiscovery"
                 class="ServerGroupComponent"
+                createDeletePolicy="both"
                 >
-            <!-- TODO move operation to createDeletePolicy="create-only" -->
 
             <plugin-configuration>
                 <c:simple-property name="path" default="server-group" readOnly="true"/>
@@ -260,7 +245,7 @@
                 </c:simple-property>
                 <c:simple-property name="socket-binding-port-offset" required="false" defaultValue="0" type="integer"
                                    description="The default offset to be added to the port values given by the socket binding group."/>
-                <c:simple-property name="jvm" required="false"/>
+                <c:simple-property name="jvm" required="false"/> <!-- TODO -->
             </resource-configuration>
 
         </server>

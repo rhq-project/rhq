@@ -47,64 +47,6 @@ import org.rhq.enterprise.server.system.ServerVersion;
 public interface ResourceFactoryManagerRemote {
 
     /**
-     * @Deprecated
-     * 
-     * Use new signature with timeout parameter:
-     * @{link {@link #createPackageBackedResource(Subject, int, int, String, Configuration, String, String, Integer, Configuration, byte[], Integer)}
-     */
-    @WebMethod
-    CreateResourceHistory createResource( //
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "parentResourceId") int parentResourceId, //
-        @WebParam(name = "resourceTypeId") int resourceTypeId, //
-        @WebParam(name = "resourceName") String resourceName, //        
-        @WebParam(name = "pluginConfiguration") Configuration pluginConfiguration, //
-        @WebParam(name = "resourceConfiguration") Configuration resourceConfiguration);
-
-    /**
-     * @Deprecated
-     * 
-     * Use new signature with timeout parameter:
-     * @{link {@link #createPackageBackedResource(Subject, int, int, String, Configuration, String, String, Integer, Configuration, byte[], Integer)}
-     */
-    @WebMethod
-    CreateResourceHistory createPackageBackedResource(//
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "parentResourceId") int parentResourceId, //
-        @WebParam(name = "newResourceTypeId") int newResourceTypeId, //
-        @WebParam(name = "newResourceName") String newResourceName, //
-        @WebParam(name = "pluginConfiguration")//
-        @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
-        Configuration pluginConfiguration, //
-        @WebParam(name = "packageName") String packageName, //
-        @WebParam(name = "packageVersion") String packageVersion, //
-        @WebParam(name = "architectureId") Integer architectureId, //
-        @WebParam(name = "deploymentTimeConfiguration")//
-        @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
-        Configuration deploymentTimeConfiguration, //
-        @WebParam(name = "packageBits") byte[] packageBits);
-
-    /**
-     * @Deprecated
-     * 
-     * Use new signature with timeout parameter:
-     * @{link {@link #createPackageBackedResourceViaPackageVersion(Subject, int, int, String, Configuration, Configuration, int, Integer)
-     */
-    @WebMethod
-    public CreateResourceHistory createPackageBackedResourceViaPackageVersion(//
-        @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "parentResourceId") int parentResourceId, //
-        @WebParam(name = "newResourceTypeId") int newResourceTypeId, //
-        @WebParam(name = "newResourceName") String newResourceName, //
-        @WebParam(name = "pluginConfiguration")//
-        @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
-        Configuration pluginConfiguration, //
-        @WebParam(name = "deploymentTimeConfiguration")//
-        @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
-        Configuration deploymentTimeConfiguration, //
-        @WebParam(name = "packageVersionId") int packageVersionId);
-
-    /**
      * Creates a new physical resource. The resource will be created as a child of the specified parent. In other words,
      * the resource component of the indicated parent will be used to create the new resource. This call should only be
      * made for resource types that are defined with a create/delete policy of {@link CreateDeletePolicy#BOTH} or

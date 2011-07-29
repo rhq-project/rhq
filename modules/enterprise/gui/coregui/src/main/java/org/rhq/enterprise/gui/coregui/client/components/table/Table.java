@@ -35,6 +35,7 @@ import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
+import com.smartgwt.client.data.ResultSet;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.Overflow;
@@ -89,6 +90,12 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * A tabular view of set of data records from an {@link RPCDataSource}.
+ *
+ * WARNING! If you make _any_ changes to this class, no matter how seemingly
+ * trivial, you must get it peer reviewed. Send out your proposed changes
+ * to the dev mailing list and ask for comments. Any problems introduced to
+ * this class are magnified because it is used in so many UI views and problems
+ * are hard to detect due to the varies ways it is used.
  *
  * @author Greg Hinkle
  * @author Ian Springer
@@ -333,7 +340,6 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
                 }
             });
 
-
             Label tableInfo = new Label();
             tableInfo.setWrap(false);
             setTableInfo(tableInfo);
@@ -363,8 +369,19 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     private void refreshRowCount() {
         Label tableInfo = getTableInfo();
         if (tableInfo != null) {
-            boolean lengthIsKnown = (listGrid != null && listGrid.getResultSet().lengthIsKnown() != null)
-                    ? listGrid.getResultSet().lengthIsKnown() : false;
+            boolean lengthIsKnown = false;
+            if (listGrid != null) {
+                ResultSet results = listGrid.getResultSet();
+                if (results != null) {
+                    Boolean flag = results.lengthIsKnown();
+                    if (flag != null) {
+                        lengthIsKnown = flag.booleanValue();
+                    }
+                } else {
+                    lengthIsKnown = (listGrid.getDataSource() == null); // not bound by a datasource, assume we know
+                }
+            }
+
             String contents;
             if (lengthIsKnown) {
                 int totalRows = this.listGrid.getTotalRows();

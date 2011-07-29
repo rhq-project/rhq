@@ -41,6 +41,10 @@ public class CollectionMatchesChecker<T> {
                 toString(elementsThatShouldNotBePresent) + "\n\n");
         }
 
+        if (!isMatch) {
+            details.append("expected: " + expected + "\n").append("actual: " + actual + "\n\n");
+        }
+
         return new MatchResult(isMatch, details.toString());
     }
 

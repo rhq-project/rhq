@@ -335,15 +335,17 @@ public class DatasourceDeployTest extends AbstractIntegrationTest {
 
         Configuration parameters = new Configuration();
         // Operation takes no parameters
-        OperationResult operationResult = dc.invokeOperation(theOperation,parameters);
-        assert operationResult != null;
-        assert operationResult.getSimpleResult()!=null;
-        assert operationResult.getErrorMessage()==null;
+        try {
+            OperationResult operationResult = dc.invokeOperation(theOperation,parameters);
+            assert operationResult != null;
+            assert operationResult.getSimpleResult()!=null : "Simple result was null, result was " + operationResult;
+            assert operationResult.getErrorMessage()==null;
+        } finally {
 
-
-        cleanupDatasource(conn,dsAddress);
-        cleanupSGDeployment(conn,sgAddress);
-        cleanupDomainDeployment(conn);
+            cleanupDatasource(conn,dsAddress);
+            cleanupSGDeployment(conn,sgAddress);
+            cleanupDomainDeployment(conn);
+        }
 
     }
 

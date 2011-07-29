@@ -134,5 +134,13 @@ public class Operation {
         return address;
     }
 
+    @Override
+    public String toString() {
+        return "Operation{" +
+                "operation='" + operation + '\'' +
+                ", address=" + address +
+                ", additionalProperties=" + additionalProperties +
+                '}';
+    }
 }
 

@@ -28,7 +28,6 @@ import javax.management.MBeanServerFactory;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
 import javax.transaction.TransactionManager;
 
 import org.hibernate.SessionFactory;
@@ -36,6 +35,7 @@ import org.hibernate.stat.Statistics;
 import org.testng.AssertJUnit;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterSuite;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeSuite;
 
@@ -57,12 +57,28 @@ import org.rhq.enterprise.server.scheduler.SchedulerService;
 import org.rhq.enterprise.server.scheduler.SchedulerServiceMBean;
 import org.rhq.enterprise.server.util.LookupUtil;
 
+import static org.rhq.test.JPAUtils.clearDB;
+import static org.rhq.test.JPAUtils.lookupEntityManager;
+import static org.rhq.test.JPAUtils.lookupTransactionManager;
+
 /**
  * This is the abstract test base for server jar tests.
  *
  * @author Greg Hinkle
  */
 public abstract class AbstractEJB3Test extends AssertJUnit {
+
+    @BeforeClass
+    public void resetDB() throws Exception {
+        if (isDBResetNeeded()) {
+            clearDB();
+        }
+    }
+
+    protected boolean isDBResetNeeded() {
+        return true;
+    }
+
     //@BeforeSuite(groups = {"integration.ejb3","PERF"}) // TODO investigate again
     @BeforeSuite(alwaysRun = true)
     public static void startupEmbeddedJboss() throws Exception {
@@ -165,23 +181,11 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
     private static Statistics stats;
 
     public TransactionManager getTransactionManager() {
-        try {
-            tm = (TransactionManager) getInitialContext().lookup("java:/TransactionManager");
-            return tm;
-        } catch (NamingException e) {
-            e.printStackTrace();
-            throw new RuntimeException("Failed to load transaction manager", e);
-        }
+        return lookupTransactionManager();
     }
 
     public static EntityManager getEntityManager() {
-        try {
-            return ((EntityManagerFactory) getInitialContext().lookup(RHQConstants.ENTITY_MANAGER_JNDI_NAME))
-                .createEntityManager();
-        } catch (NamingException e) {
-            e.printStackTrace();
-            throw new RuntimeException("Failed to load entity manager", e);
-        }
+        return lookupEntityManager();
     }
 
     public static InitialContext getInitialContext() {

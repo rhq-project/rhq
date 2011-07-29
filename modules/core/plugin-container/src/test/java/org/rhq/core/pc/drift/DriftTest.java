@@ -81,6 +81,12 @@ public class DriftTest {
      */
     protected File resourceDir;
 
+    /**
+     * The default interval assigned to drift configurations created using
+     * {@link #driftConfiguration(String, String)}
+     */
+    protected long defaultInterval = 1800L;  // 30 minutes;
+
     private MessageDigestGenerator digestGenerator;
 
     /**
@@ -180,6 +186,7 @@ public class DriftTest {
     /**
      * Creates a {@link DriftConfiguration} with the specified basedir. The file system is
      * used as the context for the basedir which means the path specified is used as is.
+     * The interval property is set to {@link #defaultInterval}.
      *
      * @param name The configuration name
      * @param basedir An absolute path of the base directory
@@ -189,6 +196,8 @@ public class DriftTest {
         DriftConfiguration config = new DriftConfiguration(new Configuration());
         config.setName(name);
         config.setBasedir(new DriftConfiguration.BaseDirectory(fileSystem, basedir));
+        config.setEnabled(true);
+        config.setInterval(defaultInterval);
 
         return config;
     }

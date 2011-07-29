@@ -23,13 +23,13 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import com.allen_sauer.gwt.log.client.Log;
-import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.rpc.RPCResponse;
+import com.smartgwt.client.types.Alignment;
+import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGridField;
@@ -38,10 +38,12 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.drift.DriftConfiguration;
+import org.rhq.core.domain.drift.DriftConfiguration.BaseDirectory;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
@@ -53,15 +55,18 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author Jay Shaughnessy
+ * @author John Mazzitelli
  */
 public class DriftConfigurationDataSource extends RPCDataSource<DriftConfiguration, ResourceCriteria> {
 
-    public static final String FILTER_CATEGORIES = "categories";
-
-    public static final String ATTR_ENTITY = "Entity";
+    public static final String ATTR_ENTITY = "object";
+    public static final String ATTR_ID = "id";
+    public static final String ATTR_NAME = "name";
+    public static final String ATTR_INTERVAL = "interval";
+    public static final String ATTR_BASE_DIR_STRING = "baseDirString";
+    public static final String ATTR_ENABLED = "enabled";
 
     private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
-
     private EntityContext entityContext;
 
     public DriftConfigurationDataSource() {
@@ -69,9 +74,7 @@ public class DriftConfigurationDataSource extends RPCDataSource<DriftConfigurati
     }
 
     public DriftConfigurationDataSource(EntityContext context) {
-        super();
         this.entityContext = context;
-
         addDataSourceFields();
     }
 
@@ -84,30 +87,34 @@ public class DriftConfigurationDataSource extends RPCDataSource<DriftConfigurati
     public ArrayList<ListGridField> getListGridFields() {
         ArrayList<ListGridField> fields = new ArrayList<ListGridField>(6);
 
-        ListGridField nameField = new ListGridField("name", MSG.common_title_name());
+        ListGridField nameField = new ListGridField(ATTR_NAME, MSG.common_title_name());
         fields.add(nameField);
 
-        ListGridField intervalField = new ListGridField("interval", MSG.common_title_interval());
+        ListGridField enabledField = new ListGridField(ATTR_ENABLED, MSG.common_title_enabled());
+        enabledField.setType(ListGridFieldType.IMAGE);
+        enabledField.setAlign(Alignment.CENTER);
+        enabledField.setCanSort(false);
+        fields.add(enabledField);
+
+        ListGridField intervalField = new ListGridField(ATTR_INTERVAL, MSG.common_title_interval());
+        intervalField.setCanSort(false);
         fields.add(intervalField);
 
-        ListGridField baseDirField = new ListGridField("baseDir", MSG.view_drift_table_baseDir());
+        ListGridField baseDirField = new ListGridField(ATTR_BASE_DIR_STRING, MSG.view_drift_table_baseDir());
+        baseDirField.setCanSort(false);
         fields.add(baseDirField);
-
-        ListGridField enabledField = new ListGridField("enabled", MSG.common_title_enabled());
-        fields.add(enabledField);
 
         if (this.entityContext.type != EntityContext.Type.Resource) {
             ListGridField resourceNameField = new ListGridField(AncestryUtil.RESOURCE_NAME, MSG.common_title_resource());
             resourceNameField.setCellFormatter(new CellFormatter() {
                 public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                    String url = LinkManager
-                        .getResourceLink(listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
+                    Integer resourceId = listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID);
+                    String url = LinkManager.getResourceLink(resourceId);
                     return SeleniumUtility.getLocatableHref(url, o.toString(), null);
                 }
             });
             resourceNameField.setShowHover(true);
             resourceNameField.setHoverCustomizer(new HoverCustomizer() {
-
                 public String hoverHTML(Object value, ListGridRecord listGridRecord, int rowNum, int colNum) {
                     return AncestryUtil.getResourceHoverHTML(listGridRecord, 0);
                 }
@@ -117,16 +124,16 @@ public class DriftConfigurationDataSource extends RPCDataSource<DriftConfigurati
             ListGridField ancestryField = AncestryUtil.setupAncestryListGridField();
             fields.add(ancestryField);
 
-            nameField.setWidth("15%");
+            nameField.setWidth("20%");
+            enabledField.setWidth(60);
             intervalField.setWidth(100);
-            enabledField.setWidth("5%");
             baseDirField.setWidth("20%");
             resourceNameField.setWidth("20%");
             ancestryField.setWidth("40%");
         } else {
-            nameField.setWidth("15%");
+            nameField.setWidth("20%");
+            enabledField.setWidth(60);
             intervalField.setWidth(100);
-            enabledField.setWidth("5%");
             baseDirField.setWidth("80%");
         }
 
@@ -135,11 +142,7 @@ public class DriftConfigurationDataSource extends RPCDataSource<DriftConfigurati
 
     @Override
     protected void executeFetch(final DSRequest request, final DSResponse response, final ResourceCriteria criteria) {
-
-        final long start = System.currentTimeMillis();
-
         this.resourceService.findResourcesByCriteria(criteria, new AsyncCallback<PageList<Resource>>() {
-
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError(MSG.view_inventory_resources_loadFailed(), caught);
                 response.setStatus(RPCResponse.STATUS_FAILURE);
@@ -147,11 +150,6 @@ public class DriftConfigurationDataSource extends RPCDataSource<DriftConfigurati
             }
 
             public void onSuccess(PageList<Resource> result) {
-                if (Log.isDebugEnabled()) {
-                    long fetchTime = System.currentTimeMillis() - start;
-                    Log.debug(result.size() + " resources (with drift configs) fetched in: " + fetchTime + "ms");
-                }
-
                 dataRetrieved(result, response, request);
             }
         });
@@ -163,7 +161,7 @@ public class DriftConfigurationDataSource extends RPCDataSource<DriftConfigurati
     protected void dataRetrieved(final PageList<Resource> result, final DSResponse response, final DSRequest request) {
         switch (entityContext.type) {
 
-        // no need to disambiguate, the dift configs are for a single resource
+        // no need to disambiguate, the drift configs are for a single resource
         case Resource:
             Set<DriftConfiguration> driftConfigs = DriftConfiguration.valueOf(result.get(0));
             response.setData(buildRecords(driftConfigs));
@@ -230,7 +228,6 @@ public class DriftConfigurationDataSource extends RPCDataSource<DriftConfigurati
      * @return should not exceed result.size(). 
      */
     protected int getTotalRows(final Set<DriftConfiguration> result, final DSResponse response, final DSRequest request) {
-
         return result.size();
     }
 
@@ -281,25 +278,24 @@ public class DriftConfigurationDataSource extends RPCDataSource<DriftConfigurati
 
         record.setAttribute(ATTR_ENTITY, from);
 
-        record.setAttribute("id", from.getId());
-        record.setAttribute("name", from.getName());
-        record.setAttribute("interval", String.valueOf(from.getInterval()));
-        record.setAttribute("baseDir", from.getBasedir());
-        record.setAttribute("enabled", from.getEnabled());
+        record.setAttribute(ATTR_ID, from.getId());
+        record.setAttribute(ATTR_NAME, from.getName());
+        record.setAttribute(ATTR_INTERVAL, String.valueOf(from.getInterval()));
+        record.setAttribute(ATTR_BASE_DIR_STRING, getBaseDirString(from.getBasedir()));
+        record.setAttribute(ATTR_ENABLED, ImageManager.getAvailabilityIcon(from.getEnabled()));
 
-        Resource resource = from.getResource();
-
-        // for ancestry handling       
-        record.setAttribute(AncestryUtil.RESOURCE_ID, resource.getId());
-        record.setAttribute(AncestryUtil.RESOURCE_NAME, resource.getName());
-        record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY, resource.getAncestry());
-        record.setAttribute(AncestryUtil.RESOURCE_TYPE_ID, resource.getResourceType().getId());
+        // // for ancestry handling       
+        // Resource resource = ...
+        // record.setAttribute(AncestryUtil.RESOURCE_ID, resource.getId());
+        // record.setAttribute(AncestryUtil.RESOURCE_NAME, resource.getName());
+        // record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY, resource.getAncestry());
+        // record.setAttribute(AncestryUtil.RESOURCE_TYPE_ID, resource.getResourceType().getId());
 
         return record;
     }
 
-    protected void executeRemove(Record recordToRemove, final DSRequest request, final DSResponse response) {
-        Window.alert(String.valueOf(recordToRemove.getAttributeAsInt("id")));
+    private static String getBaseDirString(BaseDirectory basedir) {
+        return basedir.getValueContext() + ":" + basedir.getValueName();
     }
 
     public ResourceGWTServiceAsync getResourceService() {

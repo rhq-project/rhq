@@ -34,14 +34,27 @@ public class Result {
     public static final String SUCCESS = "success";
     private String outcome;
     private Object result;
-    @JsonProperty("compensating-operation")
-    private Operation compensatingOperation;
     @JsonProperty("failure-description")
     private /*List<Map<String, String>>*/Object failureDescription;
     @JsonIgnore
     private boolean success = false;
     @JsonProperty("rolled-back")
     private boolean rolledBack = false;
+
+    /** Record throwsables during low level processing */
+    @JsonIgnore
+    private Throwable throwable;
+
+    public Object getResponseHeaders() {
+        return responseHeaders;
+    }
+
+    public void setResponseHeaders(Object responseHeaders) {
+        this.responseHeaders = responseHeaders;
+    }
+
+    @JsonProperty("response-headers")
+    private Object responseHeaders;
 
     public Result() {
 
@@ -69,14 +82,6 @@ public class Result {
         this.result = result;
     }
 
-    public Operation getCompensatingOperation() {
-        return compensatingOperation;
-    }
-
-    public void setCompensatingOperation(Operation compensatingOperation) {
-        this.compensatingOperation = compensatingOperation;
-    }
-
     public String getFailureDescription() {
         return failureDescription + ", rolled-back=" + rolledBack;
     }
@@ -92,6 +97,15 @@ public class Result {
     public void setRolledBack(boolean rolledBack) {
         this.rolledBack = rolledBack;
     }
+
+    public Throwable getThrowable() {
+        return throwable;
+    }
+
+    public void setThrowable(Throwable throwable) {
+        this.throwable = throwable;
+    }
+
 
     @Override
     public String toString() {

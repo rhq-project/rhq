@@ -458,4 +458,8 @@ public class LinkManager {
     public static String getBundleDeploymentLink(int bundleId, int bundleDeploymentId) {
         return "#Bundles/Bundle/" + bundleId + "/deployments/" + bundleDeploymentId;
     }
+
+    public static String getDriftHistoryLink(int resourceId, int driftId) {
+        return "#Resource/" + resourceId + "/Drift/History/" + driftId;
+    }
 }

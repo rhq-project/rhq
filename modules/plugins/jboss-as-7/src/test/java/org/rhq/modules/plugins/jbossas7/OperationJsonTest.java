@@ -124,7 +124,7 @@ public class OperationJsonTest {
 
     public void simpleResult() throws Exception {
 
-        String resultString = "{\"outcome\" : \"success\", \"result\" : \"no metrics available\", \"compensating-operation\" : null}";
+        String resultString = "{\"outcome\" : \"success\", \"result\" : \"no metrics available\"}";
 
         ObjectMapper mapper = new ObjectMapper();
         Result result = mapper.readValue(resultString,Result.class);
@@ -136,7 +136,7 @@ public class OperationJsonTest {
 
     public void simpleResult2() throws Exception {
 
-        String resultString = "{\"outcome\" : \"success\", \"result\" : \"DISABLED\", \"compensating-operation\" : null}";
+        String resultString = "{\"outcome\" : \"success\", \"result\" : \"DISABLED\"}";
 
         ObjectMapper mapper = new ObjectMapper();
         Result result = mapper.readValue(resultString,Result.class);
@@ -157,14 +157,13 @@ public class OperationJsonTest {
         assert !result.isSuccess();
 
         assert result.getResult() == null;
-        assert result.getCompensatingOperation() == null;
         assert result.getFailureDescription() != null;
 //        assert result.getFailureDescription().size() == 1;
     }
 
     public void complexResult1() throws Exception {
 
-        String resultString = " {\"outcome\" : \"success\", \"result\" : {\"alias\" : [\"example.com\"], \"access-log\" : null, \"rewrite\" : null}, \"compensating-operation\" : null}";
+        String resultString = " {\"outcome\" : \"success\", \"result\" : {\"alias\" : [\"example.com\"], \"access-log\" : null, \"rewrite\" : null}}";
 
         ObjectMapper mapper = new ObjectMapper();
         ComplexResult result = mapper.readValue(resultString,ComplexResult.class);
@@ -184,7 +183,7 @@ public class OperationJsonTest {
 
     public void arrayResult1() throws Exception {
 
-        String resultString = "{\"outcome\":\"success\",\"result\":[\"standard-sockets\",\"messaging-sockets\"],\"compensating-operation\":null, \"rolled-back\" : false}";
+        String resultString = "{\"outcome\":\"success\",\"result\":[\"standard-sockets\",\"messaging-sockets\"],\"response-headers\":null, \"rolled-back\" : false}";
 
         ObjectMapper mapper = new ObjectMapper();
         Result result = mapper.readValue(resultString,Result.class);
@@ -214,24 +213,6 @@ public class OperationJsonTest {
 
     }
 
-    public void compensatingOp() throws Exception {
-
-        String resultString = "{\"outcome\" : \"success\", \"result\" : null, \"compensating-operation\" : {\"operation\" : \"remove\", \"address\" : [{\"deployment\" : \"test.war\"}]}}";
-
-        ObjectMapper mapper = new ObjectMapper();
-        Result result = mapper.readValue(resultString,Result.class);
-
-        assert result != null;
-        assert result.getOutcome().equals("success");
-        assert result.isSuccess();
-
-        assert result.getCompensatingOperation()!=null;
-
-        Operation op = result.getCompensatingOperation();
-
-        assert op.getOperation().equals("remove");
-
-    }
 
     public void complexResult2() throws Exception {
 

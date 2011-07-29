@@ -26,12 +26,14 @@ import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
-import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
-import org.rhq.core.domain.criteria.DriftCriteria;
-import org.rhq.core.domain.drift.Drift;
-import org.rhq.core.domain.drift.DriftChangeSet;
+import org.rhq.core.domain.criteria.DriftChangeSetJPACriteria;
+import org.rhq.core.domain.criteria.DriftJPACriteria;
+import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.drift.DriftConfiguration;
-import org.rhq.core.domain.drift.DriftFile;
+import org.rhq.core.domain.drift.RhqDrift;
+import org.rhq.core.domain.drift.RhqDriftChangeSet;
+import org.rhq.core.domain.drift.RhqDriftFile;
+import org.rhq.core.domain.drift.Snapshot;
 import org.rhq.core.domain.util.PageList;
 
 @Local
@@ -70,7 +72,7 @@ public interface DriftManagerLocal extends DriftManagerRemote {
      * 
      * @return the number of Drift records deleted
      */
-    int deleteDriftsInNewTransaction(Subject subject, int... driftIds);
+    int deleteDriftsInNewTransaction(Subject subject, String... driftIds);
 
     /**
      * Remove the specified drifts.  Ids not identifying an actual drift record will be ignored.
@@ -81,7 +83,7 @@ public interface DriftManagerLocal extends DriftManagerRemote {
      *
      * @return the number of Drift records deleted
      */
-    int deleteDrifts(Subject subject, int[] driftIds);
+    int deleteDrifts(Subject subject, String[] driftIds);
 
     /**
      * Remove all drifts on the specified entity context.
@@ -91,24 +93,24 @@ public interface DriftManagerLocal extends DriftManagerRemote {
      * 
      * @return the number of Drift records deleted
      */
-    int deleteDriftsByContext(Subject subject, EntityContext entityContext) throws RuntimeException;
+    int deleteDriftsByContext(Subject subject, EntityContext entityContext);
 
     /**
      * Remove the provided driftConfig (identified by name) on the specified entityContext.
      * Agents, if available, will be notified of the change. 
      * @param subject
      * @param entityContext
-     * @param driftConfig
+     * @param driftConfigName
      */
     void deleteDriftConfiguration(Subject subject, EntityContext entityContext, String driftConfigName);
 
     /**
-     * Simple get method for a DriftFile. Does not return the content.
+     * Simple get method for a RhqDriftFile. Does not return the content.
      * @param subject
      * @param sha256
-     * @return The DriftFile sans content.
+     * @return The RhqDriftFile sans content.
      */
-    DriftFile getDriftFile(Subject subject, String sha256);
+    RhqDriftFile getDriftFile(Subject subject, String sha256);
 
     /**
      * Standard criteria based fetch method
@@ -116,7 +118,9 @@ public interface DriftManagerLocal extends DriftManagerRemote {
      * @param criteria
      * @return The DriftChangeSets matching the criteria
      */
-    PageList<DriftChangeSet> findDriftChangeSetsByCriteria(Subject subject, DriftChangeSetCriteria criteria);
+    PageList<RhqDriftChangeSet> findDriftChangeSetsByCriteria(Subject subject, DriftChangeSetJPACriteria criteria);
+
+    PageList<DriftComposite> findDriftCompositesByCriteria(Subject subject, DriftJPACriteria criteria);
 
     /**
      * Standard criteria based fetch method
@@ -124,7 +128,7 @@ public interface DriftManagerLocal extends DriftManagerRemote {
      * @param criteria
      * @return The Drifts matching the criteria
      */
-    PageList<Drift> findDriftsByCriteria(Subject subject, DriftCriteria criteria);
+    PageList<RhqDrift> findDriftsByCriteria(Subject subject, DriftJPACriteria criteria);
 
     /**
      * Get the specified drift configuration for the specified context.
@@ -134,8 +138,7 @@ public interface DriftManagerLocal extends DriftManagerRemote {
      * @return The drift configuration
      * @throws RuntimeException, IllegalArgumentException if entity or driftConfig not found.
      */
-    DriftConfiguration getDriftConfiguration(Subject subject, EntityContext entityContext, int driftConfigId)
-        throws RuntimeException;
+    DriftConfiguration getDriftConfiguration(Subject subject, EntityContext entityContext, int driftConfigId);
 
     /**
      * This method stores the provided change-set file for the resource. The version will be incremented based
@@ -175,7 +178,7 @@ public interface DriftManagerLocal extends DriftManagerRemote {
      * @return
      * @throws Exception
      */
-    public DriftFile persistDriftFile(DriftFile driftFile) throws Exception;
+    RhqDriftFile persistDriftFile(RhqDriftFile driftFile) throws Exception;
 
     /**
      * SUPPORTS DRIFT RHQ SERVER PLUGIN
@@ -183,6 +186,8 @@ public interface DriftManagerLocal extends DriftManagerRemote {
      * @param data
      * @throws Exception
      */
-    public void persistDriftFileData(DriftFile driftFile, InputStream data) throws Exception;
+    void persistDriftFileData(RhqDriftFile driftFile, InputStream data) throws Exception;
+
+    Snapshot createSnapshot(Subject subject, DriftChangeSetJPACriteria criteria);
 
 }

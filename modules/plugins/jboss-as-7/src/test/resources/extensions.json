@@ -88,6 +88,5 @@
     "org.jboss.as.weld" : {
       "module" : "org.jboss.as.weld"
     }
-  } ],
-  "compensating-operation" : null
+  } ]
 }

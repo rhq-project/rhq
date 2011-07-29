@@ -23,7 +23,6 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -38,23 +37,22 @@ import org.rhq.core.domain.content.transfer.DeployPackageStep;
 import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
 import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
-import org.rhq.core.domain.resource.CreateResourceStatus;
 import org.rhq.core.pluginapi.content.ContentContext;
 import org.rhq.core.pluginapi.content.ContentFacet;
 import org.rhq.core.pluginapi.content.ContentServices;
 import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
-import org.rhq.core.pluginapi.inventory.CreateResourceReport;
 import org.rhq.modules.plugins.jbossas7.json.CompositeOperation;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
 import org.rhq.modules.plugins.jbossas7.json.ReadChildrenNames;
+import org.rhq.modules.plugins.jbossas7.json.Result;
 
 /**
  * Component dealing with server group specific things
  * @author Heiko W. Rupp
  */
 @SuppressWarnings("unused")
-public class ServerGroupComponent extends DomainComponent implements ContentFacet, CreateChildResourceFacet {
+public class ServerGroupComponent extends ManagedASComponent implements ContentFacet, CreateChildResourceFacet {
 
     private static final String SUCCESS = "success";
     private static final String OUTCOME = "outcome";
@@ -110,8 +108,8 @@ public class ServerGroupComponent extends DomainComponent implements ContentFace
                     cop.addStep(step2);
                     cop.addStep(step3);
 
-                    JsonNode result = connection.executeRaw(cop);
-                    if (ASConnection.isErrorReply(result)) // TODO get failure message into response
+                    Result result = connection.execute(cop);
+                    if (!result.isSuccess()) // TODO get failure message into response
                         response.addPackageResponse(new DeployIndividualPackageResponse(details.getKey(),ContentResponseResult.FAILURE));
                     else {
                         DeployIndividualPackageResponse individualPackageResponse = new DeployIndividualPackageResponse(
@@ -143,17 +141,14 @@ public class ServerGroupComponent extends DomainComponent implements ContentFace
 
         List<PROPERTY_VALUE> serverGroupAddress = pathToAddress(path);
 
-        Operation op = new ReadChildrenNames(serverGroupAddress,"deployment"); // TODO read full packages not onyl names
-        JsonNode node = connection.executeRaw(op);
-        if (ASConnection.isErrorReply(node))
+        Operation op = new ReadChildrenNames(serverGroupAddress,"deployment"); // TODO read full packages not only names
+        Result node = connection.execute(op);
+        if (!node.isSuccess())
             return null;
 
-        JsonNode result = node.get("result");
-        Iterator<JsonNode> iter = result.getElements();
+        List<String> resultList = (List<String>) node.getResult(); // TODO needs checking
         Set<ResourcePackageDetails> details = new HashSet<ResourcePackageDetails>();
-        while (iter.hasNext()) {
-            JsonNode jNode = iter.next();
-            String file = jNode.getTextValue();
+        for (String file : resultList) {
             String t;
             if (file.contains("."))
                 t = file.substring(file.lastIndexOf(".")+1);

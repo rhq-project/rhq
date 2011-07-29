@@ -18,8 +18,11 @@
  */
 package org.rhq.modules.plugins.jbossas7;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashSet;
 import java.util.List;
@@ -30,7 +33,6 @@ import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.mc4j.ems.connection.support.metadata.LocalVMTypeDescriptor;
 import org.w3c.dom.Document;
 
 import org.rhq.core.domain.configuration.Configuration;
@@ -43,8 +45,6 @@ import org.rhq.core.pluginapi.inventory.ProcessScanResult;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.system.ProcessInfo;
-import org.rhq.plugins.jmx.JMXDiscoveryComponent;
-
 
 /**
  * Discovery class
@@ -53,9 +53,10 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
 
 {
 
-    static final String DJBOSS_SERVER_BASE_DIR = "-Djboss.server.base.dir=";
+    static final String DJBOSS_HOME_DIR = "-Djboss.home.dir=";
     static final String DORG_JBOSS_BOOT_LOG_FILE = "-Dorg.jboss.boot.log.file=";
     static final String DLOGGING_CONFIGURATION = "-Dlogging.configuration=";
+    static final String DASH_DASH_SERVER_CONFIG = "--server-config=";
     private final Log log = LogFactory.getLog(this.getClass());
 
     /**
@@ -77,11 +78,10 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
             String serverName;
             String psName = psr.getProcessScan().getName();
             String description = discoveryContext.getResourceType().getDescription();
-            if (psName.equals("ProcessController")) {
-                serverNameFull = "ProcessController";
-                serverName = "ProcessController";
-            } else if (psName.equals("HostController")) {
-                readHostXml(psr.getProcessInfo(),true);
+            String version = null;
+
+            if (psName.equals("HostController")) {
+                readStandaloneOrHostXml(psr.getProcessInfo(), true);
                 HostPort hp = getDomainControllerFromHostXml();
                 if (hp.isLocal) {
                     serverName = "DomainController";
@@ -92,11 +92,20 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
                     serverName = "HostController";
                     serverNameFull = "HostController";
                 }
-                config.put(new PropertySimple("homedir",getHomeDirFromCommandLine(psr.getProcessInfo().getCommandLine())));
-                // TODO add the start script
+                String homeDir = getHomeDirFromCommandLine(psr.getProcessInfo().getCommandLine());
+                config.put(new PropertySimple("baseDir", homeDir));
+                version = homeDir.substring(homeDir.lastIndexOf("-")+1);
+                config.put(new PropertySimple("startScript","bin/domain.sh"));
+                String host = findHost(psr.getProcessInfo(),true);
+                config.put(new PropertySimple("domainHost",host));
 
-            } else {
-                serverNameFull = getBaseDirFromCommandLine(commandLine);
+                fillUserPassFromFile(config,"domain",homeDir);
+
+                // TODO provide running config
+
+            } else { // Standalone server
+                serverNameFull = getHomeDirFromCommandLine(commandLine);
+                readStandaloneOrHostXml(psr.getProcessInfo(), false);
                 if (serverNameFull==null || serverNameFull.isEmpty()) {
                     // Try to obtain the server name
                     //  -Dorg.jboss.boot.log.file=domain/servers/server-one/log/boot.log
@@ -106,18 +115,31 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
                     tmp = tmp.substring( i + 8);
                     tmp = tmp.substring(0,tmp.indexOf("/"));
                     serverNameFull = tmp;
-
-                    String host = findHost(psr.getProcessInfo(),true);
-                    config.put(new PropertySimple("domainHost",host));
-
                 }
-                serverName = serverNameFull.substring(serverNameFull.lastIndexOf("/")+1);
+                String host = findHost(psr.getProcessInfo(),true);
+                config.put(new PropertySimple("domainHost",host));
+
+                config.put(new PropertySimple("baseDir",serverNameFull));
+                serverName = findHostName();
                 if (serverName.isEmpty())
                     serverName = serverNameFull;
+
+                version = serverName.substring(serverName.lastIndexOf("-")+1);
+
+                String serverConfig = getServerConfigFromCommandLine(commandLine);
+                config.put(new PropertySimple("config",serverConfig));
+                config.put(new PropertySimple("startScript","bin/standalone.sh"));
+
+                fillUserPassFromFile(config,"standalone", serverNameFull);
 
             }
             String logFile = getLogFileFromCommandLine(commandLine);
             initLogEventSourcesConfigProp(logFile,config);
+
+            HostPort managmentPort = getManagementPortFromHostXml();
+            config.put(new PropertySimple("hostname",managmentPort.host));
+            config.put(new PropertySimple("port",managmentPort.port));
+
 //            String javaClazz = psr.getProcessInfo().getName();
 
 
@@ -139,7 +161,7 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
                 discoveryContext.getResourceType(), // ResourceType
                 serverNameFull, // key TODO distinguish per domain?
                 serverName,  // Name
-                null,  // TODO real version ?
+                version,  // TODO get via API ?Á
                     description, // Description
                 config,
                 psr.getProcessInfo()
@@ -154,6 +176,48 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
         return discoveredResources;
 
         }
+
+    private void fillUserPassFromFile(Configuration config, String mode, String baseDir) {
+
+        String configDir = baseDir + File.separator + mode + File.separator + "configuration";
+
+        File file = new File(configDir ,"mgmt-users.properties");
+        if (!file.exists() || !file.canRead()) {
+            if (log.isDebugEnabled())
+                log.debug("No console user properties file found at [" + file.getAbsolutePath() + "] or file is not readable");
+            return;
+        }
+        BufferedReader br=null;
+        try {
+            FileReader fileReader = new FileReader(file);
+            br = new BufferedReader(fileReader);
+            String line;
+            while ((line = br.readLine())!=null) {
+                if (line.startsWith("#"))
+                    continue;
+                if (line.isEmpty())
+                    continue;
+                if (!line.contains("="))
+                    continue;
+                // found a candidate
+                String user = line.substring(0,line.indexOf("="));
+                String pass = line.substring(line.indexOf("=")+1);
+                config.put(new PropertySimple("user",user));
+                config.put(new PropertySimple("password",pass));
+
+            }
+        } catch (IOException e) {
+            e.printStackTrace();  // TODO: Customise this generated block
+        } finally {
+            if (br!=null)
+                try {
+                    br.close();
+                } catch (IOException e) {
+                    // empty
+                }
+        }
+
+    }
 
     private String findHost(ProcessInfo processInfo,boolean isDomain) {
         String hostXmlFile = getHostXmlFileLocation(processInfo, isDomain);
@@ -173,12 +237,13 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
         return hostName;
     }
 
-    String getBaseDirFromCommandLine(String[] commandLine) {
+
+    String getServerConfigFromCommandLine(String[] commandLine) {
             for (String line: commandLine) {
-                if (line.startsWith(DJBOSS_SERVER_BASE_DIR))
-                    return line.substring(DJBOSS_SERVER_BASE_DIR.length());
+                if (line.startsWith(DASH_DASH_SERVER_CONFIG))
+                    return line.substring(DASH_DASH_SERVER_CONFIG.length());
             }
-            return "";
+            return "standalone.xml";
         }
 
 //-Dorg.jboss.boot.log.file=/devel/jbas7/jboss-as/build/target/jboss-7.0.0.Alpha2/domain/log/server-manager/boot.log

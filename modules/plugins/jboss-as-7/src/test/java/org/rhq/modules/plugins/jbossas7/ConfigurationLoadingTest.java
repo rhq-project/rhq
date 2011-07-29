@@ -76,7 +76,7 @@ public class ConfigurationLoadingTest extends AbstractConfigurationHandlingTest 
 
 
         String resultString = " {\"outcome\" : \"success\", \"result\" : {\"alias\" : [\"example.com\",\"example2.com\"],"+
-                " \"access-log\" : \"my.log\", \"rewrite\" : true}, \"compensating-operation\" : null}";
+                " \"access-log\" : \"my.log\", \"rewrite\" : true}}";
 
         ObjectMapper mapper = new ObjectMapper();
         ComplexResult result = mapper.readValue(resultString,ComplexResult.class);
@@ -84,7 +84,7 @@ public class ConfigurationLoadingTest extends AbstractConfigurationHandlingTest 
 
         connection.setContent(json);
 
-        ConfigurationDelegate delegate = new ConfigurationDelegate(definition,connection,null);
+        ConfigurationLoadDelegate delegate = new ConfigurationLoadDelegate(definition,connection,null);
         Configuration config = delegate.loadResourceConfiguration();
 
         assert config.get("alias")!=null;
@@ -129,7 +129,7 @@ public class ConfigurationLoadingTest extends AbstractConfigurationHandlingTest 
                 "    },\n" +
                 "    \"suffix\" : \".yyyy-MM-dd\"\n" +
                 "  },\n" +
-                "  \"compensating-operation\" : null\n" +
+                "  \"response-headers\" : null\n" +
                 "}";
 
         FakeConnection connection = new FakeConnection();
@@ -155,7 +155,7 @@ public class ConfigurationLoadingTest extends AbstractConfigurationHandlingTest 
 
         connection.setContent(json);
 
-        ConfigurationDelegate delegate = new ConfigurationDelegate(definition,connection,null);
+        ConfigurationLoadDelegate delegate = new ConfigurationLoadDelegate(definition,connection,null);
         Configuration config = delegate.loadResourceConfiguration();
 
         assert config!=null;
@@ -221,8 +221,7 @@ public class ConfigurationLoadingTest extends AbstractConfigurationHandlingTest 
                 "        \"multicast-port\" : 18447\n" +
                 "      }"+
                 "    }\n" +
-                "  },\n" +
-                "  \"compensating-operation\" : null\n" +
+                "  }\n" +
                 "}";
 
         ConfigurationDefinition definition = loadDescriptor("socketBinding");
@@ -234,7 +233,7 @@ public class ConfigurationLoadingTest extends AbstractConfigurationHandlingTest 
         FakeConnection connection = new FakeConnection();
         connection.setContent(json);
 
-        ConfigurationDelegate delegate = new ConfigurationDelegate(definition,connection,null);
+        ConfigurationLoadDelegate delegate = new ConfigurationLoadDelegate(definition,connection,null);
         Configuration config = delegate.loadResourceConfiguration();
 
 
@@ -273,7 +272,7 @@ public class ConfigurationLoadingTest extends AbstractConfigurationHandlingTest 
         FakeConnection connection = new FakeConnection();
         connection.setContent(json);
 
-        ConfigurationDelegate delegate = new ConfigurationDelegate(definition,connection,null);
+        ConfigurationLoadDelegate delegate = new ConfigurationLoadDelegate(definition,connection,null);
         Configuration config = delegate.loadResourceConfiguration();
 
         assert config != null;
@@ -307,7 +306,7 @@ public class ConfigurationLoadingTest extends AbstractConfigurationHandlingTest 
         FakeConnection connection = new FakeConnection();
         connection.setContent(json);
 
-        ConfigurationDelegate delegate = new ConfigurationDelegate(definition,connection,null);
+        ConfigurationLoadDelegate delegate = new ConfigurationLoadDelegate(definition,connection,null);
         Configuration config = delegate.loadResourceConfiguration();
 
         assert config != null;
@@ -339,7 +338,7 @@ public class ConfigurationLoadingTest extends AbstractConfigurationHandlingTest 
         FakeConnection connection = new FakeConnection();
         connection.setContent(json);
 
-        ConfigurationDelegate delegate = new ConfigurationDelegate(definition,connection,null);
+        ConfigurationLoadDelegate delegate = new ConfigurationLoadDelegate(definition,connection,null);
         Configuration config = delegate.loadResourceConfiguration();
 
         assert config != null;
@@ -370,7 +369,7 @@ public class ConfigurationLoadingTest extends AbstractConfigurationHandlingTest 
         FakeConnection connection = new FakeConnection();
         connection.setContent(json);
 
-        ConfigurationDelegate delegate = new ConfigurationDelegate(definition,connection,null);
+        ConfigurationLoadDelegate delegate = new ConfigurationLoadDelegate(definition,connection,null);
         Configuration config = delegate.loadResourceConfiguration();
 
         assert config != null;
@@ -402,7 +401,7 @@ public class ConfigurationLoadingTest extends AbstractConfigurationHandlingTest 
         FakeConnection connection = new FakeConnection();
         connection.setContent(json);
 
-        ConfigurationDelegate delegate = new ConfigurationDelegate(definition,connection,null);
+        ConfigurationLoadDelegate delegate = new ConfigurationLoadDelegate(definition,connection,null);
         Configuration config = delegate.loadResourceConfiguration();
         assert config!=null;
         assert config.getAllProperties().size()==8 : "Did not find 8 properties, but " + config.getAllProperties().size();

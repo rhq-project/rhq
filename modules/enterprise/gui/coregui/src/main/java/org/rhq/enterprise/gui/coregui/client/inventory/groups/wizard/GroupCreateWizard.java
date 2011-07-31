@@ -22,84 +22,24 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.wizard;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.smartgwt.client.widgets.IButton;
-
 import org.rhq.core.domain.resource.group.ResourceGroup;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.LinkManager;
-import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizard;
-import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupListView;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
  * A wizard for creating a new Resource group.
  *
  * @author Greg Hinkle
+ * @author John Mazzitelli
  */
-public class GroupCreateWizard extends AbstractWizard {
+public class GroupCreateWizard extends AbstractGroupCreateWizard {
     private ResourceGroupListView resourceGroupListView;
 
-    private GroupCreateStep createStep;
-    private GroupMembersStep memberStep;
-
     public GroupCreateWizard(ResourceGroupListView resourceGroupListView) {
+        super();
         this.resourceGroupListView = resourceGroupListView;
-
-        List<WizardStep> steps = new ArrayList<WizardStep>();
-
-        steps.add(createStep = new GroupCreateStep());
-        steps.add(memberStep = new GroupMembersStep(this));
-        setSteps(steps);
     }
 
-    public String getWindowTitle() {
-        return MSG.view_groupCreateWizard_windowTitle();
-    }
-
-    public String getTitle() {
-        return MSG.view_groupCreateWizard_title();
-    }
-
-    public String getSubtitle() {
-        return null;
-    }
-
-    public List<IButton> getCustomButtons(int step) {
-        return null;
-    }
-
-    public void cancel() {
-        // Nothing to do.  Group is persisted after the "Finish" button.
-    }
-
-    public boolean createGroup() {
-
-        ResourceGroupGWTServiceAsync groupService = GWTServiceLookup.getResourceGroupService();
-
-        groupService.createResourceGroup(createStep.getGroup(), memberStep.getSelectedResourceIds(),
-            new AsyncCallback<ResourceGroup>() {
-                public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(MSG.view_groupCreateWizard_createFailure(), caught);
-                }
-
-                public void onSuccess(ResourceGroup result) {
-                    String groupUrl = LinkManager.getResourceGroupLink(result.getId());
-                    String conciseMessage = MSG.view_groupCreateWizard_createSuccessful_concise(groupUrl);
-                    String detailedMessage = MSG.view_groupCreateWizard_createSuccessful_full(result.getGroupCategory()
-                        .name().toLowerCase(), result.getName(), String
-                        .valueOf(memberStep.getSelectedResourceIds().length));
-                    CoreGUI.getMessageCenter().notify(new Message(conciseMessage, detailedMessage));
-                    resourceGroupListView.refresh();
-                }
-            });
-
-        return true;
+    public void groupCreateCallback(ResourceGroup group) {
+        resourceGroupListView.refresh();
     }
 }

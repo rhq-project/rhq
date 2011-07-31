@@ -25,6 +25,7 @@ package org.rhq.core.clientapi.agent.metadata;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -34,7 +35,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.clientapi.descriptor.plugin.Bundle;
+import org.rhq.core.clientapi.descriptor.plugin.BundleTargetDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.ContentDescriptor;
+import org.rhq.core.clientapi.descriptor.plugin.DriftDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.EventDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.MetricDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.OperationDescriptor;
@@ -49,7 +52,10 @@ import org.rhq.core.clientapi.descriptor.plugin.RunsInsideType;
 import org.rhq.core.clientapi.descriptor.plugin.ServerDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.ServiceDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.SubCategoryDescriptor;
+import org.rhq.core.clientapi.descriptor.plugin.BundleTargetDescriptor.DestinationBaseDir;
 import org.rhq.core.domain.bundle.BundleType;
+import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration;
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.event.EventDefinition;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.resource.ClassLoaderType;
@@ -436,12 +442,14 @@ public class PluginMetadataParser {
         // 2) Classes
         // 3) Plugin config
         // 4) Resource config
-        // 5) Metrics
-        // 6) Control operations
-        // 7) Process matches (for process scan auto-discovery)
-        // 8) Artifacts
-        // 9) Child subcategories
-        // 10) Bundle Type
+        // 5) Drift config
+        // 6) Metrics
+        // 7) Control operations
+        // 8) Process matches (for process scan auto-discovery)
+        // 9) Artifacts
+        // 10) Child subcategories
+        // 11) Bundle Type
+        // 12) Bundle Configuration (for types that are targets for bundle deployments)
 
         String classLoaderTypeString = resourceDescriptor.getClassLoader();
         if (classLoaderTypeString == null) {
@@ -482,6 +490,18 @@ public class PluginMetadataParser {
                 resourceType.setResourceConfigurationDefinition(ConfigurationMetadataParser.parse(resourceType
                     .getName(), resourceDescriptor.getResourceConfiguration()));
             }
+
+            Set<String> driftConfigNames = new HashSet<String>();
+            DriftMetadataParser driftMetadataParser = new DriftMetadataParser();
+            for (DriftDescriptor descriptor : resourceDescriptor.getDriftConfiguration()) {
+                if (driftConfigNames.contains(descriptor.getName())) {
+                    throw new InvalidPluginDescriptorException("Duplicate drift configuration name detected ["
+                        + descriptor.getName() + "]");
+                }
+                driftConfigNames.add(descriptor.getName());
+                resourceType.addDriftConfigurationTemplate(driftMetadataParser.parseDriftMetadata(descriptor));
+            }
+            driftConfigNames = null; // don't need this anymore
 
             int displayPosition = 1;
             for (MetricDescriptor metricDescriptor : resourceDescriptor.getMetric()) {
@@ -525,6 +545,24 @@ public class PluginMetadataParser {
             if (bundle != null) {
                 String typeName = bundle.getType();
                 resourceType.setBundleType(new BundleType(typeName, resourceType));
+            }
+
+            BundleTargetDescriptor bundleTarget = resourceDescriptor.getBundleTarget();
+            if (bundleTarget != null) {
+                List<DestinationBaseDir> destBaseDirs = bundleTarget.getDestinationBaseDir();
+                if (destBaseDirs != null && destBaseDirs.size() > 0) {
+                    Configuration c = new Configuration();
+                    ResourceTypeBundleConfiguration bundleConfiguration = new ResourceTypeBundleConfiguration(c);
+                    for (DestinationBaseDir destBaseDir : destBaseDirs) {
+                        String name = destBaseDir.getName();
+                        String valueContext = destBaseDir.getValueContext();
+                        String valueName = destBaseDir.getValueName();
+                        String description = destBaseDir.getDescription();
+                        bundleConfiguration.addBundleDestinationBaseDirectory(name, valueContext, valueName,
+                            description);
+                    }
+                    resourceType.setResourceTypeBundleConfiguration(bundleConfiguration);
+                }
             }
 
         } catch (InvalidPluginDescriptorException e) {

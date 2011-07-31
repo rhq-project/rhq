@@ -35,6 +35,7 @@ import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
+import com.smartgwt.client.data.ResultSet;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.Overflow;
@@ -89,6 +90,12 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * A tabular view of set of data records from an {@link RPCDataSource}.
+ *
+ * WARNING! If you make _any_ changes to this class, no matter how seemingly
+ * trivial, you must get it peer reviewed. Send out your proposed changes
+ * to the dev mailing list and ask for comments. Any problems introduced to
+ * this class are magnified because it is used in so many UI views and problems
+ * are hard to detect due to the varies ways it is used.
  *
  * @author Greg Hinkle
  * @author Ian Springer
@@ -333,7 +340,10 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
                 }
             });
 
-            setTableInfo(new Label("Total: " + listGrid.getTotalRows()));
+            Label tableInfo = new Label();
+            tableInfo.setWrap(false);
+            setTableInfo(tableInfo);
+            refreshRowCount();
 
             // NOTE: It is essential that we wait to hide any excluded fields until after super.onDraw() is called, since
             //       super.onDraw() is what actually adds the fields to the ListGrid (based on what fields are defined in
@@ -344,8 +354,6 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
                 }
             }
 
-            getTableInfo().setWrap(false);
-
             if (showHeader) {
                 drawHeader();
             }
@@ -355,6 +363,34 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             }
         } catch (Exception e) {
             CoreGUI.getErrorHandler().handleError(MSG.view_table_drawFail(this.toString()), e);
+        }
+    }
+
+    private void refreshRowCount() {
+        Label tableInfo = getTableInfo();
+        if (tableInfo != null) {
+            boolean lengthIsKnown = false;
+            if (listGrid != null) {
+                ResultSet results = listGrid.getResultSet();
+                if (results != null) {
+                    Boolean flag = results.lengthIsKnown();
+                    if (flag != null) {
+                        lengthIsKnown = flag.booleanValue();
+                    }
+                } else {
+                    lengthIsKnown = (listGrid.getDataSource() == null); // not bound by a datasource, assume we know
+                }
+            }
+
+            String contents;
+            if (lengthIsKnown) {
+                int totalRows = this.listGrid.getTotalRows();
+                int selectedRows = this.listGrid.getSelection().length;
+                contents = MSG.view_table_totalRows(String.valueOf(totalRows), String.valueOf(selectedRows));
+            } else {
+                contents = MSG.view_table_totalRowsUnknown();
+            }
+            tableInfo.setContents(contents);
         }
     }
 
@@ -833,7 +869,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
                 this.listGrid.setSelectionType(getDefaultSelectionStyle());
             }
 
-            int count = this.listGrid.getSelection().length;
+            int selectionCount = this.listGrid.getSelection().length;
             for (TableActionInfo tableAction : tableActions) {
                 if (tableAction.actionCanvas != null) { // if null, we haven't initialized our buttons yet, so skip this
                     boolean enabled = (!this.tableActionDisableOverride && tableAction.action.isEnabled(this.listGrid
@@ -851,10 +887,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
                     ((TableWidget) extraWidget).refresh(this.listGrid);
                 }
             }
-            if (getTableInfo() != null) {
-                getTableInfo().setContents(
-                    MSG.view_table_totalRows(String.valueOf(listGrid.getTotalRows()), String.valueOf(count)));
-            }
+            refreshRowCount();
         }
     }
 

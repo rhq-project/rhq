@@ -117,7 +117,13 @@ import org.rhq.core.domain.configuration.Configuration;
         + " WHERE roh.id = :historyId"), //
     @NamedQuery(name = OperationHistory.QUERY_DELETE_BY_HISTORY_IDS, query = "" //
         + "DELETE FROM OperationHistory oh " //
-        + " WHERE oh.id = :historyId ") })
+        + " WHERE oh.id = :historyId "),
+    @NamedQuery(name = OperationHistory.QUERY_DELETE_BY_DEFINITION, query = "" //
+        + "DELETE FROM OperationHistory  oh "
+        + " WHERE oh.operationDefinition = :definition"
+     )
+})
+
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_OPERATION_HISTORY_ID_SEQ")
 @Table(name = "RHQ_OPERATION_HISTORY")
 public abstract class OperationHistory implements Serializable {
@@ -131,6 +137,7 @@ public abstract class OperationHistory implements Serializable {
     public static final String QUERY_GET_PARAMETER_CONFIGURATION_IDS = "OperationHistory.getParameterConfigurationIds";
     public static final String QUERY_GET_RESULT_CONFIGURATION_IDS = "ResourceOperationHistory.getResultConfigurationIds";
     public static final String QUERY_DELETE_BY_HISTORY_IDS = "OperationHistory.deleteByHistoryIds";
+    public static final String QUERY_DELETE_BY_DEFINITION = "OperationHistory.deleteyByDefinition";
 
     private static final long serialVersionUID = 1L;
 
@@ -171,6 +178,7 @@ public abstract class OperationHistory implements Serializable {
     @JoinColumn(name = "PARAMETERS_CONFIG_ID", referencedColumnName = "ID", nullable = true)
     @OneToOne(cascade = { CascadeType.REMOVE }, fetch = FetchType.LAZY, optional = true)
     private Configuration parameters;
+
 
     protected OperationHistory() {
     }
@@ -292,7 +300,7 @@ public abstract class OperationHistory implements Serializable {
     }
 
     /**
-     * The time this entity was originally created.  This may, but will not necessarily, be similar or nearly identical 
+     * The time this entity was originally created.  This may, but will not necessarily, be similar or nearly identical
      * to the {@link #getStartedTime()} value.  If this is an operation on a single resource, then these two figures
      * will be very similar because resource operations are started immediately after the history element is created
      * for them.  If this is an operation on a resource group, especially a large group, then these two figures might
@@ -319,11 +327,11 @@ public abstract class OperationHistory implements Serializable {
     /**
      * This method MUST be called when the corresponding operation is triggered, but before the request is sent down to
      * the agent.  The started time is used in the calculation of {@link #getDuration()}, which is in turn used by the
-     * business layer to reason whether an operation has timed out.  If this method is never called, and if there are 
+     * business layer to reason whether an operation has timed out.  If this method is never called, and if there are
      * any issues executing the corresponding operation, this history element will never time out and will forever stay
-     * in the {@link OperationRequestStatus#INPROGRESS} state. 
-     * 
-     * @throws IllegalArgumentException if an attempt is made to start this object more than once 
+     * in the {@link OperationRequestStatus#INPROGRESS} state.
+     *
+     * @throws IllegalArgumentException if an attempt is made to start this object more than once
      * @see #getCreatedTime()
      */
     public void setStartedTime() {
@@ -334,9 +342,9 @@ public abstract class OperationHistory implements Serializable {
     }
 
     /**
-     * The time when corresponding operation was started.  If the corresponding operation has not yet been started, 
+     * The time when corresponding operation was started.  If the corresponding operation has not yet been started,
      * this method will return 0.
-     * 
+     *
      * @return started time, in epoch millis
      */
     public long getStartedTime() {
@@ -366,7 +374,7 @@ public abstract class OperationHistory implements Serializable {
         return end - start;
     }
 
-    /* 
+    /*
      * there may be some operations whose parameters are sensitive values, such as passwords - do not show them
      * as part of the toString.  they can still be gotten by explicitly calling getParameters()
      */

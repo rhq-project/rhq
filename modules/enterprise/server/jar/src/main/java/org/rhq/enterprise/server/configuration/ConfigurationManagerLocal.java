@@ -44,7 +44,6 @@ import org.rhq.core.domain.criteria.GroupResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.PluginConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.configuration.job.GroupPluginConfigurationUpdateJob;
@@ -568,4 +567,6 @@ public interface ConfigurationManagerLocal {
 
     PageList<GroupPluginConfigurationUpdate> findGroupPluginConfigurationUpdatesByCriteria(Subject subject,
         GroupPluginConfigurationUpdateCriteria criteria);
+
+    ConfigurationDefinition getOptionsForConfigurationDefinition(Subject subject, ConfigurationDefinition def);
 }

@@ -503,7 +503,7 @@ public class MBeanResourceComponent<T extends JMXComponent> implements Measureme
                     property.setErrorMessage(ThrowableUtil.getStackAsString(e));
                     report
                         .setErrorMessage("Failed setting resource configuration - see property error messages for details");
-                    log.info("Failure setting MBean Resource configuration value", e);
+                    log.info("Failure setting MBean Resource configuration value for " + key, e);
                 }
             }
         }

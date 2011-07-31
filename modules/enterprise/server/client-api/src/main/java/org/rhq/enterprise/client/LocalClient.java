@@ -40,6 +40,7 @@ import org.rhq.enterprise.server.configuration.ConfigurationManagerRemote;
 import org.rhq.enterprise.server.content.ContentManagerRemote;
 import org.rhq.enterprise.server.content.RepoManagerRemote;
 import org.rhq.enterprise.server.discovery.DiscoveryBossRemote;
+import org.rhq.enterprise.server.drift.DriftManagerRemote;
 import org.rhq.enterprise.server.event.EventManagerRemote;
 import org.rhq.enterprise.server.install.remote.RemoteInstallManagerRemote;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerRemote;
@@ -68,7 +69,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class LocalClient implements RhqFacade {
 
     private static final Log LOG = LogFactory.getLog(LocalClient.class);
-    
+
     private Subject subject;
     private Map<String, Object> managers;
 
@@ -129,6 +130,10 @@ public class LocalClient implements RhqFacade {
 
     public DiscoveryBossRemote getDiscoveryBoss() {
         return getProxy(LookupUtil.getDiscoveryBoss(), DiscoveryBossRemote.class);
+    }
+
+    public DriftManagerRemote getDriftManager() {
+        return getProxy(LookupUtil.getDriftManager(), DriftManagerRemote.class);
     }
 
     public EventManagerRemote getEventManager() {
@@ -221,9 +226,10 @@ public class LocalClient implements RhqFacade {
         RhqManagers manager = RhqManagers.forInterface(iface);
 
         Class<?> simplified = InterfaceSimplifier.simplify(iface);
-        
-        Object proxy = Proxy.newProxyInstance(iface.getClassLoader(), new Class<?>[] { simplified }, new LocalClientProxy(slsb, this, manager));
-        
+
+        Object proxy = Proxy.newProxyInstance(iface.getClassLoader(), new Class<?>[] { simplified },
+            new LocalClientProxy(slsb, this, manager));
+
         return iface.cast(proxy);
     }
 }

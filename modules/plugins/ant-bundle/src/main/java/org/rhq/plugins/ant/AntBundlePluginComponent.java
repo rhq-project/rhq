@@ -130,8 +130,7 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
 
                 // Parse and execute the Ant script.
                 executeDeploymentPhase(recipeFile, antProps, buildListeners, DeploymentPhase.STOP);
-                String deployDirString = bundleDeployment.getDestination().getDeployDir();
-                File deployDir = new File(deployDirString);
+                File deployDir = request.getAbsoluteDestinationDirectory();
                 DeploymentsMetadata deployMetadata = new DeploymentsMetadata(deployDir);
                 DeploymentPhase installPhase = (deployMetadata.isManaged()) ? DeploymentPhase.UPGRADE
                     : DeploymentPhase.INSTALL;
@@ -175,8 +174,7 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
         BundlePurgeResult result = new BundlePurgeResult();
         try {
             BundleResourceDeployment deploymentToPurge = request.getLiveResourceDeployment();
-            BundleDeployment bundleDeployment = deploymentToPurge.getBundleDeployment();
-            File deployDir = new File(bundleDeployment.getDestination().getDeployDir());
+            File deployDir = request.getAbsoluteDestinationDirectory();
             String deployDirAbsolutePath = deployDir.getAbsolutePath();
             BundleManagerProvider bundleManagerProvider = request.getBundleManagerProvider();
 
@@ -312,14 +310,11 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
 
         BundleResourceDeployment resourceDeployment = request.getResourceDeployment();
         BundleDeployment bundleDeployment = resourceDeployment.getBundleDeployment();
-        String deployDir = bundleDeployment.getDestination().getDeployDir();
-        if (deployDir == null) {
-            throw new IllegalStateException("Bundle deployment does not specify install dir: " + bundleDeployment);
-        }
-        antProps.setProperty(DeployPropertyNames.DEPLOY_DIR, deployDir);
-
         int deploymentId = bundleDeployment.getId();
+        String deployDir = request.getAbsoluteDestinationDirectory().getAbsolutePath();
+
         antProps.setProperty(DeployPropertyNames.DEPLOY_ID, Integer.toString(deploymentId));
+        antProps.setProperty(DeployPropertyNames.DEPLOY_DIR, deployDir);
         antProps.setProperty(DeployPropertyNames.DEPLOY_NAME, bundleDeployment.getName());
         antProps.setProperty(DeployPropertyNames.DEPLOY_REVERT, String.valueOf(request.isRevert()));
         antProps.setProperty(DeployPropertyNames.DEPLOY_CLEAN, String.valueOf(request.isCleanDeployment()));

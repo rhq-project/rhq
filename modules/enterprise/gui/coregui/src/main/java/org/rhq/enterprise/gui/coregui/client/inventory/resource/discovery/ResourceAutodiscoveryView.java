@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -40,6 +40,8 @@ import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+import com.smartgwt.client.widgets.grid.events.DataArrivedEvent;
+import com.smartgwt.client.widgets.grid.events.DataArrivedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
 import com.smartgwt.client.widgets.grid.events.SelectionEvent;
 import com.smartgwt.client.widgets.layout.HLayout;
@@ -51,6 +53,7 @@ import com.smartgwt.client.widgets.tree.TreeNode;
 
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
@@ -64,7 +67,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 /**
  * @author Greg Hinkle
  */
-public class ResourceAutodiscoveryView extends LocatableVLayout {
+public class ResourceAutodiscoveryView extends LocatableVLayout implements RefreshableView {
 
     private static final String TITLE = MSG.view_autoDiscoveryQ_title();
     private static final String HEADER_ICON = "global/AutoDiscovery_24.png";
@@ -73,8 +76,10 @@ public class ResourceAutodiscoveryView extends LocatableVLayout {
     private TreeGrid treeGrid;
     private ToolStrip footer;
     private DataSource dataSource;
+    // This allows the selection handler to ignore selection changes initiated by us, as opposed to by the user.
+    private boolean selectionChangedHandlerDisabled;
 
-    private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService(60000);
+    private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService(1000000);
 
     public ResourceAutodiscoveryView(String locatorId) {
         super(locatorId);
@@ -167,6 +172,10 @@ public class ResourceAutodiscoveryView extends LocatableVLayout {
 
         disableButtons(importButton, ignoreButton, unignoreButton);
 
+        footer.addMember(new LayoutSpacer());
+
+        // The remaining footer items (status filter, (de)select all buttons, and refresh button) will be right-aligned.
+
         DynamicForm form = new LocatableDynamicForm(this.extendLocatorId("Status"));
         final SelectItem statusSelectItem = new SelectItem("status", MSG.view_autoDiscoveryQ_showStatus());
         statusSelectItem.setValueMap(AutodiscoveryQueueDataSource.NEW, AutodiscoveryQueueDataSource.IGNORED,
@@ -182,7 +191,13 @@ public class ResourceAutodiscoveryView extends LocatableVLayout {
         });
         footer.addMember(form);
 
-        footer.addMember(new LayoutSpacer());
+        final IButton selectAllButton = new LocatableIButton(this.extendLocatorId("SelectAll"),
+                MSG.view_autoDiscoveryQ_selectAll());
+        footer.addMember(selectAllButton);
+        final IButton deselectAllButton = new LocatableIButton(this.extendLocatorId("DeselectAll"),
+                MSG.view_autoDiscoveryQ_deselectAll());
+        deselectAllButton.setDisabled(true);
+        footer.addMember(deselectAllButton);
 
         IButton refreshButton = new LocatableIButton(extendLocatorId("Refresh"), MSG.common_button_refresh());
         refreshButton.addClickHandler(new ClickHandler() {
@@ -193,9 +208,6 @@ public class ResourceAutodiscoveryView extends LocatableVLayout {
         footer.addMember(refreshButton);
 
         treeGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
-            // use this to ignore selection changes we initiate from within this handler
-            private boolean selectionChangedHandlerDisabled = false;
-
             public void onSelectionChanged(SelectionEvent selectionEvent) {
                 if (selectionChangedHandlerDisabled || selectionEvent.isRightButtonDown()) {
                     return;
@@ -218,7 +230,8 @@ public class ResourceAutodiscoveryView extends LocatableVLayout {
                                         }
                                     }
                                 }
-                                updateButtonEnablement(importButton, ignoreButton, unignoreButton);
+                                updateButtonEnablement(selectAllButton, deselectAllButton, importButton, ignoreButton,
+                                        unignoreButton);
                                 selectionChangedHandlerDisabled = false;
                             }
                         });
@@ -228,10 +241,11 @@ public class ResourceAutodiscoveryView extends LocatableVLayout {
                                 treeGrid.deselectRecord(child);
                             }
                         }
-                        // the immediate redraw below should not be necessary but without it the deselected
+                        // the immediate redraw below should not be necessary, but without it the deselected
                         // platform checkbox remained checked.
                         treeGrid.redraw();
-                        updateButtonEnablement(importButton, ignoreButton, unignoreButton);
+                        updateButtonEnablement(selectAllButton, deselectAllButton, importButton, ignoreButton,
+                                unignoreButton);
                         selectionChangedHandlerDisabled = false;
                     }
                 } else {
@@ -240,52 +254,71 @@ public class ResourceAutodiscoveryView extends LocatableVLayout {
                             treeGrid.selectRecord(parentNode);
                         }
                     }
-                    updateButtonEnablement(importButton, ignoreButton, unignoreButton);
+                    updateButtonEnablement(selectAllButton, deselectAllButton, importButton, ignoreButton,
+                            unignoreButton);
                     selectionChangedHandlerDisabled = false;
                 }
             }
 
-            private void updateButtonEnablement(IButton importButton, IButton ignoreButton, IButton unignoreButton) {
-                if (treeGrid.getSelection().length == 0) {
-                    importButton.setDisabled(true);
-                    ignoreButton.setDisabled(true);
-                    unignoreButton.setDisabled(true);
-                    return;
+        });
+
+        treeGrid.addDataArrivedHandler(new DataArrivedHandler() {
+            public void onDataArrived(DataArrivedEvent dataArrivedEvent) {
+                if (treeGrid != null) {
+                    updateButtonEnablement(selectAllButton, deselectAllButton, importButton, ignoreButton,
+                            unignoreButton);
+                    // NOTE: Due to a SmartGWT bug, the TreeGrid is not automatically redrawn upon data arrival, and
+                    //       calling treeGrid.markForRedraw() doesn't redraw it either. The user can mouse over the grid
+                    //       to cause it to redraw, but it is obviously not reasonable to expect that. So we must
+                    //       explicitly call redraw() here.
+                    treeGrid.redraw();
                 }
+            }
+        });
 
-                boolean importOk = false;
-                boolean ignoreOk = false;
-                boolean unignoreOk = false;
-
-                for (ListGridRecord listGridRecord : treeGrid.getSelection()) {
-                    TreeNode node = (TreeNode) listGridRecord;
-                    String status = node.getAttributeAsString("status");
-                    TreeNode parentNode = treeGrid.getTree().getParent(node);
-                    boolean isPlatform = treeGrid.getTree().isRoot(parentNode);
-
-                    importOk |= InventoryStatus.NEW.name().equals(status);
-                    unignoreOk |= InventoryStatus.IGNORED.name().equals(status);
-
-                    if (!isPlatform) {
-                        String parentStatus = parentNode.getAttributeAsString("status");
-                        if (InventoryStatus.COMMITTED.name().equals(parentStatus)) {
-                            ignoreOk |= InventoryStatus.NEW.name().equals(status);
+        selectAllButton.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent clickEvent) {
+                SC.ask(MSG.view_autoDiscoveryQ_confirmSelectAll(), new BooleanCallback() {
+                    public void execute(Boolean selectChildServers) {
+                        selectionChangedHandlerDisabled = true;
+                        TreeNode[] nodesToSelect;
+                        if (selectChildServers) {
+                            // NOTE: We do not use treeGrid.selectAllRecords() here, because it only selects nodes that
+                            //       are currently visible, and we want to select all nodes, including server nodes
+                            //       under a collapsed platform node.
+                            nodesToSelect = treeGrid.getTree().getAllNodes();
+                        } else {
+                            TreeNode rootNode = treeGrid.getTree().getRoot();
+                            // The children of the root node are the platform nodes.
+                            nodesToSelect = treeGrid.getTree().getChildren(rootNode);
                         }
+                        for (TreeNode nodeToSelect : nodesToSelect) {
+                            treeGrid.selectRecord(nodeToSelect);
+                        }
+                        treeGrid.markForRedraw();
+                        updateButtonEnablement(selectAllButton, deselectAllButton, importButton, ignoreButton,
+                                unignoreButton);
+                        selectionChangedHandlerDisabled = false;
                     }
-                }
+                });
+            }
+        });
 
-                importButton.setDisabled(!importOk || unignoreOk);
-                ignoreButton.setDisabled(!ignoreOk || unignoreOk);
-                unignoreButton.setDisabled(!unignoreOk || importOk || ignoreOk);
-                markForRedraw();
+        deselectAllButton.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent clickEvent) {
+                selectionChangedHandlerDisabled = true;
+                treeGrid.deselectAllRecords();
+                treeGrid.markForRedraw();
+                updateButtonEnablement(selectAllButton, deselectAllButton, importButton, ignoreButton, unignoreButton);
+                selectionChangedHandlerDisabled = false;
             }
         });
 
         importButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                disableButtons(importButton, ignoreButton, unignoreButton);
+                disableButtons(selectAllButton, deselectAllButton, importButton, ignoreButton, unignoreButton);
                 CoreGUI.getMessageCenter().notify(
-                    new Message("Importing the selected Resources...", Message.Severity.Info, EnumSet
+                    new Message(MSG.view_autoDiscoveryQ_importInProgress(), Message.Severity.Info, EnumSet
                         .of(Message.Option.Transient)));
 
                 resourceService.importResources(getSelectedIds(), new AsyncCallback<Void>() {
@@ -304,9 +337,9 @@ public class ResourceAutodiscoveryView extends LocatableVLayout {
 
         ignoreButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                disableButtons(importButton, ignoreButton, unignoreButton);
+                disableButtons(selectAllButton, deselectAllButton, importButton, ignoreButton, unignoreButton);
                 CoreGUI.getMessageCenter().notify(
-                    new Message("Ignoring the selected Resources...", Message.Severity.Info, EnumSet
+                    new Message(MSG.view_autoDiscoveryQ_ignoreInProgress(), Message.Severity.Info, EnumSet
                         .of(Message.Option.Transient)));
 
                 resourceService.ignoreResources(getSelectedIds(), new AsyncCallback<Void>() {
@@ -325,9 +358,9 @@ public class ResourceAutodiscoveryView extends LocatableVLayout {
 
         unignoreButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                disableButtons(importButton, ignoreButton, unignoreButton);
+                disableButtons(selectAllButton, deselectAllButton, importButton, ignoreButton, unignoreButton);
                 CoreGUI.getMessageCenter().notify(
-                    new Message("Unignoring the selected Resources...", Message.Severity.Info, EnumSet
+                    new Message(MSG.view_autoDiscoveryQ_unignoreInProgress(), Message.Severity.Info, EnumSet
                         .of(Message.Option.Transient)));
 
                 resourceService.unignoreResources(getSelectedIds(), new AsyncCallback<Void>() {
@@ -344,6 +377,49 @@ public class ResourceAutodiscoveryView extends LocatableVLayout {
             }
         });
 
+    }
+
+    private void updateButtonEnablement(IButton selectAllButton, IButton deselectAllButton,
+                                        IButton importButton, IButton ignoreButton, IButton unignoreButton) {
+        if (treeGrid.getSelection().length == 0) {
+            selectAllButton.setDisabled(false);
+            deselectAllButton.setDisabled(true);
+            importButton.setDisabled(true);
+            ignoreButton.setDisabled(true);
+            unignoreButton.setDisabled(true);
+            markForRedraw();
+            return;
+        }
+
+        boolean allSelected = (treeGrid.getSelection().length == treeGrid.getRecords().length);
+        selectAllButton.setDisabled(allSelected);
+        deselectAllButton.setDisabled(false);
+
+        boolean importOk = false;
+        boolean ignoreOk = false;
+        boolean unignoreOk = false;
+
+        for (ListGridRecord listGridRecord : treeGrid.getSelection()) {
+            TreeNode node = (TreeNode) listGridRecord;
+            String status = node.getAttributeAsString("status");
+            TreeNode parentNode = treeGrid.getTree().getParent(node);
+            boolean isPlatform = treeGrid.getTree().isRoot(parentNode);
+
+            importOk |= InventoryStatus.NEW.name().equals(status);
+            unignoreOk |= InventoryStatus.IGNORED.name().equals(status);
+
+            if (!isPlatform) {
+                String parentStatus = parentNode.getAttributeAsString("status");
+                if (InventoryStatus.COMMITTED.name().equals(parentStatus)) {
+                    ignoreOk |= InventoryStatus.NEW.name().equals(status);
+                }
+            }
+        }
+
+        importButton.setDisabled(!importOk || unignoreOk);
+        ignoreButton.setDisabled(!ignoreOk || unignoreOk);
+        unignoreButton.setDisabled(!unignoreOk || importOk || ignoreOk);
+        markForRedraw();
     }
 
     private void disableButtons(IButton... buttons) {
@@ -363,19 +439,14 @@ public class ResourceAutodiscoveryView extends LocatableVLayout {
         return TableUtility.getIds(selected);
     }
 
-    /** Custom refresh operation as we cannot directly extend Table because it
-     * contains a TreeGrid, not a ListGrid.
+    /**
+     * Custom refresh operation, as we cannot extend Table because we use a TreeGrid, not a ListGrid.
      */
-    @Override
-    public void redraw() {
-        super.redraw();
-        // Now reload the table data.
-        refresh();
-    }
-
-    private void refresh() {
-        this.treeGrid.invalidateCache();
-        this.treeGrid.markForRedraw();
+    public void refresh() {
+        if (this.treeGrid != null) {
+            this.treeGrid.invalidateCache();
+            this.treeGrid.markForRedraw();
+        }
     }
 
     public DataSource getDataSource() {

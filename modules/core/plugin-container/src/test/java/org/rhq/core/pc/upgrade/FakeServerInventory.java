@@ -26,11 +26,13 @@ package org.rhq.core.pc.upgrade;
 import static org.testng.Assert.fail;
 
 import java.lang.reflect.Field;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -81,6 +83,14 @@ public class FakeServerInventory {
         this.failing = failing;
     }
 
+    public synchronized void prepopulateInventory(Resource platform, Collection<Resource> topLevelServers) {
+        this.platform = fakePersist(platform, InventoryStatus.COMMITTED, new HashSet<String>());
+        for (Resource res : topLevelServers) {
+            res.setParentResource(this.platform);
+            fakePersist(res, InventoryStatus.COMMITTED, new HashSet<String>());
+        }
+    }
+    
     public synchronized CustomAction mergeInventoryReport(final InventoryStatus requiredInventoryStatus) {
         return new CustomAction("updateServerSideInventory") {
             public Object invoke(Invocation invocation) throws Throwable {
@@ -116,6 +126,27 @@ public class FakeServerInventory {
         };
     }
 
+    public synchronized CustomAction setResourceError() {
+        return new CustomAction("setResourceError") {
+            public Object invoke(Invocation invocation) throws Throwable {
+                synchronized(FakeServerInventory.this) {
+                    throwIfFailing();
+                    
+                    ResourceError error = (ResourceError) invocation.getParameter(0);
+                    
+                    Resource serverSideResource = resourceStore.get(error.getResource().getUuid());
+                    
+                    if (serverSideResource != null) {
+                        List<ResourceError> currentErrors = serverSideResource.getResourceErrors();
+                        currentErrors.add(error);
+                    }
+                    
+                    return null;
+                }
+            }
+        };
+    }
+    
     public synchronized CustomAction upgradeResources() {
         return new CustomAction("upgradeServerSideInventory") {
             @SuppressWarnings({ "serial", "unchecked" })
@@ -240,6 +271,17 @@ public class FakeServerInventory {
         return result;
     }
 
+    public void removeResource(Resource r) {
+        resourceStore.remove(r.getUuid());
+        Resource parent = r.getParentResource();
+        if (parent != null) {
+            parent.getChildResources().remove(r);
+        }
+        for(Resource child : r.getChildResources()) {
+            removeResource(child);
+        }
+    }
+    
     private Resource fakePersist(Resource agentSideResource, InventoryStatus requiredInventoryStatus,
         Set<String> inProgressUUIds) {
         Resource persisted = resourceStore.get(agentSideResource.getUuid());
@@ -248,6 +290,9 @@ public class FakeServerInventory {
         }
         if (persisted == null) {
             persisted = new Resource();
+            if (agentSideResource.getId() != 0 && counter < agentSideResource.getId()) {
+                counter = agentSideResource.getId() - 1;
+            }
             persisted.setId(++counter);
             persisted.setUuid(agentSideResource.getUuid());
             resourceStore.put(persisted.getUuid(), persisted);
@@ -265,18 +310,26 @@ public class FakeServerInventory {
 
         Resource parent = agentSideResource.getParentResource();
         if (parent != null && parent != Resource.ROOT) {
-            persisted.setParentResource(fakePersist(agentSideResource.getParentResource(), requiredInventoryStatus,
-                inProgressUUIds));
+            parent = fakePersist(agentSideResource.getParentResource(), requiredInventoryStatus,
+                inProgressUUIds);
+            persisted.setParentResource(parent);
+            parent.getChildResources().add(persisted);
         } else {
             persisted.setParentResource(parent);
         }
 
-        Set<Resource> childResources = new HashSet<Resource>();
-        persisted.setChildResources(childResources);
+        //persist the children
+        Set<Resource> childResources = new LinkedHashSet<Resource>();
         for (Resource child : agentSideResource.getChildResources()) {
             childResources.add(fakePersist(child, requiredInventoryStatus, inProgressUUIds));
         }
-
+        //now update the list with whatever the persisted resource contained in the past
+        //i.e. we prefer the current results from the agent but keep the children we used to
+        //have in the past. This is the same behavior as the actual RHQ server has.
+        childResources.addAll(persisted.getChildResources());
+        
+        persisted.setChildResources(childResources);
+        
         inProgressUUIds.remove(agentSideResource.getUuid());
 
         return persisted;

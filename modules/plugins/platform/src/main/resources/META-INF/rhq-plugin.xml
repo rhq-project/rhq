@@ -31,6 +31,22 @@
          </results>
       </operation>
 '>
+ <!ENTITY bundleTarget '
+      <bundle-target>
+         <destination-base-dir name="Root File System" description="The top root directory on the platform (/)" >
+            <value-context>fileSystem</value-context>
+            <value-name>/</value-name>
+         </destination-base-dir>
+      </bundle-target>
+'>
+ <!ENTITY driftConfig '
+      <drift-configuration name="File System">
+          <basedir>
+              <value-context>fileSystem</value-context>
+              <value-name>/</value-name>
+          </basedir>
+      </drift-configuration>
+'>
  <!ENTITY metrics '      
       <metric displayName="Hostname"
               property="Trait.hostname"
@@ -248,6 +264,9 @@
               <c:simple-property name="EstimatedSize" units="kilobytes"/>
          </configuration>
       </content>
+      
+      &driftConfig;
+      &bundleTarget;
 
    </platform>
 
@@ -343,6 +362,9 @@
       </content>
 -->
 
+      &driftConfig;
+      &bundleTarget;
+
    </platform>
    
    <platform name="Solaris"
@@ -360,6 +382,8 @@
       &platformCpu;
       &metrics;
       &syslogEventDefinition;
+      &driftConfig;
+      &bundleTarget;
 
    </platform>
    
@@ -372,6 +396,8 @@
       &nativeMetrics;
       &platformCpu;
       &metrics;
+      &driftConfig;
+      &bundleTarget;
    </platform>
    
    <platform name="AIX"
@@ -383,6 +409,8 @@
       &nativeMetrics;
       &platformCpu;
       &metrics;
+      &driftConfig;
+      &bundleTarget;      
    </platform>
    
    <platform name="FreeBSD"
@@ -394,6 +422,8 @@
       &nativeMetrics;
       &platformCpu;
       &metrics;
+      &driftConfig;
+      &bundleTarget;
    </platform>
    
    <platform name="Mac OS X"
@@ -410,6 +440,8 @@
       &platformCpu;
       &metrics;
       &syslogEventDefinition;
+      &driftConfig;
+      &bundleTarget;
    </platform>
    
    <platform name="Java"
@@ -419,6 +451,8 @@
       &platformSubcategories;
       &platformOperations;
       &metrics;
+      &driftConfig;
+      &bundleTarget;
    </platform>
 
    <service name="Network Adapter" discovery="NetworkAdapterDiscoveryComponent" class="NetworkAdapterComponent">

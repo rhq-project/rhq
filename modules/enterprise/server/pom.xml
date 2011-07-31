@@ -13,7 +13,7 @@
   <artifactId>rhq-enterprise-server-parent</artifactId>
   <packaging>pom</packaging>
 
-  <name>RHQ Enterprise Server</name>
+  <name>RHQ Enterprise Server Parent</name>
   <description>RHQ enterprise server parent POM</description>
 
   <scm>

@@ -19,6 +19,7 @@ logs
 dev-container
 dev-agent
 antlr-generated/
+gwt-tmp/
 *.tokens
 modules/enterprise/gui/portal-war/build/classes/*
 modules/enterprise/gui/coregui/build/classes/*

@@ -36,6 +36,9 @@ import org.testng.annotations.Test;
 import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
 import org.rhq.core.clientapi.descriptor.DescriptorPackages;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
+import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration;
+import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration.BundleDestinationBaseDirectory;
+import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration.BundleDestinationBaseDirectory.Context;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
@@ -213,7 +216,8 @@ public class MetadataManagerTest {
         assert bravo.getEnumeratedValues().size() == 4;
         assert bravo.getEnumeratedValues().get(0).getName().equals("First Option Name");
         assert bravo.getEnumeratedValues().get(0).getValue().equals("FirstOptionValue");
-        assert bravo.getEnumeratedValues().get(0).getValue().equals(def.getDefaultTemplate().getConfiguration().getSimpleValue("bravo", null));
+        assert bravo.getEnumeratedValues().get(0).getValue().equals(
+            def.getDefaultTemplate().getConfiguration().getSimpleValue("bravo", null));
 
         assert def.getPropertyDefinitionSimple("charlie").getType() == PropertySimpleType.BOOLEAN;
         assert def.getPropertyDefinitionSimple("delta").getType() == PropertySimpleType.INTEGER;
@@ -253,6 +257,25 @@ public class MetadataManagerTest {
         assert t.getConfiguration().getSimple("delta").getIntegerValue() == 42;
 
         assert serverType.getBundleType() == null : "bundle should not be defined for type: " + serverType;
+
+        // ensure the bundle target metadata is correct
+        ResourceTypeBundleConfiguration bundleTargetConfig = serverType.getResourceTypeBundleConfiguration();
+        assert bundleTargetConfig != null;
+        Set<ResourceTypeBundleConfiguration.BundleDestinationBaseDirectory> set = bundleTargetConfig
+            .getBundleDestinationBaseDirectories();
+        assert set.size() == 2;
+        for (BundleDestinationBaseDirectory bdbd : set) {
+            if (bdbd.getName().equals("basedir1")) {
+                assert bdbd.getValueContext() == Context.pluginConfiguration : bdbd;
+                assert bdbd.getValueName().equals("alpha") : bdbd;
+            } else if (bdbd.getName().equals("basedir2")) {
+                assert bdbd.getValueContext() == Context.resourceConfiguration : bdbd;
+                assert bdbd.getValueName().equals("resourceAlpha") : bdbd;
+            } else {
+                assert false : "Bad bundle target name: " + bdbd;
+            }
+        }
+
     }
 
     private void outputType(ResourceType type, int depth) {

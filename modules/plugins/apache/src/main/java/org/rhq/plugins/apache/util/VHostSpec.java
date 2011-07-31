@@ -42,6 +42,10 @@ public class VHostSpec {
         return ret;
     }
     
+    public VHostSpec() {
+        
+    }
+    
     public VHostSpec(ApacheDirective vhostDirective) {
         hosts = new ArrayList<String>(vhostDirective.getValues());
 

@@ -129,6 +129,12 @@ public interface PluginManagerLocal {
         throws Exception;
 
     /** Exists only to for transactional boundary reasons. Not for general consumption. */
-    boolean registerPluginTypes(Subject subject, Plugin plugin, PluginDescriptor pluginDescriptor, File pluginFile,
+//    boolean registerPluginTypes(Subject subject, Plugin plugin, PluginDescriptor pluginDescriptor, File pluginFile,
+//        boolean forceUpdate) throws Exception;
+    boolean registerPluginTypes(Plugin newPlugin, PluginDescriptor pluginDescriptor, boolean newOrUpdated,
         boolean forceUpdate) throws Exception;
+
+    /** Exists only for transactional boundary reasons. Not for general consumption. */
+    boolean installPluginJar(Subject subject, Plugin newPlugin, PluginDescriptor pluginDescriptor,
+        File pluginFile) throws Exception;
 }

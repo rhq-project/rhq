@@ -2746,8 +2746,10 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 for (Resource child : resource.getChildResources()) {
                     activateAndUpgradeResourceRecursively(child, doUpgrade);
                 }
-            } catch (PluginContainerException e) {
-                log.error("Exception thrown while activating [" + resource + "].", e);
+            } catch (InvalidPluginConfigurationException e) {
+                log.debug("Failed to activate resource [" + resource + "] due to invalid plugin configuration.", e);
+            } catch (Throwable t) {
+                log.error("Exception thrown while activating [" + resource + "].", t);
             }
         }
     }

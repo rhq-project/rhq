@@ -141,7 +141,8 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
         form.setDataSource(GroupDefinitionDataSource.getInstance());
         form.setHiliteRequiredFields(true);
         form.setRequiredTitleSuffix(" <span style=\"color: red;\">* </span>:");
-        DSOperationType saveOperationType = (groupDefinition.getId() == 0) ? DSOperationType.ADD : DSOperationType.UPDATE;
+        DSOperationType saveOperationType = (groupDefinition.getId() == 0) ? DSOperationType.ADD
+            : DSOperationType.UPDATE;
         form.setSaveOperationType(saveOperationType);
 
         final DynaGroupChildrenView dynaGroupChildrenView = new DynaGroupChildrenView(extendLocatorId("DynaGroups"),
@@ -200,7 +201,7 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
                         } else {
                             Record newRecord = results[0];
                             GroupDefinition newGroupDefinition = GroupDefinitionDataSource.getInstance().copyValues(
-                                    newRecord);
+                                newRecord);
                             if (recalc) {
                                 recalculate(dynaGroupChildrenView, newGroupDefinition.getId());
                             }
@@ -350,8 +351,7 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
         templateSelectorTitleSpacer.setColSpan(1);
         templateSelectorTitleSpacer.setEndRow(false);
 
-        // TODO: i18n title
-        templateSelector = new SelectItem("templateSelector", "Saved Expression");
+        templateSelector = new SelectItem("templateSelector", MSG.view_dynagroup_exprBuilder_savedExpression());
         templateStrings = getTemplates();
         templateSelector.setValueMap(templateStrings.keySet().toArray(new String[templateStrings.size()]));
         templateSelector.setAllowEmptyValue(true);

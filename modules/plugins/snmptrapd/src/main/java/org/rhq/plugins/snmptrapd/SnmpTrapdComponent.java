@@ -25,7 +25,7 @@ import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.snmp4j.Snmp;
-import org.snmp4j.TransportMapping;
+import org.snmp4j.log.Log4jLogFactory;
 import org.snmp4j.smi.UdpAddress;
 import org.snmp4j.transport.DefaultUdpTransportMapping;
 
@@ -57,6 +57,9 @@ public class SnmpTrapdComponent implements ResourceComponent, MeasurementFacet {
     private Snmp snmp;
     private SnmpTrapEventPoller snmpTrapEventPoller;
     public static int trapCount = 0;
+    static {
+        org.snmp4j.log.LogFactory.setLogFactory(new Log4jLogFactory());
+    }
 
     /* (non-Javadoc)
      * @see org.rhq.core.pluginapi.inventory.ResourceComponent#getAvailability()
@@ -65,7 +68,7 @@ public class SnmpTrapdComponent implements ResourceComponent, MeasurementFacet {
         return AvailabilityType.UP;
     }
 
-    /** 
+    /**
      * Start the event polling mechanism and the actual trap listener.
      * @see org.rhq.core.pluginapi.inventory.ResourceComponent#start(org.rhq.core.pluginapi.inventory.ResourceContext)
      */
@@ -78,19 +81,22 @@ public class SnmpTrapdComponent implements ResourceComponent, MeasurementFacet {
         String community = ps.getStringValue();
         ps = conf.getSimple("eventSeverityOid");
         String severityOid = ps.getStringValue();
+        ps = conf.getSimple("pollInterval");
+        int pollInterval = ps.getIntegerValue();
 
         eventContext = context.getEventContext();
-        snmpTrapEventPoller = new SnmpTrapEventPoller(severityOid);
-        eventContext.registerEventPoller(snmpTrapEventPoller, 60);
 
         // TODO: check if the engine is already alive
         try {
             UdpAddress targetAddress = new UdpAddress(port);
-            TransportMapping transport = new DefaultUdpTransportMapping(targetAddress);
-            snmp = new Snmp(transport);
+            // TransportMapping transport = new DefaultUdpTransportMapping(targetAddress);
+            snmp = new Snmp(new DefaultUdpTransportMapping());
+            snmpTrapEventPoller = new SnmpTrapEventPoller(severityOid);
+            eventContext.registerEventPoller(snmpTrapEventPoller, pollInterval);
             // TODO set up the community here
-            snmp.addCommandResponder(snmpTrapEventPoller);
-            transport.listen();
+            if (!snmp.addNotificationListener(targetAddress, snmpTrapEventPoller))
+                throw new IOException("cannot attach to " + targetAddress);
+            //transport.listen();
         } catch (IOException e) {
             log.error("Cannot start snmp engine. Cause: " + ThrowableUtil.getAllMessages(e));
         }

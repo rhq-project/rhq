@@ -25,7 +25,9 @@ import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.rhq.plugins.apache.ApacheServerComponent;
 import org.rhq.plugins.apache.ApacheVirtualHostServiceComponent;
@@ -64,15 +66,42 @@ public class VirtualHostLegacyResourceKeyUtil {
      * This uses the algoritms used in the RHQ 3 codebase and returns both the resource key
      * that would be generated wihout SNMP support and with it.
      * <p>
-     * The returned list contains either 1 or 2 elements. The first element is always the resource
-     * key as it would be generated without SNMP support. The second element is the resource key as 
-     * it would be derived from the SNMP record. If the legacy algorithm wouldn't be able to 
-     * deduce the resource key from SNMP (which could happen), the second element wouldn't be present
-     * in the resulting list.
-     * . 
+     * The returned set also contains the resource key as it would be found by RHQ 1.x
+     *  
      * @return possible resource keys of the main server.
      */
-    public List<String> getLegacyMainServerResourceKeys() {
+    public Set<String> getLegacyMainServerResourceKeys() {
+        Set<String> ret = new HashSet<String>();
+        
+        String key = getRHQ3NonSNMPLegacyMainServerResourceKey();
+        
+        ret.add(key);
+        
+        String snmpKey = getRHQ3SNMPLikeResourceKey(key);
+
+        if (snmpKey != null) {
+            ret.add(snmpKey);
+        }
+
+        ret.add(addressUtility.getHttpdInternalMainServerAddressRepresentation(runtimeConfig).toString(false, false));
+        
+        return ret;
+    }
+    
+    /**
+     * A resource key for the main vhost that would be returned by the RHQ 3 codebase
+     * if SNMP wasn't enabled during discovery.
+     * <p>     
+     * Note that this can return 2 different values depending on whether the URL property
+     * in the parent apache server's plugin configuration is set or not.
+     * <p>
+     * Because the resource key is dependent on a value manually entered by the user (albeit 
+     * autodetected during discovery), no attempt is made to guess what values that property
+     * could have had. Only the current value is used.
+     * 
+     * @return
+     */
+    public String getRHQ3NonSNMPLegacyMainServerResourceKey() {
         String mainServerUrl = serverComponent.getServerUrl();
         
         String key = null;
@@ -94,29 +123,45 @@ public class VirtualHostLegacyResourceKeyUtil {
             key = ApacheVirtualHostServiceComponent.MAIN_SERVER_RESOURCE_KEY;
         }
         
-        String snmpKey = getSNMPResourceKey(key);
-
-        String[] ret = new String[snmpKey == null ? 1 : 2];
-        
-        ret[0] = key;
-        if (snmpKey != null) {
-            ret[1] = snmpKey;
-        }
-        
-        return Arrays.asList(ret);
+        return key;
     }
     
     /**
      * Returns a list of possible resource keys that the RHQ 3 code could generate for the specified
      * vhost.
      * <p>
-     * As with {@link #getLegacyMainServerResourceKeys()} the resulting list will contain either 1 or 
-     * 2 elements depending on the ability of the legacy algorithm to deduce the resource key from SNMP.
+     * As with {@link #getLegacyMainServerResourceKeys()} the resulting set will contain all the various
+     * resource keys that could have been found by past versions of the plugin.
      * 
      * @param vhost
      * @return the possible vhosts
      */
-    public List<String> getLegacyVirtualHostResourceKeys(VHostSpec vhost) {
+    public Set<String> getLegacyVirtualHostResourceKeys(VHostSpec vhost) {
+        String key = getRHQ3NonSNMPLegacyVirtualHostResourceKey(vhost);
+
+        Set<String> ret = new HashSet<String>();
+        
+        ret.add(key);
+        
+        String snmpKey = getRHQ3SNMPLikeResourceKey(key);
+        if (snmpKey != null) {
+            ret.add(snmpKey);
+        }
+
+        String snmpKeyFromRhq1 = addressUtility.getHttpdInternalVirtualHostAddressRepresentation(runtimeConfig, vhost.hosts.get(0), vhost.serverName).toString(false, false);
+        ret.add(snmpKeyFromRhq1);
+        
+        return ret;
+    }
+    
+    /**
+     * A resource key for given vhost that would be returned by RHQ 3 if SNMP wasn't enabled during
+     * discovery.
+     * 
+     * @param vhost
+     * @return
+     */
+    public String getRHQ3NonSNMPLegacyVirtualHostResourceKey(VHostSpec vhost) {
         String host = vhost.hosts.get(0);
         HttpdAddressUtility.Address hostAddr = HttpdAddressUtility.Address.parse(host);
         if (vhost.serverName != null) {
@@ -131,21 +176,18 @@ public class VirtualHostLegacyResourceKeyUtil {
         } catch (UnknownHostException e) {
         } 
         
-        String key = hostAddr.host + ":" + hostAddr.port;
-
-        String snmpKey = getSNMPResourceKey(key);
-
-        String[] ret = new String[snmpKey == null ? 1 : 2];
-        ret[0] = key;
-        
-        if (snmpKey != null) {
-            ret[1] = snmpKey;
-        }
-               
-        return Arrays.asList(ret);
+        return hostAddr.host + ":" + hostAddr.port;
     }
     
-    private String getSNMPResourceKey(String nonSnmpResourceKey) {
+    /**
+     * Returns an "SNMP" resource key that would have been resolved out of the non-snmp resource key
+     * by the RHQ 3 code-base. Note that the returned key actually isn't what SNMP module would 
+     * actually return.
+     * 
+     * @param nonSnmpResourceKey
+     * @return
+     */
+    public String getRHQ3SNMPLikeResourceKey(String nonSnmpResourceKey) {
         int idx = getMatchingWwwServiceIndex(nonSnmpResourceKey);
         
         if (idx < 0) {

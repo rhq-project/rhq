@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.rhq.common.drift.Headers;
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.bundle.BundleAgentService;
 import org.rhq.core.clientapi.agent.bundle.BundlePurgeRequest;
@@ -34,6 +35,7 @@ import org.rhq.core.clientapi.agent.configuration.ConfigurationUpdateRequest;
 import org.rhq.core.clientapi.agent.content.ContentAgentService;
 import org.rhq.core.clientapi.agent.discovery.DiscoveryAgentService;
 import org.rhq.core.clientapi.agent.discovery.InvalidPluginConfigurationClientException;
+import org.rhq.core.clientapi.agent.drift.DriftAgentService;
 import org.rhq.core.clientapi.agent.inventory.CreateResourceRequest;
 import org.rhq.core.clientapi.agent.inventory.CreateResourceResponse;
 import org.rhq.core.clientapi.agent.inventory.DeleteResourceRequest;
@@ -56,6 +58,8 @@ import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
+import org.rhq.core.domain.drift.DriftConfiguration;
+import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDataRequest;
@@ -65,7 +69,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.agentclient.AgentClient;
 
-public class TestAgentClient implements AgentClient, BundleAgentService, ContentAgentService,
+public class TestAgentClient implements AgentClient, BundleAgentService, DriftAgentService, ContentAgentService,
     ResourceFactoryAgentService, ConfigurationAgentService, DiscoveryAgentService, MeasurementAgentService,
     OperationAgentService, SupportAgentService {
     private final Agent agent;
@@ -319,5 +323,31 @@ public class TestAgentClient implements AgentClient, BundleAgentService, Content
     @Override
     public BundlePurgeResponse purge(BundlePurgeRequest request) {
         return new BundlePurgeResponse();
+    }
+
+    @Override
+    public DriftAgentService getDriftAgentService() {
+        return (commService.driftService != null) ? commService.driftService : this;
+    }
+
+    @Override
+    public boolean requestDriftFiles(int resourceId, Headers headers, List<DriftFile> driftFiles) {
+        return false;
+    }
+
+    @Override
+    public void scheduleDriftDetection(int resourceId, DriftConfiguration driftConfiguration) {
+    }
+
+    @Override
+    public void detectDrift(int resourceId, DriftConfiguration driftConfiguration) {
+    }
+
+    @Override
+    public void unscheduleDriftDetection(int resourceId, DriftConfiguration driftConfiguration) {
+    }
+
+    @Override
+    public void updateDriftDetection(int resourceId, DriftConfiguration driftConfiguration) {
     }
 }

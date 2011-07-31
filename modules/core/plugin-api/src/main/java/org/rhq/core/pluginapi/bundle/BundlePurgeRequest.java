@@ -19,8 +19,10 @@
 
 package org.rhq.core.pluginapi.bundle;
 
+import java.io.File;
 import java.io.Serializable;
 
+import org.rhq.core.domain.bundle.BundleDestination;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
 
 /**
@@ -33,8 +35,23 @@ public class BundlePurgeRequest implements Serializable {
 
     private BundleResourceDeployment resourceDeployment;
     private BundleManagerProvider bundleManagerProvider;
+    private File absDestDir;
 
     public BundlePurgeRequest() {
+    }
+
+    /**
+     * Returns the full, absolute directory as found on the local machine's file system
+     * where the bundle should be deployed. This is the bundle destination's
+     * {@link BundleDestination#getDeployDir() relative destination directory} under the
+     * {@link BundleDestination#getDestinationBaseDirectoryName() destination base directory}.
+     */
+    public File getAbsoluteDestinationDirectory() {
+        return this.absDestDir;
+    }
+
+    public void setAbsoluteDestinationDirectory(File absoluteDestDir) {
+        this.absDestDir = absoluteDestDir;
     }
 
     /**
@@ -62,6 +79,7 @@ public class BundlePurgeRequest implements Serializable {
     public String toString() {
         StringBuilder str = new StringBuilder(this.getClass() + ": ");
         str.append("live-deployment-to-be-purge=[").append(resourceDeployment.toString()).append("], ");
+        str.append("full-deploy-directory=[").append(absDestDir.toString()).append("]");
         return str.toString();
     }
 }

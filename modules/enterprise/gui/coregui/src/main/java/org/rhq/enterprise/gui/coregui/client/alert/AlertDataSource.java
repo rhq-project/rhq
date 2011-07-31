@@ -100,14 +100,13 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
     public ArrayList<ListGridField> getListGridFields() {
         ArrayList<ListGridField> fields = new ArrayList<ListGridField>(6);
 
-        ListGridField ctimeField = new ListGridField(AlertCriteria.SORT_FIELD_CTIME, MSG
-            .view_alerts_field_created_time());
+        ListGridField ctimeField = new ListGridField(AlertCriteria.SORT_FIELD_CTIME, MSG.common_title_createTime());
         ctimeField.setCellFormatter(new TimestampCellFormatter());
         ctimeField.setShowHover(true);
         ctimeField.setHoverCustomizer(TimestampCellFormatter.getHoverCustomizer(AlertCriteria.SORT_FIELD_CTIME));
         fields.add(ctimeField);
 
-        ListGridField nameField = new ListGridField("name", MSG.view_alerts_field_name());
+        ListGridField nameField = new ListGridField("name", MSG.common_title_name());
         nameField.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
                 Integer resourceId = listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID);

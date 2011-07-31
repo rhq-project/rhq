@@ -205,6 +205,14 @@ public abstract class AbstractAugeasConfigurationComponentTest {
             throw new IOException("Failed to create temporary directory (" + tmpDir + ").");
         }
         pcConfig.setTemporaryDirectory(tmpDir);
+        
+        File dataDir = new File(ITEST_DIR, "plugin-data");
+        dataDir.mkdirs();
+        if (!dataDir.isDirectory() || !dataDir.canWrite()) {
+            throw new IOException("Failed to create data directory (" + dataDir + ").");
+        }
+        pcConfig.setDataDirectory(dataDir);
+        
         return pcConfig;
     }
 

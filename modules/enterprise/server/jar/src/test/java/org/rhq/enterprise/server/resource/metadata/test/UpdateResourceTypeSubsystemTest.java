@@ -19,22 +19,23 @@
 package org.rhq.enterprise.server.resource.metadata.test;
 
 import java.util.Set;
-import java.util.UUID;
 
 import javax.persistence.EntityManager;
 import javax.transaction.Status;
 
-import org.jetbrains.annotations.NotNull;
-import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.criteria.ResourceCriteria;
-import org.rhq.core.domain.resource.InventoryStatus;
-import org.rhq.core.domain.resource.Resource;
-import org.rhq.enterprise.server.util.LookupUtil;
 import org.testng.annotations.Test;
 
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration;
+import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration.BundleDestinationBaseDirectory;
+import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration.BundleDestinationBaseDirectory.Context;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * Note, plugins are registered in new transactions. For tests, this means
@@ -45,6 +46,86 @@ public class UpdateResourceTypeSubsystemTest extends UpdateSubsytemTestBase {
     @Override
     protected String getSubsystemDirectory() {
         return "resource-type";
+    }
+
+    /**
+     * Tests updating bundle-target config
+     */
+    @Test
+    public void testResourceTypeBundleTarget() throws Exception {
+        try {
+            // register the plugin - it has a platform with child server that is a bundle target
+            registerPlugin("updateResourceTypeBundleTarget-v1.xml");
+            ResourceType platform1 = getResourceType("myPlatform1");
+            getTransactionManager().begin();
+            EntityManager em = getEntityManager();
+            platform1 = em.find(ResourceType.class, platform1.getId());
+
+            assert platform1.getResourceTypeBundleConfiguration() == null : "platform should not be a bundle target";
+            Set<ResourceType> servers1 = platform1.getChildResourceTypes();
+
+            assert servers1.size() == 1 : "must only have one child server under the test platform";
+            ResourceType server1 = servers1.iterator().next();
+            ResourceTypeBundleConfiguration bundleConfig1 = server1.getResourceTypeBundleConfiguration();
+            assert bundleConfig1 != null : "server should have been a bundle target";
+
+            Set<BundleDestinationBaseDirectory> baseDirs1 = bundleConfig1.getBundleDestinationBaseDirectories();
+            assert baseDirs1.size() == 2 : "should have been 2 bundle dest base dirs: " + baseDirs1;
+
+            for (BundleDestinationBaseDirectory baseDir : baseDirs1) {
+                if (baseDir.getName().equals("firstDestBaseDir")) {
+                    assert baseDir.getValueContext() == Context.pluginConfiguration : "bad context: " + baseDir;
+                    assert baseDir.getValueName().equals("prop1") : "bad value" + baseDir;
+                } else if (baseDir.getName().equals("secondDestBaseDir")) {
+                    assert baseDir.getValueContext() == Context.fileSystem : "bad context: " + baseDir;
+                    assert baseDir.getValueName().equals("/") : "bad value" + baseDir;
+                } else {
+                    assert false : "wrong dest base dir was retrieved: " + baseDir;
+                }
+            }
+
+            getTransactionManager().rollback();
+
+            // now upgrade the plugin - the bundle config will have changed in the server
+            registerPlugin("updateResourceTypeBundleTarget-v2.xml");
+            ResourceType platform2 = getResourceType("myPlatform1");
+            getTransactionManager().begin();
+            em = getEntityManager();
+            platform2 = em.find(ResourceType.class, platform2.getId());
+
+            assert platform1.getResourceTypeBundleConfiguration() == null : "platform should not be a bundle target";
+            Set<ResourceType> servers2 = platform2.getChildResourceTypes();
+
+            assert servers2.size() == 1 : "Expected to find 1 server";
+            ResourceType server2 = servers2.iterator().next();
+            ResourceTypeBundleConfiguration bundleConfig2 = server2.getResourceTypeBundleConfiguration();
+            assert bundleConfig2 != null : "server should have been a bundle target";
+
+            Set<BundleDestinationBaseDirectory> baseDirs2 = bundleConfig2.getBundleDestinationBaseDirectories();
+            assert baseDirs2.size() == 1 : "should have been 1 bundle dest base dir: " + baseDirs2;
+
+            BundleDestinationBaseDirectory baseDir = baseDirs2.iterator().next();
+            assert baseDir.getName().equals("thirdDestBaseDir");
+            assert baseDir.getValueContext() == Context.resourceConfiguration : "bad context: " + baseDir;
+            assert baseDir.getValueName().equals("resourceProp1") : "bad value" + baseDir;
+
+            // make sure the old bundle config was deleted when we upgraded and overwrite it with the new config
+            assert null == em.find(Configuration.class, bundleConfig1.getBundleConfiguration().getId()) : "The configuration "
+                + bundleConfig1 + " should have been deleted";
+
+            getTransactionManager().rollback();
+
+        } finally {
+            if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
+                getTransactionManager().rollback();
+            }
+            try {
+                cleanupTest();
+            } catch (Exception e) {
+                System.out.println("CANNOT CLEAN UP TEST: " + this.getClass().getSimpleName()
+                    + ".testResourceTypeBundleTarget");
+            }
+        }
     }
 
     /**
@@ -146,7 +227,7 @@ public class UpdateResourceTypeSubsystemTest extends UpdateSubsytemTestBase {
             resourceManager.createResource(overlord, platformResource, -1);
 
             getTransactionManager().begin();
-            EntityManager em = getEntityManager();            
+            EntityManager em = getEntityManager();
             platform1 = em.find(ResourceType.class, platform1.getId());
 
             assert platform1 != null : "I did not find myPlatform";
@@ -199,7 +280,8 @@ public class UpdateResourceTypeSubsystemTest extends UpdateSubsytemTestBase {
             assert platform2ChildResources.size() == 2 : "Expected 2 direct child services of platform in v2";
             boolean foundMovedResource = false;
             for (Resource childResource : platform2ChildResources) {
-                assert childResource.getChildResources().isEmpty() : "Expected child Resource " + childResource + " to have no children";
+                assert childResource.getChildResources().isEmpty() : "Expected child Resource " + childResource
+                    + " to have no children";
                 if (childResource.getResourceKey().equals("foo-nestedOne")) {
                     foundMovedResource = true;
                 }
@@ -214,7 +296,7 @@ public class UpdateResourceTypeSubsystemTest extends UpdateSubsytemTestBase {
                     Set<MeasurementDefinition> defs3 = type.getMetricDefinitions();
                     MeasurementDefinition three = defs3.iterator().next();
                     assert three.getDisplayName().equals("Three") : "Expected the nestedOne to have a metric withDisplayName Three in v2, but it was "
-                            + three.getDisplayName();
+                        + three.getDisplayName();
                     assert three.getDisplayType() == DisplayType.SUMMARY : "Expected three to be SUMMARY in v2";
 
                     /*
@@ -223,12 +305,12 @@ public class UpdateResourceTypeSubsystemTest extends UpdateSubsytemTestBase {
                      * latter is a different story. We probably should cascade that anyway.
                      */
                     assert three.getId() == definitionId : "Expected the id of 'Three' to be " + definitionId
-                            + ", but it was " + three.getId() + " in v2";
+                        + ", but it was " + three.getId() + " in v2";
                 } else if (typeName.equals("service1")) {
                     // check that the nested service is gone
                     Set<ResourceType> childrenOfService = type.getChildResourceTypes();
                     assert childrenOfService.size() == 0 : "No children of 'service1' expected in v2, but found: "
-                            + childrenOfService.size();
+                        + childrenOfService.size();
                 } else {
                     assert true == false : "We found an unknown type with name " + typeName;
                 }

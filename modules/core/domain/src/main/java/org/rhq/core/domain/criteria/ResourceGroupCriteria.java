@@ -60,6 +60,7 @@ public class ResourceGroupCriteria extends TaggedCriteria {
     private Boolean filterPrivate; /* if true, show only private groups for the calling user */
     private Boolean filterVisible = true; /* only show visible groups by default */
     private List<Integer> filterIds; // requires overrides
+    private NonBindingOverrideFilter filterBundleTargetableOnly; // requires overrides - finds only those that have bundle config - that is, can be targeted for bundle deployment
 
     private boolean fetchExplicitResources;
     private boolean fetchImplicitResources;
@@ -116,6 +117,7 @@ public class ResourceGroupCriteria extends TaggedCriteria {
             + "   WHERE resourcegroup.id = explicitGroup.id AND NOT res.resourceType.name = ? )");
         filterOverrides.put("groupDefinitionId", "groupDefinition.id = ?");
         filterOverrides.put("ids", "id IN ( ? )");
+        filterOverrides.put("bundleTargetableOnly", "resourceType.bundleConfiguration IS NOT NULL");
 
         sortOverrides.put("resourceTypeName", "resourceType.name");
         sortOverrides.put("pluginName", "resourceType.plugin");
@@ -236,6 +238,20 @@ public class ResourceGroupCriteria extends TaggedCriteria {
 
     public void addFilterIds(Integer... filterIds) {
         this.filterIds = CriteriaUtils.getListIgnoringNulls(filterIds);
+    }
+
+    /**
+     * If true is passed in, only those groups that can be targeted for bundle deployments will
+     * be fetched. By definition, this means no mixed groups are ever fetched and only
+     * compatible groups with resource types that support bundle deployments are fetched.
+     * Technically, what this means is only those compatible groups whose
+     * resource types have non-null bundle configurations are fetched.
+     * 
+     * @param filterBundleTargetableOnly
+     */
+    public void addFilterBundleTargetableOnly(boolean filterBundleTargetableOnly) {
+        this.filterBundleTargetableOnly = (filterBundleTargetableOnly ? NonBindingOverrideFilter.ON
+            : NonBindingOverrideFilter.OFF);
     }
 
     public void fetchExplicitResources(boolean fetchExplicitResources) {

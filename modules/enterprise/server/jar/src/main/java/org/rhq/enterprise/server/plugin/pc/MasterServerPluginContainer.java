@@ -40,6 +40,7 @@ import org.rhq.enterprise.server.plugin.pc.alert.AlertServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.bundle.BundleServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.content.ContentServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.content.PackageTypeServerPluginContainer;
+import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.entitlement.EntitlementServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.generic.GenericServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.perspective.PerspectiveServerPluginContainer;
@@ -465,6 +466,7 @@ public class MasterServerPluginContainer {
         pcs.add(new EntitlementServerPluginContainer(this));
         pcs.add(new BundleServerPluginContainer(this));
         pcs.add(new PackageTypeServerPluginContainer(this));
+        pcs.add(new DriftServerPluginContainer(this));
         return pcs;
     }
 

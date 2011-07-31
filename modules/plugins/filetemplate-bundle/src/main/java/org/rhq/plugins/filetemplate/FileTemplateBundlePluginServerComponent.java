@@ -89,7 +89,7 @@ public class FileTemplateBundlePluginServerComponent implements ResourceComponen
 
             // before processing the recipe, wipe the dest dir if we need to perform a clean deployment
             if (request.isCleanDeployment()) {
-                File deployDir = new File(bundleDeployment.getDestination().getDeployDir());
+                File deployDir = request.getAbsoluteDestinationDirectory();
                 if (deployDir.exists()) {
                     bundleManagerProvider.auditDeployment(resourceDeployment, "Cleaning Deployment", deployDir
                         .getAbsolutePath(), null, null, "The existing deployment found at ["
@@ -109,7 +109,8 @@ public class FileTemplateBundlePluginServerComponent implements ResourceComponen
                 bundleDeployment.getName(), null, null, "setting replacement variable values using ["
                     + bundleDeployment.getConfiguration().toString(true) + "]", null);
             recipeContext.setReplacementVariableValues(bundleDeployment.getConfiguration());
-            recipeContext.addReplacementVariableValue(DEPLOY_DIR, bundleDeployment.getDestination().getDeployDir());
+            recipeContext.addReplacementVariableValue(DEPLOY_DIR, request.getAbsoluteDestinationDirectory()
+                .getAbsolutePath());
             recipeContext.addReplacementVariableValue(DEPLOY_ID, Integer.toString(bundleDeployment.getId()));
             recipeContext.addReplacementVariableValue(DEPLOY_NAME, bundleDeployment.getName());
 
@@ -130,8 +131,7 @@ public class FileTemplateBundlePluginServerComponent implements ResourceComponen
         BundlePurgeResult result = new BundlePurgeResult();
         try {
             BundleResourceDeployment deploymentToPurge = request.getLiveResourceDeployment();
-            BundleDeployment bundleDeployment = deploymentToPurge.getBundleDeployment();
-            File deployDir = new File(bundleDeployment.getDestination().getDeployDir());
+            File deployDir = request.getAbsoluteDestinationDirectory();
             String deployDirAbsolutePath = deployDir.getAbsolutePath();
             BundleManagerProvider bundleManagerProvider = request.getBundleManagerProvider();
 

@@ -37,6 +37,7 @@ import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
+import javax.persistence.EntityNotFoundException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
@@ -61,6 +62,7 @@ import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
+import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration;
 import org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
@@ -79,7 +81,6 @@ import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
@@ -145,6 +146,34 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
     @EJB
     private ResourceGroupManagerLocal resourceGroupManager;
+
+    @Override
+    public ResourceTypeBundleConfiguration getResourceTypeBundleConfiguration(Subject subject, int compatGroupId)
+        throws Exception {
+
+        // Even though its harmless to return metadata (bundle config) about a resource type, we are getting that through
+        // a relationship from a resource group. To prevent someone from probing the inventory to see which groups
+        // are types that support bundles, we only allow someone to traverse the relationship from group to type
+        // if that someone has access to the group.
+        if (authorizationManager.canViewGroup(subject, compatGroupId)) {
+            Query q = entityManager.createNamedQuery(ResourceType.QUERY_GET_BUNDLE_CONFIG_BY_GROUP_ID);
+            q.setParameter("groupId", compatGroupId);
+            ResourceTypeBundleConfiguration bundleConfig = null;
+            try {
+                Configuration config = (Configuration) q.getSingleResult();
+                if (config != null) {
+                    bundleConfig = new ResourceTypeBundleConfiguration(config);
+                }
+            } catch (EntityNotFoundException enfe) {
+                // ignore this - this is just a group that isn't a compatible group
+                // or it is, but its type cannot be a target for bundle deployments
+            }
+
+            return bundleConfig;
+        } else {
+            throw new Exception("[" + subject.getName() + "] is not authorized to access the group");
+        }
+    }
 
     @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
@@ -273,25 +302,33 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     @Override
     @RequiredPermission(Permission.MANAGE_BUNDLE)
     public BundleDestination createBundleDestination(Subject subject, int bundleId, String name, String description,
-        String deployDir, Integer groupId) throws Exception {
+        String destBaseDirName, String deployDir, Integer groupId) throws Exception {
+
+        // if there is a .. in the path that looks suspicious, reject it. (note the : is to reject things like C:..\..\dir on windows)
+        // this won't allow everything (such as directories that start with ".." like "..abc" or "/abc/..def") but if you are naming
+        // your directories in those strange ways, you deserve what you get
+        if (deployDir.startsWith("..") || deployDir.matches(".*[/:\\\\]\\.\\..*")) {
+            throw new IllegalArgumentException(
+                "Destination directories are not allowed to have '..' parent directory path elements");
+        }
 
         Bundle bundle = entityManager.find(Bundle.class, bundleId);
         if (null == bundle) {
             throw new IllegalArgumentException("Invalid bundleId [" + bundleId + "]");
         }
 
-        // validate that the group exists and is a platform group
+        // validate that the group exists and is a compatible group that can support bundle deployments
         ResourceGroupCriteria c = new ResourceGroupCriteria();
         c.addFilterId(groupId);
-        c.addFilterExplicitResourceCategory(ResourceCategory.PLATFORM);
+        c.addFilterBundleTargetableOnly(true);
         List<ResourceGroup> groups = resourceGroupManager.findResourceGroupsByCriteria(subject, c);
         if (null == groups || groups.isEmpty()) {
             throw new IllegalArgumentException("Invalid groupId [" + groupId
-                + "]. Must exist and contain only platform members.");
+                + "]. It must be an existing compatible group whose members must be able to support bundle deployments");
         }
         ResourceGroup group = entityManager.find(ResourceGroup.class, groups.get(0).getId());
 
-        BundleDestination dest = new BundleDestination(bundle, name, group, deployDir);
+        BundleDestination dest = new BundleDestination(bundle, name, group, destBaseDirName, deployDir);
         dest.setDescription(description);
         entityManager.persist(dest);
 
@@ -977,18 +1014,18 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         ResourceGroup group = destination.getGroup();
 
         // Create and persist updates for each of the group members.
-        Set<Resource> platforms = group.getExplicitResources();
-        if (platforms.isEmpty()) {
+        Set<Resource> groupMembers = group.getExplicitResources();
+        if (groupMembers.isEmpty()) {
             throw new IllegalArgumentException("Destination [" + destination
-                + "] group has no platforms. Invalid deployment destination");
+                + "] group has no members. Invalid deployment destination");
         }
 
-        for (Resource platform : platforms) {
+        for (Resource groupMember : groupMembers) {
             try {
-                scheduleBundleResourceDeployment(subject, newDeployment, platform, isCleanDeployment, isRevert);
+                scheduleBundleResourceDeployment(subject, newDeployment, groupMember, isCleanDeployment, isRevert);
             } catch (Throwable t) {
-                log.error("Failed to complete scheduling of platform deployment to [" + platform
-                    + "]. Other platforms may have been scheduled. ", t);
+                log.error("Failed to complete scheduling of bundle deployment to [" + groupMember
+                    + "]. Other bundle deployments to other resources may have been scheduled. ", t);
             }
         }
 
@@ -1027,18 +1064,18 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     private BundleResourceDeployment scheduleBundleResourceDeployment(Subject subject, BundleDeployment deployment,
-        Resource platform, boolean isCleanDeployment, boolean isRevert) throws Exception {
+        Resource bundleTarget, boolean isCleanDeployment, boolean isRevert) throws Exception {
 
-        int platformId = platform.getId();
-        AgentClient agentClient = agentManager.getAgentClient(subjectManager.getOverlord(), platformId);
+        int bundleTargetResourceId = bundleTarget.getId();
+        AgentClient agentClient = agentManager.getAgentClient(subjectManager.getOverlord(), bundleTargetResourceId);
         BundleAgentService bundleAgentService = agentClient.getBundleAgentService();
 
         // The BundleResourceDeployment record must exist in the db before the agent request because the agent may try        
         // to add History to it during immediate deployments. So, create and persist it (requires a new trans).
         BundleResourceDeployment resourceDeployment = bundleManager.createBundleResourceDeployment(subject, deployment
-            .getId(), platformId);
+            .getId(), bundleTargetResourceId);
 
-        if (ResourceCategory.PLATFORM.equals(platform.getResourceType().getCategory())) {
+        if (null != bundleTarget.getResourceType().getResourceTypeBundleConfiguration()) {
 
             // Ask the agent to schedule the request. The agent should add history as needed.
             try {
@@ -1067,7 +1104,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
                 // fail the unlaunched resource deployment
                 BundleResourceDeploymentHistory failureHistory = new BundleResourceDeploymentHistory(subject.getName(),
                     this.AUDIT_ACTION_DEPLOYMENT, deployment.getName(), null,
-                    BundleResourceDeploymentHistory.Status.FAILURE, "Failed to schedule, agent on [" + platform
+                    BundleResourceDeploymentHistory.Status.FAILURE, "Failed to schedule, agent on [" + bundleTarget
                         + "] may be down: " + t, null);
                 bundleManager.addBundleResourceDeploymentHistory(subject, resourceDeployment.getId(), failureHistory);
                 bundleManager.setBundleResourceDeploymentStatus(subject, resourceDeployment.getId(),
@@ -1079,7 +1116,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
                 BundleDeploymentStatus.FAILURE);
             BundleResourceDeploymentHistory history = new BundleResourceDeploymentHistory(subject.getName(),
                 AUDIT_ACTION_DEPLOYMENT, deployment.getName(), null, BundleResourceDeploymentHistory.Status.FAILURE,
-                "Target resource is not a platform [id=" + platform.getId() + "]. Fix target group for destination ["
+                "Target resource is not of a type that can have bundles deployed to it [resource="
+                    + bundleTarget.getName() + "; id=" + bundleTarget.getId() + "]. Fix target group for destination ["
                     + deployment.getDestination().getName() + "]", null);
             bundleManager.addBundleResourceDeploymentHistory(subject, resourceDeployment.getId(), history);
         }
@@ -1326,13 +1364,13 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         BundleResourceDeploymentCriteria criteria) {
 
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
-        ;
+
         if (!authorizationManager.isInventoryManager(subject)) {
             if (criteria.isInventoryManagerRequired()) {
                 // TODO: MANAGE_INVENTORY was too restrictive as a bundle manager could not then
                 // see his resource deployments. Until we can handle granular authorization checks on
                 // optionally fetched resource member data, allow a bundle manager to see
-                // resouce deployments to any platform.
+                // resource deployments to any resource.
                 if (!authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_BUNDLE)) {
                     throw new PermissionException("Subject [" + subject.getName()
                         + "] requires InventoryManager or BundleManager permission for requested query criteria.");

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 
 <scenario xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-          xmlns="urn:xmlns:jboss.org:on-perftest">
+          xmlns="urn:xmlns:jboss.org:rhq-perftest">
 
    <resource type="server-a">
       <simpleResourceGenerator numberOfResources="10"/>
@@ -10,16 +10,16 @@
    </resource>
 
    <resource type="server-b">
-      <simpleResourceGenerator property="on.perftest.server-b-test"/>
+      <simpleResourceGenerator property="rhq.perftest.server-b-test"/>
    </resource>
 
   <resource type="server-e">
-      <simpleResourceGenerator property="on.perftest.server-e-count"/>
+      <simpleResourceGenerator property="rhq.perftest.server-e-count"/>
       <OOBNumericMeasurementGenerator/>
    </resource>
 
    <resource type="service-e-metrics">
-      <simpleResourceGenerator property="on.perftest.service-e-metrics-count"/>
+      <simpleResourceGenerator property="rhq.perftest.service-e-metrics-count"/>
       <OOBNumericMeasurementGenerator/>
    </resource>
 

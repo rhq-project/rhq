@@ -351,6 +351,18 @@ public class ConfigurationGWTServiceImpl extends AbstractGWTServiceImpl implemen
         }
     }
 
+    @Override
+    public ConfigurationDefinition getOptionValuesForConfigDefinition(ConfigurationDefinition definition)
+        throws RuntimeException {
+        try {
+            ConfigurationDefinition def = configurationManager.getOptionsForConfigurationDefinition(
+                getSessionSubject(), definition);
+            return SerialUtility.prepare(def, "ConfigurationService.getOptionValuesForPropertySimple");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
     private Map<Integer, Configuration> convertToMap(List<ResourceConfigurationComposite> resourceConfigurations)
         throws RuntimeException {
         try {

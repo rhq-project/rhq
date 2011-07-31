@@ -88,7 +88,7 @@ public class ScenarioManagerTest {
     @Test
     public void configurableResources() {
         // Setup
-        System.setProperty("on.perftest.server-b-test", "20");
+        System.setProperty("rhq.perftest.server-b-test", "20");
 
         ResourceType resourceType = new ResourceType("server-b", "plugin", ResourceCategory.SERVER, null);
         ResourceDiscoveryContext context = new ResourceDiscoveryContext(resourceType, null, null, null, null, null,
@@ -108,8 +108,8 @@ public class ScenarioManagerTest {
     @Test
     public void OOBMetrics() {
         // Setup
-        System.setProperty("on.perftest.server-e-count", "3");
-        System.setProperty("on.perftest.service-e-metrics-count", "10");
+        System.setProperty("rhq.perftest.server-e-count", "3");
+        System.setProperty("rhq.perftest.service-e-metrics-count", "10");
 
         // Test
         ScenarioManager manager = ScenarioManager.getInstance();

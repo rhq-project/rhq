@@ -18,10 +18,8 @@
  */
 package org.rhq.enterprise.server.alert.test;
 
+import java.sql.Connection;
 import java.util.List;
-import java.util.Random;
-
-import javax.persistence.EntityManager;
 
 import org.dbunit.database.DatabaseConnection;
 import org.dbunit.database.IDatabaseConnection;
@@ -30,27 +28,15 @@ import org.dbunit.dataset.xml.FlatXmlDataSet;
 import org.dbunit.dataset.xml.FlatXmlProducer;
 import org.dbunit.operation.DatabaseOperation;
 import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.xml.sax.InputSource;
 
-import org.rhq.core.domain.alert.Alert;
-import org.rhq.core.domain.alert.AlertCondition;
-import org.rhq.core.domain.alert.AlertConditionCategory;
 import org.rhq.core.domain.alert.AlertConditionLog;
-import org.rhq.core.domain.alert.AlertDampening;
-import org.rhq.core.domain.alert.AlertDefinition;
-import org.rhq.core.domain.alert.AlertPriority;
-import org.rhq.core.domain.alert.BooleanExpression;
 import org.rhq.core.domain.alert.notification.AlertNotificationLog;
-import org.rhq.core.domain.alert.notification.ResultState;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
-import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceCategory;
-import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -64,14 +50,22 @@ public class AlertManagerBeanTest extends AbstractEJB3Test {
     private Subject superuser;
     private Resource newResource;
 
-
     @BeforeMethod
     public void beforeMethod() throws Exception {
         alertManager = LookupUtil.getAlertManager();
         superuser = LookupUtil.getSubjectManager().getOverlord();
 
-        IDatabaseConnection connection = new DatabaseConnection(getConnection());
-        DatabaseOperation.CLEAN_INSERT.execute(connection, getDataSet());
+        Connection connection = null;
+
+        try {
+            connection = getConnection();
+            IDatabaseConnection dbUnitConnection = new DatabaseConnection(connection);
+            DatabaseOperation.CLEAN_INSERT.execute(dbUnitConnection, getDataSet());
+        } finally {
+            if (connection != null) {
+                connection.close();
+            }
+        }
 
         newResource = getEntityManager().find(Resource.class, 1);
     }
@@ -79,8 +73,17 @@ public class AlertManagerBeanTest extends AbstractEJB3Test {
     @AfterClass
     public void cleanupDB() throws Exception {
         if ("true".equals(System.getProperty("clean.db"))) {
-            IDatabaseConnection connection = new DatabaseConnection(getConnection());
-            DatabaseOperation.DELETE_ALL.execute(connection, getDataSet());    
+            Connection connection = null;
+
+            try {
+                connection = getConnection();
+                IDatabaseConnection dbUnitConnection = new DatabaseConnection(connection);
+                DatabaseOperation.DELETE_ALL.execute(dbUnitConnection, getDataSet());
+            } finally {
+                if (connection != null) {
+                    connection.close();
+                }
+            }
         }
     }
 
@@ -120,6 +123,5 @@ public class AlertManagerBeanTest extends AbstractEJB3Test {
     public void testAlertDeleteInRange() {
         assert 2 == alertManager.deleteAlerts(0L, System.currentTimeMillis() + 600000L); // go out into the future to make sure we get our alert
     }
-
 
 }

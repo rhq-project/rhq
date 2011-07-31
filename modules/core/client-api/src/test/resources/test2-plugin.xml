@@ -1,0 +1,40 @@
+<plugin name="TestPlugin2" displayName="Mock JBoss AS" package="org.rhq.plugins.mock.jboss"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+
+   <server name="testServer2">
+
+
+      <resource-configuration>
+          <c:simple-property name="prop1">
+              <c:property-options>
+                  <c:option value="a"/>
+                  <c:option value="b"/>
+              </c:property-options>
+          </c:simple-property>
+
+          <c:simple-property name="prop2">
+              <c:option-source
+                      target="resource"
+                      linkToTarget="true"
+                      filter="*.jdbc"
+                      expression="resourceType=DomainDeployment,resource=*" />
+          </c:simple-property>
+
+          <c:simple-property name="prop3">
+              <c:property-options>
+                  <c:option value="one"/>
+              </c:property-options>
+              <c:option-source
+                      target="resource"
+                      linkToTarget="true"
+                      filter="*.jdbc"
+                      expression="resourceType=DomainDeployment,resource=*" />
+          </c:simple-property>
+
+      </resource-configuration>
+
+   </server>
+</plugin>

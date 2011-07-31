@@ -175,7 +175,7 @@ public class PluginContainerTest extends JMockTest {
                 Thread.sleep(100);
             }
         } catch (InterruptedException e) {
-            throw new IllegalStateException("Thread interrupted while waiting for plugin container to start.");
+            throw new IllegalStateException("Thread interrupted while waiting for plugin container to start.", e);
         }
         
         InventoryManager im = PluginContainer.getInstance().getInventoryManager();
@@ -387,7 +387,7 @@ public class PluginContainerTest extends JMockTest {
         }
                 
         
-        String pluginFileName = pluginUri.getPath().substring(pluginUri.getPath().lastIndexOf('/') + 1);
+        String pluginFileName = pluginUrl.getPath().substring(pluginUrl.getPath().lastIndexOf('/') + 1);
     
         File pluginJar = new File(destination, pluginFileName);
         FileUtils.copyURLToFile(pluginUrl, pluginJar);

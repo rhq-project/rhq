@@ -71,8 +71,6 @@ import com.smartgwt.client.widgets.form.fields.events.ChangeEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangeHandler;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
-import com.smartgwt.client.widgets.form.fields.events.TitleHoverEvent;
-import com.smartgwt.client.widgets.form.fields.events.TitleHoverHandler;
 import com.smartgwt.client.widgets.form.validator.CustomValidator;
 import com.smartgwt.client.widgets.form.validator.FloatRangeValidator;
 import com.smartgwt.client.widgets.form.validator.IntegerRangeValidator;
@@ -350,9 +348,9 @@ public class ConfigurationEditor extends LocatableVLayout {
                         }
                     });
             }
-        } else {
-            reload();
         }
+
+        reload();
     }
 
     public void reload() {

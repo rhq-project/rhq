@@ -58,7 +58,7 @@ public class CobblerComponent extends AugeasConfigurationComponent implements Au
     @Override
     public void start(ResourceContext resourceContext) throws InvalidPluginConfigurationException, Exception {
         super.start(resourceContext);
-        rawConfigHelper = new AugeasRawConfigHelper(getAugeasRootPath(), AUGEAS_LOAD_PATH,
+        rawConfigHelper = new AugeasRawConfigHelper(getAugeasRootPath(), getAugeasLoadPath(),
             getResourceConfigurationRootPath(), this);
         rawConfigHelper.addLens("CobblerSettings.lns", SETTINGS_PATH);
         rawConfigHelper.addLens("CobblerModules.lns", MODULES_PATH);

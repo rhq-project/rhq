@@ -77,6 +77,16 @@
          </c:group>
       </resource-configuration>      
       
+      <bundle-target>
+         <destination-base-dir name="basedir1">
+            <value-context>pluginConfiguration</value-context>
+            <value-name>alpha</value-name>
+         </destination-base-dir>
+         <destination-base-dir name="basedir2">
+            <value-context>resourceConfiguration</value-context>
+            <value-name>resourceAlpha</value-name>
+         </destination-base-dir>
+      </bundle-target>
 
       <service name="Service B" description="Service B Description" class="ServiceBClass" discovery="ServiceBDiscoveryClass">
          <metric property="foo" displayName="Foo"/>

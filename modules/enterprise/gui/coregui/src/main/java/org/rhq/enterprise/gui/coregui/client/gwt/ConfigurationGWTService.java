@@ -21,7 +21,8 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 
 /**
- * API for resource and plugin configurations for resources and groups.
+ * API for resource and plugin configurations for resources and groups, as well as any other 
+ * configuration related methods.
  */
 @RemoteServiceRelativePath("ConfigurationGWTService")
 public interface ConfigurationGWTService extends RemoteService {
@@ -86,4 +87,6 @@ public interface ConfigurationGWTService extends RemoteService {
 
     void deleteGroupResourceConfigurationUpdate(Integer groupId, Integer[] groupResourceConfigUpdateIds)
         throws RuntimeException;
+
+    ConfigurationDefinition getOptionValuesForConfigDefinition(ConfigurationDefinition definition);
 }

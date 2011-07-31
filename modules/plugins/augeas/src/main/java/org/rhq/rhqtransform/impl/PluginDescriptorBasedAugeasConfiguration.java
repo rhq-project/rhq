@@ -60,7 +60,6 @@ public class PluginDescriptorBasedAugeasConfiguration implements AugeasConfigura
     public static final String AUGEAS_LOAD_PATH = "augeasLoadPath";
 
     public static final String DEFAULT_AUGEAS_ROOT_PATH = File.listRoots()[0].getPath();
-    public static final String DEFAULT_AUGEAS_LOAD_PATH = "/usr/share/augeas/lenses";
     
     private final Log log = LogFactory.getLog(this.getClass());
     protected List<AugeasModuleConfig> modules;

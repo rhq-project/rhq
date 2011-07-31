@@ -23,6 +23,7 @@
 package org.rhq.core.pc.measurement;
 
 import java.lang.management.ManagementFactory;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -239,6 +240,21 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
         }
     }
 
+    /**
+     * If you want to get a cached value of a trait, pass in its schedule ID.
+     * This is useful if you don't care to obtain the latest-n-greated value of the trait,
+     * and you want to avoid making a live call to the managed resource to obtain its value.
+     * Note that if the trait is not yet cached, this will return null, and the caller will
+     * be forced to make a live call to obtain the trait value, but at least this can help
+     * avoid unnecessarily calling the live resource.
+     * 
+     * @param scheduleId the schedule for the trait for a specific resource
+     * @return the trait's cached value, <code>null</code> if not available
+     */
+    public String getCachedTraitValue(int scheduleId) {
+        return traitCache.get(scheduleId);
+    }
+
     public void perMinuteItizeData(MeasurementReport report) {
         Iterator<MeasurementDataNumeric> iter = report.getNumericData().iterator();
         while (iter.hasNext()) {
@@ -428,8 +444,8 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
         MeasurementReport report = new MeasurementReport();
         Set<MeasurementScheduleRequest> allMeasurements = new HashSet<MeasurementScheduleRequest>();
         for (MeasurementDataRequest dataRequest : requests) {
-            allMeasurements.add(new MeasurementScheduleRequest(1, dataRequest.getName(), 0, true,
-                dataRequest.getType()));
+            allMeasurements
+                .add(new MeasurementScheduleRequest(1, dataRequest.getName(), 0, true, dataRequest.getType()));
         }
 
         try {
@@ -537,6 +553,49 @@ public class MeasurementManager extends AgentService implements MeasurementAgent
         }
 
         return results;
+    }
+
+    /**
+     * Given the name of a trait, this will find the value of that trait for the given resource.
+     * 
+     * @param resource the resource whose trait value is to be obtained
+     * @param traitName the name of the trait whose value is to be obtained
+     *
+     * @return the value of the trait, or <code>null</code> if unknown
+     */
+    public String getTraitValue(ResourceContainer container, String traitName) {
+        Integer traitScheduleId = null;
+        Set<MeasurementScheduleRequest> schedules = container.getMeasurementSchedule();
+        for (MeasurementScheduleRequest schedule : schedules) {
+            if (schedule.getName().equals(traitName)) {
+                if (schedule.getDataType() != DataType.TRAIT) {
+                    throw new IllegalArgumentException("Measurement named [" + traitName + "] for resource ["
+                        + container.getResource().getName() + "] is not a trait, it is of type ["
+                        + schedule.getDataType() + "]");
+                }
+                traitScheduleId = Integer.valueOf(schedule.getScheduleId());
+            }
+        }
+        if (traitScheduleId == null) {
+            throw new IllegalArgumentException("There is no trait [" + traitName + "] for resource ["
+                + container.getResource().getName() + "]");
+        }
+
+        String traitValue = getCachedTraitValue(traitScheduleId.intValue());
+        if (traitValue == null) {
+            // the trait hasn't been collected yet, so it isn't cached. We need to get its live value
+            List<MeasurementDataRequest> requests = new ArrayList<MeasurementDataRequest>();
+            requests.add(new MeasurementDataRequest(traitName, DataType.TRAIT));
+            Set<MeasurementData> dataset = getRealTimeMeasurementValue(container.getResource().getId(), requests);
+            if (dataset != null && dataset.size() == 1) {
+                Object value = dataset.iterator().next().getValue();
+                if (value != null) {
+                    traitValue = value.toString();
+                }
+            }
+        }
+
+        return traitValue;
     }
 
     // -- MBean monitoring methods

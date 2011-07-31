@@ -37,8 +37,9 @@ import org.rhq.core.domain.resource.ResourceTypeFacet;
 public class ResourceFacets implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    public static ResourceFacets NONE = new ResourceFacets(-1, false, false, false, false, false, false, false, false);
-    public static ResourceFacets ALL = new ResourceFacets(-1, true, true, true, true, true, true, true, true);
+    public static ResourceFacets NONE = new ResourceFacets(-1, false, false, false, false, false, false, false, false,
+        false);
+    public static ResourceFacets ALL = new ResourceFacets(-1, true, true, true, true, true, true, true, true, true);
 
     private int resourceTypeId;
     private boolean measurement;
@@ -49,6 +50,7 @@ public class ResourceFacets implements Serializable {
     private boolean content;
     private boolean callTime;
     private boolean support;
+    private boolean drift;
     private Set<ResourceTypeFacet> facets;
 
     // no-arg constructor required by GWT compiler
@@ -56,7 +58,7 @@ public class ResourceFacets implements Serializable {
     }
 
     public ResourceFacets(int resourceTypeId, boolean measurement, boolean event, boolean pluginConfiguration,
-        boolean configuration, boolean operation, boolean content, boolean callTime, boolean support) {
+        boolean configuration, boolean operation, boolean content, boolean callTime, boolean support, boolean drift) {
         this.resourceTypeId = resourceTypeId;
         this.measurement = measurement;
         this.event = event;
@@ -66,11 +68,12 @@ public class ResourceFacets implements Serializable {
         this.content = content;
         this.callTime = callTime;
         this.support = support;
+        this.drift = drift;
         initEnum();
     }
 
     public ResourceFacets(int resourceTypeId, Number measurement, Number event, Number pluginConfiguration,
-        Number configuration, Number operation, Number content, Number callTime, Number support) {
+        Number configuration, Number operation, Number content, Number callTime, Number support, Number drift) {
         this.resourceTypeId = resourceTypeId;
         this.measurement = measurement.intValue() != 0;
         this.event = event.intValue() != 0;
@@ -80,6 +83,7 @@ public class ResourceFacets implements Serializable {
         this.content = content.intValue() != 0;
         this.callTime = callTime.intValue() != 0;
         this.support = support.intValue() != 0;
+        this.drift = drift.intValue() != 0;
         initEnum();
     }
 
@@ -162,6 +166,15 @@ public class ResourceFacets implements Serializable {
     }
 
     /**
+     * Does this resource expose drift capability? If so, the Drift sub-tab will be displayed in the GUI.
+     *
+     * @return true if the resource allows drift detection, false otherwise
+     */
+    public boolean isDrift() {
+        return drift;
+    }
+
+    /**
      * Returns an enum representation of the facets.
      *
      * @return an enum representation of the facets
@@ -188,5 +201,9 @@ public class ResourceFacets implements Serializable {
             this.facets.add(ResourceTypeFacet.CALL_TIME);
         if (support)
             this.facets.add(ResourceTypeFacet.SUPPORT);
+        // TODO, add this back when we actually start storing drift config templates:
+        // if (drift)
+        this.facets.add(ResourceTypeFacet.DRIFT);
+
     }
 }

@@ -28,6 +28,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.widgets.Canvas;
@@ -58,6 +59,8 @@ import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedDynamicForm
 import org.rhq.enterprise.gui.coregui.client.components.form.TimeUnit;
 import org.rhq.enterprise.gui.coregui.client.components.form.UnitType;
 import org.rhq.enterprise.gui.coregui.client.components.trigger.JobTriggerEditor;
+import org.rhq.enterprise.gui.coregui.client.gwt.ConfigurationGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.schedule.ResourceOperationScheduleDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.FormUtility;
 import org.rhq.enterprise.gui.coregui.client.util.TypeConversionUtility;
@@ -355,7 +358,7 @@ public abstract class AbstractOperationScheduleDetailsView extends
         if (operationName == null) {
             value = "<i>" + MSG.view_operationScheduleDetails_fieldDefault_parameters() + "</i>";
         } else {
-            ConfigurationDefinition parametersDefinition = this.operationNameToParametersDefinitionMap
+            final ConfigurationDefinition parametersDefinition = this.operationNameToParametersDefinitionMap
                 .get(operationName);
             if (parametersDefinition == null || parametersDefinition.getPropertyDefinitions().isEmpty()) {
                 value = "<i>" + MSG.view_operationScheduleDetails_noParameters() + "</i>";
@@ -382,11 +385,40 @@ public abstract class AbstractOperationScheduleDetailsView extends
                 } else {
 
                 }
+
+                ConfigurationGWTServiceAsync configurationService = GWTServiceLookup.getConfigurationService();
+                configurationService.getOptionValuesForConfigDefinition(parametersDefinition,new AsyncCallback<ConfigurationDefinition>() {
+
+
+                    @Override
+                    public void onFailure(Throwable throwable) {
+                        ConfigurationEditor configurationEditor = new ConfigurationEditor("ParametersEditor",
+                            parametersDefinition, parameters);
+                        configurationEditor.setReadOnly(isReadOnly());
+                        operationParametersConfigurationHolder.addMember(configurationEditor);
+                        operationParametersConfigurationHolder.show();
+
+                    }
+
+                    @Override
+                    public void onSuccess(ConfigurationDefinition result) {
+                        ConfigurationEditor configurationEditor = new ConfigurationEditor("ParametersEditor",
+                            result, parameters);
+                        configurationEditor.setReadOnly(isReadOnly());
+                        operationParametersConfigurationHolder.addMember(configurationEditor);
+                        operationParametersConfigurationHolder.show();
+
+                    }
+                });
+
+
+/*
                 ConfigurationEditor configurationEditor = new ConfigurationEditor("ParametersEditor",
                     parametersDefinition, this.parameters);
                 configurationEditor.setReadOnly(isReadOnly());
                 this.operationParametersConfigurationHolder.addMember(configurationEditor);
                 this.operationParametersConfigurationHolder.show();
+*/
             }
         }
         this.operationParametersItem.setValue(value);

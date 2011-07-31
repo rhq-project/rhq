@@ -25,15 +25,16 @@ import static org.testng.Assert.fail;
 @DataSet
 public class ResourceTypeTest extends UnitilsTestNG {
 
-    @BeforeClass(groups = "unitils", dependsOnGroups = "integration.ejb3")
+    static final String TEST_GROUP_DEPS = "integration.ejb3";
+
+    @BeforeClass(groups = "unitils", dependsOnGroups = TEST_GROUP_DEPS)
     public void init() {
     }
 
     @PersistenceContext
     EntityManager entityMgr;
 
-    @Test(groups = "unitils", dependsOnGroups = "integration.ejb3")
-    @SuppressWarnings("unchecked")
+    @Test(groups = "unitils", dependsOnGroups = TEST_GROUP_DEPS)
     public void findByPlugin() {
         List<ResourceType> results = entityMgr.createNamedQuery(QUERY_FIND_BY_PLUGIN)
             .setParameter("plugin", "TestPlugin1")
@@ -43,8 +44,7 @@ public class ResourceTypeTest extends UnitilsTestNG {
         assertEquals(results.get(0).getId(), -1, "The wrong resource type was returned");
     }
 
-    @Test(groups = "unitils", dependsOnGroups = "integration.ejb3")
-    @SuppressWarnings("unchecked")
+    @Test(groups = "unitils", dependsOnGroups = TEST_GROUP_DEPS)
     public void findByNameAndPlugin() {
         ResourceType type = (ResourceType) entityMgr.createNamedQuery(QUERY_FIND_BY_NAME_AND_PLUGIN)
             .setParameter("name", "TestServer1")
@@ -54,7 +54,7 @@ public class ResourceTypeTest extends UnitilsTestNG {
         assertEquals(type.getId(), -1, "Failed to find resource type by name and by plugin");
     }
 
-    @Test(groups = "unitils", dependsOnGroups = "integration.ejb3")
+    @Test(groups = "unitils", dependsOnGroups = TEST_GROUP_DEPS)
     public void findByNameAndPluginShouldNotReturnDeletedType() {
         List results = entityMgr.createNamedQuery(QUERY_FIND_BY_NAME_AND_PLUGIN)
             .setParameter("name", "TestServer2")
@@ -64,7 +64,7 @@ public class ResourceTypeTest extends UnitilsTestNG {
         assertEquals(results.size(), 0, "Deleted types should be ignored");
     }
 
-    @Test(groups = "unitils", dependsOnGroups = "integration.ejb3")
+    @Test(groups = "unitils", dependsOnGroups = TEST_GROUP_DEPS)
     @SuppressWarnings("unchecked")
     public void findAll() {
         List<ResourceType> results = entityMgr.createNamedQuery(QUERY_FIND_ALL).getResultList();
@@ -73,7 +73,7 @@ public class ResourceTypeTest extends UnitilsTestNG {
         assertDeletedTypesIgnored(results);
     }
 
-    @Test(groups = "unitils", dependsOnGroups = "integration.ejb3")
+    @Test(groups = "unitils", dependsOnGroups = TEST_GROUP_DEPS)
     @SuppressWarnings("unchecked")
     public void findChildren() {
         List<ResourceType> results = entityMgr.createNamedQuery(QUERY_FIND_CHILDREN)
@@ -82,6 +82,14 @@ public class ResourceTypeTest extends UnitilsTestNG {
 
         assertEquals(results.size(), 2, "Expected to get two resource types for resource type with id -4");
         assertDeletedTypesIgnored(results);
+    }
+
+    @Test(groups = "unitils", dependsOnGroups = TEST_GROUP_DEPS)
+    @SuppressWarnings("unchecked")
+    public void findDriftConfigurationTemplates() {
+        ResourceType type = entityMgr.find(ResourceType.class, -8);
+
+        assertEquals(type.getDriftConfigurationTemplates().size(), 2);
     }
 
     void assertDeletedTypesIgnored(List<ResourceType> types) {

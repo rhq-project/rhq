@@ -40,6 +40,7 @@ import org.rhq.core.clientapi.descriptor.configuration.IntegerConstraintType;
 import org.rhq.core.clientapi.descriptor.configuration.ListProperty;
 import org.rhq.core.clientapi.descriptor.configuration.MapProperty;
 import org.rhq.core.clientapi.descriptor.configuration.Option;
+import org.rhq.core.clientapi.descriptor.configuration.OptionSource;
 import org.rhq.core.clientapi.descriptor.configuration.PropertyGroup;
 import org.rhq.core.clientapi.descriptor.configuration.PropertyOptions;
 import org.rhq.core.clientapi.descriptor.configuration.PropertyType;
@@ -60,6 +61,7 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertyGroupDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyOptionsSource;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.domain.configuration.definition.constraint.Constraint;
 import org.rhq.core.domain.configuration.definition.constraint.FloatRangeConstraint;
@@ -233,6 +235,24 @@ public class ConfigurationMetadataParser {
         // Load the enumeration of options
         if (simpleProperty.getPropertyOptions() != null) {
             parsePropertyOptions(property, simpleProperty.getPropertyOptions());
+        }
+
+        if (simpleProperty.getOptionSource() != null) {
+            PropertyOptionsSource optionsSource = new PropertyOptionsSource();
+            OptionSource source = simpleProperty.getOptionSource();
+            optionsSource.setTarget(source.getTarget().toString());
+            optionsSource.setLinkToTarget(source.isLinkToTarget());
+            if (source.getFilter()!=null && source.getFilter().length()>40) {
+                throw new IllegalArgumentException("Filter expression must be less than 40 chars long");
+            }
+            optionsSource.setFilter(source.getFilter());
+            String expression = source.getExpression();
+            if (expression ==null || expression.isEmpty())
+                throw new IllegalArgumentException("Expression must not be empty");
+            if (expression.length()>400)
+                throw new IllegalArgumentException("Expression must be less than 400 chars long");
+            optionsSource.setExpression(expression);
+            property.setOptionsSource(optionsSource);
         }
 
         return property;

@@ -125,6 +125,12 @@
         <data ID="56" PROPERTY_KEY="RESOURCE_GENERIC_PROPERTIES_UPGRADE" PROPERTY_VALUE="false"
               DEFAULT_PROPERTY_VALUE="false" FREAD_ONLY="FALSE"/>
 
+        <!-- default drift server plugin settings -->
+        <data ID="57" PROPERTY_KEY="ACTIVE_DRIFT_PLUGIN" PROPERTY_VALUE="[drift-rhq$$Drift:RHQ]"
+              DEFAULT_PROPERTY_VALUE="[drift-rhq$$Drift:RHQ]" FREAD_ONLY="FALSE"/>
+        <data ID="58" PROPERTY_KEY="DRIFT_PLUGINS" PROPERTY_VALUE="" DEFAULT_PROPERTY_VALUE="[drift-rhq$$Drift:RHQ]"
+               FREAD_ONLY="FALSE"/>
+
     </table>
 
 </dbsetup>

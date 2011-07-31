@@ -218,6 +218,14 @@ public class LinkManager {
         return link;
     }
 
+    public static String getSubsystemDriftHistoryLink(int resourceId, int driftId) {
+        return "#Resource/" + resourceId + "/Drift/History/" + driftId;
+    }
+
+    public static String getSubsystemDriftConfigLink(int resourceId, int driftConfigId) {
+        return "#Resource/" + resourceId + "/Drift/Config/" + driftConfigId;
+    }
+
     public static String getAutodiscoveryQueueLink() {
         if (GWT) {
             return "#Administration/Security/Auto%20Discovery%20Queue";
@@ -449,5 +457,9 @@ public class LinkManager {
 
     public static String getBundleDeploymentLink(int bundleId, int bundleDeploymentId) {
         return "#Bundles/Bundle/" + bundleId + "/deployments/" + bundleDeploymentId;
+    }
+
+    public static String getDriftHistoryLink(int resourceId, int driftId) {
+        return "#Resource/" + resourceId + "/Drift/History/" + driftId;
     }
 }

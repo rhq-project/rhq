@@ -57,6 +57,7 @@ public class BundleDestinationDataSource extends RPCDataSource<BundleDestination
     public static final String FIELD_GROUP_ID = "groupId";
     public static final String FIELD_GROUP_NAME = "groupName";
     public static final String FIELD_DEPLOY_DIR = "deployDir";
+    public static final String FIELD_BASE_DIR_NAME = "baseDirName";
     public static final String FIELD_LATEST_DEPLOY_VERSION = "latestDeploymentVersion";
     public static final String FIELD_LATEST_DEPLOY_DATE = "latestDeploymentDate";
     public static final String FIELD_LATEST_DEPLOY_STATUS = "latestDeploymentStatus";
@@ -87,6 +88,10 @@ public class BundleDestinationDataSource extends RPCDataSource<BundleDestination
 
         DataSourceTextField group = new DataSourceTextField(FIELD_GROUP_NAME, MSG.view_bundle_dest_group());
         fields.add(group);
+
+        DataSourceTextField baseDirName = new DataSourceTextField(FIELD_BASE_DIR_NAME, MSG
+            .view_bundle_dest_baseDirName());
+        fields.add(baseDirName);
 
         DataSourceTextField deployDir = new DataSourceTextField(FIELD_DEPLOY_DIR, MSG.view_bundle_dest_deployDir());
         fields.add(deployDir);
@@ -204,6 +209,7 @@ public class BundleDestinationDataSource extends RPCDataSource<BundleDestination
         record.setAttribute(FIELD_BUNDLE_NAME, from.getBundle().getName());
         record.setAttribute(FIELD_GROUP_ID, from.getGroup().getId());
         record.setAttribute(FIELD_GROUP_NAME, from.getGroup().getName());
+        record.setAttribute(FIELD_BASE_DIR_NAME, from.getDestinationBaseDirectoryName());
         record.setAttribute(FIELD_DEPLOY_DIR, from.getDeployDir());
 
         record.setAttribute("object", from);

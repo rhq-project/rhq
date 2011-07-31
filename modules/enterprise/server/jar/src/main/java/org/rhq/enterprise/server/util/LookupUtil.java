@@ -103,6 +103,10 @@ import org.rhq.enterprise.server.dashboard.DashboardManagerBean;
 import org.rhq.enterprise.server.dashboard.DashboardManagerLocal;
 import org.rhq.enterprise.server.discovery.DiscoveryBossBean;
 import org.rhq.enterprise.server.discovery.DiscoveryBossLocal;
+import org.rhq.enterprise.server.drift.DriftManagerBean;
+import org.rhq.enterprise.server.drift.DriftManagerLocal;
+import org.rhq.enterprise.server.drift.DriftServerBean;
+import org.rhq.enterprise.server.drift.DriftServerLocal;
 import org.rhq.enterprise.server.entitlement.EntitlementManagerBean;
 import org.rhq.enterprise.server.entitlement.EntitlementManagerLocal;
 import org.rhq.enterprise.server.event.EventManagerBean;
@@ -444,6 +448,16 @@ public final class LookupUtil {
 
     public static ContentSourceManagerLocal getContentSourceManager() {
         return lookupLocal(ContentSourceManagerBean.class);
+    }
+
+    public static DriftServerLocal getDriftServer() {
+        return lookupLocal(DriftServerBean.class);
+    }
+
+    // TODO should this reference to DriftManagerLocal be removed?
+    // DriftManagerBean should only be referenced from the drift-rhq server plugin
+    public static DriftManagerLocal getDriftManager() {
+        return lookupLocal(DriftManagerBean.class);
     }
 
     public static RepoManagerLocal getRepoManagerLocal() {

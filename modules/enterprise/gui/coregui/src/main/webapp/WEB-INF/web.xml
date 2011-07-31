@@ -157,6 +157,10 @@
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI PluginGWTService</servlet-name>
         <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.PluginGWTServiceImpl</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI DriftGWTService</servlet-name>
+        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.DriftGWTServiceImpl</servlet-class>
+    </servlet>    
 
 
     <servlet-mapping>
@@ -303,6 +307,10 @@
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI PluginGWTService</servlet-name>
         <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/PluginGWTService</url-pattern>
     </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI DriftGWTService</servlet-name>
+        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/DriftGWTService</url-pattern>
+    </servlet-mapping>    
 
 
     <welcome-file-list>

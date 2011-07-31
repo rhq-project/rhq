@@ -37,7 +37,7 @@ import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
  * Deal with metrics
  * @author Heiko W. Rupp
  */
-
+@Interceptors(SetCallerInterceptor.class)
 @Stateless
 public class MetricHandlerBean  extends AbstractRestBean implements MetricHandlerLocal {
 

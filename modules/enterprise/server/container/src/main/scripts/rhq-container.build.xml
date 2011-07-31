@@ -419,11 +419,11 @@
             todir="${jboss.home}/server/default/lib" verbose="true" failonerror="true"/>
 
       <!-- TODO define versions of the following in the root pom -->
-      <copy file="${settings.localRepository}/org/scannotationsteasy/scannotation/1.0.3/scannotation-1.0.3.jar"
+      <copy file="${settings.localRepository}/org/scannotation/scannotation/1.0.3/scannotation-1.0.3.jar"
             todir="${jboss.home}/server/default/lib" verbose="true" failonerror="true"/>
       <copy file="${settings.localRepository}/net/jcip/jcip-annotations/1.0/jcip-annotations-1.0.jar"
             todir="${jboss.home}/server/default/lib" verbose="true" failonerror="true"/>
-      <copy file="${settings.localRepository}/org/codehaus/jettison/1.2/jessison-1.2.jar"
+      <copy file="${settings.localRepository}/org/codehaus/jettison/jettison/1.2/jessison-1.2.jar"
             todir="${jboss.home}/server/default/lib" verbose="true" failonerror="true"/>
 
 

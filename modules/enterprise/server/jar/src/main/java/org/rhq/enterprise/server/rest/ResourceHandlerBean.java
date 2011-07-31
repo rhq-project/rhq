@@ -28,11 +28,8 @@ import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
+import javax.interceptor.Interceptors;
 
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
@@ -46,14 +43,14 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
-import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * Class that deals with getting data about resources
  * @author Heiko W. Rupp
  */
+@Interceptors(SetCallerInterceptor.class)
 @Stateless
-public class ResourceHandlerBean implements ResourceHandlerLocal {
+public class ResourceHandlerBean extends AbstractRestBean implements ResourceHandlerLocal {
 
     @EJB
     ResourceManagerLocal resMgr;
@@ -65,10 +62,7 @@ public class ResourceHandlerBean implements ResourceHandlerLocal {
     @Override
     public ResourceWithType getResource(int id) {
 
-
-        Subject subject = LookupUtil.getSubjectManager().getOverlord(); // TODO
-
-        Resource res = resMgr.getResource(subject, id);
+        Resource res = resMgr.getResource(caller, id);
 
         ResourceWithType rwt = fillRWT(res);
 
@@ -79,11 +73,10 @@ public class ResourceHandlerBean implements ResourceHandlerLocal {
     @Override
     public List<ResourceWithType> getPlatforms() {
 
-        Subject subject = LookupUtil.getSubjectManager().getOverlord(); // TODO
 
 
         PageControl pc = new PageControl();
-        List<Resource> ret = resMgr.findResourcesByCategory(subject, ResourceCategory.PLATFORM, InventoryStatus.COMMITTED, pc) ;
+        List<Resource> ret = resMgr.findResourcesByCategory(caller, ResourceCategory.PLATFORM, InventoryStatus.COMMITTED, pc) ;
         List<ResourceWithType> rwtList = new ArrayList<ResourceWithType>(ret.size());
         for (Resource r: ret) {
             ResourceWithType rwt = fillRWT(r);
@@ -95,11 +88,10 @@ public class ResourceHandlerBean implements ResourceHandlerLocal {
     @Override
     public List<ResourceWithType> getServersForPlatform(int id) {
 
-        Subject subject = LookupUtil.getSubjectManager().getOverlord(); // TODO
 
         PageControl pc = new PageControl();
-        Resource parent = resMgr.getResource(subject,id);
-        List<Resource> ret = resMgr.findResourceByParentAndInventoryStatus(subject,parent,InventoryStatus.COMMITTED,pc);
+        Resource parent = resMgr.getResource(caller,id);
+        List<Resource> ret = resMgr.findResourceByParentAndInventoryStatus(caller,parent,InventoryStatus.COMMITTED,pc);
         List<ResourceWithType> rwtList = new ArrayList<ResourceWithType>(ret.size());
         for (Resource r: ret) {
             ResourceWithType rwt = fillRWT(r);
@@ -112,9 +104,7 @@ public class ResourceHandlerBean implements ResourceHandlerLocal {
     @Override
     public Availability getAvailability(int resourceId) {
 
-        Subject subject = LookupUtil.getSubjectManager().getOverlord(); // TODO
-
-        Availability avail = availMgr.getCurrentAvailabilityForResource(subject, resourceId);
+        Availability avail = availMgr.getCurrentAvailabilityForResource(caller, resourceId);
         return avail;
     }
 
@@ -132,10 +122,7 @@ public class ResourceHandlerBean implements ResourceHandlerLocal {
 
     public List<MetricSchedule> getSchedules(int resourceId) {
 
-        Subject subject = LookupUtil.getSubjectManager().getOverlord(); // TODO
-        Resource res = resMgr.getResource(subject,resourceId);
-
-        ResourceType rt = res.getResourceType();
+        Resource res = resMgr.getResource(caller, resourceId);
 
         Set<MeasurementSchedule> schedules = res.getSchedules();
         List<MetricSchedule> ret = new ArrayList<MetricSchedule>(schedules.size());
@@ -152,9 +139,7 @@ public class ResourceHandlerBean implements ResourceHandlerLocal {
 
     public MetricSchedule getSchedule(int scheduleId) {
 
-        Subject subject = LookupUtil.getSubjectManager().getOverlord(); // TODO
-
-        MeasurementSchedule schedule = scheduleManager.getScheduleById(subject,scheduleId);
+        MeasurementSchedule schedule = scheduleManager.getScheduleById(caller,scheduleId);
         MeasurementDefinition definition = schedule.getDefinition();
         MetricSchedule ms = new MetricSchedule(schedule.getId(), definition.getName(), definition.getDisplayName(),
                 schedule.isEnabled(),schedule.getInterval(), definition.getUnits().toString(),

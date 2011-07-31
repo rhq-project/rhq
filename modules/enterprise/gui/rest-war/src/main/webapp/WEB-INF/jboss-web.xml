@@ -2,4 +2,5 @@
 
 <jboss-web>
     <context-root>rest</context-root>
+    <security-domain>java:/jaas/REST</security-domain>
 </jboss-web>

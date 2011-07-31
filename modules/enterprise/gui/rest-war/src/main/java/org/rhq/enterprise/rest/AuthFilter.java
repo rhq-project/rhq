@@ -24,6 +24,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.jboss.resteasy.util.Base64;
 
 import org.rhq.core.domain.auth.Subject;
@@ -35,6 +38,9 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * @author Heiko W. Rupp
  */
 public class AuthFilter implements javax.servlet.Filter {
+
+    Log log = LogFactory.getLog("AuthFilter");
+
     public void destroy() {
     }
 
@@ -46,6 +52,12 @@ public class AuthFilter implements javax.servlet.Filter {
         HttpSession session = hreq.getSession();
 
         String authHeader = hreq.getHeader("authorization");
+
+        if (authHeader==null || authHeader.isEmpty()) {
+            log.warn("Client sent no authorization header");
+            ((HttpServletResponse) resp).sendError(HttpServletResponse.SC_UNAUTHORIZED);
+            return;
+        }
 
         authHeader = authHeader.substring(5);
         byte[] bytes = Base64.decode(authHeader);
@@ -62,6 +74,7 @@ public class AuthFilter implements javax.servlet.Filter {
         }
         else {
             session.setAttribute("subject",subject); // TODO how to inject to the business methods?
+            log.debug("User '" + username + "' has passed");
             chain.doFilter(req, resp);
         }
     }

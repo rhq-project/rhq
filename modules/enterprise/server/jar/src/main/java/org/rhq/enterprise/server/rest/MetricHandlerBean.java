@@ -23,27 +23,23 @@ import java.util.List;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
+import javax.interceptor.Interceptors;
 
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.rest.MetricAggregate;
 import org.rhq.enterprise.server.measurement.MeasurementAggregate;
-import org.rhq.enterprise.server.measurement.MeasurementDataManagerBean;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
-import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * Deal with metrics
  * @author Heiko W. Rupp
  */
+
 @Stateless
-public class MetricHandlerBean implements MetricHandlerLocal {
+public class MetricHandlerBean  extends AbstractRestBean implements MetricHandlerLocal {
 
     @EJB
     MeasurementDataManagerLocal dataManager;
@@ -63,17 +59,16 @@ public class MetricHandlerBean implements MetricHandlerLocal {
             startTime = endTime - EIGHT_HOURS;
         }
 
-        Subject overlord = LookupUtil.getSubjectManager().getOverlord(); // TODO
 
-        MeasurementSchedule schedule = scheduleManager.getScheduleById(overlord,scheduleId);
+        MeasurementSchedule schedule = scheduleManager.getScheduleById(caller,scheduleId);
         if (schedule.getDefinition().getDataType()!= DataType.MEASUREMENT)
             throw new IllegalArgumentException("Schedule [" + scheduleId + "] is not a (numerical) metric");
 
-        MeasurementAggregate aggr = dataManager.getAggregate(overlord, scheduleId, startTime, endTime);
+        MeasurementAggregate aggr = dataManager.getAggregate(caller, scheduleId, startTime, endTime);
         MetricAggregate res = new MetricAggregate(aggr.getMin(),aggr.getAvg(),aggr.getMax());
 
         int definitionId = schedule.getDefinition().getId();
-        List<List<MeasurementDataNumericHighLowComposite>> listList = dataManager.findDataForResource(overlord,
+        List<List<MeasurementDataNumericHighLowComposite>> listList = dataManager.findDataForResource(caller,
                 schedule.getResource().getId(), new int[]{definitionId}, startTime, endTime, dataPoints);
 
         if (!listList.isEmpty()) {

@@ -40,12 +40,17 @@ import com.smartgwt.client.widgets.tree.TreeNode;
 import com.smartgwt.client.widgets.tree.events.NodeContextClickEvent;
 import com.smartgwt.client.widgets.tree.events.NodeContextClickHandler;
 
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
+import org.rhq.core.domain.drift.DriftConfigurationDefinition;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.PopupWindow;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
+import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTreeGrid;
 
@@ -230,7 +235,40 @@ public abstract class AbstractDriftChangeSetsTreeView extends LocatableTreeGrid 
         });
         contextMenu.addItem(deleteItem);
 
+        // item that shows the drift configuration
+        MenuItem configItem = new MenuItem(MSG.view_drift_changeset_tree_showConfiguration());
+        configItem.addClickHandler(new ClickHandler() {
+            public void onClick(MenuItemClickEvent event) {
+                showDriftConfiguration(node.getChangeSetId());
+            }
+        });
+        contextMenu.addItem(configItem);
+
         return contextMenu;
+    }
+
+    protected void showDriftConfiguration(final String changeSetId) {
+        ConfigurationDefinition def = DriftConfigurationDefinition.getInstance();
+        Configuration config = new Configuration();
+        ConfigurationEditor editor = new ConfigurationEditor(extendLocatorId("driftConfigEditor"), def, config);
+        editor.setReadOnly(true);
+        PopupWindow window = new PopupWindow("details", editor);
+        window.show();
+
+        //        DriftChangeSetCriteria criteria = new BasicDriftChangeSetCriteria();
+        //        criteria.addFilterId(changeSetId);
+        //        criteria.fetchDriftConfiguration(true);
+        //        GWTServiceLookup.getDriftService().findDriftChangeSetCompositesByCriteria(criteria,
+        //            new AsyncCallback<PageList<DriftChangeSet>>() {
+        //                public void onSuccess(PageList<DriftChangeSet> result) {
+        //                    // TODO
+        //                }
+        //
+        //                public void onFailure(Throwable t) {
+        //                    CoreGUI.getErrorHandler().handleError(MSG.view_drift_changeset_tree_loadConfigFailure(changeSetId),
+        //                        t);
+        //                }
+        //            });
     }
 
     /**
@@ -248,11 +286,23 @@ public abstract class AbstractDriftChangeSetsTreeView extends LocatableTreeGrid 
     static class ChangeSetTreeNode extends TreeNode {
         public ChangeSetTreeNode(DriftChangeSet changeset) {
             setIsFolder(true);
-            setIcon("subsystems/drift/ChangeSet_16.png");
             setShowOpenIcon(true);
             setID(changeset.getId());
             setName(padWithZeroes(changeset.getVersion())); // we sort on this column, hence we make sure the version # is padded
             setTitle(buildDriftChangeSetNodeName(changeset));
+
+            switch (changeset.getCategory()) {
+            case COVERAGE:
+                setIcon("subsystems/drift/ChangeSet_Coverage_16.png");
+                break;
+            case DRIFT:
+                setIcon("subsystems/drift/ChangeSet_16.png");
+                break;
+            }
+        }
+
+        public String getChangeSetId() {
+            return getAttribute("id");
         }
 
         private String buildDriftChangeSetNodeName(DriftChangeSet changeset) {
@@ -263,7 +313,7 @@ public abstract class AbstractDriftChangeSetsTreeView extends LocatableTreeGrid 
             str.append(" (");
             str.append(TimestampCellFormatter.format(changeset.getCtime(),
                 TimestampCellFormatter.DATE_TIME_FORMAT_SHORT));
-            str.append(')');
+            str.append(")");
             return str.toString();
         }
 
@@ -285,6 +335,11 @@ public abstract class AbstractDriftChangeSetsTreeView extends LocatableTreeGrid 
             setParentID(parentID);
             setID(parentID + '_' + drift.getId());
             setName(drift.getPath()); // we sort on this column
+            setAttribute("driftId", drift.getId());
+        }
+
+        public String getDriftId() {
+            return getAttribute("driftId");
         }
 
         @Override

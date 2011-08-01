@@ -290,22 +290,24 @@ public class ResourceTypeRepository {
 
         criteria.setPageControl(PageControl.getUnlimitedInstance());
 
-        Log.info("Loading [" + typesNeeded.size() + "] types with facets=[" + metadataTypesNeeded + "]...");
+        Log.info("Loading " + typesNeeded.size()
+            + ((metadataTypes != null) ? (" types: " + metadataTypes) : ""));
 
-        if ((topLevelServerAndServiceTypes == null) && (metadataTypesNeeded != null)
-            && metadataTypesNeeded.contains(MetadataType.children)) {
+        if ((topLevelServerAndServiceTypes == null) && (metadataTypes != null) &&
+                metadataTypes.contains(MetadataType.children)) {
             // Perform a one-time load of server and service types with no parent types. These types are implicitly
             // children of all platform types, even though they are not included in the platform types'
             // childResourceTypes field.
-            loadTopLevelServerAndServiceTypes(callback, metadataTypesNeeded, criteria, cachedTypes);
+            loadTopLevelServerAndServiceTypes(callback, metadataTypes, criteria, cachedTypes);
         } else {
-            loadRequestedTypes(callback, metadataTypesNeeded, criteria, cachedTypes);
+            loadRequestedTypes(callback, metadataTypes, criteria, cachedTypes);
         }
     }
 
     private void loadTopLevelServerAndServiceTypes(final TypesLoadedCallback callback,
-        final EnumSet<MetadataType> metadataTypes, final ResourceTypeCriteria criteria,
-        final Map<Integer, ResourceType> cachedTypes) {
+                                                   final EnumSet<MetadataType> metadataTypes,
+                                                   final ResourceTypeCriteria criteria, final Map<Integer,
+            ResourceType> cachedTypes) {
         ResourceTypeCriteria topLevelCriteria = new ResourceTypeCriteria();
         topLevelCriteria.fetchParentResourceTypes(true);
         resourceTypeService.findResourceTypesByCriteria(topLevelCriteria, new AsyncCallback<PageList<ResourceType>>() {
@@ -317,8 +319,8 @@ public class ResourceTypeRepository {
             public void onSuccess(PageList<ResourceType> types) {
                 topLevelServerAndServiceTypes = new HashSet<ResourceType>();
                 for (ResourceType type : types) {
-                    if ((type.getCategory() != ResourceCategory.PLATFORM)
-                        && (type.getParentResourceTypes() == null || type.getParentResourceTypes().isEmpty())) {
+                    if ((type.getCategory() != ResourceCategory.PLATFORM) &&
+                            (type.getParentResourceTypes() == null || type.getParentResourceTypes().isEmpty())) {
                         topLevelServerAndServiceTypes.add(type);
                     }
                 }
@@ -327,8 +329,7 @@ public class ResourceTypeRepository {
         });
     }
 
-    private void loadRequestedTypes(final TypesLoadedCallback callback, final EnumSet<MetadataType> metadataTypes,
-        ResourceTypeCriteria criteria, final Map<Integer, ResourceType> cachedTypes) {
+    private void loadRequestedTypes(final TypesLoadedCallback callback, final EnumSet<MetadataType> metadataTypes, ResourceTypeCriteria criteria, final Map<Integer, ResourceType> cachedTypes) {
         resourceTypeService.findResourceTypesByCriteria(criteria, new AsyncCallback<PageList<ResourceType>>() {
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError(MSG.widget_typeCache_loadFail(), caught);
@@ -343,8 +344,8 @@ public class ResourceTypeRepository {
                                 switch (metadataType) {
                                 case children:
                                     Set<ResourceType> childTypes = type.getChildResourceTypes();
-                                    if (type.getCategory() == ResourceCategory.PLATFORM
-                                        && topLevelServerAndServiceTypes != null) {
+                                    if (type.getCategory() == ResourceCategory.PLATFORM &&
+                                            topLevelServerAndServiceTypes != null) {
                                         // Add server and service types with no parent types to the list of child types.
                                         // These types are implicitly children of all platform types, even though they
                                         // are not included in the platform types' childResourceTypes field.
@@ -389,7 +390,7 @@ public class ResourceTypeRepository {
                                     break;
                                 default:
                                     Log.error("ERROR: metadataType " + metadataType.name()
-                                        + " not merged into cached ResourceType.");
+                                            + " not merged into cached ResourceType.");
                                 }
                             }
                         }

@@ -101,8 +101,10 @@ public class MetricTemplateImporter implements Importer<MeasurementDefinition, M
     private Configuration importConfiguration;
     private Unmarshaller unmarshaller;
     
-    public MetricTemplateImporter() {
+    public MetricTemplateImporter(Subject subject, EntityManager entityManager) {
         try {
+            this.subject = subject;
+            this.entityManager = entityManager;
             JAXBContext context = JAXBContext.newInstance(MetricTemplate.class);
             unmarshaller = context.createUnmarshaller();
         } catch (JAXBException e) {
@@ -133,9 +135,7 @@ public class MetricTemplateImporter implements Importer<MeasurementDefinition, M
     }
 
     @Override
-    public void init(Subject subject, EntityManager entityManager, Configuration configuration) {
-        this.subject = subject;
-        this.entityManager = entityManager;
+    public void configure(Configuration configuration) {
         this.importConfiguration = configuration;
     }
 

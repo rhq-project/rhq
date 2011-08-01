@@ -19,11 +19,16 @@
 
 package org.rhq.enterprise.server.sync.validators;
 
+import java.util.Set;
+
+import javax.persistence.EntityManager;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.server.sync.ExportReader;
 import org.rhq.enterprise.server.sync.ExportWriter;
+import org.rhq.enterprise.server.sync.ValidationException;
 
 /**
  * Implementations of this interface can export a state and validate that
@@ -41,6 +46,8 @@ import org.rhq.enterprise.server.sync.ExportWriter;
  */
 public interface ConsistencyValidator {
 
+    void initialize(Subject subject, EntityManager entityManager);
+    
     /**
      * Exports the state this checker needs validated later on.
      * This method is being called during the export to capture that
@@ -54,7 +61,7 @@ public interface ConsistencyValidator {
     
     /**
      * This method initializes the consistency checker to perform the
-     * {@link #validate()} method later on.
+     * {@link #validateCurrentState()} method later on.
      * <p>
      * This method is called during import and the reader points to a structure
      * previously stored by the {@link #exportState(ExportWriter)} method on 
@@ -74,7 +81,21 @@ public interface ConsistencyValidator {
      * 
      * @throws InconsistentStateException in case of failed consistency check
      */
-    void validate() throws InconsistentStateException;
+    void validateCurrentState() throws InconsistentStateException;
+    
+    /**
+     * Returns the types of exported entities this validator can validate before export.
+     * This set can be empty, which would mean it can only validate the current state.
+     */
+    Set<Class<?>> getValidatedEntityTypes();
+    
+    /**
+     * Validates a single entity before it is imported.
+     * The supplied entity has one of the types returned by {@link #getValidatedEntityTypes()}.
+     * 
+     * @param entity
+     */
+    void validateExportedEntity(Object entity) throws ValidationException;
     
     /**
      * Implementations of the consistency validator interface should reimplement the

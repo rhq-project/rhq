@@ -51,11 +51,14 @@ import org.rhq.core.domain.common.ServerDetails;
 import org.rhq.core.domain.sync.ExporterMessages;
 import org.rhq.core.domain.sync.entity.SystemSettings;
 import org.rhq.enterprise.server.sync.ExportingInputStream;
+import org.rhq.enterprise.server.sync.Synchronizer;
+import org.rhq.enterprise.server.sync.SystemSettingsSynchronizer;
 import org.rhq.enterprise.server.sync.exporters.Exporter;
 import org.rhq.enterprise.server.sync.exporters.MetricTemplateExporter;
 import org.rhq.enterprise.server.sync.exporters.SystemSettingsExporter;
 import org.rhq.enterprise.server.sync.importers.SystemSettingsImporter;
 import org.rhq.enterprise.server.sync.validators.ConsistencyValidator;
+import org.rhq.enterprise.server.system.InvalidSystemConfigurationException;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 
 /**
@@ -135,6 +138,11 @@ public class SystemSettingsExporterTest {
         }
 
         @Override
+        public void validateSystemConfiguration(Subject subject, Properties properties)
+            throws InvalidSystemConfigurationException {
+        }
+        
+        @Override
         public ServerDetails getServerDetails(Subject subject) {
             return null;
         }
@@ -160,9 +168,9 @@ public class SystemSettingsExporterTest {
     };
 
     public void testCanExport() throws Exception {
-        SystemSettingsExporter exporter = new SystemSettingsExporter(systemManagerStub);
+        SystemSettingsSynchronizer exporter = new SystemSettingsSynchronizer(systemManagerStub);
 
-        Set<Exporter<?, ?>> exporters = new HashSet<Exporter<?, ?>>();
+        Set<Synchronizer<?, ?>> exporters = new HashSet<Synchronizer<?, ?>>();
         exporters.add(exporter);
 
         InputStream eis = new ExportingInputStream(exporters, new HashMap<String, ExporterMessages>(), 65536, false);
@@ -222,7 +230,7 @@ public class SystemSettingsExporterTest {
 
         Element entities = (Element) getFirstDirectChildByTagName(root, ExportingInputStream.ENTITIES_EXPORT_ELEMENT);
 
-        assertEquals(entities.getAttribute(ExportingInputStream.ID_ATTRIBUTE), SystemSettingsImporter.class.getName(),
+        assertEquals(entities.getAttribute(ExportingInputStream.ID_ATTRIBUTE), SystemSettingsSynchronizer.class.getName(),
             "Unexpected id of the entities element.");
 
         NodeList systemSettings = entities.getElementsByTagName("systemSettings");

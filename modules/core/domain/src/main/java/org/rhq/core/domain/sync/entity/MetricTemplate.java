@@ -25,7 +25,6 @@ import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
 
 import org.rhq.core.domain.measurement.MeasurementDefinition;
-import org.rhq.core.domain.measurement.composite.MeasurementScheduleComposite;
 
 /**
  * This is a exportable/importable representation of a metric template.
@@ -121,5 +120,16 @@ public class MetricTemplate extends AbstractExportedEntity {
      */
     public void setPerMinute(boolean perMinute) {
         this.perMinute = perMinute;
+    }
+    
+    @Override
+    public String toString() {
+        StringBuilder bld = new StringBuilder();
+        bld.append("MetricTemplate[metric='").append(metricName).append("', resourceType='")
+            .append(resourceTypeName).append("', plugin='").append(resourceTypePlugin)
+            .append("', perMinute=").append(perMinute).append(", defaultInterval=")
+            .append(defaultInterval).append(", enabled=").append(enabled).append("]");
+        
+        return bld.toString();
     }
 }

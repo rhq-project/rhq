@@ -20,18 +20,22 @@
 package org.rhq.enterprise.server.sync.validators;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import javax.persistence.EntityManager;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.plugin.PluginDeploymentType;
 import org.rhq.enterprise.server.resource.metadata.PluginManagerLocal;
 import org.rhq.enterprise.server.sync.ExportReader;
 import org.rhq.enterprise.server.sync.ExportWriter;
+import org.rhq.enterprise.server.sync.ValidationException;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -91,6 +95,10 @@ public class DeployedAgentPluginsValidator implements ConsistencyValidator {
     }
     
     @Override
+    public void initialize(Subject subject, EntityManager entityManager) {
+    }
+    
+    @Override
     public void exportState(ExportWriter writer) throws XMLStreamException {
         List<Plugin> plugins = pluginManager.getInstalledPlugins();
 
@@ -128,7 +136,7 @@ public class DeployedAgentPluginsValidator implements ConsistencyValidator {
     }
 
     @Override
-    public void validate() throws InconsistentStateException {
+    public void validateCurrentState() throws InconsistentStateException {
         List<Plugin> localPlugins = pluginManager.getInstalledPlugins();
         Set<ConsistentPlugin> localAgentPlugins = new HashSet<ConsistentPlugin>();
         for(Plugin p : localPlugins) {
@@ -148,6 +156,15 @@ public class DeployedAgentPluginsValidator implements ConsistencyValidator {
         }
     }
 
+    @Override
+    public Set<Class<?>> getValidatedEntityTypes() {
+        return Collections.emptySet();
+    }
+
+    @Override
+    public void validateExportedEntity(Object entity) throws ValidationException {
+    }
+    
     @Override
     public int hashCode() {
         //all the deployed plugins validators are equal

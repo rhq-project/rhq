@@ -34,6 +34,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+import javax.persistence.EntityManager;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.stream.XMLStreamException;
@@ -52,6 +53,7 @@ import org.rhq.enterprise.server.sync.ExportException;
 import org.rhq.enterprise.server.sync.ExportWriter;
 import org.rhq.enterprise.server.sync.ExportingInputStream;
 import org.rhq.enterprise.server.sync.NoSingleEntity;
+import org.rhq.enterprise.server.sync.Synchronizer;
 import org.rhq.enterprise.server.sync.exporters.AbstractDelegatingExportingIterator;
 import org.rhq.enterprise.server.sync.exporters.Exporter;
 import org.rhq.enterprise.server.sync.exporters.ExportingIterator;
@@ -68,16 +70,9 @@ public class ExportingInputStreamTest {
 
     private static final Log LOG = LogFactory.getLog(ExportingInputStreamTest.class);
     
-    private static class IntegerImporter extends DummyImporter<Integer> {        
-    }
-    
-    private static class StringImporter extends DummyImporter<String> {
-    }
-    
     private static class ListToStringExporter<T> implements Exporter<NoSingleEntity, T> {
 
         List<T> valuesToExport;
-        Class<? extends Importer<NoSingleEntity, T>> importerClass;
         
         public static final String NOTE_PREFIX = "Wow, I just exported an item from a list: ";
         
@@ -101,22 +96,10 @@ public class ExportingInputStreamTest {
             }
         }
         
-        public ListToStringExporter(Class<? extends Importer<NoSingleEntity, T>> importerClass, List<T> valuesToExport) {
-            this.importerClass = importerClass;
+        public ListToStringExporter(List<T> valuesToExport) {
             this.valuesToExport = valuesToExport;
         }
                 
-        public Set<ConsistencyValidator> getRequiredValidators() {
-            return Collections.emptySet();
-        }
-        
-        public Class<? extends Importer<NoSingleEntity, T>> getImporterType() {
-            return importerClass;
-        }
-
-        public void init(Subject subject) throws ExportException {
-        }
-
         public ExportingIterator<T> getExportingIterator() {
             return new Iterator();
         }
@@ -126,26 +109,54 @@ public class ExportingInputStreamTest {
         }        
     }
     
-    private class StringListExporter extends ListToStringExporter<String> {
-        public StringListExporter(List<String> list) {
-            super(StringImporter.class, list);
+    private static class ListToStringSynchronizer<T> implements Synchronizer<NoSingleEntity, T> {
+        private List<T> list;
+        
+        public ListToStringSynchronizer(List<T> list) {
+            this.list = list;
+        }
+        
+        @Override
+        public Exporter<NoSingleEntity, T> getExporter() {
+            return new ListToStringExporter<T>(list);
+        }
+        
+        @Override
+        public Importer<NoSingleEntity, T> getImporter() {
+            return null;
+        }
+        
+        @Override
+        public Set<ConsistencyValidator> getRequiredValidators() {
+            return Collections.emptySet();            
+        }
+        
+        @Override
+        public void initialize(Subject subject, EntityManager entityManager) {
         }
     }
     
-    private class IntegerListExporter extends ListToStringExporter<Integer> {
-        public IntegerListExporter(List<Integer> list) {
-            super(IntegerImporter.class, list);
+    private static class StringListSynchronizer extends ListToStringSynchronizer<String> {
+        public StringListSynchronizer(List<String> list) {
+            super(list);
         }
     }
     
+    private static class IntegerListSynchronizer extends ListToStringSynchronizer<Integer> {
+        public IntegerListSynchronizer(List<Integer> list) {
+            super(list);
+        }
+    }
+    
+
     public void testCanExport() throws Exception {
         List<String> list1 = Arrays.asList("a", "b", "c");
         List<Integer> list2 = Arrays.asList(1, 2, 3);
         
-        StringListExporter ex1 = new StringListExporter(list1);
-        IntegerListExporter ex2 = new IntegerListExporter(list2);
+        StringListSynchronizer ex1 = new StringListSynchronizer(list1);
+        IntegerListSynchronizer ex2 = new IntegerListSynchronizer(list2);
         
-        Set<Exporter<?, ?>> exporters = this.<Exporter<?, ?>>asSet(ex1, ex2);
+        Set<Synchronizer<?, ?>> exporters = this.<Synchronizer<?, ?>>asSet(ex1, ex2);
         
         InputStream export = new ExportingInputStream(exporters, new HashMap<String, ExporterMessages>(), 1024, false);
         
@@ -168,8 +179,8 @@ public class ExportingInputStreamTest {
         Element export1 = (Element) root.getChildNodes().item(0);
         Element export2 = (Element) root.getChildNodes().item(1);
         
-        assertEquals(export1.getAttribute("id"), StringImporter.class.getName());
-        assertEquals(export2.getAttribute("id"), IntegerImporter.class.getName());
+        assertEquals(export1.getAttribute("id"), StringListSynchronizer.class.getName());
+        assertEquals(export2.getAttribute("id"), IntegerListSynchronizer.class.getName());
 
         String[] expectedNotes = new String[] {list1.toString(), list2.toString()};
         

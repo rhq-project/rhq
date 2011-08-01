@@ -19,10 +19,8 @@
 
 package org.rhq.enterprise.server.sync.test;
 
-import javax.persistence.EntityManager;
 import javax.xml.stream.XMLStreamException;
 
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.enterprise.server.sync.ExportReader;
@@ -39,7 +37,7 @@ public class DummyImporter<T> implements Importer<NoSingleEntity, T> {
     }
     
     @Override
-    public void init(Subject subject, EntityManager entityManager, Configuration configuration) {
+    public void configure(Configuration configuration) {
     }
 
     @Override

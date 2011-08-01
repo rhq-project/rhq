@@ -626,4 +626,44 @@ public class SystemSettings extends AbstractExportedEntity {
     public void setBaselineDataSet(String baselineDataSet) {
         this.baselineDataSet = baselineDataSet;
     }
+    
+    @Override
+    public String toString() {
+        StringBuilder bld = new StringBuilder("SystemSettings[");
+        
+        bld.append("JAASProvider='").append(jAASProvider);
+        bld.append("', JDBCJAASProvider='").append(jDBCJAASProvider);
+        bld.append("', LDAPJAASProvider='").append(lDAPJAASProvider);
+        bld.append("', LDAPFactory='").append(lDAPFactory);
+        bld.append("', LDAPUrl='").append(lDAPUrl);
+        bld.append("', LDAPProtocol='").append(lDAPProtocol);
+        bld.append("', LDAPLoginProperty='").append(lDAPLoginProperty);
+        bld.append("', LDAPFilter='").append(lDAPFilter);
+        bld.append("', LDAPGroupFilter='").append(lDAPGroupFilter);
+        bld.append("', LDAPGroupMember='").append(lDAPGroupMember);
+        bld.append("', LDAPBaseDN='").append(lDAPBaseDN);
+        bld.append("', LDAPBindDN='").append(lDAPBindDN);
+        bld.append("', LDAPBindPW='").append(lDAPBindPW);
+        bld.append("', BaseURL='").append(baseURL);
+        bld.append("', AgentMaxQuietTimeAllowed='").append(agentMaxQuietTimeAllowed);
+        bld.append("', EnableAgentAutoUpdate='").append(enableAgentAutoUpdate);
+        bld.append("', EnableDebugMode='").append(enableDebugMode);
+        bld.append("', EnableExperimentalFeatures='").append(enableExperimentalFeatures);
+        bld.append("', DataPurge1Hour='").append(dataPurge1Hour);
+        bld.append("', DataPurge6Hour='").append(dataPurge6Hour);
+        bld.append("', DataPurge1Day='").append(dataPurge1Day);
+        bld.append("', DataMaintenance='").append(dataMaintenance);
+        bld.append("', DataReindex='").append(dataReindex);
+        bld.append("', RtDataPurge='").append(rtDataPurge);
+        bld.append("', AlertPurge='").append(alertPurge);
+        bld.append("', EventPurge='").append(eventPurge);
+        bld.append("', TraitPurge='").append(traitPurge);
+        bld.append("', AvailabilityPurge='").append(availabilityPurge);
+        bld.append("', BaselineFrequency='").append(baselineFrequency);
+        bld.append("', BaselineDataSet='").append(baselineDataSet);
+        
+        bld.append("']");
+        
+        return bld.toString();
+    }
 }

@@ -60,6 +60,8 @@ import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
 import org.rhq.enterprise.server.resource.metadata.PluginManagerLocal;
 import org.rhq.enterprise.server.resource.metadata.PluginStats;
 import org.rhq.enterprise.server.sync.ExportingInputStream;
+import org.rhq.enterprise.server.sync.MetricTemplateSynchronizer;
+import org.rhq.enterprise.server.sync.Synchronizer;
 import org.rhq.enterprise.server.sync.exporters.Exporter;
 import org.rhq.enterprise.server.sync.exporters.MetricTemplateExporter;
 import org.rhq.enterprise.server.sync.importers.MetricTemplateImporter;
@@ -206,10 +208,9 @@ public class MetricTemplateExporterTest {
     };
 
     public void testCanExport() throws Exception {
-        MetricTemplateExporter exporter = new MetricTemplateExporter(measurementDefManagerStub,
-            pluginManagerStub);
+        MetricTemplateSynchronizer exporter = new MetricTemplateSynchronizer(measurementDefManagerStub, pluginManagerStub);
 
-        Set<Exporter<?, ?>> exporters = new HashSet<Exporter<?, ?>>();
+        Set<Synchronizer<?, ?>> exporters = new HashSet<Synchronizer<?, ?>>();
         exporters.add(exporter);
 
         InputStream eis = new ExportingInputStream(exporters, new HashMap<String, ExporterMessages>(), 65536, false);
@@ -273,7 +274,7 @@ public class MetricTemplateExporterTest {
 
         Element entities = (Element) getFirstDirectChildByTagName(root, ExportingInputStream.ENTITIES_EXPORT_ELEMENT);
         
-        assertEquals(entities.getAttribute(ExportingInputStream.ID_ATTRIBUTE), MetricTemplateImporter.class.getName(), "Unexpected id of the entities element.");
+        assertEquals(entities.getAttribute(ExportingInputStream.ID_ATTRIBUTE), MetricTemplateSynchronizer.class.getName(), "Unexpected id of the entities element.");
         
         NodeList metricTemplates = entities.getElementsByTagName("metricTemplate");
         

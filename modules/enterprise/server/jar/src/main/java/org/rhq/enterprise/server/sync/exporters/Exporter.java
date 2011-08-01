@@ -19,14 +19,6 @@
 
 package org.rhq.enterprise.server.sync.exporters;
 
-import java.util.Set;
-
-import org.rhq.core.domain.auth.Subject;
-import org.rhq.enterprise.server.sync.ExportException;
-import org.rhq.enterprise.server.sync.importers.Importer;
-import org.rhq.enterprise.server.sync.validators.ConsistencyValidator;
-
-
 /**
  * This is the interface a subsystem export must implement.
  * 
@@ -37,27 +29,6 @@ import org.rhq.enterprise.server.sync.validators.ConsistencyValidator;
  */
 public interface Exporter<Entity, ExportedType> {
 
-    /**
-     * @return a possibly empty set of validators that will record the state
-     * needed by this exporter to exist in the target RHQ installation.
-     */
-    Set<ConsistencyValidator> getRequiredValidators();
-    
-    /**
-     * Returns the type of importer that is able to import the entities
-     * exported by this exporter.
-     */
-    Class<? extends Importer<Entity, ExportedType>> getImporterType();
-    
-    /**
-     * Initializes the exporter.
-     * 
-     * @param subject the authenticated user
-     * 
-     * @throws ExportException
-     */
-    void init(Subject subject) throws ExportException;
-    
     /**
      * Creates an iterator that is able to traverse the exported data and serialize them
      * one by one.

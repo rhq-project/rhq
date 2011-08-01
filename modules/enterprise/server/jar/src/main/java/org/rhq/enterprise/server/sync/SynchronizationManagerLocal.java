@@ -29,8 +29,8 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.sync.ExportReport;
 import org.rhq.core.domain.sync.ExportWrapper;
-import org.rhq.core.domain.sync.ImporterConfiguration;
-import org.rhq.core.domain.sync.ImporterConfigurationDefinition;
+import org.rhq.core.domain.sync.ImportConfiguration;
+import org.rhq.core.domain.sync.ImportConfigurationDefinition;
 
 /**
  * 
@@ -60,7 +60,7 @@ public interface SynchronizationManagerLocal {
     
     void validate(Subject subject, InputStream exportFile) throws ValidationException;
     
-    void importAllSubsystems(Subject subject, InputStream exportFile, List<ImporterConfiguration> importerConfigurations) throws ValidationException, ImportException;
+    void importAllSubsystems(Subject subject, InputStream exportFile, List<ImportConfiguration> importerConfigurations) throws ValidationException, ImportException;
     
     //-------- THE FOLLOWING METHODS ARE SHARED WITH THE REMOTE INTERFACE ------------
     
@@ -81,17 +81,17 @@ public interface SynchronizationManagerLocal {
     void validate(Subject subject, byte[] exportFile) throws ValidationException;
 
     /**
-     * @see SynchronizationManagerRemote#getImporterConfigurationDefinition(String) 
+     * @see SynchronizationManagerRemote#getImportConfigurationDefinition(String) 
      */
-    ImporterConfigurationDefinition getImporterConfigurationDefinition(String importerClass);
+    ImportConfigurationDefinition getImportConfigurationDefinition(String synchronizerClass);
     
     /**
      * @see SynchronizationManagerRemote#getConfigurationDefinitionOfAllImporters()
      */
-    List<ImporterConfigurationDefinition> getConfigurationDefinitionOfAllImporters();
+    List<ImportConfigurationDefinition> getConfigurationDefinitionOfAllImporters();
     
     /**
      * @see SynchronizationManagerRemote#importAllSubsystems(Subject, byte[], Set)
      */
-    void importAllSubsystems(Subject subject, byte[] exportFile, List<ImporterConfiguration> importerConfigurations) throws ValidationException, ImportException;
+    void importAllSubsystems(Subject subject, byte[] exportFile, List<ImportConfiguration> importerConfigurations) throws ValidationException, ImportException;
 }

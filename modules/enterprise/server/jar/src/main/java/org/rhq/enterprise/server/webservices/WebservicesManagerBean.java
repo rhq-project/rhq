@@ -123,8 +123,8 @@ import org.rhq.core.domain.resource.composite.ProblemResourceComposite;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.sync.ExportReport;
-import org.rhq.core.domain.sync.ImporterConfiguration;
-import org.rhq.core.domain.sync.ImporterConfigurationDefinition;
+import org.rhq.core.domain.sync.ImportConfiguration;
+import org.rhq.core.domain.sync.ImportConfigurationDefinition;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
@@ -1212,16 +1212,16 @@ public class WebservicesManagerBean implements WebservicesRemote {
         synchronizationManager.validate(subject, exportFile);
     }
     
-    public List<ImporterConfigurationDefinition> getConfigurationDefinitionOfAllImporters() {
+    public List<ImportConfigurationDefinition> getConfigurationDefinitionOfAllImporters() {
         return synchronizationManager.getConfigurationDefinitionOfAllImporters();
     }
     
-    public ImporterConfigurationDefinition getImporterConfigurationDefinition(String importerClass) {
-        return synchronizationManager.getImporterConfigurationDefinition(importerClass);
+    public ImportConfigurationDefinition getImportConfigurationDefinition(String importerClass) {
+        return synchronizationManager.getImportConfigurationDefinition(importerClass);
     }
     
     public void importAllSubsystems(Subject subject, byte[] exportFile,
-        List<ImporterConfiguration> importerConfigurations) throws ValidationException, ImportException {
+        List<ImportConfiguration> importerConfigurations) throws ValidationException, ImportException {
         synchronizationManager.importAllSubsystems(subject, exportFile, importerConfigurations);
     }
     

@@ -19,10 +19,6 @@
 
 package org.rhq.enterprise.server.sync.importers;
 
-import java.lang.reflect.Field;
-
-import javassist.Modifier;
-
 import javax.persistence.EntityManager;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -35,7 +31,6 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
-import org.rhq.core.domain.sync.entity.MetricTemplate;
 import org.rhq.core.domain.sync.entity.SystemSettings;
 import org.rhq.enterprise.server.sync.ExportReader;
 import org.rhq.enterprise.server.sync.NoSingleEntity;
@@ -50,12 +45,14 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class SystemSettingsImporter implements Importer<NoSingleEntity, SystemSettings> {
 
     private Subject subject;
-    private SystemManagerLocal systemManager = LookupUtil.getSystemManager();
+    private SystemManagerLocal systemManager;
     private Configuration importConfiguration;
     private Unmarshaller unmarshaller;
 
-    public SystemSettingsImporter() {
+    public SystemSettingsImporter(Subject subject, SystemManagerLocal systemManager) {
         try {
+            this.subject = subject;
+            this.systemManager = systemManager;
             JAXBContext context = JAXBContext.newInstance(SystemSettings.class);
             unmarshaller = context.createUnmarshaller();
         } catch (JAXBException e) {
@@ -104,8 +101,7 @@ public class SystemSettingsImporter implements Importer<NoSingleEntity, SystemSe
     }
 
     @Override
-    public void init(Subject subject, EntityManager entityManager, Configuration importConfiguration) {
-        this.subject = subject;
+    public void configure(Configuration importConfiguration) {
         this.importConfiguration = importConfiguration;
     }
 
@@ -116,8 +112,8 @@ public class SystemSettingsImporter implements Importer<NoSingleEntity, SystemSe
 
     @Override
     public void update(NoSingleEntity entity, SystemSettings exportedEntity) throws Exception {
-        //TODO implement checking for configuration before applying
-        systemManager.setSystemConfiguration(subject, exportedEntity.toProperties(), false);
+        //TODO take the configuration into account
+        systemManager.setSystemConfiguration(subject, exportedEntity.toProperties(), true);
     }
 
     @Override

@@ -27,12 +27,12 @@ import java.io.Serializable;
  * @author Lukas Krejci
  */
 public class ConsistencyValidatorFailureReport implements Serializable {
-    
+
     private static final long serialVersionUID = 1L;
-    
+
     private String validatorClassName;
     private String errorMessage;
-    
+
     public ConsistencyValidatorFailureReport() {
     }
 
@@ -68,15 +68,35 @@ public class ConsistencyValidatorFailureReport implements Serializable {
     public void setErrorMessage(String errorMessage) {
         this.errorMessage = errorMessage;
     }
-    
+
+    @Override
+    public int hashCode() {
+        return validatorClassName.hashCode() * (errorMessage == null ? 1 : errorMessage.hashCode());
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+
+        if (!(obj instanceof ConsistencyValidatorFailureReport)) {
+            return false;
+        }
+
+        ConsistencyValidatorFailureReport other = (ConsistencyValidatorFailureReport) obj;
+
+        return validatorClassName.equals(other.getValidatorClassName()) && (errorMessage == null ? other
+            .getErrorMessage() == null : errorMessage.equals(other.getErrorMessage()));
+    }
+
     @Override
     public String toString() {
         StringBuilder bld = new StringBuilder();
-        
-        bld.append("ConsistencyValidatorFailureReport[validator='")
-            .append(validatorClassName).append("', message='")
+
+        bld.append("ConsistencyValidatorFailureReport[validator='").append(validatorClassName).append("', message='")
             .append(errorMessage).append("']");
-        
+
         return bld.toString();
     }
 }

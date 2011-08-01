@@ -65,7 +65,7 @@ public class ExportingInputStream extends InputStream {
     public static final String ID_ATTRIBUTE = "id";
     public static final String CLASS_ATTRIBUTE = "class";
     
-    private Set<Exporter<?, ?>> exporters;
+    private Set<Synchronizer<?, ?>> synchronizers;
     private Map<String, ExporterMessages> messagesPerExporter;
     private PipedInputStream inputStream;
     private PipedOutputStream exportOutput;
@@ -79,23 +79,23 @@ public class ExportingInputStream extends InputStream {
      * 
      * @see #ExportingInputStream(Set, Map, int, boolean)
      */
-    public ExportingInputStream(Set<Exporter<?, ?>> exportersToUse, Map<String, ExporterMessages> messagesPerExporter)
+    public ExportingInputStream(Set<Synchronizer<?, ?>> synchronizers, Map<String, ExporterMessages> messagesPerExporter)
         throws IOException {
-        this(exportersToUse, messagesPerExporter, 65536, true);
+        this(synchronizers, messagesPerExporter, 65536, true);
     }
 
     /**
      * Constructs a new exporting input stream with the default buffer size of 64KB.
      * 
-     * @param exportersToUse the exporters to invoke when producing the export file
+     * @param synchronizers the synchronizers to invoke when producing the export file
      * @param messagesPerExporter a reference to a map of messages that the exporters will use to produce additional info about the export
      * @param size the size in bytes of the intermediate buffer
      * @param zip whether to zip the export data
      * @throws IOException on failure
      */
-    public ExportingInputStream(Set<Exporter<?, ?>> exportersToUse, Map<String, ExporterMessages> messagesPerExporter,
+    public ExportingInputStream(Set<Synchronizer<?, ?>> synchronizers, Map<String, ExporterMessages> messagesPerExporter,
         int size, boolean zip) throws IOException {
-        exporters = exportersToUse;
+        this.synchronizers = synchronizers;
         this.messagesPerExporter = messagesPerExporter;
         inputStream = new PipedInputStream(size);
         exportOutput = new PipedOutputStream(inputStream);
@@ -204,7 +204,7 @@ public class ExportingInputStream extends InputStream {
 
             exportPrologue(wrt);
             
-            for (Exporter<?, ?> exp : exporters) {
+            for (Synchronizer<?, ?> exp : synchronizers) {
                 exportSingle(wrt, exp);
             }
             
@@ -243,8 +243,8 @@ public class ExportingInputStream extends InputStream {
     private void writeValidators(XMLStreamWriter wrt) throws XMLStreamException {
         Set<ConsistencyValidator> allValidators = new HashSet<ConsistencyValidator>();
         
-        for(Exporter<?, ?> exp : exporters) {
-            allValidators.addAll(exp.getRequiredValidators());
+        for(Synchronizer<?, ?> syn : synchronizers) {
+            allValidators.addAll(syn.getRequiredValidators());
         }
         
         for(ConsistencyValidator cv : allValidators) {
@@ -265,18 +265,19 @@ public class ExportingInputStream extends InputStream {
     
     /**
      * @param wrt
-     * @param exp
+     * @param syn
      * @return
      * @throws XMLStreamException 
      */
-    private void exportSingle(XMLStreamWriter wrt, Exporter<?, ?> exp) throws XMLStreamException {
+    private void exportSingle(XMLStreamWriter wrt, Synchronizer<?, ?> syn) throws XMLStreamException {
         ExporterMessages messages = new ExporterMessages();
 
-        messagesPerExporter.put(exp.getClass().getName(), messages);
+        messagesPerExporter.put(syn.getClass().getName(), messages);
         
         wrt.writeStartElement(ENTITIES_EXPORT_ELEMENT);
-        wrt.writeAttribute(ID_ATTRIBUTE, exp.getImporterType().getName());
+        wrt.writeAttribute(ID_ATTRIBUTE, syn.getClass().getName());
         
+        Exporter<?, ?> exp = syn.getExporter();
         ExportingIterator<?> it = exp.getExportingIterator();
 
         messages.setPerEntityErrorMessages(new ArrayList<String>());

@@ -28,34 +28,34 @@ import org.rhq.core.domain.configuration.Configuration;
  *
  * @author Lukas Krejci
  */
-public class ImporterConfiguration implements Serializable {
+public class ImportConfiguration implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private String importerClassName;
+    private String synchronizerClassName;
     private Configuration configuration;
     
-    public ImporterConfiguration() {
+    public ImportConfiguration() {
         
     }
     
-    public ImporterConfiguration(String importerClassName, Configuration configuration) {
-        this.importerClassName = importerClassName;
+    public ImportConfiguration(String synchronizerClassName, Configuration configuration) {
+        this.synchronizerClassName = synchronizerClassName;
         this.configuration = configuration;
     }
 
     /**
-     * @return the importerClassName
+     * @return the synchronizerClassName
      */
-    public String getImporterClassName() {
-        return importerClassName;
+    public String getSynchronizerClassName() {
+        return synchronizerClassName;
     }
 
     /**
-     * @param importerClassName the importerClassName to set
+     * @param synchronizerClassName the synchronizerClassName to set
      */
-    public void setImporterClassName(String importerClassName) {
-        this.importerClassName = importerClassName;
+    public void setSynchronizerClassName(String synchronizerClassName) {
+        this.synchronizerClassName = synchronizerClassName;
     }
 
     /**
@@ -74,7 +74,7 @@ public class ImporterConfiguration implements Serializable {
     
     @Override
     public int hashCode() {
-        return importerClassName.hashCode();
+        return synchronizerClassName.hashCode();
     }
     
     @Override
@@ -83,12 +83,12 @@ public class ImporterConfiguration implements Serializable {
             return true;
         }
         
-        if (!(other instanceof ImporterConfiguration)) {
+        if (!(other instanceof ImportConfiguration)) {
             return false;
         }
             
-        ImporterConfiguration o = (ImporterConfiguration) other;
+        ImportConfiguration o = (ImportConfiguration) other;
         
-        return importerClassName.equals(o.getImporterClassName());        
+        return synchronizerClassName.equals(o.getSynchronizerClassName());        
     }
 }

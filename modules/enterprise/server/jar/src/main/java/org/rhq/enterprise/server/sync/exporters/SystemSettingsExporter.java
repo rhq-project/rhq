@@ -21,15 +21,10 @@ package org.rhq.enterprise.server.sync.exporters;
 
 import java.util.Collections;
 import java.util.Properties;
-import java.util.Set;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.sync.entity.SystemSettings;
-import org.rhq.enterprise.server.sync.ExportException;
 import org.rhq.enterprise.server.sync.NoSingleEntity;
-import org.rhq.enterprise.server.sync.importers.Importer;
-import org.rhq.enterprise.server.sync.importers.SystemSettingsImporter;
-import org.rhq.enterprise.server.sync.validators.ConsistencyValidator;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -59,29 +54,11 @@ public class SystemSettingsExporter implements Exporter<NoSingleEntity, SystemSe
         }
     }
     
-    public SystemSettingsExporter() {
-        this(LookupUtil.getSystemManager());
-    }
-    
-    public SystemSettingsExporter(SystemManagerLocal systemManager) {
+    public SystemSettingsExporter(Subject subject, SystemManagerLocal systemManager) {
+        this.subject = subject;
         this.systemManager = systemManager;        
     }
     
-    @Override
-    public Set<ConsistencyValidator> getRequiredValidators() {
-        return Collections.emptySet();
-    }
-    
-    @Override
-    public Class<? extends Importer<NoSingleEntity, SystemSettings>> getImporterType() {
-        return SystemSettingsImporter.class;
-    }
-    
-    @Override
-    public void init(Subject subject) throws ExportException {
-        this.subject = subject;
-    }
-
     @Override
     public ExportingIterator<SystemSettings> getExportingIterator() {
         Properties systemProps = systemManager.getSystemConfiguration(subject);

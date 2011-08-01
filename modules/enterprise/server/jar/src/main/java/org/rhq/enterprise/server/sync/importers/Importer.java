@@ -19,10 +19,8 @@
 
 package org.rhq.enterprise.server.sync.importers;
 
-import javax.persistence.EntityManager;
 import javax.xml.stream.XMLStreamException;
 
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.enterprise.server.sync.ExportReader;
@@ -43,13 +41,11 @@ public interface Importer<Entity, ExportedType> {
     ConfigurationDefinition getImportConfigurationDefinition();
     
     /**
-     * Initializes the importer.
+     * Configures the importer.
      * 
-     * @param subject the current user
-     * @param entityManager the entity manager the importer can use to persist entities
      * @param importConfiguration the configuration of the import as defined by the {@link #getImportConfigurationDefinition()}
      */    
-    void init(Subject subject, EntityManager entityManager, Configuration importConfiguration);
+    void configure(Configuration importConfiguration);
 
     /**
      * Returns an entity matcher that can match the entities from the export file

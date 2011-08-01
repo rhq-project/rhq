@@ -61,35 +61,20 @@ public enum SynchronizedEntity {
     */
     METRIC_TEMPLATE {
         @Override
-        public Exporter<?, ?> getExporter() {
-            return new MetricTemplateExporter();
-        }
-        
-        @Override
-        public Importer<?, ?> getImporter() {
-            return new MetricTemplateImporter();
+        public Synchronizer<?, ?> getSynchronizer() {
+            return new MetricTemplateSynchronizer();
         }
     },
     SYSTEM_SETTINGS {
         @Override
-        public Exporter<?, ?> getExporter() {
-            return new SystemSettingsExporter();
-        }  
-        
-        @Override
-        public Importer<?, ?> getImporter() {
-            return new SystemSettingsImporter();
+        public Synchronizer<?, ?> getSynchronizer() {
+            return new SystemSettingsSynchronizer();
         }
     };
     
     /**
-     * Returns an exporter for given subsystem.
-     */
-    public abstract Exporter<?, ?> getExporter();
-    
-    /**
-     * Returns the importer for given subsystem.
+     * Returns the synchronizer for given subsystem.
      * @return
      */
-    public abstract Importer<?, ?> getImporter();
+    public abstract Synchronizer<?, ?> getSynchronizer();
 }

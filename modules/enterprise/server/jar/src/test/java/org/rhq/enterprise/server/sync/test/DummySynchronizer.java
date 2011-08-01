@@ -19,20 +19,42 @@
 
 package org.rhq.enterprise.server.sync.test;
 
+import java.util.Collections;
+import java.util.Set;
+
+import javax.persistence.EntityManager;
+
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.server.sync.NoSingleEntity;
+import org.rhq.enterprise.server.sync.Synchronizer;
 import org.rhq.enterprise.server.sync.exporters.Exporter;
-import org.rhq.enterprise.server.sync.exporters.ExportingIterator;
+import org.rhq.enterprise.server.sync.importers.Importer;
+import org.rhq.enterprise.server.sync.validators.ConsistencyValidator;
 
-public class DummyExporter<T> implements Exporter<NoSingleEntity, T> {
+/**
+ * 
+ *
+ * @author Lukas Krejci
+ */
+public class DummySynchronizer<T> implements Synchronizer<NoSingleEntity, T> {
 
     @Override
-    public String getNotes() {
-        return null;
+    public void initialize(Subject subject, EntityManager entityManager) {
     }
 
     @Override
-    public ExportingIterator<T> getExportingIterator() {
-        return null;
+    public Exporter<NoSingleEntity, T> getExporter() {
+        return new DummyExporter<T>();
     }
-    
+
+    @Override
+    public Importer<NoSingleEntity, T> getImporter() {
+        return new DummyImporter<T>();
+    }
+
+    @Override
+    public Set<ConsistencyValidator> getRequiredValidators() {
+        return Collections.emptySet();
+    }
+
 }

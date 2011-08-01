@@ -39,6 +39,7 @@ public class DriftChangeSetJPACriteria extends Criteria implements DriftChangeSe
     private Integer filterId;
     private Integer filterInitial; // needs override
     private Integer filterResourceId; // needs override
+    private Integer filterDriftConfigurationId;
     private Integer filterVersion;
     private Integer filterStartVersion;
     private Integer filterEndVersion;
@@ -136,6 +137,16 @@ public class DriftChangeSetJPACriteria extends Criteria implements DriftChangeSe
     @Override
     public Integer getFilterResourceId() {
         return filterResourceId;
+    }
+
+    @Override
+    public void addFilterDriftConfigurationId(Integer filterDriftConfigId) {
+        this.filterDriftConfigurationId = filterDriftConfigId;
+    }
+
+    @Override
+    public Integer getFilterDriftConfigurationId() {
+        return filterDriftConfigurationId;
     }
 
     public void addFilterCategory(DriftChangeSetCategory filterCategory) {

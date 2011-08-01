@@ -111,6 +111,7 @@ public class DriftServerPluginComponent implements DriftServerPluginFacet {
         DriftChangeSetJPACriteria jpaCriteria = new DriftChangeSetJPACriteria();
         jpaCriteria.addFilterId(criteria.getFilterId());
         jpaCriteria.addFilterResourceId(criteria.getFilterResourceId());
+        jpaCriteria.addFilterDriftConfigurationId(criteria.getFilterDriftConfigurationId());
         jpaCriteria.addFilterCategory(criteria.getFilterCategory());
         jpaCriteria.addFilterCreatedAfter(criteria.getFilterCreatedAfter());
         jpaCriteria.addFilterCreatedBefore(criteria.getFilterCreatedBefore());

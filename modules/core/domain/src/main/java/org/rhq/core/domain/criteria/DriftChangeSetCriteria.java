@@ -35,6 +35,10 @@ public interface DriftChangeSetCriteria extends BaseCriteria, Serializable {
 
     Integer getFilterResourceId();
 
+    void addFilterDriftConfigurationId(Integer filterDriftConfigId);
+
+    Integer getFilterDriftConfigurationId();
+
     void addFilterCategory(DriftChangeSetCategory filterCategory);
 
     DriftChangeSetCategory getFilterCategory();

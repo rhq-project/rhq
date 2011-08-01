@@ -22,6 +22,8 @@ public class BasicDriftChangeSetCriteria implements DriftChangeSetCriteria {
 
     private Integer filterResourceId;
 
+    private Integer filterDriftConfigId;
+
     private DriftChangeSetCategory filterCategory;
 
     private boolean fetchDrifts;
@@ -98,6 +100,16 @@ public class BasicDriftChangeSetCriteria implements DriftChangeSetCriteria {
     @Override
     public Integer getFilterResourceId() {
         return filterResourceId;
+    }
+
+    @Override
+    public void addFilterDriftConfigurationId(Integer filterDriftConfigId) {
+        this.filterDriftConfigId = filterDriftConfigId;
+    }
+
+    @Override
+    public Integer getFilterDriftConfigurationId() {
+        return filterDriftConfigId;
     }
 
     @Override

@@ -201,6 +201,7 @@
                 <rhq.ds.connection-url>${rhq.dev.ds.connection-url}</rhq.ds.connection-url>
                 <rhq.ds.user-name>${rhq.dev.ds.user-name}</rhq.ds.user-name>
                 <rhq.ds.password>${rhq.dev.ds.password}></rhq.ds.password>
+                <rhq.ds.driver-class>${rhq.dev.ds.driver-class}</rhq.ds.driver-class>
             </properties>
         </profile>
         

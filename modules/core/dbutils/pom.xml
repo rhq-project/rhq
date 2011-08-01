@@ -22,6 +22,7 @@
         <rhq.ds.connection-url>${rhq.test.ds.connection-url}</rhq.ds.connection-url>
         <rhq.ds.user-name>${rhq.test.ds.user-name}</rhq.ds.user-name>
         <rhq.ds.password>${rhq.test.ds.password}></rhq.ds.password>
+        <rhq.ds.driver-class>${rhq.test.ds.driver-class}</rhq.ds.driver-class>
     </properties>
     <dependencies>
         <!-- 3rd Party Deps -->
@@ -165,6 +166,7 @@
                 <rhq.ds.connection-url>${rhq.dev.ds.connection-url}</rhq.ds.connection-url>
                 <rhq.ds.user-name>${rhq.dev.ds.user-name}</rhq.ds.user-name>
                 <rhq.ds.password>${rhq.dev.ds.password}></rhq.ds.password>
+                <rhq.ds.driver-class>${rhq.dev.ds.driver-class}</rhq.ds.driver-class>
             </properties>
         </profile>
         

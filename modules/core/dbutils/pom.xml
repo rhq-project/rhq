@@ -85,96 +85,117 @@
           <dependency>
             <groupId>postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>${postgresql.version}</version>
-          </dependency>
-           <dependency>
-    			<groupId>commons-logging</groupId>
-    			<artifactId>commons-logging</artifactId>
-    			<version>1.1.1</version>
-			</dependency>
-        </dependencies>
-        <executions>
-          <execution>
-            <phase>process-classes</phase>
-            <goals>
-              <goal>java</goal>
-            </goals>
-            <configuration>
-                <mainClass>org.rhq.core.db.reset.DBReset</mainClass>
-                <systemProperties>
-                    <systemProperty>
-                        <key>rhq.ds.type-mapping</key>
-                        <value>${rhq.ds.type-mapping}</value>
-                    </systemProperty>
-                    <systemProperty>
-                        <key>rhq.ds.server-name</key>
-                        <value>${rhq.ds.server-name}</value>
-                    </systemProperty>
-                    <systemProperty>
-                        <key>rhq.ds.db-name</key>
-                        <value>${rhq.ds.db-name}</value>
-                    </systemProperty>
-                    <systemProperty>
-                        <key>rhq.ds.connection-url</key>
-                        <value>${rhq.ds.connection-url}</value>
-                    </systemProperty>
-                    <systemProperty>
-                        <key>rhq.db.admin.username</key>
-                        <value>${rhq.db.admin.username}</value>
-                    </systemProperty>
-                    <systemProperty>
-                        <key>rhq.db.admin.password</key>
-                        <value>${rhq.db.admin.password}</value>
-                    </systemProperty>
-                    <systemProperty>
-                        <key>rhq.ds.user-name</key>
-                        <value>${rhq.ds.user-name}</value>
-                    </systemProperty>
-                    <systemProperty>
-                        <key>rhq.ds.password</key>
-                        <value>${rhq.ds.password}</value>
-                    </systemProperty>
-                </systemProperties>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-
-      <plugin>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <configuration>
-          <systemProperties>
-            <property>
-              <name>DatabaseTest.nofail</name>
-              <value>${DatabaseTest.nofail}</value>
-            </property>
-            <property>
-              <name>AntDatabaseTest.test-resources</name>
-              <value>${basedir}/src/test/resources</value>
-            </property>
-          </systemProperties>
-          <!-- The below is required for tests to run against Oracle. -->
-          <additionalClasspathElements>
-            <additionalClasspathElement>${settings.localRepository}/com/oracle/ojdbc5/${ojdbc5.version}/ojdbc5-${ojdbc5.version}.jar</additionalClasspathElement>
-          </additionalClasspathElements>
-        </configuration>
-      </plugin>
-
-    </plugins>
-  </build>
-
-   <profiles>
-      <profile>
-         <id>latest</id>
-	       <activation>
+        </dependency>
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>net.sourceforge.jtds</groupId>
+            <artifactId>jtds</artifactId>
+            <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>1.2</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>postgresql</groupId>
+                        <artifactId>postgresql</artifactId>
+                        <version>${postgresql.version}</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>commons-logging</groupId>
+                        <artifactId>commons-logging</artifactId>
+                        <version>1.1.1</version>
+                    </dependency>
+                </dependencies>
+                <executions>
+                    <execution>
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                        <configuration>
+                            <mainClass>org.rhq.core.db.reset.DBReset</mainClass>
+                            <systemProperties>
+                                <systemProperty>
+                                    <key>rhq.ds.type-mapping</key>
+                                    <value>${rhq.ds.type-mapping}</value>
+                                </systemProperty>
+                                <systemProperty>
+                                    <key>rhq.ds.server-name</key>
+                                    <value>${rhq.ds.server-name}</value>
+                                </systemProperty>
+                                <systemProperty>
+                                    <key>rhq.ds.db-name</key>
+                                    <value>${rhq.ds.db-name}</value>
+                                </systemProperty>
+                                <systemProperty>
+                                    <key>rhq.ds.connection-url</key>
+                                    <value>${rhq.ds.connection-url}</value>
+                                </systemProperty>
+                                <systemProperty>
+                                    <key>rhq.db.admin.username</key>
+                                    <value>${rhq.db.admin.username}</value>
+                                </systemProperty>
+                                <systemProperty>
+                                    <key>rhq.db.admin.password</key>
+                                    <value>${rhq.db.admin.password}</value>
+                                </systemProperty>
+                                <systemProperty>
+                                    <key>rhq.ds.user-name</key>
+                                    <value>${rhq.ds.user-name}</value>
+                                </systemProperty>
+                                <systemProperty>
+                                    <key>rhq.ds.password</key>
+                                    <value>${rhq.ds.password}</value>
+                                </systemProperty>
+                            </systemProperties>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <systemProperties>
+                        <property>
+                            <name>DatabaseTest.nofail</name>
+                            <value>${DatabaseTest.nofail}</value>
+                        </property>
+                        <property>
+                            <name>AntDatabaseTest.test-resources</name>
+                            <value>${basedir}/src/test/resources</value>
+                        </property>
+                    </systemProperties>
+                    <!-- The below is required for tests to run against Oracle. -->
+                    <additionalClasspathElements>
+                        <additionalClasspathElement>${settings.localRepository}/com/oracle/ojdbc5/${ojdbc5.version}/ojdbc5-${ojdbc5.version}.jar</additionalClasspathElement>
+                    </additionalClasspathElements>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+    
+    <profiles>
+        <profile>
+            <id>latest</id>
+            <activation>
                 <property>
                     <name>!jon.release</name>
                 </property>
             </activation>
-            
             <build>
                 <plugins>
-	               <plugin>
+                    <plugin>
                         <artifactId>maven-antrun-plugin</artifactId>
                         <executions>
                             <execution>
@@ -183,7 +204,6 @@
                                     <tasks>
                                         <!-- generate the I18N resource bundles -->
                                         <taskdef name="i18n" classpathref="maven.runtime.classpath" classname="mazz.i18n.ant.I18NAntTask" />
-                                        
                                         <i18n outputdir="${project.build.outputDirectory}" defaultlocale="en" verbose="false" append="false" verify="true">
                                             <classpath refid="maven.runtime.classpath" />
                                             <classfileset dir="${project.build.outputDirectory}">
@@ -196,396 +216,365 @@
                                     <goal>run</goal>
                                 </goals>
                             </execution>
-                            
                             <execution>
                                 <id>dbsetup-worker</id>
                                 <phase>test</phase>
                                 <configuration>
-                      <tasks>
-                         <condition property="rhq.ds.type-mapping" value="${rhq.dev.ds.type-mapping}" else="${rhq.test.ds.type-mapping}">
-                             <equals arg1="${db}" arg2="dev" />
-                         </condition>
-                         <condition property="rhq.ds.connection-url" value="${rhq.dev.ds.connection-url}" else="${rhq.test.ds.connection-url}">
-                            <equals arg1="${db}" arg2="dev" />
-                         </condition>
-                         <condition property="rhq.ds.user-name" value="${rhq.dev.ds.user-name}" else="${rhq.test.ds.user-name}">
-                            <equals arg1="${db}" arg2="dev" />
-                         </condition>
-                         <condition property="rhq.ds.password" value="${rhq.dev.ds.password}" else="${rhq.test.ds.password}">
-                            <equals arg1="${db}" arg2="dev" />
-                         </condition>
-
-                         <ant antfile="${basedir}/src/main/scripts/dbsetup-build.xml">
-                            <property name="settings.localRepository" value="${settings.localRepository}" />
-                            <property name="ojdbc5.version" value="${ojdbc5.version}" />
-                            <property name="postgresql.version" value="${postgresql.version}" />
-                            <property name="h2.version" value="${h2.version}" />
-                            <property name="jtds.version" value="${jtds.version}" />
-                            <property name="task.classpath.property" refid="maven.test.classpath" />
-                            <property name="rhq.ds.type-mapping" value="${rhq.ds.type-mapping}" />
-                            <property name="rhq.ds.db-name" value="${rhq.ds.db-name}" />
-                            <property name="rhq.ds.connection-url" value="${rhq.ds.connection-url}" />
-                            <property name="rhq.ds.user-name" value="${rhq.ds.user-name}" />
-                            <property name="rhq.ds.password" value="${rhq.ds.password}" />
-                            <property name="project.version" value="${project.version}" />
-                            <property name="db.schema.version" value="${db.schema.version}" />
-                            <property name="dbsetup" value="${dbsetup}" />
-                            <property name="dbsetup-uninstall" value="${dbsetup-uninstall}" />
-                            <property name="dbsetup-upgrade" value="${dbsetup-upgrade}" />
-                            <property name="dbsetup-export" value="${dbsetup-export}" />
-                         </ant>
-                      </tasks>
-                   </configuration>
-                   <goals>
-                      <goal>run</goal>
-                  </goals>
-               </execution>
-
-               <execution>
-                  <id>generate-dbsetup-dbupgrade-xml-files</id>
-                  <phase>process-classes</phase>
-                  <configuration>
-                     <tasks>
-                        <property name="settings.localRepository" location="${user.home}/.m2/repository}" />
-
-			            <condition property="rhq.ds.type-mapping" value="${rhq.dev.ds.type-mapping}" else="${rhq.test.ds.type-mapping}">
-                            <equals arg1="${db}" arg2="dev" />
-                        </condition>
-
-                        <condition property="rhq.ds.connection-url" value="${rhq.dev.ds.connection-url}" else="${rhq.test.ds.connection-url}">
-                            <equals arg1="${db}" arg2="dev" />
-                        </condition>
-
-                        <condition property="rhq.ds.user-name" value="${rhq.dev.ds.user-name}" else="${rhq.test.ds.user-name}">
-                            <equals arg1="${db}" arg2="dev" />
-                        </condition>
-
-                        <condition property="rhq.ds.password" value="${rhq.dev.ds.password}" else="${rhq.test.ds.password}">
-                            <equals arg1="${db}" arg2="dev" />
-		                </condition>
-
-                        <ant antfile="${basedir}/src/main/scripts/dbsetup-build.xml" target="dbsetup-combine">
-                           <property name="settings.localRepository" value="${settings.localRepository}" />
-                           <property name="ojdbc5.version" value="${ojdbc5.version}" />
-                           <property name="postgresql.version" value="${postgresql.version}" />
-                           <property name="h2.version" value="${h2.version}" />
-                           <property name="jtds.version" value="${jtds.version}" />
-                           <property name="task.classpath.property" refid="maven.test.classpath" />
-                           <property name="rhq.ds.type-mapping" value="${rhq.ds.type-mapping}" />
-                           <property name="rhq.ds.db-name" value="${rhq.ds.db-name}" />
-                           <property name="rhq.ds.connection-url" value="${rhq.ds.connection-url}" />
-                           <property name="rhq.ds.user-name" value="${rhq.ds.user-name}" />
-                           <property name="rhq.ds.password" value="${rhq.ds.password}" />
-                           <property name="project.version" value="${project.version}" />
-                           <property name="db.schema.version" value="${db.schema.version}" />
-                       </ant>
-                    </tasks>
-                 </configuration>
-                 <goals>
-                    <goal>run</goal>
-                </goals>
-             </execution>
-
-             <execution>
-               <!--
-                  This execution will abort the build if the database schema is not up to date.
-                  If you want the build to continue, regardless of your currently installed schema,
-                  then pass -Ddbsetup-do-not-check-schema to the mvn command line.
-               -->
-               <id>test-db-schema-version</id>
-               <phase>test</phase>
-                    <configuration>
-                        <tasks>
-                            <property name="settings.localRepository" location="${user.home}/.m2/repository}" />
-
-                            <condition property="rhq.ds.type-mapping" value="${rhq.dev.ds.type-mapping}" else="${rhq.test.ds.type-mapping}">
-                                <equals arg1="${db}" arg2="dev" />
-                            </condition>
-
-                            <condition property="rhq.ds.connection-url" value="${rhq.dev.ds.connection-url}" else="${rhq.test.ds.connection-url}">
-                                <equals arg1="${db}" arg2="dev" />
-                            </condition>
+                                    <tasks>
+                                        <condition property="rhq.ds.type-mapping" value="${rhq.dev.ds.type-mapping}" else="${rhq.test.ds.type-mapping}">
+                                            <equals arg1="${db}" arg2="dev" />
+                                        </condition>
+                                        <condition property="rhq.ds.connection-url" value="${rhq.dev.ds.connection-url}" else="${rhq.test.ds.connection-url}">
+                                            <equals arg1="${db}" arg2="dev" />
+                                        </condition>
+                                        <condition property="rhq.ds.user-name" value="${rhq.dev.ds.user-name}" else="${rhq.test.ds.user-name}">
+                                            <equals arg1="${db}" arg2="dev" />
+                                        </condition>
+                                        <condition property="rhq.ds.password" value="${rhq.dev.ds.password}" else="${rhq.test.ds.password}">
+                                            <equals arg1="${db}" arg2="dev" />
+                                        </condition>
+                                        <ant antfile="${basedir}/src/main/scripts/dbsetup-build.xml">
+                                            <property name="settings.localRepository" value="${settings.localRepository}" />
+                                            <property name="ojdbc5.version" value="${ojdbc5.version}" />
+                                            <property name="postgresql.version" value="${postgresql.version}" />
+                                            <property name="h2.version" value="${h2.version}" />
+                                            <property name="jtds.version" value="${jtds.version}" />
+                                            <property name="task.classpath.property" refid="maven.test.classpath" />
+                                            <property name="rhq.ds.type-mapping" value="${rhq.ds.type-mapping}" />
+                                            <property name="rhq.ds.db-name" value="${rhq.ds.db-name}" />
+                                            <property name="rhq.ds.connection-url" value="${rhq.ds.connection-url}" />
+                                            <property name="rhq.ds.user-name" value="${rhq.ds.user-name}" />
+                                            <property name="rhq.ds.password" value="${rhq.ds.password}" />
+                                            <property name="project.version" value="${project.version}" />
+                                            <property name="db.schema.version" value="${db.schema.version}" />
+                                            <property name="dbsetup" value="${dbsetup}" />
+                                            <property name="dbsetup-uninstall" value="${dbsetup-uninstall}" />
+                                            <property name="dbsetup-upgrade" value="${dbsetup-upgrade}" />
+                                            <property name="dbsetup-export" value="${dbsetup-export}" />
+                                        </ant>
+                                    </tasks>
+                                </configuration>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                            </execution>
+                            <execution>
+                                <id>generate-dbsetup-dbupgrade-xml-files</id>
+                                <phase>process-classes</phase>
+                                <configuration>
+                                    <tasks>
+                                        <property name="settings.localRepository" location="${user.home}/.m2/repository}" />
+                                        <condition property="rhq.ds.type-mapping" value="${rhq.dev.ds.type-mapping}" else="${rhq.test.ds.type-mapping}">
+                                            <equals arg1="${db}" arg2="dev" />
+                                        </condition>
+                                        <condition property="rhq.ds.connection-url" value="${rhq.dev.ds.connection-url}" else="${rhq.test.ds.connection-url}">
+                                            <equals arg1="${db}" arg2="dev" />
+                                        </condition>
+                                        <condition property="rhq.ds.user-name" value="${rhq.dev.ds.user-name}" else="${rhq.test.ds.user-name}">
+                                            <equals arg1="${db}" arg2="dev" />
+                                        </condition>
+                                        <condition property="rhq.ds.password" value="${rhq.dev.ds.password}" else="${rhq.test.ds.password}">
+                                            <equals arg1="${db}" arg2="dev" />
+                                        </condition>
+                                        <ant antfile="${basedir}/src/main/scripts/dbsetup-build.xml" target="dbsetup-combine">
+                                            <property name="settings.localRepository" value="${settings.localRepository}" />
+                                            <property name="ojdbc5.version" value="${ojdbc5.version}" />
+                                            <property name="postgresql.version" value="${postgresql.version}" />
+                                            <property name="h2.version" value="${h2.version}" />
+                                            <property name="jtds.version" value="${jtds.version}" />
+                                            <property name="task.classpath.property" refid="maven.test.classpath" />
+                                            <property name="rhq.ds.type-mapping" value="${rhq.ds.type-mapping}" />
+                                            <property name="rhq.ds.db-name" value="${rhq.ds.db-name}" />
+                                            <property name="rhq.ds.connection-url" value="${rhq.ds.connection-url}" />
+                                            <property name="rhq.ds.user-name" value="${rhq.ds.user-name}" />
+                                            <property name="rhq.ds.password" value="${rhq.ds.password}" />
+                                            <property name="project.version" value="${project.version}" />
+                                            <property name="db.schema.version" value="${db.schema.version}" />
+                                        </ant>
+                                    </tasks>
+                                </configuration>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                            </execution>
+                            <execution>
+                                <!-- This execution will abort the build if the database schema is not up to date. If you want the build to continue, regardless of your currently installed
+                                    schema, then pass -Ddbsetup-do-not-check-schema to the mvn command line. -->
+                                <id>test-db-schema-version</id>
+                                <phase>test</phase>
+                                <configuration>
+                                    <tasks>
+                                        <property name="settings.localRepository" location="${user.home}/.m2/repository}" />
+                                        <condition property="rhq.ds.type-mapping" value="${rhq.dev.ds.type-mapping}" else="${rhq.test.ds.type-mapping}">
+                                            <equals arg1="${db}" arg2="dev" />
+                                        </condition>
+                                        <condition property="rhq.ds.connection-url" value="${rhq.dev.ds.connection-url}" else="${rhq.test.ds.connection-url}">
+                                            <equals arg1="${db}" arg2="dev" />
+                                        </condition>
+                                        <condition property="rhq.ds.user-name" value="${rhq.dev.ds.user-name}" else="${rhq.test.ds.user-name}">
+                                            <equals arg1="${db}" arg2="dev" />
+                                        </condition>
+                                        <condition property="rhq.ds.password" value="${rhq.dev.ds.password}" else="${rhq.test.ds.password}">
+                                            <equals arg1="${db}" arg2="dev" />
+                                        </condition>
+                                        <condition property="rhq.ds.driver-class" value="${rhq.dev.ds.driver-class}" else="${rhq.test.ds.driver-class}">
+                                            <equals arg1="${db}" arg2="dev" />
+                                        </condition>
+                                        <ant antfile="${basedir}/src/main/scripts/dbsetup-build.xml" target="dbsetup-check-schema">
+                                            <property name="settings.localRepository" value="${settings.localRepository}" />
+                                            <property name="ojdbc5.version" value="${ojdbc5.version}" />
+                                            <property name="postgresql.version" value="${postgresql.version}" />
+                                            <property name="h2.version" value="${h2.version}" />
+                                            <property name="jtds.version" value="${jtds.version}" />
+                                            <property name="task.classpath.property" refid="maven.test.classpath" />
+                                            <property name="rhq.ds.db-name" value="${rhq.ds.db-name}" />
+                                            <property name="rhq.ds.type-mapping" value="${rhq.ds.type-mapping}" />
+                                            <property name="rhq.ds.connection-url" value="${rhq.ds.connection-url}" />
+                                            <property name="rhq.ds.user-name" value="${rhq.ds.user-name}" />
+                                            <property name="rhq.ds.password" value="${rhq.ds.password}" />
+                                            <property name="project.version" value="${project.version}" />
+                                            <property name="db.schema.version" value="${db.schema.version}" />
+                                            <property name="rhq.ds.driver-class" value="${rhq.ds.driver-class}" />
+                                            <property name="dbsetup-do-not-check-schema" value="${dbsetup-do-not-check-schema}" />
+                                        </ant>
+                                    </tasks>
+                                </configuration>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
         
-                            <condition property="rhq.ds.user-name" value="${rhq.dev.ds.user-name}" else="${rhq.test.ds.user-name}">
-                                <equals arg1="${db}" arg2="dev" />
-                            </condition>
-
-                            <condition property="rhq.ds.password" value="${rhq.dev.ds.password}" else="${rhq.test.ds.password}">
-                               <equals arg1="${db}" arg2="dev" />
-                            </condition>
-
-                            <condition property="rhq.ds.driver-class" value="${rhq.dev.ds.driver-class}" else="${rhq.test.ds.driver-class}">
-                               <equals arg1="${db}" arg2="dev" />
-                            </condition>
-
-                            <ant antfile="${basedir}/src/main/scripts/dbsetup-build.xml" target="dbsetup-check-schema">
-                              <property name="settings.localRepository" value="${settings.localRepository}" />
-                              <property name="ojdbc5.version" value="${ojdbc5.version}" />
-                              <property name="postgresql.version" value="${postgresql.version}" />
-                              <property name="h2.version" value="${h2.version}" />
-                              <property name="jtds.version" value="${jtds.version}" />
-                              <property name="task.classpath.property" refid="maven.test.classpath" />
-                              <property name="rhq.ds.db-name" value="${rhq.ds.db-name}" />
-                              <property name="rhq.ds.type-mapping" value="${rhq.ds.type-mapping}" />
-                              <property name="rhq.ds.connection-url" value="${rhq.ds.connection-url}" />
-                              <property name="rhq.ds.user-name" value="${rhq.ds.user-name}" />
-                              <property name="rhq.ds.password" value="${rhq.ds.password}" />
-                              <property name="project.version" value="${project.version}" />
-                              <property name="db.schema.version" value="${db.schema.version}" />
-                              <property name="rhq.ds.driver-class" value="${rhq.ds.driver-class}" />
-                              <property name="dbsetup-do-not-check-schema" value="${dbsetup-do-not-check-schema}" />
-                            </ant>
-                        </tasks>
-                    </configuration>
-                <goals>
-              <goal>run</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-	    </plugins>
-	 </build>
-      </profile>
-
-      <profile>
-         <id>jon.release</id>
-	 <activation>
-            <property>
-	       <name>jon.release</name>
-	    </property>
-	 </activation>
-	 <build>
-            <plugins>
-	       <plugin>
-                  <artifactId>maven-antrun-plugin</artifactId>
-                  <executions>
-                     <execution>
-                       <id>generate-schema</id>
-	               <phase>test</phase>
-	               <configuration>
-                          <tasks>
-		             <property name="settings.localRepository" location="${user.home}/.m2/repository}" />
-
-			                 <condition property="rhq.ds.type-mapping" value="${rhq.dev.ds.type-mapping}" else="${rhq.test.ds.type-mapping}">
-                               <equals arg1="${db}" arg2="dev" />
-                             </condition>
-
-                             <condition property="rhq.ds.connection-url" value="${rhq.dev.ds.connection-url}" else="${rhq.test.ds.connection-url}">
-                               <equals arg1="${db}" arg2="dev" />
-                             </condition>
-
-                             <condition property="rhq.ds.user-name" value="${rhq.dev.ds.user-name}" else="${rhq.test.ds.user-name}">
-                               <equals arg1="${db}" arg2="dev" />
-                             </condition>
-
-                            <condition property="rhq.ds.password" value="${rhq.dev.ds.password}" else="${rhq.test.ds.password}">
-                               <equals arg1="${db}" arg2="dev" />
-                            </condition>
-
-                             <ant antfile="${basedir}/src/main/scripts/dbsetup-build.xml" target="create-release-schema">
-                                <property name="settings.localRepository" value="${settings.localRepository}" />
-                                <property name="ojdbc5.version" value="${ojdbc5.version}" />
-                                <property name="postgresql.version" value="${postgresql.version}" />
-                                <property name="h2.version" value="${h2.version}" />
-                                <property name="jtds.version" value="${jtds.version}" />
-                                <property name="task.classpath.property" refid="maven.test.classpath" />
-                                <property name="rhq.ds.type-mapping" value="${rhq.ds.type-mapping}" />
-                                <property name="rhq.ds.db-name" value="${rhq.ds.db-name}" />
-                                <property name="rhq.ds.connection-url" value="${rhq.ds.connection-url}" />
-                                <property name="rhq.ds.user-name" value="${rhq.ds.user-name}" />
-                                <property name="rhq.ds.password" value="${rhq.ds.password}" />
-                                <property name="project.version" value="${project.version}" />
-                                <property name="db.schema.version" value="${db.schema.version}" />
-                                <property name="jon.release" value="${jon.release}" />
-                             </ant>
-                          </tasks>
-            	       </configuration>
-           	       <goals>
-                          <goal>run</goal>
-	               </goals>
-         	     </execution>
-                  </executions>
-               </plugin>
-	    </plugins>
-         </build>
-      </profile>
-
-      <profile>
-         <id>dev</id>
-
-         <properties>
-            <rhq.rootDir>../../..</rhq.rootDir>
-            <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
-            <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/deploy/${rhq.earName}/lib</rhq.deploymentDir>
-         </properties>
-
-         <build>
-           <plugins>
-
-               <plugin>
-                 <artifactId>maven-antrun-plugin</artifactId>
-                 <version>1.1</version>
-                 <executions>
-
-                     <execution>
-                        <id>deploy</id>
-                        <phase>compile</phase>
-                        <configuration>
-                          <tasks>
-                            <mkdir dir="${rhq.deploymentDir}" />
-                            <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
-                            <echo>*** Updating ${deployment.file}...</echo>
-                            <jar destfile="${deployment.file}" basedir="${project.build.outputDirectory}" />
-                          </tasks>
-                        </configuration>
-                        <goals>
-                          <goal>run</goal>
-                        </goals>
-                     </execution>
-
-                     <execution>
-                        <id>undeploy</id>
-                        <phase>clean</phase>
-                        <configuration>
-                          <tasks>
-                            <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
-                            <echo>*** Deleting ${deployment.file}...</echo>
-                            <delete file="${deployment.file}" />
-                          </tasks>
-                        </configuration>
-                        <goals>
-                          <goal>run</goal>
-                        </goals>
-                     </execution>
-
-                   </executions>
-               </plugin>
-
-           </plugins>
-         </build>
-      </profile>
-          <profile>
-      <id>cobertura</id>
-      <activation>
-        <activeByDefault>false</activeByDefault>
-      </activation>
-        <build>
-         <plugins>
-           <plugin>
-             <artifactId>maven-antrun-plugin</artifactId>
-              <dependencies>
-               <dependency>
-                 <groupId>net.sourceforge.cobertura</groupId>
-                 <artifactId>cobertura</artifactId>
-                 <version>${cobertura.version}</version>
-               </dependency>
-             </dependencies>
-             <executions>
-              <execution>
-               <id>cobertura-instrument</id>
-               <phase>process-test-classes</phase>
-                 <configuration>
-                   <tasks>
-                   <!-- prepare directory structure for cobertura-->
-                   <mkdir dir="target/cobertura" />
-                   <mkdir dir="target/cobertura/backup" />
-                   <!-- backup all classes so that we can instrument the original classes-->
-                   <copy toDir="target/cobertura/backup" verbose="true" overwrite="true">
-                      <fileset dir="target/classes">
-                         <include name="**/*.class" />
-                      </fileset>
-                   </copy>
-                   <!-- create a properties file and save there location of cobertura data file-->
-                   <touch file="target/classes/cobertura.properties" />
-                   <echo file="target/classes/cobertura.properties">net.sourceforge.cobertura.datafile=${project.build.directory}/cobertura/cobertura.ser</echo>
-                   <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties" />
-                   <!-- instrument all classes in target/classes directory -->
-                   <cobertura-instrument datafile="${project.build.directory}/cobertura/cobertura.ser" todir="${project.build.directory}/classes">
-                     <fileset dir="${project.build.directory}/classes">
-                        <include name="**/*.class" />
-                      </fileset>
-                    </cobertura-instrument>
-                   </tasks>
-                 </configuration>
-               <goals>
-                 <goal>run</goal>
-               </goals>
-              </execution>
-              <execution>
-               <id>cobertura-report</id>
-               <phase>prepare-package</phase>
-                 <configuration>
-                   <tasks>
-                     <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties" />
-                     <!-- prepare directory structure for cobertura-->
-                     <mkdir dir="target/cobertura" />
-                     <mkdir dir="target/site/cobertura" />
-                     <!-- restore classes from backup folder to classes folder -->
-                     <copy toDir="target/classes" verbose="true" overwrite="true">
-                      <fileset dir="target/cobertura/backup">
-                         <include name="**/*.class" />
-                      </fileset>
-                     </copy>
-                     <!-- delete backup folder-->
-                     <delete dir="target/cobertura/backup" />
-                     <!-- create a code coverage report -->
-                     <cobertura-report format="html" datafile="${project.build.directory}/cobertura/cobertura.ser" destdir="${project.build.directory}/site/cobertura">
-                      <fileset dir="${basedir}/src/main/java">
-                         <include name="**/*.java" />
-                      </fileset>
-                     </cobertura-report>
-                     <!-- delete cobertura.properties file -->
-                     <delete file="target/classes/cobertura.properties" />
-                   </tasks>
-                 </configuration>
-               <goals>
-                 <goal>run</goal>
-               </goals>
-               </execution>
-            </executions>
-           </plugin>
-          </plugins>
-       </build>
-     </profile>
-     
-    <profile>
-        <id>ojdbc-driver</id>
-        <dependencies>
-            <dependency>
-                <groupId>com.oracle</groupId>
-                <artifactId>ojdbc5</artifactId>
-                <version>${ojdbc5.version}</version>
-            </dependency>
-        </dependencies>
-        <build>
-            <plugins>
-                <plugin>
-                    <groupId>org.codehaus.mojo</groupId>
-                    <artifactId>exec-maven-plugin</artifactId>
-                    <version>1.2</version>
-                    <dependencies>
-                        <dependency>
-                            <groupId>com.oracle</groupId>
-                            <artifactId>ojdbc5</artifactId>
-                            <version>${ojdbc5.version}</version>
-                        </dependency>
-                    </dependencies>
-                </plugin>
-            </plugins>
-        </build>
-    </profile>
+        <profile>
+            <id>jon.release</id>
+            <activation>
+                <property>
+                    <name>jon.release</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>generate-schema</id>
+                                <phase>test</phase>
+                                <configuration>
+                                    <tasks>
+                                        <property name="settings.localRepository" location="${user.home}/.m2/repository}" />
+                                        <condition property="rhq.ds.type-mapping" value="${rhq.dev.ds.type-mapping}" else="${rhq.test.ds.type-mapping}">
+                                            <equals arg1="${db}" arg2="dev" />
+                                        </condition>
+                                        <condition property="rhq.ds.connection-url" value="${rhq.dev.ds.connection-url}" else="${rhq.test.ds.connection-url}">
+                                            <equals arg1="${db}" arg2="dev" />
+                                        </condition>
+                                        <condition property="rhq.ds.user-name" value="${rhq.dev.ds.user-name}" else="${rhq.test.ds.user-name}">
+                                            <equals arg1="${db}" arg2="dev" />
+                                        </condition>
+                                        <condition property="rhq.ds.password" value="${rhq.dev.ds.password}" else="${rhq.test.ds.password}">
+                                            <equals arg1="${db}" arg2="dev" />
+                                        </condition>
+                                        <ant antfile="${basedir}/src/main/scripts/dbsetup-build.xml" target="create-release-schema">
+                                            <property name="settings.localRepository" value="${settings.localRepository}" />
+                                            <property name="ojdbc5.version" value="${ojdbc5.version}" />
+                                            <property name="postgresql.version" value="${postgresql.version}" />
+                                            <property name="h2.version" value="${h2.version}" />
+                                            <property name="jtds.version" value="${jtds.version}" />
+                                            <property name="task.classpath.property" refid="maven.test.classpath" />
+                                            <property name="rhq.ds.type-mapping" value="${rhq.ds.type-mapping}" />
+                                            <property name="rhq.ds.db-name" value="${rhq.ds.db-name}" />
+                                            <property name="rhq.ds.connection-url" value="${rhq.ds.connection-url}" />
+                                            <property name="rhq.ds.user-name" value="${rhq.ds.user-name}" />
+                                            <property name="rhq.ds.password" value="${rhq.ds.password}" />
+                                            <property name="project.version" value="${project.version}" />
+                                            <property name="db.schema.version" value="${db.schema.version}" />
+                                            <property name="jon.release" value="${jon.release}" />
+                                        </ant>
+                                    </tasks>
+                                </configuration>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        
+        <profile>
+            <id>dev</id>
+            <properties>
+                <rhq.rootDir>../../..</rhq.rootDir>
+                <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
+                <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/deploy/${rhq.earName}/lib</rhq.deploymentDir>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <version>1.1</version>
+                        <executions>
+                            <execution>
+                                <id>deploy</id>
+                                <phase>compile</phase>
+                                <configuration>
+                                    <tasks>
+                                        <mkdir dir="${rhq.deploymentDir}" />
+                                        <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
+                                        <echo>*** Updating ${deployment.file}...</echo>
+                                        <jar destfile="${deployment.file}" basedir="${project.build.outputDirectory}" />
+                                    </tasks>
+                                </configuration>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                            </execution>
+                            <execution>
+                                <id>undeploy</id>
+                                <phase>clean</phase>
+                                <configuration>
+                                    <tasks>
+                                        <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
+                                        <echo>*** Deleting ${deployment.file}...</echo>
+                                        <delete file="${deployment.file}" />
+                                    </tasks>
+                                </configuration>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        
+        <profile>
+            <id>cobertura</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <dependencies>
+                            <dependency>
+                                <groupId>net.sourceforge.cobertura</groupId>
+                                <artifactId>cobertura</artifactId>
+                                <version>${cobertura.version}</version>
+                            </dependency>
+                        </dependencies>
+                        <executions>
+                            <execution>
+                                <id>cobertura-instrument</id>
+                                <phase>process-test-classes</phase>
+                                <configuration>
+                                    <tasks>
+                                        <!-- prepare directory structure for cobertura -->
+                                        <mkdir dir="target/cobertura" />
+                                        <mkdir dir="target/cobertura/backup" />
+                                        <!-- backup all classes so that we can instrument the original classes -->
+                                        <copy toDir="target/cobertura/backup" verbose="true" overwrite="true">
+                                            <fileset dir="target/classes">
+                                                <include name="**/*.class" />
+                                            </fileset>
+                                        </copy>
+                                        <!-- create a properties file and save there location of cobertura data file -->
+                                        <touch file="target/classes/cobertura.properties" />
+                                        <echo file="target/classes/cobertura.properties">net.sourceforge.cobertura.datafile=${project.build.directory}/cobertura/cobertura.ser</echo>
+                                        <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties" />
+                                        <!-- instrument all classes in target/classes directory -->
+                                        <cobertura-instrument datafile="${project.build.directory}/cobertura/cobertura.ser" todir="${project.build.directory}/classes">
+                                            <fileset dir="${project.build.directory}/classes">
+                                                <include name="**/*.class" />
+                                            </fileset>
+                                        </cobertura-instrument>
+                                    </tasks>
+                                </configuration>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                            </execution>
+                            <execution>
+                                <id>cobertura-report</id>
+                                <phase>prepare-package</phase>
+                                <configuration>
+                                    <tasks>
+                                        <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties" />
+                                        <!-- prepare directory structure for cobertura -->
+                                        <mkdir dir="target/cobertura" />
+                                        <mkdir dir="target/site/cobertura" />
+                                        <!-- restore classes from backup folder to classes folder -->
+                                        <copy toDir="target/classes" verbose="true" overwrite="true">
+                                            <fileset dir="target/cobertura/backup">
+                                                <include name="**/*.class" />
+                                            </fileset>
+                                        </copy>
+                                        <!-- delete backup folder -->
+                                        <delete dir="target/cobertura/backup" />
+                                        <!-- create a code coverage report -->
+                                        <cobertura-report format="html" datafile="${project.build.directory}/cobertura/cobertura.ser" destdir="${project.build.directory}/site/cobertura">
+                                            <fileset dir="${basedir}/src/main/java">
+                                                <include name="**/*.java" />
+                                            </fileset>
+                                        </cobertura-report>
+                                        <!-- delete cobertura.properties file -->
+                                        <delete file="target/classes/cobertura.properties" />
+                                    </tasks>
+                                </configuration>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        
+        <profile>
+            <id>ojdbc-driver</id>
+            <dependencies>
+                <dependency>
+                    <groupId>com.oracle</groupId>
+                    <artifactId>ojdbc5</artifactId>
+                    <version>${ojdbc5.version}</version>
+                </dependency>
+            </dependencies>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>1.2</version>
+                        <dependencies>
+                            <dependency>
+                                <groupId>com.oracle</groupId>
+                                <artifactId>ojdbc5</artifactId>
+                                <version>${ojdbc5.version}</version>
+                            </dependency>
+                        </dependencies>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
     </profiles>
-
-   <pluginRepositories>
-      <pluginRepository>
-         <id>codehaus-snapshots</id>
-	 <name>codehaus snapshots</name>
-	 <url>http://snapshots.repository.codehaus.org</url>
-	 <snapshots>
-            <enabled>true</enabled>
-	 </snapshots>
-      </pluginRepository>
-   </pluginRepositories>
-
+    
+    <pluginRepositories>
+        <pluginRepository>
+            <id>codehaus-snapshots</id>
+            <name>codehaus snapshots</name>
+            <url>http://snapshots.repository.codehaus.org</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </pluginRepository>
+    </pluginRepositories>
 </project>
-

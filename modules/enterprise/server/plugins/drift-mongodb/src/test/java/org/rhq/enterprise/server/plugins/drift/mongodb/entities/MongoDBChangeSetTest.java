@@ -45,7 +45,7 @@ public class MongoDBChangeSetTest {
         ds.delete(deleteAll);
     }
 
-    @Test
+    @Test(enabled = false)
     public void saveAndLoadEmptyChangeSet() throws Exception {
         MongoDBChangeSet expected = new MongoDBChangeSet();
         expected.setCategory(COVERAGE);
@@ -59,7 +59,7 @@ public class MongoDBChangeSetTest {
         assertPropertiesMatch("Failed to save change set", expected, actual);
     }
 
-    @Test
+    @Test(enabled = false)
     public void saveAndLoadChangeSetWithOneEntry() throws Exception {
         MongoDBChangeSet expected = new MongoDBChangeSet();
         expected.setResourceId(10001);
@@ -75,7 +75,7 @@ public class MongoDBChangeSetTest {
             "changeSet");
     }
 
-    @Test
+    @Test(enabled = false)
     public void saveAndFindChangeSetById() throws Exception {
         MongoDBChangeSet expected = new MongoDBChangeSet();
         expected.setCategory(COVERAGE);

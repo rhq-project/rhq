@@ -43,7 +43,7 @@ import java.util.Properties;
  *
  * @author John Sanda
  */
-public class DBInstallatonTest {
+public class DBInstallationTest {
 
     private final String LOG_DIRECTORY = System.getProperty("java.io.tmpdir", "rhq/installer-test");
     private final String TEST_DB = System.getProperty("rhq.test.ds.db-name","rhq_installer_test_db");

@@ -21,7 +21,7 @@
         <rhq.ds.db-name>${rhq.test.ds.db-name}</rhq.ds.db-name>
         <rhq.ds.connection-url>${rhq.test.ds.connection-url}</rhq.ds.connection-url>
         <rhq.ds.user-name>${rhq.test.ds.user-name}</rhq.ds.user-name>
-        <rhq.ds.password>${rhq.test.ds.password}></rhq.ds.password>
+        <rhq.ds.password>${rhq.test.ds.password}</rhq.ds.password>
         <rhq.ds.driver-class>${rhq.test.ds.driver-class}</rhq.ds.driver-class>
     </properties>
     <dependencies>
@@ -165,7 +165,7 @@
                 <rhq.ds.db-name>${rhq.dev.ds.db-name}</rhq.ds.db-name>
                 <rhq.ds.connection-url>${rhq.dev.ds.connection-url}</rhq.ds.connection-url>
                 <rhq.ds.user-name>${rhq.dev.ds.user-name}</rhq.ds.user-name>
-                <rhq.ds.password>${rhq.dev.ds.password}></rhq.ds.password>
+                <rhq.ds.password>${rhq.dev.ds.password}</rhq.ds.password>
                 <rhq.ds.driver-class>${rhq.dev.ds.driver-class}</rhq.ds.driver-class>
             </properties>
         </profile>

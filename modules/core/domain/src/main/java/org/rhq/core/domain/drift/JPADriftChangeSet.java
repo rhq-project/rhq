@@ -43,24 +43,24 @@ import javax.persistence.PrePersist;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
-import org.hibernate.annotations.Type;
-
 import org.rhq.core.domain.resource.Resource;
 
 /**
+ * The JPA Drift Server plugin (the RHQ default) implementation of DriftChangeSet.
+ *   
  * @author Jay Shaughnessy
  * @author John Sanda 
  */
 @Entity
-@NamedQueries( { @NamedQuery(name = RhqDriftChangeSet.QUERY_DELETE_BY_RESOURCES, query = "" //
-    + "DELETE FROM RhqDriftChangeSet dcs " //
+@NamedQueries( { @NamedQuery(name = JPADriftChangeSet.QUERY_DELETE_BY_RESOURCES, query = "" //
+    + "DELETE FROM JPADriftChangeSet dcs " //
     + " WHERE dcs.resource.id IN ( :resourceIds )") })
 @Table(name = "RHQ_DRIFT_CHANGE_SET")
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_DRIFT_CHANGE_SET_ID_SEQ")
-public class RhqDriftChangeSet implements Serializable, DriftChangeSet<RhqDrift> {
+public class JPADriftChangeSet implements Serializable, DriftChangeSet<JPADrift> {
     private static final long serialVersionUID = 1L;
 
-    public static final String QUERY_DELETE_BY_RESOURCES = "RhqDriftChangeSet.deleteByResources";
+    public static final String QUERY_DELETE_BY_RESOURCES = "JPADriftChangeSet.deleteByResources";
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
@@ -86,12 +86,12 @@ public class RhqDriftChangeSet implements Serializable, DriftChangeSet<RhqDrift>
     private Resource resource;
 
     @OneToMany(mappedBy = "changeSet", cascade = { CascadeType.ALL })
-    private Set<RhqDrift> drifts = new LinkedHashSet<RhqDrift>();
+    private Set<JPADrift> drifts = new LinkedHashSet<JPADrift>();
 
-    protected RhqDriftChangeSet() {
+    protected JPADriftChangeSet() {
     }
 
-    public RhqDriftChangeSet(Resource resource, int version, DriftChangeSetCategory category, int configId) {
+    public JPADriftChangeSet(Resource resource, int version, DriftChangeSetCategory category, int configId) {
         this.resource = resource;
         this.version = version;
         this.category = category;
@@ -162,18 +162,18 @@ public class RhqDriftChangeSet implements Serializable, DriftChangeSet<RhqDrift>
     }
 
     @Override
-    public Set<RhqDrift> getDrifts() {
+    public Set<JPADrift> getDrifts() {
         return drifts;
     }
 
     @Override
-    public void setDrifts(Set<RhqDrift> drifts) {
+    public void setDrifts(Set<JPADrift> drifts) {
         this.drifts = drifts;
     }
 
     @Override
     public String toString() {
-        return "RhqDriftChangeSet [id=" + id + ", resource=" + resource + ", version=" + version + "]";
+        return "JPADriftChangeSet [id=" + id + ", resource=" + resource + ", version=" + version + "]";
     }
 
 }

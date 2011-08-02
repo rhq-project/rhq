@@ -34,10 +34,10 @@ import javax.persistence.Lob;
 import javax.persistence.Table;
 
 /**
- * A RhqDriftFile represents one unique piece of content used for drift tracking.  Note that DriftFileBits provides
- * access to the bits through java.sql.Blob. This entity can not be used client-side (gwt) whereas its sister class,
- * RhqDriftFile, can.  Both enities share the same table and abstract superclass. See RHQDomain.gwt.xml for how to
- * exclude unwanted domain classes from the gwt compile.
+ * A JPADriftFile represents one unique piece of content used for drift tracking.  Note that JPADriftFileBits
+ * provides access to the bits through java.sql.Blob. This entity can not be used client-side (gwt) whereas its 
+ * sister class, JPADriftFile, can.  Both entities share the same table and abstract superclass. See 
+ * RHQDomain.gwt.xml for how to exclude unwanted domain classes from the gwt compile.
  *
  * @author Jay Shaughnessy
  * @author John Mazzitelli
@@ -45,7 +45,7 @@ import javax.persistence.Table;
  */
 @Entity
 @Table(name = "RHQ_DRIFT_FILE")
-public class DriftFileBits extends AbstractDriftFile implements Serializable {
+public class JPADriftFileBits extends AbstractJPADriftFile implements Serializable {
     private static final long serialVersionUID = 1L;
 
     // this is a hash/digest that should uniquely identify the content
@@ -53,11 +53,11 @@ public class DriftFileBits extends AbstractDriftFile implements Serializable {
     @Column(name = "HASH_ID", nullable = false)
     private String hashId;
 
-    protected DriftFileBits() {
+    protected JPADriftFileBits() {
         super();
     }
 
-    public DriftFileBits(String hashId) {
+    public JPADriftFileBits(String hashId) {
         super();
         this.hashId = hashId;
     }

@@ -32,10 +32,8 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.tree.TreeNode;
 
 import org.rhq.core.domain.criteria.BaseCriteria;
-import org.rhq.core.domain.criteria.BasicDriftChangeSetCriteria;
-import org.rhq.core.domain.criteria.BasicDriftCriteria;
-import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
-import org.rhq.core.domain.criteria.DriftCriteria;
+import org.rhq.core.domain.criteria.GenericDriftChangeSetCriteria;
+import org.rhq.core.domain.criteria.GenericDriftCriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.util.PageList;
@@ -94,34 +92,35 @@ public abstract class AbstractDriftChangeSetsTreeDataSource extends RPCDataSourc
             // There is no parent - we are at the root of the tree.
             // Get the top nodes (the change sets) but to be as fast as possible don't load their drifts.
             // We will lazily load drifts when the these changeset tree nodes are opened
-            DriftChangeSetCriteria criteria = getDriftChangeSetCriteria(request);
+            GenericDriftChangeSetCriteria criteria = getDriftChangeSetCriteria(request);
 
-            driftService.findDriftChangeSetsByCriteria(criteria, new AsyncCallback<PageList<DriftChangeSet>>() {
-                public void onSuccess(PageList<DriftChangeSet> result) {
-                    response.setData(buildRecords(result));
-                    response.setTotalRows(result.getTotalSize());
-                    processResponse(request.getRequestId(), response);
-                }
+            driftService.findDriftChangeSetsByCriteria(criteria,
+                new AsyncCallback<PageList<? extends DriftChangeSet>>() {
+                    public void onSuccess(PageList<? extends DriftChangeSet> result) {
+                        response.setData(buildRecords(result));
+                        response.setTotalRows(result.getTotalSize());
+                        processResponse(request.getRequestId(), response);
+                    }
 
-                public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(MSG.view_drift_changeset_tree_loadFailure(), caught);
-                    response.setStatus(DSResponse.STATUS_FAILURE);
-                    processResponse(request.getRequestId(), response);
-                }
-            });
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError(MSG.view_drift_changeset_tree_loadFailure(), caught);
+                        response.setStatus(DSResponse.STATUS_FAILURE);
+                        processResponse(request.getRequestId(), response);
+                    }
+                });
         } else {
             String changesetId = parentId;
-            DriftCriteria criteria = new BasicDriftCriteria();
+            GenericDriftCriteria criteria = new GenericDriftCriteria();
             criteria.addFilterChangeSetId(changesetId);
 
-            driftService.findDriftsByCriteria(criteria, new AsyncCallback<PageList<Drift>>() {
+            driftService.findDriftsByCriteria(criteria, new AsyncCallback<PageList<? extends Drift>>() {
                 public void onFailure(Throwable caught) {
                     CoreGUI.getErrorHandler().handleError(MSG.view_drift_changeset_tree_loadFailure(), caught);
                     response.setStatus(DSResponse.STATUS_FAILURE);
                     processResponse(request.getRequestId(), response);
                 }
 
-                public void onSuccess(PageList<Drift> result) {
+                public void onSuccess(PageList<? extends Drift> result) {
                     response.setData(buildRecords(result));
                     response.setTotalRows(result.getTotalSize());
                     processResponse(request.getRequestId(), response);
@@ -176,8 +175,8 @@ public abstract class AbstractDriftChangeSetsTreeDataSource extends RPCDataSourc
      * 
      * @return the criteria to use when querying for change setss 
      */
-    protected DriftChangeSetCriteria getDriftChangeSetCriteria(final DSRequest request) {
-        BasicDriftChangeSetCriteria criteria = new BasicDriftChangeSetCriteria();
+    protected GenericDriftChangeSetCriteria getDriftChangeSetCriteria(final DSRequest request) {
+        GenericDriftChangeSetCriteria criteria = new GenericDriftChangeSetCriteria();
         criteria.addSortVersion(PageOrdering.DESC);
         criteria.setPageControl(getPageControl(request));
         return criteria;

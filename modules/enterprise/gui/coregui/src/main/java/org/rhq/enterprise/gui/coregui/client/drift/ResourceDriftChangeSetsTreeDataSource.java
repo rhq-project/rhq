@@ -22,7 +22,7 @@ package org.rhq.enterprise.gui.coregui.client.drift;
 import com.smartgwt.client.data.DSRequest;
 
 import org.rhq.core.domain.common.EntityContext;
-import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
+import org.rhq.core.domain.criteria.GenericDriftChangeSetCriteria;
 
 /**
  * @author John Mazzitelli
@@ -42,8 +42,8 @@ public class ResourceDriftChangeSetsTreeDataSource extends AbstractDriftChangeSe
     }
 
     @Override
-    protected DriftChangeSetCriteria getDriftChangeSetCriteria(final DSRequest request) {
-        DriftChangeSetCriteria criteria = super.getDriftChangeSetCriteria(request);
+    protected GenericDriftChangeSetCriteria getDriftChangeSetCriteria(final DSRequest request) {
+        GenericDriftChangeSetCriteria criteria = super.getDriftChangeSetCriteria(request);
         criteria.addFilterResourceId(this.context.resourceId);
         return criteria;
     }

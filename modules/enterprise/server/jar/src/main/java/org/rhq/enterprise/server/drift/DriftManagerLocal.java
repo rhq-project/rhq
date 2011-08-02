@@ -26,14 +26,14 @@ import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
-import org.rhq.core.domain.criteria.DriftChangeSetJPACriteria;
-import org.rhq.core.domain.criteria.DriftJPACriteria;
+import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
+import org.rhq.core.domain.criteria.DriftCriteria;
+import org.rhq.core.domain.drift.Drift;
+import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.drift.DriftConfiguration;
-import org.rhq.core.domain.drift.RhqDrift;
-import org.rhq.core.domain.drift.RhqDriftChangeSet;
-import org.rhq.core.domain.drift.RhqDriftFile;
-import org.rhq.core.domain.drift.Snapshot;
+import org.rhq.core.domain.drift.DriftSnapshot;
+import org.rhq.core.domain.drift.JPADriftFile;
 import org.rhq.core.domain.util.PageList;
 
 @Local
@@ -105,12 +105,12 @@ public interface DriftManagerLocal extends DriftManagerRemote {
     void deleteDriftConfiguration(Subject subject, EntityContext entityContext, String driftConfigName);
 
     /**
-     * Simple get method for a RhqDriftFile. Does not return the content.
+     * Simple get method for a JPADriftFile. Does not return the content.
      * @param subject
      * @param sha256
-     * @return The RhqDriftFile sans content.
+     * @return The JPADriftFile sans content.
      */
-    RhqDriftFile getDriftFile(Subject subject, String sha256);
+    JPADriftFile getDriftFile(Subject subject, String sha256);
 
     /**
      * Standard criteria based fetch method
@@ -118,9 +118,9 @@ public interface DriftManagerLocal extends DriftManagerRemote {
      * @param criteria
      * @return The DriftChangeSets matching the criteria
      */
-    PageList<RhqDriftChangeSet> findDriftChangeSetsByCriteria(Subject subject, DriftChangeSetJPACriteria criteria);
+    PageList<? extends DriftChangeSet<?>> findDriftChangeSetsByCriteria(Subject subject, DriftChangeSetCriteria criteria);
 
-    PageList<DriftComposite> findDriftCompositesByCriteria(Subject subject, DriftJPACriteria criteria);
+    PageList<DriftComposite> findDriftCompositesByCriteria(Subject subject, DriftCriteria criteria);
 
     /**
      * Standard criteria based fetch method
@@ -128,7 +128,7 @@ public interface DriftManagerLocal extends DriftManagerRemote {
      * @param criteria
      * @return The Drifts matching the criteria
      */
-    PageList<RhqDrift> findDriftsByCriteria(Subject subject, DriftJPACriteria criteria);
+    PageList<? extends Drift<?, ?>> findDriftsByCriteria(Subject subject, DriftCriteria criteria);
 
     /**
      * Get the specified drift configuration for the specified context.
@@ -178,7 +178,7 @@ public interface DriftManagerLocal extends DriftManagerRemote {
      * @return
      * @throws Exception
      */
-    RhqDriftFile persistDriftFile(RhqDriftFile driftFile) throws Exception;
+    JPADriftFile persistDriftFile(JPADriftFile driftFile) throws Exception;
 
     /**
      * SUPPORTS DRIFT RHQ SERVER PLUGIN
@@ -186,8 +186,8 @@ public interface DriftManagerLocal extends DriftManagerRemote {
      * @param data
      * @throws Exception
      */
-    void persistDriftFileData(RhqDriftFile driftFile, InputStream data) throws Exception;
+    void persistDriftFileData(JPADriftFile driftFile, InputStream data) throws Exception;
 
-    Snapshot createSnapshot(Subject subject, DriftChangeSetJPACriteria criteria);
+    DriftSnapshot createSnapshot(Subject subject, DriftChangeSetCriteria criteria);
 
 }

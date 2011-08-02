@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2009 Red Hat, Inc.
+ * Copyright (C) 2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,7 +16,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-
 package org.rhq.core.domain.criteria;
 
 import java.util.ArrayList;
@@ -27,17 +26,18 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 
 import org.rhq.core.domain.drift.DriftCategory;
-import org.rhq.core.domain.drift.RhqDrift;
+import org.rhq.core.domain.drift.JPADrift;
 import org.rhq.core.domain.util.CriteriaUtils;
 import org.rhq.core.domain.util.PageOrdering;
 
 /**
+ * The JPA Drift Server plugin (the RHQ default) implementation of DriftCriteria.
+ * 
  * @author Jay Shaughnessy
  */
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
-@SuppressWarnings("unused")
-public class DriftJPACriteria extends Criteria implements DriftCriteria {
+public class JPADriftCriteria extends Criteria implements DriftCriteria {
     private static final long serialVersionUID = 1L;
 
     private Integer filterId;
@@ -52,17 +52,36 @@ public class DriftJPACriteria extends Criteria implements DriftCriteria {
 
     private PageOrdering sortCtime;
 
-    public DriftJPACriteria() {
+    public JPADriftCriteria() {
+        this(null);
+    }
+
+    public JPADriftCriteria(DriftCriteria driftCriteria) {
         filterOverrides.put("changeSetId", "changeSet.id = ?");
         filterOverrides.put("categories", "category IN ( ? )");
         filterOverrides.put("resourceIds", "changeSet.resource.id IN ( ? )");
         filterOverrides.put("startTime", "ctime >= ?");
         filterOverrides.put("endTime", "ctime <= ?");
+
+        // seed the JPA criteria with anything set in the provided criteria
+        if (null != driftCriteria) {
+            this.fetchChangeSet(driftCriteria.isFetchChangeSet());
+
+            this.addFilterCategories(driftCriteria.getFilterCategories());
+            this.addFilterChangeSetId(driftCriteria.getFilterChangeSetId());
+            this.addFilterEndTime(driftCriteria.getFilterEndTime());
+            this.addFilterId(driftCriteria.getFilterId());
+            this.addFilterPath(driftCriteria.getFilterPath());
+            this.addFilterResourceIds(driftCriteria.getFilterResourceIds());
+            this.addFilterStartTime(driftCriteria.getFilterStartTime());
+
+            this.addSortCtime(driftCriteria.getSortCtime());
+        }
     }
 
     @Override
-    public Class<RhqDrift> getPersistentClass() {
-        return RhqDrift.class;
+    public Class<JPADrift> getPersistentClass() {
+        return JPADrift.class;
     }
 
     public void addFilterId(String filterId) {
@@ -81,8 +100,8 @@ public class DriftJPACriteria extends Criteria implements DriftCriteria {
     }
 
     @Override
-    public List<DriftCategory> getFilterCategories() {
-        return filterCategories;
+    public DriftCategory[] getFilterCategories() {
+        return filterCategories.toArray(new DriftCategory[filterCategories.size()]);
     }
 
     public void addFilterChangeSetId(String filterChangeSetId) {
@@ -110,8 +129,8 @@ public class DriftJPACriteria extends Criteria implements DriftCriteria {
     }
 
     @Override
-    public List<Integer> getFilterResourceIds() {
-        return filterResourceIds;
+    public Integer[] getFilterResourceIds() {
+        return filterResourceIds.toArray(new Integer[filterResourceIds.size()]);
     }
 
     public void addFilterStartTime(Long filterStartTime) {

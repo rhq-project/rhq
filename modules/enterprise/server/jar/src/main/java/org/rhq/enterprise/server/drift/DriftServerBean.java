@@ -1,5 +1,7 @@
 package org.rhq.enterprise.server.drift;
 
+import static javax.ejb.TransactionAttributeType.NOT_SUPPORTED;
+
 import java.io.File;
 import java.util.Iterator;
 
@@ -24,7 +26,7 @@ import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.drift.DriftConfiguration;
-import org.rhq.core.domain.drift.Snapshot;
+import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.RHQConstants;
@@ -36,8 +38,6 @@ import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginFacet;
 import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginManager;
 import org.rhq.enterprise.server.util.LookupUtil;
-
-import static javax.ejb.TransactionAttributeType.NOT_SUPPORTED;
 
 @Stateless
 public class DriftServerBean implements DriftServerLocal, DriftServerRemote {
@@ -62,14 +62,15 @@ public class DriftServerBean implements DriftServerLocal, DriftServerRemote {
 
     @Override
     @TransactionAttribute(NOT_SUPPORTED)
-    public PageList<DriftChangeSet> findDriftChangeSetsByCriteria(Subject subject, DriftChangeSetCriteria criteria) {
+    public PageList<? extends DriftChangeSet<?>> findDriftChangeSetsByCriteria(Subject subject,
+        DriftChangeSetCriteria criteria) {
         DriftServerPluginFacet driftServerPlugin = getServerPlugin();
         return driftServerPlugin.findDriftChangeSetsByCriteria(subject, criteria);
     }
 
     @Override
     @TransactionAttribute(NOT_SUPPORTED)
-    public PageList<Drift> findDriftsByCriteria(Subject subject, DriftCriteria criteria) {
+    public PageList<? extends Drift<?, ?>> findDriftsByCriteria(Subject subject, DriftCriteria criteria) {
         DriftServerPluginFacet driftServerPlugin = getServerPlugin();
         return driftServerPlugin.findDriftsByCriteria(subject, criteria);
     }
@@ -97,7 +98,7 @@ public class DriftServerBean implements DriftServerLocal, DriftServerRemote {
 
     @Override
     @TransactionAttribute(NOT_SUPPORTED)
-    public Snapshot createSnapshot(Subject subject, DriftChangeSetCriteria criteria) {
+    public DriftSnapshot createSnapshot(Subject subject, DriftChangeSetCriteria criteria) {
         DriftServerPluginFacet driftServerPlugin = getServerPlugin();
         return driftServerPlugin.createSnapshot(subject, criteria);
     }

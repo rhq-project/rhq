@@ -1,5 +1,7 @@
 package org.rhq.core.pc.drift;
 
+import static org.rhq.core.util.ZipUtil.zipFileOrDirectory;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -30,8 +32,6 @@ import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.core.pc.measurement.MeasurementManager;
 import org.rhq.core.util.stream.StreamUtil;
-
-import static org.rhq.core.util.ZipUtil.zipFileOrDirectory;
 
 public class DriftManager extends AgentService implements DriftAgentService, DriftClient, ContainerService {
 
@@ -109,8 +109,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
     }
 
     @Override
-    public void sendChangeSetToServer(int resourceId, DriftConfiguration driftConfiguration,
-        DriftChangeSetCategory type) {
+    public void sendChangeSetToServer(int resourceId, DriftConfiguration driftConfiguration, DriftChangeSetCategory type) {
         try {
             File changeSetFile = changeSetMgr.findChangeSet(resourceId, driftConfiguration.getName(), type);
             if (changeSetFile == null) {
@@ -214,7 +213,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
     }
 
     @Override
-    public boolean requestDriftFiles(int resourceId, Headers headers, List<DriftFile> driftFiles) {
+    public boolean requestDriftFiles(int resourceId, Headers headers, List<? extends DriftFile> driftFiles) {
         DriftFilesSender sender = new DriftFilesSender();
         sender.setResourceId(resourceId);
         sender.setDriftClient(this);

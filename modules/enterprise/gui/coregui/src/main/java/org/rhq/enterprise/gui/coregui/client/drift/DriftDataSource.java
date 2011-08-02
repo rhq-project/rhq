@@ -37,8 +37,7 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.common.EntityContext;
-import org.rhq.core.domain.criteria.BasicDriftCriteria;
-import org.rhq.core.domain.criteria.DriftCriteria;
+import org.rhq.core.domain.criteria.GenericDriftCriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftCategory;
 import org.rhq.core.domain.drift.DriftComposite;
@@ -61,7 +60,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * @author Jay Shaughnessy
  * @author John Mazzitelli
  */
-public class DriftDataSource extends RPCDataSource<DriftComposite, DriftCriteria> {
+public class DriftDataSource extends RPCDataSource<DriftComposite, GenericDriftCriteria> {
 
     public static final String CATEGORY_ICON_NEW = ImageManager.getDriftCategoryIcon(null);
     public static final String CATEGORY_ICON_ADD = ImageManager.getDriftCategoryIcon(DriftCategory.FILE_ADDED);
@@ -172,7 +171,7 @@ public class DriftDataSource extends RPCDataSource<DriftComposite, DriftCriteria
     }
 
     @Override
-    protected void executeFetch(final DSRequest request, final DSResponse response, final DriftCriteria criteria) {
+    protected void executeFetch(final DSRequest request, final DSResponse response, final GenericDriftCriteria criteria) {
         if (criteria == null) {
             // the user selected no categories in the filter - it makes sense from the UI perspective to show 0 rows
             response.setTotalRows(0);
@@ -259,14 +258,14 @@ public class DriftDataSource extends RPCDataSource<DriftComposite, DriftCriteria
     }
 
     @Override
-    protected DriftCriteria getFetchCriteria(DSRequest request) {
+    protected GenericDriftCriteria getFetchCriteria(DSRequest request) {
         DriftCategory[] categoriesFilter = getArrayFilter(request, FILTER_CATEGORIES, DriftCategory.class);
 
         if (categoriesFilter == null || categoriesFilter.length == 0) {
             return null; // user didn't select any priorities - return null to indicate no data should be displayed
         }
 
-        BasicDriftCriteria criteria = new BasicDriftCriteria();
+        GenericDriftCriteria criteria = new GenericDriftCriteria();
         criteria.fetchChangeSet(true);
         criteria.addFilterCategories(categoriesFilter);
 

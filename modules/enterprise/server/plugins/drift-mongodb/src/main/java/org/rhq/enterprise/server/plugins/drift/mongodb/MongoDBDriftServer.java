@@ -145,12 +145,21 @@ public class MongoDBDriftServer implements DriftServerPluginFacet {
 
     @Override
     public PageList<Drift> findDriftsByCriteria(Subject subject, DriftCriteria criteria) {
-        String[] idFields = criteria.getFilterId().split(":");
-        ObjectId changeSetId = new ObjectId(idFields[0]);
-        String path = idFields[1];
-        Query<MongoDBChangeSet> query = ds.createQuery(MongoDBChangeSet.class)
-            .filter("id = ", changeSetId)
-            .filter("files.path = ", path);
+        Query<MongoDBChangeSet> query = ds.createQuery(MongoDBChangeSet.class);
+        boolean changeSetIdFiltered = false;
+
+        if (criteria.getFilterId() != null) {
+            String[] idFields = criteria.getFilterId().split(":");
+            ObjectId changeSetId = new ObjectId(idFields[0]);
+            String path = idFields[1];
+
+            query.filter("files.path = ", path);
+            query.filter("id = ", changeSetId);
+        }
+
+        if (!changeSetIdFiltered && criteria.getFilterChangeSetId() != null) {
+            query.filter("id = ", new ObjectId(criteria.getFilterChangeSetId()));
+        }
 
         PageList results = new PageList<DriftDTO>();
 

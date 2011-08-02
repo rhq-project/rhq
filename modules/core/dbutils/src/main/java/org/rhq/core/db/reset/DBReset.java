@@ -39,14 +39,13 @@ public class DBReset {
 
     private static final String DB_NAME = System.getProperty("rhq.ds.db-name", "rhq_installer_test_db");
     private static final String SERVER = System.getProperty("rhq.ds.server-name", "127.0.0.1");
+    private static final String DB_URL = System.getProperty("rhq.ds.connection-url", "jdbc:postgresql://" + SERVER
+        + ":5432/" + DB_NAME);
     private static final String USER = System.getProperty("rhq.ds.user-name", "rhqadmin");
     private static final String ADMIN_USER = System.getProperty("rhq.db.admin.username", "postgres");
     private static final String ADMIN_PASSWORD = System.getProperty("rhq.db.admin.password", "postgres");
-    private static final String DB_RESET = System.getProperty("dbreset", "false");
-    private static final String DB_URL = System.getProperty("rhq.ds.connection-url", "jdbc:postgresql://" + SERVER
-        + ":5432/" + DB_NAME);
-
     private static final String DB_TYPE_MAPPING = System.getProperty("rhq.ds.type-mapping", "PostgreSQL");
+    private static final String DB_RESET = System.getProperty("dbreset", "false");
 
     /**
      * @param args
@@ -67,7 +66,7 @@ public class DBReset {
         }
     }
 
-    private void performDBReset(String dbTypeMapping, String dbUrl, String dbName, String user, String adminUser,
+    public void performDBReset(String dbTypeMapping, String dbUrl, String dbName, String user, String adminUser,
         String adminPassword) throws Exception {
         if (dbTypeMapping.equals("PostgreSQL")) {
             Connection connection = null;

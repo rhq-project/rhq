@@ -41,21 +41,21 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 /**
- * An occurrence of drifty to be reported and managed by the user.
- 
+ * The JPA Drift Server plugin (the RHQ default) implementation of Drift.
+ *  
  * @author Jay Shaughnessy
  * @author John Sanda 
  */
 @Entity
-@NamedQueries( { @NamedQuery(name = RhqDrift.QUERY_DELETE_BY_RESOURCES, query = "" //
-    + "DELETE FROM RhqDrift d " //
-    + " WHERE d.changeSet IN ( SELECT dcs FROM RhqDriftChangeSet dcs WHERE dcs.resource.id IN ( :resourceIds ) ) )") })
+@NamedQueries( { @NamedQuery(name = JPADrift.QUERY_DELETE_BY_RESOURCES, query = "" //
+    + "DELETE FROM JPADrift d " //
+    + " WHERE d.changeSet IN ( SELECT dcs FROM JPADriftChangeSet dcs WHERE dcs.resource.id IN ( :resourceIds ) ) )") })
 @Table(name = "RHQ_DRIFT")
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_DRIFT_ID_SEQ")
-public class RhqDrift implements Serializable, Drift<RhqDriftChangeSet, RhqDriftFile> {
+public class JPADrift implements Serializable, Drift<JPADriftChangeSet, JPADriftFile> {
     private static final long serialVersionUID = 1L;
 
-    public static final String QUERY_DELETE_BY_RESOURCES = "RhqDrift.deleteByResources";
+    public static final String QUERY_DELETE_BY_RESOURCES = "JPADrift.deleteByResources";
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
@@ -75,17 +75,17 @@ public class RhqDrift implements Serializable, Drift<RhqDriftChangeSet, RhqDrift
 
     @JoinColumn(name = "DRIFT_CHANGE_SET_ID", referencedColumnName = "ID", nullable = false)
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    private RhqDriftChangeSet changeSet;
+    private JPADriftChangeSet changeSet;
 
     @JoinColumn(name = "OLD_DRIFT_FILE", referencedColumnName = "HASH_ID", nullable = true)
     @ManyToOne(fetch = FetchType.EAGER, optional = true)
-    private RhqDriftFile oldDriftFile;
+    private JPADriftFile oldDriftFile;
 
     @JoinColumn(name = "NEW_DRIFT_FILE", referencedColumnName = "HASH_ID", nullable = true)
     @ManyToOne(fetch = FetchType.EAGER, optional = true)
-    private RhqDriftFile newDriftFile;
+    private JPADriftFile newDriftFile;
 
-    protected RhqDrift() {
+    protected JPADrift() {
     }
 
     /**
@@ -94,8 +94,8 @@ public class RhqDrift implements Serializable, Drift<RhqDriftChangeSet, RhqDrift
      * @param oldDriftFile required for FILE_CHANGED and FILE_REMOVED, null for FILE_ADDED
      * @param newDriftFile required for FILE_CHANGED and FILE_ADDED, null for FILE_REMOVED
      */
-    public RhqDrift(RhqDriftChangeSet changeSet, String path, DriftCategory category, RhqDriftFile oldDriftFile,
-                    RhqDriftFile newDriftFile) {
+    public JPADrift(JPADriftChangeSet changeSet, String path, DriftCategory category, JPADriftFile oldDriftFile,
+        JPADriftFile newDriftFile) {
         this.changeSet = changeSet;
         this.path = path;
         this.category = category;
@@ -124,12 +124,12 @@ public class RhqDrift implements Serializable, Drift<RhqDriftChangeSet, RhqDrift
     }
 
     @Override
-    public RhqDriftChangeSet getChangeSet() {
+    public JPADriftChangeSet getChangeSet() {
         return changeSet;
     }
 
     @Override
-    public void setChangeSet(RhqDriftChangeSet changeSet) {
+    public void setChangeSet(JPADriftChangeSet changeSet) {
         this.changeSet = changeSet;
     }
 
@@ -154,28 +154,28 @@ public class RhqDrift implements Serializable, Drift<RhqDriftChangeSet, RhqDrift
     }
 
     @Override
-    public RhqDriftFile getOldDriftFile() {
+    public JPADriftFile getOldDriftFile() {
         return oldDriftFile;
     }
 
     @Override
-    public void setOldDriftFile(RhqDriftFile oldDriftFile) {
+    public void setOldDriftFile(JPADriftFile oldDriftFile) {
         this.oldDriftFile = oldDriftFile;
     }
 
     @Override
-    public RhqDriftFile getNewDriftFile() {
+    public JPADriftFile getNewDriftFile() {
         return newDriftFile;
     }
 
     @Override
-    public void setNewDriftFile(RhqDriftFile newDriftFile) {
+    public void setNewDriftFile(JPADriftFile newDriftFile) {
         this.newDriftFile = newDriftFile;
     }
 
     @Override
     public String toString() {
-        return "RhqDrift [ id=" + id + ", category=" + category + ", path=" + path + ", changeSet=" + changeSet + "]";
+        return "JPADrift [ id=" + id + ", category=" + category + ", path=" + path + ", changeSet=" + changeSet + "]";
     }
 
 }

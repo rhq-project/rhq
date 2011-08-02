@@ -9,7 +9,7 @@ import org.testng.annotations.Test;
 
 import org.rhq.common.drift.Headers;
 import org.rhq.core.domain.drift.DriftFile;
-import org.rhq.core.domain.drift.RhqDriftFile;
+import org.rhq.core.domain.drift.JPADriftFile;
 
 import static org.apache.commons.io.FileUtils.touch;
 import static org.apache.commons.io.IOUtils.writeLines;
@@ -160,7 +160,7 @@ public class DriftFilesSenderTest extends DriftTest {
     List<DriftFile> driftFiles(String... hashes) {
         List<DriftFile> files = new ArrayList<DriftFile>();
         for (String hash : hashes) {
-            files.add(new RhqDriftFile(hash));
+            files.add(new JPADriftFile(hash));
         }
         return files;
     }

@@ -1,5 +1,26 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2011 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
 package org.rhq.core.domain.criteria;
 
+import static org.rhq.core.domain.util.CriteriaUtils.getListIgnoringNulls;
+
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -7,9 +28,17 @@ import org.rhq.core.domain.drift.DriftCategory;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageOrdering;
 
-import static org.rhq.core.domain.util.CriteriaUtils.getListIgnoringNulls;
-
-public class BasicDriftCriteria implements DriftCriteria {
+/**
+ * The generic implementation of DriftCriteria makes no assumptions about the actual drift server
+ * plugin that will service the relevant requests.  It is a simple impl of the interface and is
+ * suitable for use by any component that can not assume a backend implmentation, like a GUI
+ * client.  Server side implementations will use this to populate the plugin-specific implementation
+ * of the interface.  
+ * 
+ * @author Jay Shaughnessy
+ * @author John Sanda
+ */
+public class GenericDriftCriteria implements Serializable, DriftCriteria {
 
     private static final long serialVersionUID = 1L;
 
@@ -49,8 +78,8 @@ public class BasicDriftCriteria implements DriftCriteria {
     }
 
     @Override
-    public List<DriftCategory> getFilterCategories() {
-        return filterCategories;
+    public DriftCategory[] getFilterCategories() {
+        return filterCategories.toArray(new DriftCategory[filterCategories.size()]);
     }
 
     @Override
@@ -79,8 +108,8 @@ public class BasicDriftCriteria implements DriftCriteria {
     }
 
     @Override
-    public List<Integer> getFilterResourceIds() {
-        return filterResourceIds;
+    public Integer[] getFilterResourceIds() {
+        return filterResourceIds.toArray(new Integer[filterResourceIds.size()]);
     }
 
     @Override

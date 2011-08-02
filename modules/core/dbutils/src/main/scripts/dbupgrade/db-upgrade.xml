@@ -3590,7 +3590,7 @@
                 <schema-directSQL>
                     <statement desc="Adding drift server plugin active plugin system configuration property">
                         INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value)
-                        VALUES (57, 'ACTIVE_DRIFT_PLUGIN', 'drift-rhq', 'drift-rhq')
+                        VALUES (57, 'ACTIVE_DRIFT_PLUGIN', 'drift-jpa', 'drift-jpa')
                     </statement>
                 </schema-directSQL>
             </schemaSpec>

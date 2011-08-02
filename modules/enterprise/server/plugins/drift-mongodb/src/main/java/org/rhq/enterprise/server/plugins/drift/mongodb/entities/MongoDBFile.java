@@ -1,5 +1,7 @@
 package org.rhq.enterprise.server.plugins.drift.mongodb.entities;
 
+import java.io.Serializable;
+
 import com.google.code.morphia.annotations.Entity;
 import com.google.code.morphia.annotations.Id;
 
@@ -7,14 +9,17 @@ import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.DriftFileStatus;
 
 @Entity
-public class MongoDBFile implements DriftFile {
+public class MongoDBFile implements Serializable, DriftFile {
 
+    private static final long serialVersionUID = 1L;
+
+    @SuppressWarnings("unused")
     @Id
     private String hash;
 
     @Override
     public String getHashId() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        return null; //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
@@ -24,12 +29,12 @@ public class MongoDBFile implements DriftFile {
 
     @Override
     public Long getCtime() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        return null; //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
     public Long getDataSize() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        return null; //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
@@ -39,7 +44,7 @@ public class MongoDBFile implements DriftFile {
 
     @Override
     public DriftFileStatus getStatus() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        return null; //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override

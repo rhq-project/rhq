@@ -23,12 +23,11 @@ import java.io.File;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
-import org.rhq.core.domain.criteria.DriftChangeSetJPACriteria;
 import org.rhq.core.domain.criteria.DriftCriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftComposite;
-import org.rhq.core.domain.drift.Snapshot;
+import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
 
@@ -40,9 +39,9 @@ import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
  */
 public interface DriftServerPluginFacet extends ServerPluginComponent {
 
-    PageList<DriftChangeSet> findDriftChangeSetsByCriteria(Subject subject, DriftChangeSetCriteria criteria);
+    PageList<? extends DriftChangeSet<?>> findDriftChangeSetsByCriteria(Subject subject, DriftChangeSetCriteria criteria);
 
-    PageList<Drift> findDriftsByCriteria(Subject subject, DriftCriteria criteria);
+    PageList<? extends Drift<?, ?>> findDriftsByCriteria(Subject subject, DriftCriteria criteria);
 
     PageList<DriftComposite> findDriftCompositesByCriteria(Subject subject, DriftCriteria criteria);
 
@@ -50,5 +49,5 @@ public interface DriftServerPluginFacet extends ServerPluginComponent {
 
     void saveChangeSetFiles(File changeSetFilesZip) throws Exception;
 
-    Snapshot createSnapshot(Subject subject, DriftChangeSetCriteria criteria);
+    DriftSnapshot createSnapshot(Subject subject, DriftChangeSetCriteria criteria);
 }

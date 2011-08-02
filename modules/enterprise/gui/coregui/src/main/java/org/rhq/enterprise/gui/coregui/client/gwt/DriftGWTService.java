@@ -22,14 +22,13 @@ import com.google.gwt.user.client.rpc.RemoteService;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
-import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
-import org.rhq.core.domain.criteria.DriftChangeSetJPACriteria;
-import org.rhq.core.domain.criteria.DriftCriteria;
+import org.rhq.core.domain.criteria.GenericDriftChangeSetCriteria;
+import org.rhq.core.domain.criteria.GenericDriftCriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.drift.DriftConfiguration;
-import org.rhq.core.domain.drift.Snapshot;
+import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.util.PageList;
 
 /**
@@ -105,7 +104,8 @@ public interface DriftGWTService extends RemoteService {
      *
      * @return all drift changesets that matches the specified criteria
      */
-    PageList<DriftChangeSet> findDriftChangeSetsByCriteria(DriftChangeSetCriteria criteria) throws RuntimeException;
+    PageList<? extends DriftChangeSet<?>> findDriftChangeSetsByCriteria(GenericDriftChangeSetCriteria criteria)
+        throws RuntimeException;
 
     /**
      * Find all drifts that match the specified criteria.
@@ -114,11 +114,11 @@ public interface DriftGWTService extends RemoteService {
      *
      * @return all drifts that match the specified criteria
      */
-    PageList<Drift> findDriftsByCriteria(DriftCriteria criteria) throws RuntimeException;
+    PageList<? extends Drift<?, ?>> findDriftsByCriteria(GenericDriftCriteria criteria) throws RuntimeException;
 
-    PageList<DriftComposite> findDriftCompositesByCriteria(DriftCriteria criteria);
+    PageList<DriftComposite> findDriftCompositesByCriteria(GenericDriftCriteria criteria);
 
-    Snapshot createSnapshot(Subject subject, DriftChangeSetCriteria criteria);
+    DriftSnapshot createSnapshot(Subject subject, GenericDriftChangeSetCriteria criteria);
 
     /**
      * Get the specified drift configuration for the specified context.

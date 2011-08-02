@@ -20,13 +20,13 @@ package org.rhq.enterprise.gui.coregui.server.gwt;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
-import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
-import org.rhq.core.domain.criteria.DriftCriteria;
+import org.rhq.core.domain.criteria.GenericDriftChangeSetCriteria;
+import org.rhq.core.domain.criteria.GenericDriftCriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.drift.DriftConfiguration;
-import org.rhq.core.domain.drift.Snapshot;
+import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.gwt.DriftGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
@@ -94,9 +94,10 @@ public class DriftGWTServiceImpl extends AbstractGWTServiceImpl implements Drift
     }
 
     @Override
-    public PageList<DriftChangeSet> findDriftChangeSetsByCriteria(DriftChangeSetCriteria criteria) {
+    public PageList<? extends DriftChangeSet<?>> findDriftChangeSetsByCriteria(GenericDriftChangeSetCriteria criteria) {
         try {
-            PageList<DriftChangeSet> results = driftServer.findDriftChangeSetsByCriteria(getSessionSubject(), criteria);
+            PageList<? extends DriftChangeSet<?>> results = driftServer.findDriftChangeSetsByCriteria(
+                getSessionSubject(), criteria);
             return SerialUtility.prepare(results, "DriftService.findDriftChangeSetsByCriteria");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
@@ -104,9 +105,9 @@ public class DriftGWTServiceImpl extends AbstractGWTServiceImpl implements Drift
     }
 
     @Override
-    public PageList<Drift> findDriftsByCriteria(DriftCriteria criteria) throws RuntimeException {
+    public PageList<? extends Drift<?, ?>> findDriftsByCriteria(GenericDriftCriteria criteria) throws RuntimeException {
         try {
-            PageList<Drift> results = driftServer.findDriftsByCriteria(getSessionSubject(), criteria);
+            PageList<? extends Drift<?, ?>> results = driftServer.findDriftsByCriteria(getSessionSubject(), criteria);
             return SerialUtility.prepare(results, "DriftService.findDriftsByCriteria");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
@@ -114,7 +115,7 @@ public class DriftGWTServiceImpl extends AbstractGWTServiceImpl implements Drift
     }
 
     @Override
-    public PageList<DriftComposite> findDriftCompositesByCriteria(DriftCriteria criteria) {
+    public PageList<DriftComposite> findDriftCompositesByCriteria(GenericDriftCriteria criteria) {
         try {
             PageList<DriftComposite> results = driftServer.findDriftCompositesByCriteria(getSessionSubject(), criteria);
             return SerialUtility.prepare(results, "DriftService.findDriftCompositesByCriteria");
@@ -124,7 +125,7 @@ public class DriftGWTServiceImpl extends AbstractGWTServiceImpl implements Drift
     }
 
     @Override
-    public Snapshot createSnapshot(Subject subject, DriftChangeSetCriteria criteria) {
+    public DriftSnapshot createSnapshot(Subject subject, GenericDriftChangeSetCriteria criteria) {
         try {
             return driftServer.createSnapshot(subject, criteria);
         } catch (Throwable t) {

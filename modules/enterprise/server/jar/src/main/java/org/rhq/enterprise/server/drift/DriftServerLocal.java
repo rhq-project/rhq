@@ -12,7 +12,7 @@ import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.drift.DriftConfiguration;
-import org.rhq.core.domain.drift.Snapshot;
+import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.util.PageList;
 
 @Local
@@ -28,12 +28,12 @@ public interface DriftServerLocal {
 
     void detectDrift(Subject subject, EntityContext context, DriftConfiguration driftConfig);
 
-    PageList<DriftChangeSet> findDriftChangeSetsByCriteria(Subject subject, DriftChangeSetCriteria criteria);
+    PageList<? extends DriftChangeSet<?>> findDriftChangeSetsByCriteria(Subject subject, DriftChangeSetCriteria criteria);
 
-    PageList<Drift> findDriftsByCriteria(Subject subject, DriftCriteria criteria);
+    PageList<? extends Drift<?, ?>> findDriftsByCriteria(Subject subject, DriftCriteria criteria);
 
     PageList<DriftComposite> findDriftCompositesByCriteria(Subject subject, DriftCriteria criteria);
 
-    Snapshot createSnapshot(Subject subject, DriftChangeSetCriteria criteria);
+    DriftSnapshot createSnapshot(Subject subject, DriftChangeSetCriteria criteria);
 
 }

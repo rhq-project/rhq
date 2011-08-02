@@ -1,9 +1,13 @@
 package org.rhq.core.domain.drift.dto;
 
+import java.io.Serializable;
+
 import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.DriftFileStatus;
 
-public class DriftFileDTO implements DriftFile {
+public class DriftFileDTO implements Serializable, DriftFile {
+
+    private static final long serialVersionUID = 1L;
 
     private String hash;
 

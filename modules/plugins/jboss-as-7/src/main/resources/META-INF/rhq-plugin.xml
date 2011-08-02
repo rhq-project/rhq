@@ -517,22 +517,18 @@
     </server>
 
 
-
-    <server name="JBoss AS JVM"
-            description="JVM of the standalone JBossAS"
-            sourcePlugin="JMX"
-            sourceType="JMX Server"
-            discovery="org.rhq.plugins.jmx.LocalJMXServerDiscoveryComponent"
-            class="org.rhq.plugins.jmx.JMXServerComponent"
-            singleton="true"
-    >
+      <server name="JBoss AS JVM"
+              description="JVM of the JBossAS"
+              sourcePlugin="JMX"
+              sourceType="JMX Server"
+              discovery="org.rhq.plugins.jmx.EmbeddedJMXServerDiscoveryComponent"
+              class="org.rhq.plugins.jmx.JMXServerComponent"
+              singleton="true">
         <runs-inside>
             <parent-resource-type name="JBossAS-Managed"  plugin="jboss-as-7"/>
             <parent-resource-type name="JBossAS7-Standalone"  plugin="jboss-as-7"/>
-            <parent-resource-type name="ProcessController"  plugin="jboss-as-7"/>
         </runs-inside>
-    </server>
-
+      </server>
 
     <server name="Messaging"
             discovery="SubsystemDiscovery"

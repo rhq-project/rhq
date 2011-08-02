@@ -4,8 +4,10 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -123,7 +125,22 @@ public class MongoDBDriftServer implements DriftServerPluginFacet {
 
     @Override
     public PageList<DriftChangeSet> findDriftChangeSetsByCriteria(Subject subject, DriftChangeSetCriteria criteria) {
-        return new PageList<DriftChangeSet>();
+        Query<MongoDBChangeSet> query = ds.createQuery(MongoDBChangeSet.class)
+            .filter("resourceId =", criteria.getFilterResourceId());
+
+        PageList results = new PageList<DriftChangeSetDTO>();
+        for (MongoDBChangeSet changeSet : query) {
+            DriftChangeSetDTO changeSetDTO = toDTO(changeSet);
+            Set<DriftDTO> entries = new HashSet<DriftDTO>();
+            for (MongoDBChangeSetEntry entry : changeSet.getDrifts()) {
+                entries.add(toDTO(entry, changeSetDTO));
+            }
+            changeSetDTO.setDrifts(entries);
+            results.add(changeSetDTO);
+        }
+
+        return results;
+        //return new PageList<DriftChangeSet>();
     }
 
     @Override
@@ -189,6 +206,7 @@ public class MongoDBDriftServer implements DriftServerPluginFacet {
     DriftChangeSetDTO toDTO(MongoDBChangeSet changeSet) {
         DriftChangeSetDTO dto = new DriftChangeSetDTO();
         dto.setId(changeSet.getId());
+        // TODO copy resource id
         dto.setDriftConfigurationId(changeSet.getDriftConfigurationId());
         dto.setVersion(changeSet.getVersion());
         dto.setCtime(changeSet.getCtime());

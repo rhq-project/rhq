@@ -745,8 +745,8 @@
 
             <resource-configuration>
                 <c:simple-property name="protocol" required="true" type="string" readOnly="true" description="The web connector protocol."/>
-                <c:simple-property name="socket-binding" required="true" type="string" readOnly="false"
-                                   description="The web connector socket-binding reference, this connector should be bound to."> <!-- TODO read-only -->
+                <c:simple-property name="socket-binding" required="true" type="string" readOnly="true"
+                                   description="The web connector socket-binding reference, this connector should be bound to.">
                     <c:option-source target="configuration" expression="socket-binding=name:type=SocketBindingGroup"/>
                 </c:simple-property>
                 <c:simple-property name="scheme" type="string" readOnly="true" default="http" description="The web connector scheme."/>

@@ -209,7 +209,7 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
         }
 
         log.debug("Validating LDAP with environment=" + env);
-        new InitialLdapContext(env, null);
+        new InitialLdapContext(env, null).close();
 
         return;
     }

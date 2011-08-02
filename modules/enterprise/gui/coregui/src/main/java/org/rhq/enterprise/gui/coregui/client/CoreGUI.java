@@ -529,10 +529,12 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
                         }
                     }.run(); // fire the timer immediately
                 } else {
-                    if (this.currentCanvas instanceof BookmarkableView) {
-                        ((BookmarkableView) this.currentCanvas).renderView(viewPath.next());
-                    } else {
-                        this.currentCanvas.markForRedraw();
+                    if (this.currentCanvas != null) {
+                        if (this.currentCanvas instanceof BookmarkableView) {
+                            ((BookmarkableView) this.currentCanvas).renderView(viewPath.next());
+                        } else {
+                            this.currentCanvas.markForRedraw();
+                        }
                     }
                 }
             }

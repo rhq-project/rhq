@@ -18,6 +18,7 @@
  */
 package org.rhq.plugins.perftest;
 
+import java.util.Collections;
 import java.util.Set;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.ResourceType;
@@ -44,6 +45,9 @@ public class PerfTestDiscoveryComponent implements ResourceDiscoveryComponent {
         Set<DiscoveredResourceDetails> resourceDetails = null;
         if (manager.isEnabled()) {
             ResourceFactory resourceFactory = manager.getResourceFactory(resourceType.getName());
+            if (resourceFactory==null)
+                return Collections.emptySet();
+            
             resourceDetails = resourceFactory.discoverResources(context);
 
             // If there is a plugin configuration factory defined, run it on each resource

@@ -32,7 +32,6 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
-import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.domain.resource.CreateResourceStatus;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
 import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
@@ -43,7 +42,7 @@ import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
  * Component class for the JMS subsystem
  * @author Heiko W. Rupp
  */
-public class JmsComponent extends DomainComponent {
+public class JmsComponent extends BaseComponent {
 
     private final Log log = LogFactory.getLog(JmsComponent.class);
 

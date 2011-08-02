@@ -103,8 +103,9 @@ public class InventoryFile {
      *                                  inventory
      */
     public void loadInventory() throws PluginContainerException {
+        FileInputStream fis = null;
         try {
-            FileInputStream fis = new FileInputStream(inventoryFile);
+            fis = new FileInputStream(inventoryFile);
             ObjectInputStream ois = new ObjectInputStream(fis);
 
             // this list will contain UUIDs of resources that we should ignore usually due to disabled plugins
@@ -126,6 +127,13 @@ public class InventoryFile {
             return;
         } catch (Exception e) {
             throw new PluginContainerException("Cannot load inventory file: " + inventoryFile, e);
+        } finally {
+            if (fis != null) {
+                try {
+                    fis.close();
+                } catch (Exception e) {
+                }
+            }
         }
     }
 

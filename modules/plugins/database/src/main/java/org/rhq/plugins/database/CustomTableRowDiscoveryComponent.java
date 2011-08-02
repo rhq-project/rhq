@@ -53,8 +53,12 @@ public class CustomTableRowDiscoveryComponent implements ResourceDiscoveryCompon
             String table = config.getSimpleValue("table", null);
             String keyColumn = config.getSimpleValue("keyColumn", null);
             String resourceName = config.getSimpleValue("name", null);
-            String resourceDescription = config.getSimpleValue("description", null);
+            String resourceDescription = config.getSimpleValue("description", "");
 
+            if (resourceName == null) {
+                throw new InvalidPluginConfigurationException("The 'name' connection property has to be specified.");
+            }
+            
             statement = conn.createStatement();
             resultSet = statement.executeQuery("SELECT * FROM " + table);
 

@@ -122,47 +122,54 @@ public class ResourceCompositeSearchView extends ResourceSearchView {
         });
 
         if (this.parentResourceComposite.getResourcePermission().isCreateChildResources()) {
-            ResourceType parentType = parentResourceComposite.getResource().getResourceType();
-
-            // manual import type menu
-            LinkedHashMap<String, ResourceType> importTypeValueMap = new LinkedHashMap<String, ResourceType>();
-
-            for (ResourceType childType : parentType.getChildResourceTypes()) {
-                if (childType.isSupportsManualAdd()) {
-                    importTypeValueMap.put(childType.getName(), childType);
-                }
-            }
-            addTableAction(extendLocatorId("Import"), MSG.common_button_import(), null, importTypeValueMap,
-                new AbstractTableAction(TableActionEnablement.ALWAYS) {
-
-                    public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                        ResourceFactoryImportWizard.showImportWizard(parentResourceComposite.getResource(),
-                            (ResourceType) actionValue);
-                    }
-                });
-
-            // creatable child type menu
-            LinkedHashMap<String, ResourceType> createTypeValueMap = new LinkedHashMap<String, ResourceType>();
-
-            for (ResourceType childType : parentType.getChildResourceTypes()) {
-                if (childType.isCreatable()) {
-                    createTypeValueMap.put(childType.getName(), childType);
-                }
-            }
-            if (!createTypeValueMap.isEmpty()) {
-                addTableAction(extendLocatorId("CreateChild"), MSG.common_button_create_child(), null,
-                    createTypeValueMap, new AbstractTableAction(TableActionEnablement.ALWAYS) {
-
-                        public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                            ResourceFactoryCreateWizard.showCreateWizard(parentResourceComposite.getResource(),
-                                (ResourceType) actionValue);
-                        }
-                    });
-            }
-
+            addImportButton();
         }
 
         super.configureTable();
+    }
+
+    private void addImportButton() {
+        ResourceType parentType = parentResourceComposite.getResource().getResourceType();
+
+        // manual import type menu
+        // TODO: Use TreeMap instead, so the types will be sorted by name.
+        LinkedHashMap<String, ResourceType> importTypeValueMap = new LinkedHashMap<String, ResourceType>();
+
+        for (ResourceType childType : parentType.getChildResourceTypes()) {
+            if (childType.isSupportsManualAdd()) {
+                importTypeValueMap.put(childType.getName(), childType);
+            }
+        }
+        if (!importTypeValueMap.isEmpty()) {
+            addTableAction(extendLocatorId("Import"), MSG.common_button_import(), null, importTypeValueMap,
+                    new AbstractTableAction(TableActionEnablement.ALWAYS) {
+
+                        public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                            ResourceFactoryImportWizard.showImportWizard(parentResourceComposite.getResource(),
+                                    (ResourceType) actionValue);
+                        }
+                    });
+        }
+
+        // creatable child type menu
+        // TODO: Use TreeMap instead, so the types will be sorted by name.
+        LinkedHashMap<String, ResourceType> createTypeValueMap = new LinkedHashMap<String, ResourceType>();
+
+        for (ResourceType childType : parentType.getChildResourceTypes()) {
+            if (childType.isCreatable()) {
+                createTypeValueMap.put(childType.getName(), childType);
+            }
+        }
+        if (!createTypeValueMap.isEmpty()) {
+            addTableAction(extendLocatorId("CreateChild"), MSG.common_button_create_child(), null,
+                createTypeValueMap, new AbstractTableAction(TableActionEnablement.ALWAYS) {
+
+                    public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                        ResourceFactoryCreateWizard.showCreateWizard(parentResourceComposite.getResource(),
+                                (ResourceType) actionValue);
+                    }
+                });
+        }
     }
 
     public ResourceComposite getParentResourceComposite() {

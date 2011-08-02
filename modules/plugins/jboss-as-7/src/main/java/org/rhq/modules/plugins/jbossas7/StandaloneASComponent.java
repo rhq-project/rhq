@@ -18,8 +18,6 @@
  */
 package org.rhq.modules.plugins.jbossas7;
 
-import java.net.ConnectException;
-
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
@@ -31,41 +29,25 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  * Component class for standalone AS7 servers
  * @author Heiko W. Rupp
  */
-public class StandaloneASComponent extends BaseComponent implements OperationFacet {
-
+public class StandaloneASComponent extends BaseServerComponent implements OperationFacet {
 
     @Override
     public OperationResult invokeOperation(String name,
                                            Configuration parameters) throws Exception {
 
-        // reload, shutdown
+        if (name.equals("start")) {
+            return startServer(AS7Mode.STANDALONE);
+        } else if (name.equals("restart")) {
+            return restartServer(parameters, AS7Mode.STANDALONE);
+
+        }
+
+        // reload, shutdown go to the remote server
         Operation op = new Operation(name,new Address());
         Result res = getASConnection().execute(op);
 
-        OperationResult operationResult = new OperationResult();
-        if (name.equals("shutdown")) {
-            /*
-             * Shutdown needs a special treatment, because after sending the operation, if shutdown suceeds,
-             * the server connection is closed and we can't read from it. So if we get connection refused for
-             * reading, this is a good sign.
-             */
-            if (!res.isSuccess()) {
-                if (res.getThrowable() instanceof ConnectException || res.getThrowable().getMessage().equals("Connection refused"))
-                    operationResult.setSimpleResult("Success");
-                else
-                    operationResult.setErrorMessage(res.getFailureDescription());
-            }
-        }
-        else {
-            if (res.isSuccess()) {
-                if (res.getResult()!=null)
-                    operationResult.setSimpleResult(res.getResult().toString());
-                else
-                    operationResult.setSimpleResult("-None provided by server-");
-            }
-            else
-                operationResult.setErrorMessage(res.getFailureDescription());
-        }
+        OperationResult operationResult = postProcessResult(name, res);
         return operationResult;
     }
+
 }

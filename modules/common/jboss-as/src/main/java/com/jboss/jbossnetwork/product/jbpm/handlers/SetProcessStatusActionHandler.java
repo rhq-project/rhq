@@ -22,6 +22,7 @@
   */
 package com.jboss.jbossnetwork.product.jbpm.handlers;
 
+import org.jbpm.context.exe.ContextInstance;
 import org.jbpm.graph.def.ActionHandler;
 import org.jbpm.graph.exe.ExecutionContext;
 
@@ -37,7 +38,10 @@ public class SetProcessStatusActionHandler implements ActionHandler {
     private Boolean status;
 
     public void execute(ExecutionContext executionContext) {
-        executionContext.getContextInstance().setVariable("processStatus", status);
+        ContextInstance instance = executionContext.getContextInstance();
+        if (instance != null) {
+            instance.setVariable("processStatus", status);
+        }
     }
 
     public Boolean getStatus() {

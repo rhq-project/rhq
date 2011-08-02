@@ -12,6 +12,13 @@ function createSnapshot(rid, cname) {
   criteria.addFilterResourceId(rid);
   criteria.addFilterDriftConfigurationId(config.id);
 
+  if (arguments.length > 2) {
+    var filters = arguments[2];
+    for (key in filters) {
+      criteria['addFilter' + key[0].toUpperCase() + key.substring(1)](filters[key]);
+    } 
+  }
+
   return DriftServer.createSnapshot(criteria);
 }
 

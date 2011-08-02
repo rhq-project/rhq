@@ -37,53 +37,53 @@ import org.rhq.core.db.DbUtil;
 public class DBReset {
     private static Log log = LogFactory.getLog(DBReset.class);
 
-    private final String DB = System.getProperty("rhq.ds.db-name", "rhq_installer_test_db");
-    private final String SERVER = System.getProperty("rhq.ds.server-name", "127.0.0.1");
-    private final String USER = System.getProperty("rhq.ds.user-name", "rhqadmin");
-    private final String ADMIN_USER = System.getProperty("rhq.db.admin.username", "postgres");
-    private final String ADMIN_PASSWORD = System.getProperty("rhq.db.admin.password", "postgres");
-    private final String DB_RESET = System.getProperty("dbreset", "false");
-    private final String DB_URL = System.getProperty("rhq.ds.connection-url", "jdbc:postgresql://" + SERVER + ":5432/"
-        + DB);
+    private static final String DB_NAME = System.getProperty("rhq.ds.db-name", "rhq_installer_test_db");
+    private static final String SERVER = System.getProperty("rhq.ds.server-name", "127.0.0.1");
+    private static final String USER = System.getProperty("rhq.ds.user-name", "rhqadmin");
+    private static final String ADMIN_USER = System.getProperty("rhq.db.admin.username", "postgres");
+    private static final String ADMIN_PASSWORD = System.getProperty("rhq.db.admin.password", "postgres");
+    private static final String DB_RESET = System.getProperty("dbreset", "false");
+    private static final String DB_URL = System.getProperty("rhq.ds.connection-url", "jdbc:postgresql://" + SERVER
+        + ":5432/" + DB_NAME);
 
-    private final String DB_TYPE_MAPPING = System.getProperty("rhq.ds.type-mapping", "PostgreSQL");
+    private static final String DB_TYPE_MAPPING = System.getProperty("rhq.ds.type-mapping", "PostgreSQL");
 
     /**
      * @param args
      */
     public static void main(String[] args) {
+        if (DB_RESET.equals("false")) {
+            return;
+        }
+
         DBReset dbreset = new DBReset();
 
         try {
-            dbreset.performDBReset();
+            dbreset.performDBReset(DB_TYPE_MAPPING, DB_URL, DB_NAME, USER, ADMIN_USER, ADMIN_PASSWORD);
+            System.setProperty("dbsetup", "true");
         } catch (Exception e) {
             log.info(e);
             System.exit(1);
         }
     }
 
-    private void performDBReset() throws Exception {
-        if (DB_RESET.equals("false")) {
-            return;
-        }
-
-        System.setProperty("dbsetup", "true");
-
-        if (DB_TYPE_MAPPING.equals("PostgreSQL")) {
+    private void performDBReset(String dbTypeMapping, String dbUrl, String dbName, String user, String adminUser,
+        String adminPassword) throws Exception {
+        if (dbTypeMapping.equals("PostgreSQL")) {
             Connection connection = null;
             Statement dropDB = null;
             Statement createDB = null;
 
             try {
-                connection = DbUtil.getConnection(DB_URL.replace(DB, "postgres"), ADMIN_USER, ADMIN_PASSWORD);
+                connection = DbUtil.getConnection(dbUrl.replace(dbName, "postgres"), adminUser, adminPassword);
 
                 dropDB = connection.createStatement();
-                dropDB.execute("drop database if exists " + DB);
+                dropDB.execute("drop database if exists " + dbName);
 
                 createDB = connection.createStatement();
-                createDB.execute("create database " + DB + " with owner " + USER);
+                createDB.execute("create database " + dbName + " with owner " + user);
 
-                log.info("Dropped and created database " + DB + ".");
+                log.info("Dropped and created postgres database " + dbName + ".");
             } finally {
                 if (dropDB != null) {
                     dropDB.close();
@@ -101,7 +101,7 @@ public class DBReset {
             PreparedStatement cleanUserStatement = null;
 
             try {
-                connection = DbUtil.getConnection(DB_URL, ADMIN_USER, ADMIN_PASSWORD);
+                connection = DbUtil.getConnection(DB_URL, adminUser, ADMIN_PASSWORD);
                 connection.setAutoCommit(false);
 
                 String plsql = "declare cursor all_objects_to_drop is\n"
@@ -118,12 +118,11 @@ public class DBReset {
                     + "    end;\n" 
                     + "  end loop;\n"
                     + " end;\n";
-                log.info(plsql);
                 cleanUserStatement = connection.prepareStatement(plsql);
                 cleanUserStatement.execute();
                 connection.commit();
 
-                log.info("Cleand database " + DB + ".");
+                log.info("Cleaned Oracle database " + dbName + ".");
             } finally {
                 if (cleanUserStatement != null) {
                     cleanUserStatement.close();

@@ -37,8 +37,9 @@ import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.rest.MetricSchedule;
-import org.rhq.core.domain.rest.ResourceWithType;
+import org.rhq.enterprise.server.rest.domain.AvailabilityRest;
+import org.rhq.enterprise.server.rest.domain.MetricSchedule;
+import org.rhq.enterprise.server.rest.domain.ResourceWithType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
@@ -102,10 +103,12 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
     }
 
     @Override
-    public Availability getAvailability(int resourceId) {
+    public AvailabilityRest getAvailability(int resourceId) {
 
         Availability avail = availMgr.getCurrentAvailabilityForResource(caller, resourceId);
-        return avail;
+        AvailabilityRest availabilityRest = new AvailabilityRest(avail.getAvailabilityType(),avail.getStartTime().getTime(),
+                avail.getResource().getId());
+        return availabilityRest;
     }
 
     private ResourceWithType fillRWT(Resource res) {

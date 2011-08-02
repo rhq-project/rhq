@@ -21,16 +21,15 @@ package org.rhq.enterprise.server.rest;
 import java.util.List;
 
 import javax.ejb.Local;
-import javax.ws.rs.ApplicationPath;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 
 import org.rhq.core.domain.measurement.Availability;
-import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.rest.MetricSchedule;
-import org.rhq.core.domain.rest.ResourceWithType;
+import org.rhq.enterprise.server.rest.domain.AvailabilityRest;
+import org.rhq.enterprise.server.rest.domain.MetricSchedule;
+import org.rhq.enterprise.server.rest.domain.ResourceWithType;
 
 /**
  * Interface class that describes the REST interface
@@ -54,7 +53,7 @@ public interface ResourceHandlerLocal {
 
     @GET
     @Path("/a/{id}")
-    Availability getAvailability(@PathParam("id") int resourceId);
+    AvailabilityRest getAvailability(@PathParam("id") int resourceId);
 
     @GET
     @Path("/r/{id}/s")

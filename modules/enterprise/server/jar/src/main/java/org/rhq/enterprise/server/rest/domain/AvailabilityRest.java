@@ -16,31 +16,43 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.server.rest;
+package org.rhq.enterprise.server.rest.domain;
 
-import javax.ejb.Local;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
+import javax.xml.bind.annotation.XmlRootElement;
 
-import org.rhq.enterprise.server.rest.domain.MetricAggregate;
+import org.rhq.core.domain.measurement.AvailabilityType;
 
 /**
- * Deal with metrics
+ * Availability implementation for exposing via REST
  * @author Heiko W. Rupp
  */
-@Produces({"application/json","application/xml","text/plain"})
-@Path("/metric")
-@Local
-public interface MetricHandlerLocal {
+//@XmlRootElement(name = "availability")
+public class AvailabilityRest {
 
+    long since;
+    String type;
 
-    @GET
-    @Path("data/{scheduleId}")
-    MetricAggregate getMetricData(@PathParam("scheduleId") int scheduleId,
-                                  @QueryParam("startTime")  long startTime,
-                                  @QueryParam("endTime") long endTime,
-                                  @QueryParam("dataPoints") int dataPoints);
+    int resourceId;
+
+    public AvailabilityRest() {
+        // for RESTEasy/JAXB
+    }
+
+    public AvailabilityRest(AvailabilityType type, long since, int resourceId) {
+        this.since = since;
+        this.type = type.toString();
+        this.resourceId = resourceId;
+    }
+
+    public long getSince() {
+        return since;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public int getResourceId() {
+        return resourceId;
+    }
 }

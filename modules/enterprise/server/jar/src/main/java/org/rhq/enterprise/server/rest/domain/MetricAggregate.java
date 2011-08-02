@@ -16,18 +16,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.core.domain.rest;
+package org.rhq.enterprise.server.rest.domain;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
-import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
-
-import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 
 /**
  * Raw data that could be used to draw a chart

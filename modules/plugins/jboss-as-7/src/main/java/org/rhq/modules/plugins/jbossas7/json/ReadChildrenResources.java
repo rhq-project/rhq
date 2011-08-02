@@ -31,10 +31,6 @@ public class ReadChildrenResources extends Operation {
      * @param address Address to look at e.g. /profile/default/subsystem/messaging
      * @param childType e.g. queue
      */
-    public ReadChildrenResources(List<PROPERTY_VALUE> address, String childType) {
-        super("read-children-resources",address,"child-type",childType);
-    }
-
     public ReadChildrenResources(Address address, String childType) {
         super("read-children-resources",address);
         addAdditionalProperty("child-type",childType);

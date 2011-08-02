@@ -58,6 +58,7 @@ import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
 import org.rhq.modules.plugins.jbossas7.json.ReadAttribute;
 import org.rhq.modules.plugins.jbossas7.json.ReadChildrenNames;
 import org.rhq.modules.plugins.jbossas7.json.ReadResource;
+import org.rhq.modules.plugins.jbossas7.json.Remove;
 import org.rhq.modules.plugins.jbossas7.json.Result;
 
 import java.io.OutputStream;
@@ -66,7 +67,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -85,6 +85,7 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
     String myServerName;
     ASConnection connection;
     String path;
+    Address address;
     String key;
     String host;
     int port;
@@ -96,7 +97,7 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
      */
     public AvailabilityType getAvailability() {
 
-        ReadResource op = new ReadResource(pathToAddress(path));
+        ReadResource op = new ReadResource(address);
         Result res = connection.execute(op);
 
         return res.isSuccess()? AvailabilityType.UP: AvailabilityType.DOWN;
@@ -122,6 +123,7 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
         }
 
         path = pluginConfiguration.getSimpleValue("path", null);
+        Address address = new Address(path);
         key = context.getResourceKey();
 
         myServerName = context.getResourceKey().substring(context.getResourceKey().lastIndexOf("/")+1);
@@ -156,7 +158,7 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
             else {
                 // Metrics from the application server
 
-                Operation op = new ReadAttribute(pathToAddress(path),req.getName()); // TODO batching
+                Operation op = new ReadAttribute(address,req.getName()); // TODO batching
                 Result res = connection.execute(op, false);
                 if (!res.isSuccess())
                     continue;
@@ -222,68 +224,25 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
 
     public Configuration loadResourceConfiguration() throws Exception {
 
-        List<PROPERTY_VALUE> address = pathToAddress(path);
         ConfigurationDefinition configDef = context.getResourceType().getResourceConfigurationDefinition();
-        ConfigurationLoadDelegate delegate = new ConfigurationLoadDelegate(configDef,connection,new Address(address));
+        ConfigurationLoadDelegate delegate = new ConfigurationLoadDelegate(configDef,connection,address);
         return delegate.loadResourceConfiguration();
     }
 
 
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
 
-        List<PROPERTY_VALUE> address = pathToAddress(path);
         ConfigurationDefinition configDef = context.getResourceType().getResourceConfigurationDefinition();
-        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(configDef,connection,new Address(address));
+        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(configDef,connection,address);
         delegate.updateResourceConfiguration(report);
     }
 
-    /**
-     * Convert a path in the form key=value,key=value... to a List of properties.
-     * @param path Path to translate
-     * @return List of properties
-     */
-    public List<PROPERTY_VALUE> pathToAddress(String path) {
-        if (path==null || path.isEmpty())
-            return Collections.emptyList();
-
-        List<PROPERTY_VALUE> result = new ArrayList<PROPERTY_VALUE>();
-        String[] components = path.split(",");
-        for (String component : components) {
-            String tmp = component.trim();
-
-            if (tmp.contains("=")) {
-                // strip / from the start of the key if it happens to be there
-                if (tmp.startsWith("/"))
-                    tmp = tmp.substring(1);
-
-                String[] pair = tmp.split("=");
-                PROPERTY_VALUE valuePair = new PROPERTY_VALUE(pair[0], pair[1]);
-                result.add(valuePair);
-            }
-        }
-
-        return result;
-    }
-
-    public String addressToPath(List<PROPERTY_VALUE> address)
-    {
-        StringBuilder builder = new StringBuilder();
-        Iterator<PROPERTY_VALUE> iter = address.iterator();
-        while (iter.hasNext()) {
-            PROPERTY_VALUE val = iter.next();
-            builder.append(val.getKey()).append('=').append(val.getValue());
-            if (iter.hasNext())
-                builder.append(',');
-        }
-        return builder.toString();
-    }
 
     @Override
     public void deleteResource() throws Exception {
 
         log.info("delete resource: " + path + " ...");
-        List<PROPERTY_VALUE> address = pathToAddress(path);
-        Operation op = new Operation("remove", address);
+        Operation op = new Remove(address);
         ComplexResult res = connection.executeComplex(op);
         if (!res.isSuccess())
             throw new IllegalArgumentException("Delete for [" + path + "] failed: " + res.getFailureDescription());
@@ -393,14 +352,13 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
             }
 
             result = connection.execute(cop);
-            resourceKey = addressToPath(step1.getAddress());
+            resourceKey = step1.getAddress().getPath();
 
         }
         else {
 
-            List<PROPERTY_VALUE> serverGroupAddress = new ArrayList<PROPERTY_VALUE>();
-            serverGroupAddress.addAll(pathToAddress(context.getResourceKey()));
-            serverGroupAddress.add(new PROPERTY_VALUE("deployment", deploymentName));
+            Address serverGroupAddress = new Address(context.getResourceKey());
+            serverGroupAddress.add("deployment", deploymentName);
             Operation step2 = new Operation("add",serverGroupAddress);
 
             cop.addStep(step2);
@@ -408,7 +366,7 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
             Operation step3 = new Operation("deploy",serverGroupAddress);
             cop.addStep(step3);
 
-            resourceKey = addressToPath(serverGroupAddress);
+            resourceKey = serverGroupAddress.getPath();
 
             if (verbose)
                 log.info("Deploy operation: " + cop);
@@ -447,26 +405,27 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
         String op = name.substring(colonPos+1);
         Operation operation=null;
 
-        List<PROPERTY_VALUE> address = new ArrayList<PROPERTY_VALUE>();
+        Address theAddress = new Address();
 
         if (what.equals("server-group")) {
             String groupName = parameters.getSimpleValue("name","");
             String profile = parameters.getSimpleValue("profile","default");
 
-            address.add(new PROPERTY_VALUE("server-group",groupName));
+            theAddress.add("server-group", groupName);
 
-            operation = new Operation(op,address,"profile",profile);
+            operation = new Operation(op,theAddress);
+            operation.addAdditionalProperty("profile",profile);
         } else if (what.equals("server")) {
             if (context.getResourceType().getName().equals("JBossAS-Managed")) {
                 String host = pluginConfiguration.getSimpleValue("domainHost","local");
-                address.add(new PROPERTY_VALUE("host",host));
-                address.add(new PROPERTY_VALUE("server-config",myServerName));
-                operation = new Operation(op,address);
+                theAddress.add("host", host);
+                theAddress.add("server-config", myServerName);
+                operation = new Operation(op,theAddress);
             }
             else if (context.getResourceType().getName().equals("Host")) {
-                address.addAll(pathToAddress(getPath()));
+                theAddress.add(address);
                 String serverName = parameters.getSimpleValue("name",null);
-                address.add(new PROPERTY_VALUE("server-config",serverName));
+                theAddress.add("server-config", serverName);
                 Map<String,Object> props = new HashMap<String, Object>();
                 String serverGroup = parameters.getSimpleValue("group",null);
                 props.put("group",serverGroup);
@@ -477,16 +436,16 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
                     // TODO put more properties in
                 }
 
-                operation = new Operation(op,address,props);
+                operation = new Operation(op,theAddress,props);
             }
             else {
-                operation = new Operation(op,address);
+                operation = new Operation(op,theAddress);
             }
         } else if (what.equals("destination")) {
-            address.addAll(pathToAddress(getPath()));
+            theAddress.add(address);
             String newName = parameters.getSimpleValue("name","");
             String type = parameters.getSimpleValue("type","jms-queue").toLowerCase();
-            address.add(new PROPERTY_VALUE(type,newName));
+            theAddress.add(type, newName);
             PropertyList jndiNamesProp = parameters.getList("entries");
             if (jndiNamesProp==null || jndiNamesProp.getList().isEmpty()) {
                 OperationResult fail = new OperationResult();
@@ -499,7 +458,7 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
                 jndiNames.add(ps.getStringValue());
             }
 
-            operation = new Operation(op,address);
+            operation = new Operation(op,theAddress);
             operation.addAdditionalProperty("entries",jndiNames);
             if (type.equals("jms-queue")) {
                 PropertySimple ps = (PropertySimple) parameters.get("durable");
@@ -509,7 +468,7 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
                 }
                 String selector = parameters.getSimpleValue("selector","");
                 if (!selector.isEmpty())
-                    operation.addAdditionalProperty("selector",selector);
+                    operation.addAdditionalProperty("selector", selector);
             }
 
 
@@ -523,8 +482,8 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
             String autostartS = parameters.getSimpleValue("auto-start","false");
             boolean autoStart = Boolean.getBoolean(autostartS);
 
-            address.add(new PROPERTY_VALUE("host", chost));
-            address.add(new PROPERTY_VALUE("server-config",serverName));
+            theAddress.add("host", chost);
+            theAddress.add("server-config", serverName);
             Map<String,Object> props = new HashMap<String, Object>();
             props.put("name",serverName);
             props.put("group",serverGroup);
@@ -532,9 +491,9 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
             props.put("socket-binding-port-offset",port);
             props.put("auto-start",autoStart);
 
-            operation = new Operation(op,address,props);
+            operation = new Operation(op,theAddress,props);
         } else if (what.equals("domain")) {
-            operation = new Operation(op,Collections.<PROPERTY_VALUE>emptyList());
+            operation = new Operation(op,new Address());
         } else if (what.equals("domain-deployment")) {
             if (op.equals("promote")) {
                 String serverGroup = parameters.getSimpleValue("server-group","-not set-");
@@ -557,18 +516,19 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
 
                 operation = new CompositeOperation();
                 for (String theGroup : serverGroups) {
-                    address = new ArrayList<PROPERTY_VALUE>();
-                    address.add(new PROPERTY_VALUE("server-group",theGroup));
+                    theAddress = new Address();
+                    theAddress.add("server-group",theGroup);
 
-                    address.add(new PROPERTY_VALUE("deployment", resourceKey));
-                    Operation step = new Operation("add",address,"enabled",enabled);
+                    theAddress.add("deployment", resourceKey);
+                    Operation step = new Operation("add",theAddress);
+                    step.addAdditionalProperty("enabled",enabled);
                     ((CompositeOperation)operation).addStep(step);
                 }
             }
         } else if (what.equals("naming")) {
             if (op.equals("jndi-view")) {
-                address.addAll(pathToAddress(getPath()));
-                operation = new Operation("jndi-view",address);
+                theAddress.add(address);
+                operation = new Operation("jndi-view",theAddress);
             }
         }
 
@@ -597,7 +557,7 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
 
     @SuppressWarnings("unchecked")
     private Collection<String> getServerGroups() {
-        Operation op = new ReadChildrenNames(Collections.<PROPERTY_VALUE>emptyList(),"server-group");
+        Operation op = new ReadChildrenNames(new Address(),"server-group");
         Result res = connection.execute(op);
 
         return (Collection<String>) res.getResult();
@@ -633,7 +593,12 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
 
     public void setPath(String path) {
         this.path = path;
+        this.address = new Address(path);
     }
 
+
+    public Address getAddress() {
+        return address;
+    }
 
 }

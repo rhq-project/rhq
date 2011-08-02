@@ -261,9 +261,7 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
         assert step3.getAdditionalProperties().get("name").equals("fixed-port");
         assert step3.getAdditionalProperties().get("value").equals("false");
 
-        assert step2.getAddress().get(0).getKey().equals("socket-binding");
-        assert step2.getAddress().get(0).getValue().equals("http");
-        assert step3.getAddress().get(0).getKey().equals("socket-binding");
-        assert step3.getAddress().get(0).getValue().equals("http");
+        assert step2.getAddress().get(0).equals("socket-binding=http");
+        assert step3.getAddress().get(0).equals("socket-binding=http");
     }
 }

@@ -23,7 +23,7 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
-import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
+import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.ReadChildrenNames;
 import org.rhq.modules.plugins.jbossas7.json.ReadResource;
 import org.rhq.modules.plugins.jbossas7.json.Result;
@@ -31,13 +31,11 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.DeserializationConfig;
 import org.codehaus.jackson.map.ObjectMapper;
 
@@ -108,10 +106,9 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
 
             Result result ;
             if (!recursive)
-                result = connection.execute(new ReadResource(parentComponent.pathToAddress(path)));
+                result = connection.execute(new ReadResource(parentComponent.getAddress()));
             else {
-                List<PROPERTY_VALUE> addr ;
-                addr = parentComponent.pathToAddress(parentPath);
+                Address addr = new Address(parentPath);
                 result = connection.execute(new ReadChildrenNames(addr, childType));
             }
             if (result.isSuccess()) {

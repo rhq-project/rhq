@@ -311,7 +311,7 @@ public class PluginTransformerTest {
         JarFile jarFile = new JarFile(pluginJarFile);
         Manifest manifest = jarFile.getManifest();
         Attributes attributes = manifest.getMainAttributes();
-
+        jarFile.close();
         return attributes.getValue(Attributes.Name.IMPLEMENTATION_VERSION);
     }
 

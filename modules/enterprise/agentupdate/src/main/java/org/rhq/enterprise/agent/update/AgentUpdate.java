@@ -272,9 +272,13 @@ public class AgentUpdate {
 
     private byte[] getJarFileContent(String filename) throws Exception {
         JarFile jarFile = new JarFile(getJarFilename()); // use the jar file because user might have used --jar
-        JarEntry jarFileEntry = jarFile.getJarEntry(filename);
-        InputStream jarFileEntryStream = jarFile.getInputStream(jarFileEntry);
-        return slurp(jarFileEntryStream);
+        try {
+            JarEntry jarFileEntry = jarFile.getJarEntry(filename);
+            InputStream jarFileEntryStream = jarFile.getInputStream(jarFileEntry);
+            return slurp(jarFileEntryStream);
+        } finally {
+            jarFile.close();
+        }
     }
 
     private void printSyntax() {

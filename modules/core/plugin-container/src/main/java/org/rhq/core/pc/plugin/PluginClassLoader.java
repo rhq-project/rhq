@@ -205,21 +205,24 @@ public class PluginClassLoader extends URLClassLoader {
                             }
                         }
 
-                        BufferedOutputStream outputStream;
+                        FileOutputStream fileOutputStream;
                         try {
-                            outputStream = new BufferedOutputStream(new FileOutputStream(file));
+                            fileOutputStream = new FileOutputStream(file);
                         } catch (FileNotFoundException ex) {
                             if (file.exists() && (file.length() > 0)) {
                                 // e.g. on win32, agent running w/ dll loaded PluginDumper cannot overwrite file inuse.
                                 continue;
                             }
-
                             throw ex;
                         }
 
+                        BufferedOutputStream outputStream = new BufferedOutputStream(fileOutputStream);
                         try {
                             file.deleteOnExit();
 
+                            // do NOT close this inputStream since it is buffering the ZipInputStream
+                            // and we are going to still process that input stream later. We close
+                            // this ZipInputStream down below in the outer most try-finally block.
                             BufferedInputStream inputStream = new BufferedInputStream(zis);
 
                             int count;
@@ -229,13 +232,12 @@ public class PluginClassLoader extends URLClassLoader {
                             }
                         } finally {
                             outputStream.flush();
-                            outputStream.close();
+                            outputStream.close(); // this also closes the fileOutputStream
                         }
                     } catch (IOException ioe) {
                         if (file != null) {
                             file.delete();
                         }
-
                         throw ioe;
                     }
                 }

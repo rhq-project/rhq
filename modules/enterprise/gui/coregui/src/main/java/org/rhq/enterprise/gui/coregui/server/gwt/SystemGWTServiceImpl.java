@@ -92,7 +92,12 @@ public class SystemGWTServiceImpl extends AbstractGWTServiceImpl implements Syst
             File file = agentManager.getAgentUpdateVersionFile();
 
             Properties props = new Properties();
-            props.load(new FileInputStream(file));
+            FileInputStream inStream = new FileInputStream(file);
+            try {
+                props.load(inStream);
+            } finally {
+                inStream.close();
+            }
 
             return convertFromProperties(props);
         } catch (Throwable t) {
@@ -143,7 +148,12 @@ public class SystemGWTServiceImpl extends AbstractGWTServiceImpl implements Syst
         File versionFile = new File(getClientDownloadDir(), "rhq-client-version.properties");
         try {
             Properties p = new Properties();
-            p.load(new FileInputStream(versionFile));
+            FileInputStream inStream = new FileInputStream(versionFile);
+            try {
+                p.load(inStream);
+            } finally {
+                inStream.close();
+            }
             return convertFromProperties(p);
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t, "Unable to retrieve client version info.");

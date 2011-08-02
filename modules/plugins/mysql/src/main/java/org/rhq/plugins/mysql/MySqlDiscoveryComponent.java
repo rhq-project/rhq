@@ -28,6 +28,7 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.pluginapi.inventory.ManualAddFacet;
 import org.rhq.core.system.ProcessInfo;
+import org.rhq.core.util.jdbc.JDBCUtil;
 
 import java.sql.Connection;
 import java.sql.SQLException;

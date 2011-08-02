@@ -277,7 +277,7 @@ public class AlertHistoryView extends TableSection<AlertDataSource> {
     }
 
     @Override
-    public Canvas getDetailsView(int alertId) {
+    public Canvas getDetailsView(Integer alertId) {
         return AlertDetailsView.getInstance();
     }
 

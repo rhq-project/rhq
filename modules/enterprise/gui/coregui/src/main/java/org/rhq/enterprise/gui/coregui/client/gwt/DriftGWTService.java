@@ -118,7 +118,7 @@ public interface DriftGWTService extends RemoteService {
 
     PageList<DriftComposite> findDriftCompositesByCriteria(DriftCriteria criteria);
 
-    Snapshot createSnapshot(Subject subject, DriftChangeSetJPACriteria criteria);
+    Snapshot createSnapshot(Subject subject, DriftChangeSetCriteria criteria);
 
     /**
      * Get the specified drift configuration for the specified context.

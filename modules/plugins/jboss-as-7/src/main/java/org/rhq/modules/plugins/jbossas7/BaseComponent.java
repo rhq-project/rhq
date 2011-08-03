@@ -65,7 +65,6 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -123,7 +122,7 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
         }
 
         path = pluginConfiguration.getSimpleValue("path", null);
-        Address address = new Address(path);
+        address = new Address(path);
         key = context.getResourceKey();
 
         myServerName = context.getResourceKey().substring(context.getResourceKey().lastIndexOf("/")+1);
@@ -160,10 +159,14 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
 
                 Operation op = new ReadAttribute(address,req.getName()); // TODO batching
                 Result res = connection.execute(op, false);
-                if (!res.isSuccess())
+                if (!res.isSuccess()) {
+                    log.warn("Getting metric [" + req.getName() +"] at [ " + address + "] failed: " + res.getFailureDescription());
                     continue;
+                }
 
-                 String val = (String) res.getResult();
+                String val = (String) res.getResult();
+                if (val==null) // One of the AS7 ways of telling "This is not implemented" See also AS7-1454
+                    continue;
 
                 if (req.getDataType()== DataType.MEASUREMENT) {
                     if (!val.equals("no metrics available")) { // AS 7 returns this

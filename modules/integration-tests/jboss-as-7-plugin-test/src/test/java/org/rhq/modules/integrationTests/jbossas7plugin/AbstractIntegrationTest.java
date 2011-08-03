@@ -31,6 +31,7 @@ import org.codehaus.jackson.JsonNode;
 
 import org.rhq.modules.plugins.jbossas7.ASConnection;
 import org.rhq.modules.plugins.jbossas7.ASUploadConnection;
+import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
 
@@ -82,8 +83,7 @@ public abstract class AbstractIntegrationTest {
 
     Operation addDeployment(String deploymentName,String bytes_value)
     {
-        List<PROPERTY_VALUE> deploymentsAddress = new ArrayList<PROPERTY_VALUE>(1);
-        deploymentsAddress.add(new PROPERTY_VALUE("deployment", deploymentName));
+        Address deploymentsAddress = new Address("deployment", deploymentName);
         Operation op = new Operation("add",deploymentsAddress);
         List<Object> content = new ArrayList<Object>(1);
         Map<String,Object> contentValues = new HashMap<String,Object>();

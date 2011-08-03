@@ -69,6 +69,7 @@ public class DBReset {
     public void performDBReset(String dbTypeMapping, String dbUrl, String dbName, String user, String adminUser,
         String adminPassword) throws Exception {
         if (dbTypeMapping.equals("PostgreSQL")) {
+            System.out.println("PostgreSQL started!");
             Connection connection = null;
             Statement dropDB = null;
             Statement createDB = null;
@@ -95,12 +96,12 @@ public class DBReset {
                 }
 
             }
-        } else if (DB_TYPE_MAPPING.equals("Oracle10g")) {
+        } else if (dbTypeMapping.equals("Oracle10g")) {
             Connection connection = null;
             PreparedStatement cleanUserStatement = null;
 
             try {
-                connection = DbUtil.getConnection(DB_URL, adminUser, ADMIN_PASSWORD);
+                connection = DbUtil.getConnection(dbUrl, adminUser, adminPassword);
                 connection.setAutoCommit(false);
 
                 String plsql = "declare cursor all_objects_to_drop is\n"

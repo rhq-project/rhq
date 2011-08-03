@@ -65,12 +65,13 @@ public class JPADriftChangeSetCriteria extends Criteria implements DriftChangeSe
         filterOverrides.put("createdBefore", "ctime <= ?");
 
         if (null != changeSetCriteria) {
-            this.addFilterId(changeSetCriteria.getFilterId());
-            this.addFilterResourceId(changeSetCriteria.getFilterResourceId());
             this.addFilterCategory(changeSetCriteria.getFilterCategory());
             this.addFilterCreatedAfter(changeSetCriteria.getFilterCreatedAfter());
             this.addFilterCreatedBefore(changeSetCriteria.getFilterCreatedBefore());
+            this.addFilterDriftConfigurationId(changeSetCriteria.getFilterDriftConfigurationId());
             this.addFilterEndVersion(changeSetCriteria.getFilterEndVersion());
+            this.addFilterId(changeSetCriteria.getFilterId());
+            this.addFilterResourceId(changeSetCriteria.getFilterResourceId());
             this.addFilterStartVersion(changeSetCriteria.getFilterStartVersion());
             this.addFilterVersion(changeSetCriteria.getFilterVersion());
 

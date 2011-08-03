@@ -68,7 +68,7 @@ public interface SynchronizationManagerRemote {
      * Returns the configuration definitions of all known importers.
      * @return
      */
-    List<ImportConfigurationDefinition> getConfigurationDefinitionOfAllImporters();
+    List<ImportConfigurationDefinition> getImportConfigurationDefinitionOfAllSynchronizers();
     
     /**
      * Imports everything from the export file.

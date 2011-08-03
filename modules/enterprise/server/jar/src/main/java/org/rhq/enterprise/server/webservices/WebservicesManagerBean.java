@@ -1212,8 +1212,8 @@ public class WebservicesManagerBean implements WebservicesRemote {
         synchronizationManager.validate(subject, exportFile);
     }
     
-    public List<ImportConfigurationDefinition> getConfigurationDefinitionOfAllImporters() {
-        return synchronizationManager.getConfigurationDefinitionOfAllImporters();
+    public List<ImportConfigurationDefinition> getImportConfigurationDefinitionOfAllSynchronizers() {
+        return synchronizationManager.getImportConfigurationDefinitionOfAllSynchronizers();
     }
     
     public ImportConfigurationDefinition getImportConfigurationDefinition(String importerClass) {

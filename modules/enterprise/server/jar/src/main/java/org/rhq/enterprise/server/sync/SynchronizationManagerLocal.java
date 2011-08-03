@@ -86,9 +86,9 @@ public interface SynchronizationManagerLocal {
     ImportConfigurationDefinition getImportConfigurationDefinition(String synchronizerClass);
     
     /**
-     * @see SynchronizationManagerRemote#getConfigurationDefinitionOfAllImporters()
+     * @see SynchronizationManagerRemote#getImportConfigurationDefinitionOfAllSynchronizers()
      */
-    List<ImportConfigurationDefinition> getConfigurationDefinitionOfAllImporters();
+    List<ImportConfigurationDefinition> getImportConfigurationDefinitionOfAllSynchronizers();
     
     /**
      * @see SynchronizationManagerRemote#importAllSubsystems(Subject, byte[], Set)

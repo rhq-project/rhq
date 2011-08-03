@@ -46,6 +46,13 @@ import org.rhq.enterprise.server.sync.ValidationException;
  */
 public interface ConsistencyValidator {
 
+    /**
+     * Initializes the validator with the current authentication info and access to database.
+     * 
+     * @param subject the currently authenticated user
+     * @param entityManager the entity manager that can be used to access the database if the 
+     * validator needs to do so.
+     */
     void initialize(Subject subject, EntityManager entityManager);
     
     /**

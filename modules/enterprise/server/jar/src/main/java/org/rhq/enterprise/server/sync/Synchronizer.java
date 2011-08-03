@@ -61,6 +61,8 @@ public interface Synchronizer<Entity, ExportedEntity> {
     /**
      * The set of validators that are required to validate the 
      * state of the export or the current installation during import.
+     * <p>
+     * The validators need not to be {@link ConsistencyValidator#initialize(Subject, EntityManager) initialized}.
      */
     Set<ConsistencyValidator> getRequiredValidators();
 }

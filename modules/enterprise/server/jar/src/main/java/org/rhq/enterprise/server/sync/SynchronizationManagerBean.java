@@ -218,7 +218,7 @@ public class SynchronizationManagerBean implements SynchronizationManagerLocal, 
     }
 
     @Override
-    public List<ImportConfigurationDefinition> getConfigurationDefinitionOfAllImporters() {
+    public List<ImportConfigurationDefinition> getImportConfigurationDefinitionOfAllSynchronizers() {
         List<ImportConfigurationDefinition> ret = new ArrayList<ImportConfigurationDefinition>();
 
         for (SynchronizedEntity e : SynchronizedEntity.values()) {
@@ -288,6 +288,23 @@ public class SynchronizationManagerBean implements SynchronizationManagerLocal, 
 
         Importer<?, ?> importer = synchronizer.getImporter();
 
+        //pre-init the validators so that we can reuse them in the loop below
+        Set<ConsistencyValidator> validators = synchronizer.getRequiredValidators();
+        for(ConsistencyValidator v : validators) {
+            v.initialize(subject, entityManager);
+            
+            if (!executedValidators.contains(v)) {
+                ret.add(new ConsistencyValidatorFailureReport(v.getClass().getName(), "The validator '"
+                    + v.getClass().getName() + "' is required by the synchronizer '" + synchronizerClass
+                    + "' but was not found in the export file."));
+            }
+        }
+        
+        //don't bother checking if there are inconsistencies in the export file
+        if (!ret.isEmpty()) {
+            return ret;
+        }
+        
         while (rdr.hasNext()) {
             boolean bailout = false;
             switch (rdr.next()) {
@@ -297,32 +314,27 @@ public class SynchronizationManagerBean implements SynchronizationManagerLocal, 
                     Object exportedEntity = importer.unmarshallExportedEntity(new ExportReader(rdr));
                     Class<?> exportedEntityClass = exportedEntity.getClass();
                     
-                    for (ConsistencyValidator validator : synchronizer.getRequiredValidators()) {
-                        validator.initialize(subject, entityManager);
-                        
-                        if (!executedValidators.contains(validator)) {
-                            ret.add(new ConsistencyValidatorFailureReport(validator.getClass().getName(), "The validator '"
-                                + validator.getClass().getName() + "' is required by the synchronizer '" + synchronizerClass
-                                + "' but was not found in the export file."));
-                        } else {
-                            boolean shouldCheck = false;
-                            for (Class<?> cls : validator.getValidatedEntityTypes()) {
-                                if (cls.isAssignableFrom(exportedEntityClass)) {
-                                    shouldCheck = true;
-                                    break;
-                                }
+                    for (ConsistencyValidator validator : validators) {
+                        boolean shouldCheck = false;
+                        for (Class<?> cls : validator.getValidatedEntityTypes()) {
+                            if (cls.isAssignableFrom(exportedEntityClass)) {
+                                shouldCheck = true;
+                                break;
                             }
-                            
-                            if (!shouldCheck) {
-                                continue;
-                            }
-                            
-                            try {
-                                validator.validateExportedEntity(exportedEntity);
-                            } catch (Exception e) {
-                                ValidationException v = new ValidationException("Failed to validate entity [" + exportedEntity + "]", e);
-                                ret.add(new ConsistencyValidatorFailureReport(validator.getClass().getName(), printExceptionToString(v)));
-                            }
+                        }
+
+                        if (!shouldCheck) {
+                            //ok, this validator doesn't want to validate this type of entity
+                            continue;
+                        }
+
+                        try {
+                            validator.validateExportedEntity(exportedEntity);
+                        } catch (Exception e) {
+                            ValidationException v = new ValidationException("Failed to validate entity ["
+                                + exportedEntity + "]", e);
+                            ret.add(new ConsistencyValidatorFailureReport(validator.getClass().getName(),
+                                printExceptionToString(v)));
                         }
                     }
                 }

@@ -50,6 +50,7 @@ import org.rhq.enterprise.gui.coregui.client.components.tab.SubTab;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTab;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewFactory;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
+import org.rhq.enterprise.gui.coregui.client.drift.ResourceDriftChangeSetsView;
 import org.rhq.enterprise.gui.coregui.client.drift.ResourceDriftConfigurationView;
 import org.rhq.enterprise.gui.coregui.client.drift.ResourceDriftHistoryView;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -98,6 +99,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
     public static class DriftSubTab {
         public static final String CONFIGURATION = "Configuration";
         public static final String HISTORY = "History";
+        public static final String CHANGE_SETS = "ChangeSets";
     }
 
     public static class OperationsSubTab {
@@ -143,6 +145,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
     private SubTab configHistory;
     private SubTab eventHistory;
     private SubTab driftHistory;
+    private SubTab driftChangeSets;
     private SubTab driftConfig;
     private SubTab contentDeployed;
     private SubTab contentNew;
@@ -240,11 +243,13 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
 
         driftTab = new TwoLevelTab(getTabSet().extendLocatorId(Tab.DRIFT), new ViewName(Tab.DRIFT, MSG
             .view_tabs_common_drift()), "subsystems/drift/Drift_16.png");
+        this.driftChangeSets = new SubTab(driftTab.extendLocatorId(DriftSubTab.CHANGE_SETS), new ViewName(
+            DriftSubTab.CHANGE_SETS, MSG.view_drift_changeSets()), null);
         this.driftHistory = new SubTab(driftTab.extendLocatorId(DriftSubTab.HISTORY), new ViewName(DriftSubTab.HISTORY,
             MSG.view_tabs_common_history()), null);
         this.driftConfig = new SubTab(driftTab.extendLocatorId(DriftSubTab.CONFIGURATION), new ViewName(
             DriftSubTab.CONFIGURATION, MSG.view_tabs_common_configuration()), null);
-        driftTab.registerSubTabs(driftHistory, driftConfig);
+        driftTab.registerSubTabs(driftChangeSets, driftHistory, driftConfig);
         tabs.add(driftTab);
 
         contentTab = new TwoLevelTab(getTabSet().extendLocatorId("Content"), new ViewName("Content", MSG
@@ -513,6 +518,13 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
     private void updateDriftTabContent(final ResourceComposite resourceComposite, final Resource resource,
         ResourcePermission resourcePermissions, Set<ResourceTypeFacet> facets) {
         if (updateTab(this.driftTab, facets.contains(ResourceTypeFacet.DRIFT), resourcePermissions.isDrift())) {
+
+            updateSubTab(this.driftTab, this.driftChangeSets, true, true, new ViewFactory() {
+                @Override
+                public Canvas createView() {
+                    return ResourceDriftChangeSetsView.get(driftChangeSets.extendLocatorId("View"), resourceComposite);
+                }
+            });
 
             updateSubTab(this.driftTab, this.driftHistory, true, true, new ViewFactory() {
                 @Override

@@ -26,7 +26,17 @@ import java.util.Map;
 import org.codehaus.jackson.JsonNode;
 import org.testng.annotations.Test;
 
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.content.PackageDetailsKey;
+import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
+import org.rhq.core.domain.resource.CreateResourceStatus;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.pluginapi.inventory.CreateResourceReport;
+import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.modules.plugins.jbossas7.ASConnection;
+import org.rhq.modules.plugins.jbossas7.BaseComponent;
+import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.CompositeOperation;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
@@ -292,7 +302,7 @@ public class UploadAndDeployTest extends AbstractIntegrationTest {
 
     /**
      * Test uploading to domain only, but not to a server group
-     * @throws Exception
+     * @throws Exception if anything goes wrong.
      */
     @Test(timeOut = 60*1000L,enabled = isEnabled)
     public void testUploadComposite2() throws Exception {
@@ -346,4 +356,77 @@ public class UploadAndDeployTest extends AbstractIntegrationTest {
 
     }
 
+    /**
+     * Test the real API code for uploading - case 1: just upload to /deployment
+     * @throws Exception if anything goes wrong.
+     */
+    @Test
+    public void testUploadViaCreateChild1() throws Exception {
+
+        BaseComponent bc = new BaseComponent();
+        bc.setConnection(getASConnection());
+        bc.setPath("");
+        ResourceType rt = new ResourceType();
+        rt.setName("Deployment");
+        Resource resource = new Resource("deployment="+TEST_WAR,TEST_WAR,rt); // TODO resource key?
+        ResourceContext context = new ResourceContext(resource,null,null,null,null,null,null,null,null,null,null,null);
+        bc.start(context);
+
+        String bytes_value = uploadToAs(TEST_WAR);
+
+        ResourcePackageDetails details = new ResourcePackageDetails(new PackageDetailsKey(TEST_WAR,"1.0","deployment","all"));
+        CreateResourceReport report = new CreateResourceReport(TEST_WAR,rt,new Configuration(), new Configuration(),details);
+        try {
+            report = bc.runDeploymentMagicOnServer(report,TEST_WAR,TEST_WAR,bytes_value);
+            assert report != null;
+            assert report.getErrorMessage()==null: "Report contained an unexpected error: " + report.getErrorMessage();
+            assert report.getStatus()!=null : "Report did not contain a status";
+            assert report.getStatus()== CreateResourceStatus.SUCCESS : "Status was no success";
+            assert report.getResourceName().equals(TEST_WAR);
+            assert report.getResourceKey().equals("deployment=" + TEST_WAR);
+        } finally {
+            Remove r =new Remove("deployment",TEST_WAR);
+            getASConnection().execute(r);
+        }
+
+    }
+
+    /**
+     * Test the real API code for uploading - case 2: upload to /deployment and a server group
+     * @throws Exception if anything goes wrong.
+     */
+    @Test
+    public void testUploadViaCreateChild2() throws Exception {
+
+        BaseComponent bc = new BaseComponent();
+        bc.setConnection(getASConnection());
+        bc.setPath("server-group=main-server-group");
+        ResourceType rt = new ResourceType();
+        rt.setName("Deployment");
+        Resource resource = new Resource("server-group=main-server-group",TEST_WAR,rt);
+        ResourceContext context = new ResourceContext(resource,null,null,null,null,null,null,null,null,null,null,null);
+        bc.start(context);
+
+        String bytes_value = uploadToAs(TEST_WAR);
+
+        ResourcePackageDetails details = new ResourcePackageDetails(new PackageDetailsKey(TEST_WAR,"1.0","deployment","all"));
+        CreateResourceReport report = new CreateResourceReport(TEST_WAR,rt,new Configuration(), new Configuration(),details);
+        try {
+            report = bc.runDeploymentMagicOnServer(report,TEST_WAR,TEST_WAR,bytes_value);
+            assert report != null;
+            assert report.getErrorMessage()==null: "Report contained an unexpected error: " + report.getErrorMessage();
+            assert report.getStatus()!=null : "Report did not contain a status";
+            assert report.getStatus()== CreateResourceStatus.SUCCESS : "Status was no success";
+            assert report.getResourceName().equals(TEST_WAR);
+            assert report.getResourceKey().equals("server-group=main-server-group,deployment=" + TEST_WAR) : "Resource key was wrong";
+        } finally {
+            Address sgd = new Address("server-group","main-server-group");
+            sgd.add("deployment", TEST_WAR);
+            Remove r =new Remove(sgd);
+            getASConnection().execute(r);
+            r =new Remove("deployment",TEST_WAR);
+            getASConnection().execute(r);
+        }
+
+    }
 }

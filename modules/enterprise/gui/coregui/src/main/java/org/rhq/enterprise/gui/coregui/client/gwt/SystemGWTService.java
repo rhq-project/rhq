@@ -24,6 +24,7 @@ import com.google.gwt.user.client.rpc.RemoteService;
 
 import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.core.domain.common.ServerDetails;
+import org.rhq.core.domain.common.composite.SystemSettings;
 
 /**
  * Provides information about the server as well as a way to reconfigure parts of the server.
@@ -36,6 +37,8 @@ public interface SystemGWTService extends RemoteService {
     ProductInfo getProductInfo() throws RuntimeException;
 
     ServerDetails getServerDetails() throws RuntimeException;
+
+    SystemSettings getSystemSettings();
 
     HashMap<String, String> getSystemConfiguration() throws RuntimeException;
 

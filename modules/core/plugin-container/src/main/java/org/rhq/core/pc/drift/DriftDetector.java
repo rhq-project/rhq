@@ -47,40 +47,44 @@ public class DriftDetector implements Runnable {
 
     @Override
     public void run() {
-        DriftDetectionSchedule schedule = scheduleQueue.dequeue();
+        DriftDetectionSchedule schedule = scheduleQueue.getNextSchedule();
         if (schedule == null) {
             return;
         }
 
-        if (schedule.getNextScan() > (System.currentTimeMillis() + 100L)) {
-            scheduleQueue.enqueue(schedule);
-            return;
-        }
-
-        DriftConfiguration driftConfig = schedule.getDriftConfiguration();
-        int resourceId = schedule.getResourceId();
-        DriftChangeSetCategory changeSetType = null;
-        int changes = 0;
-
         try {
-            if (changeSetMgr.changeSetExists(schedule.getResourceId(), new Headers(driftConfig.getName(),
-                basedir(resourceId, driftConfig), COVERAGE))) {
-                changeSetType = DRIFT;
-                changes = generateDriftChangeSet(schedule);
-            } else {
-                changeSetType = COVERAGE;
-                generateCoverageChangeSet(schedule);
+            if (schedule.getNextScan() > (System.currentTimeMillis() + 100L)) {
+                return;
             }
-        } catch (IOException e) {
-            // TODO Call ChangeSetManager here to rollback any thing that was written to disk.
-            log.error("An error occurred while scanning for drift", e);
-        }
 
-        schedule.updateShedule();
-        scheduleQueue.enqueue(schedule);
+            if (!schedule.getDriftConfiguration().getEnabled()) {
+                return;
+            }
 
-        if (changeSetType == COVERAGE || changes > 0) {
-            driftClient.sendChangeSetToServer(schedule.getResourceId(), driftConfig, changeSetType);
+            DriftConfiguration driftConfig = schedule.getDriftConfiguration();
+            int resourceId = schedule.getResourceId();
+            DriftChangeSetCategory changeSetType = null;
+            int changes = 0;
+
+            try {
+                if (changeSetMgr.changeSetExists(schedule.getResourceId(), new Headers(driftConfig.getName(),
+                    basedir(resourceId, driftConfig), COVERAGE))) {
+                    changeSetType = DRIFT;
+                    changes = generateDriftChangeSet(schedule);
+                } else {
+                    changeSetType = COVERAGE;
+                    generateCoverageChangeSet(schedule);
+                }
+            } catch (IOException e) {
+                // TODO Call ChangeSetManager here to rollback any thing that was written to disk.
+                log.error("An error occurred while scanning for drift", e);
+            }
+
+            if (changeSetType == COVERAGE || changes > 0) {
+                driftClient.sendChangeSetToServer(schedule.getResourceId(), driftConfig, changeSetType);
+            }
+        } finally {
+            scheduleQueue.deactivateSchedule();
         }
     }
 

@@ -1,7 +1,5 @@
 package org.rhq.enterprise.server.resource.metadata;
 
-import static org.rhq.core.clientapi.shared.PluginDescriptorUtil.loadPluginDescriptor;
-
 import java.io.File;
 import java.net.URL;
 import java.sql.Connection;
@@ -39,9 +37,16 @@ import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
 
+import static org.rhq.core.clientapi.shared.PluginDescriptorUtil.loadPluginDescriptor;
+
 public class MetadataBeanTest extends AbstractEJB3Test {
 
     private static List<String> plugins = new ArrayList<String>();
+
+    @Override
+    protected boolean isDBResetNeeded() {
+        return false;
+    }
 
     @BeforeGroups(groups = { "plugin.metadata" }, dependsOnGroups = { "integration.ejb3" })
     public void startMBeanServer() throws Exception {

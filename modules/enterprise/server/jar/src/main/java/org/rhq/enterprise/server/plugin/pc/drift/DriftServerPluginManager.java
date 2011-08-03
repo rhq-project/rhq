@@ -18,11 +18,18 @@
  */
 package org.rhq.enterprise.server.plugin.pc.drift;
 
+import java.util.Properties;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginEnvironment;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginManager;
+import org.rhq.enterprise.server.system.SystemManagerLocal;
+import org.rhq.enterprise.server.util.LookupUtil;
+
+import static org.rhq.enterprise.server.RHQConstants.ACTIVE_DRIFT_PLUGIN;
 
 /**
  * This loads in all drift server plugins that can be found. You can obtain a loaded plugin's
@@ -32,6 +39,7 @@ import org.rhq.enterprise.server.plugin.pc.ServerPluginManager;
  * @author John Sanda
  */
 public class DriftServerPluginManager extends ServerPluginManager {
+
     private final Log log = LogFactory.getLog(this.getClass());
 
     public DriftServerPluginManager(DriftServerPluginContainer pc) {
@@ -39,7 +47,21 @@ public class DriftServerPluginManager extends ServerPluginManager {
     }
 
     public DriftServerPluginFacet getDriftServerPluginComponent() {
-        // TODO The name of the drift server plugin probably will need to be obtained from the system config
-        return (DriftServerPluginFacet) getServerPluginComponent("drift-rhq");
+        Properties sysConfig = getSysConfig();
+        String pluginName = sysConfig.getProperty(ACTIVE_DRIFT_PLUGIN);
+
+        if (pluginName == null) {
+            throw new RuntimeException(ACTIVE_DRIFT_PLUGIN + " system configuration property is not set.");
+        }
+
+        return (DriftServerPluginFacet) getServerPluginComponent(pluginName);
     }
+
+    private Properties getSysConfig() {
+        SubjectManagerLocal subjectMgr = LookupUtil.getSubjectManager();
+        SystemManagerLocal systemMgr = LookupUtil.getSystemManager();
+
+        return systemMgr.getSystemConfiguration(subjectMgr.getOverlord());
+    }
+
 }

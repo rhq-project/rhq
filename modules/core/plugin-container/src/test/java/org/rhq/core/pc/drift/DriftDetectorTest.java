@@ -16,6 +16,7 @@ import org.rhq.common.drift.ChangeSetReaderImpl;
 import org.rhq.common.drift.DirectoryEntry;
 import org.rhq.common.drift.FileEntry;
 import org.rhq.common.drift.Headers;
+import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.drift.DriftConfiguration;
 
 import static org.apache.commons.io.FileUtils.touch;
@@ -57,7 +58,7 @@ public class DriftDetectorTest extends DriftTest {
 
         DriftConfiguration driftConfig = driftConfiguration("coverage-test", resourceDir.getAbsolutePath());
 
-        scheduleQueue.enqueue(new DriftDetectionSchedule(resourceId(), driftConfig));
+        scheduleQueue.addSchedule(new DriftDetectionSchedule(resourceId(), driftConfig));
         detector.run();
 
         File changeSet = changeSet(driftConfig.getName(), COVERAGE);
@@ -76,12 +77,12 @@ public class DriftDetectorTest extends DriftTest {
 
         DriftConfiguration driftConfig = driftConfiguration("basedir-entry-test", resourceDir.getAbsolutePath());
 
-        scheduleQueue.enqueue(new DriftDetectionSchedule(resourceId(), driftConfig));
+        scheduleQueue.addSchedule(new DriftDetectionSchedule(resourceId(), driftConfig));
         detector.run();
 
         DriftDetectionSchedule schedule = new DriftDetectionSchedule(resourceId(), driftConfig);
 
-        scheduleQueue.enqueue(schedule);
+        scheduleQueue.addSchedule(schedule);
         detector.run();
 
         assertChangeSetContainsDirEntry(changeSet(driftConfig.getName(), COVERAGE),
@@ -101,7 +102,7 @@ public class DriftDetectorTest extends DriftTest {
 
         DriftConfiguration config = driftConfiguration("multiple-files-test", resourceDir.getAbsolutePath());
 
-        scheduleQueue.enqueue(new DriftDetectionSchedule(resourceId(), config));
+        scheduleQueue.addSchedule(new DriftDetectionSchedule(resourceId(), config));
         detector.run();
 
         File changeSet = changeSet(config.getName(), COVERAGE);
@@ -126,7 +127,7 @@ public class DriftDetectorTest extends DriftTest {
 
         DriftConfiguration config = driftConfiguration("sibling-dirs-test", resourceDir.getAbsolutePath());
 
-        scheduleQueue.enqueue(new DriftDetectionSchedule(resourceId(), config));
+        scheduleQueue.addSchedule(new DriftDetectionSchedule(resourceId(), config));
         detector.run();
 
         File changeSet = changeSet(config.getName(), COVERAGE);
@@ -152,7 +153,7 @@ public class DriftDetectorTest extends DriftTest {
 
         DriftConfiguration config = driftConfiguration("nested-dirs-test", resourceDir.getAbsolutePath());
 
-        scheduleQueue.enqueue(new DriftDetectionSchedule(resourceId(), config));
+        scheduleQueue.addSchedule(new DriftDetectionSchedule(resourceId(), config));
         detector.run();
 
         File changeSet = changeSet(config.getName(), COVERAGE);
@@ -163,6 +164,32 @@ public class DriftDetectorTest extends DriftTest {
             new DirectoryEntry("conf").add(addedFileEntry("server-1.conf", sha256(server1Conf))));
         assertChangeSetContainsDirEntry(changeSet,
             new DirectoryEntry("conf/subconf").add(addedFileEntry("server-2.conf", sha256(server2Conf))));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void skipScheduledThatHasConfigDisabled() throws Exception {
+        detector.setDriftClient(new DriftClientTestStub() {
+            {
+                setBaseDir(resourceDir);
+            }
+
+            @Override
+            public void sendChangeSetToServer(int resourceId, DriftConfiguration driftConfiguration,
+                DriftChangeSetCategory type) {
+                throw new RuntimeException("Should not invoke drift client when drift configuration is disabled");
+            }
+        });
+
+        DriftConfiguration config = driftConfiguration("disabled-config-test", resourceDir.getAbsolutePath());
+        config.setEnabled(false);
+
+        File confDir = mkdir(resourceDir, "conf");
+        File server1Conf = new File(confDir, "server-1.conf");
+        touch(server1Conf);
+
+        scheduleQueue.addSchedule(new DriftDetectionSchedule(resourceId(), config));
+        detector.run();
     }
 
     @SuppressWarnings("unchecked")
@@ -190,7 +217,7 @@ public class DriftDetectorTest extends DriftTest {
         File server2Conf = new File(confDir, "server-2.conf");
         touch(server2Conf);
 
-        scheduleQueue.enqueue(new DriftDetectionSchedule(resourceId(), config));
+        scheduleQueue.addSchedule(new DriftDetectionSchedule(resourceId(), config));
         detector.run();
 
         File driftChangeSet = changeSet(config.getName(), DRIFT);
@@ -239,7 +266,7 @@ public class DriftDetectorTest extends DriftTest {
         // create some drift
         server2Conf.delete();
 
-        scheduleQueue.enqueue(new DriftDetectionSchedule(resourceId(), config));
+        scheduleQueue.addSchedule(new DriftDetectionSchedule(resourceId(), config));
         detector.run();
 
         File driftChangeSet = changeSet(config.getName(), DRIFT);

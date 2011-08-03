@@ -91,6 +91,12 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 /**
  * A tabular view of set of data records from an {@link RPCDataSource}.
  *
+ * WARNING! If you make _any_ changes to this class, no matter how seemingly
+ * trivial, you must get it peer reviewed. Send out your proposed changes
+ * to the dev mailing list and ask for comments. Any problems introduced to
+ * this class are magnified because it is used in so many UI views and problems
+ * are hard to detect due to the varies ways it is used.
+ *
  * @author Greg Hinkle
  * @author Ian Springer
  */

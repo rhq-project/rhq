@@ -33,6 +33,7 @@ import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftCategory;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftComposite;
+import org.rhq.core.domain.drift.Snapshot;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.drift.DriftManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginContext;
@@ -72,15 +73,8 @@ public class DriftServerPluginComponent implements DriftServerPluginFacet {
 
     @Override
     public PageList<DriftChangeSet> findDriftChangeSetsByCriteria(Subject subject, DriftChangeSetCriteria criteria) {
-        DriftChangeSetJPACriteria jpaCriteria = new DriftChangeSetJPACriteria();
-        jpaCriteria.addFilterId(criteria.getFilterId());
-        jpaCriteria.addFilterResourceId(criteria.getFilterResourceId());
-        jpaCriteria.addFilterVersion(criteria.getFilterVersion());
-        jpaCriteria.addFilterCategory(criteria.getFilterCategory());
-        jpaCriteria.fetchDrifts(criteria.isFetchDrifts());
-
         PageList<? extends DriftChangeSet> results = getDriftManager().findDriftChangeSetsByCriteria(subject,
-            jpaCriteria);
+            toJPACriteria(criteria));
         return (PageList<DriftChangeSet>) results;
     }
 
@@ -105,6 +99,29 @@ public class DriftServerPluginComponent implements DriftServerPluginFacet {
     public void saveChangeSetFiles(File changeSetFilesZip) throws Exception {
         DriftManagerLocal driftMgr = getDriftManager();
         driftMgr.storeFiles(changeSetFilesZip);
+    }
+
+    @Override
+    public Snapshot createSnapshot(Subject subject, DriftChangeSetCriteria criteria) {
+        DriftManagerLocal driftMgr = getDriftManager();
+        return driftMgr.createSnapshot(subject, toJPACriteria(criteria));
+    }
+
+    private DriftChangeSetJPACriteria toJPACriteria(DriftChangeSetCriteria criteria) {
+        DriftChangeSetJPACriteria jpaCriteria = new DriftChangeSetJPACriteria();
+        jpaCriteria.addFilterId(criteria.getFilterId());
+        jpaCriteria.addFilterResourceId(criteria.getFilterResourceId());
+        jpaCriteria.addFilterDriftConfigurationId(criteria.getFilterDriftConfigurationId());
+        jpaCriteria.addFilterCategory(criteria.getFilterCategory());
+        jpaCriteria.addFilterCreatedAfter(criteria.getFilterCreatedAfter());
+        jpaCriteria.addFilterCreatedBefore(criteria.getFilterCreatedBefore());
+        jpaCriteria.addFilterEndVersion(criteria.getFilterEndVersion());
+        jpaCriteria.addFilterStartVersion(criteria.getFilterStartVersion());
+        jpaCriteria.addFilterVersion(criteria.getFilterVersion());
+        jpaCriteria.addSortVersion(criteria.getSortVersion());
+        jpaCriteria.fetchDrifts(criteria.isFetchDrifts());
+
+        return jpaCriteria;
     }
 
     private DriftJPACriteria toJPACriteria(DriftCriteria criteria) {

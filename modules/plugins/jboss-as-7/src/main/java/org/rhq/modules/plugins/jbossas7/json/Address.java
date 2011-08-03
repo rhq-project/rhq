@@ -51,6 +51,27 @@ public class Address {
             path.addAll(other);
     }
 
+    public Address(String path) {
+        this();
+        if (path==null || path.isEmpty())
+            return;
+        String[] components = path.split(",");
+        for (String component : components) {
+            String tmp = component.trim();
+
+            if (tmp.contains("=")) {
+                // strip / from the start of the key if it happens to be there
+                if (tmp.startsWith("/"))
+                    tmp = tmp.substring(1);
+
+                String[] pair = tmp.split("=");
+                PROPERTY_VALUE valuePair = new PROPERTY_VALUE(pair[0], pair[1]);
+                this.path.add(valuePair);
+            }
+        }
+
+    }
+
     public void add(String key, String value) {
         path.add(new PROPERTY_VALUE(key,value));
     }
@@ -74,5 +95,18 @@ public class Address {
 
         builder.append('}');
         return builder.toString();
+    }
+
+    public String getPath() {
+        StringBuilder builder = new StringBuilder();
+        Iterator<PROPERTY_VALUE> iter = path.iterator();
+        while (iter.hasNext()) {
+            PROPERTY_VALUE val = iter.next();
+            builder.append(val.getKey()).append('=').append(val.getValue());
+            if (iter.hasNext())
+                builder.append(',');
+        }
+        return builder.toString();
+
     }
 }

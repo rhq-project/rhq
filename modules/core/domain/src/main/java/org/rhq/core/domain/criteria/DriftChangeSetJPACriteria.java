@@ -39,7 +39,12 @@ public class DriftChangeSetJPACriteria extends Criteria implements DriftChangeSe
     private Integer filterId;
     private Integer filterInitial; // needs override
     private Integer filterResourceId; // needs override
-    private String filterVersion;
+    private Integer filterDriftConfigurationId;
+    private Integer filterVersion;
+    private Integer filterStartVersion;
+    private Integer filterEndVersion;
+    private Long filterCreatedAfter;
+    private Long filterCreatedBefore;
     private DriftChangeSetCategory filterCategory;
     private boolean fetchDrifts;
 
@@ -48,6 +53,10 @@ public class DriftChangeSetJPACriteria extends Criteria implements DriftChangeSe
     public DriftChangeSetJPACriteria() {
         filterOverrides.put("initial", "version = 0");
         filterOverrides.put("resourceId", "resource.id = ?");
+        filterOverrides.put("startVersion", "version >= ?");
+        filterOverrides.put("endVersion", "version <= ?");
+        filterOverrides.put("createdAfter", "ctime >= ?");
+        filterOverrides.put("createdBefore", "ctime <= ?");
     }
 
     @Override
@@ -67,12 +76,58 @@ public class DriftChangeSetJPACriteria extends Criteria implements DriftChangeSe
     }
 
     public void addFilterVersion(String filterVersion) {
-        this.filterVersion = filterVersion;
+        if (filterVersion != null) {
+            this.filterVersion = Integer.parseInt(filterVersion);
+        }
     }
 
     @Override
     public String getFilterVersion() {
-        return filterVersion;
+        return filterVersion == null ? null : filterVersion.toString();
+    }
+
+    @Override
+    public void addFilterStartVersion(String filterStartVersion) {
+        if (filterStartVersion != null) {
+            this.filterStartVersion = Integer.parseInt(filterStartVersion);
+        }
+    }
+
+    @Override
+    public String getFilterStartVersion() {
+        return filterStartVersion == null ? null : filterStartVersion.toString();
+    }
+
+    @Override
+    public void addFilterEndVersion(String filterEndVersion) {
+        if (filterEndVersion != null) {
+            this.filterEndVersion = Integer.parseInt(filterEndVersion);
+        }
+    }
+
+    @Override
+    public String getFilterEndVersion() {
+        return filterEndVersion == null ? null : filterEndVersion.toString();
+    }
+
+    @Override
+    public void addFilterCreatedAfter(Long filterCreatedAfter) {
+        this.filterCreatedAfter = filterCreatedAfter;
+    }
+
+    @Override
+    public Long getFilterCreatedAfter() {
+        return filterCreatedAfter;
+    }
+
+    @Override
+    public void addFilterCreatedBefore(Long filterCreatedBefore) {
+        this.filterCreatedBefore = filterCreatedBefore;
+    }
+
+    @Override
+    public Long getFilterCreatedBefore() {
+        return filterCreatedBefore;
     }
 
     public void addFilterResourceId(Integer filterResourceId) {
@@ -82,6 +137,16 @@ public class DriftChangeSetJPACriteria extends Criteria implements DriftChangeSe
     @Override
     public Integer getFilterResourceId() {
         return filterResourceId;
+    }
+
+    @Override
+    public void addFilterDriftConfigurationId(Integer filterDriftConfigId) {
+        this.filterDriftConfigurationId = filterDriftConfigId;
+    }
+
+    @Override
+    public Integer getFilterDriftConfigurationId() {
+        return filterDriftConfigurationId;
     }
 
     public void addFilterCategory(DriftChangeSetCategory filterCategory) {

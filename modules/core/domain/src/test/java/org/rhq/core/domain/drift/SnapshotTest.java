@@ -1,19 +1,14 @@
-package org.rhq.enterprise.server.drift;
+package org.rhq.core.domain.drift;
 
 import java.util.HashSet;
 import java.util.Set;
 
 import org.testng.annotations.Test;
 
-import org.rhq.core.domain.drift.Drift;
-import org.rhq.core.domain.drift.DriftCategory;
-import org.rhq.core.domain.drift.DriftChangeSet;
-import org.rhq.core.domain.drift.DriftChangeSetCategory;
-import org.rhq.core.domain.drift.DriftFile;
-import org.rhq.core.domain.drift.DriftFileStatus;
-
+import static java.util.Arrays.asList;
 import static org.rhq.core.domain.drift.DriftCategory.FILE_ADDED;
 import static org.rhq.core.domain.drift.DriftCategory.FILE_CHANGED;
+import static org.rhq.core.domain.drift.DriftCategory.FILE_REMOVED;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.DRIFT;
 import static org.rhq.core.domain.drift.DriftFileStatus.LOADED;
@@ -23,7 +18,7 @@ import static org.testng.Assert.assertEquals;
 public class SnapshotTest {
 
     @Test
-    public void generateSnapshotForOneChangeSet() throws Exception {
+    public void addChangeSetWithAddedFile() {
         int configId = 1;
 
         FakeDriftChangeSet changeSet = new FakeDriftChangeSet(0, COVERAGE, configId)
@@ -37,7 +32,7 @@ public class SnapshotTest {
     }
 
     @Test
-    public void generateSnapshotWithTwoChangeSetsAndFileAdded() {
+    public void addChangeSetsWithAddedFiles() {
         int configId = 1;
 
         Drift entry1 = new FakeDrift(FILE_ADDED, null, new FakeDriftFile("a1b2c3", 1024, LOADED), "/drift/1.txt");
@@ -54,7 +49,7 @@ public class SnapshotTest {
     }
 
     @Test
-    public void generateSnapshotWithFileChanged() {
+    public void replaceFileWithChangedVersion() {
         int configId = 1;
 
         Drift entry1 = new FakeDrift(FILE_ADDED, null, new FakeDriftFile("a1b2c3", 1024, LOADED), "/drift/1.txt");
@@ -66,7 +61,83 @@ public class SnapshotTest {
 
         Snapshot snapshot = new Snapshot().add(changeSet1).add(changeSet2);
 
-        assertCollectionMatchesNoOrder(asSet(entry2), snapshot.getEntries(), "Failed build snapshot with file changed");
+        assertCollectionMatchesNoOrder(asSet(entry2), snapshot.getEntries(),
+            "Failed to build snapshot with file changed");
+    }
+
+    @Test
+    public void deleteFileThatHasBeenRemoved() {
+        int configId = 1;
+
+        Drift entry1 = new FakeDrift(FILE_ADDED, null, new FakeDriftFile("a1b2c3", 1024, LOADED), "/drift/1.txt");
+        Drift entry2 = new FakeDrift(FILE_ADDED, null, new FakeDriftFile("d1f2a3", 1024, LOADED), "/drift/2.txt");
+        FakeDriftChangeSet changeSet1 = new FakeDriftChangeSet(0, COVERAGE, configId).add(entry1).add(entry2);
+
+        Drift entry3 = new FakeDrift(FILE_REMOVED, new FakeDriftFile("a1b2c3", 1024, LOADED), null, "/drift/1.txt");
+        FakeDriftChangeSet changeSet2 = new FakeDriftChangeSet(1, DRIFT, configId).add(entry3);
+
+        Snapshot snapshot = new Snapshot().add(changeSet1).add(changeSet2);
+
+        assertCollectionMatchesNoOrder(asSet(entry2), snapshot.getEntries(),
+            "Failed to build snapshot with a file " +
+                "removed.");
+    }
+
+    @Test
+    public void diffShowsEntriesInLeftAndNotInRight() {
+        int configId = 1;
+
+        Drift entry1 = new FakeDrift(FILE_ADDED, null, new FakeDriftFile("a1b2c3", 1024, LOADED), "/drift/1.txt");
+        FakeDriftChangeSet changeSet1 = new FakeDriftChangeSet(0, COVERAGE, configId).add(entry1);
+        Snapshot right = new Snapshot().add(changeSet1);
+
+        Drift entry2 = new FakeDrift(FILE_ADDED, null, new FakeDriftFile("a3b6c9", 1024, LOADED), "/drift/2.txt");
+        FakeDriftChangeSet changeSet2 = new FakeDriftChangeSet(0, COVERAGE, configId).add(entry1).add(entry2);
+        Snapshot left = new Snapshot().add(changeSet1).add(changeSet2);
+
+        DiffReport diff = left.diff(right);
+
+        assertCollectionMatchesNoOrder(asList(entry2), diff.getElementsNotInRight(),
+            "Diff report does not contain " +
+                "elements that are in the left but not in the right.");
+    }
+
+    @Test
+    public void diffShowsEntriesInRightAndNotInLeft() {
+        int configId = 1;
+
+        Drift entry1 = new FakeDrift(FILE_ADDED, null, new FakeDriftFile("a1b2c3", 1024, LOADED), "/drift/1.txt");
+        FakeDriftChangeSet changeSet1 = new FakeDriftChangeSet(0, COVERAGE, configId).add(entry1);
+        Snapshot right = new Snapshot().add(changeSet1);
+
+        Drift entry2 = new FakeDrift(FILE_ADDED, null, new FakeDriftFile("a3b6c9", 1024, LOADED), "/drift/2.txt");
+        FakeDriftChangeSet changeSet2 = new FakeDriftChangeSet(0, COVERAGE, configId).add(entry2);
+        Snapshot left = new Snapshot().add(changeSet2);
+
+        DiffReport diff = left.diff(right);
+
+        assertCollectionMatchesNoOrder(asList(entry1), diff.getElementsNotInLeft(),
+            "Diff report does not contain " +
+                "elements that are in the left but not in the right");
+    }
+
+    @Test
+    public void diffShowsEntriesInLeftAndRightThatAreInConflict() {
+        int configId = 1;
+
+        Drift entry1 = new FakeDrift(FILE_ADDED, null, new FakeDriftFile("a1b2c3", 1024, LOADED), "/drfit/1.txt");
+        FakeDriftChangeSet changeSet1 = new FakeDriftChangeSet(0, COVERAGE, configId).add(entry1);
+        Snapshot right = new Snapshot().add(changeSet1);
+
+        Drift entry2 = new FakeDrift(FILE_ADDED, null, new FakeDriftFile("c3b2a1", 1024, LOADED), "/drfit/1.txt");
+        FakeDriftChangeSet changeSet2 = new FakeDriftChangeSet(1, DRIFT, configId).add(entry2);
+        Snapshot left = new Snapshot().add(changeSet2);
+
+        DiffReport diff = left.diff(right);
+
+        assertCollectionMatchesNoOrder(asList(entry2), diff.getElementsInConflict(),
+            "Diff report does not contain " +
+                "element that are in both left and right and are in conflict");
     }
 
     <E> Set<E> asSet(E... elements) {

@@ -1,8 +1,12 @@
 package org.rhq.core.pc.drift;
 
+import java.io.Serializable;
+
 import org.rhq.core.domain.drift.DriftConfiguration;
 
-public class DriftDetectionSchedule implements Comparable<DriftDetectionSchedule> {
+public class DriftDetectionSchedule implements Comparable<DriftDetectionSchedule>, Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private int resourceId;
 
@@ -30,6 +34,13 @@ public class DriftDetectionSchedule implements Comparable<DriftDetectionSchedule
 
     public void updateShedule() {
         nextScan = System.currentTimeMillis() + (driftConfig.getInterval() * 1000);
+    }
+
+    public DriftDetectionSchedule copy() {
+        DriftDetectionSchedule copy = new DriftDetectionSchedule(resourceId,
+            new DriftConfiguration(driftConfig.getConfiguration().deepCopyWithoutProxies()));
+        copy.nextScan = nextScan;
+        return copy;
     }
 
     @Override

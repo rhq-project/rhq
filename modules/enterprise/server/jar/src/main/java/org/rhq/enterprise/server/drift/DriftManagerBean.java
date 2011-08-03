@@ -66,11 +66,12 @@ import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.domain.drift.DriftFile;
-import org.rhq.core.domain.drift.RhqDriftFile;
 import org.rhq.core.domain.drift.DriftFileBits;
 import org.rhq.core.domain.drift.DriftFileStatus;
 import org.rhq.core.domain.drift.RhqDrift;
 import org.rhq.core.domain.drift.RhqDriftChangeSet;
+import org.rhq.core.domain.drift.RhqDriftFile;
+import org.rhq.core.domain.drift.Snapshot;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.ZipUtil;
@@ -146,11 +147,6 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
         }
 
         try {
-            DriftChangeSetJPACriteria c = new DriftChangeSetJPACriteria();
-            c.addFilterResourceId(resourceId);
-            List<RhqDriftChangeSet> changeSets = findDriftChangeSetsByCriteria(subjectManager.getOverlord(), c);
-            final int version = changeSets.size();
-
             ZipUtil.walkZipFile(changeSetZip, new ChangeSetFileVisitor() {
 
                 @Override
@@ -164,6 +160,8 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
 
                         // store the new change set info (not the actual blob)
                         DriftConfiguration config = findDriftConfiguration(resource, reader.getHeaders());
+                        int version = getChangeSetVersion(resource, config);
+
                         if (config == null) {
                             log.error("Unable to locate " + config.getClass().getSimpleName() + "[id: " +
                                 config.getId() + ", name: " + config.getName() + "]. Change set cannot be saved.");
@@ -237,6 +235,24 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
         } finally {
             // delete the changeSetFile?
         }
+    }
+
+    /**
+     * This method only exists temporarily until the version header is added to the change
+     * set meta data file. This method determines the version by looking at the number of
+     * change sets in the database.
+     *
+     * @param r The resource
+     * @param c The drift configuration
+     * @return The next change set version number
+     */
+    int getChangeSetVersion(Resource r, DriftConfiguration c) {
+        DriftChangeSetJPACriteria criteria = new DriftChangeSetJPACriteria();
+        criteria.addFilterResourceId(r.getId());
+        criteria.addFilterDriftConfigurationId(c.getId());
+        List<RhqDriftChangeSet> changeSets = findDriftChangeSetsByCriteria(subjectManager.getOverlord(), criteria);
+
+        return changeSets.size();
     }
 
     DriftConfiguration findDriftConfiguration(Resource resource, Headers headers) {
@@ -580,5 +596,18 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
         default:
             throw new IllegalArgumentException("Entity Context Type not supported [" + context + "]");
         }
+    }
+
+    @Override
+    public Snapshot createSnapshot(Subject subject, DriftChangeSetJPACriteria criteria) {
+        // TODO security checks
+        Snapshot snapshot = new Snapshot();
+        PageList<RhqDriftChangeSet> changeSets = findDriftChangeSetsByCriteria(subject, criteria);
+
+        for (RhqDriftChangeSet changeSet : changeSets) {
+            snapshot.add(changeSet);
+        }
+
+        return snapshot;
     }
 }

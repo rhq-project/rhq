@@ -21,46 +21,34 @@ package org.rhq.enterprise.server.rest;
 import java.util.List;
 
 import javax.ejb.Local;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 
-import org.rhq.core.domain.measurement.Availability;
-import org.rhq.enterprise.server.rest.domain.AvailabilityRest;
-import org.rhq.enterprise.server.rest.domain.MetricSchedule;
 import org.rhq.enterprise.server.rest.domain.ResourceWithType;
 
 /**
- * Interface class that describes the REST interface
+ * Bean that deals with user specific stuff
  * @author Heiko W. Rupp
  */
 @Produces({"application/json","application/xml","text/plain"})
-@Path("/resource")
+@Path("/user")
 @Local
-public interface ResourceHandlerLocal {
-    @GET
-    @Path("/{id}")
-    ResourceWithType getResource(@PathParam("id") int id);
+public interface UserHandlerLocal {
 
     @GET
-    @Path("/platforms")
-    List<ResourceWithType> getPlatforms();
+    @Path("favorites/resource")
+    public List<ResourceWithType> getFavorites();
 
-    @GET
-    @Path("/{id}/availability")
-    AvailabilityRest getAvailability(@PathParam("id") int resourceId);
+    @PUT
+    @Path("favorites/resource/{id}")
+    public void addFavoriteResource(@PathParam("id") int id);
 
-    @GET
-    @Path("/{id}/schedules")
-    List<MetricSchedule> getSchedules(@PathParam("id") int resourceId);
-
-    @GET
-    @Path("/schedule/{id}")
-    MetricSchedule getSchedule(@PathParam("id") int scheduleId);
-
-    @GET
-    @Path("/{id}/children")
-    List<ResourceWithType> getChildren(@PathParam("id") int id);
-
+    @DELETE
+    @Path("favorites/resource/{id}")
+    public void removeResourceFromFavorites(@PathParam("id") int id);
 }

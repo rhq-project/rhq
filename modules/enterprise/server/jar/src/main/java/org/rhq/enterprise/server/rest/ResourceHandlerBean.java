@@ -79,8 +79,6 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
     @Override
     public List<ResourceWithType> getPlatforms() {
 
-
-
         PageControl pc = new PageControl();
         List<Resource> ret = resMgr.findResourcesByCategory(caller, ResourceCategory.PLATFORM, InventoryStatus.COMMITTED, pc) ;
         List<ResourceWithType> rwtList = new ArrayList<ResourceWithType>(ret.size());
@@ -88,22 +86,6 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
             ResourceWithType rwt = fillRWT(r);
             rwtList.add(rwt);
         }
-        return rwtList;
-    }
-
-    @Override
-    public List<ResourceWithType> getServersForPlatform(int id) {
-
-
-        PageControl pc = new PageControl();
-        Resource parent = resMgr.getResource(caller,id);
-        List<Resource> ret = resMgr.findResourceByParentAndInventoryStatus(caller,parent,InventoryStatus.COMMITTED,pc);
-        List<ResourceWithType> rwtList = new ArrayList<ResourceWithType>(ret.size());
-        for (Resource r: ret) {
-            ResourceWithType rwt = fillRWT(r);
-            rwtList.add(rwt);
-        }
-
         return rwtList;
     }
 
@@ -154,5 +136,19 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
                 definition.getDataType().toString());
 
         return ms;
+    }
+
+    @Override
+    public List<ResourceWithType> getChildren(int id) {
+        PageControl pc = new PageControl();
+        Resource parent = resMgr.getResource(caller,id);
+        List<Resource> ret = resMgr.findResourceByParentAndInventoryStatus(caller,parent,InventoryStatus.COMMITTED,pc);
+        List<ResourceWithType> rwtList = new ArrayList<ResourceWithType>(ret.size());
+        for (Resource r: ret) {
+            ResourceWithType rwt = fillRWT(r);
+            rwtList.add(rwt);
+        }
+
+        return rwtList;
     }
 }

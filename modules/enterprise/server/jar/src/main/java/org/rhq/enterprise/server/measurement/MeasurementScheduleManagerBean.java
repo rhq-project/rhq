@@ -21,6 +21,7 @@ package org.rhq.enterprise.server.measurement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -522,10 +523,20 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
                     }
                 }
             }
-
         } catch (Exception e) {
-            log.error("Error updating measurement definitions: ", e);
-            throw new MeasurementException("Error updating measurement definitions: " + e.getMessage());
+            String errorMessage = "Error updating measurement definitions";
+            SQLException sqle = null;
+            if (e instanceof SQLException) {
+                sqle = (SQLException) e;
+            } else if (e.getCause() instanceof SQLException) {
+                sqle = (SQLException) e.getCause();
+            }
+            if (sqle != null) {
+                String s = JDBCUtil.convertSQLExceptionToString((SQLException) e);
+                errorMessage += ": " + s;
+            }
+            log.error(errorMessage, e);
+            throw new MeasurementException("Error updating measurement definitions: " + e);
         } finally {
             JDBCUtil.safeClose(defUpdateStmt);
             JDBCUtil.safeClose(schedUpdateStmt);

@@ -141,10 +141,10 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
         changeSets = driftManager.findDriftChangeSetsByCriteria(overlord, c);
         assertEquals(2, changeSets.size());
         changeSet = changeSets.get(0);
-        assertEquals(0, changeSet.getVersion());
+        assertEquals("The change set version is wrong", 0, changeSet.getVersion());
         assertEquals("Expected to find one entry in change set", 1, changeSet.getDrifts().size());
         changeSet = changeSets.get(1);
-        assertEquals(1, changeSet.getVersion());
+        assertEquals("The change set version is wrong", 0, changeSet.getVersion());
         assertEquals(1, changeSet.getDrifts().size());
         Drift<?, ?> drift = changeSet.getDrifts().iterator().next();
         assertEquals("dir/filename.ext", drift.getPath());

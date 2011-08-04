@@ -19,25 +19,17 @@
  */
 package org.rhq.enterprise.server.drift;
 
-import java.io.File;
 import java.io.InputStream;
 
 import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
-import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
-import org.rhq.core.domain.criteria.DriftCriteria;
-import org.rhq.core.domain.drift.Drift;
-import org.rhq.core.domain.drift.DriftChangeSet;
-import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.drift.DriftConfiguration;
-import org.rhq.core.domain.drift.DriftSnapshot;
-import org.rhq.core.domain.drift.JPADriftFile;
-import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginFacet;
 
 @Local
-public interface DriftManagerLocal extends DriftManagerRemote {
+public interface DriftManagerLocal extends DriftServerPluginFacet, DriftManagerRemote {
 
     /**
      * This method initiates an out-of-band (JMS-Based) server-side pull of the change-set file. Upon successful
@@ -62,6 +54,19 @@ public interface DriftManagerLocal extends DriftManagerRemote {
      */
     void addFiles(int resourceId, long zipSize, InputStream zipStream) throws Exception;
 
+    //TODO Should probably move to DriftServerPluginFacet
+    /**
+     * Remove the specified drifts.  Ids not identifying an actual drift record will be ignored.
+     *  
+     * @param subject
+     * @param 
+     * @param driftConfig
+     *
+     * @return the number of Drift records deleted
+     */
+    int deleteDrifts(Subject subject, String[] driftIds);
+
+    //TODO Should  probably move to JPADriftServerLocal when deleteDrifts graduates to server plugin facet
     /**
      * Remove the specified drift in its own transaction. This is used for chunking transactions and
      * should not be exposed in a Remote interface.
@@ -74,17 +79,7 @@ public interface DriftManagerLocal extends DriftManagerRemote {
      */
     int deleteDriftsInNewTransaction(Subject subject, String... driftIds);
 
-    /**
-     * Remove the specified drifts.  Ids not identifying an actual drift record will be ignored.
-     *  
-     * @param subject
-     * @param 
-     * @param driftConfig
-     *
-     * @return the number of Drift records deleted
-     */
-    int deleteDrifts(Subject subject, String[] driftIds);
-
+    //TODO Should probably move to DriftServerPluginFacet
     /**
      * Remove all drifts on the specified entity context.
      *  
@@ -105,30 +100,13 @@ public interface DriftManagerLocal extends DriftManagerRemote {
     void deleteDriftConfiguration(Subject subject, EntityContext entityContext, String driftConfigName);
 
     /**
-     * Simple get method for a JPADriftFile. Does not return the content.
-     * @param subject
-     * @param sha256
-     * @return The JPADriftFile sans content.
+     * One time on-demand request to detect drift on the specified entities, using the supplied config.
+     * 
+     * @param entityContext
+     * @param driftConfig
+     * @throws RuntimeException
      */
-    JPADriftFile getDriftFile(Subject subject, String sha256);
-
-    /**
-     * Standard criteria based fetch method
-     * @param subject
-     * @param criteria
-     * @return The DriftChangeSets matching the criteria
-     */
-    PageList<? extends DriftChangeSet<?>> findDriftChangeSetsByCriteria(Subject subject, DriftChangeSetCriteria criteria);
-
-    PageList<DriftComposite> findDriftCompositesByCriteria(Subject subject, DriftCriteria criteria);
-
-    /**
-     * Standard criteria based fetch method
-     * @param subject
-     * @param criteria
-     * @return The Drifts matching the criteria
-     */
-    PageList<? extends Drift<?, ?>> findDriftsByCriteria(Subject subject, DriftCriteria criteria);
+    void detectDrift(Subject subject, EntityContext context, DriftConfiguration driftConfig);
 
     /**
      * Get the specified drift configuration for the specified context.
@@ -141,27 +119,6 @@ public interface DriftManagerLocal extends DriftManagerRemote {
     DriftConfiguration getDriftConfiguration(Subject subject, EntityContext entityContext, int driftConfigId);
 
     /**
-     * This method stores the provided change-set file for the resource. The version will be incremented based
-     * on the max version of existing change-sets for the resource. The change-set will be processed generating
-     * requests for drift file content and/or drift instances as required.
-     *  
-     * @param resourceId The resource for which the change-set is being reported.
-     * @param changeSetZip The change-set zip file
-     * @throws Exception
-     */
-    void storeChangeSet(int resourceId, File changeSetZip) throws Exception;
-
-    /**
-     * This method stores the provided drift files. The files should correspond to requested drift files.
-     * The unzipped files will have their sha256 generated. Those not corresponding to needed content will
-     * be logged and ignored.
-     *  
-     * @param filesZip The change-set zip file
-     * @throws Exception
-     */
-    void storeFiles(File filesZip) throws Exception;
-
-    /**
      * Update the provided driftConfig (identified by name) on the specified EntityContext.  If it exists it will be replaced. If not it will
      * be added.  Agents, if available, will be notified of the change. 
      * @param subject
@@ -169,25 +126,4 @@ public interface DriftManagerLocal extends DriftManagerRemote {
      * @param driftConfig
      */
     void updateDriftConfiguration(Subject subject, EntityContext entityContext, DriftConfiguration driftConfig);
-
-    // TODO, the stuff below is very preliminary and will change
-
-    /**
-     * SUPPORTS DRIFT RHQ SERVER PLUGIN 
-     * @param driftFile
-     * @return
-     * @throws Exception
-     */
-    JPADriftFile persistDriftFile(JPADriftFile driftFile) throws Exception;
-
-    /**
-     * SUPPORTS DRIFT RHQ SERVER PLUGIN
-     * @param driftFile
-     * @param data
-     * @throws Exception
-     */
-    void persistDriftFileData(JPADriftFile driftFile, InputStream data) throws Exception;
-
-    DriftSnapshot createSnapshot(Subject subject, DriftChangeSetCriteria criteria);
-
 }

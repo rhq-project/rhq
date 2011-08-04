@@ -15,7 +15,7 @@
         Provides back-end store and retrieve for drift files.
     ]]></serverplugin:help>
     
-    <serverplugin:plugin-component class="DriftServerPluginComponent">
+    <serverplugin:plugin-component class="JPADriftServerPluginComponent">
     <!-- 
         <serverplugin:control name="testControl" description="A test control operation">
         </serverplugin:control>

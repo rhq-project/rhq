@@ -80,6 +80,8 @@ import org.rhq.core.domain.criteria.BundleFileCriteria;
 import org.rhq.core.domain.criteria.BundleResourceDeploymentCriteria;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.criteria.Criteria;
+import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
+import org.rhq.core.domain.criteria.DriftCriteria;
 import org.rhq.core.domain.criteria.EventCriteria;
 import org.rhq.core.domain.criteria.GroupOperationHistoryCriteria;
 import org.rhq.core.domain.criteria.InstalledPackageCriteria;
@@ -96,7 +98,9 @@ import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.criteria.RoleCriteria;
 import org.rhq.core.domain.criteria.SubjectCriteria;
-import org.rhq.core.domain.drift.DriftConfiguration;
+import org.rhq.core.domain.drift.Drift;
+import org.rhq.core.domain.drift.DriftChangeSet;
+import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.measurement.Availability;
@@ -597,9 +601,20 @@ public class WebservicesManagerBean implements WebservicesRemote {
     // DRIFTMANAGER: BEGIN ----------------------------------
 
     @Override
-    public void detectDrift(Subject subject, EntityContext entityContext, DriftConfiguration driftConfiguration)
+    public DriftSnapshot createSnapshot(Subject subject, DriftChangeSetCriteria criteria) throws Exception {
+        return driftManager.createSnapshot(subject, criteria);
+    }
+
+    @Override
+    public PageList<? extends DriftChangeSet<?>> findDriftChangeSetsByCriteria(Subject subject,
+        DriftChangeSetCriteria criteria) throws Exception {
+        return driftManager.findDriftChangeSetsByCriteria(subject, criteria);
+    }
+
+    @Override
+    public PageList<? extends Drift<?, ?>> findDriftsByCriteria(Subject subject, DriftCriteria criteria)
         throws Exception {
-        driftManager.detectDrift(subject, entityContext, driftConfiguration);
+        return driftManager.findDriftsByCriteria(subject, criteria);
     }
 
     // DRIFTMANAGER: END ------------------------------------

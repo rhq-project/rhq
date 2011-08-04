@@ -29,6 +29,7 @@ import org.rhq.enterprise.server.content.ContentManagerRemote;
 import org.rhq.enterprise.server.content.RepoManagerRemote;
 import org.rhq.enterprise.server.discovery.DiscoveryBossRemote;
 import org.rhq.enterprise.server.drift.DriftManagerRemote;
+import org.rhq.enterprise.server.drift.DriftServerRemote;
 import org.rhq.enterprise.server.event.EventManagerRemote;
 import org.rhq.enterprise.server.install.remote.RemoteInstallManagerRemote;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerRemote;
@@ -45,6 +46,7 @@ import org.rhq.enterprise.server.resource.ResourceTypeManagerRemote;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerRemote;
 import org.rhq.enterprise.server.search.SavedSearchManagerRemote;
 import org.rhq.enterprise.server.support.SupportManagerRemote;
+import org.rhq.enterprise.server.sync.SynchronizationManagerRemote;
 import org.rhq.enterprise.server.system.SystemManagerRemote;
 import org.rhq.enterprise.server.tagging.TagManagerRemote;
 
@@ -64,6 +66,7 @@ public enum RhqManagers {
     ConfigurationManager(ConfigurationManagerRemote.class), //
     ContentManager(ContentManagerRemote.class), //
     DataAccessManager(DataAccessManagerRemote.class), //
+    DriftServer(DriftServerRemote.class),
     DriftManager(DriftManagerRemote.class), //
     DiscoveryBoss(DiscoveryBossRemote.class), //
     EventManager(EventManagerRemote.class), //
@@ -82,7 +85,8 @@ public enum RhqManagers {
     SupportManager(SupportManagerRemote.class), //
     SystemManager(SystemManagerRemote.class), //
     RemoteInstallManager(RemoteInstallManagerRemote.class), //
-    TagManager(TagManagerRemote.class);
+    TagManager(TagManagerRemote.class), //
+    SynchronizationManager(SynchronizationManagerRemote.class);
 
     private Class<?> remote;
     private String remoteName;

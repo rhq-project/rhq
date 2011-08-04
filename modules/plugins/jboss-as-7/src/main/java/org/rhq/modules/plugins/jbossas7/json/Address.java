@@ -53,6 +53,8 @@ public class Address {
 
     public Address(String path) {
         this();
+        if (path==null || path.isEmpty())
+            return;
         String[] components = path.split(",");
         for (String component : components) {
             String tmp = component.trim();
@@ -93,5 +95,18 @@ public class Address {
 
         builder.append('}');
         return builder.toString();
+    }
+
+    public String getPath() {
+        StringBuilder builder = new StringBuilder();
+        Iterator<PROPERTY_VALUE> iter = path.iterator();
+        while (iter.hasNext()) {
+            PROPERTY_VALUE val = iter.next();
+            builder.append(val.getKey()).append('=').append(val.getValue());
+            if (iter.hasNext())
+                builder.append(',');
+        }
+        return builder.toString();
+
     }
 }

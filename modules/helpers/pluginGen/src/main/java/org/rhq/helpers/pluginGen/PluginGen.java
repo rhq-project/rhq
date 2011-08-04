@@ -61,37 +61,49 @@ public class PluginGen {
 
     public void run() throws Exception {
 
+        Props props = null;
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        try {
 
-        Props props = askQuestions(br, new Props());
-        if (props == null) {
-            // abort by user
-            return;
-        }
-
-        boolean done = false;
-        do {
-
-            System.out.println();
-            System.out.print("Do you want to add a child to " + props.getName() + "? (y/N) ");
-            String answer = br.readLine();
-            answer = answer.toLowerCase(Locale.getDefault());
-            if (answer.startsWith("n") || answer.length() == 0)
-                done = true;
-            else {
-                Props child = askQuestions(br, props);
-                if (child == null) {
-                    // abort by user
-                    return;
-                }
-                props.getChildren().add(child);
+            props = askQuestions(br, new Props());
+            if (props == null) {
+                // abort by user
+                return;
             }
 
-        } while (!done);
+            boolean done = false;
+            do {
 
-        log.info("\nYou have choosen:\n" + props.toString());
-        postprocess(props);
-        generate(props);
+                System.out.println();
+                System.out.print("Do you want to add a child to " + props.getName() + "? (y/N) ");
+                String answer = br.readLine();
+                if (answer==null) {
+                    break;
+                }
+                answer = answer.toLowerCase(Locale.getDefault());
+                if (answer.startsWith("n") || answer.length() == 0)
+                    done = true;
+                else {
+                    Props child = askQuestions(br, props);
+                    if (child == null) {
+                        // abort by user
+                        return;
+                    }
+                    props.getChildren().add(child);
+                }
+
+            } while (!done);
+        } catch (IOException ioe) {
+            System.err.println("Internal error happended: " + ioe.getMessage());
+        } finally {
+                br.close();
+        }
+
+        if (props!=null) {
+            log.info("\nYou have chosen:\n" + props.toString());
+            postprocess(props);
+            generate(props);
+        }
 
         System.out.println("Don't forget to ");
         System.out.println("  - add your plugin to the parent pom.xml if needed");
@@ -345,11 +357,15 @@ public class PluginGen {
             Template templ = config.getTemplate(template + ".ftl");
 
             Writer out = new BufferedWriter(new FileWriter(new File(directory, fileName)));
-            Map<String, Props> root = new HashMap<String, Props>();
-            root.put("props", props);
-            templ.process(root, out);
-            out.flush();
-            out.close();
+            try {
+                Map<String, Props> root = new HashMap<String, Props>();
+                root.put("props", props);
+                templ.process(root, out);
+            }
+            finally {
+                out.flush();
+                out.close();
+            }
         } catch (IOException ioe) {
             ioe.printStackTrace();
         } catch (TemplateException te) {

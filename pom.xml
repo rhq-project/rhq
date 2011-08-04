@@ -1269,6 +1269,10 @@
 
     <developers>
         <developer>
+            <name>Robert Buck</name>
+            <timezone>-5</timezone>
+        </developer>
+        <developer>
             <name>Charles Crouch</name>
             <timezone>-6</timezone>
         </developer>
@@ -1280,8 +1284,11 @@
             </roles>
         </developer>
         <developer>
-            <name>Filip Drabeck</name>
+            <name>Filip Drabek</name>
             <timezone>+1</timezone>
+            <roles>
+                <role>retired</role>
+            </roles>
         </developer>
         <developer>
             <name>Greg Hinkle</name>
@@ -1314,6 +1321,10 @@
             <name>John 'Mazz' Mazzitelli</name>
             <timezone>-5</timezone>
             <url>http://management-platform.blogspot.com</url>
+        </developer>
+        <developer>
+            <name>Stefan Negrea</name>
+            <timezone>-6</timezone>
         </developer>
         <developer>
             <name>Simeon Pinder</name>
@@ -1359,6 +1370,25 @@
         <contributor>
             <name>Rafael Torres Coelho Soares</name>
             <timezone>-7</timezone>
+        </contributor>
+        <contributor>
+            <name>Elias Ross</name>
+        </contributor>
+        <contributor>
+            <name>Fusayuki Minamoto</name>
+            <timezone>+6</timezone>
+        </contributor>
+        <contributor>
+            <name>Liju Jijun</name>
+            <timezone>+6</timezone>
+        </contributor>
+        <contributor>
+            <name>Zhongqianglee</name>
+            <timezone>+6</timezone>
+        </contributor>
+        <contributor>
+            <name>Frank Brüseke</name>
+            <timezone>+1</timezone>
         </contributor>
     </contributors>
 

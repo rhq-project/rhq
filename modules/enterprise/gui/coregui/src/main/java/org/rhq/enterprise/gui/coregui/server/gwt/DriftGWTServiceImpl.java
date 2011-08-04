@@ -21,7 +21,6 @@ package org.rhq.enterprise.gui.coregui.server.gwt;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
-import org.rhq.core.domain.criteria.DriftChangeSetJPACriteria;
 import org.rhq.core.domain.criteria.DriftCriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
@@ -125,7 +124,7 @@ public class DriftGWTServiceImpl extends AbstractGWTServiceImpl implements Drift
     }
 
     @Override
-    public Snapshot createSnapshot(Subject subject, DriftChangeSetJPACriteria criteria) {
+    public Snapshot createSnapshot(Subject subject, DriftChangeSetCriteria criteria) {
         try {
             return driftServer.createSnapshot(subject, criteria);
         } catch (Throwable t) {

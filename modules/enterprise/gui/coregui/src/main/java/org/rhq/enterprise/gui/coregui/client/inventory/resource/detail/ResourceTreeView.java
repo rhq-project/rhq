@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -60,7 +60,6 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.criteria.DashboardCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
-import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.dashboard.Dashboard;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.core.domain.measurement.DataType;
@@ -68,7 +67,6 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourceLineageComposite;
@@ -83,7 +81,6 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.resour
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.gwt.ResourceTypeGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.InventoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupContextMenu;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupDetailView;
@@ -539,57 +536,12 @@ public class ResourceTreeView extends LocatableVLayout {
                     importChildSubMenu.addItem(importItem);
                 }
             }
-            if (resourceType.getCategory() == ResourceCategory.PLATFORM) {
-                loadManuallyAddServersToPlatforms(importChildSubMenu, resource);
-            }
 
             importChildMenu.setSubmenu(importChildSubMenu);
             manualImportEnabled = importChildSubMenu.getItems().length > 0;
         }
         importChildMenu.setEnabled(manualImportEnabled);
         resourceContextMenu.addItem(importChildMenu);
-    }
-
-    private void loadManuallyAddServersToPlatforms(final Menu manuallyAddMenu, final Resource resource) {
-        ResourceTypeGWTServiceAsync rts = GWTServiceLookup.getResourceTypeGWTService();
-
-        ResourceTypeCriteria criteria = new ResourceTypeCriteria();
-        criteria.addFilterSupportsManualAdd(true);
-        criteria.fetchParentResourceTypes(true);
-        rts.findResourceTypesByCriteria(criteria, new AsyncCallback<PageList<ResourceType>>() {
-
-            public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_contextMenu_loadFailed_manualAddChildren(),
-                    caught);
-            }
-
-            public void onSuccess(PageList<ResourceType> result) {
-                //sort the display items alphabetically
-                TreeSet<String> ordered = new TreeSet<String>();
-                Map<String, ResourceType> displayTypes = new HashMap<String, ResourceType>();
-                for (ResourceType type : result) {
-                    displayTypes.put(type.getName(), type);
-                    ordered.add(type.getName());
-                }
-
-                int idx = 0;
-                for (String displayType : ordered) {
-                    final ResourceType type = displayTypes.get(displayType);
-                    if (type.getParentResourceTypes() == null || type.getParentResourceTypes().isEmpty()) {
-                        MenuItem item = new MenuItem(type.getName());
-
-                        item.addClickHandler(new ClickHandler() {
-
-                            public void onClick(MenuItemClickEvent event) {
-                                ResourceFactoryImportWizard.showImportWizard(resource, type);
-                            }
-                        });
-
-                        manuallyAddMenu.addItem(item, idx++);
-                    }
-                }
-            }
-        });
     }
 
     private MenuItem buildMetricsMenu(final ResourceType type, final Resource resource) {

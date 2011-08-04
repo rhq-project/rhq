@@ -24,8 +24,13 @@ public class JPAUtils {
 
     public static EntityManager lookupEntityManager() {
         try {
-            return ((EntityManagerFactory) getInitialContext().lookup("java:/RHQEntityManagerFactory"))
-                .createEntityManager();
+            InitialContext initialContext = getInitialContext();
+            try {
+                return ((EntityManagerFactory) initialContext.lookup("java:/RHQEntityManagerFactory"))
+                    .createEntityManager();
+            } finally {
+                initialContext.close();
+            }
         } catch (NamingException e) {
             throw new RuntimeException("Failed to load entity manager", e);
         }
@@ -33,7 +38,12 @@ public class JPAUtils {
 
     public static TransactionManager lookupTransactionManager() {
         try {
-            return  (TransactionManager) getInitialContext().lookup("java:/TransactionManager");
+            InitialContext initialContext = getInitialContext();
+            try {
+                return (TransactionManager) initialContext.lookup("java:/TransactionManager");
+            } finally {
+                initialContext.close();
+            }
         } catch (NamingException e) {
             throw new RuntimeException("Failed to load transaction manager", e);
         }

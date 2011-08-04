@@ -20,6 +20,7 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.operation.schedule;
 
 import com.smartgwt.client.widgets.Canvas;
+
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.schedule.AbstractOperationScheduleListView;
 
@@ -45,9 +46,8 @@ public class GroupOperationScheduleListView extends AbstractOperationScheduleLis
     }
 
     @Override
-    public Canvas getDetailsView(int scheduleId) {
-        return new GroupOperationScheduleDetailsView(extendLocatorId("DetailsView"),
-            this.groupComposite, scheduleId);
+    public Canvas getDetailsView(Integer scheduleId) {
+        return new GroupOperationScheduleDetailsView(extendLocatorId("DetailsView"), this.groupComposite, scheduleId);
     }
 
 }

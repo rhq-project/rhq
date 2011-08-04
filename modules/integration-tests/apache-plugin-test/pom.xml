@@ -23,6 +23,7 @@
         <scm.module.path>modules/integration-tests/apache-plugin-test</scm.module.path>
         <httpd.version>2.2.17</httpd.version>
         <httpd.install.dir>${basedir}/target/itest/httpd</httpd.install.dir>
+        <byteman.version>1.5.2</byteman.version>
     </properties>
 
     <repositories>
@@ -93,6 +94,34 @@
             <version>${httpd.version}</version>
             <scope>test</scope>
             <type>zip</type>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.jboss.byteman</groupId>
+            <artifactId>byteman</artifactId>
+            <version>${byteman.version}</version>
+            <scope>test</scope>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.jboss.byteman</groupId>
+            <artifactId>byteman-install</artifactId>
+            <version>${byteman.version}</version>
+            <scope>test</scope>
+        </dependency>        
+        
+        <dependency>
+            <groupId>org.jboss.byteman</groupId>
+            <artifactId>byteman-submit</artifactId>
+            <version>${byteman.version}</version>
+            <scope>test</scope>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.jboss.byteman</groupId>
+            <artifactId>byteman-bmunit</artifactId>
+            <version>${byteman.version}</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
@@ -253,13 +282,19 @@
                         <configuration>
                             <skip>${maven.test.skip}</skip>
                             <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
-                            <useSystemClassLoader>false</useSystemClassLoader>
+                            <useSystemClassLoader>true</useSystemClassLoader>
+                            
+                            <additionalClasspathElements>
+                                <additionalClasspathElement>${env.JAVA_HOME}/lib/tools.jar</additionalClasspathElement>
+                            </additionalClasspathElements>
                             <!--<argLine>-Dorg.hyperic.sigar.path=${basedir}/target/itest/lib 
                                 -Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y</argLine> -->
                             <environmentVariables>
                                 <LD_LIBRARY_PATH>${basedir}/target/itest/lib:${env.LD_LIBRARY_PATH}</LD_LIBRARY_PATH>
                             </environmentVariables>
                             <systemPropertyVariables>
+                                <!-- <org.jboss.byteman.verbose>true</org.jboss.byteman.verbose>  -->
+                                <AugeasReferenceLeakingTest.configurationReadingInvocationCount>10</AugeasReferenceLeakingTest.configurationReadingInvocationCount>
                                 <org.hyperic.sigar.path>${basedir}/target/itest/lib</org.hyperic.sigar.path>
                                 <project.artifactId>${project.artifactId}</project.artifactId>
                                 <project.version>${project.version}</project.version>

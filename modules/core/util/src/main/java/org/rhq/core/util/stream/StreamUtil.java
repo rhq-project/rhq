@@ -27,6 +27,7 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
@@ -317,4 +318,19 @@ public class StreamUtil {
 
         return retObject;
     }
+    
+    /**
+     * Can be used to safely close a stream. No-op if the stream is null.
+     * 
+     * @param stream the stream to close or null
+     */
+    public static void safeClose(Closeable stream) {
+        if (stream != null) {
+            try {
+                stream.close();
+            } catch (IOException e) {
+                LOG.error("Failed to close a stream.", e);
+            }
+        }
+    }    
 }

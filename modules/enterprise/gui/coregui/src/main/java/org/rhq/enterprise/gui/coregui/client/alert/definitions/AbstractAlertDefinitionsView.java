@@ -134,7 +134,7 @@ public abstract class AbstractAlertDefinitionsView extends TableSection<Abstract
     }
 
     @Override
-    public SingleAlertDefinitionView getDetailsView(final int id) {
+    public SingleAlertDefinitionView getDetailsView(final Integer id) {
         final SingleAlertDefinitionView singleAlertDefinitionView = new SingleAlertDefinitionView(this
             .extendLocatorId("singleAlertDefinitionView"), this);
 

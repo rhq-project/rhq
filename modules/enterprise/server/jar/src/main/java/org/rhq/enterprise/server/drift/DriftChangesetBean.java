@@ -37,6 +37,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.util.stream.StreamUtil;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 
 @MessageDriven(activationConfig = {
     @ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Queue"),
@@ -51,7 +52,10 @@ public class DriftChangesetBean implements MessageListener {
     private final Log log = LogFactory.getLog(DriftChangesetBean.class);
 
     @EJB
-    private DriftServerLocal driftServer;
+    private DriftManagerLocal driftManager;
+
+    @EJB
+    private SubjectManagerLocal subjectManager;
 
     @Override
     public void onMessage(Message message) {
@@ -76,7 +80,7 @@ public class DriftChangesetBean implements MessageListener {
                         + "]");
                 }
 
-                driftServer.saveChangeSet(request.getResourceId(), tempFile);
+                driftManager.saveChangeSet(subjectManager.getOverlord(), request.getResourceId(), tempFile);
 
             } catch (IOException e) {
                 log.error(e);

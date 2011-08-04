@@ -31,6 +31,7 @@ import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftComposite;
+import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.drift.dto.DriftChangeSetDTO;
 import org.rhq.core.domain.drift.dto.DriftDTO;
@@ -39,6 +40,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.ZipUtil;
 import org.rhq.core.util.file.FileUtil;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginContext;
 import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginFacet;
 import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBChangeSet;
@@ -46,7 +48,7 @@ import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBChangeSet
 import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBFile;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 
-public class MongoDBDriftServer implements DriftServerPluginFacet {
+public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginComponent {
 
     //private final Log log = LogFactory.getLog(MongoDBDriftServer.class);
 
@@ -81,7 +83,7 @@ public class MongoDBDriftServer implements DriftServerPluginFacet {
     }
 
     @Override
-    public void saveChangeSet(final int resourceId, final File changeSetZip) throws Exception {
+    public void saveChangeSet(final Subject subject, final int resourceId, final File changeSetZip) throws Exception {
         ZipUtil.walkZipFile(changeSetZip, new ZipUtil.ZipEntryVisitor() {
             @Override
             public boolean visit(ZipEntry zipEntry, ZipInputStream stream) throws Exception {
@@ -113,7 +115,7 @@ public class MongoDBDriftServer implements DriftServerPluginFacet {
     }
 
     @Override
-    public void saveChangeSetFiles(File changeSetFilesZip) throws Exception {
+    public void saveChangeSetFiles(final Subject subject, final File changeSetFilesZip) throws Exception {
 
     }
 
@@ -187,6 +189,12 @@ public class MongoDBDriftServer implements DriftServerPluginFacet {
     }
 
     @Override
+    public DriftFile getDriftFile(Subject subject, String hashId) throws Exception {
+        // TODO
+        return null;
+    }
+
+    @Override
     public DriftSnapshot createSnapshot(Subject subject, DriftChangeSetCriteria criteria) {
         return null;
     }
@@ -234,5 +242,4 @@ public class MongoDBDriftServer implements DriftServerPluginFacet {
 
         return dto;
     }
-
 }

@@ -27,27 +27,48 @@ import org.rhq.core.domain.criteria.DriftCriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftComposite;
+import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
 
 /**
- * All drift server plugins must implement this facet.
+ * All drift server plugins must implement this facet.  The methods here must all be defined in
+ * DriftManagerLocal as well.  See DriftManagerLocal for jdoc of these methods.
  * 
  * @author Jay Shaughnessy
  * @author John Sanda
  */
-public interface DriftServerPluginFacet extends ServerPluginComponent {
+public interface DriftServerPluginFacet {
 
+    DriftSnapshot createSnapshot(Subject subject, DriftChangeSetCriteria criteria);
+
+    /**
+     * Standard criteria based fetch method
+     * @param subject
+     * @param criteria
+     * @return The DriftChangeSets matching the criteria
+     */
     PageList<? extends DriftChangeSet<?>> findDriftChangeSetsByCriteria(Subject subject, DriftChangeSetCriteria criteria);
-
-    PageList<? extends Drift<?, ?>> findDriftsByCriteria(Subject subject, DriftCriteria criteria);
 
     PageList<DriftComposite> findDriftCompositesByCriteria(Subject subject, DriftCriteria criteria);
 
-    void saveChangeSet(int resourceId, File changeSetZip) throws Exception;
+    /**
+     * Standard criteria based fetch method
+     * @param subject
+     * @param criteria
+     * @return The Drifts matching the criteria
+     */
+    PageList<? extends Drift<?, ?>> findDriftsByCriteria(Subject subject, DriftCriteria criteria);
 
-    void saveChangeSetFiles(File changeSetFilesZip) throws Exception;
+    /**
+     * Simple get method for a DriftFile. Does not return the content.
+     * @param subject
+     * @param hashId
+     * @return The DriftFile sans content.
+     */
+    DriftFile getDriftFile(Subject subject, String hashId) throws Exception;
 
-    DriftSnapshot createSnapshot(Subject subject, DriftChangeSetCriteria criteria);
+    void saveChangeSet(Subject subject, int resourceId, File changeSetZip) throws Exception;
+
+    void saveChangeSetFiles(Subject subject, File changeSetFilesZip) throws Exception;
 }

@@ -25,8 +25,12 @@ import javax.jws.WebService;
 import javax.jws.soap.SOAPBinding;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.common.EntityContext;
-import org.rhq.core.domain.drift.DriftConfiguration;
+import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
+import org.rhq.core.domain.criteria.DriftCriteria;
+import org.rhq.core.domain.drift.Drift;
+import org.rhq.core.domain.drift.DriftChangeSet;
+import org.rhq.core.domain.drift.DriftSnapshot;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.system.ServerVersion;
 
 @SOAPBinding(style = SOAPBinding.Style.DOCUMENT)
@@ -34,16 +38,30 @@ import org.rhq.enterprise.server.system.ServerVersion;
 @Remote
 public interface DriftManagerRemote {
 
+    @WebMethod
+    DriftSnapshot createSnapshot(//
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "criteria") DriftChangeSetCriteria criteria) throws Exception;
+
     /**
-     * One time on-demand request to detect drift on the specified entities, using the supplied config.
-     * 
-     * @param entityContext
-     * @param driftConfig
-     * @throws RuntimeException
+     * Standard criteria based fetch method
+     * @param subject
+     * @param criteria
+     * @return The DriftChangeSets matching the criteria
      */
     @WebMethod
-    void detectDrift(//
+    PageList<? extends DriftChangeSet<?>> findDriftChangeSetsByCriteria(//
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "entityContext") EntityContext entityContext, //
-        @WebParam(name = "driftConfiguration") DriftConfiguration driftConfiguration) throws Exception;
+        @WebParam(name = "criteria") DriftChangeSetCriteria criteria) throws Exception;
+
+    /**
+     * Standard criteria based fetch method
+     * @param subject
+     * @param criteria
+     * @return The Drifts matching the criteria
+     */
+    PageList<? extends Drift<?, ?>> findDriftsByCriteria(//
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "criteria") DriftCriteria criteria) throws Exception;
+
 }

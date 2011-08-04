@@ -19,7 +19,7 @@
  */
 package org.rhq.enterprise.server.plugins.drift;
 
-import static org.rhq.enterprise.server.util.LookupUtil.getDriftManager;
+import static org.rhq.enterprise.server.util.LookupUtil.getJPADriftServer;
 
 import java.io.File;
 
@@ -32,9 +32,12 @@ import org.rhq.core.domain.criteria.DriftCriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftComposite;
+import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.DriftSnapshot;
+import org.rhq.core.domain.drift.JPADrift;
+import org.rhq.core.domain.drift.JPADriftChangeSet;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.drift.DriftManagerLocal;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginContext;
 import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginFacet;
 
@@ -44,64 +47,70 @@ import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginFacet;
  * @author Jay Shaughnessy
  * @author John Sanda
  */
-public class DriftServerPluginComponent implements DriftServerPluginFacet {
+public class JPADriftServerPluginComponent implements DriftServerPluginFacet, ServerPluginComponent {
 
-    private final Log log = LogFactory.getLog(DriftServerPluginComponent.class);
+    private final Log log = LogFactory.getLog(JPADriftServerPluginComponent.class);
 
     @SuppressWarnings("unused")
     private ServerPluginContext context;
 
+    @Override
     public void initialize(ServerPluginContext context) throws Exception {
         this.context = context;
         log.debug("The RHQ Drift plugin has been initialized!!! : " + this);
     }
 
+    @Override
     public void start() {
         log.debug("The RHQ Drift plugin has started!!! : " + this);
     }
 
+    @Override
     public void stop() {
         log.debug("The RHQ Drift plugin has stopped!!! : " + this);
     }
 
+    @Override
     public void shutdown() {
         log.debug("The RHQ Drift plugin has been shut down!!! : " + this);
     }
 
     @Override
+    public DriftSnapshot createSnapshot(Subject subject, DriftChangeSetCriteria criteria) {
+        return getJPADriftServer().createSnapshot(subject, criteria);
+    }
+
+    @Override
     public PageList<? extends DriftChangeSet<?>> findDriftChangeSetsByCriteria(Subject subject,
         DriftChangeSetCriteria criteria) {
-        PageList<? extends DriftChangeSet<?>> results = getDriftManager().findDriftChangeSetsByCriteria(subject,
-            criteria);
+        PageList<JPADriftChangeSet> results = getJPADriftServer().findDriftChangeSetsByCriteria(subject, criteria);
         return results;
     }
 
     @Override
     public PageList<? extends Drift<?, ?>> findDriftsByCriteria(Subject subject, DriftCriteria criteria) {
-        PageList<? extends Drift<?, ?>> results = getDriftManager().findDriftsByCriteria(subject, criteria);
+        PageList<JPADrift> results = getJPADriftServer().findDriftsByCriteria(subject, criteria);
         return results;
     }
 
     @Override
     public PageList<DriftComposite> findDriftCompositesByCriteria(Subject subject, DriftCriteria criteria) {
-        return getDriftManager().findDriftCompositesByCriteria(subject, criteria);
+        return getJPADriftServer().findDriftCompositesByCriteria(subject, criteria);
     }
 
     @Override
-    public void saveChangeSet(int resourceId, File changeSetZip) throws Exception {
-        DriftManagerLocal driftMgr = getDriftManager();
-        driftMgr.storeChangeSet(resourceId, changeSetZip);
+    public DriftFile getDriftFile(Subject subject, String hashId) throws Exception {
+        return getJPADriftServer().getDriftFile(subject, hashId);
     }
 
     @Override
-    public void saveChangeSetFiles(File changeSetFilesZip) throws Exception {
-        DriftManagerLocal driftMgr = getDriftManager();
-        driftMgr.storeFiles(changeSetFilesZip);
+    public void saveChangeSet(Subject subject, int resourceId, File changeSetZip) throws Exception {
+        getJPADriftServer().storeChangeSet(subject, resourceId, changeSetZip);
     }
 
     @Override
-    public DriftSnapshot createSnapshot(Subject subject, DriftChangeSetCriteria criteria) {
-        DriftManagerLocal driftMgr = getDriftManager();
-        return driftMgr.createSnapshot(subject, criteria);
+    public void saveChangeSetFiles(Subject subject, File changeSetFilesZip) throws Exception {
+        getJPADriftServer().storeFiles(subject, changeSetFilesZip);
     }
+
 }

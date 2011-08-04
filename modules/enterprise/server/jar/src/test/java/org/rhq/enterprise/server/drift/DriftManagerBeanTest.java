@@ -141,7 +141,7 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
         changeSets = driftManager.findDriftChangeSetsByCriteria(overlord, c);
         assertEquals(2, changeSets.size());
         changeSet = changeSets.get(0);
-        assertEquals("The change set version is wrong", 0, changeSet.getVersion());
+        assertEquals("", 0, changeSet.getVersion());
         assertEquals("Expected to find one entry in change set", 1, changeSet.getDrifts().size());
         changeSet = changeSets.get(1);
         assertEquals("The change set version is wrong", 0, changeSet.getVersion());
@@ -157,7 +157,7 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
         assertEquals(DriftFileStatus.REQUESTED, driftFile.getStatus());
     }
 
-    @Test(enabled = false)
+    @Test(enabled = ENABLE_TESTS)
     public void testDriftConfig() throws Exception {
         Configuration config = new Configuration();
         config.put(new PropertySimple("name", "testDriftConfig"));
@@ -179,7 +179,7 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
         assertEquals(1, resources.size());
         Set<Configuration> driftConfigs = resources.get(0).getDriftConfigurations();
         assertNotNull(driftConfigs);
-        assertEquals(1, driftConfigs.size());
+        assertEquals(3, driftConfigs.size());
         DriftConfiguration driftConfig = new DriftConfiguration(driftConfigs.iterator().next());
         assertTrue(driftConfig.getConfiguration().getId() > 0); // persisted
         assertEquals(driftConfigPojo.getName(), driftConfig.getName());
@@ -194,7 +194,7 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
         assertEquals(1, resources.size());
         driftConfigs = resources.get(0).getDriftConfigurations();
         assertNotNull(driftConfigs);
-        assertEquals(1, driftConfigs.size());
+        assertEquals(3, driftConfigs.size());
         driftConfig = new DriftConfiguration(driftConfigs.iterator().next());
         assertTrue(driftConfig.getConfiguration().getId() > 0); // persisted
         assertEquals(driftConfigPojo.getName(), driftConfig.getName());
@@ -216,7 +216,7 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
         assertEquals(1, resources.size());
         driftConfigs = resources.get(0).getDriftConfigurations();
         assertNotNull(driftConfigs);
-        assertEquals(2, driftConfigs.size());
+        assertEquals(4, driftConfigs.size());
         for (Iterator<Configuration> i = driftConfigs.iterator(); i.hasNext();) {
             driftConfig = new DriftConfiguration(i.next());
             if ("testDriftConfig".equals(driftConfig.getName())) {
@@ -228,7 +228,7 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
                 assertTrue(driftConfig.getConfiguration().getId() > 0); // persisted
                 assertEquals(driftConfigPojo.getBasedir(), driftConfig.getBasedir());
                 assertEquals(driftConfigPojo.getInterval(), driftConfig.getInterval());
-            } else {
+            } else if (!"test-1".equals(driftConfig.getName()) && !"test-2".equals(driftConfig.getName())) {
                 fail("Unexpected drift config name: " + driftConfig.getName());
             }
         }
@@ -239,7 +239,7 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
         assertEquals(1, resources.size());
         driftConfigs = resources.get(0).getDriftConfigurations();
         assertNotNull(driftConfigs);
-        assertEquals(1, driftConfigs.size());
+        assertEquals(3, driftConfigs.size());
         driftConfig = new DriftConfiguration(driftConfigs.iterator().next());
         assertTrue(driftConfig.getConfiguration().getId() > 0); // persisted
         assertEquals(driftConfigPojo.getName(), driftConfig.getName());

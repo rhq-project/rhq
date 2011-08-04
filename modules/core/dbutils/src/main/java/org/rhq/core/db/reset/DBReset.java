@@ -132,5 +132,8 @@ public class DBReset {
                 }
             }
         }
+        else {
+            throw new Exception("dbreset not supported for "+ dbTypeMapping +"!");
+        }
     }
 }

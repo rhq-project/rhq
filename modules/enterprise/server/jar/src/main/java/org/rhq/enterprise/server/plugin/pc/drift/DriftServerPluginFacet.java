@@ -35,6 +35,10 @@ import org.rhq.core.domain.util.PageList;
  * All drift server plugins must implement this facet.  The methods here must all be defined in
  * DriftManagerLocal as well.  See DriftManagerLocal for jdoc of these methods.
  * 
+ * Note that the Subject parameter is provided as a convenience to the plugin methods. It is not expected that
+ * authz be performed by the plugin code. But, it may be useful to have the user name or session id for logging, or
+ * for unknown need to interact with the RHQ SLSBs.
+ * 
  * @author Jay Shaughnessy
  * @author John Sanda
  */

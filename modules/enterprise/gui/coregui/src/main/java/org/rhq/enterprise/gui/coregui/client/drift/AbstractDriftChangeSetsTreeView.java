@@ -44,6 +44,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
+import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
@@ -282,22 +283,43 @@ public abstract class AbstractDriftChangeSetsTreeView extends LocatableTreeGrid 
         return ((TreeNode) node).getTitle();
     }
 
-    @SuppressWarnings("unchecked")
+    static class DriftConfigurationTreeNode extends TreeNode {
+        public DriftConfigurationTreeNode(DriftConfiguration driftConfig) {
+            setIsFolder(true);
+            if (driftConfig.getEnabled()) {
+                setIcon("subsystems/drift/DriftConfig_Folder_16.png");
+            } else {
+                setIcon("subsystems/drift/DriftConfig_Disabled_Folder_16.png");
+            }
+            setShowOpenIcon(true);
+            setID(String.valueOf(driftConfig.getId()));
+            setName(buildNodeName(driftConfig)); // we sort on this column
+        }
+
+        @Override
+        public String getTitle() {
+            return super.getName();
+        }
+
+        private String buildNodeName(DriftConfiguration driftConfig) {
+            return driftConfig.getName();
+        }
+    }
+
     static class ChangeSetTreeNode extends TreeNode {
-        public ChangeSetTreeNode(DriftChangeSet changeset) {
+        public ChangeSetTreeNode(DriftChangeSet<?> changeset) {
             setIsFolder(true);
             setShowOpenIcon(true);
-            setID(changeset.getId());
+            String parentID = String.valueOf(changeset.getDriftConfigurationId());
+            setParentID(parentID);
+            setID(parentID + "_" + changeset.getId());
             setName(padWithZeroes(changeset.getVersion())); // we sort on this column, hence we make sure the version # is padded
-            setTitle(buildDriftChangeSetNodeName(changeset));
+            setTitle(buildNodeName(changeset));
 
-            switch (changeset.getCategory()) {
-            case COVERAGE:
-                setIcon("subsystems/drift/ChangeSet_Coverage_16.png");
-                break;
-            case DRIFT:
-                setIcon("subsystems/drift/ChangeSet_16.png");
-                break;
+            if (changeset.getVersion() == 0) {
+                setIcon("subsystems/drift/ChangeSet_Coverage_Folder_16.png");
+            } else {
+                setIcon("subsystems/drift/ChangeSet_Folder_16.png");
             }
         }
 
@@ -305,7 +327,7 @@ public abstract class AbstractDriftChangeSetsTreeView extends LocatableTreeGrid 
             return getAttribute("id");
         }
 
-        private String buildDriftChangeSetNodeName(DriftChangeSet changeset) {
+        private String buildNodeName(DriftChangeSet<?> changeset) {
             StringBuilder str = new StringBuilder();
             str.append(MSG.common_title_version());
             str.append(' ');
@@ -316,35 +338,29 @@ public abstract class AbstractDriftChangeSetsTreeView extends LocatableTreeGrid 
             str.append(")");
             return str.toString();
         }
-
-        private String padWithZeroes(int numberToPad) {
-            String stringToPad = String.valueOf(numberToPad);
-            char[] zeroes = new char[10 - stringToPad.length()];
-            for (int i = 0; i < zeroes.length; i++)
-                zeroes[i] = '0';
-            return new String(zeroes) + stringToPad;
-        }
     }
 
-    @SuppressWarnings("unchecked")
     static class DriftTreeNode extends TreeNode {
-        public DriftTreeNode(Drift drift) {
+        public DriftTreeNode(Drift<?, ?> drift) {
             setIsFolder(false);
             setIcon(ImageManager.getDriftCategoryIcon(drift.getCategory()));
-            String parentID = drift.getChangeSet().getId();
-            setParentID(parentID);
-            setID(parentID + '_' + drift.getId());
+            DriftChangeSet<?> changeset = drift.getChangeSet();
+            setParentID(String.valueOf(changeset.getDriftConfigurationId()) + "_" + changeset.getId());
+            setID(drift.getId());
             setName(drift.getPath()); // we sort on this column
-            setAttribute("driftId", drift.getId());
-        }
-
-        public String getDriftId() {
-            return getAttribute("driftId");
         }
 
         @Override
         public String getTitle() {
             return super.getName();
         }
+    }
+
+    static private String padWithZeroes(int numberToPad) {
+        String stringToPad = String.valueOf(numberToPad);
+        char[] zeroes = new char[10 - stringToPad.length()];
+        for (int i = 0; i < zeroes.length; i++)
+            zeroes[i] = '0';
+        return new String(zeroes) + stringToPad;
     }
 }

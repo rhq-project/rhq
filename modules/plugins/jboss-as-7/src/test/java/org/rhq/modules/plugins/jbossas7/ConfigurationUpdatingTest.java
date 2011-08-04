@@ -264,4 +264,57 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
         assert step2.getAddress().get(0).equals("socket-binding=http");
         assert step3.getAddress().get(0).equals("socket-binding=http");
     }
+
+    public void test8() throws Exception {
+        ConfigurationDefinition definition = loadDescriptor("SocketBindingGroupStandalone");
+
+        FakeConnection connection = new FakeConnection();
+
+        ConfigurationWriteDelegate delegate = new ConfigurationWriteDelegate(definition,connection,null);
+
+        Configuration conf = new Configuration();
+        PropertyList propertyList = new PropertyList("*");
+        PropertyMap propertyMap = new PropertyMap("binding");
+        propertyMap.put(new PropertySimple("name","http"));
+        propertyMap.put(new PropertySimple("port",18080));
+        propertyMap.put(new PropertySimple("fixed-port",false));
+        propertyList.add(propertyMap);
+
+        propertyMap = new PropertyMap("binding");
+        propertyMap.put(new PropertySimple("name","https"));
+        propertyMap.put(new PropertySimple("port",18081));
+        propertyMap.put(new PropertySimple("fixed-port",false));
+        propertyList.add(propertyMap);
+
+        conf.put(propertyList);
+        conf.put(new PropertySimple("port-offset",0));
+
+        CompositeOperation cop = delegate.updateGenerateOperationFromProperties(conf);
+
+        assert cop.numberOfSteps() == 5 : "#Steps should be 5 but were " + cop.numberOfSteps();
+        Operation step1 = cop.step(0);
+        Operation step2 = cop.step(1);
+        Operation step3 = cop.step(2);
+        Operation step4 = cop.step(3);
+        Operation step5 = cop.step(4);
+
+        // As we do not specify a base address when creating the delegate 0 or 1 address element is ok.
+        assert step1.getAddress().isEmpty();
+        assert step2.getAddress().size()==1;
+        assert step3.getAddress().size()==1;
+
+        assert step1.getAdditionalProperties().get("name").equals("port-offset");
+        assert step1.getAdditionalProperties().get("value").equals("0");
+
+        assert step2.getAdditionalProperties().get("name").equals("port");
+        assert step2.getAdditionalProperties().get("value").equals("18080");
+
+        assert step3.getAdditionalProperties().get("name").equals("fixed-port");
+        assert step3.getAdditionalProperties().get("value").equals("false");
+
+        assert step2.getAddress().get(0).equals("socket-binding=http");
+        assert step3.getAddress().get(0).equals("socket-binding=http");
+        assert step4.getAddress().get(0).equals("socket-binding=https");
+        assert step5.getAddress().get(0).equals("socket-binding=https");
+    }
 }

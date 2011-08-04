@@ -1,6 +1,5 @@
 package org.rhq.modules.integrationTests.jbossas7plugin;
 
-import java.util.Collections;
 import java.util.Map;
 
 import org.testng.annotations.Test;
@@ -9,7 +8,6 @@ import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
 import org.rhq.modules.plugins.jbossas7.json.CompositeOperation;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
-import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
 import org.rhq.modules.plugins.jbossas7.json.ReadAttribute;
 import org.rhq.modules.plugins.jbossas7.json.Result;
 

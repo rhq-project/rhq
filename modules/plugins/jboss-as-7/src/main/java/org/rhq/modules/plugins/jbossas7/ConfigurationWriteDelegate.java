@@ -146,31 +146,28 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
         if (propDef.isReadOnly())
             return;
 
-        boolean isSpecial = false;
-
-        Property prop;
         // Handle the special case
         if (propDef instanceof PropertyDefinitionList && propDef.getName().equals("*")) {
             propDef = ((PropertyDefinitionList) propDef).getMemberDefinition();
-            PropertyList pl = (PropertyList) conf.get("*");
-            prop = pl.getList().get(0);
-            isSpecial = true;
-        }
-        else {
-            prop = conf.get(propDef.getName());
-        }
+            PropertyList pl = (PropertyList) conf.get("*");  // TODO loop over the list content
 
-        if (prop instanceof PropertySimple) {
-            updateHandlePropertySimple(cop, (PropertySimple)prop, (PropertyDefinitionSimple) propDef);
-        }
-        else if (prop instanceof PropertyList) {
-            updateHandlePropertyList(cop, (PropertyList) prop, (PropertyDefinitionList) propDef);
+            for (Property prop2 : pl.getList()) {
+                updateHandlePropertyMapSpecial(cop, (PropertyMap) prop2, (PropertyDefinitionMap) propDef);
+            }
         }
         else {
-            if(isSpecial)
-                updateHandlePropertyMapSpecial(cop, (PropertyMap) prop, (PropertyDefinitionMap) propDef);
-            else
+            // Normal cases
+            Property prop = conf.get(propDef.getName());
+
+            if (prop instanceof PropertySimple) {
+                updateHandlePropertySimple(cop, (PropertySimple)prop, (PropertyDefinitionSimple) propDef);
+            }
+            else if (prop instanceof PropertyList) {
+                updateHandlePropertyList(cop, (PropertyList) prop, (PropertyDefinitionList) propDef);
+            }
+            else {
                 updateHandlePropertyMap(cop,(PropertyMap)prop,(PropertyDefinitionMap)propDef);
+            }
         }
     }
 

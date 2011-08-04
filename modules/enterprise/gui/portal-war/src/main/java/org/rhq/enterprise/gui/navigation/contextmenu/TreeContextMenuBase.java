@@ -107,7 +107,7 @@ public abstract class TreeContextMenuBase {
         HtmlOutputLink link;
         HtmlGraphicImage image;
 
-        if (descriptor.getMonitoringUrl() != null && LookupUtil.getSystemManager().isMonitoringEnabled()) {
+        if (descriptor.getMonitoringUrl() != null /* && LookupUtil.getSystemManager().isMonitoringEnabled()*/) {
             link = FacesComponentUtility.addOutputLink(quickLinksItem, null, descriptor.getMonitoringUrl());
             image = FacesComponentUtility.addGraphicImage(link, null, "/images/icons/Monitor_grey_16.png", "Monitor");
             image.setStyle(STYLE_QUICK_LINKS_ICON);
@@ -120,7 +120,7 @@ public abstract class TreeContextMenuBase {
             image.setStyle(STYLE_QUICK_LINKS_ICON);
         }
 
-        if (descriptor.getAlertsUrl() != null && LookupUtil.getSystemManager().isMonitoringEnabled()) {
+        if (descriptor.getAlertsUrl() != null /*&& LookupUtil.getSystemManager().isMonitoringEnabled()*/) {
             link = FacesComponentUtility.addOutputLink(quickLinksItem, null, descriptor.getAlertsUrl());
             image = FacesComponentUtility.addGraphicImage(link, null, "/images/icons/Alert_grey_16.png", "Alerts");
             image.setStyle(STYLE_QUICK_LINKS_ICON);

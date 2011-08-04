@@ -72,13 +72,19 @@ import org.rhq.core.domain.resource.Resource;
         + " JOIN ev.source evs JOIN evs.resource res WHERE res.id = :resourceId AND ev.severity = :severity "
         + " AND ev.timestamp BETWEEN :start AND :end "),
     @NamedQuery(name = Event.GET_DETAILS_FOR_EVENT_IDS, query = "SELECT "
-        + " new org.rhq.core.domain.event.composite.EventComposite(ev.detail, res.id, res.name, ev.id, ev.severity, evs.location, ev.timestamp) "
+        + " new org.rhq.core.domain.event.composite.EventComposite(ev.detail, res.id, res.name, res.ancestry, res.resourceType.id, ev.id, ev.severity, evs.location, ev.timestamp) "
         + " FROM Event ev JOIN ev.source evs JOIN evs.resource res WHERE ev.id IN (:eventIds) AND evs.id = ev.source"
         + "  AND res.id = evs.resource "), //
     @NamedQuery(name = Event.QUERY_EVENT_COUNTS_BY_SEVERITY, query = "" //
         + "  SELECT ev.severity, count(ev.severity) " //
         + "    FROM Event ev JOIN ev.source evs JOIN evs.resource res " //
         + "   WHERE res.id = :resourceId " //
+        + "     AND ev.timestamp BETWEEN :start AND :end " //
+        + "GROUP BY ev.severity"), //
+    @NamedQuery(name = Event.QUERY_EVENT_COUNTS_BY_SEVERITY_GROUP, query = "" //
+        + "  SELECT ev.severity, count(ev.severity) " //
+        + "    FROM Event ev JOIN ev.source evs JOIN evs.resource res JOIN res.explicitGroups ig" //
+        + "   WHERE ig.id = :groupId " //
         + "     AND ev.timestamp BETWEEN :start AND :end " //
         + "GROUP BY ev.severity") })
 @Entity
@@ -98,6 +104,7 @@ public class Event implements Serializable {
     public static final String FIND_EVENTS_FOR_RESOURCE_ID_AND_TIME_SEVERITY = "Event.FIND_EVENTS_FOR_RESOURCE_ID_AND_TIME_Severity";
     public static final String GET_DETAILS_FOR_EVENT_IDS = "Event.GET_DETAILS_FOR_EVENT_IDS";
     public static final String QUERY_EVENT_COUNTS_BY_SEVERITY = "Event.eventCountsBySeverity";
+    public static final String QUERY_EVENT_COUNTS_BY_SEVERITY_GROUP = "Event.eventCountsBySeverityGroup";
 
     @Id
     @Column(name = "ID", nullable = false)
@@ -105,7 +112,7 @@ public class Event implements Serializable {
     private int id;
 
     @JoinColumn(name = "EVENT_SOURCE_ID", referencedColumnName = "ID", nullable = false)
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     private EventSource source;
 
     @Column(name = "TIMESTAMP", nullable = false)

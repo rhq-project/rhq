@@ -44,7 +44,7 @@ public class RemoteInstallGWTServiceImpl extends AbstractGWTServiceImpl implemen
             return SerialUtility.prepare(remoteInstallManager.agentInstallCheck(getSessionSubject(), remoteAccessInfo,
                 agentInstallPath), "RemoteInstallService.agentInstallCheck");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -53,7 +53,7 @@ public class RemoteInstallGWTServiceImpl extends AbstractGWTServiceImpl implemen
             return SerialUtility.prepare(remoteInstallManager.installAgent(getSessionSubject(), remoteAccessInfo,
                 parentPath), "RemoteInstallService.installAgent");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -62,7 +62,7 @@ public class RemoteInstallGWTServiceImpl extends AbstractGWTServiceImpl implemen
             return SerialUtility.prepare(remoteInstallManager.startAgent(getSessionSubject(), remoteAccessInfo,
                 agentInstallPath), "RemoteInstallService.startAgent");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -71,7 +71,7 @@ public class RemoteInstallGWTServiceImpl extends AbstractGWTServiceImpl implemen
             return SerialUtility.prepare(remoteInstallManager.stopAgent(getSessionSubject(), remoteAccessInfo,
                 agentInstallPath), "RemoteInstallService.stopAgent");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -80,7 +80,7 @@ public class RemoteInstallGWTServiceImpl extends AbstractGWTServiceImpl implemen
             return SerialUtility.prepare(remoteInstallManager.agentStatus(getSessionSubject(), remoteAccessInfo,
                 agentInstallPath), "RemoteInstallService.agentStatus");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -89,7 +89,7 @@ public class RemoteInstallGWTServiceImpl extends AbstractGWTServiceImpl implemen
             return SerialUtility.prepare((remoteInstallManager.findAgentInstallPath(getSessionSubject(),
                 remoteAccessInfo, parentPath)), "RemoteInstallService.findAgentInstallPath");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -98,7 +98,7 @@ public class RemoteInstallGWTServiceImpl extends AbstractGWTServiceImpl implemen
             return SerialUtility.prepare((remoteInstallManager.remotePathDiscover(getSessionSubject(),
                 remoteAccessInfo, parentPath)), "RemoteInstallService.remotePathDiscover");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 }

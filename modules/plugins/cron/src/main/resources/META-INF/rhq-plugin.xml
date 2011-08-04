@@ -62,7 +62,8 @@
 <plugin name="Cron"
         displayName="Cron"
         description="Configuration of cron"
-        package="org.rhq.plugins.cron"
+        package="org.rhq.plugins.cron"         
+        pluginLifecycleListener="org.rhq.plugins.augeas.AugeasPluginLifecycleListener"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">

@@ -31,7 +31,7 @@ import org.rhq.core.domain.operation.bean.GroupOperationSchedule;
 import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.rhq.core.domain.operation.composite.ResourceOperationLastCompletedComposite;
 import org.rhq.core.domain.operation.composite.ResourceOperationScheduleComposite;
-import org.rhq.core.domain.resource.composite.DisambiguationReport;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 
 /**
@@ -45,14 +45,27 @@ public interface OperationGWTService extends RemoteService {
     PageList<GroupOperationHistory> findGroupOperationHistoriesByCriteria(GroupOperationHistoryCriteria criteria)
         throws RuntimeException;
 
-    List<DisambiguationReport<ResourceOperationLastCompletedComposite>> findRecentCompletedOperations(int pageSize)
-        throws RuntimeException;
+    void deleteOperationHistory(int operationHistoryId, boolean deleteEvenIfInProgress) throws RuntimeException;
 
-    List<DisambiguationReport<ResourceOperationScheduleComposite>> findScheduledOperations(int pageSize)
-        throws RuntimeException;
+    PageList<ResourceOperationLastCompletedComposite> findRecentCompletedOperations(int resourceId,
+        PageControl pageControl) throws RuntimeException;
+
+    PageList<ResourceOperationScheduleComposite> findScheduledOperations(int pageSize) throws RuntimeException;
 
     void invokeResourceOperation(int resourceId, String operationName, Configuration parameters, String description,
         int timeout) throws RuntimeException;
+
+    int scheduleResourceOperation(ResourceOperationSchedule resourceOperationSchedule) throws RuntimeException;
+
+    int scheduleGroupOperation(GroupOperationSchedule groupOperationSchedule) throws RuntimeException;
+
+    ResourceOperationSchedule getResourceOperationSchedule(int scheduleId) throws RuntimeException;
+
+    GroupOperationSchedule getGroupOperationSchedule(int scheduleId) throws RuntimeException;
+
+    void unscheduleResourceOperation(ResourceOperationSchedule resourceOperationSchedule) throws RuntimeException;
+
+    void unscheduleGroupOperation(GroupOperationSchedule groupOperationSchedule) throws RuntimeException;
 
     void scheduleResourceOperation(int resourceId, String operationName, Configuration parameters, String description,
         int timeout, String cronString) throws RuntimeException;

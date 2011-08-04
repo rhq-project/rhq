@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<alert-plugin
+        name="alert-cli"
+        displayName="Alert:CLI"
+        xmlns="urn:xmlns:rhq-serverplugin.alert"
+        xmlns:c="urn:xmlns:rhq-configuration"
+        xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
+        package="org.rhq.enterprise.server.plugins.alertCli"
+        description="Alert sender plugin that can execute a CLI script."
+        >
+
+    <serverplugin:help>
+        Used to execute a CLI script.
+    </serverplugin:help>
+
+    <serverplugin:plugin-component class="CliComponent">
+        <serverplugin:control name="checkAlertsValidity" description="Alert scripts run authenticated as a user specified in their definitions. If a user is deleted, the alert definition will contain invalid reference to that user and needs to be update manually. Also the script can be deleted from a repo, or the repo itself can be deleted, at which point there is not script to run. This operation returns a list of such misconfigured alert definitions.">            
+            <serverplugin:results>
+                <c:list-property name="missingUsers" displayName="Alerts with notifications referencing non-existent user.">
+                    <c:map-property name="alertDefinition">
+                        <c:simple-property name="alertDefinitionId" />
+                        <c:simple-property name="alertDefinitionName" />
+                        <c:simple-property name="resourceId" />
+                        <c:simple-property name="resourcePath" />
+                    </c:map-property>
+                </c:list-property>
+                
+                <c:list-property name="missingScripts" displayName="Alerts with notifications referencing non-existent scripts.">
+                    <c:map-property name="alertDefinition">
+                        <c:simple-property name="alertDefinitionId" />
+                        <c:simple-property name="alertDefinitionName" />
+                        <c:simple-property name="resourceId" />
+                        <c:simple-property name="resourcePath" />
+                    </c:map-property>
+                </c:list-property>
+            </serverplugin:results>
+        </serverplugin:control>
+        
+        <serverplugin:control name="reassignAlerts" description="Re-assign alerts to run as different users">
+            <serverplugin:parameters>
+                <c:simple-property name="userName" displayName="User Name" description="The name of the user to re-assign the alerts to." />
+                <c:simple-property name="alertDefIds" displayName="Alert Definition IDs" required="false">
+                    <c:description>
+                        The comma-separated list of the alert definition ids to re-assign.
+                        If left empty, all the alert definitions with the CLI notifications that have
+                        an invalid user assigned, will be re-assigned to the provided user.
+                    </c:description>
+                    <c:constraint><c:regex-constraint expression="(\d+(\s*,\s*\d+)*)?"/></c:constraint>
+                </c:simple-property>
+            </serverplugin:parameters>
+        </serverplugin:control>
+    </serverplugin:plugin-component>
+
+    <serverplugin:plugin-configuration>
+        <c:simple-property name="scriptTimeout" type="integer" required="true" default="60" 
+            description="The maximum number of seconds a CLI script is allowed run while handling an alert."/>
+    </serverplugin:plugin-configuration>
+    
+    <!-- How does this sender show up in drop downs etc -->
+    <short-name>CLI Script</short-name>
+
+    <!-- Class that does the actual sending -->
+    <plugin-class>CliSender</plugin-class>
+
+    <alert-configuration>
+        <c:simple-property name="packageId" type="integer" required="true" description="The id of the package containing the script to execute."/>
+        <c:simple-property name="repoId" type="integer" required="true" description="The id of the repo to download the package from."/>
+        <c:simple-property name="userId" type="integer" required="true" description="The user the script will be run as."/>
+        <c:simple-property name="userName" type="string" required="true" description="The name of the user. This is used while creating/updating the notification to check the authentization. It is only required if the userId is different than the currently logged in user." />
+        <c:simple-property name="userPassword" type="string" required="false" description="The password of the user. This is used while creating/updating the notification to check the authentization. It is only required if the userId is different than the currently logged in user." />
+    </alert-configuration>
+</alert-plugin>

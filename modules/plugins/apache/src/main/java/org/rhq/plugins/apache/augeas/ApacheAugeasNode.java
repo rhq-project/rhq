@@ -24,7 +24,10 @@ package org.rhq.plugins.apache.augeas;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.rhq.augeas.node.AugeasNode;
 import org.rhq.augeas.node.AugeasNodeLazy;
@@ -42,13 +45,14 @@ import org.rhq.augeas.tree.AugeasTreeException;
  * and modifies the get* methods to handle these as well.
  * 
  * @author Filip Drabek
+ * @author Lukas Krejci
  */
 public class ApacheAugeasNode extends AugeasNodeLazy implements AugeasNode {
 
     /**
      * List of included nodes.
      */
-    private List<AugeasNode> includedNodes;
+    private Map<Integer, List<AugeasNode>> includedNodes;
 
     public ApacheAugeasNode(String fullPath, AugeasTree tree) {
         super(fullPath, tree);
@@ -72,8 +76,22 @@ public class ApacheAugeasNode extends AugeasNodeLazy implements AugeasNode {
     public List<AugeasNode> getChildNodes() {
         List<AugeasNode> nodes = null;
         nodes = ag.match(getFullPath() + File.separatorChar + "*");
-        if (includedNodes != null)
-            nodes.addAll(includedNodes);
+        
+        if (includedNodes != null) {
+            //to avoid having to recompute indexes to insert the included nodes into the
+            //list of nodes as seen by augeas, let's include them from the biggest index
+            //to the lowest.
+            List<Integer> includeNodeIndexes = new ArrayList<Integer>(includedNodes.keySet());
+            Collections.sort(includeNodeIndexes, Collections.reverseOrder());
+            
+            for(Integer idx : includeNodeIndexes) {
+                //remove the include node itself
+                nodes.remove(idx);
+                
+                //add the included nodes instead of it
+                nodes.addAll(idx, includedNodes.get(idx));
+            }
+        }
 
         return nodes;
     }
@@ -83,26 +101,36 @@ public class ApacheAugeasNode extends AugeasNodeLazy implements AugeasNode {
      * 
      * @param nodes
      */
-    public void addIncludeNodes(List<AugeasNode> nodes) {
+    public void addIncludeNodes(AugeasNode includeNode, List<AugeasNode> nodes) {
         if (nodes.isEmpty())
             return;
 
         if (includedNodes == null)
-            includedNodes = new ArrayList<AugeasNode>();
+            includedNodes = new HashMap<Integer, List<AugeasNode>>();
 
-        includedNodes.addAll(nodes);
-    }
-
-    /**
-     * Adds the node to the list of the included child nodes.
-     * 
-     * @param node
-     */
-    public void addIncludeNode(AugeasNode node) {
-        if (includedNodes == null)
-            includedNodes = new ArrayList<AugeasNode>();
-
-        includedNodes.add(node);
+        List<AugeasNode> childNodes = super.getChildNodes();
+        int idx = 0;
+        boolean found = false;
+        
+        for(AugeasNode child : childNodes) {
+            if (child.getLabel().equals(includeNode.getLabel()) && child.getSeq() == includeNode.getSeq()) {
+                found = true;
+                break;
+            }
+            
+            ++idx;
+        }
+        
+        if (found) {
+            List<AugeasNode> alreadyIncluded = includedNodes.get(idx);
+            if (alreadyIncluded == null) {
+                //copy the nodes over to a new list so that we can modify it later without modifying the original collection
+                //which might be unexpected on the caller site.
+                includedNodes.put(idx, new ArrayList<AugeasNode>(nodes));
+            } else {
+                alreadyIncluded.addAll(nodes);
+            }
+        }
     }
 
     public AugeasNode getParentNode() {
@@ -132,7 +160,8 @@ public class ApacheAugeasNode extends AugeasNodeLazy implements AugeasNode {
         //else if this node is included from another file
         //and we would destroy that association here.
     }
+    
     public void setParentNode(AugeasNode node){
     	this.parentNode = node;
-    }
+    }    
 }

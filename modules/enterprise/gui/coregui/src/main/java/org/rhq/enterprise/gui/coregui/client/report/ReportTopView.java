@@ -29,13 +29,11 @@ import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.layout.VLayout;
 
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
-import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
-import org.rhq.enterprise.gui.coregui.client.admin.templates.ResourceTypeTreeView;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertHistoryView;
 import org.rhq.enterprise.gui.coregui.client.alert.SubsystemResourceAlertView;
-import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
 import org.rhq.enterprise.gui.coregui.client.components.view.AbstractSectionedLeftNavigationView;
 import org.rhq.enterprise.gui.coregui.client.components.view.NavigationItem;
@@ -43,11 +41,14 @@ import org.rhq.enterprise.gui.coregui.client.components.view.NavigationSection;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewFactory;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.platform.PlatformSummaryPortlet;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history.AbstractOperationHistoryListView;
+import org.rhq.enterprise.gui.coregui.client.drift.DriftHistoryView;
+import org.rhq.enterprise.gui.coregui.client.drift.SubsystemResourceDriftView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ConfigurationHistoryView;
+import org.rhq.enterprise.gui.coregui.client.operation.OperationHistoryView;
 import org.rhq.enterprise.gui.coregui.client.report.measurement.MeasurementOOBView;
 import org.rhq.enterprise.gui.coregui.client.report.operation.SubsystemOperationHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.report.tag.TaggedView;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * The Reports top-level view.
@@ -82,7 +83,7 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
 
     @Override
     protected VLayout defaultView() {
-        VLayout vLayout = new VLayout();
+        LocatableVLayout vLayout = new LocatableVLayout(this.extendLocatorId("Default"));
         vLayout.setWidth100();
 
         // TODO: Admin icon.
@@ -113,45 +114,56 @@ public class ReportTopView extends AbstractSectionedLeftNavigationView {
         NavigationItem recentConfigurationChangesItem = new NavigationItem(ConfigurationHistoryView.VIEW_ID,
             "subsystems/configure/Configure_16.png", new ViewFactory() {
                 public Canvas createView() {
-                    return new ConfigurationHistoryView(extendLocatorId(ConfigurationHistoryView.VIEW_ID.getName()));
+                    return new ConfigurationHistoryView(extendLocatorId(ConfigurationHistoryView.VIEW_ID.getName()),
+                        getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
                 }
             });
 
-        NavigationItem recentOperationsItem = new NavigationItem(SubsystemOperationHistoryListView.VIEW_ID,
+        NavigationItem recentOperationsItem = new NavigationItem(OperationHistoryView.SUBSYSTEM_VIEW_ID,
             "subsystems/control/Operation_16.png", new ViewFactory() {
                 public Canvas createView() {
-                    return new SubsystemOperationHistoryListView(extendLocatorId(SubsystemOperationHistoryListView.VIEW_ID.getName()));
+                    return new SubsystemOperationHistoryListView(extendLocatorId(OperationHistoryView.SUBSYSTEM_VIEW_ID
+                        .getName()), getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
                 }
             });
 
         NavigationItem recentAlertsItem = new NavigationItem(AlertHistoryView.SUBSYSTEM_VIEW_ID,
             "subsystems/alert/Alert_LOW_16.png", new ViewFactory() {
                 public Canvas createView() {
-                    // TODO: how do we know if the user is able to ack the alerts? right now, I hardcode false to not allow it
                     return new SubsystemResourceAlertView(
-                        extendLocatorId(AlertHistoryView.SUBSYSTEM_VIEW_ID.getName()), false);
+                        extendLocatorId(AlertHistoryView.SUBSYSTEM_VIEW_ID.getName()), getGlobalPermissions().contains(
+                            Permission.MANAGE_INVENTORY));
                 }
             });
 
         NavigationItem alertDefinitionsItem = new NavigationItem(new ViewName("AlertDefinitions", MSG
             .view_reports_alertDefinitions()), "subsystems/alert/Alerts_16.png", new ViewFactory() {
             public Canvas createView() {
-                return new ResourceTypeTreeView(extendLocatorId(AdministrationView.PAGE_TEMPLATES_VIEW_ID.getName()));
+                return new AlertDefinitionReportView(extendLocatorId(AlertDefinitionReportView.VIEW_ID.getName()));
             }
         });
 
+        NavigationItem recentDriftsItem = new NavigationItem(DriftHistoryView.SUBSYSTEM_VIEW_ID,
+            "subsystems/drift/Drift_16.png", new ViewFactory() {
+                public Canvas createView() {
+                    return new SubsystemResourceDriftView(
+                        extendLocatorId(DriftHistoryView.SUBSYSTEM_VIEW_ID.getName()), getGlobalPermissions().contains(
+                            Permission.MANAGE_INVENTORY));
+                }
+            });
+
         return new NavigationSection(SECTION_SUBSYSTEMS_VIEW_ID, tagItem, suspectMetricsItem,
-            recentConfigurationChangesItem, recentOperationsItem, recentAlertsItem, alertDefinitionsItem);
+            recentConfigurationChangesItem, recentOperationsItem, recentAlertsItem, alertDefinitionsItem,
+            recentDriftsItem);
     }
 
     private NavigationSection buildInventorySection() {
-        NavigationItem inventorySummaryItem = new NavigationItem(new ViewName("InventorySummary", MSG
-            .common_title_inventorySummary()), "subsystems/inventory/Inventory_16.png", new ViewFactory() {
-            public Canvas createView() {
-                return new FullHTMLPane(extendLocatorId("InventorySummary"),
-                    "/rhq/admin/report/resourceInstallReport-body.xhtml");
-            }
-        });
+        NavigationItem inventorySummaryItem = new NavigationItem(ResourceInstallReport.VIEW_ID,
+            "subsystems/inventory/Inventory_16.png", new ViewFactory() {
+                public Canvas createView() {
+                    return new ResourceInstallReport(extendLocatorId(ResourceInstallReport.VIEW_ID.getName()));
+                }
+            }, getGlobalPermissions().contains(Permission.MANAGE_INVENTORY));
 
         NavigationItem platformSystemInfoItem = new NavigationItem(PlatformSummaryPortlet.VIEW_ID, ImageManager
             .getResourceIcon(ResourceCategory.PLATFORM), new ViewFactory() {

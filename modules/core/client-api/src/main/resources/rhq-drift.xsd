@@ -1,0 +1,144 @@
+<!--
+  ~ RHQ Management Platform
+  ~ Copyright (C) 2005-2008 Red Hat, Inc.
+  ~ All rights reserved.
+  ~
+  ~ This program is free software; you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License, version 2, as
+  ~ published by the Free Software Foundation, and/or the GNU Lesser
+  ~ General Public License, version 2.1, also as published by the Free
+  ~ Software Foundation.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+  ~ GNU General Public License and the GNU Lesser General Public License
+  ~ for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License
+  ~ and the GNU Lesser General Public License along with this program;
+  ~ if not, write to the Free Software Foundation, Inc.,
+  ~ 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+  -->
+
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           targetNamespace="urn:xmlns:rhq-drift"
+           xmlns:drift="urn:xmlns:rhq-drift"
+           elementFormDefault="qualified"
+           jaxb:version="2.0"
+           xmlns:jaxb="http://java.sun.com/xml/ns/jaxb" blockDefault="">
+
+    <xs:annotation>
+        <xs:documentation>Schema for the definition of drift configuration data.</xs:documentation>
+        <xs:appinfo>
+            <jaxb:schemaBindings>
+                <jaxb:package name="org.rhq.core.clientapi.descriptor.drift" />
+            </jaxb:schemaBindings>
+        </xs:appinfo>
+    </xs:annotation>
+
+    <xs:complexType name="RhqDrift">
+        <xs:annotation>
+            <xs:appinfo>
+                <jaxb:class name="DriftDescriptor" />
+            </xs:appinfo>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="basedir" minOccurs="1" maxOccurs="1">
+                <xs:complexType>
+                    <xs:annotation>
+                        <xs:documentation>
+                            The root directory from which snapshots will be generated during drift monitoring.
+                            Each base directory's value is obtained from a particular context
+                            (e.g. in the resource's plugin configuration or its resource configuration).
+                            Within that context, the base directory value is obtained by looking up the named value in the given context.
+                            For example, if the value-name is "install.dir" and the value-context is "pluginConfiguration",
+                            then the destination base directory value is obtained by getting the "install.dir" property value
+                            found in the resource's plugin configuration.
+                        </xs:documentation>
+                    </xs:annotation>
+                    <xs:sequence>
+                        <xs:element name="value-context">
+                            <xs:simpleType>
+                                <xs:restriction base="xs:string">
+                                    <xs:enumeration value="pluginConfiguration"></xs:enumeration>
+                                    <xs:enumeration value="resourceConfiguration"></xs:enumeration>
+                                    <xs:enumeration value="measurementTrait"></xs:enumeration>
+                                    <xs:enumeration value="fileSystem"></xs:enumeration>
+                                </xs:restriction>
+                            </xs:simpleType>
+                        </xs:element>
+                        <xs:element name="value-name" type="xs:string"></xs:element>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="interval" type="xs:long" minOccurs="0" maxOccurs="1" default="1800">
+                <xs:annotation>
+                    <xs:documentation>
+                        The frequency in seconds in which drift monitoring should run. Defaults to thirty minutes.
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="includes" type="drift:Includes" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation>
+                        A set of patterns that specify files and/or directories to include.
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="excludes" type="drift:Excludes" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation>
+                        A set of patterns that specify files and/or directories to exclude.
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+        </xs:sequence>
+        <xs:attribute name="name" type="xs:string" use="required" />
+    </xs:complexType>
+
+    <xs:complexType name="Includes">
+        <xs:annotation>
+            <xs:appinfo>
+                <jaxb:class name="IncludesDescriptor" />
+            </xs:appinfo>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="include" type="drift:DriftFilter" minOccurs="0" maxOccurs="unbounded" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="Excludes">
+        <xs:annotation>
+            <xs:appinfo>
+                <jaxb:class name="ExcludesDescriptor" />
+            </xs:appinfo>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element name="exclude" type="drift:DriftFilter" minOccurs="0" maxOccurs="unbounded" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="DriftFilter">
+        <xs:annotation>
+            <xs:appinfo>
+                <jaxb:class name="DriftFilterDescriptor" />
+            </xs:appinfo>
+        </xs:annotation>
+        <xs:attribute name="path" type="xs:string" use="required">
+            <xs:annotation>
+                <xs:documentation>
+                    A file system path that can be a directory or a file. The path is assumed to be
+                    relative to the base directory of the drift configuration.
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="pattern" type="xs:string" use="optional">
+            <xs:annotation>
+                <xs:documentation>TBD</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+
+
+</xs:schema>

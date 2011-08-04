@@ -7,10 +7,10 @@
 <%@ taglib uri="http://richfaces.org/a4j" prefix="a4j" %>
 <html:html>
    <head>
-      <meta http-equiv="EXPIRES" content="-1">
-      <meta http-equiv="PRAGMA" content="NO-CACHE">
-      <meta http-equiv="MAX-AGE" content="0">
-      <meta http-equiv="CACHE-CONTROL" content="NO-CACHE">
+      <meta http-equiv="Expires" content="-1">
+      <meta http-equiv="Pragma" content="no-cache">
+      <meta http-equiv="Max-Age" content="0">
+      <meta http-equiv="Cache-Control" content="no-cache">
 
       <link rel="stylesheet" type="text/css" media="screen" href="/css/win.css"/>
       <link rel="stylesheet" type="text/css" media="screen" href="/css/layout.css"/>
@@ -56,17 +56,19 @@
       -->
    </head>
    <body>
-      <tiles:insert attribute="header">
+
+      <!--spinder 4/20/11: commenting for better iframing for coregui. Portal.war full view with menus no longer maintained. -->
+      <!--<tiles:insert attribute="header">
          <tiles:put name="breadcrumb" beanName="breadcrumb"/>
          <tiles:put name="location" beanName="location"/>
-      </tiles:insert>
+      </tiles:insert>-->
 
       <div id="content-full">
-	     <div id="Breadcrumb">
+	     <!--<div id="Breadcrumb">
 	        <tiles:insert attribute="breadcrumb">
 	           <tiles:put name="location" beanName="location"/>
 	        </tiles:insert>
-	     </div>
+	     </div>-->
 	     <tiles:insert attribute='body'/>
       </div>
    </body>

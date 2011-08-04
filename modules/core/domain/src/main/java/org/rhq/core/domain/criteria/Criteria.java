@@ -40,9 +40,24 @@ import org.rhq.core.domain.util.PageList;
  * @author Joseph Marques
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-public abstract class Criteria implements Serializable {
+public abstract class Criteria implements Serializable, BaseCriteria {
     public enum Type {
         FILTER, FETCH, SORT;
+    }
+
+    /**
+     * This is the type of a filter value when the override for that filter does not
+     * define any query parameter. ON means the filter is enabled and will take effect,
+     * OFF means the filter will not be used in the query.
+     * Example, from AlertDefinitionCriteria:
+     *    private NonBindingOverrideFilter filterResourceOnly; // requires overrides - finds only those associated with a resource
+     *    ...
+     *    filterOverrides.put("resourceTypeOnly", "resourceType IS NOT NULL"); // notice no ? parameter
+     * 
+     * Note: Typically a null value is analogous to OFF.
+     */
+    public enum NonBindingOverrideFilter {
+        ON, OFF;
     }
 
     /**
@@ -135,6 +150,7 @@ public abstract class Criteria implements Serializable {
      * which is useful from a server-side calling context where the PageControl object
      * will already have been created for you by the extensions at the JSF layer.
      */
+    @Override
     public void setPageControl(PageControl pageControl) {
         this.pageControlOverrides = pageControl;
     }
@@ -199,7 +215,7 @@ public abstract class Criteria implements Serializable {
      * 
      * The restriction, once set, can be removed by passing NULL to this method.
      * 
-     * @eee Restriction
+     * @see Restriction
      */
     public void setRestriction(Restriction restriction) {
         this.restriction = restriction;
@@ -239,6 +255,7 @@ public abstract class Criteria implements Serializable {
      * @param requiredPermissions the permissions required by the user on any applicable objects.
      * Typically resource permissions needed by the user on returned resources or resource related data.
      */
+    // TODO (ips): This should really be renamed setRequiredPermissions()...
     public void addRequiredPermissions(Permission... requiredPermissions) {
         this.requiredPermissions = Arrays.asList(requiredPermissions);
     }

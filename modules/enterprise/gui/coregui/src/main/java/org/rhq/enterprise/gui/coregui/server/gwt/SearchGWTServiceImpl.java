@@ -47,7 +47,7 @@ public class SearchGWTServiceImpl extends AbstractGWTServiceImpl implements Sear
             List<SearchSuggestion> results = searchAssistManager.getTabAwareSuggestions(expression, caretPosition, tab);
             return results;
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -58,7 +58,7 @@ public class SearchGWTServiceImpl extends AbstractGWTServiceImpl implements Sear
             List<SearchSuggestion> results = searchAssistManager.getSuggestions(expression, caretPosition);
             return results;
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -66,27 +66,27 @@ public class SearchGWTServiceImpl extends AbstractGWTServiceImpl implements Sear
         try {
             return savedSearchManager.createSavedSearch(getSessionSubject(), savedSearch);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
-    public void updateSavedSearchName(int savedSearchId, final String newName) throws RuntimeException {
+    public boolean updateSavedSearchName(int savedSearchId, final String newName) throws RuntimeException {
         try {
             SavedSearch savedSearch = getSubjectSavedSearch(savedSearchId);
             savedSearch.setName(newName);
-            savedSearchManager.updateSavedSearch(getSessionSubject(), savedSearch);
+            return savedSearchManager.updateSavedSearch(getSessionSubject(), savedSearch);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
-    public void updateSavedSearchPattern(int savedSearchId, final String newPattern) throws RuntimeException {
+    public boolean updateSavedSearchPattern(int savedSearchId, final String newPattern) throws RuntimeException {
         try {
             SavedSearch savedSearch = getSubjectSavedSearch(savedSearchId);
             savedSearch.setPattern(newPattern);
-            savedSearchManager.updateSavedSearch(getSessionSubject(), savedSearch);
+            return savedSearchManager.updateSavedSearch(getSessionSubject(), savedSearch);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -94,7 +94,7 @@ public class SearchGWTServiceImpl extends AbstractGWTServiceImpl implements Sear
         try {
             savedSearchManager.deleteSavedSearch(getSessionSubject(), savedSearchId);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -103,7 +103,7 @@ public class SearchGWTServiceImpl extends AbstractGWTServiceImpl implements Sear
             return SerialUtility.prepare(savedSearchManager.findSavedSearchesByCriteria(getSessionSubject(), criteria),
                 "SearchService.findRolesByCriteria");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 

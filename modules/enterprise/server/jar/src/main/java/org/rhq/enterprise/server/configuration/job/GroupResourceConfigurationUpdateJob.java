@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -64,10 +64,10 @@ public class GroupResourceConfigurationUpdateJob extends AbstractGroupConfigurat
 
     protected void completeGroupConfigurationUpdate(ConfigurationManagerLocal configurationManager,
         Integer groupConfigurationUpdateId, String errorMessages) {
-        if (errorMessages != null)
-            log
-                .error("Failed to execute one or more Resource Configuration updates that were part of a group update - details: "
+        if (errorMessages != null) {
+            log.error("Failed to execute one or more Resource Configuration updates that were part of a group update - details: "
                     + errorMessages);
-        // TODO: Stick the errors in the individual updates?
+        }
+        configurationManager.updateGroupResourceConfigurationUpdateStatus(groupConfigurationUpdateId, errorMessages);
     }
 }

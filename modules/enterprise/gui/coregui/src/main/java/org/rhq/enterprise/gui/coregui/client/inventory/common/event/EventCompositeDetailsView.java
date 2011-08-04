@@ -34,8 +34,11 @@ import org.rhq.core.domain.event.composite.EventComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
+import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -79,21 +82,41 @@ public class EventCompositeDetailsView extends LocatableVLayout implements Bookm
             removeChild(child);
         }
 
-        DynamicForm form = new DynamicForm();
+        DynamicForm form = new LocatableDynamicForm(extendLocatorId("form"));
         form.setWidth100();
         form.setHeight100();
+        form.setWrapItemTitles(false);
 
         StaticTextItem id = new StaticTextItem("id", MSG.common_title_id());
         id.setValue(composite.getEventId());
 
         StaticTextItem severity = new StaticTextItem("severity", MSG.view_inventory_eventHistory_severity());
-        severity.setValue(composite.getSeverity().name());
+        String severityValue = Canvas.imgHTML(ImageManager.getEventSeverityBadge(composite.getSeverity()));
+        switch (composite.getSeverity()) {
+        case DEBUG:
+            severityValue += MSG.common_severity_debug();
+            break;
+        case INFO:
+            severityValue += MSG.common_severity_info();
+            break;
+        case WARN:
+            severityValue += MSG.common_severity_warn();
+            break;
+        case ERROR:
+            severityValue += MSG.common_severity_error();
+            break;
+        case FATAL:
+            severityValue += MSG.common_severity_fatal();
+            break;
+        }
+        severity.setValue(severityValue);
 
         StaticTextItem source = new StaticTextItem("source", MSG.view_inventory_eventHistory_sourceLocation());
         source.setValue(composite.getSourceLocation());
 
         StaticTextItem timestamp = new StaticTextItem("timestamp", MSG.view_inventory_eventHistory_timestamp());
-        timestamp.setValue(composite.getTimestamp());
+        timestamp.setValue(TimestampCellFormatter.format(composite.getTimestamp(),
+            TimestampCellFormatter.DATE_TIME_FORMAT_FULL));
 
         TextAreaItem detail = new TextAreaItem("details", MSG.view_inventory_eventHistory_details());
         detail.setValue(composite.getEventDetail());

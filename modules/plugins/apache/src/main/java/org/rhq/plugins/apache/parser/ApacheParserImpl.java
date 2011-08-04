@@ -47,6 +47,6 @@ public class ApacheParserImpl implements ApacheParser{
         File check = new File(foundInclude);        
         File root = new File(check.isAbsolute() ? Glob.rootPortion(foundInclude) : serverRootPath);
                  
-        return Glob.match(root, foundInclude);
+        return Glob.match(root, foundInclude, Glob.ALPHABETICAL_COMPARATOR);
     }
 }

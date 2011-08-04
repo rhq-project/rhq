@@ -30,7 +30,6 @@ import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceImageField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.types.Alignment;
-import com.smartgwt.client.types.DateDisplayFormat;
 import com.smartgwt.client.types.FieldType;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.widgets.grid.HoverCustomizer;
@@ -42,6 +41,8 @@ import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.components.table.EscapedHtmlCellFormatter;
+import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 
@@ -49,7 +50,8 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
  * @author Greg Hinkle
  * @author John Mazzitelli
  */
-public abstract class AbstractAlertDefinitionsDataSource extends RPCDataSource<AlertDefinition> {
+public abstract class AbstractAlertDefinitionsDataSource extends
+    RPCDataSource<AlertDefinition, AlertDefinitionCriteria> {
 
     protected static final String FIELD_ID = "id";
     protected static final String FIELD_NAME = "name";
@@ -76,23 +78,25 @@ public abstract class AbstractAlertDefinitionsDataSource extends RPCDataSource<A
     public ArrayList<ListGridField> getListGridFields() {
         ArrayList<ListGridField> fields = new ArrayList<ListGridField>(6);
 
-        ListGridField nameField = new ListGridField(FIELD_NAME, MSG.view_alerts_field_name());
+        ListGridField nameField = new ListGridField(FIELD_NAME, MSG.common_title_name());
         nameField.setWidth("20%");
+        nameField.setCellFormatter(new EscapedHtmlCellFormatter());
         fields.add(nameField);
 
         ListGridField descriptionField = new ListGridField(FIELD_DESCRIPTION, MSG.common_title_description());
         descriptionField.setWidth("20%");
+        descriptionField.setCellFormatter(new EscapedHtmlCellFormatter());
         fields.add(descriptionField);
 
-        ListGridField ctimeField = new ListGridField(FIELD_CTIME, MSG.view_alerts_field_created_time());
+        ListGridField ctimeField = new ListGridField(FIELD_CTIME, MSG.common_title_createTime());
         ctimeField.setType(ListGridFieldType.DATE);
-        ctimeField.setDateFormatter(DateDisplayFormat.TOLOCALESTRING);
+        TimestampCellFormatter.prepareDateField(ctimeField);
         ctimeField.setWidth("15%");
         fields.add(ctimeField);
 
         ListGridField mtimeField = new ListGridField(FIELD_MTIME, MSG.view_alerts_field_modified_time());
         mtimeField.setType(ListGridFieldType.DATE);
-        mtimeField.setDateFormatter(DateDisplayFormat.TOLOCALESTRING);
+        TimestampCellFormatter.prepareDateField(mtimeField);
         mtimeField.setWidth("15%");
         fields.add(mtimeField);
 
@@ -159,14 +163,14 @@ public abstract class AbstractAlertDefinitionsDataSource extends RPCDataSource<A
     protected List<DataSourceField> addDataSourceFields() {
         List<DataSourceField> fields = super.addDataSourceFields();
 
-        DataSourceTextField nameField = new DataSourceTextField(FIELD_NAME, MSG.view_alerts_field_name());
+        DataSourceTextField nameField = new DataSourceTextField(FIELD_NAME, MSG.common_title_name());
         fields.add(nameField);
 
         DataSourceTextField descriptionField = new DataSourceTextField(FIELD_DESCRIPTION, MSG
             .common_title_description());
         fields.add(descriptionField);
 
-        DataSourceTextField ctimeField = new DataSourceTextField(FIELD_CTIME, MSG.view_alerts_field_created_time());
+        DataSourceTextField ctimeField = new DataSourceTextField(FIELD_CTIME, MSG.common_title_createTime());
         ctimeField.setType(FieldType.DATETIME);
         fields.add(ctimeField);
 
@@ -184,8 +188,8 @@ public abstract class AbstractAlertDefinitionsDataSource extends RPCDataSource<A
     }
 
     @Override
-    protected void executeFetch(final DSRequest request, final DSResponse response) {
-        AlertDefinitionCriteria criteria = getCriteria(request);
+    protected void executeFetch(final DSRequest request, final DSResponse response,
+        final AlertDefinitionCriteria criteria) {
         GWTServiceLookup.getAlertDefinitionService().findAlertDefinitionsByCriteria(criteria,
             new AsyncCallback<PageList<AlertDefinition>>() {
                 public void onFailure(Throwable caught) {
@@ -195,13 +199,17 @@ public abstract class AbstractAlertDefinitionsDataSource extends RPCDataSource<A
                 }
 
                 public void onSuccess(PageList<AlertDefinition> result) {
-                    response.setData(buildRecords(result));
-                    processResponse(request.getRequestId(), response);
+                    dataRetrieved(result, response, request);
                 }
             });
     }
 
-    protected abstract AlertDefinitionCriteria getCriteria(DSRequest request);
+    protected void dataRetrieved(final PageList<AlertDefinition> result, final DSResponse response,
+        final DSRequest request) {
+
+        response.setData(buildRecords(result));
+        processResponse(request.getRequestId(), response);
+    }
 
     /**
      * Returns a criteria that will query for all alerts, but only for the ID and name fields. 

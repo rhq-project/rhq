@@ -26,3 +26,5 @@ file is expected to contain a set of commands that are used as input ( "script m
 
 It is possible to start a line with a hash mark (#) which means that this is a comment line.
 
+Also have a look at a video that shows how to use the standalone container:
+http://vimeo.com/18624567

@@ -45,7 +45,7 @@ public class RepoGWTServiceImpl extends AbstractGWTServiceImpl implements RepoGW
             return SerialUtility.prepare(repoManager.findReposByCriteria(getSessionSubject(), criteria),
                 "RepoService.findReposByCriteria");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 

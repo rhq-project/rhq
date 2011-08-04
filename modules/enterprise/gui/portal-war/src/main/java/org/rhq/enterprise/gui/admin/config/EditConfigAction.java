@@ -59,7 +59,8 @@ public class EditConfigAction extends BaseAction {
         if (cForm.isOkClicked()) {
             try {
                 log.trace("Getting config");
-                Properties props = cForm.saveConfigProperties(systemManager.getSystemConfiguration());
+                Properties props = cForm.saveConfigProperties(systemManager.getSystemConfiguration(LookupUtil
+                    .getSubjectManager().getOverlord()));
 
                 log.trace("Setting config");
                 if (LookupUtil.getAuthorizationManager().isSystemSuperuser(whoami)

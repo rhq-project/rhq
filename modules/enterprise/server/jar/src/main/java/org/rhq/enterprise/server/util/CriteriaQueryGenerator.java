@@ -181,18 +181,18 @@ public final class CriteriaQueryGenerator {
         List<Permission> requiredPerms = this.criteria.getRequiredPermissions();
         if (!(null == requiredPerms || requiredPerms.isEmpty())) {
             this.authorizationPermsFragment = "" //
-                + "AND ( SELECT COUNT(DISTINCT p)" + NL //
-                + "      FROM Subject innerSubject" + NL //
-                + "      JOIN innerSubject.roles r" + NL //
-                + "      JOIN r.permissions p" + NL //
-                + "      WHERE innerSubject.id = " + this.authorizationSubjectId + NL //
-                + "      AND p IN ( :requiredPerms ) ) = :requiredPermsSize" + NL;
+                + "( SELECT COUNT(DISTINCT p)" + NL //
+                + "   FROM Subject innerSubject" + NL //
+                + "   JOIN innerSubject.roles r" + NL //
+                + "   JOIN r.permissions p" + NL //
+                + "   WHERE innerSubject.id = " + this.authorizationSubjectId + NL //
+                + "   AND p IN ( :requiredPerms ) ) = :requiredPermsSize" + NL;
         }
     }
 
     private String getEnhancedResourceAuthorizationWhereFragment(String fragment, int subjectId) {
         String customAuthzFragment = "" //
-            + "( %aliasWithFragment%.id IN ( SELECT %aliasWithFragment%.id " + NL //
+            + "( %aliasWithFragment%.id IN ( SELECT %innerAlias%.id " + NL //
             + "                    FROM %alias% innerAlias " + NL //
             + "                    JOIN %innerAlias%.implicitGroups g JOIN g.roles r JOIN r.subjects s " + NL //
             + "                   WHERE s.id = %subjectId% ) )" + NL; //
@@ -207,17 +207,17 @@ public final class CriteriaQueryGenerator {
 
     private String getEnhancedGroupAuthorizationWhereFragment(String fragment, int subjectId) {
         String customAuthzFragment = "" //
-            + "( %aliasWithFragment%.id IN ( SELECT %aliasWithFragment%.id " + NL //
+            + "( %aliasWithFragment%.id IN ( SELECT %innerAlias%.id " + NL //
             + "                    FROM %alias% innerAlias " + NL //
             + "                    JOIN %innerAlias%.roles r JOIN r.subjects s " + NL //
             + "                   WHERE s.id = %subjectId% )" + NL //
             + "  OR" + NL //
-            + "  %aliasWithFragment%.id IN ( SELECT %aliasWithFragment%.id " + NL //
+            + "  %aliasWithFragment%.id IN ( SELECT %innerAlias%.id " + NL //
             + "                    FROM %alias% innerAlias " + NL //
             + "                    JOIN %innerAlias%.clusterResourceGroup crg JOIN crg.roles r JOIN r.subjects s " + NL //
             + "                   WHERE crg.recursive = true AND s.id = %subjectId% )" + NL //
             + "  OR" + NL //
-            + "  %aliasWithFragment%.id IN ( SELECT %aliasWithFragment%.id" + NL //
+            + "  %aliasWithFragment%.id IN ( SELECT %innerAlias%.id" + NL //
             + "                    FROM %alias% innerAlias " + NL //
             + "                    JOIN %innerAlias%.subject s" + NL //
             + "                   WHERE s.id = %subjectId% ) ) " + NL;
@@ -306,13 +306,13 @@ public final class CriteriaQueryGenerator {
         return EnumType.STRING; // catch-all
     }
 
-    // for testing purposes only, should use getQuery(EntityManager) or getCountQuery(EntityManager) instead
     public String getQueryString(boolean countQuery) {
         StringBuilder results = new StringBuilder();
         results.append("SELECT ");
         if (countQuery) {
             if (groupByClause == null) { // non-grouped method
-                results.append("COUNT(").append(alias).append(")").append(NL);
+                // use count(*) instead of count(alias) due to https://bugzilla.redhat.com/show_bug.cgi?id=699842
+                results.append("COUNT(*)").append(NL);
             } else {
                 // gets the count of the number of aggregate/grouped rows
                 // NOTE: this only works when the groupBy is a single element, as opposed to a list of elements
@@ -427,6 +427,15 @@ public final class CriteriaQueryGenerator {
         StringBuilder conjunctiveResults = new StringBuilder();
         boolean firstCrit = true;
         for (Map.Entry<String, Object> filterField : filterFields.entrySet()) {
+            Object filterFieldValue = filterField.getValue();
+
+            // if this filter field is non-binding (that is, the query has no parameter whose value is to be bound for the field)
+            // and that filter field is turned off, do nothing and continue to the next filter.
+            // this in effect does not filter on this field at all.
+            if (Criteria.NonBindingOverrideFilter.OFF.equals(filterFieldValue)) {
+                continue;
+            }
+
             if (firstCrit) {
                 firstCrit = false;
             } else {
@@ -439,7 +448,7 @@ public final class CriteriaQueryGenerator {
                 fragment = fixFilterOverride(override, fieldName);
             } else {
                 String operator = "=";
-                if (filterField.getValue() instanceof String) {
+                if (filterFieldValue instanceof String) {
                     operator = "like";
                     if (wantCaseInsensitiveMatch) {
                         fragment = "LOWER( " + alias + "." + fieldName + " ) " + operator + " :" + fieldName;
@@ -754,6 +763,8 @@ public final class CriteriaQueryGenerator {
                 query.setParameter("tagSemantic", tag.getSemantic());
                 query.setParameter("tagName", tag.getName());
 
+            } else if (value instanceof Criteria.NonBindingOverrideFilter) {
+                // skip this one - do nothing since there is no parameter binding for this value
             } else {
                 if (value instanceof String) {
                     value = prepareStringBindValue((String) value);

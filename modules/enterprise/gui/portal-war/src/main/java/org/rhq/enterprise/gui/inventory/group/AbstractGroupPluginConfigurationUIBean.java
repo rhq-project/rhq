@@ -69,7 +69,6 @@ public abstract class AbstractGroupPluginConfigurationUIBean {
         }
         this.configurationSet = GroupPluginConfigurationUtility.buildConfigurationSet(EnterpriseFacesContextUtility
             .getSubject(), this.group, this.pluginConfigurations);
-        this.configurationSet.mask();
         return;
     }
 

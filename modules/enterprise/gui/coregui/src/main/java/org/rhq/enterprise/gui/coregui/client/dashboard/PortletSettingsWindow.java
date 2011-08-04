@@ -26,7 +26,6 @@ package org.rhq.enterprise.gui.coregui.client.dashboard;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.LayoutPolicy;
 import com.smartgwt.client.types.Overflow;
-import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.events.ClickEvent;
@@ -90,6 +89,10 @@ public class PortletSettingsWindow extends LocatableWindow {
             final DynamicForm form = ((CustomSettingsPortlet) view).getCustomSettingsForm();
             layout.addMember(form);
 
+            VLayout spacer = new VLayout();
+            spacer.setHeight(10);
+            layout.addMember(spacer);
+
             IButton cancel = new LocatableIButton(this.extendLocatorId("Cancel"), MSG.common_button_cancel());
             cancel.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
@@ -100,11 +103,15 @@ public class PortletSettingsWindow extends LocatableWindow {
             save.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
                     if (form.validate()) {
+                        // the form submit handler code is responsible for performing the configure and refresh as
+                        // needed. This ensures that the updated configuration is used.                        
                         form.submit();
-                        PortletSettingsWindow.this.destroy();
-                        view.configure(parentWindow, storedPortlet);
-                        ((Canvas) view).redraw();
+
+                        // the portlet does not have a handle on its container, so saving the new settings is down here
                         parentWindow.save();
+
+                        // nuke the settings window now that its form field values have been processed 
+                        PortletSettingsWindow.this.destroy();
                     }
                 }
             });
@@ -131,16 +138,22 @@ public class PortletSettingsWindow extends LocatableWindow {
                     PortletSettingsWindow.this.destroy();
                 }
             });
-            IButton save = new LocatableIButton(this.extendLocatorId("Save"), MSG.common_button_cancel());
+            IButton save = new LocatableIButton(this.extendLocatorId("Save"), MSG.common_button_save());
             save.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
                     if (editor.validate()) {
+                        // set the portlet config to the new config
                         Configuration configuration = editor.getConfiguration();
                         storedPortlet.setConfiguration(configuration);
+
+                        // nuke the settings window now that its config data is stored
                         PortletSettingsWindow.this.destroy();
+
+                        // configure the actual portlet and redraw
                         view.configure(parentWindow, storedPortlet);
-                        //                        ((Canvas) view).markForRedraw();
                         parentWindow.markForRedraw();
+
+                        // persist the updated config
                         parentWindow.save();
                     }
                 }
@@ -153,7 +166,7 @@ public class PortletSettingsWindow extends LocatableWindow {
             layout.addMember(buttons);
 
         } else {
-            layout.addMember(new Label(MSG.view_portlet_generic_unconfigured()));
+            layout.addMember(new Label(MSG.view_portlet_configure_notNeeded()));
         }
 
         addItem(layout);

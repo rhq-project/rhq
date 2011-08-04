@@ -191,9 +191,10 @@ public class ProcessingRecipeContextTest {
         Bundle bundle = new Bundle("name", bundleType, null, null);
         BundleVersion bundleVersion = new BundleVersion("bname", "bversion", bundle, "");
         String name = "name";
+        String destBaseDirName = "destBaseDirName";
         String installDir = "installDir";
         BundleDestination bundleDestination = new BundleDestination(bundle, "destName", new ResourceGroup("groupName"),
-            installDir);
+            destBaseDirName, installDir);
         BundleDeployment bundleDeployment = new BundleDeployment(bundleVersion, bundleDestination, name);
         BundleResourceDeployment deployment = new BundleResourceDeployment(bundleDeployment, resource);
 

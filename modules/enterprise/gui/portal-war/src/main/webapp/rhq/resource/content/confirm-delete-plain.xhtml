@@ -1,0 +1,70 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+   PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+<ui:composition template="/rhq/resource/layout/main-plain.xhtml">
+
+   <ui:param name="pageTitle" value="Confirm Delete Package"/>
+   <ui:param name="selectedTabName" value="Content.Deployed"/>
+   <ui:define name="content">
+
+      <h:form>
+         <input type="hidden" name="id" value="${param.id}"/>
+
+         <rich:panel>
+
+            <f:facet name="header"><h:outputText value="Packages to be Deleted"/></f:facet>
+
+            <p>The following packages will be deleted on the resource.</p>
+
+            <ul>
+               <c:forEach items="#{DeletePackagesUIBean.packagesToDelete}" var="installedPackage">
+                  <li>
+                     <h:outputText value="${installedPackage.packageVersion.displayName} " rendered="${!empty installedPackage.packageVersion.displayName}"/>
+                     <h:outputText value="${installedPackage.packageVersion.generalPackage.name} " rendered="${empty installedPackage.packageVersion.displayName}"/>
+
+                     <h:outputText value="${installedPackage.packageVersion.displayVersion}" rendered="${!empty installedPackage.packageVersion.displayVersion}"/>
+                     <h:outputText value="${installedPackage.packageVersion.version}" rendered="${empty installedPackage.packageVersion.displayVersion}"/>
+                  </li>
+               </c:forEach>
+            </ul>
+
+         </rich:panel>
+
+         <rich:panel>
+            <f:facet name="header"><h:outputText value="Packages Delete Notes"/></f:facet>
+            <p>Notes specified below will be displayed when tracking the status of this request in order to help
+               further identify the purpose of this request. They are not sent to the plugin for use during the
+               the delete attempt. </p>
+
+            <h:inputTextarea value="#{DeletePackagesUIBean.notes}" rows="5" cols="80"/>
+
+         </rich:panel>
+
+         <rich:panel>
+             <h:panelGrid id="buttonGrid" columns="2" styleClass="buttons-table" columnClasses="button-cell">
+                <h:commandButton style="margin-top: 10px;" value="CANCEL"
+                                 action="cancel" styleClass="buttonmed"/>
+
+                <h:commandButton style="margin-top: 10px;" value="CONTINUE"
+                                 action="#{DeletePackagesUIBean.deleteSelectedInstalledPackages}" styleClass="buttonmed"
+                                 rendered="${ResourceUIBean.permissions.content}"/>
+             </h:panelGrid>
+         </rich:panel>
+
+      </h:form>
+
+   </ui:define>
+</ui:composition>
+
+</html>

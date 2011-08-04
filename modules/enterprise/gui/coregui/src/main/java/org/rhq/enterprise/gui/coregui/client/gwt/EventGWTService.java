@@ -23,6 +23,7 @@
 package org.rhq.enterprise.gui.coregui.client.gwt;
 
 import java.util.List;
+import java.util.Map;
 
 import com.google.gwt.user.client.rpc.RemoteService;
 
@@ -54,4 +55,10 @@ public interface EventGWTService extends RemoteService {
     int deleteEventsForContext(EntityContext context, List<Integer> eventIds) throws RuntimeException;
 
     int purgeEventsForContext(EntityContext context) throws RuntimeException;
+
+    Map<EventSeverity, Integer> getEventCountsBySeverity(int resourceId, long startDate, long endDate)
+        throws RuntimeException;
+
+    Map<EventSeverity, Integer> getEventCountsBySeverityForGroup(int groupId, long startDate, long endDate)
+        throws RuntimeException;
 }

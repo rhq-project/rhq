@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -22,6 +22,8 @@
  */
 package org.rhq.core.clientapi.descriptor;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.Help;
@@ -29,6 +31,8 @@ import org.rhq.core.util.MessageDigestGenerator;
 
 import java.net.URL;
 import java.io.IOException;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import java.util.jar.JarInputStream;
 import java.util.jar.Manifest;
 import java.util.jar.Attributes;
@@ -37,6 +41,8 @@ import java.util.jar.Attributes;
  * Transforms some input into a {@link org.rhq.core.domain.plugin.Plugin} object.
  */
 public class PluginTransformer {
+
+    private static final Log LOG = LogFactory.getLog(PluginTransformer.class);
 
     /**
      * Takes the given plugin descriptor and plugin JAR file URL and converts them into a
@@ -112,8 +118,24 @@ public class PluginTransformer {
 
     private String getVersionFromPluginJarManifest(URL pluginJarUrl) throws IOException {
         JarInputStream jarInputStream = new JarInputStream(pluginJarUrl.openStream());
-        jarInputStream.close();
         Manifest manifest = jarInputStream.getManifest();
+        if (manifest == null) {
+            // BZ 682116 (ips, 03/25/11): The manifest file is not in the standard place as the 2nd entry of the JAR,
+            // but we want to be flexible and support JARs that have a manifest file somewhere else, so scan the entire
+            // JAR for one.
+            JarEntry jarEntry;
+            while((jarEntry = jarInputStream.getNextJarEntry()) != null) {
+                if (JarFile.MANIFEST_NAME.equalsIgnoreCase(jarEntry.getName())) {
+                    manifest = new Manifest(jarInputStream);
+                    break;
+                }
+            }
+        }
+        try {
+            jarInputStream.close();
+        } catch (IOException e) {
+            LOG.error("Failed to close plugin jar input stream for plugin jar [" + pluginJarUrl + "].", e);
+        }
         if (manifest != null) {
             Attributes attributes = manifest.getMainAttributes();
             return attributes.getValue(Attributes.Name.IMPLEMENTATION_VERSION);
@@ -121,4 +143,5 @@ public class PluginTransformer {
             return null;
         }
     }
+
 }

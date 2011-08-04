@@ -168,6 +168,7 @@ public class JarContentFileInfo extends ContentFileInfo {
                 JarFile jarFile = new JarFile(file);
                 if (null != jarFile) {
                     manifest = jarFile.getManifest();
+                    jarFile.close();
                 }
             } else {
                 File manifestFile = new File(file, "/META-INF/MANIFEST.MF");

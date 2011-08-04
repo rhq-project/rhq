@@ -21,15 +21,31 @@
          <results>
             <c:list-property name="processList">
                <c:map-property name="process">
-                  <c:simple-property name="pid" type="integer" description="Process id"/>
+                  <c:simple-property name="pid" type="long" description="Process id"/>
                   <c:simple-property name="name" description="Name of the process"/>
-                  <c:simple-property name="size" type="integer" units="bytes" description="Memory, in bytes, that this process is using."/>
-                  <c:simple-property name="userTime" type="integer" units="milliseconds" description="User time, in milliseconds, this process has been running."/>
-                  <c:simple-property name="kernelTime" type="integer" units="milliseconds" description="Kernel time, in milliseconds, this process has been running."/>
+                  <c:simple-property name="size" type="long" units="bytes" description="Memory, in bytes, that this process is using."/>
+                  <c:simple-property name="userTime" type="long" units="milliseconds" description="User time, in milliseconds, this process has been running."/>
+                  <c:simple-property name="kernelTime" type="long" units="milliseconds" description="Kernel time, in milliseconds, this process has been running."/>
                </c:map-property>
             </c:list-property>
          </results>
       </operation>
+'>
+ <!ENTITY bundleTarget '
+      <bundle-target>
+         <destination-base-dir name="Root File System" description="The top root directory on the platform (/)" >
+            <value-context>fileSystem</value-context>
+            <value-name>/</value-name>
+         </destination-base-dir>
+      </bundle-target>
+'>
+ <!ENTITY driftConfig '
+      <drift-configuration name="File System">
+          <basedir>
+              <value-context>fileSystem</value-context>
+              <value-name>/</value-name>
+          </basedir>
+      </drift-configuration>
 '>
  <!ENTITY metrics '      
       <metric displayName="Hostname"
@@ -76,6 +92,7 @@
               property="Native.MemoryInfo.total"
               defaultOn="true"
               units="bytes"
+              defaultInterval="1200000"
               description="The total system memory"/>
               
       <metric displayName="Free Swap Space"
@@ -95,6 +112,7 @@
               property="Native.SwapInfo.total"
               defaultOn="true"
               units="bytes"
+              defaultInterval="1200000"
               description="The total system swap"/>
 '>
 
@@ -246,6 +264,9 @@
               <c:simple-property name="EstimatedSize" units="kilobytes"/>
          </configuration>
       </content>
+      
+      &driftConfig;
+      &bundleTarget;
 
    </platform>
 
@@ -341,6 +362,9 @@
       </content>
 -->
 
+      &driftConfig;
+      &bundleTarget;
+
    </platform>
    
    <platform name="Solaris"
@@ -358,6 +382,8 @@
       &platformCpu;
       &metrics;
       &syslogEventDefinition;
+      &driftConfig;
+      &bundleTarget;
 
    </platform>
    
@@ -370,6 +396,8 @@
       &nativeMetrics;
       &platformCpu;
       &metrics;
+      &driftConfig;
+      &bundleTarget;
    </platform>
    
    <platform name="AIX"
@@ -381,6 +409,8 @@
       &nativeMetrics;
       &platformCpu;
       &metrics;
+      &driftConfig;
+      &bundleTarget;      
    </platform>
    
    <platform name="FreeBSD"
@@ -392,6 +422,8 @@
       &nativeMetrics;
       &platformCpu;
       &metrics;
+      &driftConfig;
+      &bundleTarget;
    </platform>
    
    <platform name="Mac OS X"
@@ -408,6 +440,8 @@
       &platformCpu;
       &metrics;
       &syslogEventDefinition;
+      &driftConfig;
+      &bundleTarget;
    </platform>
    
    <platform name="Java"
@@ -417,6 +451,8 @@
       &platformSubcategories;
       &platformOperations;
       &metrics;
+      &driftConfig;
+      &bundleTarget;
    </platform>
 
    <service name="Network Adapter" discovery="NetworkAdapterDiscoveryComponent" class="NetworkAdapterComponent">

@@ -31,7 +31,6 @@
     <tr class="ListRowSelected">
       <td class="ListCellPrimary"><c:out value="${entry.type.name}"/> <c:out value="${entry.pluginInfo}"/></td>
       <td class="ListCell" align="left" nowrap="nowrap">
-         <c:if test="${monitorEnabled}">
             <c:if test="${not empty param.nomenu}">
                <html:link page="/admin/platform/monitor/Config.do?nomenu=true&mode=configure&id=${entry.type.id}&type=${entry.type.id}" styleClass="buttonsmall">
                   Edit Metric Template
@@ -47,10 +46,8 @@
                (<c:out value="${entry.enabledMetricCount}" /> | <c:out value="${entry.disabledMetricCount}" />)
             </span>
          </c:if>
-         </c:if>
      </td>
       <td class="ListCell" align="left" nowrap="nowrap">
-        <c:if test="${monitorEnabled}">   
         <html:link page="/rhq/admin/listAlertTemplates.xhtml?type=${entry.type.id}" styleClass="buttonsmall">
            Edit Alert Templates
         </html:link>
@@ -59,7 +56,6 @@
                (<c:out value="${entry.enabledAlertCount}" /> | <c:out value="${entry.disabledAlertCount}" />)
             </span>
          </c:if>
-        </c:if>
       </td>
     </tr>
     
@@ -105,7 +101,6 @@
     <tr class="ListRowSelected">
       <td class="ListCellPrimary"><c:out value="${entry.type.name}"/> <c:out value="${entry.pluginInfo}"/></td>
       <td class="ListCell" align="left">
-         <c:if test="${monitorEnabled}">
             <c:if test="${not empty param.nomenu}">
                <html:link page="/admin/platform/monitor/Config.do?nomenu=true&mode=configure&type=${entry.type.id}" styleClass="buttonsmall">
                   Edit Metric Template
@@ -121,10 +116,8 @@
                (<c:out value="${entry.enabledMetricCount}" /> | <c:out value="${entry.disabledMetricCount}" />)
             </span>
          </c:if>
-         </c:if>
       </td>
       <td class="ListCell" align="left">
-        <c:if test="${monitorEnabled}">   
           <html:link page="/rhq/admin/listAlertTemplates.xhtml?type=${entry.type.id}" styleClass="buttonsmall">
              Edit Alert Templates
           </html:link>
@@ -133,7 +126,6 @@
                (<c:out value="${entry.enabledAlertCount}" /> | <c:out value="${entry.disabledAlertCount}" />)
             </span>
          </c:if>
-        </c:if>
         </td>
     </tr>
     <tiles:insert definition=".resource.common.monitor.config.ShowOneResourceType">

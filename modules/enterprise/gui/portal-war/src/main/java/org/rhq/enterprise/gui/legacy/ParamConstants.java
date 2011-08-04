@@ -222,7 +222,7 @@ public interface ParamConstants {
     public static final String FILTER_BY_PARAM = "filterBy";
 
     /**
-     * a value for a request paramater that holds the message key that is the reason the user is bieng presented with
+     * a value for a request parameter that holds the message key that is the reason the user is being presented with
      * login page.<br>
      */
     public static final String LOGON_STATUS = "loginStatus";

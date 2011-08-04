@@ -44,6 +44,8 @@ import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
 import org.rhq.core.clientapi.agent.metadata.SubCategoriesMetadataParser;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.ProcessScan;
 import org.rhq.core.domain.resource.Resource;
@@ -138,8 +140,8 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
             long startTime = System.currentTimeMillis();
             updateType(resourceType);
             long endTime = System.currentTimeMillis();
-            log.debug("Updated resource type [" + toConciseString(resourceType) + "] in " + (endTime - startTime) +
-                    " ms");
+            log.debug("Updated resource type [" + toConciseString(resourceType) + "] in " + (endTime - startTime)
+                + " ms");
 
             legitimateChildren.addAll(resourceType.getChildResourceTypes());
         }
@@ -294,7 +296,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         }
 
         entityManager.flush();
-        existingType = entityManager.find(existingType.getClass(), existingType.getId());        
+        existingType = entityManager.find(existingType.getClass(), existingType.getId());
 
         // Remove all compatible groups that are of the type.
         List<ResourceGroup> compatGroups = existingType.getResourceGroups();
@@ -391,14 +393,16 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         long startTime = System.currentTimeMillis();
         pluginConfigMetadataMgr.updatePluginConfigurationDefinition(existingType, resourceType);
         long endTime = System.currentTimeMillis();
-        log.debug("Updated plugin configuration definition for ResourceType[" + toConciseString(existingType) +
-                "] in " + (endTime - startTime) + " ms");
+        log.debug("Updated plugin configuration definition for ResourceType[" + toConciseString(existingType) + "] in "
+            + (endTime - startTime) + " ms");
 
         resourceConfigMetadataMgr.updateResourceConfigurationDefinition(existingType, resourceType);
 
         measurementMetadataMgr.updateMetadata(existingType, resourceType);
         contentMetadataMgr.updateMetadata(existingType, resourceType);
         operationMetadataMgr.updateMetadata(existingType, resourceType);
+
+        resourceMetadataManager.updateDriftMetadata(existingType, resourceType);
 
         updateProcessScans(resourceType, existingType);
 
@@ -440,6 +444,79 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
 
         existingType = entityManager.merge(existingType);
         entityManager.flush();
+    }
+
+    @Override
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public void updateDriftMetadata(ResourceType existingType, ResourceType resourceType) {
+        boolean isSame = true;
+
+        existingType = entityManager.find(ResourceType.class, existingType.getId());
+
+        //
+        // First, we need to see if the drift configs have changed. If the existing and new drift configs
+        // are the same, then we can skip the update and do nothing. Only if one or more drift configs
+        // are different do we have to do anything to the persisted metadata.
+        //
+
+        Set<ConfigurationTemplate> existingDriftTemplates = existingType.getDriftConfigurationTemplates();
+        Set<ConfigurationTemplate> newDriftTemplates = resourceType.getDriftConfigurationTemplates();
+        if (existingDriftTemplates.size() != newDriftTemplates.size()) {
+            isSame = false;
+        } else {
+            // note: the size of the sets are typically really small (usually between 0 and 3),
+            // so iterating through them is fast.
+
+            // look at all the configs to ensure we detect any changes to individual settings on the templates
+            Set<String> existingNames = new HashSet<String>(existingDriftTemplates.size());
+            Set<String> newNames = new HashSet<String>(newDriftTemplates.size());
+            for (ConfigurationTemplate existingCT : existingDriftTemplates) {
+                String existingName = existingCT.getName();
+                Configuration existingConfig = existingCT.getConfiguration();
+
+                existingNames.add(existingName); // for later
+
+                for (ConfigurationTemplate newCT : newDriftTemplates) {
+                    String newName = newCT.getName();
+                    newNames.add(newName); // for later, do this here, not in the if-stmt below, so we can catch if new has names not in existing
+                    if (newName.equals(existingName)) {
+                        Configuration newConfig = newCT.getConfiguration();
+                        if (!existingConfig.equals(newConfig)) {
+                            isSame = false;
+                        }
+                        break;
+                    }
+                }
+
+                if (!isSame) {
+                    break;
+                }
+            }
+
+            if (isSame) {
+                // make sure they all have the same names and no duplicate names existed
+                isSame = existingNames.equals(newNames) && existingNames.size() == existingDriftTemplates.size();
+            }
+        }
+
+        //
+        // If one or more drift configs are different between new and existing,
+        // then we need to remove the old drift config and persist the new drift config.
+        //
+
+        if (!isSame) {
+            for (ConfigurationTemplate doomed : existingDriftTemplates) {
+                entityManager.remove(doomed);
+            }
+            existingType.getDriftConfigurationTemplates().clear();
+
+            for (ConfigurationTemplate toPersist : newDriftTemplates) {
+                entityManager.persist(toPersist);
+                existingType.addDriftConfigurationTemplate(toPersist);
+            }
+        }
+
+        return;
     }
 
     private void persistNewType(ResourceType resourceType) {
@@ -564,6 +641,9 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
                     resource.getParentResource().removeChildResource(resource);
                 }
                 newParent.addChildResource(resource);
+                // Assigning a new parent changes the ancestry for the resource and its children. Since the
+                // children are not handled in this method, update their ancestry now.
+                resourceManager.updateAncestry(subjectManager.getOverlord(), resource.getId());
             } else {
                 log.debug("We were unable to move " + resource + " from invalid parent " + resource.getParentResource()
                     + " to a new valid parent with one of the following types: " + newParentTypes);
@@ -597,7 +677,6 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         result.add(cat);
         return result;
     }
-
 
     /**
      * Update the set of process scans for a given resource type

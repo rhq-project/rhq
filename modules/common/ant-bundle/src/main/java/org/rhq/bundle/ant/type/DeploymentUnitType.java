@@ -85,7 +85,7 @@ public class DeploymentUnitType extends AbstractBundleType {
     public void install(boolean revert, boolean clean) throws BuildException {
         if (clean) {
             getProject().auditLog(
-                AuditStatus.WARN,
+                AuditStatus.INFO,
                 "Clean Requested",
                 "A clean deployment has been requested. Files will be deleted!",
                 "A clean deployment has been requested. Files will be deleted"
@@ -93,7 +93,7 @@ public class DeploymentUnitType extends AbstractBundleType {
         }
         if (revert) {
             getProject().auditLog(
-                AuditStatus.WARN,
+                AuditStatus.INFO,
                 "Revert Requested",
                 "The previous deployment will be reverted!",
                 "The previous deployment will be reverted. An attempt to restore"
@@ -102,6 +102,13 @@ public class DeploymentUnitType extends AbstractBundleType {
 
         try {
             boolean dryRun = getProject().isDryRun();
+            boolean willManageRootDir = Boolean.parseBoolean(this.manageRootDir);
+            File deployDir = getProject().getDeployDir();
+            TemplateEngine templateEngine = createTemplateEngine();
+            int deploymentId = getProject().getDeploymentId();
+            DeploymentProperties deploymentProps = new DeploymentProperties(deploymentId, getProject().getBundleName(),
+                getProject().getBundleVersion(), getProject().getBundleDescription());
+            deploymentProps.setManageRootDir(willManageRootDir);
 
             if (this.preinstallTarget != null) {
                 getProject().auditLog(AuditStatus.SUCCESS, "Pre-Install Started", "The pre install target will start",
@@ -126,12 +133,6 @@ public class DeploymentUnitType extends AbstractBundleType {
                     "The pre install target has finished", null, null);
             }
 
-            int deploymentId = getProject().getDeploymentId();
-            DeploymentProperties deploymentProps = new DeploymentProperties(deploymentId, getProject().getBundleName(),
-                getProject().getBundleVersion(), getProject().getBundleDescription());
-            File deployDir = getProject().getDeployDir();
-            TemplateEngine templateEngine = createTemplateEngine();
-
             boolean haveSomethingToDo = false;
             if (!this.files.isEmpty()) {
                 haveSomethingToDo = true;
@@ -154,7 +155,6 @@ public class DeploymentUnitType extends AbstractBundleType {
                     "You must specify at least one file to deploy via nested file, archive, url-file, url-archive types in your recipe");
             }
 
-            boolean willManageRootDir = Boolean.parseBoolean(this.manageRootDir);
             if (willManageRootDir) {
                 log("Managing the root directory of this deployment unit - unrelated files found will be removed",
                     Project.MSG_VERBOSE);
@@ -162,7 +162,7 @@ public class DeploymentUnitType extends AbstractBundleType {
                 if (!dryRun) {
                     getProject()
                         .auditLog(
-                            AuditStatus.WARN,
+                            AuditStatus.INFO,
                             "Managing Top Level Deployment Directory",
                             "The top level deployment directory will be managed - files found there will be backed up and removed!",
                             "The bundle recipe has requested that the top level deployment directory be fully managed by RHQ."

@@ -39,7 +39,7 @@ public class GroupAlertDefinitionGWTServiceImpl extends AbstractGWTServiceImpl i
                 resourceGroupId);
             return results;
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -51,7 +51,7 @@ public class GroupAlertDefinitionGWTServiceImpl extends AbstractGWTServiceImpl i
                 groupAlertDefinition, purgeInternals);
             return SerialUtility.prepare(results, "updateGroupAlertDefinitions");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -62,7 +62,7 @@ public class GroupAlertDefinitionGWTServiceImpl extends AbstractGWTServiceImpl i
                 .enableGroupAlertDefinitions(getSessionSubject(), groupAlertDefinitionIds);
             return results;
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -73,7 +73,7 @@ public class GroupAlertDefinitionGWTServiceImpl extends AbstractGWTServiceImpl i
                 groupAlertDefinitionIds);
             return results;
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -84,7 +84,7 @@ public class GroupAlertDefinitionGWTServiceImpl extends AbstractGWTServiceImpl i
                 .removeGroupAlertDefinitions(getSessionSubject(), groupAlertDefinitionIds);
             return results;
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 }

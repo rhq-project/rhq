@@ -1,5 +1,8 @@
 package org.rhq.enterprise.server.inventory;
 
+import static java.util.Arrays.asList;
+
+import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,8 +27,6 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
 
-import static java.util.Arrays.asList;
-
 public class InventoryManagerBeanTest extends AbstractEJB3Test {
 
     @BeforeClass
@@ -34,10 +35,7 @@ public class InventoryManagerBeanTest extends AbstractEJB3Test {
 
         getTransactionManager().begin();
         List<Integer> resourceTypeIds = asList(1, 2, 3, 4, 5);
-//        List<ResourceType> resourceTypes = asList(
-//                getEntityManager().find(ResourceType.class, 1),
-//                getEntityManager().find(ResourceType.class, 4));
-
+        
         InventoryManagerLocal inventoryMgr = LookupUtil.getInventoryManager();
         inventoryMgr.markTypesDeleted(resourceTypeIds);
         getTransactionManager().commit();
@@ -117,9 +115,18 @@ public class InventoryManagerBeanTest extends AbstractEJB3Test {
     }
 
     public void initDB() throws Exception {
-        IDatabaseConnection conn = new DatabaseConnection(getConnection());
-        setDbType(conn);
-        DatabaseOperation.CLEAN_INSERT.execute(conn, getDataSet());
+        Connection connection = null;
+
+        try {
+            connection = getConnection();
+            IDatabaseConnection conn = new DatabaseConnection(connection);
+            setDbType(conn);
+            DatabaseOperation.CLEAN_INSERT.execute(conn, getDataSet());
+        } finally {
+            if (connection != null) {
+                connection.close();
+            }
+        }
     }
 
     void setDbType(IDatabaseConnection connection) throws Exception {

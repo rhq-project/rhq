@@ -19,10 +19,17 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.traits;
 
 import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.widgets.grid.CellFormatter;
+import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
+import com.smartgwt.client.widgets.grid.ListGridRecord;
+
 import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMeasurementDataTraitListDetailView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * The detail view for the group Monitoring>Traits subtab.
@@ -40,12 +47,22 @@ public class TraitsDetailView extends AbstractMeasurementDataTraitListDetailView
 
         ListGrid listGrid = getListGrid();
 
-        // TODO (ips): Disambiguate Resource name.
         ListGridField resourceNameField = listGrid.getField(MeasurementDataTraitCriteria.SORT_FIELD_RESOURCE_NAME);
-        resourceNameField.setWidth("20%");
+        resourceNameField.setCellFormatter(new CellFormatter() {
+            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
+                String url = LinkManager.getResourceLink(listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
+                return SeleniumUtility.getLocatableHref(url, o.toString(), null);
+            }
+        });
+        resourceNameField.setShowHover(true);
+        resourceNameField.setHoverCustomizer(new HoverCustomizer() {
+            public String hoverHTML(Object value, ListGridRecord listGridRecord, int rowNum, int colNum) {
+                return AncestryUtil.getResourceHoverHTML(listGridRecord, 0);
+            }
+        });
         resourceNameField.setCanGroupBy(true);
 
-
+        AncestryUtil.setupAncestryListGridField(listGrid);
     }
 
     private static Criteria createCriteria(int groupId, int definitionId) {

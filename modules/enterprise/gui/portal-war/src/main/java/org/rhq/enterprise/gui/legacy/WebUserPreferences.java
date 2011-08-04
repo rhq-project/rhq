@@ -1,5 +1,6 @@
 package org.rhq.enterprise.gui.legacy;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -769,7 +770,7 @@ public class WebUserPreferences extends SubjectPreferencesBase {
             return; // nothing is stored in session for the special NONE view
         }
 
-        List pageControlProperties = new ArrayList();
+        List<Serializable> pageControlProperties = new ArrayList<Serializable>();
         pageControlProperties.add(pageControl.getPageSize());
         pageControlProperties.add(pageControl.getPageNumber());
 
@@ -797,16 +798,37 @@ public class WebUserPreferences extends SubjectPreferencesBase {
             visits.remove(10);
         }
 
-        setPreference(PREF_RECENT_RESOURCES, visits, ",");
+        setPreference(PREF_RECENT_RESOURCES, visits, PREF_LIST_DELIM);
     }
 
     public List<ResourceVisit> getRecentResourceVisits() {
-        List<String> stringList = getPreferenceAsList(PREF_RECENT_RESOURCES, ",");
         List<ResourceVisit> visits = new ArrayList<ResourceVisit>();
-        for (String string : stringList) {
-            String[] data = string.split("\\|");
-            if (data.length == 3)
-                visits.add(new ResourceVisit(Integer.parseInt(data[0]), data[2], ResourceVisit.Kind.valueOf(data[1])));
+        try {
+            // first try the new coregui format
+            List<Integer> resourceIds = getPreferenceAsIntegerList(PREF_RECENT_RESOURCES, "|");
+            for (Integer resourceId : resourceIds) {
+                ResourceVisit visit = new ResourceVisit(resourceId, "", ResourceVisit.Kind.resource);
+                visits.add(visit);
+            }
+        } catch (RuntimeException e) {
+            // if an exception occurs, try the legacy portal-war format
+            List<String> stringList = getPreferenceAsList(PREF_RECENT_RESOURCES, PREF_LIST_DELIM);
+            for (String string : stringList) {
+                String[] data = string.split(PREF_ITEM_DELIM_REGEX);
+                if (data.length != 3) {
+                    throw new RuntimeException("Failed to parse resource visit item: " + string);
+                }
+                ResourceVisit.Kind kind = ResourceVisit.Kind.valueOf(data[1]);
+                // throw away recent groups, since the new coregui format only supports resources
+                if (kind == ResourceVisit.Kind.resource || kind == ResourceVisit.Kind.PLATFORM
+                        || kind == ResourceVisit.Kind.SERVER || kind == ResourceVisit.Kind.SERVICE) {
+                    int resourceId = Integer.parseInt(data[0]);
+                    ResourceVisit visit = new ResourceVisit(resourceId, "", ResourceVisit.Kind.resource);
+                    visits.add(visit);
+                }
+            }
+            // overwrite the pref value with the new coregui format
+            setPreference(PREF_RECENT_RESOURCES, visits, "|");
         }
         return visits;
     }
@@ -814,9 +836,14 @@ public class WebUserPreferences extends SubjectPreferencesBase {
     public static class ResourceVisit {
         public enum Kind {
             @Deprecated
-            resource("Resource"), @Deprecated
-            group("Group"), PLATFORM("Platform"), SERVER("Server"), SERVICE("Service"), COMPATIBLE_GROUP("Cluster"), MIXED_GROUP(
-                "Group");
+            resource("Resource"),
+            @Deprecated
+            group("Group"),
+            PLATFORM("Platform"),
+            SERVER("Server"),
+            SERVICE("Service"),
+            COMPATIBLE_GROUP("Cluster"),
+            MIXED_GROUP("Group");
 
             private String displayName;
 
@@ -881,7 +908,7 @@ public class WebUserPreferences extends SubjectPreferencesBase {
 
         @Override
         public String toString() {
-            return id + "|" + kind.name() + "|" + name;
+            return String.valueOf(id);
         }
     }
 

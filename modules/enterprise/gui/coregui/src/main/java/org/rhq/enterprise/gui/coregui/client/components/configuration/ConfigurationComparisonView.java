@@ -24,6 +24,8 @@ import java.util.EnumSet;
 import java.util.List;
 
 import com.smartgwt.client.widgets.Window;
+import com.smartgwt.client.widgets.events.CloseClickHandler;
+import com.smartgwt.client.widgets.events.CloseClientEvent;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.VLayout;
@@ -33,6 +35,7 @@ import com.smartgwt.client.widgets.tree.TreeGridField;
 import com.smartgwt.client.widgets.tree.TreeNode;
 
 import org.rhq.core.domain.configuration.AbstractPropertyMap;
+import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
@@ -44,6 +47,7 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 
 /**
  * @author Greg Hinkle
@@ -79,7 +83,7 @@ public class ConfigurationComparisonView extends VLayout {
         nameField.setFrozen(true);
         nameField.setCellFormatter(new CellFormatter() {
             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                if (listGridRecord.getAttributeAsBoolean("consistent")) {
+                if (listGridRecord == null || listGridRecord.getAttributeAsBoolean("consistent")) {
                     return String.valueOf(o);
                 } else {
                     return "<span style=\"color: red;\">" + String.valueOf(o) + "</span>";
@@ -169,19 +173,28 @@ public class ConfigurationComparisonView extends VLayout {
         parent.setChildren(children.toArray(new TreeNode[children.size()]));
     }
 
-    public static void displayComparisonDialog(final ArrayList<ResourceConfigurationUpdate> configs) {
-        int resourceId = configs.get(0).getResource().getResourceType().getId();
-        ResourceTypeRepository.Cache.getInstance().getResourceTypes(resourceId,
-            EnumSet.of(ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
+    public static void displayComparisonDialog(final ArrayList<? extends AbstractResourceConfigurationUpdate> configs) {
+        AbstractResourceConfigurationUpdate theFirstUpdateItem = configs.get(0);
+        int resourceId = theFirstUpdateItem.getResource().getResourceType().getId();
+        final boolean isResourceConfig = theFirstUpdateItem instanceof ResourceConfigurationUpdate;
+        ResourceTypeRepository.Cache.getInstance().getResourceTypes(
+            resourceId,
+            isResourceConfig ? EnumSet.of(ResourceTypeRepository.MetadataType.resourceConfigurationDefinition)
+                : EnumSet.of(ResourceTypeRepository.MetadataType.pluginConfigurationDefinition),
             new ResourceTypeRepository.TypeLoadedCallback() {
 
                 public void onTypesLoaded(ResourceType type) {
 
-                    ConfigurationDefinition definition = type.getResourceConfigurationDefinition();
+                    ConfigurationDefinition definition;
+                    if (isResourceConfig) {
+                        definition = type.getResourceConfigurationDefinition();
+                    } else {
+                        definition = type.getPluginConfigurationDefinition();
+                    }
 
                     ArrayList<Configuration> configurations = new ArrayList<Configuration>();
                     ArrayList<String> titles = new ArrayList<String>();
-                    for (ResourceConfigurationUpdate update : configs) {
+                    for (AbstractResourceConfigurationUpdate update : configs) {
                         configurations.add(update.getConfiguration());
                         titles.add(String.valueOf(update.getId()));
                     }
@@ -194,15 +207,26 @@ public class ConfigurationComparisonView extends VLayout {
         ArrayList<Configuration> configurations, ArrayList<String> titles) {
 
         ConfigurationComparisonView view = new ConfigurationComparisonView(definition, configurations, titles);
-        Window dialog = new Window();
+        final Window dialog = new LocatableWindow("configCompare");
         dialog.setTitle(MSG.view_configCompare_comparingConfigs());
-        dialog.setWidth(800);
-        dialog.setHeight(800);
+        dialog.setShowMinimizeButton(true);
+        dialog.setShowMaximizeButton(true);
+        dialog.setWidth(700);
+        dialog.setHeight(500);
         dialog.setIsModal(true);
         dialog.setShowModalMask(true);
+        dialog.setShowResizer(true);
+        dialog.setShowFooter(true);
         dialog.setCanDragResize(true);
+        dialog.setAutoCenter(true);
         dialog.centerInPage();
         dialog.addItem(view);
+        dialog.addCloseClickHandler(new CloseClickHandler() {
+            @Override
+            public void onCloseClick(CloseClientEvent event) {
+                dialog.markForDestroy();
+            }
+        });
         dialog.show();
     }
 
@@ -238,9 +262,5 @@ public class ConfigurationComparisonView extends VLayout {
                 setAttribute("consistent", allTheSame);
             }
         }
-    }
-
-    private static class ColoredTreeGrid extends TreeGrid {
-
     }
 }

@@ -207,7 +207,7 @@ public class DiscoveredResourceDetails {
         if (resourceVersion.length() > RESOURCE_VERSION_MAX_LENGTH) {
             log.warn("Plugin error: Resource version [" + resourceVersion + "] specified by [" + this.resourceType
                 + "] discovery component is longer than the maximum length (" + RESOURCE_VERSION_MAX_LENGTH
-                + " - truncating it to " + RESOURCE_VERSION_MAX_LENGTH + " characters...");
+                + ") - truncating it to " + RESOURCE_VERSION_MAX_LENGTH + " characters...");
             this.resourceVersion = resourceVersion.substring(0, RESOURCE_VERSION_MAX_LENGTH);
         } else {
             this.resourceVersion = resourceVersion;

@@ -38,6 +38,7 @@ public class Message {
 
     // TODO: Add Debug severity?
     public enum Severity {
+        // keep the order - the ordinals are sorted least severe to highest severe
         Blank("InfoBlank", "info/icn_info_blank.png"), //
         Info("InfoBlock", "info/icn_info_blue.png"), //
         Warning("WarnBlock", "info/icn_info_orange.png"), //
@@ -112,7 +113,7 @@ public class Message {
     }
 
     public Message(String conciseMessage, Throwable details, Severity severity, EnumSet<Option> options) {
-        this(conciseMessage, ErrorHandler.getAllMessages(details), severity, options);
+        this(conciseMessage, ErrorHandler.getAllMessages(details, true), severity, options);
     }
 
     public Message(String conciseMessage, String detailedMessage, Severity severity, EnumSet<Option> options) {

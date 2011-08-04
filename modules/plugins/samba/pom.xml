@@ -5,7 +5,7 @@
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-plugins-parent</artifactId>
-      <version>4.0.0-SNAPSHOT</version>
+      <version>4.1.0-SNAPSHOT</version>
    </parent>
 
    <groupId>org.rhq</groupId>
@@ -22,9 +22,17 @@
 
    <properties>
       <scm.module.path>modules/plugins/samba/</scm.module.path>
+      <ant.contrib.version>1.0b3</ant.contrib.version>
    </properties>
 
    <dependencies>
+
+      <dependency>
+         <groupId>ant-contrib</groupId>
+         <artifactId>ant-contrib</artifactId>
+         <version>${ant.contrib.version}</version>
+         <scope>provided</scope>
+      </dependency>
 
       <dependency>
         <groupId>org.rhq</groupId>
@@ -64,6 +72,11 @@
                         <phase>pre-integration-test</phase>
                         <configuration>
                            <tasks>
+                              <taskdef resource="net/sf/antcontrib/antcontrib.properties">
+                                 <classpath>
+                                    <pathelement location="${settings.localRepository}/ant-contrib/ant-contrib/${ant.contrib.version}/ant-contrib-${ant.contrib.version}.jar" />
+                                 </classpath>
+                              </taskdef>
                               <echo>Setting up integration test plugin container environment under target/itest/...</echo>
 
                               <property name="settings.localRepository" location="${user.home}/.m2/repository" />
@@ -93,11 +106,42 @@
                                  </patternset>
                               </unzip>
                               <move todir="target/itest/lib" flatten="true">
-                                 <fileset dir="target/itest/lib">
+                                 <fileset dir="target/itest/lib/hyperic-sigar-${sigar.zip.version}">
                                     <include name="**/lib/*" />
                                  </fileset>
                               </move>
-                              <delete dir="target/itest/lib/hyperic-sigar-${sigar.version}" />
+                              <delete dir="target/itest/lib/hyperic-sigar-${sigar.zip.version}" />
+
+                              <unzip dest="target/itest/lib">
+                                 <fileset dir="${settings.localRepository}/net/augeas/augeas-native/${augeas.version}" includes="*.zip" />
+                                 <patternset>
+                                    <include name="**/lib*/*.so" />
+                                    <include name="**/lib*/*.so.*" />
+                                 </patternset>
+                              </unzip>                              
+                              <!-- by default deploy the 32bit augeas libs -->
+                              <move todir="target/itest/lib/">
+                                <fileset dir="target/itest/lib/augeas-native-${augeas.zip.version}/lib">
+                                    <include name="**/*.so"/>
+                                    <include name="**/*.so.*"/>
+                                </fileset>
+                              </move>
+                              <if>
+                                  <or>
+                                      <os family="unix" arch="x86_64" />
+                                      <os family="unix" arch="amd64" />
+                                   </or>   
+                                  <then>
+                                      <!-- overwrite with 64bits if needed -->
+                                      <move todir="target/itest/lib/">
+                                        <fileset dir="target/itest/lib/augeas-native-${augeas.zip.version}/lib64">
+                                            <include name="**/*.so"/>
+                                            <include name="**/*.so.*"/>
+                                        </fileset>
+                                      </move>
+                                  </then>
+                              </if> 
+                              <delete dir="target/itest/lib/augeas-native-${augeas.zip.version}" />                                                            
                            </tasks>
                         </configuration>
                         <goals>
@@ -124,18 +168,15 @@
                            <skip>${maven.test.skip}</skip>
                            <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
                            <useSystemClassLoader>true</useSystemClassLoader>
-                           <argLine>-Dorg.hyperic.sigar.path=${basedir}/target/itest/lib</argLine>
                            <!--<argLine>-Dorg.hyperic.sigar.path=${basedir}/target/itest/lib -Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y</argLine>-->
-                           <systemProperties>
-                              <property>
-                                 <name>project.artifactId</name>
-                                 <value>${project.artifactId}</value>
-                              </property>
-                              <property>
-                                 <name>project.version</name>
-                                 <value>${project.version}</value>
-                              </property>
-                           </systemProperties>
+                           <environmentVariables>
+                              <LD_LIBRARY_PATH>${basedir}/target/itest/lib:${env.LD_LIBRARY_PATH}</LD_LIBRARY_PATH>
+                           </environmentVariables>
+                           <systemPropertyVariables>
+                              <org.hyperic.sigar.path>${basedir}/target/itest/lib</org.hyperic.sigar.path>
+                              <project.artifactId>${project.artifactId}</project.artifactId>
+                              <project.version>${project.version}</project.version>
+                           </systemPropertyVariables>
                         </configuration>
                      </execution>
                   </executions>
@@ -184,13 +225,13 @@
                         <id>deploy-jar-meta-inf</id>
                         <phase>package</phase>
                         <configuration>
-                          <tasks>                             
-                             <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />                             
+                          <tasks>
+                             <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
                              <echo>*** Updating META-INF dir in ${deployment.file}...</echo>
                              <unjar src="${project.build.directory}/${project.build.finalName}.jar" dest="${project.build.outputDirectory}">
                                <patternset><include name="META-INF/**" /></patternset>
                              </unjar>
-                             <jar destfile="${deployment.file}" manifest="${project.build.outputDirectory}/META-INF/MANIFEST.MF" update="true">                                
+                             <jar destfile="${deployment.file}" manifest="${project.build.outputDirectory}/META-INF/MANIFEST.MF" update="true">
                              </jar>
                           </tasks>
                         </configuration>
@@ -198,7 +239,7 @@
                           <goal>run</goal>
                         </goals>
                      </execution>
-                     
+
                      <execution>
                         <id>undeploy</id>
                         <phase>clean</phase>
@@ -228,37 +269,37 @@
         <build>
          <plugins>
            <plugin>
-             <artifactId>maven-antrun-plugin</artifactId>     
+             <artifactId>maven-antrun-plugin</artifactId>
               <dependencies>
                <dependency>
                  <groupId>net.sourceforge.cobertura</groupId>
                  <artifactId>cobertura</artifactId>
-                 <version>1.9.4.1</version>       
+                 <version>${cobertura.version}</version>
                </dependency>
              </dependencies>
-             <executions>                         
-              <execution>              
+             <executions>
+              <execution>
                <id>cobertura-instrument</id>
                <phase>pre-integration-test</phase>
-                 <configuration>                  
-                   <tasks> 
+                 <configuration>
+                   <tasks>
                    <!-- prepare directory structure for cobertura-->
-                   <mkdir dir="target/cobertura" /> 
-                   <mkdir dir="target/cobertura/backup"/>
+                   <mkdir dir="target/cobertura" />
+                   <mkdir dir="target/cobertura/backup" />
                    <!-- backup all classes so that we can instrument the original classes-->
                    <copy toDir="target/cobertura/backup" verbose="true" overwrite="true">
                       <fileset dir="target/classes">
-                         <include name="**/*.class" />                         
+                         <include name="**/*.class" />
                       </fileset>
                    </copy>
                    <!-- create a properties file and save there location of cobertura data file-->
-                   <touch file="target/classes/cobertura.properties"/>
+                   <touch file="target/classes/cobertura.properties" />
                    <echo file="target/classes/cobertura.properties">net.sourceforge.cobertura.datafile=${project.build.directory}/cobertura/cobertura.ser</echo>
                    <taskdef classpathref="maven.plugin.classpath" resource="tasks.properties" />
                    <!-- instrument all classes in target/classes directory -->
                    <cobertura-instrument datafile="${project.build.directory}/cobertura/cobertura.ser" todir="${project.build.directory}/classes">
-                     <fileset dir="${project.build.directory}/classes">                     
-                        <include name="**/*.class"/>
+                     <fileset dir="${project.build.directory}/classes">
+                        <include name="**/*.class" />
                       </fileset>
                     </cobertura-instrument>
                    </tasks>
@@ -266,7 +307,7 @@
                <goals>
                  <goal>run</goal>
                </goals>
-              </execution>                            
+              </execution>
               <execution>
                <id>cobertura-report</id>
                <phase>post-integration-test</phase>
@@ -279,11 +320,11 @@
                      <!-- restore classes from backup folder to classes folder -->
                      <copy toDir="target/classes" verbose="true" overwrite="true">
                       <fileset dir="target/cobertura/backup">
-                         <include name="**/*.class" />                         
+                         <include name="**/*.class" />
                       </fileset>
                      </copy>
                      <!-- delete backup folder-->
-                     <delete dir="target/cobertura/backup"/>
+                     <delete dir="target/cobertura/backup" />
                      <!-- create a code coverage report -->
                      <cobertura-report format="html" datafile="${project.build.directory}/cobertura/cobertura.ser" destdir="${project.build.directory}/site/cobertura">
                       <fileset dir="${basedir}/src/main/java">
@@ -291,15 +332,15 @@
                       </fileset>
                      </cobertura-report>
                      <!-- delete cobertura.properties file -->
-                     <delete file="target/classes/cobertura.properties"/>
+                     <delete file="target/classes/cobertura.properties" />
                    </tasks>
                  </configuration>
                <goals>
                  <goal>run</goal>
                </goals>
-               </execution>                                           
-            </executions>   
-           </plugin>          
+               </execution>
+            </executions>
+           </plugin>
           </plugins>
        </build>
      </profile>

@@ -27,7 +27,6 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.gui.configuration.ConfigurationMaskingUtility;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.configuration.AbstractConfigurationUIBean;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
@@ -61,9 +60,6 @@ public class ConnectionPropertiesUIBean extends AbstractConfigurationUIBean {
     protected Configuration lookupConfiguration() {
         Configuration configuration = this.configurationManager.getPluginConfiguration(EnterpriseFacesContextUtility
             .getSubject(), EnterpriseFacesContextUtility.getResource().getId());
-        if (configuration != null) {
-            ConfigurationMaskingUtility.maskConfiguration(configuration, getConfigurationDefinition());
-        }
         return configuration;
     }
 
@@ -92,8 +88,6 @@ public class ConnectionPropertiesUIBean extends AbstractConfigurationUIBean {
     }
 
     public String update() {
-        ConfigurationMaskingUtility.unmaskConfiguration(getConfiguration(), getConfigurationDefinition());
-
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         Resource resource = EnterpriseFacesContextUtility.getResource();
         Configuration newConfiguration = getConfiguration();

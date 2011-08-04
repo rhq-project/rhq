@@ -5,7 +5,7 @@
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-enterprise-server-plugins-parent</artifactId>
-      <version>4.0.0-SNAPSHOT</version>
+      <version>4.1.0-SNAPSHOT</version>
    </parent>
 
    <groupId>org.rhq</groupId>
@@ -38,6 +38,9 @@
                         <java classname="org.rhq.enterprise.server.plugin.pc.ServerPluginValidatorUtil" failonerror="true" fork="true">
                            <classpath>
                               <pathelement path="${test.classpath}" />
+                              
+                              <!-- See also: http://rhq-project.org/display/RHQ/Design-Server+Side+Plugins#Design-ServerSidePlugins-xmlschemas -->
+                              
                               <pathelement location="../disk/target/rhq-serverplugin-disk-${project.version}.jar" />
                               <pathelement location="../jboss-software/target/rhq-serverplugin-jboss-software-${project.version}.jar" />
                               <pathelement location="../rhnhosted/target/rhq-serverplugin-rhnhosted-${project.version}.jar" />
@@ -52,7 +55,9 @@
                               <pathelement location="../alert-sms/target/alert-sms-${project.version}.jar" />
                               <pathelement location="../alert-snmp/target/alert-snmp-${project.version}.jar" />
                               <pathelement location="../alert-subject/target/alert-subject-${project.version}.jar" />
+                              <pathelement location="../alert-log4j/target/alert-log4j-${project.version}.jar" />
                               <pathelement location="../cobbler/target/cobbler-${project.version}.jar" />
+                              <pathelement location="../drift-rhq/target/rhq-serverplugin-drift-${project.version}.jar" />
                               <pathelement location="../filetemplate-bundle/target/rhq-serverplugin-filetemplate-bundle-${project.version}.jar" />
                               <pathelement location="../ant-bundle/target/rhq-serverplugin-ant-bundle-${project.version}.jar" />
                               <pathelement location="../perspectives/core/target/rhq-core-perspective-${project.version}.jar" />

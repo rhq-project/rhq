@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -33,6 +33,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -503,7 +504,7 @@ public class MBeanResourceComponent<T extends JMXComponent> implements Measureme
                     property.setErrorMessage(ThrowableUtil.getStackAsString(e));
                     report
                         .setErrorMessage("Failed setting resource configuration - see property error messages for details");
-                    log.info("Failure setting MBean Resource configuration value", e);
+                    log.info("Failure setting MBean Resource configuration value for " + key, e);
                 }
             }
         }
@@ -520,38 +521,72 @@ public class MBeanResourceComponent<T extends JMXComponent> implements Measureme
     public OperationResult invokeOperation(String name, Configuration parameters, EmsBean emsBean) throws Exception {
         if (emsBean == null) {
             throw new Exception("Can not invoke operation [" + name
-                + "], as we can't connect to the bean - is it down?");
+                + "], as we can't connect to the MBean - is it down?");
         }
 
-        EmsOperation operation = emsBean.getOperation(name);
-        if (operation == null) {
-            throw new Exception("Operation [" + name + "] not found on bean [" + emsBean.getBeanName() + "]");
-        }
-
-        Object[] parameterValues = new Object[operation.getParameters().size()];
-
-        int i = 0;
-        List<EmsParameter> params = operation.getParameters();
-        for (EmsParameter param : params) {
-            PropertySimple ps = parameters.getSimple(param.getName());
-            if (param.getType().equals(String.class.getName())) {
-                parameterValues[i] = (ps == null) ? null : ps.getStringValue();
-            } else if (param.getType().equals(boolean.class.getName())) {
-                parameterValues[i] = (ps == null) ? null : ps.getBooleanValue();
+        Map<String, PropertySimple> paramProps = parameters.getSimpleProperties();
+        SortedSet<EmsOperation> emsOperations = emsBean.getOperations();
+        EmsOperation operation = null;
+        // There could be multiple operations with the same name but different parameters. Try to find one that has
+        // the same # of parameters as the RHQ operation def.
+        for (EmsOperation emsOperation : emsOperations) {
+            if (emsOperation.getName().equals(name) && (emsOperation.getParameters().size() == paramProps.size())) {
+                operation = emsOperation;
+                break;
             }
-
-            // TODO GH: Handle rest of types. (I think i have a mapper for this in mc4j
-            i++;
+        }
+        if (operation == null) {
+            // We couldn't find an operation with the expected name and # of parameters, so as as a last ditch effort,
+            // see if there's an operation that at least has the expected name.
+            operation = emsBean.getOperation(name);
+        }
+        if (operation == null) {
+            throw new Exception("Operation [" + name + "] not found on MBean [" + emsBean.getBeanName() + "].");
         }
 
-        Object resultObject = operation.invoke(parameterValues);
+        List<EmsParameter> emsParams = operation.getParameters();
+        Map<String, Integer> emsParamIndexesByName = new HashMap<String, Integer>();
+        for (int i = 0, emsParamsSize = emsParams.size(); i < emsParamsSize; i++) {
+            EmsParameter emsParam = emsParams.get(i);
+            if (emsParam.getName() != null) {
+                emsParamIndexesByName.put(emsParam.getName(), i);
+            }
+        }
+
+        Object[] paramValues = new Object[operation.getParameters().size()];
+
+        for (String propName : paramProps.keySet()) {
+            Integer paramIndex;
+            if (propName.matches("\\[\\d+\\]")) {
+                paramIndex = Integer.valueOf(propName.substring(propName.indexOf('[') + 1, propName.indexOf(']')));
+                if (paramIndex < 0 || paramIndex >= emsParams.size()) {
+                    throw new IllegalStateException("Index [" + paramIndex + "] specified for parameter of operation ["
+                            + name + "] on MBean [" + emsBean.getBeanName() + "] is invalid. The MBean operation takes "
+                            + emsParams.size() + " parameters.");
+                }
+            } else {
+                paramIndex = emsParamIndexesByName.get(propName);
+                if (paramIndex == null) {
+                    throw new IllegalStateException("Name [" + propName + "] specified for parameter of operation ["
+                            + name + "] on MBean [" + emsBean.getBeanName()
+                            + "] is invalid. The MBean operation does not take a parameter by that name.");
+                }
+            }
+            EmsParameter emsParam = emsParams.get(paramIndex);
+
+            PropertySimple paramProp = paramProps.get(propName);
+            String emsParamType = emsParam.getType();
+            Object paramValue = getPropertyValueAsType(paramProp, emsParamType);
+            paramValues[paramIndex] = paramValue;
+        }
+
+        Object resultObject = operation.invoke(paramValues);
 
         boolean hasVoidReturnType = (operation.getReturnType() == null
             || Void.class.getName().equals(operation.getReturnType()) || void.class.getName().equals(
             operation.getReturnType()));
 
         OperationResult resultToReturn;
-
         if (resultObject == null && hasVoidReturnType) {
             resultToReturn = null;
         } else {
@@ -574,5 +609,26 @@ public class MBeanResourceComponent<T extends JMXComponent> implements Measureme
         }
 
         return resultToReturn;
+    }
+
+    private Object getPropertyValueAsType(PropertySimple propSimple, String typeName) {
+        Object value;
+        if (typeName.equals(String.class.getName())) {
+            value = (propSimple == null) ? null : propSimple.getStringValue();
+        } else if (typeName.equals(Boolean.class.getName()) || typeName.equals(boolean.class.getName())) {
+            value = (propSimple == null) ? null : propSimple.getBooleanValue();
+        } else if (typeName.equals(Integer.class.getName()) || typeName.equals(int.class.getName())) {
+            value = (propSimple == null) ? null : propSimple.getIntegerValue();
+        } else if (typeName.equals(Long.class.getName()) || typeName.equals(long.class.getName())) {
+            value = (propSimple == null) ? null : propSimple.getLongValue();
+        } else if (typeName.equals(Float.class.getName()) || typeName.equals(float.class.getName())) {
+            value = (propSimple == null) ? null : propSimple.getFloatValue();
+        } else if (typeName.equals(Double.class.getName()) || typeName.equals(double.class.getName())) {
+            value = (propSimple == null) ? null : propSimple.getDoubleValue();
+        } else {
+            throw new IllegalStateException("Operation parameter maps to MBean parameter with an unsupported type (" + typeName + ").");
+        }
+        // TODO GH: Handle rest of types. (I think i have a mapper for this in mc4j
+        return value;
     }
 }

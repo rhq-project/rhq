@@ -1,0 +1,512 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:a4j="http://richfaces.org/a4j"
+      xmlns:rich="http://richfaces.org/rich">
+      
+<ui:composition template="/rhq/resource/layout/main-plain.xhtml">
+
+   <ui:param name="id" value="#{param.id}" />
+   <ui:param name="mode" value="#{param.mode}" />
+   <ui:param name="pageTitle" value="Content Source '#{ContentProviderDetailsUIBean.contentSource.name}'"/>
+   <ui:param name="item" value="#{ContentProviderDetailsUIBean.contentSource}" />
+   
+   <ui:define name="breadcrumbs">
+      <h:outputLink value="listContentProviders-plain.xhtml">
+         ${msg["contentprovider.list.breadcrumb"]}
+      </h:outputLink>
+      &gt;
+      <h:outputLink value="contentProvider-plain.xhtml">
+         #{item.name}
+         <f:param name="mode" value="view" />
+         <f:param name="id" value="#{item.id}" />
+      </h:outputLink>
+   </ui:define>
+   
+   <ui:define name="content">
+
+   <a4j:region>
+      <h:form id="pollerForm">
+         <input type="hidden" name="id" value="#{param.id}"/>
+         <input type="hidden" name="mode" value="#{param.mode}"/>
+
+         <!-- TODO: Only update if a sync is in progress. -->
+         <!-- BZ-589199 modified a4j:poll to rerender all other regions of contentSourceSyncResultsListForm but the modalPanel -->
+         <a4j:poll id="poller" interval="7000" enabled="true" 
+           reRender="poller,table-check-boxes,table-start,table-end,table-id,table-status"/>
+      </h:form>
+   </a4j:region>
+
+      <h:form id="contentProviderDetailsForm">
+         <input type="hidden" name="id" value="${param.id}"/>
+         <input type="hidden" name="mode" value="${param.mode}"/>
+
+         <rich:panel>
+            <f:facet name="header">Basic Details</f:facet>
+            <table>
+               <tr>
+                  <td align="right"><b>Type:</b></td>
+                  <td align="left">
+                     <h:outputText value="#{ContentProviderDetailsUIBean.contentSource.contentSourceType.name}" />
+                  </td>
+               </tr>
+               <tr>
+                  <td align="right"><b>Name:</b></td>
+                  <td align="left">
+                     <h:inputText  rendered="${mode eq 'edit'}" value="#{ContentProviderDetailsUIBean.contentSource.name}" />
+                     <h:outputText rendered="${mode ne 'edit'}" value="#{ContentProviderDetailsUIBean.contentSource.name}" />
+                  </td>
+               </tr>
+               <tr>
+                  <td align="right"><b>Description:</b></td>
+                  <td align="left">
+                     <h:inputTextarea rendered="${mode eq 'edit'}" rows="3" cols="20" value="#{ContentProviderDetailsUIBean.contentSource.description}"/>
+                     <h:outputText    rendered="${mode ne 'edit'}" value="#{ContentProviderDetailsUIBean.contentSource.description}"/>
+                  </td>
+               </tr>
+               <tr>
+                  <td align="right"><b>Synchronization Schedule:</b></td>
+                  <td align="left">
+                     <h:inputText  rendered="${mode eq 'edit'}" value="#{ContentProviderDetailsUIBean.contentSource.syncSchedule}" />
+                     <h:outputText rendered="${mode ne 'edit'}" value="#{ContentProviderDetailsUIBean.contentSource.syncSchedule}" />
+                  </td>
+               </tr>
+               <tr>
+                  <td align="right"><b>Lazy Load:</b></td>
+                  <td align="left">
+                     <h:selectBooleanCheckbox rendered="${mode eq 'edit'}" value="#{ContentProviderDetailsUIBean.contentSource.lazyLoad}" />
+                     <h:outputText            rendered="${mode ne 'edit'}" value="#{ContentProviderDetailsUIBean.contentSource.lazyLoad}" />
+                  </td>
+               </tr>
+               <tr>
+                  <td align="right"><b>Download Mode:</b></td>
+                  <td align="left">
+                     <h:selectOneMenu rendered="${mode eq 'edit'}"
+                                      value="#{ContentProviderDetailsUIBean.selectedDownloadMode}">
+                        <f:selectItems value="#{ContentProviderDetailsUIBean.downloadModes}" />
+                     </h:selectOneMenu> 
+                     <h:outputText rendered="${mode ne 'edit'}" value="#{ContentProviderDetailsUIBean.contentSource.downloadMode}" />
+                  </td>
+               </tr>
+               <tr>
+                  <td align="right"><b>Creation Date:</b></td>
+                  <td align="left">
+                     <h:outputText value="#{ContentProviderDetailsUIBean.contentSource.creationDate}">
+                        <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
+                     </h:outputText>
+                  </td>
+               </tr>
+               <tr>
+                  <td align="right"><b>Last Modified Date:</b></td>
+                  <td align="left">
+                     <h:outputText value="#{ContentProviderDetailsUIBean.contentSource.lastModifiedDate}">
+                        <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
+                     </h:outputText>
+                  </td>
+               </tr>
+               <tr>
+                  <td align="right"><b>Last Download Error:</b></td>
+                  <td align="left">
+                     <h:outputLink rendered="#{ContentProviderDetailsUIBean.contentSource.loadErrorMessage ne null}"
+                                   value="#" id="lastDownloadErrorLink">
+                        <h:outputText value="Click here to view..."/>
+                        <rich:componentControl for="lastDownloadErrorModalPanel" attachTo="lastDownloadErrorLink" operation="show" event="onclick"/>
+                     </h:outputLink>
+                     <h:outputText rendered="#{ContentProviderDetailsUIBean.contentSource.loadErrorMessage eq null}" value="None"/>
+                     <rich:modalPanel id="lastDownloadErrorModalPanel" width="350" height="300"
+                                      style="overflow: auto;">
+                        <f:facet name="header">
+                           <h:panelGroup>
+                              <h:outputText value="Last Download Error" />
+                           </h:panelGroup>
+                        </f:facet>
+                        <f:facet name="controls">
+                           <h:panelGroup>
+                              <h:graphicImage value="/images/close.png" style="cursor:pointer" id="lastDownloadErrorModalPanelHideLink"/>
+                              <rich:componentControl for="lastDownloadErrorModalPanel" attachTo="lastDownloadErrorModalPanelHideLink" operation="hide" event="onclick"/>
+                           </h:panelGroup>
+                        </f:facet>
+                        <div class="ErrorModalBody">
+                        <h:outputText value="#{ContentProviderDetailsUIBean.contentSource.loadErrorMessage}" />
+                        </div>
+                     </rich:modalPanel>                     
+                  </td>
+               </tr>
+            </table>
+         </rich:panel>
+         
+         <rich:panel>
+             <onc:config configurationDefinition="#{ContentProviderDetailsUIBean.contentSourceTypeConfigurationDefinition}"
+                         configuration="#{ContentProviderDetailsUIBean.contentSource.configuration}"
+                         readOnly="#{mode ne 'edit'}"
+                         nullConfigurationDefinitionMessage="This content source type does not require a configuration."
+                         nullConfigurationMessage="Configuration is empty."
+                         nullConfigurationStyle="InfoBlock"/>
+         </rich:panel>
+         
+         <h:panelGrid columns="3" styleClass="buttons-table" columnClasses="button-cell">
+            <ui:remove><!-- view mode buttons --></ui:remove>
+            <h:commandButton rendered="${mode ne 'edit'}"
+                             value="EDIT" action="#{ContentProviderDetailsUIBean.edit}"
+                             alt="Edit" styleClass="buttonmed" id="editButton"/>
+            <h:commandButton rendered="${mode ne 'edit'}"
+                             value="TEST CONNECTION" action="#{ContentProviderDetailsUIBean.test}"
+                             alt="Test Connection" styleClass="buttonmed" id="testButton"/>
+            <h:commandButton rendered="${mode ne 'edit'}"
+                             value="SYNCHRONIZE" action="#{ContentProviderDetailsUIBean.sync}"
+                             alt="Synchronize" styleClass="buttonmed" id="syncButton"/>
+
+            <ui:remove><!-- edit mode buttons --></ui:remove>
+            <h:commandButton rendered="${mode eq 'edit'}"
+                             value="SAVE" action="#{ContentProviderDetailsUIBean.save}"
+                             alt="Save" styleClass="buttonmed" id="saveButton"/>
+            <h:commandButton rendered="${mode eq 'edit'}"
+                             value="CANCEL" action="#{ContentProviderDetailsUIBean.cancel}"
+                             alt="Cancel" styleClass="buttonmed" id="cancelButton"/>
+         </h:panelGrid>
+
+      </h:form>
+
+
+   
+      <!-- IMPORTED (NOT CANDIDATE) REPOS LIST -->
+
+      <h:form id="contentProviderReposListForm">
+         <input type="hidden" name="id" value="${param.id}"/>
+         <input type="hidden" name="mode" value="${param.mode}"/>
+      
+         <rich:panel>
+            <f:facet name="header">
+               <h:outputText value="Repositories"/>
+            </f:facet>
+
+            <h:panelGrid columns="1" width="100%">
+
+            <ui:param name="contentProviderReposDataModel" value="#{ContentSourceReposUIBean.dataModel}"/>
+            <rich:dataTable id="contentProviderReposDataTable"
+                            rows="#{PageControl.ContentSourceReposList.pageSize}"
+                            value="#{contentProviderReposDataModel}"
+                            var="repo"
+                            width="100%"
+                            columnsWidth="1%, 20%, 20%, 20%"
+                            headerClass="tableRowHeader"
+                            footerClass="on-pager-footer"
+                            onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
+                            onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
+
+               <f:facet name="PageControlView">
+                  <onc:paginationControl id="ContentSourceReposList" />
+               </f:facet>
+      
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:allSelect target="selectedContentSourceRepos" />
+                  </f:facet>
+                  
+                  <onc:select name="selectedContentSourceRepos" value="#{repo.id}" />
+               </rich:column>
+
+               <rich:column rendered="#{param.debug}">
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="c.id">
+                        <h:outputText styleClass="headerText" value="ID" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+                  
+                  <h:outputText value="#{repo.id}"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="c.name">
+                        <h:outputText styleClass="headerText" value="Name" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+               
+                  <h:outputLink value="repo-plain.xhtml">
+                     <f:param name="mode" value="view"/>
+                     <f:param name="id" value="#{repo.id}"/>
+                     <h:outputText value="#{repo.name}" />
+                  </h:outputLink>
+               </rich:column>
+               
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="c.creationDate">
+                        <h:outputText styleClass="headerText" value="Date Created" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+               
+                  <h:outputText value="#{repo.creationDate}">
+                     <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
+                  </h:outputText>
+               </rich:column>
+               
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="c.lastModifiedDate">
+                        <h:outputText styleClass="headerText" value="Date Modified" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+               
+                  <h:outputText value="#{repo.lastModifiedDate}">
+                     <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
+                  </h:outputText>
+               </rich:column>
+               
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="c.description">
+                        <h:outputText styleClass="headerText" value="Description" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+               
+                  <h:outputText value="#{repo.description}"/>
+               </rich:column>
+
+               <f:facet name="footer">
+                  <rich:columnGroup>
+                     <!-- colspan 6:5 for the debug 'id' column -->
+                     <rich:column colspan="#{param.debug ? 6 : 5}" width="100%">
+                        <ui:remove>
+                        <!--
+                        <onc:selectCommandButton action="#{ContentSourceReposUIBean.deleteSelectedContentSourceRepos}"
+                                                 value="DISASSOCIATE SELECTED" target="selectedContentSourceRepos"
+                                                 styleClass="on-pager-button buttonsmall"/>
+                        -->
+                        </ui:remove>
+                        <ui:param name="paginationDataTableName" value="contentProviderReposDataTable"/>
+                        <ui:param name="paginationDataModel" value="#{contentProviderReposDataModel}"/>
+                        <ui:param name="paginationPageControl" value="#{PageControl.ContentSourceReposList}"/>
+                        <ui:include src="../resource/include/pagination.xhtml"/>
+                     </rich:column>
+                  </rich:columnGroup>
+               </f:facet>
+
+            </rich:dataTable>
+
+            </h:panelGrid>
+            
+         </rich:panel>
+      </h:form>
+
+
+      <!-- SYNCHRONIZATION RESULTS HISTORY -->
+
+      <h:form id="contentSourceSyncResultsListForm">
+         <input type="hidden" name="id" value="${param.id}"/>
+         <input type="hidden" name="mode" value="${param.mode}"/>
+      
+         <rich:panel>
+            <f:facet name="header">
+               <h:outputText value="Synchronization Results History"/>
+            </f:facet>
+
+            <h:panelGrid columns="1" width="100%">
+
+            <ui:param name="contentSourceSyncResultsDataModel" value="#{ContentSourceSyncResultsUIBean.dataModel}"/>
+            <rich:dataTable id="contentSourceSyncResultsDataTable"
+                            rows="#{PageControl.ContentSourceSyncResultsList.pageSize}"
+                            value="#{contentSourceSyncResultsDataModel}"
+                            var="syncitem"
+                            width="100%"
+                            columnsWidth="1%, 10%, 20%, 20%, 10%"
+                            headerClass="tableRowHeader"
+                            footerClass="on-pager-footer"
+                            onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
+                            onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
+
+
+               <f:facet name="PageControlView">
+                  <onc:paginationControl id="ContentSourceSyncResultsList" />
+               </f:facet>
+      
+               <rich:column id="table-check-boxes">
+                  <f:facet name="header">
+                     <onc:allSelect target="selectedContentSourceSyncResults" />
+                  </f:facet>
+                  
+                  <onc:select name="selectedContentSourceSyncResults" value="#{syncitem.id}" />
+               </rich:column>
+      
+               <rich:column id="table-id">
+                  <f:facet name="header">
+                     <h:outputText styleClass="headerText" value="ID" />
+                  </f:facet>
+                  
+                  <h:outputText value="#{syncitem.id}"/>
+               </rich:column>
+
+               <rich:column id="table-start">
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="cssr.startTime">
+                        <h:outputText styleClass="headerText" value="Start Time" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+               
+                  <h:outputText value="#{syncitem.startTime}">
+                     <f:converter converterId="UserDateTimeConverter" />
+                  </h:outputText>
+               </rich:column>
+               
+               <rich:column id="table-end">
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="cssr.endTime">
+                        <h:outputText styleClass="headerText" value="End Time" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+               
+                  <h:outputText value="#{syncitem.endTime}">
+                     <f:converter converterId="UserDateTimeConverter" />
+                  </h:outputText>
+               </rich:column>
+               
+               <rich:column id="table-status">
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="cssr.status">
+                        <h:outputText styleClass="headerText" value="Status" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{syncitem.status}"/>
+               </rich:column>
+               
+               <rich:column>
+                  <f:facet name="header">
+                     <h:outputText styleClass="headerText" value="Results" />
+                  </f:facet>
+               
+                  <h:outputLink rendered="#{syncitem.results ne null}"
+                                value="#" id="resultsLink">
+                     <h:outputText value="Click here to view..."/>
+                     <rich:componentControl for="resultsModalPanel" attachTo="resultsLink" operation="show" event="onclick"/>
+                  </h:outputLink>
+                  <h:outputText rendered="#{syncitem.results eq null}" value=""/>
+
+                  <rich:modalPanel id="resultsModalPanel" width="640" height="480" moveable="false" resizeable="false"
+                                   style="overflow: auto;">
+                     <f:facet name="header">
+                        <h:panelGroup layout="block">
+                           Results for synchronization request with id #{syncitem.id}
+                        </h:panelGroup>
+                     </f:facet>
+                     <f:facet name="controls">
+                        <h:panelGroup>
+                           <h:graphicImage value="/images/close.png" style="cursor:pointer" id="resultsModelPanelHideLink"/>
+                           <rich:componentControl for="resultsModalPanel" attachTo="resultsModelPanelHideLink" operation="hide" event="onclick"/>
+                        </h:panelGroup>
+                     </f:facet>
+                     <h:panelGroup layout="block">
+                        <pre>#{syncitem.results}</pre>
+                     </h:panelGroup>
+                  </rich:modalPanel>
+               </rich:column>
+               
+               <f:facet name="footer">
+                  <rich:columnGroup>
+                     <rich:column colspan="6" width="100%">
+                        <onc:selectCommandButton action="#{ContentSourceSyncResultsUIBean.deleteSelectedContentSourceSyncResults}"
+                                                 value="DELETE SELECTED" target="selectedContentSourceSyncResults" styleClass="on-pager-button buttonsmall"/>
+
+                        <ui:param name="paginationDataTableName" value="contentSourceSyncResultsDataTable"/>
+                        <ui:param name="paginationDataModel" value="#{contentSourceSyncResultsDataModel}"/>
+                        <ui:param name="paginationPageControl" value="#{PageControl.ContentSourceSyncResultsList}"/>
+                        <ui:include src="../resource/include/pagination.xhtml"/>
+                     </rich:column>
+                  </rich:columnGroup>
+               </f:facet>
+
+            </rich:dataTable>
+
+            </h:panelGrid>
+            
+         </rich:panel>
+         
+      </h:form>
+
+
+
+      <!-- CANDIDATE (NOT IMPORTED) REPOS LIST -->
+
+      <h:form id="contentSourceRepoListForm" rendered="#{ContentSourceCandidateReposUIBean.dataModel.rowCount gt 0}">
+         <input type="hidden" name="id" value="${param.id}"/>
+         <input type="hidden" name="mode" value="${param.mode}"/>
+      
+         <rich:panel>
+            <f:facet name="header">
+               <h:outputText value="Candidate Repositories"/>
+            </f:facet>
+
+            <h:panelGrid columns="2" width="100%">
+
+            <ui:param name="contentSourceReposDataModel" value="#{ContentSourceCandidateReposUIBean.dataModel}"/>
+            <rich:dataTable id="contentSourceReposDataTable"
+                            rows="#{PageControl.ContentSourceCandidateReposList.pageSize}"
+                            value="#{contentSourceReposDataModel}"
+                            var="repo"
+                            width="100%"
+                            columnsWidth="1%,99%"
+                            headerClass="tableRowHeader"
+                            footerClass="on-pager-footer"
+                            onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
+                            onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
+
+               <f:facet name="PageControlView">
+                  <onc:paginationControl id="ContentSourceCandidateReposList" />
+               </f:facet>
+
+                <rich:column>
+                   <f:facet name="header">
+                      <onc:allSelect target="selectedCandidateRepos" />
+                   </f:facet>
+
+                   <onc:select name="selectedCandidateRepos" value="#{repo.id}" />
+                </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="c.name">
+                        <h:outputText styleClass="headerText" value="Name" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{repo.name}" />
+                  <h:outputText value="(id=#{repo.id})" rendered="#{param.debug}" />
+               </rich:column>
+
+               <f:facet name="footer">
+                  <rich:columnGroup>
+                     <!-- colspan 7:6 for the debug 'id' column -->
+                     <rich:column colspan="2" width="100%">
+                        <onc:selectCommandButton action="#{ContentSourceCandidateReposUIBean.importSelectedRepos}"
+                                                 value="IMPORT SELECTED" target="selectedCandidateRepos" styleClass="on-pager-button buttonsmall"/>
+                        <ui:param name="paginationDataTableName" value="contentSourceReposDataTable"/>
+                        <ui:param name="paginationDataModel" value="#{contentSourceReposDataModel}"/>
+                        <ui:param name="paginationPageControl" value="#{PageControl.ContentSourceCandidateReposList}"/>
+                        <ui:include src="../resource/include/pagination.xhtml"/>
+                     </rich:column>
+                  </rich:columnGroup>
+               </f:facet>
+
+            </rich:dataTable>
+
+            </h:panelGrid>
+            
+         </rich:panel>
+      </h:form>
+
+   </ui:define>
+
+</ui:composition>
+
+</html>

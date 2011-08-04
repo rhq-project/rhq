@@ -36,7 +36,8 @@ import org.rhq.enterprise.server.alert.engine.jms.model.ActiveAlertConditionMess
 import org.rhq.enterprise.server.alert.engine.jms.model.InactiveAlertConditionMessage;
 
 /**
- * see {@link CachedConditionManagerLocal#processCachedConditionMessage(AbstractAlertConditionMessage, AlertDefinition)}
+ * see {@link CachedConditionManagerLocal#processCachedConditionMessage(
+ * org.rhq.enterprise.server.alert.engine.jms.model.AbstractAlertConditionMessage, Integer)}
  * for more information.
  * 
  * @author Joseph Marques

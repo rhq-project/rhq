@@ -26,17 +26,18 @@ import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.Record;
 
+import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.schedule.OperationScheduleDataSource;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.schedule.AbstractOperationScheduleDataSource;
 
 /**
  * A DataSource for {@link ResourceOperationSchedule}s for a given {@link Resource}.
  *
  * @author Ian Springer
  */
-public class ResourceOperationScheduleDataSource extends OperationScheduleDataSource<ResourceOperationSchedule> {
+public class ResourceOperationScheduleDataSource extends AbstractOperationScheduleDataSource<ResourceOperationSchedule> {
 
     private ResourceComposite resourceComposite;
 
@@ -47,28 +48,72 @@ public class ResourceOperationScheduleDataSource extends OperationScheduleDataSo
 
     @Override
     protected ResourceOperationSchedule createOperationSchedule() {
-        return new ResourceOperationSchedule();
+        ResourceOperationSchedule resourceOperationSchedule = new ResourceOperationSchedule();
+        resourceOperationSchedule.setResource(this.resourceComposite.getResource());
+        return resourceOperationSchedule;
     }
 
     @Override
-    protected void executeFetch(final DSRequest request, final DSResponse response) {
-        operationService.findScheduledResourceOperations(this.resourceComposite.getResource().getId(),
-            new AsyncCallback<List<ResourceOperationSchedule>>() {
-                public void onSuccess(List<ResourceOperationSchedule> result) {
-                    Record[] records = buildRecords(result);
-                    response.setData(records);
-                    processResponse(request.getRequestId(), response);
+    protected void executeFetch(final DSRequest request, final DSResponse response, final Criteria unused) {
+        final Integer scheduleId = request.getCriteria().getAttributeAsInt(Field.ID);
+        if (scheduleId != null) {
+            operationService.getResourceOperationSchedule(scheduleId, new AsyncCallback<ResourceOperationSchedule>() {
+                public void onSuccess(ResourceOperationSchedule result) {
+                    sendSuccessResponse(request, response, result);
                 }
 
                 public void onFailure(Throwable caught) {
-                    throw new RuntimeException("Failed to find scheduled operations for "
-                        + resourceComposite.getResource() + ".", caught);
+                    sendFailureResponse(request, response, "Failed to fetch ResourceOperationSchedule with id "
+                        + scheduleId + ".", caught);
                 }
             });
+        } else {
+            operationService.findScheduledResourceOperations(this.resourceComposite.getResource().getId(),
+                new AsyncCallback<List<ResourceOperationSchedule>>() {
+                    public void onSuccess(List<ResourceOperationSchedule> result) {
+                        Record[] records = buildRecords(result);
+                        response.setData(records);
+                        processResponse(request.getRequestId(), response);
+                    }
+
+                    public void onFailure(Throwable caught) {
+                        throw new RuntimeException("Failed to find scheduled operations for "
+                            + resourceComposite.getResource() + ".", caught);
+                    }
+                });
+        }
     }
 
     @Override
-    protected void executeAdd(Record recordToAdd, DSRequest request, DSResponse response) {
-        //operationService.scheduleResourceOperation();
+    protected void executeAdd(Record recordToAdd, final DSRequest request, final DSResponse response) {
+        addRequestPropertiesToRecord(request, recordToAdd);
+
+        final ResourceOperationSchedule scheduleToAdd = copyValues(recordToAdd);
+
+        operationService.scheduleResourceOperation(scheduleToAdd, new AsyncCallback<Integer>() {
+            public void onSuccess(Integer scheduleId) {
+                scheduleToAdd.setId(scheduleId);
+                sendSuccessResponse(request, response, scheduleToAdd);
+            }
+
+            public void onFailure(Throwable caught) {
+                throw new RuntimeException("Failed to add " + scheduleToAdd, caught);
+            }
+        });
+    }
+
+    @Override
+    protected void executeRemove(Record recordToRemove, final DSRequest request, final DSResponse response) {
+        final ResourceOperationSchedule scheduleToRemove = copyValues(recordToRemove);
+
+        operationService.unscheduleResourceOperation(scheduleToRemove, new AsyncCallback<Void>() {
+            public void onSuccess(Void result) {
+                sendSuccessResponse(request, response, scheduleToRemove);
+            }
+
+            public void onFailure(Throwable caught) {
+                throw new RuntimeException(caught);
+            }
+        });
     }
 }

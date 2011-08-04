@@ -58,6 +58,7 @@
          <supported-locale>de</supported-locale>
          <supported-locale>fr</supported-locale>
          <supported-locale>pt</supported-locale>
+         <supported-locale>zh</supported-locale>
       </locale-config>
    </application>
 

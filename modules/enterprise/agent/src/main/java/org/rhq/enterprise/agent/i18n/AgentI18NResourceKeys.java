@@ -1936,7 +1936,7 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("Service discovery run for resource [{0}]")
     String DISCOVERY_RESOURCE_SERVICES = "PromptCommand.discovery.resource-service-scan";
 
-    @I18NMessage("The given resource ID [{0}] does not match any resource in inventory.")
+    @I18NMessage("The given resource ID [{0,number,#}] does not match any resource in inventory.")
     String DISCOVERY_RESOURCE_ID_INVALID = "PromptCommand.discovery.resource-id-invalid";
 
     @I18NMessage("=== {0} Inventory Report ===\\n\\\n" //

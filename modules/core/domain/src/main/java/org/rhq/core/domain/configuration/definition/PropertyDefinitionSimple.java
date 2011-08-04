@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -38,6 +38,7 @@ import javax.persistence.OneToMany;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 
 import org.hibernate.annotations.Cascade;
 import org.hibernate.annotations.IndexColumn;
@@ -84,7 +85,7 @@ public class PropertyDefinitionSimple extends PropertyDefinition {
      * {@link PropertyDefinition#required} field is <code>false</code> (i.e. for optional properties). Conversely, this
      * field should be null for properties whose {@link PropertyDefinition#required} field is <code>true</code> (i.e. for
      * required properties).
-     * 
+     *
      * This field is mainly used to help build default templates. You usually do not want to use this
      * default value member variable directly - consider using the configuration definition's default template.
      */
@@ -96,6 +97,10 @@ public class PropertyDefinitionSimple extends PropertyDefinition {
      */
     @Enumerated(EnumType.ORDINAL)
     private MeasurementUnits units;
+
+    @Cascade( { org.hibernate.annotations.CascadeType.ALL, org.hibernate.annotations.CascadeType.DELETE_ORPHAN })
+    @OneToMany(mappedBy = "propertyDefinition", fetch = FetchType.EAGER)
+    List<PropertyOptionsSource> optionsSource = new ArrayList<PropertyOptionsSource>();
 
     public PropertyDefinitionSimple(@NotNull String name, String description, boolean required,
         @NotNull PropertySimpleType type) {
@@ -207,7 +212,7 @@ public class PropertyDefinitionSimple extends PropertyDefinition {
      * value. Note, however, you rarely want to use this directly. Under most
      * circumstances, you should be using the configuration definition's
      * {@link ConfigurationDefinition#getDefaultTemplate() default template}.
-     * 
+     *
      * For an example of where this method is useful, see
      * org.rhq.core.clientapi.agent.configuration.ConfigurationUtility.initializeDefaultTemplate(ConfigurationDefinition)
      *
@@ -222,7 +227,7 @@ public class PropertyDefinitionSimple extends PropertyDefinition {
      * only at times when you plan on building default templates with this
      * property definition later. See {@link #getDefaultValue()} for more details
      * on this default value.
-     * 
+     *
      * @param defaultValue
      */
     public void setDefaultValue(String defaultValue) {
@@ -236,6 +241,21 @@ public class PropertyDefinitionSimple extends PropertyDefinition {
     public void setUnits(MeasurementUnits units) {
         this.units = units;
     }
+
+    public PropertyOptionsSource getOptionsSource() {
+        if (optionsSource.isEmpty())
+            return null;
+        return optionsSource.get(0);
+    }
+
+    public void setOptionsSource(PropertyOptionsSource source) {
+        this.optionsSource.clear();
+        if (source==null)
+            return;
+        source.propertyDefinition = this;
+        this.optionsSource.add(source);
+    }
+
 
     @Override
     public String toString() {

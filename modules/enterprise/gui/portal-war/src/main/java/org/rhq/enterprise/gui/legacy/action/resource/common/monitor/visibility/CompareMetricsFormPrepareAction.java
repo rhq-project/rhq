@@ -36,6 +36,8 @@ import org.apache.struts.tiles.ComponentContext;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.MeasurementCategory;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.measurement.ui.MetricDisplaySummary;
+import org.rhq.core.domain.measurement.ui.MetricDisplayValue;
 import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.action.WorkflowPrepareAction;
@@ -44,8 +46,6 @@ import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.server.measurement.MeasurementChartsManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementPreferences;
 import org.rhq.enterprise.server.measurement.MeasurementPreferences.MetricRangePreferences;
-import org.rhq.enterprise.server.measurement.uibean.MetricDisplaySummary;
-import org.rhq.enterprise.server.measurement.uibean.MetricDisplayValue;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class CompareMetricsFormPrepareAction extends WorkflowPrepareAction {

@@ -115,12 +115,12 @@ public class ResourceOperationHistory extends OperationHistory {
     @XmlTransient
     private Resource resource;
 
-    @JoinColumn(name = "RESULTS_CONFIG_ID", referencedColumnName = "ID")
-    @OneToOne(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
+    @JoinColumn(name = "RESULTS_CONFIG_ID", referencedColumnName = "ID", nullable = true)
+    @OneToOne(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY, optional = true)
     private Configuration results;
 
-    @JoinColumn(name = "GROUP_HISTORY_ID", referencedColumnName = "ID")
-    @ManyToOne
+    @JoinColumn(name = "GROUP_HISTORY_ID", referencedColumnName = "ID", nullable = true)
+    @ManyToOne(optional = true)
     private GroupOperationHistory groupOperationHistory;
 
     protected ResourceOperationHistory() {

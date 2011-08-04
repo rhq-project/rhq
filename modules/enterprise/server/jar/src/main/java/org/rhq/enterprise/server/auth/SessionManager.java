@@ -91,9 +91,10 @@ public class SessionManager {
      *
      * @param  subject
      *
-     * @return the session id assigned to the new session
+     * @return the Subject associated with session. Note, this may be a copy of the Subject passed into the method. The
+     * sessionId will be assigned.
      */
-    public int put(Subject subject) {
+    public Subject put(Subject subject) {
         return put(subject, DEFAULT_TIMEOUT);
     }
 
@@ -103,50 +104,30 @@ public class SessionManager {
      * @param  subject
      * @param  timeout the timeout for the session, in milliseconds
      *
-     * @return the session id assigned to the new session
+     * @return the Subject associated with session. This will be a copy of the Subject passed into the method (unless
+     * that Subject is overlord). The sessionId will be assigned.
      */
-    public synchronized int put(Subject subject, long timeout) {
+    public synchronized Subject put(Subject subject, long timeout) {
         Integer key;
 
         do {
             key = new Integer(_random.nextInt());
         } while (_cache.containsKey(key));
 
-        subject.setSessionId(key);
+        // Each session should have its own POJO Subject so that each can store a separate sessionId. The exception
+        // is our special-case shared singleton for overlord.
+        Subject sessionSubject;
+        if (subject.equals(overlordSubject)) {
+            sessionSubject = overlordSubject;
+            sessionSubject.setSessionId(key);
 
-        _cache.put(key, new AuthSession(subject, timeout));
-
-        return key.intValue();
-    }
-
-    /**
-     * Lookup and return the session ID that is associated with the given username.
-     *
-     * @param  username the username of the {@link Subject} that has a valid session
-     *
-     * @return session ID for the session of the give user
-     *
-     * @throws SessionNotFoundException
-     * @throws SessionTimeoutException
-     */
-    public synchronized int getSessionIdFromUsername(String username) throws SessionNotFoundException,
-        SessionTimeoutException {
-        for (Map.Entry<Integer, AuthSession> map_entry : _cache.entrySet()) {
-            int session_id = map_entry.getKey().intValue();
-            AuthSession session = map_entry.getValue();
-
-            if (session.getSubject(false).getName().equals(username)) {
-                if (session.isExpired()) {
-                    throw new SessionTimeoutException();
-                }
-
-                session.getSubject(true); // this is our session - update the last access time
-
-                return session_id;
-            }
+        } else {
+            sessionSubject = getSessionSubject(subject, key);
         }
 
-        throw new SessionNotFoundException();
+        _cache.put(key, new AuthSession(sessionSubject, timeout));
+
+        return sessionSubject;
     }
 
     /**
@@ -200,6 +181,25 @@ public class SessionManager {
         return;
     }
 
+    /**
+     * Invalidates all sessions for the given username. This is for testing purposes ONLY.
+     *
+     * @param username username for the sessions to be invalidated
+     */
+    public synchronized void invalidate(String username) {
+        List<Integer> doomedSessionIds = new ArrayList<Integer>(_cache.size());
+        for (AuthSession s : _cache.values()) {
+            if (username.equals(s.getSubject(false).getName())) {
+                doomedSessionIds.add(s.getSubject(false).getSessionId());
+            }
+        }
+        for (Integer sessionId : doomedSessionIds) {
+            _cache.remove(new Integer(sessionId));
+        }
+
+        return;
+    }
+
     public long getlastAccess(int sessionId) {
         AuthSession session = _cache.get(sessionId);
         if (session == null) {
@@ -225,23 +225,34 @@ public class SessionManager {
         try {
             // validate that the superuser session is still valid and update its LAT
             getSubject(session_id);
+
         } catch (SessionException e) {
             // its been a while since the overlord has been needed - its session has expired.
             // We need to create a new session and assign that new session ID to the instance this singleton holds internally
             // no need to synchronize here - its OK if we concurrently create more than one session, they will eventually expire
-            session_id = put(overlordSubject, OVERLORD_TIMEOUT);
+            session_id = put(overlordSubject, OVERLORD_TIMEOUT).getSessionId();
+            overlordSubject.setSessionId(session_id);
         }
 
         // we create a separate and detached Subject for each caller - do not share the copy this singleton holds internally
-        Subject copy = new Subject();
-        copy.setSessionId(session_id);
-        copy.setId(overlordSubject.getId());
-        copy.setFsystem(overlordSubject.getFsystem());
-        copy.setFactive(overlordSubject.getFactive());
-        copy.setName(overlordSubject.getName());
-        copy.setFirstName(overlordSubject.getFirstName());
-        copy.setLastName(overlordSubject.getLastName());
-        copy.setRoles(overlordSubject.getRoles());
+        Subject copy = getSessionSubject(overlordSubject, session_id);
+        return copy;
+    }
+
+    private Subject getSessionSubject(Subject subject, Integer sessionId) {
+        Subject copy = new Subject(subject.getName(), subject.getFactive(), subject.getFsystem());
+        copy.setId(subject.getId());
+        copy.setSessionId(sessionId);
+
+        copy.setDepartment(subject.getDepartment());
+        copy.setEmailAddress(subject.getEmailAddress());
+        copy.setFirstName(subject.getFirstName());
+        copy.setLastName(subject.getLastName());
+        copy.setLdapRoles(subject.getLdapRoles());
+        copy.setOwnedGroups(subject.getOwnedGroups());
+        copy.setPhoneNumber(subject.getPhoneNumber());
+        copy.setRoles(subject.getRoles());
+        copy.setUserConfiguration(subject.getUserConfiguration());
 
         return copy;
     }

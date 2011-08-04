@@ -64,8 +64,9 @@ import javax.persistence.Table;
         + "    '', " //
         + "    ro.nextFireTime, " //
         + "    ro.resource.id, " //
+        + "    ro.resource.resourceType.id, " //        
         + "    ro.resource.name, " //
-        + "    ro.resource.resourceType.name) " //
+        + "    ro.resource.ancestry) " //
         + "  FROM ResourceOperationScheduleEntity ro " //
         + " WHERE ro.nextFireTime IS NOT NULL "), //
     @NamedQuery(name = OperationScheduleEntity.QUERY_GET_SCHEDULE_RESOURCE, query = "" //
@@ -76,8 +77,9 @@ import javax.persistence.Table;
         + "    '', " //
         + "    ro.nextFireTime, " //
         + "    ro.resource.id, " //
+        + "    ro.resource.resourceType.id, " //        
         + "    ro.resource.name, " //
-        + "    ro.resource.resourceType.name) " //
+        + "    ro.resource.ancestry) " //
         + "  FROM ResourceOperationScheduleEntity ro " //
         + "  JOIN ro.resource.implicitGroups g " //
         + "  JOIN g.roles r " //
@@ -127,7 +129,7 @@ public abstract class OperationScheduleEntity implements Serializable {
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "id")
     @Id
-    private int id;    
+    private int id;
 
     @Column(name = "JOB_NAME", nullable = false)
     private String jobName;
@@ -226,5 +228,5 @@ public abstract class OperationScheduleEntity implements Serializable {
 
         return this.getJobId().equals(other.getJobId());
     }
-    
+
 }

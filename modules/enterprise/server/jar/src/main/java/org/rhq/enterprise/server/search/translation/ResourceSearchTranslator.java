@@ -69,6 +69,10 @@ public class ResourceSearchTranslator extends AbstractSearchTranslator {
             return new SearchFragment(SearchFragment.Type.WHERE_CLAUSE, //
                 getJPQLForString(alias + ".name", op, filter));
 
+        } else if (path.equals("version")) {
+            return new SearchFragment(SearchFragment.Type.WHERE_CLAUSE, //
+                getJPQLForString(alias + ".version", op, filter));
+
         } else if (path.equals("alerts")) {
             return new SearchFragment( //
                 SearchFragment.Type.PRIMARY_KEY_SUBQUERY, "SELECT res.id" //

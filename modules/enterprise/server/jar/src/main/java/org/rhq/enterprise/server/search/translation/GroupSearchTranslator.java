@@ -22,6 +22,7 @@ import static org.rhq.enterprise.server.search.common.SearchQueryGenerationUtili
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.enterprise.server.search.SearchExpressionException;
 import org.rhq.enterprise.server.search.translation.antlr.RHQLAdvancedTerm;
 import org.rhq.enterprise.server.search.translation.antlr.RHQLComparisonOperator;
@@ -71,6 +72,10 @@ public class GroupSearchTranslator extends AbstractSearchTranslator {
         } else if (path.equals("category")) {
             return new SearchFragment(SearchFragment.Type.WHERE_CLAUSE, //
                 getJPQLForEnum(alias + ".resourceType.category", op, filter, ResourceCategory.class, false));
+
+        } else if (path.equals("groupCategory")) {
+            return new SearchFragment(SearchFragment.Type.WHERE_CLAUSE, //
+                getJPQLForEnum(alias + ".groupCategory", op, filter, GroupCategory.class, false));
 
         } else if (path.equals("type")) {
             return new SearchFragment(SearchFragment.Type.WHERE_CLAUSE, //

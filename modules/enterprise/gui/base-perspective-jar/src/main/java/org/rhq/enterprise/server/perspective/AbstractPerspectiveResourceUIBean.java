@@ -37,7 +37,7 @@ public class AbstractPerspectiveResourceUIBean extends AbstractPerspectiveUIBean
         Subject subject = this.perspectiveClient.getSubject();
 
         // ***NOTE***: The javassist.NotFoundException stack traces that are logged by this call can be ignored.
-        ResourceManagerRemote resourceManager = remoteClient.getResourceManagerRemote();
+        ResourceManagerRemote resourceManager = remoteClient.getResourceManager();
         ResourceCriteria resourceCriteria = new ResourceCriteria();
         resourceCriteria.addFilterId(this.rhqResourceId);
         PageList<Resource> resources = resourceManager.findResourcesByCriteria(subject, resourceCriteria);

@@ -82,6 +82,7 @@ import org.rhq.core.clientapi.server.core.ConnectAgentRequest;
 import org.rhq.core.clientapi.server.core.ConnectAgentResults;
 import org.rhq.core.clientapi.server.core.CoreServerService;
 import org.rhq.core.clientapi.server.discovery.DiscoveryServerService;
+import org.rhq.core.clientapi.server.drift.DriftServerService;
 import org.rhq.core.clientapi.server.event.EventServerService;
 import org.rhq.core.clientapi.server.inventory.ResourceFactoryServerService;
 import org.rhq.core.clientapi.server.measurement.MeasurementServerService;
@@ -1668,8 +1669,8 @@ public class AgentMain {
                 try {
                     shutdown();
                 } catch (Throwable t) {
-                    LOG.error(t, "The plugin container has requested the agent be restarted but the shutdown " +
-                        "operation failed.");
+                    LOG.error(t, "The plugin container has requested the agent be restarted but the shutdown "
+                        + "operation failed.");
                 }
                 if (isStarted()) {
                     // Pause for a few seconds and try to shut down one more time.
@@ -1677,44 +1678,44 @@ public class AgentMain {
                         Thread.sleep(3000);
                         shutdown();
                     } catch (Throwable t) {
-                        LOG.error(t, "The plugin container has requested the agent be restarted but the shutdown " +
-                            "operation failed again.");
+                        LOG.error(t, "The plugin container has requested the agent be restarted but the shutdown "
+                            + "operation failed again.");
                     }
                 }
                 if (isStarted()) {
                     // At this point agent shut down failed twice. We can get by with rebooting the plugin container
                     // so we will try that as last ditch effort.
 
-                    LOG.warn("The agent shut down operation has failed twice. Attempting to reboot the plugin " +
-                        "container so that stale resource types and deleted plugins are removed.");
+                    LOG.warn("The agent shut down operation has failed twice. Attempting to reboot the plugin "
+                        + "container so that stale resource types and deleted plugins are removed.");
                     try {
                         rebootPluginContainer();
                     } catch (Throwable t) {
                         // If rebooting the plugin container fails as well, there is not much else we can do besides
                         // reporting the failures. Manual intervention is needed.
-                        LOG.error("The agent could not be shut down and rebooting the plugin container failed. " +
-                            "Please check the logs for errors and manually restart the agent as soon as " +
-                            "possible.");
+                        LOG.error("The agent could not be shut down and rebooting the plugin container failed. "
+                            + "Please check the logs for errors and manually restart the agent as soon as "
+                            + "possible.");
                         return;
                     }
                 } else {
                     try {
                         cleanDataDirectory();
                     } catch (Throwable t) {
-                        LOG.warn(t, "The plugin container has requested the agent be restarted but purging the " +
-                            "data directory failed.");
+                        LOG.warn(t, "The plugin container has requested the agent be restarted but purging the "
+                            + "data directory failed.");
                     }
                     try {
                         start();
                     } catch (Throwable t) {
-                        LOG.warn(t, "An error occurred while trying to restart the agent. Attempting restart " +
-                            "one more time");
+                        LOG.warn(t, "An error occurred while trying to restart the agent. Attempting restart "
+                            + "one more time");
                         try {
                             shutdown();
                             start();
                         } catch (Throwable t1) {
-                            LOG.error(t1, "Restarting the agent has failed. Please check the logs for errors and " +
-                                "manually restart the agent as soon as possible.");
+                            LOG.error(t1, "Restarting the agent has failed. Please check the logs for errors and "
+                                + "manually restart the agent as soon as possible.");
                             return;
                         }
                     }
@@ -1781,6 +1782,7 @@ public class AgentMain {
             ContentServerService contentServerService = factory.getRemotePojo(ContentServerService.class);
             EventServerService eventServerService = factory.getRemotePojo(EventServerService.class);
             BundleServerService bundleServerService = factory.getRemotePojo(BundleServerService.class);
+            DriftServerService driftServerService = factory.getRemotePojo(DriftServerService.class);
 
             ServerServices serverServices = new ServerServices();
             serverServices.setCoreServerService(coreServerService);
@@ -1792,6 +1794,7 @@ public class AgentMain {
             serverServices.setContentServerService(contentServerService);
             serverServices.setEventServerService(eventServerService);
             serverServices.setBundleServerService(bundleServerService);
+            serverServices.setDriftServerService(driftServerService);
 
             pc_config.setServerServices(serverServices);
         } catch (Exception e) {
@@ -2887,7 +2890,7 @@ public class AgentMain {
      * @throws HelpException            if help was requested and the agent should not be created
      */
     private void processArguments(String[] args) throws Exception {
-        String sopts = "-:hdlasntuD:i:o:c:p:e:";
+        String sopts = "-:hdlasntguD:i:o:c:p:e:";
         LongOpt[] lopts = { new LongOpt("help", LongOpt.NO_ARGUMENT, null, 'h'),
             new LongOpt("input", LongOpt.REQUIRED_ARGUMENT, null, 'i'),
             new LongOpt("output", LongOpt.REQUIRED_ARGUMENT, null, 'o'),

@@ -28,7 +28,6 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
-import org.apache.struts.action.ActionRedirect;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.composite.ResourceWithAvailability;
@@ -94,13 +93,13 @@ public class GroupVisibilityPortalAction extends GroupController {
         HttpServletResponse response) throws Exception {
         ActionForward fwd = super.execute(mapping, form, request, response);
 
-        if (!LookupUtil.getSystemManager().isMonitoringEnabled()) {
-            ActionRedirect redirect = new ActionRedirect(mapping.findForward("inventory-jsf"));
-            redirect.addParameter("groupId", request.getParameter("groupId"));
-            redirect.addParameter("category", request.getParameter("category"));
-            redirect.setRedirect(false);
-            fwd = redirect;
-        }
+        //        if (!LookupUtil.getSystemManager().isMonitoringEnabled()) {
+        //            ActionRedirect redirect = new ActionRedirect(mapping.findForward("inventory-jsf"));
+        //            redirect.addParameter("groupId", request.getParameter("groupId"));
+        //            redirect.addParameter("category", request.getParameter("category"));
+        //            redirect.setRedirect(false);
+        //            fwd = redirect;
+        //        }
 
         return fwd;
     }

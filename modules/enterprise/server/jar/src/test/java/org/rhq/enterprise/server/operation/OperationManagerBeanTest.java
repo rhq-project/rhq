@@ -27,8 +27,6 @@ import javax.persistence.EntityManager;
 
 import org.quartz.SimpleTrigger;
 import org.quartz.Trigger;
-import org.rhq.core.domain.operation.bean.GroupOperationSchedule;
-import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -47,6 +45,8 @@ import org.rhq.core.domain.operation.GroupOperationHistory;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
+import org.rhq.core.domain.operation.bean.GroupOperationSchedule;
+import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.rhq.core.domain.operation.composite.GroupOperationLastCompletedComposite;
 import org.rhq.core.domain.operation.composite.GroupOperationScheduleComposite;
 import org.rhq.core.domain.operation.composite.ResourceOperationLastCompletedComposite;
@@ -1490,7 +1490,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
 
         try {
             noPermSubject = LookupUtil.getSubjectManager().createSubject(overlord, noPermSubject);
-            createSession(noPermSubject);
+            noPermSubject = createSession(noPermSubject);
 
             assert !operationManager.isResourceOperationSupported(noPermSubject, resource.getId()) : "Should not have permission to get control info";
             assert !operationManager.isGroupOperationSupported(noPermSubject, newGroup.getId()) : "Should not have permission to get control info";

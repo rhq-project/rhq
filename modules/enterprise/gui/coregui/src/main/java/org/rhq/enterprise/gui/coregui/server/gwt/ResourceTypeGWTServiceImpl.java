@@ -29,7 +29,7 @@ public class ResourceTypeGWTServiceImpl extends AbstractGWTServiceImpl implement
             return SerialUtility.prepare(typeManager.findResourceTypesByCriteria(getSessionSubject(), criteria),
                 "ResourceTypes.findResourceTypesByCriteria");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -47,7 +47,7 @@ public class ResourceTypeGWTServiceImpl extends AbstractGWTServiceImpl implement
             }
             return SerialUtility.prepare(types, "ResourceTypes.getResourceTypesForResourceAncestors");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -59,7 +59,7 @@ public class ResourceTypeGWTServiceImpl extends AbstractGWTServiceImpl implement
             return SerialUtility
                 .prepare(new ArrayList<ResourceType>(list), "ResourceTypes.getAllResourceTypeAncestors");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -72,7 +72,7 @@ public class ResourceTypeGWTServiceImpl extends AbstractGWTServiceImpl implement
                 resourceTypeId);
             return SerialUtility.prepare(map, "ResourceTypes.getResourceTypeDescendantsWithOperations");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -83,7 +83,7 @@ public class ResourceTypeGWTServiceImpl extends AbstractGWTServiceImpl implement
             Map<Integer, ResourceTypeTemplateCountComposite> map = typeManager.getTemplateCountCompositeMap();
             return SerialUtility.prepare(map, "ResourceTypes.getTemplateCountCompositeMap");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 }

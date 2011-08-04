@@ -9,7 +9,7 @@
     <format>zip</format>
   </formats> 
   <includeBaseDirectory>true</includeBaseDirectory>
-  <baseDirectory>${project.build.finalName}</baseDirectory>
+  <baseDirectory>rhq-bundle-deployer-${project.version}</baseDirectory> <!-- matches the zip when it is renamed in rhq-container.build.xml -->
 
   <fileSets>
 

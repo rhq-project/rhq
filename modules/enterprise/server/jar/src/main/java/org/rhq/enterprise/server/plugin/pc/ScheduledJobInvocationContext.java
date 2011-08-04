@@ -19,12 +19,26 @@
 
 package org.rhq.enterprise.server.plugin.pc;
 
+import java.io.Serializable;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+
 import org.rhq.enterprise.server.xmlschema.ScheduledJobDefinition;
 
 /**
+ * <p>
  * A scheduled job's invocation method can take a single argument of this type.
  * If this is the case, the scheduled job's method will be passed an object of this type enabling
  * the job being invoked to be given information about the invocation.
+ * </p>
+ * <p>
+ * When a job is <strong>not</strong> marked for concurrent execution, it can store data in the context in the form of
+ * key/value properties. These properties will be persisted across invocations of the job. If the job is marked to as
+ * clustered, the job data will persist across server restarts as well. Lastly, if the job is marked to run
+ * concurrently, the methods for accessing/updating properties will throw an exception.
+ * </p>
  *  
  * @author John Mazzitelli
  */
@@ -68,4 +82,60 @@ public class ScheduledJobInvocationContext {
     public ServerPluginComponent getServerPluginComponent() {
         return serverPluginComponent;
     }
+
+    /**
+     * Adds a property to the context that is persisted across invocations of the job. The property is persisted across
+     * server restarts <strong>only if</strong> the scheduled job is declared to run as clustered. Note that method
+     * will throw an exception if the job is declared for concurrent execution.
+     *
+     * @param key The property name
+     * @param value The property value
+     * @throws UnsupportedOperationException if the job is marked for concurrent execution
+     */
+    public void put(String key, String value) {
+        throw new UnsupportedOperationException("This operation is only supported for stateful jobs.");
+    }
+
+    /**
+     * Retrieves a property value from the context.
+     *
+     * @param key The property key
+     * @return The property value or <code>null<code> if the key is not found
+     * @throws UnsupportedOperationException if the job is marked for concurrent execution
+     */
+    public String get(String key) {
+        throw new UnsupportedOperationException("This operation is only supported for stateful jobs.");
+    }
+
+    /**
+     * Removes the property value associated with the specified key
+     *
+     * @param key The property key
+     * @return The value previously associated with the key or <code>null</code> if the key is present in the context
+     * @throws UnsupportedOperationException if the job is marked for concurrent execution
+     */
+    public String remove(String key) {
+        throw new UnsupportedOperationException("This operation is only supported for stateful jobs.");
+    }
+
+    /**
+     * Checks to see whether or not the property key is stored in the context.
+     * @param key The property key
+     * @return <code>true</code> if the key is found, <code>false</code> otherwise.
+     * @throws UnsupportedOperationException if the job is marked for concurrent execution
+     */
+    public boolean containsKey(String key) {
+        throw new UnsupportedOperationException("This operation is only supported for stateful jobs.");
+    }
+
+    /**
+     * Returns a <strong>read-only</strong> view of the properties stored in the context.
+     *
+     * @return A <strong>read-only</strong> view of the properties stored in the context.
+     * @throws UnsupportedOperationException if the job is marked for concurrent execution
+     */
+    public Map<String, String> getJobData() {
+        throw new UnsupportedOperationException("This operation is only supported for stateful jobs.");
+    }
+
 }

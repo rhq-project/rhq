@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 
 <scenario xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-          xmlns="urn:xmlns:jboss.org:on-perftest">
+          xmlns="urn:xmlns:jboss.org:rhq-perftest">
 
    <!--
         This scenario will create a number of servers, each with a number of services. Some services (those of type
@@ -9,20 +9,20 @@
         specified in this file. For example, to create 10 servers, each with 20 services, and each of those services
         having 5 child services, the following should be passed to the agent:
 
-        -Don.perftest.scenario=configurable-2 -Don.perftest.server-a-count=10 -Don.perftest.service-a-count=50
-        -Don.perftest.service-ab-count=5
+        -Drhq.perftest.scenario=configurable-2 -Drhq.perftest.server-a-count=10 -Drhq.perftest.service-a-count=50
+        -Drhq.perftest.service-ab-count=5
    -->
 
    <resource type="server-a">
-      <simpleResourceGenerator property="on.perftest.server-a-count"/>
+      <simpleResourceGenerator property="rhq.perftest.server-a-count"/>
    </resource>
 
    <resource type="service-a">
-      <simpleResourceGenerator property="on.perftest.service-a-count"/>
+      <simpleResourceGenerator property="rhq.perftest.service-a-count"/>
    </resource>
 
    <resource type="service-ab">
-      <simpleResourceGenerator property="on.perftest.service-ab-count"/>
+      <simpleResourceGenerator property="rhq.perftest.service-ab-count"/>
    </resource>
 
 </scenario>

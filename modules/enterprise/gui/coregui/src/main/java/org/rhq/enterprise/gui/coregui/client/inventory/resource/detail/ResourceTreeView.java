@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -27,8 +27,14 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeSet;
 
 import com.allen_sauer.gwt.log.client.Log;
+import com.google.gwt.http.client.Request;
+import com.google.gwt.http.client.RequestBuilder;
+import com.google.gwt.http.client.RequestCallback;
+import com.google.gwt.http.client.RequestException;
+import com.google.gwt.http.client.Response;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSCallback;
@@ -51,15 +57,16 @@ import com.smartgwt.client.widgets.tree.events.NodeContextClickEvent;
 import com.smartgwt.client.widgets.tree.events.NodeContextClickHandler;
 
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.criteria.DashboardCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
-import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.dashboard.Dashboard;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
+import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourceLineageComposite;
@@ -70,13 +77,11 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.resource.graph.GraphPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.resource.graph.ResourceGraphPortlet;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.gwt.ResourceTypeGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.InventoryView;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.schedule.OperationCreateWizard;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupContextMenu;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupDetailView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceTreeDatasource.AutoGroupTreeNode;
@@ -98,8 +103,6 @@ public class ResourceTreeView extends LocatableVLayout {
 
     private Resource rootResource;
 
-    private ViewId currentViewId;
-
     private Menu resourceContextMenu;
     private ResourceGroupContextMenu autoGroupContextMenu;
 
@@ -115,6 +118,7 @@ public class ResourceTreeView extends LocatableVLayout {
         setShowResizeBar(true);
     }
 
+    @Override
     public void onInit() {
         // TODO (ips): Are we intentionally avoiding calling super.onInit() here? If so, why?
     }
@@ -141,6 +145,7 @@ public class ResourceTreeView extends LocatableVLayout {
         autoGroupContextMenu = new ResourceGroupContextMenu(extendLocatorId("autoGroupContextMenu"));
 
         treeGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
+
             public void onSelectionChanged(SelectionEvent selectionEvent) {
                 if (!selectionEvent.isRightButtonDown() && selectionEvent.getState()) {
                     ListGridRecord selectedRecord = treeGrid.getSelectedRecord();
@@ -168,6 +173,7 @@ public class ResourceTreeView extends LocatableVLayout {
                         AutoGroupTreeNode agNode = (AutoGroupTreeNode) selectedRecord;
                         selectedNodeId = agNode.getID();
                         getAutoGroupBackingGroup(agNode, new AsyncCallback<ResourceGroup>() {
+
                             public void onFailure(Throwable caught) {
                                 CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_loadFailed_selection(),
                                     caught);
@@ -192,27 +198,35 @@ public class ResourceTreeView extends LocatableVLayout {
         // setContextMenu(resourceContextMenu);
 
         treeGrid.addNodeContextClickHandler(new NodeContextClickHandler() {
+
             public void onNodeContextClick(final NodeContextClickEvent event) {
                 // stop the browser right-click menu
                 event.cancel();
 
                 // don't select the node on a right click, since we're not navigating to it
                 treeGrid.deselectRecord(event.getNode());
+                TreeNode eventNode = event.getNode();
+
+                // re-select the current node if necessary
                 if (null != selectedNodeId) {
-                    treeGrid.selectRecord(treeGrid.getTree().findById(selectedNodeId));
+                    TreeNode selectedNode = treeGrid.getTree().findById(selectedNodeId);
+                    if (!eventNode.equals(selectedNode)) {
+                        treeGrid.selectRecord(selectedNode);
+                    }
                 }
 
-                if (event.getNode() instanceof AutoGroupTreeNode) {
-                    showContextMenu((AutoGroupTreeNode) event.getNode());
-                } else if (event.getNode() instanceof ResourceTreeNode) {
-                    if (!((ResourceTreeNode) event.getNode()).isLocked()) {
-                        showContextMenu((ResourceTreeNode) event.getNode());
+                if (eventNode instanceof AutoGroupTreeNode) {
+                    showContextMenu((AutoGroupTreeNode) eventNode);
+                } else if (eventNode instanceof ResourceTreeNode) {
+                    if (!((ResourceTreeNode) eventNode).isLocked()) {
+                        showContextMenu((ResourceTreeNode) eventNode);
                     }
                 }
             }
         });
 
         treeGrid.addDataArrivedHandler(new DataArrivedHandler() {
+
             public void onDataArrived(DataArrivedEvent dataArrivedEvent) {
                 updateSelection();
             }
@@ -236,6 +250,7 @@ public class ResourceTreeView extends LocatableVLayout {
         criteria.addFilterAutoGroupParentResourceId(agNode.getParentResource().getId());
         criteria.addFilterVisible(false);
         resourceGroupService.findResourceGroupsByCriteria(criteria, new AsyncCallback<PageList<ResourceGroup>>() {
+
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_loadFailed_node(), caught);
             }
@@ -287,7 +302,7 @@ public class ResourceTreeView extends LocatableVLayout {
     }
 
     private void renderAutoGroup(ResourceGroup backingGroup) {
-        String viewPath = ResourceGroupDetailView.AUTO_GROUP_VIEW_PATH + "/" + backingGroup.getId();
+        String viewPath = ResourceGroupDetailView.AUTO_GROUP_VIEW + "/" + backingGroup.getId();
         String currentViewPath = History.getToken();
         if (!currentViewPath.startsWith(viewPath)) {
             CoreGUI.goToView(viewPath);
@@ -297,6 +312,7 @@ public class ResourceTreeView extends LocatableVLayout {
     private void updateSelection() {
 
         TreeNode selectedNode;
+
         if (treeGrid != null && treeGrid.getTree() != null
             && (selectedNode = treeGrid.getTree().findById(selectedNodeId)) != null) {
 
@@ -315,6 +331,7 @@ public class ResourceTreeView extends LocatableVLayout {
 
     private void showContextMenu(AutoGroupTreeNode agNode) {
         getAutoGroupBackingGroup(agNode, new AsyncCallback<ResourceGroup>() {
+
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_loadFailed_selection(), caught);
             }
@@ -332,8 +349,10 @@ public class ResourceTreeView extends LocatableVLayout {
         // fetch the resource composite, we need resource permission info for enablement decisions
         ResourceCriteria criteria = new ResourceCriteria();
         criteria.addFilterId(resourceId);
+        criteria.fetchSchedules(true);
         GWTServiceLookup.getResourceService().findResourceCompositesByCriteria(criteria,
             new AsyncCallback<PageList<ResourceComposite>>() {
+
                 public void onFailure(Throwable caught) {
                     CoreGUI.getMessageCenter().notify(
                         new Message(MSG.view_inventory_resource_loadFailed(String.valueOf(resourceId)),
@@ -359,6 +378,7 @@ public class ResourceTreeView extends LocatableVLayout {
                                 ResourceTypeRepository.MetadataType.resourceConfigurationDefinition,
                                 ResourceTypeRepository.MetadataType.measurements),
                             new ResourceTypeRepository.TypeLoadedCallback() {
+
                                 public void onTypesLoaded(ResourceType type) {
                                     buildResourceContextMenu(resourceComposite, type);
                                     resourceContextMenu.showContextMenu();
@@ -385,21 +405,27 @@ public class ResourceTreeView extends LocatableVLayout {
 
         // plugin config
         MenuItem pluginConfiguration = new MenuItem(MSG.view_tabs_common_connectionSettings());
-        pluginConfiguration.addClickHandler(new ClickHandler() {
-            public void onClick(MenuItemClickEvent event) {
-                CoreGUI.goToView(LinkManager.getResourceTabLink(resource.getId(), "Inventory", "ConnectionSettings"));
-            }
-        });
-        pluginConfiguration.setEnabled(resourceType.getPluginConfigurationDefinition() != null);
+        boolean pluginConfigEnabled = resourceType.getPluginConfigurationDefinition() != null;
+        pluginConfiguration.setEnabled(pluginConfigEnabled);
+        if (pluginConfigEnabled) {
+            pluginConfiguration.addClickHandler(new ClickHandler() {
+
+                public void onClick(MenuItemClickEvent event) {
+                    CoreGUI.goToView(LinkManager
+                        .getResourceTabLink(resource.getId(), "Inventory", "ConnectionSettings"));
+                }
+            });
+        }
         resourceContextMenu.addItem(pluginConfiguration);
 
         // resource config
         MenuItem resourceConfiguration = new MenuItem(MSG.view_tree_common_contextMenu_resourceConfiguration());
-        boolean enabled = resourcePermission.isConfigureRead()
+        boolean resourceConfigEnabled = resourcePermission.isConfigureRead()
             && resourceType.getResourceConfigurationDefinition() != null;
-        resourceConfiguration.setEnabled(enabled);
-        if (enabled) {
+        resourceConfiguration.setEnabled(resourceConfigEnabled);
+        if (resourceConfigEnabled) {
             resourceConfiguration.addClickHandler(new ClickHandler() {
+
                 public void onClick(MenuItemClickEvent event) {
                     CoreGUI.goToView(LinkManager.getResourceTabLink(resource.getId(), "Configuration", "Current"));
                 }
@@ -412,16 +438,30 @@ public class ResourceTreeView extends LocatableVLayout {
 
         // Operations Menu
         MenuItem operations = new MenuItem(MSG.view_tree_common_contextMenu_operations());
-        enabled = (resourcePermission.isControl() && null == resourceType.getOperationDefinitions() && !resourceType
+        boolean operationsEnabled = (resourcePermission.isControl() && (resourceType.getOperationDefinitions() != null) && !resourceType
             .getOperationDefinitions().isEmpty());
-        operations.setEnabled(enabled);
-        if (enabled) {
+        operations.setEnabled(operationsEnabled);
+        if (operationsEnabled) {
             Menu opSubMenu = new Menu();
-            for (final OperationDefinition operationDefinition : resourceType.getOperationDefinitions()) {
+
+            //sort the display items alphabetically
+            TreeSet<String> ordered = new TreeSet<String>();
+            Map<String, OperationDefinition> definitionMap = new HashMap<String, OperationDefinition>();
+            for (OperationDefinition o : resourceType.getOperationDefinitions()) {
+                ordered.add(o.getDisplayName());
+                definitionMap.put(o.getDisplayName(), o);
+            }
+            for (String displayName : ordered) {
+                final OperationDefinition operationDefinition = definitionMap.get(displayName);
+
                 MenuItem operationItem = new MenuItem(operationDefinition.getDisplayName());
                 operationItem.addClickHandler(new ClickHandler() {
+
                     public void onClick(MenuItemClickEvent event) {
-                        new OperationCreateWizard(resource, operationDefinition).startOperationWizard();
+                        String viewPath = LinkManager.getResourceTabLink(resource.getId(),
+                            ResourceDetailView.Tab.OPERATIONS, ResourceDetailView.OperationsSubTab.SCHEDULES)
+                            + "/0/" + operationDefinition.getId();
+                        CoreGUI.goToView(viewPath);
                     }
                 });
                 opSubMenu.addItem(operationItem);
@@ -431,18 +471,28 @@ public class ResourceTreeView extends LocatableVLayout {
         resourceContextMenu.addItem(operations);
 
         // Metric graph addition menu
-        resourceContextMenu.addItem(buildMetricsMenu(resourceType));
+        resourceContextMenu.addItem(buildMetricsMenu(resourceType, resource));
 
         // Create Child Menu
         MenuItem createChildMenu = new MenuItem(MSG.common_button_create_child());
-        enabled = resourcePermission.isCreateChildResources();
-        if (enabled) {
+        boolean createChildResourcesEnabled = resourcePermission.isCreateChildResources();
+        if (createChildResourcesEnabled) {
             Menu createChildSubMenu = new Menu();
-            for (final ResourceType childType : resourceType.getChildResourceTypes()) {
+            //sort the display items alphabetically
+            TreeSet<String> ordered = new TreeSet<String>();
+            Map<String, ResourceType> typeMap = new HashMap<String, ResourceType>();
+            for (ResourceType o : resourceType.getChildResourceTypes()) {
+                ordered.add(o.getName());
+                typeMap.put(o.getName(), o);
+            }
+
+            for (String type : ordered) {
+                final ResourceType childType = typeMap.get(type);
                 if (childType.isCreatable()) {
                     MenuItem createItem = new MenuItem(childType.getName());
 
                     createItem.addClickHandler(new ClickHandler() {
+
                         public void onClick(MenuItemClickEvent event) {
                             ResourceFactoryCreateWizard.showCreateWizard(resource, childType);
                         }
@@ -453,21 +503,31 @@ public class ResourceTreeView extends LocatableVLayout {
                 }
             }
             createChildMenu.setSubmenu(createChildSubMenu);
-            enabled = createChildSubMenu.getItems().length > 0;
+            createChildResourcesEnabled = createChildSubMenu.getItems().length > 0;
         }
-        createChildMenu.setEnabled(enabled);
+        createChildMenu.setEnabled(createChildResourcesEnabled);
         resourceContextMenu.addItem(createChildMenu);
 
         // Manual Import Menu
         MenuItem importChildMenu = new MenuItem(MSG.common_button_import());
-        enabled = resourcePermission.isCreateChildResources();
-        if (enabled) {
+        boolean manualImportEnabled = resourcePermission.isCreateChildResources();
+        if (manualImportEnabled) {
             Menu importChildSubMenu = new Menu();
-            for (final ResourceType childType : resourceType.getChildResourceTypes()) {
+
+            //sort the display items alphabetically
+            TreeSet<String> ordered = new TreeSet<String>();
+            Map<String, ResourceType> typeMap = new HashMap<String, ResourceType>();
+            for (ResourceType o : resourceType.getChildResourceTypes()) {
+                ordered.add(o.getName());
+                typeMap.put(o.getName(), o);
+            }
+            for (String name : ordered) {
+                final ResourceType childType = typeMap.get(name);
                 if (childType.isSupportsManualAdd()) {
                     MenuItem importItem = new MenuItem(childType.getName());
 
                     importItem.addClickHandler(new ClickHandler() {
+
                         public void onClick(MenuItemClickEvent event) {
                             ResourceFactoryImportWizard.showImportWizard(resource, childType);
                         }
@@ -477,120 +537,164 @@ public class ResourceTreeView extends LocatableVLayout {
                 }
             }
 
-            if (resourceType.getCategory() == ResourceCategory.PLATFORM) {
-                loadManuallyAddServersToPlatforms(importChildSubMenu, resource);
-            }
-
             importChildMenu.setSubmenu(importChildSubMenu);
-            enabled = importChildSubMenu.getItems().length > 0;
+            manualImportEnabled = importChildSubMenu.getItems().length > 0;
         }
-        importChildMenu.setEnabled(enabled);
+        importChildMenu.setEnabled(manualImportEnabled);
         resourceContextMenu.addItem(importChildMenu);
     }
 
-    private void loadManuallyAddServersToPlatforms(final Menu manuallyAddMenu, final Resource resource) {
-        ResourceTypeGWTServiceAsync rts = GWTServiceLookup.getResourceTypeGWTService();
-
-        ResourceTypeCriteria criteria = new ResourceTypeCriteria();
-        criteria.addFilterSupportsManualAdd(true);
-        criteria.fetchParentResourceTypes(true);
-        rts.findResourceTypesByCriteria(criteria, new AsyncCallback<PageList<ResourceType>>() {
-            public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_contextMenu_loadFailed_manualAddChildren(),
-                    caught);
-            }
-
-            public void onSuccess(PageList<ResourceType> result) {
-                for (final ResourceType type : result) {
-                    if (type.getParentResourceTypes() == null || type.getParentResourceTypes().isEmpty()) {
-                        MenuItem item = new MenuItem(type.getName());
-
-                        item.addClickHandler(new ClickHandler() {
-                            public void onClick(MenuItemClickEvent event) {
-                                ResourceFactoryImportWizard.showImportWizard(resource, type);
-                            }
-                        });
-
-                        manuallyAddMenu.addItem(item);
-                    }
-                }
-            }
-        });
-    }
-
-    private MenuItem buildMetricsMenu(final ResourceType type) {
+    private MenuItem buildMetricsMenu(final ResourceType type, final Resource resource) {
         MenuItem measurements = new MenuItem(MSG.view_tree_common_contextMenu_measurements());
         final Menu measurementsSubMenu = new Menu();
 
-        GWTServiceLookup.getDashboardService().findDashboardsForSubject(new AsyncCallback<List<Dashboard>>() {
-            public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_contextMenu_loadFailed_dashboard(), caught);
-            }
+        DashboardCriteria criteria = new DashboardCriteria();
+        GWTServiceLookup.getDashboardService().findDashboardsByCriteria(criteria,
+            new AsyncCallback<PageList<Dashboard>>() {
 
-            public void onSuccess(List<Dashboard> result) {
-
-                for (final MeasurementDefinition def : type.getMetricDefinitions()) {
-
-                    MenuItem defItem = new MenuItem(def.getDisplayName());
-                    measurementsSubMenu.addItem(defItem);
-                    Menu defSubItem = new Menu();
-                    defItem.setSubmenu(defSubItem);
-
-                    for (final Dashboard d : result) {
-                        MenuItem addToDBItem = new MenuItem(MSG.view_tree_common_contextMenu_addChartToDashboard(d
-                            .getName()));
-                        defSubItem.addItem(addToDBItem);
-
-                        addToDBItem.addClickHandler(new ClickHandler() {
-                            public void onClick(MenuItemClickEvent menuItemClickEvent) {
-                                int resourceId = ((ResourceTreeNode) treeGrid.getTree().findById(selectedNodeId))
-                                    .getResource().getId();
-
-                                DashboardPortlet p = new DashboardPortlet(def.getDisplayName() + " Chart",
-                                    GraphPortlet.KEY, 250);
-                                p.getConfiguration().put(new PropertySimple(GraphPortlet.CFG_RESOURCE_ID, resourceId));
-                                p.getConfiguration().put(
-                                    new PropertySimple(GraphPortlet.CFG_DEFINITION_ID, def.getId()));
-
-                                d.addPortlet(p, 0, 0);
-
-                                GWTServiceLookup.getDashboardService().storeDashboard(d,
-                                    new AsyncCallback<Dashboard>() {
-                                        public void onFailure(Throwable caught) {
-                                            CoreGUI.getErrorHandler().handleError(
-                                                MSG.view_tree_common_contextMenu_saveChartToDashboardFailure(), caught);
-                                        }
-
-                                        public void onSuccess(Dashboard result) {
-                                            CoreGUI.getMessageCenter().notify(
-                                                new Message(MSG
-                                                    .view_tree_common_contextMenu_saveChartToDashboardSuccessful(result
-                                                        .getName()), Message.Severity.Info));
-                                        }
-                                    });
-
-                            }
-                        });
-
-                    }
-
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_contextMenu_loadFailed_dashboard(),
+                        caught);
                 }
 
-            }
-        });
+                public void onSuccess(PageList<Dashboard> result) {
+                    //sort the display items alphabetically
+                    TreeSet<String> ordered = new TreeSet<String>();
+                    Map<String, MeasurementDefinition> definitionMap = new HashMap<String, MeasurementDefinition>();
+                    for (MeasurementDefinition m : type.getMetricDefinitions()) {
+                        ordered.add(m.getDisplayName());
+                        definitionMap.put(m.getDisplayName(), m);
+                    }
+
+                    for (String displayName : ordered) {
+                        final MeasurementDefinition def = definitionMap.get(displayName);
+                        //only add menu items for Measurement
+                        if (def.getDataType().equals(DataType.MEASUREMENT)) {
+                            MenuItem defItem = new MenuItem(def.getDisplayName());
+                            measurementsSubMenu.addItem(defItem);
+                            Menu defSubItem = new Menu();
+                            defItem.setSubmenu(defSubItem);
+
+                            for (final Dashboard d : result) {
+                                MenuItem addToDBItem = new MenuItem(MSG
+                                    .view_tree_common_contextMenu_addChartToDashboard(d.getName()));
+                                defSubItem.addItem(addToDBItem);
+
+                                addToDBItem.addClickHandler(new ClickHandler() {
+
+                                    public void onClick(MenuItemClickEvent menuItemClickEvent) {
+                                        DashboardPortlet p = new DashboardPortlet(MSG
+                                            .view_tree_common_contextMenu_resourceGraph(), ResourceGraphPortlet.KEY,
+                                            250);
+                                        p.getConfiguration().put(
+                                            new PropertySimple(ResourceGraphPortlet.CFG_RESOURCE_ID, resource.getId()));
+                                        p.getConfiguration().put(
+                                            new PropertySimple(ResourceGraphPortlet.CFG_DEFINITION_ID, def.getId()));
+
+                                        d.addPortlet(p);
+
+                                        GWTServiceLookup.getDashboardService().storeDashboard(d,
+                                            new AsyncCallback<Dashboard>() {
+
+                                                public void onFailure(Throwable caught) {
+                                                    CoreGUI.getErrorHandler().handleError(
+                                                        MSG.view_tree_common_contextMenu_saveChartToDashboardFailure(),
+                                                        caught);
+                                                }
+
+                                                public void onSuccess(Dashboard result) {
+                                                    CoreGUI
+                                                        .getMessageCenter()
+                                                        .notify(
+                                                            new Message(
+                                                                MSG
+                                                                    .view_tree_common_contextMenu_saveChartToDashboardSuccessful(result
+                                                                        .getName()), Message.Severity.Info));
+                                                }
+                                            });
+
+                                    }
+                                });
+
+                                //add new menu item for adding current graphable element to view if on Monitor/Graphs tab
+                                String currentViewPath = History.getToken();
+                                if (currentViewPath.indexOf("Monitoring/Graphs") > -1) {
+                                    MenuItem addGraphItem = new MenuItem(MSG.common_title_add_graph_to_view());
+                                    defSubItem.addItem(addGraphItem);
+
+                                    addGraphItem.addClickHandler(new ClickHandler() {
+                                        public void onClick(MenuItemClickEvent menuItemClickEvent) {
+                                            //generate javascript to call out to.
+                                            //Ex. menuLayers.hide();addMetric('${metric.resourceId},${metric.scheduleId}')
+                                            if (getScheduleDefinitionId(resource, def.getName()) > -1) {
+                                                String resourceGraphElements = resource.getId() + ","
+                                                    + getScheduleDefinitionId(resource, def.getName());
+
+                                                //construct portal.war url to access
+                                                String baseUrl = "/resource/common/monitor/visibility/IndicatorCharts.do";
+                                                baseUrl += "?id=" + resource.getId();
+                                                baseUrl += "&view=Default";
+                                                baseUrl += "&action=addChart&metric=" + resourceGraphElements;
+                                                baseUrl += "&view=Default";
+                                                final String url = baseUrl;
+                                                //initiate HTTP request
+                                                final RequestBuilder b = new RequestBuilder(RequestBuilder.GET, baseUrl);
+
+                                                try {
+                                                    b.setCallback(new RequestCallback() {
+                                                        public void onResponseReceived(final Request request,
+                                                            final Response response) {
+                                                            Log
+                                                                .trace("Successfully submitted request to add graph to view:"
+                                                                    + url);
+
+                                                            //kick off a page reload.
+                                                            String currentViewPath = History.getToken();
+                                                            CoreGUI.goToView(currentViewPath, true);
+                                                        }
+
+                                                        @Override
+                                                        public void onError(Request request, Throwable t) {
+                                                            Log.trace("Error adding Metric:" + url, t);
+                                                        }
+                                                    });
+                                                    b.send();
+                                                } catch (RequestException e) {
+                                                    Log.trace("Error adding Metric:" + url, e);
+                                                }
+                                            }
+                                        }
+                                    });
+                                }
+                                //                            }//end trait check
+                            }//end dashboard iteration
+                        }//end trait exclusion
+                    }//end measurement def iteration
+
+                }
+            });
         measurements.setSubmenu(measurementsSubMenu);
         return measurements;
     }
 
-    Resource getResource(int resourceId) {
-        if (this.treeGrid != null && this.treeGrid.getTree() != null) {
-            ResourceTreeNode treeNode = (ResourceTreeNode) this.treeGrid.getTree().findById(
-                ResourceTreeNode.idOf(resourceId));
-            if (treeNode != null) {
-                return treeNode.getResource();
+    /** Locate the specific schedule definition using the definition identifier.
+     */
+    private int getScheduleDefinitionId(Resource resource, String definitionName) {
+        int id = -1;
+        if (resource.getSchedules() != null) {
+            boolean located = false;
+            MeasurementSchedule[] schedules = new MeasurementSchedule[resource.getSchedules().size()];
+            resource.getSchedules().toArray(schedules);
+            for (int i = 0; (!located && i < resource.getSchedules().size()); i++) {
+                MeasurementSchedule schedule = schedules[i];
+                MeasurementDefinition definition = schedule.getDefinition();
+                if ((definition != null) && definition.getName().equals(definitionName)) {
+                    located = true;
+                    id = schedule.getId();
+                }
             }
         }
-        return null;
+        return id;
     }
 
     private void setRootResource(Resource rootResource) {
@@ -608,13 +712,17 @@ public class ResourceTreeView extends LocatableVLayout {
 
         } else {
             // This is for cases where we have to load the tree fresh including down to the currently visible node
-            loadTree(selectedResourceId, null);
+            loadTree(selectedResourceId, true, null);
         }
 
     }
 
-    private void loadTree(final int selectedResourceId, final AsyncCallback<Void> callback) {
-        selectedNodeId = ResourceTreeNode.idOf(selectedResourceId);
+    private void loadTree(final int selectedResourceId, final boolean updateSelection,
+        final AsyncCallback<Void> callback) {
+
+        if (updateSelection) {
+            selectedNodeId = ResourceTreeNode.idOf(selectedResourceId);
+        }
 
         final ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
 
@@ -655,9 +763,13 @@ public class ResourceTreeView extends LocatableVLayout {
                         addMember(treeGrid);
 
                         treeGrid.fetchData(treeGrid.getCriteria(), new DSCallback() {
+
                             public void execute(DSResponse response, Object rawData, DSRequest request) {
                                 Log.info("Done fetching data for tree.");
-                                updateSelection();
+
+                                if (updateSelection) {
+                                    updateSelection();
+                                }
 
                                 if (null != callback) {
                                     callback.onSuccess(null);
@@ -665,21 +777,29 @@ public class ResourceTreeView extends LocatableVLayout {
                             }
                         });
 
-                        updateSelection();
+                        // OK, there is no good reason for this to be here.  But there are times when the
+                        // callback above seems to get called prior to the treeGrid.getTree() having been
+                        // updated with the fetched data. I think this is a smartgwt bug but it's hard to
+                        // prove.  Furthermore, given that the fetchData call is async there is really no
+                        // reason why this should get called after the callback above. Having said all that,
+                        // this seems to fix the issue as it 1) does currently get called after the callback
+                        // and 2) the tree seems to be update immediately after the callback completes.
+                        // So, for now use this, but TODO: find a better way.
+                        if (updateSelection) {
+                            updateSelection();
+                        }
 
                     } else {
-                        ResourceTypeRepository.Cache.getInstance().loadResourceTypes(
-                            lineage,
-                            EnumSet.of(ResourceTypeRepository.MetadataType.operations,
-                                ResourceTypeRepository.MetadataType.children,
-                                ResourceTypeRepository.MetadataType.subCategory),
+                        ResourceTypeRepository.Cache.getInstance().loadResourceTypes(lineage,
+                            EnumSet.of(ResourceTypeRepository.MetadataType.subCategory),
                             new ResourceTypeRepository.ResourceTypeLoadedCallback() {
+
                                 public void onResourceTypeLoaded(List<Resource> result) {
                                     treeGrid.getTree()
                                         .linkNodes(ResourceTreeDatasource.buildNodes(lineage, lockedData));
 
                                     TreeNode selectedNode = treeGrid.getTree().findById(selectedNodeId);
-                                    if (selectedNode != null) {
+                                    if (selectedNode != null && updateSelection) {
                                         updateSelection();
 
                                     } else {
@@ -714,21 +834,22 @@ public class ResourceTreeView extends LocatableVLayout {
             criteria.addFilterVisible(false);
             criteria.fetchResourceType(true);
             resourceGroupService.findResourceGroupsByCriteria(criteria, new AsyncCallback<PageList<ResourceGroup>>() {
+
                 public void onFailure(Throwable caught) {
                     CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_loadFailed_node(), caught);
                 }
 
                 public void onSuccess(PageList<ResourceGroup> result) {
                     final ResourceGroup backingGroup = result.get(0);
-                    // load the tree up to the autogroup's parent resource                    
-                    loadTree(backingGroup.getAutoGroupParentResource().getId(), new AsyncCallback<Void>() {
+                    // load the tree up to the autogroup's parent resource. Don't select the resource node
+                    // to avoid an unnecessary navigation to the resource, we just need the tree in place so
+                    // we can navigate to the autogroup node.
+                    loadTree(backingGroup.getAutoGroupParentResource().getId(), false, new AsyncCallback<Void>() {
 
-                        @Override
                         public void onFailure(Throwable caught) {
                             CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_loadFailed_children(), caught);
                         }
 
-                        @Override
                         public void onSuccess(Void arg) {
                             // get the node ID and use it to add a map entry, then call this again to finish up...
                             selectedNodeId = AutoGroupTreeNode.idOf(backingGroup.getAutoGroupParentResource(),
@@ -769,7 +890,7 @@ public class ResourceTreeView extends LocatableVLayout {
     */
 
     public void renderView(ViewPath viewPath) {
-        currentViewId = viewPath.getCurrent();
+        ViewId currentViewId = viewPath.getCurrent();
         String currentViewIdPath = currentViewId.getPath();
         if ("AutoGroup".equals(currentViewIdPath)) {
             // Move the currentViewId to the ID portion to play better with other code

@@ -77,11 +77,11 @@ public class FailoverList implements Serializable {
     private int id;
 
     @JoinColumn(name = "PARTITION_EVENT_ID", referencedColumnName = "ID", nullable = false)
-    @ManyToOne
+    @ManyToOne(optional = false)
     protected PartitionEvent partitionEvent;
 
     @JoinColumn(name = "AGENT_ID", referencedColumnName = "ID", nullable = false)
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     protected Agent agent;
 
     @Column(name = "AGENT_ID", insertable = false, updatable = false)

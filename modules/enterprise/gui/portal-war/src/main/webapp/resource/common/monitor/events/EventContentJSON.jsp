@@ -62,8 +62,8 @@
 
             String icon = "/images/icons/Content_" + extra + "16.png";
 
-            String link = "/rhq/resource/content/installed_package_details.xhtml?id=" + resourceId +
-                    "&currentPackageId=" + installedPackage.getId();
+            String link = "#Resource/" + resourceId + "/Content/Deployed"; 
+            // "/rhq/resource/content/installed_package_details.xhtml?id=" + resourceId + "&currentPackageId=" + installedPackage.getId();
 
             %>
 { "start" : "<%=sdf.format(new Date(installedPackage.getTimestamp()))%>",

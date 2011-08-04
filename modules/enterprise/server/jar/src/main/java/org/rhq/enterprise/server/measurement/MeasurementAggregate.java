@@ -18,13 +18,17 @@
  */
 package org.rhq.enterprise.server.measurement;
 
+import java.io.Serializable;
+
 /**
  * Simple Java Bean to hold aggregate values
  *
  * @author  <a href="mailto:heiko.rupp@redhat.com">Heiko W. Rupp</a>
- * @version $Id$
  */
-public class MeasurementAggregate {
+public class MeasurementAggregate implements Serializable {
+
+    static final long serialVersionUID = 5673395371271765240L;
+
     Double min;
     Double avg;
     Double max;

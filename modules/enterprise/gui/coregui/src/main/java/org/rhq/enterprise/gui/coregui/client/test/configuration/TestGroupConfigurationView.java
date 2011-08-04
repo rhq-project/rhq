@@ -22,7 +22,7 @@ package org.rhq.enterprise.gui.coregui.client.test.configuration;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.events.ClickEvent;
@@ -48,7 +48,6 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  */
 public class TestGroupConfigurationView
     extends LocatableVLayout implements PropertyValueChangeListener {
-    public static final String VIEW_ID = "TestGroupConfig";
 
     private static final int GROUP_SIZE = 2;
 
@@ -100,8 +99,8 @@ public class TestGroupConfigurationView
     public void propertyValueChanged(PropertyValueChangeEvent event) {
         MessageCenter messageCenter = CoreGUI.getMessageCenter();
         Message message;
-        if (event.isValidationStateChanged()) {
-            Set<String> invalidPropertyNames = event.getInvalidPropertyNames();
+        if (event.isInvalidPropertySetChanged()) {
+            Map<String, String> invalidPropertyNames = event.getInvalidPropertyNames();
             if (invalidPropertyNames.isEmpty()) {
                 this.saveButton.enable();
                 message = new Message("All properties now have valid values, so the configuration can now be saved.",
@@ -110,7 +109,7 @@ public class TestGroupConfigurationView
             else {
                 this.saveButton.disable();
                 message = new Message(
-                    "The following properties have invalid values: " + invalidPropertyNames 
+                    "The following properties have invalid values: " + invalidPropertyNames.values()
                         + " - the values must be corrected before the configuration can be saved.",
                     Message.Severity.Error, EnumSet.of(Message.Option.Transient, Message.Option.Sticky));
             }
@@ -127,16 +126,23 @@ public class TestGroupConfigurationView
             removeMember(editor);
         }
 
-        editor = new GroupConfigurationEditor(extendLocatorId("Editor"), this.configurationDefinition,
+        editor = createConfigurationEditor();
+        addMember(editor);
+    }
+
+    protected GroupConfigurationEditor createConfigurationEditor() {
+        GroupConfigurationEditor editor = new GroupConfigurationEditor(extendLocatorId("Editor"), this.configurationDefinition,
             this.memberConfigurations);
+        editor.setEditorTitle("Test Group Configuration");
         editor.setOverflow(Overflow.AUTO);
         editor.addPropertyValueChangeListener(this);
-        addMember(editor);
+        return editor;
     }
 
     private void save() {
         CoreGUI.getMessageCenter().notify(
             new Message("Member configurations updated.", "Member configurations updated."));
         reloadConfiguration();
-    }    
+    }
+
 }

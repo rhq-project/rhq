@@ -1,25 +1,25 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 
 <scenario xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-          xmlns="urn:xmlns:jboss.org:on-perftest">
+          xmlns="urn:xmlns:jboss.org:rhq-perftest">
 
    <!--
         This scenario will create one server with a service that has 5 summary measurements in them.
         To create 10 servers, each with 170 services, the following should be passed to the agent:
 
-        -Don.perftest.scenario=configurable-5 -Don.perftest.server-d-count=10 -Don.perftest.service-d-metrics-count=170
+        -Drhq.perftest.scenario=configurable-5 -Drhq.perftest.server-d-count=10 -Drhq.perftest.service-d-metrics-count=170
 
         This collects, on average, 170 measurements per minute (assuming summary measurement collection interval is 5 mins)
    -->
 
 
    <resource type="server-d">
-      <simpleResourceGenerator property="on.perftest.server-d-count"/>
+      <simpleResourceGenerator property="rhq.perftest.server-d-count"/>
       <simpleNumericMeasurementGenerator/>
    </resource>
 
    <resource type="service-d-metrics">
-      <simpleResourceGenerator property="on.perftest.service-d-metrics-count"/>
+      <simpleResourceGenerator property="rhq.perftest.service-d-metrics-count"/>
       <simpleNumericMeasurementGenerator/>
       <simpleTraitMeasurementGenerator/>
       <ConfigurableCallTimeDataGenerator

@@ -307,13 +307,13 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         return;
     }
 
-    @RequiredPermissions({ @RequiredPermission(Permission.MANAGE_INVENTORY),
+    @RequiredPermissions( { @RequiredPermission(Permission.MANAGE_INVENTORY),
         @RequiredPermission(Permission.MANAGE_SETTINGS) })
     public void disableAllDefaultCollections(Subject subject) {
         entityManager.createNamedQuery(MeasurementDefinition.DISABLE_ALL).executeUpdate();
     }
 
-    @RequiredPermissions({ @RequiredPermission(Permission.MANAGE_INVENTORY),
+    @RequiredPermissions( { @RequiredPermission(Permission.MANAGE_INVENTORY),
         @RequiredPermission(Permission.MANAGE_SETTINGS) })
     public void disableAllSchedules(Subject subject) {
         entityManager.createNamedQuery(MeasurementSchedule.DISABLE_ALL).executeUpdate();
@@ -496,7 +496,18 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
 
                 // The number of Agents is manageable, so we can work with entities here
                 for (Integer resourceId : reqMap.keySet()) {
-                    Agent agent = agentManager.getAgentByResourceId(subject, resourceId);
+                    Agent agent = agentManager.getAgentByResourceId(subjectManager.getOverlord(), resourceId);
+
+                    // Ignore resources that are not actually associated with an agent. For example,
+                    // those with an UNINVENTORIED status. 
+                    if (null == agent) {
+                        if (log.isDebugEnabled()) {
+                            log.debug("Ignoring measurement schedule change for non-agent-related resource ["
+                                + resourceId + "]. It is probably waiting to be uninventoried.");
+                        }
+
+                        continue;
+                    }
 
                     Set<ResourceMeasurementScheduleRequest> agentUpdate = agentUpdates.get(agent);
                     if (agentUpdate == null) {

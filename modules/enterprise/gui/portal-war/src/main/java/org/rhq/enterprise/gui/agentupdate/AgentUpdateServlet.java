@@ -83,6 +83,10 @@ public class AgentUpdateServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+
+        // seeing odd browser caching issues, even though we set Last-Modified. so force no caching for now
+        disableBrowserCache(resp);
+
         String servletPath = req.getServletPath();
         if (servletPath != null) {
             if (isServerAcceptingRequests()) {
@@ -161,7 +165,8 @@ public class AgentUpdateServlet extends HttpServlet {
 
     private int getDownloadLimit() {
         // if the server cloud was configured to disallow updates, return 0
-        Properties systemConfig = LookupUtil.getSystemManager().getSystemConfiguration();
+        Properties systemConfig = LookupUtil.getSystemManager().getSystemConfiguration(
+            LookupUtil.getSubjectManager().getOverlord());
         if (!Boolean.parseBoolean(systemConfig.getProperty(RHQConstants.EnableAgentAutoUpdate))) {
             return 0;
         }
@@ -180,7 +185,7 @@ public class AgentUpdateServlet extends HttpServlet {
     }
 
     private void disableBrowserCache(HttpServletResponse resp) {
-        resp.setHeader("Cache-Control", "no-cache");
+        resp.setHeader("Cache-Control", "no-cache, no-store");
         resp.setHeader("Expires", "-1");
         resp.setHeader("Pragma", "no-cache");
     }

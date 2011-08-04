@@ -47,7 +47,7 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablem
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.ErrorHandler;
-import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 
@@ -58,7 +58,7 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
  * @author Greg Hinkle
  * @author John Mazzitelli
  */
-public class BundlesListView extends Table<RPCDataSource<BundleWithLatestVersionComposite>> {
+public class BundlesListView extends Table<BundlesWithLatestVersionDataSource> {
 
     private final Set<Permission> permissions;
 
@@ -81,7 +81,6 @@ public class BundlesListView extends Table<RPCDataSource<BundleWithLatestVersion
 
     @Override
     protected void configureTable() {
-
         ListGridField idField = new ListGridField(BundlesWithLatestVersionDataSource.FIELD_ID, MSG.common_title_id());
         idField.setType(ListGridFieldType.INTEGER);
         idField.setWidth("50");
@@ -90,28 +89,31 @@ public class BundlesListView extends Table<RPCDataSource<BundleWithLatestVersion
             .common_title_name());
         nameField.setWidth("33%");
         nameField.setCellFormatter(new CellFormatter() {
-            public String format(Object o, ListGridRecord record, int i, int i1) {
+            public String format(Object value, ListGridRecord record, int i, int i1) {
                 return "<a href=\"" + record.getAttribute(BundlesWithLatestVersionDataSource.FIELD_NAMELINK) + "\">"
-                    + String.valueOf(o) + "</a>";
+                    + StringUtility.escapeHtml(String.valueOf(value)) + "</a>";
             }
         });
 
         ListGridField descField = new ListGridField(BundlesWithLatestVersionDataSource.FIELD_DESCRIPTION, MSG
             .common_title_description());
         descField.setWidth("33%");
+        descField.setCellFormatter(new CellFormatter() {
+            public String format(Object value, ListGridRecord record, int i, int i1) {
+                return StringUtility.escapeHtml(String.valueOf(value));
+            }
+        });
 
         ListGridField latestVersionField = new ListGridField(BundlesWithLatestVersionDataSource.FIELD_LATEST_VERSION,
             MSG.view_bundle_latestVersion());
         latestVersionField.setWidth("20%");
         latestVersionField.setAlign(Alignment.CENTER);
-        latestVersionField.setCanSort(false); // need to figure out how we can sort on this projection field of the composite
 
         ListGridField versionsCountField = new ListGridField(BundlesWithLatestVersionDataSource.FIELD_VERSIONS_COUNT,
             MSG.view_bundle_list_versionsCount());
         versionsCountField.setType(ListGridFieldType.INTEGER);
         versionsCountField.setWidth("*");
         versionsCountField.setAlign(Alignment.CENTER);
-        versionsCountField.setCanSort(false); // need to figure out how we can sort on this projection field of the composite
 
         setListGridFields(idField, nameField, descField, latestVersionField, versionsCountField);
 
@@ -139,7 +141,7 @@ public class BundlesListView extends Table<RPCDataSource<BundleWithLatestVersion
                 }
             });
 
-            addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), MSG.common_msg_areYouSure(),
+            addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), MSG.view_bundle_list_deleteConfirm(),
                 new AbstractTableAction((hasAuth) ? TableActionEnablement.ANY : TableActionEnablement.NEVER) {
                     public void executeAction(ListGridRecord[] selections, Object actionValue) {
                         if (selections == null || selections.length == 0) {

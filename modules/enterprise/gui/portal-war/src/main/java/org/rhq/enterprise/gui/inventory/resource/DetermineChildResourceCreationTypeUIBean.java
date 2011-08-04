@@ -143,12 +143,13 @@ public class DetermineChildResourceCreationTypeUIBean {
      * @return list of failed create history requests
      */
     public SelectItem[] getFailedCreateHistory() {
+        Subject user = EnterpriseFacesContextUtility.getSubject();
         Resource parentResource = EnterpriseFacesContextUtility.getResource();
 
         ResourceFactoryManagerLocal resourceFactoryManager = LookupUtil.getResourceFactoryManager();
         PageControl pageControl = new PageControl(0, 1000);
-        PageList<CreateResourceHistory> pageList = resourceFactoryManager.findCreateChildResourceHistory(parentResource
-            .getId(), null, null, pageControl);
+        PageList<CreateResourceHistory> pageList = resourceFactoryManager.findCreateChildResourceHistory(user,
+            parentResource.getId(), null, null, pageControl);
 
         List<SelectItem> selectItemsList = new ArrayList<SelectItem>();
         for (CreateResourceHistory history : pageList) {

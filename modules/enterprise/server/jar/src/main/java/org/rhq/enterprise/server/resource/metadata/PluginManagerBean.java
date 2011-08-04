@@ -31,12 +31,17 @@ import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.criteria.Criteria;
+import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.plugin.PluginStatusType;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.inventory.InventoryManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
@@ -70,6 +75,9 @@ public class PluginManagerBean implements PluginManagerLocal {
     @EJB
     private ResourceManagerLocal resourceMgr;
 
+    @EJB
+    private SubjectManagerLocal subjectMgr;
+
     /**
      * Returns the information on the given plugin as found in the database.
      * @param  name the name of a plugin
@@ -84,14 +92,27 @@ public class PluginManagerBean implements PluginManagerLocal {
     }
 
     @Override
-    public void purgePlugins(Subject subject, List<Integer> pluginIds) throws Exception {
-        deletePlugins(subject, pluginIds);
-
+    public void markPluginsForPurge(Subject subject, List<Integer> pluginIds) throws Exception {
         for (Integer id : pluginIds) {
             Plugin plugin = entityManager.find(Plugin.class, id);
-            log.info("Purging [" + plugin + "] from the database");
-            entityManager.remove(plugin);
+            plugin.setCtime(Plugin.PURGED);
+            log.info("Scheduling plugin [" + plugin + "] to be purged from the database.");
         }
+    }
+
+    @Override
+    public boolean isReadyForPurge(Plugin plugin) {
+        ResourceTypeCriteria criteria = new ResourceTypeCriteria();
+        criteria.addFilterPluginName(plugin.getName());
+        criteria.setRestriction(Criteria.Restriction.COUNT_ONLY);
+        PageList results = resourceTypeMgr.findResourceTypesByCriteria(subjectMgr.getOverlord(), criteria);
+
+        return results.getTotalSize() == 0;
+    }
+
+    @Override
+    public void purgePlugins(List<Plugin> plugins) {
+        entityManager.createNamedQuery(Plugin.PURGE_PLUGINS).setParameter("plugins", plugins).executeUpdate();
     }
 
     @Override
@@ -108,6 +129,11 @@ public class PluginManagerBean implements PluginManagerLocal {
     @Override
     public List<Plugin> findAllDeletedPlugins() {
         return entityManager.createNamedQuery(Plugin.QUERY_FIND_ALL_DELETED).getResultList();
+    }
+
+    @Override
+    public List<Plugin> findPluginsMarkedForPurge() {
+        return entityManager.createNamedQuery(Plugin.QUERY_FIND_ALL_TO_PURGE).getResultList();
     }
 
     @SuppressWarnings("unchecked")
@@ -315,8 +341,10 @@ public class PluginManagerBean implements PluginManagerLocal {
         log.debug("Registering " + plugin);
         long startTime = System.currentTimeMillis();
 
-        boolean typesUpdated = pluginMgr.registerPluginTypes(subject, plugin, pluginDescriptor,
-            pluginFile, forceUpdate);
+//        boolean typesUpdated = pluginMgr.registerPluginTypes(subject, plugin, pluginDescriptor,
+//            pluginFile, forceUpdate);
+        boolean newOrUpdated = pluginMgr.installPluginJar(subject, plugin, pluginDescriptor, pluginFile);
+        boolean typesUpdated = pluginMgr.registerPluginTypes(plugin, pluginDescriptor, newOrUpdated, forceUpdate);
 
         if (typesUpdated) {
             resourceMetadataManager.removeObsoleteTypes(subject, plugin.getName(), PLUGIN_METADATA_MANAGER);
@@ -326,15 +354,13 @@ public class PluginManagerBean implements PluginManagerLocal {
         log.debug("Finished registering " + plugin + " in " + (endTime - startTime) + " ms");
     }
 
+
     @RequiredPermission(Permission.MANAGE_SETTINGS)
-    public boolean registerPluginTypes(Subject subject, Plugin newPlugin, PluginDescriptor pluginDescriptor,
-        File pluginFile, boolean forceUpdate) throws Exception {
-
-        // TODO GH: Consider how to remove features from plugins in updates without breaking everything
-
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public boolean installPluginJar(Subject subject, Plugin newPlugin, PluginDescriptor pluginDescriptor,
+        File pluginFile) throws Exception {
         Plugin existingPlugin = null;
         boolean newOrUpdated = false;
-        boolean typesUpdated = false;
 
         try {
             existingPlugin = getPlugin(newPlugin.getName());
@@ -364,6 +390,12 @@ public class PluginManagerBean implements PluginManagerLocal {
             }
             log.debug("Updated plugin entity [" + newPlugin + "]");
         }
+        return newOrUpdated;
+    }
+
+    public boolean registerPluginTypes(Plugin newPlugin, PluginDescriptor pluginDescriptor, boolean newOrUpdated,
+        boolean forceUpdate) throws Exception {
+        boolean typesUpdated = false;
 
         if (newOrUpdated || forceUpdate || !PLUGIN_METADATA_MANAGER.getPluginNames().contains(newPlugin.getName())) {
             Set<ResourceType> rootResourceTypes = PLUGIN_METADATA_MANAGER.loadPlugin(pluginDescriptor);
@@ -376,10 +408,6 @@ public class PluginManagerBean implements PluginManagerLocal {
                 typesUpdated = true;
             }
         }
-
-        // TODO GH: JBNADM-1310/JBNADM-1630 - Push updated plugins to running agents and have them reboot their PCs
-        // We probably want to be smart about this - perhaps have the agents periodically poll their server to see
-        // if there are new plugins and if so download them - this of course would be configurable/disableable
 
         return typesUpdated;
     }

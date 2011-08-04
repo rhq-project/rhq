@@ -47,7 +47,7 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 /**
  * @author Greg Hinkle
  */
-public class BundleDestinationDataSource extends RPCDataSource<BundleDestination> {
+public class BundleDestinationDataSource extends RPCDataSource<BundleDestination, BundleDestinationCriteria> {
 
     public static final String FIELD_ID = "id";
     public static final String FIELD_NAME = "name";
@@ -57,6 +57,7 @@ public class BundleDestinationDataSource extends RPCDataSource<BundleDestination
     public static final String FIELD_GROUP_ID = "groupId";
     public static final String FIELD_GROUP_NAME = "groupName";
     public static final String FIELD_DEPLOY_DIR = "deployDir";
+    public static final String FIELD_BASE_DIR_NAME = "baseDirName";
     public static final String FIELD_LATEST_DEPLOY_VERSION = "latestDeploymentVersion";
     public static final String FIELD_LATEST_DEPLOY_DATE = "latestDeploymentDate";
     public static final String FIELD_LATEST_DEPLOY_STATUS = "latestDeploymentStatus";
@@ -88,6 +89,10 @@ public class BundleDestinationDataSource extends RPCDataSource<BundleDestination
         DataSourceTextField group = new DataSourceTextField(FIELD_GROUP_NAME, MSG.view_bundle_dest_group());
         fields.add(group);
 
+        DataSourceTextField baseDirName = new DataSourceTextField(FIELD_BASE_DIR_NAME, MSG
+            .view_bundle_dest_baseDirName());
+        fields.add(baseDirName);
+
         DataSourceTextField deployDir = new DataSourceTextField(FIELD_DEPLOY_DIR, MSG.view_bundle_dest_deployDir());
         fields.add(deployDir);
 
@@ -107,30 +112,8 @@ public class BundleDestinationDataSource extends RPCDataSource<BundleDestination
     }
 
     @Override
-    protected void executeFetch(final DSRequest request, final DSResponse response) {
-        BundleDestinationCriteria criteria = new BundleDestinationCriteria();
-
-        if (request.getCriteria().getValues().containsKey(FIELD_BUNDLE_ID)) {
-            criteria.addFilterBundleId(Integer.parseInt(request.getCriteria().getAttributeAsString(FIELD_BUNDLE_ID)));
-        }
-
-        if (request.getCriteria().getValues().get("tagNamespace") != null) {
-            criteria.addFilterTagNamespace((String) request.getCriteria().getValues().get("tagNamespace"));
-        }
-
-        if (request.getCriteria().getValues().get("tagSemantic") != null) {
-            criteria.addFilterTagSemantic((String) request.getCriteria().getValues().get("tagSemantic"));
-        }
-
-        if (request.getCriteria().getValues().get("tagName") != null) {
-            criteria.addFilterTagName((String) request.getCriteria().getValues().get("tagName"));
-        }
-
-        criteria.fetchBundle(true);
-        criteria.fetchDeployments(true);
-        criteria.fetchGroup(true);
-        criteria.fetchTags(true);
-
+    protected void executeFetch(final DSRequest request, final DSResponse response,
+        final BundleDestinationCriteria criteria) {
         GWTServiceLookup.getBundleService().findBundleDestinationsByCriteria(criteria,
             new AsyncCallback<PageList<BundleDestination>>() {
                 public void onFailure(Throwable caught) {
@@ -169,6 +152,48 @@ public class BundleDestinationDataSource extends RPCDataSource<BundleDestination
     }
 
     @Override
+    protected BundleDestinationCriteria getFetchCriteria(final DSRequest request) {
+        BundleDestinationCriteria criteria = new BundleDestinationCriteria();
+
+        if (request.getCriteria().getValues().containsKey(FIELD_BUNDLE_ID)) {
+            criteria.addFilterBundleId(Integer.parseInt(request.getCriteria().getAttributeAsString(FIELD_BUNDLE_ID)));
+        }
+
+        if (request.getCriteria().getValues().get("tagNamespace") != null) {
+            criteria.addFilterTagNamespace((String) request.getCriteria().getValues().get("tagNamespace"));
+        }
+
+        if (request.getCriteria().getValues().get("tagSemantic") != null) {
+            criteria.addFilterTagSemantic((String) request.getCriteria().getValues().get("tagSemantic"));
+        }
+
+        if (request.getCriteria().getValues().get("tagName") != null) {
+            criteria.addFilterTagName((String) request.getCriteria().getValues().get("tagName"));
+        }
+
+        criteria.fetchBundle(true);
+        criteria.fetchDeployments(true);
+        criteria.fetchGroup(true);
+        criteria.fetchTags(true);
+        return criteria;
+    }
+
+    @Override
+    protected String getSortFieldForColumn(String columnName) {
+        if (FIELD_LATEST_DEPLOY_DATE.equals(columnName)) {
+            return null;
+        }
+        if (FIELD_LATEST_DEPLOY_STATUS.equals(columnName)) {
+            return null;
+        }
+        if (FIELD_LATEST_DEPLOY_VERSION.equals(columnName)) {
+            return null;
+        }
+
+        return super.getSortFieldForColumn(columnName);
+    }
+
+    @Override
     public BundleDestination copyValues(Record from) {
         return (BundleDestination) from.getAttributeAsObject("object");
     }
@@ -184,6 +209,7 @@ public class BundleDestinationDataSource extends RPCDataSource<BundleDestination
         record.setAttribute(FIELD_BUNDLE_NAME, from.getBundle().getName());
         record.setAttribute(FIELD_GROUP_ID, from.getGroup().getId());
         record.setAttribute(FIELD_GROUP_NAME, from.getGroup().getName());
+        record.setAttribute(FIELD_BASE_DIR_NAME, from.getDestinationBaseDirectoryName());
         record.setAttribute(FIELD_DEPLOY_DIR, from.getDeployDir());
 
         record.setAttribute("object", from);

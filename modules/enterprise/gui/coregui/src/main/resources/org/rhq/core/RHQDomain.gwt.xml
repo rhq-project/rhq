@@ -30,7 +30,10 @@
     <entry-point class='org.rhq.core.client.RHQDomain'/>
 
     <source path="client"/>
-    <source path="domain"/>
+    <source path="domain">
+       <!--  Exclude any domain classes that can not be used client-side due to use of unsupported class use -->
+       <exclude name="**/DriftFileBits.*"/>
+    </source>
     
     <!--<generate-with class="org.rhq.core.rebind.RecordBuilderGenerator">
         <when-type-assignable class="org.rhq.core.domain.util.Recordizable"/>

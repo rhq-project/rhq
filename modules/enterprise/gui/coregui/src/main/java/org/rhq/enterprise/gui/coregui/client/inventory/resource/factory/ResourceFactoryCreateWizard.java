@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.factory;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -79,7 +80,12 @@ public class ResourceFactoryCreateWizard extends AbstractResourceFactoryWizard {
 
             ConfigurationDefinition resourceConfigDef = getChildType().getResourceConfigurationDefinition();
             this.setNewResourceConfigurationDefinition(resourceConfigDef);
-            Map<String, ConfigurationTemplate> templates = resourceConfigDef.getTemplates();
+            Map<String, ConfigurationTemplate> templates;
+            if (resourceConfigDef == null) {
+                templates = new LinkedHashMap<String, ConfigurationTemplate>();
+            } else {
+                templates = resourceConfigDef.getTemplates();
+            }
             steps.add(new ResourceFactoryInfoStep(ResourceFactoryCreateWizard.this, MSG
                 .widget_resourceFactoryWizard_namePrompt(), MSG.widget_resourceFactoryWizard_configTemplatePrompt(),
                 templates));
@@ -123,7 +129,8 @@ public class ResourceFactoryCreateWizard extends AbstractResourceFactoryWizard {
             }
 
             GWTServiceLookup.getResourceService().createResource(parentResourceId, createTypeId, (String) null,
-                deployTimeConfiguration, packageVersionId, new AsyncCallback<Void>() {
+                deployTimeConfiguration, packageVersionId, this.getNewResourceCreateTimeout(),
+                new AsyncCallback<Void>() {
                     public void onFailure(Throwable caught) {
                         CoreGUI.getErrorHandler().handleError(MSG.widget_resourceFactoryWizard_execute2(), caught);
                         getView().closeDialog();
@@ -145,7 +152,7 @@ public class ResourceFactoryCreateWizard extends AbstractResourceFactoryWizard {
             Configuration resourceConfiguration = this.getNewResourceConfiguration();
 
             GWTServiceLookup.getResourceService().createResource(parentResourceId, createTypeId, newResourceName,
-                resourceConfiguration, new AsyncCallback<Void>() {
+                resourceConfiguration, this.getNewResourceCreateTimeout(), new AsyncCallback<Void>() {
                     public void onFailure(Throwable caught) {
                         CoreGUI.getErrorHandler().handleError(MSG.widget_resourceFactoryWizard_execute2(), caught);
                         getView().closeDialog();

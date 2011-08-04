@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2010 Red Hat, Inc.
+ * Copyright (C) 2010-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -29,8 +29,10 @@ import java.util.List;
 import com.smartgwt.client.types.DSOperationType;
 import com.smartgwt.client.widgets.form.fields.BooleanItem;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
+import com.smartgwt.client.widgets.form.fields.CheckboxItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.HiddenItem;
+import com.smartgwt.client.widgets.form.fields.SpacerItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
@@ -42,6 +44,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
  * @author Ian Springer
  */
 public class EnhancedDynamicForm extends LocatableDynamicForm {
+
+    public static final String OUTPUT_AS_HTML_ATTRIBUTE = "outputAsHTML";
 
     private static final String FIELD_ID = "id";
 
@@ -66,7 +70,8 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
         // Layout Settings
         //setWidth(640);
         //setWidth100();
-        //setPadding(13);
+        setCellPadding(3);
+
         // Default to 4 columns, i.e.: itemOneTitle | itemOneValue | itemTwoTitle | itemTwoValue
         setNumCols(4);
         setColWidths(75, 200, 75, 200);
@@ -100,7 +105,7 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
                 hasIdField = true;
             }
             if (this.isReadOnly) {
-                if ((item instanceof StaticTextItem) || (item instanceof CanvasItem)) {
+                if ((item instanceof StaticTextItem) || (item instanceof CanvasItem) || (item instanceof SpacerItem)) {
                     // note: EditableFormItem is a subclass of CanvasItem
                     if (item instanceof EditableFormItem) {
                         ((EditableFormItem) item).setReadOnly(true);
@@ -108,12 +113,19 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
                     itemsList.add(item);
                 } else {
                     StaticTextItem staticItem = new StaticTextItem(item.getName(), item.getTitle());
+                    Boolean showTitle = (item.getShowTitle() != null) ? item.getShowTitle() : true;
+                    staticItem.setShowTitle(showTitle);
                     staticItem.setTooltip(item.getTooltip());
-                    staticItem.setValue(item.getValue());
+                    String displayValue = item.getDisplayValue();
+                    staticItem.setValue(displayValue);
                     staticItem.setColSpan(item.getAttribute("colSpan"));
+                    Boolean outputAsHtml = item.getAttributeAsBoolean(OUTPUT_AS_HTML_ATTRIBUTE);
+                    if (Boolean.TRUE.equals(outputAsHtml) && null != displayValue && !displayValue.isEmpty()) {
+                        staticItem.setOutputAsHTML(true);
+                    }
                     // TODO: Any other fields we should copy? icons?
 
-                    if (item instanceof BooleanItem) {
+                    if ((item instanceof BooleanItem) || (item instanceof CheckboxItem)) {
                         LinkedHashMap<String, String> valueMap = new LinkedHashMap<String, String>();
                         valueMap.put("true", MSG.common_val_yes());
                         valueMap.put("false", MSG.common_val_no());
@@ -139,7 +151,11 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
         }
 
         for (FormItem item : itemsList) {
-            item.setValidateOnExit(true);
+            if (item instanceof StaticTextItem) {
+                item.setRequired(false);
+            } else {
+                item.setValidateOnExit(true);
+            }
 
             //item.setWidth("*"); // this causes a JavaScript exception ...  :-(
             item.setWidth(195);
@@ -151,4 +167,5 @@ public class EnhancedDynamicForm extends LocatableDynamicForm {
     public boolean isReadOnly() {
         return isReadOnly;
     }
+
 }

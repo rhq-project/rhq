@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    xmlns:serverplugin="urn:xmlns:rhq-serverplugin" xmlns:config="urn:xmlns:rhq-configuration"
+    xmlns:c="urn:xmlns:rhq-configuration" xmlns:packagetype="urn:xmlns:rhq-serverplugin.packagetype"
+    targetNamespace="urn:xmlns:rhq-serverplugin.packagetype"
+    elementFormDefault="qualified" jaxb:version="2.0"
+    xmlns:jaxb="http://java.sun.com/xml/ns/jaxb" blockDefault="">
+
+    <xs:import namespace="urn:xmlns:rhq-serverplugin"
+        schemaLocation="rhq-serverplugin.xsd" />
+    <xs:import namespace="urn:xmlns:rhq-configuration"
+        schemaLocation="rhq-configuration.xsd" />
+
+    <xs:annotation>
+        <xs:documentation>
+            Schema for package type server-side plug-ins.
+        </xs:documentation>
+        <xs:appinfo>
+            <jaxb:schemaBindings>
+                <jaxb:package
+                    name="org.rhq.enterprise.server.xmlschema.generated.serverplugin.packagetype" />
+            </jaxb:schemaBindings>
+        </xs:appinfo>
+    </xs:annotation>
+
+    <xs:element name="packagetype-plugin"
+        type="packagetype:PackageTypePluginDescriptorType"
+        substitutionGroup="serverplugin:server-plugin">
+        <xs:annotation>
+            <xs:documentation>
+                Defines a server-side package type
+                plug-in. This type of plug-in allows you to define your
+                own package types.
+                Users are then able to create packages
+                of those types and the data stored in the content
+                subsystem for such
+                packages can then be used in other
+                server-side plugins.
+            </xs:documentation>
+            <xs:appinfo>
+                <jaxb:class name="PackageTypePluginElement" />
+            </xs:appinfo>
+        </xs:annotation>
+    </xs:element>
+
+    <xs:complexType name="PackageTypePluginDescriptorType">
+        <xs:complexContent>
+            <xs:extension base="serverplugin:ServerPluginDescriptorType">
+                <xs:sequence>
+                    <xs:element name="behavior-class" type="xs:string"
+                        minOccurs="1" maxOccurs="1">
+                        <xs:annotation>
+                            <xs:documentation>
+                                The name of the class
+                                implementing the
+                                PackageTypeBehavior
+                                interface.
+                                This class provides runtime
+                                hooks for checking
+                                the correctness of the
+                                packages of different types.
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:element>
+                    <xs:element name="package-type"
+                        type="packagetype:PackageTypeDefinitionType"
+                        minOccurs="0" maxOccurs="unbounded">
+                        <xs:annotation>
+                            <xs:documentation>
+                                The list of package types
+                                this plugin defines.
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:element>
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:complexType name="PackageTypeDefinitionType">
+        <xs:sequence>
+            <xs:element name="configuration" type="config:configuration"
+                minOccurs="0">
+                <xs:annotation>
+                    <xs:documentation>
+                        Describes properties that dictate
+                        how the package was deployed or
+                        installed. The
+                        user will be
+                        prompted for values for these
+                        properties when deploying a new package of
+                        this
+                        type.
+                  </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+        </xs:sequence>
+        <xs:attribute name="name" type="xs:string" use="required">
+            <xs:annotation>
+                <xs:documentation>
+                    Name of this package type. This must
+                    be unique across all other package
+                    types defined for
+                    this
+                    resource type.
+               </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="displayName" type="xs:string"
+            use="optional">
+            <xs:annotation>
+                <xs:documentation>
+                    The user friendly name of the package
+                    type that will be displayed in
+                    the UI.
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="description" type="xs:string"
+            use="optional">
+            <xs:annotation>
+                <xs:documentation>
+                    Description of the package type that
+                    will be displayed in the UI.
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="supportsArchitecture" type="xs:boolean"
+            use="optional" default="false">
+            <xs:annotation>
+                <xs:documentation>
+                    Indicates packages of this type may be
+                    of different architectures. If this
+                    is set to false,
+                    when
+                    creating new packages of this type, the
+                    architecture will be defaulted to
+                    "noarch".
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+</xs:schema>

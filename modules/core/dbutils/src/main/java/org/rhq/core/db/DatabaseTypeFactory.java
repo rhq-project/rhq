@@ -146,6 +146,8 @@ public class DatabaseTypeFactory {
             if (db_name.indexOf("postgresql") != -1) {
                 if (db_version.startsWith("7.")) {
                     database_type_class = Postgresql7DatabaseType.class;
+                } else if (db_version.startsWith("9.1")) {
+                    database_type_class = Postgresql91DatabaseType.class;
                 } else if (db_version.startsWith("9.0")) {
                     database_type_class = Postgresql90DatabaseType.class;
                 } else if (db_version.startsWith("8.4")) {

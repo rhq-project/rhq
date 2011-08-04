@@ -38,6 +38,7 @@ import com.smartgwt.client.widgets.events.CloseClientEvent;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.alert.AlertCondition;
+import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertFormatUtility;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
@@ -128,8 +129,9 @@ public class ConditionsEditor extends LocatableVLayout {
                         }
                     });
 
-                    NewConditionEditor newConditionEditor = new NewConditionEditor(extendLocatorId("newConditionEditor"),
-                        conditions, ConditionsEditor.this.resourceType, new Runnable() {
+                    NewConditionEditor newConditionEditor = new NewConditionEditor(
+                        extendLocatorId("newConditionEditor"), conditions, ConditionsEditor.this.resourceType,
+                        new Runnable() {
                             @Override
                             public void run() {
                                 winModal.markForDestroy();
@@ -139,23 +141,24 @@ public class ConditionsEditor extends LocatableVLayout {
                     winModal.addItem(newConditionEditor);
                     winModal.show();
                 }
-        });
+            });
 
-        table.addTableAction(this.extendLocatorId("delete"), MSG.common_button_delete(), MSG
-            .view_alert_definitions_delete_confirm(), new AbstractTableAction(TableActionEnablement.ANY) {
-            public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                for (ListGridRecord record : selection) {
-                    AlertCondition cond = getDataSource().copyValues(record);
-                    conditions.remove(cond);
+            table.addTableAction(this.extendLocatorId("delete"), MSG.common_button_delete(), MSG
+                .view_alert_definition_condition_editor_delete_confirm(), new AbstractTableAction(
+                TableActionEnablement.ANY) {
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                    for (ListGridRecord record : selection) {
+                        AlertCondition cond = getDataSource().copyValues(record);
+                        conditions.remove(cond);
+                    }
+                    refresh();
                 }
-                refresh();
-            }
-        });
+            });
 
         }
     }
 
-    private class ConditionDataSource extends RPCDataSource<AlertCondition> {
+    private class ConditionDataSource extends RPCDataSource<AlertCondition, Criteria> {
         private static final String FIELD_OBJECT = "obj";
         private static final String FIELD_CONDITION = "condition";
 
@@ -190,9 +193,15 @@ public class ConditionsEditor extends LocatableVLayout {
         }
 
         @Override
-        protected void executeFetch(DSRequest request, DSResponse response) {
+        protected void executeFetch(DSRequest request, DSResponse response, Criteria unused) {
             response.setData(buildRecords(conditions));
             processResponse(request.getRequestId(), response);
+        }
+
+        @Override
+        protected Criteria getFetchCriteria(DSRequest request) {
+            // we don't use criterias for this datasource, just return null
+            return null;
         }
     }
 }

@@ -122,7 +122,7 @@ public class ContentMetadataManagerBeanTest extends MetadataBeanTest {
 
     @Test(groups = {"plugin.metadata", "Content.UpgradePlugin"}, dependsOnMethods = {"upgradeContentPlugin"})
     public void updateBundleType() {
-        ResourceType resourceType = loadResourceTypeWithBundleType("ContentServer",
+        ResourceType resourceType = loadResourceTypeWithBundleType("ContentServer7",
             "ContentMetadataManagerBeanTestPlugin");
         BundleType bundleType = resourceType.getBundleType();
 

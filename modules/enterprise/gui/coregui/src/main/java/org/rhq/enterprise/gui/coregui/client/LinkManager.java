@@ -22,8 +22,10 @@
  */
 package org.rhq.enterprise.gui.coregui.client;
 
+import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.enterprise.gui.coregui.client.admin.roles.RolesView;
 import org.rhq.enterprise.gui.coregui.client.admin.users.UsersView;
+import org.rhq.enterprise.gui.coregui.client.components.table.StringIDTableSection;
 
 /**
  * @author Greg Hinkle
@@ -83,8 +85,60 @@ public class LinkManager {
         }
     }
 
-    public static String getGroupPluginConfigurationUpdateHistoryLink(int groupId) {
-        return getResourceGroupLink(groupId) + "/Inventory/ConnectionSettingsHistory";
+    public static String getResourceGroupTabLink(ResourceGroup group, String tabName, String subTabName) {
+        String link;
+        if (group.getSubject() != null) {
+            // autogroup
+            link = getAutoGroupTabLink(group.getId(), tabName, subTabName);
+        } else if (group.getClusterResourceGroup() != null) {
+            // autocluster
+            link = getAutoClusterTabLink(group.getId(), tabName, subTabName);
+        } else {
+            // regular group
+            link = getResourceGroupTabLink(group.getId(), tabName, subTabName);
+        }
+        return link;
+    }
+
+    public static String getResourcePluginConfigurationUpdateHistoryLink(int groupId) {
+        return getResourceLink(groupId) + "/Inventory/ConnectionSettingsHistory";
+    }
+
+    public static String getGroupPluginConfigurationUpdateHistoryLink(int groupId, Integer groupUpdateHistoryId) {
+        if (groupUpdateHistoryId != null) {
+            return getResourceGroupLink(groupId) + "/Inventory/ConnectionSettingsHistory/" + groupUpdateHistoryId
+                + "/Members";
+        } else {
+            return getResourceGroupLink(groupId) + "/Inventory/ConnectionSettingsHistory";
+        }
+    }
+
+    public static String getGroupResourceConfigurationUpdateHistoryLink(int groupId, Integer groupUpdateHistoryId) {
+        if (groupUpdateHistoryId != null) {
+            return getResourceGroupLink(groupId) + "/Configuration/History/" + groupUpdateHistoryId + "/Members";
+        } else {
+            return getResourceGroupLink(groupId) + "/Configuration/History";
+        }
+    }
+
+    public static String getGroupOperationHistoryLink(int groupId, int groupOperationHistoryId) {
+        return getResourceGroupLink(groupId) + "/Operations/History/" + groupOperationHistoryId;
+    }
+
+    public static String getResourceEventHistoryListLink(int resourceId) {
+        return "#Resource/" + resourceId + "/Events/History/";
+    }
+
+    public static String getGroupEventHistoryListLink(int groupId) {
+        return getResourceGroupLink(groupId) + "/Events/History/";
+    }
+
+    public static String getResourceMonitoringGraphsLink(int resourceId) {
+        return "#Resource/" + resourceId + "/Monitoring/Graphs/";
+    }
+
+    public static String getGroupMonitoringGraphsLink(int groupId) {
+        return getResourceGroupLink(groupId) + "/Monitoring/Graphs/";
     }
 
     public static String getGroupDefinitionLink(int groupDefinitionId) {
@@ -131,12 +185,38 @@ public class LinkManager {
         return link;
     }
 
-    public static String getSubsystemAlertHistoryLink() {
-        return "/rhq/subsystem/alertHistory.xhtml";
+    public static String getSubsystemResourceOperationScheduleLink(int resourceId, int opScheduleId) {
+        String link;
+        if (GWT) {
+            link = "#Resource/" + resourceId + "/Operations/Schedules/" + opScheduleId;
+        } else {
+            link = "/rhq/resource/operation/resourceOperationScheduleDetails-plain.xhtml?id=" + resourceId + "&opId="
+                + opScheduleId;
+
+        }
+        return link;
     }
 
-    public static String getSubsystemAlertDefsLink() {
-        return "/rhq/subsystem/alertDefinitions.xhtml";
+    public static String getSubsystemAlertHistoryLink(int resourceId, int alertHistoryId) {
+        String link;
+        if (GWT) {
+            link = "#Resource/" + resourceId + "/Alerts/History/" + alertHistoryId;
+        } else {
+            link = "/rhq/subsystem/alertHistory.xhtml";
+        }
+
+        return link;
+    }
+
+    public static String getSubsystemAlertDefinitionLink(int resourceId, int alertDefinitionId) {
+        String link;
+        if (GWT) {
+            link = "#Resource/" + resourceId + "/Alerts/Definitions/" + alertDefinitionId;
+        } else {
+            link = "/rhq/subsystem/alertDefinitions.xhtml";
+        }
+
+        return link;
     }
 
     public static String getAutodiscoveryQueueLink() {
@@ -147,9 +227,17 @@ public class LinkManager {
         }
     }
 
-    public static String getDashboardLink() {
+    public static String getDashboardsLink() {
         if (GWT) {
-            return "#Dashboard";
+            return "#Dashboards";
+        } else {
+            return "/Dashboard.do";
+        }
+    }
+
+    public static String getDashboardLink(int dashboardId) {
+        if (GWT) {
+            return "#Dashboards/" + dashboardId;
         } else {
             return "/Dashboard.do";
         }
@@ -237,7 +325,7 @@ public class LinkManager {
 
     public static String getAdminSysConfigLink() {
         if (GWT) {
-            return "#Administration/Configuration/System Settings";
+            return "#Administration/Configuration/SystemSettings";
         } else {
             return "/admin/config/Config.do?mode=edit";
         }
@@ -312,14 +400,10 @@ public class LinkManager {
     }
 
     public static String getAdminDownloadsLink() {
-        return "/rhq/admin/downloads.xhtml";
-    }
-
-    public static String getAdminLicenseLink() {
         if (GWT) {
-            return "#Administration/Configuration/License";
+            return "#Administration/Configuration/Downloads";
         } else {
-            return "/admin/license/LicenseAdmin.do?mode=view";
+            return "/rhq/admin/downloads.xhtml";
         }
     }
 
@@ -344,7 +428,11 @@ public class LinkManager {
     }
 
     public static String getTagLink(String tag) {
-        return "#Reports/Subsystems/Tags/" + tag;
+        if (tag == null) {
+            return "#Reports/Subsystems/Tags";
+        } else {
+            return "#Reports/Subsystems/Tags/" + tag;
+        }
     }
 
     public static String getBundleLink(int bundleId) {
@@ -362,5 +450,16 @@ public class LinkManager {
 
     public static String getBundleDeploymentLink(int bundleId, int bundleDeploymentId) {
         return "#Bundles/Bundle/" + bundleId + "/deployments/" + bundleDeploymentId;
+    }
+
+    public static String getDriftHistoryLink(int resourceId, String driftId) {
+        if (!driftId.startsWith(StringIDTableSection.ID_PREFIX)) {
+            driftId = StringIDTableSection.ID_PREFIX + driftId;
+        }
+        return "#Resource/" + resourceId + "/Drift/History/" + driftId;
+    }
+
+    public static String getDriftConfigLink(int resourceId, int driftConfigId) {
+        return "#Resource/" + resourceId + "/Drift/Config/" + driftConfigId;
     }
 }

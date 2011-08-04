@@ -78,7 +78,7 @@ public abstract class AbstractResourceTest extends AbstractPluginTest {
         if (resourceType.getCreationDataType() == ResourceCreationDataType.CONFIGURATION) {
             ResourceFactoryManager resourceFactoryManager = PluginContainer.getInstance().getResourceFactoryManager();
             new CreateResourceRequest(0, getServerResource().getId(), "My" + getResourceTypeName(),
-                getResourceTypeName(), getPluginName(), new Configuration(), getTestResourceConfiguration());
+                getResourceTypeName(), getPluginName(), new Configuration(), getTestResourceConfiguration(), null);
             //resourceFactoryManager.createResource();
         } else {
             // TODO
@@ -139,15 +139,15 @@ public abstract class AbstractResourceTest extends AbstractPluginTest {
         Set<OperationDefinition> operationDefinitions = getResourceType().getOperationDefinitions();
         Set<String> operationNames = new TreeSet<String>();
         for (OperationDefinition operationDefinition : operationDefinitions) {
-        	operationNames.add(operationDefinition.getName());
+            operationNames.add(operationDefinition.getName());
         }
-        
+
         Set<Resource> resources = getResources();
         testOperations(resources, operationNames);
     }
-    
+
     protected void testOperations(Set<Resource> resources, Set<String> operationNames) throws Exception {
-    	if (supportsFacet(OperationFacet.class)) {
+        if (supportsFacet(OperationFacet.class)) {
             //Set<OperationDefinition> operationDefinitions = getResourceType().getOperationDefinitions();
             //Set<Resource> resources = getResources();
             for (Resource resource : resources) {
@@ -169,7 +169,6 @@ public abstract class AbstractResourceTest extends AbstractPluginTest {
         }
         return;
     }
-    
 
     protected void testResourceConfigLoad() throws Exception {
         if (supportsFacet(ConfigurationFacet.class) && getResourceType().getResourceConfigurationDefinition() != null) {
@@ -188,18 +187,18 @@ public abstract class AbstractResourceTest extends AbstractPluginTest {
     }
 
     protected void testResourceConfigUpdate() throws Exception {
-    	Set<Resource> resources = getResources();
-    	testResourceConfigUpdate(resources);
+        Set<Resource> resources = getResources();
+        testResourceConfigUpdate(resources);
     }
-    
+
     protected void testResourceConfigUpdate(Set<Resource> resources) throws Exception {
-    	if (supportsFacet(ConfigurationFacet.class) && getResourceType().getResourceConfigurationDefinition() != null) {
+        if (supportsFacet(ConfigurationFacet.class) && getResourceType().getResourceConfigurationDefinition() != null) {
             //Set<Resource> resources = getResources();
             for (Resource resource : resources) {
                 try {
                     Configuration testResourceConfig = getTestResourceConfiguration();
                     Configuration resourceConfig = updateResourceConfiguration(resource, testResourceConfig);
-                    
+
                     assert resourceConfig.equals(testResourceConfig);
                 } catch (Exception e) {
                     throw new Exception("Failed to update Resource config for " + resource + ".", e);
@@ -220,7 +219,7 @@ public abstract class AbstractResourceTest extends AbstractPluginTest {
     protected Configuration getTestResourceConfiguration() {
         throw new UnsupportedOperationException();
     }
-    
+
     protected static Set<Resource> getResources(ResourceType resourceType) {
         InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
         return inventoryManager.getResourcesWithType(resourceType);
@@ -233,9 +232,9 @@ public abstract class AbstractResourceTest extends AbstractPluginTest {
     protected static ResourceType getResourceType(String resourceTypeName, String pluginName) {
         PluginManager pluginManager = PluginContainer.getInstance().getPluginManager();
         PluginMetadataManager pluginMetadataManager = pluginManager.getMetadataManager();
-        return pluginMetadataManager.getType(resourceTypeName, pluginName);        
+        return pluginMetadataManager.getType(resourceTypeName, pluginName);
     }
-    
+
     protected ResourceType getResourceType() {
         return getResourceType(getResourceTypeName(), getPluginName());
     }
@@ -270,23 +269,24 @@ public abstract class AbstractResourceTest extends AbstractPluginTest {
         assert value != null;
     }
 
-    protected static Configuration updateResourceConfiguration(Resource resource, Configuration newConfiguration) throws Exception {
+    protected static Configuration updateResourceConfiguration(Resource resource, Configuration newConfiguration)
+        throws Exception {
         ConfigurationManager configurationManager = PluginContainer.getInstance().getConfigurationManager();
-        ConfigurationUpdateRequest configurationUpdateRequest = new ConfigurationUpdateRequest(0,
-            newConfiguration, resource.getId());
+        ConfigurationUpdateRequest configurationUpdateRequest = new ConfigurationUpdateRequest(0, newConfiguration,
+            resource.getId());
         configurationManager.updateResourceConfiguration(configurationUpdateRequest);
-        
+
         //give the component and the managed resource some time to properly persist the update
         Thread.sleep(500);
-        
+
         return configurationManager.loadResourceConfiguration(resource.getId());
     }
-    
+
     protected static Configuration loadResourceConfiguration(Resource resource) throws Exception {
         ConfigurationManager configurationManager = PluginContainer.getInstance().getConfigurationManager();
         return configurationManager.loadResourceConfiguration(resource.getId());
     }
-    
+
     private OperationDefinition getOperationDefinition(String name) {
         Set<OperationDefinition> operationDefinitions = getResourceType().getOperationDefinitions();
         OperationDefinition matchingOperationDefinition = null;

@@ -64,7 +64,7 @@ public class CallTimeDataKey implements Serializable {
     private int id;
 
     @JoinColumn(name = "SCHEDULE_ID", insertable = false, updatable = false, nullable = false)
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     private MeasurementSchedule schedule;
 
     @Column(name = "CALL_DESTINATION", length = DESTINATION_MAX_LENGTH, nullable = false)

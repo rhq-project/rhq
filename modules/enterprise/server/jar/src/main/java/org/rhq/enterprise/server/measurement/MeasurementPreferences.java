@@ -72,6 +72,9 @@ public class MeasurementPreferences extends SubjectPreferencesBase {
         } else {
             try {
                 List<String> range = getPreferenceAsList(PREF_METRIC_RANGE);
+                if (range.size() != 2) { // our gwt ui now uses |, let's be sure we can support it too
+                    range = getPreferenceAsList(PREF_METRIC_RANGE, "|");
+                }
                 prefs.begin = new Long((String) range.get(0));
                 prefs.end = new Long((String) range.get(1));
             } catch (IllegalArgumentException iae) {

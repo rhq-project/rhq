@@ -20,6 +20,7 @@ package org.rhq.enterprise.server.system;
 
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
@@ -37,7 +38,7 @@ public class SystemManagerBeanTest extends AbstractEJB3Test {
     }
 
     public void testGetSystemConfiguration() {
-        assert null != systemManager.getSystemConfiguration();
+        assert null != systemManager.getSystemConfiguration(overlord);
     }
 
     public void testAnalyze() {

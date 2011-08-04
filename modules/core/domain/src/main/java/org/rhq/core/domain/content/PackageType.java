@@ -41,7 +41,6 @@ import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-import javax.xml.bind.Unmarshaller;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlTransient;
@@ -67,12 +66,12 @@ import org.rhq.core.domain.resource.ResourceType;
     @NamedQuery(name = PackageType.QUERY_FIND_ALL, query = "SELECT pt FROM PackageType pt"),
     @NamedQuery(name = PackageType.QUERY_FIND_BY_RESOURCE_TYPE_ID, query = "SELECT pt FROM PackageType pt WHERE pt.resourceType.id = :typeId"),
     @NamedQuery(name = PackageType.QUERY_FIND_BY_RESOURCE_TYPE_ID_AND_NAME, query = "SELECT pt FROM PackageType pt WHERE pt.resourceType.id = :typeId AND pt.name = :name"),
+    @NamedQuery(name = PackageType.QUERY_FIND_BY_NAME_AND_NULL_RESOURCE_TYPE, query = "SELECT pt FROM PackageType pt WHERE pt.resourceType = null AND pt.name = :name"),
     @NamedQuery(name = PackageType.QUERY_FIND_BY_RESOURCE_TYPE_ID_AND_CREATION_FLAG, query = "SELECT pt FROM PackageType pt "
         + "JOIN pt.resourceType rt "
         + "LEFT JOIN FETCH pt.deploymentConfigurationDefinition cd "
         + "LEFT JOIN FETCH cd.templates cts " + "WHERE rt.id = :typeId AND pt.isCreationData = true"),
-    @NamedQuery(name = PackageType.QUERY_DYNAMIC_CONFIG_VALUES, query = "SELECT pt.resourceType.plugin || ' - ' || pt.resourceType.name || ' - ' || pt.displayName, pt.name FROM PackageType AS pt")
-})
+    @NamedQuery(name = PackageType.QUERY_DYNAMIC_CONFIG_VALUES, query = "SELECT pt.resourceType.plugin || ' - ' || pt.resourceType.name || ' - ' || pt.displayName, pt.name FROM PackageType AS pt") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_PACKAGE_TYPE_ID_SEQ")
 @Table(name = "RHQ_PACKAGE_TYPE")
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -85,6 +84,7 @@ public class PackageType implements Serializable {
 
     public static final String QUERY_FIND_BY_RESOURCE_TYPE_ID = "PackageType.findByResourceTypeId";
     public static final String QUERY_FIND_BY_RESOURCE_TYPE_ID_AND_NAME = "PackageType.findByResourceTypeIdAndName";
+    public static final String QUERY_FIND_BY_NAME_AND_NULL_RESOURCE_TYPE = "PackageType.findByNameAndNullResourceType";
     public static final String QUERY_FIND_BY_RESOURCE_TYPE_ID_AND_CREATION_FLAG = "PackageType.findByResourceTypeIdAndCreationFlag";
 
     public static final String QUERY_DYNAMIC_CONFIG_VALUES = "PackageType.dynamicConfigValues";
@@ -119,18 +119,18 @@ public class PackageType implements Serializable {
     private boolean supportsArchitecture;
 
     @JoinColumn(name = "DEPLOYMENT_CONFIG_DEF_ID", referencedColumnName = "ID", nullable = true)
-    @OneToOne(fetch = FetchType.LAZY, cascade = { CascadeType.ALL })
+    @OneToOne(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY, optional = true)
     private ConfigurationDefinition deploymentConfigurationDefinition;
 
     @JoinColumn(name = "PACKAGE_EXTRA_CONFIG_ID", referencedColumnName = "ID", nullable = true)
-    @OneToOne(fetch = FetchType.LAZY, cascade = { CascadeType.ALL })
+    @OneToOne(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY, optional = true)
     private ConfigurationDefinition packageExtraPropertiesDefinition;
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "packageType", cascade = { CascadeType.REMOVE })
     private Set<Package> packages;
 
-    @JoinColumn(name = "RESOURCE_TYPE_ID", referencedColumnName = "ID", nullable = false)
-    @ManyToOne
+    @JoinColumn(name = "RESOURCE_TYPE_ID", referencedColumnName = "ID", nullable = true)
+    @ManyToOne(optional = true)
     @XmlTransient
     private ResourceType resourceType;
 
@@ -289,7 +289,8 @@ public class PackageType implements Serializable {
 
     /**
      * The resource type that defined this package type. Resources of this resource type can have packages of this
-     * package type installed on them.
+     * package type installed on them. This can be null if this package type only exists in support of some serverside-only
+     * functionality.
      */
     public ResourceType getResourceType() {
         return this.resourceType;

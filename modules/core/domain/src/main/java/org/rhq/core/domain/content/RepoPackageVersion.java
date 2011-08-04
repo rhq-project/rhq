@@ -45,19 +45,29 @@ import javax.persistence.Table;
 @NamedQueries( {
     @NamedQuery(name = RepoPackageVersion.DELETE_BY_REPO_ID,
         query = "DELETE RepoPackageVersion cpv WHERE cpv.repo.id = :repoId"),
-
+    
+    //TODO this looks suspicious. How can this ever delete a package version
+    //if there are ANY content sources providing ANY packages? I miss a WHERE in this query.
     // Deletes the repo <-> package mapping when the package has no providers for this package
     @NamedQuery(name = RepoPackageVersion.DELETE_WHEN_NO_PROVIDER, query = "DELETE RepoPackageVersion rpv "
         + "WHERE rpv.repo.id = :repoId " //
         + "  AND (SELECT COUNT(pvcs.packageVersion.id) "
         + "       FROM PackageVersionContentSource pvcs) = 0"
+        ),
+    @NamedQuery(name = RepoPackageVersion.DELETE_MULTIPLE_WHEN_NO_PROVIDER, query = "DELETE RepoPackageVersion rpv"
+        + " WHERE rpv.repo.id = :repoId"
+        + "   AND rpv.packageVersion.id IN ( :packageVersionIds )"
+        + "   AND (SELECT COUNT(pvcs.packageVersion.id) "
+        + "        FROM PackageVersionContentSource pvcs"
+        + "        WHERE pvcs.packageVersion.id = rpv.packageVersion.id) = 0"
         )
 })
 @Table(name = "RHQ_REPO_PKG_VERSION_MAP")
 public class RepoPackageVersion implements Serializable {
     public static final String DELETE_BY_REPO_ID = "RepoPackageVersion.deleteByRepoId";
     public static final String DELETE_WHEN_NO_PROVIDER = "RepoPackageVersion.deleteWhenNoProvider";
-
+    public static final String DELETE_MULTIPLE_WHEN_NO_PROVIDER = "RepoPackageVersion.deleteMultipleWhenNoProvider";
+    
     private static final long serialVersionUID = 1L;
 
     /*

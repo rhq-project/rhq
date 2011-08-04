@@ -33,8 +33,9 @@ import org.rhq.core.domain.event.Event;
 public interface EventContext {
     /**
      * Minimum polling interval, in seconds.
+     * Used to be 1 minute, but since poll intervals are configurable it stands that 1 second will suffice.
      */
-    int MINIMUM_POLLING_INTERVAL = 60; // 1 minute
+    int MINIMUM_POLLING_INTERVAL = 1; // 1 second
 
     /**
      * Publishes the specified Event. This means the Plugin Container will queue the Event to be sent to the Server.

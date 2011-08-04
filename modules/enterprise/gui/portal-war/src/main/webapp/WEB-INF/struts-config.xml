@@ -1880,48 +1880,6 @@
          <set-property property="title" value="Start"/>
       </action>
 
-      <action path="/admin/license/LicenseAdmin"
-              forward=".admin.license.layout">
-      </action>
-
-      <action path="/admin/license/View"
-              type="org.rhq.enterprise.gui.action.license.LicenseController">
-         <set-property property="title" value="License"/>
-      </action>
-
-      <action path="/admin/license/LicensePortal"
-              parameter="mode"
-              input="/admin/license/LicenseAdmin.do"
-              type="org.rhq.enterprise.gui.action.license.LicensePortalAction">
-         <set-property property="title" value="License"/>
-      </action>
-
-      <action path="/admin/license/UpdateLicense"
-              name="LicenseAdminForm"
-              scope="request"
-              parameter="mode"
-              type="org.rhq.enterprise.gui.action.license.LicenseUpdateAction"
-              input="/admin/license/LicenseAdmin.do?mode=edit">
-         <set-property property="title" value="License"/>
-         <forward name="cancel" path="/admin/license/LicenseAdmin.do?mode=view" redirect="true"/>
-         <forward name="reset" path="/admin/license/LicenseAdmin.do?mode=edit" redirect="true"/>
-         <forward name="failure" path="/admin/license/LicenseAdmin.do?mode=edit&amp;error=true" redirect="true"/>
-         <forward name="success" path="/admin/license/LicenseAdmin.do?mode=view&amp;update=true" redirect="true"/>
-      </action>
-      
-      <action path="/admin/license/UpdateLicenseNoMenu"
-              name="LicenseAdminForm"
-              scope="request"
-              parameter="mode"
-              type="org.rhq.enterprise.gui.action.license.LicenseUpdateAction"
-              input="/admin/license/LicenseAdmin.do?mode=edit&amp;nomenu=true">
-         <set-property property="title" value="License"/>
-         <forward name="cancel" path="/admin/license/LicenseAdmin.do?mode=view&amp;nomenu=true" redirect="true"/>
-         <forward name="reset" path="/admin/license/LicenseAdmin.do?mode=edit&amp;nomenu=true" redirect="true"/>
-         <forward name="failure" path="/admin/license/LicenseAdmin.do?mode=edit&amp;error=true&amp;nomenu=true" redirect="true"/>
-         <forward name="success" path="/admin/license/LicenseAdmin.do?mode=view&amp;update=true&amp;nomenu=true" redirect="true"/>
-      </action>
-
       <action path="/dashboard/Admin"
               forward=".dashboard.admin.layout">
       </action>

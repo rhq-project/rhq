@@ -26,7 +26,12 @@ package org.rhq.enterprise.gui.coregui.client;
 public interface RefreshableView {
 
     /**
-     * Refresh this view, i.e. reload its data from the Server.
+     * Refresh this view, i.e. reload its data from the Server.  When implementing refresh keep in mind that
+     * the refresh may be called when revisiting an existing canvas. For example, when revisiting a subtab in
+     * resource or group detail view. The data on that existing canvas may be displaying stale data. Especially
+     * for anynchronous refresh of data,  the user experience may benefit from the stale data being
+     * destroyed/wiped/hidden prior to the async call.  This can avoid having the user briefly see the
+     * stale data before the refreshed data is rendered.
      */
     void refresh();
 

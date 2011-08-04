@@ -44,7 +44,6 @@ import org.rhq.core.domain.criteria.GroupResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.PluginConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.configuration.job.GroupPluginConfigurationUpdateJob;
@@ -165,6 +164,24 @@ public interface ConfigurationManagerLocal {
         throws ConfigurationUpdateException;
 
     /**
+     * This method is called when a user has requested to change the plugin configuration for an existing resource to
+     * one of its previous values. If the user does not have the proper permissions to change the resource's
+     * plugin configuration, an exception is thrown.
+     *
+     * <p>This will not wait for the agent to finish the configuration update. This will return after the request is
+     * sent. Once the agent finishes with the request, it will send the completed request information to
+     * {@link #completePluginConfigurationUpdate}.</p>
+     *
+     * @param  subject          the user who is requesting the update
+     * @param  resourceId      identifies the resource to be updated
+     * @param  configHistoryId the id of the resource's previous configuration to rollback to
+     *
+     * @throws ConfigurationUpdateException if the configHistoryId does not exist
+     */
+    void rollbackPluginConfiguration(Subject subject, int resourceId, int configHistoryId)
+        throws ConfigurationUpdateException;
+
+    /**
      * For internal use only - do not call this method. This is for
      * {@link #updateResourceConfiguration(Subject, int, Configuration)} to call with REQUIRES_NEW transaction scope so
      * it can force the new request to be committed to the DB. Also used by
@@ -201,7 +218,33 @@ public interface ConfigurationManagerLocal {
 
     ConfigurationUpdateResponse executePluginConfigurationUpdate(PluginConfigurationUpdate update);
 
+    /**
+     * This deletes the update information belonging to the {@link AbstractResourceConfigurationUpdate} object with the
+     * given ID. Once this returns, the complete audit trail for that update will be gone and you will not be able to
+     * rollback to that configuration.
+     *
+     * <p>Under normal circumstances, you will not want to purge an update that is currently in progress. However, there
+     * may be conditions in which an update request "gets stuck" in the in-progress state, even though you know the
+     * agent will never report the completed request (typically caused by an unusual crash of the agent). In this case,
+     * you should pass <code>true</code> in for the <code>purgeInProgress</code> parameter to tell this method to delete
+     * the request even if it says it is in-progress.
+     *
+     * @param subject                the user who is requesting the purge
+     * @param configurationUpdateId identifies the update record to be deleted
+     * @param purgeInProgress       if <code>true</code>, delete it even if its
+     *                              {@link ConfigurationUpdateStatus#INPROGRESS in progress}
+     */
     public void purgePluginConfigurationUpdate(Subject subject, int configurationUpdateId, boolean purgeInProgress);
+
+    /**
+     * This deletes one or more plugin configuration updates from the resource's plugin config history.
+     *
+     * @param subject                 the user who is requesting the purge
+     * @param configurationUpdateIds identifies the update records to be deleted
+     * @param purgeInProgress        if <code>true</code>, delete those even if
+     *                               {@link ConfigurationUpdateStatus#INPROGRESS in progress}
+     */
+    void purgePluginConfigurationUpdates(Subject subject, int[] configurationUpdateIds, boolean purgeInProgress);
 
     /**
      * This deletes the update information belonging to the {@link AbstractResourceConfigurationUpdate} object with the
@@ -327,6 +370,9 @@ public interface ConfigurationManagerLocal {
     PageList<GroupResourceConfigurationUpdate> findGroupResourceConfigurationUpdates(Subject subject, int groupId,
         PageControl pc);
 
+    ConfigurationUpdateStatus updateGroupResourceConfigurationUpdateStatus(int groupResourceConfigurationUpdateId,
+        String errorMessages);
+
     ConfigurationUpdateStatus updateGroupPluginConfigurationUpdateStatus(int groupPluginConfigurationUpdateId,
         String errorMessages);
 
@@ -353,8 +399,6 @@ public interface ConfigurationManagerLocal {
     Map<Integer, Configuration> getResourceConfigurationMapForGroupUpdate(Subject subject,
         Integer groupResourceConfigurationUpdateId);
 
-    Map<Integer, Configuration> getResourceConfigurationMapForCompatibleGroup(ResourceGroup compatibleGroup);
-
     /**
      * Returns the current Resource configurations for the members in the specified compatible group.
      *
@@ -371,7 +415,8 @@ public interface ConfigurationManagerLocal {
     Map<Integer, Configuration> getPluginConfigurationsForCompatibleGroup(Subject subject, int groupId)
         throws ConfigurationUpdateStillInProgressException, Exception;
 
-    Map<Integer, Configuration> getPluginConfigurationMapForGroupUpdate(Integer groupPluginConfigurationUpdateId);
+    Map<Integer, Configuration> getPluginConfigurationMapForGroupUpdate(Subject subject,
+        Integer groupPluginConfigurationUpdateId);
 
     /**
      * The purpose of this method is really to clean up requests when we detect
@@ -522,4 +567,6 @@ public interface ConfigurationManagerLocal {
 
     PageList<GroupPluginConfigurationUpdate> findGroupPluginConfigurationUpdatesByCriteria(Subject subject,
         GroupPluginConfigurationUpdateCriteria criteria);
+
+    ConfigurationDefinition getOptionsForConfigurationDefinition(Subject subject, ConfigurationDefinition def);
 }

@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -34,6 +35,7 @@ import org.rhq.core.domain.measurement.calltime.CallTimeDataComposite;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.domain.measurement.composite.MeasurementScheduleComposite;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.exception.ThrowableUtil;
@@ -47,6 +49,7 @@ import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
+ * @author Simeon Pinder
  * @author Greg Hinkle
  */
 public class MeasurementDataGWTServiceImpl extends AbstractGWTServiceImpl implements MeasurementDataGWTService {
@@ -66,7 +69,7 @@ public class MeasurementDataGWTServiceImpl extends AbstractGWTServiceImpl implem
             return SerialUtility.prepare(dataManager.findCurrentTraitsForResource(getSessionSubject(), resourceId,
                 displayType), "MeasurementDataService.findCurrentTraitsForResource");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -75,7 +78,7 @@ public class MeasurementDataGWTServiceImpl extends AbstractGWTServiceImpl implem
             return SerialUtility.prepare(dataManager.findLiveData(getSessionSubject(), resourceId, definitionIds),
                 "MeasurementDataService.findLiveData");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -85,7 +88,22 @@ public class MeasurementDataGWTServiceImpl extends AbstractGWTServiceImpl implem
             return SerialUtility.prepare(dataManager.findDataForResource(getSessionSubject(), resourceId,
                 definitionIds, beginTime, endTime, numPoints), "MeasurementDataService.findDataForResource");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    public List<List<MeasurementDataNumericHighLowComposite>> findDataForCompatibleGroup(int groupId,
+        int[] definitionIds, long beginTime, long endTime, int numPoints) throws RuntimeException {
+        try {
+            //iterate over each of the definitionIds to retrieve the display data for each.
+            List<List<MeasurementDataNumericHighLowComposite>> results = new ArrayList<List<MeasurementDataNumericHighLowComposite>>();
+            for (int nextDefinitionId : definitionIds) {
+                results.addAll(dataManager.findDataForCompatibleGroup(getSessionSubject(), groupId, nextDefinitionId,
+                    beginTime, endTime, numPoints));
+            }
+            return SerialUtility.prepare(results, "MeasurementDataService.findDataForCompatibleGroup");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -95,7 +113,7 @@ public class MeasurementDataGWTServiceImpl extends AbstractGWTServiceImpl implem
             return SerialUtility.prepare(callTimeDataManager.findCallTimeDataForResource(getSessionSubject(),
                 scheduleId, start, end, pageControl), "MeasurementDataService.findCallTimeDataForResource");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -105,7 +123,7 @@ public class MeasurementDataGWTServiceImpl extends AbstractGWTServiceImpl implem
             return SerialUtility.prepare(definitionManager.findMeasurementDefinitionsByCriteria(getSessionSubject(),
                 criteria), "MeasurementDataService.findMeasurementDefinintionsByCriteria");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -115,7 +133,7 @@ public class MeasurementDataGWTServiceImpl extends AbstractGWTServiceImpl implem
             return SerialUtility.prepare(scheduleManager.findSchedulesByCriteria(getSessionSubject(), criteria),
                 "MeasurementDataService.findMeasurementSchedulesByCriteria");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -126,7 +144,7 @@ public class MeasurementDataGWTServiceImpl extends AbstractGWTServiceImpl implem
                 context, PageControl.getUnlimitedInstance()),
                 "MeasurementDataService.getMeasurementScheduleCompositesByContext");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -137,7 +155,7 @@ public class MeasurementDataGWTServiceImpl extends AbstractGWTServiceImpl implem
                 metricNameFilter, resourceNameFilter, parentNameFilter, pc),
                 "MeasurementDataService.getSchedulesWithOOBs");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -146,7 +164,17 @@ public class MeasurementDataGWTServiceImpl extends AbstractGWTServiceImpl implem
             return SerialUtility.prepare(measurementOOBManager.getHighestNOOBsForResource(getSessionSubject(),
                 resourceId, n), "MeasurementDataService.getHighestNOOBsForResource");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    public PageList<MeasurementOOBComposite> getHighestNOOBsForGroup(int groupId, int n) throws RuntimeException {
+        try {
+            return SerialUtility.prepare(
+                measurementOOBManager.getHighestNOOBsForGroup(getSessionSubject(), groupId, n),
+                "MeasurementDataService.getHighestNOOBsForGroup");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -154,7 +182,7 @@ public class MeasurementDataGWTServiceImpl extends AbstractGWTServiceImpl implem
         try {
             scheduleManager.enableSchedulesForResource(getSessionSubject(), resourceId, measurementDefinitionIds);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -162,7 +190,7 @@ public class MeasurementDataGWTServiceImpl extends AbstractGWTServiceImpl implem
         try {
             scheduleManager.disableSchedulesForResource(getSessionSubject(), resourceId, measurementDefinitionIds);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -172,7 +200,7 @@ public class MeasurementDataGWTServiceImpl extends AbstractGWTServiceImpl implem
             scheduleManager.updateSchedulesForResource(getSessionSubject(), resourceId, measurementDefinitionIds,
                 collectionInterval);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -182,7 +210,7 @@ public class MeasurementDataGWTServiceImpl extends AbstractGWTServiceImpl implem
             scheduleManager.enableSchedulesForCompatibleGroup(getSessionSubject(), resourceGroupId,
                 measurementDefinitionIds);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -192,7 +220,7 @@ public class MeasurementDataGWTServiceImpl extends AbstractGWTServiceImpl implem
             scheduleManager.disableSchedulesForCompatibleGroup(getSessionSubject(), resourceGroupId,
                 measurementDefinitionIds);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -202,7 +230,7 @@ public class MeasurementDataGWTServiceImpl extends AbstractGWTServiceImpl implem
             scheduleManager.updateSchedulesForCompatibleGroup(getSessionSubject(), resourceGroupId,
                 measurementDefinitionIds, collectionInterval);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -212,7 +240,7 @@ public class MeasurementDataGWTServiceImpl extends AbstractGWTServiceImpl implem
             scheduleManager.updateDefaultCollectionIntervalForMeasurementDefinitions(getSessionSubject(),
                 measurementDefinitionIds, 0, updateExistingSchedules);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -222,7 +250,7 @@ public class MeasurementDataGWTServiceImpl extends AbstractGWTServiceImpl implem
             scheduleManager.updateDefaultCollectionIntervalForMeasurementDefinitions(getSessionSubject(),
                 measurementDefinitionIds, -1, updateExistingSchedules);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -232,17 +260,29 @@ public class MeasurementDataGWTServiceImpl extends AbstractGWTServiceImpl implem
             scheduleManager.updateDefaultCollectionIntervalForMeasurementDefinitions(getSessionSubject(),
                 measurementDefinitionIds, collectionInterval, updateExistingSchedules);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
     public PageList<MeasurementDataTrait> findTraitsByCriteria(MeasurementDataTraitCriteria criteria)
         throws RuntimeException {
         try {
-            return SerialUtility.prepare(dataManager.findTraitsByCriteria(getSessionSubject(), criteria),
-                "MeasurementDataService.findTraitsByCriteria");
+            PageList<MeasurementDataTrait> results = dataManager.findTraitsByCriteria(getSessionSubject(), criteria);
+            if (!results.isEmpty() && null != results.get(0).getSchedule()
+                && null != results.get(0).getSchedule().getResource()) {
+                List<Resource> resources = new ArrayList<Resource>(results.size());
+                for (MeasurementDataTrait result : results) {
+                    Resource res = result.getSchedule().getResource();
+                    if (null != res) {
+                        resources.add(res);
+                    }
+                }
+                ObjectFilter.filterFieldsInCollection(resources, ResourceGWTServiceImpl.importantFieldsSet);
+            }
+
+            return SerialUtility.prepare(results, "MeasurementDataService.findTraitsByCriteria");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 }

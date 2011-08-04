@@ -253,8 +253,6 @@ RHQ_AGENT_CMDLINE_OPTS="--daemon --pref=${_index} ${_cmdlineopts}"</echo>
 
    <!-- ========== -->
    <target name="stop" description="Stops all the agents (not available on Windows).">
-      <fail if="iswindows" message="Stopping agents with this script is not supported on Windows"/>
-
       <echo>Stopping all agents...</echo>
       <foreach param="_index"
                list="${agentcopy.agent.spawn.list}"
@@ -275,10 +273,22 @@ RHQ_AGENT_CMDLINE_OPTS="--daemon --pref=${_index} ${_cmdlineopts}"</echo>
 
       <echo>Stopping agent [${_index}] with pid [${_pid}]</echo>
 
-      <exec executable="kill">
-         <arg value="-TERM" />
-         <arg value="${_pid}" />
-      </exec>
+      <if>
+         <os family="windows"/>
+         <then>
+            <exec executable="taskkill.exe">
+               <arg value="/F" />
+               <arg value="/PID" />
+               <arg value="${_pid}" />
+            </exec>
+         </then>
+         <else>
+            <exec executable="kill">
+               <arg value="-TERM" />
+               <arg value="${_pid}" />
+            </exec>
+         </else>
+      </if>
    </target>
 
 </project>

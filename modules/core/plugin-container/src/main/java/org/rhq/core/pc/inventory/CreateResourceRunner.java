@@ -129,14 +129,14 @@ public class CreateResourceRunner implements Callable, Runnable {
             }
 
             // Ensure a resource key was returned from the plugin if the plugin reports the create was successful
-            if ((reportedStatus == CreateResourceStatus.SUCCESS) && (resourceKey == null)) {
-                log.warn("Plugin did not indicate the result of the request: " + requestId);
+            if ((isSuccessStatus(reportedStatus)) && (resourceKey == null)) {
+                log.warn("Plugin did not indicate the resource key for this request: " + requestId);
                 errorMessage = "Plugin did not indicate a resource key for this request.";
                 status = CreateResourceStatus.FAILURE;
             }
 
             // RHQ-666 - The plugin should provide a resource name if the create was successful
-            if ((reportedStatus == CreateResourceStatus.SUCCESS) && (resourceName == null)) {
+            if ((isSuccessStatus(reportedStatus)) && (resourceName == null)) {
                 log.warn("Plugin did not indicate a resource name for the request: " + requestId);
                 errorMessage = "Plugin did not indicate a resource name for this request.";
                 status = CreateResourceStatus.FAILURE;
@@ -175,16 +175,21 @@ public class CreateResourceRunner implements Callable, Runnable {
 
         // Trigger a service scan on the parent resource to have the newly created resource discovered if the plugin
         // said the create was successful
-        if (runRuntimeScan && (status == CreateResourceStatus.SUCCESS)) {
-            log.info("Scanning for newly created resource");
+        if (runRuntimeScan && isSuccessStatus(status)) {
+            log.info("Scanning for newly created Resource...");
             try {
                 InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
                 inventoryManager.performServiceScan(parentResourceId);
             } catch (Throwable t) {
-                log.error("Error received while attempting runtime scan for newly created resource");
+                log.error("Error received while attempting runtime scan for newly created Resource...");
             }
         }
 
         return response;
     }
-}
+
+     private static boolean isSuccessStatus(CreateResourceStatus status) {
+         return (status == CreateResourceStatus.SUCCESS) || (status == CreateResourceStatus.INVALID_CONFIGURATION)
+                 || (status == CreateResourceStatus.INVALID_ARTIFACT);
+     }
+ }

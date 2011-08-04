@@ -24,11 +24,13 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.data.ResultSet;
 import com.smartgwt.client.data.SortSpecifier;
-import com.smartgwt.client.types.MultipleAppearance;
 import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
+import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -38,13 +40,18 @@ import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.components.form.EnumSelectItem;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
+import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * A view that displays a paginated table of fired {@link org.rhq.core.domain.alert.Alert alert}s, along with the
@@ -65,28 +72,54 @@ public class AlertHistoryView extends TableSection<AlertDataSource> {
 
     private static SortSpecifier DEFAULT_SORT_SPECIFIER = new SortSpecifier(AlertCriteria.SORT_FIELD_CTIME,
         SortDirection.DESCENDING);
+    private static final Criteria INITIAL_CRITERIA = new Criteria();
     EntityContext context;
     boolean hasWriteAccess;
+    AlertDataSource dataSource;
+
+    static {
+        AlertPriority[] priorityValues = AlertPriority.values();
+        String[] priorityNames = new String[priorityValues.length];
+        int i = 0;
+        for (AlertPriority s : priorityValues) {
+            priorityNames[i++] = s.name();
+        }
+
+        INITIAL_CRITERIA.addCriteria(AlertDataSource.FILTER_PRIORITIES, priorityNames);
+    }
 
     // for subsystem views
     public AlertHistoryView(String locatorId) {
         this(locatorId, SUBSYSTEM_VIEW_ID.getTitle(), EntityContext.forSubsystemView(), false);
     }
 
+    public AlertHistoryView(String locatorId, EntityContext entityContext) {
+        this(locatorId, SUBSYSTEM_VIEW_ID.getTitle(), entityContext, false);
+    }
+
+    public AlertHistoryView(String locatorId, String tableTitle, EntityContext entityContext) {
+        this(locatorId, tableTitle, entityContext, false);
+    }
+
     protected AlertHistoryView(String locatorId, String tableTitle, EntityContext context, boolean hasWriteAccess) {
-        super(locatorId, tableTitle, new SortSpecifier[] { DEFAULT_SORT_SPECIFIER });
+        super(locatorId, tableTitle, INITIAL_CRITERIA, new SortSpecifier[] { DEFAULT_SORT_SPECIFIER });
         this.context = context;
         this.hasWriteAccess = hasWriteAccess;
 
-        setDataSource(new AlertDataSource(context));
+        setInitialCriteriaFixed(false);
+        setDataSource(getDataSource());
+    }
+
+    @Override
+    public AlertDataSource getDataSource() {
+        if (null == this.dataSource) {
+            this.dataSource = new AlertDataSource(context);
+        }
+        return this.dataSource;
     }
 
     @Override
     protected void configureTableFilters() {
-        SelectItem priorityFilter = new SelectItem("severities", MSG.view_alerts_table_filter_priority());
-        priorityFilter.setMultiple(true);
-        priorityFilter.setMultipleAppearance(MultipleAppearance.PICKLIST);
-
         LinkedHashMap<String, String> priorities = new LinkedHashMap<String, String>(3);
         priorities.put(AlertPriority.HIGH.name(), MSG.common_alert_high());
         priorities.put(AlertPriority.MEDIUM.name(), MSG.common_alert_medium());
@@ -95,9 +128,8 @@ public class AlertHistoryView extends TableSection<AlertDataSource> {
         priorityIcons.put(AlertPriority.HIGH.name(), ImageManager.getAlertIcon(AlertPriority.HIGH));
         priorityIcons.put(AlertPriority.MEDIUM.name(), ImageManager.getAlertIcon(AlertPriority.MEDIUM));
         priorityIcons.put(AlertPriority.LOW.name(), ImageManager.getAlertIcon(AlertPriority.LOW));
-        priorityFilter.setValueMap(priorities);
-        priorityFilter.setValueIcons(priorityIcons);
-        priorityFilter.setValues(AlertPriority.HIGH.name(), AlertPriority.MEDIUM.name(), AlertPriority.LOW.name());
+        SelectItem priorityFilter = new EnumSelectItem(AlertDataSource.FILTER_PRIORITIES, MSG
+            .view_alerts_table_filter_priority(), AlertPriority.class, priorities, priorityIcons);
 
         if (isShowFilterForm()) {
             setFilterFormItems(priorityFilter);
@@ -108,10 +140,30 @@ public class AlertHistoryView extends TableSection<AlertDataSource> {
     protected void configureTable() {
         ArrayList<ListGridField> dataSourceFields = getDataSource().getListGridFields();
         getListGrid().setFields(dataSourceFields.toArray(new ListGridField[dataSourceFields.size()]));
-        setupTableInteractions();
+        setupTableInteractions(this.hasWriteAccess);
+
+        super.configureTable();
     }
 
-    private void setupTableInteractions() {
+    @Override
+    protected String getDetailsLinkColumnName() {
+        return AlertCriteria.SORT_FIELD_CTIME;
+    }
+
+    @Override
+    protected CellFormatter getDetailsLinkColumnCellFormatter() {
+        return new CellFormatter() {
+            public String format(Object value, ListGridRecord record, int i, int i1) {
+                Integer resourceId = record.getAttributeAsInt(AncestryUtil.RESOURCE_ID);
+                Integer alertHistoryId = getId(record);
+                String url = LinkManager.getSubsystemAlertHistoryLink(resourceId, alertHistoryId);
+                String formattedValue = TimestampCellFormatter.format(value);
+                return SeleniumUtility.getLocatableHref(url, formattedValue, null);
+            }
+        };
+    }
+
+    protected void setupTableInteractions(final boolean hasWriteAccess) {
         TableActionEnablement singleTargetEnablement = hasWriteAccess ? TableActionEnablement.ANY
             : TableActionEnablement.NEVER;
 
@@ -121,28 +173,30 @@ public class AlertHistoryView extends TableSection<AlertDataSource> {
                     delete(selection);
                 }
             });
-        addTableAction("DeleteAll", MSG.common_button_delete_all(), MSG.view_alerts_delete_confirm_all(),
-            new TableAction() {
-                public boolean isEnabled(ListGridRecord[] selection) {
-                    ListGrid grid = getListGrid();
-                    return (hasWriteAccess && grid != null && (getListGrid().getRecords().length >= 1));
-                }
-
-                public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    deleteAll();
-                }
-            });
         addTableAction("AcknowledgeAlert", MSG.common_button_ack(), MSG.view_alerts_ack_confirm(),
             new AbstractTableAction(singleTargetEnablement) {
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     acknowledge(selection);
                 }
             });
+        addTableAction("DeleteAll", MSG.common_button_delete_all(), MSG.view_alerts_delete_confirm_all(),
+            new TableAction() {
+                public boolean isEnabled(ListGridRecord[] selection) {
+                    ListGrid grid = getListGrid();
+                    ResultSet resultSet = (null != grid) ? grid.getResultSet() : null;
+                    return (hasWriteAccess && grid != null && resultSet != null && !resultSet.isEmpty());
+                }
+
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                    deleteAll();
+                }
+            });
         addTableAction("AcknowledgeAll", MSG.common_button_ack_all(), MSG.view_alerts_ack_confirm_all(),
             new TableAction() {
                 public boolean isEnabled(ListGridRecord[] selection) {
                     ListGrid grid = getListGrid();
-                    return (hasWriteAccess && grid != null && (grid.getRecords().length >= 1));
+                    ResultSet resultSet = (null != grid) ? grid.getResultSet() : null;
+                    return (hasWriteAccess && grid != null && resultSet != null && !resultSet.isEmpty());
                 }
 
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
@@ -223,8 +277,11 @@ public class AlertHistoryView extends TableSection<AlertDataSource> {
     }
 
     @Override
-    public Canvas getDetailsView(int alertId) {
+    public Canvas getDetailsView(Integer alertId) {
         return AlertDetailsView.getInstance();
     }
 
+    public EntityContext getContext() {
+        return context;
+    }
 }

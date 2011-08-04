@@ -33,11 +33,13 @@ public class ApplicationServerPluginConfigurationProperties {
     public static final String HOME_DIR = "homeDir";
     public static final String CLIENT_URL = "clientUrl";
     public static final String LIB_URL = "libUrl";
-    public static final String COMMON_LIB_URL = "commonLibUrl";    
+    public static final String COMMON_LIB_URL = "commonLibUrl";
     public static final String SERVER_HOME_DIR = "serverHomeDir";
     public static final String JAVA_HOME = "javaHome";
     public static final String BIND_ADDRESS = "bindAddress";
     public static final String START_SCRIPT_CONFIG_PROP = "startScript";
+    public static final String START_WAIT_MAX_PROP = "startWaitMax";
+    public static final String STOP_WAIT_MAX_PROP = "stopWaitMax";
     public static final String SHUTDOWN_SCRIPT_CONFIG_PROP = "shutdownScript";
     public static final String SHUTDOWN_MBEAN_CONFIG_PROP = "shutdownMBeanName";
     public static final String SHUTDOWN_MBEAN_OPERATION_CONFIG_PROP = "shutdownMBeanOperation";

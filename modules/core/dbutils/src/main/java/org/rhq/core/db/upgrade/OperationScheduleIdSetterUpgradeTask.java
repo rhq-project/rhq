@@ -38,23 +38,23 @@ public class OperationScheduleIdSetterUpgradeTask implements DatabaseUpgradeTask
 
     @Override
     public void execute(DatabaseType databaseType, Connection connection) throws SQLException {
-        String selectSQL = "SELECT job_name FROM rhq_operation_schedule;";
+        String selectSQL = "SELECT job_name FROM rhq_operation_schedule";
         System.out.println("Executing: " + selectSQL);
         List<Object[]> results = databaseType.executeSelectSql(connection, selectSQL);
         Map<Long, String> sortedJobNames = new TreeMap<Long, String>();
         for (Object[] result : results) {
-            String jobName = (String)result[0]; // e.g.: rhq-resource-10001--121207376-1292542028679
+            String jobName = (String) result[0]; // e.g.: rhq-resource-10001--121207376-1292542028679
             // last portion is the job's creation time, e.g.: 1292542028679
             Long ctime = Long.valueOf(jobName.substring(jobName.lastIndexOf('-') + 1));
             sortedJobNames.put(ctime, jobName);
         }
         int id = 10001;
         for (String jobName : sortedJobNames.values()) {
-            String updateSQL = "UPDATE rhq_operation_schedule SET id = " + (id++) + " WHERE job_name = '" + jobName +
-                "';";
+            String updateSQL = "UPDATE rhq_operation_schedule SET id = " + (id++) + " WHERE job_name = '" + jobName
+                + "'";
             System.out.println("Executing: " + updateSQL);
             databaseType.executeSql(connection, updateSQL);
         }
     }
-    
+
 }

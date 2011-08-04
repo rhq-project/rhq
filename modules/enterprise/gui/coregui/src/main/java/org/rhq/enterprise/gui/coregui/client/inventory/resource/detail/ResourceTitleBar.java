@@ -49,9 +49,7 @@ import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagEditorView;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagsChangedCallback;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary.OverviewForm;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary.ResourceErrorsDataSource;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary.ResourceErrorsView;
+import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableImg;
@@ -128,8 +126,8 @@ public class ResourceTitleBar extends LocatableVLayout {
 
         badge = new Img(ImageManager.getResourceLargeIcon(ResourceCategory.SERVICE), 24, 24);
 
-        TagEditorView tagEditorView = new TagEditorView(extendLocatorId("TagEdit"), resource.getTags(), false,
-            new TagsChangedCallback() {
+        TagEditorView tagEditorView = new TagEditorView(extendLocatorId("TagEdit"), resource.getTags(),
+            !resourceComposite.getResourcePermission().isInventory(), new TagsChangedCallback() {
                 public void tagsChanged(final HashSet<Tag> tags) {
                     GWTServiceLookup.getTagService().updateResourceTags(resource.getId(), tags,
                         new AsyncCallback<Void>() {
@@ -204,25 +202,25 @@ public class ResourceTitleBar extends LocatableVLayout {
                 winModal.setWidth("70%");
                 winModal.setHeight("70%");
                 winModal.setIsModal(true);
+                winModal.setShowResizer(true);
+                winModal.setCanDragResize(true);
                 winModal.centerInPage();
-                winModal.setTitle(MSG.common_title_component_errors() + ":");
+                winModal.setTitle(MSG.common_title_component_errors());
 
                 LocatableVLayout form = new LocatableVLayout(extendLocatorId("_Modal_Form"));
                 form.setAlign(VerticalAlignment.CENTER);
-                form.setLayoutMargin(20);
+                form.setLayoutMargin(10);
                 form.setWidth100();
-                form.setHeight("40%");
-                ResourceErrorsView errorsGrid = new ResourceErrorsView(extendLocatorId("errors"), MSG
-                    .view_summaryOverview_header_detectedErrors(), null, null,
-                    new String[] { ResourceErrorsDataSource.Field.DETAIL });
-                errorsGrid.setWidth100();
-                errorsGrid.setHeight("400");
+                form.setHeight100();
 
                 Resource resource = resourceComposite.getResource();
                 ResourceErrorsDataSource errors = new ResourceErrorsDataSource(resource.getId());
 
-                errorsGrid.setShowFooter(false);
+                ResourceErrorsView errorsGrid = new ResourceErrorsView(extendLocatorId("errors"), MSG
+                    .view_summaryOverview_header_detectedErrors(), null, null,
+                    new String[] { ResourceErrorsDataSource.Field.DETAIL });
                 errorsGrid.setDataSource(errors);
+
                 form.addMember(errorsGrid);
                 winModal.addItem(form);
 
@@ -243,7 +241,7 @@ public class ResourceTitleBar extends LocatableVLayout {
         detailsForm.setHeight(10);
         detailsForm.setAlign(Alignment.LEFT);
 
-        detailsFormSummary = new OverviewForm(extendLocatorId("Title_Optional_Summary"), resourceComposite);
+        detailsFormSummary = new OverviewForm(extendLocatorId("Title_Optional_Summary"), resourceComposite, this);
         detailsFormSummary.setWidth100();
         detailsFormSummary.setPadding(3);
         detailsFormSummary.setMargin(3);
@@ -294,8 +292,7 @@ public class ResourceTitleBar extends LocatableVLayout {
             this.resourceComposite = resourceComposite;
             update();
 
-            this.title.setContents("<span class=\"SectionHeader\">" + resource.getName()
-                + "</span>&nbsp;<span class=\"subtitle\">" + resource.getResourceType().getName() + "</span>");
+            displayResourceName(resource.getName());
 
             Set<Integer> favorites = UserSessionManager.getUserPreferences().getFavoriteResources();
             this.favorite = favorites.contains(resource.getId());
@@ -308,6 +305,15 @@ public class ResourceTitleBar extends LocatableVLayout {
 
             markForRedraw();
         }
+    }
+
+    void displayResourceName(String resourceName) {
+        if (!resource.getName().equals(resourceName)) {
+            resource.setName(resourceName); // the name must have been changed by the user via the editable field
+        }
+        this.title.setContents("<span class=\"SectionHeader\">" + StringUtility.escapeHtml(resourceName)
+            + "</span>&nbsp;<span class=\"subtitle\">" + resource.getResourceType().getName() + "</span>");
+        this.title.markForRedraw();
     }
 
     private void updateFavoriteButton() {
@@ -350,7 +356,7 @@ public class ResourceTitleBar extends LocatableVLayout {
             } else {
                 msg = MSG.view_titleBar_common_removedFavFailure(resource.getName());
             }
-            CoreGUI.getMessageCenter().notify(new Message(msg, Message.Severity.Info));
+            CoreGUI.getErrorHandler().handleError(msg, throwable);
 
             // Revert back to our original favorite status, since the server update failed.
             toggleFavoriteLocally();

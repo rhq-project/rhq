@@ -1,6 +1,7 @@
 package org.rhq.enterprise.gui.coregui.client.gwt;
 
 import java.util.List;
+import java.util.Map;
 
 import com.google.gwt.user.client.rpc.RemoteService;
 import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
@@ -16,15 +17,28 @@ import org.rhq.core.domain.criteria.GroupPluginConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.GroupResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.PluginConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.ResourceConfigurationUpdateCriteria;
-import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 
 /**
- *
+ * API for resource and plugin configurations for resources and groups, as well as any other 
+ * configuration related methods.
  */
 @RemoteServiceRelativePath("ConfigurationGWTService")
 public interface ConfigurationGWTService extends RemoteService {
+
+    void purgePluginConfigurationUpdates(int[] configUpdateIds, boolean purgeInProgress) throws RuntimeException;
+
+    void purgeResourceConfigurationUpdates(int[] configUpdateIds, boolean purgeInProgress) throws RuntimeException;
+
+    void rollbackPluginConfiguration(int resourceId, int configHistoryId) throws RuntimeException;
+
+    void rollbackResourceConfiguration(int resourceId, int configHistoryId) throws RuntimeException;
+
+    ResourceConfigurationUpdate getLatestResourceConfigurationUpdate(int resourceId) throws RuntimeException;
+
+    PluginConfigurationUpdate getLatestPluginConfigurationUpdate(int resourceId) throws RuntimeException;
+
     Configuration getPluginConfiguration(int resourceId) throws RuntimeException;
 
     ConfigurationDefinition getPluginConfigurationDefinition(int resourceTypeId) throws RuntimeException;
@@ -54,14 +68,13 @@ public interface ConfigurationGWTService extends RemoteService {
     PageList<GroupPluginConfigurationUpdate> findGroupPluginConfigurationUpdatesByCriteria(
         GroupPluginConfigurationUpdateCriteria criteria) throws RuntimeException;
 
-    List<DisambiguationReport<ResourceConfigurationComposite>> findResourceConfigurationsForGroup(int groupId)
-        throws RuntimeException;
+    Map<Integer, Configuration> findResourceConfigurationsForGroup(int groupId) throws RuntimeException;
 
-    List<DisambiguationReport<ResourceConfigurationComposite>> findPluginConfigurationsForGroup(int groupId)
-        throws RuntimeException;
+    Map<Integer, Configuration> findPluginConfigurationsForGroup(int groupId) throws RuntimeException;
 
-    List<DisambiguationReport<ResourceConfigurationComposite>> findPluginConfigurationsForGroupUpdate(int groupUpdateId)
-        throws RuntimeException;
+    Map<Integer, Configuration> findResourceConfigurationsForGroupUpdate(int groupUpdateId) throws RuntimeException;
+
+    Map<Integer, Configuration> findPluginConfigurationsForGroupUpdate(int groupUpdateId) throws RuntimeException;
 
     void updateResourceConfigurationsForGroup(int groupId, List<ResourceConfigurationComposite> resourceConfigurations)
         throws RuntimeException;
@@ -75,5 +88,5 @@ public interface ConfigurationGWTService extends RemoteService {
     void deleteGroupResourceConfigurationUpdate(Integer groupId, Integer[] groupResourceConfigUpdateIds)
         throws RuntimeException;
 
-    //RawConfiguration dummy(RawConfiguration config) throws RuntimeException;
+    ConfigurationDefinition getOptionValuesForConfigDefinition(ConfigurationDefinition definition);
 }

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -27,7 +27,6 @@ import java.io.Serializable;
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
-import javax.persistence.Transient;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -46,18 +45,23 @@ import org.jetbrains.annotations.Nullable;
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement
 public class PropertySimple extends Property implements Serializable {
-    public static final int MAX_VALUE_LENGTH = 2000;
-
     private static final long serialVersionUID = 1L;
 
-    @Column(name = "override")
-    private Boolean override;
+    public static final int MAX_VALUE_LENGTH = 2000;
+
+    /**
+     * This is the special value for simple properties of type PASSWORD that are masked. Masking and unmasking of
+     * PASSWORD properties is done by the ConfigurationManagerBean SLSB, and, for the sake of security, prevents RHQ
+     * clients from being able to view the current value of PASSWORD properties. The value is made obscure enough to
+     * make the chances of it being the same as the property's unmasked value next to nil.
+     */
+    private static final String MASKED_VALUE = "_._._[MaSKeD]_._._";
 
     @Column(name = "string_value", length = MAX_VALUE_LENGTH)
     private String stringValue;
 
-    @Transient
-    private transient String unmaskedStringValue;
+    @Column(name = "override")
+    private Boolean override;
 
     /**
      * Constructor for {@link PropertySimple} that stores a <code>null</code> value.
@@ -69,9 +73,9 @@ public class PropertySimple extends Property implements Serializable {
 
     protected PropertySimple(PropertySimple original, boolean keepId) {
         super(original, keepId);
-        this.override = original.override;
-        this.unmaskedStringValue = original.unmaskedStringValue;
+
         this.stringValue = original.stringValue;
+        this.override = original.override;
     }
 
     /**
@@ -99,11 +103,9 @@ public class PropertySimple extends Property implements Serializable {
             return;
         }
 
-        String sVal = value.toString();
-        if (sVal.length() > MAX_VALUE_LENGTH)
-            stringValue = sVal.substring(0, MAX_VALUE_LENGTH);
-        else
-            stringValue = sVal;
+        String valueAsString = value.toString();
+        stringValue = valueAsString.length() > MAX_VALUE_LENGTH ?
+                valueAsString.substring(0, MAX_VALUE_LENGTH) : valueAsString;
     }
 
     /**
@@ -258,12 +260,16 @@ public class PropertySimple extends Property implements Serializable {
         this.override = override;
     }
 
-    public String getUnmaskedStringValue() {
-        return this.unmaskedStringValue;
+    public boolean isMasked() {
+        return MASKED_VALUE.equals(this.stringValue);
     }
 
-    public void setUnmaskedStringValue(String unmaskedStringValue) {
-        this.unmaskedStringValue = unmaskedStringValue;
+    public void mask() {
+        // Don't mask properties with null values (i.e. unset properties), otherwise they will appear to have a
+        // value when rendered in the GUI (see http://jira.jboss.com/jira/browse/JBNADM-2248).
+        if (this.stringValue != null) {
+            this.stringValue = MASKED_VALUE;
+        }
     }
 
     @Override

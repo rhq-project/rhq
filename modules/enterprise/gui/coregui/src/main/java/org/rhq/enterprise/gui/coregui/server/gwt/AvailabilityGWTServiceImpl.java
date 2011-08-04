@@ -41,7 +41,7 @@ public class AvailabilityGWTServiceImpl extends AbstractGWTServiceImpl implement
             return SerialUtility.prepare(availabilityManager.findAvailabilityForResource(getSessionSubject(),
                 resourceId, pc), "AvailabilityService.findAvailabilityForResource");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 }

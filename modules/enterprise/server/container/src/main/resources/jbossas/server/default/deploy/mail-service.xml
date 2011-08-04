@@ -2,7 +2,7 @@
 <!-- $Id: mail-service.xml 62349 2007-04-15 16:48:15Z dimitris@jboss.org $ -->
 <server>
 
-  <!-- JON Server Mail Connection Factory -->
+  <!-- RHQ Server Mail Connection Factory -->
   
   <mbean code="org.jboss.mail.MailService"
          name="jboss:service=Mail">

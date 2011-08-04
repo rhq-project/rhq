@@ -115,8 +115,4 @@ public interface PluginDeploymentScannerMBean {
      * @return agent plugin directory name
      */
     File getAgentPluginDir();
-
-    void setLicenseFile(File name);
-
-    File getLicenseFile();
 }

@@ -19,8 +19,9 @@
 package org.rhq.enterprise.gui.uibeans;
 
 import java.util.List;
+
+import org.rhq.core.domain.measurement.ui.MetricDisplaySummary;
 import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
-import org.rhq.enterprise.server.measurement.uibean.MetricDisplaySummary;
 
 /**
  * Simple UI bean for the ListChildResourcesPanel, includes the AutoGroupComposite and the MetricDisplaySummary

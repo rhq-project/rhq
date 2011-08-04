@@ -1,11 +1,13 @@
 package org.rhq.enterprise.gui.coregui.client.util;
 
-//import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.i18n.client.TimeZone;
 import com.google.gwt.i18n.client.TimeZoneInfo;
+
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.Messages;
 
 /** An RPC gwt serializable implemenation of the jsf RelativeDurationConverter
  *  utility.
@@ -23,34 +25,34 @@ public class GwtRelativeDurationConverter {
     private static final long NEVER = -1;
 
     private static final long MILLIS_IN_DAY = 24 * MILLIS_IN_HOUR;
-    //    private static final SimpleDateFormat dayFormatter = new SimpleDateFormat("D");
-    //    private static final SimpleDateFormat formatter = new SimpleDateFormat("hh:mm aaa z");
-    private static final DateTimeFormat dayFormatter = DateTimeFormat.getFormat("D");
-    private static final DateTimeFormat formatter = DateTimeFormat.getFormat("hh:mm aaa z");
+    private static final DateTimeFormat dayFormatter = DateTimeFormat.getFormat("d");
+    private static final DateTimeFormat formatter = DateTimeFormat.getFormat("hh:mm aaa Z");
+    private static final Messages MSG = CoreGUI.getMessages();
 
     public static TimeZone tz = null;
 
     public static String format(long eventMillis) {
-        int dayOfYearToday = Integer.parseInt(dayFormatter.format(new Date(System.currentTimeMillis())));
+        long now = System.currentTimeMillis();
+        int dayOfYearToday = Integer.parseInt(dayFormatter.format(new Date(now)));
         int dayOfYearEvent = Integer.parseInt(dayFormatter.format(new Date(eventMillis)));
         String result = null;
-        if (dayOfYearEvent == dayOfYearToday) {
+        //add additional check to fix when dayOfYear and dayOfYearToday is same but month apart.
+        if ((dayOfYearEvent == dayOfYearToday) & ((now - eventMillis) < MILLIS_IN_DAY)) {
             // <time>
             result = formatter.format(new Date(eventMillis));
-        } else if (dayOfYearEvent == dayOfYearToday - 1) {
+        } else if ((dayOfYearEvent == dayOfYearToday - 1) & ((now - eventMillis) < MILLIS_IN_DAY * 28)) {
             // "yesterday" <time>
-            result = "Yesterday, " + formatter.format(new Date(eventMillis));
+            result = MSG.common_label_yesterday() + ", " + formatter.format(new Date(eventMillis));
         } else {
             // <time> "ago"
-            result = getRelativeTimeAgo(eventMillis) + " ago";
+            result = getRelativeTimeAgo(eventMillis) + " " + MSG.common_label_ago();
         }
         return result;
     }
 
     private static TimeZone getTimeZone() {
         if (tz == null) {
-            //            return TimeZone.getDefault();
-            return TimeZone.createTimeZone(TimeZoneInfo.buildTimeZoneData(String.valueOf(System.currentTimeMillis())));
+            return TimeZone.createTimeZone(TimeZoneInfo.buildTimeZoneData(""));
         } else {
             return tz;
         }

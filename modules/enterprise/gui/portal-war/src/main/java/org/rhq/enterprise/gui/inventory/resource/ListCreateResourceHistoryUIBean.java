@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.inventory.resource;
 
 import javax.faces.model.DataModel;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.CreateResourceHistory;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
@@ -69,10 +70,11 @@ public class ListCreateResourceHistoryUIBean extends PagedDataTableUIBean {
 
         @Override
         public PageList<CreateResourceHistory> fetchPage(PageControl pageControl) {
+            Subject user = EnterpriseFacesContextUtility.getSubject();
             Resource parentresource = EnterpriseFacesContextUtility.getResourceIfExists();
             ResourceFactoryManagerLocal resourceFactoryManager = LookupUtil.getResourceFactoryManager();
 
-            PageList<CreateResourceHistory> pageList = resourceFactoryManager.findCreateChildResourceHistory(
+            PageList<CreateResourceHistory> pageList = resourceFactoryManager.findCreateChildResourceHistory(user,
                 parentresource.getId(), null, null, pageControl);
 
             return pageList;

@@ -29,9 +29,13 @@ import javax.jws.soap.SOAPBinding;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.Architecture;
 import org.rhq.core.domain.content.InstalledPackage;
+import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
+import org.rhq.core.domain.content.composite.PackageAndLatestVersionComposite;
+import org.rhq.core.domain.content.composite.PackageTypeAndVersionFormatComposite;
 import org.rhq.core.domain.criteria.InstalledPackageCriteria;
+import org.rhq.core.domain.criteria.PackageCriteria;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
@@ -136,6 +140,39 @@ public interface ContentManagerRemote {
         @WebParam(name = "pluginName") String pluginName) throws ResourceTypeNotFoundException;
 
     /**
+     * This re tries to find a package type of given name defined by the resource type
+     * provided. 
+     * <p>
+     * The resource type id can be null, in which case only the serverside defined package types
+     * are searched for.
+     * 
+     * @param subject the authenticated user
+     * @param resourceTypeId the id of the resource type associated with the package type or null  if only server-side package types should be searched for 
+     * @param packageTypeName the name of the package type to find
+     * @return
+     */
+    @WebMethod
+    PackageType findPackageType(
+        @WebParam(name = "subject") Subject subject,
+        @WebParam(name = "resourceTypeId") Integer resourceTypeId,
+        @WebParam(name = "packageTypeName") String packageTypeName
+        );
+    
+    /**
+     * Similar to {@link #findPackageType(Subject, Integer, String)} but
+     * returns the package type along with the version format specification.
+     * 
+     * @param subject
+     * @param resourceTypeId
+     * @param packageTypeName
+     * @return
+     */
+    @WebMethod
+    PackageTypeAndVersionFormatComposite findPackageTypeWithVersionFormat(
+        @WebParam(name = "subject") Subject subject,
+        @WebParam(name ="resourceTypeId") Integer resourceTypeId,
+        @WebParam(name = "packageTypeName") String packageTypeName);
+    /**
      * @param subject
      * @param criteria {@link InstalledPackageCriteria}
      * @return InstalledPackages for the criteria
@@ -160,6 +197,36 @@ public interface ContentManagerRemote {
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "criteria") PackageVersionCriteria criteria);
 
+    /**
+     * If the criteria object filters on repo id, the subject needs to be able to 
+     * access that repo. If there is no filter on repos, the subject needs to have 
+     * MANAGE_REPOSITORIES permission.
+     * 
+     * @param subject
+     * @param criteria
+     * @return
+     */
+    @WebMethod
+    PageList<Package> findPackagesByCriteria(
+        @WebParam(name = "subject") Subject subject,
+        @WebParam(name = "criteria") PackageCriteria criteria);
+    
+    /**
+     * Akin to {@link #findPackagesByCriteria(Subject, PackageCriteria)} but also
+     * determines the latest version of the returned packages.
+     * <p>
+     * The provided criteria has to be limited to a specific repo using {@link PackageCriteria#addFilterRepoId(Integer)}.
+     * 
+     * @param subject
+     * @param criteria
+     * @return
+     * @throws IllegalArgumentException if the criteria doesn't define a repo filter
+     */
+    @WebMethod    
+    PageList<PackageAndLatestVersionComposite> findPackagesWithLatestVersion(
+        @WebParam(name = "subject") Subject subject, 
+        @WebParam(name = "criteria") PackageCriteria criteria);
+    
     /**
      * For a resource that is content-backed (aka package-backed), this call will return InstalledPackage information
      * for the backing content (package).

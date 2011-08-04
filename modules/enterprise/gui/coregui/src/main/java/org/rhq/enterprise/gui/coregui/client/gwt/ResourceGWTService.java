@@ -26,14 +26,16 @@ import com.google.gwt.user.client.rpc.RemoteService;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.resource.CreateResourceHistory;
 import org.rhq.core.domain.resource.DeleteResourceHistory;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceAncestryFormat;
 import org.rhq.core.domain.resource.ResourceError;
-import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.resource.composite.ProblemResourceComposite;
 import org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
+import org.rhq.core.domain.resource.composite.ResourceInstallCount;
 import org.rhq.core.domain.resource.composite.ResourceLineageComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -44,12 +46,18 @@ import org.rhq.core.domain.util.PageList;
 public interface ResourceGWTService extends RemoteService {
 
     void createResource(int parentResourceId, int newResourceTypeId, String newResourceName,
-        Configuration newResourceConfiguration) throws RuntimeException;
+        Configuration newResourceConfiguration, Integer timeout) throws RuntimeException;
 
     void createResource(int parentResourceId, int newResourceTypeId, String newResourceName,
-        Configuration deploymentTimeConfiguration, int packageVersionId) throws RuntimeException;
+        Configuration deploymentTimeConfiguration, int packageVersionId, Integer timeout) throws RuntimeException;
 
     List<DeleteResourceHistory> deleteResources(int[] resourceIds) throws RuntimeException;
+
+    PageList<CreateResourceHistory> findCreateChildResourceHistory(int parentId, Long beginDate, Long endDate,
+        PageControl pc) throws RuntimeException;
+
+    PageList<DeleteResourceHistory> findDeleteChildResourceHistory(int parentId, Long beginDate, Long endDate,
+        PageControl pc) throws RuntimeException;
 
     List<RecentlyAddedResourceComposite> findRecentlyAddedResources(long ctime, int maxItems) throws RuntimeException;
 
@@ -59,12 +67,16 @@ public interface ResourceGWTService extends RemoteService {
 
     List<ResourceError> findResourceErrors(int resourceId) throws RuntimeException;
 
-    List<DisambiguationReport<ProblemResourceComposite>> findProblemResources(long ctime, int maxItems)
-        throws RuntimeException;
+    void deleteResourceErrors(int[] resourceErrorIds) throws RuntimeException;
+
+    PageList<ProblemResourceComposite> findProblemResources(long ctime, int maxItems) throws RuntimeException;
 
     Resource getPlatformForResource(int resourceId) throws RuntimeException;
 
     Map<Resource, List<Resource>> getQueuedPlatformsAndServers(HashSet<InventoryStatus> statuses, PageControl pc)
+        throws RuntimeException;
+
+    Map<Integer, String> getResourcesAncestry(Integer[] resourceIds, ResourceAncestryFormat format)
         throws RuntimeException;
 
     List<ResourceLineageComposite> getResourceLineageAndSiblings(int resourceId) throws RuntimeException;
@@ -82,4 +94,5 @@ public interface ResourceGWTService extends RemoteService {
 
     List<Integer> uninventoryResources(int[] resourceIds) throws RuntimeException;
 
+    List<ResourceInstallCount> findResourceInstallCounts(boolean groupByVersions) throws RuntimeException;
 }

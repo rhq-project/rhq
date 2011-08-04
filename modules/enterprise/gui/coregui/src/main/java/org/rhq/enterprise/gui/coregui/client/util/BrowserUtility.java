@@ -55,4 +55,11 @@ public class BrowserUtility {
             $wnd.XMLHttpRequestBackup = null;
         }
     }-*/;
+
+    //This is a JSNI call out to the third party javascript lib to execute on the data inserted into the DOM.
+    public static native void graphSparkLines()
+    /*-{
+     //find all elements where attribute class contains 'dynamicsparkline' and graph their contents
+     $wnd.jQuery('.dynamicsparkline').sparkline();
+    }-*/;
 }

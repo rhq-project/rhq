@@ -57,7 +57,7 @@ public class DashboardPortlet implements Serializable {
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_DASHBOARD_PORTLET_ID_SEQ")
     @Id
-    private int id;
+    private int id = 0;
 
     // A non-displayed, persisted identifier for the portlet.
     @Column(name = "PORTLET_KEY")
@@ -68,10 +68,10 @@ public class DashboardPortlet implements Serializable {
     private String name;
 
     @Column(name = "COL")
-    private int column;
+    private int column = 0;
 
     @Column(name = "COL_INDEX")
-    private int index;
+    private int index = 0;
 
     @Column(name = "HEIGHT")
     private int height = 300;

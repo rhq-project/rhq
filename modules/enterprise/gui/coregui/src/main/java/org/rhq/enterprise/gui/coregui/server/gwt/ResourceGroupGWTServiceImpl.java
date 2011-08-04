@@ -47,7 +47,7 @@ public class ResourceGroupGWTServiceImpl extends AbstractGWTServiceImpl implemen
             PageList<ResourceGroup> groups = groupManager.findResourceGroupsByCriteria(getSessionSubject(), criteria);
             return SerialUtility.prepare(groups, "ResourceGroupService.findResourceGroupsByCriteria");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -58,7 +58,7 @@ public class ResourceGroupGWTServiceImpl extends AbstractGWTServiceImpl implemen
                 getSessionSubject(), criteria);
             return SerialUtility.prepare(composites, "ResourceGroupService.findResourceGroupCompositesByCriteria");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -69,7 +69,7 @@ public class ResourceGroupGWTServiceImpl extends AbstractGWTServiceImpl implemen
                 getSessionSubject(), criteria);
             return SerialUtility.prepare(definitions, "ResourceGroupService.findGroupDefinitionsByCriteria");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -77,7 +77,7 @@ public class ResourceGroupGWTServiceImpl extends AbstractGWTServiceImpl implemen
         try {
             groupManager.setAssignedResources(getSessionSubject(), groupId, resourceIds, setType);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -87,7 +87,7 @@ public class ResourceGroupGWTServiceImpl extends AbstractGWTServiceImpl implemen
             groupManager.setAssignedResourceGroupsForResource(getSessionSubject(), resourceId, resourceGroupIds,
                 setType);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -98,7 +98,7 @@ public class ResourceGroupGWTServiceImpl extends AbstractGWTServiceImpl implemen
             groupManager.setAssignedResources(user, group.getId(), resourceIds, true);
             return SerialUtility.prepare(group, "ResourceGroupService.createResourceGroup");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -109,7 +109,7 @@ public class ResourceGroupGWTServiceImpl extends AbstractGWTServiceImpl implemen
             groupManager.setAssignedResources(user, group.getId(), resourceIds, true);
             return SerialUtility.prepare(group, "ResourceGroupService.createResourceGroup");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -117,7 +117,7 @@ public class ResourceGroupGWTServiceImpl extends AbstractGWTServiceImpl implemen
         try {
             groupManager.deleteResourceGroups(getSessionSubject(), groupIds);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -125,7 +125,7 @@ public class ResourceGroupGWTServiceImpl extends AbstractGWTServiceImpl implemen
         try {
             groupManager.updateResourceGroup(getSessionSubject(), group);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -133,7 +133,7 @@ public class ResourceGroupGWTServiceImpl extends AbstractGWTServiceImpl implemen
         try {
             groupManager.updateResourceGroup(getSessionSubject(), group, null, updateMembership);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -143,7 +143,7 @@ public class ResourceGroupGWTServiceImpl extends AbstractGWTServiceImpl implemen
 
             return SerialUtility.prepare(results, "ResourceGroupService.createGroupDefinition");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -151,7 +151,7 @@ public class ResourceGroupGWTServiceImpl extends AbstractGWTServiceImpl implemen
         try {
             definitionManager.updateGroupDefinition(getSessionSubject(), groupDefinition);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -161,7 +161,7 @@ public class ResourceGroupGWTServiceImpl extends AbstractGWTServiceImpl implemen
                 definitionManager.calculateGroupMembership(getSessionSubject(), nextGroupDefinitionId);
             }
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -171,7 +171,7 @@ public class ResourceGroupGWTServiceImpl extends AbstractGWTServiceImpl implemen
                 definitionManager.removeGroupDefinition(getSessionSubject(), nextGroupDefinitionId);
             }
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -180,7 +180,7 @@ public class ResourceGroupGWTServiceImpl extends AbstractGWTServiceImpl implemen
         try {
             groupManager.setRecursive(getSessionSubject(), groupId, isRecursive);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 }

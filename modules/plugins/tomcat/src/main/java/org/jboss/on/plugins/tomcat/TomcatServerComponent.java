@@ -104,6 +104,8 @@ public class TomcatServerComponent implements JMXComponent, MeasurementFacet, Op
     public static final String PLUGIN_CONFIG_SCRIPT_PREFIX = "scriptPrefix";
     public static final String PLUGIN_CONFIG_SHUTDOWN_SCRIPT = "shutdownScript";
     public static final String PLUGIN_CONFIG_START_SCRIPT = "startScript";
+    public static final String START_WAIT_MAX_PROP = "startWaitMax";
+    public static final String STOP_WAIT_MAX_PROP = "stopWaitMax";
 
     private Log log = LogFactory.getLog(this.getClass());
 

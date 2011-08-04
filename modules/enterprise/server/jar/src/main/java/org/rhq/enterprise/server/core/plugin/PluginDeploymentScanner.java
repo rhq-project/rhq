@@ -93,14 +93,6 @@ public class PluginDeploymentScanner implements PluginDeploymentScannerMBean {
         this.agentPluginScanner.getAgentPluginDeployer().setPluginDir(dir);
     }
 
-    public File getLicenseFile() {
-        return this.agentPluginScanner.getAgentPluginDeployer().getLicenseFile();
-    }
-
-    public void setLicenseFile(File file) {
-        this.agentPluginScanner.getAgentPluginDeployer().setLicenseFile(file);
-    }
-
     public void start() throws Exception {
         // This will check to see if there are any agent plugin records in the database
         // that do not have content associated with them and if so, will stream

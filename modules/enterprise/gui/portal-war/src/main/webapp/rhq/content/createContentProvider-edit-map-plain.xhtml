@@ -1,0 +1,58 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component">
+
+THIS TEXT WILL BE REMOVED.
+
+<ui:composition template="/rhq/resource/layout/main-plain.xhtml">
+
+   THIS TEXT WILL BE REMOVED AS WELL.
+
+   <ui:param name="pageTitle" value="Create Content Source - Edit Map Entry '#{param.listName}'"/>
+
+   <ui:define name="breadcrumbs">
+      <h:outputLink value="listProviders-plain.xhtml">
+         ${msg["contentprovider.list.breadcrumb"]}
+      </h:outputLink>
+      &gt;
+      <h:outputLink value="createContentProvider-plain.xhtml">
+         ${msg["contentprovider.new.breadcrumb"]}
+      </h:outputLink>
+   </ui:define>
+
+   <ui:define name="content">
+
+      <h:form id="editContentProviderConfigurationForm" onsubmit="prepareInputsForSubmission(this)">
+
+         <input type="hidden" name="typeName" value="#{param.typeName}"/>
+
+         <onc:config configurationDefinition="#{CreateContentSourceUIBean.contentSourceTypeConfigurationDefinition}"
+                     configuration="#{CreateContentSourceUIBean.contentSource.configuration}"
+                     listName="#{param.listName}"
+                     listIndex="#{param.listIndex}"/>
+
+         <h:panelGrid columns="2" styleClass="buttons-table" columnClasses="button-cell">
+            <h:commandButton value="OK" type="submit" action="#{CreateContentSourceUIBean.finishEditMap}"
+                             alt="Click to Add Map" styleClass="buttonmed"/>
+            <h:commandButton value="RESET" type="reset" immediate="true"
+                             alt="Click to Reset Fields" styleClass="buttonmed"/>
+         </h:panelGrid>
+         
+      </h:form>
+
+   </ui:define>
+
+</ui:composition>
+
+THIS TEXT WILL BE REMOVED AS WELL.
+
+</html>

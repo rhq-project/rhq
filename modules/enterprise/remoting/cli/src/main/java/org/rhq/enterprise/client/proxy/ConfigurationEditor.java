@@ -19,7 +19,7 @@
 package org.rhq.enterprise.client.proxy;
 
 import org.rhq.enterprise.client.ClientMain;
-import org.rhq.enterprise.client.TabularWriter;
+import org.rhq.bindings.output.TabularWriter;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;

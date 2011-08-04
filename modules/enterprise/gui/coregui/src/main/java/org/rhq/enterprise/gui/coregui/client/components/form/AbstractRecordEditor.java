@@ -105,12 +105,7 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
         viewPath.next();
 
         String parentViewPath = viewPath.getParentViewPath();
-        if (!viewPath.isEnd()) {
-            CoreGUI.getErrorHandler().handleError(MSG.widget_recordEditor_error_invalidViewPath(viewPath.toString()));
-            CoreGUI.goToView(parentViewPath);
-        } else {
-            this.listViewPath = parentViewPath; // e.g. Administration/Security/Roles
-        }
+        this.listViewPath = parentViewPath; // e.g. Administration/Security/Roles
     }
 
     /**
@@ -249,7 +244,7 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
         this.form.resetValues();
     }
 
-    protected void save() {
+    protected void save(DSRequest requestProperties) {
         if (!this.form.validate()) {
             Message message = new Message(MSG.widget_recordEditor_warn_validation(this.dataTypeName),
                 Message.Severity.Warning, EnumSet.of(Message.Option.Transient));
@@ -308,7 +303,7 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
                     CoreGUI.getMessageCenter().notify(message);
                 }
             }
-        });
+        }, requestProperties);
     }
 
     protected void editNewRecord() {
@@ -451,7 +446,7 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
             saveButton.setDisabled(true);
             saveButton.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
-                    save();
+                    save(new DSRequest());
                 }
             });
             hLayout.addMember(saveButton);
@@ -462,6 +457,7 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
                 public void onClick(ClickEvent clickEvent) {
                     reset();
                     resetButton.disable();
+                    saveButton.disable();
                 }
             });
             hLayout.addMember(resetButton);

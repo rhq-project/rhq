@@ -32,8 +32,10 @@ public class MeasurementOOBComposite implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private String resourceName;
     private int resourceId;
+    private String resourceName;
+    private String resourceAncestry;
+    private int resourceTypeId;
     private String scheduleName;
     private int scheduleId;
     private long timestamp;
@@ -53,11 +55,13 @@ public class MeasurementOOBComposite implements Serializable {
     public MeasurementOOBComposite() {
     }
 
-    public MeasurementOOBComposite(String resourceName, int resourceId, String scheduleName, int scheduleId,
-        long timestamp, int definitionId, int factor, double blMin, double blMax, MeasurementUnits units,
-        String parentName, Integer parentId) {
+    public MeasurementOOBComposite(String resourceName, int resourceId, String resourceAncestry, int resourceTypeId,
+        String scheduleName, int scheduleId, long timestamp, int definitionId, int factor, double blMin, double blMax,
+        MeasurementUnits units, String parentName, Integer parentId) {
         this.resourceName = resourceName;
         this.resourceId = resourceId;
+        this.resourceAncestry = resourceAncestry;
+        this.resourceTypeId = resourceTypeId;
         this.scheduleName = scheduleName;
         this.scheduleId = scheduleId;
         this.definitionId = definitionId;
@@ -70,10 +74,13 @@ public class MeasurementOOBComposite implements Serializable {
         this.parentName = parentName;
     }
 
-    public MeasurementOOBComposite(String resourceName, int resourceId, String scheduleName, int scheduleId,
-        long timestamp, int definitionId, int factor, double blMin, double blMax, MeasurementUnits unit) {
+    public MeasurementOOBComposite(String resourceName, int resourceId, String resourceAncestry, int resourceTypeId,
+        String scheduleName, int scheduleId, long timestamp, int definitionId, int factor, double blMin, double blMax,
+        MeasurementUnits unit) {
         this.resourceName = resourceName;
         this.resourceId = resourceId;
+        this.resourceAncestry = resourceAncestry;
+        this.resourceTypeId = resourceTypeId;
         this.scheduleName = scheduleName;
         this.scheduleId = scheduleId;
         this.definitionId = definitionId;
@@ -90,6 +97,14 @@ public class MeasurementOOBComposite implements Serializable {
 
     public int getResourceId() {
         return resourceId;
+    }
+
+    public String getResourceAncestry() {
+        return resourceAncestry;
+    }
+
+    public int getResourceTypeId() {
+        return resourceTypeId;
     }
 
     public String getScheduleName() {

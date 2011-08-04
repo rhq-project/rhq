@@ -38,9 +38,6 @@ import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
-import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.Event.NativePreviewEvent;
-import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
@@ -129,17 +126,23 @@ public class SearchBar extends AbstractSearchBar {
         String searchButtonId = searchBarElement.getAttribute("searchButtonId");
         searchButton = DOM.getElementById(searchButtonId);
 
-        Event.addNativePreviewHandler(new NativePreviewHandler() {
-            public void onPreviewNativeEvent(NativePreviewEvent event) {
-                if (event.getNativeEvent() != null && event.getNativeEvent().getEventTarget() != null) {
+        // Don't know what this originally was going to be used for, but if you notice,
+        // after all the if-stmts are evaluated true, the only piece of code to be invoked
+        // (prepareSearchExecution()) has been commented out. So this is a no-op. In addition
+        // the second if-stmt (getEventTarget().equals(searchButton) doesn't look correct and
+        // may not ever evaluate to true anyway. Commenting this out, in case something like this
+        // is needed in the future, but we'll havee to probably fix that if-stmt first.
 
-                    if (event.getNativeEvent().getEventTarget().equals(searchButton)
-                        && event.getTypeInt() == Event.ONMOUSEDOWN) {
-                        //prepareSearchExecution();
-                    }
-                }
-            }
-        });
+        //        Event.addNativePreviewHandler(new NativePreviewHandler() {
+        //            public void onPreviewNativeEvent(NativePreviewEvent event) {
+        //                if (event.getNativeEvent() != null && event.getNativeEvent().getEventTarget() != null) {
+        //                    if (event.getNativeEvent().getEventTarget().equals(searchButton)
+        //                        && event.getTypeInt() == Event.ONMOUSEDOWN) {
+        //                        //prepareSearchExecution();
+        //                    }
+        //                }
+        //            }
+        //        });
 
         String searchSubsystem = searchBarElement.getAttribute("searchSubsystem");
         setSearchSubsystem(SearchSubsystem.valueOf(searchSubsystem.toUpperCase()));
@@ -302,6 +305,7 @@ public class SearchBar extends AbstractSearchBar {
 
         if (name.equals("")) {
             GWTServiceLookup.getSearchService().deleteSavedSearch(currentSearchId, blackHoleCallback);
+            currentSearchId = 0;
             starImage.setUrl(STAR_OFF_URL);
         } else {
             // NOTE: currently do not support updated a saved search pattern
@@ -347,7 +351,16 @@ public class SearchBar extends AbstractSearchBar {
     }
 
     private void updateSavedSearchName(final int savedSearchId, final String newName) {
-        GWTServiceLookup.getSearchService().updateSavedSearchName(savedSearchId, newName, blackHoleCallback);
+        GWTServiceLookup.getSearchService().updateSavedSearchName(savedSearchId, newName, new AsyncCallback<Boolean>() {
+            @Override
+            public void onSuccess(Boolean hadUpdates) {
+                // no message bar to send update message to if hadUpdates
+            }
+
+            @Override
+            public void onFailure(Throwable caught) {
+            }
+        });
     }
 
     /*

@@ -31,4 +31,7 @@ public class LocatableSectionStack extends SectionStack implements Locatable {
         return this.locatorId + "_" + extension;
     }
 
+    // NOTE: It seems SectionStack does not need the sort of destroy() override that other Layout superclasses
+    //       need.  The section cleanup seems sufficient on baseWidget destroy, and further attempts to remove
+    //       members explicitly may cause issues.
 }

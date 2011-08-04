@@ -32,8 +32,8 @@ import org.apache.struts.action.ActionMapping;
 import org.apache.struts.util.ImageButtonBean;
 import org.apache.struts.util.LabelValueBean;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.measurement.ui.MetricDisplaySummary;
 import org.rhq.enterprise.gui.legacy.util.MonitorUtils;
-import org.rhq.enterprise.server.measurement.uibean.MetricDisplaySummary;
 
 /**
  * Represents the controls on various pages that display metrics summaries.

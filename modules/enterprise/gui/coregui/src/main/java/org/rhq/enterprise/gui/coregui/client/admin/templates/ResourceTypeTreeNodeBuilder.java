@@ -202,8 +202,6 @@ public class ResourceTypeTreeNodeBuilder {
             setAttribute(ATTRIB_DISABLED_ALERT_TEMPLATES, composite.getDisabledAlertCount());
             setAttribute(ATTRIB_DISABLED_METRIC_TEMPLATES, composite.getEnabledMetricCount());
             setAttribute(ATTRIB_ENABLED_METRIC_TEMPLATES, composite.getDisabledMetricCount());
-
-            setIsFolder(true);
         }
 
         @Override

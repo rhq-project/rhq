@@ -33,6 +33,7 @@ import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.agentclient.AgentClient;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
@@ -60,11 +61,14 @@ public class SupportManagerBean implements SupportManagerLocal, SupportManagerRe
     @EJB
     private ServerManagerLocal serverManager;
 
+    @EJB
+    private SubjectManagerLocal subjectManager;
+
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public InputStream getSnapshotReportStream(Subject subject, int resourceId, String name, String description)
         throws Exception {
 
-        AgentClient agentClient = this.agentManager.getAgentClient(subject, resourceId);
+        AgentClient agentClient = this.agentManager.getAgentClient(subjectManager.getOverlord(), resourceId);
         SupportAgentService supportService = agentClient.getSupportAgentService();
         InputStream snapshotStream = supportService.getSnapshotReport(resourceId, name, description);
 

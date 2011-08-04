@@ -38,20 +38,11 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 /**
  * @author Greg Hinkle
  */
-public class TaggingDataSource extends RPCDataSource<Tag> {
+public class TaggingDataSource extends RPCDataSource<Tag, TagCriteria> {
 
     @Override
-    protected void executeFetch(final DSRequest request, final DSResponse response) {
-
-        // TagCriteria criteria = new TagCriteria();
-
-        String search = (String) request.getCriteria().getValues().get("tag");
-        if (search != null) {
-            // todo
-            //            criteria.addFilter
-        }
-
-        GWTServiceLookup.getTagService().findTagsByCriteria(new TagCriteria(), new AsyncCallback<PageList<Tag>>() {
+    protected void executeFetch(final DSRequest request, final DSResponse response, final TagCriteria criteria) {
+        GWTServiceLookup.getTagService().findTagsByCriteria(criteria, new AsyncCallback<PageList<Tag>>() {
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError(MSG.view_tags_error_1(), caught);
                 response.setStatus(DSResponse.STATUS_FAILURE);
@@ -63,7 +54,20 @@ public class TaggingDataSource extends RPCDataSource<Tag> {
                 processResponse(request.getRequestId(), response);
             }
         });
+    }
 
+    @Override
+    protected TagCriteria getFetchCriteria(DSRequest request) {
+        TagCriteria criteria = new TagCriteria();
+
+        /* TODO: add search filter
+        String search = (String) request.getCriteria().getValues().get("tag");
+        if (search != null) {
+            // criteria.addFilter
+        }
+        */
+
+        return criteria;
     }
 
     @Override

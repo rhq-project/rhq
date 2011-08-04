@@ -21,7 +21,6 @@ package org.rhq.enterprise.server.resource;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -118,35 +117,6 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
     // ResourceFactoryManagerLocal Implementation  --------------------------------------------
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public Resource createInventoryResource(int parentResourceId, int resourceTypeId, String resourceName,
-        String resourceKey) {
-        // Load persisted entities
-        Resource parentResource = entityManager.find(Resource.class, parentResourceId);
-        ResourceType resourceType = entityManager.find(ResourceType.class, resourceTypeId);
-
-        Subject overLord = subjectManager.getOverlord();
-        // Check to see if the resource exists but marked as deleted
-        Resource resource = resourceManager.getResourceByParentAndKey(overLord, parentResource, resourceKey,
-            resourceType.getPlugin(), resourceType.getName());
-
-        if (resource == null) {
-            // Create the resource
-            resource = new Resource(resourceKey, resourceName, resourceType);
-            resource.setParentResource(parentResource);
-            resource.setAgent(parentResource.getAgent());
-            resource.setInventoryStatus(InventoryStatus.COMMITTED);
-
-            // Persist the resource
-            entityManager.persist(resource);
-        } else {
-            resource.setInventoryStatus(InventoryStatus.COMMITTED);
-            resource.setItime(Calendar.getInstance().getTimeInMillis());
-        }
-
-        return resource;
-    }
-
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void completeCreateResource(CreateResourceResponse response) {
         log.debug("Received call to complete create resource: " + response);
 
@@ -216,6 +186,7 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
 
             // set the resource deleted and update the db in case it matters to the child operations
             resource.setInventoryStatus(InventoryStatus.DELETED);
+            //resource.setParentResource(null); can't null this out since the query DeleteResourceHistory.QUERY_FIND_BY_PARENT_RESOURCE_ID needs it
             resource.setItime(System.currentTimeMillis());
             entityManager.merge(resource);
 
@@ -230,6 +201,7 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
         }
     }
 
+    @SuppressWarnings("unchecked")
     public void checkForTimedOutRequests() {
         try {
             Query query;
@@ -290,7 +262,7 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
         ResourceType resourceType = entityManager.getReference(ResourceType.class, resourceTypeId);
 
         // CreateResourceHistory.configuration is one-to-one, so make sure to clone the config, zeroing out all id's.
-        Configuration configurationClone = configuration.deepCopy(false);
+        Configuration configurationClone = (configuration != null) ? configuration.deepCopy(false) : null;
 
         // Persist and establish relationships
         CreateResourceHistory history = new CreateResourceHistory(parentResource, resourceType, user.getName(),
@@ -374,8 +346,8 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<CreateResourceHistory> findCreateChildResourceHistory(int parentResourceId, Long beginDate,
-        Long endDate, PageControl pageControl) {
+    public PageList<CreateResourceHistory> findCreateChildResourceHistory(Subject subject, int parentResourceId,
+        Long beginDate, Long endDate, PageControl pageControl) {
         pageControl.initDefaultOrderingField("crh.id", PageOrdering.DESC);
 
         int totalCount = getCreateChildResourceHistoryCount(parentResourceId, beginDate, endDate);
@@ -407,8 +379,8 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
     }
 
     @SuppressWarnings("unchecked")
-    public PageList<DeleteResourceHistory> findDeleteChildResourceHistory(int parentResourceId, Long beginDate,
-        Long endDate, PageControl pageControl) {
+    public PageList<DeleteResourceHistory> findDeleteChildResourceHistory(Subject subject, int parentResourceId,
+        Long beginDate, Long endDate, PageControl pageControl) {
         pageControl.initDefaultOrderingField("drh.id", PageOrdering.DESC);
 
         int totalCount = getDeleteChildResourceHistoryCount(parentResourceId, beginDate, endDate);
@@ -431,13 +403,24 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
         Integer architectureId, Configuration deploymentTimeConfiguration, InputStream packageBitStream) {
 
         return createResource(user, parentResourceId, newResourceTypeId, newResourceName, pluginConfiguration,
-            packageName, packageVersionNumber, architectureId, deploymentTimeConfiguration, packageBitStream, null);
+            packageName, packageVersionNumber, architectureId, deploymentTimeConfiguration, packageBitStream,
+            (Map<String, String>) null, (Integer) null);
     }
 
     public CreateResourceHistory createResource(Subject user, int parentResourceId, int newResourceTypeId,
         String newResourceName, Configuration pluginConfiguration, String packageName, String packageVersionNumber,
         Integer architectureId, Configuration deploymentTimeConfiguration, InputStream packageBitStream,
         Map<String, String> packageUploadDetails) {
+
+        return createResource(user, parentResourceId, newResourceTypeId, newResourceName, pluginConfiguration,
+            packageName, packageVersionNumber, architectureId, deploymentTimeConfiguration, packageBitStream,
+            packageUploadDetails, null);
+    }
+
+    public CreateResourceHistory createResource(Subject user, int parentResourceId, int newResourceTypeId,
+        String newResourceName, Configuration pluginConfiguration, String packageName, String packageVersionNumber,
+        Integer architectureId, Configuration deploymentTimeConfiguration, InputStream packageBitStream,
+        Map<String, String> packageUploadDetails, Integer timeout) {
 
         log.info("Received call to create package backed resource under parent [" + parentResourceId + "]");
 
@@ -463,15 +446,15 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
         // Create/locate package and package version
         PackageVersion packageVersion = null;
         if (packageUploadDetails == null) {
-            packageVersion = contentManager.createPackageVersion(packageName, newPackageType.getId(),
+            packageVersion = contentManager.createPackageVersion(user, packageName, newPackageType.getId(),
                 packageVersionNumber, architectureId, packageBitStream);
         } else {
-            packageVersion = contentManager.getUploadedPackageVersion(packageName, newPackageType.getId(),
-                packageVersionNumber, architectureId, packageBitStream, packageUploadDetails, newResourceTypeId);
+            packageVersion = contentManager.getUploadedPackageVersion(user, packageName, newPackageType.getId(),
+                packageVersionNumber, architectureId, packageBitStream, packageUploadDetails, null);
         }
 
         return doCreatePackageBackedResource(user, parentResource, newResourceType, newResourceName,
-            pluginConfiguration, deploymentTimeConfiguration, packageVersion);
+            pluginConfiguration, deploymentTimeConfiguration, packageVersion, timeout);
     }
 
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -482,6 +465,13 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
 
     public CreateResourceHistory createResource(Subject user, int parentResourceId, int resourceTypeId,
         String resourceName, Configuration pluginConfiguration, Configuration resourceConfiguration) {
+
+        return createResource(user, parentResourceId, resourceTypeId, resourceName, pluginConfiguration,
+            resourceConfiguration, (Integer) null);
+    }
+
+    public CreateResourceHistory createResource(Subject user, int parentResourceId, int resourceTypeId,
+        String resourceName, Configuration pluginConfiguration, Configuration resourceConfiguration, Integer timeout) {
         log.debug("Received call to create configuration backed resource under parent: " + parentResourceId
             + " of type: " + resourceTypeId);
 
@@ -501,7 +491,8 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
 
         // Package into transfer object
         CreateResourceRequest request = new CreateResourceRequest(persistedHistory.getId(), parentResourceId,
-            resourceName, resourceType.getName(), resourceType.getPlugin(), pluginConfiguration, resourceConfiguration);
+            resourceName, resourceType.getName(), resourceType.getPlugin(), pluginConfiguration, resourceConfiguration,
+            timeout);
 
         try {
             AgentClient agentClient = agentManager.getAgentClient(agent);
@@ -522,6 +513,20 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
         }
     }
 
+    @Override
+    public CreateResourceHistory createPackageBackedResource(Subject subject, int parentResourceId,
+        int newResourceTypeId, String newResourceName,//
+        @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
+        Configuration pluginConfiguration, String packageName, String packageVersionNumber, Integer architectureId,//
+        @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
+        Configuration deploymentTimeConfiguration, byte[] packageBits, Integer timeout) {
+
+        return createPackageBackedResource(subject, parentResourceId, newResourceTypeId, newResourceName,//
+            pluginConfiguration, packageName, packageVersionNumber, architectureId,//
+            deploymentTimeConfiguration, packageBits, (Integer) null);
+    }
+
+    @Override
     public CreateResourceHistory createPackageBackedResource(Subject subject, int parentResourceId,
         int newResourceTypeId, String newResourceName,//
         @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
@@ -534,13 +539,26 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
                 packageBits));
     }
 
+    @Override
+    public CreateResourceHistory createPackageBackedResourceViaPackageVersion(Subject subject, int parentResourceId,
+        int newResourceTypeId, String newResourceName,//
+        @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
+        Configuration pluginConfiguration, @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
+        Configuration deploymentTimeConfiguration,//
+        int packageVersionId) {
+
+        return createPackageBackedResourceViaPackageVersion(subject, parentResourceId, newResourceTypeId,
+            newResourceName, pluginConfiguration, deploymentTimeConfiguration, packageVersionId, (Integer) null);
+    }
+
+    @Override
     public CreateResourceHistory createPackageBackedResourceViaPackageVersion(Subject subject, int parentResourceId,
         int newResourceTypeId, String newResourceName,//
         @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
         Configuration pluginConfiguration,//
         @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
         Configuration deploymentTimeConfiguration,//
-        int packageVersionId) {
+        int packageVersionId, Integer timeout) {
 
         Resource parentResource = entityManager.find(Resource.class, parentResourceId);
 
@@ -555,12 +573,12 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
         PackageVersion packageVersion = entityManager.find(PackageVersion.class, packageVersionId);
 
         return doCreatePackageBackedResource(subject, parentResource, newResourceType, newResourceName,
-            pluginConfiguration, deploymentTimeConfiguration, packageVersion);
+            pluginConfiguration, deploymentTimeConfiguration, packageVersion, timeout);
     }
 
     private CreateResourceHistory doCreatePackageBackedResource(Subject subject, Resource parentResource,
         ResourceType newResourceType, String newResourceName, Configuration pluginConfiguration,
-        Configuration deploymentTimeConfiguration, PackageVersion packageVersion) {
+        Configuration deploymentTimeConfiguration, PackageVersion packageVersion, Integer timeout) {
 
         Agent agent = parentResource.getAgent();
 
@@ -573,7 +591,7 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
         packageDetails.setDeploymentTimeConfiguration(deploymentTimeConfiguration);
         CreateResourceRequest request = new CreateResourceRequest(persistedHistory.getId(), parentResource.getId(),
             newResourceName, newResourceType.getName(), newResourceType.getPlugin(), pluginConfiguration,
-            packageDetails);
+            packageDetails, timeout);
 
         try {
             AgentClient agentClient = agentManager.getAgentClient(agent);
@@ -646,5 +664,4 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
             throw new RuntimeException("Error while sending delete resource request to agent service", e);
         }
     }
-
 }

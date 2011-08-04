@@ -35,6 +35,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.ErrorHandler;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -56,9 +57,13 @@ public class DeployStep extends AbstractWizardStep {
         return MSG.view_bundle_deployWizard_deployStep();
     }
 
-    public Canvas getCanvas() {
+    public Canvas getCanvas(Locatable parent) {
         if (canvas == null) {
-            canvas = new LocatableVLayout("BundleDeployDeploy");
+            if (parent != null) {
+                canvas = new LocatableVLayout(parent.extendLocatorId("BundleDeployDeploy"));
+            } else {
+                canvas = new LocatableVLayout("BundleDeployDeploy");
+            }
             canvas.setWidth100();
             canvas.setHeight100();
             canvas.setAlign(Alignment.CENTER);

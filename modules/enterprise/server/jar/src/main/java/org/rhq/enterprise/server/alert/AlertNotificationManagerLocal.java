@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.alert;
 
 import java.util.List;
+import java.util.Map;
 
 import javax.ejb.Local;
 
@@ -31,8 +32,8 @@ import org.rhq.enterprise.server.plugin.pc.alert.CustomAlertSenderBackingBean;
 
 /**
  * @author Joseph Marques
+ * @author Lukas Krejci
  */
-
 @Local
 public interface AlertNotificationManagerLocal {
 
@@ -42,15 +43,17 @@ public interface AlertNotificationManagerLocal {
      * @param alertDefinitionId Id of the alert definition
      * @param senderName shortName of the {@link AlertSender}
      * @param configuration Properties for this alert sender.
+     * @throws AlertNotificationValidationException if the alert sender of the notification failed to finalize and validate the provided notification's configuration
      */
-    AlertNotification addAlertNotification(Subject user, int alertDefinitionId, AlertNotification notification);
+    AlertNotification addAlertNotification(Subject user, int alertDefinitionId, AlertNotification notification) throws AlertDefinitionUpdateException, AlertNotificationValidationException;
 
     /**
      * Persist changes to the passed {@link AlertNotification}
      *
      * @param notification
+     * @throws AlertNotificationValidationException if the alert sender of the notification failed to finalize and validate the notification's configuration
      */
-    void updateAlertNotification(Subject subject, int alertDefinitionId, AlertNotification notification);
+    void updateAlertNotification(Subject subject, int alertDefinitionId, AlertNotification notification) throws AlertDefinitionUpdateException, AlertNotificationValidationException;
 
     /**
      * Remove the passed notifications from the passed alert definition (all identified by their id)
@@ -61,6 +64,22 @@ public interface AlertNotificationManagerLocal {
      */
     int removeNotifications(Subject subject, Integer alertDefinitionId, Integer[] notificationIds);
 
+    /**
+     * This method calls out to the alert senders responsible to individual notifications and ask
+     * them to finalize and validate the notifications before they are processed further.
+     * This gives the alert senders the chance to transform their configurations from what's being
+     * input by the user to what needs to be persisted and to perform validation of the configurations.
+     * <p>
+     * The notifications can be modified during this call. New properties can be added to their configurations, etc.
+     * 
+     * @param subject the subject that is requesting the changes
+     * @param notifications the notifications to process
+     * @return true if everything went ok, false if the validation fails. In this case one or more properties
+     * in the configuration or extra configuration of one or more of the notifications contains an error message
+     * describing the error.
+     */
+    boolean finalizeNotifications(Subject subject, List<AlertNotification> notifications);
+    
     int purgeOrphanedAlertNotifications();
 
     /**
@@ -101,4 +120,12 @@ public interface AlertNotificationManagerLocal {
     int cleanseAlertNotificationBySubject(int subjectId);
 
     int cleanseAlertNotificationByRole(int roleId);
+    
+    /**
+     * This method can be used to reconfigure a number of notifications en-masse.
+     * 
+     * @param alertNotificationIds the alert notifications to update
+     * @param newConfigurationValues a map where keys are the property names and values are the new property values
+     */
+    void massReconfigure(List<Integer> alertNotificationIds, Map<String, String> newConfigurationValues);
 }

@@ -57,6 +57,10 @@ public class DownloadServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+
+        // seeing odd browser caching issues, even though we set Last-Modified. so force no caching for now
+        disableBrowserCache(resp);
+
         if (isServerAcceptingRequests()) {
             File requestedDirectory = getRequestedDirectory(req);
             if (requestedDirectory == null) {
@@ -200,7 +204,7 @@ public class DownloadServlet extends HttpServlet {
     }
 
     private void disableBrowserCache(HttpServletResponse resp) {
-        resp.setHeader("Cache-Control", "no-cache");
+        resp.setHeader("Cache-Control", "no-cache, no-store");
         resp.setHeader("Expires", "-1");
         resp.setHeader("Pragma", "no-cache");
     }

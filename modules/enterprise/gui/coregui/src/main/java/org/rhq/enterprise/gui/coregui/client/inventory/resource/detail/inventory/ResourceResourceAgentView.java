@@ -23,6 +23,7 @@ import java.util.Date;
 import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.FormItemIcon;
 import com.smartgwt.client.widgets.form.fields.HeaderItem;
@@ -52,6 +53,8 @@ public class ResourceResourceAgentView extends LocatableVLayout implements Refre
     private FormItemIcon agentStatusIcon;
     private StaticTextItem lastAvailReportValue;
     private StaticTextItem endpointValue;
+
+    private boolean loading = false; // will be true if loadData is currently waiting for responses
 
     public ResourceResourceAgentView(String locatorId, int resourceId) {
         super(locatorId);
@@ -102,16 +105,15 @@ public class ResourceResourceAgentView extends LocatableVLayout implements Refre
         // Agent Status
         agentStatusIcon = new FormItemIcon();
         agentStatusIcon.setSrc(ImageManager.getAvailabilityLargeIcon(null));
-        StaticTextItem agentStatus =
-            new StaticTextItem("agent-comm-status", MSG.view_inventory_summary_agent_status_title());
+        StaticTextItem agentStatus = new StaticTextItem("agent-comm-status", MSG
+            .view_inventory_summary_agent_status_title());
         agentStatus.setIcons(agentStatusIcon);
         agentStatus.setWrapTitle(false);
         formItems.add(agentStatus);
 
         // Last Received Avail report
         String lastAvailReport = "last-avail-report";
-        lastAvailReportValue = new StaticTextItem(lastAvailReport, MSG
-            .view_inventory_summary_agent_last_title());
+        lastAvailReportValue = new StaticTextItem(lastAvailReport, MSG.view_inventory_summary_agent_last_title());
         lastAvailReportValue.setWrapTitle(false);
         formItems.add(lastAvailReportValue);
 
@@ -124,10 +126,28 @@ public class ResourceResourceAgentView extends LocatableVLayout implements Refre
     }
 
     private void loadData() {
+        if (loading) {
+            return; // we are already loading and waiting for data, no need to re-issue the same queries
+        }
+        loading = true;
+
         GWTServiceLookup.getAgentService().getAgentForResource(this.resourceId, new AsyncCallback<Agent>() {
             @Override
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError(MSG.view_inventory_summary_agent_error1() + resourceId + ".", caught);
+                loading = false;
+                //Permissions failure, generate message to that effect
+                for (Canvas child : form.getChildren()) {
+                    child.destroy();
+                }
+
+                HeaderItem headerItem = new HeaderItem("header", MSG.view_inventory_summary_agent_title());
+                headerItem.setValue(MSG.view_inventory_summary_agent_title());
+                StaticTextItem permissionsMessage = new StaticTextItem("permissions", "permissionsFailure");
+                permissionsMessage.setShowTitle(false);
+                permissionsMessage.setValue(MSG.view_inventory_summary_agent_error3());
+                permissionsMessage.setWrap(false);
+                form.setFields(headerItem, new SpacerItem(), permissionsMessage);
+                form.markForRedraw();
             }
 
             @Override
@@ -135,14 +155,16 @@ public class ResourceResourceAgentView extends LocatableVLayout implements Refre
                 GWTServiceLookup.getAgentService().pingAgentForResource(resourceId, new AsyncCallback<Boolean>() {
                     @Override
                     public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError(MSG.view_inventory_summary_agent_error2() + resourceId + ".",
-                            caught);
+                        loading = false;
+                        CoreGUI.getErrorHandler().handleError(
+                            MSG.view_inventory_summary_agent_error2() + " " + resourceId + ".", caught);
                         agentStatusIcon.setSrc(ImageManager.getAvailabilityLargeIcon(null));
                         form.markForRedraw();
                     }
 
                     @Override
                     public void onSuccess(Boolean isUp) {
+                        loading = false;
                         //update icon with correct status
                         agentStatusIcon.setSrc(ImageManager.getAvailabilityLargeIcon(isUp));
                         form.markForRedraw();

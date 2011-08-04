@@ -22,30 +22,43 @@
  */
 package org.rhq.enterprise.gui.coregui.client.report.measurement;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
-import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.widgets.HTMLFlow;
+import com.smartgwt.client.widgets.grid.CellFormatter;
+import com.smartgwt.client.widgets.grid.HoverCustomizer;
+import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.TypesLoadedCallback;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author Greg Hinkle
  */
-public class MeasurementOOBDataSource extends RPCDataSource<MeasurementOOBComposite> {
+public class MeasurementOOBDataSource extends RPCDataSource<MeasurementOOBComposite, Criteria> {
 
     private int maximumFactor = 0;
 
@@ -54,34 +67,61 @@ public class MeasurementOOBDataSource extends RPCDataSource<MeasurementOOBCompos
         addFields(fields);
     }
 
-    @Override
-    protected List<DataSourceField> addDataSourceFields() {
-        List<DataSourceField> fields = super.addDataSourceFields();
+    /**
+     * The view that contains the list grid which will display this datasource's data will call this
+     * method to get the field information which is used to control the display of the data.
+     * 
+     * @return list grid fields used to display the datasource data
+     */
+    public ArrayList<ListGridField> getListGridFields() {
+        ArrayList<ListGridField> fields = new ArrayList<ListGridField>();
 
-        DataSourceTextField metricField = new DataSourceTextField("scheduleName", MSG.dataSource_measurementOob_field_scheduleName());
-        fields.add(metricField);
+        ListGridField resourceNameField = new ListGridField(AncestryUtil.RESOURCE_NAME, MSG.common_title_resource());
+        resourceNameField.setCellFormatter(new CellFormatter() {
+            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
+                String url = LinkManager.getResourceLink(listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
+                return SeleniumUtility.getLocatableHref(url, o.toString(), null);
+            }
+        });
+        resourceNameField.setShowHover(true);
+        resourceNameField.setHoverCustomizer(new HoverCustomizer() {
 
-        DataSourceTextField resourceField = new DataSourceTextField("resourceName", MSG.dataSource_measurementOob_field_resourceName());
-        fields.add(resourceField);
+            public String hoverHTML(Object value, ListGridRecord listGridRecord, int rowNum, int colNum) {
+                return AncestryUtil.getResourceHoverHTML(listGridRecord, 0);
+            }
+        });
+        fields.add(resourceNameField);
 
-        DataSourceTextField parentField = new DataSourceTextField("parentName", MSG.dataSource_measurementOob_field_parentName());
-        fields.add(parentField);
+        ListGridField ancestryField = AncestryUtil.setupAncestryListGridField();
+        fields.add(ancestryField);
 
-        DataSourceTextField bandField = new DataSourceTextField("formattedBaseband", MSG.dataSource_measurementOob_field_formattedBaseband());
+        ListGridField scheduleNameField = new ListGridField("scheduleName", MSG
+            .dataSource_measurementOob_field_scheduleName());
+        fields.add(scheduleNameField);
+
+        ListGridField bandField = new ListGridField("formattedBaseband", MSG
+            .dataSource_measurementOob_field_formattedBaseband());
         fields.add(bandField);
 
-        DataSourceTextField outlierField = new DataSourceTextField("formattedOutlier", MSG.dataSource_measurementOob_field_formattedOutlier());
+        ListGridField outlierField = new ListGridField("formattedOutlier", MSG
+            .dataSource_measurementOob_field_formattedOutlier());
         fields.add(outlierField);
 
-        DataSourceTextField factorField = new DataSourceTextField("factor", MSG.dataSource_measurementOob_field_factor());
+        ListGridField factorField = new ListGridField("factor", MSG.dataSource_measurementOob_field_factor());
         fields.add(factorField);
 
-        return fields;
+        resourceNameField.setWidth("20%");
+        ancestryField.setWidth("30%");
+        scheduleNameField.setWidth("20%");
+        bandField.setWidth("10%");
+        outlierField.setWidth("10%");
+        factorField.setWidth("10%");
 
+        return fields;
     }
 
     @Override
-    protected void executeFetch(final DSRequest request, final DSResponse response) {
+    protected void executeFetch(final DSRequest request, final DSResponse response, final Criteria unused) {
 
         PageControl pc = getPageControl(request);
 
@@ -91,13 +131,60 @@ public class MeasurementOOBDataSource extends RPCDataSource<MeasurementOOBCompos
                     CoreGUI.getErrorHandler().handleError(MSG.dataSource_measurementOob_error_fetchFailure(), caught);
                 }
 
-                public void onSuccess(PageList<MeasurementOOBComposite> result) {
-                    response.setData(buildRecords(result));
-                    response.setTotalRows(result.getTotalSize());
-                    processResponse(request.getRequestId(), response);
+                public void onSuccess(final PageList<MeasurementOOBComposite> result) {
+                    Set<Integer> typesSet = new HashSet<Integer>();
+                    Set<String> ancestries = new HashSet<String>();
+                    for (MeasurementOOBComposite composite : result) {
+                        typesSet.add(composite.getResourceTypeId());
+                        ancestries.add(composite.getResourceAncestry());
+                    }
+
+                    // In addition to the types of the result resources, get the types of their ancestry
+                    typesSet.addAll(AncestryUtil.getAncestryTypeIds(ancestries));
+
+                    ResourceTypeRepository typeRepo = ResourceTypeRepository.Cache.getInstance();
+                    typeRepo.getResourceTypes(typesSet.toArray(new Integer[typesSet.size()]),
+                        new TypesLoadedCallback() {
+                            @Override
+                            public void onTypesLoaded(Map<Integer, ResourceType> types) {
+                                // Smartgwt has issues storing a Map as a ListGridRecord attribute. Wrap it in a pojo.                
+                                AncestryUtil.MapWrapper typesWrapper = new AncestryUtil.MapWrapper(types);
+
+                                Record[] records = buildRecords(result);
+                                for (Record record : records) {
+                                    // To avoid a lot of unnecessary String construction, be lazy about building ancestry hover text.
+                                    // Store the types map off the records so we can build a detailed hover string as needed.                      
+                                    record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY_TYPES, typesWrapper);
+
+                                    // Build the decoded ancestry Strings now for display
+                                    record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY_VALUE, AncestryUtil
+                                        .getAncestryValue(record));
+                                }
+                                response.setData(records);
+                                // for paging to work we have to specify size of full result set
+                                response.setTotalRows(result.getTotalSize());
+                                processResponse(request.getRequestId(), response);
+                            }
+                        });
                 }
             });
 
+    }
+
+    @Override
+    protected Criteria getFetchCriteria(DSRequest request) {
+        // we don't use criterias for this datasource, just return null
+        return null;
+
+    }
+
+    protected String getSortFieldForColumn(String columnName) {
+        // Note: I don't think this should even be getting called, but it is. We already setCanSortClientOnly(true)
+        // on all of the ListGridFields. To me that should mean any sorting done client side on those fields should
+        // not be passed in on the Request, but it seems to be...
+
+        // we don't use criterias for this datasource, just return null, don't try and apply any sort.        
+        return null;
     }
 
     @Override
@@ -125,8 +212,6 @@ public class MeasurementOOBDataSource extends RPCDataSource<MeasurementOOBCompos
         record.setAttribute("scheduleId", from.getScheduleId());
         record.setAttribute("scheduleName", from.getScheduleName());
         record.setAttribute("definitionId", from.getDefinitionId());
-        record.setAttribute("resourceId", from.getResourceId());
-        record.setAttribute("resourceName", from.getResourceName());
 
         record.setAttribute("factor", from.getFactor());
         record.setAttribute("formattedBaseband", from.getFormattedBaseband());
@@ -135,6 +220,12 @@ public class MeasurementOOBDataSource extends RPCDataSource<MeasurementOOBCompos
         record.setAttribute("blMax", from.getBlMax());
         record.setAttribute("parentId", from.getParentId());
         record.setAttribute("parentName", from.getParentName());
+
+        // for ancestry handling       
+        record.setAttribute(AncestryUtil.RESOURCE_ID, from.getResourceId());
+        record.setAttribute(AncestryUtil.RESOURCE_NAME, from.getResourceName());
+        record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY, from.getResourceAncestry());
+        record.setAttribute(AncestryUtil.RESOURCE_TYPE_ID, from.getResourceTypeId());
 
         int factorRankingWidth = (int) (((double) from.getFactor()) / (double) maximumFactor * 100d);
 

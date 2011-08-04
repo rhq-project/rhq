@@ -33,7 +33,6 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
-import org.apache.struts.action.ActionRedirect;
 
 import org.rhq.enterprise.gui.legacy.AttrConstants;
 import org.rhq.enterprise.gui.legacy.KeyConstants;
@@ -46,7 +45,6 @@ import org.rhq.enterprise.gui.legacy.exception.ParameterNotFoundException;
 import org.rhq.enterprise.gui.legacy.util.ActionUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.gui.util.WebUtility;
-import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * A <code>BaseDispatchAction</code> that sets up common monitor portals.
@@ -116,12 +114,12 @@ public class VisibilityPortalAction extends ResourceVisibilityPortalAction {
     public ActionForward execute(ActionMapping mapping, ActionForm form, HttpServletRequest request,
         HttpServletResponse response) throws Exception {
         ActionForward fwd = super.execute(mapping, form, request, response);
-        if (!LookupUtil.getSystemManager().isMonitoringEnabled()) {
-            ActionRedirect redirect = new ActionRedirect(mapping.findForward("inventory-jsf"));
-            redirect.addParameter("id", request.getParameter("id"));
-            redirect.setRedirect(false);
-            fwd = redirect;
-        }
+        //        if (!LookupUtil.getSystemManager().isMonitoringEnabled()) {
+        //            ActionRedirect redirect = new ActionRedirect(mapping.findForward("inventory-jsf"));
+        //            redirect.addParameter("id", request.getParameter("id"));
+        //            redirect.setRedirect(false);
+        //            fwd = redirect;
+        //        }
 
         return fwd;
     }

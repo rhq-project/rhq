@@ -1,5 +1,7 @@
 package org.rhq.enterprise.gui.coregui.client.components.tab;
 
+import com.smartgwt.client.widgets.Canvas;
+
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTab;
 
@@ -12,6 +14,11 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTab;
 public class NamedTab extends LocatableTab {
 
     private ViewName viewName;
+
+    public NamedTab(String locatorId, ViewName viewName) {
+        super(locatorId, viewName.getTitle());
+        this.viewName = viewName;
+    }
 
     public NamedTab(String locatorId, ViewName viewName, String icon) {
         super(locatorId, viewName.getTitle(), icon);
@@ -28,6 +35,13 @@ public class NamedTab extends LocatableTab {
 
     public String getTitle() {
         return viewName.getTitle();
+    }
+
+    public void destroy() {
+        Canvas pane = getPane();
+        if (null != pane) {
+            pane.destroy();
+        }
     }
 
 }

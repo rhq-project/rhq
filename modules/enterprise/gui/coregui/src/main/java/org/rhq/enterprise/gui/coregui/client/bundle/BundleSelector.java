@@ -29,17 +29,19 @@ import com.smartgwt.client.widgets.form.fields.TextItem;
 
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleType;
+import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.bundle.list.BundlesDataSource;
 import org.rhq.enterprise.gui.coregui.client.components.selector.AbstractSelector;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 /**
  * @author Jay Shaughnessy
  */
-public class BundleSelector extends AbstractSelector<Bundle> {
+public class BundleSelector extends AbstractSelector<Bundle, BundleCriteria> {
 
     private BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService();
 
@@ -48,7 +50,7 @@ public class BundleSelector extends AbstractSelector<Bundle> {
     }
 
     protected DynamicForm getAvailableFilterForm() {
-        DynamicForm availableFilterForm = new DynamicForm();
+        DynamicForm availableFilterForm = new LocatableDynamicForm(extendLocatorId("availableForm"));
         availableFilterForm.setNumCols(4);
         final TextItem search = new TextItem("search", MSG.common_title_search());
 
@@ -72,7 +74,7 @@ public class BundleSelector extends AbstractSelector<Bundle> {
         return availableFilterForm;
     }
 
-    protected RPCDataSource<Bundle> getDataSource() {
+    protected RPCDataSource<Bundle, BundleCriteria> getDataSource() {
         return new BundlesDataSource();
     }
 

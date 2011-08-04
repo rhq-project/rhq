@@ -1,0 +1,4 @@
+#!/bin/bash
+
+rm -rf rhq-plugin-pack-all-SNAPSHOT.zip     
+zip -r1 rhq-plugin-pack-all-SNAPSHOT.zip plugins/* enterprise/server/plugins/* -i *.jar

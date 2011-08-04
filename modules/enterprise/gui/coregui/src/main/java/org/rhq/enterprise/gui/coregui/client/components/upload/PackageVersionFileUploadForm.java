@@ -30,21 +30,25 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
  * Upload a single file and use it to create a new PackageVersion. 
  * 
  * @author Jay Shaughnessy
+ * @author Lukas Krejci
  */
 public class PackageVersionFileUploadForm extends FileUploadForm {
 
     private int packageTypeId;
     private Integer archId;
+    private Integer repoId;
     private int packageVersionId;
-
+    private int packageId;
+    
     public PackageVersionFileUploadForm(String locatorId, int packageTypeId, String packageName, String version,
-        Integer archId, boolean showNameLabel, Boolean isAlreadyUploaded) {
+        Integer archId, Integer repoId, boolean showNameLabel, boolean showUploadButton, Boolean isAlreadyUploaded) {
 
-        super(locatorId, packageName, version, showNameLabel, true, isAlreadyUploaded);
+        super(locatorId, packageName, version, showNameLabel, showUploadButton, isAlreadyUploaded);
 
         this.packageTypeId = packageTypeId;
         this.archId = archId;
-
+        this.repoId = repoId;
+        
         setAction(GWT.getModuleBaseURL() + "PackageVersionFileUploadServlet");
     }
 
@@ -58,12 +62,50 @@ public class PackageVersionFileUploadForm extends FileUploadForm {
         return this.packageVersionId;
     }
 
+    /**
+     * If this component successfully upload a package version file, this will return
+     * the id of the package the uploaded package version was associated with.
+     * Otherwise, 0 is returned.
+     * 
+     * @return the package id of the new package version
+     */
+    public int getPackageId() {
+        return packageId;
+    }
+    
+    public int getPackageTypeId() {
+        return packageTypeId;
+    }
+    
+    public void setPackageTypeId(int value) {
+        packageTypeId = value;
+        onDraw();
+    }
+    
+    public Integer getArchitectureId() {
+        return archId;
+    }
+    
+    public void setArchitectureId(Integer value) {
+        archId = value; 
+        onDraw();
+    }
+    
+    public Integer getRepoId() {
+        return repoId;
+    }
+    
+    public void setRepoId(Integer value) {
+        repoId = value;
+        onDraw();
+    }
+    
     @Override
     protected List<FormItem> getOnDrawItems() {
         List<FormItem> onDrawItems = super.getOnDrawItems();
 
         HiddenItem packageTypeIdField = new HiddenItem("packageTypeId");
-        packageTypeIdField.setValue(packageTypeId);
+        packageTypeIdField.setDefaultValue(packageTypeId);
         onDrawItems.add(packageTypeIdField);
 
         if (null != archId) {
@@ -72,33 +114,66 @@ public class PackageVersionFileUploadForm extends FileUploadForm {
             onDrawItems.add(archIdField);
         }
 
+        if (null != repoId) {
+            HiddenItem repoIdField = new HiddenItem("repoId");
+            repoIdField.setDefaultValue(repoId);
+            onDrawItems.add(repoIdField);
+        }
+        
         return onDrawItems;
     }
 
     protected boolean processSubmitCompleteResults(String submitCompleteEventResults) {
-        packageVersionId = parseIdFromResponse(submitCompleteEventResults);
+        parseIdsFromResponse(submitCompleteEventResults);
         return (packageVersionId > 0);
     }
 
-    private int parseIdFromResponse(String results) {
-        String successMsgPrefix = "success ["; // the upload servlet will respond with "success [packageVersionId]" on success
+    private void parseIdsFromResponse(String results) {
+        packageVersionId = 0;
+        packageId = 0;
+        
+        // the upload servlet will respond with "success [packageVersionId=x,packageId=y]" on success
+        
+        String successMsgPrefix = "success ["; 
         int startSuccessMsgPrefix = results.indexOf(successMsgPrefix);
         if (startSuccessMsgPrefix < 0) {
-            return 0; // must mean it wasn't a success - results is probably an error message
+            CoreGUI.getErrorHandler().handleError(MSG.view_upload_error_packageVersionFile());
+            return; // must mean it wasn't a success - results is probably an error message
         }
         int endSuccessMsgPrefix = startSuccessMsgPrefix + successMsgPrefix.length();
         int startSuccessMsgPostfix = results.indexOf(']', endSuccessMsgPrefix);
         if (startSuccessMsgPostfix < 0) {
-            return 0; // this should never happen, if we have "success [" we should always have the ending "]" bracket
+            CoreGUI.getErrorHandler().handleError(MSG.view_upload_error_packageVersionFile());
+            return; // this should never happen, if we have "success [" we should always have the ending "]" bracket
         }
-        String packageVersionIdString = results.substring(endSuccessMsgPrefix, startSuccessMsgPostfix);
-        int id = 0;
+        
+        String[] ids = results.substring(endSuccessMsgPrefix, startSuccessMsgPostfix).split(",");
+        if (ids.length != 2) {
+            CoreGUI.getErrorHandler().handleError(MSG.view_upload_error_packageVersionFile());
+            return;
+        }
+        
+        String packageVersionIdString = ids[0];
+        String packageIdString = ids[1];
+        
         try {
-            id = Integer.parseInt(packageVersionIdString);
+            int equalsIdx = packageVersionIdString.indexOf('=');
+            if (equalsIdx < 0) {
+                CoreGUI.getErrorHandler().handleError(MSG.view_upload_error_packageVersionFile());
+                return;
+            }
+            packageVersionId = Integer.parseInt(packageVersionIdString.substring(equalsIdx + 1));
+            
+            equalsIdx = packageIdString.indexOf('=');
+            if (equalsIdx < 0) {
+                packageVersionId = 0;
+                CoreGUI.getErrorHandler().handleError(MSG.view_upload_error_packageVersionFile());
+                return;
+            }
+            packageId = Integer.parseInt(packageIdString.substring(equalsIdx + 1));
         } catch (Exception e) {
             CoreGUI.getErrorHandler().handleError(MSG.view_upload_error_packageVersionFile(), e);
         }
-        return id;
     }
 
     @Override
@@ -113,5 +188,4 @@ public class PackageVersionFileUploadForm extends FileUploadForm {
 
         super.submitForm();
     }
-
 }

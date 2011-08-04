@@ -41,6 +41,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.pluginapi.util.ProcessExecutionUtility;
@@ -64,7 +65,7 @@ public class TomcatServerOperationsDelegate {
     private static final String SERVER_MBEAN_NAME = "Catalina:type=Server";
 
     /** max amount of time to wait for server to show as unavailable after executing stop - in milliseconds */
-    private static final long STOP_WAIT_MAX = 1000L * 150; // 2.5 minutes
+    private static long STOP_WAIT_MAX = 1000L * 150; // 2.5 minutes
 
     /** amount of time to wait between availability checks when performing a stop - in milliseconds */
     private static final long STOP_WAIT_INTERVAL = 1000L * 10; // 10 seconds
@@ -74,7 +75,7 @@ public class TomcatServerOperationsDelegate {
     private static final long STOP_WAIT_FINAL = 1000L * 30; // 30 seconds
 
     /** max amount of time to wait for start to complete - in milliseconds */
-    private static final long START_WAIT_MAX = 1000L * 300; // 5 minutes
+    private static long START_WAIT_MAX = 1000L * 300; // 5 minutes
 
     /** amount of time to wait between availability checks when performing a start - in milliseconds */
     private static final long START_WAIT_INTERVAL = 1000L * 10; // 10 seconds
@@ -466,6 +467,18 @@ public class TomcatServerOperationsDelegate {
 
     private AvailabilityType waitForServerToStart(long start) throws InterruptedException {
         AvailabilityType avail;
+
+        //detect whether startWaitMax property has been set.
+        Configuration pluginConfig = serverComponent.getResourceContext().getPluginConfiguration();
+        PropertySimple property = pluginConfig.getSimple(TomcatServerComponent.START_WAIT_MAX_PROP);
+        //if set and valid, update startWaitMax value
+        if ((property != null) && (property.getIntegerValue() != null)) {
+            int newValue = property.getIntegerValue();
+            if (newValue >= 1) {
+                START_WAIT_MAX = 1000L * 60 * newValue;
+            }
+        }
+
         while (((avail = this.serverComponent.getAvailability()) == AvailabilityType.DOWN)
             && (System.currentTimeMillis() < (start + START_WAIT_MAX))) {
             try {
@@ -478,6 +491,16 @@ public class TomcatServerOperationsDelegate {
     }
 
     private AvailabilityType waitForServerToShutdown() {
+        //detect whether stopWaitMax property has been set.
+        Configuration pluginConfig = serverComponent.getResourceContext().getPluginConfiguration();
+        PropertySimple property = pluginConfig.getSimple(TomcatServerComponent.STOP_WAIT_MAX_PROP);
+        //if set and valid, update startWaitMax value
+        if ((property != null) && (property.getIntegerValue() != null)) {
+            int newValue = property.getIntegerValue();
+            if (newValue >= 1) {
+                STOP_WAIT_MAX = 1000L * 60 * newValue;
+            }
+        }
         for (long wait = 0L; (wait < STOP_WAIT_MAX) && (AvailabilityType.UP == this.serverComponent.getAvailability()); wait += STOP_WAIT_INTERVAL) {
             try {
                 Thread.sleep(STOP_WAIT_INTERVAL);

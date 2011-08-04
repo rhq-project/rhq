@@ -48,6 +48,7 @@ import com.smartgwt.client.widgets.events.KeyPressHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.events.ItemChangedEvent;
 import com.smartgwt.client.widgets.form.events.ItemChangedHandler;
+import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -63,14 +64,17 @@ import com.smartgwt.client.widgets.layout.VStack;
 
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableSectionStack;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTransferImgButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVStack;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author Greg Hinkle
  * @author Ian Springer
  */
-public abstract class AbstractSelector<T> extends LocatableVLayout {
+public abstract class AbstractSelector<T, C extends org.rhq.core.domain.criteria.Criteria> extends LocatableVLayout {
 
     private static final String SELECTOR_KEY = "id";
 
@@ -80,7 +84,7 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
     protected HLayout hlayout;
     protected LocatableListGrid availableGrid;
     protected LocatableListGrid assignedGrid;
-    protected RPCDataSource<T> datasource;
+    protected RPCDataSource<T, C> datasource;
 
     private Set<AssignedItemsChangedHandler> assignedItemsChangedHandlers = new HashSet<AssignedItemsChangedHandler>();
 
@@ -155,7 +159,7 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
 
     protected abstract DynamicForm getAvailableFilterForm();
 
-    protected abstract RPCDataSource<T> getDataSource();
+    protected abstract RPCDataSource<T, C> getDataSource();
 
     protected abstract Criteria getLatestCriteria(DynamicForm availableFilterForm);
 
@@ -202,10 +206,45 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
         addMember(this.hlayout);
     }
 
+    @Override
+    public void destroy() {
+        // explicitly destroy non-locatable member layouts
+        SeleniumUtility.destroyMembers(hlayout);
+        super.destroy();
+
+        // For reasons unknown, possibly issues in smartgwt's cleanup of VStack and SectionStack, these
+        // widgets did not always get destroyed (for example, if something was moved to assigned, but nothing
+        // was moved to available - go figure), so destroy them manually when the other cleanup is already done.
+        if (null != availableGrid) {
+            availableGrid.removeFromParent();
+            availableGrid.destroy();
+        }
+        if (null != assignedGrid) {
+            assignedGrid.removeFromParent();
+            assignedGrid.destroy();
+        }
+        if (null != addButton) {
+            addButton.removeFromParent();
+            addButton.destroy();
+        }
+        if (null != addAllButton) {
+            addAllButton.removeFromParent();
+            addAllButton.destroy();
+        }
+        if (null != removeButton) {
+            removeButton.removeFromParent();
+            removeButton.destroy();
+        }
+        if (null != removeAllButton) {
+            removeAllButton.removeFromParent();
+            removeAllButton.destroy();
+        }
+    }
+
     private SectionStack buildAvailableItemsStack() {
-        SectionStack availableSectionStack = new SectionStack();
-        availableSectionStack.setWidth(300);
-        availableSectionStack.setHeight(250);
+        SectionStack availableSectionStack = new LocatableSectionStack(extendLocatorId("Available"));
+        availableSectionStack.setWidth("*");
+        availableSectionStack.setHeight100();
 
         SectionStackSection availableSection = new SectionStackSection(getAvailableItemsGridTitle());
         availableSection.setCanCollapse(false);
@@ -234,6 +273,10 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
             availableFields.add(iconField);
         }
         ListGridField nameField = new ListGridField(getNameField(), MSG.common_title_name());
+        if (supportsNameHoverCustomizer()) {
+            nameField.setShowHover(true);
+            nameField.setHoverCustomizer(getNameHoverCustomizer());
+        }
         availableFields.add(nameField);
         this.availableGrid.setFields(availableFields.toArray(new ListGridField[availableFields.size()]));
 
@@ -241,12 +284,13 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
         availableSectionStack.addSection(availableSection);
 
         // Load data.
-        this.datasource = getDataSource();
-        populateAvailableGrid(new Criteria());
-
         if (this.availableFilterForm != null) {
+            // this grabs any initial criteria prior to the first data fetch
+            latestCriteria = getLatestCriteria(availableFilterForm);
+
             this.availableFilterForm.addItemChangedHandler(new ItemChangedHandler() {
                 public void onItemChanged(ItemChangedEvent itemChangedEvent) {
+
                     latestCriteria = getLatestCriteria(availableFilterForm);
 
                     Timer timer = new Timer() {
@@ -263,9 +307,11 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
                 }
             });
         }
+        this.datasource = getDataSource();
+        populateAvailableGrid((null == latestCriteria) ? new Criteria() : latestCriteria);
 
         // Add event handlers.
-        
+
         this.availableGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
             public void onSelectionChanged(SelectionEvent selectionEvent) {
                 updateButtonEnablement();
@@ -311,7 +357,7 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
                         }
                     } else {
                         availableRecords.addAll(Arrays.asList(allRecords));
-                    }                    
+                    }
                     availableGrid.setData(availableRecords.toArray(new Record[availableRecords.size()]));
                 } finally {
                     updateButtonEnablement();
@@ -321,7 +367,7 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
     }
 
     private VStack buildButtonStack() {
-        VStack moveButtonStack = new VStack(6);
+        VStack moveButtonStack = new LocatableVStack(extendLocatorId("MoveButtons"), 6);
         moveButtonStack.setWidth(42);
         moveButtonStack.setHeight(250);
         moveButtonStack.setAlign(VerticalAlignment.CENTER);
@@ -365,9 +411,9 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
     }
 
     private SectionStack buildAssignedItemsStack() {
-        SectionStack assignedSectionStack = new SectionStack();
-        assignedSectionStack.setWidth(300);
-        assignedSectionStack.setHeight(250);
+        SectionStack assignedSectionStack = new LocatableSectionStack(extendLocatorId("Assigned"));
+        assignedSectionStack.setWidth("*");
+        assignedSectionStack.setHeight100();
         assignedSectionStack.setAlign(Alignment.LEFT);
 
         SectionStackSection assignedSection = new SectionStackSection(getAssignedItemsGridTitle());
@@ -397,6 +443,11 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
             assignedFields.add(iconField);
         }
         ListGridField nameField = new ListGridField(getNameField(), MSG.common_title_name());
+        if (supportsNameHoverCustomizer()) {
+            nameField.setShowHover(true);
+            nameField.setHoverCustomizer(getNameHoverCustomizer());
+        }
+
         assignedFields.add(nameField);
         this.assignedGrid.setFields(assignedFields.toArray(new ListGridField[assignedFields.size()]));
 
@@ -440,6 +491,14 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
         }
 
         return assignedSectionStack;
+    }
+
+    protected boolean supportsNameHoverCustomizer() {
+        return false;
+    }
+
+    protected HoverCustomizer getNameHoverCustomizer() {
+        return null;
     }
 
     private void notifyAssignedItemsChangedHandlers() {
@@ -505,26 +564,6 @@ public abstract class AbstractSelector<T> extends LocatableVLayout {
     protected String getAssignedItemsGridTitle() {
         String itemTitle = getItemTitle();
         return MSG.view_selector_assigned(itemTitle);
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-
-        assignedGrid.destroy();
-
-        if (!isReadOnly) {
-            if (availableFilterForm != null) {
-                availableFilterForm.destroy();
-            }
-
-            availableGrid.destroy();
-
-            addButton.destroy();
-            removeButton.destroy();
-            addAllButton.destroy();
-            removeAllButton.destroy();
-        }
     }
 
     protected void updateButtonEnablement() {

@@ -45,8 +45,8 @@ public class MembersView extends ResourceSearchView {
     private boolean canModifyMembers;
 
     public MembersView(String locatorId, int groupId, boolean canModifyMembers) {
-        super(locatorId, new Criteria(ResourceDatasource.FILTER_GROUP_ID, String.valueOf(groupId)),
-            MSG.view_inventory_resources_title_members());
+        super(locatorId, new Criteria(ResourceDatasource.FILTER_GROUP_ID, String.valueOf(groupId)), MSG
+            .view_inventory_resources_title_members());
         this.canModifyMembers = canModifyMembers;
         this.groupId = groupId;
     }
@@ -56,8 +56,8 @@ public class MembersView extends ResourceSearchView {
         super.configureTable();
 
         addTableAction(extendLocatorId("Members"), MSG.view_groupInventoryMembers_button_updateMembership() + "...",
-            new AbstractTableAction((this.canModifyMembers) ? TableActionEnablement.ALWAYS :
-                TableActionEnablement.NEVER) {
+            new AbstractTableAction((this.canModifyMembers) ? TableActionEnablement.ALWAYS
+                : TableActionEnablement.NEVER) {
                 @Override
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     final LocatableWindow winModal = new LocatableWindow(extendLocatorId("MembersWindow"));
@@ -79,14 +79,21 @@ public class MembersView extends ResourceSearchView {
                         }
                     });
 
-                    ResourceGroupMembershipView membershipView = new ResourceGroupMembershipView(
-                        MembersView.this.extendLocatorId("View"), MembersView.this.groupId);
+                    ResourceGroupMembershipView membershipView = new ResourceGroupMembershipView(MembersView.this
+                        .extendLocatorId("View"), MembersView.this.groupId);
 
                     membershipView.setSaveButtonHandler(new ClickHandler() {
-                        @Override
+
                         public void onClick(ClickEvent event) {
                             winModal.markForDestroy();
                             CoreGUI.refresh();
+                        }
+                    });
+
+                    membershipView.setCancelButtonHandler(new ClickHandler() {
+
+                        public void onClick(ClickEvent event) {
+                            winModal.destroy();
                         }
                     });
 

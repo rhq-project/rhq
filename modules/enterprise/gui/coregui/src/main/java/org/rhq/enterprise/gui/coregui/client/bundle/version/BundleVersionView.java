@@ -174,7 +174,8 @@ public class BundleVersionView extends LocatableVLayout implements BookmarkableV
                                         new Message(MSG.view_bundle_version_deleteSuccessful(version.getVersion()),
                                             Message.Severity.Info));
                                     // Bundle version is deleted, go back to main bundle view
-                                    CoreGUI.goToView(LinkManager.getBundleVersionLink(version.getBundle().getId(), 0));
+                                    CoreGUI.goToView(LinkManager.getBundleVersionLink(version.getBundle().getId(), 0),
+                                        true);
                                 }
                             });
                         }

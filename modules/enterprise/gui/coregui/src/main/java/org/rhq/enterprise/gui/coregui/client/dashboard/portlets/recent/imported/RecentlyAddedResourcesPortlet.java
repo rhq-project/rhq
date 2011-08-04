@@ -37,14 +37,14 @@ import com.smartgwt.client.widgets.tree.TreeGrid;
 
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
-import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
+import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortletUtil;
 import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
-import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 public class RecentlyAddedResourcesPortlet extends LocatableVLayout implements CustomSettingsPortlet,
@@ -55,19 +55,24 @@ public class RecentlyAddedResourcesPortlet extends LocatableVLayout implements C
     // A default displayed, persisted name for the portlet    
     public static final String NAME = MSG.view_portlet_defaultName_recentlyAddedResources();
 
-    private boolean simple = true;
-    private DashboardPortlet storedPortlet;
-    private RecentlyAddedResourceDS dataSource;
-    private TreeGrid treeGrid = null;
     public static final String unlimited = MSG.common_label_unlimited();
     public static final String defaultValue = unlimited;
 
     private static final String RECENTLY_ADDED_SHOW_MAX = "recently-added-show-amount";
     private static final String RECENTLY_ADDED_SHOW_HRS = "recently-added-time-range";
-    private Timer defaultReloader;
+
+    // set on initial configuration, the window for this portlet view. 
+    private PortletWindow portletWindow;
+
+    private RecentlyAddedResourceDS dataSource;
+    private TreeGrid treeGrid = null;
+    private boolean simple = true;
+
+    private Timer refreshTimer;
 
     public RecentlyAddedResourcesPortlet(String locatorId) {
         super(locatorId);
+
         //insert the datasource
         this.dataSource = new RecentlyAddedResourceDS(this);
     }
@@ -91,7 +96,7 @@ public class RecentlyAddedResourcesPortlet extends LocatableVLayout implements C
         });
 
         ListGridField timestampField = new ListGridField("timestamp", MSG.common_title_timestamp());
-
+        TimestampCellFormatter.prepareDateField(timestampField);
         treeGrid.setFields(resourceNameField, timestampField);
 
         if (!simple) {
@@ -103,7 +108,15 @@ public class RecentlyAddedResourcesPortlet extends LocatableVLayout implements C
     }
 
     public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
-        this.storedPortlet = storedPortlet;
+
+        if (null == this.portletWindow && null != portletWindow) {
+            this.portletWindow = portletWindow;
+        }
+
+        if ((null == storedPortlet) || (null == storedPortlet.getConfiguration())) {
+            return;
+        }
+
         if (storedPortlet.getConfiguration().getSimple(RECENTLY_ADDED_SHOW_MAX) != null) {
             //retrieve and translate to int
             String retrieved = storedPortlet.getConfiguration().getSimple(RECENTLY_ADDED_SHOW_MAX).getStringValue();
@@ -132,16 +145,18 @@ public class RecentlyAddedResourcesPortlet extends LocatableVLayout implements C
     }
 
     public Canvas getHelpCanvas() {
-        return new HTMLFlow(MSG.view_portlet_recentlyAdded_help_msg());
+        return new HTMLFlow(MSG.view_portlet_help_recentlyAdded());
     }
 
     public DynamicForm getCustomSettingsForm() {
         final DynamicForm form = new DynamicForm();
 
-        //-------------combobox for number of recently added resources to display on the dashboard
+        final DashboardPortlet storedPortlet = portletWindow.getStoredPortlet();
+
+        // combobox for number of recently added resources to display on the dashboard
         final SelectItem maximumRecentlyAddedComboBox = new SelectItem(RECENTLY_ADDED_SHOW_MAX);
         maximumRecentlyAddedComboBox.setTitle(MSG.common_title_show());
-        maximumRecentlyAddedComboBox.setHint("<nobr><b> " + MSG.view_portlet_recentlyAdded_approved_platforms()
+        maximumRecentlyAddedComboBox.setHint("<nobr><b> " + MSG.view_portlet_recentlyAdded_setting_addedPlatforms()
             + "</b></nobr>");
         //spinder 9/3/10: the following is required workaround to disable editability of combobox.
         maximumRecentlyAddedComboBox.setType("selection");
@@ -151,7 +166,7 @@ public class RecentlyAddedResourcesPortlet extends LocatableVLayout implements C
         //set width of dropdown display region
         maximumRecentlyAddedComboBox.setWidth(100);
 
-        //default selected value to 'unlimited'(live lists) and check both combobox settings here.
+        // default selected value to 'unlimited'(live lists) and check both combobox settings here.
         String selectedValue = defaultValue;
         if (storedPortlet != null) {
             //if property exists retrieve it
@@ -161,10 +176,10 @@ public class RecentlyAddedResourcesPortlet extends LocatableVLayout implements C
                 storedPortlet.getConfiguration().put(new PropertySimple(RECENTLY_ADDED_SHOW_MAX, defaultValue));
             }
         }
-        //prepopulate the combobox with the previously stored selection
+        // prepopulate the combobox with the previously stored selection
         maximumRecentlyAddedComboBox.setDefaultValue(selectedValue);
 
-        //------------- Build second combobox for timeframe for problem resources search.
+        // second combobox for timeframe for problem resources search.
         final SelectItem maximumTimeRecentlyAddedComboBox = new SelectItem(RECENTLY_ADDED_SHOW_HRS);
         maximumTimeRecentlyAddedComboBox.setTitle("Over ");
         maximumTimeRecentlyAddedComboBox.setHint("<nobr><b> " + MSG.common_label_hours() + " </b></nobr>");
@@ -175,7 +190,7 @@ public class RecentlyAddedResourcesPortlet extends LocatableVLayout implements C
         maximumTimeRecentlyAddedComboBox.setValueMap(acceptableTimeValues);
         maximumTimeRecentlyAddedComboBox.setWidth(100);
 
-        //set to default
+        // set to default
         selectedValue = defaultValue;
         if (storedPortlet != null) {
             //if property exists retrieve it
@@ -185,13 +200,13 @@ public class RecentlyAddedResourcesPortlet extends LocatableVLayout implements C
                 storedPortlet.getConfiguration().put(new PropertySimple(RECENTLY_ADDED_SHOW_HRS, defaultValue));
             }
         }
-        //prepopulate the combobox with the previously stored selection
+        // prepopulate the combobox with the previously stored selection
         maximumTimeRecentlyAddedComboBox.setDefaultValue(selectedValue);
 
-        //insert fields
+        // insert fields
         form.setFields(maximumRecentlyAddedComboBox, maximumTimeRecentlyAddedComboBox);
 
-        //submit handler
+        // submit handler
         form.addSubmitValuesHandler(new SubmitValuesHandler() {
             @Override
             public void onSubmitValues(SubmitValuesEvent event) {
@@ -203,6 +218,10 @@ public class RecentlyAddedResourcesPortlet extends LocatableVLayout implements C
                     storedPortlet.getConfiguration().put(
                         new PropertySimple(RECENTLY_ADDED_SHOW_HRS, form.getValue(RECENTLY_ADDED_SHOW_HRS)));
                 }
+
+                configure(portletWindow, storedPortlet);
+
+                redraw();
             }
         });
 
@@ -211,48 +230,43 @@ public class RecentlyAddedResourcesPortlet extends LocatableVLayout implements C
 
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
-        private Portlet reference;
 
         public final Portlet getInstance(String locatorId) {
-            if (reference == null) {
-                reference = new RecentlyAddedResourcesPortlet(locatorId);
-            }
-            return reference;
-        }
-    }
 
-    /** Custom refresh operation as we cannot directly extend Table because it
-     * contains a TreeGrid which is not a Table.
-     */
-    @Override
-    public void redraw() {
-        super.redraw();
-        //now reload the table data
-        this.treeGrid.invalidateCache();
-        this.treeGrid.markForRedraw();
+            return new RecentlyAddedResourcesPortlet(locatorId);
+        }
     }
 
     public RecentlyAddedResourceDS getDataSource() {
         return dataSource;
     }
 
-    @Override
     public void startRefreshCycle() {
-        //current setting
-        final int retrievedRefreshInterval = UserSessionManager.getUserPreferences().getPageRefreshInterval();
-        //cancel previous operation
-        if (defaultReloader != null) {
-            defaultReloader.cancel();
-        }
-        if (retrievedRefreshInterval >= MeasurementUtility.MINUTES) {
-            defaultReloader = new Timer() {
-                public void run() {
-                    redraw();
-                    //launch again until portlet reference and child references GC.
-                    defaultReloader.schedule(retrievedRefreshInterval);
-                }
-            };
-            defaultReloader.schedule(retrievedRefreshInterval);
+        refreshTimer = AutoRefreshPortletUtil.startRefreshCycle(this, this, refreshTimer);
+    }
+
+    @Override
+    protected void onDestroy() {
+        AutoRefreshPortletUtil.onDestroy(this, refreshTimer);
+
+        super.onDestroy();
+    }
+
+    public boolean isRefreshing() {
+        return false;
+    }
+
+    // Custom refresh operation as we cannot directly extend Table because it
+    // contains a TreeGrid which is not a Table.
+    @Override
+    public void refresh() {
+        if (!isRefreshing()) {
+            if (null != treeGrid) {
+                //now reload the table data
+                treeGrid.invalidateCache();
+            }
+            markForRedraw();
         }
     }
+
 }

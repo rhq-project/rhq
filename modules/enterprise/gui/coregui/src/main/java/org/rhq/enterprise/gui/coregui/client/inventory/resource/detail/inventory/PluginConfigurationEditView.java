@@ -19,7 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory;
 
 import java.util.EnumSet;
-import java.util.Set;
+import java.util.Map;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
@@ -29,6 +29,7 @@ import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourcePermission;
@@ -56,6 +57,10 @@ public class PluginConfigurationEditView extends LocatableVLayout implements Pro
     private ResourcePermission resourcePermission;
     private ConfigurationEditor editor;
     private LocatableIButton saveButton;
+
+    // flags to indicate if the config editor is refreshing its internal config/configDef objects
+    private boolean refreshingConfig = false;
+    private boolean refreshingConfigDef = false;
 
     public PluginConfigurationEditView(String locatorId, ResourceComposite resourceComposite) {
         super(locatorId);
@@ -95,17 +100,37 @@ public class PluginConfigurationEditView extends LocatableVLayout implements Pro
 
     @Override
     public void refresh() {
+        if (this.refreshingConfig || this.refreshingConfigDef) {
+            return; // we are already in the process of refreshing, don't do it again
+        }
+
+        this.refreshingConfig = true;
+        this.refreshingConfigDef = true;
         this.saveButton.disable();
 
         if (editor != null) {
             editor.destroy();
             removeMember(editor);
         }
+        // TODO (ips): Load the config and config def ourselves, so we can remove that logic from the ConfigurationEditor,
+        //       whose only purpose should be to render a config.
         editor = new ConfigurationEditor(extendLocatorId("Editor"), resource.getId(), resource.getResourceType()
             .getId(), ConfigurationEditor.ConfigType.plugin);
         editor.setOverflow(Overflow.AUTO);
         editor.addPropertyValueChangeListener(this);
         editor.setReadOnly(!this.resourcePermission.isInventory());
+        editor.setLoadHandler(new ConfigurationEditor.LoadHandler() {
+            @Override
+            public void loadedConfigurationDefinition(ConfigurationDefinition configDef) {
+                refreshingConfig = false; // finished loading the config
+            }
+
+            @Override
+            public void loadedConfiguration(Configuration config) {
+                refreshingConfigDef = false; // finished loading the config def
+            }
+        });
+
         addMember(editor);
         // TODO (ips): If editor != null, use editor.reload() instead.
     }
@@ -133,8 +158,8 @@ public class PluginConfigurationEditView extends LocatableVLayout implements Pro
     public void propertyValueChanged(PropertyValueChangeEvent event) {
         MessageCenter messageCenter = CoreGUI.getMessageCenter();
         Message message;
-        if (event.isValidationStateChanged()) {
-            Set<String> invalidPropertyNames = event.getInvalidPropertyNames();
+        if (event.isInvalidPropertySetChanged()) {
+            Map<String, String> invalidPropertyNames = event.getInvalidPropertyNames();
             if (invalidPropertyNames.isEmpty()) {
                 this.saveButton.enable();
                 message = new Message(MSG.view_connectionSettingsDetails_allPropertiesValid(), Message.Severity.Info,
@@ -142,7 +167,7 @@ public class PluginConfigurationEditView extends LocatableVLayout implements Pro
             } else {
                 this.saveButton.disable();
                 message = new Message(MSG.view_connectionSettingsDetails_somePropertiesInvalid(invalidPropertyNames
-                    .toString()), Message.Severity.Error, EnumSet.of(Message.Option.Transient, Message.Option.Sticky));
+                    .values().toString()), Message.Severity.Error, EnumSet.of(Message.Option.Transient, Message.Option.Sticky));
             }
             messageCenter.notify(message);
         } else {

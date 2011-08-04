@@ -64,7 +64,7 @@ public class ResourceTopView extends LocatableHLayout implements BookmarkableVie
         if ("AutoGroup".equals(viewPath.getCurrent().getPath())) {
             if (null == autoGroupDetailView) {
                 this.autoGroupDetailView = new ResourceGroupDetailView(this.extendLocatorId("AutoGroupDetail"),
-                    ResourceGroupDetailView.AUTO_GROUP_VIEW_PATH);
+                    ResourceGroupDetailView.AUTO_GROUP_VIEW);
                 this.setContent(this.autoGroupDetailView);
                 this.detailView = null;
             }

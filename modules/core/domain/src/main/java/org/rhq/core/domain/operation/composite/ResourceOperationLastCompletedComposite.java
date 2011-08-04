@@ -26,37 +26,48 @@ import org.rhq.core.domain.operation.OperationRequestStatus;
 
 public class ResourceOperationLastCompletedComposite extends OperationLastCompletedComposite {
 
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L;
 
     private int resourceId;
+    private int resourceTypeId;
     private String resourceName;
-    private String resourceTypeName;
+    private String ancestry;
 
     //no args constructor. Not to be used. java bean/serialization requirement
+    @SuppressWarnings("unused")
     private ResourceOperationLastCompletedComposite() {
         super();
-        this.resourceTypeName = "(unitialized type)";
-        this.resourceName = "(unitialized)";
+
         this.resourceId = 0;
+        this.resourceTypeId = 0;
+        this.resourceName = "(unitialized)";
+        this.ancestry = "(unitialized)";
     }
 
     public ResourceOperationLastCompletedComposite(int operationId, String operationName, long operationStartTime,
-        OperationRequestStatus operationStatus, int resourceId, String resourceName, String resourceTypeName) {
+        OperationRequestStatus operationStatus, int resourceId, int resourceTypeId, String resourceName, String ancestry) {
+
         super(operationId, operationName, operationStartTime, operationStatus);
+
         this.resourceId = resourceId;
+        this.resourceTypeId = resourceTypeId;
         this.resourceName = resourceName;
-        this.resourceTypeName = resourceTypeName;
+        this.ancestry = ancestry;
     }
 
     public int getResourceId() {
         return resourceId;
     }
 
+    public int getResourceTypeId() {
+        return resourceTypeId;
+    }
+
     public String getResourceName() {
         return resourceName;
     }
 
-    public String getResourceTypeName() {
-        return resourceTypeName;
+    public String getAncestry() {
+        return ancestry;
     }
 }

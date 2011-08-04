@@ -24,8 +24,6 @@ import javax.ejb.Stateless;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.InventorySummary;
-import org.rhq.core.domain.resource.ResourceCategory;
-import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.resource.group.definition.GroupDefinitionManagerLocal;
@@ -52,14 +50,15 @@ public class ResourceBossBean implements ResourceBossLocal {
 
     public InventorySummary getInventorySummary(Subject user) {
         InventorySummary summary = new InventorySummary();
-        summary.setPlatformCount(resourceManager.getResourceCountByCategory(user, ResourceCategory.PLATFORM,
-            InventoryStatus.COMMITTED));
-        summary.setServerCount(resourceManager.getResourceCountByCategory(user, ResourceCategory.SERVER,
-            InventoryStatus.COMMITTED));
-        summary.setServiceCount(resourceManager.getResourceCountByCategory(user, ResourceCategory.SERVICE,
-            InventoryStatus.COMMITTED));
-        summary.setCompatibleGroupCount(groupManager.getResourceGroupCountByCategory(user, GroupCategory.COMPATIBLE));
-        summary.setMixedGroupCount(groupManager.getResourceGroupCountByCategory(user, GroupCategory.MIXED));
+
+        int[] categoryCounts = resourceManager.getResourceCountSummary(user, InventoryStatus.COMMITTED);
+        summary.setPlatformCount(categoryCounts[0]);
+        summary.setServerCount(categoryCounts[1]);
+        summary.setServiceCount(categoryCounts[2]);
+
+        categoryCounts = groupManager.getResourceGroupCountSummary(user);
+        summary.setMixedGroupCount(categoryCounts[0]);
+        summary.setCompatibleGroupCount(categoryCounts[1]);
 
         summary.setGroupDefinitionCount(groupDefinitionManager.getGroupDefinitionCount(user));
 

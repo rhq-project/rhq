@@ -29,10 +29,12 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.core.DataClass;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.Alignment;
-import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
+import com.smartgwt.client.widgets.grid.CellFormatter;
+import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -40,14 +42,20 @@ import com.smartgwt.client.widgets.tab.Tab;
 import com.smartgwt.client.widgets.tab.TabSet;
 
 import org.rhq.core.domain.alert.Alert;
+import org.rhq.core.domain.alert.notification.ResultState;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
+import org.rhq.enterprise.gui.coregui.client.components.tab.NamedTab;
+import org.rhq.enterprise.gui.coregui.client.components.tab.NamedTabSet;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
+import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -87,9 +95,7 @@ public class AlertDetailsView extends LocatableVLayout implements BookmarkableVi
     }
 
     private void show(Alert alert) {
-        for (Canvas child : getMembers()) {
-            removeChild(child);
-        }
+        destroyMembers();
 
         Log.info("AlertDetailsView-Alert: " + alert);
         ListGridRecord record = AlertDataSource.convert(alert);
@@ -98,15 +104,18 @@ public class AlertDetailsView extends LocatableVLayout implements BookmarkableVi
     }
 
     private TabSet getDetailsTabSet(Record record) {
-        TabSet tabset = new TabSet();
+        TabSet tabset = new NamedTabSet(extendLocatorId("detailsTabSet"));
 
-        Tab generalTab = new Tab(MSG.view_alert_common_tab_general());
+        Tab generalTab = new NamedTab(extendLocatorId("general"), new ViewName("general", MSG
+            .view_alert_common_tab_general()));
         generalTab.setPane(getDetailsTableForAlert(record));
 
-        Tab conditionsTab = new Tab(MSG.view_alert_common_tab_conditions());
+        Tab conditionsTab = new NamedTab(extendLocatorId("conditions"), new ViewName("conditions", MSG
+            .view_alert_common_tab_conditions()));
         conditionsTab.setPane(getConditionsForAlert(record));
 
-        Tab notificationsTab = new Tab(MSG.view_alert_common_tab_notifications());
+        Tab notificationsTab = new NamedTab(extendLocatorId("notifications"), new ViewName("notifications", MSG
+            .view_alert_common_tab_notifications()));
         notificationsTab.setPane(getNotificationsForAlert(record));
 
         tabset.addTab(generalTab);
@@ -117,7 +126,7 @@ public class AlertDetailsView extends LocatableVLayout implements BookmarkableVi
     }
 
     private DynamicForm getDetailsTableForAlert(Record record) {
-        DynamicForm form = new DynamicForm();
+        DynamicForm form = new LocatableDynamicForm(extendLocatorId("detailsForm"));
         form.setNumCols(4);
         form.setHeight("15%");
         form.setWrapItemTitles(false);
@@ -149,7 +158,7 @@ public class AlertDetailsView extends LocatableVLayout implements BookmarkableVi
         prioTextItem.setValueMap(priorityMap);
         items.add(prioTextItem);
 
-        StaticTextItem createdTextItem = new StaticTextItem("ctime", MSG.view_alerts_field_created_time());
+        StaticTextItem createdTextItem = new StaticTextItem("ctime", MSG.common_title_createTime());
         createdTextItem.setValue(TimestampCellFormatter.format(record.getAttributeAsDate("ctime")));
         items.add(createdTextItem);
 
@@ -157,7 +166,7 @@ public class AlertDetailsView extends LocatableVLayout implements BookmarkableVi
         if (record.getAttribute("acknowledgingSubject") != null) {
             ackByItem.setValue(record.getAttribute("acknowledgingSubject"));
         } else {
-            ackByItem.setValue(MSG.view_alerts_field_ack_status_empty());
+            ackByItem.setValue(MSG.view_alerts_field_ack_status_noAck());
         }
         items.add(ackByItem);
 
@@ -166,7 +175,7 @@ public class AlertDetailsView extends LocatableVLayout implements BookmarkableVi
         if (ack_time != null) {
             ackTimeItem.setValue(TimestampCellFormatter.format(ack_time));
         } else {
-            ackTimeItem.setValue(MSG.view_alerts_field_ack_status_empty());
+            ackTimeItem.setValue(MSG.view_alerts_field_ack_status_noAck());
         }
         items.add(ackTimeItem);
 
@@ -179,6 +188,7 @@ public class AlertDetailsView extends LocatableVLayout implements BookmarkableVi
         return form;
     }
 
+    @SuppressWarnings("unchecked")
     private class NotificationLogsTable extends Table {
         private final Record record;
 
@@ -194,23 +204,57 @@ public class AlertDetailsView extends LocatableVLayout implements BookmarkableVi
             DataClass[] input = record.getAttributeAsRecordArray("notificationLogs");
             ListGrid grid = getListGrid();
             grid.setData((Record[]) input);
+
             ListGridField sender = new ListGridField("sender", MSG.view_alert_common_tab_notifications_sender());
             sender.setWidth("33%");
+
             ListGridField status = new ListGridField("status", MSG.view_alert_common_tab_notifications_status());
-            status.setWidth("33%");
+            status.setWidth("50");
+            status.setAlign(Alignment.CENTER);
+            status.setType(ListGridFieldType.IMAGE);
+            status.setCellFormatter(new CellFormatter() {
+                public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
+                    String statusStr = record.getAttribute("status");
+                    ResultState statusEnum = (statusStr == null) ? ResultState.UNKNOWN : ResultState.valueOf(statusStr);
+                    return imgHTML(ImageManager.getAlertNotificationResultIcon(statusEnum));
+                }
+            });
+            status.setShowHover(true);
+            status.setHoverCustomizer(new HoverCustomizer() {
+                public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
+                    String statusStr = record.getAttribute("status");
+                    ResultState statusEnum = (statusStr == null) ? ResultState.UNKNOWN : ResultState.valueOf(statusStr);
+                    switch (statusEnum) {
+                    case SUCCESS:
+                        return MSG.common_status_success();
+                    case FAILURE:
+                        return MSG.common_status_failed();
+                    case PARTIAL:
+                        return MSG.common_status_partial();
+                    case DEFERRED:
+                        return MSG.common_status_deferred();
+                    case UNKNOWN:
+                    default:
+                        return MSG.common_status_unknown();
+                    }
+                }
+            });
+
             ListGridField message = new ListGridField("message", MSG.view_alert_common_tab_notifications_message());
-            message.setWidth("34%");
+            message.setWidth("*");
 
             grid.setFields(sender, status, message);
         }
     }
 
+    @SuppressWarnings("unchecked")
     private Table getNotificationsForAlert(Record record) {
         Table notifTable = new NotificationLogsTable("AlertDetailsNotifications", MSG
             .view_alert_common_tab_notifications(), record);
         return notifTable;
     }
 
+    @SuppressWarnings("unchecked")
     private class ConditionLogsTable extends Table {
         private final Record record;
 
@@ -234,6 +278,7 @@ public class AlertDetailsView extends LocatableVLayout implements BookmarkableVi
         }
     }
 
+    @SuppressWarnings("unchecked")
     private Table getConditionsForAlert(Record record) {
         String mode = record.getAttribute("conditionExpression");
         Table table = new ConditionLogsTable("AlertDetailsConditionLog", MSG.view_alert_common_tab_conditions()
@@ -247,4 +292,5 @@ public class AlertDetailsView extends LocatableVLayout implements BookmarkableVi
 
         show(alertId);
     }
+
 }

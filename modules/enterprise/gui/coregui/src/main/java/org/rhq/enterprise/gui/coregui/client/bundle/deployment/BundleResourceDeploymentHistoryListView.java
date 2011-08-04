@@ -50,6 +50,7 @@ import org.rhq.core.domain.bundle.BundleDeploymentStatus;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory;
 import org.rhq.enterprise.gui.coregui.client.ErrorMessageWindow;
+import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
@@ -74,6 +75,10 @@ public class BundleResourceDeploymentHistoryListView extends LocatableVLayout {
         statusIcons.put(BundleDeploymentStatus.FAILURE.name(), "subsystems/bundle/Error_11.png");
         statusIcons.put(BundleDeploymentStatus.MIXED.name(), "subsystems/bundle/Warning_11.png");
         statusIcons.put(BundleDeploymentStatus.SUCCESS.name(), "subsystems/bundle/Ok_11.png");
+        // bundle deployment history statuses are success/failure/warn/info - two of which have the same names/icons
+        // as bundle-deployment-status. however, there is no "warn" or "info" in bundle-deployment-status, so add them here
+        statusIcons.put(BundleResourceDeploymentHistory.Status.WARN.name(), "subsystems/bundle/Warning_11.png");
+        statusIcons.put(BundleResourceDeploymentHistory.Status.INFO.name(), "subsystems/bundle/Info_11.png");
     }
 
     @Override
@@ -99,12 +104,14 @@ public class BundleResourceDeploymentHistoryListView extends LocatableVLayout {
         user.setHidden(true);
 
         ListGridField timestamp = new ListGridField("timestamp", MSG.common_title_timestamp());
+        TimestampCellFormatter.prepareDateField(timestamp);
         timestamp.setWidth("40%");
 
         ListGridField status = new ListGridField("status", MSG.common_title_status());
         status.setValueIcons(statusIcons);
         status.setValueIconHeight(11);
         status.setValueIconWidth(11);
+        status.setShowValueIconOnly(true);
         status.setAutoFitWidth(true);
         status.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
 

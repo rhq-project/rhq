@@ -1,7 +1,9 @@
 package org.rhq.enterprise.gui.coregui.client;
 
 import org.rhq.core.domain.alert.AlertPriority;
+import org.rhq.core.domain.alert.notification.ResultState;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
+import org.rhq.core.domain.drift.DriftCategory;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.ResourceAvailability;
@@ -24,6 +26,13 @@ public class ImageManager {
 
     public static final String IMAGES_DIR = "images/";
 
+    /**
+     * Returns a generic "help" icon. This will also have a peer "disabled" help icon.
+     */
+    public static String getHelpIcon() {
+        return "global/help.png";
+    }
+
     public static String getLoadingIcon() {
         return "ajax-loader.gif";
     }
@@ -36,10 +45,24 @@ public class ImageManager {
     }
 
     /**
+     * Returns a generic view icon.
+     */
+    public static String getViewIcon() {
+        return "[SKIN]/actions/view.png";
+    }
+
+    /**
      * Returns a generic edit icon.
      */
     public static String getEditIcon() {
         return "[SKIN]/actions/edit.png";
+    }
+
+    /**
+     * Returns a generic remove icon.
+     */
+    public static String getRemoveIcon() {
+        return "[SKIN]/actions/remove.png";
     }
 
     /**
@@ -54,6 +77,32 @@ public class ImageManager {
      */
     public static String getCancelIcon() {
         return "[SKIN]/actions/undo.png";
+    }
+
+    /**
+     * Returns a drift icon given the category of the drift.
+     * Note that if the category is null, it will be assumed the drift icon
+     * should be one that indicates the file is "new" (presumably from
+     * a coverage change set report - that is, its the first time the file
+     * has been seen).
+     * 
+     * @param category
+     * @return path to icon
+     */
+    public static String getDriftCategoryIcon(DriftCategory category) {
+        if (category == null) {
+            return "subsystems/drift/Drift_new_16.png";
+        }
+
+        switch (category) {
+        case FILE_ADDED:
+            return "subsystems/drift/Drift_add_16.png";
+        case FILE_CHANGED:
+            return "subsystems/drift/Drift_change_16.png";
+        case FILE_REMOVED:
+            return "subsystems/drift/Drift_remove_16.png";
+        }
+        return null; // should never happen
     }
 
     /**
@@ -87,7 +136,7 @@ public class ImageManager {
      * {@link #IMAGES_DIR images directory}. If you need a full path to the image, including
      * this top images directory name (for example, if you need to populate an explicit HTML
      * img tag's src attribute) pass in an image path to this {@link #getFullImagePath(String)}
-     * method to obtain the full path.  The caller can optionall prepend {@link #IMAGES_DIR}
+     * method to obtain the full path.  The caller can optionally prepend {@link #IMAGES_DIR}
      * to any path returned by ImageManager, which is all this method really does.
      * 
      * @param image a relative image path
@@ -307,7 +356,7 @@ public class ImageManager {
     }
 
     public static String getAlertIcon() {
-        return "subsystems/alert/Alert_16.png";
+        return "subsystems/alert/Flag_blue_16.png";
     }
 
     public static String getAlertLargeIcon() {
@@ -380,7 +429,7 @@ public class ImageManager {
                 icon = "_warning";
                 break;
             case ERROR:
-                icon = "_info";
+                icon = "_error";
                 break;
             case FATAL:
                 icon = "_fatal";
@@ -389,5 +438,93 @@ public class ImageManager {
         }
 
         return "subsystems/event/Events" + icon + "_16.png";
+    }
+
+    public static String getAlertNotificationResultIcon(ResultState status) {
+        if (status == null) {
+            status = ResultState.UNKNOWN;
+        }
+        switch (status) {
+        case SUCCESS:
+            return ImageManager.getAvailabilityIcon(Boolean.TRUE);
+        case FAILURE:
+            return ImageManager.getAvailabilityIcon(Boolean.FALSE);
+        case PARTIAL:
+            return ImageManager.getAvailabilityYellowIcon();
+        case DEFERRED:
+            return "[skin]/actions/redo.png"; // for lack of a better icon
+        case UNKNOWN:
+        default:
+            return ImageManager.getAvailabilityIcon(null);
+        }
+    }
+
+    /**
+     * This returns an icon of the badge (e.g. the red X or the blue I) without the
+     * event icon. This is used if you have a table of events and the user knows they are
+     * events so there is no need to show the event icon itself- showing a bigger badge
+     * to indicate severity is more useful.
+     * 
+     * @param severity
+     * @return badge icon
+     */
+    public static String getEventSeverityBadge(EventSeverity severity) {
+        return "subsystems/event/" + severity.name() + "_16.png";
+    }
+
+    public static String getEventLargeIcon() {
+        return "subsystems/event/Events_24.png";
+    }
+
+    public static String getEventIcon() {
+        return "subsystems/event/Events_16.png";
+    }
+
+    public static String getMonitorIcon() {
+        return "subsystems/monitor/Monitor_16.png";
+    }
+
+    public static String getMonitorLargeIcon() {
+        return "subsystems/monitor/Monitor_24.png";
+    }
+
+    public static String getMonitorFailedIcon() {
+        return "subsystems/monitor/Monitor_failed_16.png";
+    }
+
+    public static String getMonitorFailedLargeIcon() {
+        return "subsystems/monitor/Monitor_failed_24.png";
+    }
+
+    public static String getOperationLargeIcon() {
+        return "subsystems/control/Operation_24.png";
+    }
+
+    public static String getOperationIcon() {
+        return "subsystems/control/Operation_16.png";
+    }
+
+    public static String getActivityPackageLargeIcon() {
+        return "subsystems/content/Package_24.png";
+    }
+
+    public static String getActivityPackageIcon() {
+        return "subsystems/content/Package_16.png";
+    }
+
+    public static String getBundleLargeIcon() {
+        return "subsystems/content/Content_24.png";
+    }
+
+    public static String getBundleIcon() {
+        return "subsystems/content/Content_16.png";
+    }
+
+    public static String getConfigureLargeIcon() {
+        return "subsystems/configure/Configure_24.png";
+    }
+
+    public static String getConfigureIcon() {
+        return "subsystems/configure/Configure_16.png";
     }
 }

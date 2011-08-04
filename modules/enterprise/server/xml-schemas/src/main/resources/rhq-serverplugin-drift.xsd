@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
+           xmlns:drift="urn:xmlns:rhq-serverplugin.drift"
+           targetNamespace="urn:xmlns:rhq-serverplugin.drift"
+           elementFormDefault="qualified"
+           jaxb:version="2.0"
+           xmlns:jaxb="http://java.sun.com/xml/ns/jaxb"
+           blockDefault="">
+
+    <xs:import namespace="urn:xmlns:rhq-serverplugin" schemaLocation="rhq-serverplugin.xsd" />
+
+    <xs:annotation>
+        <xs:documentation>
+            Schema for drift management server-side plugins.
+        </xs:documentation>
+        <xs:appinfo>
+            <jaxb:schemaBindings>
+                <jaxb:package name="org.rhq.enterprise.server.xmlschema.generated.serverplugin.drift" />
+            </jaxb:schemaBindings>
+        </xs:appinfo>
+    </xs:annotation>
+
+    <xs:element 
+        name="drift-plugin"
+        type="drift:DriftPluginDescriptorType" 
+        substitutionGroup="serverplugin:server-plugin">
+        <xs:annotation>
+            <xs:documentation>
+                Defines a drift management plugin. This type of plugin performs tasks that the core
+                server needs in order to properly store and retrieve content (files) being managed for
+                drift detection and remediation.
+            </xs:documentation>
+            <xs:appinfo>
+                <jaxb:class name="DriftPluginElement" />
+            </xs:appinfo>
+        </xs:annotation>
+    </xs:element>
+
+    <xs:complexType 
+        name="DriftPluginDescriptorType">
+        <xs:complexContent>
+            <xs:extension 
+               base="serverplugin:ServerPluginDescriptorType">
+               <xs:sequence>
+                   <xs:element name="drift" type="drift:DriftType" minOccurs="1" maxOccurs="1">
+                       <xs:annotation>
+                           <xs:documentation>
+                              Identifies whether the plugin supports diff capability (TODO)
+                           </xs:documentation>
+                       </xs:annotation>
+                   </xs:element>
+               </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:complexType name="DriftType">
+        <xs:attribute name="diff-support" type="xs:boolean" use="required"/>
+    </xs:complexType>
+
+</xs:schema>

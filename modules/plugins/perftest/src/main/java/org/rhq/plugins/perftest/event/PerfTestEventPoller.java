@@ -10,16 +10,17 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 
 /**
  * Emits events when polled. Set the following system properties to define behavior:
- * on.perftest.events.count (default is "1")
- * on.perftest.events.severity (default is "INFO")
- * on.perftest.events.polling-interval (in seconds; if this is not set, this poller object will never be created)
+ *
+ * rhq.perftest.events.count (default is "1")
+ * rhq.perftest.events.severity (default is "INFO")
+ * rhq.perftest.events.polling-interval (in seconds; if this is not set, this poller object will never be created)
  */
 public class PerfTestEventPoller implements EventPoller {
 
     public static final String PERFTEST_EVENT_TYPE = "PerfTestEventType";
-    public static final String SYSPROP_EVENTS_POLLING_INTERVAL = "on.perftest.events.polling-interval";
-    public static final String SYSPROP_EVENTS_COUNT = "on.perftest.events.count";
-    public static final String SYSPROP_EVENTS_SEVERITY = "on.perftest.events.severity";
+    public static final String SYSPROP_EVENTS_POLLING_INTERVAL = "rhq.perftest.events.polling-interval";
+    public static final String SYSPROP_EVENTS_COUNT = "rhq.perftest.events.count";
+    public static final String SYSPROP_EVENTS_SEVERITY = "rhq.perftest.events.severity";
 
     private final ResourceContext resourceContext;
 

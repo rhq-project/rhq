@@ -20,7 +20,9 @@ package org.rhq.enterprise.server.resource;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -66,6 +68,9 @@ import org.rhq.core.domain.content.InstalledPackageHistory;
 import org.rhq.core.domain.content.PackageInstallationStep;
 import org.rhq.core.domain.content.ResourceRepo;
 import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.criteria.ResourceTypeCriteria;
+import org.rhq.core.domain.drift.RhqDrift;
+import org.rhq.core.domain.drift.RhqDriftChangeSet;
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventSource;
 import org.rhq.core.domain.measurement.Availability;
@@ -84,6 +89,7 @@ import org.rhq.core.domain.resource.CreateResourceHistory;
 import org.rhq.core.domain.resource.DeleteResourceHistory;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceAncestryFormat;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.ResourceErrorType;
@@ -225,7 +231,11 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
          * { throw new ResourceAlreadyExistsException("Resource with key '" + resource.getName() + "' already
          * exists");}*/
 
-        persistedResource.setName(resource.getName());
+        // On name change make sure we update the ancestry as the name is part of the ancestry string
+        if (!persistedResource.getName().equals(resource.getName())) {
+            persistedResource.setName(resource.getName());
+            updateAncestry(persistedResource);
+        }
         persistedResource.setLocation(resource.getLocation());
         persistedResource.setDescription(resource.getDescription());
 
@@ -259,6 +269,9 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         }
 
         // make sure the user is authorized to delete this resource (which implies you can delete all its children)
+        // TODO: There is a pretty good argument for this being replaced with MANAGE_INVENTORY.  It takes an
+        // inventory manager to import resources, so why not to remove them?  But, since no one has complained
+        // we're timid about making a change that may hamstring existing setups. 
         if (!authorizationManager.hasResourcePermission(user, Permission.DELETE_RESOURCE, resourceId)) {
             throw new PermissionException("You do not have permission to uninventory resource [" + resourceId + "]");
         }
@@ -269,7 +282,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         if (resource.getParentResource() == null) {
             try {
                 // note, this needs to be done before the marking because the agent reference is going to be set to null
-                doomedAgent = agentManager.getAgentByResourceId(user, resourceId);
+                doomedAgent = agentManager.getAgentByResourceId(subjectManager.getOverlord(), resourceId);
             } catch (Exception e) {
                 doomedAgent = null;
                 log.warn("This warning should occur in TEST code only! " + e);
@@ -279,7 +292,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         AgentClient agentClient = null;
         try {
             // The test code does not always generate agents for the resources. Catch and log any problem but continue
-            agentClient = agentManager.getAgentClient(user, resourceId);
+            agentClient = agentManager.getAgentClient(subjectManager.getOverlord(), resourceId);
         } catch (Throwable t) {
             log.warn("No AgentClient found for resource [" + resource
                 + "]. Unable to inform agent of inventory removal (this may be ok): " + t);
@@ -402,8 +415,14 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             log.debug("Overlord is asynchronously deleting resource [" + attachedResource + "]");
         }
 
+        // our unidirectional one-to-many mapping of drift config makes it not possible to easily bulk delete drift config
+        // so remove them here and let cascading of delete_orphan do the work
+        if (attachedResource.getDriftConfigurations() != null) {
+            attachedResource.getDriftConfigurations().clear();
+        }
+
         // one more thing, delete any autogroup backing groups
-        if (attachedResource!=null) {
+        if (attachedResource != null) {
             List<ResourceGroup> backingGroups = attachedResource.getAutoGroupBackingGroups();
             if (null != backingGroups && !backingGroups.isEmpty()) {
                 int size = backingGroups.size();
@@ -417,8 +436,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                     if (log.isDebugEnabled()) {
                         log.error("Bulk delete error for autogroup backing group deletion for " + backingGroupIds, t);
                     } else {
-                        log.error("Bulk delete error for autogroup backing group deletion for " + backingGroupIds + ": "
-                            + t.getMessage());
+                        log.error("Bulk delete error for autogroup backing group deletion for " + backingGroupIds
+                            + ": " + t.getMessage());
                     }
                 }
             }
@@ -483,8 +502,9 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             AlertCondition.QUERY_DELETE_BY_RESOURCES, //       of
             AlertDampeningEvent.QUERY_DELETE_BY_RESOURCES, //  alert-
             AlertNotification.QUERY_DELETE_BY_RESOURCES, //    related
-            AlertDefinition.QUERY_DELETE_BY_RESOURCES //       deletes
-        };
+            AlertDefinition.QUERY_DELETE_BY_RESOURCES, //      deletes
+            RhqDrift.QUERY_DELETE_BY_RESOURCES, //       drift before changeset
+            RhqDriftChangeSet.QUERY_DELETE_BY_RESOURCES };
 
         List<Integer> resourceIds = new ArrayList<Integer>();
         resourceIds.add(resourceId);
@@ -504,8 +524,9 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                 continue;
             }
 
-            if (debugEnabled)
+            if (debugEnabled) {
                 log.debug("uninv, running query: " + namedQueryToExecute);
+            }
             hasErrors |= resourceManager.bulkNamedQueryDeleteInNewTransaction(overlord, namedQueryToExecute,
                 resourceIds);
         }
@@ -823,6 +844,156 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return resourceLineage;
     }
 
+    public Map<Integer, String> getResourcesAncestry(Subject subject, Integer[] resourceIds,
+        ResourceAncestryFormat format) {
+        Map<Integer, String> result = new HashMap<Integer, String>(resourceIds.length);
+
+        if (resourceIds.length == 0) {
+            return result;
+        }
+
+        ResourceCriteria resourceCriteria = new ResourceCriteria();
+        resourceCriteria.addFilterIds(resourceIds);
+        resourceCriteria.fetchResourceType(true);
+        List<Resource> resources = findResourcesByCriteria(subject, resourceCriteria);
+
+        if (ResourceAncestryFormat.RAW == format) {
+            for (Resource resource : resources) {
+                result.put(resource.getId(), resource.getAncestry());
+            }
+            return result;
+        }
+
+        HashSet<Integer> typesSet = new HashSet<Integer>();
+        HashSet<String> ancestries = new HashSet<String>();
+        for (Resource resource : resources) {
+            ResourceType type = resource.getResourceType();
+            if (type != null) {
+                typesSet.add(type.getId());
+            }
+            ancestries.add(resource.getAncestry());
+        }
+
+        // In addition to the types of the result resources, get the types of their ancestry
+        typesSet.addAll(getAncestryTypeIds(ancestries));
+
+        ResourceTypeCriteria resourceTypeCriteria = new ResourceTypeCriteria();
+        resourceTypeCriteria.addFilterIds(typesSet.toArray(new Integer[typesSet.size()]));
+        List<ResourceType> types = typeManager.findResourceTypesByCriteria(subject, resourceTypeCriteria);
+
+        for (Resource resource : resources) {
+            String decodedAncestry = getDecodedAncestry(resource, types, format);
+            result.put(resource.getId(), decodedAncestry);
+        }
+        return result;
+    }
+
+    /**
+     * Get the complete set of resource type Ids in the ancestries provided. This is useful for
+     * being able to load all the types in advance of generating decoded values.
+     *  
+     * @return
+     */
+    private HashSet<Integer> getAncestryTypeIds(Collection<String> ancestries) {
+        HashSet<Integer> result = new HashSet<Integer>();
+
+        for (String ancestry : ancestries) {
+            if (null == ancestry) {
+                continue;
+            }
+            String[] ancestryEntries = ancestry.split(Resource.ANCESTRY_DELIM);
+            for (int i = 0; i < ancestryEntries.length; ++i) {
+                String[] entryTokens = ancestryEntries[i].split(Resource.ANCESTRY_ENTRY_DELIM);
+                int rtId = Integer.valueOf(entryTokens[0]);
+                result.add(rtId);
+            }
+        }
+
+        return result;
+    }
+
+    private String getDecodedAncestry(Resource resource, List<ResourceType> typeList, ResourceAncestryFormat format) {
+
+        String ancestry = resource.getAncestry();
+        StringBuilder sb = new StringBuilder("");
+
+        if (ResourceAncestryFormat.VERBOSE != format) {
+
+            if (ResourceAncestryFormat.EXTENDED == format) {
+                sb.append(resource.getName());
+            }
+
+            if (null != ancestry) {
+                if (ResourceAncestryFormat.EXTENDED == format) {
+                    sb.append(" < ");
+                }
+
+                String[] ancestryEntries = ancestry.split(Resource.ANCESTRY_DELIM);
+                for (int i = 0; i < ancestryEntries.length; ++i) {
+                    String[] entryTokens = ancestryEntries[i].split(Resource.ANCESTRY_ENTRY_DELIM);
+                    String ancestorName = entryTokens[2];
+
+                    sb.append((i > 0) ? " < " : "");
+                    sb.append(ancestorName);
+                }
+            }
+        } else {
+
+            Map<Integer, ResourceType> types = new HashMap<Integer, ResourceType>(typeList.size());
+            for (ResourceType type : typeList) {
+                types.put(type.getId(), type);
+            }
+
+            ResourceType type = types.get(resource.getResourceType().getId());
+            String resourceLongName = getResourceLongName(resource.getName(), type);
+
+            // decode ancestry
+            if (null != ancestry) {
+                String[] ancestryEntries = ancestry.split(Resource.ANCESTRY_DELIM);
+                for (int i = ancestryEntries.length - 1, j = 0; i >= 0; --i, ++j) {
+                    String[] entryTokens = ancestryEntries[i].split(Resource.ANCESTRY_ENTRY_DELIM);
+                    int ancestorTypeId = Integer.valueOf(entryTokens[0]);
+                    String ancestorName = entryTokens[2];
+
+                    // indent with spaces
+                    if (j > 0) {
+                        sb.append("\n");
+                        for (int k = 0; k < j; ++k) {
+                            sb.append("  ");
+                        }
+                    }
+                    type = types.get(ancestorTypeId);
+                    sb.append(getResourceLongName(ancestorName, type));
+                }
+
+                // add target resource, indent with spaces
+                sb.append("\n");
+                for (int k = 0; k <= ancestryEntries.length; ++k) {
+                    sb.append("  ");
+                }
+                sb.append(resourceLongName);
+
+            } else {
+                // just show the resource name/type info
+                sb.append(resourceLongName);
+            }
+        }
+
+        return sb.toString();
+    }
+
+    private String getResourceLongName(String resourceName, ResourceType type) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(resourceName);
+        sb.append(" [");
+        sb.append(type.getPlugin());
+        sb.append(", ");
+        sb.append(type.getName());
+        sb.append("]");
+
+        return sb.toString();
+    }
+
     @NotNull
     public Resource getRootResourceForResource(int resourceId) {
         Query q = entityManager.createNamedQuery(Resource.QUERY_FIND_ROOT_PLATFORM_OF_RESOURCE);
@@ -1091,6 +1262,38 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return new PageList<Resource>(results, (int) count, pageControl);
     }
 
+    @SuppressWarnings("unchecked")
+    public int[] getResourceCountSummary(Subject user, InventoryStatus status) {
+        Query query;
+        if (authorizationManager.isInventoryManager(user)) {
+            query = entityManager.createNamedQuery(Resource.QUERY_FIND_RESOURCE_SUMMARY_BY_INVENTORY_STATUS_ADMIN);
+        } else {
+            query = entityManager.createNamedQuery(Resource.QUERY_FIND_RESOURCE_SUMMARY_BY_INVENTORY_STATUS);
+            query.setParameter("subject", user);
+        }
+
+        query.setParameter("inventoryStatus", status);
+
+        int[] counts = new int[3];
+        List<Object[]> resultList = query.getResultList();
+
+        for (Object[] row : resultList) {
+            switch ((ResourceCategory) row[0]) {
+            case PLATFORM:
+                counts[0] = ((Long) row[1]).intValue();
+                break;
+            case SERVER:
+                counts[1] = ((Long) row[1]).intValue();
+                break;
+            case SERVICE:
+                counts[2] = ((Long) row[1]).intValue();
+                break;
+            }
+        }
+
+        return counts;
+    }
+
     public int getResourceCountByCategory(Subject user, ResourceCategory category, InventoryStatus status) {
         Query queryCount;
         if (authorizationManager.isInventoryManager(user)) {
@@ -1211,6 +1414,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return result;
     }
 
+    @SuppressWarnings("unchecked")
     public List<AutoGroupComposite> findResourcesAutoGroups(Subject subject, int[] resourceIds) {
         List<AutoGroupComposite> results = new ArrayList<AutoGroupComposite>();
         List<Integer> ids = ArrayUtils.wrapInList(resourceIds);
@@ -1818,26 +2022,16 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     }
 
     public void addResourceError(ResourceError resourceError) {
-        Subject overlord = subjectManager.getOverlord();
-        Resource resource;
-        try {
-            resource = getResourceById(overlord, resourceError.getResource().getId());
-        } catch (ResourceNotFoundException rnfe) {
-            throw new ResourceNotFoundException("Resource error  an unknown Resource id: " + resourceError);
-        }
+        ResourceErrorType resourceErrorType = resourceError.getErrorType();
 
-        if (resourceError.getErrorType() == ResourceErrorType.INVALID_PLUGIN_CONFIGURATION
-            || resourceError.getErrorType() == ResourceErrorType.AVAILABILITY_CHECK
-            || resourceError.getErrorType() == ResourceErrorType.UPGRADE) {
+        if (resourceErrorType == ResourceErrorType.INVALID_PLUGIN_CONFIGURATION
+            || resourceErrorType == ResourceErrorType.AVAILABILITY_CHECK
+            || resourceErrorType == ResourceErrorType.UPGRADE) {
             // there should be at most one invalid plugin configuration error, availability check
             // or upgrade error per resource, so delete any currently existing ones before we add this new one
-            List<ResourceError> doomedErrors = resource.getResourceErrors(resourceError.getErrorType());
-
-            // there should only ever be at most 1, but loop through the list just in case something got screwed up
-            // and there ended up more than 1 associated with the resource.
-            for (ResourceError doomedError : doomedErrors) {
-                entityManager.remove(doomedError);
-            }
+            Subject overlord = subjectManager.getOverlord();
+            int resourceId = resourceError.getResource().getId();
+            resourceManager.clearResourceConfigErrorByType(overlord, resourceId, resourceErrorType);
         }
 
         entityManager.persist(resourceError);
@@ -1845,24 +2039,40 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return;
     }
 
-    public void clearResourceConfigError(int resourceId) {
-        // TODO Add subject permissions to this method
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public int clearResourceConfigErrorByType(Subject subject, int resourceId, ResourceErrorType resourceErrorType) {
 
-        Query q = entityManager
-            .createQuery("delete from ResourceError e where e.resource.id = :resourceId and e.errorType = :type");
-
-        q.setParameter("resourceId", resourceId);
-        q.setParameter("type", ResourceErrorType.INVALID_PLUGIN_CONFIGURATION);
-
-        int updates = q.executeUpdate();
-
-        if (updates > 1) {
-            log.error("Resource [" + resourceId + "] has [" + updates
-                + "] INVALID_PLUGIN_CONFIGURATION ResourceError associated with it.");
+        if (!authorizationManager.canViewResource(subject, resourceId)) {
+            throw new PermissionException("Cannot delete resource errors of type [" + resourceErrorType + "]. User ["
+                + subject.getName() + "] does not have permission to operate on resource ID [" + resourceId + "].");
         }
 
+        Query q = entityManager
+            .createQuery("DELETE FROM ResourceError e WHERE e.resource.id = :resourceId AND e.errorType = :type");
+
+        q.setParameter("resourceId", resourceId);
+        q.setParameter("type", resourceErrorType);
+
+        int updates = q.executeUpdate();
+        return updates;
     }
 
+    public void clearResourceConfigError(int resourceId) {
+        // TODO change sig to get user passed in, rather than using overlord/assuming user is authz'ed
+        Subject s = subjectManager.getOverlord();
+
+        // make a direct local call - no need to go through the ByType method's REQUIRES_NEW interface here
+        int cleared = clearResourceConfigErrorByType(s, resourceId, ResourceErrorType.INVALID_PLUGIN_CONFIGURATION);
+
+        if (cleared > 1) {
+            log.warn("Resource [" + resourceId + "] had [" + cleared
+                + "] INVALID_PLUGIN_CONFIGURATION ResourceErrors associated with it.");
+        }
+
+        return;
+    }
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void deleteResourceError(Subject user, int resourceErrorId) {
         ResourceError error = entityManager.find(ResourceError.class, resourceErrorId);
 
@@ -2009,6 +2219,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             String resourceKey = (String) prefetched[i++];
 
             Integer parentId = (Integer) prefetched[i++];
+            @SuppressWarnings("unused")
             String parentName = (String) prefetched[i++];
 
             AvailabilityType availType = (AvailabilityType) prefetched[i++];
@@ -2330,17 +2541,33 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             .getDuplicateTypeNames());
     }
 
+    public void updateAncestry(Subject subject, int resourceId) {
+        Resource resource = entityManager.find(Resource.class, resourceId);
+        if (null == resource) {
+            throw new ResourceNotFoundException(resourceId);
+        }
+
+        updateAncestry(resource);
+    }
+
+    private void updateAncestry(Resource resource) {
+        resource.updateAncestryForResource();
+
+        for (Resource child : resource.getChildResources()) {
+            child.setParentResource(resource);
+            updateAncestry(child);
+        }
+    }
+
     @SuppressWarnings("unchecked")
     public List<Integer> findIdsByTypeIds(List<Integer> resourceTypeIds) {
-        return entityManager.createNamedQuery(Resource.QUERY_FIND_IDS_BY_TYPE_IDS)
-            .setParameter("resourceTypeIds", resourceTypeIds)
-            .getResultList();
+        return entityManager.createNamedQuery(Resource.QUERY_FIND_IDS_BY_TYPE_IDS).setParameter("resourceTypeIds",
+            resourceTypeIds).getResultList();
     }
 
     @Override
     public Integer getResourceCount(List<Integer> resourceTypeIds) {
-        return (Integer) entityManager.createNamedQuery(Resource.QUERY_FIND_COUNT_BY_TYPES)
-            .setParameter("resourceTypeIds", resourceTypeIds)
-            .getSingleResult();
+        return (Integer) entityManager.createNamedQuery(Resource.QUERY_FIND_COUNT_BY_TYPES).setParameter(
+            "resourceTypeIds", resourceTypeIds).getSingleResult();
     }
 }

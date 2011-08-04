@@ -179,7 +179,20 @@ public class FileUploadServlet extends HttpServlet {
 
     protected File forceToFile(FileItem fileItem) throws IOException, ServletException {
         if (fileItem.isInMemory()) {
-            File tmpFile = File.createTempFile("" + fileItem.getName(), null);
+            String name = fileItem.getName();
+
+            if (null == name) {
+                throw new IllegalArgumentException("FileItem has null name");
+            }
+
+            // some browsers (IE, Chrome) pass an absolute filename, we just want the name of the file, no paths
+            name = name.replace('\\', '/');
+            if (name.length() > 2 && name.charAt(1) == ':') {
+                name = name.substring(2);
+            }
+            name = new File(name).getName();
+
+            File tmpFile = File.createTempFile(name, null);
             try {
                 fileItem.write(tmpFile);
                 return tmpFile;

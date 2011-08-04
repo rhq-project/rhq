@@ -55,11 +55,11 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + "SELECT h " //
         + "  FROM GroupOperationHistory h " //
         + "  WHERE h.status = :status " // 
-        + "  AND EXISTS " //
+        + "  AND NOT EXISTS " //
         + "      ( SELECT roh.id " //
         + "          FROM ResourceOperationHistory roh " //
         + "         WHERE roh.groupOperationHistory.id = h.id " //
-        + "           AND roh.status <> :status ) "),
+        + "           AND roh.status = :status ) "),
     // should always pass INPROGRESS for status
     @NamedQuery(name = GroupOperationHistory.QUERY_FIND_MEMBERLESS_IN_PROGRESS, query = "" //
         + "SELECT h " //

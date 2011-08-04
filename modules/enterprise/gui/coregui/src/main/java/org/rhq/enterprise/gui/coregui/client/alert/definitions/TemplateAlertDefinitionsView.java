@@ -24,12 +24,15 @@
 package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 
 import java.util.EnumSet;
+import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -46,10 +49,12 @@ public class TemplateAlertDefinitionsView extends AbstractAlertDefinitionsView {
     public static final String CRITERIA_RESOURCE_TYPE_ID = "resourceTypeId";
 
     private ResourceType resourceType;
+    private Set<Permission> globalPermissions;
 
-    public TemplateAlertDefinitionsView(String locatorId, ResourceType resourceType) {
-        super(locatorId, "Alert Templates");
+    public TemplateAlertDefinitionsView(String locatorId, ResourceType resourceType, Set<Permission> globalPermissions) {
+        super(locatorId, "Alert Templates", getCriteria(resourceType));
         this.resourceType = resourceType;
+        this.globalPermissions = globalPermissions;
 
         // make sure we loaded all the type info we'll need. if one of these is null, either the type
         // doesn't have it or we haven't loaded it yet. since we can't know for sure if it was loaded, we have to ask.
@@ -74,14 +79,18 @@ public class TemplateAlertDefinitionsView extends AbstractAlertDefinitionsView {
     }
 
     @Override
+    protected boolean isAuthorizedToModifyAlertDefinitions() {
+        return globalPermissions.contains(Permission.MANAGE_SETTINGS);
+    }
+
+    @Override
     protected ResourceType getResourceType() {
         return resourceType;
     }
 
-    @Override
-    protected Criteria getCriteria() {
+    private static Criteria getCriteria(ResourceType type) {
         Criteria criteria = new Criteria();
-        criteria.addCriteria(CRITERIA_RESOURCE_TYPE_ID, resourceType.getId());
+        criteria.addCriteria(CRITERIA_RESOURCE_TYPE_ID, type.getId());
         return criteria;
     }
 
@@ -91,19 +100,13 @@ public class TemplateAlertDefinitionsView extends AbstractAlertDefinitionsView {
     }
 
     @Override
-    public SingleAlertDefinitionView getDetailsView(int id) {
+    public SingleAlertDefinitionView getDetailsView(Integer id) {
         SingleAlertDefinitionView view = super.getDetailsView(id);
         if (id == 0) {
             // when creating a new alert def, make sure to set this in the new alert def
             view.getAlertDefinition().setResourceType(resourceType);
         }
         return view;
-    }
-
-    @Override
-    protected boolean isAllowedToModifyAlertDefinitions() {
-        // TODO: see if user can modify template alerts
-        return true;
     }
 
     @Override
@@ -233,4 +236,11 @@ public class TemplateAlertDefinitionsView extends AbstractAlertDefinitionsView {
                 });
         }
     }
+
+    protected AlertDefinitionCriteria getDetailCriteria() {
+        AlertDefinitionCriteria criteria = super.getDetailCriteria();
+        criteria.addFilterAlertTemplateOnly(true);
+        return criteria;
+    }
+
 }

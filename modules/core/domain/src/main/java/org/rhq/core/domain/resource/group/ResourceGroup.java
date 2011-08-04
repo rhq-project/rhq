@@ -59,6 +59,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.bundle.BundleDestination;
 import org.rhq.core.domain.configuration.group.AbstractGroupConfigurationUpdate;
+import org.rhq.core.domain.dashboard.Dashboard;
 import org.rhq.core.domain.operation.GroupOperationHistory;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
@@ -103,12 +104,18 @@ import org.rhq.core.domain.tagging.Tag;
         + "           AND (type.plugin = :pluginName OR :pluginName is null) "
         + "           AND (type.category = :category OR :category is null) ) ) "),
 
-    @NamedQuery(name = ResourceGroup.QUERY_FIND_ALL_BY_CATEGORY_COUNT, query = "SELECT COUNT(DISTINCT rg) "
-        + "  FROM ResourceGroup AS rg JOIN rg.roles r JOIN r.subjects s " + " WHERE s = :subject "
-        + " AND rg.visible = true " + "   AND rg.groupCategory = :category "),
+    @NamedQuery(name = ResourceGroup.QUERY_FIND_RESOURCE_GROUP_SUMMARY, query = "" //
+        + "SELECT rg.groupCategory, COUNT(DISTINCT rg) " //
+        + "     FROM ResourceGroup AS rg JOIN rg.roles r JOIN r.subjects s " //
+        + "    WHERE s = :subject " //
+        + "      AND rg.visible = true " //
+        + " GROUP BY rg.groupCategory "),
 
-    @NamedQuery(name = ResourceGroup.QUERY_FIND_ALL_BY_CATEGORY_COUNT_admin, query = "SELECT COUNT(rg) "
-        + "  FROM ResourceGroup AS rg " + " WHERE rg.groupCategory = :category " + " AND rg.visible = true "),
+    @NamedQuery(name = ResourceGroup.QUERY_FIND_RESOURCE_GROUP_SUMMARY_admin, query = "" //
+        + "SELECT rg.groupCategory, COUNT(rg) " //
+        + "     FROM ResourceGroup AS rg " //
+        + "    WHERE rg.visible = true " //
+        + " GROUP BY rg.groupCategory "),
 
     @NamedQuery(name = ResourceGroup.QUERY_FIND_BY_NAME, query = "SELECT rg FROM ResourceGroup AS rg WHERE LOWER(rg.name) = LOWER(:name)"),
     @NamedQuery(name = ResourceGroup.QUERY_FIND_BY_CLUSTER_KEY, query = "SELECT rg FROM ResourceGroup AS rg WHERE rg.clusterKey = :clusterKey"),
@@ -192,8 +199,8 @@ public class ResourceGroup extends Group {
     private static final long serialVersionUID = 1L;
 
     //------- Names of Named Queries -------
-    public static final String QUERY_FIND_ALL_BY_CATEGORY_COUNT = "ResourceGroup.findAllByCategory_Count";
-    public static final String QUERY_FIND_ALL_BY_CATEGORY_COUNT_admin = "ResourceGroup.findAllByCategory_Count_admin";
+    public static final String QUERY_FIND_RESOURCE_GROUP_SUMMARY = "ResourceGroup.findResourceGroupSummary";
+    public static final String QUERY_FIND_RESOURCE_GROUP_SUMMARY_admin = "ResourceGroup.findResourceGroupSummary_admin";
 
     public static final String QUERY_FIND_BY_NAME = "ResourceGroup.findByName";
     public static final String QUERY_FIND_BY_CLUSTER_KEY = "ResourceGroup.findByClusterKey";
@@ -466,6 +473,10 @@ public class ResourceGroup extends Group {
     @ManyToMany(mappedBy = "resourceGroups", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     private Set<Tag> tags;
 
+    // When a group is removed any owned dashboards are removed automatically
+    @OneToMany(mappedBy = "group", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
+    private Set<Dashboard> dashboards = null;
+
     /* no-arg constructor required by EJB spec */
     protected ResourceGroup() {
     }
@@ -552,7 +563,7 @@ public class ResourceGroup extends Group {
         this.roles.add(role);
     }
 
-    public void removeRole(Role role) {        
+    public void removeRole(Role role) {
         this.roles.remove(role);
     }
 
@@ -711,6 +722,14 @@ public class ResourceGroup extends Group {
         } else {
             return false;
         }
+    }
+
+    protected Set<Dashboard> getDashboards() {
+        return dashboards;
+    }
+
+    protected void setDashboards(Set<Dashboard> dashboards) {
+        this.dashboards = dashboards;
     }
 
     @PrePersist

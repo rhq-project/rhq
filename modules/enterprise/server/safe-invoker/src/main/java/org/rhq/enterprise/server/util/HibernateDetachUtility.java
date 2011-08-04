@@ -18,34 +18,44 @@
  */
 package org.rhq.enterprise.server.util;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.hibernate.Hibernate;
-import org.hibernate.proxy.HibernateProxy;
-
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlTransient;
-
 import java.beans.BeanInfo;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlTransient;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.hibernate.Hibernate;
+import org.hibernate.proxy.HibernateProxy;
+
 /**
+ * This is a single static utility that is used to process any object just prior to sending it over the wire
+ * to remote clients (like GWT clients or remote web service clients).
+ * 
+ * Essentially this utility scrubs the object of all Hibernate proxies, cleaning it such that it
+ * can be serialized over the wire successfully.
+ *  
  * @author Greg Hinkle
+ * @author Jay Shaughnessy
+ * @author John Mazzitelli
  */
+@SuppressWarnings("unchecked")
 public class HibernateDetachUtility {
 
     private static final Log LOG = LogFactory.getLog(HibernateDetachUtility.class);
@@ -54,40 +64,83 @@ public class HibernateDetachUtility {
         SERIALIZATION, JAXB
     }
 
-    public static void nullOutUninitializedFields(Object value, SerializationType serializationType) throws Exception {
-        long start = System.currentTimeMillis();
-        Set<Integer> checkedObjs = new HashSet<Integer>();
-        nullOutUninitializedFields(value, checkedObjs, 0, serializationType);
-        long duration = System.currentTimeMillis() - start;
-        if (duration > 1000) {
-            LOG.info("Detached [" + checkedObjs.size() + "] objects in [" + duration + "]ms");
-        } else {
-            LOG.debug("Detached [" + checkedObjs.size() + "] objects in [" + duration + "]ms");
+    // be able to configure the deepest recursion this utility will be allowed to go (see BZ 702109 that precipitated this need)
+    private static final String DEPTH_ALLOWED_SYSPROP = "rhq.server.hibernate-detach-utility.depth-allowed";
+    private static final int depthAllowed;
+    static {
+        int value;
+        try {
+            String str = System.getProperty(DEPTH_ALLOWED_SYSPROP, "50");
+            value = Integer.parseInt(str);
+        } catch (Throwable t) {
+            value = 50;
         }
+        depthAllowed = value;
     }
 
-    private static void nullOutUninitializedFields(Object value, Set<Integer> nulledObjects, int depth,
-                                                   SerializationType serializationType) throws Exception {
-        if (depth > 50) {
-            LOG.warn("Getting different object hierarchies back from calls: " + value.getClass().getName());
+    public static void nullOutUninitializedFields(Object value, SerializationType serializationType) throws Exception {
+        long start = System.currentTimeMillis();
+        Map<Integer, Object> checkedObjects = new HashMap<Integer, Object>();
+        nullOutUninitializedFields(value, checkedObjects, 0, serializationType);
+        long duration = System.currentTimeMillis() - start;
+        if (duration > 1000) {
+            LOG.info("Detached [" + checkedObjects.size() + "] objects in [" + duration + "]ms");
+        } else {
+            LOG.debug("Detached [" + checkedObjects.size() + "] objects in [" + duration + "]ms");
+        }
+        // help the garbage collector be clearing these before we leave
+        checkedObjects.clear();
+    }
+
+    private static void nullOutUninitializedFields(Object value, Map<Integer, Object> checkedObjects, int depth,
+        SerializationType serializationType) throws Exception {
+        if (depth > depthAllowed) {
+            LOG.warn("Recursed too deep [" + depth + " > " + depthAllowed
+                + "], will not attempt to detach object of type ["
+                + ((value != null) ? value.getClass().getName() : "N/A")
+                + "]. This may cause serialization errors later. If so, "
+                + "you can try to work around this by setting the system property [" + DEPTH_ALLOWED_SYSPROP
+                + "] to a value higher than [" + depth + "].");
             return;
         }
 
-        if ((value == null) || nulledObjects.contains(System.identityHashCode(value))) {
+        if (null == value) {
             return;
         }
 
-        nulledObjects.add(System.identityHashCode(value));
+        // System.identityHashCode is a hash code, and therefore not guaranteed to be unique. And we've seen this
+        // be the case.  So, we use it to try and avoid duplicating work, but handle the case when two objects may
+        // have an identity crisis.
+        Integer valueIdentity = System.identityHashCode(value);
+        Object checkedObject = checkedObjects.get(valueIdentity);
+
+        if (null == checkedObject) {
+            checkedObjects.put(valueIdentity, value);
+
+        } else if (value == checkedObject) {
+            return;
+
+        } else {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("UNEQUAL IDENTITY HASHCODE [" + valueIdentity + "]\n\tCurrent  : "
+                    + value.getClass().getName() + "\n\t" + value + "\n\tPrevious: "
+                    + checkedObject.getClass().getName() + "\n\t" + checkedObject);
+            }
+        }
 
         if (value instanceof Object[]) {
             Object[] objArray = (Object[]) value;
             for (int i = 0; i < objArray.length; i++) {
-                nullOutUninitializedFields(objArray[i], nulledObjects, depth + 1, serializationType);
+                Object listEntry = objArray[i];
+                Object replaceEntry = replaceObject(listEntry);
+                if (replaceEntry != null) {
+                    objArray[i] = replaceEntry;
+                }
+                nullOutUninitializedFields(objArray[i], checkedObjects, depth + 1, serializationType);
             }
-
         } else if (value instanceof List) {
             // Null out any entries in initialized collections
-            ListIterator i = ((List)value).listIterator();
+            ListIterator i = ((List) value).listIterator();
             while (i.hasNext()) {
                 Object val = i.next();
                 Object replace = replaceObject(val);
@@ -95,7 +148,7 @@ public class HibernateDetachUtility {
                     val = replace;
                     i.set(replace);
                 }
-                nullOutUninitializedFields(val, nulledObjects, depth + 1, serializationType);
+                nullOutUninitializedFields(val, checkedObjects, depth + 1, serializationType);
             }
 
         } else if (value instanceof Collection) {
@@ -109,55 +162,81 @@ public class HibernateDetachUtility {
                     replacementItems.add(replacementItem);
                     item = replacementItem;
                 }
-                nullOutUninitializedFields(item, nulledObjects, depth + 1, serializationType);
+                nullOutUninitializedFields(item, checkedObjects, depth + 1, serializationType);
             }
             collection.removeAll(itemsToBeReplaced);
-            collection.addAll(replacementItems);            
+            collection.addAll(replacementItems); // watch out! if this collection is a Set, HashMap$MapSet doesn't support addAll. See BZ 688000
         } else if (value instanceof Map) {
-            for (Object key : ((Map) value).keySet()) {
-                nullOutUninitializedFields(((Map) value).get(key), nulledObjects, depth + 1, serializationType);
-                nullOutUninitializedFields(key, nulledObjects, depth + 1, serializationType);
+            Map originalMap = (Map) value;
+            HashMap<Object, Object> replaceMap = new HashMap<Object, Object>();
+            for (Iterator i = originalMap.keySet().iterator(); i.hasNext();) {
+                // get original key and value - these might be hibernate proxies
+                Object originalKey = i.next();
+                Object originalKeyValue = originalMap.get(originalKey);
+
+                // replace with non-hibernate classes, if appropriate (will be null otherwise)
+                Object replaceKey = replaceObject(originalKey);
+                Object replaceValue = replaceObject(originalKeyValue);
+
+                // if either original key or original value was a hibernate proxy object, we have to 
+                // remove it from the original map, and remember the replacement objects for later
+                if (replaceKey != null || replaceValue != null) {
+                    Object newKey = (replaceKey != null) ? replaceKey : originalKey;
+                    Object newValue = (replaceValue != null) ? replaceValue : originalKeyValue;
+                    replaceMap.put(newKey, newValue);
+                    i.remove();
+                }
+            }
+
+            // all hibernate proxies have been removed, we need to replace them with their
+            // non-proxy object representations that we got from replaceObject() calls
+            originalMap.putAll(replaceMap);
+
+            // now go through each item in the map and null out their internal fields
+            for (Object key : originalMap.keySet()) {
+                nullOutUninitializedFields(originalMap.get(key), checkedObjects, depth + 1, serializationType);
+                nullOutUninitializedFields(key, checkedObjects, depth + 1, serializationType);
             }
         } else if (value instanceof Enum) {
             // don't need to detach enums, treat them as special objects
             return;
         }
 
-
         if (serializationType == SerializationType.JAXB) {
             XmlAccessorType at = value.getClass().getAnnotation(XmlAccessorType.class);
             if (at != null && at.value() == XmlAccessType.FIELD) {
-                //System.out.println("----------XML--------- field access");
-                nullOutFieldsByFieldAccess(value, nulledObjects, depth, serializationType);
+                nullOutFieldsByFieldAccess(value, checkedObjects, depth, serializationType);
             } else {
-                //System.out.println("----------XML--------- accessor access");
-                nullOutFieldsByAccessors(value, nulledObjects, depth, serializationType);
+                nullOutFieldsByAccessors(value, checkedObjects, depth, serializationType);
             }
         } else if (serializationType == SerializationType.SERIALIZATION) {
-            //                System.out.println("-----------JRMP-------- field access");
-            nullOutFieldsByFieldAccess(value, nulledObjects, depth, serializationType);
+            nullOutFieldsByFieldAccess(value, checkedObjects, depth, serializationType);
         }
 
     }
 
-    private static void nullOutFieldsByFieldAccess(Object object, Set<Integer> nulledObjects, int depth,
-                                                   SerializationType serializationType) throws Exception {
-
+    private static void nullOutFieldsByFieldAccess(Object object, Map<Integer, Object> checkedObjects, int depth,
+        SerializationType serializationType) throws Exception {
 
         Class tmpClass = object.getClass();
         List<Field> fieldsToClean = new ArrayList<Field>();
         while (tmpClass != null && tmpClass != Object.class) {
-            Collections.addAll(fieldsToClean, tmpClass.getDeclaredFields());
+            Field[] declaredFields = tmpClass.getDeclaredFields();
+            for (Field declaredField : declaredFields) {
+                // do not process static final or transient fields since they won't be serialized anyway
+                int modifiers = declaredField.getModifiers();
+                if (!((Modifier.isFinal(modifiers) && Modifier.isStatic(modifiers)) || Modifier.isTransient(modifiers))) {
+                    fieldsToClean.add(declaredField);
+                }
+            }
             tmpClass = tmpClass.getSuperclass();
         }
 
-        nullOutFieldsByFieldAccess(object, fieldsToClean, nulledObjects, depth, serializationType);
+        nullOutFieldsByFieldAccess(object, fieldsToClean, checkedObjects, depth, serializationType);
     }
 
-
-    @SuppressWarnings("unchecked")
-    private static void nullOutFieldsByFieldAccess(Object object, List<Field> classFields, Set<Integer> nulledObjects, int depth,
-                                                   SerializationType serializationType) throws Exception {
+    private static void nullOutFieldsByFieldAccess(Object object, List<Field> classFields,
+        Map<Integer, Object> checkedObjects, int depth, SerializationType serializationType) throws Exception {
 
         boolean accessModifierFlag = false;
         for (Field field : classFields) {
@@ -172,37 +251,44 @@ public class HibernateDetachUtility {
             if (fieldValue instanceof HibernateProxy) {
 
                 Object replacement = null;
-                if (fieldValue.getClass().getName().contains("javassist")) {
+                String assistClassName = fieldValue.getClass().getName();
+                if (assistClassName.contains("javassist") || assistClassName.contains("EnhancerByCGLIB")) {
 
                     Class assistClass = fieldValue.getClass();
                     try {
                         Method m = assistClass.getMethod("writeReplace");
                         replacement = m.invoke(fieldValue);
 
-                        String className = fieldValue.getClass().getName();
-                        className = className.substring(0, className.indexOf("_$$_"));
+                        String assistNameDelimiter = assistClassName.contains("javassist") ? "_$$_" : "$$";
+                        
+                        assistClassName = assistClassName.substring(0, assistClassName.indexOf(assistNameDelimiter));
                         if (!replacement.getClass().getName().contains("hibernate")) {
-                            nullOutUninitializedFields(replacement, nulledObjects, depth + 1, serializationType);
+                            nullOutUninitializedFields(replacement, checkedObjects, depth + 1, serializationType);
 
                             field.set(object, replacement);
                         } else {
                             replacement = null;
                         }
                     } catch (Exception e) {
-                        System.out.println("Unable to write replace object " + fieldValue.getClass());
+                        LOG.error("Unable to write replace object " + fieldValue.getClass(), e);
                     }
                 }
 
                 if (replacement == null) {
 
                     String className = ((HibernateProxy) fieldValue).getHibernateLazyInitializer().getEntityName();
-                    Class clazz = Class.forName(className);
-                    Class[] constArgs = {Integer.class};
+                    
+                    //see if there is a context classloader we should use instead of the current one.
+                    ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
+                    
+                    Class clazz = contextClassLoader == null ? Class.forName(className) : Class.forName(className, true, contextClassLoader);
+                    Class[] constArgs = { Integer.class };
                     Constructor construct = null;
 
                     try {
                         construct = clazz.getConstructor(constArgs);
-                        replacement = construct.newInstance((Integer) ((HibernateProxy) fieldValue).getHibernateLazyInitializer().getIdentifier());
+                        replacement = construct.newInstance((Integer) ((HibernateProxy) fieldValue)
+                            .getHibernateLazyInitializer().getIdentifier());
                         field.set(object, replacement);
                     } catch (NoSuchMethodException nsme) {
 
@@ -214,16 +300,16 @@ public class HibernateDetachUtility {
                             if (!idField.isAccessible()) {
                                 idField.setAccessible(true);
                             }
-                            idField.set(replacement, (Integer) ((HibernateProxy) fieldValue).getHibernateLazyInitializer().getIdentifier());
+                            idField.set(replacement, (Integer) ((HibernateProxy) fieldValue)
+                                .getHibernateLazyInitializer().getIdentifier());
                         } catch (Exception e) {
                             e.printStackTrace();
-                            System.out.println("No id constructor and unable to set field id for base bean " + className);
+                            LOG.error("No id constructor and unable to set field id for base bean " + className, e);
                         }
 
                         field.set(object, replacement);
                     }
                 }
-
 
             } else {
                 if (fieldValue instanceof org.hibernate.collection.PersistentCollection) {
@@ -234,27 +320,31 @@ public class HibernateDetachUtility {
                     } else {
 
                         Object replacement = null;
+                        boolean needToNullOutFields = true; // needed for BZ 688000
                         if (fieldValue instanceof Map) {
                             replacement = new HashMap((Map) fieldValue);
                         } else if (fieldValue instanceof List) {
                             replacement = new ArrayList((List) fieldValue);
                         } else if (fieldValue instanceof Set) {
-                            replacement = new HashSet((Set) fieldValue);
+                            ArrayList l = new ArrayList((Set) fieldValue); // cannot recurse Sets, see BZ 688000
+                            nullOutUninitializedFields(l, checkedObjects, depth + 1, serializationType);
+                            replacement = new HashSet(l); // convert it back to a Set since that's the type of the real collection, see BZ 688000
+                            needToNullOutFields = false;
                         } else if (fieldValue instanceof Collection) {
                             replacement = new ArrayList((Collection) fieldValue);
                         }
                         setField(object, field.getName(), replacement);
 
-                        nullOutUninitializedFields(replacement, nulledObjects, depth + 1, serializationType);
+                        if (needToNullOutFields) {
+                            nullOutUninitializedFields(replacement, checkedObjects, depth + 1, serializationType);
+                        }
                     }
 
                 } else {
-                    if (fieldValue != null &&
-                            (fieldValue.getClass().getName().contains("org.rhq") ||
-                                    fieldValue instanceof Collection ||
-                                    fieldValue instanceof Object[] ||
-                                    fieldValue instanceof Map))
-                        nullOutUninitializedFields((fieldValue), nulledObjects, depth + 1, serializationType);
+                    if (fieldValue != null
+                        && (fieldValue.getClass().getName().contains("org.rhq") || fieldValue instanceof Collection
+                            || fieldValue instanceof Object[] || fieldValue instanceof Map))
+                        nullOutUninitializedFields((fieldValue), checkedObjects, depth + 1, serializationType);
                 }
             }
             if (accessModifierFlag) {
@@ -263,7 +353,6 @@ public class HibernateDetachUtility {
         }
 
     }
-
 
     private static Object replaceObject(Object object) {
         Object replacement = null;
@@ -277,16 +366,15 @@ public class HibernateDetachUtility {
 
                     String className = object.getClass().getName();
                 } catch (Exception e) {
-                    System.out.println("Unable to write replace object " + object.getClass());
+                    LOG.error("Unable to write replace object " + object.getClass(), e);
                 }
             }
         }
         return replacement;
     }
 
-
-    private static void nullOutFieldsByAccessors(Object value, Set<Integer> nulledObjects, int depth,
-                                                 SerializationType serializationType) throws Exception {
+    private static void nullOutFieldsByAccessors(Object value, Map<Integer, Object> checkedObjects, int depth,
+        SerializationType serializationType) throws Exception {
         // Null out any collections that aren't loaded
         BeanInfo bi = Introspector.getBeanInfo(value.getClass(), Object.class);
 
@@ -309,19 +397,19 @@ public class HibernateDetachUtility {
 
                     Method writeMethod = pd.getWriteMethod();
                     if ((writeMethod != null) && (writeMethod.getAnnotation(XmlTransient.class) == null)) {
-                        pd.getWriteMethod().invoke(value, new Object[]{null});
+                        pd.getWriteMethod().invoke(value, new Object[] { null });
                     } else {
                         nullOutField(value, pd.getName());
                     }
                 } catch (Exception lie) {
                     LOG.debug("Couldn't null out: " + pd.getName() + " off of " + value.getClass().getSimpleName()
-                            + " trying field access", lie);
+                        + " trying field access", lie);
                     nullOutField(value, pd.getName());
                 }
             } else {
                 if ((propertyValue instanceof Collection)
-                        || ((propertyValue != null) && propertyValue.getClass().getName().startsWith("org.rhq.core.domain"))) {
-                    nullOutUninitializedFields(propertyValue, nulledObjects, depth + 1, serializationType);
+                    || ((propertyValue != null) && propertyValue.getClass().getName().startsWith("org.rhq.core.domain"))) {
+                    nullOutUninitializedFields(propertyValue, checkedObjects, depth + 1, serializationType);
                 }
             }
         }

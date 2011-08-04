@@ -400,6 +400,11 @@ public class SearchAssistManager {
                 expression = "";
             }
 
+            // make sure caretPos is at a valid index prior to parsing it for suggestions
+            if (caretPos > expression.length()) {
+                caretPos = expression.length();
+            }
+
             List<SearchSuggestion> simple = getSimpleSuggestions(expression, caretPos, tab);
             List<SearchSuggestion> advanced = getAdvancedSuggestions(expression, caretPos, tab);
             List<SearchSuggestion> userSavedSearches = getUserSavedSearchSuggestions(expression);

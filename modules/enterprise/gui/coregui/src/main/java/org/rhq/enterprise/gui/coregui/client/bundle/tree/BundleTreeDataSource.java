@@ -43,17 +43,18 @@ import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
 import org.rhq.core.domain.criteria.BundleDestinationCriteria;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
+import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 
 /**
  * @author Greg Hinkle
  */
-@SuppressWarnings("unchecked")
-public class BundleTreeDataSource extends RPCDataSource {
+public class BundleTreeDataSource extends RPCDataSource<Object, Criteria> {
 
     private BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService();
     private final boolean canManageBundles;
@@ -85,7 +86,7 @@ public class BundleTreeDataSource extends RPCDataSource {
     }
 
     @Override
-    protected void executeFetch(final DSRequest request, final DSResponse response) {
+    protected void executeFetch(final DSRequest request, final DSResponse response, final Criteria unused) {
 
         String p = request.getCriteria().getAttribute("parentId");
 
@@ -170,6 +171,13 @@ public class BundleTreeDataSource extends RPCDataSource {
     }
 
     @Override
+    protected Criteria getFetchCriteria(DSRequest request) {
+        // our executeFetch will determine on its own what criteria to use based on what is to be fetched
+        // thus we don't return anything here and let the executeFetch do everything
+        return null;
+    }
+
+    @Override
     public Object copyValues(Record from) {
         return null; // don't need this method.
     }
@@ -237,7 +245,7 @@ public class BundleTreeDataSource extends RPCDataSource {
             node.setIsFolder(true);
             node.setIcon("subsystems/bundle/Bundle_16.png");
             node.setID(String.valueOf(bundle.getId()));
-            node.setName(bundle.getName());
+            node.setName(StringUtility.escapeHtml(bundle.getName()));
 
         } else if (from instanceof BundleVersion) {
             BundleVersion version = (BundleVersion) from;
@@ -255,10 +263,11 @@ public class BundleTreeDataSource extends RPCDataSource {
             parentID = bundleId + "_destinations_" + deployment.getDestination().getId();
             node.setParentID(parentID);
             node.setID(bundleId + "_deployments_" + deployment.getId());
+            String name = StringUtility.escapeHtml(deployment.getName());
             if (deployment.isLive()) {
-                node.setName("<span style=\"color: green; font-weight: bold\">(live)</span> " + deployment.getName());
+                node.setName("<span style=\"color: green; font-weight: bold\">(live)</span> " + name);
             } else {
-                node.setName(deployment.getName());
+                node.setName(name);
             }
 
         } else if (from instanceof BundleDestination) {
@@ -268,7 +277,7 @@ public class BundleTreeDataSource extends RPCDataSource {
             parentID = destination.getBundle().getId() + "_destinations";
             node.setParentID(parentID);
             node.setID(parentID + '_' + destination.getId());
-            node.setName(destination.getName());
+            node.setName(StringUtility.escapeHtml(destination.getName()));
         }
 
         return node;

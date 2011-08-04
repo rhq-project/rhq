@@ -63,6 +63,9 @@ public interface EventManagerLocal {
 
     Map<EventSeverity, Integer> getEventCountsBySeverity(Subject subject, int resourceId, long startDate, long endDate);
 
+    Map<EventSeverity, Integer> getEventCountsBySeverityForGroup(Subject subject, int groupId, long startDate,
+        long endDate);
+
     /**
      * Retrieve the count of events for the given resource in the time between begin and end, nicely separated
      * in numBuckets.

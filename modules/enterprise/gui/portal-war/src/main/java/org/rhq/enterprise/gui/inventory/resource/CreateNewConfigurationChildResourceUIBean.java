@@ -36,7 +36,6 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.gui.configuration.ConfigurationMaskingUtility;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.configuration.AbstractConfigurationUIBean;
@@ -96,7 +95,6 @@ public class CreateNewConfigurationChildResourceUIBean extends AbstractConfigura
         // Collect data for create call
         Resource parentResource = EnterpriseFacesContextUtility.getResource();
         Configuration resourceConfiguration = getConfiguration();
-        ConfigurationMaskingUtility.unmaskConfiguration(resourceConfiguration, getConfigurationDefinition());
 
         try {
             ResourceFactoryManagerLocal resourceFactoryManager = LookupUtil.getResourceFactoryManager();
@@ -194,7 +192,6 @@ public class CreateNewConfigurationChildResourceUIBean extends AbstractConfigura
         Configuration resourceConfig = (resourceConfigTemplate != null) ? resourceConfigTemplate.createConfiguration()
             : new Configuration();
         ConfigurationUtility.normalizeConfiguration(resourceConfig, getConfigurationDefinition());
-        ConfigurationMaskingUtility.maskConfiguration(resourceConfig, getConfigurationDefinition());
 
         return resourceConfig;
     }

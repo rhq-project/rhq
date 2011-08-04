@@ -166,14 +166,39 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         }
     }
 
-    public ResourceOperationSchedule scheduleResourceOperation(Subject subject, ResourceOperationSchedule schedule)
-        throws ScheduleException {
+    public int scheduleResourceOperation(Subject subject, ResourceOperationSchedule schedule) throws ScheduleException {
         JobTrigger jobTrigger = schedule.getJobTrigger();
         Trigger trigger = convertToTrigger(jobTrigger);
         try {
-            return scheduleResourceOperation(subject, schedule.getResource().getId(), schedule.getOperationName(), schedule.getParameters(), trigger, schedule.getDescription());
+            ResourceOperationSchedule resourceOperationSchedule = scheduleResourceOperation(subject, schedule
+                .getResource().getId(), schedule.getOperationName(), schedule.getParameters(), trigger, schedule
+                .getDescription());
+            return resourceOperationSchedule.getId();
+        } catch (SchedulerException e) {
+            throw new ScheduleException(e);
         }
-        catch (SchedulerException e) {
+    }
+
+    public int scheduleGroupOperation(Subject subject, GroupOperationSchedule schedule) throws ScheduleException {
+        JobTrigger jobTrigger = schedule.getJobTrigger();
+        Trigger trigger = convertToTrigger(jobTrigger);
+        try {
+            List<Resource> executionOrderResources = schedule.getExecutionOrder();
+            int[] executionOrderResourceIds;
+            if (executionOrderResources == null) {
+                executionOrderResourceIds = null;
+            } else {
+                executionOrderResourceIds = new int[executionOrderResources.size()];
+                for (int i = 0, executionOrderResourcesSize = executionOrderResources.size(); i < executionOrderResourcesSize; i++) {
+                    Resource executionOrderResource = executionOrderResources.get(i);
+                    executionOrderResourceIds[i] = executionOrderResource.getId();
+                }
+            }
+            GroupOperationSchedule groupOperationSchedule = scheduleGroupOperation(subject,
+                schedule.getGroup().getId(), executionOrderResourceIds, schedule.getHaltOnFailure(), schedule
+                    .getOperationName(), schedule.getParameters(), trigger, schedule.getDescription());
+            return groupOperationSchedule.getId();
+        } catch (SchedulerException e) {
             throw new ScheduleException(e);
         }
     }
@@ -200,6 +225,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
 
         jobDataMap.putAsString(ResourceOperationJob.DATAMAP_INT_SUBJECT_ID, subject.getId());
         jobDataMap.putAsString(ResourceOperationJob.DATAMAP_INT_RESOURCE_ID, resource.getId());
+        jobDataMap.put("description", notes);
 
         JobDetail jobDetail = new JobDetail();
         jobDetail.setName(uniqueJobId);
@@ -440,12 +466,34 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return operationSchedules;
     }
 
+    public ResourceOperationSchedule getResourceOperationSchedule(Subject whoami, int scheduleId) {
+        OperationScheduleEntity operationScheduleEntity = entityManager.find(OperationScheduleEntity.class, scheduleId);
+        try {
+            ResourceOperationSchedule resourceOperationSchedule = getResourceOperationSchedule(whoami,
+                operationScheduleEntity.getJobId().toString());
+            return resourceOperationSchedule;
+        } catch (SchedulerException e) {
+            throw new RuntimeException("Failed to retrieve ResourceOperationSchedule with id [" + scheduleId + "].", e);
+        }
+    }
+
+    public GroupOperationSchedule getGroupOperationSchedule(Subject whoami, int scheduleId) {
+        OperationScheduleEntity operationScheduleEntity = entityManager.find(OperationScheduleEntity.class, scheduleId);
+        try {
+            GroupOperationSchedule groupOperationSchedule = getGroupOperationSchedule(whoami, operationScheduleEntity
+                .getJobId().toString());
+            return groupOperationSchedule;
+        } catch (SchedulerException e) {
+            throw new RuntimeException("Failed to retrieve GroupOperationSchedule with id [" + scheduleId + "].", e);
+        }
+    }
+
     public ResourceOperationSchedule getResourceOperationSchedule(Subject whoami, JobDetail jobDetail) {
         JobDataMap jobDataMap = jobDetail.getJobDataMap();
 
         String jobName = jobDetail.getName();
         String jobGroup = jobDetail.getGroup();
-        String description = jobDetail.getDescription();
+        String description = jobDataMap.getString("description");
         String operationName = jobDataMap.getString(ResourceOperationJob.DATAMAP_STRING_OPERATION_NAME);
         String displayName = jobDataMap.getString(ResourceOperationJob.DATAMAP_STRING_OPERATION_DISPLAY_NAME);
         int subjectId = jobDataMap.getIntFromString(ResourceOperationJob.DATAMAP_INT_SUBJECT_ID);
@@ -481,6 +529,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         Trigger trigger = getTriggerOfJob(jobDetail);
         JobTrigger jobTrigger = convertToJobTrigger(trigger);
         sched.setJobTrigger(jobTrigger);
+        sched.setNextFireTime(trigger.getNextFireTime());
 
         return sched;
     }
@@ -491,7 +540,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         int entityId;
         if (entityIdObj != null) {
             // for jobs created using RHQ 4.0 or later, the map will contain an entityId entry
-            entityId = Integer.valueOf((String)entityIdObj);
+            entityId = Integer.valueOf((String) entityIdObj);
         } else {
             // for jobs created prior to upgrading to RHQ 4.0, the map will not contain an entityId entry,
             // so we'll need to lookup the entity id from the DB.
@@ -554,7 +603,12 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
             }
         }
 
+        boolean haltOnFailure = jobDataMap.getBooleanValueFromString(GroupOperationJob.DATAMAP_BOOL_HALT_ON_FAILURE);
+
+        Integer entityId = getOperationScheduleEntityId(jobDetail);
+
         GroupOperationSchedule sched = new GroupOperationSchedule();
+        sched.setId(entityId);
         sched.setJobName(jobDetail.getName());
         sched.setJobGroup(jobDetail.getGroup());
         sched.setGroup(group);
@@ -564,10 +618,11 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         sched.setParameters(parameters);
         sched.setExecutionOrder(executionOrder);
         sched.setDescription(description);
-        sched.setHaltOnFailure(jobDataMap.getBooleanValueFromString(GroupOperationJob.DATAMAP_BOOL_HALT_ON_FAILURE));
+        sched.setHaltOnFailure(haltOnFailure);
         Trigger trigger = getTriggerOfJob(jobDetail);
         JobTrigger jobTrigger = convertToJobTrigger(trigger);
         sched.setJobTrigger(jobTrigger);
+        sched.setNextFireTime(trigger.getNextFireTime());
 
         return sched;
     }
@@ -793,6 +848,19 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
             history.setParameters(parameters);
         }
 
+        // to avoid TransientObjectExceptions during the merge, we need to attach all resource operation histories, if there are any
+        if (history instanceof GroupOperationHistory) {
+            GroupOperationHistory groupHistory = (GroupOperationHistory) history;
+            List<ResourceOperationHistory> roh = groupHistory.getResourceOperationHistories();
+            if (roh != null && roh.size() > 0) {
+                List<ResourceOperationHistory> attached = new ArrayList<ResourceOperationHistory>(roh.size());
+                for (ResourceOperationHistory unattachedHistory : roh) {
+                    attached.add(entityManager.getReference(ResourceOperationHistory.class, unattachedHistory.getId()));
+                }
+                groupHistory.setResourceOperationHistories(attached);
+            }
+        }
+
         history = entityManager.merge(history); // merge will persist if it doesn't exist yet
 
         if (history.getParameters() != null) {
@@ -910,7 +978,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         boolean canceled = false;
 
         try {
-            agent = agentManager.getAgentClient(subject, resourceId);
+            agent = agentManager.getAgentClient(subjectManager.getOverlord(), resourceId);
 
             // since this method is usually called by the UI, we want to quickly determine if we can even talk to the agent
             if (agent.ping(5000L)) {
@@ -1227,11 +1295,24 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
             for (ResourceOperationHistory history : histories) {
                 long timeout = getOperationTimeout(history.getOperationDefinition(), history.getParameters());
 
+                // there are two cases we need to check. First, did the resource history start but it took too long? (aka timed out?)
+                // Or, second, did the resource history not even start yet, but its been a very long time (1 day) since it was created?
+                // In either case, we can't wait forever, so we'll mark them as failed with an appropriate error message.
                 long duration = history.getDuration();
-                if (duration > timeout) {
-                    LOG.info("Operation execution seems to have been orphaned - timing it out: " + history);
-                    history.setErrorMessage("Timed out : did not complete after " + duration + " ms"
-                        + " (the timeout period was " + timeout + " ms)");
+                long createdTime = history.getCreatedTime();
+                boolean timedOut = (duration > timeout);
+                boolean neverStarted = ((System.currentTimeMillis() - createdTime) > (1000 * 60 * 60 * 24));
+                if (timedOut || neverStarted) {
+                    if (timedOut) {
+                        // the operation started, but the agent never told us how it finished prior to exceeding the timeout 
+                        LOG.info("Operation execution seems to have been orphaned - timing it out: " + history);
+                        history.setErrorMessage("Timed out : did not complete after " + duration + " ms"
+                            + " (the timeout period was " + timeout + " ms)");
+                    } else {
+                        // the operation never even started, but its been at least a day since it was created
+                        LOG.info("Operation execution seems to have never started - timing it out: " + history);
+                        history.setErrorMessage("Failed to start : operation never started");
+                    }
                     history.setStatus(OperationRequestStatus.FAILURE);
                     notifyAlertConditionCacheManager("checkForTimedOutOperations", history);
 
@@ -1301,7 +1382,6 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
                          * where sent to the remaining INPROGRESS elements).
                          */
                         cancelOperationHistory(subject, resourceHistory.getId(), true);
-                        break;
                     }
                 }
 
@@ -1472,8 +1552,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         Subject overlord = subjectManager.getOverlord();
         for (ResourceOperationScheduleComposite composite : results) {
             try {
-                ResourceOperationSchedule sched = getResourceOperationSchedule(subject, composite.getJobId()
-                    .toString());
+                ResourceOperationSchedule sched = getResourceOperationSchedule(subject, composite.getJobId().toString());
                 OperationDefinition def = getSupportedResourceOperation(overlord, composite.getResourceId(), sched
                     .getOperationName(), false);
                 composite.setOperationName((def.getDisplayName() != null) ? def.getDisplayName() : sched
@@ -1526,8 +1605,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         Subject overlord = subjectManager.getOverlord();
         for (GroupOperationScheduleComposite composite : results) {
             try {
-                GroupOperationSchedule sched = getGroupOperationSchedule(subject, composite.getJobId()
-                    .toString());
+                GroupOperationSchedule sched = getGroupOperationSchedule(subject, composite.getJobId().toString());
                 OperationDefinition def = getSupportedGroupOperation(overlord, composite.getGroupId(), sched
                     .getOperationName(), false);
                 composite.setOperationName((def.getDisplayName() != null) ? def.getDisplayName() : sched
@@ -1811,7 +1889,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         query.setParameter("jobName", jobName);
         String jobGroup = jobId.getJobGroup();
         query.setParameter("jobGroup", jobGroup);
-        OperationScheduleEntity operationScheduleEntity = (OperationScheduleEntity)query.getSingleResult();
+        OperationScheduleEntity operationScheduleEntity = (OperationScheduleEntity) query.getSingleResult();
         return operationScheduleEntity;
     }
 
@@ -1887,8 +1965,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         Trigger[] triggers;
         try {
             triggers = scheduler.getTriggersOfJob(jobDetail.getName(), jobDetail.getGroup());
-        }
-        catch (SchedulerException e) {
+        } catch (SchedulerException e) {
             throw new RuntimeException("Failed to lookup trigger for job [" + jobDetail.getFullName() + "].", e);
         }
         if (triggers.length == 0) {
@@ -1904,7 +1981,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     private static JobTrigger convertToJobTrigger(Trigger trigger) {
         JobTrigger schedule;
         if (trigger instanceof SimpleTrigger) {
-            SimpleTrigger simpleTrigger = (SimpleTrigger)trigger;
+            SimpleTrigger simpleTrigger = (SimpleTrigger) trigger;
             Date startTime = simpleTrigger.getStartTime();
             if (startTime != null) {
                 // later
@@ -1948,7 +2025,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
                 }
             }
         } else if (trigger instanceof CronTrigger) {
-            CronTrigger cronTrigger = (CronTrigger)trigger;
+            CronTrigger cronTrigger = (CronTrigger) trigger;
             schedule = JobTrigger.createCronTrigger(cronTrigger.getCronExpression());
         } else {
             throw new IllegalStateException("Unsupported Quartz trigger type: " + trigger.getClass().getName());
@@ -1962,8 +2039,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
             CronTrigger cronTrigger = new CronTrigger();
             try {
                 cronTrigger.setCronExpression(jobTrigger.getCronExpression());
-            }
-            catch (ParseException e) {
+            } catch (ParseException e) {
                 throw new RuntimeException(e);
             }
             trigger = cronTrigger;
@@ -1971,18 +2047,27 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
             SimpleTrigger simpleTrigger = new SimpleTrigger();
             Date startTime = null;
             switch (jobTrigger.getStartType()) {
-                case NOW:
-                    startTime = new Date();
-                    break;
-                case DATETIME:
-                    startTime = jobTrigger.getStartDate();
-                    break;
+            case NOW:
+                startTime = new Date();
+                break;
+            case DATETIME:
+                startTime = jobTrigger.getStartDate();
+                break;
             }
             simpleTrigger.setStartTime(startTime);
+            if (jobTrigger.getRecurrenceType() == JobTrigger.RecurrenceType.REPEAT_INTERVAL) {
+                simpleTrigger.setRepeatInterval(jobTrigger.getRepeatInterval());
+                if (jobTrigger.getEndType() == JobTrigger.EndType.REPEAT_COUNT) {
+                    simpleTrigger.setRepeatCount(jobTrigger.getRepeatCount());
+                } else {
+                    simpleTrigger.setRepeatCount(SimpleTrigger.REPEAT_INDEFINITELY);
+                    if (jobTrigger.getEndType() == JobTrigger.EndType.DATETIME) {
+                        simpleTrigger.setEndTime(jobTrigger.getEndDate());
+                    }
+                }
+            }
 
-            // TODO (ips): Finish implementing this.
-
-            trigger= simpleTrigger;
+            trigger = simpleTrigger;
         }
 
         return trigger;

@@ -1,28 +1,27 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.pc.inventory;
 
-import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -31,7 +30,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.jetbrains.annotations.Nullable;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.inventory.CreateResourceRequest;
@@ -41,7 +39,6 @@ import org.rhq.core.clientapi.agent.inventory.DeleteResourceResponse;
 import org.rhq.core.clientapi.agent.inventory.ResourceFactoryAgentService;
 import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
 import org.rhq.core.clientapi.server.inventory.ResourceFactoryServerService;
-import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.ContainerService;
 import org.rhq.core.pc.PluginContainer;
@@ -62,7 +59,40 @@ import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
  * @author Jason Dobies
  */
 public class ResourceFactoryManager extends AgentService implements ContainerService, ResourceFactoryAgentService {
-    private static final int FACET_METHOD_TIMEOUT = 60 * 1000; // 60 seconds
+
+    // This used to be a single value fixed at 60 seconds. But create and delete actions can very well exceed 1 minute
+    // depending on the type of resource being created, or perhaps graceful shutdown of a resource being deleted. So, 
+    // allow the timeout value to be overriden by editing rhq-agent-env.sh with new -D settings. Also, create separate
+    // timeouts for create and delete, as their execution times really are not related. The properties are set in
+    // milliseconds:
+    //    rhq.agent.plugins.facet.create-child-resource.timeout
+    //    rhq.agent.plugins.facet.delete-resource.timeout
+    //
+    // The default is still 60s.  Note that increasing this value affects all types across all plugins and should not
+    // be raised unless a successful create or delete action requires the higher limit.  Realize that while a
+    // create or delete is in progress that the resource is write-locked, so no other actions can take place (like
+    // metric collection).
+    //
+    private static final int FACET_CREATE_TIMEOUT;
+    private static final int FACET_DELETE_TIMEOUT;
+
+    static {
+        int timeout;
+        try {
+            timeout = Integer.parseInt(System.getProperty("rhq.agent.plugins.facet.create-child-resource.timeout",
+                "60000"));
+        } catch (Throwable t) {
+            timeout = 60 * 1000;
+        }
+        FACET_CREATE_TIMEOUT = timeout;
+
+        try {
+            timeout = Integer.parseInt(System.getProperty("rhq.agent.plugins.facet.delete-resource.timeout", "60000"));
+        } catch (Throwable t) {
+            timeout = 60 * 1000;
+        }
+        FACET_DELETE_TIMEOUT = timeout;
+    }
 
     // Attributes  --------------------------------------------
 
@@ -119,6 +149,7 @@ public class ResourceFactoryManager extends AgentService implements ContainerSer
 
     // ResourceFactoryAgentService Implementation  --------------------------------------------
 
+    @SuppressWarnings("unchecked")
     public CreateResourceResponse executeCreateResourceImmediately(CreateResourceRequest request)
         throws PluginContainerException {
         // Load the actual resource type instance to be passed to the facet
@@ -138,7 +169,8 @@ public class ResourceFactoryManager extends AgentService implements ContainerSer
             .getPluginConfiguration(), request.getResourceConfiguration(), request.getPackageDetails());
 
         // Execute the create against the plugin
-        CreateChildResourceFacet facet = getCreateChildResourceFacet(request.getParentResourceId());
+        CreateChildResourceFacet facet = getCreateChildResourceFacet(request.getParentResourceId(), request
+            .getTimeout());
 
         CreateResourceRunner runner = new CreateResourceRunner(this, request.getParentResourceId(), facet, request
             .getRequestId(), report, configuration.isInsideAgent());
@@ -171,13 +203,15 @@ public class ResourceFactoryManager extends AgentService implements ContainerSer
             .getPluginConfiguration(), request.getResourceConfiguration(), request.getPackageDetails());
 
         // Execute the create against the plugin
-        CreateChildResourceFacet facet = getCreateChildResourceFacet(request.getParentResourceId());
+        CreateChildResourceFacet facet = getCreateChildResourceFacet(request.getParentResourceId(), request
+            .getTimeout());
 
         CreateResourceRunner runner = new CreateResourceRunner(this, request.getParentResourceId(), facet, request
             .getRequestId(), report, configuration.isInsideAgent());
         executor.submit((Runnable) runner);
     }
 
+    @SuppressWarnings("unchecked")
     public DeleteResourceResponse executeDeleteResourceImmediately(DeleteResourceRequest request)
         throws PluginContainerException {
         int resourceId = request.getResourceId();
@@ -235,7 +269,7 @@ public class ResourceFactoryManager extends AgentService implements ContainerSer
      */
     private DeleteResourceFacet getDeleteResourceFacet(int resourceId) throws PluginContainerException {
         DeleteResourceFacet facet = ComponentUtil.getComponent(resourceId, DeleteResourceFacet.class,
-            FacetLockType.WRITE, FACET_METHOD_TIMEOUT, false, true);
+            FacetLockType.WRITE, FACET_DELETE_TIMEOUT, false, true);
         return facet;
     }
 
@@ -243,27 +277,20 @@ public class ResourceFactoryManager extends AgentService implements ContainerSer
      * Returns the component that should be used to create the resource in the given request.
      *
      * @param  parentResourceId identifies the parent under which the new resource will be created
+     * @param  timeout the agent side timeout for the resource creation. if null or unusable use FACET_CREATE_TIMEOUT. 
      *
      * @return component used to create the resource
      *
      * @throws PluginContainerException if the resource component required to create the resource does not implement the
      *                                  correct facet
      */
-    private CreateChildResourceFacet getCreateChildResourceFacet(int parentResourceId) throws PluginContainerException {
+    private CreateChildResourceFacet getCreateChildResourceFacet(int parentResourceId, Integer timeout)
+        throws PluginContainerException {
+        int createTimeout = (null == timeout || timeout < 1) ? FACET_CREATE_TIMEOUT : timeout;
+
         CreateChildResourceFacet facet = ComponentUtil.getComponent(parentResourceId, CreateChildResourceFacet.class,
-            FacetLockType.WRITE, FACET_METHOD_TIMEOUT, false, true);
+            FacetLockType.WRITE, createTimeout, false, true);
         return facet;
     }
 
-    @Nullable
-    private PackageType getPackageType(ResourceType resourceType, String packageTypeName) {
-        Set<PackageType> packageTypes = resourceType.getPackageTypes();
-        for (PackageType packageType : packageTypes) {
-            if (packageType.getName().equals(packageTypeName)) {
-                return packageType;
-            }
-        }
-
-        return null;
-    }
 }

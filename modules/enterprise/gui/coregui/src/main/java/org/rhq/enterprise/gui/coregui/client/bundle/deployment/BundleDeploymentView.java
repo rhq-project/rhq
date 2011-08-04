@@ -23,14 +23,13 @@
 package org.rhq.enterprise.gui.coregui.client.bundle.deployment;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.AnimationEffect;
 import com.smartgwt.client.types.AutoFitWidthApproach;
-import com.smartgwt.client.types.DateDisplayFormat;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.util.BooleanCallback;
 import com.smartgwt.client.util.SC;
@@ -74,10 +73,12 @@ import org.rhq.enterprise.gui.coregui.client.bundle.revert.BundleRevertWizard;
 import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
 import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
+import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagEditorView;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagsChangedCallback;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
@@ -87,8 +88,6 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Greg Hinkle
  */
 public class BundleDeploymentView extends LocatableVLayout implements BookmarkableView {
-    private BundleGWTServiceAsync bundleService;
-
     private BundleDeployment deployment;
     private BundleVersion version;
     private Bundle bundle;
@@ -149,7 +148,7 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
         LinkItem bundleName = new LinkItem("bundle");
         bundleName.setTitle(MSG.view_bundle_bundle());
         bundleName.setValue(LinkManager.getBundleLink(bundle.getId()));
-        bundleName.setLinkTitle(bundle.getName());
+        bundleName.setLinkTitle(StringUtility.escapeHtml(bundle.getName()));
         bundleName.setTarget("_self");
 
         CanvasItem actionItem = new CanvasItem("actions");
@@ -166,8 +165,8 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
         bundleVersionName.setTarget("_self");
 
         StaticTextItem deployed = new StaticTextItem("deployed", MSG.view_bundle_deployed());
-        deployed.setDateFormatter(DateDisplayFormat.TOLOCALESTRING);
-        deployed.setValue(new Date(deployment.getCtime()));
+        deployed.setValue(TimestampCellFormatter.format(deployment.getCtime(),
+            TimestampCellFormatter.DATE_TIME_FORMAT_FULL));
 
         StaticTextItem deployedBy = new StaticTextItem("deployedBy", MSG.view_bundle_deploy_deployedBy());
         deployedBy.setValue(deployment.getSubjectName());
@@ -175,14 +174,17 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
         LinkItem destinationGroup = new LinkItem("group");
         destinationGroup.setTitle(MSG.common_title_resource_group());
         destinationGroup.setValue(LinkManager.getResourceGroupLink(deployment.getDestination().getGroup().getId()));
-        destinationGroup.setLinkTitle(deployment.getDestination().getGroup().getName());
+        destinationGroup.setLinkTitle(StringUtility.escapeHtml((deployment.getDestination().getGroup().getName())));
         destinationGroup.setTarget("_self");
+
+        StaticTextItem destBaseDir = new StaticTextItem("destBaseDir", MSG.view_bundle_dest_baseDirName());
+        destBaseDir.setValue(deployment.getDestination().getDestinationBaseDirectoryName());
 
         StaticTextItem path = new StaticTextItem("path", MSG.view_bundle_deployDir());
         path.setValue(deployment.getDestination().getDeployDir());
 
         StaticTextItem description = new StaticTextItem("description", MSG.common_title_description());
-        description.setValue(deployment.getDescription());
+        description.setValue(StringUtility.escapeHtml(deployment.getDescription()));
 
         StaticTextItem status = new StaticTextItem("status", MSG.common_title_status());
         status.setValue(deployment.getStatus().name());
@@ -202,8 +204,8 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
             });
         }
 
-        form.setFields(bundleName, deployed, actionItem, bundleVersionName, deployedBy, destinationGroup, path,
-            description, status);
+        form.setFields(bundleName, bundleVersionName, actionItem, deployed, deployedBy, destinationGroup, destBaseDir,
+            description, path, status);
 
         return form;
     }
@@ -211,7 +213,11 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
     private Canvas getActionLayout(String locatorId) {
         LocatableVLayout actionLayout = new LocatableVLayout(locatorId, 10);
 
-        // we can only revert the live deployments, only show revert button when appropriate 
+        // we can only revert the live deployments, only show revert button when appropriate
+        // in addition, we provide a purge button if you are viewing the live deployment, so
+        // they can be shown an option to purge the platform content (since only the "live"
+        // deployment represents content on the remote machines, showing purge only for live
+        // deployments makes sense).
         if (deployment.isLive()) {
             IButton revertButton = new LocatableIButton(actionLayout.extendLocatorId("Revert"), MSG
                 .view_bundle_revert());
@@ -222,8 +228,44 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
                 }
             });
             actionLayout.addMember(revertButton);
+
+            IButton purgeButton = new LocatableIButton(actionLayout.extendLocatorId("Purge"), MSG.view_bundle_purge());
+            purgeButton.setIcon("subsystems/bundle/BundleDestinationAction_Purge_16.png");
+            purgeButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
+                public void onClick(com.smartgwt.client.widgets.events.ClickEvent clickEvent) {
+                    SC.ask(MSG.view_bundle_dest_purgeConfirm(), new BooleanCallback() {
+                        public void execute(Boolean aBoolean) {
+                            if (aBoolean) {
+                                final int destinationId = deployment.getDestination().getId();
+                                final String destinationName = deployment.getDestination().getName();
+                                BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService(600000); // 10m should be enough right?
+                                bundleService.purgeBundleDestination(destinationId, new AsyncCallback<Void>() {
+                                    @Override
+                                    public void onFailure(Throwable caught) {
+                                        CoreGUI.getErrorHandler().handleError(
+                                            MSG.view_bundle_dest_purgeFailure(destinationName), caught);
+                                    }
+
+                                    @Override
+                                    public void onSuccess(Void result) {
+                                        CoreGUI.getMessageCenter().notify(
+                                            new Message(MSG.view_bundle_dest_purgeSuccessful(destinationName),
+                                                Message.Severity.Info));
+                                        // Bundle destination is purged, go back to bundle deployment view - it is not live anymore
+                                        CoreGUI.goToView(LinkManager.getBundleDeploymentLink(bundle.getId(), deployment
+                                            .getId()), true);
+                                    }
+                                });
+                            }
+                        }
+                    });
+                }
+            });
+            actionLayout.addMember(purgeButton);
+
             if (!canManageBundles) {
                 revertButton.setDisabled(true);
+                purgeButton.setDisabled(true);
             }
         }
 
@@ -235,6 +277,7 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
                 SC.ask(MSG.view_bundle_deploy_deleteConfirm(), new BooleanCallback() {
                     public void execute(Boolean aBoolean) {
                         if (aBoolean) {
+                            BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService();
                             bundleService.deleteBundleDeployment(deployment.getId(), new AsyncCallback<Void>() {
                                 public void onFailure(Throwable caught) {
                                     CoreGUI.getErrorHandler().handleError(
@@ -247,7 +290,7 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
                                             Message.Severity.Info));
                                     // Bundle deployment is deleted, go back to main bundle destinations view
                                     CoreGUI.goToView(LinkManager.getBundleDestinationLink(bundle.getId(), deployment
-                                        .getDestination().getId()));
+                                        .getDestination().getId()), true);
                                 }
                             });
                         }
@@ -288,35 +331,36 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
         return tagEditor;
     }
 
+    @SuppressWarnings("unchecked")
     private Table addMemberDeploymentsTable() {
         Table table = new Table(extendLocatorId("Deployments"), MSG.view_bundle_deploy_deploymentPlatforms());
 
         table.setTitleComponent(new HTMLFlow(MSG.view_bundle_deploy_selectARow()));
 
         // resource icon field
+        ResourceCategory resourceCategory = deployment.getDestination().getGroup().getResourceType().getCategory();
         ListGridField resourceIcon = new ListGridField("resourceAvailability");
         HashMap<String, String> icons = new HashMap<String, String>();
-        icons.put(AvailabilityType.UP.name(), ImageManager.getResourceIcon(ResourceCategory.PLATFORM, Boolean.TRUE));
-        icons.put(AvailabilityType.DOWN.name(), ImageManager.getResourceIcon(ResourceCategory.PLATFORM, Boolean.FALSE));
+        icons.put(AvailabilityType.UP.name(), ImageManager.getResourceIcon(resourceCategory, Boolean.TRUE));
+        icons.put(AvailabilityType.DOWN.name(), ImageManager.getResourceIcon(resourceCategory, Boolean.FALSE));
         resourceIcon.setValueIcons(icons);
         resourceIcon.setValueIconSize(16);
         resourceIcon.setType(ListGridFieldType.ICON);
         resourceIcon.setWidth(40);
 
         // resource field
-        ListGridField resource = new ListGridField("resource", MSG.common_title_platform());
-        resource.setAutoFitWidth(true);
-        resource.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
+        ListGridField resource = new ListGridField("resource", MSG.common_title_resource());
+        resource.setWidth("*");
         resource.setCellFormatter(new CellFormatter() {
-            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
+            public String format(Object value, ListGridRecord listGridRecord, int i, int i1) {
                 return "<a href=\"" + LinkManager.getResourceLink(listGridRecord.getAttributeAsInt("resourceId"))
-                    + "\">" + o + "</a>";
+                    + "\">" + StringUtility.escapeHtml(String.valueOf(value)) + "</a>";
 
             }
         });
 
         // resource version field
-        ListGridField resourceVersion = new ListGridField("resourceVersion", MSG.view_bundle_deploy_operatingSystem());
+        ListGridField resourceVersion = new ListGridField("resourceVersion", MSG.common_title_version());
         resourceVersion.setAutoFitWidth(true);
         resourceVersion.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
 
@@ -325,9 +369,10 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
         status.setValueIcons(statusIcons);
         status.setValueIconHeight(11);
         status.setValueIconWidth(11);
-        status.setWidth("*");
+        status.setShowValueIconOnly(true);
+        status.setWidth(60);
 
-        ArrayList<ListGridRecord> records = new ArrayList<ListGridRecord>();
+        List<ListGridRecord> records = new ArrayList<ListGridRecord>();
         for (BundleResourceDeployment rd : deployment.getResourceDeployments()) {
             ListGridRecord record = new ListGridRecord();
             Resource rr = rd.getResource();
@@ -384,7 +429,7 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
         criteria.fetchDestination(true);
         criteria.fetchTags(true);
 
-        bundleService = GWTServiceLookup.getBundleService();
+        final BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService();
         bundleService.findBundleDeploymentsByCriteria(criteria, new AsyncCallback<PageList<BundleDeployment>>() {
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError(MSG.view_bundle_deploy_loadFailure(), caught);

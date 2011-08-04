@@ -43,7 +43,7 @@ public class ResourceSearchAssistant extends TabAwareSearchAssistant {
         parameterizedContexts = Collections.unmodifiableList(Arrays.asList("alerts", "connection", "configuration",
             "trait"));
         simpleContexts = Collections.unmodifiableList(Arrays.asList("availability", "category", "type", "plugin",
-            "name"));
+            "name", "version"));
     }
 
     public ResourceSearchAssistant(Subject subject, String tab) {
@@ -164,6 +164,16 @@ public class ResourceSearchAssistant extends TabAwareSearchAssistant {
                 + conditionallyAddJPQLString("type.category", tab) //
                 + conditionallyAddAuthzFragment(getAuthzFragment()) //
                 + " ORDER BY res.name ");
+
+        } else if (context.equals("version")) {
+            return execute("" //
+                + "SELECT DISTINCT res.version " //
+                + "  FROM Resource res, ResourceType type " //
+                + " WHERE res.resourceType = type " //
+                + conditionallyAddJPQLString("res.name", filter) //
+                + conditionallyAddJPQLString("type.category", tab) //
+                + conditionallyAddAuthzFragment(getAuthzFragment()) //
+                + " ORDER BY res.version ");
 
         } else if (context.equals("alerts")) {
             return filter(AlertPriority.class, filter, true);

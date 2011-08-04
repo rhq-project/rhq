@@ -89,7 +89,7 @@ public class SavedSearch implements Serializable {
     private Long resultCount;
 
     @JoinColumn(name = "SUBJECT_ID", nullable = false)
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     private Subject subject;
 
     @Column(name = "SUBJECT_ID", insertable = false, updatable = false)
@@ -241,6 +241,10 @@ public class SavedSearch implements Serializable {
         }
 
         if (!pattern.equals(other.pattern)) {
+            return false;
+        }
+
+        if (lastComputeTime != other.lastComputeTime) {
             return false;
         }
 

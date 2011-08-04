@@ -232,8 +232,11 @@ public class OperationManager extends AgentService implements OperationAgentServ
             PropertySimple timeoutProperty = paramConfig.getSimple(OperationDefinition.TIMEOUT_PARAM_NAME);
             if (timeoutProperty != null) {
                 try {
-                    paramConfig.remove(timeoutProperty.getName()); // we have to remove it since resources are not expecting it
-                    return timeoutProperty.getLongValue().longValue() * 1000L;
+                    paramConfig.remove(timeoutProperty.getName()); // we have to remove it since ResourceComponents are not expecting it
+                    Long timeout = timeoutProperty.getLongValue();
+                    if (timeout != null) {
+                        return timeout * 1000L;
+                    }
                 } catch (Exception e) {
                     throw new PluginContainerException("The timeout specified in the configuration was invalid: "
                         + timeoutProperty);

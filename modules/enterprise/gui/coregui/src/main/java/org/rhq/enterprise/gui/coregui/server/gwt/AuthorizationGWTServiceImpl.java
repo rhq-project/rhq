@@ -18,11 +18,11 @@
  */
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
 import org.rhq.core.domain.authz.Permission;
-import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.coregui.client.gwt.AuthorizationGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
@@ -42,7 +42,7 @@ public class AuthorizationGWTServiceImpl extends AbstractGWTServiceImpl implemen
             return SerialUtility.prepare(new HashSet<Permission>(authorizationManager.getExplicitResourcePermissions(
                 getSessionSubject(), resourceId)), "AuthorizationManager.getExplicitResourcePermissions");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -51,7 +51,7 @@ public class AuthorizationGWTServiceImpl extends AbstractGWTServiceImpl implemen
             return SerialUtility.prepare(new HashSet<Permission>(authorizationManager.getImplicitResourcePermissions(
                 getSessionSubject(), resourceId)), "AuthorizationManager.getImplicitResourcePermissions");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -60,7 +60,7 @@ public class AuthorizationGWTServiceImpl extends AbstractGWTServiceImpl implemen
             return SerialUtility.prepare(new HashSet<Permission>(authorizationManager.getExplicitGroupPermissions(
                 getSessionSubject(), groupId)), "AuthorizationManager.getExplicitGroupPermissions");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -69,7 +69,7 @@ public class AuthorizationGWTServiceImpl extends AbstractGWTServiceImpl implemen
             return SerialUtility.prepare(new HashSet<Permission>(authorizationManager.getImplicitGroupPermissions(
                 getSessionSubject(), groupId)), "AuthorizationManager.getImplicitGroupPermissions");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -79,7 +79,16 @@ public class AuthorizationGWTServiceImpl extends AbstractGWTServiceImpl implemen
                 .getExplicitGlobalPermissions(getSessionSubject())),
                 "AuthorizationManager.getExplicitGlobalPermissions");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    public boolean hasResourcePermission(Permission permission, Collection<Integer> resourceIds) {
+        try {
+            boolean result = authorizationManager.hasResourcePermission(getSessionSubject(), permission, resourceIds);
+            return result;
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
         }
     }
 

@@ -34,7 +34,6 @@ import javax.transaction.TransactionManager;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.configuration.DynamicConfigurationPropertyValue;
 import org.rhq.core.domain.content.PackageType;
@@ -63,32 +62,32 @@ public class DynamicConfigurationPropertyBeanTest extends AbstractEJB3Test {
         List<DynamicConfigurationPropertyValue> stringList = bean.lookupValues("foo");
 
         //Verify
-        assert stringList !=null;
+        assert stringList != null;
         assert stringList.size() == 0;
-   }
+    }
 
     @Test(enabled = ENABLED)
     public void user() throws Exception {
+        String queryString = "SELECT s FROM Subject s WHERE s.fsystem = false";
+
         // Setup
-        int existingUserCount = countForQuery(Subject.QUERY_FIND_ALL);
+        int existingUserCount = countForQuery(queryString, false);
 
         // Test
-        List<DynamicConfigurationPropertyValue> users =
-            bean.lookupValues(PropertyExpressionEvaluator.KEY_USERS);
+        List<DynamicConfigurationPropertyValue> users = bean.lookupValues(PropertyExpressionEvaluator.KEY_USERS);
 
         // Verify
         outputList(users);
         assert users.size() == existingUserCount : "Expected: " + existingUserCount + ", Found: " + users.size();
-  }
+    }
 
     @Test(enabled = ENABLED)
-    public void roles() throws Exception{
+    public void roles() throws Exception {
         // Setup
         int existingRoleCount = countForQuery(Role.QUERY_FIND_ALL);
 
         // Test
-        List<DynamicConfigurationPropertyValue> roles =
-            bean.lookupValues(PropertyExpressionEvaluator.KEY_ROLES);
+        List<DynamicConfigurationPropertyValue> roles = bean.lookupValues(PropertyExpressionEvaluator.KEY_ROLES);
 
         // Verify
         outputList(roles);
@@ -112,8 +111,7 @@ public class DynamicConfigurationPropertyBeanTest extends AbstractEJB3Test {
             packageType = new PackageType("dynamicConfigPropBeanTestType", resourceType);
             entityManager.persist(packageType);
             tx.commit();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             if (tx.getStatus() == Status.STATUS_ACTIVE) {
                 tx.rollback();
             }
@@ -123,8 +121,8 @@ public class DynamicConfigurationPropertyBeanTest extends AbstractEJB3Test {
         assert existingPackageTypes > 0 : "Package type created in setup was not written correctly";
 
         // Test
-        List<DynamicConfigurationPropertyValue> types =
-            bean.lookupValues(PropertyExpressionEvaluator.KEY_PACKAGE_TYPES);
+        List<DynamicConfigurationPropertyValue> types = bean
+            .lookupValues(PropertyExpressionEvaluator.KEY_PACKAGE_TYPES);
 
         // Verify
         assert types.size() == existingPackageTypes : "Expected: " + existingPackageTypes + ", Found: " + types.size();
@@ -138,12 +136,11 @@ public class DynamicConfigurationPropertyBeanTest extends AbstractEJB3Test {
             resourceType = entityManager.find(ResourceType.class, resourceType.getId());
             entityManager.remove(resourceType);
 
-            packageType = entityManager.find(PackageType.class,  packageType.getId());
+            packageType = entityManager.find(PackageType.class, packageType.getId());
             entityManager.remove(packageType);
 
             tx.commit();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             if (tx.getStatus() == Status.STATUS_ACTIVE) {
                 tx.rollback();
             }
@@ -151,10 +148,16 @@ public class DynamicConfigurationPropertyBeanTest extends AbstractEJB3Test {
     }
 
     private int countForQuery(String queryName) throws NotSupportedException, SystemException {
+        return countForQuery(queryName, true);
+    }
+
+    @SuppressWarnings("unchecked")
+    private int countForQuery(String queryString, boolean isName) throws NotSupportedException, SystemException {
+
         getTransactionManager().begin();
         EntityManager entityManager = getEntityManager();
 
-        Query query = entityManager.createNamedQuery(queryName);
+        Query query = (isName) ? entityManager.createNamedQuery(queryString) : entityManager.createQuery(queryString);
         List existing = query.getResultList();
 
         int count = existing.size();

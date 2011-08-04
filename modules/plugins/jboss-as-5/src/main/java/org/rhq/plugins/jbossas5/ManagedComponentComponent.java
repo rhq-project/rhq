@@ -148,7 +148,8 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
     public Configuration loadResourceConfiguration() {
         Configuration resourceConfig;
         try {
-            Map<String, ManagedProperty> managedProperties = getManagedComponent().getProperties();
+            ManagedComponent managedComponent = getManagedComponent(true);
+            Map<String, ManagedProperty> managedProperties = managedComponent.getProperties();
             Map<String, PropertySimple> customProps = ResourceComponentUtils.getCustomProperties(getResourceContext()
                 .getPluginConfiguration());
             if (this.log.isDebugEnabled())
@@ -172,7 +173,7 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
         Configuration resourceConfig = configurationUpdateReport.getConfiguration();
         Configuration pluginConfig = getResourceContext().getPluginConfiguration();
         try {
-            ManagedComponent managedComponent = getManagedComponent();
+            ManagedComponent managedComponent = getManagedComponent(true);
             Map<String, ManagedProperty> managedProperties = managedComponent.getProperties();
             Map<String, PropertySimple> customProps = ResourceComponentUtils.getCustomProperties(pluginConfig);
             if (this.log.isDebugEnabled())

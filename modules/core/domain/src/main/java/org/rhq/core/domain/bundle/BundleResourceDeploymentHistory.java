@@ -68,7 +68,7 @@ public class BundleResourceDeploymentHistory implements Serializable {
     private int id;
 
     @JoinColumn(name = "BUNDLE_RES_DEPLOY_ID", referencedColumnName = "ID", nullable = false)
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     private BundleResourceDeployment resourceDeployment;
 
     @Column(name = "SUBJECT_NAME", nullable = true)
@@ -209,7 +209,8 @@ public class BundleResourceDeploymentHistory implements Serializable {
     public enum Status {
         SUCCESS("Success"), //
         FAILURE("Failure"), //
-        WARN("Warning");
+        WARN("Warning"), //
+        INFO("Information"); // used mainly for informational audit messages
 
         private String displayName;
 

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -21,6 +21,7 @@ package org.rhq.enterprise.server.resource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.annotation.PostConstruct;
@@ -44,13 +45,14 @@ import org.rhq.core.db.SQLServerDatabaseType;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.ResourceAvailability;
+import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 
 /**
- * A manager that provides methods for manipulating and querying the cached current availability for resources.
+ * A manager that provides methods for manipulating and querying the cached current availability for Resources.
  *
  * @author Joseph Marques
  */
@@ -65,6 +67,7 @@ public class ResourceAvailabilityManagerBean implements ResourceAvailabilityMana
 
     @javax.annotation.Resource(name = "RHQ_DS")
     private DataSource rhqDs;
+
     private DatabaseType dbType;
 
     @EJB
@@ -84,16 +87,11 @@ public class ResourceAvailabilityManagerBean implements ResourceAvailabilityMana
     }
 
     public void insertNeededAvailabilityForImportedResources(List<Integer> resourceIds) {
-        // Hibernate diddn't want to swallow ResourceAvailability.INSERT_BY_RESOURCE_IDS, so had to go native
+        // Hibernate didn't want to swallow ResourceAvailability.INSERT_BY_RESOURCE_IDS, so we had to go native.
         Connection conn = null;
         PreparedStatement ps = null;
         try {
-            int[] values = new int[resourceIds.size()];
-            for (int i = 0; i < resourceIds.size(); i++) {
-                values[i] = resourceIds.get(i);
-            }
-
-            String query = null;
+            String query;
             if (dbType instanceof SQLServerDatabaseType) {
                 query = "" //
                     + "INSERT INTO RHQ_RESOURCE_AVAIL ( RESOURCE_ID ) " //
@@ -111,7 +109,7 @@ public class ResourceAvailabilityManagerBean implements ResourceAvailabilityMana
                     + "      WHERE res.ID IN ( :resourceIds ) " //
                     + "        AND avail.ID IS NULL ";
 
-                String nextValSqlFragment = null;
+                String nextValSqlFragment;
                 if (dbType instanceof PostgresqlDatabaseType) {
                     nextValSqlFragment = "nextval('%s_id_seq'::text)";
                 } else if (dbType instanceof OracleDatabaseType) {
@@ -126,13 +124,26 @@ public class ResourceAvailabilityManagerBean implements ResourceAvailabilityMana
                 query = String.format(query, nextValSql);
             }
 
-            query = JDBCUtil.transformQueryForMultipleInParameters(query, ":resourceIds", values.length);
             conn = rhqDs.getConnection();
-            ps = conn.prepareStatement(query);
-            JDBCUtil.bindNTimes(ps, values, 1);
-            ps.execute();
+
+            // Do one query per 1000 Resource id's to prevent Oracle from failing because of an IN clause with more
+            // than 1000 items.
+            int[] resourceIdArray = ArrayUtils.unwrapCollection(resourceIds);
+            int fromIndex = 0;
+            while (fromIndex < resourceIdArray.length) {
+                int toIndex = (resourceIdArray.length < (fromIndex + 1000)) ? resourceIdArray.length : (fromIndex + 1000);
+
+                int[] resourceIdSubArray = Arrays.copyOfRange(resourceIdArray, fromIndex, toIndex);
+                String transformedQuery = JDBCUtil.transformQueryForMultipleInParameters(query, ":resourceIds",
+                        resourceIdSubArray.length);
+                ps = conn.prepareStatement(transformedQuery);
+                JDBCUtil.bindNTimes(ps, resourceIdSubArray, 1);
+                ps.execute();
+
+                fromIndex = toIndex;
+            }
         } catch (SQLException e) {
-            log.warn("Could not create default  metrics for schedules: " + e.getMessage());
+            log.warn("Could not insert cached current availabilities for newly imported Resources: " + e);
         } finally {
             JDBCUtil.safeClose(ps);
             JDBCUtil.safeClose(conn);
@@ -164,4 +175,5 @@ public class ResourceAvailabilityManagerBean implements ResourceAvailabilityMana
         query.setParameter("agentId", agentId);
         query.executeUpdate();
     }
+
 }

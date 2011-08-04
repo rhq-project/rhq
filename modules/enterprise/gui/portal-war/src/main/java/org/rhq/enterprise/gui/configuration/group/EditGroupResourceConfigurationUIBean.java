@@ -67,8 +67,6 @@ public class EditGroupResourceConfigurationUIBean extends AbstractGroupResourceC
         try {
             // TODO: See if there's some way for the config renderer to handle calling applyGroupConfiguration(),
             //       so the managed bean doesn't have to worry about doing it.
-            getConfigurationSet().unmask();
-
             getConfigurationSet().applyGroupConfiguration();
             getConfigurationManager().scheduleGroupResourceConfigurationUpdate(
                 EnterpriseFacesContextUtility.getSubject(), getGroup().getId(), getResourceConfigurations());

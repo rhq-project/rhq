@@ -57,7 +57,6 @@ public class DynamicCallbackFormImpl {
      * Hooks the iframe's onLoad event and the form's onSubmit event.
      *
      * @param iframe   the iframe whose onLoad event is to be hooked
-     * @param form     the form whose onSubmit event is to be hooked
      * @param listener the listener to receive notification
      */
     public native void hookEvents(Element iframe,
@@ -78,7 +77,7 @@ public class DynamicCallbackFormImpl {
     /**
      * Submits a form.
      *
-     * @param form   the form to be submitted
+     * @param action the submit action
      * @param iframe the iframe that is targetted, or <code>null</code>
      */
     public native void submit(String action, Element iframe) /*-{
@@ -92,7 +91,6 @@ public class DynamicCallbackFormImpl {
      * Unhooks the iframe's onLoad event.
      *
      * @param iframe the iframe whose onLoad event is to be unhooked
-     * @param form   the form whose onSubmit event is to be unhooked
      */
     public native void unhookEvents(Element iframe) /*-{
     if (iframe)

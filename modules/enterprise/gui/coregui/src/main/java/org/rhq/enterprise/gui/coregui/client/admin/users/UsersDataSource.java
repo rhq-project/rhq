@@ -51,10 +51,11 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
  * @author Greg Hinkle
  * @author Ian Springer
  */
-public class UsersDataSource extends RPCDataSource<Subject> {
+public class UsersDataSource extends RPCDataSource<Subject, SubjectCriteria> {
 
     private static UsersDataSource INSTANCE;
-    private static final String EMAIL_ADDRESS_REGEXP = "^([a-zA-Z0-9_.\\-+])+@(([a-zA-Z0-9\\-])+\\.)+[a-zA-Z0-9]{2,4}$";
+
+    private static final String EMAIL_ADDRESS_REGEXP = "^([a-zA-Z0-9_.\\-+])+@([a-zA-Z0-9\\-])+(\\.([a-zA-Z0-9\\-])+)*$";
     private static final String MASKED_PASSWORD_VALUE = "XXXXXXXX";
 
     public static abstract class Field {
@@ -106,7 +107,9 @@ public class UsersDataSource extends RPCDataSource<Subject> {
         fields.add(idDataField);
 
         DataSourceTextField usernameField = createTextField(Field.NAME, MSG.dataSource_users_field_name(), 3, 100, true);
-
+        // Don't allow characters that could be used in HTML intended for an XSS attack.
+        RegExpValidator regExpValidator = new RegExpValidator("[^&<]*");
+        usernameField.setValidators(regExpValidator);
         fields.add(usernameField);
 
         DataSourceTextField ldapField = createBooleanField(Field.LDAP, MSG.dataSource_users_field_ldap(), true);
@@ -125,7 +128,7 @@ public class UsersDataSource extends RPCDataSource<Subject> {
             .dataSource_users_field_passwordVerify(), 100, true);
         MatchesFieldValidator passwordsEqualValidator = new MatchesFieldValidator();
         passwordsEqualValidator.setOtherField(Field.PASSWORD);
-        passwordsEqualValidator.setErrorMessage("Passwords do not match.");
+        passwordsEqualValidator.setErrorMessage(MSG.dataSource_users_passwordsDoNotMatch());
         passwordVerifyField.setValidators(passwordsEqualValidator);
         fields.add(passwordVerifyField);
 
@@ -141,7 +144,7 @@ public class UsersDataSource extends RPCDataSource<Subject> {
             .dataSource_users_field_emailAddress(), null, 100, true);
         fields.add(emailAddressField);
         RegExpValidator emailAddressValidator = new RegExpValidator(EMAIL_ADDRESS_REGEXP);
-        emailAddressValidator.setErrorMessage("Invalid email address.");
+        emailAddressValidator.setErrorMessage(MSG.dataSource_users_invalidEmailAddress());
         emailAddressField.setValidators(emailAddressValidator);
 
         DataSourceTextField phoneNumberField = createTextField(Field.PHONE_NUMBER, MSG
@@ -161,8 +164,8 @@ public class UsersDataSource extends RPCDataSource<Subject> {
         return fields;
     }
 
-    public void executeFetch(final DSRequest request, final DSResponse response) {
-        SubjectCriteria criteria = getFetchCriteria(request);
+    @Override
+    public void executeFetch(final DSRequest request, final DSResponse response, final SubjectCriteria criteria) {
 
         subjectService.findSubjectsByCriteria(criteria, new AsyncCallback<PageList<Subject>>() {
             public void onFailure(Throwable caught) {
@@ -328,6 +331,7 @@ public class UsersDataSource extends RPCDataSource<Subject> {
         return to;
     }
 
+    @Override
     protected SubjectCriteria getFetchCriteria(DSRequest request) {
         SubjectCriteria criteria = new SubjectCriteria();
 
@@ -350,6 +354,17 @@ public class UsersDataSource extends RPCDataSource<Subject> {
         //       count across the wire.  this count will not require permission checks at all.
 
         return criteria;
+    }
+
+    @Override
+    protected String getSortFieldForColumn(String columnName) {
+
+        // this is a calculated field, can't perform server-side sort
+        if (Field.LDAP.equals(columnName)) {
+            return null;
+        }
+
+        return super.getSortFieldForColumn(columnName);
     }
 
 }

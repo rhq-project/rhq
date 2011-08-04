@@ -23,7 +23,7 @@ import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 
 /**
- * @author Joseph Marques
+ * @author Jay Shaughnessy
  */
 public class ResourceAlertHistoryView extends AlertHistoryView {
     public static ResourceAlertHistoryView get(String locatorId, ResourceComposite composite) {

@@ -52,7 +52,7 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
  * @author Greg Hinkle
  * @author Ian Springer
  */
-public class RolesDataSource extends RPCDataSource<Role> {
+public class RolesDataSource extends RPCDataSource<Role, RoleCriteria> {
 
     public static abstract class Field {
         public static final String ID = "id";
@@ -91,7 +91,6 @@ public class RolesDataSource extends RPCDataSource<Role> {
         addFields(fields);
     }
 
-    // TODO: i18n field titles
     @Override
     protected List<DataSourceField> addDataSourceFields() {
         List<DataSourceField> fields = super.addDataSourceFields();
@@ -109,24 +108,25 @@ public class RolesDataSource extends RPCDataSource<Role> {
         fields.add(descriptionField);
 
         DataSourceField resourceGroupsField = new DataSourceField(Field.RESOURCE_GROUPS, FieldType.ANY,
-            "Resource Groups");
+           MSG.datasource_roles_field_resourceGroups());
         fields.add(resourceGroupsField);
 
-        DataSourceField permissionsField = new DataSourceField(Field.PERMISSIONS, FieldType.ANY, "Permissions");
+        DataSourceField permissionsField = new DataSourceField(Field.PERMISSIONS, FieldType.ANY,
+                MSG.datasource_roles_field_permissions());
         fields.add(permissionsField);
 
-        DataSourceField subjectsField = new DataSourceField(Field.SUBJECTS, FieldType.ANY, "Subjects");
+        DataSourceField subjectsField = new DataSourceField(Field.SUBJECTS, FieldType.ANY,
+                MSG.datasource_roles_field_subjects());
         fields.add(subjectsField);
 
-        DataSourceField ldapGroupsField = new DataSourceField(Field.LDAP_GROUPS, FieldType.ANY, "LDAP Groups");
+        DataSourceField ldapGroupsField = new DataSourceField(Field.LDAP_GROUPS, FieldType.ANY,
+                MSG.datasource_roles_field_ldapGroups());
         fields.add(ldapGroupsField);
 
         return fields;
     }
 
-    public void executeFetch(final DSRequest request, final DSResponse response) {
-        RoleCriteria criteria = getFetchCriteria(request);
-
+    public void executeFetch(final DSRequest request, final DSResponse response, final RoleCriteria criteria) {
         roleService.findRolesByCriteria(criteria, new AsyncCallback<PageList<Role>>() {
             public void onFailure(Throwable caught) {
                 sendFailureResponse(request, response, MSG.view_adminRoles_failRoles(), caught);
@@ -142,7 +142,6 @@ public class RolesDataSource extends RPCDataSource<Role> {
     protected void executeAdd(Record recordToAdd, final DSRequest request, final DSResponse response) {
         Role roleToAdd = copyValues(recordToAdd);
 
-        final String rolename = roleToAdd.getName();
         roleService.createRole(roleToAdd, new AsyncCallback<Role>() {
             public void onFailure(Throwable caught) {
                 throw new RuntimeException(caught);
@@ -235,8 +234,8 @@ public class RolesDataSource extends RPCDataSource<Role> {
 
         if (cascade) {
             Set<ResourceGroup> resourceGroups = sourceRole.getResourceGroups();
-            ListGridRecord[] resourceGroupRecords = ResourceGroupsDataSource.getInstance().buildRecords(
-                resourceGroups, false);
+            ListGridRecord[] resourceGroupRecords = ResourceGroupsDataSource.getInstance().buildRecords(resourceGroups,
+                false);
             targetRecord.setAttribute(Field.RESOURCE_GROUPS, resourceGroupRecords);
 
             Set<Subject> subjects = sourceRole.getSubjects();
@@ -244,8 +243,8 @@ public class RolesDataSource extends RPCDataSource<Role> {
             targetRecord.setAttribute(Field.SUBJECTS, subjectRecords);
 
             Set<LdapGroup> ldapGroups = sourceRole.getLdapGroups();
-            ListGridRecord[] ldapGroupRecords = new RoleLdapGroupSelector.LdapGroupsDataSource().buildRecords(
-                ldapGroups);
+            ListGridRecord[] ldapGroupRecords = new RoleLdapGroupSelector.LdapGroupsDataSource()
+                .buildRecords(ldapGroups);
             targetRecord.setAttribute(Field.LDAP_GROUPS, ldapGroupRecords);
         }
 
@@ -254,6 +253,8 @@ public class RolesDataSource extends RPCDataSource<Role> {
 
     public static Set<Permission> toPermissionSet(Record[] permissionRecords) {
         Set<Permission> permissions = new HashSet<Permission>();
+        // VIEW_RESOURCE is implied, so make sure it's always in the returned Set.
+        permissions.add(Permission.VIEW_RESOURCE);
         for (Record permissionRecord : permissionRecords) {
             String permissionName = permissionRecord.getAttribute("name");
             Permission permission = Permission.valueOf(permissionName);
@@ -273,7 +274,7 @@ public class RolesDataSource extends RPCDataSource<Role> {
         return permissionRecords;
     }
 
-    private RoleCriteria getFetchCriteria(DSRequest request) {
+    protected RoleCriteria getFetchCriteria(DSRequest request) {
         RoleCriteria criteria = new RoleCriteria();
 
         // Pagination
@@ -283,7 +284,7 @@ public class RolesDataSource extends RPCDataSource<Role> {
         Integer id = getFilter(request, Field.ID, Integer.class);
         criteria.addFilterId(id);
 
-        Integer subjectId = request.getCriteria().getAttributeAsInt(CriteriaField.SUBJECT_ID);
+        Integer subjectId = getFilter(request, CriteriaField.SUBJECT_ID, Integer.class);
         if (subjectId != null) {
             criteria.addFilterSubjectId(subjectId);
         }

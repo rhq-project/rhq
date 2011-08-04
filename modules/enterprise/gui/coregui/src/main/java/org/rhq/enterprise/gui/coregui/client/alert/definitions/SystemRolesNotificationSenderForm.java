@@ -103,20 +103,21 @@ public class SystemRolesNotificationSenderForm extends AbstractNotificationSende
     }
 
     @Override
-    public boolean validate() {
+    public void validate(AsyncCallback<Void> callback) {
         if (selector != null) {
             try {
                 Set<Integer> selectedIds = selector.getSelection();
                 String newPropValue = fence(selectedIds);
                 getConfiguration().put(new PropertySimple(PROPNAME, newPropValue));
-                return true;
+                callback.onSuccess(null);
             } catch (Exception e) {
                 CoreGUI.getErrorHandler().handleError(MSG.view_alert_definition_notification_role_editor_saveFailed(),
                     e);
-                return false;
+                callback.onFailure(null);
             }
+        } else {
+            callback.onSuccess(null);
         }
-        return true;
     }
 
     @SuppressWarnings("unchecked")
@@ -160,7 +161,7 @@ public class SystemRolesNotificationSenderForm extends AbstractNotificationSende
         return builder.toString();
     }
 
-    private class RoleSelector extends AbstractSelector<Role> {
+    private class RoleSelector extends AbstractSelector<Role, RoleCriteria> {
         public RoleSelector(String id, Collection<Role> roles) {
             super(id);
             if (roles != null) {
@@ -170,7 +171,7 @@ public class SystemRolesNotificationSenderForm extends AbstractNotificationSende
         }
 
         @Override
-        protected RPCDataSource<Role> getDataSource() {
+        protected RPCDataSource<Role, RoleCriteria> getDataSource() {
             return new RolesDataSource();
         }
 

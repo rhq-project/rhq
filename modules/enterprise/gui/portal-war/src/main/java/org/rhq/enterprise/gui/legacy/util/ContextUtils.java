@@ -24,8 +24,9 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+
 import javax.servlet.ServletContext;
-import org.rhq.enterprise.gui.legacy.AttrConstants;
+
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -248,31 +249,11 @@ public class ContextUtils {
     public static boolean usingLDAPAuthentication(ServletContext context) throws Exception {
         String provider = (String) context.getAttribute(Constants.JAAS_PROVIDER_CTX_ATTR);
         if (provider == null) {
-            provider = LookupUtil.getSystemManager().getSystemConfiguration().getProperty(RHQConstants.JAASProvider);
+            provider = LookupUtil.getSystemManager().getSystemConfiguration(
+                LookupUtil.getSubjectManager().getOverlord()).getProperty(RHQConstants.JAASProvider);
             context.setAttribute(Constants.JAAS_PROVIDER_CTX_ATTR, provider);
         }
 
         return (provider != null) && provider.equals(RHQConstants.LDAPJAASProvider);
-    }
-
-    public static boolean updateMonitoringEnabled(ServletContext context) {
-        boolean enabled;
-        try {
-            enabled = LookupUtil.getSystemManager().isMonitoringEnabled();
-        } catch (Exception e) {
-            enabled = false;
-        }
-
-        context.setAttribute(AttrConstants.MONITOR_ENABLED, Boolean.valueOf(enabled));
-        return enabled;
-    }
-
-    public static boolean monitoringEnabled(ServletContext context) {
-        Boolean enabled = (Boolean) context.getAttribute(AttrConstants.MONITOR_ENABLED);
-        if (enabled == null) {
-            return updateMonitoringEnabled(context);
-        } else {
-            return enabled;
-        }
     }
 }

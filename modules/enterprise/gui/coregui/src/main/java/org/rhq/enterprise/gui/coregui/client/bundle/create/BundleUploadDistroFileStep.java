@@ -46,8 +46,10 @@ import org.rhq.enterprise.gui.coregui.client.components.upload.TextFileRetriever
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 public class BundleUploadDistroFileStep extends AbstractWizardStep {
@@ -68,14 +70,19 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
         this.wizard = bundleCreationWizard;
     }
 
-    public Canvas getCanvas() {
+    public Canvas getCanvas(Locatable parent) {
         if (mainCanvasForm == null) {
             LinkedHashMap<String, DynamicForm> radioItems = new LinkedHashMap<String, DynamicForm>();
             radioItems.put(URL_OPTION, createUrlForm());
             radioItems.put(UPLOAD_OPTION, createUploadForm());
             radioItems.put(RECIPE_OPTION, createRecipeForm());
 
-            mainCanvasForm = new DynamicForm();
+            if (parent != null) {
+                mainCanvasForm = new RadioDynamicForm(parent.extendLocatorId("mainCanvasForm"));
+            } else {
+                mainCanvasForm = new RadioDynamicForm("mainCanvasForm");
+            }
+
             radioGroup = new RadioGroupWithComponentsItem("bundleDistRadioGroup", MSG
                 .view_bundle_createWizard_bundleDistro(), radioItems, mainCanvasForm);
             radioGroup.setShowTitle(false);
@@ -213,7 +220,7 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
             return;
         }
 
-        BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
+        BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService(10 * 60 * 1000); // if upload takes more than 10m, you have other things to worry about
         bundleServer.createBundleVersionViaURL(urlString, new AsyncCallback<BundleVersion>() {
             public void onSuccess(BundleVersion result) {
                 CoreGUI.getMessageCenter().notify(
@@ -225,7 +232,9 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
             }
 
             public void onFailure(Throwable caught) {
-                wizard.getView().showMessage(caught.getMessage());
+                // Escape it, since it contains the URL, which the user entered.
+                String message = StringUtility.escapeHtml(caught.getMessage());
+                wizard.getView().showMessage(message);
                 CoreGUI.getErrorHandler().handleError(MSG.view_bundle_createWizard_createFailure(), caught);
                 wizard.setBundleVersion(null);
                 setButtonsDisableMode(false);
@@ -314,5 +323,19 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
             CoreGUI.getMessageCenter().notify(
                 new Message(MSG.view_bundle_createWizard_failedToUploadDistroFile(), errorMessage, Severity.Error));
         }
+    }
+
+    private class RadioDynamicForm extends LocatableDynamicForm {
+
+        public RadioDynamicForm(String locatorId) {
+            super(locatorId);
+        }
+
+        @Override
+        public void destroy() {
+            radioGroup.destroyComponents();
+            super.destroy();
+        }
+
     }
 }

@@ -24,9 +24,11 @@
 package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Set;
+import java.util.TreeSet;
 
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.widgets.form.DynamicForm;
@@ -39,6 +41,7 @@ import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
+import com.smartgwt.client.widgets.form.validator.IsFloatValidator;
 
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
@@ -302,7 +305,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
             newCondition.setName(measDef.getDisplayName()); // TODO should not use display name
             newCondition.setThreshold(Double.valueOf(getValueAsString(BASELINE_PERCENTAGE_ITEMNAME)) / 100.0);
             newCondition.setComparator(getValueAsString(BASELINE_COMPARATOR_ITEMNAME));
-            newCondition.setOption(null);
+            newCondition.setOption(getValueAsString(BASELINE_SELECTION_ITEMNAME));
             newCondition.setMeasurementDefinition(measDef);
             break;
         }
@@ -390,7 +393,9 @@ public class NewConditionEditor extends LocatableDynamicForm {
         absoluteValue.setWrapTitle(false);
         absoluteValue.setRequired(true);
         absoluteValue.setTooltip(MSG.view_alert_definition_condition_editor_metric_threshold_value_tooltip());
-
+        absoluteValue.setHoverWidth(200);
+        absoluteValue.setValidateOnChange(true);
+        absoluteValue.setValidators(new IsFloatValidator());
         absoluteValue.setShowIfCondition(ifFunc);
         formItems.add(absoluteValue);
 
@@ -415,7 +420,10 @@ public class NewConditionEditor extends LocatableDynamicForm {
         baselinePercentage.setWrapTitle(false);
         baselinePercentage.setRequired(true);
         baselinePercentage.setTooltip(MSG.view_alert_definition_condition_editor_metric_baseline_percentage_tooltip());
+        baselinePercentage.setHoverWidth(200);
         baselinePercentage.setShowIfCondition(ifFunc);
+        baselinePercentage.setValidateOnChange(true);
+        baselinePercentage.setValidators(new IsFloatValidator());
         formItems.add(baselinePercentage);
 
         SelectItem baselineSelection = new SelectItem(BASELINE_SELECTION_ITEMNAME, MSG
@@ -468,6 +476,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
         limits.put("MAX", MSG.view_alert_definition_condition_editor_common_max());
         minMaxAvgSelection
             .setTooltip(MSG.view_alert_definition_condition_editor_metric_calltime_common_limit_tooltip());
+        minMaxAvgSelection.setHoverWidth(200);
         minMaxAvgSelection.setValueMap(limits);
         minMaxAvgSelection.setDefaultValue("AVG");
         minMaxAvgSelection.setWrapTitle(false);
@@ -482,13 +491,17 @@ public class NewConditionEditor extends LocatableDynamicForm {
         absoluteValue.setWrapTitle(false);
         absoluteValue.setRequired(true);
         absoluteValue.setTooltip(MSG.view_alert_definition_condition_editor_metric_calltime_threshold_value_tooltip());
+        absoluteValue.setHoverWidth(200);
         absoluteValue.setShowIfCondition(ifFunc);
+        absoluteValue.setValidateOnChange(true);
+        absoluteValue.setValidators(new IsFloatValidator());
         formItems.add(absoluteValue);
 
         TextItem regex = new TextItem(CALLTIME_THRESHOLD_REGEX_ITEMNAME, MSG
             .view_alert_definition_condition_editor_metric_calltime_common_regex());
         regex.setRequired(false);
         regex.setTooltip(MSG.view_alert_definition_condition_editor_metric_calltime_common_regex_tooltip());
+        regex.setHoverWidth(200);
         regex.setWrapTitle(false);
         regex.setShowIfCondition(ifFunc);
         formItems.add(regex);
@@ -515,6 +528,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
         limits.put("MAX", MSG.view_alert_definition_condition_editor_common_max());
         minMaxAvgSelection
             .setTooltip(MSG.view_alert_definition_condition_editor_metric_calltime_common_limit_tooltip());
+        minMaxAvgSelection.setHoverWidth(200);
         minMaxAvgSelection.setValueMap(limits);
         minMaxAvgSelection.setDefaultValue("AVG");
         minMaxAvgSelection.setWrapTitle(false);
@@ -530,13 +544,17 @@ public class NewConditionEditor extends LocatableDynamicForm {
         percentage.setWrapTitle(false);
         percentage.setRequired(true);
         percentage.setTooltip(MSG.view_alert_definition_condition_editor_metric_calltime_change_percentage_tooltip());
+        percentage.setHoverWidth(200);
         percentage.setShowIfCondition(ifFunc);
+        percentage.setValidateOnChange(true);
+        percentage.setValidators(new IsFloatValidator());
         formItems.add(percentage);
 
         TextItem regex = new TextItem(CALLTIME_CHANGE_REGEX_ITEMNAME, MSG
             .view_alert_definition_condition_editor_metric_calltime_common_regex());
         regex.setRequired(false);
         regex.setTooltip(MSG.view_alert_definition_condition_editor_metric_calltime_common_regex_tooltip());
+        regex.setHoverWidth(200);
         regex.setWrapTitle(false);
         regex.setShowIfCondition(ifFunc);
         formItems.add(regex);
@@ -556,7 +574,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
         LinkedHashMap<String, String> traitsMap = new LinkedHashMap<String, String>();
         for (MeasurementDefinition def : this.resourceType.getMetricDefinitions()) {
             if (def.getDataType() == DataType.TRAIT) {
-                traitsMap.put(def.getName(), def.getDisplayName());
+                traitsMap.put(String.valueOf(def.getId()), def.getDisplayName());
             }
         }
 
@@ -664,6 +682,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
             .view_alert_definition_condition_editor_event_regex());
         eventRegex.setRequired(false);
         eventRegex.setTooltip(MSG.view_alert_definition_condition_editor_event_regex_tooltip());
+        eventRegex.setHoverWidth(200);
         eventRegex.setWrapTitle(false);
         eventRegex.setShowIfCondition(ifFunc);
         formItems.add(eventRegex);
@@ -686,10 +705,21 @@ public class NewConditionEditor extends LocatableDynamicForm {
     private SelectItem buildMetricDropDownMenu(String itemName, boolean dynamicOnly, FormItemIfFunction ifFunc) {
 
         LinkedHashMap<String, String> metricsMap = new LinkedHashMap<String, String>();
-        for (MeasurementDefinition def : this.resourceType.getMetricDefinitions()) {
+        TreeSet<MeasurementDefinition> sortedDefs = new TreeSet<MeasurementDefinition>(
+            new Comparator<MeasurementDefinition>() {
+
+                @Override
+                public int compare(MeasurementDefinition o1, MeasurementDefinition o2) {
+                    return o1.getDisplayName().compareTo(o2.getDisplayName());
+                }
+            });
+        sortedDefs.addAll(this.resourceType.getMetricDefinitions());
+
+        for (MeasurementDefinition def : sortedDefs) {
             if (def.getDataType() == DataType.MEASUREMENT) {
                 if (!dynamicOnly || def.getNumericType() == NumericType.DYNAMIC) {
-                    metricsMap.put(def.getName(), def.getDisplayName());
+                    // use id as opposed to name for key, the name is not unique when per-minute metric is also used 
+                    metricsMap.put(String.valueOf(def.getId()), def.getDisplayName());
                 }
             }
         }
@@ -709,7 +739,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
         LinkedHashMap<String, String> metricsMap = new LinkedHashMap<String, String>();
         for (MeasurementDefinition def : this.resourceType.getMetricDefinitions()) {
             if (def.getDataType() == DataType.CALLTIME) {
-                metricsMap.put(def.getName(), def.getDisplayName());
+                metricsMap.put(String.valueOf(def.getId()), def.getDisplayName());
             }
         }
 
@@ -739,6 +769,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
         comparatorSelection.setDefaultValue("<");
         comparatorSelection
             .setTooltip(MSG.view_alert_definition_condition_editor_metric_threshold_comparator_tooltip());
+        comparatorSelection.setHoverWidth(200);
         comparatorSelection.setShowIfCondition(ifFunc);
         return comparatorSelection;
     }
@@ -756,6 +787,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
         comparatorSelection.setDefaultValue("CH");
         comparatorSelection.setTooltip(MSG
             .view_alert_definition_condition_editor_metric_calltime_common_comparator_tooltip());
+        comparatorSelection.setHoverWidth(200);
         comparatorSelection.setShowIfCondition(ifFunc);
         return comparatorSelection;
     }
@@ -771,9 +803,10 @@ public class NewConditionEditor extends LocatableDynamicForm {
         return help;
     }
 
-    private MeasurementDefinition getMeasurementDefinition(String metricName) {
+    private MeasurementDefinition getMeasurementDefinition(String metricId) {
+        int id = Integer.valueOf(metricId).intValue();
         for (MeasurementDefinition def : this.resourceType.getMetricDefinitions()) {
-            if (metricName.equals(def.getName())) {
+            if (id == def.getId()) {
                 return def;
             }
         }

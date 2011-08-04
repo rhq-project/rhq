@@ -25,7 +25,6 @@ package org.rhq.enterprise.gui.coregui.client.bundle.destination;
 import java.util.HashMap;
 
 import com.smartgwt.client.data.Criteria;
-import com.smartgwt.client.types.DateDisplayFormat;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
 import com.smartgwt.client.widgets.events.DoubleClickHandler;
@@ -35,16 +34,16 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.bundle.BundleDeploymentStatus;
-import org.rhq.core.domain.bundle.BundleDestination;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
-import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
+import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 
 /**
  * @author Greg Hinkle
  */
-public class BundleDestinationListView extends Table<RPCDataSource<BundleDestination>> {
+public class BundleDestinationListView extends Table<BundleDestinationDataSource> {
 
     public BundleDestinationListView(String locatorId) {
         this(locatorId, null);
@@ -66,6 +65,8 @@ public class BundleDestinationListView extends Table<RPCDataSource<BundleDestina
             .view_bundle_bundle());
         ListGridField groupNameField = new ListGridField(BundleDestinationDataSource.FIELD_GROUP_NAME, MSG
             .view_bundle_dest_group());
+        ListGridField baseDirNameField = new ListGridField(BundleDestinationDataSource.FIELD_BASE_DIR_NAME, MSG
+            .view_bundle_dest_baseDirName());
         ListGridField deployDirField = new ListGridField(BundleDestinationDataSource.FIELD_DEPLOY_DIR, MSG
             .view_bundle_dest_deployDir());
         ListGridField latestDeploymentVersionField = new ListGridField(
@@ -76,27 +77,30 @@ public class BundleDestinationListView extends Table<RPCDataSource<BundleDestina
             BundleDestinationDataSource.FIELD_LATEST_DEPLOY_STATUS, MSG.view_bundle_dest_lastDeploymentStatus());
 
         latestDeploymentDateField.setType(ListGridFieldType.DATE);
-        latestDeploymentDateField.setDateFormatter(DateDisplayFormat.TOLOCALESTRING);
+        TimestampCellFormatter.prepareDateField(latestDeploymentDateField);
 
         nameField.setCellFormatter(new CellFormatter() {
-            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
+            public String format(Object value, ListGridRecord listGridRecord, int i, int i1) {
                 Integer bundleId = listGridRecord.getAttributeAsInt(BundleDestinationDataSource.FIELD_BUNDLE_ID);
                 Integer bundleDestId = listGridRecord.getAttributeAsInt(BundleDestinationDataSource.FIELD_ID);
-                return "<a href=\"" + LinkManager.getBundleDestinationLink(bundleId, bundleDestId) + "\">" + o + "</a>";
+                return "<a href=\"" + LinkManager.getBundleDestinationLink(bundleId, bundleDestId) + "\">"
+                    + StringUtility.escapeHtml(value.toString()) + "</a>";
             }
         });
 
         groupNameField.setCellFormatter(new CellFormatter() {
-            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
+            public String format(Object value, ListGridRecord listGridRecord, int i, int i1) {
                 Integer groupId = listGridRecord.getAttributeAsInt(BundleDestinationDataSource.FIELD_GROUP_ID);
-                return "<a href=\"" + LinkManager.getResourceGroupLink(groupId) + "\">" + o + "</a>";
+                return "<a href=\"" + LinkManager.getResourceGroupLink(groupId) + "\">"
+                    + StringUtility.escapeHtml(value.toString()) + "</a>";
             }
         });
 
         bundleNameField.setCellFormatter(new CellFormatter() {
-            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
+            public String format(Object value, ListGridRecord listGridRecord, int i, int i1) {
                 Integer bid = listGridRecord.getAttributeAsInt(BundleDestinationDataSource.FIELD_BUNDLE_ID);
-                return "<a href=\"" + LinkManager.getBundleLink(bid) + "\">" + o + "</a>";
+                return "<a href=\"" + LinkManager.getBundleLink(bid) + "\">"
+                    + StringUtility.escapeHtml(value.toString()) + "</a>";
             }
         });
 
@@ -109,20 +113,22 @@ public class BundleDestinationListView extends Table<RPCDataSource<BundleDestina
         latestDeploymentStatusField.setValueIcons(statusIcons);
         latestDeploymentStatusField.setValueIconHeight(11);
         latestDeploymentStatusField.setValueIconWidth(11);
+        latestDeploymentStatusField.setShowValueIconOnly(true);
 
         idField.setWidth(50);
-        nameField.setWidth("20%");
-        descriptionField.setWidth("25%");
+        nameField.setWidth("15%");
+        descriptionField.setWidth("20%");
         bundleNameField.setHidden(true);
         groupNameField.setWidth("15%");
-        deployDirField.setWidth("20%");
+        baseDirNameField.setWidth("15%");
+        deployDirField.setWidth("15%");
         latestDeploymentVersionField.setWidth("10%");
         latestDeploymentDateField.setWidth("10%");
         latestDeploymentStatusField.setWidth(80);
 
         // XXX there seems to be a bug here - i want to hide the bundle column, but setHidden(true) causes the entire rendering to fail
-        setListGridFields(idField, nameField, descriptionField, /*bundleNameField, */groupNameField, deployDirField,
-            latestDeploymentVersionField, latestDeploymentDateField, latestDeploymentStatusField);
+        setListGridFields(idField, nameField, descriptionField, /*bundleNameField, */groupNameField, baseDirNameField,
+            deployDirField, latestDeploymentVersionField, latestDeploymentDateField, latestDeploymentStatusField);
 
         setListGridDoubleClickHandler(new DoubleClickHandler() {
             @Override

@@ -25,7 +25,7 @@ package org.rhq.enterprise.server.dashboard;
 import javax.ejb.Local;
 
 /**
- * @author Greg Hinkle
+ * @author Jay Shaughnessy
  */
 @Local
 public interface DashboardManagerLocal extends DashboardManagerRemote {

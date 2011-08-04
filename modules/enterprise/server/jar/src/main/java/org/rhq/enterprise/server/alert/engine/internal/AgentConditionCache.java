@@ -349,15 +349,23 @@ class AgentConditionCache extends AbstractConditionCache {
         if ((callTime == null) || (callTime.length == 0)) {
             return new AlertConditionCacheStats();
         }
+
         AlertConditionCacheStats stats = new AlertConditionCacheStats();
-        HashMap<Integer, HashMap<String, ArrayList<CallTimeDataValue>>> order = produceOrderedCallTimeDataStructure(callTime);
-        for (Integer scheduleId : order.keySet()) {
-            List<? extends CallTimeDataCacheElement> conditionCacheElements = lookupCallTimeDataCacheElements(scheduleId);
-            for (String callDest : order.get(scheduleId).keySet())
-                for (CallTimeDataValue provided : order.get(scheduleId).get(callDest)) {
-                    processCacheElements(conditionCacheElements, provided, provided.getBeginTime(), stats, callDest);
+        try {
+            HashMap<Integer, HashMap<String, ArrayList<CallTimeDataValue>>> order = produceOrderedCallTimeDataStructure(callTime);
+            for (Integer scheduleId : order.keySet()) {
+                List<? extends CallTimeDataCacheElement> conditionCacheElements = lookupCallTimeDataCacheElements(scheduleId);
+                for (String callDest : order.get(scheduleId).keySet()) {
+                    for (CallTimeDataValue provided : order.get(scheduleId).get(callDest)) {
+                        processCacheElements(conditionCacheElements, provided, provided.getBeginTime(), stats, callDest);
+                    }
                 }
+            }
+        } catch (Throwable t) {
+            // don't let any exceptions bubble up to the calling SLSB layer
+            log.error("Error during calltime cache processing for agent[id=" + agentId + "]", t);
         }
+
         return stats;
     }
 

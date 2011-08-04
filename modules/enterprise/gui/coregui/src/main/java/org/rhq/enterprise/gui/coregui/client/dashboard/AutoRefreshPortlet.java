@@ -22,15 +22,27 @@
  */
 package org.rhq.enterprise.gui.coregui.client.dashboard;
 
+
 /**
  * @author Simeon Pinder
  */
 public interface AutoRefreshPortlet extends Portlet {
 
-    int refreshCycle = 60000;//ms
-
-    /** Each portlet implements to define the refresh cycle. See
-     *  TableOrCanvasAutoRefresh for sample implementation.
+    /**
+     * Each portlet implements to define the refresh cycle.  Note that once refresh is started it
+     * should be canceled when the portlet goes out of scope (typically in an onDestroy() override).
      */
     void startRefreshCycle();
+
+    /**     
+     * @return true if the portlet is currently responding to a refresh (i.e. reloading data). This can be used
+     * to ignore refresh requests until a prior request is completed. 
+     */
+    boolean isRefreshing();
+
+    /**
+     * Refresh this portlet, reload data, redraw widgets, whatever is needed to refresh the portlet
+     */
+    void refresh();
+
 }

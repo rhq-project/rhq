@@ -20,8 +20,9 @@ package org.rhq.enterprise.gui.uibeans;
 
 import java.util.List;
 import java.util.Map;
+
+import org.rhq.core.domain.measurement.ui.MetricDisplaySummary;
 import org.rhq.core.domain.resource.composite.ResourceWithAvailability;
-import org.rhq.enterprise.server.measurement.uibean.MetricDisplaySummary;
 
 /**
  * Simple UI bean for the resource/group/../ListChildResourcesPanel, includes the CompGroupComposite and the

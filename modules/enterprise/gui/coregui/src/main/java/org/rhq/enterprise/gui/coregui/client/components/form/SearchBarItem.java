@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components.form;
 
+import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
 
@@ -33,15 +34,20 @@ public class SearchBarItem extends CanvasItem {
     private FlexSearchBar searchBar;
 
     public SearchBarItem(String name, String title, SearchSubsystem subsystem) {
+        this(name, title, subsystem, null);
+    }
+
+    public SearchBarItem(String name, String title, SearchSubsystem subsystem, String initialSearchText) {
         super(name, title);
 
-        searchBar = new FlexSearchBar(subsystem);
+        searchBar = new FlexSearchBar(subsystem, initialSearchText);
 
         searchBar.setHeight("30px");
         canvas.addChild(searchBar);
 
         setCanvas(canvas);
         setHeight(30);
+        setTitleVAlign(VerticalAlignment.TOP);
     }
 
     @Override

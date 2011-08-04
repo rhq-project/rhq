@@ -27,8 +27,8 @@ import org.rhq.core.domain.resource.Agent;
  */
 public interface AgentGWTService extends RemoteService {
 
-    Agent getAgentForResource(int resourceId);
+    Agent getAgentForResource(int resourceId) throws RuntimeException;
 
-    Boolean pingAgentForResource(int resourceId);
+    Boolean pingAgentForResource(int resourceId) throws RuntimeException;
 
 }

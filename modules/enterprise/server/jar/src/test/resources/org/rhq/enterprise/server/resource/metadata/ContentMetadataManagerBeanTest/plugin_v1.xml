@@ -5,8 +5,6 @@
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">
     <server name="ContentServer">
-        <bundle type="ContentServer.Bundle.1"/>
-
         <content name="ContentServer.Content.1" category="deployable"/>
     </server>
 
@@ -40,4 +38,8 @@
     </server>
 
     <server name="ContentServer6"/>
+
+    <server name="ContentServer7">
+        <bundle type="ContentServer.Bundle.1"/>
+    </server>
 </plugin>

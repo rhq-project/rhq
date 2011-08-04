@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -48,12 +49,16 @@ import org.rhq.core.domain.content.composite.AdvisoryDetailsComposite;
 import org.rhq.core.domain.content.composite.LoadedPackageBitsComposite;
 import org.rhq.core.domain.content.composite.PackageListItemComposite;
 import org.rhq.core.domain.content.composite.PackageVersionComposite;
+import org.rhq.core.domain.criteria.InstalledPackageHistoryCriteria;
 import org.rhq.core.domain.util.OrderingField;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.server.PersistenceUtility;
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
+import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
+import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 
 /**
  * @author Jason Dobies
@@ -67,6 +72,9 @@ public class ContentUIManagerBean implements ContentUIManagerLocal {
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
+
+    @EJB
+    private AuthorizationManagerLocal authorizationManager;
 
     // ContentUIManagerLocal Implementation  --------------------------------------------
 
@@ -87,6 +95,18 @@ public class ContentUIManagerBean implements ContentUIManagerLocal {
         return packageType;
     }
 
+    public List<PackageType> getPackageTypes() {
+        OrderingField orderingField = new OrderingField("pt.displayName", PageOrdering.ASC);
+
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
+            PackageType.QUERY_FIND_ALL, orderingField);
+
+        @SuppressWarnings("unchecked")
+        List<PackageType> packageList = (List<PackageType>) query.getResultList();
+        
+        return packageList;
+    }
+    
     @SuppressWarnings("unchecked")
     public List<PackageType> getPackageTypes(int resourceTypeId) {
         OrderingField orderingField = new OrderingField("pt.displayName", PageOrdering.ASC);
@@ -496,5 +516,25 @@ public class ContentUIManagerBean implements ContentUIManagerLocal {
         List<InstalledPackageHistory> packages = query.getResultList();
 
         return new PageList<InstalledPackageHistory>(packages, (int) totalCount, pc);
+    }
+
+    @SuppressWarnings("unchecked")
+    public PageList<InstalledPackageHistory> findInstalledPackageHistoryByCriteria(Subject subject,
+        InstalledPackageHistoryCriteria criteria) {
+
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        ;
+
+        if (!authorizationManager.isInventoryManager(subject)) {
+            // Ensure we limit to packages installed to viewable resources
+            generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.RESOURCE,
+                "resource", subject.getId());
+        }
+
+        CriteriaQueryRunner<InstalledPackageHistory> queryRunner = new CriteriaQueryRunner(criteria, generator,
+            entityManager);
+
+        return queryRunner.execute();
+
     }
 }

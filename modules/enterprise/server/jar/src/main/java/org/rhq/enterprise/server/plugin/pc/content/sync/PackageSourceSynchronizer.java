@@ -239,10 +239,12 @@ public class PackageSourceSynchronizer {
             PackageVersion pv = pvcs.getPackageVersionContentSourcePK().getPackageVersion();
             org.rhq.core.domain.content.Package p = pv.getGeneralPackage();
             ResourceType rt = p.getPackageType().getResourceType();
-
+            String resourceTypeName = rt != null ? rt.getName() : null;
+            String resourceTypePlugin = rt != null ? rt.getPlugin() : null;
+            
             ContentProviderPackageDetailsKey key;
             key = new ContentProviderPackageDetailsKey(p.getName(), pv.getVersion(), p.getPackageType().getName(), pv
-                .getArchitecture().getName(), rt.getName(), rt.getPlugin());
+                .getArchitecture().getName(), resourceTypeName, resourceTypePlugin);
 
             ContentProviderPackageDetails details = new ContentProviderPackageDetails(key);
             details.setClassification(pv.getGeneralPackage().getClassification());

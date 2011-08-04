@@ -21,7 +21,6 @@ package org.rhq.enterprise.gui.coregui.client.bundle.list;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.Overflow;
@@ -61,6 +60,7 @@ import org.rhq.enterprise.gui.coregui.client.components.tagging.TagEditorView;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagsChangedCallback;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
@@ -99,7 +99,7 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
 
         BackButton backButton = new BackButton(extendLocatorId("BackButton"), MSG.view_bundle_list_backToAll(),
             BundleTopView.VIEW_ID.getTitle());
-        headerLabel = new HeaderLabel("subsystems/bundle/Bundle_24.png", bundle.getName());
+        headerLabel = new HeaderLabel("subsystems/bundle/Bundle_24.png", StringUtility.escapeHtml(bundle.getName()));
         tabs = new LocatableTabSet(getLocatorId());
         versionsTab = createVersionsTab();
         destinationsTab = createDestinationsTab();
@@ -189,7 +189,7 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
         destinationsCountItem.setValue(bundle.getDestinations() != null ? bundle.getDestinations().size() : 0);
 
         StaticTextItem descriptionItem = new StaticTextItem("description", MSG.common_title_description());
-        descriptionItem.setValue(bundle.getDescription());
+        descriptionItem.setValue(StringUtility.escapeHtml(bundle.getDescription()));
 
         form.setFields(versionCountItem, actionItem, destinationsCountItem, descriptionItem);
 
@@ -232,7 +232,7 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
         deleteButton.setIcon("subsystems/bundle/BundleAction_Delete_16.png");
         deleteButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                SC.ask(MSG.view_bundle_list_deleteConfirm(), new BooleanCallback() {
+                SC.ask(MSG.view_bundle_deleteConfirm(), new BooleanCallback() {
                     public void execute(Boolean aBoolean) {
                         if (aBoolean) {
                             bundleManager.deleteBundle(bundleBeingViewed, new AsyncCallback<Void>() {
@@ -245,7 +245,7 @@ public class BundleView extends LocatableVLayout implements BookmarkableView {
                                     CoreGUI.getMessageCenter().notify(
                                         new Message(MSG.view_bundle_list_deleteSuccessful(bundle.getName()),
                                             Message.Severity.Info));
-                                    History.newItem("Bundles"); // Bundle is deleted, go back to all bundles view
+                                    CoreGUI.goToView("Bundles", true); // Bundle is deleted, go back to all bundles view
                                 }
                             });
                         }

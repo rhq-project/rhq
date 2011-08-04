@@ -75,6 +75,31 @@ public class RepoPackageVersionsUIBean extends PagedDataTableUIBean {
         }
     }
 
+    public void deleteSelectedPackages() {
+        Subject subject = EnterpriseFacesContextUtility.getSubject();
+        String[] selectedPackages = FacesContextUtility.getRequest().getParameterValues("selectedPackages");
+        int repoId = Integer.valueOf(FacesContextUtility.getRequiredRequestParameter("id"));
+
+        RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
+        
+        int[] packageIds = new int[selectedPackages.length];
+        for (int i = 0; i < packageIds.length; i++) {
+            packageIds[i] = Integer.parseInt(selectedPackages[i]);
+        }
+        
+        try {
+            if (!repoManager.deletePackageVersionsFromRepo(subject, repoId, packageIds)) {
+                FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Not all packages where deleted because some of them are provided by content sources.");
+            }
+            
+            //force reload of the package version list
+            dataModel = null;
+        } catch(Exception e) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to delete packages: " + packageIds
+                + " from repository: " + repoId + " Error: " + e.getMessage());
+        }
+    }
+    
     @Override
     public DataModel getDataModel() {
         if (dataModel == null) {

@@ -94,7 +94,6 @@ public class ResourceGroupManagerBeanTest extends AbstractEJB3Test {
             /* bootstrap */
             ResourceType type = new ResourceType("type", "plugin", ResourceCategory.PLATFORM, null);
             Subject testSubject = SessionTestHelper.createNewSubject(em, "testSubject");
-            createSession(testSubject);
             Role testRole = SessionTestHelper.createNewRoleForSubject(em, testSubject, "testRole");
             testRole.addPermission(Permission.MANAGE_INVENTORY);
             ResourceGroup compatGroup = new ResourceGroup("group1", type);
@@ -128,7 +127,6 @@ public class ResourceGroupManagerBeanTest extends AbstractEJB3Test {
             /* bootstrap */
             ResourceType type = new ResourceType("type", "plugin", ResourceCategory.PLATFORM, null);
             Subject testSubject = SessionTestHelper.createNewSubject(em, "testSubject");
-            createSession(testSubject);
             Role testRole = SessionTestHelper.createNewRoleForSubject(em, testSubject, "testRole");
             testRole.addPermission(Permission.MANAGE_INVENTORY);
             ResourceGroup compatGroup = new ResourceGroup("group1", type);

@@ -20,6 +20,8 @@ package org.rhq.enterprise.server.configuration.job;
 
 import java.util.List;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.quartz.JobDataMap;
 import org.quartz.JobDetail;
 
@@ -33,6 +35,8 @@ public class GroupPluginConfigurationUpdateJob extends AbstractGroupConfiguratio
      * Prefix for all job names and job group names of group plugin configuration updates.
      */
     private static final String JOB_NAME_PREFIX = "rhq-apcu-";
+
+    private final Log log = LogFactory.getLog(GroupPluginConfigurationUpdateJob.class);
 
     public static JobDetail getJobDetail(ResourceGroup group, Subject subject, JobDataMap jobDataMap) {
         return AbstractGroupConfigurationUpdateJob.getJobDetail(group, subject, jobDataMap,
@@ -60,6 +64,10 @@ public class GroupPluginConfigurationUpdateJob extends AbstractGroupConfiguratio
 
     protected void completeGroupConfigurationUpdate(ConfigurationManagerLocal configurationManager,
         Integer groupConfigurationUpdateId, String errorMessages) {
+        if (errorMessages != null) {
+            log.error("Failed to execute one or more plugin Configuration updates that were part of a group update - details: "
+                    + errorMessages);
+        }
         configurationManager.updateGroupPluginConfigurationUpdateStatus(groupConfigurationUpdateId, errorMessages);
     }
 }

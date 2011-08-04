@@ -49,7 +49,6 @@
          <c:out value="${serviceType.type.name}" />
       </td>
       <td class="ListCell" align="left" nowrap="nowrap">
-         <c:if test="${monitorEnabled}">
             <c:if test="${not empty param.nomenu}">
                <html:link page="/admin/platform/monitor/Config.do?nomenu=true&mode=configure&id=${serviceType.type.id}&type=${serviceType.type.id}" styleClass="buttonsmall">
                   Edit Metric Template
@@ -65,10 +64,8 @@
                (<c:out value="${serviceType.enabledMetricCount}" /> | <c:out value="${serviceType.disabledMetricCount}" />)
             </span>
          </c:if>
-         </c:if>
       </td>
       <td class="ListCell" align="left" nowrap="nowrap">
-         <c:if test="${monitorEnabled}">
             <html:link page="/rhq/admin/listAlertTemplates.xhtml?type=${serviceType.type.id}" styleClass="buttonsmall">
                Edit Alert Templates
             </html:link>
@@ -77,7 +74,6 @@
                   (<c:out value="${serviceType.enabledAlertCount}" /> | <c:out value="${serviceType.disabledAlertCount}" />)
                </span>
             </c:if>
-         </c:if>
       </td>
    </tr>
 

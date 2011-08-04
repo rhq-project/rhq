@@ -31,9 +31,9 @@ import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.measurement.MeasurementUnits;
-import org.rhq.enterprise.server.measurement.uibean.MetricDisplayConstants;
-import org.rhq.enterprise.server.measurement.uibean.MetricDisplaySummary;
-import org.rhq.enterprise.server.measurement.uibean.MetricDisplayValue;
+import org.rhq.core.domain.measurement.ui.MetricDisplayConstants;
+import org.rhq.core.domain.measurement.ui.MetricDisplaySummary;
+import org.rhq.core.domain.measurement.ui.MetricDisplayValue;
 
 /**
  * Test to make sure that refactoring to the MeasurementUnits, and ConvertUnits class does not break the current

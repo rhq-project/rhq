@@ -29,6 +29,7 @@
    <server name="Sample Plugin Server"
            discovery="SamplePluginDiscoveryComponent"
            class="SamplePluginServerComponent"
+           supportsManualAdd="true"
            description="This is a sample resource type and should be removed.">
 
       <!--       

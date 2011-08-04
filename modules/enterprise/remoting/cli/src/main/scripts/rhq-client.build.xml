@@ -53,7 +53,7 @@
       <copy file="${settings.localRepository}/org/rhq/rhq-remoting-client-api/${project.version}/rhq-remoting-client-api-${project.version}.jar" todir="${lib.home}" verbose="true" />
       <copy file="${settings.localRepository}/org/rhq/rhq-core-domain/${project.version}/rhq-core-domain-${project.version}.jar" tofile="${lib.home}/rhq-core-domain-${project.version}.jar" verbose="true" />
       <copy file="${settings.localRepository}/org/rhq/rhq-core-util/${project.version}/rhq-core-util-${project.version}.jar" tofile="${lib.home}/rhq-core-util-${project.version}.jar" verbose="true" />
-      <copy file="${settings.localRepository}/org/rhq/rhq-enterprise-server/${project.version}/rhq-enterprise-server-${project.version}.jar" tofile="${lib.home}/rhq-enterprise-server-${project.version}.jar" verbose="true" />
+      <copy file="${settings.localRepository}/org/rhq/rhq-enterprise-server/${project.version}/rhq-enterprise-server-${project.version}-client.jar" tofile="${lib.home}/rhq-enterprise-server-${project.version}-client.jar" verbose="true" />
       <copy file="${settings.localRepository}/org/rhq/rhq-enterprise-comm/${project.version}/rhq-enterprise-comm-${project.version}.jar" tofile="${lib.home}/rhq-enterprise-comm-${project.version}.jar" verbose="true" />
       <copy file="${settings.localRepository}/jboss/jboss-common/${jboss-common.version}/jboss-common-${jboss-common.version}.jar" tofile="${lib.home}/jboss-common-${jboss-common.version}.jar" verbose="true" />
       <copy file="${settings.localRepository}/jboss/jboss-remoting/${jboss-remoting.version}/jboss-remoting-${jboss-remoting.version}.jar" tofile="${lib.home}/jboss-remoting-${jboss-remoting.version}.jar" verbose="true" />
@@ -64,6 +64,8 @@
       <copy file="${basedir}/target/${project.artifactId}-${project.version}.jar" tofile="${lib.home}/${project.artifactId}-${project.version}.jar" verbose="true" />
       <copy file="${settings.localRepository}/net/sf/opencsv/opencsv/${opencsv.version}/opencsv-${opencsv.version}.jar" tofile="${lib.home}/opencsv-${opencsv.version}.jar" verbose="true" />
       <copy file="${settings.localRepository}/org/testng/testng/${testng.version}/testng-${testng.version}.jar" tofile="${lib.home}/testng-${testng.version}.jar" verbose="true" />
+   	  <copy file="${settings.localRepository}/org/rhq/rhq-script-bindings/${project.version}/rhq-script-bindings-${project.version}.jar" tofile="${lib.home}/rhq-script-bindings-${project.version}.jar" verbose="true" />
+   	  <copy file="${settings.localRepository}/hibernate-annotations/hibernate-annotations/${hibernate-annotations.version}/hibernate-annotations-${hibernate-annotations.version}.jar" todir="${lib.home}" verbose="true" />
    </target>
 
 </project>

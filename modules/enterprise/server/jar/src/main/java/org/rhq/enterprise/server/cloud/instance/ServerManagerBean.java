@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.server.cloud.instance;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Collection;
 import java.util.List;
 
@@ -282,6 +284,19 @@ public class ServerManagerBean implements ServerManagerLocal {
     private GlobalSuspendCommandListener getMaintenanceModeListener() {
         return new GlobalSuspendCommandListener(Server.OperationMode.MAINTENANCE.name(),
             Server.OperationMode.MAINTENANCE.name());
+    }
+
+    public void syncEndpointAddress() throws SyncEndpointAddressException {
+        Server server = getServer();
+        try {
+            String hostName = InetAddress.getLocalHost().getHostName();
+
+            if (!hostName.equals(server.getAddress())) {
+                server.setAddress(hostName);
+            }
+        } catch (UnknownHostException e) {
+            throw new SyncEndpointAddressException("Failed to sync endpoint address for " + server, e);
+        }
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)

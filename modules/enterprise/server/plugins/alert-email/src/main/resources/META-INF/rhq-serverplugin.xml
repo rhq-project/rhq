@@ -24,7 +24,13 @@
     <!-- What can a user configure when defining an alert -->
     <alert-configuration>
         <c:simple-property name="emailAddress" displayName="Receiver Email Address(es)" type="longString"
-                description="Email addresses (separated by comma) used for notifications."/>
+                description="Email addresses (separated by comma) used for notifications.">
+            <c:constraint>
+                <!-- a real email regex that validates all possible email address would be thousands of chars long -->
+                <!-- here we do just a very basic validation of comma-separated str1@str2 -->
+                <c:regex-constraint expression=".+@[^@, ]+(,.+@[^,@ ]+)?"/>
+            </c:constraint>
+        </c:simple-property>
     </alert-configuration>
 
 </alert-plugin>

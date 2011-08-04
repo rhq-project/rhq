@@ -23,7 +23,6 @@ import java.util.List;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
-import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -61,12 +60,6 @@ public class TemplateSchedulesDataSource extends AbstractMeasurementScheduleComp
         fields.add(resourceGroupIdField);
 
         return fields;
-    }
-
-    @Override
-    protected void executeFetch(DSRequest request, DSResponse response) {
-        super.executeFetch(request, response);
-
     }
 
     @Override

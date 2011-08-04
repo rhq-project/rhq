@@ -60,7 +60,6 @@ public class PluginDescriptorBasedAugeasConfiguration implements AugeasConfigura
     public static final String AUGEAS_LOAD_PATH = "augeasLoadPath";
 
     public static final String DEFAULT_AUGEAS_ROOT_PATH = File.listRoots()[0].getPath();
-    public static final String DEFAULT_AUGEAS_LOAD_PATH = "/usr/share/augeas/lenses";
     
     private final Log log = LogFactory.getLog(this.getClass());
     protected List<AugeasModuleConfig> modules;
@@ -183,7 +182,7 @@ public class PluginDescriptorBasedAugeasConfiguration implements AugeasConfigura
 	            throw new IllegalStateException("Expecting at least once inclusion pattern for configuration files.");
 	        }
 
-	        List<File> files = Glob.matchAll(root, includeGlobs);
+	        List<File> files = Glob.matchAll(root, includeGlobs, Glob.ALPHABETICAL_COMPARATOR);
 
 	        if (module.getExcludedGlobs() != null) {
 	            List<String> excludeGlobs = module.getExcludedGlobs();

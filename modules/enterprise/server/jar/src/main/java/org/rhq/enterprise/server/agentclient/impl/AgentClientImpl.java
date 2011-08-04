@@ -22,6 +22,7 @@ import org.rhq.core.clientapi.agent.bundle.BundleAgentService;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationAgentService;
 import org.rhq.core.clientapi.agent.content.ContentAgentService;
 import org.rhq.core.clientapi.agent.discovery.DiscoveryAgentService;
+import org.rhq.core.clientapi.agent.drift.DriftAgentService;
 import org.rhq.core.clientapi.agent.inventory.ResourceFactoryAgentService;
 import org.rhq.core.clientapi.agent.measurement.MeasurementAgentService;
 import org.rhq.core.clientapi.agent.operation.OperationAgentService;
@@ -92,6 +93,7 @@ public class AgentClientImpl implements AgentClient {
         this.clientRemotePojoFactory.setDeliveryGuaranteed(ClientRemotePojoFactory.GuaranteedDelivery.DISABLED);
     }
 
+    @Override
     public Agent getAgent() {
         return this.agent;
     }
@@ -101,10 +103,12 @@ public class AgentClientImpl implements AgentClient {
         return getAgent().toString();
     }
 
+    @Override
     public void startSending() {
         this.sender.startSending();
     }
 
+    @Override
     public void stopSending() {
         // Passing in false means any current commands that are queue will be aborted;
         // guaranteed commands will be persisted, but any volatile commands will be lost.
@@ -113,6 +117,7 @@ public class AgentClientImpl implements AgentClient {
         this.sender.stopSending(false);
     }
 
+    @Override
     public boolean ping(long timeoutMillis) {
         try {
             // create our own factory so we can customize the timeout
@@ -126,36 +131,49 @@ public class AgentClientImpl implements AgentClient {
         }
     }
 
+    @Override
     public BundleAgentService getBundleAgentService() {
         return clientRemotePojoFactory.getRemotePojo(BundleAgentService.class);
     }
 
+    @Override
     public ContentAgentService getContentAgentService() {
         return clientRemotePojoFactory.getRemotePojo(ContentAgentService.class);
     }
 
+    @Override
     public ResourceFactoryAgentService getResourceFactoryAgentService() {
         return clientRemotePojoFactory.getRemotePojo(ResourceFactoryAgentService.class);
     }
 
+    @Override
     public DiscoveryAgentService getDiscoveryAgentService() {
         return clientRemotePojoFactory.getRemotePojo(DiscoveryAgentService.class);
     }
 
+    @Override
     public MeasurementAgentService getMeasurementAgentService() {
         return clientRemotePojoFactory.getRemotePojo(MeasurementAgentService.class);
     }
 
+    @Override
     public OperationAgentService getOperationAgentService() {
         return clientRemotePojoFactory.getRemotePojo(OperationAgentService.class);
     }
 
+    @Override
     public ConfigurationAgentService getConfigurationAgentService() {
         return clientRemotePojoFactory.getRemotePojo(ConfigurationAgentService.class);
     }
 
+    @Override
     public SupportAgentService getSupportAgentService() {
         return clientRemotePojoFactory.getRemotePojo(SupportAgentService.class);
+    }
+
+    @Override
+    public DriftAgentService getDriftAgentService() {
+        return clientRemotePojoFactory.getRemotePojo(DriftAgentService.class);
     }
 
     /**
@@ -173,10 +191,11 @@ public class AgentClientImpl implements AgentClient {
         };
 
         public void sending(Command command) {
-//            long start = System.currentTimeMillis();
+            //            long start = System.currentTimeMillis();
             try {
-                HibernateDetachUtility.nullOutUninitializedFields(command, HibernateDetachUtility.SerializationType.SERIALIZATION);
-//                System.out.println("HDU: " + (System.currentTimeMillis() - start));
+                HibernateDetachUtility.nullOutUninitializedFields(command,
+                    HibernateDetachUtility.SerializationType.SERIALIZATION);
+                //                System.out.println("HDU: " + (System.currentTimeMillis() - start));
             } catch (Exception e) {
                 e.printStackTrace();
             }

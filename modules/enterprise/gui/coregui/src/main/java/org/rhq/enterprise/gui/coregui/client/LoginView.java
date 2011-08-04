@@ -39,7 +39,6 @@ import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.Img;
 import com.smartgwt.client.widgets.Label;
-import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
@@ -69,6 +68,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableCanvas;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 
 /**
  * @author Greg Hinkle
@@ -78,8 +78,8 @@ public class LoginView extends LocatableCanvas {
 
     private static boolean loginShowing = false;
 
-    private Window window;
-    private DynamicForm form;
+    private LocatableWindow window;
+    private LocatableDynamicForm form;
     private LocatableDynamicForm inputForm;
 
     private SubmitItem loginButton;
@@ -113,7 +113,7 @@ public class LoginView extends LocatableCanvas {
             loginShowing = true;
             UserSessionManager.logout();
 
-            form = new LocatableDynamicForm("LoginView");
+            form = new LocatableDynamicForm(extendLocatorId("LoginView"));
             form.setMargin(25);
             form.setAutoFocus(true);
             form.setShowErrorText(true);
@@ -157,7 +157,12 @@ public class LoginView extends LocatableCanvas {
 
             form.setFields(logo, header, new RowSpacerItem(), user, password, loginButton);
 
-            window = new Window();
+            // we ant the login window to have the same locator regardless of its parent.  It can be
+            // created from at least two different paths (LoginView, UserSessionManager) but for test purposes
+            // we want a single login script. There will only be one login dialog at any time, so it is safe
+            // to use a non-extended locator.
+            // is parented by the Login 
+            window = new LocatableWindow("Login");
             window.setWidth(400);
             window.setHeight(275);
             window.setTitle(MSG.common_title_welcome());
@@ -258,6 +263,7 @@ public class LoginView extends LocatableCanvas {
             IButton okButton = new LocatableIButton(inputForm.extendLocatorId("OK"), MSG.common_button_ok());
             okButton.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent event) {
+
                     //F5 refresh check? If they've reloaded the form for some reason then bail.
                     boolean credentialsEmpty = ((user == null) || (user.trim().isEmpty()) || (password == null) || (password
                         .trim().isEmpty()));
@@ -271,12 +277,17 @@ public class LoginView extends LocatableCanvas {
                     if (inputForm.validate()) {
                         Log.trace("Successfully validated all data for user registration.");
                         //populate form
-                        inputForm.setValue(FIRST, String.valueOf(first.getValue()));
-                        inputForm.setValue(LAST, String.valueOf(last.getValue()));
+                        if (first.getValue() != null)
+                            inputForm.setValue(FIRST, String.valueOf(first.getValue()));
+                        if (last.getValue() != null)
+                            inputForm.setValue(LAST, String.valueOf(last.getValue()));
                         inputForm.setValue(USERNAME, String.valueOf(username.getValue()));
-                        inputForm.setValue(EMAIL, String.valueOf(email.getValue()));
-                        inputForm.setValue(PHONE, String.valueOf(phone.getValue()));
-                        inputForm.setValue(DEPARTMENT, String.valueOf(department.getValue()));
+                        if (email.getValue() != null)
+                            inputForm.setValue(EMAIL, String.valueOf(email.getValue()));
+                        if (phone.getValue() != null)
+                            inputForm.setValue(PHONE, String.valueOf(phone.getValue()));
+                        if (department.getValue() != null)
+                            inputForm.setValue(DEPARTMENT, String.valueOf(department.getValue()));
                         inputForm.setValue(SESSIONID, sessionId);
                         inputForm.setValue(PASSWORD, password);
                         registerLdapUser(LoginView.this.extendLocatorId("RegisterLdap"), inputForm, callback);
@@ -361,7 +372,7 @@ public class LoginView extends LocatableCanvas {
             row.addMember(logoutLabel);
             column.addMember(row);
 
-            window = new Window();
+            window = new LocatableWindow(extendLocatorId("RegistrationWindow"));
             window.setWidth(670);
             window.setHeight(330);
             window.setTitle(MSG.view_login_registerUser());
@@ -460,9 +471,10 @@ public class LoginView extends LocatableCanvas {
 
                         CoreGUI.getMessageCenter().notify(
                             new Message(MSG.view_login_registerLdapSuccess(), Message.Severity.Info));
-                        Log.trace("Succesfully registered the new ldap Subject.");
+                        Log.trace("Successfully registered the new ldap Subject.");
                         window.destroy();
                         loginShowing = false;
+                        //indicate to login callback success
                         callback.onSuccess(checked);
                     }
                 });
@@ -509,8 +521,9 @@ public class LoginView extends LocatableCanvas {
         loginButton.setDisabled(true);
 
         try {
-            RequestBuilder b = new RequestBuilder(RequestBuilder.GET, "/j_security_check.do?j_username=" + user
-                + "&j_password=" + password);
+            RequestBuilder b = new RequestBuilder(RequestBuilder.POST, "/j_security_check.do");
+            b.setHeader("Content-Type", "application/x-www-form-urlencoded");
+            b.setRequestData("j_username=" + user + "&j_password=" + password);
             b.setCallback(new RequestCallback() {
                 public void onResponseReceived(Request request, Response response) {
                     int statusCode = response.getStatusCode();

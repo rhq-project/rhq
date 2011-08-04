@@ -23,6 +23,7 @@
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
 import java.util.List;
+import java.util.Map;
 
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.EventCriteria;
@@ -30,7 +31,6 @@ import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.event.composite.EventComposite;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.coregui.client.gwt.EventGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.event.EventManagerLocal;
@@ -52,7 +52,7 @@ public class EventGWTServiceImpl extends AbstractGWTServiceImpl implements Event
             return SerialUtility.prepare(eventManager.getSeverityBuckets(getSessionSubject(), resourceId, begin, end,
                 numBuckets), "EventService.getSeverityBuckets");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -63,7 +63,7 @@ public class EventGWTServiceImpl extends AbstractGWTServiceImpl implements Event
                 parentResourceId, resourceTypeId, begin, end, numBuckets),
                 "EventService.getSeverityBucketsForAutoGroup");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -73,25 +73,34 @@ public class EventGWTServiceImpl extends AbstractGWTServiceImpl implements Event
             return SerialUtility.prepare(eventManager.getSeverityBucketsForCompGroup(getSessionSubject(),
                 resourceGroupId, begin, end, numBuckets), "EventService.getSeverityBucketsForCompGroup");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
-    //    public Map<EventSeverity, Integer> getEventCountsBySeverity(int resourceId, long startDate, long endDate) {
-    //        try {
-    //            return SerialUtility.prepare(eventManager.getEventCountsBySeverity(getSessionSubject(), resourceId,
-    //                startDate, endDate), "EventService.getEventCountsBySeverity");
-    //        } catch (Exception e) {
-    //            throw new RuntimeException(ThrowableUtil.getAllMessages(e));
-    //        }
-    //    }
+    public Map<EventSeverity, Integer> getEventCountsBySeverity(int resourceId, long startDate, long endDate) {
+        try {
+            return SerialUtility.prepare(eventManager.getEventCountsBySeverity(getSessionSubject(), resourceId,
+                startDate, endDate), "EventService.getEventCountsBySeverity");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    public Map<EventSeverity, Integer> getEventCountsBySeverityForGroup(int groupId, long startDate, long endDate) {
+        try {
+            return SerialUtility.prepare(eventManager.getEventCountsBySeverityForGroup(getSessionSubject(), groupId,
+                startDate, endDate), "EventService.getEventCountsBySeverityForGroup");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
 
     public PageList<Event> findEventsByCriteria(EventCriteria criteria) throws RuntimeException {
         try {
             return SerialUtility.prepare(eventManager.findEventsByCriteria(getSessionSubject(), criteria),
                 "EventService.findEventsByCriteria");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -100,7 +109,7 @@ public class EventGWTServiceImpl extends AbstractGWTServiceImpl implements Event
             return SerialUtility.prepare(eventManager.findEventCompositesByCriteria(getSessionSubject(), criteria),
                 "EventService.findEventsByCriteria");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -108,7 +117,7 @@ public class EventGWTServiceImpl extends AbstractGWTServiceImpl implements Event
         try {
             return eventManager.deleteEventsForContext(getSessionSubject(), context, eventIds);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -116,7 +125,7 @@ public class EventGWTServiceImpl extends AbstractGWTServiceImpl implements Event
         try {
             return eventManager.purgeEventsForContext(getSessionSubject(), context);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 

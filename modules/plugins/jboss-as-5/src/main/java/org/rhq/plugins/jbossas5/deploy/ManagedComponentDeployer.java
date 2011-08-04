@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,7 +16,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-
 package org.rhq.plugins.jbossas5.deploy;
 
 import java.io.File;
@@ -30,11 +29,15 @@ import java.util.jar.Manifest;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.jboss.deployers.spi.management.KnownDeploymentTypes;
 import org.jboss.deployers.spi.management.ManagementView;
 import org.jboss.deployers.spi.management.deploy.DeploymentManager;
+import org.jboss.managed.api.DeploymentState;
 import org.jboss.managed.api.ManagedDeployment;
+import org.jboss.profileservice.spi.NoSuchDeploymentException;
 import org.jboss.profileservice.spi.ProfileKey;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
@@ -56,21 +59,19 @@ public class ManagedComponentDeployer implements Deployer {
 
     private static final ProfileKey FARM_PROFILE_KEY = new ProfileKey("farm");
     private static final ProfileKey APPLICATIONS_PROFILE_KEY = new ProfileKey("applications");
-    public static final String DEPLOYMENT_NAME_PROPERTY = "deploymentName";
 
     private PackageDownloader downloader;
     private ProfileServiceConnection profileServiceConnection;
-    
-    /**
-     * @param downloader
-     */
+
     public ManagedComponentDeployer(ProfileServiceConnection profileServiceConnection, PackageDownloader downloader) {
         this.downloader = downloader;
         this.profileServiceConnection = profileServiceConnection;
     }
 
     public void deploy(CreateResourceReport createResourceReport, ResourceType resourceType) {
+        createResourceReport.setStatus(null);
         File archiveFile = null;
+
         try {
             ResourcePackageDetails details = createResourceReport.getPackageDetails();
             PackageDetailsKey key = details.getKey();
@@ -88,7 +89,7 @@ public class ManagedComponentDeployer implements Deployer {
             abortIfApplicationAlreadyDeployed(resourceType, archiveFile);
 
             Configuration deployTimeConfig = details.getDeploymentTimeConfiguration();
-            @SuppressWarnings( { "ConstantConditions" })
+            @SuppressWarnings({ "ConstantConditions" })
             boolean deployExploded = deployTimeConfig.getSimple("deployExploded").getBooleanValue();
 
             DeploymentManager deploymentManager = this.profileServiceConnection.getDeploymentManager();
@@ -114,8 +115,9 @@ public class ManagedComponentDeployer implements Deployer {
                 deploymentManager.loadProfile(FARM_PROFILE_KEY);
             }
 
+            String[] deploymentNames;
             try {
-                DeploymentUtils.deployArchive(deploymentManager, archiveFile, deployExploded);
+                deploymentNames = DeploymentUtils.deployArchive(deploymentManager, archiveFile, deployExploded);
             } finally {
                 // Make sure to switch back to the 'applications' profile if we switched to the 'farm' profile above.
                 if (deployFarmed) {
@@ -123,24 +125,36 @@ public class ManagedComponentDeployer implements Deployer {
                 }
             }
 
-            //if deployed exploded, we need to store the sha of source package for correct versioning
+            if (deploymentNames == null || deploymentNames.length != 1) {
+                throw new RuntimeException("deploy operation returned invalid result: " + deploymentNames);
+            }
+
+            // e.g.: vfszip:/C:/opt/jboss-6.0.0.Final/server/default/deploy/foo.war
+            String deploymentName = deploymentNames[0];
+
+            // If deployed exploded, we need to store the SHA of source package in META-INF/MANIFEST.MF for correct
+            // versioning.
             if (deployExploded) {
-                String shaString = new MessageDigestGenerator(MessageDigestGenerator.SHA_256)
-                    .getDigestString(archiveFile);
-                String deploymentName = deployTimeConfig.getSimple(DEPLOYMENT_NAME_PROPERTY).getStringValue();
-                URI deployePackageURI = URI.create(deploymentName);
-                // e.g.: foo.war
-                String path = deployePackageURI.getPath();
-                File location = new File(path);
-                //We've located the deployed
-                if ((location != null) && (location.isDirectory())) {
-                    File manifestFile = new File(location, "META-INF/MANIFEST.MF");
+                MessageDigestGenerator sha256Generator = new MessageDigestGenerator(MessageDigestGenerator.SHA_256);
+                String shaString = sha256Generator.calcDigestString(archiveFile);
+                URI deploymentURI = URI.create(deploymentName);
+                // e.g.: /C:/opt/jboss-6.0.0.Final/server/default/deploy/foo.war
+                String deploymentPath = deploymentURI.getPath();
+                File deploymentFile = new File(deploymentPath);
+                if (deploymentFile.isDirectory()) {
+                    File manifestFile = new File(deploymentFile, "META-INF/MANIFEST.MF");
                     Manifest manifest;
                     if (manifestFile.exists()) {
                         FileInputStream inputStream = new FileInputStream(manifestFile);
                         manifest = new Manifest(inputStream);
                         inputStream.close();
                     } else {
+                        File metaInf = new File(deploymentFile, "META-INF");
+                        if (!metaInf.exists())
+                            if (!metaInf.mkdir())
+                                throw new Exception("Could not create directory " + deploymentFile + "META-INF.");
+
+                        manifestFile = new File(metaInf, "MANIFEST.MF");
                         manifest = new Manifest();
                     }
                     Attributes attribs = manifest.getMainAttributes();
@@ -148,14 +162,44 @@ public class ManagedComponentDeployer implements Deployer {
                     FileOutputStream outputStream = new FileOutputStream(manifestFile);
                     manifest.write(outputStream);
                     outputStream.close();
+                } else {
+                    LOG.error("Exploded deployment '" + deploymentFile
+                            + "' does not exist or is not a directory - unable to add RHQ versioning metadata to META-INF/MANIFEST.MF.");
                 }
             }
 
-            // Deployment was successful!
+            // Reload the management view to pickup the ManagedDeployment for the app we just deployed.
+            ManagementView managementView = this.profileServiceConnection.getManagementView();
+            managementView.load();
+
+            ManagedDeployment managedDeployment = null;
+            try {
+                managedDeployment = managementView.getDeployment(deploymentName);
+            } catch (NoSuchDeploymentException e) {
+                LOG.error("Failed to find managed deployment '" + deploymentName + "' after deploying '"
+                        + archiveName + "', so cannot start the application.");
+                createResourceReport.setStatus(CreateResourceStatus.INVALID_ARTIFACT);
+                createResourceReport.setErrorMessage("Unable to start application '" + deploymentName
+                        + "' after deploying it, since lookup of the associated ManagedDeployment failed.");
+            }
+            if (managedDeployment != null) {
+                DeploymentState state = managedDeployment.getDeploymentState();
+                if (state != DeploymentState.STARTED) {
+                    // The app failed to start - do not consider this a FAILURE, since it was at least deployed
+                    // successfully. However, set the status to INVALID_ARTIFACT and set an error message, so
+                    // the user is informed of the condition.
+                    createResourceReport.setStatus(CreateResourceStatus.INVALID_ARTIFACT);
+                    createResourceReport.setErrorMessage("Failed to start application '" + deploymentName
+                            + "' after deploying it.");
+                }
+            }
+
             createResourceReport.setResourceName(archiveName);
             createResourceReport.setResourceKey(archiveName);
-            createResourceReport.setStatus(CreateResourceStatus.SUCCESS);
-
+            if (createResourceReport.getStatus() == null) {
+                // Deployment was 100% successful, including starting the app.
+                createResourceReport.setStatus(CreateResourceStatus.SUCCESS);
+            }
         } catch (Throwable t) {
             LOG.error("Error deploying application for request [" + createResourceReport + "].", t);
             createResourceReport.setStatus(CreateResourceStatus.FAILURE);
@@ -179,5 +223,5 @@ public class ManagedComponentDeployer implements Deployer {
                 throw new IllegalArgumentException("An application named '" + archiveFileName
                     + "' is already deployed.");
         }
-    }    
+    }
 }

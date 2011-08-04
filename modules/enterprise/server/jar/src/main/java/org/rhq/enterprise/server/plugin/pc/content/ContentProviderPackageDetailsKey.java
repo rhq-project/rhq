@@ -54,22 +54,23 @@ public class ContentProviderPackageDetailsKey extends PackageDetailsKey {
     }
 
     /**
-     * The name of the {@link ResourceType} that this package's type belongs to. All package types are defined and
+     * The name of the {@link ResourceType} that this package's type belongs to. Package types are usually defined and
      * supported by a particular {@link ResourceType}, this name is part of the natural key of a resource type. See
      * {@link #getResourceTypePluginName() plugin name} for the other part.
      *
-     * @return resource type name
+     * @return resource type name or null if the package type isn't tied to a resource type
      */
     public String getResourceTypeName() {
         return resourceTypeName;
     }
 
     /**
-     * The name of the plugin that defined the {@link ResourceType} that this package's type belongs to. All package
-     * types are defined and supported by a particular {@link ResourceType}, this plugin name is part of the natural key
+     * The name of the plugin that defined the {@link ResourceType} that this package's type belongs to. Package
+     * types are usually defined and supported by a particular {@link ResourceType}, this plugin name is part of the natural key
      * of a resource type. See {@link #getResourceTypeName() resource type name} for the other part.
      *
-     * @return the name of the plugin that defines the resource type that defined the package type
+     * @return the name of the plugin that defines the resource type that defined the package type or null if the package
+     * type isn't tied to a resource type
      */
     public String getResourceTypePluginName() {
         return resourceTypePluginName;

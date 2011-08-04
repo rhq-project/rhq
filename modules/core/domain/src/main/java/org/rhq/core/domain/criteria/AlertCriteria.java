@@ -50,6 +50,7 @@ public class AlertCriteria extends Criteria {
     public static final String SORT_FIELD_NAME = "name";
     public static final String SORT_FIELD_PRIORITY = "priority";
     public static final String SORT_FIELD_RESOURCE_ID = "resourceId";
+    public static final String SORT_FIELD_RESOURCE_NAME = "resourceName";
 
     private Integer filterId;
     private String filterTriggeredOperationName; // requires overrides
@@ -76,6 +77,7 @@ public class AlertCriteria extends Criteria {
     private PageOrdering sortName; // requires sort override
     private PageOrdering sortPriority; // requires sort override
     private PageOrdering sortResourceId; // requires sort override
+    private PageOrdering sortResourceName; // requires sort override
 
     public AlertCriteria() {
 
@@ -99,6 +101,7 @@ public class AlertCriteria extends Criteria {
         sortOverrides.put(SORT_FIELD_NAME, "alertDefinition.name");
         sortOverrides.put(SORT_FIELD_PRIORITY, "alertDefinition.priority");
         sortOverrides.put(SORT_FIELD_RESOURCE_ID, "alertDefinition.resource.id");
+        sortOverrides.put(SORT_FIELD_RESOURCE_NAME, "alertDefinition.resource.name");
     }
 
     @Override
@@ -207,4 +210,10 @@ public class AlertCriteria extends Criteria {
         addSortField(SORT_FIELD_RESOURCE_ID);
         this.sortResourceId = sortResourceId;
     }
+
+    public void addSortResourceName(PageOrdering sortResourceName) {
+        addSortField(SORT_FIELD_RESOURCE_NAME);
+        this.sortResourceName = sortResourceName;
+    }
+
 }

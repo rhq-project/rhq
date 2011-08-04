@@ -33,11 +33,11 @@ import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.criteria.SubjectCriteria;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.server.auth.SessionManager;
 import org.rhq.enterprise.server.auth.SessionNotFoundException;
-import org.rhq.enterprise.server.auth.SessionTimeoutException;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
@@ -77,14 +77,10 @@ public class SubjectManagerBeanTest extends AbstractEJB3Test {
 
         // clean out all users' sessions (a user can have more than one session)
         while (usernames.size() > 0) {
-            String doomed_user = usernames.get(0);
             try {
-                int session = session_manager.getSessionIdFromUsername(doomed_user);
-                session_manager.invalidate(session);
-            } catch (SessionTimeoutException e) {
-                // keep going - just means we cleaned out that expired session
-                usernames.remove(0);
-            } catch (SessionNotFoundException e) {
+                String doomed_user = usernames.get(0);
+                session_manager.invalidate(doomed_user);
+            } finally {
                 usernames.remove(0);
             }
         }
@@ -106,7 +102,6 @@ public class SubjectManagerBeanTest extends AbstractEJB3Test {
             // create the user
             Subject new_user = new Subject("dummy-user", true, false);
             new_user = subjectManager.createSubject(superuser, new_user);
-            createSession(new_user);
             assert new_user.getUserConfiguration() == null : "There should not be any configuration yet";
 
             // set and persist an empty configuration
@@ -128,6 +123,7 @@ public class SubjectManagerBeanTest extends AbstractEJB3Test {
             assert new_user.getUserConfiguration() != null : "A full configuration should have been set";
             assert new_user.getUserConfiguration().getProperties().size() == 2 : "A full config should have been set";
 
+            new_user = createSession(new_user);
             new_user = subjectManager.updateSubject(new_user, new_user); // let the user itself change it
             config = new_user.getUserConfiguration();
             assert config != null : "A full configuration should have been persisted";
@@ -169,7 +165,7 @@ public class SubjectManagerBeanTest extends AbstractEJB3Test {
         try {
             superuser = subjectManager.getOverlord();
             rhqadmin = subjectManager.getSubjectByName("rhqadmin");
-            createSession(rhqadmin);
+            rhqadmin = createSession(rhqadmin);
 
             try {
                 superuser.setFactive(false);
@@ -208,9 +204,9 @@ public class SubjectManagerBeanTest extends AbstractEJB3Test {
         getTransactionManager().begin();
         try {
             superuser = subjectManager.getOverlord();
-            createSession(superuser);
+            superuser = createSession(superuser);
             rhqadmin = subjectManager.getSubjectByName("rhqadmin");
-            createSession(rhqadmin);
+            rhqadmin = createSession(rhqadmin);
 
             try {
                 subjectManager.deleteUsers(superuser, new int[] { rhqadmin.getId() });
@@ -268,7 +264,7 @@ public class SubjectManagerBeanTest extends AbstractEJB3Test {
         assert rhqadmin.getName().equals("rhqadmin");
         assert authorizationManager.getExplicitGlobalPermissions(rhqadmin).containsAll(all_global_perms);
 
-        createSession(rhqadmin); // our test needs to ensure the rhqadmin user has a session
+        rhqadmin = createSession(rhqadmin); // our test needs to ensure the rhqadmin user has a session
 
         // check the subjects that do and do not have principals
         Collection<String> all_users_with_principals = subjectManager.findAllUsersWithPrincipals();
@@ -278,7 +274,19 @@ public class SubjectManagerBeanTest extends AbstractEJB3Test {
         assert subjectManager.isUserWithPrincipal(rhqadmin.getName());
 
         // get all subjects, whether or not they have a principal
-        PageList<Subject> all_subjects = subjectManager.findAllSubjects(PageControl.getUnlimitedInstance());
+        SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
+        Subject subject = null;
+        try {
+            subject = subjectManager.loginUnauthenticated("rhqadmin");
+        } catch (Exception e) {
+            assert false : "There must be at least rhqadmin user";
+        }
+
+        SubjectCriteria c = new SubjectCriteria();
+        c.addFilterFsystem(false);
+        c.addSortName(PageOrdering.ASC);
+        PageList<Subject> all_subjects = subjectManager.findSubjectsByCriteria(subject, c);
+
         assert all_subjects.size() >= 1 : "There must be at least rhqadmin user";
         assert !all_subjects.contains(superuser) : "The superuser should not have been returned in the list";
         assert all_subjects.contains(rhqadmin) : "Missing user [" + rhqadmin + "] from: " + all_subjects;
@@ -296,14 +304,14 @@ public class SubjectManagerBeanTest extends AbstractEJB3Test {
         new_user.setDepartment("my-department");
 
         new_user = subjectManager.createSubject(rhqadmin, new_user);
-        createSession(new_user);
+        new_user = createSession(new_user);
         assert !subjectManager.isUserWithPrincipal(new_user.getName());
         subjectManager.createPrincipal(subjectManager.getOverlord(), new_user.getName(), "my-password");
         assert subjectManager.isUserWithPrincipal(new_user.getName());
 
         // make sure it was persisted and you can actually login with it
         assert new_user.getId() != 0;
-        Subject login_new_user = subjectManager.loginUnauthenticated(new_user.getName(), false);
+        Subject login_new_user = subjectManager.loginUnauthenticated(new_user.getName());
         assert login_new_user.equals(new_user);
         new_user = login_new_user; // login_new_user was given a new session ID
 
@@ -381,29 +389,45 @@ public class SubjectManagerBeanTest extends AbstractEJB3Test {
         getTransactionManager().begin();
 
         try {
-            Subject subject1 = subjectManager.loginUnauthenticated("rhqadmin", false);
+            Subject subject1 = subjectManager.loginUnauthenticated("rhqadmin");
             int session1 = subject1.getSessionId();
 
             Thread.sleep(500); // just wait a bit
 
-            Subject subject2 = subjectManager.loginUnauthenticated("rhqadmin", true);
+            Subject subject2 = subjectManager.loginUnauthenticated("rhqadmin");
             int session2 = subject2.getSessionId();
 
-            assert session1 == session2 : "The same session should be been assigned when logging in twice";
+            assert session1 != session2 : "The same sessionId should never be assigned when logging in twice";
             assert subject1.equals(subject2);
 
-            assert subjectManager.isLoggedIn("rhqadmin");
+            Subject s = subjectManager.getSubjectByNameAndSessionId("rhqadmin", subject1.getSessionId());
+            assert s.getSessionId() == session1;
+            s = subjectManager.getSubjectByNameAndSessionId("rhqadmin", subject2.getSessionId());
+            assert s.getSessionId() == session2;
+
+            subjectManager.logout(session1);
+            try {
+                s = subjectManager.getSubjectByNameAndSessionId("rhqadmin", subject1.getSessionId());
+                assert false : "Session should be invalid";
+            } catch (SessionNotFoundException ok) {
+            }
+
+            s = subjectManager.getSubjectByNameAndSessionId("rhqadmin", subject2.getSessionId());
+            assert s.getSessionId() == session2;
+
+            // this should ne a no-op, no exception
+            subjectManager.logout(session1);
+
             subjectManager.logout(session2);
-            assert !subjectManager.isLoggedIn("rhqadmin");
-
-            subject2 = subjectManager.loginUnauthenticated("rhqadmin", true);
-            session2 = subject2.getSessionId();
-
-            assert session1 != session2 : "A new session should have been assigned after logging out";
-            assert subject2.equals(subjectManager.getSubjectBySessionId(session2));
+            try {
+                s = subjectManager.getSubjectByNameAndSessionId("rhqadmin", subject2.getSessionId());
+                fail("Session should be invalid");
+            } catch (SessionNotFoundException e) {
+                // expected
+            }
 
             try {
-                subjectManager.loginUnauthenticated("rhqadminX", true);
+                subjectManager.loginUnauthenticated("rhqadminX");
                 assert false : "Should not have logged in - provided a bad username";
             } catch (LoginException ok) {
             }

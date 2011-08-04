@@ -19,7 +19,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components.configuration;
 
-import java.util.Set;
+import java.util.Map;
 
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
@@ -28,16 +28,17 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinition;
  * @author Ian Springer
  */
 public class PropertyValueChangeEvent {
+
     private Property property;
     private PropertyDefinition propertyDefinition;
-    private boolean validationStateChanged;
-    private Set<String> invalidPropertyNames;
+    private boolean invalidPropertySetChanged;
+    private Map<String, String> invalidPropertyNames;
 
-    public PropertyValueChangeEvent(Property property, PropertyDefinition propertyDefinition, boolean validationStatechanged,
-                                    Set<String> invalidPropertyNames) {
+    public PropertyValueChangeEvent(Property property, PropertyDefinition propertyDefinition, boolean invalidPropertySetChanged,
+                                    Map<String, String> invalidPropertyNames) {
         this.property = property;
         this.propertyDefinition = propertyDefinition;
-        this.validationStateChanged = validationStatechanged;
+        this.invalidPropertySetChanged = invalidPropertySetChanged;
         this.invalidPropertyNames = invalidPropertyNames;
     }
 
@@ -49,11 +50,12 @@ public class PropertyValueChangeEvent {
         return propertyDefinition;
     }
 
-    public boolean isValidationStateChanged() {
-        return validationStateChanged;
+    public boolean isInvalidPropertySetChanged() {
+        return invalidPropertySetChanged;
     }
 
-    public Set<String> getInvalidPropertyNames() {
+    public Map<String, String> getInvalidPropertyNames() {
         return invalidPropertyNames;
     }
+
 }

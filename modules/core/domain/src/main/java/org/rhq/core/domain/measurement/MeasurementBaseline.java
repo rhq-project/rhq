@@ -215,7 +215,7 @@ public class MeasurementBaseline implements Serializable {
     private long computeTime;
 
     @JoinColumn(name = "SCHEDULE_ID", nullable = false)
-    @OneToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.LAZY, optional = false)
     private MeasurementSchedule schedule;
 
     // we need this to support autobaseline insertion queries

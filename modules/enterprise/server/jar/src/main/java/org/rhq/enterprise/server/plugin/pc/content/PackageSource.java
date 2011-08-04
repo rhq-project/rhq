@@ -59,5 +59,4 @@ public interface PackageSource {
      * @throws Exception if failed to obtain the stream to the remote package data
      */
     InputStream getInputStream(String location) throws Exception;
-
 }

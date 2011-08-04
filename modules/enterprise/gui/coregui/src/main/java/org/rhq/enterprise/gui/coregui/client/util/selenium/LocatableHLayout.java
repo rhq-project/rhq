@@ -46,4 +46,15 @@ public class LocatableHLayout extends HLayout implements Locatable {
     public String extendLocatorId(String extension) {
         return this.locatorId + "_" + extension;
     }
+
+    public void destroyMembers() {
+        SeleniumUtility.destroyMembers(this);
+    }
+
+    @Override
+    public void destroy() {
+        destroyMembers();
+        super.destroy();
+    }
+
 }

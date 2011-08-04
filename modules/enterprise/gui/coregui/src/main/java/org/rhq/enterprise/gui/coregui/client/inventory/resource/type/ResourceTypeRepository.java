@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -32,6 +32,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
@@ -51,6 +52,7 @@ public class ResourceTypeRepository {
 
     private Map<Integer, ResourceType> typeCache = new HashMap<Integer, ResourceType>();
     private Map<Integer, EnumSet<MetadataType>> typeCacheLevel = new HashMap<Integer, EnumSet<MetadataType>>();
+    private Set<ResourceType> topLevelServerAndServiceTypes;
 
     private static ResourceTypeGWTServiceAsync resourceTypeService = GWTServiceLookup.getResourceTypeGWTService();
 
@@ -252,9 +254,46 @@ public class ResourceTypeRepository {
 
         criteria.setPageControl(PageControl.getUnlimitedInstance());
 
-        com.allen_sauer.gwt.log.client.Log.info("Loading " + typesNeeded.size()
+        Log.info("Loading " + typesNeeded.size()
             + ((metadataTypes != null) ? (" types: " + metadataTypes) : ""));
 
+        if ((topLevelServerAndServiceTypes == null) && (metadataTypes != null) &&
+                metadataTypes.contains(MetadataType.children)) {
+            // Perform a one-time load of server and service types with no parent types. These types are implicitly
+            // children of all platform types, even though they are not included in the platform types'
+            // childResourceTypes field.
+            loadTopLevelServerAndServiceTypes(callback, metadataTypes, criteria, cachedTypes);
+        } else {
+            loadRequestedTypes(callback, metadataTypes, criteria, cachedTypes);
+        }
+    }
+
+    private void loadTopLevelServerAndServiceTypes(final TypesLoadedCallback callback,
+                                                   final EnumSet<MetadataType> metadataTypes,
+                                                   final ResourceTypeCriteria criteria, final Map<Integer,
+            ResourceType> cachedTypes) {
+        ResourceTypeCriteria topLevelCriteria = new ResourceTypeCriteria();
+        topLevelCriteria.fetchParentResourceTypes(true);
+        resourceTypeService.findResourceTypesByCriteria(topLevelCriteria, new AsyncCallback<PageList<ResourceType>>() {
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError(MSG.widget_typeCache_loadFail(), caught);
+                loadRequestedTypes(callback, metadataTypes, criteria, cachedTypes);
+            }
+
+            public void onSuccess(PageList<ResourceType> types) {
+                topLevelServerAndServiceTypes = new HashSet<ResourceType>();
+                for (ResourceType type : types) {
+                    if ((type.getCategory() != ResourceCategory.PLATFORM) &&
+                            (type.getParentResourceTypes() == null || type.getParentResourceTypes().isEmpty())) {
+                        topLevelServerAndServiceTypes.add(type);
+                    }
+                }
+                loadRequestedTypes(callback, metadataTypes, criteria, cachedTypes);
+            }
+        });
+    }
+
+    private void loadRequestedTypes(final TypesLoadedCallback callback, final EnumSet<MetadataType> metadataTypes, ResourceTypeCriteria criteria, final Map<Integer, ResourceType> cachedTypes) {
         resourceTypeService.findResourceTypesByCriteria(criteria, new AsyncCallback<PageList<ResourceType>>() {
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError(MSG.widget_typeCache_loadFail(), caught);
@@ -268,13 +307,21 @@ public class ResourceTypeRepository {
                             for (MetadataType metadataType : metadataTypes) {
                                 switch (metadataType) {
                                 case children:
-                                    cachedType.setChildResourceTypes(type.getChildResourceTypes());
+                                    Set<ResourceType> childTypes = type.getChildResourceTypes();
+                                    if (type.getCategory() == ResourceCategory.PLATFORM &&
+                                            topLevelServerAndServiceTypes != null) {
+                                        // Add server and service types with no parent types to the list of child types.
+                                        // These types are implicitly children of all platform types, even though they
+                                        // are not included in the platform types' childResourceTypes field.
+                                        childTypes.addAll(topLevelServerAndServiceTypes);
+                                    }
+                                    cachedType.setChildResourceTypes(childTypes);
                                     break;
                                 case content:
                                     cachedType.setPackageTypes(type.getPackageTypes());
                                     break;
                                 case events:
-                                    cachedType.setPackageTypes(type.getPackageTypes());
+                                    cachedType.setEventDefinitions(type.getEventDefinitions());
                                     break;
                                 case measurements:
                                     cachedType.setMetricDefinitions(type.getMetricDefinitions());
@@ -304,7 +351,7 @@ public class ResourceTypeRepository {
                                     break;
                                 default:
                                     Log.error("ERROR: metadataType " + metadataType.name()
-                                        + " not merged into cached ResourceType.");
+                                            + " not merged into cached ResourceType.");
                                 }
                             }
                         }

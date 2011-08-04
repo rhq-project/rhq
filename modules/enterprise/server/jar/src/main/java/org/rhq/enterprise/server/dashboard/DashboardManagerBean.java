@@ -22,31 +22,33 @@
  */
 package org.rhq.enterprise.server.dashboard;
 
-import java.util.List;
-
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.criteria.DashboardCriteria;
 import org.rhq.core.domain.dashboard.Dashboard;
+import org.rhq.core.domain.dashboard.DashboardCategory;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerBean;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
+import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
+import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 
 /**
- *
+ * @author Jay Shaughnessy
  * @author Greg Hinkle
  */
 @Stateless
-public class DashboardManagerBean implements DashboardManagerLocal, DashboardManagerRemote{
+public class DashboardManagerBean implements DashboardManagerLocal, DashboardManagerRemote {
 
     @SuppressWarnings("unused")
     private final Log log = LogFactory.getLog(SubjectManagerBean.class);
@@ -57,20 +59,30 @@ public class DashboardManagerBean implements DashboardManagerLocal, DashboardMan
     @EJB
     private AuthorizationManagerLocal authorizationManager;
 
+    public PageList<Dashboard> findDashboardsByCriteria(Subject subject, DashboardCriteria criteria) {
+        if (criteria.isInventoryManagerRequired()) {
+            if (!authorizationManager.isInventoryManager(subject)) {
+                throw new PermissionException("Subject [" + subject.getName()
+                    + "] requires InventoryManager permission for requested query criteria.");
+            }
 
-    public List<Dashboard> findDashboardsForSubject(Subject subject) {
-        Query query = entityManager.createQuery("SELECT d FROM Dashboard d WHERE d.owner.id = :subjectId");
+            Integer ownerId = criteria.getFilterOwnerId();
+            if (null != ownerId && 0 == ownerId.intValue()) {
+                criteria.addFilterOwnerId(null);
+            }
+        } else {
+            criteria.addFilterOwnerId(subject.getId());
+        }
 
-        query.setParameter("subjectId", subject.getId());
+        if (null == criteria.getFilterCategory()) {
+            criteria.addFilterCategory(DashboardCategory.INVENTORY);
+        }
 
-        return query.getResultList();
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
 
-    }
-
-    public List<Dashboard> findSharedDashboards(Subject subject) {
-        Query query = entityManager.createQuery("SELECT d FROM Dashboard d WHERE d.shared = true");
-
-        return query.getResultList();
+        CriteriaQueryRunner<Dashboard> queryRunner = new CriteriaQueryRunner<Dashboard>(criteria, generator,
+            entityManager);
+        return queryRunner.execute();
     }
 
     public Dashboard storeDashboard(Subject subject, Dashboard dashboard) {
@@ -80,7 +92,8 @@ public class DashboardManagerBean implements DashboardManagerLocal, DashboardMan
             entityManager.persist(dashboard);
             return dashboard;
         } else {
-            if (!authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_SETTINGS) && d.getOwner().getId() != subject.getId()) {
+            if (!authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_SETTINGS)
+                && d.getOwner().getId() != subject.getId()) {
                 throw new PermissionException("You may only alter dashboards you own.");
             }
             return entityManager.merge(dashboard);
@@ -89,9 +102,10 @@ public class DashboardManagerBean implements DashboardManagerLocal, DashboardMan
 
     public void removeDashboard(Subject subject, int dashboardId) {
 
-        Dashboard toDelete = entityManager.find(Dashboard.class,dashboardId);
+        Dashboard toDelete = entityManager.find(Dashboard.class, dashboardId);
 
-        if (!authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_SETTINGS) && toDelete.getOwner().getId() != subject.getId()) {
+        if (!authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_SETTINGS)
+            && toDelete.getOwner().getId() != subject.getId()) {
             throw new PermissionException("You may only delete dashboards you own.");
         }
 

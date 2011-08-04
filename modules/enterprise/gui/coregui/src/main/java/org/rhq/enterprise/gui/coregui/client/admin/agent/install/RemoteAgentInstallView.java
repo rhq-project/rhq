@@ -355,7 +355,7 @@ public class RemoteAgentInstallView extends LocatableVLayout {
     }
 
     private void buildInstallInfoCanvas(VLayout installInfo, AgentInstallInfo info) {
-        DynamicForm infoForm = new DynamicForm();
+        DynamicForm infoForm = new LocatableDynamicForm(extendLocatorId("infoForm"));
         infoForm.setMargin(20);
         infoForm.setWidth100();
         infoForm.setHeight100();

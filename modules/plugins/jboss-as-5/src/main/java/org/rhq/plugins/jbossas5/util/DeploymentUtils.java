@@ -1,6 +1,6 @@
 /*
  * Jopr Management Platform
- * Copyright (C) 2005-2009 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,18 +23,20 @@
 package org.rhq.plugins.jbossas5.util;
 
 import java.io.File;
-import java.net.URL;
 import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.jboss.deployers.spi.management.deploy.DeploymentManager;
 import org.jboss.deployers.spi.management.deploy.DeploymentProgress;
 import org.jboss.deployers.spi.management.deploy.DeploymentStatus;
 import org.jboss.profileservice.spi.DeploymentOption;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.util.exception.ThrowableUtil;
@@ -72,15 +74,14 @@ public class DeploymentUtils {
      *
      * @throws Exception if the deployment fails for any reason
      */
-    public static void deployArchive(DeploymentManager deploymentManager, File archiveFile, boolean deployExploded)
+    public static String[] deployArchive(DeploymentManager deploymentManager, File archiveFile, boolean deployExploded)
         throws Exception {
         String archiveFileName = archiveFile.getName();
         LOG.debug("Deploying '" + archiveFileName + "' (deployExploded=" + deployExploded + ")...");
         URL contentURL;
         try {
             contentURL = archiveFile.toURI().toURL();
-        }
-        catch (MalformedURLException e) {
+        } catch (MalformedURLException e) {
             throw new IllegalArgumentException("Failed to convert archive file path '" + archiveFile + "' to URL.", e);
         }
         List<DeploymentOption> deploymentOptions = new ArrayList<DeploymentOption>();
@@ -91,23 +92,22 @@ public class DeploymentUtils {
         DeploymentStatus distributeStatus;
         Exception distributeFailure = null;
         try {
-            progress = deploymentManager.distribute(archiveFileName, contentURL, deploymentOptions
-                .toArray(new DeploymentOption[deploymentOptions.size()]));
+            progress = deploymentManager.distribute(archiveFileName, contentURL,
+                deploymentOptions.toArray(new DeploymentOption[deploymentOptions.size()]));
             distributeStatus = run(progress);
             if (distributeStatus.isFailed()) {
-                distributeFailure = (distributeStatus.getFailure() != null) ? distributeStatus.getFailure() :
-                        new Exception("Distribute failed for unknown reason.");
+                distributeFailure = (distributeStatus.getFailure() != null) ? distributeStatus.getFailure()
+                    : new Exception("Distribute failed for unknown reason.");
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             distributeFailure = e;
         }
         if (distributeFailure != null) {
             throw new Exception("Failed to distribute '" + contentURL + "' to '" + archiveFileName + "' - cause: "
-                    + ThrowableUtil.getAllMessages(distributeFailure));
+                + ThrowableUtil.getAllMessages(distributeFailure));
         }
 
-        // Now that we've successfully distributed the deployment, we need to start it.
+        // Now that we've successfully distributed the deployment, try to start it.
         String[] deploymentNames = progress.getDeploymentID().getRepositoryNames();
         DeploymentStatus startStatus;
         Exception startFailure = null;
@@ -115,40 +115,19 @@ public class DeploymentUtils {
             progress = deploymentManager.start(deploymentNames);
             startStatus = run(progress);
             if (startStatus.isFailed()) {
-                startFailure = (startStatus.getFailure() != null) ? startStatus.getFailure() :
-                        new Exception("Start failed for unknown reason.");
+                startFailure = (startStatus.getFailure() != null) ? startStatus.getFailure() : new Exception(
+                    "Start failed for unknown reason.");
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             startFailure = e;
         }
         if (startFailure != null) {
-            LOG.error("Failed to start deployment " + Arrays.asList(deploymentNames)
-                + " during deployment of '" + archiveFileName + "'. Backing out the deployment...", startFailure);
-            // If start failed, the app is invalid, so back out the deployment.
-            DeploymentStatus removeStatus;
-            Exception removeFailure = null;
-            try {
-                progress = deploymentManager.remove(deploymentNames);
-                removeStatus = run(progress);
-                if (removeStatus.isFailed()) {
-                    removeFailure = (removeStatus.getFailure() != null) ? removeStatus.getFailure() :
-                        new Exception("Remove failed for unknown reason.");
-                }
-            }
-            catch (Exception e) {
-                removeFailure = e;
-            }
-            if (removeFailure != null) {
-                LOG.error("Failed to remove deployment " + Arrays.asList(deploymentNames)
-                    + " after start failure.", removeFailure);
-            }
-            throw new Exception("Failed to start deployment " + Arrays.asList(deploymentNames)
-                + " during deployment of '" + archiveFileName + "' - cause: " +
-                    ThrowableUtil.getAllMessages(startFailure));
+            // There are times when the user expects the app to fail to start, so just log a warning.
+            LOG.warn("Failed to start deployment " + Arrays.asList(deploymentNames) + " during deployment of '"
+                + archiveFileName + "'.", startFailure);
         }
-        // If we made it this far, the deployment (distribution+start) was successful.
-        return;
+
+        return deploymentNames;
     }
 
     public static DeploymentStatus run(DeploymentProgress progress) {

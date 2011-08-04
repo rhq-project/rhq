@@ -74,6 +74,19 @@
                                description="The absolute path to a JRE or JDK installation directory containing
                                             the JVM that should be used to start and shutdown the JBossAS instance;
                                             defaults to the home directory of the RHQ agent JRE."/>
+                                            
+             <c:simple-property name="startWaitMax" required="false"
+                               description="The time, in minutes,(e.g. 1 or 8) that must elapse before the server is considered to have failed to start up. The default is 5 minutes.">
+                         <c:constraint>
+                             <c:integer-constraint minimum="1"/>
+                         </c:constraint>
+             </c:simple-property>
+             <c:simple-property name="stopWaitMax" required="false"
+                               description="The time, in minutes,(e.g. 1 or 8) that must elapse before the server is considered to have failed to stop. The default is 2.5 minutes.">
+                         <c:constraint>
+                             <c:integer-constraint minimum="1"/>
+                         </c:constraint>
+             </c:simple-property>
          </c:group>
 
          <c:group name="event" displayName="Events">
@@ -243,6 +256,29 @@
             <c:simple-property name="instructionCompatibilityVersion"/>
          </configuration>
       </content>
+
+      <drift-configuration name="Core Files">
+         <basedir>
+            <value-context>pluginConfiguration</value-context>
+            <value-name>jbossHomeDir</value-name>
+         </basedir>
+         <includes>
+            <include path="bin" />
+            <include path="lib" />
+            <include path="client" />
+         </includes>
+      </drift-configuration>
+
+      <bundle-target>
+         <destination-base-dir name="Install Directory" description="The top directory where the JBossAS Server is installed. (i.e. the value found in the 'JBoss Home Directory' connection property)">
+            <value-context>pluginConfiguration</value-context>
+            <value-name>jbossHomeDir</value-name>
+         </destination-base-dir>
+         <destination-base-dir name="Profile Directory" description="The profile configuration directory such as 'default', 'minimal', 'production' or similar location. (i.e. the value found in the 'Configuration Path' connection property)">
+            <value-context>pluginConfiguration</value-context>
+            <value-name>configurationPath</value-name>
+         </destination-base-dir>
+      </bundle-target>
 
       <help>
       <![CDATA[

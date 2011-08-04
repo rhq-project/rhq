@@ -169,4 +169,8 @@ public class RemoteServiceStatistics {
 
         return stats;
     }
+
+    public static void clearAll() {
+        statistics.clear();
+    }
 }

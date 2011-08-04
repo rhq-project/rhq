@@ -36,14 +36,6 @@
   <definition name=".admin.home"
               path="/admin/AdminHome.jsp"/>
 
-  <!-- license manager -->
-  <definition name=".admin.license.View"
-              controllerUrl="/admin/license/View.do"
-              path="/admin/license/License.jsp"/>
-
-  <definition name=".admin.license.Edit"
-              path="/admin/license/LicenseEdit.jsp"/>
-
   <!-- admin role portlets -->
   <definition name=".admin.role.List"
               controllerUrl="/admin/role/List.do"

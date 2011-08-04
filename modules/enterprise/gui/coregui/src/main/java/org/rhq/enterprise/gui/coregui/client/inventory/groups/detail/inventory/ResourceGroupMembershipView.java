@@ -45,6 +45,7 @@ public class ResourceGroupMembershipView extends LocatableVLayout {
     private ResourceGroup resourceGroup;
     private ResourceGroupResourceSelector selector;
     private ClickHandler saveButtonHandler;
+    private ClickHandler cancelButtonHandler;
 
     public ResourceGroupMembershipView(String locatorId, int resourceGroupId) {
         super(locatorId);
@@ -63,6 +64,17 @@ public class ResourceGroupMembershipView extends LocatableVLayout {
         this.saveButtonHandler = saveButtonHandler;
     }
 
+    /**
+     * Allows an external component to hook into the cancel button. The given
+     * handler will be invoked when the cancel button is pressed. If <code>null</code>
+     * is given, then no external handler will be called.
+     * 
+     * @param cancelButtonHandler
+     */
+    public void setCancelButtonHandler(ClickHandler cancelButtonHandler) {
+        this.cancelButtonHandler = cancelButtonHandler;
+    }
+
     @Override
     protected void onDraw() {
         super.onDraw();
@@ -71,7 +83,8 @@ public class ResourceGroupMembershipView extends LocatableVLayout {
     }
 
     public void build() {
-        ToolStrip toolStrip = new ToolStrip();
+
+        final ToolStrip toolStrip = new ToolStrip();
         toolStrip.setWidth100();
         toolStrip.setExtraSpace(10);
         toolStrip.setMembersMargin(5);
@@ -86,9 +99,18 @@ public class ResourceGroupMembershipView extends LocatableVLayout {
                 }
             }
         });
-
         toolStrip.addMember(saveButton);
-        this.addMember(toolStrip);
+
+        IButton cancelButton = new LocatableIButton(this.extendLocatorId("Cancel"), MSG.common_button_cancel());
+        cancelButton.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent clickEvent) {
+                if (ResourceGroupMembershipView.this.cancelButtonHandler != null) {
+                    ResourceGroupMembershipView.this.cancelButtonHandler.onClick(clickEvent);
+                }
+                destroy();
+            }
+        });
+        toolStrip.addMember(cancelButton);
 
         ResourceGroupCriteria c = new ResourceGroupCriteria();
         c.addFilterId(this.resourceGroupId);
@@ -111,6 +133,9 @@ public class ResourceGroupMembershipView extends LocatableVLayout {
                             : null, false);
 
                     addMember(ResourceGroupMembershipView.this.selector);
+
+                    addMember(toolStrip);
+
                     markForRedraw();
                 }
             });

@@ -23,12 +23,13 @@
 
 package org.rhq.test;
 
-import static org.testng.Assert.*;
-
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
 
 public class AssertUtils {
 
@@ -99,6 +100,40 @@ public class AssertUtils {
         EqualsResult result = checker.execute();
 
         assertTrue(result.isEqual(), msg + " -- " + result.getDetails());
+    }
+
+    /**
+     * Verifies that the two collections contain the same number of matching elements as is
+     * done in {@link #assertPropertiesMatch(String, Object, Object, String...)}. If the
+     * collections differ in size, an assertion error will be thrown; otherwise, elements
+     * are compared, ignoring order. Note that all element properties are are compared in
+     * this method.
+     *
+     * @param expected The expected collection to compare against
+     * @param actual The actual collection under test
+     * @param msg An error message
+     * @param <T> The type of the elements in the collections
+     */
+    public static <T> void assertCollectionMatchesNoOrder(Collection<T> expected, Collection<T> actual, String msg) {
+        CollectionMatchesChecker<T> checker = new CollectionMatchesChecker<T>();
+        checker.setExpected(expected);
+        checker.setActual(actual);
+
+        MatchResult result = checker.execute();
+
+        assertTrue(result.isMatch(), msg + " -- " + result.getDetails());
+    }
+
+    public static <T> void assertCollectionMatchesNoOrder(String msg, Collection<T> expected, Collection<T> actual,
+        String... ignoredProperties) {
+        CollectionMatchesChecker<T> checker = new CollectionMatchesChecker<T>();
+        checker.setExpected(expected);
+        checker.setActual(actual);
+        checker.setIgnoredProperties(ignoredProperties);
+
+        MatchResult result = checker.execute();
+
+        assertTrue(result.isMatch(), msg + " -- " + result.getDetails());
     }
 
 }

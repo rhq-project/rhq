@@ -32,7 +32,6 @@ import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.resource.CreateDeletePolicy;
 import org.rhq.core.domain.resource.CreateResourceHistory;
 import org.rhq.core.domain.resource.DeleteResourceHistory;
-import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCreationDataType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -128,49 +127,6 @@ public interface ResourceFactoryManagerLocal {
     int getDeleteChildResourceHistoryCount(int parentResourceId, Long beginDate, Long endDate);
 
     /**
-     * Returns a pagination enabled list of requests for the creation of new child resources to the specified parent.
-     * These requests may be completed or still in progress; it represents the history of creation attempts for this
-     * parent resource.
-     *
-     * @param  parentResourceId resource to check for child resource creations
-     * @param  beginDate        filter used to show only results occurring after this epoch millis parameter, nullable
-     * @param  endDate          filter used to show only results occurring before this epoch millis parameter, nullable
-     * @param  pageControl      control for pagination
-     *
-     * @return list of requests
-     */
-    PageList<CreateResourceHistory> findCreateChildResourceHistory(int parentResourceId, Long beginDate, Long endDate,
-        PageControl pageControl);
-
-    /**
-     * Returns a pagination enabled list of requests to delete a child resource on the specified parent. These requests
-     * may be complete or still in progress; it represents the history of all delete attempts of child resources to this
-     * resource.
-     *
-     * @param  parentResourceId resource to check for deleted child resources
-     * @param  beginDate        filter used to show only results occurring after this epoch millis parameter, nullable
-     * @param  endate           filter used to show only results occurring before this epoch millis parameter, nullable
-     * @param  pageControl      control for pagination
-     *
-     * @return list of requests
-     */
-    PageList<DeleteResourceHistory> findDeleteChildResourceHistory(int parentResourceId, Long beginDate, Long endDate,
-        PageControl pageControl);
-
-    /**
-     * Creates a new resource in the inventory.
-     * This should NOT be made accessible to remote clients, do not call this unless you know what you are doing
-     *
-     * @param  parentResourceId parent of the new resource
-     * @param  resourceTypeId   type of resource being created
-     * @param  resourceName     name of the new resource
-     * @param  resourceKey      resource key of the new resource
-     *
-     * @return resource object after it's been persisted
-     */
-    Resource createInventoryResource(int parentResourceId, int resourceTypeId, String resourceName, String resourceKey);
-
-    /**
      * Persists a record in the resource history to indicate a request has been made to create a configuration-backed
      * resource.
      *
@@ -224,21 +180,44 @@ public interface ResourceFactoryManagerLocal {
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     /**
-     * @see {@link ResourceFactoryManagerRemote.createResource(Subject,int,int,String,Configuration,Configuration) 
+     * @see {@link ResourceFactoryManagerRemote#createResource(Subject,int,int,String,Configuration,Configuration) 
      */
     CreateResourceHistory createResource(Subject subject, int parentResourceId, int resourceTypeId,
         String resourceName, Configuration pluginConfiguration, Configuration resourceConfiguration);
 
     /**
-     * @see {@link ResourceFactoryManagerRemote.createPackageBackedResource(Subject,int,int,String,Configuration,String,String,Integer,Configuration,byte[]) 
+     * @see {@link ResourceFactoryManagerRemote#createPackageBackedResource(Subject,int,int,String,Configuration,String,String,Integer,Configuration,byte[]) 
      */
     CreateResourceHistory createPackageBackedResource(Subject subject, int parentResourceId, int newResourceTypeId,
         String newResourceName, Configuration pluginConfiguration, String packageName, String packageVersion,
         Integer architectureId, Configuration deploymentTimeConfiguration, byte[] packageBits);
 
+    /**
+     * @see {@link ResourceFactoryManagerRemote#createPackageBackedResourceViaPackageVersion(Subject, int, int, String, Configuration, Configuration, int) 
+     */
     public CreateResourceHistory createPackageBackedResourceViaPackageVersion(Subject subject, int parentResourceId,
         int newResourceTypeId, String newResourceName, Configuration pluginConfiguration,
         Configuration deploymentTimeConfiguration, int packageVersionId);
+
+    /**
+     * @see {@link ResourceFactoryManagerRemote#createResource(Subject,int,int,String,Configuration,Configuration,Integer) 
+     */
+    CreateResourceHistory createResource(Subject subject, int parentResourceId, int resourceTypeId,
+        String resourceName, Configuration pluginConfiguration, Configuration resourceConfiguration, Integer timeout);
+
+    /**
+     * @see {@link ResourceFactoryManagerRemote#createPackageBackedResource(Subject,int,int,String,Configuration,String,String,Integer,Configuration,byte[],Integer) 
+     */
+    CreateResourceHistory createPackageBackedResource(Subject subject, int parentResourceId, int newResourceTypeId,
+        String newResourceName, Configuration pluginConfiguration, String packageName, String packageVersion,
+        Integer architectureId, Configuration deploymentTimeConfiguration, byte[] packageBits, Integer timeout);
+
+    /**
+     * @see {@link ResourceFactoryManagerRemote#createPackageBackedResourceViaPackageVersion(Subject, int, int, String, Configuration, Configuration, int, Integer) 
+     */
+    public CreateResourceHistory createPackageBackedResourceViaPackageVersion(Subject subject, int parentResourceId,
+        int newResourceTypeId, String newResourceName, Configuration pluginConfiguration,
+        Configuration deploymentTimeConfiguration, int packageVersionId, Integer timeout);
 
     /**
      * @see {@link ResourceFactoryManagerRemote.deleteResource(Subject,int) 
@@ -250,4 +229,9 @@ public interface ResourceFactoryManagerLocal {
      */
     List<DeleteResourceHistory> deleteResources(Subject subject, int[] resourceIds);
 
+    PageList<CreateResourceHistory> findCreateChildResourceHistory(Subject subject, int parentResourceId,
+        Long beginDate, Long endDate, PageControl pageControl);
+
+    PageList<DeleteResourceHistory> findDeleteChildResourceHistory(Subject subject, int parentResourceId,
+        Long beginDate, Long endDate, PageControl pageControl);
 }

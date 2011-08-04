@@ -55,6 +55,7 @@
    <td colspan="62" style="height: 2px;"></td>
    </tr>
    
+   <!-- BZ 610791
    <tr style="height: 12px;">
    <td></td>
    <c:forEach var="timeTick" items="#{EventsTimelineUIBean.data}" varStatus="status">
@@ -84,7 +85,6 @@
          </c:choose>
       </c:if>
       
-      <!-- put onmousedown in table data element not the div, which gives the user a larger clickable area -->
       <c:if test="#{empty timeTick.severity}">
          <td style="background-image: url(#{icon}); background-repeat:no-repeat;" align="center" valign="middle">
          </td>
@@ -102,7 +102,7 @@
       <h:outputFormat value="#{msg['resource.common.monitor.label.elc']}" />
    </td>
    </tr>
-   
+   -->
    <tr>
    <td colspan="62" valign="top">
       <a name="eventDetail"></a>

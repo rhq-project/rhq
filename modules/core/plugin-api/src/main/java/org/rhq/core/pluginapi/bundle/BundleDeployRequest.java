@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.Serializable;
 import java.util.Map;
 
+import org.rhq.core.domain.bundle.BundleDestination;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.content.PackageVersion;
 
@@ -40,8 +41,23 @@ public class BundleDeployRequest implements Serializable {
     private Map<PackageVersion, File> packageVersionFiles;
     private boolean isCleanDeployment = false;
     private boolean isRevert = false;
+    private File absDestDir;
 
     public BundleDeployRequest() {
+    }
+
+    /**
+     * Returns the full, absolute directory as found on the local machine's file system
+     * where the bundle should be deployed. This is the bundle destination's
+     * {@link BundleDestination#getDeployDir() relative destination directory} under the
+     * {@link BundleDestination#getDestinationBaseDirectoryName() destination base directory}.
+     */
+    public File getAbsoluteDestinationDirectory() {
+        return this.absDestDir;
+    }
+
+    public void setAbsoluteDestinationDirectory(File absoluteDestDir) {
+        this.absDestDir = absoluteDestDir;
     }
 
     /**
@@ -118,6 +134,7 @@ public class BundleDeployRequest implements Serializable {
     public String toString() {
         StringBuilder str = new StringBuilder(this.getClass() + ": ");
         str.append("deployment=[").append(resourceDeployment.toString()).append("], ");
+        str.append("full-deploy-directory=[").append(absDestDir.toString()).append("], ");
         str.append("clean=[").append(isCleanDeployment).append("], ");
         str.append("revert=[").append(isRevert).append("]");
         return str.toString();

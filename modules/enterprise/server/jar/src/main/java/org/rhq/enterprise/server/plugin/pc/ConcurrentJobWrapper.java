@@ -19,6 +19,10 @@
 
 package org.rhq.enterprise.server.plugin.pc;
 
+import java.util.Map;
+
+import org.rhq.enterprise.server.xmlschema.ScheduledJobDefinition;
+
 /**
  * The actual quartz job that the plugin container will submit when it needs to invoke
  * a concurrent scheduled job on behalf of a plugin. This is a normal non-stateful "job"
@@ -31,4 +35,9 @@ package org.rhq.enterprise.server.plugin.pc;
  * @author John Mazzitelli
  */
 public class ConcurrentJobWrapper extends AbstractJobWrapper {
+    @Override
+    protected ScheduledJobInvocationContext createContext(ScheduledJobDefinition jobDefinition,
+        ServerPluginContext pluginContext, ServerPluginComponent serverPluginComponent, Map<String, String> jobData) {
+        return new ScheduledJobInvocationContext(jobDefinition, pluginContext, serverPluginComponent);
+    }
 }

@@ -48,7 +48,7 @@ public class TagGWTServiceImpl extends AbstractGWTServiceImpl implements TagGWTS
             return SerialUtility.prepare(tagManager.findTagsByCriteria(getSessionSubject(), tagCriteria),
                 "TagService.findTagsByCriteria");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -56,7 +56,7 @@ public class TagGWTServiceImpl extends AbstractGWTServiceImpl implements TagGWTS
         try {
             return SerialUtility.prepare(tagManager.addTags(getSessionSubject(), tags), "TagService.addTags");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -64,7 +64,7 @@ public class TagGWTServiceImpl extends AbstractGWTServiceImpl implements TagGWTS
         try {
             tagManager.removeTags(getSessionSubject(), tags);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -72,7 +72,7 @@ public class TagGWTServiceImpl extends AbstractGWTServiceImpl implements TagGWTS
         try {
             tagManager.updateResourceTags(getSessionSubject(), resourceId, tags);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -80,7 +80,7 @@ public class TagGWTServiceImpl extends AbstractGWTServiceImpl implements TagGWTS
         try {
             tagManager.updateResourceGroupTags(getSessionSubject(), resourceGroupId, tags);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -88,7 +88,7 @@ public class TagGWTServiceImpl extends AbstractGWTServiceImpl implements TagGWTS
         try {
             tagManager.updateBundleTags(getSessionSubject(), bundleId, tags);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -96,7 +96,7 @@ public class TagGWTServiceImpl extends AbstractGWTServiceImpl implements TagGWTS
         try {
             tagManager.updateBundleVersionTags(getSessionSubject(), bundleVersionId, tags);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -104,7 +104,7 @@ public class TagGWTServiceImpl extends AbstractGWTServiceImpl implements TagGWTS
         try {
             tagManager.updateBundleDeploymentTags(getSessionSubject(), bundleDeploymentId, tags);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -112,7 +112,7 @@ public class TagGWTServiceImpl extends AbstractGWTServiceImpl implements TagGWTS
         try {
             tagManager.updateBundleDestinationTags(getSessionSubject(), bundleDestinationId, tags);
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 
@@ -123,7 +123,7 @@ public class TagGWTServiceImpl extends AbstractGWTServiceImpl implements TagGWTS
                 tagManager.findTagReportCompositesByCriteria(getSessionSubject(), tagCriteria),
                 "TagService.findTagReportCompositesByCriteria");
         } catch (Throwable t) {
-            throw new RuntimeException(ThrowableUtil.getAllMessages(t));
+            throw getExceptionToThrowToClient(t);
         }
     }
 }

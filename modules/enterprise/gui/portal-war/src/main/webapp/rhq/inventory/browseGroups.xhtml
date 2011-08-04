@@ -118,7 +118,7 @@
                      </ui:remove>
 
                      <onc:icon name="Monitor" url="/rhq/group/monitor/graphs.xhtml" alt="Monitor"
-                               visible="#{monitorEnabled and item.category.name eq 'COMPATIBLE'}">
+                               visible="#{item.category.name eq 'COMPATIBLE'}">
                         <f:param name="category" value="#{item.category.name}"/>
                      </onc:icon>
 
@@ -127,7 +127,7 @@
                      </onc:icon>
 
                      <onc:icon name="Alert" url="/rhq/group/alert/listGroupAlertDefinitions.xhtml" alt="Alert"
-                               visible="#{monitorEnabled and item.category.name eq 'COMPATIBLE'}"/>
+                               visible="#{item.category.name eq 'COMPATIBLE'}"/>
 
                      <onc:icon name="Configure" url="/rhq/group/configuration/viewCurrent.xhtml" alt="Configure"
                                visible="#{item.category.name eq 'COMPATIBLE' and

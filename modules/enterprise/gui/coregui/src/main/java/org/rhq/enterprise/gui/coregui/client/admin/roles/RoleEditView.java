@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
@@ -290,7 +291,7 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
                         .view_adminConfig_systemSettings()));
                 label.setWidth100();
                 label.setHeight(20);
-                label.setPadding(5);
+                label.setPadding(10);
                 updateTab(this.ldapGroupsTab, label);
             }
         }
@@ -302,18 +303,22 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
     protected List<FormItem> createFormItems(EnhancedDynamicForm form) {
         List<FormItem> items = new ArrayList<FormItem>();
 
-        TextItem nameItem = new TextItem(RolesDataSource.Field.NAME, MSG.common_title_name());
+        TextItem nameItem = new TextItem(RolesDataSource.Field.NAME);
+        nameItem.setShowTitle(true);
+        nameItem.setAttribute(EnhancedDynamicForm.OUTPUT_AS_HTML_ATTRIBUTE, true);
         items.add(nameItem);
 
-        TextItem descriptionItem = new TextItem(RolesDataSource.Field.DESCRIPTION, MSG.common_title_description());
+        TextItem descriptionItem = new TextItem(RolesDataSource.Field.DESCRIPTION);
+        descriptionItem.setShowTitle(true);
         descriptionItem.setColSpan(form.getNumCols());
+        descriptionItem.setAttribute(EnhancedDynamicForm.OUTPUT_AS_HTML_ATTRIBUTE, true);
         items.add(descriptionItem);
 
         return items;
     }
 
     @Override
-    protected void save() {
+    protected void save(DSRequest requestProperties) {
         // Grab the currently assigned sets from each of the selectors and stick them into the corresponding canvas
         // items on the form, so when the form is saved, they'll get submitted along with the rest of the simple fields
         // to the datasource's add or update methods.
@@ -333,7 +338,7 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
         }
 
         // Submit the form values to the datasource.
-        super.save();
+        super.save(requestProperties);
     }
 
     @Override

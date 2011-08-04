@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.resource;
 
 import java.util.List;
+import java.util.Map;
 
 import javax.ejb.Remote;
 import javax.jws.WebMethod;
@@ -31,8 +32,10 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.measurement.ResourceAvailability;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceAncestryFormat;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.jaxb.WebServiceMapAdapter;
 import org.rhq.enterprise.server.jaxb.adapter.ResourceListAdapter;
 import org.rhq.enterprise.server.system.ServerVersion;
 
@@ -138,4 +141,23 @@ public interface ResourceManagerRemote {
     Resource getParentResource( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "resourceId") int resourceId);
+
+    /**
+     * Resource.ancestry is an encoded value that holds the resource's parental ancestry. It is not suitable for display.
+     * This method can be used to get decoded and formatted ancestry values for a set of resources.  A typical usage
+     * would a criteria resource fetch, and then a subsequent call to this method for ancestry display, potentially
+     * for resource disambiguation purposes.
+     * 
+     * @param subject
+     * @param resourceIds
+     * @param format
+     * @return A Map of ResourceIds to FormattedAncestryStrings, one entry for each unique, valid, resourceId passed in. 
+     */
+    @WebMethod
+    @XmlJavaTypeAdapter(value = WebServiceMapAdapter.class)
+    Map<Integer, String> getResourcesAncestry( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "resourceIds") Integer[] resourceIds, //
+        @WebParam(name = "format") ResourceAncestryFormat format);
+
 }

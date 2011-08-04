@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.bundle;
 
 import java.util.HashMap;
+import java.util.Map;
 
 import javax.ejb.Local;
 
@@ -186,4 +187,16 @@ public interface BundleManagerLocal extends BundleManagerRemote {
     BundleResourceDeployment setBundleResourceDeploymentStatus(Subject subject, int resourceDeploymentId,
         BundleDeploymentStatus status) throws Exception;
 
+    /**
+     * This is for internal use only - when {@link #purgeBundleDestination(Subject, int)} is done, it
+     * calls this so the purge can be finalized. This is required because this method is called with
+     * a transactional context, as opposed to the main purge method.
+     * 
+     * @param subject
+     * @param bundleDeployment
+     * @param failedToPurge
+     * @throws Exception
+     */
+    void _finalizePurge(Subject subject, BundleDeployment bundleDeployment,
+        Map<BundleResourceDeployment, String> failedToPurge) throws Exception;
 }

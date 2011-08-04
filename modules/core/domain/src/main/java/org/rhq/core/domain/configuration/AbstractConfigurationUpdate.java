@@ -22,8 +22,6 @@
  */
 package org.rhq.core.domain.configuration;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
 import java.io.Serializable;
 
 import javax.persistence.CascadeType;
@@ -244,7 +242,8 @@ public abstract class AbstractConfigurationUpdate implements Serializable {
 
     @Override
     public String toString() {
-        StringBuilder str = new StringBuilder(this.getClass().getName().substring(this.getClass().getName().lastIndexOf(".")+1));
+        StringBuilder str = new StringBuilder(this.getClass().getName().substring(
+            this.getClass().getName().lastIndexOf(".") + 1));
         str.append("[status=").append(this.status);
         str.append(", configuration=").append(this.configuration);
         str.append(", subjectName=").append(this.subjectName);

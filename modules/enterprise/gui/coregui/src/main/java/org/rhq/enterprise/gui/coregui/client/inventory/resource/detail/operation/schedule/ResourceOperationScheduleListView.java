@@ -22,13 +22,14 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operatio
 import com.smartgwt.client.widgets.Canvas;
 
 import org.rhq.core.domain.resource.composite.ResourceComposite;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.schedule.OperationScheduleListView;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.schedule.ResourceOperationScheduleDetailsView;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.schedule.AbstractOperationScheduleListView;
 
 /**
+ * The details view of the Resource Operations>Schedules subtab.
+ *
  * @author Ian Springer
  */
-public class ResourceOperationScheduleListView extends OperationScheduleListView {
+public class ResourceOperationScheduleListView extends AbstractOperationScheduleListView {
 
     private static final String TITLE = null;
 
@@ -45,9 +46,9 @@ public class ResourceOperationScheduleListView extends OperationScheduleListView
     }
 
     @Override
-    public Canvas getDetailsView(int scheduleId) {
-        return new ResourceOperationScheduleDetailsView(extendLocatorId("DetailsView"), 
-            this.resourceComposite, scheduleId);
+    public Canvas getDetailsView(Integer scheduleId) {
+        return new ResourceOperationScheduleDetailsView(extendLocatorId("DetailsView"), this.resourceComposite,
+            scheduleId);
     }
 
 }

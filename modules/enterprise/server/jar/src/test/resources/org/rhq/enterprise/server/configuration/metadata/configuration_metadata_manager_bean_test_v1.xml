@@ -67,4 +67,17 @@
             </c:map-property>
         </plugin-configuration>
     </server>
+
+    <server name="OptionSourceTest">
+            <plugin-configuration>
+                <c:simple-property name="prop1">
+                    <c:property-options>
+                        <c:option value="value1"/>
+                    </c:property-options>
+                    <c:option-source target="resource" expression="resourceType=DomainDeployment,plugin=as7"
+                                  filter="*.jdbc" linkToTarget="false"/>
+                </c:simple-property>
+                <c:simple-property name="prop2"/>
+            </plugin-configuration>
+    </server>
 </plugin>

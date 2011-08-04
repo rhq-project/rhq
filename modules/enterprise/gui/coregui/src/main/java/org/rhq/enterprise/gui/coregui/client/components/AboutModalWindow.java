@@ -25,6 +25,7 @@ import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.Button;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
+import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
@@ -35,6 +36,10 @@ import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 
 /**
  * The "About RHQ" modal window.
@@ -42,12 +47,22 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
  * @author Ian Springer
  * @author Joseph Marques
  */
-public class AboutModalWindow extends Window {
+public class AboutModalWindow extends LocatableWindow {
+
     private static final Messages MSG = CoreGUI.getMessages();
 
     private static ProductInfo PRODUCT_INFO;
 
-    public AboutModalWindow() {
+    /**
+     * <pre>
+     * ID Format: "simpleClassname_locatorId"
+     * </pre>
+     *
+     * @param locatorId not null or empty.
+     */
+    public AboutModalWindow(String locatorId) {
+        super(locatorId);
+
         setWidth(300);
         setHeight(300);
         setOverflow(Overflow.VISIBLE);
@@ -83,7 +98,7 @@ public class AboutModalWindow extends Window {
     }
 
     private void finishOnInit() {
-        VLayout contentPane = new VLayout();
+        LocatableVLayout contentPane = new LocatableVLayout(extendLocatorId("Content"));
         contentPane.setPadding(15);
         contentPane.setMembersMargin(25);
 
@@ -103,15 +118,16 @@ public class AboutModalWindow extends Window {
         htmlFlow.setContents(html);
         contentPane.addMember(htmlFlow);
 
-        HLayout bottomPanel = new HLayout();
-        bottomPanel.setAlign(VerticalAlignment.BOTTOM);
-        contentPane.addMember(bottomPanel);
+        LocatableHLayout buttonBar = new LocatableHLayout(contentPane.extendLocatorId("ButtonBar"));
+        buttonBar.setAlign(VerticalAlignment.BOTTOM);
+        contentPane.addMember(buttonBar);
 
         Canvas spacer = new Canvas();
         spacer.setWidth("*");
-        bottomPanel.addMember(spacer);
+        buttonBar.addMember(spacer);
 
-        Button closeButton = new Button(MSG.common_button_close());
+        LocatableIButton closeButton = new LocatableIButton(buttonBar.extendLocatorId("Close"),
+                MSG.common_button_close());
         closeButton.setShowRollOver(true);
         closeButton.setShowDown(true);
         closeButton.setWidth("60");
@@ -120,7 +136,7 @@ public class AboutModalWindow extends Window {
                 hide();
             }
         });
-        bottomPanel.addMember(closeButton);
+        buttonBar.addMember(closeButton);
 
         // NOTE: Since this is a subclass of Window, we MUST use addItem(), rather than addMember() from the
         //       Layout class.

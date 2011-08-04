@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -36,8 +36,10 @@ import java.util.jar.Manifest;
 
 import javax.xml.XMLConstants;
 import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.bind.ValidationEvent;
+import javax.xml.bind.ValidationEventLocator;
 import javax.xml.bind.util.ValidationEventCollector;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
@@ -57,11 +59,13 @@ import org.rhq.core.clientapi.descriptor.plugin.ServerDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.ServiceDescriptor;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.util.exception.WrappedRemotingException;
+import org.xml.sax.SAXException;
 
 /**
  * Utilities for agent plugin descriptors.
  *
  * @author John Mazzitelli
+ * @author Ian Springer
  */
 public abstract class AgentPluginDescriptorUtil {
     private static final Log LOG = LogFactory.getLog(AgentPluginDescriptorUtil.class);
@@ -123,7 +127,7 @@ public abstract class AgentPluginDescriptorUtil {
      * is searched for an implementation version string and if one is found that is the version
      * of the plugin. If the manifest entry is also not found, the plugin does not have a version
      * associated with it, which causes this method to throw an exception.
-     * 
+     *
      * @param pluginFile the plugin jar
      * @param descriptor the plugin descriptor as found in the plugin jar (if <code>null</code>,
      *                   the plugin file will be read and the descriptor parsed from it)
@@ -161,7 +165,7 @@ public abstract class AgentPluginDescriptorUtil {
      * Obtains the manifest of the plugin file represented by the given deployment info.
      * Use this method rather than calling deploymentInfo.getManifest()
      * (workaround for https://jira.jboss.org/jira/browse/JBAS-6266).
-     * 
+     *
      * @param pluginFile the plugin file
      * @return the deployed plugin's manifest
      */
@@ -182,7 +186,7 @@ public abstract class AgentPluginDescriptorUtil {
     /**
      * Given an existing dependency graph and a plugin descriptor, this will add that plugin and its dependencies
      * to the dependency graph.
-     * 
+     *
      * @param dependencyGraph
      * @param descriptor
      */
@@ -281,9 +285,9 @@ public abstract class AgentPluginDescriptorUtil {
 
     /**
      * Loads a plugin descriptor from the given plugin jar and returns it.
-     * 
-     * This is a static method to provide a convienence method for others to be able to use.
-     *  
+     *
+     * This is a static method to provide a convenience method for others to be able to use.
+     *
      * @param pluginJarFileUrl URL to a plugin jar file
      * @return the plugin descriptor found in the given plugin jar file
      * @throws PluginContainerException if failed to find or parse a descriptor file in the plugin jar
@@ -299,16 +303,9 @@ public abstract class AgentPluginDescriptorUtil {
 
         testPluginJarIsReadable(pluginJarFileUrl);
 
-        JAXBContext jaxbContext;
-        try {
-            jaxbContext = JAXBContext.newInstance(DescriptorPackages.PC_PLUGIN);
-        } catch (Exception e) {
-            throw new PluginContainerException("Failed to create JAXB Context.", new WrappedRemotingException(e));
-        }
-
         JarInputStream jis = null;
         JarEntry descriptorEntry = null;
-
+        ValidationEventCollector validationEventCollector = new ValidationEventCollector();
         try {
             jis = new JarInputStream(pluginJarFileUrl.openStream());
             JarEntry nextEntry = jis.getNextJarEntry();
@@ -325,29 +322,10 @@ public abstract class AgentPluginDescriptorUtil {
                 throw new Exception("The plugin descriptor does not exist");
             }
 
-            Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-
-            // Enable schema validation
-            URL pluginSchemaURL = AgentPluginDescriptorUtil.class.getClassLoader().getResource(PLUGIN_SCHEMA_PATH);
-            Schema pluginSchema = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI).newSchema(
-                pluginSchemaURL);
-            unmarshaller.setSchema(pluginSchema);
-
-            ValidationEventCollector vec = new ValidationEventCollector();
-            unmarshaller.setEventHandler(vec);
-
-            PluginDescriptor pluginDescriptor = (PluginDescriptor) unmarshaller.unmarshal(jis);
-
-            for (ValidationEvent event : vec.getEvents()) {
-                logger.debug("Plugin [" + pluginDescriptor.getName() + "] descriptor messages {Severity: "
-                    + event.getSeverity() + ", Message: " + event.getMessage() + ", Exception: "
-                    + event.getLinkedException() + "}");
-            }
-
-            return pluginDescriptor;
+            return parsePluginDescriptor(jis, validationEventCollector);
         } catch (Exception e) {
             throw new PluginContainerException("Could not successfully parse the plugin descriptor ["
-                + PLUGIN_DESCRIPTOR_PATH + " found in plugin jar at [" + pluginJarFileUrl + "]",
+                + PLUGIN_DESCRIPTOR_PATH + "] found in plugin jar at [" + pluginJarFileUrl + "].",
                 new WrappedRemotingException(e));
         } finally {
             if (jis != null) {
@@ -356,6 +334,95 @@ public abstract class AgentPluginDescriptorUtil {
                 } catch (Exception e) {
                     logger.warn("Cannot close jar stream [" + pluginJarFileUrl + "]. Cause: " + e);
                 }
+            }
+
+            logValidationEvents(pluginJarFileUrl, validationEventCollector, logger);
+        }
+    }
+
+    /**
+     * Parses a descriptor from InputStream without a validator.
+     * @param is input to check
+     * @return parsed PluginDescriptor
+     * @throws PluginContainerException if validation fails
+     */
+    public static PluginDescriptor parsePluginDescriptor(InputStream is) throws PluginContainerException {
+        return parsePluginDescriptor(is, new ValidationEventCollector());
+    }
+
+    /**
+     * Parses a descriptor from InputStream without a validator.
+     * @param is input to check
+     * @return parsed PluginDescriptor
+     * @throws PluginContainerException if validation fails
+     */
+    public static PluginDescriptor parsePluginDescriptor(InputStream is,
+            ValidationEventCollector validationEventCollector) throws PluginContainerException {
+        JAXBContext jaxbContext;
+        try {
+            jaxbContext = JAXBContext.newInstance(DescriptorPackages.PC_PLUGIN);
+        } catch (Exception e) {
+            throw new PluginContainerException("Failed to create JAXB Context.", new WrappedRemotingException(e));
+        }
+
+        Unmarshaller unmarshaller;
+        try {
+            unmarshaller = jaxbContext.createUnmarshaller();
+            // Enable schema validation
+            URL pluginSchemaURL = AgentPluginDescriptorUtil.class.getClassLoader().getResource(PLUGIN_SCHEMA_PATH);
+            Schema pluginSchema = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI).newSchema(
+                    pluginSchemaURL);
+            unmarshaller.setSchema(pluginSchema);
+            unmarshaller.setEventHandler(validationEventCollector);
+
+            PluginDescriptor pluginDescriptor = (PluginDescriptor) unmarshaller.unmarshal(is);
+            return pluginDescriptor;
+        } catch (JAXBException e) {
+            throw new PluginContainerException(e);
+        } catch (SAXException e) {
+            throw new PluginContainerException(e);
+        }
+    }
+
+    private static void logValidationEvents(URL pluginJarFileUrl, ValidationEventCollector validationEventCollector,
+                                            Log logger) {
+        for (ValidationEvent event : validationEventCollector.getEvents()) {
+            // First build the message to be logged. The message will look something like this:
+            //
+            //   Validation fatal error while parsing [jopr-jboss-as-plugin-4.1.0-SNAPSHOT.jar:META-INF/rhq-plugin.xml]
+            //   at line 221, column 94: cvc-minInclusive-valid: Value '20000' is not facet-valid with respect to
+            //   minInclusive '30000' for type '#AnonType_defaultIntervalmetric'.
+            //
+            StringBuilder message = new StringBuilder();
+            String severity = null;
+            switch(event.getSeverity()) {
+                case ValidationEvent.WARNING:
+                    severity = "warning";
+                    break;
+                case ValidationEvent.ERROR:
+                    severity = "error";
+                    break;
+                case ValidationEvent.FATAL_ERROR:
+                    severity = "fatal error";
+                    break;
+            }
+            message.append("Validation ").append(severity);
+            File pluginJarFile = new File(pluginJarFileUrl.getPath());
+            message.append(" while parsing [").append(pluginJarFile.getName()).append(":").append(PLUGIN_DESCRIPTOR_PATH).append("]");
+            ValidationEventLocator locator = event.getLocator();
+            message.append(" at line ").append(locator.getLineNumber());
+            message.append(", column ").append(locator.getColumnNumber());
+            message.append(": ").append(event.getMessage());
+
+            // Now write the message to the log at an appropriate level.
+            switch(event.getSeverity()) {
+                case ValidationEvent.WARNING:
+                case ValidationEvent.ERROR:
+                    logger.warn(message);
+                    break;
+                case ValidationEvent.FATAL_ERROR:
+                    logger.error(message);
+                    break;
             }
         }
     }

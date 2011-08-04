@@ -20,15 +20,19 @@ package org.rhq.enterprise.gui.admin.user;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.tiles.ComponentContext;
 import org.apache.struts.tiles.actions.TilesAction;
-import org.rhq.core.domain.util.PageControl;
+
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.criteria.SubjectCriteria;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.legacy.Constants;
-import org.rhq.enterprise.gui.util.WebUtility;
+import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -37,8 +41,11 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class ListAction extends TilesAction {
     public ActionForward execute(ComponentContext context, ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) throws Exception {
-        PageControl pc = WebUtility.getPageControl(request);
-        PageList users = LookupUtil.getSubjectManager().findAllSubjects(pc);
+        SubjectCriteria c = new SubjectCriteria();
+        c.addFilterFsystem(false);
+        c.addSortName(PageOrdering.ASC);
+        PageList<Subject> users = LookupUtil.getSubjectManager().findSubjectsByCriteria(
+            RequestUtils.getSubject(request), c);
         request.setAttribute(Constants.ALL_USERS_ATTR, users);
 
         return null;

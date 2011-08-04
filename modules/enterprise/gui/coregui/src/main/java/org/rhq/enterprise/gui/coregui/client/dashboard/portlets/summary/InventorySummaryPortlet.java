@@ -28,7 +28,7 @@ import java.util.List;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.LinkItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
@@ -38,14 +38,13 @@ import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.core.domain.resource.InventorySummary;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortletUtil;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceBossGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
@@ -59,26 +58,30 @@ public class InventorySummaryPortlet extends LocatableVLayout implements AutoRef
     private ResourceBossGWTServiceAsync resourceBossService = GWTServiceLookup.getResourceBossService();
 
     private LocatableDynamicForm form;
-    private Timer defaultReloader;
-    private Timer reloader;
+    private Timer refreshTimer;
 
     public InventorySummaryPortlet(String locatorId) {
         super(locatorId);
 
-        loadInventoryViewDiata();
+        loadInventoryViewData();
     }
 
-    private void loadInventoryViewDiata() {
+    private void loadInventoryViewData() {
         for (Canvas child : getChildren()) {
             child.destroy();
         }
-        resourceBossService.getInventorySummaryForLoggedInUser(new AsyncCallback<InventorySummary>() {
+        //destroy form
+        if (form != null) {
+            form.destroy();
+        }
+
+        resourceBossService.getInventorySummary(new AsyncCallback<InventorySummary>() {
             public void onFailure(Throwable throwable) {
                 CoreGUI.getErrorHandler().handleError(MSG.view_portlet_inventory_error1(), throwable);
             }
 
             public void onSuccess(InventorySummary summary) {
-                form = new LocatableDynamicForm("Portlet_Inventory_Summary");
+                form = new LocatableDynamicForm(extendLocatorId("Form"));
                 List<FormItem> formItems = new ArrayList<FormItem>();
 
                 //                HeaderItem headerItem = new HeaderItem("header");
@@ -143,60 +146,42 @@ public class InventorySummaryPortlet extends LocatableVLayout implements AutoRef
     }
 
     public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
-        // TODO: Implement this method.
+        // No Configuration for this portlet
     }
 
     public Canvas getHelpCanvas() {
-        return null; // TODO: Implement this method.
+        return new HTMLFlow(MSG.view_portlet_help_inventorySummary());
     }
 
-    public DynamicForm getCustomSettingsForm() {
-        return null; // TODO: Implement this method.
+    public void startRefreshCycle() {
+        refreshTimer = AutoRefreshPortletUtil.startRefreshCycle(this, this, refreshTimer);
     }
 
-    /** Custom refresh operation as we are not directly extending Table
-     */
     @Override
-    public void redraw() {
-        super.redraw();
-        if (form != null) {
-            //destroy form
-            form.destroy();
+    protected void onDestroy() {
+        AutoRefreshPortletUtil.onDestroy(this, refreshTimer);
+
+        super.onDestroy();
+    }
+
+    public boolean isRefreshing() {
+        return false;
+    }
+
+    //Custom refresh operation as we are not directly extending Table
+    @Override
+    public void refresh() {
+        if (!isRefreshing()) {
+            loadInventoryViewData();
         }
-        //now reload the data
-        loadInventoryViewDiata();
     }
 
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
-        private Portlet reference;
 
         public final Portlet getInstance(String locatorId) {
-            // return GWT.create(InventorySummaryView.class);
-            if (reference == null) {
-                reference = new InventorySummaryPortlet(locatorId);
-            }
-            return reference;
+            return new InventorySummaryPortlet(locatorId);
         }
     }
 
-    @Override
-    public void startRefreshCycle() {
-        //current setting
-        final int retrievedRefreshInterval = UserSessionManager.getUserPreferences().getPageRefreshInterval();
-        //cancel previous operation
-        if (defaultReloader != null) {
-            defaultReloader.cancel();
-        }
-        if (retrievedRefreshInterval >= MeasurementUtility.MINUTES) {
-            defaultReloader = new Timer() {
-                public void run() {
-                    redraw();
-                    //launch again until portlet reference and child references GC.
-                    defaultReloader.schedule(retrievedRefreshInterval);
-                }
-            };
-            defaultReloader.schedule(retrievedRefreshInterval);
-        }
-    }
 }

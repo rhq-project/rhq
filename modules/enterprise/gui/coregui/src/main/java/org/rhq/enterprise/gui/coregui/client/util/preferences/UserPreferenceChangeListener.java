@@ -25,4 +25,6 @@ public interface UserPreferenceChangeListener {
 
     void onPreferenceChange(UserPreferenceChangeEvent event);
 
+    void onPreferenceRemove(UserPreferenceChangeEvent event);
+
 }

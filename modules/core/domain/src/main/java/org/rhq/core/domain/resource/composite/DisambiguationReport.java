@@ -35,8 +35,7 @@ public class DisambiguationReport<T> implements Serializable {
 
     private T original;
     private List<Resource> parents;
-    private ResourceType resourceType;
-    private String name;
+    private Resource resource;
 
     public static class ResourceType implements Serializable {
 
@@ -124,18 +123,21 @@ public class DisambiguationReport<T> implements Serializable {
         }
     }
 
-    public DisambiguationReport() {
+    //GWT needs this
+    protected DisambiguationReport() {
     }
 
-    public DisambiguationReport(T original, List<Resource> parents, ResourceType resourceType, String name) {
+    public DisambiguationReport(T original, List<Resource> parents, Resource resource) {
         this.original = original;
         //        this.parents = Collections.unmodifiableList(parents);
         //spinder: the returned type is not Serializable and causes GWT serialization errors.
         this.parents = parents;
-        this.resourceType = resourceType;
-        this.name = name;
+        this.resource = resource;
     }
 
+    /**
+     * @return an object from the original result list that this disambiguation report represents.
+     */
     public T getOriginal() {
         return original;
     }
@@ -149,23 +151,48 @@ public class DisambiguationReport<T> implements Serializable {
     }
 
     /**
+     * @return the resource that the {@link #getOriginal() original} represents.
+     */
+    public Resource getResource() {
+        return resource;
+    }
+    
+    /**
      * @return the ResourceType of the resource represented by the {@link #getOriginal()}
      * or null if type disambiguation isn't needed.
+     * 
+     * @deprecated use {@link #getResource()}.{@link Resource#getType() getType()}
      */
+    @Deprecated
     public ResourceType getResourceType() {
-        return resourceType;
+        return resource.getType();
     }
 
     /**
      *
      * @return the Resource name
+     * 
+     * @deprecated use {@link #getResource()}.{@link Resource#getName() getName()}
      */
+    @Deprecated
     public String getName() {
-        return name;
+        return resource.getName();
+    }
+
+    /**
+     *
+     * @return the Resource id
+     * 
+     * @deprecated use {@link #getResource()}.{@link Resource#getId() getId()}
+     */
+    @Deprecated
+    public int getId() {
+        return resource.getId();
     }
 
     public String toString() {
-        return "DisambiguationReport(type=" + resourceType + ", parents=" + parents + ", original=" + original
-            + ", name=" + name + ")";
+        return "DisambiguationReport(resource=" + resource + ", parents=" + parents + ", original=" + original
+            + ")";
     }
+    
 }

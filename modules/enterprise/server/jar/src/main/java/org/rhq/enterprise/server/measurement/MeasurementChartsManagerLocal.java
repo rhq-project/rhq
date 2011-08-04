@@ -26,7 +26,7 @@ import javax.ejb.Local;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
-import org.rhq.enterprise.server.measurement.uibean.MetricDisplaySummary;
+import org.rhq.core.domain.measurement.ui.MetricDisplaySummary;
 
 /**
  * @author Joseph Marques

@@ -26,7 +26,6 @@ import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
-import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.Label;
 
 import org.rhq.core.domain.measurement.DataType;
@@ -37,7 +36,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.components.measurement.MeasurementRangeEditor;
+import org.rhq.enterprise.gui.coregui.client.components.measurement.UserPreferencesMeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectListener;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
@@ -62,15 +61,13 @@ public class GraphListView extends LocatableVLayout implements ResourceSelectLis
     protected void onDraw() {
         super.onDraw();
 
-        for (Canvas c : getMembers()) {
-            c.destroy();
-        }
+        destroyMembers();
 
         addMember(new AvailabilityBarView(resource));
 
         //        addMember(loadingLabel);
 
-        addMember(new MeasurementRangeEditor(this.getLocatorId()));
+        addMember(new UserPreferencesMeasurementRangeEditor(this.getLocatorId()));
 
         if (resource != null) {
             buildGraphs();
@@ -130,7 +127,7 @@ public class GraphListView extends LocatableVLayout implements ResourceSelectLis
     }
 
     private void buildGraph(MeasurementDefinition def, List<MeasurementDataNumericHighLowComposite> data) {
-        SmallGraphView graph = new SmallGraphView(extendLocatorId(def.getName()), resource.getId(), def, data);
+        ResourceMetricGraphView graph = new ResourceMetricGraphView(extendLocatorId(def.getName()), resource.getId(), def, data);
         graph.setWidth("95%");
         graph.setHeight(220);
 

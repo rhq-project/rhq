@@ -40,7 +40,7 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 /**
  * @author Greg Hinkle
  */
-public class BundlesDataSource extends RPCDataSource<Bundle> {
+public class BundlesDataSource extends RPCDataSource<Bundle, BundleCriteria> {
 
     private BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService();
 
@@ -71,8 +71,24 @@ public class BundlesDataSource extends RPCDataSource<Bundle> {
     }
 
     @Override
-    protected void executeFetch(final DSRequest request, final DSResponse response) {
+    protected void executeFetch(final DSRequest request, final DSResponse response, final BundleCriteria criteria) {
+        bundleService.findBundlesByCriteria(criteria, new AsyncCallback<PageList<Bundle>>() {
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError(MSG.dataSource_bundle_loadFailed(), caught);
+                response.setStatus(DSResponse.STATUS_FAILURE);
+                processResponse(request.getRequestId(), response);
+            }
 
+            public void onSuccess(PageList<Bundle> result) {
+                response.setData(buildRecords(result));
+                response.setTotalRows(result.getTotalSize());
+                processResponse(request.getRequestId(), response);
+            }
+        });
+    }
+
+    @Override
+    protected BundleCriteria getFetchCriteria(final DSRequest request) {
         BundleCriteria criteria = new BundleCriteria();
         criteria.setPageControl(getPageControl(request));
 
@@ -98,20 +114,7 @@ public class BundlesDataSource extends RPCDataSource<Bundle> {
         //       criteria.setSearchExpression(request.getCriteria().getValues().get("search").toString());
         // }
 
-        bundleService.findBundlesByCriteria(criteria, new AsyncCallback<PageList<Bundle>>() {
-            public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError(MSG.dataSource_bundle_loadFailed(), caught);
-                response.setStatus(DSResponse.STATUS_FAILURE);
-                processResponse(request.getRequestId(), response);
-            }
-
-            public void onSuccess(PageList<Bundle> result) {
-                response.setData(buildRecords(result));
-                response.setTotalRows(result.getTotalSize());
-                processResponse(request.getRequestId(), response);
-            }
-        });
-
+        return criteria;
     }
 
     @Override

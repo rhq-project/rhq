@@ -90,6 +90,7 @@ public class ResourceCriteria extends TaggedCriteria {
     private boolean fetchResourceErrors;
     private boolean fetchEventSources;
     private boolean fetchProductVersion;
+    private boolean fetchDriftConfigurations;
 
     private PageOrdering sortName;
     private PageOrdering sortInventoryStatus;
@@ -100,6 +101,7 @@ public class ResourceCriteria extends TaggedCriteria {
     private PageOrdering sortParentResourceName; // needs overrides
     private PageOrdering sortAgentName; // needs overrides
     private PageOrdering sortCurrentAvailability; // needs overrides
+    private PageOrdering sortResourceAncestry; // needs overrides
 
     public ResourceCriteria() {
         filterOverrides.put("resourceTypeId", "resourceType.id = ?");
@@ -133,6 +135,7 @@ public class ResourceCriteria extends TaggedCriteria {
         sortOverrides.put("parentResourceName", "parentResource.name");
         sortOverrides.put("agentName", "agent.name");
         sortOverrides.put("currentAvailability", "currentAvailability.availabilityType");
+        sortOverrides.put("resourceAncestry", "ancestry");
     }
 
     @Override
@@ -328,6 +331,10 @@ public class ResourceCriteria extends TaggedCriteria {
         this.fetchProductVersion = fetchProductVersion;
     }
 
+    public void fetchDriftConfigurations(boolean fetchDriftConfigurations) {
+        this.fetchDriftConfigurations = fetchDriftConfigurations;
+    }
+
     public void addSortName(PageOrdering sortName) {
         addSortField("name");
         this.sortName = sortName;
@@ -371,6 +378,11 @@ public class ResourceCriteria extends TaggedCriteria {
     public void addSortCurrentAvailability(PageOrdering sortCurrentAvailability) {
         addSortField("currentAvailability");
         this.sortCurrentAvailability = sortCurrentAvailability;
+    }
+
+    public void addSortResourceAncestry(PageOrdering sortAncestry) {
+        addSortField("resourceAncestry");
+        this.sortResourceAncestry = sortAncestry;
     }
 
     /** subclasses should override as necessary */

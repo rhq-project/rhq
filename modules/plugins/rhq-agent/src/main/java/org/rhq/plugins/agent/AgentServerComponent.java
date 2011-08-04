@@ -194,6 +194,9 @@ public class AgentServerComponent extends JMXServerComponent implements JMXCompo
                             throw eie;
                         }
                     }
+                } else if (name.equals("switchToServer")) {
+                    String server = params.getSimpleValue("server", null);
+                    getAgentBean().getOperation(name).invoke(server);
                 } else {
                     // this should really never happen
                     throw new IllegalArgumentException("Operation [" + name + "] does not support params");

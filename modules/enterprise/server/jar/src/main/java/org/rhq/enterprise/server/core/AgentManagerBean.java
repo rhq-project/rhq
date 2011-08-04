@@ -58,6 +58,7 @@ import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
@@ -97,6 +98,10 @@ public class AgentManagerBean implements AgentManagerLocal {
 
     @EJB
     private SystemManagerLocal systemManager;
+
+    @EJB
+    @IgnoreDependency
+    private SubjectManagerLocal subjectManager;
 
     @EJB
     private AuthorizationManagerLocal authorizationManager;
@@ -157,7 +162,9 @@ public class AgentManagerBean implements AgentManagerLocal {
         return client;
     }
 
-    @ExcludeDefaultInterceptors
+    /*
+     * Removed ExcludeDefaultInterceptors annotation to enable permission and session check by the container.
+     */
     public AgentClient getAgentClient(Subject subject, int resourceId) {
         Agent agent = getAgentByResourceId(subject, resourceId);
 
@@ -210,7 +217,8 @@ public class AgentManagerBean implements AgentManagerLocal {
 
         long maximumQuietTimeAllowed = 900000L;
         try {
-            String prop = systemManager.getSystemConfiguration().getProperty(RHQConstants.AgentMaxQuietTimeAllowed);
+            String prop = systemManager.getSystemConfiguration(subjectManager.getOverlord()).getProperty(
+                RHQConstants.AgentMaxQuietTimeAllowed);
             if (prop != null) {
                 maximumQuietTimeAllowed = Long.parseLong(prop);
             }
@@ -355,16 +363,17 @@ public class AgentManagerBean implements AgentManagerLocal {
         return agent;
     }
 
-    @ExcludeDefaultInterceptors
+    /*
+     * Removed ExcludeDefaultInterceptors annotation to enable permission and session check by the container.
+     */
     public Agent getAgentByResourceId(Subject subject, int resourceId) {
         Agent agent;
 
         try {
-            //insert logged in check and view resources perm check as method calld from GWT*Service
-            if ((subject != null)
-                && (!authorizationManager.hasResourcePermission(subject, Permission.MANAGE_INVENTORY, resourceId))) {
+            //insert logged in check and view resources perm check as method called from GWT*Service
+            if ((subject != null) && (!authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_SETTINGS))) {
                 throw new PermissionException("Can not get agent details - " + subject + " lacks "
-                    + Permission.MANAGE_INVENTORY + " for resource[id=" + resourceId + "]");
+                    + Permission.MANAGE_SETTINGS + " for resource[id=" + resourceId + "]");
             }
 
             Query query = entityManager.createNamedQuery(Agent.QUERY_FIND_BY_RESOURCE_ID);

@@ -87,6 +87,10 @@ public class AgentManagement implements AgentManagementMBean, MBeanRegistration 
         m_agent = agent;
     }
 
+    public void switchToServer(String server) {
+        m_agent.switchToServer(server);
+    }
+
     public void restart() {
         // restarting the agent is a suicidal act - this MBean instance will
         // be unregistered after we shutdown.  Therefore, we must do this in a

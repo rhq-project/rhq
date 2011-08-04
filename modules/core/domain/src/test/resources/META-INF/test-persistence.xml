@@ -118,6 +118,8 @@
     <class>org.rhq.core.domain.content.PackageBitsBlob</class>
     <class>org.rhq.core.domain.content.PackageVersionContentSource</class>
     <class>org.rhq.core.domain.measurement.MeasurementDataTrait</class>
+    <class>org.rhq.core.domain.dashboard.Dashboard</class>
+    <class>org.rhq.core.domain.dashboard.DashboardPortlet</class>
     <properties>
       <property name="hibernate.connection.provider_class" value="org.hibernate.connection.DriverManagerConnectionProvider"/>
       <!--

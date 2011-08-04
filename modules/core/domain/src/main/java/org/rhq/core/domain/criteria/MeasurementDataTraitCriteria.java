@@ -70,15 +70,15 @@ public class MeasurementDataTraitCriteria extends Criteria {
         filterOverrides.put(FILTER_FIELD_GROUP_ID, "schedule.resource.id IN " //
             + "( SELECT res.id " //
             + "    FROM Resource res " //
-            + "    JOIN res.implicitGroups ig " //
+            + "    JOIN res.explicitGroups ig " //
             + "   WHERE ig.id = ? )");
         filterOverrides.put(FILTER_FIELD_DEFINITION_ID, "schedule.definition.id = ?");
         filterOverrides.put(FILTER_FIELD_MAX_TIMESTAMP, "id.timestamp = " //
             + "( SELECT MAX(mdt.id.timestamp) "
             + "    FROM MeasurementDataTrait mdt "
-            + "   WHERE mdt.id.scheduleId = " + getAlias() + ".id.scheduleId ) "
+            + "   WHERE mdt.id.scheduleId = " + getAlias() + ".id.scheduleId ) " //
             + "     AND 1 = ?");
-        
+
         sortOverrides.put(SORT_FIELD_TIMESTAMP, "id.timestamp");
         sortOverrides.put(SORT_FIELD_DISPLAY_NAME, "schedule.definition.displayName");
         sortOverrides.put(SORT_FIELD_RESOURCE_NAME, "schedule.resource.name");

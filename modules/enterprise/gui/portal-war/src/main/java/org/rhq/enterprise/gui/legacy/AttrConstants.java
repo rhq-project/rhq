@@ -792,16 +792,6 @@ public interface AttrConstants {
     public static final String MONITOR_CONFIG_OPTIONS = "monitorConfigOptions";
 
     /**
-     * Servlet context attribute indicating whether the installed RHQ license enables monitoring features.
-     */
-    public static final String MONITOR_ENABLED = "monitorEnabled";
-
-    /**
-     * Request attribute indicating whether monitoring is enabled for a resource.
-     */
-    public static final String MONITOR_ENABLED_ATTR = "monitorEnabledAttr";
-
-    /**
      * Request attribute to hold monitoring help text
      */
     public static final String MONITOR_HELP = "monitorHelp";

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright 2010, Red Hat Middleware LLC, and individual contributors
+ * Copyright 2010-2011, Red Hat Middleware LLC, and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -22,45 +22,87 @@ package org.rhq.enterprise.gui.coregui.client.util.message;
 import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.Overflow;
-import com.smartgwt.client.widgets.Label;
+import com.smartgwt.client.widgets.events.DoubleClickEvent;
+import com.smartgwt.client.widgets.events.DoubleClickHandler;
+import com.smartgwt.client.widgets.events.RightMouseDownEvent;
+import com.smartgwt.client.widgets.events.RightMouseDownHandler;
+import com.smartgwt.client.widgets.menu.Menu;
+import com.smartgwt.client.widgets.menu.MenuItem;
+import com.smartgwt.client.widgets.menu.events.ClickHandler;
+import com.smartgwt.client.widgets.menu.events.MenuItemClickEvent;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableLabel;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableMenu;
 
 /**
  * A bar for displaying a message at the top of a page - the equivalent of the JSF h:messages component.
- * The message will be displayed for 30 seconds and then will be automatically cleared.
+ * The message will be displayed for 30 seconds and then will be automatically cleared unless
+ * it is a sticky message.
  *
  * @author Ian Springer
+ * @author Jay Shaughnessy
  */
 public class MessageBar extends LocatableHLayout implements MessageCenter.MessageListener {
+
     private static final String LOCATOR_ID = "MessageBar";
     private static final int AUTO_HIDE_DELAY_MILLIS = 30000;
-
-    private Label label = new Label();
-    private Message stickyMessage;
-
     private static final String NON_BREAKING_SPACE = "&nbsp;";
+
+    private LocatableLabel label;
+    private Message currentMessage;
+    private Message stickyMessage; // this message will always be shown until dismissed by user.
+    private Menu showDetailsMenu;
+    private Timer messageClearingTimer;
 
     public MessageBar() {
         super(LOCATOR_ID);
-
         setOverflow(Overflow.VISIBLE);
+        setWidth100();
+        setAlign(Alignment.CENTER);
+
+        label = new LocatableLabel(extendLocatorId("Label"));
+        label.setAlign(Alignment.CENTER);
+        label.setWidth100();
+        label.setHeight("30px");
+        label.setCanSelectText(true);
+        addMember(label);
+
+        showDetailsMenu = new LocatableMenu(extendLocatorId("showDetailsMenu"));
+        MenuItem showDetailsMenuItem = new MenuItem(MSG.view_messageCenter_messageBarShowDetails());
+        showDetailsMenuItem.addClickHandler(new ClickHandler() {
+            @Override
+            public void onClick(MenuItemClickEvent event) {
+                MessageCenterView.showDetails(MessageBar.this.currentMessage);
+            }
+        });
+        showDetailsMenu.setItems(showDetailsMenuItem);
     }
 
     @Override
     protected void onDraw() {
         super.onDraw();
 
-        setWidth100();
-        setAlign(Alignment.CENTER);
-
-        label.setAlign(Alignment.CENTER);
-        label.setWidth("400px");
-        label.setHeight("25px");
-
         setLabelEmpty();
-        addMember(label);
+
+        // sometimes it's annoying to have the error message hang around for too long;
+        // let the user click the message so it goes away on demand
+        addDoubleClickHandler(new DoubleClickHandler() {
+            @Override
+            public void onDoubleClick(DoubleClickEvent event) {
+                clearMessage(true);
+            }
+        });
+
+        addRightMouseDownHandler(new RightMouseDownHandler() {
+            @Override
+            public void onRightMouseDown(RightMouseDownEvent event) {
+                if (MessageBar.this.currentMessage != null) {
+                    showDetailsMenu.showContextMenu();
+                }
+            }
+        });
 
         CoreGUI.getMessageCenter().addMessageListener(this);
     }
@@ -68,29 +110,35 @@ public class MessageBar extends LocatableHLayout implements MessageCenter.Messag
     @Override
     public void onMessage(Message message) {
         if (!message.isBackgroundJobResult()) {
+            if (this.messageClearingTimer != null) {
+                this.messageClearingTimer.cancel();
+            }
+
+            this.currentMessage = message;
             updateLabel(message);
 
             // Auto-clear the message after some time unless it's been designated as sticky.
             if (message.isSticky()) {
                 this.stickyMessage = message;
             } else {
-                new Timer() {
-                    @Override
+                this.messageClearingTimer = new Timer() {
                     public void run() {
                         clearMessage(false);
+                        // if we had a sticky message before, show it again, now that our more recent message has gone away
                         if (stickyMessage != null) {
                             updateLabel(stickyMessage);
                         }
                     }
-                }.schedule(AUTO_HIDE_DELAY_MILLIS);
+                };
+                this.messageClearingTimer.schedule(AUTO_HIDE_DELAY_MILLIS);
             }
         }
     }
 
-    private void clearMessage(boolean clearSticky) {
+    public void clearMessage(boolean clearSticky) {
+        this.currentMessage = null;
         setLabelEmpty();
         markForRedraw();
-
         if (clearSticky) {
             this.stickyMessage = null;
         }
@@ -110,13 +158,10 @@ public class MessageBar extends LocatableHLayout implements MessageCenter.Messag
         String styleName = (contents != null) ? message.getSeverity().getStyle() : null;
         label.setStyleName(styleName);
 
-        // TODO: Create some custom edge images in greed, yellow, red, etc. so we can add nice rounded corners to the
-        //       label.
-        //label.setShowEdges(true);
-
         String icon = (contents != null) ? message.getSeverity().getIcon() : null;
         label.setIcon(icon);
 
         markForRedraw();
     }
+
 }

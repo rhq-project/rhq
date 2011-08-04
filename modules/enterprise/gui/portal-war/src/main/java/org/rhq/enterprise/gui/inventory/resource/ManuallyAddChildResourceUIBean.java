@@ -35,7 +35,6 @@ import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.gui.configuration.ConfigurationMaskingUtility;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
@@ -151,7 +150,6 @@ public class ManuallyAddChildResourceUIBean {
     }
 
     public String addResource() {
-        ConfigurationMaskingUtility.unmaskConfiguration(getConfiguration(), getConfigurationDefinition());
         MergeResourceResponse mergeResourceResponse = null;
         try {
             mergeResourceResponse = discoveryBoss.manuallyAddResource(EnterpriseFacesContextUtility.getSubject(),
@@ -221,14 +219,10 @@ public class ManuallyAddChildResourceUIBean {
             pluginConfigTemplate = getConfigurationDefinition().getDefaultTemplate();
         }
 
-        Configuration pluginConfig = (pluginConfigTemplate != null) ? pluginConfigTemplate.createConfiguration()
+        configuration = (pluginConfigTemplate != null) ? pluginConfigTemplate.createConfiguration()
             : new Configuration();
-        if (pluginConfig != null) {
-            ConfigurationMaskingUtility.maskConfiguration(pluginConfig, this.configurationDefinition);
-            configuration = pluginConfig;
-        }
 
-        return pluginConfig;
+        return configuration;
     }
 
     public ResourceType getType() {

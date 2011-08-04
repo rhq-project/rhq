@@ -46,13 +46,13 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 /**
  * @author Greg Hinkle
  */
-public class BundleDeploymentDataSource extends RPCDataSource<BundleDeployment> {
+public class BundleDeploymentDataSource extends RPCDataSource<BundleDeployment, BundleDeploymentCriteria> {
 
     public static final String FIELD_ID = "id";
     public static final String FIELD_NAME = "name";
     public static final String FIELD_DEPLOY_DIR = "deployDir";
     public static final String FIELD_DESCRIPTION = "description";
-    public static final String FIELD_DEPLOY_TIME = "deploymentTime";
+    public static final String FIELD_DEPLOY_TIME = "ctime";
     public static final String FIELD_ERROR_MESSAGE = "errorMessage";
     public static final String FIELD_CONFIG = "configuration";
     public static final String FIELD_STATUS = "status";
@@ -97,7 +97,23 @@ public class BundleDeploymentDataSource extends RPCDataSource<BundleDeployment> 
     }
 
     @Override
-    protected void executeFetch(final DSRequest request, final DSResponse response) {
+    protected void executeFetch(final DSRequest request, final DSResponse response,
+        final BundleDeploymentCriteria criteria) {
+        bundleService.findBundleDeploymentsByCriteria(criteria, new AsyncCallback<PageList<BundleDeployment>>() {
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError(MSG.view_bundle_deploy_loadDeployFailure(), caught);
+            }
+
+            public void onSuccess(PageList<BundleDeployment> result) {
+                response.setData(buildRecords(result));
+                processResponse(request.getRequestId(), response);
+            }
+        });
+
+    }
+
+    @Override
+    protected BundleDeploymentCriteria getFetchCriteria(final DSRequest request) {
         BundleDeploymentCriteria criteria = new BundleDeploymentCriteria();
         criteria.fetchBundleVersion(true);
 
@@ -126,18 +142,16 @@ public class BundleDeploymentDataSource extends RPCDataSource<BundleDeployment> 
         if (request.getCriteria().getValues().get("tagName") != null) {
             criteria.addFilterTagName((String) request.getCriteria().getValues().get("tagName"));
         }
+        return criteria;
+    }
 
-        bundleService.findBundleDeploymentsByCriteria(criteria, new AsyncCallback<PageList<BundleDeployment>>() {
-            public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError(MSG.view_bundle_deploy_loadDeployFailure(), caught);
-            }
+    @Override
+    protected String getSortFieldForColumn(String columnName) {
+        if (FIELD_BUNDLE_VERSION_VERSION.equals(columnName)) {
+            return "bundleVersion.version";
+        }
 
-            public void onSuccess(PageList<BundleDeployment> result) {
-                response.setData(buildRecords(result));
-                processResponse(request.getRequestId(), response);
-            }
-        });
-
+        return super.getSortFieldForColumn(columnName);
     }
 
     @Override

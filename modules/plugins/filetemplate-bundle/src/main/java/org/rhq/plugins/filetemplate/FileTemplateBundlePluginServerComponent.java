@@ -27,14 +27,19 @@ import org.rhq.bundle.filetemplate.recipe.RecipeParser;
 import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleVersion;
+import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory.Category;
+import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory.Status;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.pluginapi.bundle.BundleDeployRequest;
 import org.rhq.core.pluginapi.bundle.BundleDeployResult;
 import org.rhq.core.pluginapi.bundle.BundleFacet;
 import org.rhq.core.pluginapi.bundle.BundleManagerProvider;
+import org.rhq.core.pluginapi.bundle.BundlePurgeRequest;
+import org.rhq.core.pluginapi.bundle.BundlePurgeResult;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.util.FileUtils;
+import org.rhq.core.util.file.FileUtil;
 
 /**
  * @author John Mazzitelli
@@ -84,7 +89,7 @@ public class FileTemplateBundlePluginServerComponent implements ResourceComponen
 
             // before processing the recipe, wipe the dest dir if we need to perform a clean deployment
             if (request.isCleanDeployment()) {
-                File deployDir = new File(bundleDeployment.getDestination().getDeployDir());
+                File deployDir = request.getAbsoluteDestinationDirectory();
                 if (deployDir.exists()) {
                     bundleManagerProvider.auditDeployment(resourceDeployment, "Cleaning Deployment", deployDir
                         .getAbsolutePath(), null, null, "The existing deployment found at ["
@@ -104,7 +109,8 @@ public class FileTemplateBundlePluginServerComponent implements ResourceComponen
                 bundleDeployment.getName(), null, null, "setting replacement variable values using ["
                     + bundleDeployment.getConfiguration().toString(true) + "]", null);
             recipeContext.setReplacementVariableValues(bundleDeployment.getConfiguration());
-            recipeContext.addReplacementVariableValue(DEPLOY_DIR, bundleDeployment.getDestination().getDeployDir());
+            recipeContext.addReplacementVariableValue(DEPLOY_DIR, request.getAbsoluteDestinationDirectory()
+                .getAbsolutePath());
             recipeContext.addReplacementVariableValue(DEPLOY_ID, Integer.toString(bundleDeployment.getId()));
             recipeContext.addReplacementVariableValue(DEPLOY_NAME, bundleDeployment.getName());
 
@@ -118,6 +124,34 @@ public class FileTemplateBundlePluginServerComponent implements ResourceComponen
             result.setErrorMessage(t);
         }
 
+        return result;
+    }
+
+    public BundlePurgeResult purgeBundle(BundlePurgeRequest request) {
+        BundlePurgeResult result = new BundlePurgeResult();
+        try {
+            BundleResourceDeployment deploymentToPurge = request.getLiveResourceDeployment();
+            File deployDir = request.getAbsoluteDestinationDirectory();
+            String deployDirAbsolutePath = deployDir.getAbsolutePath();
+            BundleManagerProvider bundleManagerProvider = request.getBundleManagerProvider();
+
+            // completely purge the deployment directory.
+            // TODO: if the receipe copied a file outside of the deployment directory, it will still exist. How do we remove those?
+            FileUtil.purge(deployDir, true);
+
+            if (!deployDir.exists()) {
+                bundleManagerProvider.auditDeployment(deploymentToPurge, "Purge",
+                    "The destination directory has been purged", Category.AUDIT_MESSAGE, Status.SUCCESS,
+                    "Directory purged: " + deployDirAbsolutePath, null);
+            } else {
+                bundleManagerProvider.auditDeployment(deploymentToPurge, "Purge",
+                    "The destination directory failed to be purged", Category.AUDIT_MESSAGE, Status.FAILURE,
+                    "The directory that failed to be purged: " + deployDirAbsolutePath, null);
+            }
+        } catch (Throwable t) {
+            log.error("Failed to purge bundle [" + request + "]", t);
+            result.setErrorMessage(t);
+        }
         return result;
     }
 }

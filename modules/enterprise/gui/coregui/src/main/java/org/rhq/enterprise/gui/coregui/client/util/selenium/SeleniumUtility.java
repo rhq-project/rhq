@@ -1,6 +1,5 @@
 package org.rhq.enterprise.gui.coregui.client.util.selenium;
 
-import com.google.gwt.user.client.ui.Hyperlink;
 import com.google.gwt.user.client.ui.UIObject;
 import com.smartgwt.client.widgets.BaseWidget;
 import com.smartgwt.client.widgets.Canvas;
@@ -99,20 +98,6 @@ public class SeleniumUtility {
     }
 
     /**
-     * A utility for assigning an ID to a gwt Hyperlink.  For a smartgwt widget
-     * use {@link setId(BaseWidget)}. Any current ID will be overwritten.  The algorithm is:
-     * <pre>
-     * Equivalent to setHtmlId(hyperlink, hyperlink.getText());
-     * </pre>
-     * 
-     * @param hyperlink
-     * @return the updated hyperlink 
-     */
-    static public <T extends Hyperlink> T setHtmlId(final T hyperlink) {
-        return setHtmlId(hyperlink, hyperlink.getText());
-    }
-
-    /**
      * Use only if you are sure the unsafeId is not null or empty, or if DEFAULT_ID is acceptable.  
      * <pre>
      * Equivalent to:
@@ -156,7 +141,16 @@ public class SeleniumUtility {
      * @param layout
      */
     static public <T extends Layout> void destroyMembers(T layout) {
-        for (Canvas currentMember : layout.getMembers()) {
+        if (null == layout) {
+            return;
+        }
+
+        Canvas[] members = layout.getMembers();
+        if (null == members) {
+            return;
+        }
+
+        for (Canvas currentMember : members) {
             layout.removeMember(currentMember);
             currentMember.destroy();
         }

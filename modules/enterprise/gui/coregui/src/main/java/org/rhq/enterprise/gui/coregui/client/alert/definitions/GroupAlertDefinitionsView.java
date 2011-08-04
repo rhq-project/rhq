@@ -53,7 +53,7 @@ public class GroupAlertDefinitionsView extends AbstractAlertDefinitionsView {
     private ResourcePermission permissions;
 
     public GroupAlertDefinitionsView(String locatorId, ResourceGroupComposite groupComposite) {
-        super(locatorId, MSG.view_alert_definitions_table_title_group());
+        super(locatorId, MSG.view_alert_definitions_table_title_group(), getCriteria(groupComposite));
         this.group = groupComposite.getResourceGroup();
         this.permissions = groupComposite.getResourcePermission();
 
@@ -81,10 +81,9 @@ public class GroupAlertDefinitionsView extends AbstractAlertDefinitionsView {
         return group.getResourceType();
     }
 
-    @Override
-    protected Criteria getCriteria() {
+    private static Criteria getCriteria(ResourceGroupComposite composite) {
         Criteria criteria = new Criteria();
-        criteria.addCriteria(CRITERIA_GROUP_ID, group.getId());
+        criteria.addCriteria(CRITERIA_GROUP_ID, composite.getResourceGroup().getId());
         return criteria;
     }
 
@@ -94,7 +93,7 @@ public class GroupAlertDefinitionsView extends AbstractAlertDefinitionsView {
     }
 
     @Override
-    public SingleAlertDefinitionView getDetailsView(int id) {
+    public SingleAlertDefinitionView getDetailsView(Integer id) {
         SingleAlertDefinitionView view = super.getDetailsView(id);
         if (id == 0) {
             // when creating a new alert def, make sure to set this in the new alert def
@@ -104,7 +103,7 @@ public class GroupAlertDefinitionsView extends AbstractAlertDefinitionsView {
     }
 
     @Override
-    protected boolean isAllowedToModifyAlertDefinitions() {
+    protected boolean isAuthorizedToModifyAlertDefinitions() {
         return this.permissions.isAlert();
     }
 

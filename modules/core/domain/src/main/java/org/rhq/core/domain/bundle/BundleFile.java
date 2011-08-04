@@ -67,7 +67,7 @@ public class BundleFile implements Serializable {
     private int id;
 
     @JoinColumn(name = "BUNDLE_VERSION_ID", referencedColumnName = "ID", nullable = false)
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     private BundleVersion bundleVersion;
 
     // Note, currently we cascade remove the PackageVersion because BundleVersions do not share
@@ -75,7 +75,7 @@ public class BundleFile implements Serializable {
     // the future (e.e reuse of PVs if the sha256 is not different) then this will will have to change
     // to reflect the fact that multiple BundleFiles could reference the same PackageVersion.
     @JoinColumn(name = "PACKAGE_VERSION_ID", referencedColumnName = "ID", nullable = false)
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false, cascade = CascadeType.REMOVE)
     private PackageVersion packageVersion;
 
     public BundleFile() {

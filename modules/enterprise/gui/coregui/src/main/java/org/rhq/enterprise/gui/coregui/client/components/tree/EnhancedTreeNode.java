@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2010 Red Hat, Inc.
+ * Copyright (C) 2010-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,6 +24,7 @@ import com.smartgwt.client.widgets.tree.TreeNode;
  * @author Ian Springer
  */
 public class EnhancedTreeNode extends TreeNode {
+
     public EnhancedTreeNode() {
         super();
     }
@@ -55,7 +56,7 @@ public class EnhancedTreeNode extends TreeNode {
     public void setName(String name) {
         super.setName(name);
         if (name != null && getTitle() == null) {
-            setTitle(name);
+            super.setTitle(name);
         }
     }
 
@@ -65,6 +66,15 @@ public class EnhancedTreeNode extends TreeNode {
 
     public String getParentID() {
         return getAttribute(Attributes.PARENT_ID);
+    }
+
+    public boolean isFolderNode() {
+        Boolean isFolder = getAttributeAsBoolean(Attributes.IS_FOLDER);
+        if (isFolder == null) {
+            Object children = getAttributeAsBoolean(Attributes.CHILDREN);
+            isFolder = Boolean.valueOf(children != null);
+        }
+        return isFolder.booleanValue();
     }
 
     @Override
@@ -95,8 +105,11 @@ public class EnhancedTreeNode extends TreeNode {
         public static final String PARENT_ID = "parentId";
         public static final String NAME = "name";
         public static final String DESCRIPTION = "description";
+        public static final String IS_FOLDER = "isFolder";
+        public static final String CHILDREN = "children";
 
         private Attributes() {
         }
     }
+
 }

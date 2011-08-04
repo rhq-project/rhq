@@ -45,17 +45,19 @@ public class TemplateAlertDefinitionsDataSource extends AbstractAlertDefinitions
     }
 
     @Override
-    protected AlertDefinitionCriteria getCriteria(DSRequest request) {
+    protected AlertDefinitionCriteria getFetchCriteria(DSRequest request) {
         AlertDefinitionCriteria criteria = new AlertDefinitionCriteria();
 
         Criteria requestCriteria = request.getCriteria();
+        criteria.addFilterAlertTemplateOnly(true);
+
         if (requestCriteria != null) {
             Map values = requestCriteria.getValues();
             for (Object key : values.keySet()) {
                 String fieldName = (String) key;
                 if (fieldName.equals(TemplateAlertDefinitionsView.CRITERIA_RESOURCE_TYPE_ID)) {
-                    Integer resourceId = (Integer) values.get(fieldName);
-                    criteria.addFilterAlertTemplateResourceTypeId(resourceId);
+                    Integer resourceTypeId = (Integer) values.get(fieldName);
+                    criteria.addFilterAlertTemplateResourceTypeId(resourceTypeId);
                 }
             }
         }

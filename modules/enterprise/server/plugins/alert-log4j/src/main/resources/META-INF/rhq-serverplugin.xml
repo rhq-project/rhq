@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<alert-plugin
+        name="alert-log4j"
+        displayName="Alert:Log4J"
+        xmlns="urn:xmlns:rhq-serverplugin.alert"
+        xmlns:c="urn:xmlns:rhq-configuration"
+        xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
+        package="org.rhq.enterprise.server.plugins.alertlog4j"
+        description="Alert sender plugin that sends alert notifications to a Log4J category"
+        >
+
+    <serverplugin:help>
+        Used to send notifications to a Log4J Category. This enables you to send different alerts to different
+        log files where they can be scraped by different system management tools e.g. OVO.
+
+        To configure log4j in the RHQServer edit the file ${rhq.server.home}/conf/jboss-log4j.xml and
+        configure an appender for each of your log categories.
+        The format of the log4J message is;
+        ALERT,Priority,AlertName,AlertDescription,ResourceName,ResourcePlatform,AlertDetails,RHQURL
+    </serverplugin:help>
+
+    <!-- How does this sender show up in drop downs etc -->
+    <short-name>Log4J Alerter</short-name>
+
+    <!-- Class that does the actual sending -->
+    <plugin-class>Log4JSender</plugin-class>
+
+    <alert-configuration>
+        <c:simple-property name="log4JCategory" type="string" required="true" displayName="Log4J Category" description="Log4J Category to log the Alert to"/>
+    </alert-configuration>
+</alert-plugin>

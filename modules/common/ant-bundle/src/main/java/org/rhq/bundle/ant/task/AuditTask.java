@@ -26,7 +26,7 @@ import org.rhq.bundle.ant.BundleAntProject.AuditStatus;
  * The rhq:audit task is a way recipe authors can add their own audit messages to the stream
  * of audit messages that the server gets to see how the progress went with the provisioning of a bundle.
  *
- * &lt;rhq:audit status='SUCCESS|WARN|FAILURE' action="My Step" info="summary info" message="intermediate details">
+ * &lt;rhq:audit status='SUCCESS|INFO|WARN|FAILURE' action="My Step" info="summary info" message="intermediate details">
  *    long details here
  * &lt;/rhq:audit>
  *
@@ -60,7 +60,7 @@ public class AuditTask extends AbstractBundleTask {
             try {
                 this.status = AuditStatus.valueOf(status.toUpperCase());
             } catch (Exception e) {
-                throw new BuildException("The 'status' attribute must be either 'SUCCESS', 'WARN' or 'FAILURE'");
+                throw new BuildException("The 'status' attribute must be either 'SUCCESS', 'INFO', 'WARN' or 'FAILURE'");
             }
         }
     }

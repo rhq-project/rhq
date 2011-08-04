@@ -22,6 +22,7 @@ import org.rhq.core.clientapi.agent.bundle.BundleAgentService;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationAgentService;
 import org.rhq.core.clientapi.agent.content.ContentAgentService;
 import org.rhq.core.clientapi.agent.discovery.DiscoveryAgentService;
+import org.rhq.core.clientapi.agent.drift.DriftAgentService;
 import org.rhq.core.clientapi.agent.inventory.ResourceFactoryAgentService;
 import org.rhq.core.clientapi.agent.measurement.MeasurementAgentService;
 import org.rhq.core.clientapi.agent.operation.OperationAgentService;
@@ -82,4 +83,6 @@ public interface AgentClient {
     ConfigurationAgentService getConfigurationAgentService();
 
     SupportAgentService getSupportAgentService();
+
+    DriftAgentService getDriftAgentService();
 }

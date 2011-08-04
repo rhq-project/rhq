@@ -93,6 +93,7 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
         this.oracle = new SearchSuggestOracle();
 
         this.box = box;
+        this.box.setName("SearchPatternField");
         initWidget(box);
 
         getElement().setAttribute("autocomplete", "off"); // we're producing completion suggestions, not the browser

@@ -45,7 +45,7 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
  * @author Greg Hinkle
  * @author Joseph Marques
  */
-public class GroupDefinitionDataSource extends RPCDataSource<GroupDefinition> {
+public class GroupDefinitionDataSource extends RPCDataSource<GroupDefinition, ResourceGroupDefinitionCriteria> {
 
     private ResourceGroupGWTServiceAsync groupService = GWTServiceLookup.getResourceGroupService();
 
@@ -84,11 +84,13 @@ public class GroupDefinitionDataSource extends RPCDataSource<GroupDefinition> {
         expressionField.setRequired(true);
         fields.add(expressionField);
 
-        DataSourceIntegerField lastCalculationTimeIntervalField = new DataSourceIntegerField("lastCalculationTime", MSG
-            .view_dynagroup_recalculationInterval());
+        // it is a Long, but there is no DataSourceLongField and I've seen problems trying to use anything other than text field
+        DataSourceTextField lastCalculationTimeIntervalField = new DataSourceTextField("lastCalculationTime", MSG
+            .view_dynagroup_lastCalculationTime());
         fields.add(lastCalculationTimeIntervalField);
 
-        DataSourceIntegerField nextCalculationTimeField = new DataSourceIntegerField("nextCalculationTime", MSG
+        // it is a Long, but there is no DataSourceLongField and I've seen problems trying to use anything other than text field
+        DataSourceTextField nextCalculationTimeField = new DataSourceTextField("nextCalculationTime", MSG
             .view_dynagroup_nextCalculationTime());
         fields.add(nextCalculationTimeField);
 
@@ -96,10 +98,8 @@ public class GroupDefinitionDataSource extends RPCDataSource<GroupDefinition> {
     }
 
     @Override
-    protected void executeFetch(final DSRequest request, final DSResponse response) {
-        ResourceGroupDefinitionCriteria criteria = new ResourceGroupDefinitionCriteria();
-        criteria.setPageControl(getPageControl(request));
-
+    protected void executeFetch(final DSRequest request, final DSResponse response,
+        final ResourceGroupDefinitionCriteria criteria) {
         groupService.findGroupDefinitionsByCriteria(criteria, new AsyncCallback<PageList<GroupDefinition>>() {
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError(MSG.view_dynagroup_definitionLoadFailure(), caught);
@@ -112,6 +112,13 @@ public class GroupDefinitionDataSource extends RPCDataSource<GroupDefinition> {
                 processResponse(request.getRequestId(), response);
             }
         });
+    }
+
+    @Override
+    protected ResourceGroupDefinitionCriteria getFetchCriteria(final DSRequest request) {
+        ResourceGroupDefinitionCriteria criteria = new ResourceGroupDefinitionCriteria();
+        criteria.setPageControl(getPageControl(request));
+        return criteria;
     }
 
     @Override
@@ -169,7 +176,8 @@ public class GroupDefinitionDataSource extends RPCDataSource<GroupDefinition> {
         groupDefinition.setDescription(from.getAttributeAsString("description"));
         groupDefinition.setExpression(from.getAttributeAsString("expression"));
         groupDefinition.setRecursive(from.getAttributeAsBoolean("recursive"));
-        groupDefinition.setRecalculationInterval(Long.valueOf(from.getAttributeAsString("recalculationInterval")));
+        String recalcInt = from.getAttributeAsString("recalculationInterval");
+        groupDefinition.setRecalculationInterval((recalcInt != null) ? Long.parseLong(recalcInt) : 0L);
         // modifiedTime, createdTime, and lastCalculationTime are updated by GroupDefinitionManagerBean only 
         // nextCalculationTime is a non-persistent, derived field
 
@@ -184,13 +192,20 @@ public class GroupDefinitionDataSource extends RPCDataSource<GroupDefinition> {
         record.setAttribute("description", from.getDescription());
         record.setAttribute("expression", from.getExpression());
         record.setAttribute("recursive", from.isRecursive());
-        record.setAttribute("recalculationInterval", from.getRecalculationInterval());
+        record.setAttribute("recalculationInterval", convertLongToString(from.getRecalculationInterval()));
         record.setAttribute("modifiedTime", from.getModifiedTime());
         record.setAttribute("createdTime", from.getCreatedTime());
-        record.setAttribute("lastCalculationTime", from.getLastCalculationTime());
-        record.setAttribute("nextCalculationTime", from.getNextCalculationTime()); // derived
-        //        record.setAttribute("managedResourceGroups", from.getManagedResourceGroups());
-
+        record.setAttribute("lastCalculationTime", convertLongToString(from.getLastCalculationTime()));
+        record.setAttribute("nextCalculationTime", convertLongToString(from.getNextCalculationTime())); // derived
+        //record.setAttribute("object", from);
         return record;
+    }
+
+    private String convertLongToString(Long val) {
+        String ret = null;
+        if (val != null) {
+            ret = Long.toString(val.longValue());
+        }
+        return ret;
     }
 }

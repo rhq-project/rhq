@@ -386,21 +386,31 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         group.getAlertDefinitions().size();
     }
 
-    public int getResourceGroupCountByCategory(Subject subject, GroupCategory category) {
-        Query queryCount;
-
-        if (authorizationManager.isInventoryManager(subject)) {
-            queryCount = entityManager.createNamedQuery(ResourceGroup.QUERY_FIND_ALL_BY_CATEGORY_COUNT_admin);
+    @SuppressWarnings("unchecked")
+    public int[] getResourceGroupCountSummary(Subject user) {
+        Query query;
+        if (authorizationManager.isInventoryManager(user)) {
+            query = entityManager.createNamedQuery(ResourceGroup.QUERY_FIND_RESOURCE_GROUP_SUMMARY_admin);
         } else {
-            queryCount = entityManager.createNamedQuery(ResourceGroup.QUERY_FIND_ALL_BY_CATEGORY_COUNT);
-            queryCount.setParameter("subject", subject);
+            query = entityManager.createNamedQuery(ResourceGroup.QUERY_FIND_RESOURCE_GROUP_SUMMARY);
+            query.setParameter("subject", user);
         }
 
-        queryCount.setParameter("category", category);
+        int[] counts = new int[2];
+        List<Object[]> resultList = query.getResultList();
 
-        long count = (Long) queryCount.getSingleResult();
+        for (Object[] row : resultList) {
+            switch ((GroupCategory) row[0]) {
+            case MIXED:
+                counts[0] = ((Long) row[1]).intValue();
+                break;
+            case COMPATIBLE:
+                counts[1] = ((Long) row[1]).intValue();
+                break;
+            }
+        }
 
-        return (int) count;
+        return counts;
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
@@ -1495,7 +1505,8 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
                 + "   ( SELECT count(p) FROM %permAlias%.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 11 ), " // CONFIGURE_WRITE
                 + "   ( SELECT count(p) FROM %permAlias%.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 9 ), " // MANAGE_CONTENT
                 + "   ( SELECT count(p) FROM %permAlias%.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 6 ), " // CREATE_CHILD_RESOURCES
-                + "   ( SELECT count(p) FROM %permAlias%.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 5 ))"; // DELETE_RESOURCES
+                + "   ( SELECT count(p) FROM %permAlias%.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 5 ), " // DELETE_RESOURCES
+                + "   ( SELECT count(p) FROM %permAlias%.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 16 ))"; // MANAGE_DRIFT            
             compositeProjection = compositeProjection.replace("%subjectId%", String.valueOf(subject.getId()));
             break;
         default:

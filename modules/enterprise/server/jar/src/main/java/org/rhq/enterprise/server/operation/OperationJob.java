@@ -54,10 +54,10 @@ public abstract class OperationJob implements Job {
      *
      * @throws Exception
      *
-     * @see    SubjectManagerLocal#loginUnauthenticated(String, boolean)
+     * @see    SubjectManagerLocal#loginUnauthenticated(String)
      */
-    protected Subject getUserWithSession(Subject user, boolean reattach) throws Exception {
-        return LookupUtil.getSubjectManager().loginUnauthenticated(user.getName(), reattach);
+    protected Subject getUserWithSession(Subject user) throws Exception {
+        return LookupUtil.getSubjectManager().loginUnauthenticated(user.getName());
     }
 
     protected void updateOperationScheduleEntity(JobDetail jobDetail, Date nextFireTime,
@@ -99,14 +99,11 @@ public abstract class OperationJob implements Job {
         history = new ResourceOperationHistory(jobName, jobGroup, schedule.getSubject().getName(), op, parameters,
             schedule.getResource(), groupHistory);
 
-        // resource-level ops can start immediately, group ops will be started as appropriate by the GroupOperationJob
-        if (groupHistory == null) {
-            history.setStartedTime();
-        }
-
         // persist the results of the initial create
-        history = (ResourceOperationHistory) operationManager.updateOperationHistory(schedule.getSubject(), history);
+        ResourceOperationHistory persisted;
+        persisted = (ResourceOperationHistory) operationManager.updateOperationHistory(schedule.getSubject(), history);
+        history.setId(persisted.getId()); // we need this - this enables the server to successfully update the group history later
 
-        return history;
+        return persisted;
     }
 }

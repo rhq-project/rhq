@@ -22,23 +22,20 @@
  */
 package org.rhq.enterprise.gui.coregui.client.gwt;
 
-import java.util.List;
-
 import com.google.gwt.user.client.rpc.RemoteService;
 
+import org.rhq.core.domain.criteria.DashboardCriteria;
 import org.rhq.core.domain.dashboard.Dashboard;
+import org.rhq.core.domain.util.PageList;
 
 /**
- * @author Greg Hinkle
+ * @author Jay Shaughnessy
  */
 public interface DashboardGWTService extends RemoteService {
 
-    List<Dashboard> findDashboardsForSubject() throws RuntimeException;
-
-    List<Dashboard> findSharedDashboards() throws RuntimeException;
+    PageList<Dashboard> findDashboardsByCriteria(DashboardCriteria criteria) throws RuntimeException;
 
     Dashboard storeDashboard(Dashboard dashboard) throws RuntimeException;
 
     void removeDashboard(int dashboardId) throws RuntimeException;
-
 }

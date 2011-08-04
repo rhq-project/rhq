@@ -78,11 +78,11 @@ public class BundleResourceDeployment implements Serializable {
     private int id;
 
     @JoinColumn(name = "BUNDLE_DEPLOYMENT_ID", referencedColumnName = "ID", nullable = false)
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     private BundleDeployment bundleDeployment;
 
     @JoinColumn(name = "RESOURCE_ID", referencedColumnName = "ID", nullable = false)
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     private Resource resource;
 
     @Column(name = "STATUS", nullable = false)

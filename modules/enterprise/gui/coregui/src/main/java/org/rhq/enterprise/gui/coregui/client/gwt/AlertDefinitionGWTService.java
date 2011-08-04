@@ -28,7 +28,7 @@ import org.rhq.core.domain.util.PageList;
 
 public interface AlertDefinitionGWTService extends RemoteService {
 
-    PageList<AlertDefinition> findAlertDefinitionsByCriteria(AlertDefinitionCriteria criteria);
+    PageList<AlertDefinition> findAlertDefinitionsByCriteria(AlertDefinitionCriteria criteria) throws RuntimeException;
 
     int createAlertDefinition(AlertDefinition alertDefinition, Integer resourceId) throws RuntimeException;
 

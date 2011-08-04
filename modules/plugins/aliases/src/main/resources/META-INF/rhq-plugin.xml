@@ -4,6 +4,7 @@
         displayName="Aliases"
         description="Support for aliases file"
         package="org.rhq.plugins.aliases"
+        pluginLifecycleListener="org.rhq.plugins.augeas.AugeasPluginLifecycleListener"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">

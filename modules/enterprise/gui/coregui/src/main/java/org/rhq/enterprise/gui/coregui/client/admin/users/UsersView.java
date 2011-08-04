@@ -22,14 +22,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+import com.smartgwt.client.widgets.grid.events.CellClickEvent;
+import com.smartgwt.client.widgets.grid.events.CellClickHandler;
 
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
 import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
 import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
+import org.rhq.enterprise.gui.coregui.client.components.table.EscapedHtmlCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
@@ -52,6 +56,7 @@ public class UsersView extends TableSection<UsersDataSource> {
     private static final String HEADER_ICON = "global/User_24.png";
 
     private boolean hasManageSecurity;
+    private boolean initialized;
 
     public UsersView(String locatorId) {
         super(locatorId, MSG.view_adminSecurity_users());
@@ -60,32 +65,59 @@ public class UsersView extends TableSection<UsersDataSource> {
 
         setDataSource(dataSource);
         setHeaderIcon(HEADER_ICON);
-    }
-
-    @Override
-    protected void configureTable() {
-        List<ListGridField> fields = createFields();
-        setListGridFields(fields.toArray(new ListGridField[fields.size()]));
-
-        addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), getDeleteConfirmMessage(),
-            createDeleteAction());
-        addTableAction(extendLocatorId("New"), MSG.common_button_new(), createNewAction());
+        setEscapeHtmlInDetailsLinkColumn(true);
 
         fetchManageSecurityPermissionAsync();
     }
 
+    @Override
+    protected void configureTable() {
+        updateSelectionStyle();
+        getListGrid().addCellClickHandler(new CellClickHandler() {
+            public void onCellClick(CellClickEvent event) {
+                updateSelectionStyle();
+            }
+        });
+
+        List<ListGridField> fields = createFields();
+        setListGridFields(fields.toArray(new ListGridField[fields.size()]));
+
+        addTableAction(extendLocatorId("New"), MSG.common_button_new(), createNewAction());
+        addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), getDeleteConfirmMessage(),
+            createDeleteAction());
+
+        super.configureTable();
+    }
+
+    @Override
+    public void refresh() {
+        super.refresh();
+
+        updateSelectionStyle();
+    }
+
     private void fetchManageSecurityPermissionAsync() {
         new PermissionsLoader().loadExplicitGlobalPermissions(new PermissionsLoadedListener() {
-            @Override
             public void onPermissionsLoaded(Set<Permission> permissions) {
                 if (permissions != null) {
                     hasManageSecurity = permissions.contains(Permission.MANAGE_SECURITY);
-                    refresh();
+                    refreshTableInfo();
                 } else {
                     hasManageSecurity = false;
                 }
+                initialized = true;
             }
         });
+    }
+
+    private void updateSelectionStyle() {
+        if (initialized) {
+            if (!hasManageSecurity) {
+                getListGrid().deselectAllRecords();
+            }
+            SelectionStyle selectionStyle = hasManageSecurity ? getDefaultSelectionStyle() : SelectionStyle.NONE;
+            getListGrid().setSelectionType(selectionStyle);
+        }
     }
 
     private List<ListGridField> createFields() {
@@ -101,12 +133,15 @@ public class UsersView extends TableSection<UsersDataSource> {
         fields.add(ldapField);
 
         ListGridField firstNameField = new ListGridField(UsersDataSource.Field.FIRST_NAME, 150);
+        firstNameField.setCellFormatter(new EscapedHtmlCellFormatter());
         fields.add(firstNameField);
 
         ListGridField lastNameField = new ListGridField(UsersDataSource.Field.LAST_NAME, 150);
+        lastNameField.setCellFormatter(new EscapedHtmlCellFormatter());
         fields.add(lastNameField);
 
         ListGridField departmentField = new ListGridField(UsersDataSource.Field.DEPARTMENT, 150);
+        departmentField.setCellFormatter(new EscapedHtmlCellFormatter());
         fields.add(departmentField);
 
         // TODO: instead of fetching roles, use a composite object that will pull the role count across the wire.
@@ -136,9 +171,25 @@ public class UsersView extends TableSection<UsersDataSource> {
         return fields;
     }
 
+    private TableAction createNewAction() {
+        return new TableAction() {
+            public boolean isEnabled(ListGridRecord[] selection) {
+                return hasManageSecurity;
+            }
+
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                newDetails();
+            }
+        };
+    }
+
     private TableAction createDeleteAction() {
         return new TableAction() {
             public boolean isEnabled(ListGridRecord[] selection) {
+                if (!hasManageSecurity) {
+                    return false;
+                }
+
                 int count = selection.length;
                 if (count == 0) {
                     return false;
@@ -160,19 +211,8 @@ public class UsersView extends TableSection<UsersDataSource> {
         };
     }
 
-    private TableAction createNewAction() {
-        return new TableAction() {
-            public boolean isEnabled(ListGridRecord[] selection) {
-                return hasManageSecurity;
-            }
-
-            public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                newDetails();
-            }
-        };
-    }
-
-    public Canvas getDetailsView(int subjectId) {
+    @Override
+    public Canvas getDetailsView(Integer subjectId) {
         return new UserEditView(extendLocatorId("Detail"), subjectId);
     }
 

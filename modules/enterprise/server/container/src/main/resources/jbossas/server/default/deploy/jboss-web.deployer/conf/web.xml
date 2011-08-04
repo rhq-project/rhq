@@ -273,7 +273,7 @@
       </init-param>
       
       <!-- Uncomment to use jdk1.5 features in jsp pages -->
-      <!-- JON: Uncommented. -->
+      <!-- RHQ: Uncommented. -->
       <init-param>
          <param-name>compilerSourceVM</param-name>
          <param-value>1.5</param-value>
@@ -303,7 +303,7 @@
          <param-value>jstl.jar</param-value>
       </init-param>
       -->
-      <!-- JON: Note, we could instead load the JSF RI's impls of the
+      <!-- RHQ: Note, we could instead load the JSF RI's impls of the
                 standard JSF taglibs here, but, since we're using 
                 Facelets rather than JSP, there's no point in doing so. -->
       

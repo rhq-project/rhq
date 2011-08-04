@@ -64,12 +64,17 @@ import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * Test for {@link DriftManagerBean} SLSB.
+ * 
+ * !!! Actually, this is really testing only the JPA impl, it does not actually go through the
+ * !!! configured drift server plugin.  To enhance this to do that then you may need to model this
+ * !!! mode like BundleManagerBeanTest 
  */
 @Test(groups = "drift-manager")
 public class DriftManagerBeanTest extends AbstractEJB3Test {
 
     private static final boolean ENABLE_TESTS = true;
 
+    private JPADriftServerLocal jpaDriftServer;
     private DriftManagerLocal driftManager;
     private Subject overlord;
     private Resource newResource;
@@ -81,6 +86,7 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
      */
     @BeforeClass
     public void beforeClass() {
+        jpaDriftServer = LookupUtil.getJPADriftServer();
         driftManager = LookupUtil.getDriftManager();
         overlord = LookupUtil.getSubjectManager().getOverlord();
 
@@ -118,33 +124,33 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
     public void testStoreChangeSet() throws Exception {
         File changeset1 = new File("./src/test/resources/org/rhq/enterprise/server/drift/changeset-1.zip");
         assertTrue(changeset1.exists());
-        driftManager.storeChangeSet(newResource.getId(), changeset1);
+        jpaDriftServer.storeChangeSet(overlord, newResource.getId(), changeset1);
 
         JPADriftChangeSetCriteria c = new JPADriftChangeSetCriteria();
         c.addFilterResourceId(newResource.getId());
         c.fetchDrifts(true);
-        List<? extends DriftChangeSet<?>> changeSets = driftManager.findDriftChangeSetsByCriteria(overlord, c);
+        List<? extends DriftChangeSet<?>> changeSets = jpaDriftServer.findDriftChangeSetsByCriteria(overlord, c);
         assertEquals(1, changeSets.size());
         DriftChangeSet<?> changeSet = changeSets.get(0);
         assertEquals(0, changeSet.getVersion());
         assertEquals("Expected to find one entry in change set", 1, changeSet.getDrifts().size());
 
-        JPADriftFile driftFile = driftManager.getDriftFile(overlord, "aaaaa");
+        DriftFile driftFile = jpaDriftServer.getDriftFile(overlord, "aaaaa");
         assertNotNull(driftFile);
         assertEquals(DriftFileStatus.REQUESTED, driftFile.getStatus());
 
         // the second change set should report drift
         File changeset2 = new File("./src/test/resources/org/rhq/enterprise/server/drift/changeset-2.zip");
         assertTrue(changeset2.exists());
-        driftManager.storeChangeSet(newResource.getId(), changeset2);
+        jpaDriftServer.storeChangeSet(overlord, newResource.getId(), changeset2);
         c.addSortVersion(PageOrdering.ASC);
-        changeSets = driftManager.findDriftChangeSetsByCriteria(overlord, c);
+        changeSets = jpaDriftServer.findDriftChangeSetsByCriteria(overlord, c);
         assertEquals(2, changeSets.size());
         changeSet = changeSets.get(0);
-        assertEquals("", 0, changeSet.getVersion());
+        assertEquals("The change set version is wrong", 0, changeSet.getVersion());
         assertEquals("Expected to find one entry in change set", 1, changeSet.getDrifts().size());
         changeSet = changeSets.get(1);
-        assertEquals("The change set version is wrong", 0, changeSet.getVersion());
+        assertEquals(1, changeSet.getVersion());
         assertEquals(1, changeSet.getDrifts().size());
         Drift<?, ?> drift = changeSet.getDrifts().iterator().next();
         assertEquals("dir/filename.ext", drift.getPath());
@@ -152,7 +158,7 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
         assertEquals("bbbbb", drift.getNewDriftFile().getHashId());
         assertEquals(DriftCategory.FILE_CHANGED, drift.getCategory());
 
-        driftFile = driftManager.getDriftFile(overlord, "bbbbb");
+        driftFile = jpaDriftServer.getDriftFile(overlord, "bbbbb");
         assertNotNull(driftFile);
         assertEquals(DriftFileStatus.REQUESTED, driftFile.getStatus());
     }
@@ -216,7 +222,7 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
         assertEquals(1, resources.size());
         driftConfigs = resources.get(0).getDriftConfigurations();
         assertNotNull(driftConfigs);
-        assertEquals(4, driftConfigs.size());
+        assertEquals(2, driftConfigs.size());
         for (Iterator<Configuration> i = driftConfigs.iterator(); i.hasNext();) {
             driftConfig = new DriftConfiguration(i.next());
             if ("testDriftConfig".equals(driftConfig.getName())) {

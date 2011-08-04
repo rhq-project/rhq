@@ -57,7 +57,6 @@ public class ManagedASDiscovery extends AbstractBaseDiscovery
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext discoveryContext) throws Exception {
         Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>();
 
-
         List<ProcessScanResult> scans = discoveryContext.getAutoDiscoveredProcesses();
 
         for (ProcessScanResult psr : scans) {
@@ -74,51 +73,44 @@ public class ManagedASDiscovery extends AbstractBaseDiscovery
             String hostName = findHostName();
             HostPort managementHostPort = getManagementPortFromHostXml();
 
-
             List<ServerInfo> serverNames = getServersFromHostXml();
             for (ServerInfo serverInfo : serverNames) {
 
                 Configuration config = discoveryContext.getDefaultPluginConfiguration();
-                config.put(new PropertySimple("domainHost",hostName));
-                config.put(new PropertySimple("group",serverInfo.group));
-                config.put(new PropertySimple("port",managementHostPort.port));
-                config.put(new PropertySimple("hostname",managementHostPort.host));
-                if (serverInfo.bindingGroup!=null) {
-                    config.put(new PropertySimple("socket-binding-group",serverInfo.bindingGroup));
-                    config.put(new PropertySimple("socket-binding-port-offset",serverInfo.portOffset));
-                }
-                else {
+                config.put(new PropertySimple("domainHost", hostName));
+                config.put(new PropertySimple("group", serverInfo.group));
+                config.put(new PropertySimple("port", managementHostPort.port));
+                config.put(new PropertySimple("hostname", managementHostPort.host));
+                if (serverInfo.bindingGroup != null) {
+                    config.put(new PropertySimple("socket-binding-group", serverInfo.bindingGroup));
+                    config.put(new PropertySimple("socket-binding-port-offset", serverInfo.portOffset));
+                } else {
                     HostPort dcHP = getDomainControllerFromHostXml();
                     if (dcHP.port == 9999)
-                        dcHP.port = 9990;  // TODO Hack until JBAS-9306 is solved
+                        dcHP.port = 9990; // TODO Hack until JBAS-9306 is solved
 
                     ServerInfo dcInfo = getBindingsFromDC(dcHP, serverInfo.group);
                     config.put(new PropertySimple("socket-binding-group", dcInfo.bindingGroup));
-                    config.put(new PropertySimple("socket-binding-port-offset",dcInfo.portOffset));
+                    config.put(new PropertySimple("socket-binding-port-offset", dcInfo.portOffset));
                 }
-                config.put(new PropertySimple("socket-binding-port-offset",serverInfo.portOffset));
+                config.put(new PropertySimple("socket-binding-port-offset", serverInfo.portOffset));
 
                 String path = "host=" + hostName + ",server-config=" + serverInfo.name;
-                config.put(new PropertySimple("path",path));
-
-
+                config.put(new PropertySimple("path", path));
 
                 // TODO this fails for the downed servers.
                 // get from the domain or other place as soon as the domain provides it.
                 String homeDir = getHomeDirFromCommandLine(processInfo.getCommandLine());
                 initLogFile(scans, serverInfo.name, config, homeDir);
 
-                String version = homeDir.substring(homeDir.lastIndexOf("-")+1);
+                String version = homeDir.substring(homeDir.lastIndexOf("-") + 1);
 
-                DiscoveredResourceDetails detail = new DiscoveredResourceDetails(
-                    discoveryContext.getResourceType(), // ResourceType
+                DiscoveredResourceDetails detail = new DiscoveredResourceDetails(discoveryContext.getResourceType(), // ResourceType
                     hostName + "/" + serverInfo.name, // key
-                    serverInfo.name,  // Name
-                    version,  // TODO  get from Domain as soon as it is provided
+                    serverInfo.name, // Name
+                    version, // TODO  get from Domain as soon as it is provided
                     "Managed AS 7 instance", // Description
-                    config,
-                    null
-                );
+                    config, null);
 
                 // Add to return values
                 discoveredResources.add(detail);
@@ -129,9 +121,9 @@ public class ManagedASDiscovery extends AbstractBaseDiscovery
     }
 
     private ServerInfo getBindingsFromDC(HostPort domainController, String serverGroup) {
-        ASConnection dcConnection = new ASConnection(domainController.host,domainController.port);
+        ASConnection dcConnection = new ASConnection(domainController.host, domainController.port);
         List<PROPERTY_VALUE> address = new ArrayList<PROPERTY_VALUE>();
-        address.add(new PROPERTY_VALUE("server-group",serverGroup));
+        address.add(new PROPERTY_VALUE("server-group", serverGroup));
         Operation op = new ReadResource(address);
         ComplexResult res = (ComplexResult) dcConnection.execute(op, true);
         if (res.isSuccess()) {
@@ -162,10 +154,12 @@ public class ManagedASDiscovery extends AbstractBaseDiscovery
 
             String[] commandLine = psr.getProcessInfo().getCommandLine();
 
-            String logFile = basePath + File.separator +  getLogFileFromCommandLine(commandLine);
+            //preload server.log file for event log monitoring
+            String bootLogFile = getLogFileFromCommandLine(commandLine);
+            String logFile = bootLogFile.substring(0, bootLogFile.lastIndexOf("/")) + File.separator + "server.log";
 
             if (logFile.contains(name))
-                initLogEventSourcesConfigProp(logFile,config);
+                initLogEventSourcesConfigProp(logFile, config);
         }
     }
 
@@ -173,17 +167,17 @@ public class ManagedASDiscovery extends AbstractBaseDiscovery
 
         Element host = hostXml.getDocumentElement();
         NodeList serversElement = host.getElementsByTagName("servers");
-        if (serversElement ==null || serversElement.getLength()==0) {
+        if (serversElement == null || serversElement.getLength() == 0) {
             log.warn("No <servers> found in host.xml");
             return Collections.emptyList();
         }
         NodeList servers = serversElement.item(0).getChildNodes();
-        if (servers==null || servers.getLength()==0) {
+        if (servers == null || servers.getLength() == 0) {
             log.warn("No <server> found in host.xml");
             return Collections.emptyList();
         }
         List<ServerInfo> result = new ArrayList<ServerInfo>();
-        for (int i = 0 ; i < servers.getLength(); i++) {
+        for (int i = 0; i < servers.getLength(); i++) {
             if (!(servers.item(i) instanceof Element))
                 continue;
 
@@ -192,14 +186,14 @@ public class ManagedASDiscovery extends AbstractBaseDiscovery
             info.name = server.getAttribute("name");
             info.group = server.getAttribute("group");
             String autoStart = server.getAttribute("autoStart");
-            if (autoStart==null || autoStart.isEmpty())
+            if (autoStart == null || autoStart.isEmpty())
                 autoStart = "false";
             info.autoStart = Boolean.getBoolean(autoStart);
 
             // Look for  <socket-binding-group ref="standard-sockets" port-offset="250"/>
             NodeList sbgs = server.getChildNodes();
-            if (sbgs!=null) {
-                for (int j = 0 ; j < sbgs.getLength(); j++) {
+            if (sbgs != null) {
+                for (int j = 0; j < sbgs.getLength(); j++) {
                     if (!(sbgs.item(j) instanceof Element))
                         continue;
 
@@ -209,7 +203,7 @@ public class ManagedASDiscovery extends AbstractBaseDiscovery
 
                     info.bindingGroup = sbg.getAttribute("ref");
                     String portOffset = sbg.getAttribute("port-offset");
-                    if (portOffset!=null && !portOffset.isEmpty())
+                    if (portOffset != null && !portOffset.isEmpty())
                         info.portOffset = Integer.parseInt(portOffset);
 
                 }
@@ -220,13 +214,12 @@ public class ManagedASDiscovery extends AbstractBaseDiscovery
         return result;
     }
 
-
     private void initLogEventSourcesConfigProp(String fileName, Configuration pluginConfiguration) {
 
         PropertyList logEventSources = pluginConfiguration
             .getList(LogFileEventResourceComponentHelper.LOG_EVENT_SOURCES_CONFIG_PROP);
 
-        if (logEventSources==null)
+        if (logEventSources == null)
             return;
 
         File serverLogFile = new File(fileName);
@@ -250,10 +243,7 @@ public class ManagedASDiscovery extends AbstractBaseDiscovery
 
         @Override
         public String toString() {
-            return "ServerInfo{" +
-                "name='" + name + '\'' +
-                ", group='" + group + '\'' +
-                '}';
+            return "ServerInfo{" + "name='" + name + '\'' + ", group='" + group + '\'' + '}';
         }
     }
 

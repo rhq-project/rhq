@@ -158,7 +158,7 @@
       host name changes are/should be uncommon in a typical deployment, they
       are more common in a cloud deployment such as EC2. And in a cloud
       deployment like EC2, we want to turn this behavior on to ensure that
-      the server endpoint accurately reflects the current machine address. 
+      the server endpoint accurately reflects the current machine address.
     -->
     <rhq.sync.endpoint-address>false</rhq.sync.endpoint-address>
 
@@ -849,7 +849,7 @@
       </plugin>
 
        <!-- As of v1.0 of the buildnumber plugin, the create goal doesn't work,
-            and the create-timestamp goal doesn't provide a way to specify 
+            and the create-timestamp goal doesn't provide a way to specify
             a locale or a timezone, so comment this out for now and instead use
             our own homemade mix of antrun and properties-file plugin executions
             (just below this commented out block). (ips, 06/28/11)
@@ -902,11 +902,11 @@
                   <phase>generate-sources</phase>
                   <configuration>
                       <tasks>
-                          <mkdir dir="target" />                          
+                          <mkdir dir="target" />
 
                           <tstamp>
                               <format property="buildTime" pattern="MM/dd/yy hh:mm aa z" locale="en,US" timezone="GMT" />
-                          </tstamp>                          
+                          </tstamp>
                           <echo file="target/build.properties">buildTime = ${buildTime}${line.separator}</echo>
 
                           <exec executable="git" outputproperty="buildNumber" failonerror="false" failifexecutionfails="false">
@@ -947,7 +947,7 @@
                   </goals>
                   <configuration>
                       <files>
-                          <file>${project.build.directory}/build.properties</file>                                  
+                          <file>${project.build.directory}/build.properties</file>
                       </files>
                       <quiet>true</quiet>
                   </configuration>
@@ -1104,7 +1104,7 @@
       </profile>
 
       <!-- Set the java6.home prop to a Java6 JRE dir to enforce that only Java6 APIs are used.
-           If using Java7 to run the build, this will ensure no APIs introduced in Java7 are 
+           If using Java7 to run the build, this will ensure no APIs introduced in Java7 are
            used. -->
       <profile>
          <id>check-java-api</id>
@@ -1146,7 +1146,7 @@
           </build>
       </profile>
 
-      <!-- This profile should be enabled when a release is being published. 
+      <!-- This profile should be enabled when a release is being published.
            It will ensure that sources and javadoc jars are built and published
            for each source module. -->
       <profile>
@@ -1256,6 +1256,10 @@
 
     <developers>
         <developer>
+            <name>Robert Buck</name>
+            <timezone>-5</timezone>
+        </developer>
+        <developer>
             <name>Charles Crouch</name>
             <timezone>-6</timezone>
         </developer>
@@ -1267,8 +1271,11 @@
             </roles>
         </developer>
         <developer>
-            <name>Filip Drabeck</name>
+            <name>Filip Drabek</name>
             <timezone>+1</timezone>
+            <roles>
+                <role>retired</role>
+            </roles>
         </developer>
         <developer>
             <name>Greg Hinkle</name>
@@ -1301,6 +1308,10 @@
             <name>John 'Mazz' Mazzitelli</name>
             <timezone>-5</timezone>
             <url>http://management-platform.blogspot.com</url>
+        </developer>
+        <developer>
+            <name>Stefan Negrea</name>
+            <timezone>-6</timezone>
         </developer>
         <developer>
             <name>Simeon Pinder</name>
@@ -1346,6 +1357,25 @@
         <contributor>
             <name>Rafael Torres Coelho Soares</name>
             <timezone>-7</timezone>
+        </contributor>
+        <contributor>
+            <name>Elias Ross</name>
+        </contributor>
+        <contributor>
+            <name>Fusayuki Minamoto</name>
+            <timezone>+6</timezone>
+        </contributor>
+        <contributor>
+            <name>Liju Jijun</name>
+            <timezone>+6</timezone>
+        </contributor>
+        <contributor>
+            <name>Zhongqianglee</name>
+            <timezone>+6</timezone>
+        </contributor>
+        <contributor>
+            <name>Frank Brüseke</name>
+            <timezone>+1</timezone>
         </contributor>
     </contributors>
 

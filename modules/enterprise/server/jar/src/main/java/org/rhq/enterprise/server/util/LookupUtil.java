@@ -235,6 +235,7 @@ public final class LookupUtil {
         try {
             InitialContext context = new InitialContext();
             DataSource ds = (DataSource) context.lookup(RHQConstants.DATASOURCE_JNDI_NAME);
+            context.close();
             return ds;
         } catch (Exception e) {
             throw new RuntimeException("Failed to get the data source", e);
@@ -251,6 +252,7 @@ public final class LookupUtil {
         try {
             InitialContext context = new InitialContext();
             TransactionManager tm = (TransactionManager) context.lookup(RHQConstants.TRANSACTION_MANAGER_JNDI_NAME);
+            context.close();
             return tm;
         } catch (Exception e) {
             throw new RuntimeException("Failed to get the transaction manager", e);
@@ -268,6 +270,7 @@ public final class LookupUtil {
         try {
             InitialContext context = new InitialContext();
             EntityManagerFactory factory = (EntityManagerFactory) context.lookup(RHQConstants.ENTITY_MANAGER_JNDI_NAME);
+            context.close();
             return factory.createEntityManager();
         } catch (Exception e) {
             throw new RuntimeException("Failed to create an entity manager", e);
@@ -661,7 +664,8 @@ public final class LookupUtil {
             localJNDIName = getLocalJNDIName(type);
             return (T) lookup(localJNDIName);
         } catch (NamingException e) {
-            throw new RuntimeException("Failed to lookup local interface to EJB " + type + ", localJNDI=[" + localJNDIName + "]", e);
+            throw new RuntimeException("Failed to lookup local interface to EJB " + type + ", localJNDI=["
+                + localJNDIName + "]", e);
         }
     }
 
@@ -684,7 +688,12 @@ public final class LookupUtil {
      * @throws NamingException when resource not found
      */
     private static Object lookup(String name) throws NamingException {
-        return new InitialContext().lookup(name);
+        InitialContext initialContext = new InitialContext();
+        try {
+            return initialContext.lookup(name);
+        } finally {
+            initialContext.close();
+        }
     }
 
     public static DataAccessManagerLocal getDataAccessManager() {

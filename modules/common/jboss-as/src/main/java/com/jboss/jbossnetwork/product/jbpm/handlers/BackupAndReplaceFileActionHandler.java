@@ -155,9 +155,11 @@ public class BackupAndReplaceFileActionHandler extends BaseHandler {
         if (!replacementFilename.equalsIgnoreCase(originalFilename)) {
             // This file name can't be relative since we need its parent in the next step
             HandlerUtils.checkFilenameIsAbsolute(originalFileLocation);
-
-            File destinationFile = new File(originalFile.getParentFile().getPath() + File.separator
-                + replacementFilename);
+            
+            //check that there is a parent
+            File parent = HandlerUtils.checkAndReturnParent(originalFileLocation);
+            
+            File destinationFile = new File(parent, replacementFilename);
             setDestinationFileLocation(destinationFile.getPath());
 
             // Make sure the newly generated file name isn't going to clash with an existing file

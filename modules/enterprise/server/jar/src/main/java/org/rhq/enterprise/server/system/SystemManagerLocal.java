@@ -26,6 +26,7 @@ import org.rhq.core.db.DatabaseType;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.core.domain.common.ServerDetails;
+import org.rhq.core.domain.common.composite.SystemSettings;
 
 /**
  * Provides access to the server cloud's system configuration as well as some methods
@@ -145,6 +146,8 @@ public interface SystemManagerLocal {
     ProductInfo getProductInfo(Subject subject);
 
     ServerDetails getServerDetails(Subject subject);
+
+    SystemSettings getSystemSettings(Subject subject);
 
     Properties getSystemConfiguration(Subject subject);
 

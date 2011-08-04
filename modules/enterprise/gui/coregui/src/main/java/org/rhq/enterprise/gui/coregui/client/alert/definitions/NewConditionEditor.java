@@ -24,9 +24,11 @@
 package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Set;
+import java.util.TreeSet;
 
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.widgets.form.DynamicForm;
@@ -572,7 +574,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
         LinkedHashMap<String, String> traitsMap = new LinkedHashMap<String, String>();
         for (MeasurementDefinition def : this.resourceType.getMetricDefinitions()) {
             if (def.getDataType() == DataType.TRAIT) {
-                traitsMap.put(def.getName(), def.getDisplayName());
+                traitsMap.put(String.valueOf(def.getId()), def.getDisplayName());
             }
         }
 
@@ -703,10 +705,21 @@ public class NewConditionEditor extends LocatableDynamicForm {
     private SelectItem buildMetricDropDownMenu(String itemName, boolean dynamicOnly, FormItemIfFunction ifFunc) {
 
         LinkedHashMap<String, String> metricsMap = new LinkedHashMap<String, String>();
-        for (MeasurementDefinition def : this.resourceType.getMetricDefinitions()) {
+        TreeSet<MeasurementDefinition> sortedDefs = new TreeSet<MeasurementDefinition>(
+            new Comparator<MeasurementDefinition>() {
+
+                @Override
+                public int compare(MeasurementDefinition o1, MeasurementDefinition o2) {
+                    return o1.getDisplayName().compareTo(o2.getDisplayName());
+                }
+            });
+        sortedDefs.addAll(this.resourceType.getMetricDefinitions());
+
+        for (MeasurementDefinition def : sortedDefs) {
             if (def.getDataType() == DataType.MEASUREMENT) {
                 if (!dynamicOnly || def.getNumericType() == NumericType.DYNAMIC) {
-                    metricsMap.put(def.getName(), def.getDisplayName());
+                    // use id as opposed to name for key, the name is not unique when per-minute metric is also used 
+                    metricsMap.put(String.valueOf(def.getId()), def.getDisplayName());
                 }
             }
         }
@@ -726,7 +739,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
         LinkedHashMap<String, String> metricsMap = new LinkedHashMap<String, String>();
         for (MeasurementDefinition def : this.resourceType.getMetricDefinitions()) {
             if (def.getDataType() == DataType.CALLTIME) {
-                metricsMap.put(def.getName(), def.getDisplayName());
+                metricsMap.put(String.valueOf(def.getId()), def.getDisplayName());
             }
         }
 
@@ -790,9 +803,10 @@ public class NewConditionEditor extends LocatableDynamicForm {
         return help;
     }
 
-    private MeasurementDefinition getMeasurementDefinition(String metricName) {
+    private MeasurementDefinition getMeasurementDefinition(String metricId) {
+        int id = Integer.valueOf(metricId).intValue();
         for (MeasurementDefinition def : this.resourceType.getMetricDefinitions()) {
-            if (metricName.equals(def.getName())) {
+            if (id == def.getId()) {
                 return def;
             }
         }

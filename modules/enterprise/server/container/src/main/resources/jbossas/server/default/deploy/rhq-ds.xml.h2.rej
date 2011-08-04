@@ -22,6 +22,7 @@
     <idle-timeout-minutes>15</idle-timeout-minutes>
     <prepared-statement-cache-size>0</prepared-statement-cache-size>
     <check-valid-connection-sql>SELECT * FROM DUAL</check-valid-connection-sql>
+    <track-statements>true</track-statements>
   </xa-datasource>
 
   <!-- Quartz needs a no-tx datasource defined -->
@@ -38,7 +39,9 @@
     <idle-timeout-minutes>15</idle-timeout-minutes>
     <prepared-statement-cache-size>0</prepared-statement-cache-size>
     <check-valid-connection-sql>SELECT * FROM DUAL</check-valid-connection-sql>
+    <track-statements>true</track-statements>
   </no-tx-datasource>
 
 
 </datasources>
+

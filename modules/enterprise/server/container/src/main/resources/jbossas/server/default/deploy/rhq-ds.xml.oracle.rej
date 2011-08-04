@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 
-<!-- The RHQ datasources for ORACLE -->
+<!-- The RHQ datasources for Oracle -->
 
 <datasources>
 
@@ -27,6 +27,7 @@
     <idle-timeout-minutes>15</idle-timeout-minutes>
     <prepared-statement-cache-size>75</prepared-statement-cache-size>
     <check-valid-connection-sql>select 1 from dual</check-valid-connection-sql>
+    <track-statements>true</track-statements>
   </xa-datasource>
 
   <!-- this currently isn't supported by the JBoss transaction manager
@@ -55,6 +56,8 @@
 
     <!-- Tells an Oracle 10g driver to properly implement clobs. -->
     <connection-property name="SetBigStringTryClob">true</connection-property>    
+    <track-statements>true</track-statements>
   </no-tx-datasource>
 
 </datasources>
+

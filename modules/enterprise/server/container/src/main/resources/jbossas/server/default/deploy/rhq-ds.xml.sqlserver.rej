@@ -32,6 +32,7 @@
     <new-connection-sql>select 1</new-connection-sql>
     <check-valid-connection-sql>select 1</check-valid-connection-sql>
     <set-tx-query-timeout></set-tx-query-timeout>
+    <track-statements>true</track-statements>
   </xa-datasource>
 
   <!-- Quartz needs a no-tx datasource defined -->
@@ -53,6 +54,8 @@
     <new-connection-sql>select 1</new-connection-sql>
     <check-valid-connection-sql>select 1</check-valid-connection-sql>
     <set-tx-query-timeout></set-tx-query-timeout>
+    <track-statements>true</track-statements>
   </no-tx-datasource>
 
 </datasources>
+

@@ -478,6 +478,12 @@
            <version>${resteasy.version}</version>
            <scope>provided</scope> <!-- by container -->
        </dependency>
+       <dependency>
+           <groupId>org.jboss.resteasy</groupId>
+           <artifactId>resteasy-links</artifactId>
+           <version>${resteasy.version}</version>
+           <scope>provided</scope> <!-- by container -->
+       </dependency>
 
 
    </dependencies>
@@ -617,7 +623,7 @@ Build-OS-Version=${os.version}
                </execution>
             </executions>
          </plugin>
-      
+
          <plugin>
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>build-helper-maven-plugin</artifactId>

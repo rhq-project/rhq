@@ -6,6 +6,7 @@ DEV_CONTAINER=/im/dev-container
 
 cd $DEV_CONTAINER/jbossas/server/default/lib
 cp ~/.m2/repository/org/jboss/resteasy/resteasy-jaxrs/2.2.1.GA/resteasy-jaxrs-2.2.1.GA.jar .
+cp ~/.m2/repository/org/jboss/resteasy/resteasy-links/2.2.0.GA/resteasy-links-2.2.0.GA.jar .
 cp ~/.m2/repository/org/jboss/resteasy/resteasy-jettison-provider/2.2.0.GA/resteasy-jettison-provider-2.2.0.GA.jar .
 cp ~/.m2/repository/org/jboss/resteasy/resteasy-jaxb-provider/2.2.1.GA/resteasy-jaxb-provider-2.2.1.GA.jar .
 cp ~/.m2/repository/org/scannotation/scannotation/1.0.3/scannotation-1.0.3.jar .

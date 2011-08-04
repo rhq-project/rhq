@@ -30,6 +30,9 @@ import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
 
+import org.jboss.resteasy.links.AddLinks;
+import org.jboss.resteasy.links.LinkResource;
+
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
@@ -60,7 +63,9 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
     @EJB
     MeasurementScheduleManagerLocal scheduleManager;
 
+    @LinkResource
     @Override
+    @AddLinks
     public ResourceWithType getResource(int id) {
 
         Resource res = resMgr.getResource(caller, id);

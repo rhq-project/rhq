@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.server.rest.domain;
 
+import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
 import org.rhq.core.domain.measurement.AvailabilityType;
@@ -26,7 +27,7 @@ import org.rhq.core.domain.measurement.AvailabilityType;
  * Availability implementation for exposing via REST
  * @author Heiko W. Rupp
  */
-//@XmlRootElement(name = "availability")
+@XmlRootElement(name = "availability")
 public class AvailabilityRest {
 
     long since;
@@ -44,14 +45,17 @@ public class AvailabilityRest {
         this.resourceId = resourceId;
     }
 
+    @XmlElement
     public long getSince() {
         return since;
     }
 
+    @XmlElement
     public String getType() {
         return type;
     }
 
+    @XmlElement
     public int getResourceId() {
         return resourceId;
     }

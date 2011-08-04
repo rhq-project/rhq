@@ -22,13 +22,28 @@
  */
 package org.rhq.enterprise.server.rest.domain;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlElementRef;
+import javax.xml.bind.annotation.XmlID;
 import javax.xml.bind.annotation.XmlRootElement;
+
+import org.jboss.resteasy.annotations.providers.jaxb.json.Mapped;
+import org.jboss.resteasy.annotations.providers.jaxb.json.XmlNsMap;
+import org.jboss.resteasy.links.AddLinks;
+import org.jboss.resteasy.links.LinkResource;
+import org.jboss.resteasy.links.RESTServiceDiscovery;
+
+import org.rhq.core.domain.resource.Resource;
 
 /**
  * A (partial) resource with some type information
  * @author Heiko W. Rupp
  */
+@Mapped(namespaceMap = @XmlNsMap(jsonName = "atom", namespace = "http://www.w3.org/2005/Atom"))
 @XmlRootElement
+@XmlAccessorType(XmlAccessType.NONE)
 public class ResourceWithType {
 
     String resourceName;
@@ -39,6 +54,9 @@ public class ResourceWithType {
     int pluginId;
     String parentName;
     int parentId;
+
+    @XmlElementRef
+	private RESTServiceDiscovery rest;
 
     public ResourceWithType() {
     }
@@ -51,6 +69,7 @@ public class ResourceWithType {
         this.pluginName = pluginName;
     }
 
+    @XmlElement
     public String getResourceName() {
         return resourceName;
     }
@@ -59,14 +78,16 @@ public class ResourceWithType {
         this.resourceName = resourceName;
     }
 
-    public int getResourceId() {
-        return resourceId;
+    @XmlID
+    public String getResourceId() {
+        return String.valueOf(resourceId);
     }
 
     public void setResourceId(int resourceId) {
         this.resourceId = resourceId;
     }
 
+    @XmlElement
     public String getTypeName() {
         return typeName;
     }
@@ -75,6 +96,7 @@ public class ResourceWithType {
         this.typeName = typeName;
     }
 
+    @XmlElement
     public int getTypeId() {
         return typeId;
     }
@@ -83,6 +105,7 @@ public class ResourceWithType {
         this.typeId = typeId;
     }
 
+    @XmlElement
     public String getPluginName() {
         return pluginName;
     }
@@ -91,6 +114,7 @@ public class ResourceWithType {
         this.pluginName = pluginName;
     }
 
+    @XmlElement
     public int getPluginId() {
         return pluginId;
     }
@@ -99,6 +123,7 @@ public class ResourceWithType {
         this.pluginId = pluginId;
     }
 
+    @XmlElement
     public String getParentName() {
         return parentName;
     }
@@ -107,6 +132,9 @@ public class ResourceWithType {
         this.parentName = parentName;
     }
 
+    @AddLinks
+    @LinkResource (value = ResourceWithType.class)
+    @XmlElement
     public int getParentId() {
         return parentId;
     }

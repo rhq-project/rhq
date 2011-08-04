@@ -10,6 +10,8 @@
         <param-value>rhq/ResourceHandlerBean/local,rhq/MetricHandlerBean/local</param-value>
         <description>List of jndi names of EJBs local interfaces that define REST stuff</description>
     </context-param>
+
+<!--
     <filter>
 
         <filter-name>AuthFilter</filter-name>
@@ -19,6 +21,7 @@
         <filter-name>AuthFilter</filter-name>
         <servlet-name>Resteasy</servlet-name>
     </filter-mapping>
+-->
 
 
     <servlet>

@@ -22,6 +22,9 @@ package org.rhq.plugins.apache.upgrade.rhq3_0_0;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
+import org.rhq.plugins.apache.PluginLocation;
+import org.rhq.plugins.apache.setup.ApacheTestConfiguration;
+import org.rhq.plugins.apache.setup.ApacheTestSetup;
 import org.rhq.plugins.apache.upgrade.UpgradeTestBase;
 import org.rhq.test.pc.PluginContainerSetup;
 
@@ -60,10 +63,10 @@ public class UpgradeNestedConfigurationFromRHQ3_0_0Test extends UpgradeTestBase 
      * and therefore the vhost discovery wouldn't even take place.
      */
     @Test
-    @PluginContainerSetup(plugins = { PLATFORM_PLUGIN, AUGEAS_PLUGIN, APACHE_PLUGIN }, numberOfInitialDiscoveries = 2)
+    @PluginContainerSetup(plugins = { PluginLocation.PLATFORM_PLUGIN, PluginLocation.AUGEAS_PLUGIN, PluginLocation.APACHE_PLUGIN }, numberOfInitialDiscoveries = 2)
     @Parameters({ "apache2.install.dir", "apache2.exe.path" })
     public void testWithResolvableNamesWithoutSNMP(final String installDir, final String exePath) throws Throwable {
-        testUpgrade(new TestConfiguration() {
+        testUpgrade(new ApacheTestConfiguration() {
             {
                 apacheConfigurationFiles = configuredApacheConfigurationFiles;
                 inventoryFile = configuredInventoryFileWithoutSNMP;
@@ -78,17 +81,17 @@ public class UpgradeNestedConfigurationFromRHQ3_0_0Test extends UpgradeTestBase 
             }
 
             @Override
-            public String[] getExpectedResourceKeysAfterUpgrade(TestSetup setup) {
+            public String[] getExpectedResourceKeysAfterUpgrade(ApacheTestSetup setup) {
                 return getVHostRKs(setup, new int[] { 0, 2, 4 }, null, ResourceKeyFormat.RHQ3);
             }
         });
     }
 
     @Test
-    @PluginContainerSetup(plugins = { PLATFORM_PLUGIN, AUGEAS_PLUGIN, APACHE_PLUGIN }, numberOfInitialDiscoveries = 2)
+    @PluginContainerSetup(plugins = { PluginLocation.PLATFORM_PLUGIN, PluginLocation.AUGEAS_PLUGIN, PluginLocation.APACHE_PLUGIN }, numberOfInitialDiscoveries = 2)
     @Parameters({ "apache2.install.dir", "apache2.exe.path" })
     public void testWithUnresolvableNamesWithoutSNMP(final String installDir, final String exePath) throws Throwable {
-        testUpgrade(new TestConfiguration() {
+        testUpgrade(new ApacheTestConfiguration() {
             {
                 apacheConfigurationFiles = configuredApacheConfigurationFiles;
                 inventoryFile = configuredInventoryFileWithoutSNMP;
@@ -107,17 +110,17 @@ public class UpgradeNestedConfigurationFromRHQ3_0_0Test extends UpgradeTestBase 
             }
 
             @Override
-            public String[] getExpectedResourceKeysAfterUpgrade(TestSetup setup) {
+            public String[] getExpectedResourceKeysAfterUpgrade(ApacheTestSetup setup) {
                 return getVHostRKs(setup, new int[] { 0, 2, 4 }, null, ResourceKeyFormat.RHQ3);
             }
         });
     }
 
     @Test
-    @PluginContainerSetup(plugins = { PLATFORM_PLUGIN, AUGEAS_PLUGIN, APACHE_PLUGIN }, numberOfInitialDiscoveries = 2)
+    @PluginContainerSetup(plugins = { PluginLocation.PLATFORM_PLUGIN, PluginLocation.AUGEAS_PLUGIN, PluginLocation.APACHE_PLUGIN }, numberOfInitialDiscoveries = 2)
     @Parameters({ "apache2.install.dir", "apache2.exe.path" })
     public void testWithNonUniqueNamesWithoutSNMP(final String installDir, final String exePath) throws Throwable {
-        testUpgrade(new TestConfiguration() {
+        testUpgrade(new ApacheTestConfiguration() {
             {
                 apacheConfigurationFiles = configuredApacheConfigurationFiles;
                 inventoryFile = configuredInventoryFileWithoutSNMP;
@@ -136,7 +139,7 @@ public class UpgradeNestedConfigurationFromRHQ3_0_0Test extends UpgradeTestBase 
             }
 
             @Override
-            public String[] getExpectedResourceKeysAfterUpgrade(TestSetup setup) {
+            public String[] getExpectedResourceKeysAfterUpgrade(ApacheTestSetup setup) {
                 return getVHostRKs(setup, new int[] { 0, 2, 4 }, null, ResourceKeyFormat.RHQ3);
             }
         });
@@ -154,10 +157,10 @@ public class UpgradeNestedConfigurationFromRHQ3_0_0Test extends UpgradeTestBase 
      * @throws Throwable
      */
     @Test
-    @PluginContainerSetup(plugins = { PLATFORM_PLUGIN, AUGEAS_PLUGIN, APACHE_PLUGIN })
+    @PluginContainerSetup(plugins = { PluginLocation.PLATFORM_PLUGIN, PluginLocation.AUGEAS_PLUGIN, PluginLocation.APACHE_PLUGIN })
     @Parameters({ "apache2.install.dir", "apache2.exe.path" })
     public void testWithResolvableNamesWithSNMP(final String installDir, final String exePath) throws Throwable {
-        testUpgrade(new TestConfiguration() {
+        testUpgrade(new ApacheTestConfiguration() {
             {
                 apacheConfigurationFiles = configuredApacheConfigurationFiles;
                 inventoryFile = configuredInventoryFileWithSNMP;
@@ -167,22 +170,22 @@ public class UpgradeNestedConfigurationFromRHQ3_0_0Test extends UpgradeTestBase 
             }
 
             @Override
-            public void beforeTestSetup(TestSetup testSetup) throws Throwable {
+            public void beforeTestSetup(ApacheTestSetup testSetup) throws Throwable {
                 defineRHQ3ResourceKeys(this, testSetup);
             }
 
             @Override
-            public String[] getExpectedResourceKeysAfterUpgrade(TestSetup setup) {
+            public String[] getExpectedResourceKeysAfterUpgrade(ApacheTestSetup setup) {
                 return getVHostRKs(setup, new int[] { 0, 2, 4 }, null, ResourceKeyFormat.RHQ3);
             }
         });
     }
 
     @Test
-    @PluginContainerSetup(plugins = { PLATFORM_PLUGIN, AUGEAS_PLUGIN, APACHE_PLUGIN })
+    @PluginContainerSetup(plugins = { PluginLocation.PLATFORM_PLUGIN, PluginLocation.AUGEAS_PLUGIN, PluginLocation.APACHE_PLUGIN })
     @Parameters({ "apache2.install.dir", "apache2.exe.path" })
     public void testWithUnresolvableNamesWithSNMP(final String installDir, final String exePath) throws Throwable {
-        testUpgrade(new TestConfiguration() {
+        testUpgrade(new ApacheTestConfiguration() {
             {
                 apacheConfigurationFiles = configuredApacheConfigurationFiles;
                 inventoryFile = configuredInventoryFileWithSNMP;
@@ -203,22 +206,22 @@ public class UpgradeNestedConfigurationFromRHQ3_0_0Test extends UpgradeTestBase 
             }
 
             @Override
-            public void beforeTestSetup(TestSetup testSetup) throws Throwable {
+            public void beforeTestSetup(ApacheTestSetup testSetup) throws Throwable {
                 defineRHQ3ResourceKeys(this, testSetup);
             }
 
             @Override
-            public String[] getExpectedResourceKeysAfterUpgrade(TestSetup setup) {
+            public String[] getExpectedResourceKeysAfterUpgrade(ApacheTestSetup setup) {
                 return getVHostRKs(setup, new int[] { 0, 2, 4 }, null, ResourceKeyFormat.RHQ3);
             }
         });
     }
 
     @Test
-    @PluginContainerSetup(plugins = { PLATFORM_PLUGIN, AUGEAS_PLUGIN, APACHE_PLUGIN })
+    @PluginContainerSetup(plugins = { PluginLocation.PLATFORM_PLUGIN, PluginLocation.AUGEAS_PLUGIN, PluginLocation.APACHE_PLUGIN })
     @Parameters({ "apache2.install.dir", "apache2.exe.path" })
     public void testWithNonUniqueNamesWithSNMP(final String installDir, final String exePath) throws Throwable {
-        testUpgrade(new TestConfiguration() {
+        testUpgrade(new ApacheTestConfiguration() {
             {
                 apacheConfigurationFiles = configuredApacheConfigurationFiles;
                 inventoryFile = configuredInventoryFileWithSNMP;
@@ -239,22 +242,22 @@ public class UpgradeNestedConfigurationFromRHQ3_0_0Test extends UpgradeTestBase 
             }
 
             @Override
-            public void beforeTestSetup(TestSetup testSetup) throws Throwable {
+            public void beforeTestSetup(ApacheTestSetup testSetup) throws Throwable {
                 defineRHQ3ResourceKeys(this, testSetup);
             }
 
             @Override
-            public String[] getExpectedResourceKeysAfterUpgrade(TestSetup setup) {
+            public String[] getExpectedResourceKeysAfterUpgrade(ApacheTestSetup setup) {
                 return getVHostRKs(setup, new int[] { 0, 2, 4 }, null, ResourceKeyFormat.RHQ3);
             }
         });
     }
 
     @Test
-    @PluginContainerSetup(plugins = { PLATFORM_PLUGIN, AUGEAS_PLUGIN, APACHE_PLUGIN })
+    @PluginContainerSetup(plugins = { PluginLocation.PLATFORM_PLUGIN, PluginLocation.AUGEAS_PLUGIN, PluginLocation.APACHE_PLUGIN })
     @Parameters({ "apache2.install.dir", "apache2.exe.path" })
     public void testWithAnyAddressWithoutSNMP(final String installPath, final String exePath) throws Throwable {
-        testUpgrade(new TestConfiguration() {
+        testUpgrade(new ApacheTestConfiguration() {
             {
                 configurationName = DEPLOYMENT_SIMPLE_WITH_WILDCARD_LISTENS;
 
@@ -275,17 +278,17 @@ public class UpgradeNestedConfigurationFromRHQ3_0_0Test extends UpgradeTestBase 
             }
 
             @Override
-            public String[] getExpectedResourceKeysAfterUpgrade(TestSetup setup) {
+            public String[] getExpectedResourceKeysAfterUpgrade(ApacheTestSetup setup) {
                 return getVHostRKs(setup, new int[] { 0, 2, 4 }, null, ResourceKeyFormat.RHQ3);
             }
         });
     }
 
     @Test
-    @PluginContainerSetup(plugins = { PLATFORM_PLUGIN, AUGEAS_PLUGIN, APACHE_PLUGIN })
+    @PluginContainerSetup(plugins = { PluginLocation.PLATFORM_PLUGIN, PluginLocation.AUGEAS_PLUGIN, PluginLocation.APACHE_PLUGIN })
     @Parameters({ "apache2.install.dir", "apache2.exe.path" })
     public void testWithAnyAddressWithSNMP(final String installPath, final String exePath) throws Throwable {
-        testUpgrade(new TestConfiguration() {
+        testUpgrade(new ApacheTestConfiguration() {
             {
                 configurationName = DEPLOYMENT_SIMPLE_WITH_WILDCARD_LISTENS;
 
@@ -302,22 +305,22 @@ public class UpgradeNestedConfigurationFromRHQ3_0_0Test extends UpgradeTestBase 
             }
 
             @Override
-            public void beforeTestSetup(TestSetup testSetup) throws Throwable {
+            public void beforeTestSetup(ApacheTestSetup testSetup) throws Throwable {
                 defineRHQ3ResourceKeys(this, testSetup);
             }
 
             @Override
-            public String[] getExpectedResourceKeysAfterUpgrade(TestSetup setup) {
+            public String[] getExpectedResourceKeysAfterUpgrade(ApacheTestSetup setup) {
                 return getVHostRKs(setup, new int[] { 0, 2, 4 }, null, ResourceKeyFormat.RHQ3);
             }
         });
     }
 
     @Test
-    @PluginContainerSetup(plugins = { PLATFORM_PLUGIN, AUGEAS_PLUGIN, APACHE_PLUGIN })
+    @PluginContainerSetup(plugins = { PluginLocation.PLATFORM_PLUGIN, PluginLocation.AUGEAS_PLUGIN, PluginLocation.APACHE_PLUGIN })
     @Parameters({ "apache2.install.dir", "apache2.exe.path" })
     public void testWithWildcardAddressWithoutSNMP(final String installPath, final String exePath) throws Throwable {
-        testUpgrade(new TestConfiguration() {
+        testUpgrade(new ApacheTestConfiguration() {
             {
                 configurationName = DEPLOYMENT_SIMPLE_WITH_WILDCARD_LISTENS;
 
@@ -338,17 +341,17 @@ public class UpgradeNestedConfigurationFromRHQ3_0_0Test extends UpgradeTestBase 
             }
 
             @Override
-            public String[] getExpectedResourceKeysAfterUpgrade(TestSetup setup) {
+            public String[] getExpectedResourceKeysAfterUpgrade(ApacheTestSetup setup) {
                 return getVHostRKs(setup, new int[] { 0, 2, 4 }, null, ResourceKeyFormat.RHQ3);
             }
         });
     }
 
     @Test
-    @PluginContainerSetup(plugins = { PLATFORM_PLUGIN, AUGEAS_PLUGIN, APACHE_PLUGIN })
+    @PluginContainerSetup(plugins = { PluginLocation.PLATFORM_PLUGIN, PluginLocation.AUGEAS_PLUGIN, PluginLocation.APACHE_PLUGIN })
     @Parameters({ "apache2.install.dir", "apache2.exe.path" })
     public void testWithWildcardAddressWithSNMP(final String installPath, final String exePath) throws Throwable {
-        testUpgrade(new TestConfiguration() {
+        testUpgrade(new ApacheTestConfiguration() {
             {
                 configurationName = DEPLOYMENT_SIMPLE_WITH_WILDCARD_LISTENS;
 
@@ -365,12 +368,12 @@ public class UpgradeNestedConfigurationFromRHQ3_0_0Test extends UpgradeTestBase 
             }
 
             @Override
-            public void beforeTestSetup(TestSetup testSetup) throws Throwable {
+            public void beforeTestSetup(ApacheTestSetup testSetup) throws Throwable {
                 defineRHQ3ResourceKeys(this, testSetup);
             }
 
             @Override
-            public String[] getExpectedResourceKeysAfterUpgrade(TestSetup setup) {
+            public String[] getExpectedResourceKeysAfterUpgrade(ApacheTestSetup setup) {
                 return getVHostRKs(setup, new int[] { 0, 2, 4 }, null, ResourceKeyFormat.RHQ3);
             }
         });

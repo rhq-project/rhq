@@ -18,18 +18,17 @@ GNU General Public License for more details.
  */
 package org.rhq.plugins.samba;
 
+import java.util.List;
+
 import net.augeas.Augeas;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
-import org.rhq.core.domain.resource.CreateResourceHistory;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
-import org.rhq.core.pluginapi.inventory.CreateResourceReport;
 import org.rhq.plugins.augeas.AugeasConfigurationComponent;
 import org.rhq.plugins.augeas.helper.AugeasNode;
-
-import java.util.List;
 
 /**
  * TODO
@@ -52,7 +51,7 @@ public class SambaShareComponent extends AugeasConfigurationComponent<SambaServe
         String targetPath = "/files/etc/samba/smb.conf/target[.='" + targetName + "']";
         AugeasNode targetNode = new AugeasNode(targetPath);
         Augeas augeas = getAugeas();
-        augeas.load();
+
         List<String> matches = augeas.match(targetNode.getPath());
         return matches.get(0);
     }
@@ -62,7 +61,7 @@ public class SambaShareComponent extends AugeasConfigurationComponent<SambaServe
     }
 
     public AvailabilityType getAvailability() {
-       return super.getAvailability();
+        return super.getAvailability();
     }
 
     public Configuration loadResourceConfiguration() throws Exception {
@@ -78,7 +77,15 @@ public class SambaShareComponent extends AugeasConfigurationComponent<SambaServe
     }
 
     public void deleteResource() throws Exception {
-        super.deleteResource();
+        initAugeas();
+        String rootPath = getResourceConfigurationRootPath();
+        try {
+            Augeas augeas = getAugeas();
+            augeas.remove(rootPath);
+            augeas.save();
+        } finally {
+            close();
+        }
     }
 
 }

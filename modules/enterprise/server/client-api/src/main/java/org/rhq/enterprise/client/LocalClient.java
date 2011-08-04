@@ -41,6 +41,7 @@ import org.rhq.enterprise.server.content.ContentManagerRemote;
 import org.rhq.enterprise.server.content.RepoManagerRemote;
 import org.rhq.enterprise.server.discovery.DiscoveryBossRemote;
 import org.rhq.enterprise.server.drift.DriftManagerRemote;
+import org.rhq.enterprise.server.drift.DriftServerRemote;
 import org.rhq.enterprise.server.event.EventManagerRemote;
 import org.rhq.enterprise.server.install.remote.RemoteInstallManagerRemote;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerRemote;
@@ -130,6 +131,10 @@ public class LocalClient implements RhqFacade {
 
     public DiscoveryBossRemote getDiscoveryBoss() {
         return getProxy(LookupUtil.getDiscoveryBoss(), DiscoveryBossRemote.class);
+    }
+
+    public DriftServerRemote getDriftServer() {
+        return getProxy(LookupUtil.getDriftServer(), DriftServerRemote.class);
     }
 
     public DriftManagerRemote getDriftManager() {

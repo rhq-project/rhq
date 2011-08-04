@@ -211,7 +211,7 @@ public class EventCompositeHistoryView extends TableSection<EventCompositeDataso
     }
 
     @Override
-    public Canvas getDetailsView(int eventId) {
+    public Canvas getDetailsView(Integer eventId) {
         return EventCompositeDetailsView.getInstance();
     }
 

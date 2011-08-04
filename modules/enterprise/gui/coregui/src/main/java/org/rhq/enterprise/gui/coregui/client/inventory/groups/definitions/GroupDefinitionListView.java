@@ -128,26 +128,26 @@ public class GroupDefinitionListView extends TableSection<GroupDefinitionDataSou
             nextCalculationTimeField);
 
         addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), MSG.common_msg_areYouSure(),
-                new AbstractTableAction(TableActionEnablement.ANY) {
-            public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                final int[] groupDefinitionIds = TableUtility.getIds(selection);
-                ResourceGroupGWTServiceAsync groupManager = GWTServiceLookup.getResourceGroupService(60000);
-                groupManager.deleteGroupDefinitions(groupDefinitionIds, new AsyncCallback<Void>() {
-                    @Override
-                    public void onSuccess(Void result) {
-                        CoreGUI.getMessageCenter().notify(
-                            new Message(MSG.view_dynagroup_deleteSuccessfulSelection(String
-                                .valueOf(groupDefinitionIds.length)), Severity.Info));
-                        GroupDefinitionListView.this.refresh();
-                    }
+            new AbstractTableAction(TableActionEnablement.ANY) {
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                    final int[] groupDefinitionIds = TableUtility.getIds(selection);
+                    ResourceGroupGWTServiceAsync groupManager = GWTServiceLookup.getResourceGroupService(60000);
+                    groupManager.deleteGroupDefinitions(groupDefinitionIds, new AsyncCallback<Void>() {
+                        @Override
+                        public void onSuccess(Void result) {
+                            CoreGUI.getMessageCenter().notify(
+                                new Message(MSG.view_dynagroup_deleteSuccessfulSelection(String
+                                    .valueOf(groupDefinitionIds.length)), Severity.Info));
+                            GroupDefinitionListView.this.refresh();
+                        }
 
-                    @Override
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError(MSG.view_dynagroup_deleteFailureSelection(), caught);
-                    }
-                });
-            }
-        });
+                        @Override
+                        public void onFailure(Throwable caught) {
+                            CoreGUI.getErrorHandler().handleError(MSG.view_dynagroup_deleteFailureSelection(), caught);
+                        }
+                    });
+                }
+            });
 
         addTableAction(extendLocatorId("New"), MSG.common_button_new(), null, new AbstractTableAction() {
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
@@ -180,7 +180,7 @@ public class GroupDefinitionListView extends TableSection<GroupDefinitionDataSou
     }
 
     @Override
-    public Canvas getDetailsView(int id) {
+    public Canvas getDetailsView(Integer id) {
         final SingleGroupDefinitionView singleGroupDefinitionView = new SingleGroupDefinitionView(this
             .extendLocatorId("Details"));
         return singleGroupDefinitionView;

@@ -29,45 +29,49 @@ import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 
-import org.rhq.core.domain.criteria.DriftCriteria;
-import org.rhq.core.domain.criteria.DriftJPACriteria;
+import org.rhq.core.domain.criteria.BasicDriftCriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
  * @author Jay Shaughnessy
  */
-public class DriftDetailsView extends LocatableVLayout implements BookmarkableView {
+public class DriftDetailsView extends LocatableVLayout {
 
     private String driftId;
 
-    private static DriftDetailsView INSTANCE = new DriftDetailsView("DriftDetailsView");
-
-    public static DriftDetailsView getInstance() {
-        return INSTANCE;
-    }
-
-    private DriftDetailsView(String id) {
-        // access through the static singleton only (see renderView)
-        super(id);
-
+    public DriftDetailsView(String locatorId, String driftId) {
+        super(locatorId);
+        this.driftId = driftId;
         setMembersMargin(10);
     }
 
+    @Override
+    protected void onDraw() {
+        super.onDraw();
+        show(this.driftId);
+    }
+
     private void show(String driftId) {
-        DriftCriteria criteria = new DriftJPACriteria();
+        BasicDriftCriteria criteria = new BasicDriftCriteria();
         criteria.addFilterId(driftId);
         criteria.fetchChangeSet(true);
         GWTServiceLookup.getDriftService().findDriftsByCriteria(criteria, new AsyncCallback<PageList<Drift>>() {
             @Override
             public void onSuccess(PageList<Drift> result) {
+                if (result.getTotalSize() != 1) {
+                    CoreGUI.getMessageCenter().notify(
+                        new Message("Got [" + result.getTotalSize()
+                            + "] results. Should have been 1. The details shown here might not be correct.",
+                            Severity.Warning));
+                }
                 Drift drift = result.get(0);
                 show(drift);
             }
@@ -81,7 +85,8 @@ public class DriftDetailsView extends LocatableVLayout implements BookmarkableVi
 
     private void show(Drift drift) {
         for (Canvas child : getMembers()) {
-            removeChild(child);
+            removeMember(child);
+            child.destroy();
         }
 
         // the change set to which the drift belongs
@@ -158,11 +163,4 @@ public class DriftDetailsView extends LocatableVLayout implements BookmarkableVi
 
         addMember(driftForm);
     }
-
-    @Override
-    public void renderView(ViewPath viewPath) {
-        driftId = Integer.toString(viewPath.getCurrentAsInt());
-        show(driftId);
-    }
-
 }

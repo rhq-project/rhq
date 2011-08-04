@@ -25,6 +25,7 @@ import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 import org.rhq.core.domain.common.EntityContext;
+import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableIButton;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
@@ -34,10 +35,11 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  *
  * @author John Mazzitelli
  */
-public class DriftChangeSetsView extends LocatableVLayout {
+public class DriftChangeSetsView extends LocatableVLayout implements RefreshableView {
 
     private EntityContext context;
     private boolean hasWriteAccess;
+    private ResourceDriftChangeSetsTreeView tree;
 
     protected DriftChangeSetsView(String locatorId, String tableTitle, EntityContext context, boolean hasWriteAccess) {
         super(locatorId);
@@ -49,9 +51,8 @@ public class DriftChangeSetsView extends LocatableVLayout {
     protected void onDraw() {
         super.onDraw();
 
-        final ResourceDriftChangeSetsTreeView tree = new ResourceDriftChangeSetsTreeView(extendLocatorId("Tree"),
-            this.hasWriteAccess, this.context);
-        addMember(tree);
+        this.tree = new ResourceDriftChangeSetsTreeView(extendLocatorId("Tree"), this.hasWriteAccess, this.context);
+        addMember(this.tree);
 
         ToolStrip toolStrip = new LocatableToolStrip(extendLocatorId("toolstrip"));
         toolStrip.setBackgroundImage(null);
@@ -61,7 +62,7 @@ public class DriftChangeSetsView extends LocatableVLayout {
         IButton refreshButton = new LocatableIButton(extendLocatorId("refreshButton"), MSG.common_button_refresh());
         refreshButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
-                tree.refresh();
+                DriftChangeSetsView.this.tree.refresh();
             }
         });
         toolStrip.addMember(refreshButton);
@@ -74,5 +75,12 @@ public class DriftChangeSetsView extends LocatableVLayout {
 
     protected boolean hasWriteAccess() {
         return this.hasWriteAccess;
+    }
+
+    @Override
+    public void refresh() {
+        if (this.tree != null) {
+            this.tree.refresh();
+        }
     }
 }

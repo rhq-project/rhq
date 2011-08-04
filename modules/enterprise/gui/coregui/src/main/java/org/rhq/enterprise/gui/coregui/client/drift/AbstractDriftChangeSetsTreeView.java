@@ -164,12 +164,12 @@ public abstract class AbstractDriftChangeSetsTreeView extends LocatableTreeGrid 
 
     /**
      * Returns the link (as a string) that the client should be redirected to
-     * if the given node is clicked.
+     * if the given node's details are to be shown.
      * 
-     * @param node the node whose target link is to be returned
-     * @return the node's link
+     * @param node the node whose target details link is to be returned
+     * @return the node's details link
      */
-    protected abstract String getNodeTargetLink(TreeNode node);
+    protected abstract String getNodeDetailsLink(TreeNode node);
 
     /**
      * Builds the right-mouse-click context menu for the given drift node
@@ -197,7 +197,7 @@ public abstract class AbstractDriftChangeSetsTreeView extends LocatableTreeGrid 
         MenuItem detailsItem = new MenuItem(MSG.common_title_details());
         detailsItem.addClickHandler(new ClickHandler() {
             public void onClick(MenuItemClickEvent event) {
-                String link = getNodeTargetLink(node);
+                String link = getNodeDetailsLink(node);
                 if (link != null) {
                     CoreGUI.goToView(link);
                 }

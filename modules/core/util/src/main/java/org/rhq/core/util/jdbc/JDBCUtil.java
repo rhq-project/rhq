@@ -227,4 +227,17 @@ public class JDBCUtil {
             }
         }
     }
+
+    public static String convertSQLExceptionToString(SQLException e) {
+        StringBuilder result = new StringBuilder(e.toString());
+        if (e.getNextException() != null) {
+            result.append(" - causes:");
+            SQLException cause = e;
+            while ((cause = cause.getNextException()) != null) {
+                result.append("\n\t").append(e);
+            }
+        }
+        return result.toString();
+    }
+
 }

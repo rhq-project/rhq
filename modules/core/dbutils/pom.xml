@@ -1,88 +1,53 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-
-  <modelVersion>4.0.0</modelVersion>
-
-   <parent>
-      <groupId>org.rhq</groupId>
-      <artifactId>rhq-core-parent</artifactId>
-      <version>4.1.0-SNAPSHOT</version>
-   </parent>
-
-  <groupId>org.rhq</groupId>
-  <artifactId>rhq-core-dbutils</artifactId>
-  <packaging>jar</packaging>
-
-  <name>RHQ Database Utilities</name>
-  <description>Database schema setup, upgrade and other utilities</description>
-
-  <scm>
-    <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/core/dbutils</connection>
-    <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/core/dbutils</developerConnection>
-  </scm>
-
-  <properties>
-    <scm.module.path>modules/core/dbutils/</scm.module.path>
-    <db.schema.version>2.112</db.schema.version>
-  </properties>
-
-  <dependencies>
-
-    <!-- 3rd Party Deps -->
-
-    <dependency>
-      <groupId>ant</groupId>
-      <artifactId>ant</artifactId>
-      <version>1.6.5</version>
-    </dependency>
-    
-    <dependency>
-    	<groupId>commons-logging</groupId>
-    	<artifactId>commons-logging</artifactId>
-    	<version>1.1.1</version>
-	</dependency>
-
-    <dependency>
-      <groupId>ant</groupId>
-      <artifactId>ant-launcher</artifactId>
-      <version>1.6.5</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>i18nlog</groupId>
-      <artifactId>i18nlog</artifactId>
-      <version>${i18nlog.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>postgresql</groupId>
-      <artifactId>postgresql</artifactId>      
-    </dependency>
-
-    <dependency>
-      <groupId>com.h2database</groupId>
-      <artifactId>h2</artifactId>
-      <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>net.sourceforge.jtds</groupId>
-      <artifactId>jtds</artifactId>
-      <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-      <scope>test</scope>
-    </dependency>
-
-  </dependencies>
-
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>exec-maven-plugin</artifactId>
-        <version>1.2</version>
-        <dependencies>
-          <dependency>
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.rhq</groupId>
+        <artifactId>rhq-core-parent</artifactId>
+        <version>4.1.0-SNAPSHOT</version>
+    </parent>
+    <groupId>org.rhq</groupId>
+    <artifactId>rhq-core-dbutils</artifactId>
+    <packaging>jar</packaging>
+    <name>RHQ Database Utilities</name>
+    <description>Database schema setup, upgrade and other utilities</description>
+    <scm>
+        <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/core/dbutils</connection>
+        <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/core/dbutils</developerConnection>
+    </scm>
+    <properties>
+        <scm.module.path>modules/core/dbutils/</scm.module.path>
+        <db.schema.version>2.111</db.schema.version>
+        <rhq.ds.type-mapping>${rhq.test.ds.type-mapping}</rhq.ds.type-mapping>
+        <rhq.ds.db-name>${rhq.test.ds.db-name}</rhq.ds.db-name>
+        <rhq.ds.connection-url>${rhq.test.ds.connection-url}</rhq.ds.connection-url>
+        <rhq.ds.user-name>${rhq.test.ds.user-name}</rhq.ds.user-name>
+        <rhq.ds.password>${rhq.test.ds.password}</rhq.ds.password>
+        <rhq.ds.driver-class>${rhq.test.ds.driver-class}</rhq.ds.driver-class>
+    </properties>
+    <dependencies>
+        <!-- 3rd Party Deps -->
+        <dependency>
+            <groupId>ant</groupId>
+            <artifactId>ant</artifactId>
+            <version>1.6.5</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+            <version>1.1.1</version>
+        </dependency>
+        <dependency>
+            <groupId>ant</groupId>
+            <artifactId>ant-launcher</artifactId>
+            <version>1.6.5</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>i18nlog</groupId>
+            <artifactId>i18nlog</artifactId>
+            <version>${i18nlog.version}</version>
+        </dependency>
+        <dependency>
             <groupId>postgresql</groupId>
             <artifactId>postgresql</artifactId>
         </dependency>
@@ -545,5 +510,4 @@
             </snapshots>
         </pluginRepository>
     </pluginRepositories>
-</project>
 </project>

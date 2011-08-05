@@ -43,6 +43,10 @@ public class ChangeSetDAO extends BasicDAO<MongoDBChangeSet, ObjectId> {
         Query<MongoDBChangeSet> query = createQuery();
 
         if (criteria.getFilterId() != null) {
+            // TODO use the $slice operator
+            // The slice operator will allow us to return only the requested entry in the
+            // change set document. Morphia does not yet support the $slice operator so
+            // we will hae to drop down to the mongo driver to issue a query.
             String[] ids = criteria.getFilterId().split(":");
             ObjectId changeSetId = new ObjectId(ids[0]);
             query.field("id").equal(changeSetId);

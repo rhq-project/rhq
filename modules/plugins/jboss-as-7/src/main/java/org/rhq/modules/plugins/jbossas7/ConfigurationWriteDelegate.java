@@ -18,9 +18,7 @@
  */
 package org.rhq.modules.plugins.jbossas7;
 
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,9 +43,6 @@ import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.CompositeOperation;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
-import org.rhq.modules.plugins.jbossas7.json.ReadAttribute;
-import org.rhq.modules.plugins.jbossas7.json.ReadChildrenResources;
-import org.rhq.modules.plugins.jbossas7.json.ReadResource;
 import org.rhq.modules.plugins.jbossas7.json.Result;
 import org.rhq.modules.plugins.jbossas7.json.WriteAttribute;
 
@@ -88,7 +83,7 @@ public class ConfigurationWriteDelegate implements ConfigurationFacet {
     /**
      * Write the configuration back to the AS. Care must be taken, not to send properties that
      * are read-only, as AS will choke on them.
-     * @param report
+     * @param report Report containing the new configuration
      */
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
 

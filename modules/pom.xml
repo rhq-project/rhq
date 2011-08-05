@@ -137,6 +137,7 @@
 
            <modules>
                <module>core</module>
+               <module>common</module>
                <module>plugins</module>
                <module>integration-tests</module>
            </modules>

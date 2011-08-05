@@ -48,6 +48,10 @@ public class GenericDriftCriteria implements Serializable, DriftCriteria {
 
     private String filterChangeSetId;
 
+    private Integer filterChangeSetStartVersion;
+
+    private Integer filterChangeSetEndVersion;
+
     private String filterPath;
 
     private List<Integer> filterResourceIds = new ArrayList<Integer>();
@@ -90,6 +94,26 @@ public class GenericDriftCriteria implements Serializable, DriftCriteria {
     @Override
     public String getFilterChangeSetId() {
         return filterChangeSetId;
+    }
+
+    @Override
+    public void addFilterChangeSetStartVersion(Integer filterChangeSetStartVersion) {
+        this.filterChangeSetStartVersion = filterChangeSetStartVersion;
+    }
+
+    @Override
+    public Integer getFilterChangeSetStartVersion() {
+        return filterChangeSetStartVersion;
+    }
+
+    @Override
+    public void addFilterChangeSetEndVersion(Integer filterChangeSetEndVersion) {
+        this.filterChangeSetEndVersion = filterChangeSetEndVersion;
+    }
+
+    @Override
+    public Integer getFilterChangeSetEndVersion() {
+        return filterChangeSetEndVersion;
     }
 
     @Override

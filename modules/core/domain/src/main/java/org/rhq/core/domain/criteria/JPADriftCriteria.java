@@ -43,6 +43,8 @@ public class JPADriftCriteria extends Criteria implements DriftCriteria {
     private Integer filterId;
     private List<DriftCategory> filterCategories = new ArrayList<DriftCategory>();
     private Integer filterChangeSetId; // needs override
+    private Integer filterChangeSetStartVersion; // needs override
+    private Integer filterChangeSetEndVersion; // needs override    
     private String filterPath;
     private List<Integer> filterResourceIds = new ArrayList<Integer>();
     private Long filterStartTime; // requires overrides
@@ -58,6 +60,8 @@ public class JPADriftCriteria extends Criteria implements DriftCriteria {
 
     public JPADriftCriteria(DriftCriteria driftCriteria) {
         filterOverrides.put("changeSetId", "changeSet.id = ?");
+        filterOverrides.put("changeSetStartVersion", "changeSet.version >= ?");
+        filterOverrides.put("changeSetEndVersion", "changeSet.version <= ?");
         filterOverrides.put("categories", "category IN ( ? )");
         filterOverrides.put("resourceIds", "changeSet.resource.id IN ( ? )");
         filterOverrides.put("startTime", "ctime >= ?");
@@ -69,6 +73,8 @@ public class JPADriftCriteria extends Criteria implements DriftCriteria {
 
             this.addFilterCategories(driftCriteria.getFilterCategories());
             this.addFilterChangeSetId(driftCriteria.getFilterChangeSetId());
+            this.addFilterChangeSetStartVersion(driftCriteria.getFilterChangeSetStartVersion());
+            this.addFilterChangeSetEndVersion(driftCriteria.getFilterChangeSetEndVersion());
             this.addFilterEndTime(driftCriteria.getFilterEndTime());
             this.addFilterId(driftCriteria.getFilterId());
             this.addFilterPath(driftCriteria.getFilterPath());
@@ -104,6 +110,7 @@ public class JPADriftCriteria extends Criteria implements DriftCriteria {
         return filterCategories.toArray(new DriftCategory[filterCategories.size()]);
     }
 
+    @Override
     public void addFilterChangeSetId(String filterChangeSetId) {
         if (filterChangeSetId != null) {
             this.filterChangeSetId = Integer.parseInt(filterChangeSetId);
@@ -113,6 +120,26 @@ public class JPADriftCriteria extends Criteria implements DriftCriteria {
     @Override
     public String getFilterChangeSetId() {
         return filterChangeSetId == null ? null : filterChangeSetId.toString();
+    }
+
+    @Override
+    public Integer getFilterChangeSetStartVersion() {
+        return filterChangeSetStartVersion;
+    }
+
+    @Override
+    public void addFilterChangeSetStartVersion(Integer filterChangeSetStartVersion) {
+        this.filterChangeSetStartVersion = filterChangeSetStartVersion;
+    }
+
+    @Override
+    public Integer getFilterChangeSetEndVersion() {
+        return filterChangeSetEndVersion;
+    }
+
+    @Override
+    public void addFilterChangeSetEndVersion(Integer filterChangeSetEndVersion) {
+        this.filterChangeSetEndVersion = filterChangeSetEndVersion;
     }
 
     public void addFilterPath(String filterPath) {

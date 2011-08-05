@@ -181,7 +181,9 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
         for (MongoDBChangeSet changeSet : query) {
             DriftChangeSetDTO changeSetDTO = toDTO(changeSet);
             for (MongoDBChangeSetEntry entry : changeSet.getDrifts()) {
-                results.add(new DriftComposite(toDTO(entry, changeSetDTO), resources.get(changeSet.getResourceId())));
+                // TODO: need to access config name
+                results.add(new DriftComposite(toDTO(entry, changeSetDTO), resources.get(changeSet.getResourceId()),
+                    "TODO"));
             }
         }
 

@@ -132,7 +132,10 @@ public class JPADriftServerBean implements JPADriftServerLocal {
         PageList<JPADrift> drifts = findDriftsByCriteria(subject, criteria);
         PageList<DriftComposite> composites = new PageList<DriftComposite>();
         for (JPADrift drift : drifts) {
-            composites.add(new DriftComposite(drift, drift.getChangeSet().getResource()));
+            JPADriftChangeSet changeSet = drift.getChangeSet();
+            DriftConfiguration driftConfig = new DriftConfiguration(entityManager.find(Configuration.class, changeSet
+                .getDriftConfigurationId()));
+            composites.add(new DriftComposite(drift, changeSet.getResource(), driftConfig.getName()));
         }
         return composites;
     }

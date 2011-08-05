@@ -30,39 +30,51 @@ import org.rhq.core.domain.util.PageOrdering;
  */
 public interface DriftCriteria extends BaseCriteria {
 
+    // Filters
     void addFilterId(String filterId);
-
-    String getFilterId();
 
     void addFilterCategories(DriftCategory... filterCategories);
 
-    DriftCategory[] getFilterCategories();
-
     void addFilterChangeSetId(String filterChangeSetId);
 
-    String getFilterChangeSetId();
+    void addFilterChangeSetStartVersion(Integer filterChangeSetStartVersion);
+
+    void addFilterChangeSetEndVersion(Integer filterChangeSetEndVersion);
 
     void addFilterPath(String filterPath);
 
-    String getFilterPath();
-
     void addFilterResourceIds(Integer... filterResourceIds);
-
-    Integer[] getFilterResourceIds();
 
     void addFilterStartTime(Long filterStartTime);
 
-    Long getFilterStartTime();
-
     void addFilterEndTime(Long filterEndTime);
+
+    // sorting
+    void addSortCtime(PageOrdering sortCtime);
+
+    // optional data fetch
+    void fetchChangeSet(boolean fetchChangeSet);
+
+    // getters for inspecting settings
+    String getFilterId();
+
+    DriftCategory[] getFilterCategories();
+
+    String getFilterChangeSetId();
+
+    Integer getFilterChangeSetStartVersion();
+
+    Integer getFilterChangeSetEndVersion();
+
+    String getFilterPath();
+
+    Integer[] getFilterResourceIds();
+
+    Long getFilterStartTime();
 
     Long getFilterEndTime();
 
-    void fetchChangeSet(boolean fetchChangeSet);
-
     boolean isFetchChangeSet();
-
-    void addSortCtime(PageOrdering sortCtime);
 
     PageOrdering getSortCtime();
 

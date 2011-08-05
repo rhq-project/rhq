@@ -7,21 +7,26 @@
 
     <context-param>
         <param-name>resteasy.jndi.resources</param-name>
-        <param-value>rhq/ResourceHandlerBean/local,rhq/MetricHandlerBean/local,rhq/UserHandlerBean/local</param-value>
+        <param-value>rhq/ResourceHandlerBean/local,rhq/MetricHandlerBean/local,rhq/UserHandlerBean/local,rhq/StatusHandlerBean/local,rhq/AlertHandlerBean/local</param-value>
         <description>List of jndi names of EJBs local interfaces that define REST stuff</description>
     </context-param>
+    <context-param>
+        <param-name>resteasy.providers</param-name>
+        <param-value>org.rhq.enterprise.server.rest.CustomExceptionMapper</param-value>
+        <description>Maps Exceptions to HTTP response codes</description>
+    </context-param>
 
-<!--
-    <filter>
+    <!--
+        <filter>
 
-        <filter-name>AuthFilter</filter-name>
-        <filter-class>org.rhq.enterprise.rest.AuthFilter</filter-class>
-    </filter>
-    <filter-mapping>
-        <filter-name>AuthFilter</filter-name>
-        <servlet-name>Resteasy</servlet-name>
-    </filter-mapping>
--->
+            <filter-name>AuthFilter</filter-name>
+            <filter-class>org.rhq.enterprise.rest.AuthFilter</filter-class>
+        </filter>
+        <filter-mapping>
+            <filter-name>AuthFilter</filter-name>
+            <servlet-name>Resteasy</servlet-name>
+        </filter-mapping>
+    -->
 
 
     <servlet>

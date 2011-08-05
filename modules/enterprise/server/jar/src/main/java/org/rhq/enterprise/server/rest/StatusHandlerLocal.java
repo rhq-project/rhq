@@ -21,32 +21,20 @@ package org.rhq.enterprise.server.rest;
 import javax.ejb.Local;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 
-import org.rhq.enterprise.server.rest.domain.MetricAggregate;
-import org.rhq.enterprise.server.rest.domain.MetricSchedule;
+import org.rhq.enterprise.server.rest.domain.Status;
 
 /**
- * Deal with metrics
+ * Return some status information about the system
  * @author Heiko W. Rupp
  */
-@Produces({"application/json","application/xml","text/plain"})
-@Path("/metric")
+@Path("/status")
 @Local
-public interface MetricHandlerLocal {
-
-
-    @GET
-    @Path("data/{scheduleId}")
-    MetricAggregate getMetricData(@PathParam("scheduleId") int scheduleId,
-                                  @QueryParam("startTime")  long startTime,
-                                  @QueryParam("endTime") long endTime,
-                                  @QueryParam("dataPoints") int dataPoints);
+@Produces({"application/json","application/xml","text/plain"})
+public interface StatusHandlerLocal {
 
     @GET
-    @Path("/schedule/{id}")
-    MetricSchedule getSchedule(@PathParam("id") int scheduleId);
-
+    @Path("/")
+    Status getStatus();
 }

@@ -127,16 +127,6 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
         return ret;
     }
 
-    public MetricSchedule getSchedule(int scheduleId) {
-
-        MeasurementSchedule schedule = scheduleManager.getScheduleById(caller,scheduleId);
-        MeasurementDefinition definition = schedule.getDefinition();
-        MetricSchedule ms = new MetricSchedule(schedule.getId(), definition.getName(), definition.getDisplayName(),
-                schedule.isEnabled(),schedule.getInterval(), definition.getUnits().toString(),
-                definition.getDataType().toString());
-
-        return ms;
-    }
 
     @Override
     public List<ResourceWithType> getChildren(int id) {

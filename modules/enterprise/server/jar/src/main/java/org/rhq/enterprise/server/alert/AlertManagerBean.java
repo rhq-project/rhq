@@ -169,10 +169,10 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
 
     // TODO: iterate in batches of 1000 elements at a time
     /**
-     * Acknowledge alert(s) so that administrators know who is working on remedying the underlying 
+     * Acknowledge alert(s) so that administrators know who is working on remedying the underlying
      * condition(s) that caused the alert(s) in the first place.
      *
-     * @param user calling user
+     * @param subject calling user
      * @param alertIds PKs of the alerts to acknowledge
      * @return number of alerts acknowledged
      */
@@ -310,7 +310,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
     //       in-clause issues
     private void checkAlertsPermission(Subject subject, List<Integer> alertIds) {
         if (authorizationManager.isInventoryManager(subject)) {
-            return; // inventory manager 
+            return; // inventory manager
         }
 
         long canModifyCount = checkAuthz(subject, alertIds);
@@ -321,7 +321,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
              * implies one of two things:
              *    1) user does not have permission to modify alerts for some of the corresponding resources
              *    2) some of the passed alertIds do not exist
-             *    
+             *
              * to remedy this, let's remove alertIds that no longer exist.  if the new list is smaller than the
              * original list, we know that the list DID contain non-existent entries and we should perform the authz
              * check again.  however, if all of the elements in the original list existed, then we know that the
@@ -345,7 +345,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
     }
 
     private long checkAuthz(Subject subject, List<Integer> alertIds) {
-        /* 
+        /*
          * get the count of the number of these alerts for which user
          * has MANAGE_ALERTS permission on the corresponding resource
          */
@@ -365,7 +365,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
 
     @SuppressWarnings("unchecked")
     private List<Integer> removeNonExistent(List<Integer> alertIds) {
-        /* 
+        /*
          * get the count of the number of these alerts for which user
          * has MANAGE_ALERTS permission on the corresponding resource
          */

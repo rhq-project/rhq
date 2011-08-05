@@ -19,12 +19,14 @@
 package org.rhq.enterprise.server.rest.domain;
 
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlType;
 
 /**
  * A simple metric schedule
  * @author Heiko W. Rupp
  */
 @XmlRootElement
+@XmlType(propOrder = {"scheduleId","scheduleName","displayName","enabled","collectionInterval","unit","type"})
 public class MetricSchedule {
 
     int scheduleId;

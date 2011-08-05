@@ -56,10 +56,6 @@ public interface ResourceHandlerLocal {
     List<MetricSchedule> getSchedules(@PathParam("id") int resourceId);
 
     @GET
-    @Path("/schedule/{id}")
-    MetricSchedule getSchedule(@PathParam("id") int scheduleId);
-
-    @GET
     @Path("/{id}/children")
     List<ResourceWithType> getChildren(@PathParam("id") int id);
 

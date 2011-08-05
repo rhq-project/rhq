@@ -16,7 +16,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-
 package org.rhq.enterprise.server.rest;
 
 import java.util.List;
@@ -26,12 +25,14 @@ import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
 
 import org.rhq.core.domain.measurement.DataType;
+import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.enterprise.server.rest.domain.MetricAggregate;
 import org.rhq.enterprise.server.measurement.MeasurementAggregate;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
+import org.rhq.enterprise.server.rest.domain.MetricSchedule;
 
 /**
  * Deal with metrics
@@ -82,4 +83,18 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
 
         return res;
     }
+
+    public MetricSchedule getSchedule(int scheduleId) {
+
+        MeasurementSchedule schedule = scheduleManager.getScheduleById(caller,scheduleId);
+        if (schedule==null)
+            throw new StuffNotFoundException("Schedule with id " + scheduleId);
+        MeasurementDefinition definition = schedule.getDefinition();
+        MetricSchedule ms = new MetricSchedule(schedule.getId(), definition.getName(), definition.getDisplayName(),
+                schedule.isEnabled(),schedule.getInterval(), definition.getUnits().toString(),
+                definition.getDataType().toString());
+
+        return ms;
+    }
+
 }

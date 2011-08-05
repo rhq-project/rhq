@@ -18,35 +18,50 @@
  */
 package org.rhq.enterprise.server.rest;
 
+import java.util.List;
+
 import javax.ejb.Local;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 
-import org.rhq.enterprise.server.rest.domain.MetricAggregate;
-import org.rhq.enterprise.server.rest.domain.MetricSchedule;
+import org.rhq.enterprise.server.rest.domain.AlertRest;
+import org.rhq.enterprise.server.rest.domain.AlertDefinitionRest;
 
 /**
- * Deal with metrics
+ * Deal with Alerts
  * @author Heiko W. Rupp
  */
 @Produces({"application/json","application/xml","text/plain"})
-@Path("/metric")
 @Local
-public interface MetricHandlerLocal {
-
-
-    @GET
-    @Path("data/{scheduleId}")
-    MetricAggregate getMetricData(@PathParam("scheduleId") int scheduleId,
-                                  @QueryParam("startTime")  long startTime,
-                                  @QueryParam("endTime") long endTime,
-                                  @QueryParam("dataPoints") int dataPoints);
+@Path("/alert")
+public interface AlertHandlerLocal {
 
     @GET
-    @Path("/schedule/{id}")
-    MetricSchedule getSchedule(@PathParam("id") int scheduleId);
+    @Path("/")
+    List<AlertRest> listAlerts(@QueryParam("page") int page,@QueryParam("status") String status);
 
+    @GET
+    @Path("/{id}")
+    AlertRest getAlert(@PathParam("id") int id);
+
+    @PUT
+    @Path("/{id}")
+    AlertRest ackAlert(@PathParam("id") int id);
+
+    @DELETE
+    @Path("/{id}")
+    void purgeAlert(@PathParam("id") int id);
+
+    @GET
+    @Path("/definition")
+    List<AlertDefinitionRest> listAlertDefinitions(@QueryParam("page") int page,@QueryParam("status") String status);
+
+    @GET
+    @Path("/definition/{id}")
+    AlertDefinitionRest getAlertDefinition(@PathParam("id") int definitionId);
 }

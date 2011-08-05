@@ -31,7 +31,7 @@ import org.jboss.resteasy.links.LinkResource;
  * @author Heiko W. Rupp
  */
 @XmlRootElement
-@XmlType(propOrder = {"id","name","alertDefinitionId","definitionEnabled","resourceId","resourceName","ackBy","ackTime"})
+@XmlType(propOrder = {"id","name","alertTime","description","alertDefinitionId","definitionEnabled","resourceId","resourceName","ackBy","ackTime"})
 public class AlertRest {
 
     private int id;
@@ -42,6 +42,8 @@ public class AlertRest {
     private boolean definitionEnabled;
     String ackBy;
     long ackTime;
+    long alertTime;
+    String description;
 
     public void setId(int id) {
         this.id = id;
@@ -112,5 +114,21 @@ public class AlertRest {
 
     public void setAckTime(long ackTime) {
         this.ackTime = ackTime;
+    }
+
+    public long getAlertTime() {
+        return alertTime;
+    }
+
+    public void setAlertTime(long alertTime) {
+        this.alertTime = alertTime;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 }

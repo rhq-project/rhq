@@ -20,6 +20,7 @@ package org.rhq.enterprise.server.rest;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -30,6 +31,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
 
 import org.rhq.core.domain.alert.Alert;
+import org.rhq.core.domain.alert.AlertConditionLog;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
@@ -157,7 +159,9 @@ public class AlertHandlerBean extends AbstractRestBean implements AlertHandlerLo
             ret.setAckBy(al.getAcknowledgingSubject());
             ret.setAckTime(al.getAcknowledgeTime());
         }
+        ret.setAlertTime(al.getCtime());
 
+        ret.setDescription(alertManager.prettyPrintAlertConditions(al,false));
 
         return ret;
     }

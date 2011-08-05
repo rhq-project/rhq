@@ -49,7 +49,6 @@ import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.DriftFileStatus;
-import org.rhq.core.domain.drift.JPADriftFile;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
@@ -222,7 +221,7 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
         assertEquals(1, resources.size());
         driftConfigs = resources.get(0).getDriftConfigurations();
         assertNotNull(driftConfigs);
-        assertEquals(2, driftConfigs.size());
+        assertEquals(4, driftConfigs.size());
         for (Iterator<Configuration> i = driftConfigs.iterator(); i.hasNext();) {
             driftConfig = new DriftConfiguration(i.next());
             if ("testDriftConfig".equals(driftConfig.getName())) {

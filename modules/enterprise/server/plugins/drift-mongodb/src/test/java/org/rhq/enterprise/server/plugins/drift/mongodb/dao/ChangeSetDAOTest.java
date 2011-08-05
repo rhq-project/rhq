@@ -1,3 +1,22 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2011 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+
 package org.rhq.enterprise.server.plugins.drift.mongodb.dao;
 
 import java.util.List;
@@ -26,6 +45,7 @@ import static org.rhq.core.domain.drift.DriftChangeSetCategory.DRIFT;
 import static org.rhq.test.AssertUtils.assertCollectionMatchesNoOrder;
 import static org.rhq.test.AssertUtils.assertPropertiesMatch;
 import static org.testng.Assert.assertNotNull;
+import static org.testng.AssertJUnit.assertEquals;
 
 public class ChangeSetDAOTest {
 
@@ -177,6 +197,49 @@ public class ChangeSetDAOTest {
             expected, actual, ignore);
     }
 
+    @Test(enabled = ENABLED)
+    public void findByDriftCriteriaWithCategoriesFilter() throws Exception {
+        MongoDBChangeSet c1 = createChangeSet(COVERAGE, 1, 1, 1).add(new MongoDBChangeSetEntry("c1-1.txt", FILE_ADDED));
+        dao.save(c1);
+
+        MongoDBChangeSet c2 = createChangeSet(DRIFT, 2, 1, 1)
+            .add(new MongoDBChangeSetEntry("c2-1.txt", FILE_ADDED))
+            .add(new MongoDBChangeSetEntry("c1-1.txt", FILE_CHANGED));
+        dao.save(c2);
+
+        MongoDBChangeSet c3 = createChangeSet(DRIFT, 3, 1, 1).add(new MongoDBChangeSetEntry("c1-1.txt", FILE_REMOVED));
+        dao.save(c3);
+
+        GenericDriftCriteria criteria = new GenericDriftCriteria();
+        criteria.addFilterCategories(FILE_CHANGED, FILE_REMOVED);
+
+        List<MongoDBChangeSet> actual = dao.findByDriftCriteria(criteria);
+        List<MongoDBChangeSet> expected = asList(c2, c3);
+
+        String ignore = "drifts";
+        assertCollectionMatchesNoOrder("Failed to find change sets by drift criteria with categories filter.",
+            expected, actual, ignore);
+    }
+
+    @Test(enabled = ENABLED)
+    public void findByDriftCriteriaWithIdFilter() throws Exception {
+        MongoDBChangeSet c1 = createChangeSet(COVERAGE, 1, 1, 1);
+        MongoDBChangeSetEntry entry = new MongoDBChangeSetEntry("c1-1.txt", FILE_ADDED);
+        c1.add(entry);
+
+        dao.save(c1);
+
+        GenericDriftCriteria criteria = new GenericDriftCriteria();
+        criteria.addFilterId(entry.getId());
+
+        List<MongoDBChangeSet> actual = dao.findByDriftCriteria(criteria);
+        List<MongoDBChangeSet> expected = asList(c1);
+
+        assertEquals("Expected to get back only one change set when searching by drift criteria with id filter.",
+            1, actual.size());
+        assertChangeSetMatches("Failed to find change set by drift criteria with id filter.", c1, actual.get(0));
+    }
+
     /**
      * This method first checks that the actual change set is not null. It then performs a
      * property-wise comparison against the expected change set using
@@ -219,9 +282,6 @@ public class ChangeSetDAOTest {
         return changeSet;
     }
 
-//    MongoDBChangeSetEntry createEntry(String path, DriftCategory category) {
-//        MongoDBChangeSetEntry entry = new MongoDBChangeSetEntry(path, category);
-//        // TODO init oldFile
-//    }
+
 
 }

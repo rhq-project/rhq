@@ -42,6 +42,16 @@ public class ChangeSetDAO extends BasicDAO<MongoDBChangeSet, ObjectId> {
     public List<MongoDBChangeSet> findByDriftCriteria(DriftCriteria criteria) {
         Query<MongoDBChangeSet> query = createQuery();
 
+        if (criteria.getFilterId() != null) {
+            String[] ids = criteria.getFilterId().split(":");
+            ObjectId changeSetId = new ObjectId(ids[0]);
+            query.field("id").equal(changeSetId);
+
+            // If the id filter is set, there is no need to process other filters since the id
+            // filter uniquely identifies both the change set and the drift entry.
+            return query.asList();
+        }
+
         if (criteria.getFilterResourceIds() != null && criteria.getFilterResourceIds().length > 0) {
             query.field("resourceId").in(asList(criteria.getFilterResourceIds()));
         }

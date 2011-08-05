@@ -64,6 +64,8 @@ import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBChangeSet
 import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBFile;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 
+import static org.rhq.enterprise.server.util.LookupUtil.getResourceManager;
+
 public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginComponent {
 
     //private final Log log = LogFactory.getLog(MongoDBDriftServer.class);

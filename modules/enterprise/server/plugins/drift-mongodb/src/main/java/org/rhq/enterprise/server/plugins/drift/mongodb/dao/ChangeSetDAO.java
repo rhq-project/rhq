@@ -19,18 +19,38 @@
 
 package org.rhq.enterprise.server.plugins.drift.mongodb.dao;
 
+import java.util.List;
+
 import com.google.code.morphia.Morphia;
 import com.google.code.morphia.dao.BasicDAO;
+import com.google.code.morphia.query.Query;
 import com.mongodb.Mongo;
 
 import org.bson.types.ObjectId;
 
+import org.rhq.core.domain.criteria.DriftCriteria;
 import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBChangeSet;
+
+import static java.util.Arrays.asList;
 
 public class ChangeSetDAO extends BasicDAO<MongoDBChangeSet, ObjectId> {
 
     public ChangeSetDAO(Morphia morphia, Mongo mongo, String db) {
         super(mongo, morphia, db);
+    }
+
+    public List<MongoDBChangeSet> findByDriftCriteria(DriftCriteria criteria) {
+        Query<MongoDBChangeSet> query = createQuery();
+
+        if (criteria.getFilterResourceIds() != null && criteria.getFilterResourceIds().length > 0) {
+            query.field("resourceId").in(asList(criteria.getFilterResourceIds()));
+        }
+
+        if (criteria.getFilterCategories() != null && criteria.getFilterCategories().length > 0) {
+            query.field("files.category").in(asList(criteria.getFilterCategories()));
+        }
+
+        return query.asList();
     }
 
 }

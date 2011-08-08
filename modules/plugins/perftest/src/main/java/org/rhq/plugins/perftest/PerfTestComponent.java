@@ -32,7 +32,6 @@ import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.measurement.AvailabilityType;
-import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
@@ -62,7 +61,7 @@ import java.util.Set;
 import java.util.Arrays;
 
 /**
- * RHQ resource component for handling resources defined in the performance test scenario.
+ * RHQ resource component for handling resources defined in a performance test scenario.
  *
  * @author Jason Dobies
  */

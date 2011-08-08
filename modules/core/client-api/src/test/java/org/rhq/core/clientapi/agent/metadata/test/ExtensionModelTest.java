@@ -37,6 +37,7 @@ import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
 import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
 import org.rhq.core.clientapi.descriptor.DescriptorPackages;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
@@ -130,7 +131,9 @@ public class ExtensionModelTest {
         assert !def1.isRequired();
         assert def1 instanceof PropertyDefinitionSimple;
         assert ((PropertyDefinitionSimple) def1).getType().equals(PropertySimpleType.BOOLEAN);
-        def1.getConfigurationDefinition().getDefaultTemplate().getConfiguration().get("force").equals("false");
+        PropertySimple prop = (PropertySimple) def1.getConfigurationDefinition().getDefaultTemplate()
+            .getConfiguration().get("force");
+        assert prop.getBooleanValue().booleanValue() == false;
 
         assert stopOp.getResultsConfigurationDefinition() != null;
         ConfigurationDefinition results = stopOp.getResultsConfigurationDefinition();

@@ -29,7 +29,9 @@ import java.net.URL;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.SerializationConfig;
 
@@ -49,6 +51,7 @@ public class ASConnection {
     String urlString;
     private ObjectMapper mapper;
     public static boolean verbose = false; // This is a variable on purpose, so devs can switch it on in the debugger or in the agent
+    private HttpURLConnection conn;
 
     /**
      * Construct an ASConnection object. The real "physical" connection is done in
@@ -59,7 +62,7 @@ public class ASConnection {
     public ASConnection(String host, int port) {
 
         try {
-            url = new URL("http",host,port, MANAGEMENT);
+            url = new URL("http", host, port, MANAGEMENT);
             urlString = url.toString();
 
         } catch (MalformedURLException e) {
@@ -87,11 +90,12 @@ public class ASConnection {
     public JsonNode executeRaw(Operation operation) {
 
         InputStream inputStream = null;
-        BufferedReader br=null;
+        BufferedReader br = null;
+        InputStream es = null;
         long t1 = System.currentTimeMillis();
         try {
 
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn = (HttpURLConnection) url.openConnection();
             conn.setDoOutput(true);
             conn.setRequestMethod("POST");
             OutputStream out = conn.getOutputStream();
@@ -106,50 +110,63 @@ public class ASConnection {
             out.close();
 
             int responseCode = conn.getResponseCode();
-            if (responseCode ==HttpURLConnection.HTTP_OK) {
+            if (responseCode == HttpURLConnection.HTTP_OK) {
                 inputStream = conn.getInputStream();
             } else {
                 inputStream = conn.getErrorStream();
             }
 
-            if (inputStream!=null) {
+            if (inputStream != null) {
 
-            br = new BufferedReader(new InputStreamReader(
-                    inputStream));
-            String line;
-            StringBuilder builder = new StringBuilder();
-            while ((line = br.readLine()) != null) {
-                builder.append(line);
-            }
-
-            String outcome;
-            JsonNode operationResult=null;
-            if (builder !=null) {
-                outcome= builder.toString();
-                operationResult = mapper.readTree(outcome);
-                if (verbose) {
-                    ObjectMapper om2 = new ObjectMapper();
-                    om2.configure(SerializationConfig.Feature.INDENT_OUTPUT, true);
-                    String tmp = om2.writeValueAsString(operationResult);
-                    log.info(tmp);
+                br = new BufferedReader(new InputStreamReader(inputStream));
+                String line;
+                StringBuilder builder = new StringBuilder();
+                while ((line = br.readLine()) != null) {
+                    builder.append(line);
                 }
-            }
-            else {
-                outcome="- no response from server -";
-                Result noResult = new Result();
-                noResult.setFailureDescription(outcome);
-                noResult.setOutcome("failure");
-                operationResult = mapper.valueToTree(noResult);
-            }
-            return operationResult;
-            }
-            else {
+
+                String outcome;
+                JsonNode operationResult = null;
+                if (builder.length() > 0) {
+                    outcome = builder.toString();
+                    operationResult = mapper.readTree(outcome);
+                    if (verbose) {
+                        ObjectMapper om2 = new ObjectMapper();
+                        om2.configure(SerializationConfig.Feature.INDENT_OUTPUT, true);
+                        String tmp = om2.writeValueAsString(operationResult);
+                        log.info(tmp);
+                    }
+                } else {
+                    outcome = "- no response from server -";
+                    Result noResult = new Result();
+                    noResult.setFailureDescription(outcome);
+                    noResult.setOutcome("failure");
+                    operationResult = mapper.valueToTree(noResult);
+                }
+                return operationResult;
+            } else {
                 log.error("IS was null and code was " + responseCode);
             }
 
-
         } catch (IOException e) {
-            log.error("Failed to get data: " + e.getMessage()  );
+            log.error("Failed to get data: " + e.getMessage());
+
+            //the following code is in place to help keep-alive http connection re-use to occur.
+            if (conn != null) {//on error conditions it's still necessary to read the response so JDK knows can reuse
+                //the http connections behind the scenes.                
+                es = conn.getErrorStream();
+                if (es != null) {
+                    BufferedReader dr = new BufferedReader(new InputStreamReader(es));
+                    String ignore = null;
+                    try {
+                        while ((ignore = dr.readLine()) != null) {
+                            //already reported error. just empty stream.
+                        }
+                        es.close();
+                    } catch (IOException e1) {
+                    }
+                }
+            }
 
             Result failure = new Result();
             failure.setFailureDescription(e.getMessage());
@@ -160,16 +177,24 @@ public class ASConnection {
             return ret;
 
         } finally {
-            if (br!=null)
+            if (br != null) {
                 try {
                     br.close();
                 } catch (IOException e) {
-                    e.printStackTrace();  // TODO: Customise this generated block
+                    e.printStackTrace(); // TODO: Customise this generated block
                 }
+            }
+            if (es != null) {
+                try {
+                    es.close();
+                } catch (IOException e) {
+                    e.printStackTrace(); // TODO: Customise this generated block
+                }
+            }
             long t2 = System.currentTimeMillis();
             PluginStats stats = PluginStats.getInstance();
             stats.incrementRequestCount();
-            stats.addRequestTime(t2-t1);
+            stats.addRequestTime(t2 - t1);
         }
 
         return null;
@@ -183,7 +208,7 @@ public class ASConnection {
      * @see #execute(org.rhq.modules.plugins.jbossas7.json.Operation, boolean)
      */
     public Result execute(Operation op) {
-        return execute(op,false);
+        return execute(op, false);
     }
 
     /**
@@ -194,7 +219,7 @@ public class ASConnection {
      * @see #execute(org.rhq.modules.plugins.jbossas7.json.Operation, boolean)
      */
     public ComplexResult executeComplex(Operation op) {
-        return (ComplexResult) execute(op,true);
+        return (ComplexResult) execute(op, true);
     }
 
     /**
@@ -204,20 +229,38 @@ public class ASConnection {
      * @param isComplex should a complex result be returned?
      * @return ComplexResult of the execution
      */
-    public Result execute(Operation op, boolean isComplex){
+    public Result execute(Operation op, boolean isComplex) {
         JsonNode node = executeRaw(op);
 
         try {
             Result res;
             if (isComplex)
-                res = mapper.readValue(node,ComplexResult.class);
+                res = mapper.readValue(node, ComplexResult.class);
             else
-                res = mapper.readValue(node,Result.class);
+                res = mapper.readValue(node, Result.class);
             return res;
         } catch (IOException e) {
-            e.printStackTrace();  // TODO: Customise this generated block
+            e.printStackTrace(); // TODO: Customise this generated block
             return null;
         }
+    }
+
+    public void writeValue(OutputStream out, Object value) throws IOException, JsonGenerationException,
+        JsonMappingException {
+        //    JsonGenerator jgen = _jsonFactory.createJsonGenerator(out, JsonEncoding.UTF8);
+        //    JsonGenerator jgen = mapper.createJsonGenerator(out, JsonEncoding.UTF8);
+        //    JsonGenerator jgen = new Js
+        //    boolean closed = false;
+        //    try {
+        //        writeValue(jgen, value);
+        //        closed = true;
+        //        jgen.close();
+        //    } finally {
+        //        if (!closed) {
+        //            jgen.close();
+        //        }
+        //    }
+
     }
 
 }

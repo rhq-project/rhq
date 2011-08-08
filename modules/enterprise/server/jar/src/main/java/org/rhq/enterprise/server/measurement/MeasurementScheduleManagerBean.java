@@ -499,6 +499,17 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
                 for (Integer resourceId : reqMap.keySet()) {
                     Agent agent = agentManager.getAgentByResourceId(subjectManager.getOverlord(), resourceId);
 
+                    // Ignore resources that are not actually associated with an agent. For example,
+                    // those with an UNINVENTORIED status. 
+                    if (null == agent) {
+                        if (log.isDebugEnabled()) {
+                            log.debug("Ignoring measurement schedule change for non-agent-related resource ["
+                                + resourceId + "]. It is probably waiting to be uninventoried.");
+                        }
+
+                        continue;
+                    }
+
                     Set<ResourceMeasurementScheduleRequest> agentUpdate = agentUpdates.get(agent);
                     if (agentUpdate == null) {
                         agentUpdate = new HashSet<ResourceMeasurementScheduleRequest>();

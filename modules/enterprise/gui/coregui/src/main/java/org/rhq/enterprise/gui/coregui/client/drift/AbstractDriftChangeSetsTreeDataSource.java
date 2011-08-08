@@ -32,10 +32,10 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.tree.TreeNode;
 
 import org.rhq.core.domain.criteria.BaseCriteria;
+import org.rhq.core.domain.criteria.BasicDriftChangeSetCriteria;
+import org.rhq.core.domain.criteria.BasicDriftCriteria;
 import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
-import org.rhq.core.domain.criteria.DriftChangeSetJPACriteria;
 import org.rhq.core.domain.criteria.DriftCriteria;
-import org.rhq.core.domain.criteria.DriftJPACriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.util.PageList;
@@ -111,7 +111,7 @@ public abstract class AbstractDriftChangeSetsTreeDataSource extends RPCDataSourc
             });
         } else {
             String changesetId = parentId;
-            DriftCriteria criteria = new DriftJPACriteria();
+            DriftCriteria criteria = new BasicDriftCriteria();
             criteria.addFilterChangeSetId(changesetId);
 
             driftService.findDriftsByCriteria(criteria, new AsyncCallback<PageList<Drift>>() {
@@ -177,7 +177,7 @@ public abstract class AbstractDriftChangeSetsTreeDataSource extends RPCDataSourc
      * @return the criteria to use when querying for change setss 
      */
     protected DriftChangeSetCriteria getDriftChangeSetCriteria(final DSRequest request) {
-        DriftChangeSetCriteria criteria = new DriftChangeSetJPACriteria();
+        BasicDriftChangeSetCriteria criteria = new BasicDriftChangeSetCriteria();
         criteria.addSortVersion(PageOrdering.DESC);
         criteria.setPageControl(getPageControl(request));
         return criteria;

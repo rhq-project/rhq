@@ -36,6 +36,7 @@ import com.smartgwt.client.widgets.toolbar.ToolStrip;
 import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.core.domain.common.ServerDetails;
 import org.rhq.core.domain.common.ServerDetails.Detail;
+import org.rhq.core.domain.common.composite.SystemSettings;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
@@ -127,15 +128,14 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
     protected void onDraw() {
         super.onDraw();
 
-        GWTServiceLookup.getSystemService().getSystemConfiguration(new AsyncCallback<HashMap<String, String>>() {
+        GWTServiceLookup.getSystemService().getSystemSettings(new AsyncCallback<SystemSettings>() {
             @Override
-            public void onSuccess(HashMap<String, String> result) {
+            public void onSuccess(SystemSettings result) {
 
                 canvas.addMember(getServerDetails());
 
                 Configuration config = new Configuration();
-                String[] driftPlugins = null;
-                for (Map.Entry<String, String> entry : result.entrySet()) {
+                for (Map.Entry<String, String> entry : result.getSystemConfiguration().entrySet()) {
                     String name = entry.getKey();
                     String value = (entry.getValue() == null) ? "" : entry.getValue();
 
@@ -173,9 +173,6 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
                         if (value.trim().length() == 0) {
                             value = "true";
                         }
-                    } else if (Constant.DRIFT_PLUGINS.equals(name)) {
-                        driftPlugins = value.split(",");
-                        continue;
                     }
 
                     PropertySimple prop = new PropertySimple(name, value);
@@ -184,7 +181,7 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
 
                 // build our config definition and populate our config editor
                 editor = new ConfigurationEditor(extendLocatorId("configEditor"), getSystemSettingsDefinition(config,
-                    driftPlugins), config);
+                    result.getDriftPlugins()), config);
                 editor.addPropertyValueChangeListener(SystemSettingsView.this);
                 canvas.addMember(editor);
 
@@ -315,7 +312,8 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
      *
      * @return system settings config def
      */
-    private ConfigurationDefinition getSystemSettingsDefinition(Configuration config, String[] driftPlugins) {
+    private ConfigurationDefinition getSystemSettingsDefinition(Configuration config,
+        Map<String, String> driftPlugins) {
         ConfigurationDefinition def = new ConfigurationDefinition("sysset", MSG.view_adminConfig_systemSettings());
 
         ///////////////////////////////////
@@ -544,12 +542,10 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
         activeDriftServer.setPropertyGroupDefinition(driftGroup);
 
         List<PropertyDefinitionEnumeration> options = new ArrayList<PropertyDefinitionEnumeration>();
-        for (String plugin : driftPlugins) {
-            // plugin is of the form, [plugin_name$$plugin_display_name]]
-            String pluginName = plugin.substring(1, plugin.indexOf("$$"));
-            String pluginDisplayName = plugin.substring(pluginName.length() + 3, plugin.indexOf("]"));
-            options.add(new PropertyDefinitionEnumeration(pluginDisplayName, plugin));
+        for (Map.Entry<String, String> entry : driftPlugins.entrySet()) {
+            options.add(new PropertyDefinitionEnumeration(entry.getValue(), entry.getKey())) ;
         }
+
         activeDriftServer.setEnumeratedValues(options, false);
 
         def.put(activeDriftServer);

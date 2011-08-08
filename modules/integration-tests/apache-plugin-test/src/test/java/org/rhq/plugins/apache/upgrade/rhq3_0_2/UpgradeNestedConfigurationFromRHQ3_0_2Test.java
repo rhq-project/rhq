@@ -22,8 +22,10 @@ package org.rhq.plugins.apache.upgrade.rhq3_0_2;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
+import org.rhq.plugins.apache.PluginLocation;
+import org.rhq.plugins.apache.setup.ApacheTestConfiguration;
+import org.rhq.plugins.apache.setup.ApacheTestSetup;
 import org.rhq.plugins.apache.upgrade.UpgradeTestBase;
-import org.rhq.plugins.apache.upgrade.UpgradeTestBase.TestSetup;
 import org.rhq.test.pc.PluginContainerSetup;
 
 /**
@@ -57,10 +59,10 @@ public class UpgradeNestedConfigurationFromRHQ3_0_2Test extends UpgradeTestBase 
     }
 
     @Test
-    @PluginContainerSetup(plugins = { PLATFORM_PLUGIN, AUGEAS_PLUGIN, APACHE_PLUGIN })
+    @PluginContainerSetup(plugins = { PluginLocation.PLATFORM_PLUGIN, PluginLocation.AUGEAS_PLUGIN, PluginLocation.APACHE_PLUGIN })
     @Parameters({ "apache2.install.dir", "apache2.exe.path" })
     public void testWithResolvableNames(final String installDir, final String exePath) throws Throwable {
-        testUpgrade(new TestConfiguration() {
+        testUpgrade(new ApacheTestConfiguration() {
             {
                 apacheConfigurationFiles = configuredApacheConfigurationFiles;
                 inventoryFile = configuredInventoryFile;
@@ -70,17 +72,17 @@ public class UpgradeNestedConfigurationFromRHQ3_0_2Test extends UpgradeTestBase 
             }
             
             @Override
-            public String[] getExpectedResourceKeysAfterUpgrade(TestSetup setup) {
+            public String[] getExpectedResourceKeysAfterUpgrade(ApacheTestSetup setup) {
                 return getVHostRKs(setup, new int[] { 0, 2, 4 }, null, null);
             }
         });
     }
 
     @Test
-    @PluginContainerSetup(plugins = { PLATFORM_PLUGIN, AUGEAS_PLUGIN, APACHE_PLUGIN })
+    @PluginContainerSetup(plugins = { PluginLocation.PLATFORM_PLUGIN, PluginLocation.AUGEAS_PLUGIN, PluginLocation.APACHE_PLUGIN })
     @Parameters({ "apache2.install.dir", "apache2.exe.path" })
     public void testWithUnresolvableNames(final String installDir, final String exePath) throws Throwable {
-        testUpgrade(new TestConfiguration() {
+        testUpgrade(new ApacheTestConfiguration() {
             {
                 apacheConfigurationFiles = configuredApacheConfigurationFiles;
                 inventoryFile = configuredInventoryFile;
@@ -101,17 +103,17 @@ public class UpgradeNestedConfigurationFromRHQ3_0_2Test extends UpgradeTestBase 
             }
             
             @Override
-            public String[] getExpectedResourceKeysAfterUpgrade(TestSetup setup) {
+            public String[] getExpectedResourceKeysAfterUpgrade(ApacheTestSetup setup) {
                 return getVHostRKs(setup, new int[] { 0, 2, 4 }, null, null);
             }
         });
     }
 
     @Test
-    @PluginContainerSetup(plugins = { PLATFORM_PLUGIN, AUGEAS_PLUGIN, APACHE_PLUGIN })
+    @PluginContainerSetup(plugins = { PluginLocation.PLATFORM_PLUGIN, PluginLocation.AUGEAS_PLUGIN, PluginLocation.APACHE_PLUGIN })
     @Parameters({ "apache2.install.dir", "apache2.exe.path" })
     public void testWithNonUniqueNames(final String installDir, final String exePath) throws Throwable {
-        testUpgrade(new TestConfiguration() {
+        testUpgrade(new ApacheTestConfiguration() {
             {
                 apacheConfigurationFiles = configuredApacheConfigurationFiles;
                 inventoryFile = configuredInventoryFileWithSingleVHost;
@@ -132,17 +134,17 @@ public class UpgradeNestedConfigurationFromRHQ3_0_2Test extends UpgradeTestBase 
             }
             
             @Override
-            public String[] getExpectedResourceKeysAfterUpgrade(TestSetup setup) {
+            public String[] getExpectedResourceKeysAfterUpgrade(ApacheTestSetup setup) {
                 return getVHostRKs(setup, new int[] { 0, 2, 4 }, null, null);
             }
         });
     }
 
     @Test
-    @PluginContainerSetup(plugins = { PLATFORM_PLUGIN, AUGEAS_PLUGIN, APACHE_PLUGIN })
+    @PluginContainerSetup(plugins = { PluginLocation.PLATFORM_PLUGIN, PluginLocation.AUGEAS_PLUGIN, PluginLocation.APACHE_PLUGIN })
     @Parameters({ "apache2.install.dir", "apache2.exe.path" })
     public void testWithAnyAddress(final String installPath, final String exePath) throws Throwable {
-        testUpgrade(new TestConfiguration() {
+        testUpgrade(new ApacheTestConfiguration() {
             {
                 configurationName = DEPLOYMENT_SIMPLE_WITH_WILDCARD_LISTENS;
 
@@ -163,7 +165,7 @@ public class UpgradeNestedConfigurationFromRHQ3_0_2Test extends UpgradeTestBase 
             }
             
             @Override
-            public String[] getExpectedResourceKeysAfterUpgrade(TestSetup setup) {
+            public String[] getExpectedResourceKeysAfterUpgrade(ApacheTestSetup setup) {
                 return getVHostRKs(setup, new int[] { 0, 2, 4 }, null, null);
             }
         });
@@ -174,10 +176,10 @@ public class UpgradeNestedConfigurationFromRHQ3_0_2Test extends UpgradeTestBase 
      * vhosts - it could be either a main vhost or vhost1.
      */
     @Test
-    @PluginContainerSetup(plugins = { PLATFORM_PLUGIN, AUGEAS_PLUGIN, APACHE_PLUGIN })
+    @PluginContainerSetup(plugins = { PluginLocation.PLATFORM_PLUGIN, PluginLocation.AUGEAS_PLUGIN, PluginLocation.APACHE_PLUGIN })
     @Parameters({ "apache2.install.dir", "apache2.exe.path" })
     public void testWithWildcardAddress(final String installPath, final String exePath) throws Throwable {
-        testUpgrade(new TestConfiguration() {
+        testUpgrade(new ApacheTestConfiguration() {
             {
                 configurationName = DEPLOYMENT_SIMPLE_WITH_WILDCARD_LISTENS;
 
@@ -198,7 +200,7 @@ public class UpgradeNestedConfigurationFromRHQ3_0_2Test extends UpgradeTestBase 
             }
             
             @Override
-            public String[] getExpectedResourceKeysAfterUpgrade(TestSetup setup) {
+            public String[] getExpectedResourceKeysAfterUpgrade(ApacheTestSetup setup) {
                 return getVHostRKs(setup, new int[] { 0, 2, 4 }, null, null);
             }
         });

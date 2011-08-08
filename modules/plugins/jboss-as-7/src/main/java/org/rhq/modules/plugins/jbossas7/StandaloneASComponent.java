@@ -18,8 +18,6 @@
  */
 package org.rhq.modules.plugins.jbossas7;
 
-import java.net.ConnectException;
-
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
@@ -38,9 +36,9 @@ public class StandaloneASComponent extends BaseServerComponent implements Operat
                                            Configuration parameters) throws Exception {
 
         if (name.equals("start")) {
-            return startServer(Mode.STANDALONE);
+            return startServer(AS7Mode.STANDALONE);
         } else if (name.equals("restart")) {
-            return restartServer(parameters, Mode.STANDALONE);
+            return restartServer(parameters, AS7Mode.STANDALONE);
 
         }
 

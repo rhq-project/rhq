@@ -157,10 +157,11 @@ public class ConfigurationMaskingUtility {
             // properties.
             if (!memberProperties.isEmpty() && memberProperties.get(0) instanceof PropertyMap) {
                 PropertyList unmaskedPropertyList = unmaskedParentPropertyMap.getList(propertyList.getName());
-                if (unmaskedPropertyList!=null) {
-                    for (int i = 0; i < propertyList.getList().size(); i++) {
+                if (unmaskedPropertyList != null) {
+                    List<Property> unmaskedMemberProperties = unmaskedPropertyList.getList();
+                    for (int i = 0; (i < memberProperties.size()) && (i < unmaskedMemberProperties.size()); i++) {
                         PropertyMap propertyMap = (PropertyMap) memberProperties.get(i);
-                        PropertyMap unmaskedPropertyMap = (PropertyMap) unmaskedPropertyList.getList().get(i);
+                        PropertyMap unmaskedPropertyMap = (PropertyMap) unmaskedMemberProperties.get(i);
                         unmaskPropertyMap(propertyMap, unmaskedPropertyMap);
                     }
                 }

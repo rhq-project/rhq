@@ -38,7 +38,7 @@ public class TraitsView extends AbstractMeasurementDataTraitListView {
     }
 
     @Override
-    public Canvas getDetailsView(int definitionId) {
+    public Canvas getDetailsView(Integer definitionId) {
         return new TraitsDetailView(extendLocatorId("Detail"), this.resourceId, definitionId);
     }
 

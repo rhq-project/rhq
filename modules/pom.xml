@@ -136,8 +136,13 @@
            </activation>
 
            <modules>
+               <module>helpers</module>
                <module>core</module>
+               <module>common</module>
                <module>plugins</module>
+               <!-- these two are needed by the rhq-agent plugin -->
+               <module>enterprise/agent</module>
+               <module>enterprise/comm</module>
                <module>integration-tests</module>
            </modules>
        </profile>

@@ -35,10 +35,13 @@ import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.event.EventSeverity;
+import org.rhq.core.domain.resource.ResourceUpgradeReport;
 import org.rhq.core.pluginapi.event.log.LogFileEventResourceComponentHelper;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.core.pluginapi.upgrade.ResourceUpgradeContext;
+import org.rhq.core.pluginapi.upgrade.ResourceUpgradeFacet;
 import org.rhq.enterprise.agent.AgentConfigurationConstants;
 import org.rhq.enterprise.agent.AgentManagement;
 import org.rhq.enterprise.agent.AgentManagementMBean;
@@ -49,9 +52,12 @@ import org.rhq.plugins.jmx.JMXDiscoveryComponent;
  *
  * @author John Mazzitelli
  */
-public class AgentDiscoveryComponent implements ResourceDiscoveryComponent {
+public class AgentDiscoveryComponent implements ResourceDiscoveryComponent, ResourceUpgradeFacet {
+    
+    private static final String RESOURCE_NAME = "RHQ Agent";
+    
     private final Log log = LogFactory.getLog(AgentDiscoveryComponent.class);
-
+    
     /**
      * Simply returns the agent resource.
      *
@@ -63,10 +69,10 @@ public class AgentDiscoveryComponent implements ResourceDiscoveryComponent {
         HashSet<DiscoveredResourceDetails> set = new HashSet<DiscoveredResourceDetails>();
 
         try {
-            AgentManagementMBean mbean = getAgentManagementMBean();
-
-            String name = "RHQ Agent";
-            String key = name; // our key IS our name - its unique since there is only one per platform
+            AgentManagementMBean mbean = getAgentManagementMBean();            
+            
+            String name = RESOURCE_NAME;
+            String key = getResourceKey(mbean);
             String version = mbean.getVersion();
             String description = "RHQ Management Agent";
 
@@ -89,6 +95,48 @@ public class AgentDiscoveryComponent implements ResourceDiscoveryComponent {
         return set;
     }
 
+    public ResourceUpgradeReport upgrade(ResourceUpgradeContext inventoriedResource) {
+        AgentManagementMBean mbean = getAgentManagementMBean();
+        
+        String oldResourceKey = inventoriedResource.getResourceKey();        
+        String newResourceKey = getResourceKey(mbean);
+        
+        ResourceUpgradeReport ret = null;
+        
+        if (!oldResourceKey.equals(newResourceKey)) {
+            ret = new ResourceUpgradeReport();
+            ret.setNewResourceKey(newResourceKey);            
+            return ret;
+        }   
+        
+        /* if we ever allow resource name upgrades on the server, we can uncomment
+         * this but I'm leaving it out for now so that we don't litter the upgrade
+         * report with data that will never get used. No need to increase the traffic
+         * between agent and server.
+         */
+        /*
+        if (!RESOURCE_NAME.equals(inventoriedResource.getName())) {
+            if (ret == null) {
+                ret = new ResourceUpgradeReport();
+            }
+            
+            ret.setNewName(RESOURCE_NAME);
+        }
+        */
+        
+        return ret;
+    }
+    
+    private static String getResourceKey(AgentManagementMBean mbean) {
+        String agentName = mbean.getAgentConfiguration().getProperty(AgentConfigurationConstants.NAME);
+        
+        //DO NOT CHANGE THIS EVER UNLESS YOU UPDATE THE upgrade() METHOD TO HANDLE THE
+        //CHANGES OF THE RESOURCE KEY FORMAT!!!
+        //This doesn't use the RESOURCE_NAME constant on purpose so that a change of that constant
+        //doesn't modify the resource key format.
+        return agentName + " RHQ Agent";
+    }
+    
     private void initLogEventSourcesConfigProp(AgentManagementMBean agent, Configuration pluginConfiguration) {
         File logsDir = new File(agent.getAgentHomeDirectory(), "logs");
 

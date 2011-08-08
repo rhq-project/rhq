@@ -159,11 +159,10 @@ public class TomcatVHostComponent extends MBeanResourceComponent<TomcatServerCom
         String currentValsLongString = currentVals.getStringValue();
         String newValsLongString = newVals.getStringValue();
         StringTokenizer tokenizer = null;
-        Configuration opConfig = null;
+        Configuration opConfig = new Configuration();
 
         if (null != newValsLongString) {
             tokenizer = new StringTokenizer(newValsLongString, "\n");
-            opConfig = new Configuration();
             while (tokenizer.hasMoreTokens()) {
                 String newVal = tokenizer.nextToken().trim();
                 if ((null == currentValsLongString) || !currentValsLongString.contains(newVal)) {

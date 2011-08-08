@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -33,6 +33,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import org.rhq.core.domain.configuration.Configuration;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
@@ -207,7 +209,8 @@ public class JMXPluginTest {
                     ResourceComponent serviceComponent = PluginContainer.getInstance().getInventoryManager()
                         .getResourceComponent(service);
 
-                    Object result = ((OperationFacet) serviceComponent).invokeOperation("findMonitorDeadlockedThreads", null);
+                    Object result = ((OperationFacet) serviceComponent).invokeOperation("findMonitorDeadlockedThreads",
+                            new Configuration());
                     System.out.println("Result of operation test was: " + result);
                 }
             }
@@ -275,7 +278,7 @@ public class JMXPluginTest {
         long started = System.currentTimeMillis();
 
         public static void main(String[] args) {
-            System.out.println("Test Program Running");
+            System.out.println("Test program running...");
             TestProgram tp = new TestProgram();
             tp.run();
         }

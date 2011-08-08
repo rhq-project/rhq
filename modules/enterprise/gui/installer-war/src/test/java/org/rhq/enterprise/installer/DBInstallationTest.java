@@ -23,17 +23,17 @@
 
 package org.rhq.enterprise.installer;
 
-import org.rhq.core.db.DbUtil;
-import org.rhq.core.db.setup.DBSetup;
+import java.io.File;
+import java.net.URL;
+import java.util.Properties;
+
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.io.File;
-import java.net.URI;
-import java.net.URL;
-import java.sql.Connection;
-import java.sql.Statement;
-import java.util.Properties;
+import org.rhq.core.db.reset.DBReset;
+import org.rhq.core.db.setup.DBSetup;
+import org.rhq.enterprise.installer.ServerInformation;
+import org.rhq.enterprise.installer.ServerProperties;
 
 /**
  * The tests in this class exercise the dbsetup/dbupgrade code that is run in the installer. The tests currently only
@@ -43,16 +43,18 @@ import java.util.Properties;
  *
  * @author John Sanda
  */
-public class DBInstallatonTest {
+public class DBInstallationTest {
 
     private final String LOG_DIRECTORY = System.getProperty("java.io.tmpdir", "rhq/installer-test");
-    private final String TEST_DB = System.getProperty("rhq.test.ds.db-name","rhq_installer_test_db");
+    private final String DB_NAME = System.getProperty("rhq.test.ds.db-name", "rhq_installer_test_db");
     private final String USERNAME = System.getProperty("rhq.test.ds.user-name", "rhqadmin");
     private final String PASSWORD = System.getProperty("rhq.test.ds.password", "rhqadmin");
     private final String SERVER = System.getProperty("rhq.test.ds.server-name", "127.0.0.1");
-    private final String DB_URL = System.getProperty("rhq.test.ds.connection-url", "jdbc:postgresql://" + SERVER + ":5432/"+TEST_DB);
+    private final String DB_URL = System.getProperty("rhq.test.ds.connection-url", "jdbc:postgresql://" + SERVER
+        + ":5432/" + DB_NAME);
     private final String ADMIN_USERNAME = System.getProperty("rhq.db.admin.username", "postgres");
     private final String ADMIN_PASSWORD = System.getProperty("rhq.db.admin.password", "postgres");
+    private static final String DB_TYPE_MAPPING = System.getProperty("rhq.test.ds.type-mapping", "PostgreSQL");
 
     private ServerInformation installer;
 
@@ -79,8 +81,8 @@ public class DBInstallatonTest {
 
     @Test
     public void overwriteJON231Schema() throws Exception {
-            installSchemaAndData("2.3.1");
-            installer.createNewDatabaseSchema(getInstallProperties());
+        installSchemaAndData("2.3.1");
+        installer.createNewDatabaseSchema(getInstallProperties());
     }
 
     @Test
@@ -88,13 +90,13 @@ public class DBInstallatonTest {
         installSchemaAndData("2.3.1");
         installer.upgradeExistingDatabaseSchema(getInstallProperties());
     }
-    
+
     @Test
     public void overwriteJON240Schema() throws Exception {
-            installSchemaAndData("2.4.0");
-            installer.createNewDatabaseSchema(getInstallProperties());
+        installSchemaAndData("2.4.0");
+        installer.createNewDatabaseSchema(getInstallProperties());
     }
-    
+
     @Test
     public void upgradeJON240Schema() throws Exception {
         installSchemaAndData("2.4.0");
@@ -110,29 +112,8 @@ public class DBInstallatonTest {
     }
 
     private void recreateTestDatabase() throws Exception {
-        Connection connection = null;
-        Statement dropDB = null;
-        Statement createDB = null;
-
-        try {
-            connection = DbUtil.getConnection(DB_URL.replace(TEST_DB,"postgres"), ADMIN_USERNAME, ADMIN_PASSWORD);
-            
-            dropDB = connection.createStatement();
-            dropDB.execute("drop database if exists " + TEST_DB);
-            
-            createDB = connection.createStatement();
-            createDB.execute("create database " + TEST_DB + " with owner " + USERNAME);
-        } finally {
-            if (connection != null) {
-                connection.close();
-            }
-            if (dropDB != null) {
-                dropDB.close();
-            }
-            if (createDB != null) {
-                createDB.close();
-            }
-        }
+        DBReset dbReset = new DBReset();
+        dbReset.performDBReset(DB_TYPE_MAPPING, DB_URL, DB_NAME, USERNAME, ADMIN_USERNAME, ADMIN_PASSWORD);
     }
 
     private void installSchemaAndData(String jonVersion) throws Exception {

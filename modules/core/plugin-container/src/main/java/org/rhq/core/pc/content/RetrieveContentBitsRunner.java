@@ -86,7 +86,12 @@ public class RetrieveContentBitsRunner implements Runnable {
             InputStream is;
             try {
                 is = contentManager.performGetPackageBits(request.getResourceId(), request.getPackageDetails());
-                pkgDetails.setSHA256(new MessageDigestGenerator(MessageDigestGenerator.SHA_256).calcDigestString(is));
+                try {
+                    pkgDetails.setSHA256(new MessageDigestGenerator(MessageDigestGenerator.SHA_256)
+                        .calcDigestString(is));
+                } finally {
+                    is.close();
+                }
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -95,7 +100,11 @@ public class RetrieveContentBitsRunner implements Runnable {
             InputStream is;
             try {
                 is = contentManager.performGetPackageBits(request.getResourceId(), request.getPackageDetails());
-                pkgDetails.setMD5((new MessageDigestGenerator(MessageDigestGenerator.MD5).calcDigestString(is)));
+                try {
+                    pkgDetails.setMD5((new MessageDigestGenerator(MessageDigestGenerator.MD5).calcDigestString(is)));
+                } finally {
+                    is.close();
+                }
             } catch (Exception e) {
                 e.printStackTrace();
             }

@@ -20,6 +20,8 @@ package org.rhq.modules.plugins.jbossas7;
 
 import java.io.File;
 import java.net.ConnectException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -37,7 +39,6 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  */
 public class BaseServerComponent extends BaseComponent {
 
-    private static final String STANDALONE_XML = "standalone.xml";
     private static final String SEPARATOR = "\n-----------------------\n";
     final Log log = LogFactory.getLog(BaseServerComponent.class);
 
@@ -50,7 +51,7 @@ public class BaseServerComponent extends BaseComponent {
      * @return State of execution
      * @throws Exception If anything goes wrong
      */
-    protected OperationResult restartServer(Configuration parameters, Mode mode) throws Exception {
+    protected OperationResult restartServer(Configuration parameters, AS7Mode mode) throws Exception {
         OperationResult tmp = invokeOperation("shutdown",parameters);
 
         if (tmp.getErrorMessage()!=null) {
@@ -67,23 +68,38 @@ public class BaseServerComponent extends BaseComponent {
      * @return State of Execution.
      * @param mode
      */
-    protected OperationResult startServer(Mode mode) {
+    protected OperationResult startServer(AS7Mode mode) {
         OperationResult operationResult = new OperationResult();
-        Configuration conf = context.getPluginConfiguration();
-        String startScript = conf.getSimpleValue("startScript", mode.getStartScript());
-        String baseDir = conf.getSimpleValue("baseDir","");
+        String startScript = pluginConfiguration.getSimpleValue("startScript", mode.getStartScript());
+        String baseDir = pluginConfiguration.getSimpleValue("baseDir","");
         if (baseDir.isEmpty()) {
             operationResult.setErrorMessage("No base directory provided");
             return operationResult;
         }
         String script = baseDir + File.separator + startScript;
-        String config = conf.getSimpleValue("config", mode.getXmlFile());
 
         ProcessExecution processExecution;
         processExecution = ProcessExecutionUtility.createProcessExecution(new File(script));
-        if (!config.equals(mode.getXmlFile())) {
-            processExecution.getArguments().add(mode.getConfigArg());
-            processExecution.getArguments().add(config);
+
+        String config = pluginConfiguration.getSimpleValue(mode.getConfigPropertyName(), mode.getDefaultXmlFile());
+        List<String> arguments = processExecution.getArguments();
+        if (arguments==null) {
+            arguments = new ArrayList<String>();
+            processExecution.setArguments(arguments);
+        }
+
+        if (!config.equals(mode.getDefaultXmlFile())) {
+            arguments.add(mode.getConfigArg());
+            arguments.add(config);
+        }
+        if (mode==AS7Mode.DOMAIN) {
+            // We also need to check for host-config
+            config =  pluginConfiguration.getSimpleValue(AS7Mode.HOST.getConfigPropertyName(),AS7Mode.HOST.getDefaultXmlFile());
+            if (!config.equals(AS7Mode.HOST.getDefaultXmlFile())) {
+                arguments.add(AS7Mode.HOST.getConfigArg());
+                arguments.add(config);
+
+            }
         }
         processExecution.setWorkingDirectory(baseDir);
         processExecution.setCaptureOutput(true);
@@ -91,7 +107,6 @@ public class BaseServerComponent extends BaseComponent {
         processExecution.setKillOnTimeout(false);
 
 
-        long start = System.currentTimeMillis();
         if (log.isDebugEnabled()) {
             log.debug("About to execute the following process: [" + processExecution + "]");
         }
@@ -148,37 +163,4 @@ public class BaseServerComponent extends BaseComponent {
         return operationResult;
     }
 
-    enum Mode {
-        STANDALONE(STANDALONE_XML,"standalone","--server-config","bin/standalone.sh"),
-        DOMAIN("domain.xml","domain", "--domain-config","bin/domain.sh"),
-        HOST("host.xml","domain", "--host-config","bin/domain.sh");
-
-        private String xmlFile;
-        private String baseDir;
-        private String configArg;
-        private String startScript;
-
-        private Mode(String xmlFile, String baseDir, String configArg, String startScript) {
-            this.xmlFile = xmlFile;
-            this.baseDir = baseDir;
-            this.configArg = configArg;
-            this.startScript = startScript;
-        }
-
-        public String getXmlFile() {
-            return xmlFile;
-        }
-
-        public String getBaseDir() {
-            return baseDir;
-        }
-
-        public String getConfigArg() {
-            return configArg;
-        }
-
-        public String getStartScript() {
-            return startScript;
-        }
-    }
 }

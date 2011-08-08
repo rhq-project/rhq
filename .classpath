@@ -82,7 +82,6 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/seam/jboss-seam-ui/2.1.0.SP1/jboss-seam-ui-2.1.0.SP1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/hibernate/hibernate3/3.2.r14201-2/hibernate3-3.2.r14201-2.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/jline/jline/0.9.94/jline-0.9.94.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/com/ettrema/milton-api/1.4.1/milton-api-1.4.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/jboss/javassist/3.8.0.GA/javassist-3.8.0.GA.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/net/sf/opencsv/opencsv/1.8/opencsv-1.8.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/bouncycastle/bcpg-jdk15/140/bcpg-jdk15-140.jar"/>
@@ -112,10 +111,12 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/dbunit/dbunit/2.4.8/dbunit-2.4.8.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/apache/poi/poi/3.7/poi-3.7.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/bsh/bsh/1.3.0/bsh-1.3.0.jar"/>
-    <classpathentry exported="true" kind="var" path="M2_REPO/org/unitils/unitils-core/3.1/unitils-core-3.1.jar"/>   
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/unitils/unitils-core/3.1/unitils-core-3.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/unitils/unitils-dbunit/3.1/unitils-dbunit-3.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/unitils/unitils-orm/3.1/unitils-orm-3.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/unitils/unitils-testng/3.1/unitils-testng-3.1.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/codehaus/jackson/jackson-core-asl/1.7.4/jackson-core-asl-1.7.4.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/codehaus/jackson/jackson-mapper-asl/1.7.4/jackson-mapper-asl-1.7.4.jar"/>
 	<classpathentry exported="true" kind="lib" path="modules/enterprise/remoting/webservices/target/rhq-remoting-webservices-4.1.0-SNAPSHOT/wsconsume-output"/>
 	<classpathentry kind="src" path="modules/common/ant-bundle/src/main/java"/>
 	<classpathentry kind="src" path="modules/common/drift/src/main/java"/>
@@ -164,7 +165,6 @@
 	<classpathentry kind="src" path="modules/enterprise/gui/installer-war/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/gui/base-perspective-jar/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/gui/content_http-war/src/main/java"/>
-	<classpathentry kind="src" path="modules/enterprise/gui/webdav-war/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/client-api/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/remoting/client-api/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/remoting/webservices/src/main/java"/>
@@ -273,5 +273,8 @@
 	<classpathentry excluding="**" kind="src" path="modules/enterprise/agent/src/test/resources"/>
 	<classpathentry kind="src" path="modules/plugins/mod-cluster/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/mod-cluster/src/test/java"/>
+	<classpathentry kind="src" path="modules/plugins/jboss-as-7/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/jboss-as-7/src/test/java"/>
+	<classpathentry kind="src" path="modules/integration-tests/jboss-as-7-plugin-test/src/test/java"/>
 	<classpathentry kind="output" path="eclipse-classes"/>
 </classpath>

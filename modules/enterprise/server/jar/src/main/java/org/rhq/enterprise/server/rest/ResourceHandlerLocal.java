@@ -26,7 +26,10 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 
-import org.rhq.core.domain.measurement.Availability;
+import org.jboss.resteasy.links.AddLinks;
+import org.jboss.resteasy.links.LinkResource;
+import org.jboss.resteasy.spi.Link;
+
 import org.rhq.enterprise.server.rest.domain.AvailabilityRest;
 import org.rhq.enterprise.server.rest.domain.MetricSchedule;
 import org.rhq.enterprise.server.rest.domain.ResourceWithType;
@@ -39,24 +42,39 @@ import org.rhq.enterprise.server.rest.domain.ResourceWithType;
 @Path("/resource")
 @Local
 public interface ResourceHandlerLocal {
+
+    @AddLinks
+    @LinkResource
     @GET
     @Path("/{id}")
     ResourceWithType getResource(@PathParam("id") int id);
 
+    @AddLinks
     @GET
     @Path("/platforms")
     List<ResourceWithType> getPlatforms();
 
+    @AddLinks
+    @LinkResource(rel = "availability", value = AvailabilityRest.class)
     @GET
     @Path("/{id}/availability")
     AvailabilityRest getAvailability(@PathParam("id") int resourceId);
 
+    @AddLinks
     @GET
     @Path("/{id}/schedules")
+    @LinkResource(rel="schedules",value = MetricSchedule.class)
     List<MetricSchedule> getSchedules(@PathParam("id") int resourceId);
 
     @GET
     @Path("/{id}/children")
+    @LinkResource(rel="children", value = ResourceWithType.class)
     List<ResourceWithType> getChildren(@PathParam("id") int id);
+
+    @AddLinks
+    @GET
+    @Path(("/{id}/alerts"))
+//    @LinkResource(rel="alerts", value = AlertRest.class)
+    List<Link> getAlertsForResource(@PathParam("id") int resourceId); // TODO paging + status
 
 }

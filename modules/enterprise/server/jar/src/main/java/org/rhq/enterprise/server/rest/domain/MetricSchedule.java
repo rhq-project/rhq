@@ -18,8 +18,13 @@
  */
 package org.rhq.enterprise.server.rest.domain;
 
+import javax.xml.bind.annotation.XmlID;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
+
+import org.jboss.resteasy.annotations.providers.jaxb.json.Mapped;
+import org.jboss.resteasy.annotations.providers.jaxb.json.XmlNsMap;
+import org.jboss.resteasy.spi.touri.URITemplate;
 
 /**
  * A simple metric schedule
@@ -27,6 +32,8 @@ import javax.xml.bind.annotation.XmlType;
  */
 @XmlRootElement
 @XmlType(propOrder = {"scheduleId","scheduleName","displayName","enabled","collectionInterval","unit","type"})
+@Mapped(namespaceMap = @XmlNsMap(jsonName = "atom", namespace = "http://www.w3.org/2005/Atom"))
+@URITemplate("/metric/schedule/{id}")
 public class MetricSchedule {
 
     int scheduleId;
@@ -50,8 +57,9 @@ public class MetricSchedule {
         this.type = type;
     }
 
-    public int getScheduleId() {
-        return scheduleId;
+    @XmlID
+    public String getScheduleId() {
+        return ""+scheduleId;
     }
 
     public void setScheduleId(int scheduleId) {

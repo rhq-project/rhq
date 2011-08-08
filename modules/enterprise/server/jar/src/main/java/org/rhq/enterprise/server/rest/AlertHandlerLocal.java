@@ -29,8 +29,13 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 
+import org.jboss.resteasy.links.AddLinks;
+import org.jboss.resteasy.links.LinkResource;
+import org.jboss.resteasy.links.LinkResources;
+
 import org.rhq.enterprise.server.rest.domain.AlertRest;
 import org.rhq.enterprise.server.rest.domain.AlertDefinitionRest;
+import org.rhq.enterprise.server.rest.domain.ResourceWithType;
 
 /**
  * Deal with Alerts
@@ -43,19 +48,31 @@ public interface AlertHandlerLocal {
 
     @GET
     @Path("/")
+    @AddLinks
+    @LinkResource(value = AlertRest.class)
     List<AlertRest> listAlerts(@QueryParam("page") int page,@QueryParam("status") String status);
 
     @GET
     @Path("/{id}")
+    @AddLinks
+    @LinkResource(value = AlertRest.class)
     AlertRest getAlert(@PathParam("id") int id);
 
     @PUT
     @Path("/{id}")
+    @LinkResource
     AlertRest ackAlert(@PathParam("id") int id);
 
     @DELETE
     @Path("/{id}")
+    @LinkResource(value = AlertRest.class)
     void purgeAlert(@PathParam("id") int id);
+
+    @GET
+    @LinkResource(rel="definition",value = AlertDefinitionRest.class)
+    @Path("/{id}/definition")
+    AlertDefinitionRest getDefinitionForAlert(@PathParam("id") int alertId);
+
 
     @GET
     @Path("/definition")

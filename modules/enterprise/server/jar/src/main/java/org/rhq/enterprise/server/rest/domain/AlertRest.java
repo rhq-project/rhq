@@ -18,32 +18,50 @@
  */
 package org.rhq.enterprise.server.rest.domain;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlElementRef;
 import javax.xml.bind.annotation.XmlID;
 import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlType;
 
+import org.jboss.resteasy.annotations.providers.jaxb.json.Mapped;
+import org.jboss.resteasy.annotations.providers.jaxb.json.XmlNsMap;
+import org.jboss.resteasy.links.AddLinks;
 import org.jboss.resteasy.links.LinkResource;
+import org.jboss.resteasy.links.RESTServiceDiscovery;
+import org.jboss.resteasy.spi.touri.URITemplate;
 
 /**
  * A single alert
  * @author Heiko W. Rupp
  */
+@URITemplate("/alert/{id}")
 @XmlRootElement
-@XmlType(propOrder = {"id","name","alertTime","description","alertDefinitionId","definitionEnabled","resourceId","resourceName","ackBy","ackTime"})
+//@XmlType(propOrder = {"id","name","alertTime","description","alertDefinitionId","definitionEnabled","resourceId","resourceName","ackBy","ackTime","rest"})
+@XmlAccessorType(XmlAccessType.PUBLIC_MEMBER)
+@Mapped(namespaceMap = @XmlNsMap(jsonName = "atom", namespace = "http://www.w3.org/2005/Atom"))
 public class AlertRest {
 
     private int id;
     private String name;
-    private int alertDefinitionId;
-    private int resourceId;
-    private String resourceName;
+    private AlertDefinitionRest alertDefinition;
     private boolean definitionEnabled;
     String ackBy;
     long ackTime;
     long alertTime;
     String description;
+
+
+	private RESTServiceDiscovery rest;
+
+    public void setResource(ResourceWithType resource) {
+        this.resource = resource;
+    }
+
+    private ResourceWithType resource
+            ;
 
     public void setId(int id) {
         this.id = id;
@@ -53,8 +71,8 @@ public class AlertRest {
         this.name = name;
     }
 
-    public void setAlertDefinitionId(int alertDefinitionId) {
-        this.alertDefinitionId = alertDefinitionId;
+    public void setAlertDefinition(AlertDefinitionRest alertDefinitionId) {
+        this.alertDefinition = alertDefinitionId;
     }
 
     @XmlID
@@ -68,29 +86,13 @@ public class AlertRest {
         return name;
     }
 
-    @XmlElement
-    @LinkResource(rel="definition",value = AlertDefinitionRest.class, pathParameters = "id")
-    public int getAlertDefinitionId() {
-        return alertDefinitionId;
+    @AddLinks
+    @LinkResource(rel="definition",value = AlertDefinitionRest.class)
+    @XmlElementRef
+    public AlertDefinitionRest getAlertDefinition() {
+        return alertDefinition;
     }
 
-    @XmlElement
-    public int getResourceId() {
-        return resourceId;
-    }
-
-    public void setResourceId(int resourceId) {
-        this.resourceId = resourceId;
-    }
-
-    @XmlElement
-    public String getResourceName() {
-        return resourceName;
-    }
-
-    public void setResourceName(String resourceName) {
-        this.resourceName = resourceName;
-    }
 
     public boolean isDefinitionEnabled() {
         return definitionEnabled;
@@ -130,5 +132,21 @@ public class AlertRest {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    @AddLinks
+    @LinkResource(rel="resource",value = ResourceWithType.class)
+    @XmlElementRef
+    ResourceWithType getResource() {
+        return resource;
+    }
+
+    @XmlElementRef
+    public RESTServiceDiscovery getRest() {
+        return rest;
+    }
+
+    public void setRest(RESTServiceDiscovery rest) {
+        this.rest = rest;
     }
 }

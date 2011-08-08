@@ -35,6 +35,7 @@ import org.jboss.resteasy.annotations.providers.jaxb.json.XmlNsMap;
 import org.jboss.resteasy.links.AddLinks;
 import org.jboss.resteasy.links.LinkResource;
 import org.jboss.resteasy.links.RESTServiceDiscovery;
+import org.jboss.resteasy.spi.touri.URITemplate;
 
 import org.rhq.core.domain.resource.Resource;
 
@@ -45,7 +46,8 @@ import org.rhq.core.domain.resource.Resource;
 @Mapped(namespaceMap = @XmlNsMap(jsonName = "atom", namespace = "http://www.w3.org/2005/Atom"))
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.NONE)
-@XmlType(propOrder = {"resourceId","resourceName","parentId","parentName","typeId","typeName","pluginId","pluginName","rest"})
+//@XmlType(propOrder = {"resourceId","resourceName","parentId","parentName","typeId","typeName","pluginId","pluginName","rest"})
+@URITemplate("{id}")
 public class ResourceWithType {
 
     String resourceName;
@@ -56,8 +58,8 @@ public class ResourceWithType {
     int pluginId;
     String parentName;
     int parentId;
+    ResourceWithType parent;
 
-    @XmlElementRef
 	private RESTServiceDiscovery rest;
 
     public ResourceWithType() {
@@ -69,6 +71,10 @@ public class ResourceWithType {
         this.typeName = typeName;
         this.typeId = typeId;
         this.pluginName = pluginName;
+    }
+
+    public ResourceWithType(int id) {
+        this.resourceId = id;
     }
 
     @XmlElement
@@ -134,9 +140,6 @@ public class ResourceWithType {
         this.parentName = parentName;
     }
 
-    @AddLinks
-    @LinkResource (value = ResourceWithType.class)
-    @XmlElement
     public int getParentId() {
         return parentId;
     }
@@ -145,6 +148,18 @@ public class ResourceWithType {
         this.parentId = parentId;
     }
 
+    @AddLinks
+    @LinkResource(rel = "parent")
+    @XmlElementRef
+    public ResourceWithType getParent() {
+        return parent;
+    }
+
+    public void setParent(ResourceWithType parent) {
+        this.parent = parent;
+    }
+
+    @XmlElementRef
     public RESTServiceDiscovery getRest() {
         return rest;
     }

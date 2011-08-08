@@ -20,18 +20,30 @@ package org.rhq.enterprise.server.rest.domain;
 
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlElementRef;
+import javax.xml.bind.annotation.XmlID;
 import javax.xml.bind.annotation.XmlRootElement;
+
+import org.jboss.resteasy.annotations.providers.jaxb.json.Mapped;
+import org.jboss.resteasy.annotations.providers.jaxb.json.XmlNsMap;
+import org.jboss.resteasy.links.RESTServiceDiscovery;
+import org.jboss.resteasy.spi.touri.URITemplate;
 
 /**
  * Alert Definition
  * @author Heiko W. Rupp
  */
+@URITemplate("/alert/definition/{id}")
 @XmlRootElement
+@Mapped(namespaceMap = @XmlNsMap(jsonName = "atom", namespace = "http://www.w3.org/2005/Atom"))
 public class AlertDefinitionRest {
 
     int id;
     String name;
     boolean enabled;
+
+    private RESTServiceDiscovery rest;
+
 
     public AlertDefinitionRest() {
     }
@@ -40,9 +52,10 @@ public class AlertDefinitionRest {
         this.id = id;
     }
 
+    @XmlID
     @XmlAttribute
-    public int getId() {
-        return id;
+    public String getId() {
+        return ""+id;
     }
 
     @XmlElement
@@ -61,5 +74,14 @@ public class AlertDefinitionRest {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    @XmlElementRef
+    public RESTServiceDiscovery getRest() {
+        return rest;
+    }
+
+    public void setRest(RESTServiceDiscovery rest) {
+        this.rest = rest;
     }
 }

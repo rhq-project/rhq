@@ -29,10 +29,12 @@ import java.util.Set;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
+import javax.ws.rs.PathParam;
 
-import org.jboss.resteasy.links.AddLinks;
-import org.jboss.resteasy.links.LinkResource;
+import org.jboss.resteasy.spi.Link;
 
+import org.rhq.core.domain.alert.Alert;
+import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
@@ -40,6 +42,8 @@ import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.enterprise.server.alert.AlertManagerLocal;
+import org.rhq.enterprise.server.rest.domain.AlertRest;
 import org.rhq.enterprise.server.rest.domain.AvailabilityRest;
 import org.rhq.enterprise.server.rest.domain.MetricSchedule;
 import org.rhq.enterprise.server.rest.domain.ResourceWithType;
@@ -62,10 +66,10 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
     AvailabilityManagerLocal availMgr;
     @EJB
     MeasurementScheduleManagerLocal scheduleManager;
+    @EJB
+    AlertManagerLocal alertManager;
 
-    @LinkResource
     @Override
-    @AddLinks
     public ResourceWithType getResource(int id) {
 
         Resource res = resMgr.getResource(caller, id);
@@ -140,5 +144,19 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
         }
 
         return rwtList;
+    }
+
+    @Override
+    public List<Link> getAlertsForResource(@PathParam("id") int resourceId) {
+        AlertCriteria criteria = new AlertCriteria();
+        criteria.addFilterResourceIds(resourceId);
+        List<Alert> alerts = alertManager.findAlertsByCriteria(caller,criteria);
+        List<Link> links = new ArrayList<Link>(alerts.size());
+        for (Alert al: alerts) {
+            Link link = new Link();
+            link.setRelationship("alert");
+            link.setHref("/alert/" + al.getId());
+        }
+        return links;
     }
 }

@@ -15,6 +15,11 @@
         <param-value>org.rhq.enterprise.server.rest.CustomExceptionMapper</param-value>
         <description>Maps Exceptions to HTTP response codes</description>
     </context-param>
+    <context-param>
+        <param-name>resteasy.servlet.mapping.prefix</param-name>
+        <param-value>/1</param-value>
+        <description>Prefix of the REST api</description>
+    </context-param>
 
     <!--
         <filter>
@@ -48,7 +53,7 @@
 
     <servlet-mapping>
         <servlet-name>Resteasy</servlet-name>
-        <url-pattern>/*</url-pattern>
+        <url-pattern>/1/*</url-pattern>
     </servlet-mapping>
 
     <security-constraint>
@@ -70,7 +75,7 @@
 
     <login-config>
         <auth-method>BASIC</auth-method>
-        <realm-name>REST</realm-name>
+        <realm-name>RHQ REST</realm-name>
     </login-config>
 
     <security-role>

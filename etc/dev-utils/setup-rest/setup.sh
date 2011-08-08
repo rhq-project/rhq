@@ -13,3 +13,4 @@ cp ~/.m2/repository/org/scannotation/scannotation/1.0.3/scannotation-1.0.3.jar .
 cp ~/.m2/repository/net/jcip/jcip-annotations/1.0/jcip-annotations-1.0.jar .
 cp ~/.m2/repository/org/codehaus/jettison/1.2/jessison-1.2.jar .
 cp ~/.m2/repository/org/codehaus/jettison/jettison/1.2/jettison-1.2.jar .
+cp ~/.m2/repository/org/jboss/el/jboss-el/2.0.1.GA/jboss-el-2.0.1.GA.jar .

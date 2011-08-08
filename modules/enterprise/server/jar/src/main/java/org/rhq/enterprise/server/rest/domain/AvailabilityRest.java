@@ -19,7 +19,12 @@
 package org.rhq.enterprise.server.rest.domain;
 
 import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlElementRef;
 import javax.xml.bind.annotation.XmlRootElement;
+
+import org.jboss.resteasy.annotations.providers.jaxb.json.Mapped;
+import org.jboss.resteasy.annotations.providers.jaxb.json.XmlNsMap;
+import org.jboss.resteasy.links.RESTServiceDiscovery;
 
 import org.rhq.core.domain.measurement.AvailabilityType;
 
@@ -28,12 +33,15 @@ import org.rhq.core.domain.measurement.AvailabilityType;
  * @author Heiko W. Rupp
  */
 @XmlRootElement(name = "availability")
+@Mapped(namespaceMap = @XmlNsMap(jsonName = "atom", namespace = "http://www.w3.org/2005/Atom"))
 public class AvailabilityRest {
 
     long since;
     String type;
 
     int resourceId;
+
+    private RESTServiceDiscovery rest;
 
     public AvailabilityRest() {
         // for RESTEasy/JAXB
@@ -58,5 +66,14 @@ public class AvailabilityRest {
     @XmlElement
     public int getResourceId() {
         return resourceId;
+    }
+
+    @XmlElementRef
+    public RESTServiceDiscovery getRest() {
+        return rest;
+    }
+
+    public void setRest(RESTServiceDiscovery rest) {
+        this.rest = rest;
     }
 }

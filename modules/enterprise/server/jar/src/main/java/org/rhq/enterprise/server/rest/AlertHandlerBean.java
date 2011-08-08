@@ -20,7 +20,6 @@ package org.rhq.enterprise.server.rest;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -30,8 +29,10 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
 
+import org.jboss.resteasy.links.AddLinks;
+import org.jboss.resteasy.links.LinkResource;
+
 import org.rhq.core.domain.alert.Alert;
-import org.rhq.core.domain.alert.AlertConditionLog;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
@@ -40,6 +41,7 @@ import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.rest.domain.AlertRest;
 import org.rhq.enterprise.server.rest.domain.AlertDefinitionRest;
+import org.rhq.enterprise.server.rest.domain.ResourceWithType;
 
 /**
  * Deal with alert related stuff
@@ -58,6 +60,9 @@ public class AlertHandlerBean extends AbstractRestBean implements AlertHandlerLo
     AlertDefinitionManagerLocal alertDefinitionManager;
 
 
+    @GET
+    @AddLinks
+    @LinkResource(value = AlertRest.class)
     @Override
     public List<AlertRest> listAlerts(@QueryParam("page") int page, @QueryParam("status") String status) {
         AlertCriteria criteria = new AlertCriteria();
@@ -83,9 +88,9 @@ public class AlertHandlerBean extends AbstractRestBean implements AlertHandlerLo
 
     @Override
     public AlertRest ackAlert(@PathParam("id") int id) {
-        Alert al = findAlertWithId(id);
+        findAlertWithId(id); // Ensure the alert exists
         alertManager.acknowledgeAlerts(caller,new int[]{id});
-        al = findAlertWithId(id);
+        Alert al = findAlertWithId(id);
         AlertRest ar = alertToDomain(al);
         return ar;
     }
@@ -94,6 +99,17 @@ public class AlertHandlerBean extends AbstractRestBean implements AlertHandlerLo
     public void purgeAlert(@PathParam("id") int id) {
         alertManager.deleteAlerts(caller,new int[]{id});
 
+    }
+
+    @Override
+    @GET
+    @LinkResource(rel = "definition")
+    @Path("/{id}/definition")
+    public AlertDefinitionRest getDefinitionForAlert(@PathParam("id") int alertId) {
+        Alert al = findAlertWithId(alertId);
+        AlertDefinition def = al.getAlertDefinition();
+        AlertDefinitionRest ret = definitionToDomain(def);
+        return ret;
     }
 
     @Override
@@ -147,13 +163,12 @@ public class AlertHandlerBean extends AbstractRestBean implements AlertHandlerLo
         return alerts.get(0);
     }
 
-    private AlertRest alertToDomain(Alert al) {
+    public AlertRest alertToDomain(Alert al) {
         AlertRest ret = new AlertRest();
         ret.setId(al.getId());
         AlertDefinition alertDefinition = al.getAlertDefinition();
         ret.setName(alertDefinition.getName());
-        ret.setAlertDefinitionId(alertDefinition.getId());
-        ret.setResourceId(alertDefinition.getResource().getId());
+        ret.setAlertDefinition(definitionToDomain(alertDefinition));
         ret.setDefinitionEnabled(alertDefinition.getEnabled());
         if (al.getAcknowledgingSubject()!=null) {
             ret.setAckBy(al.getAcknowledgingSubject());
@@ -162,6 +177,8 @@ public class AlertHandlerBean extends AbstractRestBean implements AlertHandlerLo
         ret.setAlertTime(al.getCtime());
 
         ret.setDescription(alertManager.prettyPrintAlertConditions(al,false));
+
+        ret.setResource(new ResourceWithType(alertDefinition.getResource().getId()));
 
         return ret;
     }

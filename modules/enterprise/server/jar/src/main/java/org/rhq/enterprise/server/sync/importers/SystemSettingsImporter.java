@@ -19,7 +19,12 @@
 
 package org.rhq.enterprise.server.sync.importers;
 
-import javax.persistence.EntityManager;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Properties;
+import java.util.Set;
+
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
@@ -35,7 +40,6 @@ import org.rhq.core.domain.sync.entity.SystemSettings;
 import org.rhq.enterprise.server.sync.ExportReader;
 import org.rhq.enterprise.server.sync.NoSingleEntity;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
-import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * 
@@ -64,37 +68,11 @@ public class SystemSettingsImporter implements Importer<NoSingleEntity, SystemSe
     public ConfigurationDefinition getImportConfigurationDefinition() {
         ConfigurationDefinition def = new ConfigurationDefinition("SystemSettingsConfiguration", null);
         
-        addSwitchToConfigDef(def, "importJAASProvider", false);
-        addSwitchToConfigDef(def, "importJDBCJAASProvider", false);
-        addSwitchToConfigDef(def, "importLDAPJAASProvider", false);
-        addSwitchToConfigDef(def, "imoprtLDAPFactory", true);
-        addSwitchToConfigDef(def, "importLDAPUrl", false);
-        addSwitchToConfigDef(def, "importLDAPProtocol", false);
-        addSwitchToConfigDef(def, "imoprtLDAPLoginProperty", false);
-        addSwitchToConfigDef(def, "importLDAPFilter", false);
-        addSwitchToConfigDef(def, "importLDAPGroupFilter", false);
-        addSwitchToConfigDef(def, "importLDAPGroupMember", false);
-        addSwitchToConfigDef(def, "importLDAPBaseDN", false);
-        addSwitchToConfigDef(def, "importLDAPBindDN", false);
-        addSwitchToConfigDef(def, "importLDAPBindPW", false);
-        addSwitchToConfigDef(def, "importBaseURL", false);
-        addSwitchToConfigDef(def, "importAgentMaxQuietTimeAllowed", true);
-        addSwitchToConfigDef(def, "importEnableAgentAutoUpdate", true);
-        addSwitchToConfigDef(def, "importEnableDebugMode", true);
-        addSwitchToConfigDef(def, "importEnableExperimentalFeatures", true);
-        addSwitchToConfigDef(def, "importDataPurge1Hour", true);
-        addSwitchToConfigDef(def, "importDataPurge6Hour", true);
-        addSwitchToConfigDef(def, "importDataPurge1Day", true);
-        addSwitchToConfigDef(def, "importDataMaintenance", true);
-        addSwitchToConfigDef(def, "importDataReindex", true);
-        addSwitchToConfigDef(def, "imoprtRtDataPurge", true);
-        addSwitchToConfigDef(def, "importAlertPurge", true);
-        addSwitchToConfigDef(def, "importEventPurge", true);
-        addSwitchToConfigDef(def, "importTraitPurge", true);
-        addSwitchToConfigDef(def, "importAvailabilityPurge", true);
-        addSwitchToConfigDef(def, "importBaselineFrequency", true);
-        addSwitchToConfigDef(def, "importBaselineDataSet", true);
-        
+        PropertyDefinitionSimple props = new PropertyDefinitionSimple("propertiesToImport", "The names of the properties that should be imported. Note that these are the INTERNAL names as used in the RHQ database", true, PropertySimpleType.STRING); 
+        props.setDefaultValue("AgentMaxQuietTimeAllowed, EnableAgentAutoUpdate, EnableDebugMode, EnableExperimentalFeatures, DataPurge1Hour, DataPurge6Hour, " +
+            "DataPurge1Day, DataMaintenance, DataReindex, RtDataPurge, AlertPurge, EventPurge, TraitPurge, AvailabilityPurge, BaselineFrequence, BaselineDataSet");
+        def.put(props);
+                
         ConfigurationUtility.initializeDefaultTemplate(def);
         
         return def;
@@ -112,8 +90,24 @@ public class SystemSettingsImporter implements Importer<NoSingleEntity, SystemSe
 
     @Override
     public void update(NoSingleEntity entity, SystemSettings exportedEntity) throws Exception {
-        //TODO take the configuration into account
-        systemManager.setSystemConfiguration(subject, exportedEntity.toProperties(), true);
+        Properties props = exportedEntity.toProperties();
+        
+        Set<String> propsToImport = getSettingNamesConfiguredForImport(importConfiguration);
+        
+        Set<String> propsToRemove = new HashSet<String>();
+        
+        for(Object k : props.keySet()) {
+            String key = (String) k;
+            if (!propsToImport.contains(key)) {
+                propsToRemove.add(key);
+            }
+        }
+        
+        for(String p : propsToRemove) {
+            props.remove(p);
+        }
+        
+        systemManager.setSystemConfiguration(subject, props, true);
     }
 
     @Override
@@ -128,10 +122,16 @@ public class SystemSettingsImporter implements Importer<NoSingleEntity, SystemSe
     @Override
     public void finishImport() {
     }
-    
-    private void addSwitchToConfigDef(ConfigurationDefinition def, String name, boolean defaultValue) {
-        PropertyDefinitionSimple prop = new PropertyDefinitionSimple(name, null, true, PropertySimpleType.BOOLEAN);
-        prop.setDefaultValue(Boolean.toString(defaultValue));
-        def.put(prop);
+ 
+    private Set<String> getSettingNamesConfiguredForImport(Configuration importConfiguration) {
+        String settingsToImport = importConfiguration.getSimpleValue("propertiesToImport", null);
+        
+        if (settingsToImport == null) {
+            return Collections.emptySet();
+        } else {
+            String[] vals = settingsToImport.split("\\s*,\\s*");
+            
+            return new HashSet<String>(Arrays.asList(vals));
+        }
     }
 }

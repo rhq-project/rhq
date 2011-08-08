@@ -17,7 +17,7 @@ public class DriftDetectionSchedule implements Comparable<DriftDetectionSchedule
     public DriftDetectionSchedule(int resourceId, DriftConfiguration configuration) {
         this.resourceId = resourceId;
         driftConfig = configuration;
-        nextScan = System.currentTimeMillis();
+        nextScan = -1;
     }
 
     public int getResourceId() {

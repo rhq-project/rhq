@@ -252,6 +252,32 @@ public class DriftDetectorTest extends DriftTest {
 
     @SuppressWarnings("unchecked")
     @Test
+    public void includeFiledAddedInNewDirectoryInDriftChangeSet() throws Exception {
+        DriftConfiguration config = driftConfiguration("file-added-in-new-dir", resourceDir.getAbsolutePath());
+
+        File confDir = mkdir(resourceDir, "conf");
+        File server1Conf = createRandomFile(confDir, "server-1.conf");
+
+        ChangeSetWriter writer = changeSetMgr.getChangeSetWriter(resourceId(), createHeaders(config, COVERAGE));
+        writer.writeDirectoryEntry(new DirectoryEntry("conf").add(addedFileEntry("server-1.conf", sha256(server1Conf))));
+        writer.close();
+
+        // create some drift
+        File subconfDir = mkdir(confDir, "subconf");
+        File server2Conf = createRandomFile(subconfDir, "server-2.conf");
+
+        scheduleQueue.addSchedule(new DriftDetectionSchedule(resourceId(), config));
+        detector.run();
+
+        File driftChangeSet = changeSet(config.getName(), DRIFT);
+        assertTrue(driftChangeSet.exists(), "Expected to find drift change set " + driftChangeSet.getPath());
+
+        assertChangeSetContainsDirEntry(driftChangeSet, new DirectoryEntry("subconf")
+            .add(addedFileEntry("server-2.conf", sha256(server2Conf))));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
     public void includeRemovedFileInDriftChangeSet() throws Exception {
         DriftConfiguration config = driftConfiguration("file-removed-drift-test", resourceDir.getAbsolutePath());
 
@@ -289,6 +315,32 @@ public class DriftDetectorTest extends DriftTest {
         assertHeaderEquals(coverageChangeSet, createHeaders(config, COVERAGE));
         assertChangeSetContainsDirEntry(coverageChangeSet, new DirectoryEntry("conf")
             .add(addedFileEntry("server-1.conf", sha256(server1Conf))));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void includeFilesInRemovedDirectoryInDriftChangeSet() throws Exception {
+        DriftConfiguration config = driftConfiguration("dir-removed-test", resourceDir.getAbsolutePath());
+
+        File confDir = mkdir(resourceDir, "conf");
+        File server1Conf = createRandomFile(confDir, "server-1.conf");
+        String server1Hash = sha256(server1Conf);
+
+        ChangeSetWriter writer = changeSetMgr.getChangeSetWriter(resourceId(), createHeaders(config, COVERAGE));
+        writer.writeDirectoryEntry(new DirectoryEntry("conf").add(addedFileEntry("server-1.conf", server1Hash)));
+        writer.close();
+
+        // create some drift
+        server1Conf.delete();
+        confDir.delete();
+
+        File driftChangeSet = changeSet(config.getName(), DRIFT);
+
+        // verify that the drift change set was generated
+        assertTrue(driftChangeSet.exists(), "Expected to find drift change set " + driftChangeSet.getPath());
+
+        assertChangeSetContainsDirEntry(driftChangeSet, new DirectoryEntry("conf")
+            .add(removedFileEntry("server-1.conf", server1Hash)));
     }
 
     void assertHeaderEquals(File changeSet, Headers expected) throws Exception {

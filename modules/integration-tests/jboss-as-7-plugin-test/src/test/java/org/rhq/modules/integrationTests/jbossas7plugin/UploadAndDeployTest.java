@@ -92,8 +92,7 @@ public class UploadAndDeployTest extends AbstractIntegrationTest {
         System.out.println();
         ASConnection connection = new ASConnection(DC_HOST, DC_HTTP_PORT);
 
-        List<PROPERTY_VALUE> deploymentsAddress = new ArrayList<PROPERTY_VALUE>(1);
-        deploymentsAddress.add(new PROPERTY_VALUE("deployment", TEST_WAR));
+        Address deploymentsAddress = new Address("deployment", TEST_WAR);
         Operation op = new Operation("add",deploymentsAddress);
         List<Object> content = new ArrayList<Object>(1);
         Map<String,Object> contentValues = new HashMap<String,Object>();
@@ -110,9 +109,9 @@ public class UploadAndDeployTest extends AbstractIntegrationTest {
         assert ret.toString().contains("success") : ret;
 
 
-        List<PROPERTY_VALUE> serverGroupAddress = new ArrayList<PROPERTY_VALUE>(1);
-        serverGroupAddress.add(new PROPERTY_VALUE("server-group", "main-server-group"));
-        serverGroupAddress.add(new PROPERTY_VALUE("deployment", TEST_WAR));
+        Address serverGroupAddress = new Address();
+        serverGroupAddress.add("server-group", "main-server-group");
+        serverGroupAddress.add("deployment", TEST_WAR);
 
         Operation attach = new Operation("add",serverGroupAddress);//,"enabled","true");
 //        deploy.addAdditionalProperty("runtime-name", TEST_WAR);
@@ -193,11 +192,12 @@ public class UploadAndDeployTest extends AbstractIntegrationTest {
         assert ret.toString().contains("success") : ret;
 
 
-        List<PROPERTY_VALUE> serverGroupAddress = new ArrayList<PROPERTY_VALUE>(1);
-        serverGroupAddress.add(new PROPERTY_VALUE("server-group", "main-server-group"));
-        serverGroupAddress.add(new PROPERTY_VALUE("deployment", TEST_WAR));
+        Address serverGroupAddress = new Address();
+        serverGroupAddress.add("server-group", "main-server-group");
+        serverGroupAddress.add("deployment", TEST_WAR);
 
-        Operation attach = new Operation("add",serverGroupAddress,"enabled",true);
+        Operation attach = new Operation("add",serverGroupAddress);
+        attach.addAdditionalProperty("enabled",true);
         System.out.flush();
         ret = connection.executeRaw(attach);
         System.out.println("Add to server group done: " + ret);
@@ -246,8 +246,8 @@ public class UploadAndDeployTest extends AbstractIntegrationTest {
         System.out.println("Prepare done");
         System.out.flush();
 
-        List<PROPERTY_VALUE> deploymentsAddress = new ArrayList<PROPERTY_VALUE>(1);
-        deploymentsAddress.add(new PROPERTY_VALUE("deployment", TEST_WAR));
+        Address deploymentsAddress = new Address();
+        deploymentsAddress.add("deployment", TEST_WAR);
         Operation step1 = new Operation("add",deploymentsAddress);
         List<Object> content = new ArrayList<Object>(1);
         Map<String,Object> contentValues = new HashMap<String,Object>();
@@ -257,9 +257,9 @@ public class UploadAndDeployTest extends AbstractIntegrationTest {
         step1.addAdditionalProperty("name", TEST_WAR); // this needs to be unique per upload
 
 
-        List<PROPERTY_VALUE> serverGroupAddress = new ArrayList<PROPERTY_VALUE>(1);
-        serverGroupAddress.add(new PROPERTY_VALUE("server-group","main-server-group"));
-        serverGroupAddress.add(new PROPERTY_VALUE("deployment", TEST_WAR));
+        Address serverGroupAddress = new Address();
+        serverGroupAddress.add("server-group","main-server-group");
+        serverGroupAddress.add("deployment", TEST_WAR);
         Operation step2 = new Operation("add",serverGroupAddress);// ,"enabled","true");
         Operation step2a = new Operation("deploy",serverGroupAddress);
 
@@ -312,8 +312,7 @@ public class UploadAndDeployTest extends AbstractIntegrationTest {
         System.out.println("Prepare done");
         System.out.flush();
 
-        List<PROPERTY_VALUE> deploymentsAddress = new ArrayList<PROPERTY_VALUE>(1);
-        deploymentsAddress.add(new PROPERTY_VALUE("deployment", TEST_WAR));
+        Address deploymentsAddress = new Address("deployment", TEST_WAR);
         Operation step1 = new Operation("add",deploymentsAddress);
         List<Object> content = new ArrayList<Object>(1);
         Map<String,Object> contentValues = new HashMap<String,Object>();

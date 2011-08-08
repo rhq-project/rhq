@@ -18,8 +18,6 @@
  */
 package org.rhq.modules.plugins.jbossas7.json;
 
-import java.util.List;
-
 /**
  * Operation that reads names of children of a given type from an address
  * @author Heiko W. Rupp
@@ -31,7 +29,8 @@ public class ReadChildrenNames extends Operation {
      * @param address Address to look at e.g. /profile/default/subsystem/messaging
      * @param childType e.g. queue
      */
-    public ReadChildrenNames(List<PROPERTY_VALUE> address, String childType) {
-        super("read-children-names",address,"child-type",childType);
+    public ReadChildrenNames(Address address, String childType) {
+        super("read-children-names",address);
+        addAdditionalProperty("child-type",childType);
     }
 }

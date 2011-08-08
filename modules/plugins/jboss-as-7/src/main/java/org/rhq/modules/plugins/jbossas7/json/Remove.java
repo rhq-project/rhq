@@ -18,8 +18,6 @@
  */
 package org.rhq.modules.plugins.jbossas7.json;
 
-import java.util.List;
-
 /**
  * The :remove operation
  * @author Heiko W. Rupp
@@ -30,10 +28,6 @@ public class Remove extends Operation{
 
     public Remove(Address address) {
         super("remove",address);
-    }
-
-    public Remove(List<PROPERTY_VALUE> address) {
-        super(REMOVE,address);
     }
 
     public Remove(String key, String value) {

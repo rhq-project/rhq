@@ -99,6 +99,10 @@ public class UpgradeNestedConfigurationFromRHQ3_0_0Test extends UpgradeTestBase 
                 binPath = exePath;
                 configurationName = DEPLOYMENT_SIMPLE_WITH_UNRESOLVABLE_SERVER_NAMES;
 
+                //just define the servername value without actually setting the ${servername.directive} so that
+                //we don't define a servername directive itself but do have a value for the actual server name.
+                //this is deduced by apache and the plugin but tests aren't that clever.
+                defaultOverrides.put("servername", "${localhost}");
                 defaultOverrides.put(variableName(configurationName, "vhost1.servername.directive"),
                     "ServerName ${unresolvable.host}:${listen1}");
                 defaultOverrides.put(variableName(configurationName, "vhost2.servername.directive"),
@@ -128,6 +132,10 @@ public class UpgradeNestedConfigurationFromRHQ3_0_0Test extends UpgradeTestBase 
                 binPath = exePath;
                 configurationName = DEPLOYMENT_SIMPLE_WITH_UNRESOLVABLE_SERVER_NAMES;
 
+                //just define the servername value without actually setting the ${servername.directive} so that
+                //we don't define a servername directive itself but do have a value for the actual server name.
+                //this is deduced by apache and the plugin but tests aren't that clever.
+                defaultOverrides.put("servername", "${localhost}");
                 defaultOverrides.put(variableName(configurationName, "vhost1.servername.directive"),
                     "ServerName ${unresolvable.host}");
                 defaultOverrides.put(variableName(configurationName, "vhost2.servername.directive"),

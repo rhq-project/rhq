@@ -19,12 +19,28 @@
 
 package org.rhq.common.drift;
 
-public interface ChangeSetReader extends Iterable<DirectoryEntry> {
+import java.io.IOException;
 
-    Headers getHeaders() throws ChangeSetReaderException;
+/**
+ * An exception thrown by {@link ChangeSetReader} when an error occurs while parsing a
+ * change set file.
+ */
+public class ChangeSetReaderException extends IOException {
 
-    DirectoryEntry readDirectoryEntry() throws ChangeSetReaderException;
+    public ChangeSetReaderException() {
+        super();
+    }
 
-    void close() throws ChangeSetReaderException;
+    public ChangeSetReaderException(String message) {
+        super(message);
+    }
+
+    public ChangeSetReaderException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public ChangeSetReaderException(Throwable cause) {
+        super(cause);
+    }
 
 }

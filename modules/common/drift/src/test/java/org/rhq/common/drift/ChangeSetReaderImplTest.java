@@ -1,30 +1,41 @@
 package org.rhq.common.drift;
 
 import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.testng.annotations.Test;
 
-import org.rhq.core.domain.drift.DriftChangeSetCategory;
+import org.rhq.core.util.MessageDigestGenerator;
 
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
-import static org.testng.Assert.*;
+import static org.rhq.test.AssertUtils.assertPropertiesMatch;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
 
 public class ChangeSetReaderImplTest {
+
+    MessageDigestGenerator digestGenerator = new MessageDigestGenerator(MessageDigestGenerator.SHA_256);
+
     @Test
     @SuppressWarnings("unchecked")
     public void readDirectoryEntryWithFileAdded() throws Exception {
-        String changeset = "file-added-test\n" +
+        String sha = sha256("myconf.conf");
+        String changeset = "1\n" +
+                           "1\n" +
+                           "file-added-test\n" +
                            "myresource\n" +
                            "C\n" +
-                           "myresource/conf 1\n" +
-                           "a34ef6 0 myconf.conf A";
+                           "1 myresource/conf\n" +
+                           "A " + sha + " 0 myconf.conf";
 
         ChangeSetReaderImpl reader = new ChangeSetReaderImpl(new StringReader(changeset));
 
         Headers actualHeaders = reader.getHeaders();
-        Headers expectedHeaders = new Headers("file-added-test", "myresource", COVERAGE);
+        Headers expectedHeaders = new Headers();
+        expectedHeaders.setResourceId(1);
+        expectedHeaders.setDriftCofigurationId(1);
+        expectedHeaders.setDriftConfigurationName("file-added-test");
+        expectedHeaders.setBasedir("myresource");
+        expectedHeaders.setType(COVERAGE);
 
         assertHeadersEquals(actualHeaders, expectedHeaders);
 
@@ -34,7 +45,7 @@ public class ChangeSetReaderImplTest {
         assertDirectoryEntryEquals(dirEntry, "myresource/conf", 1);
 
         FileEntry actualFileEntry = dirEntry.iterator().next();
-        FileEntry expectedFileEntry = new FileEntry("a34ef6", "0", "myconf.conf", "A");
+        FileEntry expectedFileEntry = new FileEntry(sha, "0", "myconf.conf", "A");
 
         assertFileEntryEquals(actualFileEntry, expectedFileEntry);
     }
@@ -42,16 +53,24 @@ public class ChangeSetReaderImplTest {
     @Test
     @SuppressWarnings("unchecked")
     public void readDirectoryEntryWithFileRemoved() throws Exception {
-        String changeset = "file-removed-test\n" +
+        String sha = sha256("myconf.conf");
+        String changeset = "1\n" +
+                           "1\n" +
+                           "file-removed-test\n" +
                            "myresource\n" +
                            "C\n" +
-                           "myresource/conf 1\n" +
-                           "0 a34ef6 myconf.conf R";
+                           "1 myresource/conf\n" +
+                           "R 0 " + sha + " myconf.conf";
 
         ChangeSetReaderImpl reader = new ChangeSetReaderImpl(new StringReader(changeset));
 
         Headers actualHeaders = reader.getHeaders();
-        Headers expectedHeaders = new Headers("file-removed-test", "myresource", COVERAGE);
+        Headers expectedHeaders = new Headers();
+        expectedHeaders.setResourceId(1);
+        expectedHeaders.setDriftCofigurationId(1);
+        expectedHeaders.setDriftConfigurationName("file-removed-test");
+        expectedHeaders.setBasedir("myresource");
+        expectedHeaders.setType(COVERAGE);
 
         assertHeadersEquals(actualHeaders, expectedHeaders);
 
@@ -61,7 +80,7 @@ public class ChangeSetReaderImplTest {
         assertDirectoryEntryEquals(dirEntry, "myresource/conf", 1);
 
         FileEntry actualFileEntry = dirEntry.iterator().next();
-        FileEntry expectedFileEntry = new FileEntry("0", "a34ef6", "myconf.conf", "R");
+        FileEntry expectedFileEntry = new FileEntry("0", sha, "myconf.conf", "R");
 
         assertFileEntryEquals(actualFileEntry, expectedFileEntry);
     }
@@ -69,16 +88,25 @@ public class ChangeSetReaderImplTest {
     @Test
     @SuppressWarnings("unchecked")
     public void readDirectoryEntryWithFileChanged() throws Exception {
-        String changeset = "file-changed-test\n" +
+        String oldSha = sha256("myconf.conf.old");
+        String newSha = sha256("myconf.conf.new");
+        String changeset = "1\n" +
+                           "1\n" +
+                           "file-changed-test\n" +
                            "myresource\n" +
                            "C\n" +
-                           "myresource/conf 1\n" +
-                           "a34ef6 c41b8 myconf.conf C";
+                           "1 myresource/conf\n" +
+                           "C " + newSha + " " + oldSha + " myconf.conf";
 
         ChangeSetReaderImpl reader = new ChangeSetReaderImpl(new StringReader(changeset));
 
         Headers actualHeaders = reader.getHeaders();
-        Headers expectedHeaders = new Headers("file-changed-test", "myresource", COVERAGE);
+        Headers expectedHeaders = new Headers();
+        expectedHeaders.setResourceId(1);
+        expectedHeaders.setDriftCofigurationId(1);
+        expectedHeaders.setDriftConfigurationName("file-changed-test");
+        expectedHeaders.setBasedir("myresource");
+        expectedHeaders.setType(COVERAGE);
 
         assertHeadersEquals(actualHeaders, expectedHeaders);
 
@@ -88,7 +116,42 @@ public class ChangeSetReaderImplTest {
         assertDirectoryEntryEquals(dirEntry, "myresource/conf", 1);
 
         FileEntry actualFileEntry = dirEntry.iterator().next();
-        FileEntry expectedFileEntry = new FileEntry("a34ef6", "c41b8", "myconf.conf", "C");
+        FileEntry expectedFileEntry = new FileEntry(newSha, oldSha, "myconf.conf", "C");
+
+        assertFileEntryEquals(actualFileEntry, expectedFileEntry);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void readEntryWithAddedFileThatHasSpaces() throws Exception {
+        String sha = sha256("file with spaces.conf");
+        String changeset = "1\n" +
+                           "1\n" +
+                           "file-name-test\n" +
+                           "myresource\n" +
+                           "C\n" +
+                           "1 myresource/conf\n" +
+                           "A " + sha + " 0 file with spaces.conf";
+
+        ChangeSetReaderImpl reader = new ChangeSetReaderImpl(new StringReader(changeset));
+
+        Headers actualHeaders = reader.getHeaders();
+        Headers expectedHeaders = new Headers();
+        expectedHeaders.setResourceId(1);
+        expectedHeaders.setDriftCofigurationId(1);
+        expectedHeaders.setDriftConfigurationName("file-name-test");
+        expectedHeaders.setBasedir("myresource");
+        expectedHeaders.setType(COVERAGE);
+
+        assertHeadersEquals(actualHeaders, expectedHeaders);
+
+        DirectoryEntry dirEntry = reader.readDirectoryEntry();
+        reader.close();
+
+        assertDirectoryEntryEquals(dirEntry, "myresource/conf", 1);
+
+        FileEntry actualFileEntry = dirEntry.iterator().next();
+        FileEntry expectedFileEntry = new FileEntry(sha, "0", "file with spaces.conf", "A");
 
         assertFileEntryEquals(actualFileEntry, expectedFileEntry);
     }
@@ -106,14 +169,15 @@ public class ChangeSetReaderImplTest {
     @Test
     @SuppressWarnings("unchecked")
     public void iterateOverChangeSetWithMultipledDirectoryEntries() throws Exception {
-        String changeset = "multiple-dir-entries-test\n" +
+        String changeset = "1\n" +
+                           "1\n" +
+                           "multiple-dir-entries-test\n" +
                            "myresource\n" +
                            "C\n" +
-                           "conf 1\n" +
-                           "abcd 0 resource.conf A\n" +
-                           "\n" +
-                           "lib 1\n" +
-                           "1234 0 resource.jar A";
+                           "1 conf\n" +
+                           "A " + sha256("resource.conf") +  " 0 resource.conf\n" +
+                           "1 lib\n" +
+                           "A " + sha256("resource.jar") + " 0 resource.jar";
 
         ChangeSetReaderImpl reader = new ChangeSetReaderImpl(new StringReader(changeset));
         int numDirEntries = 0;
@@ -128,12 +192,14 @@ public class ChangeSetReaderImplTest {
     @Test
     @SuppressWarnings("unchecked")
     public void iterateOverChangeSetOneDirectoryEntry() throws Exception {
-        String changeset = "single-dir-entry-test\n" +
+        String sha = sha256("resource.conf");
+        String changeset = "1\n" +
+                           "1\n" +
+                           "single-dir-entry-test\n" +
                            "myresource\n" +
                            "C\n" +
-                           "conf 1\n" +
-                           "abcd 0 resource.conf A\n" +
-                           "\n";
+                           "1 conf\n" +
+                           "A " + sha + " 0 resource.conf\n";
 
         ChangeSetReaderImpl reader = new ChangeSetReaderImpl(new StringReader(changeset));
         int numDirEntries = 0;
@@ -152,7 +218,9 @@ public class ChangeSetReaderImplTest {
         // header) but this test is here to make sure ChangeReaderImpl is robust in handling
         // edge cases.
 
-        String changeset = "empty-changeset-test\n" +
+        String changeset = "1\n" +
+                           "1\n" +
+                           "empty-changeset-test\n" +
                            "myresouce\n" +
                            "C\n";
 
@@ -167,12 +235,7 @@ public class ChangeSetReaderImplTest {
     }
 
     void assertHeadersEquals(Headers actual, Headers expected) {
-        assertEquals(actual.getDriftConfigurationName(), expected.getDriftConfigurationName(),
-            "The drift configuration name, which should be the first header, is wrong.");
-        assertEquals(actual.getBasedir(), expected.getBasedir(), "The drift configuration base directory, which " +
-            "should be the second header, is wrong.");
-        assertEquals(actual.getType(), expected.getType(), "The change set type flag, " +
-            "which should be the third header, is wrong.");
+        assertPropertiesMatch(expected, actual, "Failed to parse change set headers");
     }
 
     /**
@@ -191,10 +254,14 @@ public class ChangeSetReaderImplTest {
     }
 
     void assertFileEntryEquals(FileEntry actual, FileEntry expected) {
-        assertEquals(actual.getNewSHA(), expected.getNewSHA(), "The first column, the new SHA-256, is wrong");
-        assertEquals(actual.getOldSHA(), expected.getOldSHA(), "The second column, the old SHA-256, is wrong");
-        assertEquals(actual.getFile(), expected.getFile(), "The third column, the file name, is wrong");
-        assertEquals(actual.getType(), expected.getType(), "The fourth column, the entry type, is wrong");
+        assertEquals(actual.getType(), expected.getType(), "The first column, the entry type, is wrong");
+        assertEquals(actual.getNewSHA(), expected.getNewSHA(), "The second column, the new SHA-256, is wrong");
+        assertEquals(actual.getOldSHA(), expected.getOldSHA(), "The third column, the old SHA-256, is wrong");
+        assertEquals(actual.getFile(), expected.getFile(), "The fourth column, the file name, is wrong");
+    }
+
+    String sha256(String s) throws Exception {
+        return digestGenerator.calcDigestString(s);
     }
 
 }

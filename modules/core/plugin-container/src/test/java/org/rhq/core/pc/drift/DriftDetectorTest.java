@@ -1,3 +1,22 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2011 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+
 package org.rhq.core.pc.drift;
 
 import java.io.BufferedReader;
@@ -13,6 +32,7 @@ import org.testng.annotations.Test;
 
 import org.rhq.common.drift.ChangeSetReader;
 import org.rhq.common.drift.ChangeSetReaderImpl;
+import org.rhq.common.drift.ChangeSetWriter;
 import org.rhq.common.drift.DirectoryEntry;
 import org.rhq.common.drift.FileEntry;
 import org.rhq.common.drift.Headers;
@@ -63,7 +83,7 @@ public class DriftDetectorTest extends DriftTest {
 
         File changeSet = changeSet(driftConfig.getName(), COVERAGE);
 
-        assertHeaderEquals(changeSet, new Headers(driftConfig.getName(), resourceDir.getAbsolutePath(), COVERAGE));
+        assertHeaderEquals(changeSet, createHeaders(driftConfig, COVERAGE));
         assertThatChangeSetDoesNotContainEmptyDirs(changeSet);
     }
 
@@ -107,7 +127,7 @@ public class DriftDetectorTest extends DriftTest {
 
         File changeSet = changeSet(config.getName(), COVERAGE);
 
-        assertHeaderEquals(changeSet, new Headers(config.getName(), resourceDir.getAbsolutePath(), COVERAGE));
+        assertHeaderEquals(changeSet, createHeaders(config, COVERAGE));
         assertChangeSetContainsDirEntry(changeSet,
             new DirectoryEntry("conf")
                 .add(addedFileEntry("server-1.conf", sha256(server1Conf)))
@@ -132,7 +152,7 @@ public class DriftDetectorTest extends DriftTest {
 
         File changeSet = changeSet(config.getName(), COVERAGE);
 
-        assertHeaderEquals(changeSet, new Headers(config.getName(), resourceDir.getAbsolutePath(), COVERAGE));
+        assertHeaderEquals(changeSet, createHeaders(config, COVERAGE));
 
         assertChangeSetContainsDirEntry(changeSet,
             new DirectoryEntry("conf").add(addedFileEntry("server.conf", sha256(serverConf))));
@@ -158,7 +178,7 @@ public class DriftDetectorTest extends DriftTest {
 
         File changeSet = changeSet(config.getName(), COVERAGE);
 
-        assertHeaderEquals(changeSet, new Headers("nested-dirs-test", resourceDir.getAbsolutePath(), COVERAGE));
+        assertHeaderEquals(changeSet, createHeaders(config, COVERAGE));
 
         assertChangeSetContainsDirEntry(changeSet,
             new DirectoryEntry("conf").add(addedFileEntry("server-1.conf", sha256(server1Conf))));
@@ -201,17 +221,9 @@ public class DriftDetectorTest extends DriftTest {
         File server1Conf = new File(confDir, "server-1.conf");
         touch(server1Conf);
 
-        File changeSetDir = changeSetDir(config.getName());
-
-        // Generate the initial, coverage change set
-        writeChangeSet(changeSetDir,
-            config.getName(),
-            resourceDir.getAbsolutePath(),
-            COVERAGE.code(),
-            "conf 1",
-            sha256(server1Conf) + " 0 server-1.conf A",
-            ""
-        );
+        ChangeSetWriter writer = changeSetMgr.getChangeSetWriter(resourceId(), createHeaders(config, COVERAGE));
+        writer.writeDirectoryEntry(new DirectoryEntry("conf").add(addedFileEntry("server-1.conf", sha256(server1Conf))));
+        writer.close();
 
         // Create some drift
         File server2Conf = new File(confDir, "server-2.conf");
@@ -225,14 +237,14 @@ public class DriftDetectorTest extends DriftTest {
         assertTrue(driftChangeSet.exists(), "Expected to find drift change set " + driftChangeSet.getPath());
 
         // verify that the drift change set was generated
-        assertHeaderEquals(driftChangeSet, new Headers(config.getName(), resourceDir.getAbsolutePath(), DRIFT));
+        assertHeaderEquals(driftChangeSet, createHeaders(config, DRIFT));
         assertChangeSetContainsDirEntry(driftChangeSet, new DirectoryEntry("conf")
             .add(addedFileEntry("server-2.conf", sha256(server2Conf))));
 
         File coverageChangeSet = changeSet(config.getName(), COVERAGE);
 
         // verify that the coverage change set was updated
-        assertHeaderEquals(coverageChangeSet, new Headers(config.getName(), resourceDir.getAbsolutePath(), COVERAGE));
+        assertHeaderEquals(coverageChangeSet, createHeaders(config, COVERAGE));
         assertChangeSetContainsDirEntry(coverageChangeSet, new DirectoryEntry("conf")
             .add(addedFileEntry("server-1.conf", sha256(server1Conf)))
             .add(addedFileEntry("server-2.conf", sha256(server2Conf))));
@@ -250,18 +262,12 @@ public class DriftDetectorTest extends DriftTest {
         touch(server2Conf);
 
         String server2ConfHash = sha256(server2Conf);
-        File changeSetDir = changeSetDir(config.getName());
 
-        // generate the initial, coverage change set
-        writeChangeSet(changeSetDir,
-            config.getName(),
-            resourceDir.getAbsolutePath(),
-            COVERAGE.code(),
-            "conf 2",
-            sha256(server1Conf) + " 0 server-1.conf A",
-            server2ConfHash + " 0 server-2.conf A",
-            ""
-        );
+        ChangeSetWriter writer = changeSetMgr.getChangeSetWriter(resourceId(), createHeaders(config, COVERAGE));
+        writer.writeDirectoryEntry(new DirectoryEntry("conf")
+            .add(addedFileEntry("server-1.conf", sha256(server1Conf)))
+            .add(addedFileEntry("server-2.conf", server2ConfHash)));
+        writer.close();
 
         // create some drift
         server2Conf.delete();
@@ -273,14 +279,14 @@ public class DriftDetectorTest extends DriftTest {
 
         // verify that the drift change set was generated
         assertTrue(driftChangeSet.exists(), "Expected to find drift change set " + driftChangeSet.getPath());
-        assertHeaderEquals(driftChangeSet, new Headers(config.getName(), resourceDir.getAbsolutePath(), DRIFT));
+        assertHeaderEquals(driftChangeSet, createHeaders(config, DRIFT));
         assertChangeSetContainsDirEntry(driftChangeSet, new DirectoryEntry("conf")
             .add(removedFileEntry("server-2.conf", server2ConfHash)));
 
         // verify that the coverage change set was updated
         File coverageChangeSet = changeSet(config.getName(), COVERAGE);
 
-        assertHeaderEquals(coverageChangeSet, new Headers(config.getName(), resourceDir.getAbsolutePath(), COVERAGE));
+        assertHeaderEquals(coverageChangeSet, createHeaders(config, COVERAGE));
         assertChangeSetContainsDirEntry(coverageChangeSet, new DirectoryEntry("conf")
             .add(addedFileEntry("server-1.conf", sha256(server1Conf))));
     }
@@ -317,6 +323,17 @@ public class DriftDetectorTest extends DriftTest {
         assertNotNull(actual, "Failed to find " + expected + " in " + changeSet.getPath());
         assertCollectionMatchesNoOrder(fileEntries(expected), fileEntries(actual), "File entries for " +
             expected + " in change set " + changeSet.getPath() + " do not match");
+    }
+
+    Headers createHeaders(DriftConfiguration driftConfig, DriftChangeSetCategory type) {
+        Headers headers = new Headers();
+        headers.setResourceId(resourceId());
+        headers.setDriftCofigurationId(driftConfig.getId());
+        headers.setDriftConfigurationName(driftConfig.getName());
+        headers.setBasedir(resourceDir.getAbsolutePath());
+        headers.setType(type);
+
+        return headers;
     }
 
     Collection<FileEntry> fileEntries(DirectoryEntry dirEntry) {

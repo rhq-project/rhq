@@ -26,11 +26,19 @@ import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.zip.GZIPOutputStream;
 
+import javax.xml.XMLConstants;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
+import javax.xml.namespace.NamespaceContext;
 import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
@@ -38,11 +46,14 @@ import javax.xml.stream.XMLStreamWriter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.sync.ExporterMessages;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.server.sync.exporters.Exporter;
 import org.rhq.enterprise.server.sync.exporters.ExportingIterator;
 import org.rhq.enterprise.server.sync.validators.ConsistencyValidator;
+import org.rhq.enterprise.server.xmlschema.ConfigurationInstanceUtil;
 
 /**
  * Reading from this input stream produces the export file in a lazy (and therefore memory efficient)
@@ -54,6 +65,9 @@ public class ExportingInputStream extends InputStream {
 
     private static final Log LOG = LogFactory.getLog(ExportingInputStream.class);
 
+    public static final String CONFIGURATION_NAMESPACE = "urn:xmlns:rhq-configuration";
+    public static final String EXPORT_NAMESPACE = "urn:xmlns:rhq-configuration-export";
+
     public static final String CONFIGURATION_EXPORT_ELEMENT = "configuration-export";
     public static final String ENTITIES_EXPORT_ELEMENT = "entities";
     public static final String ENTITY_EXPORT_ELEMENT = "entity";
@@ -61,6 +75,7 @@ public class ExportingInputStream extends InputStream {
     public static final String NOTES_ELEMENT = "notes";
     public static final String DATA_ELEMENT = "data";
     public static final String VALIDATOR_ELEMENT = "validator";
+    public static final String DEFAULT_CONFIGURATION_ELEMENT = "default-configuration";
     public static final String ID_ATTRIBUTE = "id";
     public static final String CLASS_ATTRIBUTE = "class";
 
@@ -71,6 +86,8 @@ public class ExportingInputStream extends InputStream {
     private Thread exportRunner;
     private Throwable unexpectedExporterException;
     private boolean zipOutput;
+
+    private Marshaller configurationMarshaller;
 
     /**
      * Constructs a new exporting input stream with the default buffer size of 64KB that zips up
@@ -99,6 +116,18 @@ public class ExportingInputStream extends InputStream {
         inputStream = new PipedInputStream(size);
         exportOutput = new PipedOutputStream(inputStream);
         zipOutput = zip;
+
+        try {
+            JAXBContext context = JAXBContext.newInstance(DefaultImportConfigurationDescriptor.class);
+
+            configurationMarshaller = context.createMarshaller();
+            configurationMarshaller.setProperty(Marshaller.JAXB_FRAGMENT, true);
+            configurationMarshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+            configurationMarshaller.setProperty(Marshaller.JAXB_ENCODING, "UTF-8");
+
+        } catch (JAXBException e) {
+            throw new IOException(e);
+        }
     }
 
     @Override
@@ -182,6 +211,7 @@ public class ExportingInputStream extends InputStream {
         OutputStream out = null;
         try {
             XMLOutputFactory ofactory = XMLOutputFactory.newInstance();
+            ofactory.setProperty(XMLOutputFactory.IS_REPAIRING_NAMESPACES, true);
 
             try {
                 out = exportOutput;
@@ -223,9 +253,68 @@ public class ExportingInputStream extends InputStream {
      * @throws XMLStreamException 
      */
     private void exportPrologue(XMLStreamWriter wrt) throws XMLStreamException {
-        wrt.setDefaultNamespace("urn:xmlns:rhq-configuration-export");
-        wrt.writeStartDocument();
-        wrt.writeStartElement(CONFIGURATION_EXPORT_ELEMENT);
+        wrt.setDefaultNamespace(EXPORT_NAMESPACE);
+        wrt.setPrefix(XMLConstants.DEFAULT_NS_PREFIX, EXPORT_NAMESPACE);
+        wrt.setPrefix("ci", ConfigurationInstanceUtil.NS_CONFIGURATION_INSTANCE);
+        wrt.setPrefix("c", CONFIGURATION_NAMESPACE);
+        
+        NamespaceContext nsContext = new NamespaceContext() {
+
+            //this map has to correspond to the namespaces defined in the code above
+            private final Map<String, String> PREFIXES = new HashMap<String, String>();
+            {
+                PREFIXES.put(XMLConstants.DEFAULT_NS_PREFIX, EXPORT_NAMESPACE);
+                PREFIXES.put("ci", ConfigurationInstanceUtil.NS_CONFIGURATION_INSTANCE);
+                PREFIXES.put("c", CONFIGURATION_NAMESPACE);
+            }
+
+            @Override
+            public Iterator<String> getPrefixes(String namespaceURI) {
+                String prefix = getPrefix(namespaceURI);
+                if (prefix == null) {
+                    return Collections.<String> emptySet().iterator();
+                } else {
+                    return Collections.singleton(prefix).iterator();
+                }
+            }
+
+            @Override
+            public String getPrefix(String namespaceURI) {
+                if (namespaceURI == null) {
+                    throw new IllegalArgumentException();
+                } else if (XMLConstants.XMLNS_ATTRIBUTE_NS_URI.equals(namespaceURI)) {
+                    return XMLConstants.XMLNS_ATTRIBUTE;
+                } else if (XMLConstants.XML_NS_URI.equals(namespaceURI)) {
+                    return XMLConstants.XML_NS_PREFIX;
+                } else {
+                    String prefix = null;
+                    for (Map.Entry<String, String> e : PREFIXES.entrySet()) {
+                        String p = e.getKey();
+                        String namespace = e.getValue();
+
+                        if (namespaceURI.equals(namespace)) {
+                            prefix = p;
+                            break;
+                        }
+                    }
+
+                    return prefix;
+                }
+            }
+
+            @Override
+            public String getNamespaceURI(String prefix) {
+                return PREFIXES.get(prefix);
+            }
+        };
+
+        wrt.setNamespaceContext(nsContext);
+
+        wrt.writeStartElement(EXPORT_NAMESPACE, CONFIGURATION_EXPORT_ELEMENT);
+        wrt.writeDefaultNamespace(EXPORT_NAMESPACE);
+        wrt.writeNamespace("ci", ConfigurationInstanceUtil.NS_CONFIGURATION_INSTANCE);
+        wrt.writeNamespace("c", CONFIGURATION_NAMESPACE);
+
         writeValidators(wrt);
     }
 
@@ -266,11 +355,21 @@ public class ExportingInputStream extends InputStream {
 
         messagesPerExporter.put(syn.getClass().getName(), messages);
 
-        wrt.writeStartElement(ENTITIES_EXPORT_ELEMENT);
+        wrt.writeStartElement(EXPORT_NAMESPACE, ENTITIES_EXPORT_ELEMENT);
         wrt.writeAttribute(ID_ATTRIBUTE, syn.getClass().getName());
 
         Exporter<?, ?> exp = syn.getExporter();
         ExportingIterator<?> it = exp.getExportingIterator();
+
+        DefaultImportConfigurationDescriptor importConfig = getDefaultImportConfiguraton(syn);
+
+        if (importConfig != null) {
+            try {
+                configurationMarshaller.marshal(importConfig, wrt);
+            } catch (JAXBException e) {
+                throw new XMLStreamException(e);
+            }
+        }
 
         messages.setPerEntityErrorMessages(new ArrayList<String>());
         messages.setPerEntityNotes(new ArrayList<String>());
@@ -278,9 +377,9 @@ public class ExportingInputStream extends InputStream {
         while (it.hasNext()) {
             it.next();
 
-            wrt.writeStartElement(ENTITY_EXPORT_ELEMENT);
+            wrt.writeStartElement(EXPORT_NAMESPACE, ENTITY_EXPORT_ELEMENT);
 
-            wrt.writeStartElement(DATA_ELEMENT);
+            wrt.writeStartElement(EXPORT_NAMESPACE, DATA_ELEMENT);
 
             Exception exportError = null;
             try {
@@ -299,18 +398,18 @@ public class ExportingInputStream extends InputStream {
 
                 if (notes != null) {
                     messages.getPerEntityNotes().add(notes);
-                    wrt.writeStartElement(NOTES_ELEMENT);
+                    wrt.writeStartElement(EXPORT_NAMESPACE, NOTES_ELEMENT);
                     wrt.writeCharacters(notes);
                     wrt.writeEndElement();
                 }
             } else {
                 String message = ThrowableUtil.getStackAsString(exportError);
                 messages.getPerEntityErrorMessages().add(message);
-                wrt.writeStartElement(ERROR_MESSAGE_ELEMENT);
+                wrt.writeStartElement(EXPORT_NAMESPACE, ERROR_MESSAGE_ELEMENT);
                 wrt.writeCharacters(message);
                 wrt.writeEndElement();
             }
-            
+
             wrt.writeEndElement(); //entity
         }
 
@@ -319,7 +418,7 @@ public class ExportingInputStream extends InputStream {
         messages.setExporterNotes(notes);
 
         if (notes != null) {
-            wrt.writeStartElement(NOTES_ELEMENT);
+            wrt.writeStartElement(EXPORT_NAMESPACE, NOTES_ELEMENT);
             wrt.writeCharacters(notes);
             wrt.writeEndElement();
         }
@@ -335,5 +434,21 @@ public class ExportingInputStream extends InputStream {
         } catch (IOException e) {
             LOG.error("Failed to close an output stream. This shouldn't happen.", e);
         }
+    }
+
+    private DefaultImportConfigurationDescriptor getDefaultImportConfiguraton(Synchronizer<?, ?> synchronizer) {
+        DefaultImportConfigurationDescriptor ret = null;
+
+        ConfigurationDefinition def = synchronizer.getImporter().getImportConfigurationDefinition();
+
+        if (def != null) {
+            ConfigurationTemplate template = def.getDefaultTemplate();
+            if (template != null) {
+                ret = DefaultImportConfigurationDescriptor.create(ConfigurationInstanceUtil
+                    .createConfigurationInstance(def, template.getConfiguration()));
+            }
+        }
+
+        return ret;
     }
 }

@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    xmlns:config="urn:xmlns:rhq-configuration" xmlns:ci="urn:xmlns:rhq-configuration-instance"
+    targetNamespace="urn:xmlns:rhq-configuration-instance"
+    elementFormDefault="qualified" jaxb:version="2.0"
+    xmlns:jaxb="http://java.sun.com/xml/ns/jaxb" blockDefault="">
+
+    <xs:annotation>
+        <xs:documentation>Schema for the definition of generic
+            configuration data.
+      </xs:documentation>
+        <xs:appinfo>
+            <jaxb:schemaBindings>
+                <jaxb:package
+                    name="org.rhq.enterprise.server.xmlschema.generated.configuration.instance" />
+            </jaxb:schemaBindings>
+        </xs:appinfo>
+    </xs:annotation>
+
+    <xs:import namespace="urn:xmlns:rhq-configuration"
+        schemaLocation="rhq-configuration.xsd" />
+
+    <xs:element name="configuration" type="ci:Configuration" />
+    <xs:complexType name="Configuration">
+        <xs:annotation>
+            <xs:appinfo>
+                <jaxb:class name="ConfigurationInstanceDescriptor" />
+            </xs:appinfo>
+            <xs:documentation></xs:documentation>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element ref="ci:configuration-property"
+                minOccurs="0" maxOccurs="unbounded" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:element name="configuration-property" abstract="true" />
+
+    <xs:element name="simple-property" type="ci:SimpleProperty"
+        substitutionGroup="ci:configuration-property" />
+    <xs:complexType name="SimpleProperty">
+        <xs:annotation>
+            <xs:appinfo>
+                <jaxb:class name="SimplePropertyInstanceDescriptor" />
+            </xs:appinfo>
+            <xs:documentation></xs:documentation>
+        </xs:annotation>
+        <xs:complexContent>
+            <xs:extension base="config:simpleProperty">
+                <xs:attribute name="value" type="xs:string" />
+                <xs:attribute name="default" use="prohibited" />
+                <xs:attribute name="defaultValue" use="prohibited" />
+                <xs:attribute name="summary" use="prohibited" />
+                <xs:attribute name="readOnly" use="prohibited" />
+                <xs:attribute name="activationPolicy" use="prohibited" />
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:element name="list-property" type="ci:ListProperty"
+        substitutionGroup="ci:configuration-property" />
+    <xs:complexType name="ListProperty">
+        <xs:annotation>
+            <xs:appinfo>
+                <jaxb:class name="ListPropertyInstanceDescriptor" />
+            </xs:appinfo>
+            <xs:documentation></xs:documentation>
+        </xs:annotation>
+        <xs:complexContent>
+            <xs:extension base="config:listProperty">
+                <xs:sequence>
+                    <xs:element name="values" type="ci:PropertyValues"
+                        minOccurs="0" maxOccurs="1" />
+                </xs:sequence>
+                <xs:attribute name="default" use="prohibited" />
+                <xs:attribute name="defaultValue" use="prohibited" />
+                <xs:attribute name="summary" use="prohibited" />
+                <xs:attribute name="readOnly" use="prohibited" />
+                <xs:attribute name="activationPolicy" use="prohibited" />
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:element name="map-property" type="ci:MapProperty"
+        substitutionGroup="ci:configuration-property" />
+    <xs:complexType name="MapProperty">
+        <xs:annotation>
+            <xs:appinfo>
+                <jaxb:class name="MapPropertyInstanceDescriptor" />
+            </xs:appinfo>
+            <xs:documentation></xs:documentation>
+        </xs:annotation>
+        <xs:complexContent>
+            <xs:extension base="config:mapProperty">
+                <xs:sequence>
+                    <xs:element name="values" type="ci:PropertyValues"
+                        minOccurs="0" maxOccurs="1" />
+                </xs:sequence>
+                <xs:attribute name="default" use="prohibited" />
+                <xs:attribute name="defaultValue" use="prohibited" />
+                <xs:attribute name="summary" use="prohibited" />
+                <xs:attribute name="readOnly" use="prohibited" />
+                <xs:attribute name="activationPolicy" use="prohibited" />
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:element name="complex-value" abstract="true" />
+    <xs:complexType name="ComplexValue">
+        <xs:annotation>
+            <xs:appinfo>
+                <jaxb:class name="ComplexValueDescriptor" />
+            </xs:appinfo>
+            <xs:documentation></xs:documentation>
+        </xs:annotation>
+        <xs:attribute name="property-name" type="xs:string"
+            use="required" />
+    </xs:complexType>
+
+    <xs:complexType name="PropertyValues">
+        <xs:annotation>
+            <xs:appinfo>
+                <jaxb:class name="PropertyValuesDescriptor" />
+            </xs:appinfo>
+            <xs:documentation></xs:documentation>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element ref="ci:complex-value" minOccurs="0"
+                maxOccurs="unbounded" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:element name="simple-value" type="ci:ComplexValueSimple"
+        substitutionGroup="ci:complex-value" />
+    <xs:complexType name="ComplexValueSimple">
+        <xs:annotation>
+            <xs:appinfo>
+                <jaxb:class name="ComplexValueSimpleDescriptor" />
+            </xs:appinfo>
+            <xs:documentation></xs:documentation>
+        </xs:annotation>
+        <xs:complexContent>
+            <xs:restriction base="ci:ComplexValue" />
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:element name="list-value" type="ci:ComplexValueList"
+        substitutionGroup="ci:complex-value" />
+    <xs:complexType name="ComplexValueList">
+        <xs:annotation>
+            <xs:appinfo>
+                <jaxb:class name="ComplexValueListDescriptor" />
+            </xs:appinfo>
+            <xs:documentation></xs:documentation>
+        </xs:annotation>
+        <xs:complexContent>
+            <xs:extension base="ci:ComplexValue">
+                <xs:sequence>
+                    <xs:element ref="ci:complex-value"
+                        minOccurs="0" maxOccurs="unbounded" />
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:element name="map-value" type="ci:ComplexValueMap"
+        substitutionGroup="ci:complex-value" />
+    <xs:complexType name="ComplexValueMap">
+        <xs:annotation>
+            <xs:appinfo>
+                <jaxb:class name="ComplexValueMapDescriptor" />
+            </xs:appinfo>
+            <xs:documentation></xs:documentation>
+        </xs:annotation>
+        <xs:complexContent>
+            <xs:extension base="ci:ComplexValue">
+                <xs:sequence>
+                    <xs:element ref="ci:complex-value"
+                        minOccurs="0" maxOccurs="unbounded" />
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+</xs:schema>

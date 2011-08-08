@@ -28,6 +28,7 @@ import javax.ws.rs.Produces;
 
 import org.jboss.resteasy.links.AddLinks;
 import org.jboss.resteasy.links.LinkResource;
+import org.jboss.resteasy.links.LinkResources;
 import org.jboss.resteasy.spi.Link;
 
 import org.rhq.enterprise.server.rest.domain.AvailabilityRest;
@@ -44,23 +45,22 @@ import org.rhq.enterprise.server.rest.domain.ResourceWithType;
 public interface ResourceHandlerLocal {
 
     @AddLinks
-    @LinkResource
+    @LinkResources({
+            @LinkResource(rel="children", value = ResourceWithType.class)
+    })
     @GET
     @Path("/{id}")
     ResourceWithType getResource(@PathParam("id") int id);
 
-    @AddLinks
     @GET
     @Path("/platforms")
     List<ResourceWithType> getPlatforms();
 
-    @AddLinks
     @LinkResource(rel = "availability", value = AvailabilityRest.class)
     @GET
     @Path("/{id}/availability")
     AvailabilityRest getAvailability(@PathParam("id") int resourceId);
 
-    @AddLinks
     @GET
     @Path("/{id}/schedules")
     @LinkResource(rel="schedules",value = MetricSchedule.class)

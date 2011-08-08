@@ -43,7 +43,6 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
-import org.rhq.enterprise.server.rest.domain.AlertRest;
 import org.rhq.enterprise.server.rest.domain.AvailabilityRest;
 import org.rhq.enterprise.server.rest.domain.MetricSchedule;
 import org.rhq.enterprise.server.rest.domain.ResourceWithType;
@@ -104,12 +103,15 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
 
     private ResourceWithType fillRWT(Resource res) {
         ResourceType resourceType = res.getResourceType();
-        ResourceWithType rwt = new ResourceWithType(res.getName(),res.getId(), resourceType.getName(),
-                resourceType.getId(), resourceType.getPlugin());
+        ResourceWithType rwt = new ResourceWithType(res.getName(),res.getId());
+        rwt.setTypeName(resourceType.getName());
+        rwt.setTypeId(resourceType.getId());
+        rwt.setPluginName(resourceType.getPlugin());
         Resource parent = res.getParentResource();
         if (parent!=null) {
-            rwt.setParentId(parent.getId());
-            rwt.setParentName(parent.getName());
+            ResourceWithType rwtParent = new ResourceWithType(parent.getName(), parent.getId());
+            rwtParent.setIsParent(true);
+            rwt.setParentResource(rwtParent);
         }
         return rwt;
     }

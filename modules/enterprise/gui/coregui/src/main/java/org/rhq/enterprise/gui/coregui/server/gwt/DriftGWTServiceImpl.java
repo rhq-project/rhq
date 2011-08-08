@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.coregui.server.gwt;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
+import org.rhq.core.domain.criteria.DriftConfigurationCriteria;
 import org.rhq.core.domain.criteria.GenericDriftChangeSetCriteria;
 import org.rhq.core.domain.criteria.GenericDriftCriteria;
 import org.rhq.core.domain.drift.Drift;
@@ -112,11 +113,24 @@ public class DriftGWTServiceImpl extends AbstractGWTServiceImpl implements Drift
     }
 
     @Override
-    public PageList<DriftComposite> findDriftCompositesByCriteria(GenericDriftCriteria criteria) {
+    public PageList<DriftComposite> findDriftCompositesByCriteria(GenericDriftCriteria criteria)
+        throws RuntimeException {
         try {
             PageList<DriftComposite> results = driftManager
                 .findDriftCompositesByCriteria(getSessionSubject(), criteria);
             return SerialUtility.prepare(results, "DriftService.findDriftCompositesByCriteria");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    @Override
+    public PageList<DriftConfiguration> findDriftConfigurationsByCriteria(DriftConfigurationCriteria criteria)
+        throws RuntimeException {
+        try {
+            PageList<DriftConfiguration> results = driftManager.findDriftConfigurationsByCriteria(getSessionSubject(),
+                criteria);
+            return SerialUtility.prepare(results, "DriftService.findDriftConfigurationsByCriteria");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
@@ -132,11 +146,9 @@ public class DriftGWTServiceImpl extends AbstractGWTServiceImpl implements Drift
     }
 
     @Override
-    public DriftConfiguration getDriftConfiguration(EntityContext entityContext, int driftConfigId)
-        throws RuntimeException {
+    public DriftConfiguration getDriftConfiguration(int driftConfigId) throws RuntimeException {
         try {
-            DriftConfiguration driftConfig = driftManager.getDriftConfiguration(getSessionSubject(), entityContext,
-                driftConfigId);
+            DriftConfiguration driftConfig = driftManager.getDriftConfiguration(getSessionSubject(), driftConfigId);
             return SerialUtility.prepare(driftConfig, "DriftService.getDriftConfiguration");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);

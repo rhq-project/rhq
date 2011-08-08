@@ -19,6 +19,10 @@
 
 package org.rhq.core.pc.drift;
 
+import static java.util.Collections.EMPTY_LIST;
+import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
+import static org.rhq.core.domain.drift.DriftChangeSetCategory.DRIFT;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
@@ -36,10 +40,6 @@ import org.rhq.common.drift.Headers;
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.util.MessageDigestGenerator;
-
-import static java.util.Collections.EMPTY_LIST;
-import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
-import static org.rhq.core.domain.drift.DriftChangeSetCategory.DRIFT;
 
 public class DriftDetector implements Runnable {
     private Log log = LogFactory.getLog(DriftDetector.class);
@@ -76,7 +76,7 @@ public class DriftDetector implements Runnable {
                 return;
             }
 
-            if (!schedule.getDriftConfiguration().getEnabled()) {
+            if (!schedule.getDriftConfiguration().isEnabled()) {
                 return;
             }
 
@@ -109,12 +109,12 @@ public class DriftDetector implements Runnable {
     private int generateDriftChangeSet(DriftDetectionSchedule schedule) throws IOException {
         File basedir = new File(basedir(schedule.getResourceId(), schedule.getDriftConfiguration()));
 
-        ChangeSetWriter driftWriter = changeSetMgr.getChangeSetWriter(schedule.getResourceId(),
-            createHeaders(schedule, DRIFT));
+        ChangeSetWriter driftWriter = changeSetMgr.getChangeSetWriter(schedule.getResourceId(), createHeaders(schedule,
+            DRIFT));
         ChangeSetWriter coverageWriter = changeSetMgr.getChangeSetWriterForUpdate(schedule.getResourceId(),
             createHeaders(schedule, COVERAGE));
-        ChangeSetReader reader = changeSetMgr.getChangeSetReader(schedule.getResourceId(),
-            schedule.getDriftConfiguration().getName());
+        ChangeSetReader reader = changeSetMgr.getChangeSetReader(schedule.getResourceId(), schedule
+            .getDriftConfiguration().getName());
 
         int changes = 0;
 
@@ -122,8 +122,8 @@ public class DriftDetector implements Runnable {
             DirectoryAnalyzer analyzer = new DirectoryAnalyzer(basedir, dirEntry);
             analyzer.run();
 
-            if (analyzer.getFilesAdded().size() > 0 || analyzer.getFilesRemoved().size() > 0 ||
-                analyzer.getFilesChanged().size() > 0) {
+            if (analyzer.getFilesAdded().size() > 0 || analyzer.getFilesRemoved().size() > 0
+                || analyzer.getFilesChanged().size() > 0) {
                 DirectoryEntry driftDirEntry = new DirectoryEntry(dirEntry.getDirectory());
                 DirectoryEntry coverageDirEntry = new DirectoryEntry(dirEntry.getDirectory());
 
@@ -221,11 +221,13 @@ public class DriftDetector implements Runnable {
             walk(new File(basedir(resourceId, driftConfig)), EMPTY_LIST);
         }
 
+        @SuppressWarnings("unchecked")
         @Override
         protected void handleDirectoryStart(File directory, int depth, Collection results) throws IOException {
             stack.push(new DirectoryEntry(relativePath(new File(basedir(resourceId, driftConfig)), directory)));
         }
 
+        @SuppressWarnings("unchecked")
         @Override
         protected void handleDirectoryEnd(File directory, int depth, Collection results) throws IOException {
             DirectoryEntry dirEntry = stack.pop();
@@ -234,12 +236,14 @@ public class DriftDetector implements Runnable {
             }
         }
 
+        @SuppressWarnings("unchecked")
         @Override
         protected void handleFile(File file, int depth, Collection results) throws IOException {
             DirectoryEntry dirEntry = stack.peek();
             dirEntry.add(FileEntry.addedFileEntry(file.getName(), sha256(file)));
         }
 
+        @SuppressWarnings("unchecked")
         @Override
         protected void handleEnd(Collection results) throws IOException {
             writer.close();

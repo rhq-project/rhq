@@ -25,7 +25,9 @@ import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
+import org.rhq.core.domain.criteria.DriftConfigurationCriteria;
 import org.rhq.core.domain.drift.DriftConfiguration;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginFacet;
 
 @Local
@@ -108,15 +110,16 @@ public interface DriftManagerLocal extends DriftServerPluginFacet, DriftManagerR
      */
     void detectDrift(Subject subject, EntityContext context, DriftConfiguration driftConfig);
 
+    PageList<DriftConfiguration> findDriftConfigurationsByCriteria(Subject subject, DriftConfigurationCriteria criteria);
+
     /**
-     * Get the specified drift configuration for the specified context.
+     * Get the specified drift configuration. Note, the full Configuration is fetched. 
      * 
-     * @param entityContext
      * @param driftConfigId
      * @return The drift configuration
      * @throws RuntimeException, IllegalArgumentException if entity or driftConfig not found.
      */
-    DriftConfiguration getDriftConfiguration(Subject subject, EntityContext entityContext, int driftConfigId);
+    DriftConfiguration getDriftConfiguration(Subject subject, int driftConfigId);
 
     /**
      * Update the provided driftConfig (identified by name) on the specified EntityContext.  If it exists it will be replaced. If not it will

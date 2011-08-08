@@ -19,8 +19,8 @@ public class ScheduleQueueImpl implements ScheduleQueue {
         try {
             lock.writeLock().lock();
             if (activeSchedule != null) {
-                throw new IllegalStateException("There is already an active schedule that must be deactivated " +
-                    "before getting the next schedule.");
+                throw new IllegalStateException("There is already an active schedule that must be deactivated "
+                    + "before getting the next schedule.");
             }
             activeSchedule = queue.poll();
             return activeSchedule == null ? null : activeSchedule.copy();
@@ -32,8 +32,8 @@ public class ScheduleQueueImpl implements ScheduleQueue {
     private boolean isActiveSchedule(int resourceId, DriftConfiguration config) {
         try {
             lock.readLock().lock();
-            return activeSchedule != null && activeSchedule.getResourceId() == resourceId &&
-                   activeSchedule.getDriftConfiguration().getName().equals(config.getName());
+            return activeSchedule != null && activeSchedule.getResourceId() == resourceId
+                && activeSchedule.getDriftConfiguration().getName().equals(config.getName());
         } finally {
             lock.readLock().unlock();
         }
@@ -80,8 +80,8 @@ public class ScheduleQueueImpl implements ScheduleQueue {
             Iterator<DriftDetectionSchedule> iterator = queue.iterator();
             while (iterator.hasNext()) {
                 DriftDetectionSchedule schedule = iterator.next();
-                if (schedule.getResourceId() == resourceId &&
-                    schedule.getDriftConfiguration().getName().equals(config.getName())) {
+                if (schedule.getResourceId() == resourceId
+                    && schedule.getDriftConfiguration().getName().equals(config.getName())) {
                     iterator.remove();
                     return schedule;
                 }
@@ -114,7 +114,7 @@ public class ScheduleQueueImpl implements ScheduleQueue {
     }
 
     private void update(DriftDetectionSchedule schedule, DriftConfiguration config) {
-        schedule.getDriftConfiguration().setEnabled(config.getEnabled());
+        schedule.getDriftConfiguration().setEnabled(config.isEnabled());
         schedule.getDriftConfiguration().setInterval(config.getInterval());
     }
 

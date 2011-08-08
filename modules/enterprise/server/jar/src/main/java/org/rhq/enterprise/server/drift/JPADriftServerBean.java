@@ -210,7 +210,7 @@ public class JPADriftServerBean implements JPADriftServerLocal {
                         }
 
                         DriftChangeSetCategory category = reader.getHeaders().getType();
-                        driftChangeSet = new JPADriftChangeSet(resource, version, category, config.getId());
+                        driftChangeSet = new JPADriftChangeSet(resource, version, category, config);
                         entityManager.persist(driftChangeSet);
 
                         for (DirectoryEntry dir = reader.readDirectoryEntry(); null != dir; dir = reader
@@ -314,8 +314,7 @@ public class JPADriftServerBean implements JPADriftServerLocal {
     }
 
     private DriftConfiguration findDriftConfiguration(Resource resource, Headers headers) {
-        for (Configuration config : resource.getDriftConfigurations()) {
-            DriftConfiguration driftConfig = new DriftConfiguration(config);
+        for (DriftConfiguration driftConfig : resource.getDriftConfigurations()) {
             if (driftConfig.getName().equals(headers.getDriftConfigurationName())) {
                 return driftConfig;
             }

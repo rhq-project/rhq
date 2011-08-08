@@ -22,11 +22,20 @@ import static java.util.Collections.emptyList;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
+
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.PrePersist;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
@@ -49,10 +58,133 @@ import org.rhq.core.domain.resource.Resource;
  *
  * @author John Sanda
  * @author John Mazzitelli
+ * @author Jay Shaughnessy
  */
+@Entity
+@Table(name = "RHQ_DRIFT_CONFIG")
+@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_DRIFT_CONFIG_ID_SEQ")
 public class DriftConfiguration implements Serializable {
-
     private static final long serialVersionUID = 1L;
+
+    @Column(name = "ID", nullable = false)
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
+    @Id
+    private int id;
+
+    @Column(name = "CTIME", nullable = false)
+    private Long ctime = -1L;
+
+    @Column(name = "NAME", nullable = false)
+    private String name;
+
+    @Column(name = "IS_ENABLED", nullable = false)
+    private boolean isEnabled;
+
+    // unit = millis
+    @Column(name = "INTERVAL", nullable = false)
+    private long interval;
+
+    @JoinColumn(name = "CONFIG_ID", referencedColumnName = "ID", nullable = false)
+    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY, optional = false)
+    private Configuration configuration;
+
+    @JoinColumn(name = "RESOURCE_ID", referencedColumnName = "ID", nullable = true)
+    @ManyToOne(optional = true)
+    private Resource resource = null;
+
+    // required for jaxb/web services stuff
+    protected DriftConfiguration() {
+    }
+
+    public DriftConfiguration(Configuration c) {
+        this.setConfiguration(c);
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public Long getCtime() {
+        return ctime;
+    }
+
+    @PrePersist
+    void onPersist() {
+        this.ctime = System.currentTimeMillis();
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        if (null == name) {
+            throw new IllegalArgumentException("Drift congig name can not be null");
+        }
+
+        this.name = name;
+        this.setNameProperty(name);
+    }
+
+    public boolean isEnabled() {
+        return isEnabled;
+    }
+
+    /**
+     * If null set to default
+     * @param isEnabled
+     */
+    public void setEnabled(Boolean isEnabled) {
+        if (isEnabled == null) {
+            isEnabled = DriftConfigurationDefinition.DEFAULT_ENABLED;
+        }
+
+        this.isEnabled = isEnabled;
+        this.setEnabledProperty(isEnabled);
+    }
+
+    public long getInterval() {
+        return interval;
+    }
+
+    /**
+     * If null, set to default.
+     * @param interval
+     */
+    public void setInterval(Long interval) {
+        if (interval == null) {
+            interval = DriftConfigurationDefinition.DEFAULT_INTERVAL;
+        }
+
+        this.interval = interval;
+        this.setIntervalProperty(interval);
+    }
+
+    public Configuration getConfiguration() {
+        return configuration;
+    }
+
+    public void setConfiguration(Configuration configuration) {
+        this.configuration = configuration;
+        this.name = this.getNameProperty();
+        this.isEnabled = this.getIsEnabledProperty();
+        this.interval = this.getIntervalProperty();
+    }
+
+    public Resource getResource() {
+        return resource;
+    }
+
+    public void setResource(Resource resource) {
+        this.resource = resource;
+        if (this.resource != null) {
+            this.resource.getDriftConfigurations().add(this);
+        }
+    }
 
     public static class BaseDirectory implements Serializable {
         private static final long serialVersionUID = 1L;
@@ -178,35 +310,13 @@ public class DriftConfiguration implements Serializable {
         }
     }
 
-    private Configuration configuration;
-
-    // required for jaxb/web services stuff
-    protected DriftConfiguration() {
+    private String getNameProperty() {
+        return configuration.getSimpleValue(DriftConfigurationDefinition.PROP_NAME, null);
     }
 
-    public DriftConfiguration(Configuration c) {
-        this.configuration = c;
-    }
-
-    public Configuration getConfiguration() {
-        return configuration;
-    }
-
-    public int getId() {
-        return configuration.getId();
-    }
-
-    public void setId(int id) {
-        configuration.setId(id);
-    }
-
-    public String getName() {
-        return configuration.getSimpleValue(DriftConfigurationDefinition.PROP_NAME, "");
-    }
-
-    public void setName(String name) {
+    private void setNameProperty(String name) {
         if (name == null) {
-            throw new NullPointerException("name is null");
+            throw new IllegalArgumentException("name is null");
         }
         configuration.put(new PropertySimple(DriftConfigurationDefinition.PROP_NAME, name));
     }
@@ -256,25 +366,21 @@ public class DriftConfiguration implements Serializable {
         configuration.put(basedirMap);
     }
 
-    public Long getInterval() {
+    private Long getIntervalProperty() {
         return Long.parseLong(configuration.getSimpleValue(DriftConfigurationDefinition.PROP_INTERVAL, String
             .valueOf(DriftConfigurationDefinition.DEFAULT_INTERVAL)));
     }
 
-    public void setInterval(Long interval) {
-        if (interval == null) {
-            configuration.remove(DriftConfigurationDefinition.PROP_INTERVAL);
-        } else {
-            configuration.put(new PropertySimple(DriftConfigurationDefinition.PROP_INTERVAL, interval.toString()));
-        }
+    private void setIntervalProperty(Long interval) {
+        configuration.put(new PropertySimple(DriftConfigurationDefinition.PROP_INTERVAL, interval.toString()));
     }
 
-    public boolean getEnabled() {
+    private boolean getIsEnabledProperty() {
         return configuration.getSimpleValue(DriftConfigurationDefinition.PROP_ENABLED,
             String.valueOf(DriftConfigurationDefinition.DEFAULT_ENABLED)).equals("true");
     }
 
-    public void setEnabled(boolean enabled) {
+    private void setEnabledProperty(boolean enabled) {
         configuration.put(new PropertySimple(DriftConfigurationDefinition.PROP_ENABLED, String.valueOf(enabled)));
     }
 
@@ -301,38 +407,4 @@ public class DriftConfiguration implements Serializable {
 
         return filters;
     }
-
-    public static Set<DriftConfiguration> valueOf(Resource resource) {
-        if (null == resource) {
-            return new HashSet<DriftConfiguration>(0);
-        }
-
-        Set<Configuration> configs = resource.getDriftConfigurations();
-        if (null == configs) {
-            return new HashSet<DriftConfiguration>(0);
-        }
-
-        Set<DriftConfiguration> result = new HashSet<DriftConfiguration>(configs.size());
-
-        for (Iterator<Configuration> i = configs.iterator(); i.hasNext();) {
-            result.add(new DriftConfiguration(i.next()));
-        }
-
-        return result;
-    }
-
-    public static <T extends Collection<Configuration>> Set<DriftConfiguration> valueOf(T configs) {
-        if (null == configs) {
-            return new HashSet<DriftConfiguration>(0);
-        }
-
-        Set<DriftConfiguration> result = new HashSet<DriftConfiguration>(configs.size());
-
-        for (Iterator<Configuration> i = configs.iterator(); i.hasNext();) {
-            result.add(new DriftConfiguration(i.next()));
-        }
-
-        return result;
-    }
-
 }

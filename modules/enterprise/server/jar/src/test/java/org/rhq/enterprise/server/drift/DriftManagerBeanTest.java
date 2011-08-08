@@ -19,7 +19,6 @@
 package org.rhq.enterprise.server.drift;
 
 import java.io.File;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
@@ -39,8 +38,6 @@ import org.rhq.core.clientapi.server.drift.DriftServerService;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.PropertyMap;
-import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.criteria.JPADriftChangeSetCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.drift.Drift;
@@ -49,6 +46,7 @@ import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.DriftFileStatus;
+import org.rhq.core.domain.drift.DriftConfiguration.BaseDirectory;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
@@ -165,13 +163,10 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
     @Test(enabled = ENABLE_TESTS)
     public void testDriftConfig() throws Exception {
         Configuration config = new Configuration();
-        config.put(new PropertySimple("name", "testDriftConfig"));
-        config.put(new PropertySimple("interval", "60"));
-        PropertyMap basedirMap = new PropertyMap("basedir");
-        basedirMap.put(new PropertySimple("valueContext", BaseDirValueContext.fileSystem));
-        basedirMap.put(new PropertySimple("valueName", "foo/bar"));
-        config.put(basedirMap);
         DriftConfiguration driftConfigPojo = new DriftConfiguration(config);
+        driftConfigPojo.setName("testDriftConfig");
+        driftConfigPojo.setInterval(60L);
+        driftConfigPojo.setBasedir(new BaseDirectory(BaseDirValueContext.fileSystem, "foo/bar"));
 
         driftManager
             .updateDriftConfiguration(overlord, EntityContext.forResource(newResource.getId()), driftConfigPojo);
@@ -182,16 +177,21 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
         c.fetchDriftConfigurations(true);
         List<Resource> resources = resourceManager.findResourcesByCriteria(overlord, c);
         assertEquals(1, resources.size());
-        Set<Configuration> driftConfigs = resources.get(0).getDriftConfigurations();
+        Set<DriftConfiguration> driftConfigs = resources.get(0).getDriftConfigurations();
         assertNotNull(driftConfigs);
         assertEquals(3, driftConfigs.size());
-        DriftConfiguration driftConfig = new DriftConfiguration(driftConfigs.iterator().next());
+        DriftConfiguration driftConfig = null;
+        for (Iterator<DriftConfiguration> i = driftConfigs.iterator(); i.hasNext();) {
+            driftConfig = i.next();
+            if (driftConfigPojo.getName().equals(driftConfig.getName()))
+                break;
+        }
         assertTrue(driftConfig.getConfiguration().getId() > 0); // persisted
         assertEquals(driftConfigPojo.getName(), driftConfig.getName());
         assertEquals(driftConfigPojo.getBasedir(), driftConfig.getBasedir());
         assertEquals(driftConfigPojo.getInterval(), driftConfig.getInterval());
 
-        driftConfigPojo.getConfiguration().put(new PropertySimple("interval", "120"));
+        driftConfigPojo.setInterval(120L);
         driftManager
             .updateDriftConfiguration(overlord, EntityContext.forResource(newResource.getId()), driftConfigPojo);
 
@@ -200,19 +200,20 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
         driftConfigs = resources.get(0).getDriftConfigurations();
         assertNotNull(driftConfigs);
         assertEquals(3, driftConfigs.size());
-        driftConfig = new DriftConfiguration(driftConfigs.iterator().next());
-        assertTrue(driftConfig.getConfiguration().getId() > 0); // persisted
+        driftConfig = null;
+        for (Iterator<DriftConfiguration> i = driftConfigs.iterator(); i.hasNext();) {
+            driftConfig = i.next();
+            if (driftConfigPojo.getName().equals(driftConfig.getName()))
+                break;
+        }
         assertEquals(driftConfigPojo.getName(), driftConfig.getName());
+        assertTrue(driftConfig.getConfiguration().getId() > 0); // persisted
         assertEquals(driftConfigPojo.getBasedir(), driftConfig.getBasedir());
-        assertEquals(new Long(120), driftConfig.getInterval());
+        assertEquals(120L, driftConfig.getInterval());
 
-        config = driftConfigPojo.getConfiguration();
-        config.put(new PropertySimple("name", "testDriftConfig-2"));
-        config.put(new PropertySimple("interval", "30"));
-        basedirMap = new PropertyMap("basedir");
-        basedirMap.put(new PropertySimple("valueContext", BaseDirValueContext.fileSystem));
-        basedirMap.put(new PropertySimple("valueName", "foo/baz"));
-        config.put(basedirMap);
+        driftConfigPojo.setName("testDriftConfig-2");
+        driftConfigPojo.setInterval(30L);
+        driftConfigPojo.setBasedir(new BaseDirectory(BaseDirValueContext.fileSystem, "foo/baz"));
 
         driftManager
             .updateDriftConfiguration(overlord, EntityContext.forResource(newResource.getId()), driftConfigPojo);
@@ -222,13 +223,13 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
         driftConfigs = resources.get(0).getDriftConfigurations();
         assertNotNull(driftConfigs);
         assertEquals(4, driftConfigs.size());
-        for (Iterator<Configuration> i = driftConfigs.iterator(); i.hasNext();) {
-            driftConfig = new DriftConfiguration(i.next());
+        for (Iterator<DriftConfiguration> i = driftConfigs.iterator(); i.hasNext();) {
+            driftConfig = i.next();
             if ("testDriftConfig".equals(driftConfig.getName())) {
                 assertTrue(driftConfig.getConfiguration().getId() > 0); // persisted
                 assertEquals("foo/bar", driftConfig.getBasedir().getValueName());
                 assertEquals(BaseDirValueContext.fileSystem, driftConfig.getBasedir().getValueContext());
-                assertEquals(new Long(120), driftConfig.getInterval());
+                assertEquals(120L, driftConfig.getInterval());
             } else if ("testDriftConfig-2".equals(driftConfig.getName())) {
                 assertTrue(driftConfig.getConfiguration().getId() > 0); // persisted
                 assertEquals(driftConfigPojo.getBasedir(), driftConfig.getBasedir());
@@ -245,7 +246,11 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
         driftConfigs = resources.get(0).getDriftConfigurations();
         assertNotNull(driftConfigs);
         assertEquals(3, driftConfigs.size());
-        driftConfig = new DriftConfiguration(driftConfigs.iterator().next());
+        for (Iterator<DriftConfiguration> i = driftConfigs.iterator(); i.hasNext();) {
+            driftConfig = i.next();
+            if (driftConfigPojo.getName().equals(driftConfig.getName()))
+                break;
+        }
         assertTrue(driftConfig.getConfiguration().getId() > 0); // persisted
         assertEquals(driftConfigPojo.getName(), driftConfig.getName());
         assertEquals(driftConfigPojo.getBasedir(), driftConfig.getBasedir());
@@ -299,15 +304,12 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
                 DriftConfiguration test2Config = new DriftConfiguration(new Configuration());
                 test2Config.setName("test-2");
 
-                Set<Configuration> driftConfigs = new HashSet<Configuration>();
-                driftConfigs.add(test1Config.getConfiguration());
-                driftConfigs.add(test2Config.getConfiguration());
-
                 resource = new Resource("reskey" + System.currentTimeMillis(), "resname", resourceType);
                 resource.setUuid("" + new Random().nextInt());
                 resource.setAgent(agent);
                 resource.setInventoryStatus(InventoryStatus.COMMITTED);
-                resource.setDriftConfigurations(driftConfigs);
+                resource.addDriftConfiguration(test1Config);
+                resource.addDriftConfiguration(test2Config);
                 em.persist(resource);
 
             } catch (Exception e) {

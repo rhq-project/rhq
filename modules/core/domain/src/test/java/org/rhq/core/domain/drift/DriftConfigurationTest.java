@@ -1,6 +1,12 @@
 package org.rhq.core.domain.drift;
 
-import java.util.Arrays;
+import static java.util.Arrays.asList;
+import static org.rhq.core.domain.drift.DriftConfigurationDefinition.PROP_BASEDIR;
+import static org.rhq.core.domain.drift.DriftConfigurationDefinition.PROP_BASEDIR_VALUECONTEXT;
+import static org.rhq.core.domain.drift.DriftConfigurationDefinition.PROP_BASEDIR_VALUENAME;
+import static org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext.fileSystem;
+import static org.testng.Assert.assertEquals;
+
 import java.util.List;
 
 import org.testng.annotations.Test;
@@ -9,13 +15,6 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
-
-import static java.util.Arrays.asList;
-import static org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext.fileSystem;
-import static org.rhq.core.domain.drift.DriftConfigurationDefinition.PROP_BASEDIR;
-import static org.rhq.core.domain.drift.DriftConfigurationDefinition.PROP_BASEDIR_VALUECONTEXT;
-import static org.rhq.core.domain.drift.DriftConfigurationDefinition.PROP_BASEDIR_VALUENAME;
-import static org.testng.Assert.*;
 
 public class DriftConfigurationTest {
     @Test
@@ -31,7 +30,7 @@ public class DriftConfigurationTest {
 
     @Test
     public void getBasedirForFileSystemContext() {
-        String basedir = "/opt/drift/test" ;
+        String basedir = "/opt/drift/test";
         Configuration config = new Configuration();
 
         PropertyMap map = new PropertyMap(PROP_BASEDIR);
@@ -48,7 +47,7 @@ public class DriftConfigurationTest {
 
     @Test
     public void getInterval() {
-        Long interval = 3600L;
+        long interval = 3600L;
         Configuration config = new Configuration();
         config.put(new PropertySimple("interval", interval));
 

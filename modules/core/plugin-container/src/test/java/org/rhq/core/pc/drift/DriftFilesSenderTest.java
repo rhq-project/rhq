@@ -1,3 +1,22 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2011 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+
 package org.rhq.core.pc.drift;
 
 import java.io.File;
@@ -7,12 +26,14 @@ import java.util.List;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import org.rhq.common.drift.ChangeSetWriter;
+import org.rhq.common.drift.DirectoryEntry;
 import org.rhq.common.drift.Headers;
+import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.JPADriftFile;
 
-import static org.apache.commons.io.FileUtils.touch;
-import static org.apache.commons.io.IOUtils.writeLines;
+import static org.rhq.common.drift.FileEntry.addedFileEntry;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
@@ -38,32 +59,31 @@ public class DriftFilesSenderTest extends DriftTest {
         String driftConfigName = "single-directory-test";
 
         File confDir = mkdir(resourceDir, "conf");
-        touch(new File(confDir, "server-1.conf"));
-        touch(new File(confDir, "server-2.conf"));
+        File server1Conf = createRandomFile(confDir, "server-1.conf");
+        File server2Conf = createRandomFile(confDir, "server-2.conf");
+
+        String server1ConfHash = sha256(server1Conf);
+        String server2ConfHash = sha256(server2Conf);
 
         File changeSetDir = changeSetDir(driftConfigName);
 
-        // Each item in changeSet is listed by the line it will appear in the actual file
-        // in an attemp to make it more self-documenting.
-        writeChangeSet(changeSetDir,
-            driftConfigName,
-            resourceDir.getAbsolutePath(),
-            COVERAGE.code(),
-            "conf 2",
-            "2e345df 0 server-1.conf A",
-            "a5d8c3e 0 server-2.conf A",
-            ""
-        );
+        Headers headers = createHeaders(driftConfigName, COVERAGE);
 
-        sender.setDriftFiles(driftFiles("2e345df", "a5d8c3e"));
-        sender.setHeaders(new Headers(driftConfigName, resourceDir.getAbsolutePath(), COVERAGE));
+        ChangeSetWriter writer = changeSetMgr.getChangeSetWriter(resourceId(), headers);
+        writer.writeDirectoryEntry(new DirectoryEntry("conf")
+            .add(addedFileEntry("server-1.conf", server1ConfHash))
+            .add(addedFileEntry("server-2.conf", server2ConfHash)));
+        writer.close();
+
+        sender.setDriftFiles(driftFiles(server1ConfHash, server2ConfHash));
+        sender.setHeaders(createHeaders(driftConfigName, COVERAGE));
         sender.run();
 
         File contentDir = mkdir(changeSetDir, "content");
 
         assertEquals(contentDir.list().length, 2, "Expected to find two files in " + contentDir.getAbsolutePath());
-        assertFileCopiedToContentDir(contentDir, "2e345df");
-        assertFileCopiedToContentDir(contentDir, "a5d8c3e");
+        assertFileCopiedToContentDir(contentDir, server1ConfHash);
+        assertFileCopiedToContentDir(contentDir, server2ConfHash);
     }
 
     @Test
@@ -72,74 +92,78 @@ public class DriftFilesSenderTest extends DriftTest {
 
         File confDir = mkdir(resourceDir, "conf");
         File libDir = mkdir(resourceDir, "lib");
-        touch(new File(confDir, "server-1.conf"));
-        touch(new File(confDir, "server-2.conf"));
-        touch(new File(libDir, "server-1.jar"));
-        touch(new File(libDir, "server-2.jar"));
+        File server1Conf = createRandomFile(confDir, "server-1.conf");
+        File server2Conf = createRandomFile(confDir, "server-2.conf");
+        File server1Jar = createRandomFile(libDir, "server-1.jar");
+        File server2Jar = createRandomFile(libDir, "server-2.jar");
+
+        String server1ConfHash = sha256(server1Conf);
+        String server2ConfHash = sha256(server2Conf);
+        String server1JarHash = sha256(server1Jar);
+        String server2JarHash = sha256(server2Jar);
 
         File changeSetDir = changeSetDir(driftConfigName);
 
-        // Each item in changeSet is listed by the line it will appear in the actual file
-        // in an attemp to make it more self-documenting.
-        writeChangeSet(changeSetDir,
-            driftConfigName,
-            resourceDir.getAbsolutePath(),
-            COVERAGE.code(),
-            "conf 2",
-            "2e345df 0 server-1.conf A",
-            "a5d8c3e 0 server-2.conf A",
-            "",
-            "lib 2",
-            "91d4abb 0 server-1.jar A",
-            "92c4abb 0 server-2.jar A",
-            ""
-        );
+        Headers headers = createHeaders(driftConfigName, COVERAGE);
+
+        ChangeSetWriter writer = changeSetMgr.getChangeSetWriter(resourceId(), headers);
+        writer.writeDirectoryEntry(new DirectoryEntry("conf")
+            .add(addedFileEntry("server-1.conf", server1ConfHash))
+            .add(addedFileEntry("server-2.conf", server2ConfHash)));
+        writer.writeDirectoryEntry(new DirectoryEntry("lib")
+            .add(addedFileEntry("server-1.jar", server1JarHash))
+            .add(addedFileEntry("server-2.jar", server2JarHash)));
+        writer.close();
 
         // Note that the order of the drift files is random. When the server sends a request
         // for files we cannot assume that the files will be in any particular order.
-        sender.setDriftFiles(driftFiles("2e345df", "91d4abb", "a5d8c3e", "92c4abb"));
-        sender.setHeaders(new Headers(driftConfigName, resourceDir.getAbsolutePath(), COVERAGE));
+        sender.setDriftFiles(driftFiles(server1JarHash, server2ConfHash, server2JarHash, server1ConfHash));
+        sender.setHeaders(createHeaders(driftConfigName, COVERAGE));
         sender.run();
 
         File contentDir = mkdir(changeSetDir, "content");
 
         assertEquals(contentDir.list().length, 4, "Expected to find four files in " + contentDir.getAbsolutePath());
-        assertFileCopiedToContentDir(contentDir, "2e345df");
-        assertFileCopiedToContentDir(contentDir, "a5d8c3e");
-        assertFileCopiedToContentDir(contentDir, "91d4abb");
-        assertFileCopiedToContentDir(contentDir, "92c4abb");
+        assertFileCopiedToContentDir(contentDir, server1ConfHash);
+        assertFileCopiedToContentDir(contentDir, server2ConfHash);
+        assertFileCopiedToContentDir(contentDir, server1JarHash);
+        assertFileCopiedToContentDir(contentDir, server2JarHash);
     }
 
     @Test
     public void checkForFilesThatHaveBeenRemoved() throws Exception {
-        // It is possible that the server can request a file that has been deleted since it
-        // it was initially detected during drift detection.
-
         String driftConfigName = "file-exists-test";
 
         File confDir = mkdir(resourceDir, "conf");
-        touch(new File(confDir, "server-2.conf"));
+        File server1Conf = createRandomFile(confDir, "server-1.conf");
+        File server2Conf = createRandomFile(confDir, "server-2.conf");
+
+        String server1ConfHash = sha256(server1Conf);
+        String server2ConfHash = sha256(server2Conf);
 
         File changeSetDir = changeSetDir(driftConfigName);
 
-        writeChangeSet(changeSetDir,
-            driftConfigName,
-            resourceDir.getAbsolutePath(),
-            COVERAGE.code(),
-            "conf 2",
-            "a34fcc 0 server-1.conf A",  // The file is listed but does not exist
-            "f319d5 0 server-2.conf A",
-            ""
-        );
+        Headers headers = createHeaders(driftConfigName, COVERAGE);
 
-        sender.setDriftFiles(driftFiles("a34fcc", "f319d5"));
-        sender.setHeaders(new Headers(driftConfigName, resourceDir.getAbsolutePath(), COVERAGE));
+        ChangeSetWriter writer = changeSetMgr.getChangeSetWriter(resourceId(), headers);
+        writer.writeDirectoryEntry(new DirectoryEntry("conf")
+            .add(addedFileEntry("server-1.conf", server1ConfHash))
+            .add(addedFileEntry("server-2.conf", server2ConfHash)));
+        writer.close();
+
+        // It is possible that the server can request a file that has been deleted since it
+        // it was initially detected during drift detection.
+        server1Conf.delete();
+
+
+        sender.setDriftFiles(driftFiles(server1ConfHash, server2ConfHash));
+        sender.setHeaders(headers);
         sender.run();
 
         File contentDir = mkdir(changeSetDir, "content");
 
         assertEquals(contentDir.list().length, 1, "Expected to find one file in " + contentDir.getAbsolutePath());
-        assertFileCopiedToContentDir(contentDir, "f319d5");
+        assertFileCopiedToContentDir(contentDir, server2ConfHash);
     }
 
     /**
@@ -155,6 +179,17 @@ public class DriftFilesSenderTest extends DriftTest {
         File file = new File(contentDir, fileHash);
         assertTrue(file.exists(), "Expected to find file named " + file.getName() + " in content directory " +
             contentDir.getPath() + ". The SHA-256 hash should be used as the file name.");
+    }
+
+    Headers createHeaders(String configName, DriftChangeSetCategory type) {
+        Headers headers = new Headers();
+        headers.setResourceId(resourceId());
+        headers.setDriftCofigurationId(0);
+        headers.setDriftConfigurationName(configName);
+        headers.setBasedir(resourceDir.getAbsolutePath());
+        headers.setType(type);
+
+        return headers;
     }
 
     List<DriftFile> driftFiles(String... hashes) {

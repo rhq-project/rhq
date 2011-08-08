@@ -1,3 +1,22 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2011 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+
 package org.rhq.core.pc.drift;
 
 import java.io.File;
@@ -6,10 +25,14 @@ import java.util.List;
 import org.testng.annotations.Test;
 
 import org.rhq.common.drift.ChangeSetReader;
+import org.rhq.common.drift.ChangeSetWriter;
 import org.rhq.common.drift.DirectoryEntry;
 import org.rhq.common.drift.Headers;
+import org.rhq.core.domain.drift.DriftChangeSetCategory;
 
 import static java.util.Arrays.asList;
+import static org.rhq.common.drift.FileEntry.addedFileEntry;
+import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.DRIFT;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
@@ -28,44 +51,42 @@ public class ChangeSetManagerImplTest extends DriftTest {
     @Test
     public void returnReaderForRequestedChangeSet() throws Exception {
         String config = "return-reader-for-existing-changeset-test";
-        File changeSetDir = changeSetDir(config);
 
-        writeChangeSet(changeSetDir,
-            config,
-            "server",
-            "D",
-            "server/conf 1",
-            "8f26ac3d 0 myconf.conf A"
-        );
+        File confDir = mkdir(resourceDir, "conf");
+        File serverConf = createRandomFile(confDir, "server.conf");
+        String serverConfHash = sha256(serverConf);
+
+        ChangeSetWriter writer = changeSetMgr.getChangeSetWriter(resourceId(), createHeaders(config, COVERAGE));
+        writer.writeDirectoryEntry(new DirectoryEntry("conf").add(addedFileEntry("server.conf", serverConfHash)));
+        writer.close();
 
         ChangeSetReader reader = changeSetMgr.getChangeSetReader(resourceId(), config);
 
         assertNotNull(reader, "Expected to get a change set reader when change set exists");
-        assertReaderOpenedOnChangeSet(reader, asList("server/conf", "1"));
+        assertReaderOpenedOnChangeSet(reader, asList("conf", "1"));
     }
 
     @Test
     public void verifyChangeSetExists() throws Exception {
         String config = "changeset-exists-test";
-        File changeSetDir = changeSetDir(config);
 
-        writeChangeSet(changeSetDir,
-            config,
-            "server",
-            "D",
-            "server/conf 1",
-            "8f26ac3d 0 myconf.conf A"
-        );
+        File confDir = mkdir(resourceDir, "conf");
+        File serverConf = createRandomFile(confDir, "server.conf");
 
-        assertTrue(changeSetMgr.changeSetExists(resourceId(), new Headers(config, resourceDir.getAbsolutePath(),
-            DRIFT)), "Expected to find change set file.");
+        Headers headers = createHeaders(config, COVERAGE);
+
+        ChangeSetWriter writer = changeSetMgr.getChangeSetWriter(resourceId(), headers);
+        writer.writeDirectoryEntry(new DirectoryEntry("conf").add(addedFileEntry("server.conf", sha256(serverConf))));
+        writer.close();
+
+        assertTrue(changeSetMgr.changeSetExists(resourceId(), headers), "Expected to find change set file.");
     }
 
     @Test
     public void verifyChangeSetDoesNotExist() throws Exception {
         String config = "changeset-does-not-exist";
-        assertFalse(changeSetMgr.changeSetExists(resourceId(), new Headers(config, resourceDir.getAbsolutePath(),
-            DRIFT)), "Did not expect to find change set file.");
+        assertFalse(changeSetMgr.changeSetExists(resourceId(), createHeaders(config, DRIFT)),
+            "Did not expect to find change set file.");
     }
 
     /**
@@ -92,6 +113,17 @@ public class ChangeSetManagerImplTest extends DriftTest {
         assertEquals(actual.getDirectory(), dirEntry.get(0), "The directory entry path is wrong");
         assertEquals(Integer.toString(actual.getNumberOfFiles()), dirEntry.get(1),
             "The number of files for the directory entry is wrong");
+    }
+
+    Headers createHeaders(String driftConfigName, DriftChangeSetCategory type) {
+        Headers headers = new Headers();
+        headers.setResourceId(resourceId());
+        headers.setDriftCofigurationId(1);
+        headers.setDriftConfigurationName(driftConfigName);
+        headers.setBasedir(resourceDir.getPath());
+        headers.setType(type);
+
+        return headers;
     }
 
 }

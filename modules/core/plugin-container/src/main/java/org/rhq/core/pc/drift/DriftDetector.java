@@ -1,3 +1,22 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2011 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+
 package org.rhq.core.pc.drift;
 
 import java.io.File;
@@ -67,8 +86,7 @@ public class DriftDetector implements Runnable {
             int changes = 0;
 
             try {
-                if (changeSetMgr.changeSetExists(schedule.getResourceId(), new Headers(driftConfig.getName(),
-                    basedir(resourceId, driftConfig), COVERAGE))) {
+                if (changeSetMgr.changeSetExists(schedule.getResourceId(), createHeaders(schedule, COVERAGE))) {
                     changeSetType = DRIFT;
                     changes = generateDriftChangeSet(schedule);
                 } else {
@@ -92,9 +110,9 @@ public class DriftDetector implements Runnable {
         File basedir = new File(basedir(schedule.getResourceId(), schedule.getDriftConfiguration()));
 
         ChangeSetWriter driftWriter = changeSetMgr.getChangeSetWriter(schedule.getResourceId(),
-            new Headers(schedule.getDriftConfiguration().getName(), basedir.getAbsolutePath(), DRIFT));
+            createHeaders(schedule, DRIFT));
         ChangeSetWriter coverageWriter = changeSetMgr.getChangeSetWriterForUpdate(schedule.getResourceId(),
-            new Headers(schedule.getDriftConfiguration().getName(), basedir.getAbsolutePath(), COVERAGE));
+            createHeaders(schedule, COVERAGE));
         ChangeSetReader reader = changeSetMgr.getChangeSetReader(schedule.getResourceId(),
             schedule.getDriftConfiguration().getName());
 
@@ -144,16 +162,14 @@ public class DriftDetector implements Runnable {
         }
         driftWriter.close();
         coverageWriter.close();
-        changeSetMgr.updateChangeSet(schedule.getResourceId(), new Headers(schedule.getDriftConfiguration().getName(),
-            basedir.getAbsolutePath(), COVERAGE));
+        changeSetMgr.updateChangeSet(schedule.getResourceId(), createHeaders(schedule, COVERAGE));
 
         return changes;
     }
 
     private void generateCoverageChangeSet(DriftDetectionSchedule schedule) throws IOException {
-        ChangeSetWriter writer = changeSetMgr.getChangeSetWriter(schedule.getResourceId(),
-            new Headers(schedule.getDriftConfiguration().getName(),
-                basedir(schedule.getResourceId(), schedule.getDriftConfiguration()), COVERAGE));
+        ChangeSetWriter writer = changeSetMgr.getChangeSetWriter(schedule.getResourceId(), createHeaders(schedule,
+            COVERAGE));
 
         DirectoryScanner scanner = new DirectoryScanner(schedule.getResourceId(), schedule.getDriftConfiguration(),
             writer);
@@ -173,6 +189,17 @@ public class DriftDetector implements Runnable {
 
     private String basedir(int resourceId, DriftConfiguration driftConfig) {
         return driftClient.getAbsoluteBaseDirectory(resourceId, driftConfig).getAbsolutePath();
+    }
+
+    private Headers createHeaders(DriftDetectionSchedule schedule, DriftChangeSetCategory type) {
+        Headers headers = new Headers();
+        headers.setResourceId(schedule.getResourceId());
+        headers.setDriftCofigurationId(schedule.getDriftConfiguration().getId());
+        headers.setDriftConfigurationName(schedule.getDriftConfiguration().getName());
+        headers.setBasedir(basedir(schedule.getResourceId(), schedule.getDriftConfiguration()));
+        headers.setType(type);
+
+        return headers;
     }
 
     // TODO Do not use DirectoryWalker

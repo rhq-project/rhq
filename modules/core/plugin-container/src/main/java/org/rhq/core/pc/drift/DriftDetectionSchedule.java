@@ -36,6 +36,10 @@ public class DriftDetectionSchedule implements Comparable<DriftDetectionSchedule
         nextScan = System.currentTimeMillis() + (driftConfig.getInterval() * 1000);
     }
 
+    public void resetSchedule() {
+        nextScan = -1;
+    }
+
     public DriftDetectionSchedule copy() {
         DriftDetectionSchedule copy = new DriftDetectionSchedule(resourceId,
             new DriftConfiguration(driftConfig.getConfiguration().deepCopyWithoutProxies()));
@@ -77,5 +81,11 @@ public class DriftDetectionSchedule implements Comparable<DriftDetectionSchedule
     @Override
     public int hashCode() {
         return Long.valueOf(nextScan).hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return getClass().getSimpleName() + "[resourceId: " + resourceId + ", driftConfigurationId: " +
+            driftConfig.getId() + ", driftConfigurationName: " + driftConfig.getName() + "]";
     }
 }

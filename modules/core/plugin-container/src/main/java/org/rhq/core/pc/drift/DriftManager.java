@@ -180,50 +180,22 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
 
     @Override
     public void detectDrift(int resourceId, DriftConfiguration driftConfiguration) {
-        ScheduleQueue queue = new ScheduleQueue() {
-            DriftDetectionSchedule schedule;
+        if (log.isDebugEnabled()) {
+            log.debug("Received request to schedule drift detection immediately for [resourceId: " + resourceId +
+                ", driftConfigurationId: " + driftConfiguration.getId() + ", driftConfigurationName: " +
+                driftConfiguration.getName() + "]");
+        }
 
-            @Override
-            public DriftDetectionSchedule getNextSchedule() {
-                DriftDetectionSchedule removedSchedule = schedule;
-                schedule = null;
-                return removedSchedule;
-            }
-
-            @Override
-            public boolean addSchedule(DriftDetectionSchedule schedule) {
-                this.schedule = schedule;
-                return true;
-            }
-
-            @Override
-            public void clear() {
-                schedule = null;
-            }
-
-            @Override
-            public void deactivateSchedule() {
-                schedule = null;
-            }
-
-            @Override
-            public DriftDetectionSchedule update(int resourceId, DriftConfiguration config) {
-                return schedule;
-            }
-
-            @Override
-            public DriftDetectionSchedule remove(int resourceId, DriftConfiguration config) {
-                return null;
-            }
-        };
-        queue.addSchedule(new DriftDetectionSchedule(resourceId, driftConfiguration));
-
-        DriftDetector driftDetector = new DriftDetector();
-        driftDetector.setChangeSetManager(changeSetMgr);
-        driftDetector.setScheduleQueue(queue);
-        driftDetector.setDriftClient(this);
-
-        driftThreadPool.execute(driftDetector);
+        DriftDetectionSchedule schedule = schedulesQueue.remove(resourceId, driftConfiguration);
+        if (schedule == null) {
+            log.warn("No schedule found in the queue for [resourceId:" + resourceId + ", driftConfigurationId:" +
+                driftConfiguration.getId() + ", driftConfigurationName: " + driftConfiguration.getName() + "]. No " +
+                " work will be scheduled.");
+            return;
+        }
+        log.debug("Resetting " + schedule + " for immediate detection.");
+        schedule.resetSchedule();
+        schedulesQueue.addSchedule(schedule);
     }
 
     @Override

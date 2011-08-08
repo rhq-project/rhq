@@ -47,8 +47,8 @@ import org.jboss.remoting.CannotConnectException;
 import org.rhq.core.clientapi.agent.drift.DriftAgentService;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
-import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
+import org.rhq.core.domain.criteria.DriftConfigurationCriteria;
 import org.rhq.core.domain.criteria.DriftCriteria;
 import org.rhq.core.domain.criteria.JPADriftCriteria;
 import org.rhq.core.domain.drift.Drift;
@@ -68,6 +68,8 @@ import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginFacet;
 import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginManager;
+import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
+import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -251,8 +253,8 @@ public class DriftManagerBean implements DriftManagerLocal {
                 throw new IllegalArgumentException("Entity not found [" + entityContext + "]");
             }
 
-            for (Iterator<Configuration> i = resource.getDriftConfigurations().iterator(); i.hasNext();) {
-                DriftConfiguration dc = new DriftConfiguration(i.next());
+            for (Iterator<DriftConfiguration> i = resource.getDriftConfigurations().iterator(); i.hasNext();) {
+                DriftConfiguration dc = i.next();
                 if (dc.getName().equals(driftConfigName)) {
                     i.remove();
                     entityManager.merge(resource);
@@ -292,6 +294,18 @@ public class DriftManagerBean implements DriftManagerLocal {
     }
 
     @Override
+    public PageList<DriftConfiguration> findDriftConfigurationsByCriteria(Subject subject,
+        DriftConfigurationCriteria criteria) {
+
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        CriteriaQueryRunner<DriftConfiguration> queryRunner = new CriteriaQueryRunner<DriftConfiguration>(criteria,
+            generator, entityManager);
+        PageList<DriftConfiguration> result = queryRunner.execute();
+
+        return result;
+    }
+
+    @Override
     @TransactionAttribute(NOT_SUPPORTED)
     public PageList<? extends Drift<?, ?>> findDriftsByCriteria(Subject subject, DriftCriteria criteria) {
         DriftServerPluginFacet driftServerPlugin = getServerPlugin();
@@ -299,33 +313,16 @@ public class DriftManagerBean implements DriftManagerLocal {
     }
 
     @Override
-    public DriftConfiguration getDriftConfiguration(Subject subject, EntityContext entityContext, int driftConfigId) {
-        DriftConfiguration result = null;
-
-        switch (entityContext.getType()) {
-        case Resource:
-            Resource resource = entityManager.find(Resource.class, entityContext.getResourceId());
-            if (null == resource) {
-                throw new IllegalArgumentException("Entity not found [" + entityContext + "]");
-            }
-
-            for (Configuration config : resource.getDriftConfigurations()) {
-                if (config.getId() == driftConfigId) {
-                    result = new DriftConfiguration(config);
-                    break;
-                }
-            }
-
-            break;
-
-        default:
-            throw new IllegalArgumentException("Entity Context Type not supported [" + entityContext + "]");
-        }
+    public DriftConfiguration getDriftConfiguration(Subject subject, int driftConfigId) {
+        DriftConfiguration result = entityManager.find(DriftConfiguration.class, driftConfigId);
 
         if (null == result) {
-            throw new IllegalArgumentException("Drift Configuration Id [" + driftConfigId
-                + "] not found for entityContext [" + entityContext + "]");
+            throw new IllegalArgumentException("Drift Configuration Id [" + driftConfigId + "] not found.");
         }
+
+        // force lazy loads
+        result.getConfiguration().getProperties();
+        result.getResource();
 
         return result;
     }
@@ -361,15 +358,16 @@ public class DriftManagerBean implements DriftManagerLocal {
                 throw new IllegalArgumentException("Entity not found [" + entityContext + "]");
             }
 
-            for (Iterator<Configuration> i = resource.getDriftConfigurations().iterator(); i.hasNext();) {
-                DriftConfiguration dc = new DriftConfiguration(i.next());
+            // just completely replace an old version of the config 
+            for (Iterator<DriftConfiguration> i = resource.getDriftConfigurations().iterator(); i.hasNext();) {
+                DriftConfiguration dc = i.next();
                 if (dc.getName().equals(driftConfig.getName())) {
                     i.remove();
                     break;
                 }
             }
 
-            resource.getDriftConfigurations().add(driftConfig.getConfiguration());
+            resource.addDriftConfiguration(driftConfig);
             entityManager.merge(resource);
 
             AgentClient agentClient = agentManager.getAgentClient(subjectManager.getOverlord(), resourceId);

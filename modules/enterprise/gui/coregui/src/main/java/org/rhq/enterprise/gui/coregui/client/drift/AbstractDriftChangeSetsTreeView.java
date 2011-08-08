@@ -286,7 +286,7 @@ public abstract class AbstractDriftChangeSetsTreeView extends LocatableTreeGrid 
     static class DriftConfigurationTreeNode extends TreeNode {
         public DriftConfigurationTreeNode(DriftConfiguration driftConfig) {
             setIsFolder(true);
-            if (driftConfig.getEnabled()) {
+            if (driftConfig.isEnabled()) {
                 setIcon("subsystems/drift/DriftConfig_Folder_16.png");
             } else {
                 setIcon("subsystems/drift/DriftConfig_Disabled_Folder_16.png");

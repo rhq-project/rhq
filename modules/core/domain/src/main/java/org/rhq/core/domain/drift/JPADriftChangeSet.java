@@ -78,8 +78,9 @@ public class JPADriftChangeSet implements Serializable, DriftChangeSet<JPADrift>
     @Enumerated(EnumType.STRING)
     private DriftChangeSetCategory category;
 
-    @Column(name = "CONFIG_ID", nullable = false)
-    private int driftConfigurationId;
+    @JoinColumn(name = "DRIFT_CONFIG_ID", referencedColumnName = "ID", nullable = false)
+    @ManyToOne(optional = false)
+    private DriftConfiguration driftConfiguration;
 
     @JoinColumn(name = "RESOURCE_ID", referencedColumnName = "ID", nullable = false)
     @ManyToOne(optional = false)
@@ -91,11 +92,12 @@ public class JPADriftChangeSet implements Serializable, DriftChangeSet<JPADrift>
     protected JPADriftChangeSet() {
     }
 
-    public JPADriftChangeSet(Resource resource, int version, DriftChangeSetCategory category, int configId) {
+    public JPADriftChangeSet(Resource resource, int version, DriftChangeSetCategory category,
+        DriftConfiguration driftConfiguration) {
         this.resource = resource;
         this.version = version;
         this.category = category;
-        driftConfigurationId = configId;
+        this.driftConfiguration = driftConfiguration;
     }
 
     @Override
@@ -151,14 +153,22 @@ public class JPADriftChangeSet implements Serializable, DriftChangeSet<JPADrift>
         this.resource = resource;
     }
 
+    public DriftConfiguration getDriftConfiguration() {
+        return driftConfiguration;
+    }
+
+    public void setDriftConfiguration(DriftConfiguration driftConfiguration) {
+        this.driftConfiguration = driftConfiguration;
+    }
+
     @Override
     public int getDriftConfigurationId() {
-        return driftConfigurationId;
+        return this.driftConfiguration.getId();
     }
 
     @Override
     public void setDriftConfigurationId(int id) {
-        driftConfigurationId = id;
+        this.driftConfiguration.setId(id);
     }
 
     @Override

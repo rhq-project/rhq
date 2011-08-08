@@ -19,9 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client.drift;
 
 import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.Collection;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
@@ -36,20 +34,16 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.common.EntityContext;
-import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.criteria.DriftConfigurationCriteria;
 import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.domain.drift.DriftConfiguration.BaseDirectory;
-import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.gwt.DriftGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.TypesLoadedCallback;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
@@ -57,7 +51,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * @author Jay Shaughnessy
  * @author John Mazzitelli
  */
-public class DriftConfigurationDataSource extends RPCDataSource<DriftConfiguration, ResourceCriteria> {
+public class DriftConfigurationDataSource extends RPCDataSource<DriftConfiguration, DriftConfigurationCriteria> {
 
     public static final String ATTR_ENTITY = "object";
     public static final String ATTR_ID = "id";
@@ -66,7 +60,7 @@ public class DriftConfigurationDataSource extends RPCDataSource<DriftConfigurati
     public static final String ATTR_BASE_DIR_STRING = "baseDirString";
     public static final String ATTR_ENABLED = "enabled";
 
-    private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
+    private DriftGWTServiceAsync driftService = GWTServiceLookup.getDriftService();
     private EntityContext entityContext;
 
     public DriftConfigurationDataSource() {
@@ -141,80 +135,43 @@ public class DriftConfigurationDataSource extends RPCDataSource<DriftConfigurati
     }
 
     @Override
-    protected void executeFetch(final DSRequest request, final DSResponse response, final ResourceCriteria criteria) {
-        this.resourceService.findResourcesByCriteria(criteria, new AsyncCallback<PageList<Resource>>() {
-            public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError(MSG.view_inventory_resources_loadFailed(), caught);
-                response.setStatus(RPCResponse.STATUS_FAILURE);
-                processResponse(request.getRequestId(), response);
-            }
+    protected void executeFetch(final DSRequest request, final DSResponse response,
+        final DriftConfigurationCriteria criteria) {
+        this.driftService.findDriftConfigurationsByCriteria(criteria,
+            new AsyncCallback<PageList<DriftConfiguration>>() {
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError(MSG.view_drift_failure_load(), caught);
+                    response.setStatus(RPCResponse.STATUS_FAILURE);
+                    processResponse(request.getRequestId(), response);
+                }
 
-            public void onSuccess(PageList<Resource> result) {
-                dataRetrieved(result, response, request);
-            }
-        });
+                public void onSuccess(PageList<DriftConfiguration> result) {
+                    dataRetrieved(result, response, request);
+                }
+            });
     }
 
     /**
      * Additional processing to support entity-specific or cross-resource views, and something that can be overidden.
      */
-    protected void dataRetrieved(final PageList<Resource> result, final DSResponse response, final DSRequest request) {
+    protected void dataRetrieved(final PageList<DriftConfiguration> result, final DSResponse response,
+        final DSRequest request) {
         switch (entityContext.type) {
 
         // no need to disambiguate, the drift configs are for a single resource
         case Resource:
-            Set<DriftConfiguration> driftConfigs = DriftConfiguration.valueOf(result.get(0));
-            response.setData(buildRecords(driftConfigs));
+            response.setData(buildRecords(result));
             // for paging to work we have to specify size of full result set
-            response.setTotalRows(getTotalRows(driftConfigs, response, request));
+            response.setTotalRows(getTotalRows(result, response, request));
             processResponse(request.getRequestId(), response);
             break;
 
-        // disambiguate as the results could be cross-resource
+        case ResourceGroup:
+            //TODO
+
         default:
-            Set<Integer> typesSet = new HashSet<Integer>();
-            Set<String> ancestries = new HashSet<String>();
-            for (Resource resource : result) {
-                typesSet.add(resource.getResourceType().getId());
-                ancestries.add(resource.getAncestry());
-            }
-
-            // In addition to the types of the result resources, get the types of their ancestry
-            typesSet.addAll(AncestryUtil.getAncestryTypeIds(ancestries));
-
-            ResourceTypeRepository typeRepo = ResourceTypeRepository.Cache.getInstance();
-            typeRepo.getResourceTypes(typesSet.toArray(new Integer[typesSet.size()]), new TypesLoadedCallback() {
-                @Override
-                public void onTypesLoaded(Map<Integer, ResourceType> types) {
-                    // Smartgwt has issues storing a Map as a ListGridRecord attribute. Wrap it in a pojo.                
-                    AncestryUtil.MapWrapper typesWrapper = new AncestryUtil.MapWrapper(types);
-
-                    Set<DriftConfiguration> driftConfigs = getDriftConfigs(result);
-                    Record[] records = buildRecords(driftConfigs);
-                    for (Record record : records) {
-                        // To avoid a lot of unnecessary String construction, be lazy about building ancestry hover text.
-                        // Store the types map off the records so we can build a detailed hover string as needed.                      
-                        record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY_TYPES, typesWrapper);
-
-                        // Build the decoded ancestry Strings now for display
-                        record
-                            .setAttribute(AncestryUtil.RESOURCE_ANCESTRY_VALUE, AncestryUtil.getAncestryValue(record));
-                    }
-                    response.setData(records);
-                    // for paging to work we have to specify size of full result set
-                    response.setTotalRows(getTotalRows(driftConfigs, response, request));
-                    processResponse(request.getRequestId(), response);
-                }
-            });
+            throw new IllegalArgumentException("Unsupported Context Type: " + entityContext);
         }
-    }
-
-    private Set<DriftConfiguration> getDriftConfigs(PageList<Resource> resources) {
-        Set<DriftConfiguration> result = new HashSet<DriftConfiguration>();
-        for (Resource resource : resources) {
-            result.addAll(DriftConfiguration.valueOf(resource.getDriftConfigurations()));
-        }
-        return result;
     }
 
     /**
@@ -227,33 +184,34 @@ public class DriftConfigurationDataSource extends RPCDataSource<DriftConfigurati
      * 
      * @return should not exceed result.size(). 
      */
-    protected int getTotalRows(final Set<DriftConfiguration> result, final DSResponse response, final DSRequest request) {
+    protected int getTotalRows(final Collection<DriftConfiguration> result, final DSResponse response,
+        final DSRequest request) {
         return result.size();
     }
 
     @Override
-    protected ResourceCriteria getFetchCriteria(DSRequest request) {
+    protected DriftConfigurationCriteria getFetchCriteria(DSRequest request) {
 
-        ResourceCriteria criteria = new ResourceCriteria();
+        DriftConfigurationCriteria criteria = new DriftConfigurationCriteria();
         switch (entityContext.getType()) {
         case Resource:
-            criteria.addFilterId(entityContext.getResourceId());
+            criteria.addFilterResourceIds(entityContext.getResourceId());
             break;
 
         case ResourceGroup:
-            criteria.addFilterExplicitGroupIds(entityContext.getGroupId());
-            break;
+            //TODO
 
         default:
             // no filter
         }
 
-        criteria.fetchDriftConfigurations(true);
+        criteria.fetchConfiguration(true);
         criteria.setPageControl(getPageControl(request));
 
         return criteria;
     }
 
+    /*
     @Override
     protected String getSortFieldForColumn(String columnName) {
         if (AncestryUtil.RESOURCE_ANCESTRY.equals(columnName)) {
@@ -262,6 +220,7 @@ public class DriftConfigurationDataSource extends RPCDataSource<DriftConfigurati
 
         return super.getSortFieldForColumn(columnName);
     }
+    */
 
     @Override
     public DriftConfiguration copyValues(Record from) {
@@ -282,7 +241,7 @@ public class DriftConfigurationDataSource extends RPCDataSource<DriftConfigurati
         record.setAttribute(ATTR_NAME, from.getName());
         record.setAttribute(ATTR_INTERVAL, String.valueOf(from.getInterval()));
         record.setAttribute(ATTR_BASE_DIR_STRING, getBaseDirString(from.getBasedir()));
-        record.setAttribute(ATTR_ENABLED, ImageManager.getAvailabilityIcon(from.getEnabled()));
+        record.setAttribute(ATTR_ENABLED, ImageManager.getAvailabilityIcon(from.isEnabled()));
 
         // // for ancestry handling       
         // Resource resource = ...
@@ -296,10 +255,6 @@ public class DriftConfigurationDataSource extends RPCDataSource<DriftConfigurati
 
     private static String getBaseDirString(BaseDirectory basedir) {
         return basedir.getValueContext() + ":" + basedir.getValueName();
-    }
-
-    public ResourceGWTServiceAsync getResourceService() {
-        return resourceService;
     }
 
     protected EntityContext getEntityContext() {

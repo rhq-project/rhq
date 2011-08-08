@@ -60,7 +60,7 @@ public class ResourceDriftChangeSetsTreeDataSource extends AbstractDriftChangeSe
         criteria.fetchDriftConfigurations(true);
         this.resourceService.findResourcesByCriteria(criteria, new AsyncCallback<PageList<Resource>>() {
             public void onSuccess(PageList<Resource> result) {
-                Set<DriftConfiguration> driftConfigs = DriftConfiguration.valueOf(result.get(0));
+                Set<DriftConfiguration> driftConfigs = result.get(0).getDriftConfigurations();
                 response.setData(buildRecords(driftConfigs));
                 response.setTotalRows(result.getTotalSize());
                 processResponse(request.getRequestId(), response);

@@ -39,7 +39,6 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
@@ -70,6 +69,7 @@ import org.rhq.core.domain.content.InstalledPackageHistory;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.ResourceRepo;
 import org.rhq.core.domain.dashboard.Dashboard;
+import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.domain.event.EventSource;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
@@ -1074,11 +1074,9 @@ public class Resource implements Comparable<Resource>, Serializable {
     @OneToMany(mappedBy = "resource", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     private Set<Dashboard> dashboards = null;
 
-    @JoinTable(name = "RHQ_DRIFT_CONFIG_MAP", joinColumns = { @JoinColumn(name = "RESOURCE_ID", nullable = false) },
-        inverseJoinColumns = { @JoinColumn(name = "CONFIG_ID", nullable = false)})
-    @OneToMany(fetch = FetchType.LAZY, cascade = { CascadeType.ALL })
+    @OneToMany(mappedBy = "resource", fetch = FetchType.LAZY, cascade = { CascadeType.ALL })
     @org.hibernate.annotations.Cascade(org.hibernate.annotations.CascadeType.DELETE_ORPHAN)
-    private Set<Configuration> driftConfigurations = null;
+    private Set<DriftConfiguration> driftConfigurations = null;
 
     public Resource() {
     }
@@ -1749,12 +1747,21 @@ public class Resource implements Comparable<Resource>, Serializable {
         this.dashboards = dashboards;
     }
 
-    public Set<Configuration> getDriftConfigurations() {
+    public Set<DriftConfiguration> getDriftConfigurations() {
+        if (this.driftConfigurations == null) {
+            this.driftConfigurations = new LinkedHashSet<DriftConfiguration>();
+        }
+
         return driftConfigurations;
     }
 
-    public void setDriftConfigurations(Set<Configuration> driftConfigurations) {
+    public void setDriftConfigurations(Set<DriftConfiguration> driftConfigurations) {
         this.driftConfigurations = driftConfigurations;
+    }
+
+    public void addDriftConfiguration(DriftConfiguration driftConfiguration) {
+        getDriftConfigurations().add(driftConfiguration);
+        driftConfiguration.setResource(this);
     }
 
     public int compareTo(Resource that) {

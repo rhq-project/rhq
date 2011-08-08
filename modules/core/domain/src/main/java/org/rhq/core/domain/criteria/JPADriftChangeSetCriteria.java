@@ -41,7 +41,7 @@ public class JPADriftChangeSetCriteria extends Criteria implements DriftChangeSe
     private Integer filterId;
     private Integer filterInitial; // needs override
     private Integer filterResourceId; // needs override
-    private Integer filterDriftConfigurationId;
+    private Integer filterDriftConfigurationId; // needs override
     private Integer filterVersion;
     private Integer filterStartVersion;
     private Integer filterEndVersion;
@@ -63,6 +63,7 @@ public class JPADriftChangeSetCriteria extends Criteria implements DriftChangeSe
         filterOverrides.put("endVersion", "version <= ?");
         filterOverrides.put("createdAfter", "ctime >= ?");
         filterOverrides.put("createdBefore", "ctime <= ?");
+        filterOverrides.put("driftConfigurationId", "driftConfiguration.id = ?");
 
         if (null != changeSetCriteria) {
             this.addFilterCategory(changeSetCriteria.getFilterCategory());

@@ -358,17 +358,26 @@ public class DriftManagerBean implements DriftManagerLocal {
                 throw new IllegalArgumentException("Entity not found [" + entityContext + "]");
             }
 
-            // just completely replace an old version of the config 
+            // Update or add the driftConfig as necessary
+            boolean isUpdated = false;
             for (Iterator<DriftConfiguration> i = resource.getDriftConfigurations().iterator(); i.hasNext();) {
                 DriftConfiguration dc = i.next();
                 if (dc.getName().equals(driftConfig.getName())) {
-                    i.remove();
+                    dc.setConfiguration(driftConfig.getConfiguration());
+                    isUpdated = true;
                     break;
                 }
             }
 
-            resource.addDriftConfiguration(driftConfig);
-            entityManager.merge(resource);
+            if (!isUpdated) {
+                resource.addDriftConfiguration(driftConfig);
+            }
+            resource = entityManager.merge(resource);
+
+            // Do not pass attached entities to the following Agent call, which is outside Hibernate's control. Flush
+            // and clear the entities to ensure the work above is captured and we pass out a detached object. 
+            entityManager.flush();
+            entityManager.clear();
 
             AgentClient agentClient = agentManager.getAgentClient(subjectManager.getOverlord(), resourceId);
             DriftAgentService service = agentClient.getDriftAgentService();

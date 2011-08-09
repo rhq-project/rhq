@@ -52,7 +52,6 @@ public interface WebservicesRemote extends //
     //Removed as it was problematic for WS clients. Not sure if this well be re-enabled.
     //    DataAccessManagerRemote,//
     DiscoveryBossRemote,//
-    DriftManagerRemote, //
     EventManagerRemote,//
     MeasurementBaselineManagerRemote,//
     MeasurementDataManagerRemote,//

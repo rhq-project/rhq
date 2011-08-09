@@ -37,6 +37,7 @@ import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ProcessScanResult;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.system.ProcessInfo;
+import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
@@ -123,8 +124,8 @@ public class ManagedASDiscovery extends AbstractBaseDiscovery
     private ServerInfo getBindingsFromDC(HostPort domainController, String serverGroup) {
         ASConnection dcConnection = new ASConnection(domainController.host, domainController.port);
         List<PROPERTY_VALUE> address = new ArrayList<PROPERTY_VALUE>();
-        address.add(new PROPERTY_VALUE("server-group", serverGroup));
-        Operation op = new ReadResource(address);
+        Address theAddress = new Address("server-group", serverGroup);
+        Operation op = new ReadResource(theAddress);
         ComplexResult res = (ComplexResult) dcConnection.execute(op, true);
         if (res.isSuccess()) {
             if (res.getResult().containsKey("socket-binding-group")) {

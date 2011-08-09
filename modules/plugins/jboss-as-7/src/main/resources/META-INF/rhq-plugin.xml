@@ -1932,7 +1932,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
                                required="true">
                 <c:option-source target="resource" expression="type=NetworkInterface plugin=jboss-as-7"/>
             </c:simple-property>
-            <c:list-property name="includes" required="false">
+            <c:list-property name="includes" required="false" readOnly="true"> <!-- read-only until AS7-1467 is fixed -->
                 <c:simple-property name="includes" displayName="Included bindings" description="Other bindings that are included in this one (only needed in Domain Mode)"/>
             </c:list-property>
             <c:group name="children:socket-binding:name" displayName="Individual socket bindings">

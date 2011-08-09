@@ -18,7 +18,6 @@
  */
 package org.rhq.modules.plugins.jbossas7.json;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -35,43 +34,34 @@ import org.codehaus.jackson.annotate.JsonProperty;
  */
 public class Operation {
 
-    private String operation;
     @JsonProperty
-    private List<PROPERTY_VALUE> address = Collections.emptyList();
+    private String operation;
+    @JsonProperty(value = "address")
+    private List<PROPERTY_VALUE> _address ;
+    @JsonIgnore
+    Address address ;
     private Map<String,Object> additionalProperties;
 
 
-    public Operation(String operation, List<PROPERTY_VALUE> address, Map<String,Object> payload) {
-        this.operation = operation;
-        this.address = address;
-        this.additionalProperties = payload;
-    }
-
-    public Operation(String operation, List<PROPERTY_VALUE> address, String key, Object value) {
-        this.operation = operation;
-        this.address = address;
-        additionalProperties = new HashMap<String,Object>(1);
-        additionalProperties.put(key,value);
-
-    }
-
-    public Operation(String operation, List<PROPERTY_VALUE> address) {
-        this.operation = operation;
-        this.address = address;
-
-    }
-
     public Operation(String operation, String addressKey, String addressValue) {
         this.operation = operation;
-        List<PROPERTY_VALUE> address = new ArrayList<PROPERTY_VALUE>(1);
-        address.add(new PROPERTY_VALUE(addressKey, addressValue));
-        this.address = address;
+        this.address = new Address(addressKey,addressValue);
+        this._address = address.path;
     }
 
     public Operation(String operation, Address address) {
         this.operation = operation;
-        if (address!=null)
-            this.address = address.path;
+        if (address!=null && address.path!=null) {
+            this.address = address;
+            this._address = address.path;
+        } else {
+            _address = Collections.emptyList();
+        }
+    }
+
+    public Operation(String operation, Address address, Map<String, Object> additionalProperties) {
+        this(operation,address);
+        this.additionalProperties = additionalProperties;
     }
 
     public Operation() {
@@ -85,6 +75,7 @@ public class Operation {
         additionalProperties.put(key,value);
     }
 
+    @SuppressWarnings("unused")
     public void setAdditionalProperties(Map<String, Object> additionalProperties) {
         this.additionalProperties = additionalProperties;
     }
@@ -111,28 +102,19 @@ public class Operation {
             return null;
     }
 
+    @JsonProperty
     public String getOperation() {
         return operation;
     }
 
-    public void setOperation(String operation) {
-        this.operation = operation;
-    }
-
-    public List<PROPERTY_VALUE> getAddress() {
+    @JsonIgnore
+    public Address getAddress() {
+        if (address==null) {
+            address = new Address(_address);
+        }
         return address;
     }
 
-    public void setAddress(List<PROPERTY_VALUE> address) {
-        this.address = address;
-    }
-
-    public List<PROPERTY_VALUE> addToAddress(PROPERTY_VALUE component) {
-        if (address==null)
-            address = new ArrayList<PROPERTY_VALUE>();
-        address.add(component);
-        return address;
-    }
 
     @Override
     public String toString() {

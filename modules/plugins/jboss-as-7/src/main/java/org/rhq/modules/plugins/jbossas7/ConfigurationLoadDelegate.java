@@ -19,9 +19,7 @@
 package org.rhq.modules.plugins.jbossas7;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -29,7 +27,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
@@ -43,13 +40,11 @@ import org.rhq.core.domain.configuration.definition.PropertyGroupDefinition;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.modules.plugins.jbossas7.json.Address;
-import org.rhq.modules.plugins.jbossas7.json.CompositeOperation;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.ReadAttribute;
 import org.rhq.modules.plugins.jbossas7.json.ReadChildrenResources;
 import org.rhq.modules.plugins.jbossas7.json.ReadResource;
 import org.rhq.modules.plugins.jbossas7.json.Result;
-import org.rhq.modules.plugins.jbossas7.json.WriteAttribute;
 
 public class ConfigurationLoadDelegate implements ConfigurationFacet {
 
@@ -58,7 +53,6 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
     private Address address;
     private ASConnection connection;
     private ConfigurationDefinition configurationDefinition;
-    private String namePropLocator;
 
     /**
      * Create a new configuration delegate, that reads the attributes for the resource at address.

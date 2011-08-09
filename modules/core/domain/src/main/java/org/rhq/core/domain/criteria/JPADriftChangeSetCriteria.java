@@ -48,7 +48,8 @@ public class JPADriftChangeSetCriteria extends Criteria implements DriftChangeSe
     private Long filterCreatedAfter;
     private Long filterCreatedBefore;
     private DriftChangeSetCategory filterCategory;
-    private boolean fetchDrifts;
+    private Boolean fetchDrifts;
+    private Boolean fetchDriftConfiguration;
 
     private PageOrdering sortVersion;
 
@@ -188,6 +189,10 @@ public class JPADriftChangeSetCriteria extends Criteria implements DriftChangeSe
     @Override
     public boolean isFetchDrifts() {
         return fetchDrifts;
+    }
+
+    public void fetchDriftConfiguration(boolean fetchDriftConfiguration) {
+        this.fetchDriftConfiguration = fetchDriftConfiguration;
     }
 
     public void addSortVersion(PageOrdering sortVersion) {

@@ -598,27 +598,6 @@ public class WebservicesManagerBean implements WebservicesRemote {
 
     //DISCOVERYBOSS: END ------------------------------------
 
-    // DRIFTMANAGER: BEGIN ----------------------------------
-
-    @Override
-    public DriftSnapshot createSnapshot(Subject subject, DriftChangeSetCriteria criteria) throws Exception {
-        return driftManager.createSnapshot(subject, criteria);
-    }
-
-    @Override
-    public PageList<? extends DriftChangeSet<?>> findDriftChangeSetsByCriteria(Subject subject,
-        DriftChangeSetCriteria criteria) throws Exception {
-        return driftManager.findDriftChangeSetsByCriteria(subject, criteria);
-    }
-
-    @Override
-    public PageList<? extends Drift<?, ?>> findDriftsByCriteria(Subject subject, DriftCriteria criteria)
-        throws Exception {
-        return driftManager.findDriftsByCriteria(subject, criteria);
-    }
-
-    // DRIFTMANAGER: END ------------------------------------
-
     //EVENTMANAGER: BEGIN ----------------------------------
     public PageList<Event> findEventsByCriteria(Subject subject, EventCriteria criteria) {
         checkParametersPassedIn(subject, criteria);

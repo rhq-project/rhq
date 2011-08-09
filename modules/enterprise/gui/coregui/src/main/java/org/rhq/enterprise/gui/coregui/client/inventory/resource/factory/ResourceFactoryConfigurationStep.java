@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.factory;
 
 import java.util.TreeSet;
 
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
 
@@ -29,6 +30,8 @@ import org.rhq.enterprise.gui.coregui.client.components.configuration.Configurat
 import org.rhq.enterprise.gui.coregui.client.components.form.DurationItem;
 import org.rhq.enterprise.gui.coregui.client.components.form.TimeUnit;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
+import org.rhq.enterprise.gui.coregui.client.gwt.ConfigurationGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.schedule.AbstractOperationScheduleDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
@@ -55,11 +58,42 @@ public class ResourceFactoryConfigurationStep extends AbstractWizardStep {
                 .extendLocatorId("ResourceFactoryConfig");
             vLayout = new LocatableVLayout(locatorId);
 
-            ConfigurationDefinition def = wizard.getNewResourceConfigurationDefinition();
+            final ConfigurationDefinition def = wizard.getNewResourceConfigurationDefinition();
             if (def != null) {
-                Configuration startingConfig = wizard.getNewResourceStartingConfiguration();
-                editor = new ConfigurationEditor(vLayout.extendLocatorId("Editor"), def, startingConfig);
-                vLayout.addMember(editor);
+
+                final Configuration startingConfig = wizard.getNewResourceStartingConfiguration();
+
+                ConfigurationGWTServiceAsync configurationService = GWTServiceLookup.getConfigurationService();
+                configurationService.getOptionValuesForConfigDefinition(def,new AsyncCallback<ConfigurationDefinition>() {
+
+
+                    @Override
+                    public void onFailure(Throwable throwable) {
+                        ConfigurationEditor configurationEditor = new ConfigurationEditor(vLayout.extendLocatorId("Editor"),
+                            def, startingConfig);
+//                        configurationEditor.setReadOnly(isReadOnly());
+//                        operationParametersConfigurationHolder.addMember(configurationEditor);
+//                        operationParametersConfigurationHolder.show();
+                        vLayout.addMember(configurationEditor);
+
+                    }
+
+                    @Override
+                    public void onSuccess(ConfigurationDefinition result) {
+                        ConfigurationEditor configurationEditor = new ConfigurationEditor(vLayout.extendLocatorId("Editor"),
+                            result, startingConfig);
+//                        configurationEditor.setReadOnly(isReadOnly());
+//                        operationParametersConfigurationHolder.addMember(configurationEditor);
+//                        operationParametersConfigurationHolder.show();
+                        vLayout.addMember(configurationEditor);
+                    }
+                });
+
+
+
+//                Configuration startingConfig = wizard.getNewResourceStartingConfiguration();
+//                editor = new ConfigurationEditor(vLayout.extendLocatorId("Editor"), def, startingConfig);
+//                vLayout.addMember(editor);
             }
 
             TreeSet<TimeUnit> supportedUnits = new TreeSet<TimeUnit>();

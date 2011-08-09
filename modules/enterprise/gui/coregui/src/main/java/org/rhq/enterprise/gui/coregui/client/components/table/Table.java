@@ -100,7 +100,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * @author Greg Hinkle
  * @author Ian Springer
  */
-public class Table<DS extends RPCDataSource> extends LocatableHLayout implements RefreshableView {
+public class Table<DS extends RPCDataSource<?, ?>> extends LocatableHLayout implements RefreshableView {
 
     protected static final String FIELD_ID = "id";
     protected static final String FIELD_NAME = "name";
@@ -538,6 +538,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     public void setFilterFormItems(FormItem... formItems) {
         setShowHeader(false);
         this.filterForm.setItems(formItems);
+        this.filterForm.setNumCols(4);
     }
 
     /**
@@ -869,7 +870,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
                 this.listGrid.setSelectionType(getDefaultSelectionStyle());
             }
 
-            int selectionCount = this.listGrid.getSelection().length;
+            //int selectionCount = this.listGrid.getSelection().length;
             for (TableActionInfo tableAction : tableActions) {
                 if (tableAction.actionCanvas != null) { // if null, we haven't initialized our buttons yet, so skip this
                     boolean enabled = (!this.tableActionDisableOverride && tableAction.action.isEnabled(this.listGrid

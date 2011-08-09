@@ -250,8 +250,9 @@ public class DriftDetectorTest extends DriftTest {
             .add(addedFileEntry("server-2.conf", sha256(server2Conf))));
     }
 
+    // TODO enable test once change set file format is changed to only store file entries
     @SuppressWarnings("unchecked")
-    @Test
+    @Test(enabled = false)
     public void includeFiledAddedInNewDirectoryInDriftChangeSet() throws Exception {
         DriftConfiguration config = driftConfiguration("file-added-in-new-dir", resourceDir.getAbsolutePath());
 
@@ -276,9 +277,8 @@ public class DriftDetectorTest extends DriftTest {
             .add(addedFileEntry("server-2.conf", sha256(server2Conf))));
     }
 
-    // TODO enable test once change set file format is changed to only store file entries
     @SuppressWarnings("unchecked")
-    @Test(enabled = false)
+    @Test
     public void includeRemovedFileInDriftChangeSet() throws Exception {
         DriftConfiguration config = driftConfiguration("file-removed-drift-test", resourceDir.getAbsolutePath());
 

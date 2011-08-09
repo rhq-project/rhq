@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -43,6 +43,7 @@ import org.quartz.SchedulerException;
 import org.quartz.SimpleTrigger;
 import org.quartz.Trigger;
 
+import org.rhq.core.clientapi.agent.configuration.ConfigurationUtility;
 import org.rhq.core.clientapi.agent.operation.CancelResults;
 import org.rhq.core.clientapi.agent.operation.CancelResults.InterruptedState;
 import org.rhq.core.domain.auth.Subject;
@@ -51,6 +52,7 @@ import org.rhq.core.domain.common.JobTrigger;
 import org.rhq.core.domain.common.composite.IntegerOptionItem;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.criteria.GroupOperationHistoryCriteria;
 import org.rhq.core.domain.criteria.OperationDefinitionCriteria;
 import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
@@ -72,6 +74,7 @@ import org.rhq.core.domain.operation.composite.GroupOperationScheduleComposite;
 import org.rhq.core.domain.operation.composite.ResourceOperationLastCompletedComposite;
 import org.rhq.core.domain.operation.composite.ResourceOperationScheduleComposite;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
@@ -209,6 +212,8 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
 
         ensureControlPermission(subject, resource);
 
+        validateOperationNameAndParameters(resource.getResourceType(), operationName, parameters);
+
         String uniqueJobId = createUniqueJobName(resource, operationName);
 
         JobDataMap jobDataMap = new JobDataMap();
@@ -276,6 +281,8 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         ResourceGroup group = getCompatibleGroupIfAuthorized(subject, compatibleGroupId);
 
         ensureControlPermission(subject, group);
+
+        validateOperationNameAndParameters(group.getResourceType(), operationName, parameters);
 
         JobDataMap jobDataMap = new JobDataMap();
         jobDataMap.put(GroupOperationJob.DATAMAP_STRING_OPERATION_NAME, operationName);
@@ -2071,6 +2078,29 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         }
 
         return trigger;
+    }
+
+    private static void validateOperationNameAndParameters(ResourceType resourceType, String operationName,
+                                                           Configuration parameters) {
+        Set<OperationDefinition> operationDefinitions = resourceType.getOperationDefinitions();
+        OperationDefinition matchingOperationDefinition = null;
+        for (OperationDefinition operationDefinition : operationDefinitions) {
+            if (operationDefinition.getName().equals(operationName)) {
+                matchingOperationDefinition = operationDefinition;
+                break;
+            }
+        }
+        if (matchingOperationDefinition == null) {
+            throw new IllegalArgumentException("[" + operationName
+                    + "] is not a valid operation name for Resources of type [" + resourceType.getName() + "]." );
+        }
+        ConfigurationDefinition parametersDefinition =
+                matchingOperationDefinition.getParametersConfigurationDefinition();
+        List<String> errors = ConfigurationUtility.validateConfiguration(parameters, parametersDefinition);
+        if (!errors.isEmpty()) {
+            throw new IllegalArgumentException("Parameters for [" + operationName
+                    + "] on Resource of type [" + resourceType.getName() + "] are not valid: " + errors );
+        }
     }
 
 }

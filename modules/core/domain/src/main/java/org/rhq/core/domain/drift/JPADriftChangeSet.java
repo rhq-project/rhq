@@ -31,6 +31,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -79,7 +80,9 @@ public class JPADriftChangeSet implements Serializable, DriftChangeSet<JPADrift>
     private DriftChangeSetCategory category;
 
     @JoinColumn(name = "DRIFT_CONFIG_ID", referencedColumnName = "ID", nullable = false)
-    @ManyToOne(optional = false)
+    // @ManyToOne(optional = false)
+    // TODO: remove this eager load, the drift tree build should be written to not need this
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
     private DriftConfiguration driftConfiguration;
 
     @JoinColumn(name = "RESOURCE_ID", referencedColumnName = "ID", nullable = false)

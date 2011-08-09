@@ -23,13 +23,9 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 
-import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
-import com.smartgwt.client.data.DSCallback;
 import com.smartgwt.client.data.DSRequest;
-import com.smartgwt.client.data.DSResponse;
-import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.widgets.Canvas;
@@ -191,7 +187,8 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
         final List<Integer> successIds = new ArrayList<Integer>();
         final List<Integer> failureIds = new ArrayList<Integer>();
         for (ListGridRecord record : recordsToBeDeleted) {
-            final ResourceOperationHistory operationHistoryToRemove = new OperationHistoryDataSource().copyValues(record);
+            final ResourceOperationHistory operationHistoryToRemove = new OperationHistoryDataSource()
+                .copyValues(record);
             GWTServiceLookup.getOperationService().deleteOperationHistory(operationHistoryToRemove.getId(), force,
                 new AsyncCallback<Void>() {
                     public void onSuccess(Void result) {
@@ -202,7 +199,7 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
                     public void onFailure(Throwable caught) {
                         // TODO: i18n
                         CoreGUI.getErrorHandler().handleError("Failed to delete " + operationHistoryToRemove + ".",
-                                caught);
+                            caught);
                         failureIds.add(operationHistoryToRemove.getId());
                         handleCompletion(successIds, failureIds, numberOfRecordsToBeDeleted);
                     }
@@ -214,10 +211,13 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
         if ((successIds.size() + failureIds.size()) == numberOfRecordsToBeDeleted) {
             // TODO: i18n
             if (successIds.size() == numberOfRecordsToBeDeleted) {
-                CoreGUI.getMessageCenter().notify(new Message("Deleted " + numberOfRecordsToBeDeleted + " operation history items."));
+                CoreGUI.getMessageCenter().notify(
+                    new Message("Deleted " + numberOfRecordsToBeDeleted + " operation history items."));
             } else {
-                CoreGUI.getMessageCenter().notify(new Message("Deleted " + successIds.size()
-                        + " operation history items, but failed to delete the items with the following IDs: " + failureIds));
+                CoreGUI.getMessageCenter().notify(
+                    new Message("Deleted " + successIds.size()
+                        + " operation history items, but failed to delete the items with the following IDs: "
+                        + failureIds));
             }
             refresh();
         }
@@ -228,7 +228,7 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
     }
 
     @Override
-    public Canvas getDetailsView(int id) {
+    public Canvas getDetailsView(Integer id) {
         return new ResourceOperationHistoryDetailsView(extendLocatorId("Detail"));
     }
 
@@ -236,6 +236,5 @@ public class OperationHistoryView extends TableSection<OperationHistoryDataSourc
     protected String getTitleFieldName() {
         return OperationHistoryDataSource.Field.OPERATION_NAME;
     }
-
 
 }

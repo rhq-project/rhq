@@ -58,7 +58,7 @@ public class ConfigurationHistoryView extends AbstractConfigurationHistoryView<C
     }
 
     @Override
-    public Canvas getDetailsView(int id) {
+    public Canvas getDetailsView(Integer id) {
         ConfigurationHistoryDetailView detailView = new ConfigurationHistoryDetailView(this.getLocatorId());
         return detailView;
     }

@@ -42,9 +42,9 @@ import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.form.EnumSelectItem;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
+import org.rhq.enterprise.gui.coregui.client.components.table.StringIDTableSection;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -62,7 +62,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  *
  * @author Jay Shaughnessy
  */
-public class DriftHistoryView extends TableSection<DriftDataSource> {
+public class DriftHistoryView extends StringIDTableSection<DriftDataSource> {
 
     public static final ViewName SUBSYSTEM_VIEW_ID = new ViewName("RecentDrifts", MSG.common_title_recent_drifts());
 
@@ -155,8 +155,8 @@ public class DriftHistoryView extends TableSection<DriftDataSource> {
         return new CellFormatter() {
             public String format(Object value, ListGridRecord record, int i, int i1) {
                 Integer resourceId = record.getAttributeAsInt(AncestryUtil.RESOURCE_ID);
-                Integer driftId = getId(record);
-                String url = LinkManager.getSubsystemDriftHistoryLink(resourceId, driftId);
+                String driftId = getId(record);
+                String url = LinkManager.getDriftHistoryLink(resourceId, driftId);
                 String formattedValue = TimestampCellFormatter.format(value);
                 return SeleniumUtility.getLocatableHref(url, formattedValue, null);
             }
@@ -284,8 +284,8 @@ public class DriftHistoryView extends TableSection<DriftDataSource> {
     //    }
 
     @Override
-    public Canvas getDetailsView(int driftId) {
-        return DriftDetailsView.getInstance();
+    public Canvas getDetailsView(String driftId) {
+        return new DriftDetailsView(extendLocatorId("Details"), driftId);
     }
 
     public EntityContext getContext() {

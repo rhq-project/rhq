@@ -7,7 +7,6 @@ import javax.ejb.Local;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
-import org.rhq.core.domain.criteria.DriftChangeSetJPACriteria;
 import org.rhq.core.domain.criteria.DriftCriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
@@ -35,6 +34,6 @@ public interface DriftServerLocal {
 
     PageList<DriftComposite> findDriftCompositesByCriteria(Subject subject, DriftCriteria criteria);
 
-    Snapshot createSnapshot(Subject subject, DriftChangeSetJPACriteria criteria);
+    Snapshot createSnapshot(Subject subject, DriftChangeSetCriteria criteria);
 
 }

@@ -18,17 +18,11 @@
  */
 package org.rhq.modules.plugins.jbossas7.json;
 
-import java.util.List;
-
 /**
  * Read Attribute operation
  * @author Heiko W. Rupp
  */
 public class ReadAttribute extends Operation {
-
-    public ReadAttribute(List<PROPERTY_VALUE> address, String name) {
-        super("read-attribute",address,"name",name);
-    }
 
     public ReadAttribute(Address address, String name) {
         super("read-attribute",address);

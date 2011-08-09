@@ -28,6 +28,7 @@ import java.util.Properties;
 
 import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.core.domain.common.ServerDetails;
+import org.rhq.core.domain.common.composite.SystemSettings;
 import org.rhq.enterprise.gui.coregui.client.gwt.SystemGWTService;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
@@ -60,6 +61,15 @@ public class SystemGWTServiceImpl extends AbstractGWTServiceImpl implements Syst
     public ServerDetails getServerDetails() throws RuntimeException {
         try {
             return systemManager.getServerDetails(getSessionSubject());
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    @Override
+    public SystemSettings getSystemSettings() {
+        try {
+            return systemManager.getSystemSettings(getSessionSubject());
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

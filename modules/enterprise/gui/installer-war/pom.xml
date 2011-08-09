@@ -147,6 +147,7 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
           <systemPropertyVariables>
+            <rhq.test.ds.type-mapping>${rhq.test.ds.type-mapping}</rhq.test.ds.type-mapping>
             <rhq.test.ds.server-name>${rhq.test.ds.server-name}</rhq.test.ds.server-name>
             <rhq.test.ds.db-name>${rhq.test.ds.db-name}</rhq.test.ds.db-name>
             <rhq.test.ds.connection-url>${rhq.test.ds.connection-url}</rhq.test.ds.connection-url>

@@ -26,9 +26,9 @@ import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-
 import com.smartgwt.client.widgets.grid.events.CellClickEvent;
 import com.smartgwt.client.widgets.grid.events.CellClickHandler;
+
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
@@ -85,7 +85,7 @@ public class RolesView extends TableSection<RolesDataSource> implements Bookmark
 
         addTableAction(extendLocatorId("New"), MSG.common_button_new(), createNewAction());
         addTableAction(extendLocatorId("Delete"), MSG.common_button_delete(), getDeleteConfirmMessage(),
-                createDeleteAction());
+            createDeleteAction());
 
         super.configureTable();
     }
@@ -184,7 +184,7 @@ public class RolesView extends TableSection<RolesDataSource> implements Bookmark
     }
 
     @Override
-    public Canvas getDetailsView(int roleId) {
+    public Canvas getDetailsView(Integer roleId) {
         return new RoleEditView(extendLocatorId("Detail"), roleId);
     }
 

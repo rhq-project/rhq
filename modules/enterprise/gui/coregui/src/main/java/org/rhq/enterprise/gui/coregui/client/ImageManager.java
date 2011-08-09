@@ -79,7 +79,21 @@ public class ImageManager {
         return "[SKIN]/actions/undo.png";
     }
 
+    /**
+     * Returns a drift icon given the category of the drift.
+     * Note that if the category is null, it will be assumed the drift icon
+     * should be one that indicates the file is "new" (presumably from
+     * a coverage change set report - that is, its the first time the file
+     * has been seen).
+     * 
+     * @param category
+     * @return path to icon
+     */
     public static String getDriftCategoryIcon(DriftCategory category) {
+        if (category == null) {
+            return "subsystems/drift/Drift_new_16.png";
+        }
+
         switch (category) {
         case FILE_ADDED:
             return "subsystems/drift/Drift_add_16.png";

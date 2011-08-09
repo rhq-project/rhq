@@ -93,7 +93,7 @@ public class ResourceAlertDefinitionsView extends AbstractAlertDefinitionsView {
     }
 
     @Override
-    public SingleAlertDefinitionView getDetailsView(int id) {
+    public SingleAlertDefinitionView getDetailsView(Integer id) {
         SingleAlertDefinitionView view = super.getDetailsView(id);
         if (id == 0) {
             // when creating a new alert def, make sure to set this in the new alert def

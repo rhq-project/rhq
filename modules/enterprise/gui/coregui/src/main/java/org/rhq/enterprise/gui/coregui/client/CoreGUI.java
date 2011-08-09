@@ -108,6 +108,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
     private RootCanvas rootCanvas;
     private MenuBarView menuBarView;
     private Footer footer;
+    private int rpcTimeout;
 
     public void onModuleLoad() {
         String hostPageBaseURL = GWT.getHostPageBaseURL();
@@ -119,6 +120,16 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
         String enableLocators = Location.getParameter("enableLocators");
         if ((null != enableLocators) && Boolean.parseBoolean(enableLocators)) {
             SeleniumUtility.setUseDefaultIds(false);
+        }
+
+        rpcTimeout = -1;
+        String rpcTimeoutParam =  Location.getParameter("rpcTimeout");
+        if (rpcTimeoutParam != null) {
+            try {
+                rpcTimeout = Integer.parseInt(rpcTimeoutParam) * 1000;
+            } catch (NumberFormatException ignored) {
+                // nada
+            }
         }
 
         coreGUI = this;
@@ -149,6 +160,10 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
         // Remove loading image, which can be seen if LoginView doesn't completely cover it.
         Element loadingPanel = DOM.getElementById("Loading-Panel");
         loadingPanel.removeFromParent();
+    }
+
+    public int getRpcTimeout() {
+        return rpcTimeout;
     }
 
     public void onPreviewNativeEvent(Event.NativePreviewEvent event) {
@@ -383,6 +398,11 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
         } else {
             if (view.matches(TREE_NAV_VIEW_PATTERN)) {
                 // e.g. "Resource/10001" or "Resource/AutoGroup/10003"
+                // TODO: need to support string IDs "Drift/History/0id_abcdefghijk"
+                // TODO: see StringIDTableSection.ID_PREFIX
+                // TODO: remember \D is a non-digit, and \d is a digit
+                // TODO: String suffix = currentViewPath.replaceFirst("\\D*[^/]*", ""); // this might be OK if 0id_ starts with a digit
+                // TODO: suffix = suffix.replaceFirst("((\\d.*)|(0id_[^/]*))", "");
                 if (!currentViewPath.startsWith(view)) {
                     // The Node that was selected is not the same Node that was previously selected - it
                     // may not even be the same node type. For example, the user could have moved from a

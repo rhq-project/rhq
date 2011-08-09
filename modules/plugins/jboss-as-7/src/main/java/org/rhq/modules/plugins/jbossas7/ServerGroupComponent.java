@@ -41,6 +41,7 @@ import org.rhq.core.pluginapi.content.ContentContext;
 import org.rhq.core.pluginapi.content.ContentFacet;
 import org.rhq.core.pluginapi.content.ContentServices;
 import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
+import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.CompositeOperation;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
@@ -85,8 +86,8 @@ public class ServerGroupComponent extends ManagedASComponent implements ContentF
                     String hash = resultNode.get("BYTES_VALUE").getTextValue();
                     ASConnection connection = getASConnection();
 
-                    List<PROPERTY_VALUE> deploymentsAddress = new ArrayList<PROPERTY_VALUE>(1);
-                    deploymentsAddress.add(new PROPERTY_VALUE("deployment", fileName));
+                    Address deploymentsAddress = new Address();
+                    deploymentsAddress.add("deployment", fileName);
                     Operation step1 = new Operation("add",deploymentsAddress);
 //                    step1.addAdditionalProperty("hash", new PROPERTY_VALUE("BYTES_VALUE", hash));
                     List<Object> content = new ArrayList<Object>(1);
@@ -97,9 +98,8 @@ public class ServerGroupComponent extends ManagedASComponent implements ContentF
 
                     step1.addAdditionalProperty("name", fileName);
 
-                    List<PROPERTY_VALUE> serverGroupAddress = new ArrayList<PROPERTY_VALUE>(1);
-                    serverGroupAddress.addAll(pathToAddress(context.getResourceKey()));
-                    serverGroupAddress.add(new PROPERTY_VALUE("deployment", fileName));
+                    Address serverGroupAddress = new Address(context.getResourceKey());
+                    serverGroupAddress.add("deployment", fileName);
                     Operation step2 = new Operation("add",serverGroupAddress);
                     Operation step3 = new Operation("deploy",serverGroupAddress);
 
@@ -139,9 +139,8 @@ public class ServerGroupComponent extends ManagedASComponent implements ContentF
     @Override
     public Set<ResourcePackageDetails> discoverDeployedPackages(PackageType type) {
 
-        List<PROPERTY_VALUE> serverGroupAddress = pathToAddress(path);
 
-        Operation op = new ReadChildrenNames(serverGroupAddress,"deployment"); // TODO read full packages not only names
+        Operation op = new ReadChildrenNames(address,"deployment"); // TODO read full packages not only names
         Result node = connection.execute(op);
         if (!node.isSuccess())
             return null;

@@ -50,7 +50,7 @@
         xmlns:c="urn:xmlns:rhq-configuration"
         >
 
-<!--    <depends plugin="JMX" useClasses="true"/> -->
+    <depends plugin="JMX" useClasses="true"/>
 
 
     <!-- TODO I think we should introduce an abstract AS7 plugin that contains some base functionality and then
@@ -86,12 +86,47 @@
             <c:simple-property name="port" default="9990" type="integer" required="true" description="Port of the domain API"/>
             <c:simple-property name="user" type="string" description="Management user for a secured Host controller" required="false"/>
             <c:simple-property name="password" type="password" description="Password for the management user" required="false"/>
-            <c:simple-property name="config" type="string" default="domain.xml" description="Running configuration" displayName="Configuration"/>
+            <c:simple-property name="domainConfig" type="string" default="domain.xml" description="Running configuration (domain part)" displayName="Domain Configuration"/>
+            <c:simple-property name="hostConfig" type="string" default="host.xml" description="Running configuration (host part)" displayName="Host Configuration"/>
             <c:simple-property name="baseDir" type="file" description="Base directory of the server installation" displayName="Base directory" readOnly="true" required="false"/>
             <c:simple-property name="startScript" type="file" default="bin/domain.sh" description="Script used to start the server. If the path is not absolute, it is relative to the base directory"/>
             <c:simple-property name="domainHost" type="string" readOnly="true" required="false" description="Host name within the AS7 domain"/>
 
             &logSources;
+         <c:group name="event" displayName="Events">
+             <c:list-property name="logEventSources">
+                 <c:map-property name="logEventSource">
+                     <c:simple-property name="logFilePath" type="file" summary="true"
+                                        description="The absolute path to the source log file."/>
+                     <c:simple-property name="enabled" type="boolean" summary="true"
+                                        description="A flag indicating whether of not this log Event source is currently
+                                                     enabled (i.e. whether the associated log file should be tailed for
+                                                     new entries)."/>
+                     <c:simple-property name="dateFormat" required="false"
+                                        description="The date format to use when parsing the dates in log entries. The
+                                                     format must be in the syntax defined by the Java SimpleDateFormat
+                                                     class. If not specified, the three date formats that are predefined
+                                                     by Log4J (ISO8601, DATE, and ABSOLUTE) will be tried."/>
+                     <c:simple-property name="includesPattern" required="false"
+                                        description="A regular expression against which a log entry's detail is matched
+                                                     to determine if an Event should be fired for that entry. If not
+                                                     specified, no filtering of log entries will be done based on their
+                                                     detail."/>
+                     <c:simple-property name="minimumSeverity" required="false" default="error"
+                                        description="The minimum severity of Events that should be collected for this
+                                                     source. If not specified, there is no minimum severity (i.e. all
+                                                     events will be collected).">
+                         <c:property-options>
+                            <c:option name="debug" value="debug"/>
+                            <c:option name="info"  value="info"/>
+                            <c:option name="warn"  value="warn"/>
+                            <c:option name="error" value="error"/>
+                            <c:option name="fatal" value="fatal"/>
+                         </c:property-options>
+                     </c:simple-property>
+                 </c:map-property>
+             </c:list-property>
+         </c:group>
         </plugin-configuration>
 
         <process-scan name="HostController" query="process|basename|match=^java.*,arg|org.jboss.as.host-controller|match=.*"/>
@@ -102,21 +137,6 @@
         </operation>
 -->
 
-        <operation name="server-group:add" displayName="Add ServerGroup" description="Add a server group to the Domain.">
-            <parameters>
-                <c:simple-property name="name" description="Name of Group to add"/>
-                <c:simple-property name="profile" description="Profile to add this group to">
-                    <c:option-source target="resource" expression="type=Profile plugin=jboss-as-7"/>
-                </c:simple-property>
-            </parameters>
-        </operation>
-        <operation name="server-group:remove" displayName="Remove ServerGroup" description="Remove a server group from the Domain.">
-            <parameters>
-                <c:simple-property name="name" description="Name of Group to remove">
-                    <c:option-source target="resource" expression="type=ServerGroup"/>
-                </c:simple-property>
-            </parameters>
-        </operation>
         <operation name="managed-server:add" displayName="Add managed server" description="Add a new managed server">
             <parameters>
                 <c:simple-property name="servername" displayName="Name of the new server" required="true"/>
@@ -172,6 +192,7 @@
                 displayType="summary" measurementType="dynamic" description="Max time for a request since last metric get" units="milliseconds"
                 displayName="Maximum request time"/>
 
+        <event name="logEntry" description="an entry in a log file"/>
 
         <resource-configuration>
             <c:group name="attribute:schema-locations" displayName="Schema locations">
@@ -209,8 +230,8 @@
                 description="Server groups on this domain"
                 discovery="SubsystemDiscovery"
                 class="ServerGroupComponent"
+                createDeletePolicy="both"
                 >
-            <!-- TODO move operation to createDeletePolicy="create-only" -->
 
             <plugin-configuration>
                 <c:simple-property name="path" default="server-group" readOnly="true"/>
@@ -218,13 +239,15 @@
 
 
             <resource-configuration>
-                <c:simple-property name="profile" description="The profile name" required="true"/>
+                <c:simple-property name="profile" description="The profile name" required="true">
+                    <c:option-source target="resource" expression="type=Profile plugin=jboss-as-7"/>
+                </c:simple-property>
                 <c:simple-property name="socket-binding-group" readOnly="false" required="true">
                     <c:option-source target="resource" expression="type=SocketBindingGroupDomain"/>
                 </c:simple-property>
                 <c:simple-property name="socket-binding-port-offset" required="false" defaultValue="0" type="integer"
                                    description="The default offset to be added to the port values given by the socket binding group."/>
-                <c:simple-property name="jvm" required="false"/>
+                <c:simple-property name="jvm" required="false"/> <!-- TODO -->
             </resource-configuration>
 
         </server>
@@ -319,6 +342,41 @@
                 </c:map-property>
             </c:list-property>
             &logSources;
+
+         <c:group name="event" displayName="Events">
+             <c:list-property name="logEventSources">
+                 <c:map-property name="logEventSource">
+                     <c:simple-property name="logFilePath" type="file" summary="true"
+                                        description="The absolute path to the source log file."/>
+                     <c:simple-property name="enabled" type="boolean" summary="true"
+                                        description="A flag indicating whether of not this log Event source is currently
+                                                     enabled (i.e. whether the associated log file should be tailed for
+                                                     new entries)."/>
+                     <c:simple-property name="dateFormat" required="false"
+                                        description="The date format to use when parsing the dates in log entries. The
+                                                     format must be in the syntax defined by the Java SimpleDateFormat
+                                                     class. If not specified, the three date formats that are predefined
+                                                     by Log4J (ISO8601, DATE, and ABSOLUTE) will be tried."/>
+                     <c:simple-property name="includesPattern" required="false"
+                                        description="A regular expression against which a log entry's detail is matched
+                                                     to determine if an Event should be fired for that entry. If not
+                                                     specified, no filtering of log entries will be done based on their
+                                                     detail."/>
+                     <c:simple-property name="minimumSeverity" required="false" default="error"
+                                        description="The minimum severity of Events that should be collected for this
+                                                     source. If not specified, there is no minimum severity (i.e. all
+                                                     events will be collected).">
+                         <c:property-options>
+                            <c:option name="debug" value="debug"/>
+                            <c:option name="info"  value="info"/>
+                            <c:option name="warn"  value="warn"/>
+                            <c:option name="error" value="error"/>
+                            <c:option name="fatal" value="fatal"/>
+                         </c:property-options>
+                     </c:simple-property>
+                 </c:map-property>
+             </c:list-property>
+         </c:group>
         </plugin-configuration>
 
         <process-scan name="StandaloneAS" query="process|basename|match=^java.*,arg|org.jboss.as.standalone|match=.*"/>
@@ -356,6 +414,7 @@
                 displayType="summary" measurementType="dynamic" description="Max time for a request since last metric get" units="milliseconds"
                 displayName="Maximum request time"/>
 
+        <event name="logEntry" description="an entry in a log file"/>
 
         <resource-configuration>
 
@@ -396,6 +455,40 @@
             <c:simple-property name="path" readOnly="true" />
 
             &logSources;
+         <c:group name="event" displayName="Events">
+             <c:list-property name="logEventSources">
+                 <c:map-property name="logEventSource">
+                     <c:simple-property name="logFilePath" type="file" summary="true"
+                                        description="The absolute path to the source log file."/>
+                     <c:simple-property name="enabled" type="boolean" summary="true"
+                                        description="A flag indicating whether of not this log Event source is currently
+                                                     enabled (i.e. whether the associated log file should be tailed for
+                                                     new entries)."/>
+                     <c:simple-property name="dateFormat" required="false"
+                                        description="The date format to use when parsing the dates in log entries. The
+                                                     format must be in the syntax defined by the Java SimpleDateFormat
+                                                     class. If not specified, the three date formats that are predefined
+                                                     by Log4J (ISO8601, DATE, and ABSOLUTE) will be tried."/>
+                     <c:simple-property name="includesPattern" required="false"
+                                        description="A regular expression against which a log entry's detail is matched
+                                                     to determine if an Event should be fired for that entry. If not
+                                                     specified, no filtering of log entries will be done based on their
+                                                     detail."/>
+                     <c:simple-property name="minimumSeverity" required="false" default="error"
+                                        description="The minimum severity of Events that should be collected for this
+                                                     source. If not specified, there is no minimum severity (i.e. all
+                                                     events will be collected).">
+                         <c:property-options>
+                            <c:option name="debug" value="debug"/>
+                            <c:option name="info"  value="info"/>
+                            <c:option name="warn"  value="warn"/>
+                            <c:option name="error" value="error"/>
+                            <c:option name="fatal" value="fatal"/>
+                         </c:property-options>
+                     </c:simple-property>
+                 </c:map-property>
+             </c:list-property>
+         </c:group>
         </plugin-configuration>
 
         <!-- Scan for host controller is intentional -->
@@ -421,25 +514,23 @@
         <metric property="status" dataType="trait" displayName="Server state" description="Detailed server state"
                 displayType="summary"/>
 
+         <event name="logEntry" description="an entry in a log file"/>
+
     </server>
 
 
-<!--
-    <server name="JBoss AS JVM"
-            description="JVM of the standalone JBossAS"
-            sourcePlugin="JMX"
-            sourceType="JMX Server"
-            discovery="org.rhq.plugins.jmx.LocalJMXServerDiscoveryComponent"
-            class="org.rhq.plugins.jmx.JMXServerComponent"
-            singleton="true"
-    >
+      <server name="JBoss AS JVM"
+              description="JVM of the JBossAS"
+              sourcePlugin="JMX"
+              sourceType="JMX Server"
+              discovery="org.rhq.plugins.jmx.EmbeddedJMXServerDiscoveryComponent"
+              class="org.rhq.plugins.jmx.JMXServerComponent"
+              singleton="true">
         <runs-inside>
             <parent-resource-type name="JBossAS-Managed"  plugin="jboss-as-7"/>
             <parent-resource-type name="JBossAS7-Standalone"  plugin="jboss-as-7"/>
-            <parent-resource-type name="ProcessController"  plugin="jboss-as-7"/>
         </runs-inside>
-    </server>
--->
+      </server>
 
     <server name="Messaging"
             discovery="SubsystemDiscovery"
@@ -497,7 +588,7 @@
                 <c:simple-property name="path" readOnly="true" default="jms-queue"/>
             </plugin-configuration>
 
-            <resource-configuration> <!-- See BZ 705713 TODO -->
+            <resource-configuration>
                 <c:simple-property name="durable" required="false" type="boolean" readOnly="true" default="false"
                                    description="Whether the queue is durable or not."/>
                 <c:list-property name="entries" required="false"  readOnly="true"
@@ -505,15 +596,6 @@
                     <c:simple-property name="entries" type="string"/>
                 </c:list-property>
                 <c:simple-property name="selector" required="false" type="string" readOnly="true" description="The queue selector."/>
-                <c:template name="add" description="Properties when adding a new queue" >
-                    <c:simple-property name="durable" required="false" type="boolean" default="false"
-                                       description="Whether the queue is durable or not."/>
-                    <c:list-property name="entries" required="false"
-                                     description="The jndi names the queue will be bound to.">
-                        <c:simple-property name="entries" type="string"/>
-                    </c:list-property>
-                    <c:simple-property name="selector" required="false" type="string" description="The queue selector."/>
-                </c:template>
             </resource-configuration>
         </service>
         <service name="JMS Topic"
@@ -524,18 +606,11 @@
             <plugin-configuration>
                 <c:simple-property name="path" readOnly="true" default="jms-topic"/>
             </plugin-configuration>
-            <resource-configuration> <!-- See BZ 705713 TODO -->
+            <resource-configuration>
                 <c:list-property name="entries" required="false"  readOnly="true"
                                  description="The jndi names the queue will be bound to.">
                     <c:simple-property name="entries" type="string"/>
                 </c:list-property>
-                <c:template name="add" description="Template when adding a Topic">
-                    <!--<c:list-property name="entries" required="false"-->
-                                     <!--description="The jndi names the queue will be bound to.">-->
-                        <c:simple-property name="entries" type="string"/>
-                    <c:simple-property name="foobar" required="false" />
-                    <!--</c:list-property>-->
-                </c:template>
             </resource-configuration>
         </service>
         <service name="Connection-Factory"
@@ -656,8 +731,8 @@
 
             <resource-configuration>
                 <c:simple-property name="protocol" required="true" type="string" readOnly="true" description="The web connector protocol."/>
-                <c:simple-property name="socket-binding" required="true" type="string" readOnly="false"
-                                   description="The web connector socket-binding reference, this connector should be bound to."> <!-- TODO read-only -->
+                <c:simple-property name="socket-binding" required="true" type="string" readOnly="true"
+                                   description="The web connector socket-binding reference, this connector should be bound to.">
                     <c:option-source target="configuration" expression="socket-binding=name:type=SocketBindingGroup"/>
                 </c:simple-property>
                 <c:simple-property name="scheme" type="string" readOnly="true" default="http" description="The web connector scheme."/>
@@ -1843,7 +1918,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
                                required="true">
                 <c:option-source target="resource" expression="type=NetworkInterface plugin=jboss-as-7"/>
             </c:simple-property>
-            <c:list-property name="includes" required="false">
+            <c:list-property name="includes" required="false" readOnly="true"> <!-- read-only until AS7-1467 is fixed -->
                 <c:simple-property name="includes" displayName="Included bindings" description="Other bindings that are included in this one (only needed in Domain Mode)"/>
             </c:list-property>
             <c:group name="children:socket-binding:name" displayName="Individual socket bindings">

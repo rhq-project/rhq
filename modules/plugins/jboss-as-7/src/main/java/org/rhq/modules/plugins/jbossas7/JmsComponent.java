@@ -34,6 +34,7 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.resource.CreateResourceStatus;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
+import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
@@ -56,11 +57,11 @@ public class JmsComponent extends BaseComponent {
 
         String type = pConf.getSimpleValue("path", "");
 
-        List<PROPERTY_VALUE> address = pathToAddress(getPath());
-        address.add(new PROPERTY_VALUE(type,report.getUserSpecifiedResourceName()));
-        Operation op = new Operation("add",address);
+        Address theAddress = new Address(address);
+        theAddress.add(type, report.getUserSpecifiedResourceName());
+        Operation op = new Operation("add",theAddress);
 
-        // Loop over the properties from the config and add them as properties to the op
+        // Loop over the properties from the config and add them as properties to the op TODO make generally available ?
         for (Map.Entry<String, Property> entry:  resConf.getAllProperties().entrySet()) {
             Property value = entry.getValue();
             if (value !=null) {
@@ -93,7 +94,7 @@ public class JmsComponent extends BaseComponent {
             report.setStatus(CreateResourceStatus.FAILURE);
         } else {
             report.setStatus(CreateResourceStatus.SUCCESS);
-            report.setResourceKey(address.toString());
+            report.setResourceKey(theAddress.toString());
             report.setResourceName(report.getUserSpecifiedResourceName());
         }
 

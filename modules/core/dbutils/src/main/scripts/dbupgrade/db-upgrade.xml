@@ -3540,7 +3540,7 @@
                 <schema-alterColumn table="RHQ_DRIFT" column="CTIME" nullable="FALSE" />
                 <schema-addColumn   table="RHQ_DRIFT" column="CATEGORY" columnType="VARCHAR2" precision="20" />
                 <schema-alterColumn table="RHQ_DRIFT" column="CATEGORY" nullable="FALSE" />
-                <schema-addColumn   table="RHQ_DRIFT" column="PATH" columnType="VARCHAR2" precision="512" />
+                <schema-addColumn   table="RHQ_DRIFT" column="PATH" columnType="VARCHAR2" precision="1024" />
                 <schema-alterColumn table="RHQ_DRIFT" column="PATH" nullable="FALSE" />
                 <schema-addColumn   table="RHQ_DRIFT" column="DRIFT_CHANGE_SET_ID" columnType="INTEGER" />
                 <schema-directSQL>

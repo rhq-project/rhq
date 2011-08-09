@@ -175,7 +175,7 @@ public class ChangeSetDAOTest {
             expected, actual, ignore);
     }
 
-    @Test
+    @Test(enabled = ENABLED)
     public void findByDriftCriteriaWithCategoryFilter() throws Exception {
         MongoDBChangeSet c1 = createChangeSet(COVERAGE, 1, 1, 1).add(new MongoDBChangeSetEntry("c1-1.txt", FILE_ADDED));
         dao.save(c1);

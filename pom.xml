@@ -6,7 +6,7 @@
 
   <groupId>org.rhq</groupId>
   <artifactId>rhq-parent</artifactId>
-  <version>4.1.0-SNAPSHOT</version>
+  <version>4.1.0.Beta.TEST</version>
   <packaging>pom</packaging>
 
   <name>RHQ</name>
@@ -913,9 +913,9 @@
                           <echo file="target/build.properties">buildTime = ${buildTime}${line.separator}</echo>
 
                           <exec executable="git" outputproperty="buildNumber" failonerror="false" failifexecutionfails="false">
-                             <arg value="log"/>
-                             <arg value="--pretty=format:%h"/>
-                             <arg value="-n1"/>
+                             <arg value="log" />
+                             <arg value="--pretty=format:%h" />
+                             <arg value="-n1" />
                           </exec>
                           <echo file="target/build.properties" append="true">buildNumber = ${buildNumber}${line.separator}</echo>
                       </tasks>

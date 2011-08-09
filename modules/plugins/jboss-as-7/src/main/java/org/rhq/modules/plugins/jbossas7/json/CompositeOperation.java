@@ -39,12 +39,12 @@ public class CompositeOperation extends Operation {
     OperationHeaders operationHeaders;
 
     public CompositeOperation(List<Operation> steps) {
-        super("composite",new ArrayList<PROPERTY_VALUE>());
+        super("composite",new Address());
         this.steps = steps;
     }
 
     public CompositeOperation() {
-        super("composite",new ArrayList<PROPERTY_VALUE>());
+        super("composite",new Address());
     }
 
     public void addStep(Operation step) {

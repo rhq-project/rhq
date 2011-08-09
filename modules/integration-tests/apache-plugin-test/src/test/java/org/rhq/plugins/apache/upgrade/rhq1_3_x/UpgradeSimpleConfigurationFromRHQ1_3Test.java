@@ -24,6 +24,8 @@ import java.util.HashMap;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
+import org.rhq.plugins.apache.PluginLocation;
+import org.rhq.plugins.apache.setup.ApacheTestConfiguration;
 import org.rhq.plugins.apache.upgrade.UpgradeTestBase;
 import org.rhq.test.pc.PluginContainerSetup;
 
@@ -52,12 +54,12 @@ public class UpgradeSimpleConfigurationFromRHQ1_3Test extends UpgradeTestBase {
     }
     
     @Test
-    @PluginContainerSetup(plugins = { PLATFORM_PLUGIN, AUGEAS_PLUGIN, APACHE_PLUGIN })
+    @PluginContainerSetup(plugins = { PluginLocation.PLATFORM_PLUGIN, PluginLocation.AUGEAS_PLUGIN, PluginLocation.APACHE_PLUGIN })
     @Parameters({ "apache2.install.dir", "apache2.exe.path" })
     public void testWithResolvableServerNames_Apache2(final String installPath, final String exePath)
         throws Throwable {
 
-        testUpgrade(new TestConfiguration() {
+        testUpgrade(new ApacheTestConfiguration() {
             {
                 serverRoot = installPath;
                 binPath = exePath;
@@ -70,12 +72,12 @@ public class UpgradeSimpleConfigurationFromRHQ1_3Test extends UpgradeTestBase {
 
     @Test(enabled = false)
     //ApacheServerOperationsDelegate doesn't work with apache 1.3
-    @PluginContainerSetup(plugins = { PLATFORM_PLUGIN, AUGEAS_PLUGIN, APACHE_PLUGIN })
+    @PluginContainerSetup(plugins = { PluginLocation.PLATFORM_PLUGIN, PluginLocation.AUGEAS_PLUGIN, PluginLocation.APACHE_PLUGIN })
     @Parameters({ "apache1.install.dir", "apache1.exe.path" })
     public void testWithResolvableServerNames_Apache1(final String installPath, final String exePath)
         throws Throwable {
 
-        testUpgrade(new TestConfiguration() {{
+        testUpgrade(new ApacheTestConfiguration() {{
             serverRoot = installPath;
             binPath = exePath;
             configurationName = DEPLOYMENT_SIMPLE_WITH_RESOLVABLE_SERVERNAMES;
@@ -85,10 +87,10 @@ public class UpgradeSimpleConfigurationFromRHQ1_3Test extends UpgradeTestBase {
     }
 
     @Test
-    @PluginContainerSetup(plugins = { PLATFORM_PLUGIN, AUGEAS_PLUGIN, APACHE_PLUGIN })
+    @PluginContainerSetup(plugins = { PluginLocation.PLATFORM_PLUGIN, PluginLocation.AUGEAS_PLUGIN, PluginLocation.APACHE_PLUGIN })
     @Parameters({ "apache2.install.dir", "apache2.exe.path" })
     public void testWithNonUniqueServerNames_Apache2(final String installPath, final String exePath) throws Throwable {
-        testUpgrade(new TestConfiguration() {
+        testUpgrade(new ApacheTestConfiguration() {
             {
                 configurationName = DEPLOYMENT_SIMPLE_WITH_UNRESOLVABLE_SERVER_NAMES;
                 apacheConfigurationFiles = configuredApacheConfigurationFiles;
@@ -108,10 +110,10 @@ public class UpgradeSimpleConfigurationFromRHQ1_3Test extends UpgradeTestBase {
     }
     
     @Test
-    @PluginContainerSetup(plugins = {PLATFORM_PLUGIN, AUGEAS_PLUGIN, APACHE_PLUGIN})
+    @PluginContainerSetup(plugins = {PluginLocation.PLATFORM_PLUGIN, PluginLocation.AUGEAS_PLUGIN, PluginLocation.APACHE_PLUGIN})
     @Parameters({"apache2.install.dir", "apache2.exe.path" })
     public void testWithAnyAddress(final String installPath, final String exePath) throws Throwable {
-        testUpgrade(new TestConfiguration() {
+        testUpgrade(new ApacheTestConfiguration() {
             {
                 configurationName = DEPLOYMENT_SIMPLE_WITH_WILDCARD_LISTENS;
                 
@@ -130,10 +132,10 @@ public class UpgradeSimpleConfigurationFromRHQ1_3Test extends UpgradeTestBase {
     }
 
     @Test
-    @PluginContainerSetup(plugins = {PLATFORM_PLUGIN, AUGEAS_PLUGIN, APACHE_PLUGIN})
+    @PluginContainerSetup(plugins = {PluginLocation.PLATFORM_PLUGIN, PluginLocation.AUGEAS_PLUGIN, PluginLocation.APACHE_PLUGIN})
     @Parameters({"apache2.install.dir", "apache2.exe.path" })
     public void testWithWildcardAddress(final String installPath, final String exePath) throws Throwable {
-        testUpgrade(new TestConfiguration() {
+        testUpgrade(new ApacheTestConfiguration() {
             {
                 configurationName = DEPLOYMENT_SIMPLE_WITH_WILDCARD_LISTENS;
                 

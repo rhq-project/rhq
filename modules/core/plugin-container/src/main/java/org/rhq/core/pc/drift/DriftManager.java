@@ -26,6 +26,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.ZipEntry;
@@ -107,9 +108,11 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
         }
 
         log.debug("Rescheduling drift detection schedules for " + r);
-        for (DriftDetectionSchedule schedule : container.getDriftSchedules()) {
-            schedulesQueue.addSchedule(schedule);
-        }
+        Set<DriftDetectionSchedule> driftSchedules = container.getDriftSchedules();
+        if (driftSchedules!=null)
+            for (DriftDetectionSchedule schedule : driftSchedules) {
+                schedulesQueue.addSchedule(schedule);
+            }
 
         for (Resource child : r.getChildResources()) {
             initSchedules(child, inventoryMgr);
@@ -242,7 +245,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
      *
      * @param resourceId The id of the resource to which the config belongs
      * @param driftConfiguration describes what is to be monitored for drift
-     * 
+     *
      * @return absolute directory location where the drift configuration base directory is referring
      */
     @Override
@@ -313,7 +316,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
     /**
      * Returns the manager that can provide data on the inventory. This is a separate protected method
      * so we can extend our manger class to have a mock manager for testing.
-     * 
+     *
      * @return the inventory manager
      */
     protected InventoryManager getInventoryManager() {
@@ -323,7 +326,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
     /**
      * Returns the manager that can provide data on the measurements/metrics. This is a separate protected method
      * so we can extend our manger class to have a mock manager for testing.
-     * 
+     *
      * @return the inventory manager
      */
     protected MeasurementManager getMeasurementManager() {

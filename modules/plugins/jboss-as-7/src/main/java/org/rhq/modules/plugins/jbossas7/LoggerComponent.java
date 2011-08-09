@@ -22,7 +22,6 @@ import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.tools.ant.taskdefs.Sleep;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
@@ -43,7 +42,7 @@ public class LoggerComponent extends BaseComponent {
     public OperationResult invokeOperation(String name,
                                            Configuration parameters) throws InterruptedException, Exception {
 
-        Operation op = new Operation(name,pathToAddress(getPath()));
+        Operation op = new Operation(name,address);
 
         Map<String,Property> propertyMap = parameters.getAllProperties();
         for (Map.Entry<String,Property> entry : propertyMap.entrySet()) {

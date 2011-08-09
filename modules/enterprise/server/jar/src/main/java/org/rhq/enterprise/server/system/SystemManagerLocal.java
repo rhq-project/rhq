@@ -137,6 +137,8 @@ public interface SystemManagerLocal {
 
     boolean isExperimentalFeaturesEnabled();
 
+    void validateSystemConfiguration(Subject subject, Properties properties) throws InvalidSystemConfigurationException;
+    
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //
     // The following are shared with the Remote Interface

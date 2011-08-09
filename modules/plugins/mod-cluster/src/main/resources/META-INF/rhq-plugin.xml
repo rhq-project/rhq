@@ -26,9 +26,10 @@
       <plugin-configuration>
          <c:simple-property name="objectName" readOnly="true" default="Catalina:type=ModClusterListener,*"/>
          <c:simple-property name="engineObjectName" readOnly="true" default="jboss.web:type=Engine"/>
+         <c:simple-property name="nameTemplate" default="mod_cluster"/>
       </plugin-configuration>
       
-      <operation name="stop" displayName="Stop all webapps" description="Gracefully stops all webapps for all engines.">
+      <operation name="stop" displayName="Stop all webapps" description="Gracefully stops all webapps for all virtual hosts of this application server.">
             <parameters>
             	<c:simple-property required="true" name="timeout" type="string" displayName="Session draining timeout"/>
                 <c:simple-property required="true" name="unit" default="MILLISECONDS" displayName="Time unit of the timeout parameter">
@@ -52,13 +53,13 @@
             <c:simple-property required="true" name="port" type="string" displayName="Proxy port"/>
         </parameters>
    	  </operation>
-   	  <operation name="enable" displayName="Enable all webapps" description="Enable all webapps for all engines">
+   	  <operation name="enable" displayName="Enable all webapps" description="Enable all webapps for all virtual hosts of this application server.">
       	<results>
       		<c:simple-property name="result" type="boolean" description="The result of the operation" />
       	</results>
       </operation>
-      <operation name="reset" displayName="Reset the node" description="Move the node out of an error state." />
-      <operation name="disable" displayName="Disable all webpapps" description="Disable all webapps for all engines.">
+      <operation name="reset" displayName="Reset the node" description="Move this application server out of an error state." />
+      <operation name="disable" displayName="Disable all webpapps" description="Disable all webapps for all virtual hosts of this application server.">
       	<results>
       		<c:simple-property name="result" type="boolean" description="The result of the operation" />
       	</results>
@@ -69,7 +70,7 @@
             <c:simple-property required="true" name="port" type="string" displayName="Proxy port"/>
         </parameters>
    	  </operation>
-      <operation name="refresh" displayName="Refresh configuration" description="Refresh configuration" />
+      <operation name="refresh" displayName="Refresh configuration" description="Refresh configuration for this application server." />
       
       <metric property="proxyConfiguration" displayName="Proxy Configuration" displayType="summary" dataType="trait" />
       <metric property="modelerType" displayName="Type of the modeled resource" displayType="summary" dataType="trait" />
@@ -77,9 +78,9 @@
       <metric property="advertise" displayName="Enable autodiscovery of httpd servers." displayType="summary" dataType="trait" />
       
       <resource-configuration>
-      	<c:simple-property name="workerTimeout" type="integer" description="Timeout to wait for an available worker (default is no wait)" />
+      	<c:simple-property name="workerTimeout" type="integer" description="Timeout to wait for an available worker (default is no wait)." />
       	<c:simple-property name="stickySession" type="boolean" description="Enables sticky session for the cluster."/>
-      	<c:simple-property name="stickySessionRemove" type="boolean" description="Remove session when the request cannot be routed to the right node."/>
+      	<c:simple-property name="stickySessionRemove" type="boolean" description="Remove session when the request cannot be routed to the right node for this cluster."/>
       	<c:simple-property name="smax" type="integer" description="Maximum time on seconds for idle connections above smax."/>
       	<c:simple-property name="maxAttempts" type="integer" description="Maximum number of attempts to send the request to the backend server."/>
       	<c:simple-property name="advertiseSecurityKey" type="string" required="false" description="Security key for discovery."/>

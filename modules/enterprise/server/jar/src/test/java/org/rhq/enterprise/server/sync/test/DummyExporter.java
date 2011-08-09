@@ -16,20 +16,23 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.modules.plugins.jbossas7.json;
 
-/**
- * @author Heiko W. Rupp
- */
-public class Tuple {
-    String key;
-    String value;
+package org.rhq.enterprise.server.sync.test;
+
+import org.rhq.enterprise.server.sync.NoSingleEntity;
+import org.rhq.enterprise.server.sync.exporters.Exporter;
+import org.rhq.enterprise.server.sync.exporters.ExportingIterator;
+
+public class DummyExporter<T> implements Exporter<NoSingleEntity, T> {
 
     @Override
-    public String toString() {
-        return "Tuple{" +
-                "key='" + key + '\'' +
-                ", value='" + value + '\'' +
-                '}';
+    public String getNotes() {
+        return null;
     }
+
+    @Override
+    public ExportingIterator<T> getExportingIterator() {
+        return null;
+    }
+    
 }

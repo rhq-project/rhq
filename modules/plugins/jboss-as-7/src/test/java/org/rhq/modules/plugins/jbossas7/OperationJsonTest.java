@@ -45,20 +45,19 @@ public class OperationJsonTest {
 
     public void operationSerDeserTest() throws Exception{
 
-        List<PROPERTY_VALUE> address=new ArrayList<PROPERTY_VALUE>(2);
-        PROPERTY_VALUE part = new PROPERTY_VALUE("subsystem","web");
-        address.add(part);
-        part = new PROPERTY_VALUE("connector","http");
-        address.add(part);
+        Address address= new Address();
+        address.add("subsystem","web");
+        address.add("connector","http");
 
-        Operation operation = new WriteAttribute(new Address(address),"socket-binding","jndi");
+        Operation operation = new WriteAttribute(address,"socket-binding","jndi");
 
 
         ObjectMapper mapper = new ObjectMapper();
 
         String result = mapper.writeValueAsString(operation);
-
         Operation op = mapper.readValue(result,Operation.class);
+        assert op!=null;
+        assert op.getOperation()!=null : "op.operation was null!";
         assert op.getOperation().equals(operation.getOperation()) : "Operation is " + op.getOperation();
         assert op.getName().equals("socket-binding") : "attribute name  is " + op.getName();
         assert op.getValue().equals("jndi") : "attribute value  is " + op.getValue();
@@ -80,9 +79,8 @@ public class OperationJsonTest {
 
     public void anyPayloadTest() throws Exception {
 
-        List<PROPERTY_VALUE> address=new ArrayList<PROPERTY_VALUE>(2);
-        PROPERTY_VALUE part = new PROPERTY_VALUE("/server-group","newOne");
-        address.add(part);
+        Address address= new Address();
+        address.add("/server-group","newOne");
 
         Map<String,Object> props = new HashMap<String, Object>();
         props.put("profile","default");
@@ -108,9 +106,8 @@ public class OperationJsonTest {
     }
 
     public void addPropsTest() throws Exception {
-        List<PROPERTY_VALUE> address=new ArrayList<PROPERTY_VALUE>(2);
-        PROPERTY_VALUE part = new PROPERTY_VALUE("/server-group","newOne");
-        address.add(part);
+        Address address= new Address();
+        address.add("/server-group","newOne");
 
         Operation operation = new Operation("add",address);
         operation.addAdditionalProperty("foo","bar");

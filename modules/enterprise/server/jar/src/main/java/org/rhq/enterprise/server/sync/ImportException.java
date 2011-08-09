@@ -16,24 +16,32 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.modules.plugins.jbossas7.json;
+
+package org.rhq.enterprise.server.sync;
 
 /**
- * // TODO: Document this
- * @author Heiko W. Rupp
+ * 
+ *
+ * @author Lukas Krejci
  */
-public class TypeModelValue {
+public class ImportException extends SynchronizationException {
 
-    public String TYPE_MODEL_VALUE;
-    public String value;
+    private static final long serialVersionUID = 1L;
 
-    @Override
-    public String toString() {
-        final StringBuilder sb = new StringBuilder();
-        sb.append("TypeModelValue");
-        sb.append("{TYPE_MODEL_VALUE='").append(TYPE_MODEL_VALUE).append('\'');
-        sb.append(", value='").append(value).append('\'');
-        sb.append('}');
-        return sb.toString();
+    public ImportException() {
     }
+
+    public ImportException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public ImportException(String message) {
+        super(message);
+    }
+
+    public ImportException(Throwable cause) {
+        super(cause);
+    }
+
+    
 }

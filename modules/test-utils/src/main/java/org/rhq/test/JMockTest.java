@@ -30,6 +30,7 @@ import org.testng.IHookCallBack;
 import org.testng.IHookable;
 import org.testng.IInvokedMethod;
 import org.testng.IInvokedMethodListener;
+import org.testng.ITestNGListener;
 import org.testng.ITestResult;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -44,6 +45,13 @@ import org.testng.annotations.Listeners;
  * field, while in the latter case (when JMockTest is specified as a {@link Listeners listener}
  * of a test class), the JMock context is accessible using the {@link #getCurrentMockContext()}
  * static method.
+ * <p>
+ * Unlike the default behavior of the Listeners annotation which makes the supplied classes
+ * the listeners on <b>ALL</b> test methods in <b>ALL</b> classes, this implementation behaves differntly. 
+ * It checks whether the Listeners annotation is specified on the class that the current test 
+ * method is being executed on (or its superclasses) and only if it does, the test method is 
+ * "augmented". This means that the classes can specify if they want to be augmented by JMockTest
+ * by specifying it as their listener.
  * 
  * @author John Sanda
  * @author Lukas Krejci
@@ -54,9 +62,6 @@ public class JMockTest implements IHookable, IInvokedMethodListener {
 
     private static final ThreadLocal<Mockery> STATICALLY_ACCESSIBLE_CONTEXT = new ThreadLocal<Mockery>();
 
-    private boolean initRan;
-    private boolean tearDownRan;
-    
     /**
      * @return the JMock context of the current test or null if the calling test class doesn't have 
      * this class set as a listener or doesn't inherit from this class.
@@ -66,21 +71,13 @@ public class JMockTest implements IHookable, IInvokedMethodListener {
     }
 
     @BeforeMethod
-    public void initMockContext(Method testMethod) {
-        if (!initRan) {
-            initBeforeTest(this, testMethod);
-        } 
-        tearDownRan = false;
-        initRan = true;
+    public final void initMockContext(Method testMethod) {
+        initBeforeTest(this, testMethod);
     }
     
     @AfterMethod
-    public void tearDownMockContext(ITestResult testResult) {
-        if (!tearDownRan) {
-            tearDownAfterTest(testResult);
-        }
-        tearDownRan = true;
-        initRan = false;
+    public final void tearDownMockContext(ITestResult testResult) {
+        tearDownAfterTest(testResult);
     }
     
     /**
@@ -101,12 +98,10 @@ public class JMockTest implements IHookable, IInvokedMethodListener {
      * 
      * @see IInvokedMethodListener#beforeInvocation(IInvokedMethod, ITestResult)
      */
-    public final void beforeInvocation(IInvokedMethod method, ITestResult testResult) {
-        if (!initRan) {
+    public final void beforeInvocation(IInvokedMethod method, ITestResult testResult) {  
+        if (!isUsedAsSubClass(method) && isListenerDefinedOnTestClass(method)) {
             initBeforeTest(testResult.getInstance(), testResult.getMethod().getMethod());
         }
-        initRan = true;
-        tearDownRan = false;
     }
     
     /**
@@ -115,11 +110,9 @@ public class JMockTest implements IHookable, IInvokedMethodListener {
      * @see IInvokedMethodListener#afterInvocation(IInvokedMethod, ITestResult)
      */
     public final void afterInvocation(IInvokedMethod method, ITestResult testResult) {
-        if (!tearDownRan) {
+        if (!isUsedAsSubClass(method) && isListenerDefinedOnTestClass(method)) {
             tearDownAfterTest(testResult);
         }
-        initRan = false;
-        tearDownRan = true;
     }
     
     /**
@@ -163,5 +156,31 @@ public class JMockTest implements IHookable, IInvokedMethodListener {
         //null out the static field so that the GC can
         //collect the no-longer used context.
         STATICALLY_ACCESSIBLE_CONTEXT.set(null);
+    }
+    
+    private boolean isUsedAsSubClass(IInvokedMethod method) {
+        Class<?> testMethodClass = method.getTestMethod().getTestClass().getRealClass();
+        
+        return this.getClass().isAssignableFrom(testMethodClass);
+    }    
+    
+    private boolean isListenerDefinedOnTestClass(IInvokedMethod method) {
+        Class<?> cls = method.getTestMethod().getTestClass().getRealClass();
+        
+        while (cls != null) {
+            Listeners annotation = cls.getAnnotation(Listeners.class);
+            
+            if (annotation != null) {
+                for(Class<?> listener : annotation.value()) {
+                    if (this.getClass().equals(listener)) {
+                        return true;
+                    }
+                }
+            }
+            
+            cls = cls.getSuperclass();
+        }
+        
+        return false;
     }
 }

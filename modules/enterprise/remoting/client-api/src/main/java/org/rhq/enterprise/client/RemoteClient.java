@@ -60,6 +60,7 @@ import org.rhq.enterprise.server.resource.ResourceTypeManagerRemote;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerRemote;
 import org.rhq.enterprise.server.search.SavedSearchManagerRemote;
 import org.rhq.enterprise.server.support.SupportManagerRemote;
+import org.rhq.enterprise.server.sync.SynchronizationManagerRemote;
 import org.rhq.enterprise.server.system.SystemManagerRemote;
 import org.rhq.enterprise.server.tagging.TagManagerRemote;
 
@@ -367,6 +368,10 @@ public class RemoteClient implements RhqFacade {
         return RemoteClientProxy.getProcessor(this, RhqManagers.TagManager);
     }
 
+    public SynchronizationManagerRemote getSynchronizationManager() {
+        return RemoteClientProxy.getProcessor(this, RhqManagers.SynchronizationManager);
+    }
+    
     /**
      * Returns the map of all remote managers running in the server that this
      * client can talk to.

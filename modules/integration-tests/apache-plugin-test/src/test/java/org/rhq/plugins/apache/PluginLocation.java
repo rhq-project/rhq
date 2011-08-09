@@ -16,35 +16,18 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.modules.plugins.jbossas7.json;
 
-import org.codehaus.jackson.annotate.JsonProperty;
+package org.rhq.plugins.apache;
 
 /**
- * // TODO: Document this
- * @author Heiko W. Rupp
+ * 
+ *
+ * @author Lukas Krejci
  */
-public class Type {
+public interface PluginLocation {
 
-    @JsonProperty("TYPE_MODEL_VALUE")
-    public DataType modelValue;
+    public static final String PLATFORM_PLUGIN = "file:target/itest/plugins/rhq-platform-plugin-for-apache-test.jar";
+    public static final String AUGEAS_PLUGIN = "file:target/itest/plugins/rhq-augeas-plugin-for-apache-test.jar";
+    public static final String APACHE_PLUGIN = "file:target/itest/plugins/rhq-apache-plugin-for-apache-test.jar";
 
-    @Override
-    public String toString() {
-        final StringBuilder sb = new StringBuilder();
-        sb.append("Type");
-        sb.append("{modelValue='").append(modelValue).append('\'');
-        sb.append('}');
-        return sb.toString();
-    }
-
-    public enum DataType {
-        STRING,
-        INT,
-        BOOLEAN,
-        OBJECT,
-        LIST
-
-        ;
-    }
 }

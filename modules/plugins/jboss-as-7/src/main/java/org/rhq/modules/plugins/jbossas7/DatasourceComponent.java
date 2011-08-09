@@ -11,6 +11,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
 import org.rhq.modules.plugins.jbossas7.json.Result;
@@ -36,10 +37,11 @@ public class DatasourceComponent extends BaseComponent implements OperationFacet
             String drivername = parameters.getSimpleValue("driver-name", NOTSET);
 
 
-            List<PROPERTY_VALUE> address = pathToAddress(getPath());
-            address.add(new PROPERTY_VALUE("jdbc-driver",drivername));
+            Address theAddress = new Address(address);
+            theAddress.add("jdbc-driver", drivername);
 
-            op =  new Operation("add",address,"driver-name",drivername);
+            op =  new Operation("add",theAddress);
+            op.addAdditionalProperty("driver-name",drivername);
             op.addAdditionalProperty("deployment-name",parameters.getSimpleValue("deployment-name", NOTSET));
             op.addAdditionalProperty("driver-class-name",parameters.getSimpleValue("driver-class-name", NOTSET));
 
@@ -48,9 +50,9 @@ public class DatasourceComponent extends BaseComponent implements OperationFacet
         else if (operationName.equals("addDatasource")) {
             String name = parameters.getSimpleValue("name",NOTSET);
 
-            List<PROPERTY_VALUE> address = pathToAddress(getPath());
-            address.add(new PROPERTY_VALUE("data-source",name));
-            op = new Operation("add",address);
+            Address theAddress = new Address(address);
+            theAddress.add("data-source", name);
+            op = new Operation("add",theAddress);
             addRequiredToOp(op,parameters,"driver-name");
             addRequiredToOp(op,parameters,"jndi-name");
             addRequiredToOp(op, parameters, "pool-name");
@@ -61,9 +63,9 @@ public class DatasourceComponent extends BaseComponent implements OperationFacet
         else if (operationName.equals("addXADatasource")) {
             String name = parameters.getSimpleValue("name",NOTSET);
 
-            List<PROPERTY_VALUE> address = pathToAddress(getPath());
-            address.add(new PROPERTY_VALUE("xa-data-source",name));
-            op = new Operation("add",address);
+            Address theAddress = new Address(address);
+            theAddress.add("xa-data-source",name);
+            op = new Operation("add",theAddress);
             addRequiredToOp(op,parameters,"driver-name");
             addRequiredToOp(op,parameters,"jndi-name");
             addRequiredToOp(op,parameters,"pool-name");
@@ -81,7 +83,6 @@ public class DatasourceComponent extends BaseComponent implements OperationFacet
             /*
              * This is a catch all for operations that are not explicitly treated above.
              */
-            List<PROPERTY_VALUE> address = pathToAddress(getPath());
             op = new Operation(operationName,address);
         }
 

@@ -45,6 +45,7 @@ import org.rhq.enterprise.server.resource.ResourceTypeManagerRemote;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerRemote;
 import org.rhq.enterprise.server.search.SavedSearchManagerRemote;
 import org.rhq.enterprise.server.support.SupportManagerRemote;
+import org.rhq.enterprise.server.sync.SynchronizationManagerRemote;
 import org.rhq.enterprise.server.system.SystemManagerRemote;
 import org.rhq.enterprise.server.tagging.TagManagerRemote;
 
@@ -82,7 +83,8 @@ public enum RhqManagers {
     SupportManager(SupportManagerRemote.class), //
     SystemManager(SystemManagerRemote.class), //
     RemoteInstallManager(RemoteInstallManagerRemote.class), //
-    TagManager(TagManagerRemote.class);
+    TagManager(TagManagerRemote.class), //
+    SynchronizationManager(SynchronizationManagerRemote.class);
 
     private Class<?> remote;
     private String remoteName;

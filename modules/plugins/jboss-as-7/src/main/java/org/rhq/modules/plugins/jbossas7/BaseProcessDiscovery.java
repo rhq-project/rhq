@@ -125,7 +125,7 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
                     serverNameFull = tmp;
 
                 }
-                String host = findHost(psr.getProcessInfo(), true);
+                String host = findHost(psr.getProcessInfo(), false);
                 config.put(new PropertySimple("domainHost", host));
 
                 config.put(new PropertySimple("baseDir", serverNameFull));

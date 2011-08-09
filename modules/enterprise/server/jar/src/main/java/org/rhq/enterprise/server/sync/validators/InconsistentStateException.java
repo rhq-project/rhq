@@ -16,30 +16,33 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.modules.plugins.jbossas7.json;
 
-import java.util.Map;
+package org.rhq.enterprise.server.sync.validators;
 
-import org.codehaus.jackson.annotate.JsonProperty;
+import org.rhq.enterprise.server.sync.SynchronizationException;
 
 /**
- * @author Heiko W. Rupp
+ * 
+ *
+ * @author Lukas Krejci
  */
-public class NetworkInterface {
+public class InconsistentStateException extends SynchronizationException {
 
-    public String name;
-    public String description;
-    @JsonProperty("attributes")
-    public
-    Map<String,Attribute> attributes;
+    private static final long serialVersionUID = 1L;
 
+    public InconsistentStateException() {
+        super();
+    }
 
-    @Override
-    public String toString() {
-        return "NetworkInterface{" +
-                "name='" + name + '\'' +
-                ", description='" + description + '\'' +
-                ", attributes=" + attributes +
-                '}';
+    public InconsistentStateException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public InconsistentStateException(String message) {
+        super(message);
+    }
+
+    public InconsistentStateException(Throwable cause) {
+        super(cause);
     }
 }

@@ -304,6 +304,16 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
         systemConfigurationCache = newCacheProperties;
     }
 
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    public void validateSystemConfiguration(Subject subject, Properties properties) throws InvalidSystemConfigurationException {
+        for(Object key : properties.keySet()) {
+            String name = (String) key;
+            String value = properties.getProperty(name);
+            
+            verifyNewSystemConfigurationProperty(name, value, properties);
+        }
+    }
+    
     /**
      * Call this to transform a system property to a more appropriate value.
      * @param prop

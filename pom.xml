@@ -103,6 +103,9 @@
     <augeas.zip.version>0.7.1</augeas.zip.version>
     <ant.contrib.version>1.0b3</ant.contrib.version>
 
+    <rhq.db.admin.username>rhqadmin</rhq.db.admin.username>
+    <rhq.db.admin.password>rhqadmin</rhq.db.admin.password>
+
     <!--
        defaults for datasource used by integration tests -
        these may be overridden in ~/.m2/settings.xml

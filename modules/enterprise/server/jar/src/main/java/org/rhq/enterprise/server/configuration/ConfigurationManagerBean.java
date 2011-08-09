@@ -69,6 +69,8 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationFormat;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionEnumeration;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertyOptionsSource;
 import org.rhq.core.domain.configuration.group.AbstractGroupConfigurationUpdate;
@@ -2397,7 +2399,41 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                 handlePDS(subject, pds);
 
             }
-            // TODO consider more cases
+            else if (pd instanceof PropertyDefinitionList) {
+                PropertyDefinitionList pdl = (PropertyDefinitionList) pd;
+                PropertyDefinition memberDef = pdl.getMemberDefinition();
+                if (memberDef instanceof PropertyDefinitionSimple) {
+                    PropertyDefinitionSimple pds = (PropertyDefinitionSimple) memberDef;
+                    handlePDS(subject, pds);
+                }
+                else if (memberDef instanceof PropertyDefinitionMap) {
+                    PropertyDefinitionMap pdm = (PropertyDefinitionMap) memberDef;
+                    for (PropertyDefinition inner : pdm.getPropertyDefinitions().values()) {
+                        if (inner instanceof PropertyDefinitionSimple) {
+                            handlePDS(subject, (PropertyDefinitionSimple) inner);
+                        }
+                        log.warn("3 >>>>>>>>>> " + inner.toString() + " in " + pdl.toString() + " <<<<<<< not yet supported");
+                    }
+                }
+                else {
+                    log.warn("2 >>>>>>>>>> " + memberDef.toString() + " in " + pdl.toString() + " <<<<<<< not yet supported");
+                }
+
+            }
+            else if (pd instanceof PropertyDefinitionMap) {
+                PropertyDefinitionMap pdm = (PropertyDefinitionMap) pd;
+                    for (PropertyDefinition inner : pdm.getPropertyDefinitions().values()) {
+                        if (inner instanceof PropertyDefinitionSimple) {
+                            handlePDS(subject, (PropertyDefinitionSimple) inner);
+                        }
+                        else {
+                            log.warn("4 >>>>>>>>>> " + inner.toString() + " in " + pdm.toString() + " <<<<<<< not yet supported");
+                        }
+                    }
+            }
+            else {
+                log.warn("1 >>>>>>>>>> " + pd.toString() + " <<<<<<< not yet supported");
+            }
         }
 
         return def; // TODO clone the incoming definition?
@@ -2463,7 +2499,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
     /**
      * Drill down in the case the user set up a target of "configuration". We need to check
-     * that the target property actually exiists and that it has a format we understand
+     * that the target property actually exists and that it has a format we understand
      * @param pds Propertydefinition to examine
      * @param expression The whole expression starting with identifier: for the configuration
      * identifier. This looks like <i>listname</i> for list of

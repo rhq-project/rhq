@@ -20,8 +20,8 @@
 package org.rhq.enterprise.server.sync.test;
 
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -53,11 +53,6 @@ import org.rhq.core.domain.sync.entity.SystemSettings;
 import org.rhq.enterprise.server.sync.ExportingInputStream;
 import org.rhq.enterprise.server.sync.Synchronizer;
 import org.rhq.enterprise.server.sync.SystemSettingsSynchronizer;
-import org.rhq.enterprise.server.sync.exporters.Exporter;
-import org.rhq.enterprise.server.sync.exporters.MetricTemplateExporter;
-import org.rhq.enterprise.server.sync.exporters.SystemSettingsExporter;
-import org.rhq.enterprise.server.sync.importers.SystemSettingsImporter;
-import org.rhq.enterprise.server.sync.validators.ConsistencyValidator;
 import org.rhq.enterprise.server.system.InvalidSystemConfigurationException;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 
@@ -71,10 +66,7 @@ public class SystemSettingsExporterTest {
 
     private static final Log LOG = LogFactory.getLog(MetricTemplateExporterTest.class);
 
-    private SystemManagerLocal systemManagerStub = null;
-
-
-    /*new SystemManagerLocal() {
+    private SystemManagerLocal systemManagerStub = new SystemManagerLocal() {
 
         @Override
         public long vacuumAppdef(Subject whoami) {
@@ -133,9 +125,9 @@ public class SystemSettingsExporterTest {
 
         @Override
         public Properties getSystemConfiguration(Subject subject) {
-            SystemSettings settings = new SystemSettings();
-
-            settings.setBaseURL("herethereandeverywhere");
+            HashMap<String, String> values = new HashMap<String, String>();
+            values.put("BaseURL", "herethereandeverywhere");
+            SystemSettings settings = new SystemSettings(values);
 
             return settings.toProperties();
         }
@@ -168,9 +160,16 @@ public class SystemSettingsExporterTest {
         public long analyze(Subject whoami) {
             return 0;
         }
-    };*/
 
-    private void testCanExport() throws Exception {
+        @Override
+        public org.rhq.core.domain.common.composite.SystemSettings getSystemSettings(Subject subject) {
+            return null;
+        }
+        
+        
+    };
+
+    public void testCanExport() throws Exception {
         SystemSettingsSynchronizer exporter = new SystemSettingsSynchronizer(systemManagerStub);
 
         Set<Synchronizer<?, ?>> exporters = new HashSet<Synchronizer<?, ?>>();
@@ -178,11 +177,11 @@ public class SystemSettingsExporterTest {
 
         InputStream eis = new ExportingInputStream(exporters, new HashMap<String, ExporterMessages>(), 65536, false);
 
-        //        String exportContents = readAll(new InputStreamReader(eis, "UTF-8"));
-        //        
-        //        LOG.warn("Export contents:\n" + exportContents);
-        //        
-        //        eis = new ByteArrayInputStream(exportContents.getBytes("UTF-8"));
+                String exportContents = readAll(new InputStreamReader(eis, "UTF-8"));
+                
+                LOG.warn("Export contents:\n" + exportContents);
+                
+                eis = new ByteArrayInputStream(exportContents.getBytes("UTF-8"));
 
 //         <?xml version="1.0" ?>
 //        <configuration-export>
@@ -190,36 +189,7 @@ public class SystemSettingsExporterTest {
 //                <entity>
 //                    <data>
 //                        <systemSettings referencedEntityId="0">
-//                            <jAASProvider></jAASProvider>
-//                            <jDBCJAASProvider></jDBCJAASProvider>
-//                            <lDAPJAASProvider></lDAPJAASProvider>
-//                            <lDAPFactory></lDAPFactory>
-//                            <lDAPUrl></lDAPUrl>
-//                            <lDAPProtocol></lDAPProtocol>
-//                            <lDAPLoginProperty></lDAPLoginProperty>
-//                            <lDAPFilter></lDAPFilter>
-//                            <lDAPGroupFilter></lDAPGroupFilter>
-//                            <lDAPGroupMember></lDAPGroupMember>
-//                            <lDAPBaseDN></lDAPBaseDN>
-//                            <lDAPBindDN></lDAPBindDN>
-//                            <lDAPBindPW></lDAPBindPW>
-//                            <baseURL>herethereandeverywhere</baseURL>
-//                            <agentMaxQuietTimeAllowed></agentMaxQuietTimeAllowed>
-//                            <enableAgentAutoUpdate></enableAgentAutoUpdate>
-//                            <enableDebugMode></enableDebugMode>
-//                            <enableExperimentalFeatures></enableExperimentalFeatures>
-//                            <dataPurge1Hour></dataPurge1Hour>
-//                            <dataPurge6Hour></dataPurge6Hour>
-//                            <dataPurge1Day></dataPurge1Day>
-//                            <dataMaintenance></dataMaintenance>
-//                            <dataReindex></dataReindex>
-//                            <rtDataPurge></rtDataPurge>
-//                            <alertPurge></alertPurge>
-//                            <eventPurge></eventPurge>
-//                            <traitPurge></traitPurge>
-//                            <availabilityPurge></availabilityPurge>
-//                            <baselineFrequency></baselineFrequency>
-//                            <baselineDataSet></baselineDataSet>
+//                            <entry key="BaseUrl">herethereandeverywhere</entry>
 //                        </systemSettings>
 //                    </data>
 //                </entity>
@@ -245,17 +215,15 @@ public class SystemSettingsExporterTest {
 
             assertEquals(m.getAttribute("referencedEntityId"), "0", "Unexpected referencedEntityId value");
             
-            //i'm too lazy to repeat the check for the presence of all 30 properties in the export file
-            //let's just count them.
-            assertEquals(m.getChildNodes().getLength(), 30, "Unexpected number of properties in the system settings.");
+            assertEquals(m.getChildNodes().getLength(), 1, "Unexpected number of properties in the system settings.");
             
-            //but let's check that the explicitly assigned value to baseURL has been exported.
-            NodeList baseURLs = m.getElementsByTagName("baseURL");
+            NodeList baseURLs = m.getElementsByTagName("entry");
             
             assertEquals(baseURLs.getLength(), 1, "Unexpected number of baseURL elements in the system settings export.");
             
             Element baseURL = (Element) baseURLs.item(0);
             
+            assertEquals(baseURL.getAttribute("key"), "BaseURL");
             assertEquals(baseURL.getTextContent(), "herethereandeverywhere", "Unexpected value of baseURL");
         }
     }

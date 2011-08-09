@@ -18,12 +18,9 @@
  */
 package org.rhq.modules.plugins.jbossas7;
 
-import java.util.List;
-
 import org.testng.annotations.Test;
 
 import org.rhq.modules.plugins.jbossas7.json.Address;
-import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
 
 /**
  * Test handling of path elements.
@@ -33,77 +30,6 @@ import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
  */
 @Test
 public class PathHandlingTest {
-
-    public void buildPath1() throws Exception {
-
-        String path = "/subsystem=jms,profile=default,queue=foo";
-
-        BaseComponent bc = new BaseComponent();
-        List<PROPERTY_VALUE> list = bc.pathToAddress(path);
-
-        int found = 0;
-        for (PROPERTY_VALUE p : list) {
-            if (p.getKey().equals("subsystem")) {
-                assert p.getValue().equals("jms");
-                found++;
-            }
-            if (p.getKey().equals("queue")) {
-                found++;
-                assert p.getValue().equals("foo");
-            }
-        }
-        assert found == 2 : "did not find both keys, but " + found;
-    }
-
-    public void buildPath2() throws Exception {
-
-        String path = "/subsystem=jms,profile=default,queue=java:/foo";
-
-        BaseComponent bc = new BaseComponent();
-        List<PROPERTY_VALUE> list = bc.pathToAddress(path);
-
-        assert list.size()==3 : "We don't have 3 components, but " + list.size();
-        for (PROPERTY_VALUE p : list) {
-            if (p.getKey().equals("subsystem"))
-                assert p.getValue().equals("jms");
-            if (p.getKey().equals("queue"))
-                assert p.getValue().equals("java:/foo") : "Queue value is wrong: " + p.getValue();
-
-        }
-    }
-
-    public void buildIncomplete() throws Exception {
-
-        String path = "/subsystem=jms,profile=default,queue=java:/foo,topic";
-
-        BaseComponent bc = new BaseComponent();
-        List<PROPERTY_VALUE> list = bc.pathToAddress(path);
-
-        assert list.size()==3 : "We don't have 3 components, but " + list.size();
-        int found = 0;
-        for (PROPERTY_VALUE p : list) {
-            if (p.getKey().equals("subsystem")) {
-                assert p.getValue().equals("jms");
-                found++;
-            }
-            if (p.getKey().equals("queue")) {
-                assert p.getValue().equals("java:/foo") : "Queue value is wrong: " + p.getValue();
-                found++;
-            }
-        }
-        assert found == 2 : "did not find both keys, but " + found;
-    }
-
-    public void addr2path() throws Exception {
-
-        String path = "subsystem=jms,profile=default,queue=java:/foo";
-
-        BaseComponent bc = new BaseComponent();
-        List<PROPERTY_VALUE> list = bc.pathToAddress(path);
-
-        String path2 = bc.addressToPath(list);
-        assert path.equals(path2);
-    }
 
     public void emptyAddress() throws Exception {
 
@@ -117,6 +43,8 @@ public class PathHandlingTest {
         Address a = new Address((String)null);
         assert a.getPath() != null;
         assert a.getPath().isEmpty();
+        assert a.isEmpty();
+        assert a.size()==0;
     }
 
     public void addressPath1() throws Exception {
@@ -129,5 +57,7 @@ public class PathHandlingTest {
         String path = "subsystem=jms,profile=default,queue=foo";
         Address a = new Address(path);
         assert a.getPath().equals(path);
+        assert a.size()==3 : "Size was not 3, but "+ a.size();
+        assert !a.isEmpty();
     }
 }

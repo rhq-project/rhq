@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.drift;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
@@ -32,6 +33,10 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import org.rhq.common.drift.ChangeSetWriter;
+import org.rhq.common.drift.ChangeSetWriterImpl;
+import org.rhq.common.drift.DirectoryEntry;
+import org.rhq.common.drift.FileEntry;
 import org.rhq.common.drift.Headers;
 import org.rhq.core.clientapi.agent.drift.DriftAgentService;
 import org.rhq.core.clientapi.server.drift.DriftServerService;
@@ -44,20 +49,30 @@ import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftCategory;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftConfiguration;
-import org.rhq.core.domain.drift.DriftFile;
-import org.rhq.core.domain.drift.DriftFileStatus;
 import org.rhq.core.domain.drift.DriftConfiguration.BaseDirectory;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext;
+import org.rhq.core.domain.drift.DriftFile;
+import org.rhq.core.domain.drift.DriftFileStatus;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.core.util.MessageDigestGenerator;
+import org.rhq.core.util.ZipUtil;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TestServerCommunicationsService;
 import org.rhq.enterprise.server.util.LookupUtil;
+
+import static org.apache.commons.io.FileUtils.deleteDirectory;
+import static org.apache.commons.io.FileUtils.toFile;
+import static org.apache.commons.io.IOUtils.write;
+import static org.rhq.common.drift.FileEntry.addedFileEntry;
+import static org.rhq.common.drift.FileEntry.changedFileEntry;
+import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
+import static org.rhq.core.domain.drift.DriftChangeSetCategory.DRIFT;
 
 /**
  * Test for {@link DriftManagerBean} SLSB.
@@ -78,11 +93,14 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
     @SuppressWarnings("unused")
     private DriftServerService driftServerService;
 
+    MessageDigestGenerator digestGenerator;
+
     /**
      * Prepares things for the entire test class.
      */
     @BeforeClass
-    public void beforeClass() {
+    public void beforeClass() throws Exception {
+        digestGenerator = new MessageDigestGenerator(MessageDigestGenerator.SHA_256);
         jpaDriftServer = LookupUtil.getJPADriftServer();
         driftManager = LookupUtil.getDriftManager();
         overlord = LookupUtil.getSubjectManager().getOverlord();
@@ -119,9 +137,32 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
 
     @Test(enabled = ENABLE_TESTS)
     public void testStoreChangeSet() throws Exception {
-        File changeset1 = new File("./src/test/resources/org/rhq/enterprise/server/drift/changeset-1.zip");
-        assertTrue(changeset1.exists());
-        jpaDriftServer.storeChangeSet(overlord, newResource.getId(), changeset1);
+        File rootDir = toFile(getClass().getResource("."));
+        deleteDirectory(rootDir);
+
+        File changeSetsDir = new File(rootDir, "changesets");
+        changeSetsDir.mkdirs();
+
+        Headers headers = new Headers();
+        headers.setResourceId(newResource.getId());
+        headers.setDriftCofigurationId(1);
+        headers.setDriftConfigurationName("test-1");
+        headers.setBasedir(rootDir.getAbsolutePath());
+        headers.setType(COVERAGE);
+
+        String file1Hash = sha256("test-1-file-1");
+
+        File changeSet1 = new File(changeSetsDir, "changeset-1.txt");
+        ChangeSetWriter writer = new ChangeSetWriterImpl(changeSet1, headers);
+        writer.writeDirectoryEntry(new DirectoryEntry("test").add(addedFileEntry("file-1", file1Hash)));
+        writer.close();
+
+        File changeSet1Zip = new File(changeSetsDir, "changeset-1.zip");
+        ZipUtil.zipFileOrDirectory(changeSet1, changeSet1Zip);
+
+        assertTrue("Expected to find change set zip file: " + changeSet1Zip.getPath(), changeSet1Zip.exists());
+
+        jpaDriftServer.storeChangeSet(overlord, newResource.getId(), changeSet1Zip);
 
         JPADriftChangeSetCriteria c = new JPADriftChangeSetCriteria();
         c.addFilterResourceId(newResource.getId());
@@ -132,30 +173,42 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
         assertEquals(0, changeSet.getVersion());
         assertEquals("Expected to find one entry in change set", 1, changeSet.getDrifts().size());
 
-        DriftFile driftFile = jpaDriftServer.getDriftFile(overlord, "aaaaa");
+        DriftFile driftFile = jpaDriftServer.getDriftFile(overlord, file1Hash);
         assertNotNull(driftFile);
         assertEquals(DriftFileStatus.REQUESTED, driftFile.getStatus());
 
         // the second change set should report drift
-        File changeset2 = new File("./src/test/resources/org/rhq/enterprise/server/drift/changeset-2.zip");
-        assertTrue(changeset2.exists());
-        jpaDriftServer.storeChangeSet(overlord, newResource.getId(), changeset2);
+        String modifiedFile1Hash = sha256("test-2-file-1-modified");
+        headers.setType(DRIFT);
+        File changeSet2 = new File(changeSetsDir, "changeset-2.txt");
+
+        writer = new ChangeSetWriterImpl(changeSet2, headers);
+        writer.writeDirectoryEntry(new DirectoryEntry("test").add(changedFileEntry("file-1", file1Hash, modifiedFile1Hash)));
+        writer.close();
+
+        File changeSet2Zip = new File(changeSetsDir, "changeset-2.zip");
+        ZipUtil.zipFileOrDirectory(changeSet2, changeSet2Zip);
+
+        assertTrue("Expected to find change set file: " + changeSet2Zip.getPath(), changeSet2Zip.exists());
+
+        jpaDriftServer.storeChangeSet(overlord, newResource.getId(), changeSet2Zip);
         c.addSortVersion(PageOrdering.ASC);
+        c.addFilterCategory(DRIFT);
         changeSets = jpaDriftServer.findDriftChangeSetsByCriteria(overlord, c);
-        assertEquals(2, changeSets.size());
+        assertEquals(1, changeSets.size());
         changeSet = changeSets.get(0);
-        assertEquals("The change set version is wrong", 0, changeSet.getVersion());
+        assertEquals("The change set version is wrong", 1, changeSet.getVersion());
         assertEquals("Expected to find one entry in change set", 1, changeSet.getDrifts().size());
-        changeSet = changeSets.get(1);
+        changeSet = changeSets.get(0);
         assertEquals(1, changeSet.getVersion());
         assertEquals(1, changeSet.getDrifts().size());
         Drift<?, ?> drift = changeSet.getDrifts().iterator().next();
-        assertEquals("dir/filename.ext", drift.getPath());
-        assertEquals("aaaaa", drift.getOldDriftFile().getHashId());
-        assertEquals("bbbbb", drift.getNewDriftFile().getHashId());
+        assertEquals("test/file-1", drift.getPath());
+        assertEquals(file1Hash, drift.getOldDriftFile().getHashId());
+        assertEquals(modifiedFile1Hash, drift.getNewDriftFile().getHashId());
         assertEquals(DriftCategory.FILE_CHANGED, drift.getCategory());
 
-        driftFile = jpaDriftServer.getDriftFile(overlord, "bbbbb");
+        driftFile = jpaDriftServer.getDriftFile(overlord, modifiedFile1Hash);
         assertNotNull(driftFile);
         assertEquals(DriftFileStatus.REQUESTED, driftFile.getStatus());
     }
@@ -367,6 +420,10 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
                 }
             }
         }
+    }
+
+    String sha256(String s) throws Exception {
+        return digestGenerator.calcDigestString(s);
     }
 
     private class TestConfigService implements DriftAgentService {

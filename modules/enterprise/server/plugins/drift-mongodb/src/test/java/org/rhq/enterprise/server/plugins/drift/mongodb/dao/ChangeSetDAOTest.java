@@ -49,7 +49,9 @@ import static org.testng.AssertJUnit.assertEquals;
 
 public class ChangeSetDAOTest {
 
-    static final boolean ENABLED = true;
+    // Tests need to be disabled when committed/pushed to the remote repo until we get
+    // mongodb installed on the hudson slave
+    static final boolean ENABLED = false;
 
     Mongo connection;
 
@@ -239,6 +241,16 @@ public class ChangeSetDAOTest {
             1, actual.size());
         assertChangeSetMatches("Failed to find change set by drift criteria with id filter.", c1, actual.get(0));
     }
+
+//    @Test
+//    public void testSlice() throws Exception {
+//         MongoDBChangeSet c1 = createChangeSet(DRIFT, 2, 1, 1)
+//            .add(new MongoDBChangeSetEntry("c2-1.txt", FILE_ADDED))
+//            .add(new MongoDBChangeSetEntry("c1-1.txt", FILE_CHANGED));
+//        dao.save(c1);
+//
+//        dao.createQuery().filter("files $slice", new Integer(1));
+//    }
 
     /**
      * This method first checks that the actual change set is not null. It then performs a

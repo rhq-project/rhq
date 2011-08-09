@@ -239,7 +239,9 @@
 
 
             <resource-configuration>
-                <c:simple-property name="profile" description="The profile name" required="true"/>
+                <c:simple-property name="profile" description="The profile name" required="true">
+                    <c:option-source target="resource" expression="type=Profile plugin=jboss-as-7"/>
+                </c:simple-property>
                 <c:simple-property name="socket-binding-group" readOnly="false" required="true">
                     <c:option-source target="resource" expression="type=SocketBindingGroupDomain"/>
                 </c:simple-property>
@@ -586,7 +588,7 @@
                 <c:simple-property name="path" readOnly="true" default="jms-queue"/>
             </plugin-configuration>
 
-            <resource-configuration> <!-- See BZ 705713 TODO -->
+            <resource-configuration>
                 <c:simple-property name="durable" required="false" type="boolean" readOnly="true" default="false"
                                    description="Whether the queue is durable or not."/>
                 <c:list-property name="entries" required="false"  readOnly="true"
@@ -594,15 +596,6 @@
                     <c:simple-property name="entries" type="string"/>
                 </c:list-property>
                 <c:simple-property name="selector" required="false" type="string" readOnly="true" description="The queue selector."/>
-                <c:template name="add" description="Properties when adding a new queue" >
-                    <c:simple-property name="durable" required="false" type="boolean" default="false"
-                                       description="Whether the queue is durable or not."/>
-                    <c:list-property name="entries" required="false"
-                                     description="The jndi names the queue will be bound to.">
-                        <c:simple-property name="entries" type="string"/>
-                    </c:list-property>
-                    <c:simple-property name="selector" required="false" type="string" description="The queue selector."/>
-                </c:template>
             </resource-configuration>
         </service>
         <service name="JMS Topic"
@@ -613,18 +606,11 @@
             <plugin-configuration>
                 <c:simple-property name="path" readOnly="true" default="jms-topic"/>
             </plugin-configuration>
-            <resource-configuration> <!-- See BZ 705713 TODO -->
+            <resource-configuration>
                 <c:list-property name="entries" required="false"  readOnly="true"
                                  description="The jndi names the queue will be bound to.">
                     <c:simple-property name="entries" type="string"/>
                 </c:list-property>
-                <c:template name="add" description="Template when adding a Topic">
-                    <!--<c:list-property name="entries" required="false"-->
-                                     <!--description="The jndi names the queue will be bound to.">-->
-                        <c:simple-property name="entries" type="string"/>
-                    <c:simple-property name="foobar" required="false" />
-                    <!--</c:list-property>-->
-                </c:template>
             </resource-configuration>
         </service>
         <service name="Connection-Factory"

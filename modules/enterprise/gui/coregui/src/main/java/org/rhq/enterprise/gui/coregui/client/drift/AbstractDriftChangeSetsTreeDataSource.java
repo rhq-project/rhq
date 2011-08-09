@@ -118,6 +118,8 @@ public abstract class AbstractDriftChangeSetsTreeDataSource extends RPCDataSourc
             String changesetId = parentId.substring(parentId.indexOf('_') + 1);
             GenericDriftCriteria criteria = new GenericDriftCriteria();
             criteria.addFilterChangeSetId(changesetId);
+            // TODO, this should probably not need to be eager loaded, the drift tree build should not need this 
+            criteria.fetchChangeSet(true);
 
             driftService.findDriftsByCriteria(criteria, new AsyncCallback<PageList<? extends Drift>>() {
                 public void onFailure(Throwable caught) {

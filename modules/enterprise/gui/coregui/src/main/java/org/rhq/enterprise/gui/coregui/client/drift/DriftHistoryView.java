@@ -30,6 +30,7 @@ import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
+import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
@@ -56,7 +57,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * A view that displays a paginated table of {@link org.rhq.core.domain.drift.JPADrift}s, along with the
  * ability to filter those drifts, sort those drifts, double-click a row to view full details a drift, and perform
  * various actions on the the drifts: delete selected, delete all from source, etc.
- * This view full respects the user's authorization, and will not allow acttions on the drifts unless the user is
+ * This view fully respects the user's authorization, and will not allow actions on the drifts unless the user is
  * either the inventory manager or has MANAGE_DRIFT permission on every resource corresponding to the drifts being
  * operated on.
  *
@@ -131,8 +132,13 @@ public class DriftHistoryView extends StringIDTableSection<DriftDataSource> {
         SelectItem categoryFilter = new EnumSelectItem(DriftDataSource.FILTER_CATEGORIES, MSG.common_title_category(),
             DriftCategory.class, categories, categoryIcons);
 
+        TextItem configurationFilter = new TextItem(DriftDataSource.FILTER_CONFIGURATION, MSG
+            .common_title_configuration());
+        TextItem changeSetFilter = new TextItem(DriftDataSource.FILTER_CHANGE_SET, MSG.view_drift_table_changeSet());
+        TextItem pathFilter = new TextItem(DriftDataSource.FILTER_PATH, MSG.common_title_path());
+
         if (isShowFilterForm()) {
-            setFilterFormItems(categoryFilter);
+            setFilterFormItems(configurationFilter, changeSetFilter, categoryFilter, pathFilter);
         }
     }
 

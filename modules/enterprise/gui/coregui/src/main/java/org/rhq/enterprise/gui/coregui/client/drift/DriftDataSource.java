@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.coregui.client.drift;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -75,6 +76,9 @@ public class DriftDataSource extends RPCDataSource<DriftComposite, GenericDriftC
     public static final String ATTR_PATH = "path";
 
     public static final String FILTER_CATEGORIES = "categories";
+    public static final String FILTER_CONFIGURATION = "configuration";
+    public static final String FILTER_CHANGE_SET = "changeSet";
+    public static final String FILTER_PATH = "path";
 
     private DriftGWTServiceAsync driftService = GWTServiceLookup.getDriftService();
 
@@ -191,6 +195,20 @@ public class DriftDataSource extends RPCDataSource<DriftComposite, GenericDriftC
             }
 
             public void onSuccess(PageList<DriftComposite> result) {
+                // only get the desired config names (substring match)
+                // note - this does not alter the PageList row count, which, I think, makes this
+                //        ok without messing up paging.
+                String configFilter = getFilter(request, FILTER_CONFIGURATION, String.class);
+                if (null != configFilter && !configFilter.isEmpty()) {
+                    configFilter = configFilter.toLowerCase();
+                    for (Iterator<DriftComposite> i = result.getValues().iterator(); i.hasNext();) {
+                        DriftComposite composite = i.next();
+                        if (!composite.getDriftConfigName().toLowerCase().contains(configFilter)) {
+                            i.remove();
+                        }
+                    }
+                }
+
                 dataRetrieved(result, response, request);
             }
         });
@@ -269,13 +287,36 @@ public class DriftDataSource extends RPCDataSource<DriftComposite, GenericDriftC
             return null; // user didn't select any priorities - return null to indicate no data should be displayed
         }
 
+        String changeSetFilter = getFilter(request, FILTER_CHANGE_SET, String.class);
+        String pathFilter = getFilter(request, FILTER_PATH, String.class);
+        // note, this criteria does not allow for query-time config name filtering. That filter is applied lazily
+        // to the query results.
+
         GenericDriftCriteria criteria = new GenericDriftCriteria();
         // grab the change set for the drift
         criteria.fetchChangeSet(true);
         // only get the desired drift categories
         criteria.addFilterCategories(categoriesFilter);
-        // do not fetch tracking entries from the coverage changeset 
-        criteria.addFilterChangeSetStartVersion(1);
+        // only get the desired changeset version (substring match)
+        if (null != changeSetFilter && !changeSetFilter.isEmpty()) {
+            try {
+                Integer version = Integer.valueOf(changeSetFilter);
+                criteria.addFilterChangeSetStartVersion(version);
+                criteria.addFilterChangeSetEndVersion(version);
+            } catch (Exception e) {
+                // ignore the specified filter, it's an invalid integer
+                // do not fetch tracking entries from the coverage changeset
+                criteria.addFilterChangeSetStartVersion(1);
+            }
+        } else {
+            // do not fetch tracking entries from the coverage changeset 
+            criteria.addFilterChangeSetStartVersion(1);
+        }
+
+        // only get the desired paths (substring match)
+        if (null != pathFilter && !pathFilter.isEmpty()) {
+            criteria.addFilterPath(pathFilter);
+        }
 
         switch (entityContext.getType()) {
         case Resource:

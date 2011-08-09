@@ -3525,7 +3525,7 @@
                         ALTER TABLE RHQ_DRIFT_CHANGE_SET
                         ADD CONSTRAINT RHQ_DCS_DRIFT_CONFIG_ID_FK
                         FOREIGN KEY (DRIFT_CONFIG_ID)
-                        REFERENCES RHQ_CONFIG (ID)
+                        REFERENCES RHQ_DRIFT_CONFIG (ID)
                     </statement>
                 </schema-directSQL>
 

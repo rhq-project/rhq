@@ -49,6 +49,7 @@ import org.rhq.enterprise.server.resource.ResourceTypeManagerRemote;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerRemote;
 import org.rhq.enterprise.server.search.SavedSearchManagerRemote;
 import org.rhq.enterprise.server.support.SupportManagerRemote;
+import org.rhq.enterprise.server.sync.SynchronizationManagerRemote;
 import org.rhq.enterprise.server.system.SystemManagerRemote;
 import org.rhq.enterprise.server.tagging.TagManagerRemote;
 
@@ -128,6 +129,8 @@ public interface RhqFacade {
 
     TagManagerRemote getTagManager();
 
+    SynchronizationManagerRemote getSynchronizationManager();
+    
     /**
      * This map is constructed using all the elements in the {@link RhqManagers} enum which are then proxied
      * using this instance.

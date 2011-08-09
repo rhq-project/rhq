@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
@@ -76,7 +77,7 @@ public class Domain2Descriptor {
 
         ASConnection conn = new ASConnection("localhost",9990);
 
-        List<PROPERTY_VALUE> address = pathToAddress(path);
+        Address address = new Address(path);
         Operation op = new Operation("read-resource-description",address);
         op.addAdditionalProperty("recursive","true");
 

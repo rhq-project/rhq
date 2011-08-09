@@ -100,11 +100,15 @@ public class PerspectiveServerPluginManager extends ServerPluginManager {
         String name = null;
         try {
             JarFile pluginJarFile = new JarFile(env.getPluginUrl().getFile());
-            for (JarEntry entry : Collections.list(pluginJarFile.entries())) {
-                name = entry.getName();
-                if (name.toLowerCase().endsWith(".war")) {
-                    deployWar(env, entry.getName(), pluginJarFile.getInputStream(entry));
+            try {
+                for (JarEntry entry : Collections.list(pluginJarFile.entries())) {
+                    name = entry.getName();
+                    if (name.toLowerCase().endsWith(".war")) {
+                        deployWar(env, entry.getName(), pluginJarFile.getInputStream(entry));
+                    }
                 }
+            } finally {
+                pluginJarFile.close();
             }
         } catch (Exception e) {
             Throwable t = (e instanceof MBeanException) ? e.getCause() : e;
@@ -225,11 +229,15 @@ public class PerspectiveServerPluginManager extends ServerPluginManager {
         String name = null;
         try {
             JarFile plugin = new JarFile(env.getPluginUrl().getFile());
-            for (JarEntry entry : Collections.list(plugin.entries())) {
-                name = entry.getName();
-                if (name.toLowerCase().endsWith(".war")) {
-                    undeployWar(getDeployFile(env, entry.getName()));
+            try {
+                for (JarEntry entry : Collections.list(plugin.entries())) {
+                    name = entry.getName();
+                    if (name.toLowerCase().endsWith(".war")) {
+                        undeployWar(getDeployFile(env, entry.getName()));
+                    }
                 }
+            } finally {
+                plugin.close();
             }
         } catch (Exception e) {
             this.log.error("Failed to deploy " + env.getPluginKey().getPluginName() + "#" + name, e);

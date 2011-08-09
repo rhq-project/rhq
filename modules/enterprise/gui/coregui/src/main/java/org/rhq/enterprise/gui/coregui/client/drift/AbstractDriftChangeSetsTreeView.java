@@ -324,7 +324,8 @@ public abstract class AbstractDriftChangeSetsTreeView extends LocatableTreeGrid 
         }
 
         public String getChangeSetId() {
-            return getAttribute("id");
+            String idAttrib = getAttribute("id");
+            return idAttrib.substring(idAttrib.indexOf('_') + 1);
         }
 
         private String buildNodeName(DriftChangeSet<?> changeset) {
@@ -346,8 +347,13 @@ public abstract class AbstractDriftChangeSetsTreeView extends LocatableTreeGrid 
             setIcon(ImageManager.getDriftCategoryIcon(drift.getCategory()));
             DriftChangeSet<?> changeset = drift.getChangeSet();
             setParentID(String.valueOf(changeset.getDriftConfigurationId()) + "_" + changeset.getId());
-            setID(drift.getId());
+            setID('D' + drift.getId()); // prefix with a 'D' so it doesn't conflict with driftConfig node IDs
             setName(drift.getPath()); // we sort on this column
+        }
+
+        public String getDriftId() {
+            String idAttrib = getAttribute("id");
+            return idAttrib.substring(1); // skip the 'D' prefix!
         }
 
         @Override

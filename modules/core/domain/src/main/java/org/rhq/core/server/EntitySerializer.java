@@ -252,14 +252,26 @@ public class EntitySerializer {
         String tempDir = System.getProperty("java.io.tmpdir");
         File tempFile = new File(tempDir, "entitySerializerTest.txt");
 
-        ObjectOutput output = new ObjectOutputStream(new FileOutputStream(tempFile));
-        writeExternalRemote(writeResource, output);
-        output.close();
+        ObjectOutput output = null;
+        try {
+            output = new ObjectOutputStream(new FileOutputStream(tempFile));
+            writeExternalRemote(writeResource, output);
+        } finally {
+            if (output != null) {
+                output.close();
+            }
+        }
 
         Resource readResource = new Resource();
-        ObjectInput input = new ObjectInputStream(new FileInputStream(tempFile));
-        readExternalRemote(readResource, input);
-        input.close();
+        ObjectInput input = null;
+        try {
+            input = new ObjectInputStream(new FileInputStream(tempFile));
+            readExternalRemote(readResource, input);
+        } finally {
+            if (input != null) {
+                input.close();
+            }
+        }
 
         // quick verification
         System.out.println("AFTER");

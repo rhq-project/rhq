@@ -55,7 +55,7 @@ public class SpecificParams {
         if (name.equals("Listen")){
             int i;
             StringBuilder val = new StringBuilder(value);
-            while (val.charAt(0) == ' ' | val.charAt(0) == '\t')
+            while (val.charAt(0) == ' ' || val.charAt(0) == '\t')
                 val.deleteCharAt(0);
             
             String [] str = val.toString().split("[ \t]+");

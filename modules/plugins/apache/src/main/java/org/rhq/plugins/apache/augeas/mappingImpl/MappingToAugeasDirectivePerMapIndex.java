@@ -182,7 +182,7 @@ public class MappingToAugeasDirectivePerMapIndex extends ConfigurationToAugeasAp
                   PropertyMap propMap = (PropertyMap)prop;
                   PropertySimple propSim = ((PropertySimple)propMap.get("_index"));
                   int value;
-                  if (propSim ==null | propSim.getIntegerValue() == null)
+                  if (propSim ==null || propSim.getIntegerValue() == null)
                     value = 0;
                           else
                     value = propSim.getIntegerValue().intValue();

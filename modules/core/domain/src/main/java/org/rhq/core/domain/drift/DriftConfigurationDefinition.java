@@ -57,6 +57,11 @@ public class DriftConfigurationDefinition implements Serializable {
     public static final String PROP_PATH = "path"; // for both include and exclude
     public static final String PROP_PATTERN = "pattern"; // for both include and exclude
 
+    // because we know drift config names will actually be used by the agent's plugin container as directories names,
+    // we must make sure they are restricted to only be characters valid for file system pathnames.
+    // Thus, we only allow config names to only include spaces or "." or "-" or alphanumeric or "_" characters.
+    public static final String PROP_NAME_REGEX_PATTERN = "[ \\.\\-\\w]+";
+
     public static final boolean DEFAULT_ENABLED = false;
     public static final long DEFAULT_INTERVAL = 1800L;
 
@@ -108,11 +113,7 @@ public class DriftConfigurationDefinition implements Serializable {
         pd.setConfigurationDefinition(INSTANCE);
 
         RegexConstraint constrait = new RegexConstraint();
-        // because we know these names will actually be used by the agent's plugin container as directories names,
-        // we must make sure they are restricted to only be characters valid for file system pathnames.
-        // Thus, we only allow config names to only include spaces or "." or "-" or alphanumeric or "_" characters.
-        String pattern = "[ \\.\\-\\w]+";
-        constrait.setDetails(pattern);
+        constrait.setDetails(PROP_NAME_REGEX_PATTERN);
         pd.addConstraints(constrait);
 
         return pd;

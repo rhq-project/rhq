@@ -55,6 +55,7 @@ import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.drift.DriftConfiguration;
+import org.rhq.core.domain.drift.DriftConfigurationDefinition;
 import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.drift.JPADrift;
@@ -350,6 +351,13 @@ public class DriftManagerBean implements DriftManagerLocal {
 
     @Override
     public void updateDriftConfiguration(Subject subject, EntityContext entityContext, DriftConfiguration driftConfig) {
+
+        // before we do anything, make sure the drift config name is valid
+        if (!driftConfig.getName().matches(DriftConfigurationDefinition.PROP_NAME_REGEX_PATTERN)) {
+            throw new IllegalArgumentException("Drift configuration name contains invalid characters: "
+                + driftConfig.getName());
+        }
+
         switch (entityContext.getType()) {
         case Resource:
             int resourceId = entityContext.getResourceId();
@@ -360,8 +368,7 @@ public class DriftManagerBean implements DriftManagerLocal {
 
             // Update or add the driftConfig as necessary
             boolean isUpdated = false;
-            for (Iterator<DriftConfiguration> i = resource.getDriftConfigurations().iterator(); i.hasNext();) {
-                DriftConfiguration dc = i.next();
+            for (DriftConfiguration dc : resource.getDriftConfigurations()) {
                 if (dc.getName().equals(driftConfig.getName())) {
                     dc.setConfiguration(driftConfig.getConfiguration());
                     isUpdated = true;

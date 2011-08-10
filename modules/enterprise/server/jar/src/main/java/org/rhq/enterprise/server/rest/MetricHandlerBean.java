@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.server.rest;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.ejb.EJB;
@@ -28,6 +29,7 @@ import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
+import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.rest.domain.MetricAggregate;
 import org.rhq.enterprise.server.measurement.MeasurementAggregate;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
@@ -46,6 +48,9 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
     MeasurementDataManagerLocal dataManager;
     @EJB
     MeasurementScheduleManagerLocal scheduleManager;
+    @EJB
+    ResourceManagerLocal resMgr;
+
     private static final long EIGHT_HOURS = 8 * 3600L * 1000L;
 
     @Override
@@ -66,7 +71,7 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
             throw new IllegalArgumentException("Schedule [" + scheduleId + "] is not a (numerical) metric");
 
         MeasurementAggregate aggr = dataManager.getAggregate(caller, scheduleId, startTime, endTime);
-        MetricAggregate res = new MetricAggregate(aggr.getMin(),aggr.getAvg(),aggr.getMax());
+        MetricAggregate res = new MetricAggregate(scheduleId, aggr.getMin(),aggr.getAvg(),aggr.getMax());
 
         int definitionId = schedule.getDefinition().getId();
         List<List<MeasurementDataNumericHighLowComposite>> listList = dataManager.findDataForResource(caller,
@@ -78,6 +83,7 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
                 MetricAggregate.DataPoint dp = new MetricAggregate.DataPoint(c.getTimestamp(),c.getValue(),c.getHighValue(),c.getLowValue());
                 res.addDataPoint(dp);
             }
+            res.setNumDataPoints(list.size());
         }
 
 
@@ -97,4 +103,43 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
         return ms;
     }
 
+    @Override
+    public List<MetricAggregate> getAggregatesForResource( int resourceId) {
+
+        List<MeasurementSchedule> schedules = scheduleManager.findSchedulesForResourceAndType(caller,
+                resourceId, DataType.MEASUREMENT, null,false);
+        List<MetricAggregate> ret = new ArrayList<MetricAggregate>(schedules.size());
+
+        long now = System.currentTimeMillis();
+        long then = now - EIGHT_HOURS;
+
+        for (MeasurementSchedule schedule: schedules) {
+            MeasurementAggregate aggr = dataManager.getAggregate(caller,schedule.getId(),then,now);
+            MetricAggregate res = new MetricAggregate(schedule.getId(), aggr.getMin(),aggr.getAvg(),aggr.getMax());
+            ret.add(res);
+        }
+        return ret;
+
+    }
+
+    @Override
+    public MetricSchedule updateSchedule(int scheduleId, MetricSchedule in) {
+        if (in==null)
+            throw new StuffNotFoundException("Input is null"); // TODO other type of exception
+
+        MeasurementSchedule schedule = scheduleManager.getScheduleById(caller, scheduleId);
+        if (schedule==null)
+            throw new StuffNotFoundException("Schedule with id " + scheduleId);
+
+        schedule.setEnabled(in.isEnabled());
+        schedule.setInterval(in.getCollectionInterval());
+
+        scheduleManager.updateSchedule(caller, schedule);
+
+        schedule = scheduleManager.getScheduleById(caller,scheduleId);
+
+        MetricSchedule ret = new MetricSchedule(scheduleId,in.getScheduleName(),in.getDisplayName(),schedule.isEnabled(),schedule.getInterval(),in.getUnit(),in.getType());
+
+        return ret;
+    }
 }

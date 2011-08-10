@@ -18,9 +18,14 @@
  */
 package org.rhq.enterprise.server.rest;
 
+import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
 
+import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
+import org.rhq.enterprise.server.alert.AlertManagerLocal;
+import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.rest.domain.Status;
 
 /**
@@ -30,6 +35,16 @@ import org.rhq.enterprise.server.rest.domain.Status;
 @Stateless
 @Interceptors(SetCallerInterceptor.class)
 public class StatusHandlerBean extends AbstractRestBean implements StatusHandlerLocal {
+
+
+    @EJB
+    MeasurementScheduleManagerLocal scheduleManager;
+    @EJB
+    ResourceManagerLocal resourceManager;
+    @EJB
+    AlertManagerLocal alertManager;
+    @EJB
+    AlertDefinitionManagerLocal alertDefinitionManager;
 
     @Override
     public Status getStatus() {
@@ -44,7 +59,7 @@ public class StatusHandlerBean extends AbstractRestBean implements StatusHandler
         status.setServers(2);
         status.setServices(3);
         status.setSchedules(4);
-        status.setMetricsMin(99);
+        status.setMetricsMin(scheduleManager.getScheduledMeasurementsPerMinute());
 
         return status;
     }

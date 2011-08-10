@@ -53,8 +53,7 @@ public class ResourceWithType {
     String typeName;
     Integer typeId;
     String pluginName;
-    ResourceWithType parent;
-    Boolean isParentResource;
+    Integer parentId;
 
 	private RESTServiceDiscovery rest;
 
@@ -116,16 +115,12 @@ public class ResourceWithType {
         this.pluginName = pluginName;
     }
 
-
-    @AddLinks
-    @LinkResource(rel = "parent")
-    @XmlElementRef
-    public ResourceWithType getParentResource() {
-        return parent;
+    public Integer getParentId() {
+        return parentId;
     }
 
-    public void setParentResource(ResourceWithType parentResource) {
-        this.parent = parentResource;
+    public void setParentId(Integer parentId) {
+        this.parentId = parentId;
     }
 
     @XmlElementRef
@@ -137,12 +132,4 @@ public class ResourceWithType {
         this.rest = rest;
     }
 
-    @XmlAttribute
-    public Boolean isParent() {
-        return isParentResource;
-    }
-
-    public void setIsParent(Boolean isParent) {
-        this.isParentResource = isParent;
-    }
 }

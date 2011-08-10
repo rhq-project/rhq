@@ -21,6 +21,7 @@ package org.rhq.enterprise.server.rest.domain;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
 /**
@@ -30,6 +31,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement
 public class MetricAggregate {
 
+    Integer scheduleId;
     double min;
     double avg;
     double max;
@@ -39,7 +41,8 @@ public class MetricAggregate {
     public MetricAggregate() {
     }
 
-    public MetricAggregate(double min, double avg, double max) {
+    public MetricAggregate(Integer scheduleId, double min, double avg, double max) {
+        this.scheduleId = scheduleId;
 
         this.min = min;
         this.avg = avg;
@@ -47,6 +50,7 @@ public class MetricAggregate {
         dataPoints = new ArrayList<DataPoint>();
     }
 
+    @XmlElement
     public List<DataPoint> getDataPoints() {
         return dataPoints;
     }
@@ -59,14 +63,17 @@ public class MetricAggregate {
         this.dataPoints = dataPoints;
     }
 
+    @XmlElement
     public double getMin() {
         return min;
     }
 
+    @XmlElement
     public double getAvg() {
         return avg;
     }
 
+    @XmlElement
     public double getMax() {
         return max;
     }
@@ -91,7 +98,15 @@ public class MetricAggregate {
         this.numDataPoints = numDataPoints;
     }
 
-//    @XmlRootElement
+    @XmlElement
+    public Integer getScheduleId() {
+        return scheduleId;
+    }
+
+    public void setScheduleId(Integer scheduleId) {
+        this.scheduleId = scheduleId;
+    }
+
     public static class DataPoint {
         long timeStamp;
         double value;

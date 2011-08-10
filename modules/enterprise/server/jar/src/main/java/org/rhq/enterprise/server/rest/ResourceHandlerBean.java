@@ -109,9 +109,7 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
         rwt.setPluginName(resourceType.getPlugin());
         Resource parent = res.getParentResource();
         if (parent!=null) {
-            ResourceWithType rwtParent = new ResourceWithType(parent.getName(), parent.getId());
-            rwtParent.setIsParent(true);
-            rwt.setParentResource(rwtParent);
+            rwt.setParentId(parent.getId());
         }
         return rwt;
     }

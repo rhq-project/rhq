@@ -18,11 +18,14 @@
  */
 package org.rhq.enterprise.server.rest;
 
+import java.util.List;
+
 import javax.ejb.Local;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.PUT;
 import javax.ws.rs.QueryParam;
 
 import org.rhq.enterprise.server.rest.domain.MetricAggregate;
@@ -46,7 +49,15 @@ public interface MetricHandlerLocal {
                                   @QueryParam("dataPoints") int dataPoints);
 
     @GET
+    @Path("data/resource/{resourceId}")
+    List<MetricAggregate> getAggregatesForResource(@PathParam("resourceId") int resourceId);
+
+    @GET
     @Path("/schedule/{id}")
     MetricSchedule getSchedule(@PathParam("id") int scheduleId);
+
+    @PUT
+    @Path("/schedule/{id}")
+    MetricSchedule updateSchedule(@PathParam("id") int scheduleId, MetricSchedule in);
 
 }

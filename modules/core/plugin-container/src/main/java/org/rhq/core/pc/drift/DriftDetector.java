@@ -1,4 +1,27 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2011 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+
 package org.rhq.core.pc.drift;
+
+import static java.util.Collections.EMPTY_LIST;
+import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
+import static org.rhq.core.domain.drift.DriftChangeSetCategory.DRIFT;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,10 +40,6 @@ import org.rhq.common.drift.Headers;
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.util.MessageDigestGenerator;
-
-import static java.util.Collections.EMPTY_LIST;
-import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
-import static org.rhq.core.domain.drift.DriftChangeSetCategory.DRIFT;
 
 public class DriftDetector implements Runnable {
     private Log log = LogFactory.getLog(DriftDetector.class);
@@ -57,7 +76,7 @@ public class DriftDetector implements Runnable {
                 return;
             }
 
-            if (!schedule.getDriftConfiguration().getEnabled()) {
+            if (!schedule.getDriftConfiguration().isEnabled()) {
                 return;
             }
 
@@ -67,8 +86,7 @@ public class DriftDetector implements Runnable {
             int changes = 0;
 
             try {
-                if (changeSetMgr.changeSetExists(schedule.getResourceId(), new Headers(driftConfig.getName(),
-                    basedir(resourceId, driftConfig), COVERAGE))) {
+                if (changeSetMgr.changeSetExists(schedule.getResourceId(), createHeaders(schedule, COVERAGE))) {
                     changeSetType = DRIFT;
                     changes = generateDriftChangeSet(schedule);
                 } else {
@@ -91,12 +109,12 @@ public class DriftDetector implements Runnable {
     private int generateDriftChangeSet(DriftDetectionSchedule schedule) throws IOException {
         File basedir = new File(basedir(schedule.getResourceId(), schedule.getDriftConfiguration()));
 
-        ChangeSetWriter driftWriter = changeSetMgr.getChangeSetWriter(schedule.getResourceId(),
-            new Headers(schedule.getDriftConfiguration().getName(), basedir.getAbsolutePath(), DRIFT));
+        ChangeSetWriter driftWriter = changeSetMgr.getChangeSetWriter(schedule.getResourceId(), createHeaders(schedule,
+            DRIFT));
         ChangeSetWriter coverageWriter = changeSetMgr.getChangeSetWriterForUpdate(schedule.getResourceId(),
-            new Headers(schedule.getDriftConfiguration().getName(), basedir.getAbsolutePath(), COVERAGE));
-        ChangeSetReader reader = changeSetMgr.getChangeSetReader(schedule.getResourceId(),
-            schedule.getDriftConfiguration().getName());
+            createHeaders(schedule, COVERAGE));
+        ChangeSetReader reader = changeSetMgr.getChangeSetReader(schedule.getResourceId(), schedule
+            .getDriftConfiguration().getName());
 
         int changes = 0;
 
@@ -104,8 +122,8 @@ public class DriftDetector implements Runnable {
             DirectoryAnalyzer analyzer = new DirectoryAnalyzer(basedir, dirEntry);
             analyzer.run();
 
-            if (analyzer.getFilesAdded().size() > 0 || analyzer.getFilesRemoved().size() > 0 ||
-                analyzer.getFilesChanged().size() > 0) {
+            if (analyzer.getFilesAdded().size() > 0 || analyzer.getFilesRemoved().size() > 0
+                || analyzer.getFilesChanged().size() > 0) {
                 DirectoryEntry driftDirEntry = new DirectoryEntry(dirEntry.getDirectory());
                 DirectoryEntry coverageDirEntry = new DirectoryEntry(dirEntry.getDirectory());
 
@@ -144,16 +162,14 @@ public class DriftDetector implements Runnable {
         }
         driftWriter.close();
         coverageWriter.close();
-        changeSetMgr.updateChangeSet(schedule.getResourceId(), new Headers(schedule.getDriftConfiguration().getName(),
-            basedir.getAbsolutePath(), COVERAGE));
+        changeSetMgr.updateChangeSet(schedule.getResourceId(), createHeaders(schedule, COVERAGE));
 
         return changes;
     }
 
     private void generateCoverageChangeSet(DriftDetectionSchedule schedule) throws IOException {
-        ChangeSetWriter writer = changeSetMgr.getChangeSetWriter(schedule.getResourceId(),
-            new Headers(schedule.getDriftConfiguration().getName(),
-                basedir(schedule.getResourceId(), schedule.getDriftConfiguration()), COVERAGE));
+        ChangeSetWriter writer = changeSetMgr.getChangeSetWriter(schedule.getResourceId(), createHeaders(schedule,
+            COVERAGE));
 
         DirectoryScanner scanner = new DirectoryScanner(schedule.getResourceId(), schedule.getDriftConfiguration(),
             writer);
@@ -175,6 +191,17 @@ public class DriftDetector implements Runnable {
         return driftClient.getAbsoluteBaseDirectory(resourceId, driftConfig).getAbsolutePath();
     }
 
+    private Headers createHeaders(DriftDetectionSchedule schedule, DriftChangeSetCategory type) {
+        Headers headers = new Headers();
+        headers.setResourceId(schedule.getResourceId());
+        headers.setDriftCofigurationId(schedule.getDriftConfiguration().getId());
+        headers.setDriftConfigurationName(schedule.getDriftConfiguration().getName());
+        headers.setBasedir(basedir(schedule.getResourceId(), schedule.getDriftConfiguration()));
+        headers.setType(type);
+
+        return headers;
+    }
+
     // TODO Do not use DirectoryWalker
     // Want to do the file scan iteratively to keep memory overhead as low as possible.
     private class DirectoryScanner extends DirectoryWalker {
@@ -194,11 +221,13 @@ public class DriftDetector implements Runnable {
             walk(new File(basedir(resourceId, driftConfig)), EMPTY_LIST);
         }
 
+        @SuppressWarnings("unchecked")
         @Override
         protected void handleDirectoryStart(File directory, int depth, Collection results) throws IOException {
             stack.push(new DirectoryEntry(relativePath(new File(basedir(resourceId, driftConfig)), directory)));
         }
 
+        @SuppressWarnings("unchecked")
         @Override
         protected void handleDirectoryEnd(File directory, int depth, Collection results) throws IOException {
             DirectoryEntry dirEntry = stack.pop();
@@ -207,12 +236,14 @@ public class DriftDetector implements Runnable {
             }
         }
 
+        @SuppressWarnings("unchecked")
         @Override
         protected void handleFile(File file, int depth, Collection results) throws IOException {
             DirectoryEntry dirEntry = stack.peek();
             dirEntry.add(FileEntry.addedFileEntry(file.getName(), sha256(file)));
         }
 
+        @SuppressWarnings("unchecked")
         @Override
         protected void handleEnd(Collection results) throws IOException {
             writer.close();

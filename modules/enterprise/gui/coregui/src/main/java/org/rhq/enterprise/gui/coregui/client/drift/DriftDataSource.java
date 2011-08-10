@@ -37,8 +37,7 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.common.EntityContext;
-import org.rhq.core.domain.criteria.BasicDriftCriteria;
-import org.rhq.core.domain.criteria.DriftCriteria;
+import org.rhq.core.domain.criteria.GenericDriftCriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftCategory;
 import org.rhq.core.domain.drift.DriftComposite;
@@ -61,7 +60,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * @author Jay Shaughnessy
  * @author John Mazzitelli
  */
-public class DriftDataSource extends RPCDataSource<DriftComposite, DriftCriteria> {
+public class DriftDataSource extends RPCDataSource<DriftComposite, GenericDriftCriteria> {
 
     public static final String CATEGORY_ICON_NEW = ImageManager.getDriftCategoryIcon(null);
     public static final String CATEGORY_ICON_ADD = ImageManager.getDriftCategoryIcon(DriftCategory.FILE_ADDED);
@@ -71,8 +70,9 @@ public class DriftDataSource extends RPCDataSource<DriftComposite, DriftCriteria
     public static final String ATTR_ID = "id";
     public static final String ATTR_CTIME = "ctime";
     public static final String ATTR_CATEGORY = "category";
-    public static final String ATTR_PATH = "path";
     public static final String ATTR_CHANGESET_VERSION = "changeSetVersion";
+    public static final String ATTR_CHANGESET_CONFIG = "changSetConfig";
+    public static final String ATTR_PATH = "path";
 
     public static final String FILTER_CATEGORIES = "categories";
 
@@ -103,6 +103,9 @@ public class DriftDataSource extends RPCDataSource<DriftComposite, DriftCriteria
         ctimeField.setShowHover(true);
         ctimeField.setHoverCustomizer(TimestampCellFormatter.getHoverCustomizer(ATTR_CTIME));
         fields.add(ctimeField);
+
+        ListGridField changeSetConfigField = new ListGridField(ATTR_CHANGESET_CONFIG, MSG.common_title_configuration());
+        fields.add(changeSetConfigField);
 
         ListGridField changeSetVersionField = new ListGridField(ATTR_CHANGESET_VERSION, MSG
             .view_drift_table_changeSet());
@@ -172,7 +175,7 @@ public class DriftDataSource extends RPCDataSource<DriftComposite, DriftCriteria
     }
 
     @Override
-    protected void executeFetch(final DSRequest request, final DSResponse response, final DriftCriteria criteria) {
+    protected void executeFetch(final DSRequest request, final DSResponse response, final GenericDriftCriteria criteria) {
         if (criteria == null) {
             // the user selected no categories in the filter - it makes sense from the UI perspective to show 0 rows
             response.setTotalRows(0);
@@ -259,16 +262,20 @@ public class DriftDataSource extends RPCDataSource<DriftComposite, DriftCriteria
     }
 
     @Override
-    protected DriftCriteria getFetchCriteria(DSRequest request) {
+    protected GenericDriftCriteria getFetchCriteria(DSRequest request) {
         DriftCategory[] categoriesFilter = getArrayFilter(request, FILTER_CATEGORIES, DriftCategory.class);
 
         if (categoriesFilter == null || categoriesFilter.length == 0) {
             return null; // user didn't select any priorities - return null to indicate no data should be displayed
         }
 
-        BasicDriftCriteria criteria = new BasicDriftCriteria();
+        GenericDriftCriteria criteria = new GenericDriftCriteria();
+        // grab the change set for the drift
         criteria.fetchChangeSet(true);
+        // only get the desired drift categories
         criteria.addFilterCategories(categoriesFilter);
+        // do not fetch tracking entries from the coverage changeset 
+        criteria.addFilterChangeSetStartVersion(1);
 
         switch (entityContext.getType()) {
         case Resource:
@@ -304,7 +311,7 @@ public class DriftDataSource extends RPCDataSource<DriftComposite, DriftCriteria
 
     public static ListGridRecord convert(DriftComposite from) {
         ListGridRecord record = new ListGridRecord();
-        Drift drift = from.getDrift();
+        Drift<?, ?> drift = from.getDrift();
         record.setAttribute(ATTR_ID, drift.getId());
         record.setAttribute(ATTR_CTIME, new Date(drift.getCtime()));
         switch (drift.getChangeSet().getCategory()) {
@@ -316,6 +323,7 @@ public class DriftDataSource extends RPCDataSource<DriftComposite, DriftCriteria
             break;
         }
         record.setAttribute(ATTR_PATH, drift.getPath());
+        record.setAttribute(ATTR_CHANGESET_CONFIG, from.getDriftConfigName());
         record.setAttribute(ATTR_CHANGESET_VERSION, drift.getChangeSet().getVersion());
 
         // for ancestry handling     

@@ -331,7 +331,7 @@ public class TestAgentClient implements AgentClient, BundleAgentService, DriftAg
     }
 
     @Override
-    public boolean requestDriftFiles(int resourceId, Headers headers, List<DriftFile> driftFiles) {
+    public boolean requestDriftFiles(int resourceId, Headers headers, List<? extends DriftFile> driftFiles) {
         return false;
     }
 

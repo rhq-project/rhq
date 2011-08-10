@@ -29,7 +29,7 @@ import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 
-import org.rhq.core.domain.criteria.BasicDriftCriteria;
+import org.rhq.core.domain.criteria.GenericDriftCriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
@@ -60,27 +60,28 @@ public class DriftDetailsView extends LocatableVLayout {
     }
 
     private void show(String driftId) {
-        BasicDriftCriteria criteria = new BasicDriftCriteria();
+        GenericDriftCriteria criteria = new GenericDriftCriteria();
         criteria.addFilterId(driftId);
         criteria.fetchChangeSet(true);
-        GWTServiceLookup.getDriftService().findDriftsByCriteria(criteria, new AsyncCallback<PageList<Drift>>() {
-            @Override
-            public void onSuccess(PageList<Drift> result) {
-                if (result.getTotalSize() != 1) {
-                    CoreGUI.getMessageCenter().notify(
-                        new Message("Got [" + result.getTotalSize()
-                            + "] results. Should have been 1. The details shown here might not be correct.",
-                            Severity.Warning));
+        GWTServiceLookup.getDriftService().findDriftsByCriteria(criteria,
+            new AsyncCallback<PageList<? extends Drift>>() {
+                @Override
+                public void onSuccess(PageList<? extends Drift> result) {
+                    if (result.getTotalSize() != 1) {
+                        CoreGUI.getMessageCenter().notify(
+                            new Message("Got [" + result.getTotalSize()
+                                + "] results. Should have been 1. The details shown here might not be correct.",
+                                Severity.Warning));
+                    }
+                    Drift drift = result.get(0);
+                    show(drift);
                 }
-                Drift drift = result.get(0);
-                show(drift);
-            }
 
-            @Override
-            public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError(MSG.view_drift_failure_load(), caught);
-            }
-        });
+                @Override
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError(MSG.view_drift_failure_load(), caught);
+                }
+            });
     }
 
     private void show(Drift drift) {

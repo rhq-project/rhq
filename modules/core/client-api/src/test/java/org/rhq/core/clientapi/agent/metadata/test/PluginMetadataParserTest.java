@@ -639,7 +639,7 @@ public class PluginMetadataParserTest {
                 Configuration config = driftTemplate.getConfiguration();
                 DriftConfiguration dconfig = new DriftConfiguration(config);
 
-                assertEquals(dconfig.getInterval().longValue(), 11111L);
+                assertEquals(dconfig.getInterval(), 11111L);
                 assertEquals(dconfig.getBasedir().getValueContext(), BaseDirValueContext.pluginConfiguration);
                 assertEquals(dconfig.getBasedir().getValueName(), "var.lib.test1");
 
@@ -679,7 +679,7 @@ public class PluginMetadataParserTest {
                 Configuration config = driftTemplate.getConfiguration();
                 DriftConfiguration dconfig = new DriftConfiguration(config);
 
-                assertEquals(dconfig.getInterval().longValue(), 22222L);
+                assertEquals(dconfig.getInterval(), 22222L);
                 assertEquals(dconfig.getBasedir().getValueContext(), BaseDirValueContext.resourceConfiguration);
                 assertEquals(dconfig.getBasedir().getValueName(), "var.lib.test2");
 
@@ -719,7 +719,7 @@ public class PluginMetadataParserTest {
                 Configuration config = driftTemplate.getConfiguration();
                 DriftConfiguration dconfig = new DriftConfiguration(config);
 
-                assertEquals(dconfig.getInterval().longValue(), 33333L);
+                assertEquals(dconfig.getInterval(), 33333L);
                 assertEquals(dconfig.getBasedir().getValueContext(), BaseDirValueContext.measurementTrait);
                 assertEquals(dconfig.getBasedir().getValueName(), "var.lib.test3");
 
@@ -781,7 +781,7 @@ public class PluginMetadataParserTest {
                 Configuration config = driftTemplate.getConfiguration();
                 DriftConfiguration dconfig = new DriftConfiguration(config);
 
-                assertEquals(dconfig.getInterval().longValue(), 44444L);
+                assertEquals(dconfig.getInterval(), 44444L);
                 assertEquals(dconfig.getBasedir().getValueContext(), BaseDirValueContext.fileSystem);
                 assertEquals(dconfig.getBasedir().getValueName(), "/wot/gorilla");
 

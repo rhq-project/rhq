@@ -23,7 +23,7 @@ import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.criteria.DriftJPACriteria;
+import org.rhq.core.domain.criteria.GenericDriftCriteria;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.core.domain.drift.DriftCategory;
 import org.rhq.core.domain.drift.DriftComposite;
@@ -349,14 +349,15 @@ public abstract class AbstractRecentDriftsPortlet extends DriftHistoryView imple
          * the portlet. This sets the counter appropriately and stops further queries to the server.
          */
         @Override
-        protected int getTotalRows(final PageList<DriftComposite> result, final DSResponse response, final DSRequest request) {
+        protected int getTotalRows(final PageList<DriftComposite> result, final DSResponse response,
+            final DSRequest request) {
 
             return result.size();
         }
 
         @Override
-        protected DriftJPACriteria getFetchCriteria(DSRequest request) {
-            DriftJPACriteria criteria = new DriftJPACriteria();
+        protected GenericDriftCriteria getFetchCriteria(DSRequest request) {
+            GenericDriftCriteria criteria = new GenericDriftCriteria();
 
             // result count
             String currentSetting = this.configuration.getSimpleValue(Constant.RESULT_COUNT,

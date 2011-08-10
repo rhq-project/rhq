@@ -3459,6 +3459,42 @@
                 <schema-addColumn   table="RHQ_DRIFT_FILE" column="STATUS" columnType="VARCHAR2" precision="20" />
                 <schema-alterColumn table="RHQ_DRIFT_FILE" column="STATUS" nullable="FALSE" />
 
+                <!-- RHQ_DRIFT_CONFIG -->
+                <schema-createSequence name="RHQ_DRIFT_CONFIG_ID_SEQ" initial="10001" />
+                <schema-directSQL>
+                    <statement desc="Creating table RHQ_DRIFT_CONFIG">
+                        CREATE TABLE RHQ_DRIFT_CONFIG (ID INTEGER PRIMARY KEY)
+                    </statement>
+                </schema-directSQL>
+                <schema-addColumn   table="RHQ_DRIFT_CONFIG" column="CTIME" columnType="LONG" />
+                <schema-alterColumn table="RHQ_DRIFT_CONFIG" column="CTIME" nullable="FALSE" />
+                <schema-addColumn   table="RHQ_DRIFT_CONFIG" column="NAME" columnType="VARCHAR2" precision="512" />
+                <schema-alterColumn table="RHQ_DRIFT_CONFIG" column="NAME" nullable="FALSE" />
+                <schema-addColumn   table="RHQ_DRIFT_CONFIG" column="INTERVAL" columnType="LONG" />
+                <schema-alterColumn table="RHQ_DRIFT_CONFIG" column="INTERVAL" nullable="FALSE" />                
+                <schema-addColumn   table="RHQ_DRIFT_CONFIG" column="IS_ENABLED" columnType="BOOLEAN" />
+                <schema-alterColumn table="RHQ_DRIFT_CONFIG" column="IS_ENABLED" nullable="FALSE" />
+                <schema-addColumn   table="RHQ_DRIFT_CONFIG" column="CONFIG_ID" columnType="INTEGER" />
+                <schema-alterColumn table="RHQ_DRIFT_CONFIG" column="CONFIG_ID" nullable="FALSE" />                
+                <schema-directSQL>
+                    <statement desc="Creating RHQ_DRIFT_CONFIG foreign key relation to RHQ_CONFIG">
+                        ALTER TABLE RHQ_DRIFT_CONFIG
+                        ADD CONSTRAINT RHQ_DC_CONFIG_ID_FK
+                        FOREIGN KEY (CONFIG_ID)
+                        REFERENCES RHQ_CONFIG (ID)
+                    </statement>
+                </schema-directSQL>
+                <schema-addColumn   table="RHQ_DRIFT_CONFIG" column="RESOURCE_ID" columnType="INTEGER" />                
+                <schema-directSQL>
+                    <statement desc="Creating RHQ_DRIFT_CONFIG foreign key relation to RHQ_RESOURCE">
+                        ALTER TABLE RHQ_DRIFT_CONFIG
+                        ADD CONSTRAINT RHQ_DC_RESOURCE_ID_FK
+                        FOREIGN KEY (RESOURCE_ID)
+                        REFERENCES RHQ_RESOURCE (ID)
+                    </statement>
+                </schema-directSQL>
+
+                
                 <!-- RHQ_DRIFT_CHANGE_SET -->
                 <schema-createSequence name="RHQ_DRIFT_CHANGE_SET_ID_SEQ" initial="10001" />
                 <schema-directSQL>
@@ -3473,7 +3509,7 @@
                 <schema-addColumn   table="RHQ_DRIFT_CHANGE_SET" column="CATEGORY" columnType="VARCHAR2" precision="20" />
                 <schema-alterColumn table="RHQ_DRIFT_CHANGE_SET" column="CATEGORY" nullable="FALSE" />
                 <schema-addColumn   table="RHQ_DRIFT_CHANGE_SET" column="RESOURCE_ID" columnType="INTEGER" />
-                <schema-addColumn   table="RHQ_DRIFT_CHANGE_SET" column="CONFIG_ID" columnType="INTEGER" />
+                <schema-alterColumn table="RHQ_DRIFT_CHANGE_SET" column="RESOURCE_ID" nullable="FALSE" />                
                 <schema-directSQL>
                     <statement desc="Creating RHQ_DRIFT_CHANGE_SET foreign key relation to RHQ_RESOURCE">
                         ALTER TABLE RHQ_DRIFT_CHANGE_SET
@@ -3481,17 +3517,17 @@
                         FOREIGN KEY (RESOURCE_ID)
                         REFERENCES RHQ_RESOURCE (ID)
                     </statement>
-                </schema-directSQL>
+                </schema-directSQL>                
+                <schema-addColumn   table="RHQ_DRIFT_CHANGE_SET" column="DRIFT_CONFIG_ID" columnType="INTEGER" />
+                <schema-alterColumn table="RHQ_DRIFT_CHANGE_SET" column="DRIFT_CONFIG_ID" nullable="FALSE" />                
                 <schema-directSQL>
-                    <statement desc="Creating RHQ_DRIFT_CHANGE_SET foreign key relation to RHQ_CONFIG">
+                    <statement desc="Creating RHQ_DRIFT_CHANGE_SET foreign key relation to RHQ_DRIFT_CONFIG">
                         ALTER TABLE RHQ_DRIFT_CHANGE_SET
-                        ADD CONSTRAINT RHQ_DCS_CONFIG_ID_FK
-                        FOREIGN KEY (CONFIG_ID)
-                        REFERENCES RHQ_CONFIG (ID)
+                        ADD CONSTRAINT RHQ_DCS_DRIFT_CONFIG_ID_FK
+                        FOREIGN KEY (DRIFT_CONFIG_ID)
+                        REFERENCES RHQ_DRIFT_CONFIG (ID)
                     </statement>
                 </schema-directSQL>
-                <schema-alterColumn table="RHQ_DRIFT_CHANGE_SET" column="RESOURCE_ID" nullable="FALSE" />
-                <schema-alterColumn table="RHQ_DRIFT_CHANGE_SET" column="CONFIG_ID" nullable="FALSE" />
 
                 <!-- RHQ_DRIFT -->
                 <schema-createSequence name="RHQ_DRIFT_ID_SEQ" initial="10001" />
@@ -3504,7 +3540,7 @@
                 <schema-alterColumn table="RHQ_DRIFT" column="CTIME" nullable="FALSE" />
                 <schema-addColumn   table="RHQ_DRIFT" column="CATEGORY" columnType="VARCHAR2" precision="20" />
                 <schema-alterColumn table="RHQ_DRIFT" column="CATEGORY" nullable="FALSE" />
-                <schema-addColumn   table="RHQ_DRIFT" column="PATH" columnType="VARCHAR2" precision="512" />
+                <schema-addColumn   table="RHQ_DRIFT" column="PATH" columnType="VARCHAR2" precision="1024" />
                 <schema-alterColumn table="RHQ_DRIFT" column="PATH" nullable="FALSE" />
                 <schema-addColumn   table="RHQ_DRIFT" column="DRIFT_CHANGE_SET_ID" columnType="INTEGER" />
                 <schema-directSQL>
@@ -3559,38 +3595,13 @@
                         REFERENCES RHQ_CONFIG_TEMPLATE (ID)
                     </statement>
                 </schema-directSQL>
-                
-                <!-- RHQ_DRIFT_CONFIG_MAP -->
-                <schema-directSQL>
-                    <statement desc="Creating table RHQ_DRIFT_CONFIG_MAP">
-                        CREATE TABLE RHQ_DRIFT_CONFIG_MAP (
-                            RESOURCE_ID INTEGER,
-                            CONFIG_ID INTEGER)
-                    </statement>
-                </schema-directSQL>
-                <schema-alterColumn table="RHQ_DRIFT_CONFIG_MAP" column="RESOURCE_ID" nullable="FALSE"/>
-                <schema-alterColumn table="RHQ_DRIFT_CONFIG_MAP" column="CONFIG_ID" nullable="FALSE"/>
-                <schema-directSQL>
-                    <statement desc="Creating RHQ_DRIFT_CONFIG_MAP foreign key to RHQ_RESOURCE">
-                        ALTER TABLE RHQ_DRIFT_CONFIG_MAP
-                        ADD CONSTRAINT RHQ_DCM_RESOURCE_ID_FK
-                        FOREIGN KEY (RESOURCE_ID)
-                        REFERENCES RHQ_RESOURCE (ID)
-                    </statement>
-                    <statement desc="Creating RHQ_DRIFT_CONFIG_MAP foreign key to RHQ_CONFIG">
-                        ALTER TABLE RHQ_DRIFT_CONFIG_MAP
-                        ADD CONSTRAINT RHQ_DCM_CONFIG_ID_FK
-                        FOREIGN KEY (CONFIG_ID)
-                        REFERENCES RHQ_CONFIG (ID)
-                    </statement>
-                </schema-directSQL>
             </schemaSpec>
 
             <schemaSpec version="2.112">
                 <schema-directSQL>
                     <statement desc="Adding drift server plugin active plugin system configuration property">
                         INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value)
-                        VALUES (57, 'ACTIVE_DRIFT_PLUGIN', 'drift-rhq', 'drift-rhq')
+                        VALUES (57, 'ACTIVE_DRIFT_PLUGIN', 'drift-jpa', 'drift-jpa')
                     </statement>
                 </schema-directSQL>
             </schemaSpec>

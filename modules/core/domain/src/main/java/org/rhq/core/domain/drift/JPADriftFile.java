@@ -30,9 +30,9 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 
 /**
- * A RhqDriftFile represents one unique piece of content used for drift tracking.  Note that RhqDriftFile does not
+ * The JPA Drift Server plugin (the RHQ default) implementation of DriftFile.  Note that JPADriftFile does not
  * include the actual bits, and therefore can be used freely client-side (gwt).  The bits are stored via the
- * DriftFileBits class, which is like this one but adds the Blob field. 
+ * JPADriftFileBits class, which is like this one but adds the Blob field. 
  *  
  * @author Jay Shaughnessy
  * @author John Mazzitelli
@@ -40,7 +40,7 @@ import javax.persistence.Table;
  */
 @Entity
 @Table(name = "RHQ_DRIFT_FILE")
-public class RhqDriftFile extends AbstractDriftFile implements DriftFile {
+public class JPADriftFile extends AbstractJPADriftFile implements Serializable, DriftFile {
     private static final long serialVersionUID = 1L;
 
     // this is a hash/digest that should uniquely identify the content
@@ -48,11 +48,11 @@ public class RhqDriftFile extends AbstractDriftFile implements DriftFile {
     @Column(name = "HASH_ID", nullable = false)
     private String hashId;
 
-    protected RhqDriftFile() {
+    protected JPADriftFile() {
         super();
     }
 
-    public RhqDriftFile(String hashId) {
+    public JPADriftFile(String hashId) {
         super();
         this.hashId = hashId;
     }
@@ -69,7 +69,7 @@ public class RhqDriftFile extends AbstractDriftFile implements DriftFile {
 
     @Override
     public String toString() {
-        return "RhqDriftFile [hashId=" + hashId + ", status=" + status + "]";
+        return "JPADriftFile [hashId=" + hashId + ", status=" + status + "]";
     }
 
 }

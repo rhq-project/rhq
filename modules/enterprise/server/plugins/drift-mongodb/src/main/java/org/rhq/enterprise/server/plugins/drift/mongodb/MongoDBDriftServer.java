@@ -1,3 +1,22 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2011 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+
 package org.rhq.enterprise.server.plugins.drift.mongodb;
 
 import java.io.BufferedReader;
@@ -5,7 +24,6 @@ import java.io.File;
 import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.zip.ZipEntry;
@@ -16,8 +34,6 @@ import com.google.code.morphia.Morphia;
 import com.google.code.morphia.query.Query;
 import com.mongodb.Mongo;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.bson.types.ObjectId;
 
 import org.rhq.common.drift.ChangeSetReader;
@@ -32,7 +48,8 @@ import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftComposite;
-import org.rhq.core.domain.drift.Snapshot;
+import org.rhq.core.domain.drift.DriftFile;
+import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.drift.dto.DriftChangeSetDTO;
 import org.rhq.core.domain.drift.dto.DriftDTO;
 import org.rhq.core.domain.drift.dto.DriftFileDTO;
@@ -40,6 +57,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.ZipUtil;
 import org.rhq.core.util.file.FileUtil;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginContext;
 import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginFacet;
 import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBChangeSet;
@@ -49,9 +67,9 @@ import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 
 import static org.rhq.enterprise.server.util.LookupUtil.getResourceManager;
 
-public class MongoDBDriftServer implements DriftServerPluginFacet {
+public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginComponent {
 
-    private final Log log = LogFactory.getLog(MongoDBDriftServer.class);
+    //private final Log log = LogFactory.getLog(MongoDBDriftServer.class);
 
     private Mongo connection;
 
@@ -64,10 +82,7 @@ public class MongoDBDriftServer implements DriftServerPluginFacet {
     @Override
     public void initialize(ServerPluginContext context) throws Exception {
         connection = new Mongo("localhost");
-        morphia = new Morphia()
-            .map(MongoDBChangeSet.class)
-            .map(MongoDBChangeSetEntry.class)
-            .map(MongoDBFile.class);
+        morphia = new Morphia().map(MongoDBChangeSet.class).map(MongoDBChangeSetEntry.class).map(MongoDBFile.class);
         ds = morphia.createDatastore(connection, "rhq");
     }
 
@@ -87,7 +102,7 @@ public class MongoDBDriftServer implements DriftServerPluginFacet {
     }
 
     @Override
-    public void saveChangeSet(final int resourceId, final File changeSetZip) throws Exception {
+    public void saveChangeSet(final Subject subject, final int resourceId, final File changeSetZip) throws Exception {
         ZipUtil.walkZipFile(changeSetZip, new ZipUtil.ZipEntryVisitor() {
             @Override
             public boolean visit(ZipEntry zipEntry, ZipInputStream stream) throws Exception {
@@ -119,16 +134,17 @@ public class MongoDBDriftServer implements DriftServerPluginFacet {
     }
 
     @Override
-    public void saveChangeSetFiles(File changeSetFilesZip) throws Exception {
+    public void saveChangeSetFiles(final Subject subject, final File changeSetFilesZip) throws Exception {
 
     }
 
     @Override
-    public PageList<DriftChangeSet> findDriftChangeSetsByCriteria(Subject subject, DriftChangeSetCriteria criteria) {
-        Query<MongoDBChangeSet> query = ds.createQuery(MongoDBChangeSet.class)
-            .filter("resourceId =", criteria.getFilterResourceId());
+    public PageList<? extends DriftChangeSet<?>> findDriftChangeSetsByCriteria(Subject subject,
+        DriftChangeSetCriteria criteria) {
+        Query<MongoDBChangeSet> query = ds.createQuery(MongoDBChangeSet.class).filter("resourceId =",
+            criteria.getFilterResourceId());
 
-        PageList results = new PageList<DriftChangeSetDTO>();
+        PageList<DriftChangeSetDTO> results = new PageList<DriftChangeSetDTO>();
         for (MongoDBChangeSet changeSet : query) {
             DriftChangeSetDTO changeSetDTO = toDTO(changeSet);
             Set<DriftDTO> entries = new HashSet<DriftDTO>();
@@ -144,7 +160,7 @@ public class MongoDBDriftServer implements DriftServerPluginFacet {
     }
 
     @Override
-    public PageList<Drift> findDriftsByCriteria(Subject subject, DriftCriteria criteria) {
+    public PageList<? extends Drift<?, ?>> findDriftsByCriteria(Subject subject, DriftCriteria criteria) {
         Query<MongoDBChangeSet> query = ds.createQuery(MongoDBChangeSet.class);
         boolean changeSetIdFiltered = false;
 
@@ -161,7 +177,7 @@ public class MongoDBDriftServer implements DriftServerPluginFacet {
             query.filter("id = ", new ObjectId(criteria.getFilterChangeSetId()));
         }
 
-        PageList results = new PageList<DriftDTO>();
+        PageList<DriftDTO> results = new PageList<DriftDTO>();
 
         for (MongoDBChangeSet changeSet : query) {
             DriftChangeSetDTO changeSetDTO = toDTO(changeSet);
@@ -170,14 +186,13 @@ public class MongoDBDriftServer implements DriftServerPluginFacet {
             }
         }
 
-        return (PageList<Drift>) results;
+        return results;
     }
 
     @Override
     public PageList<DriftComposite> findDriftCompositesByCriteria(Subject subject, DriftCriteria criteria) {
-        Query<MongoDBChangeSet> query = ds.createQuery(MongoDBChangeSet.class)
-            .filter("files.category in ", criteria.getFilterCategories())
-            .filter("resourceId in", criteria.getFilterResourceIds());
+        Query<MongoDBChangeSet> query = ds.createQuery(MongoDBChangeSet.class).filter("files.category in ",
+            criteria.getFilterCategories()).filter("resourceId in", criteria.getFilterResourceIds());
 
         PageList<DriftComposite> results = new PageList<DriftComposite>();
         Map<Integer, Resource> resources = loadResourceMap(subject, criteria.getFilterResourceIds());
@@ -185,7 +200,9 @@ public class MongoDBDriftServer implements DriftServerPluginFacet {
         for (MongoDBChangeSet changeSet : query) {
             DriftChangeSetDTO changeSetDTO = toDTO(changeSet);
             for (MongoDBChangeSetEntry entry : changeSet.getDrifts()) {
-                results.add(new DriftComposite(toDTO(entry, changeSetDTO), resources.get(changeSet.getResourceId())));
+                // TODO: need to access config name
+                results.add(new DriftComposite(toDTO(entry, changeSetDTO), resources.get(changeSet.getResourceId()),
+                    "TODO"));
             }
         }
 
@@ -193,13 +210,19 @@ public class MongoDBDriftServer implements DriftServerPluginFacet {
     }
 
     @Override
-    public Snapshot createSnapshot(Subject subject, DriftChangeSetCriteria criteria) {
+    public DriftFile getDriftFile(Subject subject, String hashId) throws Exception {
+        // TODO
         return null;
     }
 
-    Map<Integer, Resource> loadResourceMap(Subject subject, List<Integer> resourceIds) {
+    @Override
+    public DriftSnapshot createSnapshot(Subject subject, DriftChangeSetCriteria criteria) {
+        return null;
+    }
+
+    Map<Integer, Resource> loadResourceMap(Subject subject, Integer[] resourceIds) {
         ResourceCriteria criteria = new ResourceCriteria();
-        criteria.addFilterIds(resourceIds.toArray(new Integer[resourceIds.size()]));
+        criteria.addFilterIds(resourceIds);
 
         ResourceManagerLocal resourceMgr = getResourceManager();
         PageList<Resource> resources = resourceMgr.findResourcesByCriteria(subject, criteria);
@@ -240,5 +263,4 @@ public class MongoDBDriftServer implements DriftServerPluginFacet {
 
         return dto;
     }
-
 }

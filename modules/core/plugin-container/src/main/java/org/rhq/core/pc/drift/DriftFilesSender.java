@@ -1,5 +1,7 @@
 package org.rhq.core.pc.drift;
 
+import static org.rhq.core.util.file.FileUtil.copyFile;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -13,8 +15,6 @@ import org.rhq.common.drift.FileEntry;
 import org.rhq.common.drift.Headers;
 import org.rhq.core.domain.drift.DriftFile;
 
-import static org.rhq.core.util.file.FileUtil.copyFile;
-
 public class DriftFilesSender implements Runnable {
 
     private Log log = LogFactory.getLog(DriftFilesSender.class);
@@ -23,7 +23,7 @@ public class DriftFilesSender implements Runnable {
 
     private Headers headers;
 
-    private List<DriftFile> driftFiles;
+    private List<? extends DriftFile> driftFiles;
 
     private ChangeSetManager changeSetMgr;
 
@@ -37,7 +37,7 @@ public class DriftFilesSender implements Runnable {
         this.headers = headers;
     }
 
-    public void setDriftFiles(List<DriftFile> driftFiles) {
+    public void setDriftFiles(List<? extends DriftFile> driftFiles) {
         this.driftFiles = driftFiles;
     }
 

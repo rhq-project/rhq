@@ -33,9 +33,9 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
 /**
- * A RhqDriftFile represents one unique piece of content used for drift tracking.  Because the bits are supported
+ * A JPADriftFile represents one unique piece of content used for drift tracking.  Because the bits are supported
  * by java.sql.Blob and java.io streaming, we must hide the bits from entities used on the gwt client. This base
- * class is used as the superclass for both RhqDriftFile (no blob) and DriftFileBits (blob).
+ * class is used as the superclass for both JPADriftFile (no blob) and JPADriftFileBits (blob).
  *  
  * @author Jay Shaughnessy
  * @author John Mazzitelli
@@ -43,7 +43,7 @@ import javax.xml.bind.annotation.XmlAccessorType;
  */
 @MappedSuperclass
 @XmlAccessorType(XmlAccessType.FIELD)
-public class AbstractDriftFile implements Serializable {
+public class AbstractJPADriftFile implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Column(name = "CTIME", nullable = false)
@@ -56,7 +56,7 @@ public class AbstractDriftFile implements Serializable {
     @Enumerated(EnumType.STRING)
     protected DriftFileStatus status = DriftFileStatus.EMPTY;
 
-    protected AbstractDriftFile() {
+    protected AbstractJPADriftFile() {
     }
 
     public Long getCtime() {

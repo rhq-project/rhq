@@ -69,8 +69,8 @@ import org.rhq.core.domain.content.PackageInstallationStep;
 import org.rhq.core.domain.content.ResourceRepo;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
-import org.rhq.core.domain.drift.RhqDrift;
-import org.rhq.core.domain.drift.RhqDriftChangeSet;
+import org.rhq.core.domain.drift.JPADrift;
+import org.rhq.core.domain.drift.JPADriftChangeSet;
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventSource;
 import org.rhq.core.domain.measurement.Availability;
@@ -503,8 +503,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             AlertDampeningEvent.QUERY_DELETE_BY_RESOURCES, //  alert-
             AlertNotification.QUERY_DELETE_BY_RESOURCES, //    related
             AlertDefinition.QUERY_DELETE_BY_RESOURCES, //      deletes
-            RhqDrift.QUERY_DELETE_BY_RESOURCES, //       drift before changeset
-            RhqDriftChangeSet.QUERY_DELETE_BY_RESOURCES };
+            JPADrift.QUERY_DELETE_BY_RESOURCES, //       drift before changeset
+            JPADriftChangeSet.QUERY_DELETE_BY_RESOURCES };
 
         List<Integer> resourceIds = new ArrayList<Integer>();
         resourceIds.add(resourceId);

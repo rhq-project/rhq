@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2009 Red Hat, Inc.
+ * Copyright (C) 2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,98 +16,90 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-
 package org.rhq.core.domain.criteria;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlRootElement;
+import java.io.Serializable;
 
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
-import org.rhq.core.domain.drift.RhqDriftChangeSet;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageOrdering;
 
 /**
+ * The generic implementation of DriftChangeSetCriteria makes no assumptions about the actual drift server
+ * plugin that will service the relevant requests.  It is a simple impl of the interface and is
+ * suitable for use by any component that can not assume a backend implmentation, like a GUI
+ * client.  Server side implementations will use this to populate the plugin-specific implementation
+ * of the interface.  
+ * 
  * @author Jay Shaughnessy
+ * @author John Sanda
  */
-@XmlRootElement
-@XmlAccessorType(XmlAccessType.FIELD)
-@SuppressWarnings("unused")
-public class DriftChangeSetJPACriteria extends Criteria implements DriftChangeSetCriteria {
+public class GenericDriftChangeSetCriteria implements Serializable, DriftChangeSetCriteria {
+
     private static final long serialVersionUID = 1L;
 
-    private Integer filterId;
-    private Integer filterInitial; // needs override
-    private Integer filterResourceId; // needs override
-    private Integer filterDriftConfigurationId;
-    private Integer filterVersion;
-    private Integer filterStartVersion;
-    private Integer filterEndVersion;
+    private String filterId;
+
+    private String filterVersion;
+
+    private String filterStartVersion;
+
+    private String filterEndVersion;
+
     private Long filterCreatedAfter;
+
     private Long filterCreatedBefore;
+
+    private Integer filterResourceId;
+
+    private Integer filterDriftConfigId;
+
     private DriftChangeSetCategory filterCategory;
+
     private boolean fetchDrifts;
 
     private PageOrdering sortVersion;
 
-    public DriftChangeSetJPACriteria() {
-        filterOverrides.put("initial", "version = 0");
-        filterOverrides.put("resourceId", "resource.id = ?");
-        filterOverrides.put("startVersion", "version >= ?");
-        filterOverrides.put("endVersion", "version <= ?");
-        filterOverrides.put("createdAfter", "ctime >= ?");
-        filterOverrides.put("createdBefore", "ctime <= ?");
-    }
+    private PageControl pageControl;
 
     @Override
-    public Class<RhqDriftChangeSet> getPersistentClass() {
-        return RhqDriftChangeSet.class;
-    }
-
     public void addFilterId(String filterId) {
-        if (filterId != null) {
-            this.filterId = Integer.parseInt(filterId);
-        }
+        this.filterId = filterId;
     }
 
     @Override
     public String getFilterId() {
-        return filterId == null ? null : filterId.toString();
+        return filterId;
     }
 
+    @Override
     public void addFilterVersion(String filterVersion) {
-        if (filterVersion != null) {
-            this.filterVersion = Integer.parseInt(filterVersion);
-        }
+        this.filterVersion = filterVersion;
     }
 
     @Override
     public String getFilterVersion() {
-        return filterVersion == null ? null : filterVersion.toString();
+        return filterVersion;
     }
 
     @Override
     public void addFilterStartVersion(String filterStartVersion) {
-        if (filterStartVersion != null) {
-            this.filterStartVersion = Integer.parseInt(filterStartVersion);
-        }
+        this.filterStartVersion = filterStartVersion;
     }
 
     @Override
     public String getFilterStartVersion() {
-        return filterStartVersion == null ? null : filterStartVersion.toString();
+        return filterStartVersion;
     }
 
     @Override
     public void addFilterEndVersion(String filterEndVersion) {
-        if (filterEndVersion != null) {
-            this.filterEndVersion = Integer.parseInt(filterEndVersion);
-        }
+        this.filterEndVersion = filterEndVersion;
     }
 
     @Override
     public String getFilterEndVersion() {
-        return filterEndVersion == null ? null : filterEndVersion.toString();
+        return filterEndVersion;
     }
 
     @Override
@@ -130,6 +122,7 @@ public class DriftChangeSetJPACriteria extends Criteria implements DriftChangeSe
         return filterCreatedBefore;
     }
 
+    @Override
     public void addFilterResourceId(Integer filterResourceId) {
         this.filterResourceId = filterResourceId;
     }
@@ -141,14 +134,15 @@ public class DriftChangeSetJPACriteria extends Criteria implements DriftChangeSe
 
     @Override
     public void addFilterDriftConfigurationId(Integer filterDriftConfigId) {
-        this.filterDriftConfigurationId = filterDriftConfigId;
+        this.filterDriftConfigId = filterDriftConfigId;
     }
 
     @Override
     public Integer getFilterDriftConfigurationId() {
-        return filterDriftConfigurationId;
+        return filterDriftConfigId;
     }
 
+    @Override
     public void addFilterCategory(DriftChangeSetCategory filterCategory) {
         this.filterCategory = filterCategory;
     }
@@ -158,6 +152,7 @@ public class DriftChangeSetJPACriteria extends Criteria implements DriftChangeSe
         return filterCategory;
     }
 
+    @Override
     public void fetchDrifts(boolean fetchDrifts) {
         this.fetchDrifts = fetchDrifts;
     }
@@ -167,13 +162,23 @@ public class DriftChangeSetJPACriteria extends Criteria implements DriftChangeSe
         return fetchDrifts;
     }
 
+    @Override
     public void addSortVersion(PageOrdering sortVersion) {
-        addSortField("version");
         this.sortVersion = sortVersion;
     }
 
     @Override
     public PageOrdering getSortVersion() {
         return sortVersion;
+    }
+
+    @Override
+    public PageControl getPageControlOverrides() {
+        return pageControl;
+    }
+
+    @Override
+    public void setPageControl(PageControl pageControl) {
+        this.pageControl = pageControl;
     }
 }

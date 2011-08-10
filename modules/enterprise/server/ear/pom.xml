@@ -490,6 +490,12 @@
                                   <artifactId>jopr-jboss-cache-v3-plugin</artifactId>
                                   <version>${project.version}</version>
                                 </artifactItem>
+                                
+                                <artifactItem>
+                                  <groupId>org.rhq</groupId>
+                                  <artifactId>modcluster-plugin</artifactId>
+                                  <version>${project.version}</version>
+                                </artifactItem>
 
                              </artifactItems>
                              <outputDirectory>${earDirectory}/rhq-downloads/rhq-plugins</outputDirectory>

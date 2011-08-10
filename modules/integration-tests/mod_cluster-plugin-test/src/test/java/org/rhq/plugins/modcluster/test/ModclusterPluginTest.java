@@ -148,10 +148,12 @@ public class ModclusterPluginTest {
         }
 
         if (resourceComponent instanceof OperationFacet) {
-            OperationResult result = ((OperationFacet) resourceComponent).invokeOperation("reset", null);
+            OperationResult result = null;
+
+            result = ((OperationFacet) resourceComponent).invokeOperation("reset", new Configuration());
             log.info("Result of operation test was: " + result);
 
-            result = ((OperationFacet) resourceComponent).invokeOperation("disable", null);
+            result = ((OperationFacet) resourceComponent).invokeOperation("disable", new Configuration());
             log.info("Result of operation test was: " + result.getSimpleResult());
         }
     }

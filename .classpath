@@ -280,5 +280,6 @@
 	<classpathentry kind="src" path="modules/plugins/jboss-as-7/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/jboss-as-7/src/test/java"/>
 	<classpathentry kind="src" path="modules/integration-tests/jboss-as-7-plugin-test/src/test/java"/>
+	<classpathentry kind="src" path="modules/integration-tests/mod_cluster-plugin-test/src/test/java"/>
 	<classpathentry kind="output" path="eclipse-classes"/>
 </classpath>

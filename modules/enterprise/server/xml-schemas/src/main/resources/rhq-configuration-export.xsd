@@ -44,12 +44,10 @@
     </xs:complexType>
     
     <xs:complexType name="EntityExport">
-        <xs:choice>
-            <xs:sequence>
-                <xs:element name="data" />
-                <xs:element type="xs:string" name="notes"/>
-            </xs:sequence>
-            <xs:element type="xs:string" name="error-message" />
-        </xs:choice>
+        <xs:sequence>
+            <xs:element name="data" />
+            <xs:element type="xs:string" name="notes" minOccurs="0" maxOccurs="1"/>
+            <xs:element type="xs:string" name="error-message" minOccurs="0" maxOccurs="1"/>
+        </xs:sequence>
     </xs:complexType>
 </xs:schema>

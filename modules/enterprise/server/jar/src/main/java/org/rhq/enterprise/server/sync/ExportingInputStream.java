@@ -262,7 +262,7 @@ public class ExportingInputStream extends InputStream {
     private void exportEpilogue(XMLStreamWriter wrt) throws XMLStreamException {
         wrt.writeEndDocument();
     }
-    
+
     /**
      * @param wrt
      * @param syn
@@ -273,10 +273,10 @@ public class ExportingInputStream extends InputStream {
         ExporterMessages messages = new ExporterMessages();
 
         messagesPerExporter.put(syn.getClass().getName(), messages);
-        
+
         wrt.writeStartElement(ENTITIES_EXPORT_ELEMENT);
         wrt.writeAttribute(ID_ATTRIBUTE, syn.getClass().getName());
-        
+
         Exporter<?, ?> exp = syn.getExporter();
         ExportingIterator<?> it = exp.getExportingIterator();
 
@@ -287,25 +287,32 @@ public class ExportingInputStream extends InputStream {
             it.next();
 
             wrt.writeStartElement(ENTITY_EXPORT_ELEMENT);
-            
+
+            wrt.writeStartElement(DATA_ELEMENT);
+
+            Exception exportError = null;
             try {
-                wrt.writeStartElement(DATA_ELEMENT);
                 it.export(new ExportWriter(wrt));
-                wrt.writeEndElement();
-                
+            } catch (XMLStreamException e) {
+                //there's not much we can do about these but to give up.
+                throw e;
+            } catch (Exception e) {
+                exportError = e;
+            }
+
+            wrt.writeEndElement(); //data
+
+            if (exportError == null) {
                 String notes = it.getNotes();
-                
+
                 if (notes != null) {
                     messages.getPerEntityNotes().add(notes);
                     wrt.writeStartElement(NOTES_ELEMENT);
                     wrt.writeCharacters(notes);
                     wrt.writeEndElement();
                 }
-            } catch (XMLStreamException e) {
-                //there's not much we can do about these but to give up.
-                throw e;
-            } catch (Exception e) {
-                String message = ThrowableUtil.getStackAsString(e);
+            } else {
+                String message = ThrowableUtil.getStackAsString(exportError);
                 messages.getPerEntityErrorMessages().add(message);
                 wrt.writeStartElement(ERROR_MESSAGE_ELEMENT);
                 wrt.writeCharacters(message);
@@ -314,17 +321,17 @@ public class ExportingInputStream extends InputStream {
             
             wrt.writeEndElement(); //entity
         }
-        
+
         String notes = exp.getNotes();
-        
+
         messages.setExporterNotes(notes);
-        
+
         if (notes != null) {
             wrt.writeStartElement(NOTES_ELEMENT);
             wrt.writeCharacters(notes);
             wrt.writeEndElement();
         }
-        
+
         wrt.writeEndElement(); //entities
     }
 

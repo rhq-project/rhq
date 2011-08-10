@@ -1,7 +1,5 @@
 package org.rhq.core.pc.drift;
 
-import static org.rhq.core.util.file.FileUtil.copyFile;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -10,10 +8,11 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.common.drift.ChangeSetReader;
-import org.rhq.common.drift.DirectoryEntry;
 import org.rhq.common.drift.FileEntry;
 import org.rhq.common.drift.Headers;
 import org.rhq.core.domain.drift.DriftFile;
+
+import static org.rhq.core.util.file.FileUtil.copyFile;
 
 public class DriftFilesSender implements Runnable {
 
@@ -72,16 +71,11 @@ public class DriftFilesSender implements Runnable {
 
     private File find(DriftFile driftFile) throws IOException {
         ChangeSetReader reader = changeSetMgr.getChangeSetReader(resourceId, headers.getDriftConfigurationName());
-        DirectoryEntry dirEntry = reader.readDirectoryEntry();
 
-        while (dirEntry != null) {
-            for (FileEntry fileEntry : dirEntry) {
-                if (fileEntry.getNewSHA().equals(driftFile.getHashId())) {
-                    File dir = new File(headers.getBasedir(), dirEntry.getDirectory());
-                    return new File(dir, fileEntry.getFile());
-                }
+        for (FileEntry entry : reader) {
+            if (entry.getNewSHA().equals(driftFile.getHashId())) {
+                return new File(headers.getBasedir(), entry.getFile());
             }
-            dirEntry = reader.readDirectoryEntry();
         }
         return null;
     }

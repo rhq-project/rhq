@@ -22,7 +22,17 @@
  */
 package org.rhq.core.util.file;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.testng.annotations.Test;
+
+import static java.util.Arrays.asList;
+import static org.apache.commons.io.FileUtils.deleteDirectory;
+import static org.apache.commons.io.FileUtils.toFile;
+import static org.apache.commons.io.FileUtils.touch;
+import static org.rhq.test.AssertUtils.assertCollectionEqualsNoOrder;
 
 @Test
 public class FileUtilTest {
@@ -109,4 +119,98 @@ public class FileUtilTest {
         assert FileUtil.stripDriveLetter(str) == null;
         assert str.toString().equals("hello:world/hello");
     }
+
+    @Test
+    public void visitEachFileInDir() throws Exception {
+        File dir = new File(toFile(getClass().getResource(".")), "visit-each-file-in-dir");
+        deleteDirectory(dir);
+        dir.mkdirs();
+
+        File file1 = new File(dir, "file-1");
+        touch(file1);
+        File file2 = new File(dir, "file-2");
+        touch(file2);
+
+        List<File> expectedFiles = asList(file1, file2);
+        final List<File> actualFiles = new ArrayList<File>();
+
+        FileUtil.forEachFile(dir, new FileVisitor() {
+            @Override
+            public void visit(File file) {
+                actualFiles.add(file);
+            }
+        });
+
+        assertCollectionEqualsNoOrder(expectedFiles, actualFiles,
+            "Expected to visit all files in directory");
+    }
+
+    @Test
+    public void visitFilesInSubdirectories() throws Exception {
+        File dir = new File(toFile(getClass().getResource(".")), "visit-files-in-sub-dirs");
+        deleteDirectory(dir);
+        dir.mkdirs();
+
+        File file1 = new File(dir, "file-1");
+        touch(file1);
+
+        File subdir1 = new File(dir, "subdir-1");
+        subdir1.mkdir();
+
+        File file2 = new File(subdir1, "file-2");
+        touch(file2);
+
+        File subdir2 = new File(dir, "subdir-2");
+
+        File file3 = new File(subdir2, "file-3");
+        touch(file3);
+
+        List<File> expectedFiles = asList(file1, file2, file3);
+        final List<File> actualFiles = new ArrayList<File>();
+
+        FileUtil.forEachFile(dir, new FileVisitor() {
+            @Override
+            public void visit(File file) {
+                actualFiles.add(file);
+            }
+        });
+
+        assertCollectionEqualsNoOrder(expectedFiles, actualFiles,
+            "Expected to visit files in sub directories");
+    }
+
+    @Test
+    public void visitFilesInNestedSubDirectories() throws Exception {
+        File dir = new File(toFile(getClass().getResource(".")), "visit-files-in-nested-sub-dirs");
+        deleteDirectory(dir);
+        dir.mkdirs();
+
+        File file1 = new File(dir, "file-1");
+        touch(file1);
+
+        File subdir1 = new File(dir, "subdir-1");
+        subdir1.mkdir();
+
+        File file2 = new File(subdir1, "file-2");
+        touch(file2);
+
+        File subdir2 = new File(subdir1, "subdir-2");
+
+        File file3 = new File(subdir2, "file-3");
+        touch(file3);
+
+        List<File> expectedFiles = asList(file1, file2, file3);
+        final List<File> actualFiles = new ArrayList<File>();
+
+        FileUtil.forEachFile(dir, new FileVisitor() {
+            @Override
+            public void visit(File file) {
+                actualFiles.add(file);
+            }
+        });
+
+        assertCollectionEqualsNoOrder(expectedFiles, actualFiles,
+            "Expected to visit files in nested sub directories");
+    }
+
 }

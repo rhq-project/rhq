@@ -19,8 +19,6 @@
  */
 package org.rhq.enterprise.server.drift;
 
-import static javax.ejb.TransactionAttributeType.REQUIRES_NEW;
-
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
@@ -28,7 +26,6 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -45,7 +42,6 @@ import org.hibernate.Hibernate;
 
 import org.rhq.common.drift.ChangeSetReader;
 import org.rhq.common.drift.ChangeSetReaderImpl;
-import org.rhq.common.drift.DirectoryEntry;
 import org.rhq.common.drift.FileEntry;
 import org.rhq.common.drift.Headers;
 import org.rhq.core.clientapi.agent.drift.DriftAgentService;
@@ -75,6 +71,8 @@ import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
+
+import static javax.ejb.TransactionAttributeType.REQUIRES_NEW;
 
 /**
  * The SLSB method implementation needed to support the JPA (RHQ Default) Drift Server Plugin.
@@ -216,30 +214,21 @@ public class JPADriftServerBean implements JPADriftServerLocal {
                         driftChangeSet = new JPADriftChangeSet(resource, version, category, config);
                         entityManager.persist(driftChangeSet);
 
-                        for (DirectoryEntry dir = reader.readDirectoryEntry(); null != dir; dir = reader
-                            .readDirectoryEntry()) {
+                        for (FileEntry entry : reader) {
+                            JPADriftFile oldDriftFile = getDriftFile(entry.getOldSHA(), emptyDriftFiles);
+                            JPADriftFile newDriftFile = getDriftFile(entry.getNewSHA(), emptyDriftFiles);
 
-                            for (Iterator<FileEntry> i = dir.iterator(); i.hasNext();) {
-                                FileEntry entry = i.next();
-                                JPADriftFile oldDriftFile = getDriftFile(entry.getOldSHA(),
-                                    (List<JPADriftFile>) emptyDriftFiles);
-                                JPADriftFile newDriftFile = getDriftFile(entry.getNewSHA(),
-                                    (List<JPADriftFile>) emptyDriftFiles);
+                            // TODO Figure out an efficient way to save coverage change sets.
+                            // The initial/coverage change set could contain hundreds or even thousands
+                            // of entries. We probably want to consider doing some kind of batch insert
+                            //
+                            // jsanda
 
-                                // TODO Figure out an efficient way to save coverage change sets.
-                                // The initial/coverage change set could contain hundreds or even thousands
-                                // of entries. We probably want to consider doing some kind of batch insert
-                                //
-                                // jsanda
-
-                                // use a path with only forward slashing to ensure consistent paths across reports
-                                String path = new File(dir.getDirectory(), entry.getFile()).getPath();
-                                path = FileUtil.useForwardSlash(path);
-                                JPADrift drift = new JPADrift(driftChangeSet, path, entry.getType(), oldDriftFile,
-                                    newDriftFile);
-                                entityManager.persist(drift);
-
-                            }
+                            // use a path with only forward slashing to ensure consistent paths across reports
+                            String path = FileUtil.useForwardSlash(entry.getFile());
+                            JPADrift drift = new JPADrift(driftChangeSet, path, entry.getType(), oldDriftFile,
+                                newDriftFile);
+                            entityManager.persist(drift);
                         }
                         // send a message to the agent requesting the empty JPADriftFile content
                         if (!emptyDriftFiles.isEmpty()) {

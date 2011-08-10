@@ -53,21 +53,18 @@ public class ChangeSetWriterImpl implements ChangeSetWriter {
         writer.write(headers.getType().code() + "\n");
     }
 
-    public void writeDirectoryEntry(DirectoryEntry dirEntry) throws IOException {
-        writer.write(dirEntry.getNumberOfFiles() + " " + dirEntry.getDirectory() + "\n");
-        for (FileEntry entry : dirEntry) {
-            switch (entry.getType()) {
-                case FILE_ADDED:
-                    writer.write(entry.getType().code() + " " + entry.getNewSHA() + " 0 " + entry.getFile() + "\n");
-                    break;
-                case FILE_CHANGED:
-                    writer.write(entry.getType().code() + " " + entry.getNewSHA() + " " + entry.getOldSHA() + " " +
-                        entry.getFile() + "\n");
-                    break;
-                case FILE_REMOVED:
-                    writer.write(entry.getType().code() + " 0 " + entry.getOldSHA() + " " + entry.getFile() + "\n");
-                    break;
-            }
+    public void write(FileEntry entry) throws IOException {
+        switch (entry.getType()) {
+        case FILE_ADDED:
+            writer.write(entry.getType().code() + " " + entry.getNewSHA() + " 0 " + entry.getFile() + "\n");
+            break;
+        case FILE_CHANGED:
+            writer.write(entry.getType().code() + " " + entry.getNewSHA() + " " + entry.getOldSHA() + " " +
+                entry.getFile() + "\n");
+            break;
+        case FILE_REMOVED:
+            writer.write(entry.getType().code() + " 0 " + entry.getOldSHA() + " " + entry.getFile() + "\n");
+            break;
         }
     }
 

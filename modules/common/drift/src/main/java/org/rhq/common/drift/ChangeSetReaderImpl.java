@@ -31,7 +31,6 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
 
-import static java.lang.Integer.parseInt;
 import static org.rhq.common.drift.FileEntry.addedFileEntry;
 import static org.rhq.common.drift.FileEntry.changedFileEntry;
 import static org.rhq.common.drift.FileEntry.removedFileEntry;
@@ -90,45 +89,33 @@ public class ChangeSetReaderImpl implements ChangeSetReader {
     }
 
     @Override
-    public DirectoryEntry readDirectoryEntry() throws ChangeSetReaderException {
+    public FileEntry read() throws ChangeSetReaderException {
         try {
-            String dirLine = reader.readLine();
-            if (null == dirLine) {
+            String line = reader.readLine();
+            if (line == null) {
                 return null;
             }
 
-            int index = dirLine.indexOf(" ");
-            // TODO should we throw a parse exception if index is < 1
-            int numFiles = parseInt(dirLine.substring(0, index));
-            DirectoryEntry dirEntry = new DirectoryEntry(dirLine.substring(index + 1));
-
-            for (int i = 0; i < numFiles; ++i) {
-                String line  = reader.readLine();
-                if (line.charAt(0) == 'A') {  // file added
-                    String sha = line.substring(2, 66);
-                    String fileName = line.substring(69);
-
-                    dirEntry.add(addedFileEntry(fileName, sha));
-                } else if (line.charAt(0) == 'C') {  // file changed
-                    String newSha = line.substring(2, 66);
-                    String oldSha = line.substring(67, 131);
-                    String fileName = line.substring(132);
-
-                    dirEntry.add(changedFileEntry(fileName, oldSha, newSha));
-                } else if (line.charAt(0) == 'R') {
-                    String sha = line.substring(4, 68);
-                    String fileName = line.substring(69);
-
-                    dirEntry.add(removedFileEntry(fileName, sha));
-                } else {
-                    log.error("An error occurred while parsing " + metaDataFile.getAbsolutePath() + ": " +
-                        line.charAt(0) + " is not a recognized drift change set category code.");
-                    throw new ChangeSetReaderException(line.charAt(0) + " is not a recognized drift change set " +
-                        "category code.");
-                }
+            if (line.charAt(0) == 'A') {  // file added
+                String sha = line.substring(2, 66);
+                String fileName = line.substring(69);
+                return addedFileEntry(fileName, sha);
+            }
+            if (line.charAt(0) == 'C') {  // file modified
+                String newSha = line.substring(2, 66);
+                String oldSha = line.substring(67, 131);
+                String fileName = line.substring(132);
+                return changedFileEntry(fileName, oldSha, newSha);
+            }
+            if (line.charAt(0) == 'R') {  // file deleted
+                String sha = line.substring(4, 68);
+                String fileName = line.substring(69);
+                return removedFileEntry(fileName, sha);
             }
 
-            return dirEntry;
+            log.error("An error occurred while parsing " + metaDataFile.getAbsolutePath() + ": " +
+                line.charAt(0) + " is not a recognized drift change set category code.");
+            throw new ChangeSetReaderException(line.charAt(0) + " is not a recognized drift change set category code.");
         } catch (IOException e) {
             log.error("An error ocurred while parsing " + metaDataFile.getAbsolutePath() + ": " + e.getMessage());
             throw new ChangeSetReaderException("An error ocurred while parsing " + metaDataFile.getAbsolutePath(), e);
@@ -147,15 +134,15 @@ public class ChangeSetReaderImpl implements ChangeSetReader {
     }
 
     @Override
-    public Iterator<DirectoryEntry> iterator() {
+    public Iterator<FileEntry> iterator() {
 
-        return new Iterator<DirectoryEntry>() {
+        return new Iterator<FileEntry>() {
 
-            private DirectoryEntry next;
+            private FileEntry next;
 
             {
                 try {
-                    next = readDirectoryEntry();
+                    next = read();
                 } catch (IOException e) {
                     throw new RuntimeException("Failed to create iterator: " + e);
                 }
@@ -167,13 +154,16 @@ public class ChangeSetReaderImpl implements ChangeSetReader {
             }
 
             @Override
-            public DirectoryEntry next() {
+            public FileEntry next() {
                 try {
-                    DirectoryEntry previous = next;
-                    next = readDirectoryEntry();
+                    FileEntry previous = next;
+                    next = read();
+                    if (next == null) {
+                        close();
+                    }
                     return previous;
                 } catch (IOException e) {
-                    throw new RuntimeException("Failed to get next " + DirectoryEntry.class.getName() + ": " + e);
+                    throw new RuntimeException("Failed to get next " + FileEntry.class.getName() + ": " + e);
                 }
             }
 

@@ -33,6 +33,9 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Deque;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -319,4 +322,30 @@ public class FileUtil {
     public static String useForwardSlash(String path) {
         return path.replace('\\', '/');
     }
+
+    /**
+     * Performs a breadth-first scan, calling <code>visitor</code> for each file in
+     * <code>directory</code>. Sub directories are scanned as well. Note that if
+     * <code>visitor</code> throws a RuntimeException it will not be called again as this
+     * method does not provide any exception handling.
+     *
+     * @param directory The directory over which to iterate
+     * @param visitor The callback to invoke for each file
+     */
+    public static void forEachFile(File directory, FileVisitor visitor) {
+        Deque<File> directories = new LinkedList<File>();
+        directories.push(directory);
+
+        while(!directories.isEmpty()) {
+            File dir = directories.pop();
+            for (File file : dir.listFiles()) {
+                if (file.isDirectory()) {
+                    directories.push(file);
+                } else {
+                    visitor.visit(file);
+                }
+            }
+        }
+    }
+
 }

@@ -56,7 +56,7 @@ public class ChangeSetWriterImplTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void writeDirectoryEntryWithAddedFile() throws Exception {
+    public void writeFiledAddedEntry() throws Exception {
         File resourceDir = new File(resourcesDir, "myresource");
 
         File changeSetFile = new File(changeSetsDir, "added-file-test");
@@ -70,27 +70,21 @@ public class ChangeSetWriterImplTest {
 
         ChangeSetWriterImpl writer = new ChangeSetWriterImpl(changeSetFile, headers);
 
-        writer.writeDirectoryEntry(new DirectoryEntry("conf").add(
-            addedFileEntry("myconf.conf", "a34ef6")));
+        writer.write(addedFileEntry("conf/myconf.conf", "a34ef6"));
         writer.close();
 
         File metaDataFile = writer.getChangeSetFile();
         List<String> lines = readLines(new FileInputStream(metaDataFile));
 
-        assertEquals(lines.size(), 7, "Expected to find seven lines in " + metaDataFile.getPath() +
-            " - five for the header followed by two for a directory entry.");
-
+        assertEquals(lines.size(), 6, "Expected to find seven lines in " + metaDataFile.getPath() +
+            " - five for the header followed by one file entry.");
         assertHeadersEquals(lines, headers);
-
-        assertEquals(lines.get(5), "1 conf", "The first line for a directory entry should specify the " +
-            "the number of lines in the entry followed by the directory path.");
-
-        assertFileEntryEquals(lines.get(6), "A a34ef6 0 myconf.conf");
+        assertFileEntryEquals(lines.get(5), "A a34ef6 0 conf/myconf.conf");
     }
 
     @Test
     @SuppressWarnings("unchecked")
-    public void writeDirectoryEntryWithRemovedFile() throws Exception {
+    public void writeFileRemovedEntry() throws Exception {
         File resourceDir = new File(resourcesDir, "myresource");
 
         File changeSetFile = new File(changeSetsDir, "removed-file-test");
@@ -103,27 +97,21 @@ public class ChangeSetWriterImplTest {
 
         ChangeSetWriterImpl writer = new ChangeSetWriterImpl(changeSetFile, headers);
 
-        writer.writeDirectoryEntry(new DirectoryEntry("conf").add(
-            removedFileEntry("myconf.conf", "a34ef6")));
+        writer.write(removedFileEntry("conf/myconf.conf", "a34ef6"));
         writer.close();
 
         File metaDataFile = writer.getChangeSetFile();
         List<String> lines = readLines(new FileInputStream(metaDataFile));
 
-        assertEquals(lines.size(), 7, "Expected to find seven lines in " + metaDataFile.getPath() +
-            " - five for the header followed by two for a directory entry.");
-
+        assertEquals(lines.size(), 6, "Expected to find six lines in " + metaDataFile.getPath() +
+            " - five for the header followed by one file entry.");
         assertHeadersEquals(lines, headers);
-
-        assertEquals(lines.get(5), "1 conf", "The first line for a directory entry should specify the " +
-            "the number of lines in the entry followed by the directory path.");
-
-        assertFileEntryEquals(lines.get(6), "R 0 a34ef6 myconf.conf");
+        assertFileEntryEquals(lines.get(5), "R 0 a34ef6 conf/myconf.conf");
     }
 
     @Test
     @SuppressWarnings("unchecked")
-    public void writeDirectoryEntryWithChangedFile() throws Exception {
+    public void writeFileChangedEntry() throws Exception {
         File resourceDir = new File(resourcesDir, "myresource");
 
         File changeSetFile = new File(changeSetsDir, "changed-file-test");
@@ -136,22 +124,16 @@ public class ChangeSetWriterImplTest {
 
         ChangeSetWriterImpl writer = new ChangeSetWriterImpl(changeSetFile, headers);
 
-        writer.writeDirectoryEntry(new DirectoryEntry("conf").add(
-            changedFileEntry("myconf.conf", "a34ef6", "c2d55f")));
+        writer.write(changedFileEntry("conf/myconf.conf", "a34ef6", "c2d55f"));
         writer.close();
 
         File metaDataFile = writer.getChangeSetFile();
         List<String> lines = readLines(new FileInputStream(metaDataFile));
 
-        assertEquals(lines.size(), 7, "Expected to find seven lines in " + metaDataFile.getPath() +
-            " - five for the header followed by two for a directory entry.");
-
+        assertEquals(lines.size(), 6, "Expected to find six lines in " + metaDataFile.getPath() +
+            " - five for the header followed by one file entry.");
         assertHeadersEquals(lines, headers);
-
-        assertEquals(lines.get(5), "1 conf", "The first line for a directory entry should specify the " +
-            "the number of lines in the entry followed by the directory path.");
-
-        assertFileEntryEquals(lines.get(6), "C c2d55f a34ef6 myconf.conf");
+        assertFileEntryEquals(lines.get(5), "C c2d55f a34ef6 conf/myconf.conf");
     }
 
     /**

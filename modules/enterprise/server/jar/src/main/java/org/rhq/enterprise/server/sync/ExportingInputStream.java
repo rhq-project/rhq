@@ -25,7 +25,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
-import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Map;
@@ -64,15 +63,15 @@ public class ExportingInputStream extends InputStream {
     public static final String VALIDATOR_ELEMENT = "validator";
     public static final String ID_ATTRIBUTE = "id";
     public static final String CLASS_ATTRIBUTE = "class";
-    
+
     private Set<Synchronizer<?, ?>> synchronizers;
     private Map<String, ExporterMessages> messagesPerExporter;
     private PipedInputStream inputStream;
     private PipedOutputStream exportOutput;
     private Thread exportRunner;
-    private Throwable uncaughtExporterException;
+    private Throwable unexpectedExporterException;
     private boolean zipOutput;
-    
+
     /**
      * Constructs a new exporting input stream with the default buffer size of 64KB that zips up
      * the results.
@@ -93,8 +92,8 @@ public class ExportingInputStream extends InputStream {
      * @param zip whether to zip the export data
      * @throws IOException on failure
      */
-    public ExportingInputStream(Set<Synchronizer<?, ?>> synchronizers, Map<String, ExporterMessages> messagesPerExporter,
-        int size, boolean zip) throws IOException {
+    public ExportingInputStream(Set<Synchronizer<?, ?>> synchronizers,
+        Map<String, ExporterMessages> messagesPerExporter, int size, boolean zip) throws IOException {
         this.synchronizers = synchronizers;
         this.messagesPerExporter = messagesPerExporter;
         inputStream = new PipedInputStream(size);
@@ -167,21 +166,14 @@ public class ExportingInputStream extends InputStream {
 
             exportRunner.setDaemon(true);
             exportRunner.setName("Configuration Export Thread");
-            exportRunner.setUncaughtExceptionHandler(new UncaughtExceptionHandler() {
 
-                @Override
-                public void uncaughtException(Thread t, Throwable e) {
-                    uncaughtExporterException = e;
-                }
-            });
-            
             exportRunner.setContextClassLoader(Thread.currentThread().getContextClassLoader());
-            
+
             exportRunner.start();
         }
 
-        if (uncaughtExporterException != null) {
-            throw new IOException("The exporter thread failed with an uncaught exception.", uncaughtExporterException);
+        if (unexpectedExporterException != null) {
+            throw new IOException("The exporter thread failed with an uncaught exception.", unexpectedExporterException);
         }
     }
 
@@ -193,7 +185,7 @@ public class ExportingInputStream extends InputStream {
 
             try {
                 out = exportOutput;
-                if (zipOutput) {                    
+                if (zipOutput) {
                     out = new GZIPOutputStream(out);
                 }
                 wrt = ofactory.createXMLStreamWriter(out, "UTF-8");
@@ -203,17 +195,17 @@ public class ExportingInputStream extends InputStream {
             }
 
             exportPrologue(wrt);
-            
+
             for (Synchronizer<?, ?> exp : synchronizers) {
                 exportSingle(wrt, exp);
             }
-            
-            exportEpilogue(wrt);         
-            
+
+            exportEpilogue(wrt);
+
             wrt.flush();
         } catch (Exception e) {
             LOG.error("Error while exporting.", e);
-            throw new RuntimeException(e);
+            unexpectedExporterException = e;
         } finally {
             if (wrt != null) {
                 try {
@@ -242,12 +234,12 @@ public class ExportingInputStream extends InputStream {
      */
     private void writeValidators(XMLStreamWriter wrt) throws XMLStreamException {
         Set<ConsistencyValidator> allValidators = new HashSet<ConsistencyValidator>();
-        
-        for(Synchronizer<?, ?> syn : synchronizers) {
+
+        for (Synchronizer<?, ?> syn : synchronizers) {
             allValidators.addAll(syn.getRequiredValidators());
         }
-        
-        for(ConsistencyValidator cv : allValidators) {
+
+        for (ConsistencyValidator cv : allValidators) {
             wrt.writeStartElement(VALIDATOR_ELEMENT);
             wrt.writeAttribute(CLASS_ATTRIBUTE, cv.getClass().getName());
             cv.exportState(new ExportWriter(wrt));

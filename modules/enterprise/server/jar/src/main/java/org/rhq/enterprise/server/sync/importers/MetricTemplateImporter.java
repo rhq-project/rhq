@@ -32,6 +32,9 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.stream.XMLStreamException;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.clientapi.agent.configuration.ConfigurationUtility;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
@@ -40,7 +43,6 @@ import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
-import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
@@ -58,6 +60,8 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 public class MetricTemplateImporter implements Importer<MeasurementDefinition, MetricTemplate> {
 
+    private static final Log LOG = LogFactory.getLog(MetricTemplateImporter.class);
+
     private static final boolean UPDATE_SCHEDULES_DEFAULT = false;
     private static final String UPDATE_ALL_SCHEDULES_PROPERTY = "updateAllSchedules";
     private static final String METRIC_NAME_PROPERTY = "metricName";
@@ -71,7 +75,7 @@ public class MetricTemplateImporter implements Importer<MeasurementDefinition, M
         public long collectionInterval;
         public boolean updateSchedules;
 
-        @Override 
+        @Override
         public int hashCode() {
             return (int) collectionInterval * (updateSchedules ? 31 : 1);
         }
@@ -100,8 +104,13 @@ public class MetricTemplateImporter implements Importer<MeasurementDefinition, M
         new HashMap<MetricTemplateImporter.CollectionIntervalAndUpdateSchedules, List<MeasurementDefinition>>();
     private Configuration importConfiguration;
     private Unmarshaller unmarshaller;
+    private MeasurementScheduleManagerLocal measurementScheduleManager;
     
     public MetricTemplateImporter(Subject subject, EntityManager entityManager) {
+        this(subject, entityManager, LookupUtil.getMeasurementScheduleManager());
+    }
+
+    public MetricTemplateImporter(Subject subject, EntityManager entityManager, MeasurementScheduleManagerLocal measurementScheduleManager) {
         try {
             this.subject = subject;
             this.entityManager = entityManager;
@@ -110,6 +119,7 @@ public class MetricTemplateImporter implements Importer<MeasurementDefinition, M
         } catch (JAXBException e) {
             throw new IllegalStateException("Failed to initialize JAXB marshaller for MetricTemplate.", e);
         }
+        this.measurementScheduleManager = measurementScheduleManager;
     }
     
     @Override
@@ -145,15 +155,23 @@ public class MetricTemplateImporter implements Importer<MeasurementDefinition, M
 
             @Override
             public MeasurementDefinition findMatch(MetricTemplate object) {
-                Query q = entityManager.createNamedQuery(MeasurementDefinition.FIND_RAW_OR_PER_MINUTE_BY_NAME_AND_RESOURCE_TYPE_NAME);
+                Query q = entityManager
+                    .createNamedQuery(MeasurementDefinition.FIND_RAW_OR_PER_MINUTE_BY_NAME_AND_RESOURCE_TYPE_NAME);
                 q.setParameter("name", object.getMetricName());
                 q.setParameter("resourceTypeName", object.getResourceTypeName());
                 q.setParameter("resourceTypePlugin", object.getResourceTypePlugin());
                 q.setParameter("perMinute", object.isPerMinute() ? 1 : 0);
-                
+
                 List<?> results = q.getResultList();
 
                 if (results.isEmpty()) {
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("Failed to find a measurement definition corresponding to "
+                            + object
+                            + ". This means that the plugins in the source RHQ install were different than in this RHQ install "
+                            + "but the DeployedAgentPluginsValidator failed to catch that. This most probably means that the "
+                            + "export file has been tampered with. Letting the import continue because that might have been intentional change by the user.");
+                    }
                     return null;
                 } else if (results.size() > 1) {
                     throw new IllegalStateException(
@@ -168,6 +186,10 @@ public class MetricTemplateImporter implements Importer<MeasurementDefinition, M
 
     @Override
     public void update(MeasurementDefinition entity, MetricTemplate exportedEntity) {
+        if (entity == null) {
+            return;
+        }
+
         if (exportedEntity.isEnabled()) {
             definitionsToEnable.add(entity);
         } else {
@@ -188,17 +210,17 @@ public class MetricTemplateImporter implements Importer<MeasurementDefinition, M
 
     @Override
     public void finishImport() {
-        MeasurementScheduleManagerLocal sm = LookupUtil.getMeasurementScheduleManager();
+        measurementScheduleManager.enableMeasurementTemplates(subject, getIdsFromDefs(definitionsToEnable));
+        measurementScheduleManager.disableMeasurementTemplates(subject, getIdsFromDefs(definitionsToDisable));
 
-        sm.enableMeasurementTemplates(subject, getIdsFromDefs(definitionsToEnable));
-        sm.disableMeasurementTemplates(subject, getIdsFromDefs(definitionsToDisable));
-
-        for (Map.Entry<CollectionIntervalAndUpdateSchedules, List<MeasurementDefinition>> e : definitionsByCollectionIntervalAndUpdateSchedules.entrySet()) {
-            sm.updateDefaultCollectionIntervalForMeasurementDefinitions(subject, getIdsFromDefs(e.getValue()), e.getKey().collectionInterval,
-                e.getKey().updateSchedules);
+        for (Map.Entry<CollectionIntervalAndUpdateSchedules, List<MeasurementDefinition>> e : definitionsByCollectionIntervalAndUpdateSchedules
+            .entrySet()) {
+            measurementScheduleManager.updateDefaultCollectionIntervalForMeasurementDefinitions(subject, getIdsFromDefs(e.getValue()),
+                e.getKey().collectionInterval, e.getKey().updateSchedules);
         }
     }
 
+    
     private static int[] getIdsFromDefs(Collection<MeasurementDefinition> defs) {
         int[] ids = new int[defs.size()];
 
@@ -214,7 +236,7 @@ public class MetricTemplateImporter implements Importer<MeasurementDefinition, M
         CollectionIntervalAndUpdateSchedules key = new CollectionIntervalAndUpdateSchedules();
         key.collectionInterval = metricTemplate.getDefaultInterval();
         key.updateSchedules = shouldUpdateSchedules(metricTemplate);
-        
+
         List<MeasurementDefinition> defs = definitionsByCollectionIntervalAndUpdateSchedules.get(key);
 
         if (defs == null) {

@@ -81,6 +81,9 @@ public class SystemSettingsImporter implements Importer<NoSingleEntity, SystemSe
     @Override
     public void configure(Configuration importConfiguration) {
         this.importConfiguration = importConfiguration;
+        if (importConfiguration == null) {
+            this.importConfiguration = getImportConfigurationDefinition().getDefaultTemplate().getConfiguration();
+        }
     }
 
     @Override

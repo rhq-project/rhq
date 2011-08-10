@@ -61,8 +61,11 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent> impleme
         try {
             DocumentBuilder builder = factory.newDocumentBuilder();
             InputStream is = new FileInputStream(hostXmlFile);
-            hostXml = builder.parse(is);
-            is.close();
+            try {
+                hostXml = builder.parse(is);
+            } finally {
+                is.close();
+            }
         } catch (Exception e) {
             e.printStackTrace();  // TODO: Customise this generated block
         }
@@ -127,8 +130,7 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent> impleme
                 hp.port = port;
 
                 String nIf = mgmtInterface.getAttribute("interface");
-                String hostName = getInterface(nIf);
-                hp.host = hostName;
+                hp.host = getInterface(nIf);
                 return hp;
             }
         }
@@ -174,8 +176,7 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent> impleme
                         if (nodeName.equals("any-ipv4-address"))
                             return "0.0.0.0";
 
-                        String x = ((Element) nl.item(j)).getAttribute("value");
-                        return x;
+                        return ((Element) nl.item(j)).getAttribute("value");
 
                         // TODO check for <any> and so on
                     }
@@ -195,8 +196,7 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent> impleme
         if (hostXml==null)
             throw new IllegalArgumentException("hostXml is null. You need to call 'readStandaloneOrHostXml' first.");
 
-        String hostName = hostXml.getDocumentElement().getAttribute("name");
-        return hostName;
+        return hostXml.getDocumentElement().getAttribute("name");
     }
 
     /**

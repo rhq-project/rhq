@@ -22,7 +22,6 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -91,13 +90,14 @@ public class BundleGen {
 
       try {
          File outFile = new File(genPath,"generatedBundle.zip");
-         FileOutputStream fos = new FileOutputStream(outFile);
-         ZipOutputStream zos = new ZipOutputStream(fos);
-
-         copyToOutputStream(zos,genPath,"deploy.xml");
-         copyToOutputStream(zos,props.getContentDir(),props.getBundleFile());
-         zos.flush();
-         zos.close();
+         ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(outFile));
+         try {
+             copyToOutputStream(zos,genPath,"deploy.xml");
+             copyToOutputStream(zos,props.getContentDir(),props.getBundleFile());
+         } finally {
+             // by definition this automatically flushes!
+             zos.close();
+         }
 
          File targetFile = new File(bundleTargetDirectory + "/" + "generatedBundle.zip");
          boolean success = outFile.renameTo(targetFile);
@@ -125,10 +125,13 @@ public class BundleGen {
       ZipEntry entry = new ZipEntry(fileName);
       zos.putNextEntry(entry);
       FileInputStream fis = new FileInputStream(new File(filedir , fileName));
-      StreamUtil.copy(fis,zos,false);
-      zos.flush();
-      log.debug("Added ["+ fileName + "]");
-      fis.close();
+      try {
+          StreamUtil.copy(fis,zos,false);
+          zos.flush();
+          log.debug("Added ["+ fileName + "]");
+      } finally {
+          fis.close();
+      }
    }
 
    /**

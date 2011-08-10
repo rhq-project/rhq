@@ -28,6 +28,7 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
+import org.rhq.core.domain.configuration.definition.constraint.RegexConstraint;
 
 /**
  * The drift subsystem has a fixed configuration definition. That is, its property definitions
@@ -105,6 +106,15 @@ public class DriftConfigurationDefinition implements Serializable {
         pd.setOrder(0);
         pd.setAllowCustomEnumeratedValue(false);
         pd.setConfigurationDefinition(INSTANCE);
+
+        RegexConstraint constrait = new RegexConstraint();
+        // because we know these names will actually be used by the agent's plugin container as directories names,
+        // we must make sure they are restricted to only be characters valid for file system pathnames.
+        // Thus, we only allow config names to only include spaces or "." or "-" or alphanumeric or "_" characters.
+        String pattern = "[ \\.\\-\\w]+";
+        constrait.setDetails(pattern);
+        pd.addConstraints(constrait);
+
         return pd;
     }
 

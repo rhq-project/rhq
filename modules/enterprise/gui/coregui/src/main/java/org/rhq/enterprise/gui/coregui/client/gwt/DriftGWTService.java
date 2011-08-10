@@ -147,6 +147,6 @@ public interface DriftGWTService extends RemoteService {
      * @param entityContext
      * @param driftConfig
      */
-    void updateDriftConfiguration(EntityContext entityContext, DriftConfiguration driftConfig);
+    void updateDriftConfiguration(EntityContext entityContext, DriftConfiguration driftConfig) throws RuntimeException;
 
 }

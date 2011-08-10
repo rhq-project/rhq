@@ -83,7 +83,7 @@ public class DriftGWTServiceImpl extends AbstractGWTServiceImpl implements Drift
     }
 
     @Override
-    public void detectDrift(EntityContext entityContext, DriftConfiguration driftConfig) {
+    public void detectDrift(EntityContext entityContext, DriftConfiguration driftConfig) throws RuntimeException {
         try {
             this.driftManager.detectDrift(getSessionSubject(), entityContext, driftConfig);
         } catch (Throwable t) {
@@ -92,7 +92,8 @@ public class DriftGWTServiceImpl extends AbstractGWTServiceImpl implements Drift
     }
 
     @Override
-    public PageList<? extends DriftChangeSet<?>> findDriftChangeSetsByCriteria(GenericDriftChangeSetCriteria criteria) {
+    public PageList<? extends DriftChangeSet<?>> findDriftChangeSetsByCriteria(GenericDriftChangeSetCriteria criteria)
+        throws RuntimeException {
         try {
             PageList<? extends DriftChangeSet<?>> results = driftManager.findDriftChangeSetsByCriteria(
                 getSessionSubject(), criteria);
@@ -137,7 +138,8 @@ public class DriftGWTServiceImpl extends AbstractGWTServiceImpl implements Drift
     }
 
     @Override
-    public DriftSnapshot createSnapshot(Subject subject, GenericDriftChangeSetCriteria criteria) {
+    public DriftSnapshot createSnapshot(Subject subject, GenericDriftChangeSetCriteria criteria)
+        throws RuntimeException {
         try {
             return driftManager.createSnapshot(subject, criteria);
         } catch (Throwable t) {
@@ -156,7 +158,8 @@ public class DriftGWTServiceImpl extends AbstractGWTServiceImpl implements Drift
     }
 
     @Override
-    public void updateDriftConfiguration(EntityContext entityContext, DriftConfiguration driftConfig) {
+    public void updateDriftConfiguration(EntityContext entityContext, DriftConfiguration driftConfig)
+        throws RuntimeException {
         try {
             this.driftManager.updateDriftConfiguration(getSessionSubject(), entityContext, driftConfig);
         } catch (Throwable t) {

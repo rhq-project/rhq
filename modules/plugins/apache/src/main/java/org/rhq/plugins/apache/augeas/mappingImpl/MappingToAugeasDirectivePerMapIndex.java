@@ -191,7 +191,7 @@ public class MappingToAugeasDirectivePerMapIndex extends ConfigurationToAugeasAp
                          map.add(propMap);
                      count = count + 1;
                   }
-                  if (value > min & value<next){
+                  if (value > min && value<next){
                          next = value;
                   }
                 }

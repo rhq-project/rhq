@@ -142,7 +142,7 @@ public class MappingToAugeasParamPerMap extends ConfigurationToAugeasApacheBase{
                              tempList.add(propMap);
                          count = count + 1;
                       }
-                      if (value > min & value<next){
+                      if (value > min && value<next){
                              next = value;
                       }
                     }

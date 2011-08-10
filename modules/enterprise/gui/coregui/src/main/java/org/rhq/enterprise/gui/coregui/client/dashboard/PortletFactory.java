@@ -298,7 +298,7 @@ public class PortletFactory {
 
     public static PortletViewFactory getRegisteredPortletFactory(String key) {
         PortletViewFactory portletFactory = null;
-        if ((key != null) & (!key.trim().isEmpty())) {
+        if ((key != null) && (!key.trim().isEmpty())) {
             portletFactory = registeredPortletFactoryMap.get(key);
         }
         return portletFactory;
@@ -306,7 +306,7 @@ public class PortletFactory {
 
     public static PortletViewFactory getRegisteredGroupPortletFactory(String key) {
         PortletViewFactory portletFactory = null;
-        if ((key != null) & (!key.trim().isEmpty())) {
+        if ((key != null) && (!key.trim().isEmpty())) {
             portletFactory = registeredGroupPortletFactoryMap.get(key);
         }
         return portletFactory;
@@ -314,7 +314,7 @@ public class PortletFactory {
 
     public static PortletViewFactory getRegisteredResourcePortletFactory(String key) {
         PortletViewFactory portletFactory = null;
-        if ((key != null) & (!key.trim().isEmpty())) {
+        if ((key != null) && (!key.trim().isEmpty())) {
             portletFactory = registeredResourcePortletFactoryMap.get(key);
         }
         return portletFactory;

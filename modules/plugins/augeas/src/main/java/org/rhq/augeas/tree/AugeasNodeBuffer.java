@@ -89,7 +89,7 @@ public class AugeasNodeBuffer {
         for (String key : buffer.keySet()) {
 
             int index = key.indexOf(parentNode.getFullPath());
-            if ((index == 0) & (key.length() > parentNode.getFullPath().length())) {
+            if ((index == 0) && (key.length() > parentNode.getFullPath().length())) {
                 String localPath = key.substring(parentNode.getFullPath().length());
                 int endOfLabel = localPath.indexOf(File.separatorChar);
                 String label;

@@ -586,7 +586,6 @@ public class ConfigurationEditor extends LocatableVLayout {
                 property, odd, fields);
             odd = !odd;
         }
-        return;
     }
 
     public void addItemsForPropertyRecursively(String locatorId, PropertyDefinition propertyDefinition,
@@ -1064,13 +1063,18 @@ public class ConfigurationEditor extends LocatableVLayout {
     }
 
     private PropertyMapListGridRecord[] buildSummaryRecords(PropertyList propertyList, List<PropertyDefinition> definitions) {
-        PropertyMapListGridRecord[] records = new PropertyMapListGridRecord[propertyList == null ? 0 : propertyList.getList().size()];
-        List<Property> list = propertyList.getList();
-        for (int index = 0, listSize = list.size(); index < listSize; index++) {
-            Property row = list.get(index);
-            PropertyMap rowMap = (PropertyMap) row;
-            PropertyMapListGridRecord record = new PropertyMapListGridRecord(rowMap, index, definitions);
-            records[index] = record;
+        PropertyMapListGridRecord[] records;
+        if (propertyList == null) {
+            records = new PropertyMapListGridRecord[0];
+        } else {
+            records = new PropertyMapListGridRecord[propertyList.getList().size()];
+            List<Property> list = propertyList.getList();
+            for (int index = 0, listSize = list.size(); index < listSize; index++) {
+                Property row = list.get(index);
+                PropertyMap rowMap = (PropertyMap) row;
+                PropertyMapListGridRecord record = new PropertyMapListGridRecord(rowMap, index, definitions);
+                records[index] = record;
+            }
         }
         return records;
     }

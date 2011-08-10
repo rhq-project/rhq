@@ -27,7 +27,7 @@ public class SpecificParams {
             Pattern pattern =  Pattern.compile("[ \t]*(Add|Remove|Set)[ \t]*([a-zA-Z]+)"); 
             int startIndex = 0;
             boolean updated = true;
-            while (updated & startIndex < value.length()){
+            while (updated && startIndex < value.length()){
                 updated = false;
                     Matcher m = pattern.matcher(value);
                     while (m.find(startIndex)) {
@@ -96,7 +96,7 @@ public class SpecificParams {
             Pattern pattern =  Pattern.compile("[ \t]*([+-]?)([a-zA-Z]+)"); 
             int startIndex = 0;
             boolean updated = true;
-            while (updated & startIndex < value.length()){
+            while (updated && startIndex < value.length()){
                 updated = false;
                     Matcher m = pattern.matcher(value);
                     while (m.find(startIndex)) {

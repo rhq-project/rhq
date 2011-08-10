@@ -2412,11 +2412,11 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                         if (inner instanceof PropertyDefinitionSimple) {
                             handlePDS(subject, (PropertyDefinitionSimple) inner);
                         }
-                        log.warn("3 >>>>>>>>>> " + inner.toString() + " in " + pdl.toString() + " <<<<<<< not yet supported");
+                        log.debug("3 >>>>>>>>>> " + inner.toString() + " in " + pdl.toString() + " <<<<<<< not yet supported");
                     }
                 }
                 else {
-                    log.warn("2 >>>>>>>>>> " + memberDef.toString() + " in " + pdl.toString() + " <<<<<<< not yet supported");
+                    log.debug("2 >>>>>>>>>> " + memberDef.toString() + " in " + pdl.toString() + " <<<<<<< not yet supported");
                 }
 
             }
@@ -2427,12 +2427,12 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                             handlePDS(subject, (PropertyDefinitionSimple) inner);
                         }
                         else {
-                            log.warn("4 >>>>>>>>>> " + inner.toString() + " in " + pdm.toString() + " <<<<<<< not yet supported");
+                            log.debug("4 >>>>>>>>>> " + inner.toString() + " in " + pdm.toString() + " <<<<<<< not yet supported");
                         }
                     }
             }
             else {
-                log.warn("1 >>>>>>>>>> " + pd.toString() + " <<<<<<< not yet supported");
+                log.debug("1 >>>>>>>>>> " + pd.toString() + " <<<<<<< not yet supported");
             }
         }
 

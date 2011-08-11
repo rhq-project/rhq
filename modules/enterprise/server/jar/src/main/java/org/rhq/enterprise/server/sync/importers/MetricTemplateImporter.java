@@ -63,13 +63,13 @@ public class MetricTemplateImporter implements Importer<MeasurementDefinition, M
     private static final Log LOG = LogFactory.getLog(MetricTemplateImporter.class);
 
     private static final boolean UPDATE_SCHEDULES_DEFAULT = false;
-    private static final String UPDATE_ALL_SCHEDULES_PROPERTY = "updateAllSchedules";
-    private static final String METRIC_NAME_PROPERTY = "metricName";
-    private static final String RESOURCE_TYPE_NAME_PROPERTY = "resourceTypeName";
-    private static final String RESOURCE_TYPE_PLUGIN_PROPERTY = "resourceTypePlugin";
-    private static final String UPDATE_SCHEDULES_PROPERTY = "updateSchedules";
-    private static final String METRIC_UPDATE_OVERRIDES_PROPERTY = "metricUpdateOverrides";
-    private static final String METRIC_UPDATE_OVERRIDE = "metricUpdateOverride";
+    public static final String UPDATE_ALL_SCHEDULES_PROPERTY = "updateAllSchedules";
+    public static final String METRIC_NAME_PROPERTY = "metricName";
+    public static final String RESOURCE_TYPE_NAME_PROPERTY = "resourceTypeName";
+    public static final String RESOURCE_TYPE_PLUGIN_PROPERTY = "resourceTypePlugin";
+    public static final String UPDATE_SCHEDULES_PROPERTY = "updateSchedules";
+    public static final String METRIC_UPDATE_OVERRIDES_PROPERTY = "metricUpdateOverrides";
+    public static final String METRIC_UPDATE_OVERRIDE_PROPERTY = "metricUpdateOverride";
 
     private static class CollectionIntervalAndUpdateSchedules {
         public long collectionInterval;
@@ -134,7 +134,7 @@ public class MetricTemplateImporter implements Importer<MeasurementDefinition, M
         PropertyDefinitionSimple resourceTypePlugin = new PropertyDefinitionSimple(RESOURCE_TYPE_PLUGIN_PROPERTY, "The name of the plugin defining the resource type that defines the metric", true, PropertySimpleType.STRING);
         PropertyDefinitionSimple updateSchedules = new PropertyDefinitionSimple(UPDATE_SCHEDULES_PROPERTY, "Whether to update the schedules of this metric on existing resources", true, PropertySimpleType.BOOLEAN);
         
-        PropertyDefinitionMap metricUpdateOverride = new PropertyDefinitionMap(METRIC_UPDATE_OVERRIDE, null, true, metricName, resourceTypeName, resourceTypePlugin, updateSchedules); 
+        PropertyDefinitionMap metricUpdateOverride = new PropertyDefinitionMap(METRIC_UPDATE_OVERRIDE_PROPERTY, null, true, metricName, resourceTypeName, resourceTypePlugin, updateSchedules); 
         PropertyDefinitionList metricUpdateOverrides = new PropertyDefinitionList(METRIC_UPDATE_OVERRIDES_PROPERTY, "Per metric settings", false, metricUpdateOverride);
         
         def.put(metricUpdateOverrides);

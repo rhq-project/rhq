@@ -50,7 +50,6 @@ import org.rhq.common.drift.FileEntry;
 import org.rhq.common.drift.Headers;
 import org.rhq.core.clientapi.agent.drift.DriftAgentService;
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
 import org.rhq.core.domain.criteria.DriftCriteria;
 import org.rhq.core.domain.criteria.JPADriftChangeSetCriteria;
@@ -129,15 +128,19 @@ public class JPADriftServerBean implements JPADriftServerLocal {
     @Override
     public PageList<DriftComposite> findDriftCompositesByCriteria(Subject subject, DriftCriteria criteria) {
 
-        PageList<JPADrift> drifts = findDriftsByCriteria(subject, criteria);
-        PageList<DriftComposite> composites = new PageList<DriftComposite>();
+        JPADriftCriteria jpaCriteria = (criteria instanceof JPADriftCriteria) ? (JPADriftCriteria) criteria
+            : new JPADriftCriteria(criteria);
+
+        jpaCriteria.fetchChangeSet(true);
+        PageList<JPADrift> drifts = findDriftsByCriteria(subject, jpaCriteria);
+        PageList<DriftComposite> result = new PageList<DriftComposite>();
         for (JPADrift drift : drifts) {
             JPADriftChangeSet changeSet = drift.getChangeSet();
-            DriftConfiguration driftConfig = new DriftConfiguration(entityManager.find(Configuration.class, changeSet
-                .getDriftConfigurationId()));
-            composites.add(new DriftComposite(drift, changeSet.getResource(), driftConfig.getName()));
+            DriftConfiguration driftConfig = changeSet.getDriftConfiguration();
+            result.add(new DriftComposite(drift, changeSet.getResource(), driftConfig.getName()));
         }
-        return composites;
+
+        return result;
     }
 
     @Override

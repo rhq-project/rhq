@@ -254,7 +254,9 @@ public class MetricTemplateImporter implements Importer<MeasurementDefinition, M
 
         String updateAll = importConfiguration.getSimpleValue(UPDATE_ALL_SCHEDULES_PROPERTY, null);
         if (updateAll != null) {
-            return Boolean.parseBoolean(updateAll);
+            if(Boolean.parseBoolean(updateAll)) {
+                return true;
+            }
         }
 
         PropertyList perMetricOverrides = importConfiguration.getList(METRIC_UPDATE_OVERRIDES_PROPERTY);

@@ -363,7 +363,6 @@ public class PluginGen {
                 templ.process(root, out);
             }
             finally {
-                out.flush();
                 out.close();
             }
         } catch (IOException ioe) {

@@ -156,11 +156,13 @@ public class BundleGen {
            Template templ = config.getTemplate(template + ".ftl");
 
            Writer out = new BufferedWriter(new FileWriter(new File(directory, fileName)));
-           Map<String, Props> root = new HashMap<String, Props>();
-           root.put("props", props);
-           templ.process(root, out);
-           out.flush();
-           out.close();
+           try {
+               Map<String, Props> root = new HashMap<String, Props>();
+               root.put("props", props);
+               templ.process(root, out);
+           } finally {
+               out.close();
+           }
        } catch (IOException ioe) {
            ioe.printStackTrace();
        } catch (TemplateException te) {

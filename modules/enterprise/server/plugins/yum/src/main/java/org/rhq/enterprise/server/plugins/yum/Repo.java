@@ -251,9 +251,11 @@ public class Repo {
         XMLOutputter printer = new XMLOutputter();
         ByteArrayOutputStream zipped = new ByteArrayOutputStream();
         GZIPOutputStream gzip = new GZIPOutputStream(zipped);
-        printer.output(p, gzip);
-        gzip.flush();
-        gzip.close();
+        try {
+            printer.output(p, gzip);
+        } finally {
+            gzip.close();
+        }
         return zipped.toByteArray();
     }
 }

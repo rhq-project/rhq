@@ -49,7 +49,6 @@ import javax.persistence.Id;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.server.ExternalizableStrategy;
 import org.rhq.core.server.ExternalizableStrategy.Subsystem;
 
 /**
@@ -99,8 +98,7 @@ public class EntitySerializer {
 
         Collections.sort(serializableFields, fieldComparator);
 
-        Field[] results = serializableFields.toArray(new Field[serializableFields.size()]);
-        return results;
+        return serializableFields.toArray(new Field[serializableFields.size()]);
     }
 
     private static List<Field> getNonEntityFieldList(Object object) {
@@ -252,25 +250,29 @@ public class EntitySerializer {
         String tempDir = System.getProperty("java.io.tmpdir");
         File tempFile = new File(tempDir, "entitySerializerTest.txt");
 
-        ObjectOutput output = null;
+        FileOutputStream fos = new FileOutputStream(tempFile);
         try {
-            output = new ObjectOutputStream(new FileOutputStream(tempFile));
-            writeExternalRemote(writeResource, output);
-        } finally {
-            if (output != null) {
+            ObjectOutput output = new ObjectOutputStream(fos);
+            try {
+                writeExternalRemote(writeResource, output);
+            } finally {
                 output.close();
             }
+        } finally {
+            fos.close();
         }
 
         Resource readResource = new Resource();
-        ObjectInput input = null;
+        FileInputStream fis = new FileInputStream(tempFile);
         try {
-            input = new ObjectInputStream(new FileInputStream(tempFile));
-            readExternalRemote(readResource, input);
-        } finally {
-            if (input != null) {
-                input.close();
+            ObjectInput ois = new ObjectInputStream(fis);
+            try {
+                readExternalRemote(readResource, ois);
+            } finally {
+                ois.close();
             }
+        } finally {
+            fis.close();
         }
 
         // quick verification

@@ -18,11 +18,7 @@
  */
 package org.rhq.core.pc;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -93,18 +89,26 @@ public class StandaloneContainer {
         if (argv.length == 0) {
             br = new BufferedReader(new InputStreamReader(System.in));
             isStdin = true;
+            sc.run(br);
         }
         else {
             try {
                 br = new BufferedReader(new InputStreamReader(new FileInputStream(argv[0])));
-                isStdin=false;
+                try {
+                    isStdin=false;
+                    sc.run(br);
+                } finally {
+                    try {
+                        br.close();
+                    } catch (IOException e) {
+                        System.err.println("IOException happened: " + e + "\n");
+                    }
+                }
             } catch (FileNotFoundException fnfe) {
                 System.err.println("File " + argv[0] + " not found");
                 System.exit(1);
             }
         }
-
-        sc.run(br);
     }
 
     /**

@@ -23,6 +23,7 @@ import static javax.ejb.TransactionAttributeType.REQUIRES_NEW;
 
 import java.io.File;
 import java.io.InputStream;
+import java.util.Iterator;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -111,6 +112,9 @@ public class DriftManagerBean implements DriftManagerLocal {
     private AgentManagerLocal agentManager;
 
     @EJB
+    private DriftManagerLocal driftManager; // ourself
+
+    @EJB
     private SubjectManagerLocal subjectManager;
 
     // use a new transaction when putting things on the JMS queue. see 
@@ -178,48 +182,78 @@ public class DriftManagerBean implements DriftManagerLocal {
     }
 
     @Override
+    @TransactionAttribute(NOT_SUPPORTED)
     public void deleteDriftConfiguration(Subject subject, EntityContext entityContext, String driftConfigName) {
-
-        // TODO security check!
 
         switch (entityContext.getType()) {
         case Resource:
             int resourceId = entityContext.getResourceId();
-            Resource resource = entityManager.find(Resource.class, resourceId);
-            if (null == resource) {
-                throw new IllegalArgumentException("Entity not found [" + entityContext + "]");
-            }
-
+            DriftConfigurationCriteria criteria = new DriftConfigurationCriteria();
+            criteria.addFilterName(driftConfigName);
+            criteria.addFilterResourceIds(resourceId);
+            PageList<DriftConfiguration> results = driftManager.findDriftConfigurationsByCriteria(subject, criteria);
             DriftConfiguration doomedDriftConfig = null;
-            for (DriftConfiguration dc : resource.getDriftConfigurations()) {
-                if (dc.getName().equals(driftConfigName)) {
-                    doomedDriftConfig = dc;
-                    break;
-                }
+            if (results != null && results.size() == 1) {
+                doomedDriftConfig = results.get(0);
             }
 
             if (doomedDriftConfig != null) {
+
+                // TODO security check!
+
                 // tell the agent first - we don't want the agent reporting on the drift config after we delete it
+                boolean unscheduledOnAgent = false;
                 try {
                     AgentClient agentClient = agentManager.getAgentClient(subjectManager.getOverlord(), resourceId);
                     DriftAgentService service = agentClient.getDriftAgentService();
-                    // make a copy of the config, so we don't mess with the attached original
-                    // note that we don't copy over the resource reference, that's also attached but we don't need it in the copy anyway
-                    DriftConfiguration copy = new DriftConfiguration(doomedDriftConfig.getConfiguration().clone());
-                    service.unscheduleDriftDetection(resourceId, copy);
+                    service.unscheduleDriftDetection(resourceId, doomedDriftConfig);
+                    unscheduledOnAgent = true;
                 } catch (Exception e) {
                     log.warn(" Unable to inform agent of unscheduled drift detection  [" + doomedDriftConfig + "]", e);
                 }
 
-                resource.getDriftConfigurations().remove(doomedDriftConfig);
-                doomedDriftConfig.setResource(null);
-                resource = entityManager.merge(resource);
+                // purge all data related to this drift configuration
+                try {
+                    driftManager.purgeByDriftConfigurationName(subject, resourceId, doomedDriftConfig.getName());
+                } catch (Exception e) {
+                    String warnMessage = "Failed to purge data for drift configuration [" + driftConfigName
+                        + "] for resource [" + resourceId + "].";
+                    if (unscheduledOnAgent) {
+                        warnMessage += " The agent was told to stop detecting drift for that configuration.";
+                    }
+                    log.warn(warnMessage, e);
+                }
+
+                // now purge the drift config itself
+                driftManager.deleteResourceDriftConfiguration(subject, resourceId, doomedDriftConfig.getId());
             }
             break;
 
         default:
             throw new IllegalArgumentException("Entity Context Type not supported [" + entityContext + "]");
         }
+    }
+
+    @Override
+    public void deleteResourceDriftConfiguration(Subject subject, int resourceId, int driftConfigId) {
+        Resource resource = entityManager.getReference(Resource.class, resourceId);
+        boolean removed = false;
+        Iterator<DriftConfiguration> i = resource.getDriftConfigurations().iterator();
+        while (i.hasNext()) {
+            DriftConfiguration next = i.next();
+            if (next.getId() == driftConfigId) {
+                i.remove();
+                removed = true;
+                break;
+            }
+        }
+
+        // just removing the drift config from the list of drift configs associated with the resource will purge it.
+        // this is because the DELETE_ORPHAN annotation is on the resource drift config field
+        if (removed) {
+            entityManager.merge(resource);
+        }
+        return;
     }
 
     @Override
@@ -290,6 +324,22 @@ public class DriftManagerBean implements DriftManagerLocal {
     public void saveChangeSetFiles(Subject subject, File changeSetFilesZip) throws Exception {
         DriftServerPluginFacet driftServerPlugin = getServerPlugin();
         driftServerPlugin.saveChangeSetFiles(subject, changeSetFilesZip);
+    }
+
+    /**
+     * This purges the persisted data related to drift configuration, but it does NOT talk to the agent to tell the agent
+     * about this nor does it actually delete the drift config itself.
+     * 
+     * If you want to delete a drift configuration and all that that entails, you must use
+     * {@link #deleteDriftConfiguration(Subject, EntityContext, String)} instead.
+     * 
+     * This method is really for internal use only.
+     */
+    @Override
+    @TransactionAttribute(NOT_SUPPORTED)
+    public void purgeByDriftConfigurationName(Subject subject, int resourceId, String driftConfigName) throws Exception {
+        DriftServerPluginFacet driftServerPlugin = getServerPlugin();
+        driftServerPlugin.purgeByDriftConfigurationName(subject, resourceId, driftConfigName);
     }
 
     @Override

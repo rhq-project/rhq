@@ -66,6 +66,11 @@ public interface DriftManagerLocal extends DriftServerPluginFacet, DriftManagerR
     void deleteDriftConfiguration(Subject subject, EntityContext entityContext, String driftConfigName);
 
     /**
+     * This is for internal use only - do not call it unless you know what you are doing.
+     */
+    void deleteResourceDriftConfiguration(Subject subject, int resourceId, int driftConfigId);
+
+    /**
      * One time on-demand request to detect drift on the specified entities, using the supplied config.
      * 
      * @param entityContext

@@ -19,6 +19,8 @@
  */
 package org.rhq.enterprise.server.drift;
 
+import static javax.ejb.TransactionAttributeType.REQUIRES_NEW;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
@@ -72,8 +74,6 @@ import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 
-import static javax.ejb.TransactionAttributeType.REQUIRES_NEW;
-
 /**
  * The SLSB method implementation needed to support the JPA (RHQ Default) Drift Server Plugin.
  * 
@@ -95,6 +95,12 @@ public class JPADriftServerBean implements JPADriftServerLocal {
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
+
+    @Override
+    public void purgeByDriftConfigurationName(Subject subject, int resourceId, String driftConfigName) throws Exception {
+        // TODO security checks
+        System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! " + resourceId + " !!!" + driftConfigName);
+    }
 
     @Override
     public DriftSnapshot createSnapshot(Subject subject, DriftChangeSetCriteria criteria) {

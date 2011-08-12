@@ -113,4 +113,9 @@ public class JPADriftServerPluginComponent implements DriftServerPluginFacet, Se
         getJPADriftServer().storeFiles(subject, changeSetFilesZip);
     }
 
+    @Override
+    public void purgeByDriftConfigurationName(Subject subject, int resourceId, String driftConfigName) throws Exception {
+        getJPADriftServer().purgeByDriftConfigurationName(subject, resourceId, driftConfigName);
+    }
+
 }

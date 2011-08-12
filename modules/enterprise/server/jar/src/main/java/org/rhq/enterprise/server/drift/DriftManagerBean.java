@@ -271,6 +271,7 @@ public class DriftManagerBean implements DriftManagerLocal {
                 doomedDriftConfig.setResource(null);
                 resource = entityManager.merge(resource);
                 entityManager.flush();
+                entityManager.clear(); // clear the hibernate cache - we're about to call some agent API and we don't want it messing with attached objects
 
                 try {
                     AgentClient agentClient = agentManager.getAgentClient(subjectManager.getOverlord(), resourceId);

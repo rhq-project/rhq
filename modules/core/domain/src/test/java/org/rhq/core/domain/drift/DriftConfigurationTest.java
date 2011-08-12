@@ -15,12 +15,13 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.drift.DriftConfigurationComparator.CompareMode;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext;
 
 public class DriftConfigurationTest {
     @Test
     public void getCompareIgnoreIncludesExcludes() {
-        DriftConfigurationComparator comparator = new DriftConfigurationComparator(true);
+        DriftConfigurationComparator comparator = new DriftConfigurationComparator(CompareMode.ONLY_BASE_INFO);
 
         DriftConfiguration dc1 = new DriftConfiguration(new Configuration());
         DriftConfiguration dc2 = new DriftConfiguration(new Configuration());
@@ -74,13 +75,14 @@ public class DriftConfigurationTest {
         assert comparator.compare(dc1, dc2) == 0 : dc1 + " should equal (ignoring includes/excludes) " + dc2;
 
         // now show that our non-ignoring comparator would detect a different
-        comparator = new DriftConfigurationComparator(false);
+        comparator = new DriftConfigurationComparator(CompareMode.BOTH_BASE_INFO_AND_INCLUDES_EXCLUDES);
         assert comparator.compare(dc1, dc2) != 0 : dc1 + " should not equal (not ignoring includes/excludes) " + dc2;
     }
 
     @Test
-    public void getCompareIncludesExcludes() {
-        DriftConfigurationComparator comparator = new DriftConfigurationComparator(false);
+    public void getCompareBaseInfoAndIncludesExcludes() {
+        DriftConfigurationComparator comparator = new DriftConfigurationComparator(
+            CompareMode.BOTH_BASE_INFO_AND_INCLUDES_EXCLUDES);
 
         DriftConfiguration dc1 = new DriftConfiguration(new Configuration());
         DriftConfiguration dc2 = new DriftConfiguration(new Configuration());
@@ -94,6 +96,44 @@ public class DriftConfigurationTest {
         dc2.setEnabled(true);
         dc2.setInterval(1000L);
         dc2.setName("the-name");
+
+        getCompareBaseInfoAndIncludesExcludes(comparator, dc1, dc2);
+    }
+
+    @Test
+    public void getCompareOnlyIncludesExcludes() {
+        DriftConfigurationComparator comparator = new DriftConfigurationComparator(CompareMode.ONLY_INCLUDES_EXCLUDES);
+
+        DriftConfiguration dc1 = new DriftConfiguration(new Configuration());
+        DriftConfiguration dc2 = new DriftConfiguration(new Configuration());
+
+        dc1.setBasedir(new DriftConfiguration.BaseDirectory(BaseDirValueContext.resourceConfiguration, "foo"));
+        dc1.setEnabled(false);
+        dc1.setInterval(1111L);
+        dc1.setName("some-name");
+
+        dc2.setBasedir(new DriftConfiguration.BaseDirectory(BaseDirValueContext.pluginConfiguration, "hello.world"));
+        dc2.setEnabled(true);
+        dc2.setInterval(2222L);
+        dc2.setName("another-name");
+
+        getCompareBaseInfoAndIncludesExcludes(comparator, dc1, dc2);
+    }
+
+    /**
+     * Used by two main tests - we are to pass in a comparator that compares both base info
+     * and filters (with dc1 and dc2 having the same base info to make sure that data is compared too)
+     * and then we are to pass in a comparator that compares only the filters (with dc1 and
+     * dc2 having different base info to make sure that data is ignored).
+     * 
+     * Note that when first called, comparator is assumed to see that dc1 and dc2 are the same.
+     *
+     * @param comparator used to test changes in filters
+     * @param dc1 the initial drift config1 to test
+     * @param dc2 the initial drift config2 to test
+     */
+    private void getCompareBaseInfoAndIncludesExcludes(DriftConfigurationComparator comparator, DriftConfiguration dc1,
+        DriftConfiguration dc2) {
 
         assert comparator.compare(dc1, dc2) == 0 : dc1 + " should equal " + dc2; // sanity check
 

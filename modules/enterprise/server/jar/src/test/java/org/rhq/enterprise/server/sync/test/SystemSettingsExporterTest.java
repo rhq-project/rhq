@@ -81,11 +81,11 @@ public class SystemSettingsExporterTest extends JMockTest {
 
         InputStream eis = new ExportingInputStream(exporters, new HashMap<String, ExporterMessages>(), 65536, false);
 
-        String exportContents = readAll(new InputStreamReader(eis, "UTF-8"));
-        
-        LOG.warn("Export contents:\n" + exportContents);
-        
-        eis = new ByteArrayInputStream(exportContents.getBytes("UTF-8"));
+//        String exportContents = readAll(new InputStreamReader(eis, "UTF-8"));
+//        
+//        LOG.warn("Export contents:\n" + exportContents);
+//        
+//        eis = new ByteArrayInputStream(exportContents.getBytes("UTF-8"));
 
 //         <?xml version="1.0" ?>
 //        <configuration-export>

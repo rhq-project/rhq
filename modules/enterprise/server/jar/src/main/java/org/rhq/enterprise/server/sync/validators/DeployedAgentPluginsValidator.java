@@ -46,7 +46,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 public class DeployedAgentPluginsValidator implements ConsistencyValidator {
 
-    private static class ConsistentPlugin extends Plugin {
+    public static class ConsistentPlugin extends Plugin {
         
         private static final long serialVersionUID = 1L;
 
@@ -92,6 +92,22 @@ public class DeployedAgentPluginsValidator implements ConsistencyValidator {
     
     public DeployedAgentPluginsValidator(PluginManagerLocal pluginManager) {
         this.pluginManager = pluginManager;
+    }
+    
+    /**
+     * Provided for testability
+     * @return the pluginsToValidate
+     */
+    public Set<ConsistentPlugin> getPluginsToValidate() {
+        return pluginsToValidate;
+    }
+    
+    /**
+     * Provided for testability
+     * @param pluginsToValidate the pluginsToValidate to set
+     */
+    public void setPluginsToValidate(Set<ConsistentPlugin> pluginsToValidate) {
+        this.pluginsToValidate = pluginsToValidate;
     }
     
     @Override

@@ -19,11 +19,61 @@
 
 package org.rhq.enterprise.server.sync.test;
 
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+
+import java.util.Properties;
+
+import org.jmock.Expectations;
+import org.testng.annotations.Test;
+
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.sync.entity.SystemSettings;
+import org.rhq.enterprise.server.sync.validators.SystemSettingsValidator;
+import org.rhq.enterprise.server.system.SystemManagerLocal;
+import org.rhq.test.JMockTest;
+
 /**
  * 
  *
  * @author Lukas Krejci
  */
-public class SystemSettingsValidatorTest {
+@Test
+public class SystemSettingsValidatorTest extends JMockTest {
 
+    public void testValidatorCallsSystemManager() {
+        final SystemManagerLocal systemManager = context.mock(SystemManagerLocal.class);
+        
+        SystemSettingsValidator validator = new SystemSettingsValidator(systemManager);
+        
+        final Properties settings = new Properties();
+        settings.put("A", "a");
+        settings.put("B", "b");
+        SystemSettings importedSettings = new SystemSettings(settings);
+        
+        context.checking(new Expectations() {
+            {
+                oneOf(systemManager).validateSystemConfiguration(with(any(Subject.class)), with(settings));
+            }
+        });
+        
+        validator.validateExportedEntity(importedSettings);
+    }
+    
+    public void testAllValidatorsAreEqual() {
+        SystemManagerLocal systemManager = context.mock(SystemManagerLocal.class);
+        
+        SystemSettingsValidator v1 = new SystemSettingsValidator(systemManager);
+        SystemSettingsValidator v2 = new SystemSettingsValidator(systemManager);
+        SystemSettingsValidator v3 = new SystemSettingsValidator(systemManager);
+        Object o = new Object();
+        
+        assertEquals(v1, v2);
+        assertEquals(v1, v3);
+        assertEquals(v2, v3);
+        
+        assertFalse(v1.equals(o));
+        assertFalse(v2.equals(o));
+        assertFalse(v3.equals(o));
+    }
 }

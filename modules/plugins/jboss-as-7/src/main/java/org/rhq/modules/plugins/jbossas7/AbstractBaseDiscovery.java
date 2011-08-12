@@ -44,6 +44,7 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent> impleme
     static final String DORG_JBOSS_BOOT_LOG_FILE = "-Dorg.jboss.boot.log.file=";
     private static final String DJBOSS_SERVER_HOME_DIR = "-Djboss.home.dir";
     static final int DEFAULT_MGMT_PORT = 9990;
+    private static final String JBOSS_AS_PREFIX = "jboss-as-";
     protected Document hostXml;
     protected final Log log = LogFactory.getLog(this.getClass());
 
@@ -254,6 +255,17 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent> impleme
             builder.append(File.separator).append(AS7Mode.STANDALONE.getDefaultXmlFile());
         return builder.toString();
 
+    }
+
+    protected String determineServerVersionFromHomeDir(String homeDir) {
+        String version;
+        String tmp = homeDir.substring(homeDir.lastIndexOf("/")+1);
+        if (tmp.startsWith("jboss-as-")) {
+            version = tmp.substring(JBOSS_AS_PREFIX.length());
+        } else {
+            version = homeDir.substring(homeDir.lastIndexOf("-") + 1);
+        }
+        return version;
     }
 
     /**

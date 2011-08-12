@@ -104,6 +104,9 @@
     <ant.contrib.version>1.0b3</ant.contrib.version>
     <resteasy.version>2.2.0.GA</resteasy.version>
 
+    <rhq.db.admin.username>rhqadmin</rhq.db.admin.username>
+    <rhq.db.admin.password>rhqadmin</rhq.db.admin.password>
+
     <!--
        defaults for datasource used by integration tests -
        these may be overridden in ~/.m2/settings.xml
@@ -923,9 +926,9 @@
                           <echo file="target/build.properties">buildTime = ${buildTime}${line.separator}</echo>
 
                           <exec executable="git" outputproperty="buildNumber" failonerror="false" failifexecutionfails="false">
-                             <arg value="log"/>
-                             <arg value="--pretty=format:%h"/>
-                             <arg value="-n1"/>
+                             <arg value="log" />
+                             <arg value="--pretty=format:%h" />
+                             <arg value="-n1" />
                           </exec>
                           <echo file="target/build.properties" append="true">buildNumber = ${buildNumber}${line.separator}</echo>
                       </tasks>

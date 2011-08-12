@@ -3,7 +3,7 @@ package org.rhq.core.domain.drift;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DiffReport<T> {
+public class DriftDiffReport<T> {
 
     private List<T> notInLeft = new ArrayList<T>();
 

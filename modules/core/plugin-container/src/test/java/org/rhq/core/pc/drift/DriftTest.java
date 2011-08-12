@@ -1,3 +1,22 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2011 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+
 package org.rhq.core.pc.drift;
 
 import java.io.BufferedOutputStream;
@@ -5,6 +24,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.util.Random;
 
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
@@ -16,6 +36,7 @@ import org.rhq.core.util.MessageDigestGenerator;
 
 import static java.util.Arrays.asList;
 import static org.apache.commons.io.FileUtils.deleteDirectory;
+import static org.apache.commons.io.IOUtils.write;
 import static org.apache.commons.io.IOUtils.writeLines;
 import static org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext.fileSystem;
 
@@ -88,6 +109,11 @@ public class DriftTest {
     protected long defaultInterval = 1800L;  // 30 minutes;
 
     private MessageDigestGenerator digestGenerator;
+
+    /**
+     * Used for creating random files in {@link #createRandomFile(java.io.File, String)}
+     */
+    private Random random = new Random();
 
     /**
      * Deletes the base output directory (which is the name of the test class), removing
@@ -176,6 +202,17 @@ public class DriftTest {
         return digestGenerator.calcDigestString(file);
     }
 
+    protected File createRandomFile(File dir, String fileName) throws Exception {
+        File file = new File(dir, fileName);
+        FileOutputStream stream = new FileOutputStream(file);
+        byte[] bytes = new byte[32];
+        random.nextBytes(bytes);
+        write(bytes, stream);
+        stream.close();
+
+        return file;
+    }
+
     protected void writeChangeSet(File changeSetDir, String... changeSet) throws Exception {
         File changeSetFile = new File(changeSetDir, "changeset.txt");
         BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(changeSetFile));
@@ -201,4 +238,5 @@ public class DriftTest {
 
         return config;
     }
+
 }

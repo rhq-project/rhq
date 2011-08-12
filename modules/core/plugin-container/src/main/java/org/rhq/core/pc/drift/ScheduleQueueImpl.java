@@ -1,5 +1,6 @@
 package org.rhq.core.pc.drift;
 
+import java.util.Iterator;
 import java.util.PriorityQueue;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -18,8 +19,8 @@ public class ScheduleQueueImpl implements ScheduleQueue {
         try {
             lock.writeLock().lock();
             if (activeSchedule != null) {
-                throw new IllegalStateException("There is already an active schedule that must be deactivated " +
-                    "before getting the next schedule.");
+                throw new IllegalStateException("There is already an active schedule that must be deactivated "
+                    + "before getting the next schedule.");
             }
             activeSchedule = queue.poll();
             return activeSchedule == null ? null : activeSchedule.copy();
@@ -29,8 +30,13 @@ public class ScheduleQueueImpl implements ScheduleQueue {
     }
 
     private boolean isActiveSchedule(int resourceId, DriftConfiguration config) {
-        return activeSchedule != null && activeSchedule.getResourceId() == resourceId &&
-               activeSchedule.getDriftConfiguration().getName().equals(config.getName());
+        try {
+            lock.readLock().lock();
+            return activeSchedule != null && activeSchedule.getResourceId() == resourceId
+                && activeSchedule.getDriftConfiguration().getName().equals(config.getName());
+        } finally {
+            lock.readLock().unlock();
+        }
 
     }
 
@@ -63,72 +69,22 @@ public class ScheduleQueueImpl implements ScheduleQueue {
 
     @Override
     public DriftDetectionSchedule remove(int resourceId, DriftConfiguration config) {
-        DriftDetectionSchedule scheduleToRemove = null;
-        try {
-            lock.readLock().lock();
-            if (isActiveSchedule(resourceId, config)) {
-                // The schedule to be removed is the currently active schedule so "upgrade"
-                // to the write lock and return the schedule while removing it from the queue
-                // at the same time.
-                try {
-                    lock.writeLock().lock();
-                    DriftDetectionSchedule removedSchedule = activeSchedule;
-                    activeSchedule = null;
-                    return removedSchedule;
-                } finally {
-                    lock.writeLock().unlock();
-                }
-            }
-
-            for (DriftDetectionSchedule s : queue) {
-                if (s.getResourceId() == resourceId &&
-                    s.getDriftConfiguration().getName().equals(config.getName())) {
-                    scheduleToRemove = s;
-                    break;
-                }
-            }
-
-            // The schedule was not found in the queue so we can simply return null without
-            // any additional processing.
-            if (scheduleToRemove == null) {
-                return null;
-            }
-
-            boolean removed = false;
-            // At this point, we found the target schedule in the queue. We "upgrade" to
-            // the write lock and remove it from the queue. If the schedule was successfully
-            // removed we return it; otherwise, return null.
-            try {
-                lock.writeLock().lock();
-                removed = queue.remove(scheduleToRemove);
-            } finally {
-                lock.writeLock().unlock();
-            }
-
-            return removed ? scheduleToRemove : null;
-        } finally {
-            lock.readLock().unlock();
-        }
-    }
-
-    @Override
-    public DriftDetectionSchedule update(int resourceId, DriftConfiguration config) {
         try {
             lock.writeLock().lock();
             if (isActiveSchedule(resourceId, config)) {
-                update(activeSchedule, config);
-                return activeSchedule.copy();
+                DriftDetectionSchedule removedSchedule = activeSchedule;
+                activeSchedule = null;
+                return removedSchedule;
             }
 
-            DriftDetectionSchedule schedule = remove(resourceId, config);
-            if (schedule == null) {
-                return null;
-            }
-
-            update(schedule, config);
-
-            if (queue.offer(schedule)) {
-               return schedule.copy();
+            Iterator<DriftDetectionSchedule> iterator = queue.iterator();
+            while (iterator.hasNext()) {
+                DriftDetectionSchedule schedule = iterator.next();
+                if (schedule.getResourceId() == resourceId
+                    && schedule.getDriftConfiguration().getName().equals(config.getName())) {
+                    iterator.remove();
+                    return schedule;
+                }
             }
 
             return null;
@@ -137,8 +93,28 @@ public class ScheduleQueueImpl implements ScheduleQueue {
         }
     }
 
+    @Override
+    public DriftDetectionSchedule update(int resourceId, DriftConfiguration config) {
+        DriftDetectionSchedule schedule = remove(resourceId, config);
+        if (schedule == null) {
+            return null;
+        }
+
+        update(schedule, config);
+
+        try {
+            lock.writeLock().lock();
+            if (queue.offer(schedule)) {
+                return schedule.copy();
+            }
+            return null;
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
+
     private void update(DriftDetectionSchedule schedule, DriftConfiguration config) {
-        schedule.getDriftConfiguration().setEnabled(config.getEnabled());
+        schedule.getDriftConfiguration().setEnabled(config.isEnabled());
         schedule.getDriftConfiguration().setInterval(config.getInterval());
     }
 

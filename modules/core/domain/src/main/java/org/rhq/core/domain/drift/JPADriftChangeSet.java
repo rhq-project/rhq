@@ -31,6 +31,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -43,24 +44,24 @@ import javax.persistence.PrePersist;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
-import org.hibernate.annotations.Type;
-
 import org.rhq.core.domain.resource.Resource;
 
 /**
+ * The JPA Drift Server plugin (the RHQ default) implementation of DriftChangeSet.
+ *   
  * @author Jay Shaughnessy
  * @author John Sanda 
  */
 @Entity
-@NamedQueries( { @NamedQuery(name = RhqDriftChangeSet.QUERY_DELETE_BY_RESOURCES, query = "" //
-    + "DELETE FROM RhqDriftChangeSet dcs " //
+@NamedQueries( { @NamedQuery(name = JPADriftChangeSet.QUERY_DELETE_BY_RESOURCES, query = "" //
+    + "DELETE FROM JPADriftChangeSet dcs " //
     + " WHERE dcs.resource.id IN ( :resourceIds )") })
 @Table(name = "RHQ_DRIFT_CHANGE_SET")
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_DRIFT_CHANGE_SET_ID_SEQ")
-public class RhqDriftChangeSet implements Serializable, DriftChangeSet<RhqDrift> {
+public class JPADriftChangeSet implements Serializable, DriftChangeSet<JPADrift> {
     private static final long serialVersionUID = 1L;
 
-    public static final String QUERY_DELETE_BY_RESOURCES = "RhqDriftChangeSet.deleteByResources";
+    public static final String QUERY_DELETE_BY_RESOURCES = "JPADriftChangeSet.deleteByResources";
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
@@ -78,24 +79,28 @@ public class RhqDriftChangeSet implements Serializable, DriftChangeSet<RhqDrift>
     @Enumerated(EnumType.STRING)
     private DriftChangeSetCategory category;
 
-    @Column(name = "CONFIG_ID", nullable = false)
-    private int driftConfigurationId;
+    @JoinColumn(name = "DRIFT_CONFIG_ID", referencedColumnName = "ID", nullable = false)
+    // @ManyToOne(optional = false)
+    // TODO: remove this eager load, the drift tree build should be written to not need this
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
+    private DriftConfiguration driftConfiguration;
 
     @JoinColumn(name = "RESOURCE_ID", referencedColumnName = "ID", nullable = false)
     @ManyToOne(optional = false)
     private Resource resource;
 
     @OneToMany(mappedBy = "changeSet", cascade = { CascadeType.ALL })
-    private Set<RhqDrift> drifts = new LinkedHashSet<RhqDrift>();
+    private Set<JPADrift> drifts = new LinkedHashSet<JPADrift>();
 
-    protected RhqDriftChangeSet() {
+    protected JPADriftChangeSet() {
     }
 
-    public RhqDriftChangeSet(Resource resource, int version, DriftChangeSetCategory category, int configId) {
+    public JPADriftChangeSet(Resource resource, int version, DriftChangeSetCategory category,
+        DriftConfiguration driftConfiguration) {
         this.resource = resource;
         this.version = version;
         this.category = category;
-        driftConfigurationId = configId;
+        this.driftConfiguration = driftConfiguration;
     }
 
     @Override
@@ -151,29 +156,37 @@ public class RhqDriftChangeSet implements Serializable, DriftChangeSet<RhqDrift>
         this.resource = resource;
     }
 
+    public DriftConfiguration getDriftConfiguration() {
+        return driftConfiguration;
+    }
+
+    public void setDriftConfiguration(DriftConfiguration driftConfiguration) {
+        this.driftConfiguration = driftConfiguration;
+    }
+
     @Override
     public int getDriftConfigurationId() {
-        return driftConfigurationId;
+        return this.driftConfiguration.getId();
     }
 
     @Override
     public void setDriftConfigurationId(int id) {
-        driftConfigurationId = id;
+        this.driftConfiguration.setId(id);
     }
 
     @Override
-    public Set<RhqDrift> getDrifts() {
+    public Set<JPADrift> getDrifts() {
         return drifts;
     }
 
     @Override
-    public void setDrifts(Set<RhqDrift> drifts) {
+    public void setDrifts(Set<JPADrift> drifts) {
         this.drifts = drifts;
     }
 
     @Override
     public String toString() {
-        return "RhqDriftChangeSet [id=" + id + ", resource=" + resource + ", version=" + version + "]";
+        return "JPADriftChangeSet [id=" + id + ", resource=" + resource + ", version=" + version + "]";
     }
 
 }

@@ -69,8 +69,8 @@ public class SystemSettingsImporter implements Importer<NoSingleEntity, SystemSe
         ConfigurationDefinition def = new ConfigurationDefinition("SystemSettingsConfiguration", null);
         
         PropertyDefinitionSimple props = new PropertyDefinitionSimple("propertiesToImport", "The names of the properties that should be imported. Note that these are the INTERNAL names as used in the RHQ database", true, PropertySimpleType.STRING); 
-        props.setDefaultValue("AgentMaxQuietTimeAllowed, EnableAgentAutoUpdate, EnableDebugMode, EnableExperimentalFeatures, DataPurge1Hour, DataPurge6Hour, " +
-            "DataPurge1Day, DataMaintenance, DataReindex, RtDataPurge, AlertPurge, EventPurge, TraitPurge, AvailabilityPurge, BaselineFrequence, BaselineDataSet");
+        props.setDefaultValue("AGENT_MAX_QUIET_TIME_ALLOWED, ENABLE_AGENT_AUTO_UPDATE, ENABLE_DEBUG_MODE, ENABLE_EXPERIMENTAL_FEATURES, CAM_DATA_PURGE_1H, CAM_DATA_PURGE_6H, " +
+            "CAM_DATA_PURGE_1D, CAM_DATA_MAINTENANCE, DATA_REINDEX_NIGHTLY, RT_DATA_PURGE, ALERT_PURGE, EVENT_PURGE, TRAIT_PURGE, AVAILABILITY_PURGE, CAM_BASELINE_FREQUENCY, CAM_BASELINE_DATASET");
         def.put(props);
                 
         ConfigurationUtility.initializeDefaultTemplate(def);
@@ -81,6 +81,9 @@ public class SystemSettingsImporter implements Importer<NoSingleEntity, SystemSe
     @Override
     public void configure(Configuration importConfiguration) {
         this.importConfiguration = importConfiguration;
+        if (importConfiguration == null) {
+            this.importConfiguration = getImportConfigurationDefinition().getDefaultTemplate().getConfiguration();
+        }
     }
 
     @Override

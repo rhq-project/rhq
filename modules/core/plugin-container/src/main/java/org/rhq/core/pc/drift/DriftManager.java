@@ -1,3 +1,22 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2011 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+
 package org.rhq.core.pc.drift;
 
 import java.io.BufferedInputStream;
@@ -112,8 +131,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
     }
 
     @Override
-    public void sendChangeSetToServer(int resourceId, DriftConfiguration driftConfiguration,
-        DriftChangeSetCategory type) {
+    public void sendChangeSetToServer(int resourceId, DriftConfiguration driftConfiguration, DriftChangeSetCategory type) {
         try {
             File changeSetFile = changeSetMgr.findChangeSet(resourceId, driftConfiguration.getName(), type);
             if (changeSetFile == null) {
@@ -165,50 +183,22 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
 
     @Override
     public void detectDrift(int resourceId, DriftConfiguration driftConfiguration) {
-        ScheduleQueue queue = new ScheduleQueue() {
-            DriftDetectionSchedule schedule;
+        if (log.isDebugEnabled()) {
+            log.debug("Received request to schedule drift detection immediately for [resourceId: " + resourceId +
+                ", driftConfigurationId: " + driftConfiguration.getId() + ", driftConfigurationName: " +
+                driftConfiguration.getName() + "]");
+        }
 
-            @Override
-            public DriftDetectionSchedule getNextSchedule() {
-                DriftDetectionSchedule removedSchedule = schedule;
-                schedule = null;
-                return removedSchedule;
-            }
-
-            @Override
-            public boolean addSchedule(DriftDetectionSchedule schedule) {
-                this.schedule = schedule;
-                return true;
-            }
-
-            @Override
-            public void clear() {
-                schedule = null;
-            }
-
-            @Override
-            public void deactivateSchedule() {
-                schedule = null;
-            }
-
-            @Override
-            public DriftDetectionSchedule update(int resourceId, DriftConfiguration config) {
-                return schedule;
-            }
-
-            @Override
-            public DriftDetectionSchedule remove(int resourceId, DriftConfiguration config) {
-                return null;
-            }
-        };
-        queue.addSchedule(new DriftDetectionSchedule(resourceId, driftConfiguration));
-
-        DriftDetector driftDetector = new DriftDetector();
-        driftDetector.setChangeSetManager(changeSetMgr);
-        driftDetector.setScheduleQueue(queue);
-        driftDetector.setDriftClient(this);
-
-        driftThreadPool.execute(driftDetector);
+        DriftDetectionSchedule schedule = schedulesQueue.remove(resourceId, driftConfiguration);
+        if (schedule == null) {
+            log.warn("No schedule found in the queue for [resourceId:" + resourceId + ", driftConfigurationId:" +
+                driftConfiguration.getId() + ", driftConfigurationName: " + driftConfiguration.getName() + "]. No " +
+                " work will be scheduled.");
+            return;
+        }
+        log.debug("Resetting " + schedule + " for immediate detection.");
+        schedule.resetSchedule();
+        schedulesQueue.addSchedule(schedule);
     }
 
     @Override
@@ -217,7 +207,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
     }
 
     @Override
-    public boolean requestDriftFiles(int resourceId, Headers headers, List<DriftFile> driftFiles) {
+    public boolean requestDriftFiles(int resourceId, Headers headers, List<? extends DriftFile> driftFiles) {
         DriftFilesSender sender = new DriftFilesSender();
         sender.setResourceId(resourceId);
         sender.setDriftClient(this);

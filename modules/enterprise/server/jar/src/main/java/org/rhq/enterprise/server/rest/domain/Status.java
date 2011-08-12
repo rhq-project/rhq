@@ -31,7 +31,7 @@ public class Status {
     int servers;
     int services;
     int alerts;
-    int alertTemplates;
+    int alertDefinitions;
     int metricsMin;
     int schedules;
 
@@ -70,12 +70,12 @@ public class Status {
         this.alerts = alerts;
     }
 
-    public int getAlertTemplates() {
-        return alertTemplates;
+    public int getAlertDefinitions() {
+        return alertDefinitions;
     }
 
-    public void setAlertTemplates(int alertTemplates) {
-        this.alertTemplates = alertTemplates;
+    public void setAlertDefinitions(int alertDefinitions) {
+        this.alertDefinitions = alertDefinitions;
     }
 
     public int getMetricsMin() {

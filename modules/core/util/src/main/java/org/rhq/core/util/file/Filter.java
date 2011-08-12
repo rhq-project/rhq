@@ -72,7 +72,10 @@ public class Filter implements Serializable {
 
     @Override
     public int hashCode() {
-        return 13 * (path.hashCode() + pattern.hashCode());
+        int result = 1;
+        result = 31 * result + path.hashCode();
+        result = 31 * result + pattern.hashCode();
+        return result;
     }
 
     @Override

@@ -65,6 +65,7 @@ public interface DriftManagerLocal extends DriftServerPluginFacet, DriftManagerR
      * @param driftConfig
      *
      * @return the number of Drift records deleted
+     * @deprecated this will be removed, we will only support deleting changesets in the future
      */
     int deleteDrifts(Subject subject, String[] driftIds);
 

@@ -23,7 +23,6 @@ import static javax.ejb.TransactionAttributeType.REQUIRES_NEW;
 
 import java.io.File;
 import java.io.InputStream;
-import java.util.Iterator;
 import java.util.List;
 
 import javax.ejb.EJB;
@@ -55,10 +54,12 @@ import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.drift.DriftConfiguration;
+import org.rhq.core.domain.drift.DriftConfigurationComparator;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition;
 import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.drift.JPADrift;
+import org.rhq.core.domain.drift.DriftConfigurationComparator.CompareMode;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.RHQConstants;
@@ -184,6 +185,7 @@ public class DriftManagerBean implements DriftManagerLocal {
     }
 
     @Override
+    @Deprecated
     public int deleteDrifts(Subject subject, String[] driftIds) {
         // avoid big transactions by doing this one at a time. if this is too slow we can chunk in bigger increments.
         int result = 0;
@@ -246,6 +248,8 @@ public class DriftManagerBean implements DriftManagerLocal {
     @Override
     public void deleteDriftConfiguration(Subject subject, EntityContext entityContext, String driftConfigName) {
 
+        // TODO security check!
+
         switch (entityContext.getType()) {
         case Resource:
             int resourceId = entityContext.getResourceId();
@@ -254,24 +258,27 @@ public class DriftManagerBean implements DriftManagerLocal {
                 throw new IllegalArgumentException("Entity not found [" + entityContext + "]");
             }
 
-            for (Iterator<DriftConfiguration> i = resource.getDriftConfigurations().iterator(); i.hasNext();) {
-                DriftConfiguration dc = i.next();
+            DriftConfiguration doomedDriftConfig = null;
+            for (DriftConfiguration dc : resource.getDriftConfigurations()) {
                 if (dc.getName().equals(driftConfigName)) {
-                    i.remove();
-                    entityManager.merge(resource);
-
-                    AgentClient agentClient = agentManager.getAgentClient(subjectManager.getOverlord(), resourceId);
-                    DriftAgentService service = agentClient.getDriftAgentService();
-                    try {
-                        service.unscheduleDriftDetection(resourceId, dc);
-                    } catch (Exception e) {
-                        log.warn(" Unable to inform agent of unscheduled drift detection  [" + dc + "]", e);
-                    }
-
+                    doomedDriftConfig = dc;
                     break;
                 }
             }
 
+            if (doomedDriftConfig != null) {
+                resource.getDriftConfigurations().remove(doomedDriftConfig);
+                entityManager.remove(doomedDriftConfig);
+                entityManager.merge(resource);
+
+                try {
+                    AgentClient agentClient = agentManager.getAgentClient(subjectManager.getOverlord(), resourceId);
+                    DriftAgentService service = agentClient.getDriftAgentService();
+                    service.unscheduleDriftDetection(resourceId, doomedDriftConfig);
+                } catch (Exception e) {
+                    log.warn(" Unable to inform agent of unscheduled drift detection  [" + doomedDriftConfig + "]", e);
+                }
+            }
             break;
 
         default:
@@ -367,12 +374,22 @@ public class DriftManagerBean implements DriftManagerLocal {
             }
 
             // Update or add the driftConfig as necessary
+            DriftConfigurationComparator comparator = new DriftConfigurationComparator(
+                CompareMode.ONLY_INCLUDES_EXCLUDES);
             boolean isUpdated = false;
             for (DriftConfiguration dc : resource.getDriftConfigurations()) {
                 if (dc.getName().equals(driftConfig.getName())) {
-                    dc.setConfiguration(driftConfig.getConfiguration());
-                    isUpdated = true;
-                    break;
+                    // compare the includes/excludes filters only - if they are different, abort.
+                    // you cannot update drift config that changes includes/excludes from the original.
+                    // the user must delete the drift config and create a new one, as opposed to trying to update the existing one.
+                    if (comparator.compare(driftConfig, dc) == 0) {
+                        dc.setConfiguration(driftConfig.getConfiguration());
+                        isUpdated = true;
+                        break;
+                    } else {
+                        throw new IllegalArgumentException(
+                            "You cannot change an existing drift configuration's includes/excludes filters.");
+                    }
                 }
             }
 

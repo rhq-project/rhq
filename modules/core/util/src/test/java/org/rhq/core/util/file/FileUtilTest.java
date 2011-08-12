@@ -25,6 +25,7 @@ package org.rhq.core.util.file;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import org.testng.annotations.Test;
 
@@ -211,6 +212,66 @@ public class FileUtilTest {
 
         assertCollectionEqualsNoOrder(expectedFiles, actualFiles,
             "Expected to visit files in nested sub directories");
+    }
+
+    public void testGetPattern() {
+        Pattern regex;
+
+        regex = assertPatternsRegex("(/basedir/easy\\.txt)|(/basedir/test\\.txt)",
+            new Filter("/basedir/easy.txt", null), new Filter("/basedir/test.txt", null));
+
+        assert regex.matcher("/basedir/easy.txt").matches();
+        assert regex.matcher("/basedir/test.txt").matches();
+        assert !regex.matcher("/basedir/easyXtxt").matches();
+        assert !regex.matcher("/basedir/testXtxt").matches();
+        assert !regex.matcher("/basedir/easy.txtX").matches();
+        assert !regex.matcher("/basedir/test.txtX").matches();
+        assert !regex.matcher("/basedirX/easy.txt").matches();
+        assert !regex.matcher("/basedirX/test.txt").matches();
+        assert !regex.matcher("easy.txt").matches() : "missing basedir";
+        assert !regex.matcher("test.txt").matches() : "missing basedir";
+
+        regex = assertPatternsRegex("(/basedir/([^/]*\\.txt))", new Filter("/basedir", "*.txt"));
+
+        assert regex.matcher("/basedir/foo.txt").matches();
+        assert regex.matcher("/basedir/file with spaces.txt").matches();
+        assert regex.matcher("/basedir/123.txt").matches();
+        assert !regex.matcher("/basedir/subdir/foo.txt").matches();
+        assert !regex.matcher("/basedir/foo.txt.swp").matches();
+
+        regex = assertPatternsRegex("(/var/lib/([^/]*\\.war))|(/var/lib/([^/]*\\.ear))",
+            new Filter("/var/lib", "*.war"), new Filter("/var/lib", "*.ear"));
+
+        assert regex.matcher("/var/lib/myapp.war").matches();
+        assert regex.matcher("/var/lib/myapp.ear").matches();
+        assert regex.matcher("/var/lib/my-app.war").matches();
+        assert !regex.matcher("/var/lib/myapp.War").matches();
+        assert !regex.matcher("/var/libs/myapp.war").matches();
+        assert !regex.matcher("myapp.ear").matches();
+        assert !regex.matcher("/var/lib/myapp.ear.rej").matches();
+
+        regex = assertPatternsRegex("(/conf/(server-.\\.conf))", new Filter("/conf", "server-?.conf"));
+
+        assert regex.matcher("/conf/server-1.conf").matches();
+        assert regex.matcher("/conf/server-X.conf").matches();
+        assert !regex.matcher("/conf/subconf/server-1.conf").matches();
+        assert !regex.matcher("/conf/server.conf").matches();
+
+        regex = assertPatternsRegex("(/etc/(.*[^/]*\\.conf))", new Filter("/etc", "**/*.conf"));
+
+        assert regex.matcher("/etc/yum.conf").matches();
+        assert regex.matcher("/etc/httpd/httpd.conf").matches();
+        assert !regex.matcher("/etc/foo.conf/foo").matches();
+    }
+
+    private Pattern assertPatternsRegex(String expectedPattern, Filter... filters) {
+        Pattern regex = FileUtil.generateRegex(asList(filters));
+
+        assert regex != null : "The regex was not able to be produced - it was null";
+        assert expectedPattern.equals(regex.pattern()) : "The expected pattern [" + expectedPattern
+            + "] did not match the actual pattern [" + regex.pattern() + "]";
+
+        return regex;
     }
 
 }

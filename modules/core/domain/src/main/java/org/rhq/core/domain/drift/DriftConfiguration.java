@@ -44,6 +44,7 @@ import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.util.file.Filter;
 
 /**
  * This is a convienence wrapper around a Configuration object whose schema is that
@@ -53,6 +54,8 @@ import org.rhq.core.domain.resource.Resource;
  * with Configuration.
  * 
  * This object also has an optional relationship with a Resource.
+ *
+ * TODO: this is missing setters for includes/excludes filters. We should add those.
  *
  * @author John Sanda
  * @author John Mazzitelli
@@ -255,69 +258,6 @@ public class DriftConfiguration implements Serializable {
                 return false;
             }
             return true;
-        }
-    }
-
-    public static class Filter implements Serializable {
-        private static final long serialVersionUID = 1L;
-
-        private String path;
-        private String pattern;
-
-        public Filter(String path, String pattern) {
-            setPath(path);
-            setPattern(pattern);
-        }
-
-        public String getPath() {
-            return path;
-        }
-
-        public void setPath(String path) {
-            if (path == null) {
-                this.path = "";
-            } else {
-                this.path = path;
-            }
-        }
-
-        public String getPattern() {
-            return pattern;
-        }
-
-        public void setPattern(String pattern) {
-            if (pattern == null) {
-                this.pattern = "";
-            } else {
-                this.pattern = pattern;
-            }
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (obj == null) {
-                return false;
-            }
-
-            if (obj instanceof Filter) {
-                Filter that = (Filter) obj;
-                return this.path.equals(that.path) && this.pattern.equals(that.pattern);
-            }
-
-            return false;
-        }
-
-        @Override
-        public int hashCode() {
-            int result = 1;
-            result = 31 * result + path.hashCode();
-            result = 31 * result + pattern.hashCode();
-            return result;
-        }
-
-        @Override
-        public String toString() {
-            return "Filter[path: " + path + ", pattern: " + pattern + "]";
         }
     }
 

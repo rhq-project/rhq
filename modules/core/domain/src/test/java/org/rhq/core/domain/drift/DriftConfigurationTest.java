@@ -17,6 +17,7 @@ import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.drift.DriftConfigurationComparator.CompareMode;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext;
+import org.rhq.core.util.file.Filter;
 
 public class DriftConfigurationTest {
     @Test
@@ -255,10 +256,10 @@ public class DriftConfigurationTest {
         config.put(includes);
 
         DriftConfiguration driftConfig = new DriftConfiguration(config);
-        List<DriftConfiguration.Filter> actual = driftConfig.getIncludes();
+        List<Filter> actual = driftConfig.getIncludes();
 
-        List<DriftConfiguration.Filter> expected = asList(new DriftConfiguration.Filter(path1, pattern1),
-            new DriftConfiguration.Filter(path2, pattern2));
+        List<Filter> expected = asList(new Filter(path1, pattern1),
+            new Filter(path2, pattern2));
 
         assertEquals(actual.size(), 2, "Expected to find two includes filters");
         assertEquals(actual, expected, "Failed to get drift configuration includes filters");
@@ -281,10 +282,10 @@ public class DriftConfigurationTest {
         config.put(excludes);
 
         DriftConfiguration driftConfig = new DriftConfiguration(config);
-        List<DriftConfiguration.Filter> actual = driftConfig.getExcludes();
+        List<Filter> actual = driftConfig.getExcludes();
 
-        List<DriftConfiguration.Filter> expected = asList(new DriftConfiguration.Filter(path1, pattern1),
-            new DriftConfiguration.Filter(path2, pattern2));
+        List<Filter> expected = asList(new Filter(path1, pattern1),
+            new Filter(path2, pattern2));
 
         assertEquals(actual.size(), 2, "Expected to find two excludes filters");
         assertEquals(actual, expected, "Failed to get drift configuration excludes filters");

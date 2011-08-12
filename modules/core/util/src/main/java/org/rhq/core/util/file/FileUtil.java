@@ -315,8 +315,7 @@ public class FileUtil {
     /**
      * Ensure that the path uses only forward slash
      * Like java.io.File(String,String) but just 
-     * @param dir
-     * @param fileName
+     * @param path
      * @return
      */
     public static String useForwardSlash(String path) {
@@ -346,6 +345,63 @@ public class FileUtil {
                 }
             }
         }
+    }
+
+    public static Pattern generateRegex(List<Filter> filters) {
+        boolean first = true;
+        StringBuilder regex = new StringBuilder();
+        for (Filter filter : filters) {
+            if (!first) {
+                regex.append("|");
+            } else {
+                first = false;
+            }
+            regex.append("(");
+            File path = new File(filter.getPath());
+
+            if (isEmpty(filter.getPattern()) && path.isDirectory()) {
+                regex.append(".*");
+            } else if (isEmpty(filter.getPattern()) && !path.isDirectory()) {
+                buildPatternRegex(path.getAbsolutePath(), regex);
+            } else if (!isEmpty(filter.getPattern())) {
+                // note that this case assumes path is a directory. We probably
+                // need another if else block for when there is a pattern and
+                // path is not a directory.
+                regex.append(path).append("/").append("(");
+                buildPatternRegex(filter.getPattern(), regex);
+                regex.append(")");
+            }
+            regex.append(")");
+        }
+        return Pattern.compile(regex.toString());
+    }
+
+    private static void buildPatternRegex(String pattern, StringBuilder regex) {
+        for (int i = 0; i < pattern.length(); i++) {
+            char c = pattern.charAt(i);
+            if (c == '?') {
+                regex.append('.');
+            } else if (c == '*') {
+                if (i + 1 < pattern.length()) {
+                    char c2 = pattern.charAt(i + 1);
+                    if (c2 == '*') {
+                        regex.append(".*");
+                        i += 2;
+                        continue;
+                    }
+                }
+                regex.append("[^/]*");
+            } else if (c == '.') {
+                regex.append("\\.");
+            } else {
+                regex.append(c);
+            }
+            // TODO: Escape backslashes.
+        }
+    }
+
+    private static boolean isEmpty(String s) {
+        return s == null || s.length() == 0;
     }
 
 }

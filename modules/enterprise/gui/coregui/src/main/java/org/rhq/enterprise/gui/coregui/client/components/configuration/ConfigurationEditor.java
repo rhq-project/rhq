@@ -599,6 +599,7 @@ public class ConfigurationEditor extends LocatableVLayout {
 
             if (propertySimple == null) {
                 propertySimple = new PropertySimple(propertyDefinitionSimple.getName(), null);
+                configuration.put(propertySimple);
             }
 
             fieldsForThisProperty = buildFieldsForPropertySimple(propertyDefinition, propertyDefinitionSimple,
@@ -609,6 +610,7 @@ public class ConfigurationEditor extends LocatableVLayout {
             PropertyList propertyList = (PropertyList) property;
             if (propertyList == null) {
                 propertyList = new PropertyList(propertyDefinitionList.getName());
+                configuration.put(propertyList);
             }
             fieldsForThisProperty = buildFieldsForPropertyList(locatorId, propertyDefinition, oddRow,
                 propertyDefinitionList, memberDefinition, propertyList);
@@ -617,6 +619,7 @@ public class ConfigurationEditor extends LocatableVLayout {
             PropertyMap propertyMap = (PropertyMap) property;
             if (propertyMap == null) {
                 propertyMap = new PropertyMap(propertyDefinitionMap.getName());
+                configuration.put(propertyMap);
             }
 
             fieldsForThisProperty = buildFieldsForPropertyMap(locatorId, propertyDefinitionMap, propertyMap);

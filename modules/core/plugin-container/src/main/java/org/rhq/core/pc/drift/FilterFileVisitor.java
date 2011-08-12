@@ -22,8 +22,8 @@ package org.rhq.core.pc.drift;
 import java.io.File;
 import java.util.List;
 
+import org.rhq.core.domain.drift.Filter;
 import org.rhq.core.util.file.FileVisitor;
-import org.rhq.core.util.file.Filter;
 
 public class FilterFileVisitor implements FileVisitor {
 

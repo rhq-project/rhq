@@ -19,67 +19,22 @@
 
 package org.rhq.core.util.file;
 
-import java.io.Serializable;
-
-public class Filter implements Serializable {
-    private static final long serialVersionUID = 1L;
+public class Filter {
 
     private String path;
+
     private String pattern;
 
     public Filter(String path, String pattern) {
-        setPath(path);
-        setPattern(pattern);
+        this.path = path;
+        this.pattern = pattern;
     }
 
     public String getPath() {
         return path;
     }
 
-    public void setPath(String path) {
-        if (path == null) {
-            this.path = "";
-        } else {
-            this.path = path;
-        }
-    }
-
     public String getPattern() {
         return pattern;
-    }
-
-    public void setPattern(String pattern) {
-        if (pattern == null) {
-            this.pattern = "";
-        } else {
-            this.pattern = pattern;
-        }
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (obj == null) {
-            return false;
-        }
-
-        if (obj instanceof Filter) {
-            Filter that = (Filter) obj;
-            return this.path.equals(that.path) && this.pattern.equals(that.pattern);
-        }
-
-        return false;
-    }
-
-    @Override
-    public int hashCode() {
-        int result = 1;
-        result = 31 * result + path.hashCode();
-        result = 31 * result + pattern.hashCode();
-        return result;
-    }
-
-    @Override
-    public String toString() {
-        return "Filter[path: " + path + ", pattern: " + pattern + "]";
     }
 }

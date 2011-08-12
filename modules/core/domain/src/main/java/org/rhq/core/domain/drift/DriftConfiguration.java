@@ -18,8 +18,6 @@
  */
 package org.rhq.core.domain.drift;
 
-import static java.util.Collections.emptyList;
-
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -44,7 +42,8 @@ import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.util.file.Filter;
+
+import static java.util.Collections.emptyList;
 
 /**
  * This is a convienence wrapper around a Configuration object whose schema is that
@@ -54,8 +53,6 @@ import org.rhq.core.util.file.Filter;
  * with Configuration.
  * 
  * This object also has an optional relationship with a Resource.
- *
- * TODO: this is missing setters for includes/excludes filters. We should add those.
  *
  * @author John Sanda
  * @author John Mazzitelli

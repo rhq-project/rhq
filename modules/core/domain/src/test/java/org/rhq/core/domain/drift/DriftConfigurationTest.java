@@ -1,12 +1,5 @@
 package org.rhq.core.domain.drift;
 
-import static java.util.Arrays.asList;
-import static org.rhq.core.domain.drift.DriftConfigurationDefinition.PROP_BASEDIR;
-import static org.rhq.core.domain.drift.DriftConfigurationDefinition.PROP_BASEDIR_VALUECONTEXT;
-import static org.rhq.core.domain.drift.DriftConfigurationDefinition.PROP_BASEDIR_VALUENAME;
-import static org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext.fileSystem;
-import static org.testng.Assert.assertEquals;
-
 import java.util.List;
 
 import org.testng.annotations.Test;
@@ -17,7 +10,13 @@ import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.drift.DriftConfigurationComparator.CompareMode;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext;
-import org.rhq.core.util.file.Filter;
+
+import static java.util.Arrays.asList;
+import static org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext.fileSystem;
+import static org.rhq.core.domain.drift.DriftConfigurationDefinition.PROP_BASEDIR;
+import static org.rhq.core.domain.drift.DriftConfigurationDefinition.PROP_BASEDIR_VALUECONTEXT;
+import static org.rhq.core.domain.drift.DriftConfigurationDefinition.PROP_BASEDIR_VALUENAME;
+import static org.testng.Assert.assertEquals;
 
 public class DriftConfigurationTest {
     @Test
@@ -68,10 +67,10 @@ public class DriftConfigurationTest {
         assert comparator.compare(dc1, dc2) == 0 : dc1 + " should equal " + dc2; // sanity check - we should be back to equals
 
         // add some includes and excludes that are different and test that they are ignored by our comparator
-        dc1.addInclude(new DriftConfiguration.Filter("ipath1", "ipattern1"));
-        dc2.addInclude(new DriftConfiguration.Filter("ipath2", "ipattern2"));
-        dc1.addExclude(new DriftConfiguration.Filter("epath1", "epattern1"));
-        dc2.addExclude(new DriftConfiguration.Filter("epath2", "epattern2"));
+        dc1.addInclude(new Filter("ipath1", "ipattern1"));
+        dc2.addInclude(new Filter("ipath2", "ipattern2"));
+        dc1.addExclude(new Filter("epath1", "epattern1"));
+        dc2.addExclude(new Filter("epath2", "epattern2"));
 
         assert comparator.compare(dc1, dc2) == 0 : dc1 + " should equal (ignoring includes/excludes) " + dc2;
 
@@ -138,55 +137,55 @@ public class DriftConfigurationTest {
 
         assert comparator.compare(dc1, dc2) == 0 : dc1 + " should equal " + dc2; // sanity check
 
-        dc1.addInclude(new DriftConfiguration.Filter("ipath1", "ipattern1"));
+        dc1.addInclude(new Filter("ipath1", "ipattern1"));
         assert comparator.compare(dc1, dc2) != 0 : dc1 + " should not equal " + dc2;
         assert comparator.compare(dc2, dc1) != 0 : dc2 + " should not equal " + dc1;
 
-        dc2.addInclude(new DriftConfiguration.Filter("ipath1", "ipattern1"));
+        dc2.addInclude(new Filter("ipath1", "ipattern1"));
         assert comparator.compare(dc1, dc2) == 0 : dc1 + " should now be equal " + dc2;
         assert comparator.compare(dc2, dc1) == 0 : dc2 + " should now be equal " + dc1;
 
         // add a second include to see that we test multiple filters
-        dc1.addInclude(new DriftConfiguration.Filter("ipath2", "ipattern2"));
+        dc1.addInclude(new Filter("ipath2", "ipattern2"));
         assert comparator.compare(dc1, dc2) != 0 : dc1 + " should not equal " + dc2;
         assert comparator.compare(dc2, dc1) != 0 : dc2 + " should not equal " + dc1;
 
-        dc2.addInclude(new DriftConfiguration.Filter("ipath2", "ipattern2"));
+        dc2.addInclude(new Filter("ipath2", "ipattern2"));
         assert comparator.compare(dc1, dc2) == 0 : dc1 + " should now be equal " + dc2;
         assert comparator.compare(dc2, dc1) == 0 : dc2 + " should now be equal " + dc1;
 
         // side test just to see null patterns work
-        dc1.addInclude(new DriftConfiguration.Filter("ipath3", null));
+        dc1.addInclude(new Filter("ipath3", null));
         assert comparator.compare(dc1, dc2) != 0 : dc1 + " should not equal " + dc2;
         assert comparator.compare(dc2, dc1) != 0 : dc2 + " should not equal " + dc1;
 
-        dc2.addInclude(new DriftConfiguration.Filter("ipath3", null));
+        dc2.addInclude(new Filter("ipath3", null));
         assert comparator.compare(dc1, dc2) == 0 : dc1 + " should now be equal " + dc2;
         assert comparator.compare(dc2, dc1) == 0 : dc2 + " should now be equal " + dc1;
 
         // now test excludes
 
-        dc1.addExclude(new DriftConfiguration.Filter("epath1", "epattern1"));
+        dc1.addExclude(new Filter("epath1", "epattern1"));
         assert comparator.compare(dc1, dc2) != 0 : dc1 + " should not equal " + dc2;
         assert comparator.compare(dc2, dc1) != 0 : dc2 + " should not equal " + dc1;
 
-        dc2.addExclude(new DriftConfiguration.Filter("epath1", "epattern1"));
+        dc2.addExclude(new Filter("epath1", "epattern1"));
         assert comparator.compare(dc1, dc2) == 0 : dc1 + " should now be equal " + dc2;
         assert comparator.compare(dc2, dc1) == 0 : dc2 + " should now be equal " + dc1;
 
         // add a second exclude to see that we test multiple filters
-        dc1.addExclude(new DriftConfiguration.Filter("epath2", "epattern2"));
+        dc1.addExclude(new Filter("epath2", "epattern2"));
         assert comparator.compare(dc1, dc2) != 0 : dc1 + " should not equal " + dc2;
         assert comparator.compare(dc2, dc1) != 0 : dc2 + " should not equal " + dc1;
 
-        dc2.addExclude(new DriftConfiguration.Filter("epath2", "epattern2"));
+        dc2.addExclude(new Filter("epath2", "epattern2"));
         assert comparator.compare(dc1, dc2) == 0 : dc1 + " should now be equal " + dc2;
         assert comparator.compare(dc2, dc1) == 0 : dc2 + " should now be equal " + dc1;
 
         // now test that we have the same number of filters but they differ
 
-        dc1.addInclude(new DriftConfiguration.Filter("ipathA", "ipatternA"));
-        dc2.addInclude(new DriftConfiguration.Filter("ipathZ", "ipatternZ"));
+        dc1.addInclude(new Filter("ipathA", "ipatternA"));
+        dc2.addInclude(new Filter("ipathZ", "ipatternZ"));
         assert comparator.compare(dc1, dc2) != 0 : dc1 + " should not equal " + dc2;
         assert comparator.compare(dc2, dc1) != 0 : dc2 + " should not equal " + dc1;
 
@@ -194,8 +193,8 @@ public class DriftConfigurationTest {
         dc1 = new DriftConfiguration(new Configuration());
         dc2 = new DriftConfiguration(new Configuration());
         assert comparator.compare(dc1, dc2) == 0 : dc1 + " should equal " + dc2; // sanity check
-        dc1.addExclude(new DriftConfiguration.Filter("epathA", "epatternA"));
-        dc2.addExclude(new DriftConfiguration.Filter("epathZ", "epatternZ"));
+        dc1.addExclude(new Filter("epathA", "epatternA"));
+        dc2.addExclude(new Filter("epathZ", "epatternZ"));
         assert comparator.compare(dc1, dc2) != 0 : dc1 + " should not equal " + dc2;
         assert comparator.compare(dc2, dc1) != 0 : dc2 + " should not equal " + dc1;
     }

@@ -268,8 +268,9 @@ public class DriftManagerBean implements DriftManagerLocal {
 
             if (doomedDriftConfig != null) {
                 resource.getDriftConfigurations().remove(doomedDriftConfig);
-                entityManager.remove(doomedDriftConfig);
-                entityManager.merge(resource);
+                doomedDriftConfig.setResource(null);
+                resource = entityManager.merge(resource);
+                entityManager.flush();
 
                 try {
                     AgentClient agentClient = agentManager.getAgentClient(subjectManager.getOverlord(), resourceId);

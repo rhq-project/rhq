@@ -40,33 +40,6 @@ public interface DriftGWTService extends RemoteService {
     DriftSnapshot createSnapshot(Subject subject, GenericDriftChangeSetCriteria criteria) throws RuntimeException;
 
     /**
-     * Delete the drifts with the specified ids if the current user has permission to do so (i.e. either
-     * the MANAGE_INVENTORY global permission, or the MANAGE_DRIFT permission for all corresponding resources).
-     * If the user does not have permission for all of the specified drifts, then none of the drifts will be deleted
-     * and a PermissionException will be thrown.
-     *
-     * If any of the ids do not correspond to drift entities that exist, those ids will be gracefully ignored.
-     *
-     * @param driftIds the ids of the drifts to be deleted
-     * @return the number of drifts deleted
-     * @deprecated
-     */
-    int deleteDrifts(String[] driftIds) throws RuntimeException;
-
-    /**
-     * Delete all drifts for the specified context if the current user has permission to do so (i.e. either
-     * the MANAGE_INVENTORY global permission, or the MANAGE_DRIFT permission for all corresponding resources).
-     * If the user does not have permission for all of the specified drifts, then none of the drifts will be deleted
-     * and a PermissionException will be thrown.
-     *
-     * If the entity does not correspond to an existing entity, it will be gracefully ignored.
-     *
-     * @param entityContext the context for deletion
-     * @return the number of drifts deleted
-     */
-    int deleteDriftsByContext(EntityContext entityContext) throws RuntimeException;
-
-    /**
      * Delete all named drift configurations for the specified context if the current user has permission to do so (i.e. either
      * the MANAGE_INVENTORY global permission, or the MANAGE_DRIFT permission for all corresponding resources).
      *

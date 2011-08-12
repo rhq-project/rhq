@@ -56,43 +56,6 @@ public interface DriftManagerLocal extends DriftServerPluginFacet, DriftManagerR
      */
     void addFiles(int resourceId, long zipSize, InputStream zipStream) throws Exception;
 
-    //TODO Should probably move to DriftServerPluginFacet
-    /**
-     * Remove the specified drifts.  Ids not identifying an actual drift record will be ignored.
-     *  
-     * @param subject
-     * @param 
-     * @param driftConfig
-     *
-     * @return the number of Drift records deleted
-     * @deprecated this will be removed, we will only support deleting changesets in the future
-     */
-    int deleteDrifts(Subject subject, String[] driftIds);
-
-    //TODO Should  probably move to JPADriftServerLocal when deleteDrifts graduates to server plugin facet
-    /**
-     * Remove the specified drift in its own transaction. This is used for chunking transactions and
-     * should not be exposed in a Remote interface.
-     * 
-     * @param subject
-     * @param 
-     * @param driftConfig
-     * 
-     * @return the number of Drift records deleted
-     */
-    int deleteDriftsInNewTransaction(Subject subject, String... driftIds);
-
-    //TODO Should probably move to DriftServerPluginFacet
-    /**
-     * Remove all drifts on the specified entity context.
-     *  
-     * @param subject
-     * @param entityContext the context
-     * 
-     * @return the number of Drift records deleted
-     */
-    int deleteDriftsByContext(Subject subject, EntityContext entityContext);
-
     /**
      * Remove the provided driftConfig (identified by name) on the specified entityContext.
      * Agents, if available, will be notified of the change. 

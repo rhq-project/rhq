@@ -1,5 +1,12 @@
 package org.rhq.core.domain.drift;
 
+import static java.util.Arrays.asList;
+import static org.rhq.core.domain.drift.DriftConfigurationDefinition.PROP_BASEDIR;
+import static org.rhq.core.domain.drift.DriftConfigurationDefinition.PROP_BASEDIR_VALUECONTEXT;
+import static org.rhq.core.domain.drift.DriftConfigurationDefinition.PROP_BASEDIR_VALUENAME;
+import static org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext.fileSystem;
+import static org.testng.Assert.assertEquals;
+
 import java.util.List;
 
 import org.testng.annotations.Test;
@@ -11,13 +18,6 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.drift.DriftConfigurationComparator.CompareMode;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext;
 
-import static java.util.Arrays.asList;
-import static org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext.fileSystem;
-import static org.rhq.core.domain.drift.DriftConfigurationDefinition.PROP_BASEDIR;
-import static org.rhq.core.domain.drift.DriftConfigurationDefinition.PROP_BASEDIR_VALUECONTEXT;
-import static org.rhq.core.domain.drift.DriftConfigurationDefinition.PROP_BASEDIR_VALUENAME;
-import static org.testng.Assert.assertEquals;
-
 public class DriftConfigurationTest {
     @Test
     public void getCompareIgnoreIncludesExcludes() {
@@ -28,9 +28,6 @@ public class DriftConfigurationTest {
 
         // make sure our comparator can deal with all the nulls that are in empty configs
         assert comparator.compare(dc1, dc2) == 0 : dc1 + " should equal " + dc2;
-        dc1.setBasedir(new DriftConfiguration.BaseDirectory(BaseDirValueContext.fileSystem, "/foo"));
-        assert comparator.compare(dc1, dc2) != 0 : dc1 + " should not equal " + dc2;
-        assert comparator.compare(dc2, dc1) != 0 : dc2 + " should not equal " + dc1;
         dc1.setEnabled(true);
         assert comparator.compare(dc1, dc2) != 0 : dc1 + " should not equal " + dc2;
         assert comparator.compare(dc2, dc1) != 0 : dc2 + " should not equal " + dc1;
@@ -41,17 +38,12 @@ public class DriftConfigurationTest {
         assert comparator.compare(dc1, dc2) != 0 : dc1 + " should not equal " + dc2;
         assert comparator.compare(dc2, dc1) != 0 : dc2 + " should not equal " + dc1;
 
-        dc2.setBasedir(new DriftConfiguration.BaseDirectory(BaseDirValueContext.fileSystem, "/foo"));
         dc2.setEnabled(true);
         dc2.setInterval(1000L);
         dc2.setName("the-name");
 
         assert comparator.compare(dc1, dc2) == 0 : dc1 + " should equal " + dc2;
 
-        dc1.setBasedir(new DriftConfiguration.BaseDirectory(BaseDirValueContext.pluginConfiguration, "/foo"));
-        assert comparator.compare(dc1, dc2) != 0 : dc1 + "  should have different basedir than " + dc2;
-
-        dc1.setBasedir(dc2.getBasedir()); // put them back to the same value
         dc1.setEnabled(!dc2.isEnabled());
         assert comparator.compare(dc1, dc2) < 0 : dc1 + "  should have different enabled than " + dc2;
 
@@ -67,32 +59,33 @@ public class DriftConfigurationTest {
         assert comparator.compare(dc1, dc2) == 0 : dc1 + " should equal " + dc2; // sanity check - we should be back to equals
 
         // add some includes and excludes that are different and test that they are ignored by our comparator
+        dc1.setBasedir(new DriftConfiguration.BaseDirectory(BaseDirValueContext.fileSystem, "/foo"));
+        dc2.setBasedir(new DriftConfiguration.BaseDirectory(BaseDirValueContext.pluginConfiguration, "blah"));
         dc1.addInclude(new Filter("ipath1", "ipattern1"));
         dc2.addInclude(new Filter("ipath2", "ipattern2"));
         dc1.addExclude(new Filter("epath1", "epattern1"));
         dc2.addExclude(new Filter("epath2", "epattern2"));
 
-        assert comparator.compare(dc1, dc2) == 0 : dc1 + " should equal (ignoring includes/excludes) " + dc2;
+        assert comparator.compare(dc1, dc2) == 0 : dc1 + " should equal (ignoring basedir/includes/excludes) " + dc2;
 
         // now show that our non-ignoring comparator would detect a different
-        comparator = new DriftConfigurationComparator(CompareMode.BOTH_BASE_INFO_AND_INCLUDES_EXCLUDES);
-        assert comparator.compare(dc1, dc2) != 0 : dc1 + " should not equal (not ignoring includes/excludes) " + dc2;
+        comparator = new DriftConfigurationComparator(CompareMode.BOTH_BASE_INFO_AND_DIRECTORY_SPECIFICATIONS);
+        assert comparator.compare(dc1, dc2) != 0 : dc1 + " should not equal (not ignoring basedir/includes/excludes) "
+            + dc2;
     }
 
     @Test
     public void getCompareBaseInfoAndIncludesExcludes() {
         DriftConfigurationComparator comparator = new DriftConfigurationComparator(
-            CompareMode.BOTH_BASE_INFO_AND_INCLUDES_EXCLUDES);
+            CompareMode.BOTH_BASE_INFO_AND_DIRECTORY_SPECIFICATIONS);
 
         DriftConfiguration dc1 = new DriftConfiguration(new Configuration());
         DriftConfiguration dc2 = new DriftConfiguration(new Configuration());
 
-        dc1.setBasedir(new DriftConfiguration.BaseDirectory(BaseDirValueContext.pluginConfiguration, "hello.world"));
         dc1.setEnabled(true);
         dc1.setInterval(1000L);
         dc1.setName("the-name");
 
-        dc2.setBasedir(new DriftConfiguration.BaseDirectory(BaseDirValueContext.pluginConfiguration, "hello.world"));
         dc2.setEnabled(true);
         dc2.setInterval(1000L);
         dc2.setName("the-name");
@@ -102,17 +95,16 @@ public class DriftConfigurationTest {
 
     @Test
     public void getCompareOnlyIncludesExcludes() {
-        DriftConfigurationComparator comparator = new DriftConfigurationComparator(CompareMode.ONLY_INCLUDES_EXCLUDES);
+        DriftConfigurationComparator comparator = new DriftConfigurationComparator(
+            CompareMode.ONLY_DIRECTORY_SPECIFICATIONS);
 
         DriftConfiguration dc1 = new DriftConfiguration(new Configuration());
         DriftConfiguration dc2 = new DriftConfiguration(new Configuration());
 
-        dc1.setBasedir(new DriftConfiguration.BaseDirectory(BaseDirValueContext.resourceConfiguration, "foo"));
         dc1.setEnabled(false);
         dc1.setInterval(1111L);
         dc1.setName("some-name");
 
-        dc2.setBasedir(new DriftConfiguration.BaseDirectory(BaseDirValueContext.pluginConfiguration, "hello.world"));
         dc2.setEnabled(true);
         dc2.setInterval(2222L);
         dc2.setName("another-name");
@@ -136,6 +128,14 @@ public class DriftConfigurationTest {
         DriftConfiguration dc2) {
 
         assert comparator.compare(dc1, dc2) == 0 : dc1 + " should equal " + dc2; // sanity check
+
+        dc1.setBasedir(new DriftConfiguration.BaseDirectory(BaseDirValueContext.pluginConfiguration, "hello.world"));
+        assert comparator.compare(dc1, dc2) != 0 : dc1 + " should not equal " + dc2;
+        assert comparator.compare(dc2, dc1) != 0 : dc2 + " should not equal " + dc1;
+
+        dc2.setBasedir(new DriftConfiguration.BaseDirectory(BaseDirValueContext.pluginConfiguration, "hello.world"));
+        assert comparator.compare(dc1, dc2) == 0 : dc1 + " should now be equal " + dc2;
+        assert comparator.compare(dc2, dc1) == 0 : dc2 + " should now be equal " + dc1;
 
         dc1.addInclude(new Filter("ipath1", "ipattern1"));
         assert comparator.compare(dc1, dc2) != 0 : dc1 + " should not equal " + dc2;
@@ -257,8 +257,7 @@ public class DriftConfigurationTest {
         DriftConfiguration driftConfig = new DriftConfiguration(config);
         List<Filter> actual = driftConfig.getIncludes();
 
-        List<Filter> expected = asList(new Filter(path1, pattern1),
-            new Filter(path2, pattern2));
+        List<Filter> expected = asList(new Filter(path1, pattern1), new Filter(path2, pattern2));
 
         assertEquals(actual.size(), 2, "Expected to find two includes filters");
         assertEquals(actual, expected, "Failed to get drift configuration includes filters");
@@ -283,8 +282,7 @@ public class DriftConfigurationTest {
         DriftConfiguration driftConfig = new DriftConfiguration(config);
         List<Filter> actual = driftConfig.getExcludes();
 
-        List<Filter> expected = asList(new Filter(path1, pattern1),
-            new Filter(path2, pattern2));
+        List<Filter> expected = asList(new Filter(path1, pattern1), new Filter(path2, pattern2));
 
         assertEquals(actual.size(), 2, "Expected to find two excludes filters");
         assertEquals(actual, expected, "Failed to get drift configuration excludes filters");

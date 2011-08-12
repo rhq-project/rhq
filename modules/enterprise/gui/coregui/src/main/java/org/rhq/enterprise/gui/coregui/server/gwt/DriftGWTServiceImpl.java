@@ -43,25 +43,6 @@ public class DriftGWTServiceImpl extends AbstractGWTServiceImpl implements Drift
     private DriftManagerLocal driftManager = LookupUtil.getDriftManager();
 
     @Override
-    @Deprecated
-    public int deleteDrifts(String[] driftIds) throws RuntimeException {
-        try {
-            return this.driftManager.deleteDrifts(getSessionSubject(), driftIds);
-        } catch (Throwable t) {
-            throw getExceptionToThrowToClient(t);
-        }
-    }
-
-    @Override
-    public int deleteDriftsByContext(EntityContext entityContext) throws RuntimeException {
-        try {
-            return this.driftManager.deleteDriftsByContext(getSessionSubject(), entityContext);
-        } catch (Throwable t) {
-            throw getExceptionToThrowToClient(t);
-        }
-    }
-
-    @Override
     public int deleteDriftConfigurationsByContext(EntityContext entityContext, String[] driftConfigNames)
         throws RuntimeException {
         try {

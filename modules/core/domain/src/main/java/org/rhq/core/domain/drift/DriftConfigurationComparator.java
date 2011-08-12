@@ -24,8 +24,8 @@ import java.util.List;
 
 /**
  * Compares two {@link DriftConfiguration} objects. The comparison can either
- * compare includes/excludes filters or ignore them. Will also compare
- * name, interval, enabled flag and base directory.
+ * compare basedir/includes-excludes filters or ignore them. Will also compare
+ * name, interval, enabled flag.
  * 
  * @author John Mazzitelli
  */
@@ -33,22 +33,22 @@ public class DriftConfigurationComparator implements Comparator<DriftConfigurati
 
     public enum CompareMode {
         /**
-         * The comparator will only check the base information: name, enabled, interval, basedirectory.
-         * The includes/excludes filters will be ignored. 
+         * The comparator will only check the base information: name, enabled, interval.
+         * The basedir/includes-excludes filters will be ignored. 
          */
         ONLY_BASE_INFO,
 
         /**
-         * The comparator will only check the includes/excludes filters. 
+         * The comparator will only check the basedir/includes-excludes filters. 
          * The base information will be ignored (see {@link #ONLY_BASE_INFO} for what those are).
          */
-        ONLY_INCLUDES_EXCLUDES,
+        ONLY_DIRECTORY_SPECIFICATIONS,
 
         /**
-         * The comparator will check both the includes/excludes filters and 
+         * The comparator will check both the basedir/includes-excludes filters and 
          * the base information (see {@link #ONLY_BASE_INFO} for what those are).
          */
-        BOTH_BASE_INFO_AND_INCLUDES_EXCLUDES;
+        BOTH_BASE_INFO_AND_DIRECTORY_SPECIFICATIONS;
     };
 
     private final CompareMode compareMode;
@@ -59,7 +59,7 @@ public class DriftConfigurationComparator implements Comparator<DriftConfigurati
 
     @Override
     public int compare(DriftConfiguration dc1, DriftConfiguration dc2) {
-        if (compareMode != CompareMode.ONLY_INCLUDES_EXCLUDES) {
+        if (compareMode != CompareMode.ONLY_DIRECTORY_SPECIFICATIONS) {
             if (dc1.getName() != null) {
                 if (dc2.getName() != null) {
                     int results = dc1.getName().compareTo(dc2.getName());
@@ -73,16 +73,6 @@ public class DriftConfigurationComparator implements Comparator<DriftConfigurati
                 return -1; // dc1's name is null, but dc2's name is not null, not equal!
             }
 
-            if (dc1.getBasedir() != null) {
-                if (!dc1.getBasedir().equals(dc2.getBasedir())) {
-                    int hash1 = dc1.getBasedir().hashCode();
-                    int hash2 = (dc2.getBasedir() != null) ? dc2.getBasedir().hashCode() : 0;
-                    return hash1 < hash2 ? -1 : 1;
-                }
-            } else if (dc2.getBasedir() != null) {
-                return -1; // dc1's basedir is null, but dc2's basedir is not null, not equal!
-            }
-
             if (dc1.getInterval() != dc2.getInterval()) {
                 return dc1.getInterval() < dc2.getInterval() ? -1 : 1;
             }
@@ -93,6 +83,16 @@ public class DriftConfigurationComparator implements Comparator<DriftConfigurati
         }
 
         if (compareMode != CompareMode.ONLY_BASE_INFO) {
+            if (dc1.getBasedir() != null) {
+                if (!dc1.getBasedir().equals(dc2.getBasedir())) {
+                    int hash1 = dc1.getBasedir().hashCode();
+                    int hash2 = (dc2.getBasedir() != null) ? dc2.getBasedir().hashCode() : 0;
+                    return hash1 < hash2 ? -1 : 1;
+                }
+            } else if (dc2.getBasedir() != null) {
+                return -1; // dc1's basedir is null, but dc2's basedir is not null, not equal!
+            }
+
             List<Filter> filters1 = dc1.getIncludes();
             List<Filter> filters2 = dc2.getIncludes();
             int results = compareFilters(filters1, filters2);

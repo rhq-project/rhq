@@ -23,12 +23,10 @@ import static javax.ejb.TransactionAttributeType.REQUIRES_NEW;
 
 import java.io.File;
 import java.io.InputStream;
-import java.util.List;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
 import javax.jms.MessageProducer;
@@ -49,7 +47,6 @@ import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
 import org.rhq.core.domain.criteria.DriftConfigurationCriteria;
 import org.rhq.core.domain.criteria.DriftCriteria;
-import org.rhq.core.domain.criteria.JPADriftCriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftComposite;
@@ -58,7 +55,6 @@ import org.rhq.core.domain.drift.DriftConfigurationComparator;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition;
 import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.DriftSnapshot;
-import org.rhq.core.domain.drift.JPADrift;
 import org.rhq.core.domain.drift.DriftConfigurationComparator.CompareMode;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
@@ -113,9 +109,6 @@ public class DriftManagerBean implements DriftManagerLocal {
 
     @EJB
     private AgentManagerLocal agentManager;
-
-    @EJB
-    private DriftManagerLocal driftManager;
 
     @EJB
     private SubjectManagerLocal subjectManager;
@@ -185,67 +178,6 @@ public class DriftManagerBean implements DriftManagerLocal {
     }
 
     @Override
-    @Deprecated
-    public int deleteDrifts(Subject subject, String[] driftIds) {
-        // avoid big transactions by doing this one at a time. if this is too slow we can chunk in bigger increments.
-        int result = 0;
-
-        for (String driftId : driftIds) {
-            result += driftManager.deleteDriftsInNewTransaction(subject, driftId);
-        }
-
-        return result;
-    }
-
-    @Override
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public int deleteDriftsInNewTransaction(Subject subject, String... driftIds) {
-        int result = 0;
-
-        for (String driftId : driftIds) {
-            Drift<?, ?> doomed = entityManager.find(JPADrift.class, driftId);
-            if (null != doomed) {
-                entityManager.remove(doomed);
-                ++result;
-            }
-        }
-
-        return result;
-    }
-
-    @Override
-    public int deleteDriftsByContext(Subject subject, EntityContext entityContext) throws RuntimeException {
-        int result = 0;
-        JPADriftCriteria criteria = new JPADriftCriteria();
-
-        switch (entityContext.getType()) {
-        case Resource:
-            criteria.addFilterResourceIds(entityContext.getResourceId());
-            break;
-
-        case SubsystemView:
-            // delete them all
-            break;
-
-        default:
-            throw new IllegalArgumentException("Entity Context Type not supported [" + entityContext + "]");
-        }
-
-        List<? extends Drift<?, ?>> drifts = driftManager.findDriftsByCriteria(subject, criteria);
-        if (!drifts.isEmpty()) {
-            String[] driftIds = new String[drifts.size()];
-            int i = 0;
-            for (Drift<?, ?> drift : drifts) {
-                driftIds[i++] = drift.getId();
-            }
-
-            result = driftManager.deleteDrifts(subject, driftIds);
-        }
-
-        return result;
-    }
-
-    @Override
     public void deleteDriftConfiguration(Subject subject, EntityContext entityContext, String driftConfigName) {
 
         // TODO security check!
@@ -267,19 +199,21 @@ public class DriftManagerBean implements DriftManagerLocal {
             }
 
             if (doomedDriftConfig != null) {
-                resource.getDriftConfigurations().remove(doomedDriftConfig);
-                doomedDriftConfig.setResource(null);
-                resource = entityManager.merge(resource);
-                entityManager.flush();
-                entityManager.clear(); // clear the hibernate cache - we're about to call some agent API and we don't want it messing with attached objects
-
+                // tell the agent first - we don't want the agent reporting on the drift config after we delete it
                 try {
                     AgentClient agentClient = agentManager.getAgentClient(subjectManager.getOverlord(), resourceId);
                     DriftAgentService service = agentClient.getDriftAgentService();
-                    service.unscheduleDriftDetection(resourceId, doomedDriftConfig);
+                    // make a copy of the config, so we don't mess with the attached original
+                    // note that we don't copy over the resource reference, that's also attached but we don't need it in the copy anyway
+                    DriftConfiguration copy = new DriftConfiguration(doomedDriftConfig.getConfiguration().clone());
+                    service.unscheduleDriftDetection(resourceId, copy);
                 } catch (Exception e) {
                     log.warn(" Unable to inform agent of unscheduled drift detection  [" + doomedDriftConfig + "]", e);
                 }
+
+                resource.getDriftConfigurations().remove(doomedDriftConfig);
+                doomedDriftConfig.setResource(null);
+                resource = entityManager.merge(resource);
             }
             break;
 
@@ -377,7 +311,7 @@ public class DriftManagerBean implements DriftManagerLocal {
 
             // Update or add the driftConfig as necessary
             DriftConfigurationComparator comparator = new DriftConfigurationComparator(
-                CompareMode.ONLY_INCLUDES_EXCLUDES);
+                CompareMode.ONLY_DIRECTORY_SPECIFICATIONS);
             boolean isUpdated = false;
             for (DriftConfiguration dc : resource.getDriftConfigurations()) {
                 if (dc.getName().equals(driftConfig.getName())) {

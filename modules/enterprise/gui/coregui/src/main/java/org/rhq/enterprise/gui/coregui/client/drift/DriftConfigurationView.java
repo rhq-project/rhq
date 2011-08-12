@@ -180,19 +180,7 @@ public class DriftConfigurationView extends TableSection<DriftConfigurationDataS
             driftConfigNames[i] = driftConfigName;
         }
 
-        GWTServiceLookup.getDriftService().deleteDriftConfigurationsByContext(context, driftConfigNames,
-            new AsyncCallback<Integer>() {
-                public void onSuccess(Integer resultCount) {
-                    CoreGUI.getMessageCenter().notify(
-                        new Message(MSG.view_drift_success_deleteConfigs(String.valueOf(resultCount)),
-                            Message.Severity.Info));
-                    refresh();
-                }
-
-                public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(MSG.view_drift_failure_deleteConfigs(), caught);
-                }
-            });
+        deleteDriftConfigurationsByName(driftConfigNames);
     }
 
     private void deleteAll() {
@@ -205,6 +193,10 @@ public class DriftConfigurationView extends TableSection<DriftConfigurationDataS
             driftConfigNames[i] = driftConfigName;
         }
 
+        deleteDriftConfigurationsByName(driftConfigNames);
+    }
+
+    private void deleteDriftConfigurationsByName(final String[] driftConfigNames) {
         GWTServiceLookup.getDriftService().deleteDriftConfigurationsByContext(context, driftConfigNames,
             new AsyncCallback<Integer>() {
                 public void onSuccess(Integer resultCount) {

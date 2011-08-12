@@ -149,10 +149,8 @@ public class MetricTemplateImporterTest extends JMockTest {
 
                 //this is what we expect the measurement schedule manager msm to be
                 //called with when the importer finishes its work.
-                one(msm).enableMeasurementTemplates(with(any(Subject.class)), with(new int[] { 1 }));
-                one(msm).disableMeasurementTemplates(with(any(Subject.class)), with(new int[0]));
-                one(msm).updateDefaultCollectionIntervalForMeasurementDefinitions(with(any(Subject.class)),
-                    with(new int[] { 1 }), with(1000L), with(false));
+                one(msm).updateDefaultCollectionIntervalAndEnablementForMeasurementDefinitions(with(any(Subject.class)),
+                    with(new int[] { 1 }), with(1000L), with(true), with(false));
             }
         });
 
@@ -209,12 +207,10 @@ public class MetricTemplateImporterTest extends JMockTest {
 
                 //this is what we expect the measurement schedule manager msm to be
                 //called with when the importer finishes its work.
-                one(msm).enableMeasurementTemplates(with(any(Subject.class)), with(new int[] { 1 }));
-                one(msm).disableMeasurementTemplates(with(any(Subject.class)), with(new int[] { 2 }));
-                one(msm).updateDefaultCollectionIntervalForMeasurementDefinitions(with(any(Subject.class)),
-                    with(new int[] { 1 }), with(1000L), with(false));
-                one(msm).updateDefaultCollectionIntervalForMeasurementDefinitions(with(any(Subject.class)),
-                    with(new int[] { 2 }), with(2000L), with(false));
+                one(msm).updateDefaultCollectionIntervalAndEnablementForMeasurementDefinitions(with(any(Subject.class)),
+                    with(new int[] { 1 }), with(1000L), with(true), with(false));
+                one(msm).updateDefaultCollectionIntervalAndEnablementForMeasurementDefinitions(with(any(Subject.class)),
+                    with(new int[] { 2 }), with(2000L), with(false), with(false));
             }
         });
 
@@ -260,10 +256,8 @@ public class MetricTemplateImporterTest extends JMockTest {
 
                 MeasurementScheduleManagerLocal msm = prereqs.getMeasurementScheduleManager();
 
-                one(msm).enableMeasurementTemplates(with(any(Subject.class)), with(new int[] { 1 }));
-                one(msm).disableMeasurementTemplates(with(any(Subject.class)), with(new int[0]));
-                one(msm).updateDefaultCollectionIntervalForMeasurementDefinitions(with(any(Subject.class)),
-                    with(new int[] { 1 }), with(1000L), with(true));
+                one(msm).updateDefaultCollectionIntervalAndEnablementForMeasurementDefinitions(with(any(Subject.class)),
+                    with(new int[] { 1 }), with(1000L), with(true), with(true));
             }
         });
 
@@ -310,12 +304,10 @@ public class MetricTemplateImporterTest extends JMockTest {
 
                 MeasurementScheduleManagerLocal msm = prereqs.getMeasurementScheduleManager();
 
-                one(msm).enableMeasurementTemplates(with(any(Subject.class)), with(new int[] { 1, 2 }));
-                one(msm).disableMeasurementTemplates(with(any(Subject.class)), with(new int[0]));
-                one(msm).updateDefaultCollectionIntervalForMeasurementDefinitions(with(any(Subject.class)),
-                    with(new int[] { 1 }), with(1000L), with(true));
-                one(msm).updateDefaultCollectionIntervalForMeasurementDefinitions(with(any(Subject.class)),
-                    with(new int[] { 2 }), with(2000L), with(false));
+                one(msm).updateDefaultCollectionIntervalAndEnablementForMeasurementDefinitions(with(any(Subject.class)),
+                    with(new int[] { 1 }), with(1000L), with(true), with(true));
+                one(msm).updateDefaultCollectionIntervalAndEnablementForMeasurementDefinitions(with(any(Subject.class)),
+                    with(new int[] { 2 }), with(2000L), with(true), with(false));
             }
         });
 
@@ -397,12 +389,10 @@ public class MetricTemplateImporterTest extends JMockTest {
                 
                 MeasurementScheduleManagerLocal msm = prereqs.getMeasurementScheduleManager();
 
-                one(msm).enableMeasurementTemplates(with(any(Subject.class)), with(new int[] { 1 }));
-                one(msm).disableMeasurementTemplates(with(any(Subject.class)), with(new int[] { 2 }));
-                one(msm).updateDefaultCollectionIntervalForMeasurementDefinitions(with(any(Subject.class)),
-                    with(new int[] { 1 }), with(1000L), with(false));
-                one(msm).updateDefaultCollectionIntervalForMeasurementDefinitions(with(any(Subject.class)),
-                    with(new int[] { 2 }), with(2000L), with(false));
+                one(msm).updateDefaultCollectionIntervalAndEnablementForMeasurementDefinitions(with(any(Subject.class)),
+                    with(new int[] { 1 }), with(1000L), with(true), with(false));
+                one(msm).updateDefaultCollectionIntervalAndEnablementForMeasurementDefinitions(with(any(Subject.class)),
+                    with(new int[] { 2 }), with(2000L), with(false), with(false));
             }
         });
 

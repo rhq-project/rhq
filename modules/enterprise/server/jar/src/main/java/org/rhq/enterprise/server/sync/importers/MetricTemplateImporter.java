@@ -71,18 +71,20 @@ public class MetricTemplateImporter implements Importer<MeasurementDefinition, M
     public static final String METRIC_UPDATE_OVERRIDES_PROPERTY = "metricUpdateOverrides";
     public static final String METRIC_UPDATE_OVERRIDE_PROPERTY = "metricUpdateOverride";
 
-    private static class CollectionIntervalAndUpdateSchedules {
+    private static class UpdateKey {
         public final long collectionInterval;
         public final boolean updateSchedules;
+        public final boolean enable;
 
-        public CollectionIntervalAndUpdateSchedules(long collectionInterval, boolean updateSchedules) {
+        public UpdateKey(long collectionInterval, boolean updateSchedules, boolean enable) {
             this.collectionInterval = collectionInterval;
             this.updateSchedules = updateSchedules;
+            this.enable = enable;
         }
 
         @Override
         public int hashCode() {
-            return (int) collectionInterval * (updateSchedules ? 31 : 1);
+            return (int) collectionInterval * (updateSchedules ? 31 : 1) * (enable ? 31 : 1);
         }
 
         @Override
@@ -91,22 +93,21 @@ public class MetricTemplateImporter implements Importer<MeasurementDefinition, M
                 return true;
             }
 
-            if (!(other instanceof CollectionIntervalAndUpdateSchedules)) {
+            if (!(other instanceof UpdateKey)) {
                 return false;
             }
 
-            CollectionIntervalAndUpdateSchedules o = (CollectionIntervalAndUpdateSchedules) other;
+            UpdateKey o = (UpdateKey) other;
 
-            return o.collectionInterval == collectionInterval && o.updateSchedules == updateSchedules;
+            return o.collectionInterval == collectionInterval && o.updateSchedules == updateSchedules
+                && enable == o.enable;
         }
     }
 
     private Subject subject;
     private EntityManager entityManager;
-    private List<MeasurementDefinition> definitionsToEnable = new ArrayList<MeasurementDefinition>();
-    private List<MeasurementDefinition> definitionsToDisable = new ArrayList<MeasurementDefinition>();
-    private Map<CollectionIntervalAndUpdateSchedules, List<MeasurementDefinition>> definitionsByCollectionIntervalAndUpdateSchedules =
-        new HashMap<MetricTemplateImporter.CollectionIntervalAndUpdateSchedules, List<MeasurementDefinition>>();
+    private Map<UpdateKey, List<MeasurementDefinition>> definitionsByUpdateKey =
+        new HashMap<UpdateKey, List<MeasurementDefinition>>();
     private Configuration importConfiguration;
     private Unmarshaller unmarshaller;
     private MeasurementScheduleManagerLocal measurementScheduleManager;
@@ -215,13 +216,7 @@ public class MetricTemplateImporter implements Importer<MeasurementDefinition, M
             return;
         }
 
-        if (exportedEntity.isEnabled()) {
-            definitionsToEnable.add(entity);
-        } else {
-            definitionsToDisable.add(entity);
-        }
-
-        addToCollectionIntervalMap(exportedEntity, entity);
+        addToUpdateMap(exportedEntity, entity);
     }
 
     @Override
@@ -235,13 +230,14 @@ public class MetricTemplateImporter implements Importer<MeasurementDefinition, M
 
     @Override
     public void finishImport() {
-        measurementScheduleManager.enableMeasurementTemplates(subject, getIdsFromDefs(definitionsToEnable));
-        measurementScheduleManager.disableMeasurementTemplates(subject, getIdsFromDefs(definitionsToDisable));
-
-        for (Map.Entry<CollectionIntervalAndUpdateSchedules, List<MeasurementDefinition>> e : definitionsByCollectionIntervalAndUpdateSchedules
-            .entrySet()) {
-            measurementScheduleManager.updateDefaultCollectionIntervalForMeasurementDefinitions(subject,
-                getIdsFromDefs(e.getValue()), e.getKey().collectionInterval, e.getKey().updateSchedules);
+        for (Map.Entry<UpdateKey, List<MeasurementDefinition>> e : definitionsByUpdateKey.entrySet()) {
+            int[] ids = getIdsFromDefs(e.getValue());
+            boolean enable = e.getKey().enable;
+            boolean updateSchedules = e.getKey().updateSchedules;
+            long collectionInterval = e.getKey().collectionInterval;
+            
+            measurementScheduleManager.updateDefaultCollectionIntervalAndEnablementForMeasurementDefinitions(subject,
+                ids, collectionInterval, enable, updateSchedules);
         }
     }
 
@@ -256,16 +252,13 @@ public class MetricTemplateImporter implements Importer<MeasurementDefinition, M
         return ids;
     }
 
-    private void addToCollectionIntervalMap(MetricTemplate metricTemplate, MeasurementDefinition def) {
-        CollectionIntervalAndUpdateSchedules key =
-            new CollectionIntervalAndUpdateSchedules(metricTemplate.getDefaultInterval(),
-                shouldUpdateSchedules(metricTemplate));
+    private void addToUpdateMap(MetricTemplate metricTemplate, MeasurementDefinition def) {
+        UpdateKey key = new UpdateKey(metricTemplate.getDefaultInterval(), shouldUpdateSchedules(metricTemplate), metricTemplate.isEnabled());
 
-        List<MeasurementDefinition> defs = definitionsByCollectionIntervalAndUpdateSchedules.get(key);
-
+        List<MeasurementDefinition> defs = definitionsByUpdateKey.get(key);
         if (defs == null) {
             defs = new ArrayList<MeasurementDefinition>();
-            definitionsByCollectionIntervalAndUpdateSchedules.put(key, defs);
+            definitionsByUpdateKey.put(key, defs);
         }
 
         defs.add(def);

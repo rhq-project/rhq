@@ -37,6 +37,7 @@ import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -65,6 +66,7 @@ import org.rhq.core.domain.drift.JPADriftFile;
 import org.rhq.core.domain.drift.JPADriftFileBits;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.util.StopWatch;
 import org.rhq.core.util.ZipUtil;
 import org.rhq.core.util.file.FileUtil;
 import org.rhq.enterprise.server.RHQConstants;
@@ -97,9 +99,29 @@ public class JPADriftServerBean implements JPADriftServerLocal {
     private EntityManager entityManager;
 
     @Override
+    @TransactionAttribute(REQUIRES_NEW)
     public void purgeByDriftConfigurationName(Subject subject, int resourceId, String driftConfigName) throws Exception {
-        // TODO security checks
-        System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! " + resourceId + " !!!" + driftConfigName);
+
+        int driftsDeleted;
+        int changeSetsDeleted;
+        StopWatch timer = new StopWatch();
+
+        // purge all drift entities first
+        Query q = entityManager.createNamedQuery(JPADrift.QUERY_DELETE_BY_DRIFTCONFIG_RESOURCE);
+        q.setParameter("resourceId", resourceId);
+        q.setParameter("driftConfigurationName", driftConfigName);
+        driftsDeleted = q.executeUpdate();
+
+        // now purge all changesets
+        q = entityManager.createNamedQuery(JPADriftChangeSet.QUERY_DELETE_BY_DRIFTCONFIG_RESOURCE);
+        q.setParameter("resourceId", resourceId);
+        q.setParameter("driftConfigurationName", driftConfigName);
+        changeSetsDeleted = q.executeUpdate();
+
+        log.info("Purged [" + driftsDeleted + "] drift items and [" + changeSetsDeleted
+            + "] changesets associated with drift config [" + driftConfigName + "] from resource [" + resourceId
+            + "]. Elapsed time=[" + timer.getElapsed() + "]ms");
+        return;
     }
 
     @Override

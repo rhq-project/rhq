@@ -191,6 +191,7 @@ public class DriftManagerBean implements DriftManagerLocal {
             DriftConfigurationCriteria criteria = new DriftConfigurationCriteria();
             criteria.addFilterName(driftConfigName);
             criteria.addFilterResourceIds(resourceId);
+            criteria.setStrict(true);
             PageList<DriftConfiguration> results = driftManager.findDriftConfigurationsByCriteria(subject, criteria);
             DriftConfiguration doomedDriftConfig = null;
             if (results != null && results.size() == 1) {
@@ -226,6 +227,9 @@ public class DriftManagerBean implements DriftManagerLocal {
 
                 // now purge the drift config itself
                 driftManager.deleteResourceDriftConfiguration(subject, resourceId, doomedDriftConfig.getId());
+            } else {
+                throw new IllegalArgumentException("Resource does not have drift config named [" + driftConfigName
+                    + "]");
             }
             break;
 

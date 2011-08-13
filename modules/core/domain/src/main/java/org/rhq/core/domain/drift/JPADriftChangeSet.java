@@ -55,13 +55,22 @@ import org.rhq.core.domain.resource.Resource;
 @Entity
 @NamedQueries( { @NamedQuery(name = JPADriftChangeSet.QUERY_DELETE_BY_RESOURCES, query = "" //
     + "DELETE FROM JPADriftChangeSet dcs " //
-    + " WHERE dcs.resource.id IN ( :resourceIds )") })
+    + " WHERE dcs.resource.id IN ( :resourceIds )"), //
+    @NamedQuery(name = JPADriftChangeSet.QUERY_DELETE_BY_DRIFTCONFIG_RESOURCE, query = "" //
+        + "DELETE FROM JPADriftChangeSet dcs " //
+        + " WHERE dcs.resource.id = :resourceId " //
+        + "   AND dcs.driftConfiguration.id IN " //
+        + "       (SELECT dc.id " //
+        + "          FROM DriftConfiguration dc " //
+        + "         WHERE dc.resource.id = :resourceId AND dc.name = :driftConfigurationName)" //
+    ) })
 @Table(name = "RHQ_DRIFT_CHANGE_SET")
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_DRIFT_CHANGE_SET_ID_SEQ")
 public class JPADriftChangeSet implements Serializable, DriftChangeSet<JPADrift> {
     private static final long serialVersionUID = 1L;
 
     public static final String QUERY_DELETE_BY_RESOURCES = "JPADriftChangeSet.deleteByResources";
+    public static final String QUERY_DELETE_BY_DRIFTCONFIG_RESOURCE = "JPADriftChangeSet.deleteByDriftConfigResource";
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")

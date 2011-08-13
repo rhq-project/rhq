@@ -85,4 +85,13 @@ public interface DriftServerPluginFacet {
      * @param driftConfigName identifies the data that is to be purged
      */
     void purgeByDriftConfigurationName(Subject subject, int resourceId, String driftConfigName) throws Exception;
+
+    /**
+     * This will remove all drift files that are no longer referenced by drift entries. This is a maintenance method
+     * to help reclaim space on the backend.
+     * 
+     * @param subject
+     * @return number of orphaned drife files that were removed
+     */
+    int purgeOrphanedDriftFiles(Subject subject);
 }

@@ -23,7 +23,6 @@ import static javax.ejb.TransactionAttributeType.REQUIRES_NEW;
 
 import java.io.File;
 import java.io.InputStream;
-import java.util.Iterator;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -240,23 +239,8 @@ public class DriftManagerBean implements DriftManagerLocal {
 
     @Override
     public void deleteResourceDriftConfiguration(Subject subject, int resourceId, int driftConfigId) {
-        Resource resource = entityManager.getReference(Resource.class, resourceId);
-        boolean removed = false;
-        Iterator<DriftConfiguration> i = resource.getDriftConfigurations().iterator();
-        while (i.hasNext()) {
-            DriftConfiguration next = i.next();
-            if (next.getId() == driftConfigId) {
-                i.remove();
-                removed = true;
-                break;
-            }
-        }
-
-        // just removing the drift config from the list of drift configs associated with the resource will purge it.
-        // this is because the DELETE_ORPHAN annotation is on the resource drift config field
-        if (removed) {
-            entityManager.merge(resource);
-        }
+        DriftConfiguration doomed = entityManager.getReference(DriftConfiguration.class, driftConfigId);
+        entityManager.remove(doomed);
         return;
     }
 
@@ -344,6 +328,13 @@ public class DriftManagerBean implements DriftManagerLocal {
     public void purgeByDriftConfigurationName(Subject subject, int resourceId, String driftConfigName) throws Exception {
         DriftServerPluginFacet driftServerPlugin = getServerPlugin();
         driftServerPlugin.purgeByDriftConfigurationName(subject, resourceId, driftConfigName);
+    }
+
+    @Override
+    @TransactionAttribute(NOT_SUPPORTED)
+    public int purgeOrphanedDriftFiles(Subject subject) {
+        DriftServerPluginFacet driftServerPlugin = getServerPlugin();
+        return driftServerPlugin.purgeOrphanedDriftFiles(subject);
     }
 
     @Override

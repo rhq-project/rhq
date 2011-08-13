@@ -221,6 +221,12 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
         // TODO implement me!        
     }
 
+    @Override
+    public int purgeOrphanedDriftFiles(Subject subject) {
+        // TODO implement me!
+        return 0;
+    }
+
     Map<Integer, Resource> loadResourceMap(Subject subject, Integer[] resourceIds) {
         ResourceCriteria criteria = new ResourceCriteria();
         criteria.addFilterIds(resourceIds);

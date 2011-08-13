@@ -118,4 +118,8 @@ public class JPADriftServerPluginComponent implements DriftServerPluginFacet, Se
         getJPADriftServer().purgeByDriftConfigurationName(subject, resourceId, driftConfigName);
     }
 
+    @Override
+    public int purgeOrphanedDriftFiles(Subject subject) {
+        return getJPADriftServer().purgeOrphanedDriftFiles(subject);
+    }
 }

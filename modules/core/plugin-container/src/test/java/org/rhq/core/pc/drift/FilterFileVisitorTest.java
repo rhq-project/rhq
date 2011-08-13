@@ -20,16 +20,28 @@
 package org.rhq.core.pc.drift;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
+import org.apache.commons.io.FileUtils;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import org.rhq.core.domain.drift.Filter;
+import org.rhq.core.util.file.FileVisitor;
+
+import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
 import static org.apache.commons.io.FileUtils.deleteDirectory;
 import static org.apache.commons.io.FileUtils.toFile;
+import static org.rhq.core.util.file.FileUtil.forEachFile;
+import static org.rhq.test.AssertUtils.assertCollectionEqualsNoOrder;
+import static org.testng.Assert.assertTrue;
 
 public class FilterFileVisitorTest {
 
-    File basedir;
+    private File basedir;
 
     @BeforeMethod
     public void setUp() throws Exception {
@@ -40,9 +52,131 @@ public class FilterFileVisitorTest {
     }
 
     @Test
-    public void callVisitorWhenFileMatchesIncludeFilter() {
-//        touch(new );
-//        List<Filter> includes = asList(new Filter(""));
+    public void visitAllFilesWhenNoFiltersSpecified() throws Exception {
+        File libDir = mkdir(basedir, "lib");
+        File server1Jar = touch(libDir, "server-1.jar");
+        File server2Jar = touch(libDir, "server-2.jar");
+
+        File nativeLibDir = mkdir(libDir, "native");
+        File nativeServer1Lib = touch(nativeLibDir, "server-1.so");
+        File nativeServer2Lib = touch(nativeLibDir, "server-2.so");
+
+        List<Filter> includes = emptyList();
+        List<Filter> excludes = emptyList();
+        TestVisitor visitor = new TestVisitor();
+
+        forEachFile(basedir, new FilterFileVisitor(includes, excludes, visitor));
+
+        assertCollectionEqualsNoOrder(asList(server1Jar, server2Jar, nativeServer1Lib, nativeServer2Lib),
+            visitor.visitedFiles, "Visitor should be called for every file when no filters specified");
+    }
+
+    @Test
+    public void visitFilesThatMatchIncludes() throws Exception {
+        File libDir = mkdir(basedir, "lib");
+        File fooJar = touch(libDir, "foo.jar");
+        File fooWar = touch(libDir, "foo-1.jar");
+        File myapp = touch(libDir, "myapp.war");
+        touch(libDir, "bar.jar");
+
+        List<Filter> includes = asList(new Filter(libDir.getAbsolutePath(), "foo*"),
+            new Filter(libDir.getAbsolutePath(), "*.war"));
+        List<Filter> excludes = emptyList();
+        TestVisitor visitor = new TestVisitor();
+
+        forEachFile(libDir, new FilterFileVisitor(includes, excludes, visitor));
+
+        assertCollectionEqualsNoOrder(asList(fooJar, fooWar, myapp), visitor.visitedFiles,
+            "Filtering failed with mulitple includes and no excludes");
+    }
+
+    @Test
+    public void doNotVisitFileThatDoesNotMatchInclude() throws Exception {
+        touch(basedir, "server.txt");
+
+        List<Filter> includes = asList(new Filter(basedir.getAbsolutePath(), "*.html"));
+        List<Filter> excludes = emptyList();
+        TestVisitor visitor = new TestVisitor();
+
+        forEachFile(basedir, new FilterFileVisitor(includes, excludes, visitor));
+
+        assertTrue(visitor.visitedFiles.isEmpty(), "Do not visit files that do not match an includes filter");
+    }
+
+    @Test
+    public void visitFileThatDoesNotMatchExcludes() throws Exception {
+        File server1Txt = touch(basedir, "server-1.txt");
+        File server1Html = touch(basedir, "server-1.html");
+
+        List<Filter> includes = emptyList();
+        List<Filter> excludes = asList(new Filter(basedir.getAbsolutePath(), "*.txt"));
+        TestVisitor visitor = new TestVisitor();
+
+        forEachFile(basedir, new FilterFileVisitor(includes, excludes, visitor));
+
+        assertCollectionEqualsNoOrder(asList(server1Html), visitor.visitedFiles, "Visit files that do not match " +
+            "excludes filter and no includes are specified");
+    }
+
+    @Test
+    public void doNotVisitFileThatMatchesExclude() throws Exception {
+        File libDir = mkdir(basedir, "lib");
+        File server1Jar = touch(libDir, "server-1.jar");
+        File server2Jar = touch(libDir, "server-2.jar");
+
+        List<Filter> includes = emptyList();
+        List<Filter> excludes = asList(new Filter(libDir.getAbsolutePath(), "server-1.jar"));
+        TestVisitor visitor = new TestVisitor();
+
+        forEachFile(libDir, new FilterFileVisitor(includes, excludes, visitor));
+
+        assertCollectionEqualsNoOrder(asList(server2Jar), visitor.visitedFiles,
+            "Filtering failed when no includes an exclude were specified.");
+    }
+
+    @Test
+    public void visitFileThatMatchesIncludeAndDoesNotMatchesExclude() throws Exception {
+        // This test also verifies that files that match an include and also match
+        // an exclude are not visited.
+
+        File libDir = mkdir(basedir, "lib");
+        File server1Jar = touch(libDir, "server-1.jar");
+        File server2Jar = touch(libDir, "server-2.jar");
+
+        File confDir = mkdir(basedir, "conf");
+        File server1Conf = touch(confDir, "server-1.conf");
+        File server2Conf = touch(confDir, "server-2.conf");
+
+        List<Filter> includes = asList(new Filter(basedir.getAbsolutePath(), "**/*.*"));
+        List<Filter> excludes = asList(new Filter(confDir.getAbsolutePath(), "server-2.conf"));
+        TestVisitor visitor = new TestVisitor();
+
+        forEachFile(basedir, new FilterFileVisitor(includes, excludes, visitor));
+
+        assertCollectionEqualsNoOrder(asList(server1Jar, server2Jar, server1Conf), visitor.visitedFiles,
+            "Do not visit files that match an excludes even when the file matches an include");
+    }
+
+    private File mkdir(File parent, String dirName) throws IOException {
+        File dir = new File(parent, dirName);
+        dir.mkdirs();
+        return dir;
+    }
+
+    private File touch(File dir, String fileName) throws IOException {
+        File file = new File(dir, fileName);
+        FileUtils.touch(file);
+        return file;
+    }
+
+    static class TestVisitor implements FileVisitor {
+
+        public List<File> visitedFiles = new ArrayList<File>();
+
+        @Override
+        public void visit(File file) {
+            visitedFiles.add(file);
+        }
     }
 
 }

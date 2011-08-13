@@ -347,10 +347,10 @@ public class FileUtil {
         }
     }
 
-    public static Pattern generateRegex(List<Filter> filters) {
+    public static Pattern generateRegex(List<PathFilter> filters) {
         boolean first = true;
         StringBuilder regex = new StringBuilder();
-        for (Filter filter : filters) {
+        for (PathFilter filter : filters) {
             if (!first) {
                 regex.append("|");
             } else {

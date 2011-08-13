@@ -19,13 +19,13 @@
 
 package org.rhq.core.util.file;
 
-public class Filter {
+public class PathFilter {
 
     private String path;
 
     private String pattern;
 
-    public Filter(String path, String pattern) {
+    public PathFilter(String path, String pattern) {
         this.path = path;
         this.pattern = pattern;
     }

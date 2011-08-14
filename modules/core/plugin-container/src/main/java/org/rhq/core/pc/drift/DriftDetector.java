@@ -145,7 +145,8 @@ public class DriftDetector implements Runnable {
         }
 
         // Now we need to do a directory tree scan to look for newly added files
-        forEachFile(basedir, new FileVisitor() {
+        forEachFile(basedir, new FilterFileVisitor(schedule.getDriftConfiguration().getIncludes(),
+            schedule.getDriftConfiguration().getExcludes(), new FileVisitor() {
             @Override
             public void visit(File file) {
                 try {
@@ -162,7 +163,7 @@ public class DriftDetector implements Runnable {
                     throw new DriftDetectionException("An error occurred while generating a drift change set", e);
                 }
             }
-        });
+        }));
 
         driftWriter.close();
         coverageWriter.close();

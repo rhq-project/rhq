@@ -26,6 +26,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
+import org.rhq.plugins.modcluster.helper.JBossHelper;
 
 /**
  * Manages a mod_cluster context entity.
@@ -44,7 +45,7 @@ public class ContextComponent extends MBeanResourceComponent<MBeanResourceCompon
         ClassLoader cl = Thread.currentThread().getContextClassLoader();
         try {
             Thread.currentThread().setContextClassLoader(getEmsBean().getClass().getClassLoader());
-            String rawProxyInfo = (String) getEmsBean().getAttribute("proxyInfo").refresh().toString();
+            String rawProxyInfo = JBossHelper.getRawProxyInfo(getEmsBean());
 
             ProxyInfo proxyInfo = new ProxyInfo(rawProxyInfo);
 
@@ -91,12 +92,16 @@ public class ContextComponent extends MBeanResourceComponent<MBeanResourceCompon
                 Thread.currentThread().setContextClassLoader(getEmsBean().getClass().getClassLoader());
                 Object resultObject = getEmsBean().getOperation(name).invoke(configuration);
 
-                return new OperationResult(String.valueOf(resultObject));
+                if (resultObject instanceof OperationResult) {
+                    return (OperationResult) resultObject;
+                } else {
+                    return new OperationResult(String.valueOf(resultObject));
+                }
             } finally {
                 Thread.currentThread().setContextClassLoader(cl);
             }
         }
 
-        throw new Exception("Operation " + name + " not available mod_cluster_context service");
+        throw new Exception("Operation " + name + " not available mod_cluster WebApp service.");
     }
 }

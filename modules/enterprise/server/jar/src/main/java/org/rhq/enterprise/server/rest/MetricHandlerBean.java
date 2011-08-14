@@ -77,14 +77,24 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
         List<List<MeasurementDataNumericHighLowComposite>> listList = dataManager.findDataForResource(caller,
                 schedule.getResource().getId(), new int[]{definitionId}, startTime, endTime, dataPoints);
 
+        long minTime=Long.MAX_VALUE;
+        long maxTime=0;
+
         if (!listList.isEmpty()) {
             List<MeasurementDataNumericHighLowComposite> list = listList.get(0);
             for (MeasurementDataNumericHighLowComposite c : list) {
-                MetricAggregate.DataPoint dp = new MetricAggregate.DataPoint(c.getTimestamp(),c.getValue(),c.getHighValue(),c.getLowValue());
+                long timestamp = c.getTimestamp();
+                MetricAggregate.DataPoint dp = new MetricAggregate.DataPoint(timestamp,c.getValue(),c.getHighValue(),c.getLowValue());
                 res.addDataPoint(dp);
+                if (timestamp <minTime)
+                    minTime= timestamp;
+                if (timestamp >maxTime)
+                    maxTime= timestamp;
             }
             res.setNumDataPoints(list.size());
         }
+        res.setMaxTimeStamp(maxTime);
+        res.setMinTimeStamp(minTime);
 
 
         return res;

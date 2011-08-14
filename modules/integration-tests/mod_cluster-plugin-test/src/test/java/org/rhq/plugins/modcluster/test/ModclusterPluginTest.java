@@ -168,7 +168,7 @@ public class ModclusterPluginTest {
                 log.info("Result of operation " + "enableContext" + " was: " + result.getSimpleResult());
 
                 Configuration config = new Configuration();
-                config.put(new PropertySimple("timeout", "1000"));
+                config.put(new PropertySimple("timeout", "1"));
                 config.put(new PropertySimple("unit", java.util.concurrent.TimeUnit.SECONDS));
                 result = ((OperationFacet) resourceComponent).invokeOperation("stopContext", config);
                 log.info("Result of operation stopContext was: " + result.getSimpleResult());

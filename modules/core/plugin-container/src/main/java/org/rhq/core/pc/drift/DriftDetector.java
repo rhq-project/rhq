@@ -174,10 +174,10 @@ public class DriftDetector implements Runnable {
     private void generateCoverageChangeSet(final DriftDetectionSchedule schedule) throws IOException {
         final ChangeSetWriter writer = changeSetMgr.getChangeSetWriter(schedule.getResourceId(), createHeaders(schedule,
             COVERAGE));
+        final DriftConfiguration config = schedule.getDriftConfiguration();
+        final File basedir = new File(basedir(schedule.getResourceId(), config));
 
-        final File basedir = new File(basedir(schedule.getResourceId(), schedule.getDriftConfiguration()));
-
-        forEachFile(basedir, new FileVisitor() {
+        forEachFile(basedir, new FilterFileVisitor(config.getIncludes(), config.getExcludes(), new FileVisitor() {
             @Override
             public void visit(File file) {
                 try {
@@ -189,7 +189,7 @@ public class DriftDetector implements Runnable {
                         schedule, e);
                 }
             }
-        });
+        }));
         writer.close();
     }
 

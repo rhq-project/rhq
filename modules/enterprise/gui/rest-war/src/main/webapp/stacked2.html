@@ -39,7 +39,7 @@ var svg = d3.select("body").append("svg:svg")
 
 
 d3.json(
-  'http://localhost:7080/rest/1/metric/data/10003',
+  '/rest/1/metric/data/10003',
   function (jsondata) {
 
       var points = jsondata.metricAggregate.dataPoints;

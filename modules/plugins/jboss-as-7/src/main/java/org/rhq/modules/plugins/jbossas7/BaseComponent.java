@@ -270,10 +270,43 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
     @Override
     public CreateResourceReport createResource(CreateResourceReport report) {
 
+        if (context.getContentContext() != null) { // Content deployment
+            return deployContent(report);
+        } else {
+            report.setStatus(CreateResourceStatus.INVALID_CONFIGURATION);
+            Address createAddress = new Address(address);
+            createAddress.add(report.getPluginConfiguration().getSimpleValue("path",""),report.getUserSpecifiedResourceName());
+            Operation op = new Operation("add",createAddress);
+            for (Property prop : report.getResourceConfiguration().getProperties()) {
+                if (prop instanceof PropertySimple) {
+                    PropertySimple ps = (PropertySimple) prop;
+                    String value = ps.getStringValue();
+                    op.addAdditionalProperty(prop.getName(), value);
+                }
+                // TODO more types
+            }
+            Result result = getASConnection().execute(op);
+            if (result.isSuccess()) {
+                report.setStatus(CreateResourceStatus.SUCCESS);
+                report.setResourceKey(address.getPath());
+                report.setResourceName(report.getUserSpecifiedResourceName());
+            } else {
+                report.setStatus(CreateResourceStatus.FAILURE);
+                report.setErrorMessage(result.getFailureDescription());
+            }
+        }
+        return report;
+    }
 
+    /**
+     * Deploy content to the remote server - this is one half of #createResource
+     * @param report Create resource report that tells us what to do
+     * @return report that tells us what has been done.
+     */
+    private CreateResourceReport deployContent(CreateResourceReport report) {
+        ContentContext cctx = context.getContentContext();
         ResourcePackageDetails details = report.getPackageDetails();
 
-        ContentContext cctx = context.getContentContext();
         ContentServices contentServices = cctx.getContentServices();
         String resourceTypeName = report.getResourceType().getName();
 
@@ -298,14 +331,12 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
             fileName=fileName.substring("C:\\fakepath\\".length());
         }
 
-
         String tmpName = fileName; // TODO figure out the tmp-name biz with the AS guys
 
         JsonNode resultNode = uploadResult.get("result");
         String hash = resultNode.get("BYTES_VALUE").getTextValue();
 
         return runDeploymentMagicOnServer(report, fileName, tmpName, hash);
-
     }
 
     /**

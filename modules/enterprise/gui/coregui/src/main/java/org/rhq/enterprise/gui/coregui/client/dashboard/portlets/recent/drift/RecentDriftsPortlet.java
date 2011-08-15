@@ -39,7 +39,7 @@ public class RecentDriftsPortlet extends AbstractRecentDriftsPortlet {
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final Portlet getInstance(String locatorId) {
+        public final Portlet getInstance(String locatorId, EntityContext context) {
 
             return new RecentDriftsPortlet(locatorId);
         }

@@ -258,7 +258,8 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         updateSubTab(this.summaryTab, this.summaryActivity, true, true, new ViewFactory() {
             @Override
             public Canvas createView() {
-                return new ActivityView(summaryActivity.extendLocatorId("View"), groupComposite);
+                return new ActivityView(summaryActivity.extendLocatorId("View"), groupComposite, isAutoCluster(),
+                    isAutoGroup());
             }
         });
         // TODO (ips): Add Timeline subtab?

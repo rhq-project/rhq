@@ -55,7 +55,7 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
 
     @Override
     public MetricAggregate getMetricData(int scheduleId, long startTime, long endTime,
-                                         int dataPoints) {
+                                         int dataPoints,boolean hideEmpty) {
 
         if (dataPoints<0)
             throw new IllegalArgumentException("dataPoints must be >0 ");
@@ -84,8 +84,10 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
             List<MeasurementDataNumericHighLowComposite> list = listList.get(0);
             for (MeasurementDataNumericHighLowComposite c : list) {
                 long timestamp = c.getTimestamp();
-                MetricAggregate.DataPoint dp = new MetricAggregate.DataPoint(timestamp,c.getValue(),c.getHighValue(),c.getLowValue());
-                res.addDataPoint(dp);
+                if (!Double.isNaN(c.getValue()) || !hideEmpty) {
+                    MetricAggregate.DataPoint dp = new MetricAggregate.DataPoint(timestamp,c.getValue(),c.getHighValue(),c.getLowValue());
+                    res.addDataPoint(dp);
+                }
                 if (timestamp <minTime)
                     minTime= timestamp;
                 if (timestamp >maxTime)

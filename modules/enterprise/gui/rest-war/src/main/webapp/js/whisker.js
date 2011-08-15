@@ -1,7 +1,3 @@
-//
-// Heiko W. Rupp 2011
-//
-
 function whisker(scheduleId,divId) {
 // Width and height of the chart to print
     var w = 240,
@@ -15,7 +11,7 @@ function whisker(scheduleId,divId) {
 //    .attr("transform", "translate(" + p[3] + "," + (h - p[2]) + ")");
 console.log(scheduleId);
     d3.json(
-            'http://localhost:7080/rest/1/metric/data/'+scheduleId,
+            'http://localhost:7080/rest/1/metric/data/'+scheduleId+'?hideEmpty=true',
             function (jsondata) {
 
                 var points = jsondata.metricAggregate.dataPoints;
@@ -42,8 +38,8 @@ console.log(scheduleId);
                         .attr("y1", h - y(avgVal))
                         .attr("x2", x(new Date(maxTs)))
                         .attr("y2", h - y(avgVal))
-                        .attr("stroke", "lighgrey")
-                        .attr("stroke-dasharray", "2,2");
+                        .attr("stroke", "lightgrey")
+                        .attr("stroke-dasharray", "2,4");
 
                 // TODO if present add lines for baselines
 
@@ -63,15 +59,15 @@ console.log(scheduleId);
                         .attr("y2", function(d) {
                             return h - y(d.high)
                         })
-                        .attr("stroke", "blue");
+                        .attr("stroke", "lightblue");
 
                 var circleLow = bars.enter().append("svg:circle")
                         .attr("cx", currX)
                         .attr("cy", function(d) {
                             return h - y(d.low)
                         })
-                        .attr("r", 2)
-                        .attr("stroke", "lightgreen")
+                        .attr("r", 1)
+                        .attr("stroke", "green")
                         .attr("fill", "lightgreen");
 
                 var circleHigh = bars.enter().append("svg:circle")
@@ -79,8 +75,8 @@ console.log(scheduleId);
                         .attr("cy", function(d) {
                             return h - y(d.high)
                         })
-                        .attr("r", 2)
-                        .attr("stroke", "lightblue")
+                        .attr("r", 1)
+                        .attr("stroke", "green")
                         .attr("fill", "lightblue");
 
                 var circleVal = bars.enter().append("svg:circle")
@@ -88,8 +84,8 @@ console.log(scheduleId);
                         .attr("cy", function(d) {
                             return h - y(d.value)
                         })
-                        .attr("r", 3)
-                        .attr("stroke", "lightpink")
+                        .attr("r", 1.5)
+                        .attr("stroke", "blue")
                         .attr("fill", "lightpink");
 
             });

@@ -46,7 +46,8 @@ public interface MetricHandlerLocal {
     MetricAggregate getMetricData(@PathParam("scheduleId") int scheduleId,
                                   @QueryParam("startTime")  long startTime,
                                   @QueryParam("endTime") long endTime,
-                                  @QueryParam("dataPoints") int dataPoints);
+                                  @QueryParam("dataPoints") int dataPoints,
+                                  @QueryParam("hideEmpty") boolean hideEmpty);
 
     @GET
     @Path("data/resource/{resourceId}")

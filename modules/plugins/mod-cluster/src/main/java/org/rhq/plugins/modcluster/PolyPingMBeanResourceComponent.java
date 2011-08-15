@@ -22,6 +22,10 @@ import org.rhq.core.pluginapi.operation.OperationResult;
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+/**
+ * 
+ * @author Stefan Negrea
+ */
 public class PolyPingMBeanResourceComponent extends FileConfiguredMBeanResourceComponent {
 
     @Override

@@ -36,4 +36,22 @@ public class JBossWebServerFile extends AbstractConfigurationFile {
         // TODO Auto-generated constructor stub
     }
 
+    @Override
+    void setPropertyValue(String propertyName, String value) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    String getPropertyValue(String propertyName) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    void saveConfigurationFile() throws Exception {
+        // TODO Auto-generated method stub
+
+    }
+
 }

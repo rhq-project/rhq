@@ -32,9 +32,6 @@ import org.xml.sax.SAXException;
  * @author Stefan Negrea
  */
 public abstract class AbstractConfigurationFile {
-
-    public static final String SERVER_HOME_DIR = "jboss.server.home.dir";
-
     private String fileName;
     private Document document;
 
@@ -60,4 +57,9 @@ public abstract class AbstractConfigurationFile {
         return document;
     }
 
+    abstract void setPropertyValue(String propertyName, String value);
+
+    abstract String getPropertyValue(String propertyName);
+
+    abstract void saveConfigurationFile() throws Exception;
 }

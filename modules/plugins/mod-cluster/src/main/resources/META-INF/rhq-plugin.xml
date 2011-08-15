@@ -5,7 +5,8 @@
 
    <depends plugin="JMX" />
 
-   <service name="mod_cluster" discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent" class="ModclusterServerComponent" supportsManualAdd="true" description="mod_cluster plugin" singleton="true">
+   <service name="mod_cluster" 
+        discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent" class="ModclusterServerComponent" supportsManualAdd="true" description="mod_cluster plugin" singleton="true">
 
       <runs-inside>
          <parent-resource-type name="JBossAS Server" plugin="JBossAS" />

@@ -16,7 +16,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-
 package org.rhq.plugins.modcluster.config;
 
 import java.io.IOException;
@@ -38,24 +37,38 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 /**
- * @author snegrea
+ * @author Stefan Negrea
  *
  */
 public class ModClusterBeanFile extends AbstractConfigurationFile {
 
     private Node beanNode;
 
-    public ModClusterBeanFile(String className) throws ParserConfigurationException, SAXException, IOException {
-        super(
-            "/home/snegrea/Downloads/jboss51eap/jboss-as/server/all/deploy/mod_cluster.sar/META-INF/mod_cluster-jboss-beans.xml");
+    /**
+     * @param className
+     * @param configurationFile
+     * @throws ParserConfigurationException
+     * @throws SAXException
+     * @throws IOException
+     */
+    public ModClusterBeanFile(String className, String configurationFile) throws ParserConfigurationException,
+        SAXException, IOException {
+        super(configurationFile);
 
         beanNode = this.getBeanNodeByClass(className);
     }
 
-    public ModClusterBeanFile(String className, String constructorArgumentClassName)
+    /**
+     * @param className
+     * @param constructorArgumentClassName
+     * @param configurationFile
+     * @throws ParserConfigurationException
+     * @throws SAXException
+     * @throws IOException
+     */
+    public ModClusterBeanFile(String className, String constructorArgumentClassName, String configurationFile)
         throws ParserConfigurationException, SAXException, IOException {
-        super(
-            "/home/snegrea/Downloads/jboss51eap/jboss-as/server/all/deploy/mod_cluster.sar/META-INF/mod_cluster-jboss-beans.xml");
+        super(configurationFile);
 
         Node primaryBeanNode = this.getBeanNodeByClass(className);
         String dependencyName = this.getBeanFromConstructorArgument(primaryBeanNode, constructorArgumentClassName);
@@ -63,6 +76,117 @@ public class ModClusterBeanFile extends AbstractConfigurationFile {
         beanNode = this.getBeanNodeByName(dependencyName);
     }
 
+    /**
+     * @param propertyName
+     * @param value
+     */
+    public void setPropertyValue(String propertyName, String value) {
+        boolean propertyFound = false;
+        for (int i = 0; i < beanNode.getChildNodes().getLength(); i++) {
+            Node currentNode = beanNode.getChildNodes().item(i);
+
+            if (currentNode.getNodeName().equals("property")
+                && currentNode.getAttributes().getNamedItem("name") != null
+                && propertyName.equals(currentNode.getAttributes().getNamedItem("name").getTextContent())) {
+
+                if (value != null) {
+                    currentNode.setTextContent(value);
+                } else {
+                    beanNode.removeChild(currentNode);
+                }
+
+                propertyFound = true;
+            }
+        }
+
+        if (value != null && !propertyFound) {
+            Node propertyChild = this.getDocument().createElement("property");
+            Attr nameProperty = this.getDocument().createAttribute("name");
+            nameProperty.setValue(propertyName);
+            propertyChild.setTextContent(value);
+            propertyChild.getAttributes().setNamedItem(nameProperty);
+            beanNode.appendChild(propertyChild);
+        }
+    }
+
+    /**
+     * @param propertyName
+     * @return
+     */
+    public String getPropertyValue(String propertyName) {
+        for (int i = 0; i < beanNode.getChildNodes().getLength(); i++) {
+            Node currentNode = beanNode.getChildNodes().item(i);
+
+            if (currentNode.getNodeName().equals("property")
+                && currentNode.getAttributes().getNamedItem("name") != null
+                && propertyName.equals(currentNode.getAttributes().getNamedItem("name").getTextContent())) {
+
+                return currentNode.getTextContent();
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @throws TransformerException
+     */
+    public void saveConfigurationFile() throws TransformerException {
+        Transformer transformer = TransformerFactory.newInstance().newTransformer();
+        transformer.setOutputProperty(OutputKeys.INDENT, "no");
+
+        //initialize StreamResult with File object to save to file
+        StreamResult result = new StreamResult(new StringWriter());
+        DOMSource source = new DOMSource(this.getDocument());
+        transformer.transform(source, result);
+
+        String xmlString = result.getWriter().toString();
+        System.out.println(xmlString);
+    }
+
+    /**
+     * @param className
+     * @return
+     */
+    private Node getBeanNodeByClass(String className) {
+        NodeList result = this.getDocument().getElementsByTagName("bean");
+
+        for (int i = 1; i < result.getLength(); i++) {
+            Node node = result.item(i);
+            if (node.getAttributes().getNamedItem("class") != null
+                && className.equals(node.getAttributes().getNamedItem("class").getTextContent())) {
+                System.out.println(node.getAttributes().getNamedItem("class").getTextContent());
+                return node;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param beanName
+     * @return
+     */
+    private Node getBeanNodeByName(String beanName) {
+        NodeList result = this.getDocument().getElementsByTagName("bean");
+
+        for (int i = 1; i < result.getLength(); i++) {
+            Node node = result.item(i);
+            if (node.getAttributes().getNamedItem("name") != null
+                && beanName.equals(node.getAttributes().getNamedItem("name").getTextContent())) {
+                System.out.println(node.getAttributes().getNamedItem("name").getTextContent());
+                return node;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param beanNode
+     * @param constructorArgumentClassName
+     * @return
+     */
     private String getBeanFromConstructorArgument(Node beanNode, String constructorArgumentClassName) {
         List<Node> tempNodeList = this.getChildNodesByName(beanNode, "constructor");
 
@@ -101,6 +225,11 @@ public class ModClusterBeanFile extends AbstractConfigurationFile {
         return null;
     }
 
+    /**
+     * @param node
+     * @param nodeName
+     * @return
+     */
     private List<Node> getChildNodesByName(Node node, String nodeName) {
         List<Node> listOfNodes = new ArrayList<Node>();
 
@@ -113,93 +242,6 @@ public class ModClusterBeanFile extends AbstractConfigurationFile {
         }
 
         return listOfNodes;
-    }
-
-    public void setPropertyValue(String propertyName, String value) {
-        boolean propertyFound = false;
-        for (int i = 0; i < beanNode.getChildNodes().getLength(); i++) {
-            Node currentNode = beanNode.getChildNodes().item(i);
-
-            if (currentNode.getNodeName().equals("property")
-                && currentNode.getAttributes().getNamedItem("name") != null
-                && propertyName.equals(currentNode.getAttributes().getNamedItem("name").getTextContent())) {
-
-                if (value != null) {
-                    currentNode.setTextContent(value);
-                } else {
-                    beanNode.removeChild(currentNode);
-                }
-
-                propertyFound = true;
-            }
-        }
-
-        if (value != null && !propertyFound) {
-            Node propertyChild = this.getDocument().createElement("property");
-            Attr nameProperty = this.getDocument().createAttribute("name");
-            nameProperty.setValue(propertyName);
-            propertyChild.setTextContent(value);
-            propertyChild.getAttributes().setNamedItem(nameProperty);
-            beanNode.appendChild(propertyChild);
-        }
-    }
-
-    public String getPropertyValue(String propertyName) {
-        for (int i = 0; i < beanNode.getChildNodes().getLength(); i++) {
-            Node currentNode = beanNode.getChildNodes().item(i);
-
-            if (currentNode.getNodeName().equals("property")
-                && currentNode.getAttributes().getNamedItem("name") != null
-                && propertyName.equals(currentNode.getAttributes().getNamedItem("name").getTextContent())) {
-
-                return currentNode.getTextContent();
-            }
-        }
-
-        return null;
-    }
-
-    public void saveConfigFile() throws TransformerException {
-        Transformer transformer = TransformerFactory.newInstance().newTransformer();
-        transformer.setOutputProperty(OutputKeys.INDENT, "no");
-
-        //initialize StreamResult with File object to save to file
-        StreamResult result = new StreamResult(new StringWriter());
-        DOMSource source = new DOMSource(this.getDocument());
-        transformer.transform(source, result);
-
-        String xmlString = result.getWriter().toString();
-        System.out.println(xmlString);
-    }
-
-    public Node getBeanNodeByClass(String className) {
-        NodeList result = this.getDocument().getElementsByTagName("bean");
-
-        for (int i = 1; i < result.getLength(); i++) {
-            Node node = result.item(i);
-            if (node.getAttributes().getNamedItem("class") != null
-                && className.equals(node.getAttributes().getNamedItem("class").getTextContent())) {
-                System.out.println(node.getAttributes().getNamedItem("class").getTextContent());
-                return node;
-            }
-        }
-
-        return null;
-    }
-
-    public Node getBeanNodeByName(String beanName) {
-        NodeList result = this.getDocument().getElementsByTagName("bean");
-
-        for (int i = 1; i < result.getLength(); i++) {
-            Node node = result.item(i);
-            if (node.getAttributes().getNamedItem("name") != null
-                && beanName.equals(node.getAttributes().getNamedItem("name").getTextContent())) {
-                System.out.println(node.getAttributes().getNamedItem("name").getTextContent());
-                return node;
-            }
-        }
-
-        return null;
     }
 
 }

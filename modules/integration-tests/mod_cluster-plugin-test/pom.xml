@@ -42,7 +42,13 @@
     </dependencyManagement>
 
    <dependencies>
-   
+     <dependency>
+         <groupId>org.jboss.on</groupId>
+         <artifactId>jopr-jboss-as-5-plugin</artifactId>
+         <version>${project.version}</version>
+         <scope>provided</scope>
+      </dependency>
+      
         <dependency>
           <groupId>org.jboss.integration</groupId>
           <artifactId>jboss-profileservice-spi</artifactId>

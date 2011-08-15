@@ -273,31 +273,35 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
     }
 
     protected void updateTabContent(ResourceComposite resourceComposite) {
-        this.resourceComposite = resourceComposite;
-        for (ResourceSelectListener selectListener : this.selectListeners) {
-            selectListener.onResourceSelected(this.resourceComposite);
+        try {
+            this.resourceComposite = resourceComposite;
+            for (ResourceSelectListener selectListener : this.selectListeners) {
+                selectListener.onResourceSelected(this.resourceComposite);
+            }
+            Resource resource = this.resourceComposite.getResource();
+            getTitleBar().setResource(this.resourceComposite);
+
+            // wipe the canvas views for the current set of subtabs.
+            this.getTabSet().destroyViews();
+
+            ResourcePermission resourcePermissions = this.resourceComposite.getResourcePermission();
+            Set<ResourceTypeFacet> facets = this.resourceComposite.getResourceFacets().getFacets();
+
+            updateSummaryTabContent(resource);
+            updateInventoryTabContent(resourceComposite, resource, facets);
+            updateAlertsTabContent(resourceComposite);
+            updateMonitoringTabContent(resource, facets);
+            updateEventsTabContent(resourceComposite, facets);
+            updateOperationsTabContent(facets);
+            updateConfigurationTabContent(resourceComposite, resource, resourcePermissions, facets);
+            updateDriftTabContent(resourceComposite, resource, resourcePermissions, facets);
+            updateContentTabContent(resource, facets);
+
+            this.show();
+            markForRedraw();
+        } catch (Exception e) {
+            CoreGUI.getErrorHandler().handleError("Failed to update tab content.", e);
         }
-        Resource resource = this.resourceComposite.getResource();
-        getTitleBar().setResource(this.resourceComposite);
-
-        // wipe the canvas views for the current set of subtabs.
-        this.getTabSet().destroyViews();
-
-        ResourcePermission resourcePermissions = this.resourceComposite.getResourcePermission();
-        Set<ResourceTypeFacet> facets = this.resourceComposite.getResourceFacets().getFacets();
-
-        updateSummaryTabContent(resource);
-        updateInventoryTabContent(resourceComposite, resource, facets);
-        updateAlertsTabContent(resourceComposite);
-        updateMonitoringTabContent(resource, facets);
-        updateEventsTabContent(resourceComposite, facets);
-        updateOperationsTabContent(facets);
-        updateConfigurationTabContent(resourceComposite, resource, resourcePermissions, facets);
-        updateDriftTabContent(resourceComposite, resource, resourcePermissions, facets);
-        updateContentTabContent(resource, facets);
-
-        this.show();
-        markForRedraw();
     }
 
     private void updateSummaryTabContent(final Resource resource) {

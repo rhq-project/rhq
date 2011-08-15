@@ -360,8 +360,8 @@ public class DriftManagerBean implements DriftManagerLocal {
             boolean isUpdated = false;
             for (DriftConfiguration dc : resource.getDriftConfigurations()) {
                 if (dc.getName().equals(driftConfig.getName())) {
-                    // compare the includes/excludes filters only - if they are different, abort.
-                    // you cannot update drift config that changes includes/excludes from the original.
+                    // compare the directory specs (basedir/includes-excludes filters only - if they are different, abort.
+                    // you cannot update drift config that changes basedir/includes/excludes from the original.
                     // the user must delete the drift config and create a new one, as opposed to trying to update the existing one.
                     if (comparator.compare(driftConfig, dc) == 0) {
                         dc.setConfiguration(driftConfig.getConfiguration());
@@ -369,7 +369,7 @@ public class DriftManagerBean implements DriftManagerLocal {
                         break;
                     } else {
                         throw new IllegalArgumentException(
-                            "You cannot change an existing drift configuration's includes/excludes filters.");
+                            "You cannot change an existing drift configuration's base directory or includes/excludes filters.");
                     }
                 }
             }

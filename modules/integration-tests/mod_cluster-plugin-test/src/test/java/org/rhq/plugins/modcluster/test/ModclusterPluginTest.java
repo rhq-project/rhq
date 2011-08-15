@@ -45,6 +45,7 @@ import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.plugin.FileSystemPluginFinder;
 import org.rhq.core.pc.plugin.PluginEnvironment;
 import org.rhq.core.pc.plugin.PluginManager;
+import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
@@ -109,7 +110,8 @@ public class ModclusterPluginTest {
 
             {
                 add(PLUGIN_NAME);
-                add(PLUGIN_NAME + " Webapp Context");
+                add("Webapp Context");
+                add("HA Service Configuration");
             }
         };
 
@@ -124,8 +126,12 @@ public class ModclusterPluginTest {
                 Resource resource = (Resource) objectResource;
                 if (resource.getResourceType().getName().equals("mod_cluster")) {
                     testResourceMeasurement(resource);
-                } else {
+                } else if (resource.getResourceType().getName().equals("Webapp Context")) {
                     testContextOperations(resource);
+                } else if (resource.getResourceType().getName().equals("HA Service Configuration")) {
+                    ResourceComponent resourceComponent = PluginContainer.getInstance().getInventoryManager()
+                        .getResourceComponent(resource);
+                    ((ConfigurationFacet) resourceComponent).loadResourceConfiguration();
                 }
             }
         }

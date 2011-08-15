@@ -18,7 +18,11 @@
  */
 package org.rhq.plugins.modcluster;
 
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.pluginapi.inventory.ResourceContext;
+import org.rhq.plugins.jbossas.JBossASServerComponent;
+import org.rhq.plugins.jbossas5.ApplicationServerComponent;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
 import org.rhq.plugins.modcluster.helper.JBossHelper;
 
@@ -28,6 +32,38 @@ import org.rhq.plugins.modcluster.helper.JBossHelper;
  */
 @SuppressWarnings({ "rawtypes" })
 public class ModclusterServerComponent extends MBeanResourceComponent {
+
+    private final static String JBOSS_SERVER_HOME_DIR = "jboss.server.home.dir";
+
+    @SuppressWarnings({ "unchecked", "deprecation", "static-access" })
+    @Override
+    public void start(ResourceContext context) {
+        super.start(context);
+
+        String serverHomeDirectory = null;
+        if (this.resourceContext.getParentResourceComponent() instanceof ApplicationServerComponent) {
+            ApplicationServerComponent parentComponent = (ApplicationServerComponent) this.resourceContext
+                .getParentResourceComponent();
+
+            serverHomeDirectory = parentComponent.getResourceContext().getPluginConfiguration()
+                .getSimple("serverHomeDir").getStringValue();
+
+        } else if (this.resourceContext.getParentResourceComponent() instanceof JBossASServerComponent) {
+            JBossASServerComponent parentComponent = (JBossASServerComponent) this.resourceContext
+                .getParentResourceComponent();
+
+            serverHomeDirectory = parentComponent.getPluginConfiguration()
+                .getSimple(parentComponent.JBOSS_HOME_DIR_CONFIG_PROP).getStringValue();
+        }
+
+        if (serverHomeDirectory != null) {
+            PropertySimple serverHomeDirectoryProperty = null;
+            serverHomeDirectoryProperty = new PropertySimple();
+            serverHomeDirectoryProperty.setName(JBOSS_SERVER_HOME_DIR);
+            serverHomeDirectoryProperty.setStringValue(serverHomeDirectory);
+            this.resourceContext.getPluginConfiguration().put(serverHomeDirectoryProperty);
+        }
+    };
 
     //private final static String PROXY_INFO_PROPERTY_NAME
 

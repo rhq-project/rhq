@@ -19,6 +19,9 @@
 
 package org.rhq.plugins.modcluster;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -34,11 +37,15 @@ import org.rhq.plugins.modcluster.config.ModClusterBeanFile;
  * @author Stefan Negrea
  *
  */
-@SuppressWarnings("rawtypes")
+@SuppressWarnings({ "rawtypes", "deprecation" })
 public class FileConfiguredMBeanResourceComponent extends MBeanResourceComponent {
+
+    private static final Log log = LogFactory.getLog(FileConfiguredMBeanResourceComponent.class);
 
     private static final String BEAN_CLASS_NAME_PROPERTY = "className";
     private static final String DEPENDENCY_BEAN_CLASS_NAME_PROPERTY = "dependencyClassName";
+    private static final String SERVER_HOME_DIR = "jboss.server.home.dir";
+    private static final String CONFIGURATION_FILE_RELATIVE_PATH = "/deploy/mod_cluster.sar/META-INF/mod_cluster-jboss-beans.xml";
 
     /**
      * This default setup of configuration properties can map to mbean attributes
@@ -46,15 +53,14 @@ public class FileConfiguredMBeanResourceComponent extends MBeanResourceComponent
      * @return the configuration of the component
      */
     @Override
-    @SuppressWarnings("deprecation")
     public Configuration loadResourceConfiguration() {
+
         Configuration configuration = new Configuration();
         ConfigurationDefinition configurationDefinition = this.resourceContext.getResourceType()
             .getResourceConfigurationDefinition();
 
         try {
-            ModClusterBeanFile modClusterBeanFile = this.getModClusterBeanFileInstance(this.resourceContext
-                .getPluginConfiguration());
+            ModClusterBeanFile modClusterBeanFile = this.getModClusterBeanFileInstance();
 
             for (PropertyDefinition property : configurationDefinition.getPropertyDefinitions().values()) {
                 if (property instanceof PropertyDefinitionSimple) {
@@ -69,8 +75,7 @@ public class FileConfiguredMBeanResourceComponent extends MBeanResourceComponent
                 }
             }
         } catch (Exception e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            log.debug("Unable to load mod_cluster configuration file.", e);
         }
 
         return configuration;
@@ -84,19 +89,35 @@ public class FileConfiguredMBeanResourceComponent extends MBeanResourceComponent
         updateResourceConfiguration(report, false);
     }
 
-    private ModClusterBeanFile getModClusterBeanFileInstance(Configuration pluginConfig) throws Exception {
+    private ModClusterBeanFile getModClusterBeanFileInstance() throws Exception {
+        Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
         String beanClassName = pluginConfig.getSimple(BEAN_CLASS_NAME_PROPERTY).getStringValue();
+
+        String fileName = this.getServerHomeDirectory() + CONFIGURATION_FILE_RELATIVE_PATH;
 
         if (pluginConfig.getSimple(DEPENDENCY_BEAN_CLASS_NAME_PROPERTY) != null) {
             String dependencyBeanClassName = pluginConfig.getSimple(DEPENDENCY_BEAN_CLASS_NAME_PROPERTY)
                 .getStringValue();
-            return new ModClusterBeanFile(dependencyBeanClassName);
+            return new ModClusterBeanFile(beanClassName, dependencyBeanClassName, fileName);
         }
 
-        return new ModClusterBeanFile(beanClassName);
+        return new ModClusterBeanFile(beanClassName, fileName);
     }
 
-    @SuppressWarnings("deprecation")
+    private String getServerHomeDirectory() {
+        ModclusterServerComponent modClusterComponent = (ModclusterServerComponent) this.resourceContext
+            .getParentResourceComponent();
+
+        PropertySimple property = modClusterComponent.getResourceContext().getPluginConfiguration()
+            .getSimple(SERVER_HOME_DIR);
+
+        if (property != null) {
+            return property.getStringValue();
+        }
+
+        return null;
+    }
+
     @Override
     public void updateResourceConfiguration(ConfigurationUpdateReport report, boolean ignoreReadOnly) {
         ConfigurationDefinition configurationDefinition = this.getResourceContext().getResourceType()
@@ -106,8 +127,7 @@ public class FileConfiguredMBeanResourceComponent extends MBeanResourceComponent
         report.setStatus(ConfigurationUpdateStatus.SUCCESS);
 
         try {
-            ModClusterBeanFile modClusterBeanFile = this.getModClusterBeanFileInstance(this.resourceContext
-                .getPluginConfiguration());
+            ModClusterBeanFile modClusterBeanFile = this.getModClusterBeanFileInstance();
 
             for (String key : report.getConfiguration().getSimpleProperties().keySet()) {
                 PropertySimple property = report.getConfiguration().getSimple(key);
@@ -127,10 +147,9 @@ public class FileConfiguredMBeanResourceComponent extends MBeanResourceComponent
                 }
             }
 
-            modClusterBeanFile.saveConfigFile();
+            modClusterBeanFile.saveConfigurationFile();
         } catch (Exception e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            log.debug("Unable to save mod_cluster configuration file.", e);
         }
     }
 

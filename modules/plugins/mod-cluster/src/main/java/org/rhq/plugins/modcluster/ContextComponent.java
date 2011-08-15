@@ -20,6 +20,8 @@ package org.rhq.plugins.modcluster;
 
 import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.mc4j.ems.connection.bean.EmsBean;
 
 import org.rhq.core.domain.configuration.Configuration;
@@ -35,6 +37,9 @@ import org.rhq.plugins.modcluster.helper.JBossHelper;
  */
 @SuppressWarnings({ "rawtypes", "deprecation" })
 public class ContextComponent extends MBeanResourceComponent<MBeanResourceComponent> {
+
+    private static final Log log = LogFactory.getLog(ContextComponent.class);
+
     @Override
     protected EmsBean loadBean() {
         return getResourceContext().getParentResourceComponent().getEmsBean();

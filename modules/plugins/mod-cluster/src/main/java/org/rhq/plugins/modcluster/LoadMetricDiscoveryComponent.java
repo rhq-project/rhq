@@ -30,7 +30,7 @@ import org.rhq.plugins.jmx.JMXComponent;
 import org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent;
 
 /**
- * @author snegrea
+ * @author Stefan Negrea
  *
  */
 @SuppressWarnings("rawtypes")

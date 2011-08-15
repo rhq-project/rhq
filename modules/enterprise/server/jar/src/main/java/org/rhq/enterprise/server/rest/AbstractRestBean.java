@@ -22,7 +22,20 @@
  */
 package org.rhq.enterprise.server.rest;
 
-import javax.interceptor.Interceptors;
+import java.io.IOException;
+import java.io.StringWriter;
+import java.util.HashMap;
+import java.util.Map;
+
+import freemarker.cache.ClassTemplateLoader;
+import freemarker.cache.MultiTemplateLoader;
+import freemarker.cache.TemplateLoader;
+import freemarker.template.Configuration;
+import freemarker.template.Template;
+import freemarker.template.TemplateException;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.auth.Subject;
 
@@ -32,5 +45,50 @@ import org.rhq.core.domain.auth.Subject;
  */
 public class AbstractRestBean {
 
+    Log log = LogFactory.getLog(getClass().getName());
+
+    /** Subject of the caller that gets injected via {@link SetCallerInterceptor} */
     Subject caller;
+
+    /**
+     * Renders the passed object with the help of a freemarker template into a string. Freemarket templates
+     * are searched in the class path in a directory called "/rest_templates". In the usual Maven tree structure,
+     * this is below src/main/resources/.
+     * @param objectToRender Object to render via template
+     * @param templateName Template to use for rendering. If the template name does not end in .ftl, .ftl is appended.
+     * @return Template filled with data from objectToRender
+     */
+    protected String fillTemplate(Object objectToRender, String templateName) {
+        try {
+            freemarker.template.Configuration config = new Configuration();
+
+            // XXX fall-over to ClassTL after failure in FTL seems not to work
+            // FileTemplateLoader ftl = new FileTemplateLoader(new File("src/main/resources"));
+            ClassTemplateLoader ctl = new ClassTemplateLoader(getClass(), "/rest_templates/");
+            TemplateLoader[] loaders = new TemplateLoader[] { ctl };
+            MultiTemplateLoader mtl = new MultiTemplateLoader(loaders);
+
+            config.setTemplateLoader(mtl);
+
+            if (!templateName.endsWith(".ftl"))
+                templateName = templateName + ".ftl";
+            Template template = config.getTemplate(templateName);
+
+            StringWriter out = new StringWriter();
+            try {
+                Map<String, Object> root = new HashMap<String, Object>();
+                root.put("var", objectToRender);
+                template.process(root, out);
+                return out.toString();
+            }
+            finally {
+                out.close();
+            }
+        } catch (IOException ioe) {
+            log.error(ioe);
+        } catch (TemplateException te) {
+            log.error(te.getMessage());
+        }
+        return null;
+    }
 }

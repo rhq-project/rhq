@@ -102,6 +102,15 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
         return res;
     }
 
+    public String getMetricDataHtml(int scheduleId,
+                                    long startTime,
+                                    long endTime,
+                                    int dataPoints,
+                                    boolean hideEmpty) {
+        MetricAggregate agg = getMetricData(scheduleId,startTime,endTime,dataPoints,hideEmpty);
+        return fillTemplate(agg,"metricData");
+    }
+
     public MetricSchedule getSchedule(int scheduleId) {
 
         MeasurementSchedule schedule = scheduleManager.getScheduleById(caller,scheduleId);
@@ -113,6 +122,12 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
                 definition.getDataType().toString());
 
         return ms;
+    }
+
+    @Override
+    public String getScheduleHtml(int scheduleId) {
+        MetricSchedule ms = getSchedule(scheduleId);
+        return fillTemplate(ms,"metricSchedule");
     }
 
     @Override

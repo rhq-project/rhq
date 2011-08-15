@@ -11,7 +11,7 @@ function whisker(scheduleId,divId) {
 //    .attr("transform", "translate(" + p[3] + "," + (h - p[2]) + ")");
 console.log(scheduleId);
     d3.json(
-            'http://localhost:7080/rest/1/metric/data/'+scheduleId+'?hideEmpty=true',
+            'http://localhost:7080/rest/1/metric/data/'+scheduleId+'.json?hideEmpty=true',
             function (jsondata) {
 
                 var points = jsondata.metricAggregate.dataPoints;

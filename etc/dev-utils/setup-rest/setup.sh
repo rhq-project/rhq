@@ -14,3 +14,4 @@ cp ~/.m2/repository/net/jcip/jcip-annotations/1.0/jcip-annotations-1.0.jar .
 cp ~/.m2/repository/org/codehaus/jettison/1.2/jessison-1.2.jar .
 cp ~/.m2/repository/org/codehaus/jettison/jettison/1.2/jettison-1.2.jar .
 cp ~/.m2/repository/org/jboss/el/jboss-el/2.0.1.GA/jboss-el-2.0.1.GA.jar .
+cp ~/.m2/repository/org/freemarker/freemarker/2.3.18/freemarker-2.3.18.jar .

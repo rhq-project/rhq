@@ -20,6 +20,10 @@
         <param-value>/1</param-value>
         <description>Prefix of the REST api</description>
     </context-param>
+    <context-param>
+        <param-name>resteasy.media.type.mappings</param-name>
+        <param-value>html : text/html, json : application/json, xml : application/xml</param-value>
+    </context-param>
 
     <!--
         <filter>

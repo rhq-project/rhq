@@ -31,19 +31,20 @@ import org.jboss.resteasy.spi.touri.URITemplate;
  * @author Heiko W. Rupp
  */
 @XmlRootElement
-@XmlType(propOrder = {"scheduleId","scheduleName","displayName","enabled","collectionInterval","unit","type"})
+//@XmlType(propOrder = {"scheduleId","scheduleName","displayName","enabled","collectionInterval","unit","type"})
 @Mapped(namespaceMap = @XmlNsMap(jsonName = "atom", namespace = "http://www.w3.org/2005/Atom"))
 @URITemplate("/metric/schedule/{id}")
 public class MetricSchedule {
 
     int scheduleId;
     String scheduleName;
-    boolean enabled;
+    Boolean enabled;
     long collectionInterval;
     String displayName;
     String unit;
     String type;
 
+    @SuppressWarnings("unused")
     public MetricSchedule() {
     }
 
@@ -74,11 +75,11 @@ public class MetricSchedule {
         this.scheduleName = scheduleName;
     }
 
-    public boolean isEnabled() {
+    public Boolean isEnabled() {
         return enabled;
     }
 
-    public void setEnabled(boolean enabled) {
+    public void setEnabled(Boolean enabled) {
         this.enabled = enabled;
     }
 
@@ -112,5 +113,9 @@ public class MetricSchedule {
 
     public void setType(String type) {
         this.type = type;
+    }
+
+    public String getEnabled() {
+        return String.valueOf(enabled);
     }
 }

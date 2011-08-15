@@ -425,7 +425,8 @@
             todir="${jboss.home}/server/default/lib" verbose="true" failonerror="true"/>
       <copy file="${settings.localRepository}/org/codehaus/jettison/jettison/1.2/jessison-1.2.jar"
             todir="${jboss.home}/server/default/lib" verbose="true" failonerror="true"/>
-
+      <copy file="${settings.localRepository/org/freemarker/freemarker/2.3.18/freemarker-2.3.18.jar"
+            todir="${jboss.home}/server/default/lib" verbose="true" failonerror="true"/>
 
    </target>
 

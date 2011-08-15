@@ -35,7 +35,7 @@ import org.rhq.enterprise.server.rest.domain.MetricSchedule;
  * Deal with metrics
  * @author Heiko W. Rupp
  */
-@Produces({"application/json","application/xml","text/plain"})
+@Produces({"application/json","application/xml", "text/html"})
 @Path("/metric")
 @Local
 public interface MetricHandlerLocal {
@@ -43,6 +43,7 @@ public interface MetricHandlerLocal {
 
     @GET
     @Path("data/{scheduleId}")
+    @Produces({"application/json","application/xml"})
     MetricAggregate getMetricData(@PathParam("scheduleId") int scheduleId,
                                   @QueryParam("startTime")  long startTime,
                                   @QueryParam("endTime") long endTime,
@@ -50,12 +51,27 @@ public interface MetricHandlerLocal {
                                   @QueryParam("hideEmpty") boolean hideEmpty);
 
     @GET
+    @Path("data/{scheduleId}")
+    @Produces("text/html")
+    String getMetricDataHtml(@PathParam("scheduleId") int scheduleId,
+                             @QueryParam("startTime") long startTime,
+                             @QueryParam("endTime") long endTime,
+                             @QueryParam("dataPoints") int dataPoints,
+                             @QueryParam("hideEmpty") boolean hideEmpty);
+
+    @GET
     @Path("data/resource/{resourceId}")
     List<MetricAggregate> getAggregatesForResource(@PathParam("resourceId") int resourceId);
 
     @GET
     @Path("/schedule/{id}")
+    @Produces({"application/json","application/xml"})
     MetricSchedule getSchedule(@PathParam("id") int scheduleId);
+
+    @GET
+    @Path("/schedule/{id}")
+    @Produces("text/html")
+    String getScheduleHtml(@PathParam("id") int scheduleId);
 
     @PUT
     @Path("/schedule/{id}")

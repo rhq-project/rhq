@@ -201,9 +201,8 @@ public class ResourceFacets implements Serializable {
             this.facets.add(ResourceTypeFacet.CALL_TIME);
         if (support)
             this.facets.add(ResourceTypeFacet.SUPPORT);
-        // TODO, add this back when we actually start storing drift config templates:
-        // if (drift)
-        this.facets.add(ResourceTypeFacet.DRIFT);
+        if (drift)
+            this.facets.add(ResourceTypeFacet.DRIFT);
 
     }
 }

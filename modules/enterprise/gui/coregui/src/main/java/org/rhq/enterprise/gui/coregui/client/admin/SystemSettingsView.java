@@ -570,7 +570,7 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
     }
 
     private DynamicForm getServerDetails() {
-        DynamicForm form = new LocatableDynamicForm(extendLocatorId("serverDetails"));
+        final DynamicForm form = new LocatableDynamicForm(extendLocatorId("serverDetails"));
         form.setWidth100();
         form.setExtraSpace(15);
         form.setIsGroup(true);
@@ -624,21 +624,21 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
             @Override
             public void onSuccess(ServerDetails result) {
                 ProductInfo productInfo = result.getProductInfo();
-                productName.setValue(productInfo.getName());
-                productVersion.setValue(productInfo.getVersion());
-                productBuildNumber.setValue(productInfo.getBuildNumber());
+                form.setValue(productName.getName(), productInfo.getName());
+                form.setValue(productVersion.getName(), productInfo.getVersion());
+                form.setValue(productBuildNumber.getName(), productInfo.getBuildNumber());
 
-                HashMap<Detail, String> details = result.getDetails();
-                serverTimezone.setValue(details.get(ServerDetails.Detail.SERVER_TIMEZONE));
-                serverTime.setValue(details.get(ServerDetails.Detail.SERVER_LOCAL_TIME));
-                serverInstallDir.setValue(details.get(ServerDetails.Detail.SERVER_INSTALL_DIR));
-                dbUrl.setValue(details.get(ServerDetails.Detail.DATABASE_CONNECTION_URL));
-                dbProductName.setValue(details.get(ServerDetails.Detail.DATABASE_PRODUCT_NAME));
-                dbProductVersion.setValue(details.get(ServerDetails.Detail.DATABASE_PRODUCT_VERSION));
-                dbDriverName.setValue(details.get(ServerDetails.Detail.DATABASE_DRIVER_NAME));
-                dbDriverVersion.setValue(details.get(ServerDetails.Detail.DATABASE_DRIVER_VERSION));
-                currentMeasRawTable.setValue(details.get(ServerDetails.Detail.CURRENT_MEASUREMENT_TABLE));
-                nextMeasTableRotation.setValue(details.get(ServerDetails.Detail.NEXT_MEASUREMENT_TABLE_ROTATION));
+                Map<Detail, String> details = result.getDetails();
+                form.setValue(serverTimezone.getName(), details.get(ServerDetails.Detail.SERVER_TIMEZONE));
+                form.setValue(serverTime.getName(), details.get(ServerDetails.Detail.SERVER_LOCAL_TIME));
+                form.setValue(serverInstallDir.getName(), details.get(ServerDetails.Detail.SERVER_INSTALL_DIR));
+                form.setValue(dbUrl.getName(), details.get(ServerDetails.Detail.DATABASE_CONNECTION_URL));
+                form.setValue(dbProductName.getName(), details.get(ServerDetails.Detail.DATABASE_PRODUCT_NAME));
+                form.setValue(dbProductVersion.getName(), details.get(ServerDetails.Detail.DATABASE_PRODUCT_VERSION));
+                form.setValue(dbDriverName.getName(), details.get(ServerDetails.Detail.DATABASE_DRIVER_NAME));
+                form.setValue(dbDriverVersion.getName(), details.get(ServerDetails.Detail.DATABASE_DRIVER_VERSION));
+                form.setValue(currentMeasRawTable.getName(), details.get(ServerDetails.Detail.CURRENT_MEASUREMENT_TABLE));
+                form.setValue(nextMeasTableRotation.getName(), details.get(ServerDetails.Detail.NEXT_MEASUREMENT_TABLE_ROTATION));
             }
 
             @Override

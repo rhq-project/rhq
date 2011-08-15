@@ -145,7 +145,7 @@ public class DriftDetector implements Runnable {
         }
 
         // Now we need to do a directory tree scan to look for newly added files
-        forEachFile(basedir, new FilterFileVisitor(schedule.getDriftConfiguration().getIncludes(),
+        forEachFile(basedir, new FilterFileVisitor(basedir, schedule.getDriftConfiguration().getIncludes(),
             schedule.getDriftConfiguration().getExcludes(), new FileVisitor() {
             @Override
             public void visit(File file) {
@@ -178,7 +178,8 @@ public class DriftDetector implements Runnable {
         final DriftConfiguration config = schedule.getDriftConfiguration();
         final File basedir = new File(basedir(schedule.getResourceId(), config));
 
-        forEachFile(basedir, new FilterFileVisitor(config.getIncludes(), config.getExcludes(), new FileVisitor() {
+        forEachFile(basedir, new FilterFileVisitor(basedir, config.getIncludes(), config.getExcludes(),
+            new FileVisitor() {
             @Override
             public void visit(File file) {
                 try {

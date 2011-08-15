@@ -65,7 +65,7 @@ public class FilterFileVisitorTest {
         List<Filter> excludes = emptyList();
         TestVisitor visitor = new TestVisitor();
 
-        forEachFile(basedir, new FilterFileVisitor(includes, excludes, visitor));
+        forEachFile(basedir, new FilterFileVisitor(basedir, includes, excludes, visitor));
 
         assertCollectionEqualsNoOrder(asList(server1Jar, server2Jar, nativeServer1Lib, nativeServer2Lib),
             visitor.visitedFiles, "Visitor should be called for every file when no filters specified");
@@ -84,7 +84,7 @@ public class FilterFileVisitorTest {
         List<Filter> excludes = emptyList();
         TestVisitor visitor = new TestVisitor();
 
-        forEachFile(libDir, new FilterFileVisitor(includes, excludes, visitor));
+        forEachFile(basedir, new FilterFileVisitor(basedir, includes, excludes, visitor));
 
         assertCollectionEqualsNoOrder(asList(fooJar, fooWar, myapp), visitor.visitedFiles,
             "Filtering failed with mulitple includes and no excludes");
@@ -98,7 +98,7 @@ public class FilterFileVisitorTest {
         List<Filter> excludes = emptyList();
         TestVisitor visitor = new TestVisitor();
 
-        forEachFile(basedir, new FilterFileVisitor(includes, excludes, visitor));
+        forEachFile(basedir, new FilterFileVisitor(basedir, includes, excludes, visitor));
 
         assertTrue(visitor.visitedFiles.isEmpty(), "Do not visit files that do not match an includes filter");
     }
@@ -112,7 +112,7 @@ public class FilterFileVisitorTest {
         List<Filter> excludes = asList(new Filter(basedir.getAbsolutePath(), "*.txt"));
         TestVisitor visitor = new TestVisitor();
 
-        forEachFile(basedir, new FilterFileVisitor(includes, excludes, visitor));
+        forEachFile(basedir, new FilterFileVisitor(basedir, includes, excludes, visitor));
 
         assertCollectionEqualsNoOrder(asList(server1Html), visitor.visitedFiles, "Visit files that do not match " +
             "excludes filter and no includes are specified");
@@ -128,10 +128,10 @@ public class FilterFileVisitorTest {
         List<Filter> excludes = asList(new Filter(libDir.getAbsolutePath(), "server-1.jar"));
         TestVisitor visitor = new TestVisitor();
 
-        forEachFile(libDir, new FilterFileVisitor(includes, excludes, visitor));
+        forEachFile(basedir, new FilterFileVisitor(basedir, includes, excludes, visitor));
 
         assertCollectionEqualsNoOrder(asList(server2Jar), visitor.visitedFiles,
-            "Filtering failed when no includes an exclude were specified.");
+            "Filtering failed when no includes and an exclude were specified.");
     }
 
     @Test
@@ -151,10 +151,31 @@ public class FilterFileVisitorTest {
         List<Filter> excludes = asList(new Filter(confDir.getAbsolutePath(), "server-2.conf"));
         TestVisitor visitor = new TestVisitor();
 
-        forEachFile(basedir, new FilterFileVisitor(includes, excludes, visitor));
+        forEachFile(basedir, new FilterFileVisitor(basedir, includes, excludes, visitor));
 
         assertCollectionEqualsNoOrder(asList(server1Jar, server2Jar, server1Conf), visitor.visitedFiles,
             "Do not visit files that match an excludes even when the file matches an include");
+    }
+
+    @Test
+    public void expandRelativePaths() throws Exception {
+        File server1Html = touch(basedir, "server-1.html");
+        File server2Html = touch(basedir, "server-2.html");
+        File server1Txt = touch(basedir, "server-1.txt");
+        File server2Txt = touch(basedir, "server-2.txt");
+
+        File libDir = mkdir(basedir, "lib");
+        File server1Jar = touch(libDir, "server-1.jar");
+        File server2Jar = touch(libDir, "server-2.jar");
+
+        List<Filter> includes = asList(new Filter(".", "server-1.*"), new Filter("./lib", "server-1.*"));
+        List<Filter> excludes = emptyList();
+        TestVisitor visitor = new TestVisitor();
+
+        forEachFile(basedir, new FilterFileVisitor(basedir, includes, excludes, visitor));
+
+        assertCollectionEqualsNoOrder(asList(server1Html, server1Txt, server1Jar), visitor.visitedFiles,
+            "Relative paths should be expanded out to full paths");
     }
 
     private File mkdir(File parent, String dirName) throws IOException {

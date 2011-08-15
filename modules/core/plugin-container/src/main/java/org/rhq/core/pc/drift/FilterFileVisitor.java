@@ -28,6 +28,7 @@ import org.rhq.core.domain.drift.Filter;
 import org.rhq.core.util.file.FileVisitor;
 import org.rhq.core.util.file.PathFilter;
 
+import static org.apache.commons.io.FilenameUtils.normalize;
 import static org.rhq.core.util.file.FileUtil.generateRegex;
 
 public class FilterFileVisitor implements FileVisitor {
@@ -42,18 +43,24 @@ public class FilterFileVisitor implements FileVisitor {
 
     private Pattern excludesPattern;
 
-    public FilterFileVisitor(List<Filter> includes, List<Filter> excludes, FileVisitor visitor) {
-        this.includes = convert(includes);
-        this.excludes = convert(excludes);
+    public FilterFileVisitor(File basedir, List<Filter> includes, List<Filter> excludes, FileVisitor visitor) {
+        this.includes = convert(basedir, includes);
+        this.excludes = convert(basedir, excludes);
         this.visitor = visitor;
         includesPattern = generateRegex(this.includes);
         excludesPattern = generateRegex(this.excludes);
     }
 
-    private List<PathFilter> convert(List<Filter> filters) {
+    private List<PathFilter> convert(File basedir, List<Filter> filters) {
         List<PathFilter> pathFilters = new ArrayList<PathFilter>(filters.size());
         for (Filter filter : filters) {
-            pathFilters.add(new PathFilter(filter.getPath(), filter.getPattern()));
+            File path = new File(filter.getPath());
+            if (path.isAbsolute()) {
+                pathFilters.add(new PathFilter(normalize(path.getAbsolutePath()), filter.getPattern()));
+            } else {
+                pathFilters.add(new PathFilter(normalize(new File(basedir, filter.getPath()).getAbsolutePath()),
+                filter.getPattern()));
+            }
         }
         return pathFilters;
     }

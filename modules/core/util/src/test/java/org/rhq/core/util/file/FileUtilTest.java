@@ -218,8 +218,6 @@ public class FileUtilTest {
         Pattern regex;
 
         regex = assertPatternsRegex("(/basedir/(test1\\.txt))", new PathFilter("/basedir", "test1.txt"));
-        //regex = Pattern.compile("/basedir/test1\\.txt");
-        //regex = Pattern.compile("(/basedir/(test1\\.txt))");
 
         assert regex.matcher("/basedir/test1.txt").matches();
         assert !regex.matcher("/basedir/test2.txt").matches();

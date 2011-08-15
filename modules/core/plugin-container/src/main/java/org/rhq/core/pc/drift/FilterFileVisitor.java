@@ -31,6 +31,38 @@ import org.rhq.core.util.file.PathFilter;
 import static org.apache.commons.io.FilenameUtils.normalize;
 import static org.rhq.core.util.file.FileUtil.generateRegex;
 
+/**
+ * A file visitor that peforms filtering using specified filters. When a file matches a
+ * filter this visitor delegates to another {@link FileVisitor} object. The filtering rules
+ * are as follows:
+ * <p/>
+ * <ul>
+ *     <li>When no filters are specified, are files are considered matches.</li>
+ *     <li>
+ *         When one or more includes filters is specified and no excludes filters are
+ *         specified, only files matching at least one of the includes filter(s) are
+ *         considered matches.
+ *     </li>
+ *     <li>
+ *         When one or more excludes filters is specified and no includes filters are
+ *         specified, only files that do not match any of the excludes filters are
+ *         considered matches.
+ *     </li>
+ *     <li>
+ *         When both includes and excludes filters are specified, only files that match at
+ *         at least one of the includes and do not match any of the excludes are considered
+ *         matches.
+ *     </li>
+ * </ul>
+ * <br/><br/>
+ * Note that the filtering is done on files and not on directories. This is a subtle yet
+ * important distinction. Suppose we have the following filter pattern, *.war, that we apply
+ * to the deploy directory of our JBoss application server. That filter will match things
+ * like foo.war, foo-123.war, or more precisely, any file that ends with .war. The pattern
+ * will not however match things like foo.war/ where foo.war is a directory (i.e., exploded
+ * webapp) since matching is not done on directories. To match the contents of foo.war/
+ * you could use something like *.war/**.
+ */
 public class FilterFileVisitor implements FileVisitor {
 
     private List<PathFilter> includes;

@@ -347,6 +347,42 @@ public class FileUtil {
         }
     }
 
+    /**
+     * Takes a list of filters and compiles them into a regular expression that can be used
+     * for matching or filtering paths. The pattern syntax supports regular expressions as
+     * well as the syntax used in Ant's file/path selectors. Here are some example patterns
+     * that can be specified in a filter:
+     * <p/>
+     * <table border="1">
+     *     <tr>
+     *         <td>Pattern</td>
+     *         <td>Description</td>
+     *     </tr>
+     *     <tr>
+     *         <td>/etc/yum.conf</td>
+     *         <td>exact match of the path</td>
+     *     </tr>
+     *     <tr>
+     *         <td>/etc/*.conf</td>
+     *         <td>match any file /etc that has a .conf suffix</td>
+     *     </tr>
+     *     <tr>
+     *         <td>deploy/myapp-?.war</td>
+     *         <td>Match any file in the deploy directory that starts with myapp- followed any one character and
+     *         ending with a suffix of .war</td>
+     *     </tr>
+     *     <tr>
+     *         <td>jboss/server/**&#047;*.war</td>
+     *         <td>Matches all .war files under the server directory. Sub directories are included as well such
+     *         that jboss/server/default/myapp.war jboss/server/production/myapp.war and
+     *         jboss/server/default/myapp.ear/myapp.war all match</td>
+     *     </tr>
+     * </table>
+     *
+     * @param filters Compiled into a regular expression
+     * @return A Pattern object that is a compilation of regular expressions built from
+     * the specified path filters
+     */
     public static Pattern generateRegex(List<PathFilter> filters) {
         boolean first = true;
         StringBuilder regex = new StringBuilder();

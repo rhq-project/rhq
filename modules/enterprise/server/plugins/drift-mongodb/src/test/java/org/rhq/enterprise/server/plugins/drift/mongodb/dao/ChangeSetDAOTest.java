@@ -52,7 +52,7 @@ public class ChangeSetDAOTest {
 
     // Tests need to be disabled when committed/pushed to the remote repo until we get
     // mongodb installed on the hudson slave
-    static final boolean ENABLED = true;
+    static final boolean ENABLED = false;
 
     Mongo connection;
 

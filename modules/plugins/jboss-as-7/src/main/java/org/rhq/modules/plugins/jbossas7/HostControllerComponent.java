@@ -70,8 +70,11 @@ public class HostControllerComponent extends BaseServerComponent implements Oper
     @Override
     public CreateResourceReport createResource(CreateResourceReport report) {
 
-        // TODO check for types of children -- this is server group only at the moment.
+        // If Content is to be deployed, call the deployContent method
+        if (report.getPackageDetails()!=null)
+            return super.deployContent(report);
 
+        // TODO check for types of children -- this is server group only at the moment.
         String name = report.getUserSpecifiedResourceName();
         Address address = new Address(path);
         address.add("server-group",name);
@@ -94,7 +97,7 @@ public class HostControllerComponent extends BaseServerComponent implements Oper
         op.addAdditionalProperty("socket-binding-group",socketBindingGroup);
         PropertySimple offset = rc.getSimple("socket-binding-port-offset");
         if (offset!=null && offset.getStringValue()!=null)
-            op.addAdditionalProperty("socket-binding-port-offset",offset);
+            op.addAdditionalProperty("socket-binding-port-offset",offset.getIntegerValue());
         // TODO add jvm info
 
         Result res = getASConnection().execute(op);

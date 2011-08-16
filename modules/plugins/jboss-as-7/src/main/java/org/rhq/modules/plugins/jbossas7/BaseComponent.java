@@ -270,7 +270,7 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
     @Override
     public CreateResourceReport createResource(CreateResourceReport report) {
 
-        if (context.getContentContext() != null) { // Content deployment
+        if (report.getPackageDetails() != null) { // Content deployment
             return deployContent(report);
         } else {
             report.setStatus(CreateResourceStatus.INVALID_CONFIGURATION);
@@ -303,7 +303,7 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
      * @param report Create resource report that tells us what to do
      * @return report that tells us what has been done.
      */
-    private CreateResourceReport deployContent(CreateResourceReport report) {
+    protected CreateResourceReport deployContent(CreateResourceReport report) {
         ContentContext cctx = context.getContentContext();
         ResourcePackageDetails details = report.getPackageDetails();
 

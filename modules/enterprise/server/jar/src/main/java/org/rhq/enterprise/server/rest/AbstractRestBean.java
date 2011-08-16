@@ -54,11 +54,12 @@ public class AbstractRestBean {
      * Renders the passed object with the help of a freemarker template into a string. Freemarket templates
      * are searched in the class path in a directory called "/rest_templates". In the usual Maven tree structure,
      * this is below src/main/resources/.
-     * @param objectToRender Object to render via template
+     *
      * @param templateName Template to use for rendering. If the template name does not end in .ftl, .ftl is appended.
+     * @param objectToRender Object to render via template
      * @return Template filled with data from objectToRender
      */
-    protected String fillTemplate(Object objectToRender, String templateName) {
+    protected String renderTemplate(String templateName, Object objectToRender) {
         try {
             freemarker.template.Configuration config = new Configuration();
 

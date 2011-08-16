@@ -39,7 +39,7 @@ import org.rhq.enterprise.server.rest.domain.ResourceWithType;
  * Interface class that describes the REST interface
  * @author Heiko W. Rupp
  */
-@Produces({"application/json","application/xml","text/plain"})
+@Produces({"application/json","application/xml","text/html"})
 @Path("/resource")
 @Local
 public interface ResourceHandlerLocal {
@@ -50,11 +50,23 @@ public interface ResourceHandlerLocal {
     })
     @GET
     @Path("/{id}")
+    @Produces({"application/json","application/xml"})
     ResourceWithType getResource(@PathParam("id") int id);
 
     @GET
+    @Path("/{id}")
+    @Produces("text/html")
+    String getResourceHtml(@PathParam("id") int id);
+
+    @GET
     @Path("/platforms")
+    @Produces({"application/json","application/xml"})
     List<ResourceWithType> getPlatforms();
+
+    @GET
+    @Path("/platforms")
+    @Produces("text/html")
+    String getPlatformsHtml();
 
     @LinkResource(rel = "availability", value = AvailabilityRest.class)
     @GET
@@ -63,13 +75,27 @@ public interface ResourceHandlerLocal {
 
     @GET
     @Path("/{id}/schedules")
+    @Produces({"application/json","application/xml"})
     @LinkResource(rel="schedules",value = MetricSchedule.class)
     List<MetricSchedule> getSchedules(@PathParam("id") int resourceId);
 
     @GET
+    @Path("/{id}/schedules")
+    @Produces("text/html")
+    @LinkResource(rel="schedules",value = MetricSchedule.class)
+    String getSchedulesHtml(@PathParam("id") int resourceId);
+
+    @GET
     @Path("/{id}/children")
+    @Produces({"application/json","application/xml"})
     @LinkResource(rel="children", value = ResourceWithType.class)
     List<ResourceWithType> getChildren(@PathParam("id") int id);
+
+    @GET
+    @Path("/{id}/children")
+    @Produces("text/html")
+    @LinkResource(rel="children", value = ResourceWithType.class)
+    String getChildrenHtml(@PathParam("id") int id);
 
     @AddLinks
     @GET

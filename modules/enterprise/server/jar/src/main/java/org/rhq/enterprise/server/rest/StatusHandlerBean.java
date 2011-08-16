@@ -21,6 +21,9 @@ package org.rhq.enterprise.server.rest;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
 
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertDefinition;
@@ -92,5 +95,11 @@ public class StatusHandlerBean extends AbstractRestBean implements StatusHandler
         status.setMetricsMin(scheduleManager.getScheduledMeasurementsPerMinute());
 
         return status;
+    }
+
+    @Override
+    public String getStatusHtml() {
+        Status status = getStatus();
+        return renderTemplate("status",status);
     }
 }

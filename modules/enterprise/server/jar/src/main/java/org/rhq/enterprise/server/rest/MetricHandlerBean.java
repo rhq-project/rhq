@@ -108,7 +108,7 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
                                     int dataPoints,
                                     boolean hideEmpty) {
         MetricAggregate agg = getMetricData(scheduleId,startTime,endTime,dataPoints,hideEmpty);
-        return fillTemplate(agg,"metricData");
+        return renderTemplate("metricData", agg);
     }
 
     public MetricSchedule getSchedule(int scheduleId) {
@@ -127,7 +127,7 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
     @Override
     public String getScheduleHtml(int scheduleId) {
         MetricSchedule ms = getSchedule(scheduleId);
-        return fillTemplate(ms,"metricSchedule");
+        return renderTemplate("metricSchedule", ms);
     }
 
     @Override

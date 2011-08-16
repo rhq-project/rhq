@@ -78,6 +78,11 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
         return rwt;
     }
 
+    @Override
+    public String getResourceHtml(int id) {
+        ResourceWithType rwt = getResource(id);
+        return renderTemplate("resourceWithType.ftl", rwt);
+    }
 
     @Override
     public List<ResourceWithType> getPlatforms() {
@@ -90,6 +95,12 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
             rwtList.add(rwt);
         }
         return rwtList;
+    }
+
+    @Override
+    public String getPlatformsHtml() {
+        List<ResourceWithType> list = getPlatforms();
+        return renderTemplate("listResourceWithType", list);
     }
 
     @Override
@@ -131,6 +142,10 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
         return ret;
     }
 
+    public String getSchedulesHtml(int resourceId) {
+        List<MetricSchedule> list = getSchedules(resourceId);
+        return renderTemplate("listMetricSchedule", list);
+    }
 
     @Override
     public List<ResourceWithType> getChildren(int id) {
@@ -144,6 +159,11 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
         }
 
         return rwtList;
+    }
+
+    public String getChildrenHtml(int id) {
+        List<ResourceWithType> list = getChildren(id);
+        return renderTemplate("listResourceWithType", list);
     }
 
     @Override

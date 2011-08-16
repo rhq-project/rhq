@@ -87,6 +87,7 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
         String TraitPurge = "TRAIT_PURGE";
         String RtDataPurge = "RT_DATA_PURGE";
         String EventPurge = "EVENT_PURGE";
+        String DriftFilePurge = "DRIFT_FILE_PURGE";
         String DataReindex = "DATA_REINDEX_NIGHTLY";
         String BaselineFrequency = "CAM_BASELINE_FREQUENCY";
         String BaselineDataSet = "CAM_BASELINE_DATASET";
@@ -153,8 +154,8 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
                         value = convertMillisToHours(value);
                     } else if (Constant.AvailabilityPurge.equals(name) || Constant.AlertPurge.equals(name)
                         || Constant.TraitPurge.equals(name) || Constant.RtDataPurge.equals(name)
-                        || Constant.EventPurge.equals(name) || Constant.BaselineFrequency.equals(name)
-                        || Constant.BaselineDataSet.equals(name)) {
+                        || Constant.EventPurge.equals(name) || Constant.DriftFilePurge.equals(name)
+                        || Constant.BaselineFrequency.equals(name) || Constant.BaselineDataSet.equals(name)) {
                         value = convertMillisToDays(value);
                     } else if (Constant.EnableAgentAutoUpdate.equals(name)) {
                         if (value.trim().length() == 0) {
@@ -250,6 +251,7 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
                 } else if (Constant.AvailabilityPurge.equals(simple.getName())
                     || Constant.AlertPurge.equals(simple.getName()) || Constant.TraitPurge.equals(simple.getName())
                     || Constant.RtDataPurge.equals(simple.getName()) || Constant.EventPurge.equals(simple.getName())
+                    || Constant.DriftFilePurge.equals(simple.getName())
                     || Constant.BaselineFrequency.equals(simple.getName())
                     || Constant.BaselineDataSet.equals(simple.getName())) {
                     value = convertDaysToMillis(value);
@@ -415,6 +417,14 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
         eventPurge.addConstraints(new IntegerRangeConstraint(Long.valueOf(1), null));
         eventPurge.setDefaultValue("14");
         def.put(eventPurge);
+
+        PropertyDefinitionSimple driftFilePurge = new PropertyDefinitionSimple(Constant.DriftFilePurge, MSG
+            .view_admin_systemSettings_DriftFilePurge_desc(), true, PropertySimpleType.INTEGER);
+        driftFilePurge.setDisplayName(MSG.view_admin_systemSettings_DriftFilePurge_name());
+        driftFilePurge.setPropertyGroupDefinition(dataManagerGroup);
+        driftFilePurge.addConstraints(new IntegerRangeConstraint(Long.valueOf(1), null));
+        driftFilePurge.setDefaultValue("7");
+        def.put(driftFilePurge);
 
         PropertyDefinitionSimple dataReindex = new PropertyDefinitionSimple(Constant.DataReindex, MSG
             .view_admin_systemSettings_DataReindex_desc(), true, PropertySimpleType.BOOLEAN);
@@ -634,8 +644,10 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
                 form.setValue(dbProductVersion.getName(), details.get(ServerDetails.Detail.DATABASE_PRODUCT_VERSION));
                 form.setValue(dbDriverName.getName(), details.get(ServerDetails.Detail.DATABASE_DRIVER_NAME));
                 form.setValue(dbDriverVersion.getName(), details.get(ServerDetails.Detail.DATABASE_DRIVER_VERSION));
-                form.setValue(currentMeasRawTable.getName(), details.get(ServerDetails.Detail.CURRENT_MEASUREMENT_TABLE));
-                form.setValue(nextMeasTableRotation.getName(), details.get(ServerDetails.Detail.NEXT_MEASUREMENT_TABLE_ROTATION));
+                form.setValue(currentMeasRawTable.getName(), details
+                    .get(ServerDetails.Detail.CURRENT_MEASUREMENT_TABLE));
+                form.setValue(nextMeasTableRotation.getName(), details
+                    .get(ServerDetails.Detail.NEXT_MEASUREMENT_TABLE_ROTATION));
             }
 
             @Override

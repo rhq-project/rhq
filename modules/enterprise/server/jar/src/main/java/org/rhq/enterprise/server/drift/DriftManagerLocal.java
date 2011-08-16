@@ -104,7 +104,8 @@ public interface DriftManagerLocal extends DriftServerPluginFacet, DriftManagerR
      * to help reclaim space on the backend.
      * 
      * @param subject
+     * @param purgeMillis only those unused drift files that are older than this (in epoch millis) will be purged.
      * @return number of orphaned drife files that were removed
      */
-    int purgeOrphanedDriftFiles(Subject subject);
+    int purgeOrphanedDriftFiles(Subject subject, long purgeMillis);
 }

@@ -100,8 +100,9 @@ public class JPADriftServerBean implements JPADriftServerLocal {
 
     @Override
     @TransactionAttribute(REQUIRES_NEW)
-    public int purgeOrphanedDriftFiles(Subject subject) {
+    public int purgeOrphanedDriftFiles(Subject subject, long purgeMillis) {
         Query q = entityManager.createNativeQuery(JPADriftFile.NATIVE_DELETE_ORPHANED_DRIFT_FILES);
+        q.setParameter(1, purgeMillis);
         int count = q.executeUpdate();
         log.debug("purged [" + count + "] drift files that were orphaned (that is, no longer referenced by drift)");
         return count;

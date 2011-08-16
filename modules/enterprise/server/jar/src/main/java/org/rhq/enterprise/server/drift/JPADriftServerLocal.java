@@ -121,7 +121,8 @@ public interface JPADriftServerLocal {
      * to help reclaim space on the backend.
      * 
      * @param subject
+     * @param purgeMillis 
      * @return number of orphaned drife files that were removed
      */
-    int purgeOrphanedDriftFiles(Subject subject);
+    int purgeOrphanedDriftFiles(Subject subject, long purgeMillis);
 }

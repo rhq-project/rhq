@@ -61,11 +61,14 @@ public class JPADriftFile extends AbstractJPADriftFile implements Serializable, 
      * 
      * Therefore, we need to define a native query that we know works. This should be periodically executed
      * in order to purge unused drift files.
+     * 
+     * Note that we also add the AND clause to also check for CTIME. 
      */
     public static final String NATIVE_DELETE_ORPHANED_DRIFT_FILES = "" //
         + "DELETE FROM RHQ_DRIFT_FILE " //
         + " WHERE (HASH_ID NOT IN (SELECT OLD_DRIFT_FILE FROM RHQ_DRIFT)) " //
-        + "   AND (HASH_ID NOT IN (SELECT NEW_DRIFT_FILE FROM RHQ_DRIFT)) ";
+        + "   AND (HASH_ID NOT IN (SELECT NEW_DRIFT_FILE FROM RHQ_DRIFT)) " //
+        + "   AND CTIME < ?";
 
     // this is a hash/digest that should uniquely identify the content
     @Id

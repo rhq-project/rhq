@@ -119,7 +119,7 @@ public class JPADriftServerPluginComponent implements DriftServerPluginFacet, Se
     }
 
     @Override
-    public int purgeOrphanedDriftFiles(Subject subject) {
-        return getJPADriftServer().purgeOrphanedDriftFiles(subject);
+    public int purgeOrphanedDriftFiles(Subject subject, long purgeMillis) {
+        return getJPADriftServer().purgeOrphanedDriftFiles(subject, purgeMillis);
     }
 }

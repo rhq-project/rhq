@@ -332,9 +332,9 @@ public class DriftManagerBean implements DriftManagerLocal {
 
     @Override
     @TransactionAttribute(NOT_SUPPORTED)
-    public int purgeOrphanedDriftFiles(Subject subject) {
+    public int purgeOrphanedDriftFiles(Subject subject, long purgeMillis) {
         DriftServerPluginFacet driftServerPlugin = getServerPlugin();
-        return driftServerPlugin.purgeOrphanedDriftFiles(subject);
+        return driftServerPlugin.purgeOrphanedDriftFiles(subject, purgeMillis);
     }
 
     @Override

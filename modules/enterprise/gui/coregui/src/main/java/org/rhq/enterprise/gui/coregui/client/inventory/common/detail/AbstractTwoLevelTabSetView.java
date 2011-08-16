@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.Set;
 
 import com.allen_sauer.gwt.log.client.Log;
-import com.google.gwt.user.client.History;
 import com.smartgwt.client.types.Side;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.layout.Layout;
@@ -140,9 +139,11 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
         // we want to prevent user initiation of another tab change. To block users from clicking tabs we 
         // disable the tab set.  We re-enable the tabset when safe. (see this method and also selectTab()). 
 
+        String historyToken = tabSelectedEvent.getHistoryToken();
+
         if (getSelectedItemId() == null) {
             this.tabSet.disable();
-            CoreGUI.goToView(History.getToken());
+            CoreGUI.goToView(historyToken);
 
         } else {
             String tabId = tabSelectedEvent.getId();
@@ -153,7 +154,7 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
             // If the selected tab or subtab is not already the current history item, the user clicked on the tab, rather
             // than going directly to the tab's URL. In this case, fire a history event to go to the tab and make it the
             // current history item.
-            if (!(History.getToken().equals(path) || History.getToken().startsWith(path + "/"))) {
+            if (!(historyToken.equals(path) || historyToken.startsWith(path + "/"))) {
                 this.tabSet.disable();
                 CoreGUI.goToView(path);
 

@@ -69,23 +69,23 @@ public class ResourceFactoryConfigurationStep extends AbstractWizardStep {
 
                     @Override
                     public void onFailure(Throwable throwable) {
-                        ConfigurationEditor configurationEditor = new ConfigurationEditor(vLayout.extendLocatorId("Editor"),
+                        editor = new ConfigurationEditor(vLayout.extendLocatorId("Editor"),
                             def, startingConfig);
 //                        configurationEditor.setReadOnly(isReadOnly());
 //                        operationParametersConfigurationHolder.addMember(configurationEditor);
 //                        operationParametersConfigurationHolder.show();
-                        vLayout.addMember(configurationEditor);
+                        vLayout.addMember(editor);
 
                     }
 
                     @Override
                     public void onSuccess(ConfigurationDefinition result) {
-                        ConfigurationEditor configurationEditor = new ConfigurationEditor(vLayout.extendLocatorId("Editor"),
+                        editor = new ConfigurationEditor(vLayout.extendLocatorId("Editor"),
                             result, startingConfig);
 //                        configurationEditor.setReadOnly(isReadOnly());
 //                        operationParametersConfigurationHolder.addMember(configurationEditor);
 //                        operationParametersConfigurationHolder.show();
-                        vLayout.addMember(configurationEditor);
+                        vLayout.addMember(editor);
                     }
                 });
 

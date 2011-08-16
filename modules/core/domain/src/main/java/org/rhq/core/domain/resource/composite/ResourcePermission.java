@@ -49,7 +49,7 @@ public class ResourcePermission implements Serializable {
         this.permissions = Permission.RESOURCE_ALL;
     }
 
-    public ResourcePermission(//
+    public ResourcePermission( //
         boolean measure, //
         boolean inventory, //
         boolean control, //
@@ -58,8 +58,9 @@ public class ResourcePermission implements Serializable {
         boolean configureRead, //
         boolean configureWrite, //
         boolean content, //
-        boolean createChildResources,//
-        boolean deleteResource, boolean drift) {
+        boolean createChildResources, //
+        boolean deleteResource, //
+        boolean drift) {
 
         this.permissions = new HashSet<Permission>();
 

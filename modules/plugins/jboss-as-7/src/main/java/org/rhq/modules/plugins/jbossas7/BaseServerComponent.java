@@ -137,17 +137,22 @@ public class BaseServerComponent extends BaseComponent {
      */
     protected OperationResult postProcessResult(String name, Result res) {
         OperationResult operationResult = new OperationResult();
-        if (name.equals("shutdown")) {
+        if (name.equals("shutdown") || name.equals("reload")) {
             /*
              * Shutdown needs a special treatment, because after sending the operation, if shutdown suceeds,
              * the server connection is closed and we can't read from it. So if we get connection refused for
              * reading, this is a good sign.
              */
             if (!res.isSuccess()) {
-                if (res.getThrowable()!=null && (res.getThrowable() instanceof ConnectException || res.getThrowable().getMessage().equals("Connection refused")))
+                if (res.getThrowable()!=null && (res.getThrowable() instanceof ConnectException || res.getThrowable().getMessage().equals("Connection refused"))) {
                     operationResult.setSimpleResult("Success");
+                    log.debug("Got a ConnectionRefused for operation " + name + " this is considered ok, as the remote server sometimes closes the communications channel before sending a reply");
+                }
                 else
                     operationResult.setErrorMessage(res.getFailureDescription());
+            }
+            else {
+                operationResult.setSimpleResult("Success");
             }
         }
         else {

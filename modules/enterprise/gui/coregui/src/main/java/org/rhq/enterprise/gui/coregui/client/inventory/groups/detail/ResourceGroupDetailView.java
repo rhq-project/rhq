@@ -226,27 +226,31 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
     }
 
     protected void updateTabContent(ResourceGroupComposite groupComposite) {
-        this.groupComposite = groupComposite;
-        ResourceGroup group = groupComposite.getResourceGroup();
-        int groupId = group.getId();
-        getTitleBar().setGroup(groupComposite);
+        try {
+            this.groupComposite = groupComposite;
+            ResourceGroup group = groupComposite.getResourceGroup();
+            int groupId = group.getId();
+            getTitleBar().setGroup(groupComposite);
 
-        // wipe the canvas views for the current set of subtabs.
-        this.getTabSet().destroyViews();
+            // wipe the canvas views for the current set of subtabs.
+            this.getTabSet().destroyViews();
 
-        GroupCategory groupCategory = groupComposite.getResourceGroup().getGroupCategory();
-        Set<ResourceTypeFacet> facets = groupComposite.getResourceFacets().getFacets();
+            GroupCategory groupCategory = groupComposite.getResourceGroup().getGroupCategory();
+            Set<ResourceTypeFacet> facets = groupComposite.getResourceFacets().getFacets();
 
-        updateSummaryTab();
-        updateMonitoringTab(groupId, groupCategory, facets);
-        updateInventoryTab(groupId, facets);
-        updateOperationsTab(groupCategory, facets);
-        updateAlertsTab(groupComposite, groupCategory);
-        updateConfigurationTab(groupId, groupCategory, facets);
-        updateEventsTab(groupComposite, groupCategory, facets);
+            updateSummaryTab();
+            updateMonitoringTab(groupId, groupCategory, facets);
+            updateInventoryTab(groupId, facets);
+            updateOperationsTab(groupCategory, facets);
+            updateAlertsTab(groupComposite, groupCategory);
+            updateConfigurationTab(groupId, groupCategory, facets);
+            updateEventsTab(groupComposite, groupCategory, facets);
 
-        this.show();
-        markForRedraw();
+            this.show();
+            markForRedraw();
+        } catch (Exception e) {
+            CoreGUI.getErrorHandler().handleError("Failed to update tab content.", e);
+        }
     }
 
     private void updateSummaryTab() {

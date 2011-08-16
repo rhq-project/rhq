@@ -2438,7 +2438,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                 + "   ( SELECT count(p) FROM %alias%.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 11 ), " // CONFIGURE_WRITE
                 + "   ( SELECT count(p) FROM %alias%.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 9 ), " // MANAGE_CONTENT
                 + "   ( SELECT count(p) FROM %alias%.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 6 ), " // CREATE_CHILD_RESOURCES
-                + "   ( SELECT count(p) FROM %alias%.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 5 ))"; // DELETE_RESOURCES
+                + "   ( SELECT count(p) FROM %alias%.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 5 ), " // DELETE_RESOURCES
+                + "   ( SELECT count(p) FROM %alias%.implicitGroups g JOIN g.roles r JOIN r.subjects s JOIN r.permissions p WHERE s.id = %subjectId% AND p = 16 ))"; // MANAGE_DRIFT
             compositeProjection = compositeProjection.replace("%subjectId%", String.valueOf(subject.getId()));
         }
         compositeProjection = compositeProjection.replace("%alias%", criteria.getAlias());

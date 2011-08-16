@@ -204,7 +204,7 @@
                   <property name="rhq.server.enable.ws" value="${rhq.server.enable.ws}" />
                   <property name="jbossws-native-dist.version" value="${jbossws-native-dist.version}" />
 
-                  <property name="rhq.sync.endpoint-address" value="${rhq.sync.endpoint-address}"/>
+                  <property name="rhq.sync.endpoint-address" value="${rhq.sync.endpoint-address}" />
                 </ant>
               </tasks>
             </configuration>

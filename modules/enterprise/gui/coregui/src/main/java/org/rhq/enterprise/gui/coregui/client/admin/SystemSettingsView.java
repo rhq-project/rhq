@@ -105,7 +105,6 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
         String LDAPBindPW = "CAM_LDAP_BIND_PW";
 
         String ACTIVE_DRIFT_PLUGIN = "ACTIVE_DRIFT_PLUGIN";
-        String DRIFT_PLUGINS = "DRIFT_PLUGINS";
     }
 
     public SystemSettingsView(String locatorId) {
@@ -309,11 +308,10 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
      *               be converted to the types the definition will expect - for example,
      *               the JAAS setting will not be "LDAP" or "JDBC" as the server would know it,
      *               rather the value will be "true" or "false" (i.e. is ldap enabled or not?)
-     *
+     * @param driftPlugins the set of drift server plugins that are currently deployed
      * @return system settings config def
      */
-    private ConfigurationDefinition getSystemSettingsDefinition(Configuration config,
-        Map<String, String> driftPlugins) {
+    private ConfigurationDefinition getSystemSettingsDefinition(Configuration config, Map<String, String> driftPlugins) {
         ConfigurationDefinition def = new ConfigurationDefinition("sysset", MSG.view_adminConfig_systemSettings());
 
         ///////////////////////////////////
@@ -530,20 +528,19 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
         ///////////////////////////////////////////
         // Drift Server Configuration Properties //
         ///////////////////////////////////////////
-        PropertyGroupDefinition driftGroup = new PropertyGroupDefinition("drift server");
-        driftGroup.setDisplayName("Drift Server Configuration Settings");
+        PropertyGroupDefinition driftGroup = new PropertyGroupDefinition("drift");
+        driftGroup.setDisplayName(MSG.view_admin_systemSettings_group_drift());
         driftGroup.setOrder(4);
         driftGroup.setDefaultHidden(false);
 
-        PropertyDefinitionSimple activeDriftServer = new PropertyDefinitionSimple("ACTIVE_DRIFT_PLUGIN",
-            "The drift server plugin that manages the persistence of drift-related entities and content", true,
-            PropertySimpleType.STRING);
-        activeDriftServer.setDisplayName("Active Drift Server Plugin");
+        PropertyDefinitionSimple activeDriftServer = new PropertyDefinitionSimple(Constant.ACTIVE_DRIFT_PLUGIN, MSG
+            .view_admin_systemSettings_ActiveDriftServerPlugin_desc(), true, PropertySimpleType.STRING);
+        activeDriftServer.setDisplayName(MSG.view_admin_systemSettings_ActiveDriftServerPlugin_name());
         activeDriftServer.setPropertyGroupDefinition(driftGroup);
 
         List<PropertyDefinitionEnumeration> options = new ArrayList<PropertyDefinitionEnumeration>();
         for (Map.Entry<String, String> entry : driftPlugins.entrySet()) {
-            options.add(new PropertyDefinitionEnumeration(entry.getValue(), entry.getKey())) ;
+            options.add(new PropertyDefinitionEnumeration(entry.getValue(), entry.getKey()));
         }
 
         activeDriftServer.setEnumeratedValues(options, false);

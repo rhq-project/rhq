@@ -19,8 +19,6 @@
 
 package org.rhq.enterprise.server.plugins.drift.mongodb;
 
-import static org.rhq.enterprise.server.util.LookupUtil.getResourceManager;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
@@ -65,6 +63,8 @@ import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBChangeSet
 import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBChangeSetEntry;
 import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBFile;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+
+import static org.rhq.enterprise.server.util.LookupUtil.getResourceManager;
 
 public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginComponent {
 
@@ -225,6 +225,11 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
     public int purgeOrphanedDriftFiles(Subject subject) {
         // TODO implement me!
         return 0;
+    }
+
+    @Override
+    public String getDriftFileBits(String hash) {
+        return null;
     }
 
     Map<Integer, Resource> loadResourceMap(Subject subject, Integer[] resourceIds) {

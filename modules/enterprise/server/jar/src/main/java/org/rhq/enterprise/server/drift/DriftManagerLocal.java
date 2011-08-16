@@ -107,4 +107,12 @@ public interface DriftManagerLocal extends DriftServerPluginFacet, DriftManagerR
      * @return number of orphaned drife files that were removed
      */
     int purgeOrphanedDriftFiles(Subject subject);
+
+    /**
+     * Returns the content associated with the specified hash as a string
+     *
+     * @param hash The hash the uniquely identifies the requested content
+     * @return The content as a string
+     */
+    String getDriftFileBits(String hash);
 }

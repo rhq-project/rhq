@@ -22,8 +22,10 @@ package org.rhq.enterprise.server.sync.test;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -54,6 +56,7 @@ import org.rhq.core.domain.sync.ExporterMessages;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
+import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.resource.metadata.PluginManagerLocal;
 import org.rhq.enterprise.server.sync.ExportingInputStream;
 import org.rhq.enterprise.server.sync.MetricTemplateSynchronizer;
@@ -74,6 +77,7 @@ public class MetricTemplateExporterTest extends JMockTest {
     public void testCanExport() throws Exception {
         final MeasurementDefinitionManagerLocal measurementDefinitionManager = context.mock(MeasurementDefinitionManagerLocal.class);
         final PluginManagerLocal pluginManager = context.mock(PluginManagerLocal.class);
+        final MeasurementScheduleManagerLocal measurementScheduleManager = context.mock(MeasurementScheduleManagerLocal.class);
         context.checking(new Expectations() {
             {
                 allowing(measurementDefinitionManager).findMeasurementDefinitionsByCriteria(with(any(Subject.class)), with(any(MeasurementDefinitionCriteria.class)));
@@ -84,7 +88,7 @@ public class MetricTemplateExporterTest extends JMockTest {
             }
         });
         
-        MetricTemplateSynchronizer exporter = new MetricTemplateSynchronizer(measurementDefinitionManager, pluginManager);
+        MetricTemplateSynchronizer exporter = new MetricTemplateSynchronizer(measurementDefinitionManager, measurementScheduleManager, pluginManager);
 
         Set<Synchronizer<?, ?>> exporters = new HashSet<Synchronizer<?, ?>>();
         exporters.add(exporter);

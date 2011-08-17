@@ -24,11 +24,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import org.apache.commons.io.FilenameUtils;
+
 import org.rhq.core.domain.drift.Filter;
 import org.rhq.core.util.file.FileVisitor;
 import org.rhq.core.util.file.PathFilter;
 
-import static org.apache.commons.io.FilenameUtils.normalize;
 import static org.rhq.core.util.file.FileUtil.generateRegex;
 
 /**
@@ -62,6 +63,9 @@ import static org.rhq.core.util.file.FileUtil.generateRegex;
  * will not however match things like foo.war/ where foo.war is a directory (i.e., exploded
  * webapp) since matching is not done on directories. To match the contents of foo.war/
  * you could use something like *.war/**.
+ * <br/><br/>
+ * If a filter path denotes a directory and if no pattern is specified, then it is assumed
+ * everything in the directory (including subdirectories) should be considered a match.
  */
 public class FilterFileVisitor implements FileVisitor {
 
@@ -86,15 +90,44 @@ public class FilterFileVisitor implements FileVisitor {
     private List<PathFilter> convert(File basedir, List<Filter> filters) {
         List<PathFilter> pathFilters = new ArrayList<PathFilter>(filters.size());
         for (Filter filter : filters) {
-            File path = new File(filter.getPath());
-            if (path.isAbsolute()) {
-                pathFilters.add(new PathFilter(normalize(path.getAbsolutePath()), filter.getPattern()));
-            } else {
-                pathFilters.add(new PathFilter(normalize(new File(basedir, filter.getPath()).getAbsolutePath()),
-                filter.getPattern()));
-            }
+            pathFilters.add(normalize(basedir, filter));
         }
         return pathFilters;
+    }
+
+    /**
+     * Besides converting the {@link Filter} into a {@link PathFilter}, this method does a
+     * couple additional things. If the path is a relative, it is expanded into an absolute
+     * path. If the path denotes a directory and if no pattern is specified, it is assumed
+     * that everything under that directory including sub directories should be considered
+     * matches.
+     *
+     * @param basedir The base directory from which drift detection is being done
+     * @param filter The filter to convert and normalize
+     * @return The converted and normalized filter
+     */
+    private PathFilter normalize(File basedir, Filter filter) {
+        File path = new File(filter.getPath());
+        File filterPath;
+        String filterPattern;
+
+        if (path.isAbsolute()) {
+            filterPath = path;
+        } else {
+            filterPath = new File(basedir, filter.getPath());
+        }
+
+        if (filterPath.isDirectory() && isEmpty(filter.getPattern())) {
+            filterPattern = "**/*";
+        } else {
+            filterPattern = filter.getPattern();
+        }
+
+        return new PathFilter(FilenameUtils.normalize(filterPath.getAbsolutePath()), filterPattern);
+    }
+
+    private boolean isEmpty(String s) {
+        return s == null || s.length() == 0;
     }
 
     @Override

@@ -178,6 +178,27 @@ public class FilterFileVisitorTest {
             "Relative paths should be expanded out to full paths");
     }
 
+    @Test
+    public void includeEverythingWhenPathIsADirectoryAndNoPatternSpecified() throws Exception {
+        File deployDir = mkdir(basedir, "deploy");
+        File serverEar = touch(deployDir, "server.ear");
+        File myapp = mkdir(deployDir, "myapp.war");
+        File indexHtml = touch(myapp, "index.html");
+
+        File confDir = mkdir(basedir, "conf");
+        File serverConf = touch(confDir, "server.conf");
+
+        List<Filter> includes = asList(new Filter(deployDir.getAbsolutePath(), null));
+        List<Filter> excludes = emptyList();
+        TestVisitor visitor = new TestVisitor();
+
+        forEachFile(basedir, new FilterFileVisitor(basedir, includes, excludes, visitor));
+
+        assertCollectionEqualsNoOrder(asList(serverEar, indexHtml), visitor.visitedFiles,
+            "When a filter path specifies a directory and no pattern is specified, all files under that directory, " +
+            "including subdirectories should be considered a match.");
+    }
+
     private File mkdir(File parent, String dirName) throws IOException {
         File dir = new File(parent, dirName);
         dir.mkdirs();

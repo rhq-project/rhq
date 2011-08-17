@@ -23,30 +23,29 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
-import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.common.drift.ChangeSetReader;
 import org.rhq.common.drift.ChangeSetReaderImpl;
 import org.rhq.common.drift.ChangeSetWriter;
-import org.rhq.common.drift.DirectoryEntry;
 import org.rhq.common.drift.FileEntry;
 import org.rhq.common.drift.Headers;
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.drift.DriftConfiguration;
 
+import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
 import static org.apache.commons.io.FileUtils.touch;
 import static org.rhq.common.drift.FileEntry.addedFileEntry;
+import static org.rhq.common.drift.FileEntry.changedFileEntry;
 import static org.rhq.common.drift.FileEntry.removedFileEntry;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.DRIFT;
 import static org.rhq.test.AssertUtils.assertCollectionMatchesNoOrder;
 import static org.rhq.test.AssertUtils.assertPropertiesMatch;
-import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
 public class DriftDetectorTest extends DriftTest {
@@ -74,7 +73,10 @@ public class DriftDetectorTest extends DriftTest {
     @Test
     public void excludeEmptyDirsFromCoverageChangeSet() throws Exception {
         File confDir = mkdir(resourceDir, "conf");
-        touch(new File(confDir, "server.conf"));
+        File serverConf = createRandomFile(confDir, "server.conf");
+
+        // create an empty directory
+        File libDir = mkdir(resourceDir, "lib");
 
         DriftConfiguration driftConfig = driftConfiguration("coverage-test", resourceDir.getAbsolutePath());
 
@@ -82,43 +84,19 @@ public class DriftDetectorTest extends DriftTest {
         detector.run();
 
         File changeSet = changeSet(driftConfig.getName(), COVERAGE);
+        Headers headers = createHeaders(driftConfig, COVERAGE);
+        List<FileEntry> expected = asList(addedFileEntry("conf/server.conf", sha256(serverConf)));
 
-        assertHeaderEquals(changeSet, createHeaders(driftConfig, COVERAGE));
-        assertThatChangeSetDoesNotContainEmptyDirs(changeSet);
-    }
-
-    @SuppressWarnings("unchecked")
-    @Test
-    public void usePeriodAsNameOfBasedirDirectoryEntry() throws Exception {
-        File data1 = new File(resourceDir, "data-1.txt");
-        touch(data1);
-        File data2 = new File(resourceDir, "data-2.txt");
-        touch(data2);
-
-        DriftConfiguration driftConfig = driftConfiguration("basedir-entry-test", resourceDir.getAbsolutePath());
-
-        scheduleQueue.addSchedule(new DriftDetectionSchedule(resourceId(), driftConfig));
-        detector.run();
-
-        DriftDetectionSchedule schedule = new DriftDetectionSchedule(resourceId(), driftConfig);
-
-        scheduleQueue.addSchedule(schedule);
-        detector.run();
-
-        assertChangeSetContainsDirEntry(changeSet(driftConfig.getName(), COVERAGE),
-            new DirectoryEntry(".")
-                .add(addedFileEntry("data-1.txt", sha256(data1)))
-                .add(addedFileEntry("data-2.txt", sha256(data2))));
+        assertHeaderEquals(changeSet, headers);
+        assertFileEntriesMatch("Only files should be included in a change set.", expected, changeSet);
     }
 
     @SuppressWarnings("unchecked")
     @Test
     public void includeMultipleFilesInDirInCoverageChangeSet() throws Exception {
         File confDir = mkdir(resourceDir, "conf");
-        File server1Conf = new File(confDir, "server-1.conf");
-        touch(server1Conf);
-        File server2Conf = new File(confDir, "server-2.conf");
-        touch(server2Conf);
+        File server1Conf = createRandomFile(confDir, "server-1.conf");
+        File server2Conf = createRandomFile(confDir, "server-2.conf");
 
         DriftConfiguration config = driftConfiguration("multiple-files-test", resourceDir.getAbsolutePath());
 
@@ -126,24 +104,23 @@ public class DriftDetectorTest extends DriftTest {
         detector.run();
 
         File changeSet = changeSet(config.getName(), COVERAGE);
+        List<FileEntry> entries = asList(
+            addedFileEntry("conf/server-1.conf", sha256(server1Conf)),
+            addedFileEntry("conf/server-2.conf", sha256(server2Conf)));
 
         assertHeaderEquals(changeSet, createHeaders(config, COVERAGE));
-        assertChangeSetContainsDirEntry(changeSet,
-            new DirectoryEntry("conf")
-                .add(addedFileEntry("server-1.conf", sha256(server1Conf)))
-                .add(addedFileEntry("server-2.conf", sha256(server2Conf))));
+        assertFileEntriesMatch("Each file in a directory should be included in a coverage change set", entries,
+            changeSet);
     }
 
     @SuppressWarnings("unchecked")
     @Test
     public void includedSiblingDirsInCoverageChangeSet() throws Exception {
         File confDir = mkdir(resourceDir, "conf");
-        File serverConf = new File(confDir, "server.conf");
-        touch(serverConf);
+        File serverConf = createRandomFile(confDir, "server.conf");
 
         File libDir = mkdir(resourceDir, "lib");
-        File serverLib = new File(libDir, "server.jar");
-        touch(serverLib);
+        File serverLib = createRandomFile(libDir, "server.jar");
 
         DriftConfiguration config = driftConfiguration("sibling-dirs-test", resourceDir.getAbsolutePath());
 
@@ -151,25 +128,23 @@ public class DriftDetectorTest extends DriftTest {
         detector.run();
 
         File changeSet = changeSet(config.getName(), COVERAGE);
+        List<FileEntry> entries = asList(
+            addedFileEntry("conf/server.conf", sha256(serverConf)),
+            addedFileEntry("lib/server.jar", sha256(serverLib)));
 
         assertHeaderEquals(changeSet, createHeaders(config, COVERAGE));
-
-        assertChangeSetContainsDirEntry(changeSet,
-            new DirectoryEntry("conf").add(addedFileEntry("server.conf", sha256(serverConf))));
-        assertChangeSetContainsDirEntry(changeSet,
-            new DirectoryEntry("lib").add(addedFileEntry("server.jar", sha256(serverLib))));
+        assertFileEntriesMatch("A coverage change set should include files from multiple, sibling directories",
+            entries, changeSet);
     }
 
     @SuppressWarnings("unchecked")
     @Test
     public void includeNestedDirsInCoverageChangeSet() throws Exception {
         File confDir = mkdir(resourceDir, "conf");
-        File server1Conf = new File(confDir, "server-1.conf");
-        touch(server1Conf);
+        File server1Conf = createRandomFile(confDir, "server-1.conf");
 
         File subConfDir = mkdir(confDir, "subconf");
-        File server2Conf = new File(subConfDir, "server-2.conf");
-        touch(server2Conf);
+        File server2Conf = createRandomFile(subConfDir, "server-2.conf");
 
         DriftConfiguration config = driftConfiguration("nested-dirs-test", resourceDir.getAbsolutePath());
 
@@ -177,13 +152,13 @@ public class DriftDetectorTest extends DriftTest {
         detector.run();
 
         File changeSet = changeSet(config.getName(), COVERAGE);
+        List<FileEntry> entries = asList(
+            addedFileEntry("conf/server-1.conf", sha256(server1Conf)),
+            addedFileEntry("conf/subconf/server-2.conf", sha256(server2Conf)));
 
         assertHeaderEquals(changeSet, createHeaders(config, COVERAGE));
-
-        assertChangeSetContainsDirEntry(changeSet,
-            new DirectoryEntry("conf").add(addedFileEntry("server-1.conf", sha256(server1Conf))));
-        assertChangeSetContainsDirEntry(changeSet,
-            new DirectoryEntry("conf/subconf").add(addedFileEntry("server-2.conf", sha256(server2Conf))));
+        assertFileEntriesMatch("A coverage change set should include files in nested sub directories", entries,
+            changeSet);
     }
 
     @SuppressWarnings("unchecked")
@@ -218,39 +193,75 @@ public class DriftDetectorTest extends DriftTest {
         DriftConfiguration config = driftConfiguration("file-added-drift-test", resourceDir.getAbsolutePath());
 
         File confDir = mkdir(resourceDir, "conf");
-        File server1Conf = new File(confDir, "server-1.conf");
-        touch(server1Conf);
+        File server1Conf = createRandomFile(confDir, "server-1.conf");
 
         ChangeSetWriter writer = changeSetMgr.getChangeSetWriter(resourceId(), createHeaders(config, COVERAGE));
-        writer.writeDirectoryEntry(new DirectoryEntry("conf").add(addedFileEntry("server-1.conf", sha256(server1Conf))));
+        writer.write(addedFileEntry("conf/server-1.conf", sha256(server1Conf)));
         writer.close();
 
         // Create some drift
-        File server2Conf = new File(confDir, "server-2.conf");
-        touch(server2Conf);
+        File server2Conf = createRandomFile(confDir, "server-2.conf");
 
         scheduleQueue.addSchedule(new DriftDetectionSchedule(resourceId(), config));
         detector.run();
 
         File driftChangeSet = changeSet(config.getName(), DRIFT);
-
-        assertTrue(driftChangeSet.exists(), "Expected to find drift change set " + driftChangeSet.getPath());
+        List<FileEntry> driftEntries = asList(addedFileEntry("conf/server-2.conf", sha256(server2Conf)));
 
         // verify that the drift change set was generated
+        assertTrue(driftChangeSet.exists(), "Expected to find drift change set " + driftChangeSet.getPath());
         assertHeaderEquals(driftChangeSet, createHeaders(config, DRIFT));
-        assertChangeSetContainsDirEntry(driftChangeSet, new DirectoryEntry("conf")
-            .add(addedFileEntry("server-2.conf", sha256(server2Conf))));
+        assertFileEntriesMatch("The drift change set does not match the expected values", driftEntries, driftChangeSet);
 
         File coverageChangeSet = changeSet(config.getName(), COVERAGE);
+        List<FileEntry> coverageEntries = asList(
+            addedFileEntry("conf/server-1.conf", sha256(server1Conf)),
+            addedFileEntry("conf/server-2.conf", sha256(server2Conf)));
 
         // verify that the coverage change set was updated
         assertHeaderEquals(coverageChangeSet, createHeaders(config, COVERAGE));
-        assertChangeSetContainsDirEntry(coverageChangeSet, new DirectoryEntry("conf")
-            .add(addedFileEntry("server-1.conf", sha256(server1Conf)))
-            .add(addedFileEntry("server-2.conf", sha256(server2Conf))));
+        assertFileEntriesMatch("The coverage change set was not updated as expected", coverageEntries,
+            coverageChangeSet);
     }
 
-    // TODO enable test once change set file format is changed to only store file entries
+    @SuppressWarnings("unchecked")
+    @Test
+    public void includeModifiedFileInDriftChangeSet() throws Exception {
+        DriftConfiguration config = driftConfiguration("file-modified-drift-test", resourceDir.getAbsolutePath());
+
+        File confDir = mkdir(resourceDir, "conf");
+        File server1Conf = createRandomFile(confDir, "server-1.conf");
+        String oldHash = sha256(server1Conf);
+
+        ChangeSetWriter writer = changeSetMgr.getChangeSetWriter(resourceId(), createHeaders(config, COVERAGE));
+        writer.write(addedFileEntry("conf/server-1.conf", oldHash));
+        writer.close();
+
+        // create some drift
+        server1Conf.delete();
+        server1Conf = createRandomFile(confDir, "server-1.conf");
+        String newHash = sha256(server1Conf);
+
+        scheduleQueue.addSchedule(new DriftDetectionSchedule(resourceId(), config));
+        detector.run();
+
+        File driftChangeSet = changeSet(config.getName(), DRIFT);
+        List<FileEntry> driftEntries = asList(changedFileEntry("conf/server-1.conf", oldHash, newHash));
+
+        // verify that the drift change set was generated
+        assertTrue(driftChangeSet.exists(), "Expected to find drift change set " + driftChangeSet.getPath());
+        assertHeaderEquals(driftChangeSet, createHeaders(config, DRIFT));
+        assertFileEntriesMatch("The drift change set does not match the expected values", driftEntries, driftChangeSet);
+
+        File coverageChangeSet = changeSet(config.getName(), COVERAGE);
+        List<FileEntry> coverageEntries = asList(changedFileEntry("conf/server-1.conf", oldHash, newHash));
+
+        // verify that the coverage change set was updated
+        assertHeaderEquals(coverageChangeSet, createHeaders(config, COVERAGE));
+        assertFileEntriesMatch("The coverage change set was not updated as expected", coverageEntries,
+            coverageChangeSet);
+    }
+
     @SuppressWarnings("unchecked")
     @Test(enabled = false)
     public void includeFiledAddedInNewDirectoryInDriftChangeSet() throws Exception {
@@ -260,7 +271,7 @@ public class DriftDetectorTest extends DriftTest {
         File server1Conf = createRandomFile(confDir, "server-1.conf");
 
         ChangeSetWriter writer = changeSetMgr.getChangeSetWriter(resourceId(), createHeaders(config, COVERAGE));
-        writer.writeDirectoryEntry(new DirectoryEntry("conf").add(addedFileEntry("server-1.conf", sha256(server1Conf))));
+        writer.write(addedFileEntry("conf/server-1.conf", sha256(server1Conf)));
         writer.close();
 
         // create some drift
@@ -271,10 +282,22 @@ public class DriftDetectorTest extends DriftTest {
         detector.run();
 
         File driftChangeSet = changeSet(config.getName(), DRIFT);
-        assertTrue(driftChangeSet.exists(), "Expected to find drift change set " + driftChangeSet.getPath());
+        List<FileEntry> driftEntries = asList(addedFileEntry("conf/subconf/server-2.conf", sha256(server2Conf)));
 
-        assertChangeSetContainsDirEntry(driftChangeSet, new DirectoryEntry("subconf")
-            .add(addedFileEntry("server-2.conf", sha256(server2Conf))));
+        // verify that the drift change set was generated
+        assertTrue(driftChangeSet.exists(), "Expected to find drift change set " + driftChangeSet.getPath());
+        assertHeaderEquals(driftChangeSet, createHeaders(config, DRIFT));
+        assertFileEntriesMatch("The drift change set does not match the expected values", driftEntries, driftChangeSet);
+
+        File coverageChangeSet = changeSet(config.getName(), COVERAGE);
+        List<FileEntry> coverageEntries = asList(
+            addedFileEntry("conf/server-1.conf", sha256(server1Conf)),
+            addedFileEntry("conf/subconf/server-2.conf", sha256(server2Conf)));
+
+        // verify that the coverage change set was updated
+        assertHeaderEquals(coverageChangeSet, createHeaders(config, COVERAGE));
+        assertFileEntriesMatch("The coverage change set was not updated as expected", coverageEntries,
+            coverageChangeSet);
     }
 
     @SuppressWarnings("unchecked")
@@ -283,17 +306,14 @@ public class DriftDetectorTest extends DriftTest {
         DriftConfiguration config = driftConfiguration("file-removed-drift-test", resourceDir.getAbsolutePath());
 
         File confDir = mkdir(resourceDir, "conf");
-        File server1Conf = new File(confDir, "server-1.conf");
-        touch(server1Conf);
-        File server2Conf = new File(confDir, "server-2.conf");
-        touch(server2Conf);
+        File server1Conf = createRandomFile(confDir, "server-1.conf");
+        File server2Conf = createRandomFile(confDir, "server-2.conf");
 
         String server2ConfHash = sha256(server2Conf);
 
         ChangeSetWriter writer = changeSetMgr.getChangeSetWriter(resourceId(), createHeaders(config, COVERAGE));
-        writer.writeDirectoryEntry(new DirectoryEntry("conf")
-            .add(addedFileEntry("server-1.conf", sha256(server1Conf)))
-            .add(addedFileEntry("server-2.conf", server2ConfHash)));
+        writer.write(addedFileEntry("conf/server-1.conf", sha256(server1Conf)));
+        writer.write(addedFileEntry("conf/server-2.conf", server2ConfHash));
         writer.close();
 
         // create some drift
@@ -303,22 +323,22 @@ public class DriftDetectorTest extends DriftTest {
         detector.run();
 
         File driftChangeSet = changeSet(config.getName(), DRIFT);
+        List<FileEntry> driftEntries = asList(removedFileEntry("conf/server-2.conf", server2ConfHash));
 
         // verify that the drift change set was generated
         assertTrue(driftChangeSet.exists(), "Expected to find drift change set " + driftChangeSet.getPath());
         assertHeaderEquals(driftChangeSet, createHeaders(config, DRIFT));
-        assertChangeSetContainsDirEntry(driftChangeSet, new DirectoryEntry("conf")
-            .add(removedFileEntry("server-2.conf", server2ConfHash)));
+        assertFileEntriesMatch("The drift change set does not match the expected values", driftEntries, driftChangeSet);
 
         // verify that the coverage change set was updated
         File coverageChangeSet = changeSet(config.getName(), COVERAGE);
+        List<FileEntry> coverageEntries = asList(addedFileEntry("conf/server-1.conf", sha256(server1Conf)));
 
         assertHeaderEquals(coverageChangeSet, createHeaders(config, COVERAGE));
-        assertChangeSetContainsDirEntry(coverageChangeSet, new DirectoryEntry("conf")
-            .add(addedFileEntry("server-1.conf", sha256(server1Conf))));
+        assertFileEntriesMatch("The coverage change set was not updated as expected", coverageEntries,
+            coverageChangeSet);
     }
 
-    // TODO enable test once change set file format is changed to only store file entries
     @SuppressWarnings("unchecked")
     @Test(enabled = false)
     public void includeFilesInRemovedDirectoryInDriftChangeSet() throws Exception {
@@ -329,7 +349,7 @@ public class DriftDetectorTest extends DriftTest {
         String server1Hash = sha256(server1Conf);
 
         ChangeSetWriter writer = changeSetMgr.getChangeSetWriter(resourceId(), createHeaders(config, COVERAGE));
-        writer.writeDirectoryEntry(new DirectoryEntry("conf").add(addedFileEntry("server-1.conf", server1Hash)));
+        writer.write(addedFileEntry("conf/server-1.conf", server1Hash));
         writer.close();
 
         // create some drift
@@ -337,12 +357,20 @@ public class DriftDetectorTest extends DriftTest {
         confDir.delete();
 
         File driftChangeSet = changeSet(config.getName(), DRIFT);
+        List<FileEntry> driftEntries = asList(removedFileEntry("conf/server-1.conf", server1Hash));
 
         // verify that the drift change set was generated
         assertTrue(driftChangeSet.exists(), "Expected to find drift change set " + driftChangeSet.getPath());
+        assertHeaderEquals(driftChangeSet, createHeaders(config, DRIFT));
+        assertFileEntriesMatch("The drift change set does not match the expected values", driftEntries, driftChangeSet);
 
-        assertChangeSetContainsDirEntry(driftChangeSet, new DirectoryEntry("conf")
-            .add(removedFileEntry("server-1.conf", server1Hash)));
+        // verify that the coverage change set was updated
+        File coverageChangeSet = changeSet(config.getName(), COVERAGE);
+        List<FileEntry> coverageEntries = emptyList();
+
+        assertHeaderEquals(coverageChangeSet, createHeaders(config, COVERAGE));
+        assertFileEntriesMatch("The coverage change set was not updated as expected", coverageEntries,
+            coverageChangeSet);
     }
 
     void assertHeaderEquals(File changeSet, Headers expected) throws Exception {
@@ -352,31 +380,15 @@ public class DriftDetectorTest extends DriftTest {
             "expected values");
     }
 
-    void assertThatChangeSetDoesNotContainEmptyDirs(File changeSet) throws Exception {
-        ChangeSetReader reader = new ChangeSetReaderImpl(new BufferedReader(new FileReader(changeSet)));
-        DirectoryEntry dirEntry = reader.readDirectoryEntry();
-
-        while (dirEntry != null) {
-            Assert.assertTrue(dirEntry.getNumberOfFiles() > 0, "The change set file should not include empty "
-                + "directories");
-            dirEntry = reader.readDirectoryEntry();
-        }
-    }
-
-    void assertChangeSetContainsDirEntry(File changeSet, DirectoryEntry expected) throws Exception {
+    void assertFileEntriesMatch(String msg, List<FileEntry> expected, File changeSet) throws Exception {
+        List<FileEntry> actual = new ArrayList<FileEntry>();
         ChangeSetReader reader = new ChangeSetReaderImpl(changeSet);
-        DirectoryEntry actual = null;
 
-        for (DirectoryEntry entry : reader) {
-            if (entry.getDirectory().equals(expected.getDirectory())) {
-                actual = entry;
-                break;
-            }
+        for (FileEntry entry : reader) {
+            actual.add(entry);
         }
 
-        assertNotNull(actual, "Failed to find " + expected + " in " + changeSet.getPath());
-        assertCollectionMatchesNoOrder(fileEntries(expected), fileEntries(actual), "File entries for " +
-            expected + " in change set " + changeSet.getPath() + " do not match");
+        assertCollectionMatchesNoOrder(msg, expected, actual);
     }
 
     Headers createHeaders(DriftConfiguration driftConfig, DriftChangeSetCategory type) {
@@ -388,14 +400,6 @@ public class DriftDetectorTest extends DriftTest {
         headers.setType(type);
 
         return headers;
-    }
-
-    Collection<FileEntry> fileEntries(DirectoryEntry dirEntry) {
-        List<FileEntry> list = new ArrayList<FileEntry>();
-        for (FileEntry entry : dirEntry) {
-            list.add(entry);
-        }
-        return list;
     }
 
 }

@@ -42,6 +42,7 @@ import static org.rhq.core.domain.drift.DriftCategory.FILE_CHANGED;
 import static org.rhq.core.domain.drift.DriftCategory.FILE_REMOVED;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.DRIFT;
+import static org.rhq.core.domain.drift.DriftFileStatus.EMPTY;
 import static org.rhq.test.AssertUtils.assertCollectionMatchesNoOrder;
 import static org.rhq.test.AssertUtils.assertPropertiesMatch;
 import static org.testng.Assert.assertNotNull;
@@ -96,13 +97,24 @@ public class ChangeSetDAOTest {
     }
 
     @Test(enabled = ENABLED)
-    public void saveAndLoadChangeSetWithOneEntry() throws Exception {
+    public void saveAndLoadChangeSetWithAddedFileEntry() throws Exception {
         MongoDBChangeSet expected = new MongoDBChangeSet();
         expected.setCategory(DRIFT);
         expected.setResourceId(1);
         expected.setDriftConfigurationId(1);
         expected.setVersion(1);
-        expected.add(new MongoDBChangeSetEntry("foo", FILE_ADDED));
+
+        MongoDBChangeSetEntry entry = new MongoDBChangeSetEntry();
+        entry.setCategory(FILE_ADDED);
+        entry.setPath("foo");
+
+        MongoDBFile file = new MongoDBFile();
+        file.setDataSize(1024L);
+        file.setHashId("a1b2c3d4");
+        file.setStatus(EMPTY);
+
+        entry.setNewDriftFile(file);
+        expected.add(entry);
 
         dao.save(expected);
 

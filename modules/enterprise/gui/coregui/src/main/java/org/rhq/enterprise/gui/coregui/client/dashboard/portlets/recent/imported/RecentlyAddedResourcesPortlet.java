@@ -35,6 +35,7 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.tree.TreeGrid;
 
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
@@ -231,7 +232,7 @@ public class RecentlyAddedResourcesPortlet extends LocatableVLayout implements C
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final Portlet getInstance(String locatorId) {
+        public final Portlet getInstance(String locatorId, EntityContext context) {
 
             return new RecentlyAddedResourcesPortlet(locatorId);
         }

@@ -75,4 +75,31 @@ public interface DriftServerPluginFacet {
     void saveChangeSet(Subject subject, int resourceId, File changeSetZip) throws Exception;
 
     void saveChangeSetFiles(Subject subject, File changeSetFilesZip) throws Exception;
+
+    /**
+     * When a user wants to completely remove all data related to a drift configuration,
+     * this method will be called to give the plugin a chance to clean up any data related
+     * to the drift configuration that is going to be deleted.
+     * @param Subject
+     * @param resourceId the resource whose drift configuration is being purged
+     * @param driftConfigName identifies the data that is to be purged
+     */
+    void purgeByDriftConfigurationName(Subject subject, int resourceId, String driftConfigName) throws Exception;
+
+    /**
+     * This will remove all drift files that are no longer referenced by drift entries. This is a maintenance method
+     * to help reclaim space on the backend.
+     * 
+     * @param subject
+     * @return number of orphaned drife files that were removed
+     */
+    int purgeOrphanedDriftFiles(Subject subject);
+
+    /**
+     * Returns the content associated with the specified hash as a string
+     *
+     * @param hash The hash the uniquely identifies the requested content
+     * @return The content as a string
+     */
+    String getDriftFileBits(String hash);
 }

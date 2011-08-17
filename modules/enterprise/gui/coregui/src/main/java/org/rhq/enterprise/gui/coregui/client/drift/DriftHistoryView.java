@@ -20,43 +20,34 @@
 package org.rhq.enterprise.gui.coregui.client.drift;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 
-import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
-import com.smartgwt.client.data.ResultSet;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
+import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.grid.CellFormatter;
-import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.drift.DriftCategory;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.form.EnumSelectItem;
-import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.StringIDTableSection;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * A view that displays a paginated table of {@link org.rhq.core.domain.drift.JPADrift}s, along with the
  * ability to filter those drifts, sort those drifts, double-click a row to view full details a drift, and perform
  * various actions on the the drifts: delete selected, delete all from source, etc.
- * This view full respects the user's authorization, and will not allow acttions on the drifts unless the user is
+ * This view fully respects the user's authorization, and will not allow actions on the drifts unless the user is
  * either the inventory manager or has MANAGE_DRIFT permission on every resource corresponding to the drifts being
  * operated on.
  *
@@ -131,8 +122,13 @@ public class DriftHistoryView extends StringIDTableSection<DriftDataSource> {
         SelectItem categoryFilter = new EnumSelectItem(DriftDataSource.FILTER_CATEGORIES, MSG.common_title_category(),
             DriftCategory.class, categories, categoryIcons);
 
+        TextItem configurationFilter = new TextItem(DriftDataSource.FILTER_CONFIGURATION, MSG
+            .common_title_configuration());
+        TextItem changeSetFilter = new TextItem(DriftDataSource.FILTER_CHANGE_SET, MSG.view_drift_table_changeSet());
+        TextItem pathFilter = new TextItem(DriftDataSource.FILTER_PATH, MSG.common_title_path());
+
         if (isShowFilterForm()) {
-            setFilterFormItems(categoryFilter);
+            setFilterFormItems(configurationFilter, changeSetFilter, categoryFilter, pathFilter);
         }
     }
 
@@ -164,41 +160,21 @@ public class DriftHistoryView extends StringIDTableSection<DriftDataSource> {
     }
 
     protected void setupTableInteractions(final boolean hasWriteAccess) {
+
+        /*
+         * TODO add ack 
+         * 
         TableActionEnablement singleTargetEnablement = hasWriteAccess ? TableActionEnablement.ANY
             : TableActionEnablement.NEVER;
 
-        addTableAction("DeleteDrift", MSG.common_button_delete(), MSG.view_drift_delete_confirm(),
-            new AbstractTableAction(singleTargetEnablement) {
-                public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    delete(selection);
-                }
-            });
-
-        // TODO add ack
-        /*
         addTableAction("AcknowledgeDrift", MSG.common_button_ack(), MSG.view_drift_ack_confirm(),
             new AbstractTableAction(singleTargetEnablement) {
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     acknowledge(selection);
                 }
             });
-        */
 
-        addTableAction("DeleteAll", MSG.common_button_delete_all(), MSG.view_drift_delete_confirmAll(),
-            new TableAction() {
-                public boolean isEnabled(ListGridRecord[] selection) {
-                    ListGrid grid = getListGrid();
-                    ResultSet resultSet = (null != grid) ? grid.getResultSet() : null;
-                    return (hasWriteAccess && grid != null && resultSet != null && !resultSet.isEmpty());
-                }
-
-                public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    deleteAll();
-                }
-            });
-
-        /*
-        addTableAction("AcknowledgeAll", MSG.common_button_ack_all(), MSG.iew_alerts_ack_confirm_all(),
+        addTableAction("AcknowledgeAll", MSG.common_button_ack_all(), MSG.view_drift_ack_confirm_all(),
             new TableAction() {
                 public boolean isEnabled(ListGridRecord[] selection) {
                     ListGrid grid = getListGrid();
@@ -210,78 +186,51 @@ public class DriftHistoryView extends StringIDTableSection<DriftDataSource> {
                     acknowledgeAll();
                 }
             });
+        *
+        *
         */
     }
 
-    private void delete(ListGridRecord[] records) {
-        final String[] driftIds = new String[records.length];
+    /*
+     * TODO add ack
+     * 
+    private void acknowledge(ListGridRecord[] records) {
+        final int[] alertIds = new int[records.length];
         for (int i = 0, selectionLength = records.length; i < selectionLength; i++) {
             ListGridRecord record = records[i];
-            String driftId = record.getAttributeAsString(DriftDataSource.ATTR_ID);
-            driftIds[i] = driftId;
+            Integer alertId = record.getAttributeAsInt(DriftDataSource.ATTR_ID);
+            alertIds[i] = alertId;
         }
 
-        GWTServiceLookup.getDriftService().deleteDrifts(driftIds, new AsyncCallback<Integer>() {
+        GWTServiceLookup.getDriftService().acknowledgeDrifts(alertIds, new AsyncCallback<Integer>() {
             public void onSuccess(Integer resultCount) {
                 CoreGUI.getMessageCenter().notify(
-                    new Message(MSG.view_drift_success_delete(String.valueOf(resultCount)), Message.Severity.Info));
+                    new Message(MSG.view_drift_ack_success(String.valueOf(resultCount)), Message.Severity.Info));
                 refresh();
             }
 
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError(MSG.view_drift_failure_delete(Arrays.toString(driftIds)), caught);
+                CoreGUI.getErrorHandler().handleError(MSG.view_drift_ack_failure(Arrays.toString(alertIds)), caught);
             }
         });
     }
 
-    private void deleteAll() {
-        GWTServiceLookup.getDriftService().deleteDriftsByContext(context, new AsyncCallback<Integer>() {
+    private void acknowledgeAll() {
+        GWTServiceLookup.getDriftService().acknowledgeDriftsByContext(context, new AsyncCallback<Integer>() {
             public void onSuccess(Integer resultCount) {
                 CoreGUI.getMessageCenter().notify(
-                    new Message(MSG.view_drift_success_delete(String.valueOf(resultCount)), Message.Severity.Info));
+                    new Message(MSG.view_drift_ack_success(String.valueOf(resultCount)), Message.Severity.Info));
                 refresh();
             }
 
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError(MSG.view_drift_failure_deleteAll(), caught);
+                CoreGUI.getErrorHandler().handleError(MSG.view_drift_ack_failure_all(), caught);
             }
         });
     }
-
-    //    private void acknowledge(ListGridRecord[] records) {
-    //        final int[] alertIds = new int[records.length];
-    //        for (int i = 0, selectionLength = records.length; i < selectionLength; i++) {
-    //            ListGridRecord record = records[i];
-    //            Integer alertId = record.getAttributeAsInt(DriftDataSource.ATTR_ID);
-    //            alertIds[i] = alertId;
-    //        }
-    //
-    //        GWTServiceLookup.getAlertService().acknowledgeAlerts(alertIds, new AsyncCallback<Integer>() {
-    //            public void onSuccess(Integer resultCount) {
-    //                CoreGUI.getMessageCenter().notify(
-    //                    new Message(MSG.iew_alerts_ack_success(String.valueOf(resultCount)), Message.Severity.Info));
-    //                refresh();
-    //            }
-    //
-    //            public void onFailure(Throwable caught) {
-    //                CoreGUI.getErrorHandler().handleError(MSG.iew_alerts_ack_failure(Arrays.toString(alertIds)), caught);
-    //            }
-    //        });
-    //    }
-
-    //    private void acknowledgeAll() {
-    //        GWTServiceLookup.getAlertService().acknowledgeAlertsByContext(context, new AsyncCallback<Integer>() {
-    //            public void onSuccess(Integer resultCount) {
-    //                CoreGUI.getMessageCenter().notify(
-    //                    new Message(MSG.iew_alerts_ack_success(String.valueOf(resultCount)), Message.Severity.Info));
-    //                refresh();
-    //            }
-    //
-    //            public void onFailure(Throwable caught) {
-    //                CoreGUI.getErrorHandler().handleError(MSG.iew_alerts_ack_failure_all(), caught);
-    //            }
-    //        });
-    //    }
+    *
+    *
+    */
 
     @Override
     public Canvas getDetailsView(String driftId) {

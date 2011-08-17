@@ -19,8 +19,6 @@
  */
 package org.rhq.enterprise.server.plugins.drift;
 
-import static org.rhq.enterprise.server.util.LookupUtil.getJPADriftServer;
-
 import java.io.File;
 
 import org.apache.commons.logging.Log;
@@ -40,6 +38,8 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginContext;
 import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginFacet;
+
+import static org.rhq.enterprise.server.util.LookupUtil.getJPADriftServer;
 
 /**
  * A drift server-side plugin component that the server uses to process drift files.
@@ -113,4 +113,18 @@ public class JPADriftServerPluginComponent implements DriftServerPluginFacet, Se
         getJPADriftServer().storeFiles(subject, changeSetFilesZip);
     }
 
+    @Override
+    public void purgeByDriftConfigurationName(Subject subject, int resourceId, String driftConfigName) throws Exception {
+        getJPADriftServer().purgeByDriftConfigurationName(subject, resourceId, driftConfigName);
+    }
+
+    @Override
+    public int purgeOrphanedDriftFiles(Subject subject) {
+        return getJPADriftServer().purgeOrphanedDriftFiles(subject);
+    }
+
+    @Override
+    public String getDriftFileBits(String hash) {
+        return getJPADriftServer().getDriftFileBits(hash);
+    }
 }

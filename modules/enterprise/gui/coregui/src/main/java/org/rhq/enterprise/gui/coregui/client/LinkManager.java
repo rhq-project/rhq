@@ -459,7 +459,7 @@ public class LinkManager {
         return "#Resource/" + resourceId + "/Drift/History/" + driftId;
     }
 
-    public static String getDriftConfigLink(int resourceId, int driftConfigId) {
-        return "#Resource/" + resourceId + "/Drift/Config/" + driftConfigId;
+    public static String getDriftConfigurationLink(int resourceId, int driftConfigId) {
+        return "#Resource/" + resourceId + "/Drift/Configuration/" + driftConfigId;
     }
 }

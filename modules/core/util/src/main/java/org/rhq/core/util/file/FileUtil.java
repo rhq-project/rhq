@@ -33,6 +33,9 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Deque;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -312,11 +315,129 @@ public class FileUtil {
     /**
      * Ensure that the path uses only forward slash
      * Like java.io.File(String,String) but just 
-     * @param dir
-     * @param fileName
+     * @param path
      * @return
      */
     public static String useForwardSlash(String path) {
         return path.replace('\\', '/');
     }
+
+    /**
+     * Performs a breadth-first scan, calling <code>visitor</code> for each file in
+     * <code>directory</code>. Sub directories are scanned as well. Note that if
+     * <code>visitor</code> throws a RuntimeException it will not be called again as this
+     * method does not provide any exception handling.
+     *
+     * @param directory The directory over which to iterate
+     * @param visitor The callback to invoke for each file
+     */
+    public static void forEachFile(File directory, FileVisitor visitor) {
+        Deque<File> directories = new LinkedList<File>();
+        directories.push(directory);
+
+        while(!directories.isEmpty()) {
+            File dir = directories.pop();
+            for (File file : dir.listFiles()) {
+                if (file.isDirectory()) {
+                    directories.push(file);
+                } else {
+                    visitor.visit(file);
+                }
+            }
+        }
+    }
+
+    /**
+     * Takes a list of filters and compiles them into a regular expression that can be used
+     * for matching or filtering paths. The pattern syntax supports regular expressions as
+     * well as the syntax used in Ant's file/path selectors. Here are some example patterns
+     * that can be specified in a filter:
+     * <p/>
+     * <table border="1">
+     *     <tr>
+     *         <td>Pattern</td>
+     *         <td>Description</td>
+     *     </tr>
+     *     <tr>
+     *         <td>/etc/yum.conf</td>
+     *         <td>exact match of the path</td>
+     *     </tr>
+     *     <tr>
+     *         <td>/etc/*.conf</td>
+     *         <td>match any file /etc that has a .conf suffix</td>
+     *     </tr>
+     *     <tr>
+     *         <td>deploy/myapp-?.war</td>
+     *         <td>Match any file in the deploy directory that starts with myapp- followed any one character and
+     *         ending with a suffix of .war</td>
+     *     </tr>
+     *     <tr>
+     *         <td>jboss/server/**&#047;*.war</td>
+     *         <td>Matches all .war files under the server directory. Sub directories are included as well such
+     *         that jboss/server/default/myapp.war jboss/server/production/myapp.war and
+     *         jboss/server/default/myapp.ear/myapp.war all match</td>
+     *     </tr>
+     * </table>
+     *
+     * @param filters Compiled into a regular expression
+     * @return A Pattern object that is a compilation of regular expressions built from
+     * the specified path filters
+     */
+    public static Pattern generateRegex(List<PathFilter> filters) {
+        boolean first = true;
+        StringBuilder regex = new StringBuilder();
+        for (PathFilter filter : filters) {
+            if (!first) {
+                regex.append("|");
+            } else {
+                first = false;
+            }
+            regex.append("(");
+            File path = new File(filter.getPath());
+
+            if (isEmpty(filter.getPattern()) && path.isDirectory()) {
+                regex.append(".*");
+            } else if (isEmpty(filter.getPattern()) && !path.isDirectory()) {
+                buildPatternRegex(path.getAbsolutePath(), regex);
+            } else if (!isEmpty(filter.getPattern())) {
+                // note that this case assumes path is a directory. We probably
+                // need another if else block for when there is a pattern and
+                // path is not a directory.
+                regex.append(path).append("/").append("(");
+                buildPatternRegex(filter.getPattern(), regex);
+                regex.append(")");
+            }
+            regex.append(")");
+        }
+        return Pattern.compile(regex.toString());
+    }
+
+    private static void buildPatternRegex(String pattern, StringBuilder regex) {
+        for (int i = 0; i < pattern.length(); i++) {
+            char c = pattern.charAt(i);
+            if (c == '?') {
+                regex.append('.');
+            } else if (c == '*') {
+                if (i + 1 < pattern.length()) {
+                    char c2 = pattern.charAt(i + 1);
+                    if (c2 == '*') {
+                        regex.append(".*");
+                        i += 2;
+                        continue;
+                    }
+                }
+                regex.append("[^/]*");
+            } else if (c == '.') {
+                regex.append("\\.");
+            } else {
+                regex.append(c);
+            }
+            // TODO: Escape backslashes.
+        }
+    }
+
+    private static boolean isEmpty(String s) {
+        return s == null || s.length() == 0;
+    }
+
 }

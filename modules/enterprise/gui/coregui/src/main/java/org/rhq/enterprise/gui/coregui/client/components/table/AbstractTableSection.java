@@ -57,6 +57,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * @author Greg Hinkle
  * @author John Mazzitelli
  */
+@SuppressWarnings("unchecked")
 public abstract class AbstractTableSection<DS extends RPCDataSource, ID> extends Table<DS> implements BookmarkableView {
 
     private VLayout detailsHolder;
@@ -387,6 +388,8 @@ public abstract class AbstractTableSection<DS extends RPCDataSource, ID> extends
                 Log.debug("Refreshing data for Table [" + getClass().getName() + "]...");
                 refresh();
             }
+            // if the detailsHolder is visible then gracefully switch views, otherwise just
+            // clean up any lingering details holder and show the table view.
             if (detailsHolder != null && detailsHolder.isVisible()) {
                 detailsHolder.animateHide(AnimationEffect.WIPE, new AnimationCallback() {
                     @Override
@@ -397,6 +400,9 @@ public abstract class AbstractTableSection<DS extends RPCDataSource, ID> extends
                     }
                 });
             } else {
+                if (detailsHolder != null) {
+                    SeleniumUtility.destroyMembers(detailsHolder);
+                }
                 contents.animateShow(AnimationEffect.WIPE);
             }
         }

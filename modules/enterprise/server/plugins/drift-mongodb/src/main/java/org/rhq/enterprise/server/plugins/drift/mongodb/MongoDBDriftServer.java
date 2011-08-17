@@ -38,7 +38,6 @@ import org.bson.types.ObjectId;
 
 import org.rhq.common.drift.ChangeSetReader;
 import org.rhq.common.drift.ChangeSetReaderImpl;
-import org.rhq.common.drift.DirectoryEntry;
 import org.rhq.common.drift.FileEntry;
 import org.rhq.common.drift.Headers;
 import org.rhq.core.domain.auth.Subject;
@@ -116,15 +115,12 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
                 changeSet.setDriftConfigurationId(1);
                 changeSet.setVersion(changeSetVersions++);
 
-                for (DirectoryEntry dirEntry : reader) {
-                    for (FileEntry fileEntry : dirEntry) {
-                        String path = new File(dirEntry.getDirectory(), fileEntry.getFile()).getPath();
-                        path = FileUtil.useForwardSlash(path);
-                        MongoDBChangeSetEntry entry = new MongoDBChangeSetEntry();
-                        entry.setCategory(fileEntry.getType());
-                        entry.setPath(path);
-                        changeSet.add(entry);
-                    }
+                for (FileEntry fileEntry : reader) {
+                    String path = FileUtil.useForwardSlash(fileEntry.getFile());
+                    MongoDBChangeSetEntry entry = new MongoDBChangeSetEntry();
+                    entry.setCategory(fileEntry.getType());
+                    entry.setPath(path);
+                    changeSet.add(entry);
                 }
 
                 ds.save(changeSet);
@@ -217,6 +213,22 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
 
     @Override
     public DriftSnapshot createSnapshot(Subject subject, DriftChangeSetCriteria criteria) {
+        return null;
+    }
+
+    @Override
+    public void purgeByDriftConfigurationName(Subject subject, int resourceId, String driftConfigName) throws Exception {
+        // TODO implement me!        
+    }
+
+    @Override
+    public int purgeOrphanedDriftFiles(Subject subject) {
+        // TODO implement me!
+        return 0;
+    }
+
+    @Override
+    public String getDriftFileBits(String hash) {
         return null;
     }
 

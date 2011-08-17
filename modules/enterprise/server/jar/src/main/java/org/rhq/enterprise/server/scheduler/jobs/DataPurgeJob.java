@@ -35,6 +35,7 @@ import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.alert.AlertNotificationManagerLocal;
+import org.rhq.enterprise.server.drift.DriftManagerLocal;
 import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.measurement.CallTimeDataManagerLocal;
@@ -120,6 +121,7 @@ public class DataPurgeJob extends AbstractStatefulJob {
         purgeOrphanedAlertNotifications(LookupUtil.getAlertNotificationManager());
         purgeMeasurementTraitData(LookupUtil.getMeasurementDataManager(), systemConfig);
         purgeAvailabilityData(LookupUtil.getAvailabilityManager(), systemConfig);
+        purgeOrphanedDriftFiles(LookupUtil.getDriftManager());
     }
 
     private void purgeMeasurementTraitData(MeasurementDataManagerLocal measurementDataManager, Properties systemConfig) {
@@ -249,6 +251,21 @@ public class DataPurgeJob extends AbstractStatefulJob {
         } finally {
             long duration = System.currentTimeMillis() - timeStart;
             LOG.info("Purged [" + orphansPurged + "] orphan alert notifications - completed in [" + duration + "]ms");
+        }
+    }
+
+    private void purgeOrphanedDriftFiles(DriftManagerLocal driftManager) {
+        long timeStart = System.currentTimeMillis();
+        LOG.info("Drift file orphan purge starting at " + new Date(timeStart));
+        int orphansPurged = 0;
+
+        try {
+            orphansPurged = driftManager.purgeOrphanedDriftFiles(LookupUtil.getSubjectManager().getOverlord());
+        } catch (Exception e) {
+            LOG.error("Failed to purge orphaned drift files. Cause: " + e, e);
+        } finally {
+            long duration = System.currentTimeMillis() - timeStart;
+            LOG.info("Purged [" + orphansPurged + "] orphaned drift files - completed in [" + duration + "]ms");
         }
     }
 

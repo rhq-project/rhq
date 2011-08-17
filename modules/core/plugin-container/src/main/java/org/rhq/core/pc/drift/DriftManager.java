@@ -19,6 +19,8 @@
 
 package org.rhq.core.pc.drift;
 
+import static org.rhq.core.util.ZipUtil.zipFileOrDirectory;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -50,8 +52,6 @@ import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.core.pc.measurement.MeasurementManager;
 import org.rhq.core.util.stream.StreamUtil;
-
-import static org.rhq.core.util.ZipUtil.zipFileOrDirectory;
 
 public class DriftManager extends AgentService implements DriftAgentService, DriftClient, ContainerService {
 
@@ -91,8 +91,15 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
         initSchedules(inventoryMgr.getPlatform(), inventoryMgr);
 
         driftThreadPool = new ScheduledThreadPoolExecutor(5);
-        // TODO Make the drift detection rate configurable
-        driftThreadPool.scheduleAtFixedRate(driftDetector, 30, 60, TimeUnit.SECONDS);
+
+        long initialDelay = pluginContainerConfiguration.getDriftDetectionInitialDelay();
+        long period = pluginContainerConfiguration.getDriftDetectionPeriod();
+        if (period > 0) {
+            // note that drift detection is globally disabled if the detection period is 0 or less
+            driftThreadPool.scheduleAtFixedRate(driftDetector, initialDelay, period, TimeUnit.SECONDS);
+        } else {
+            log.info("Drift detection has been globally disabled as per plugin container configuration");
+        }
     }
 
     private void initSchedules(Resource r, InventoryManager inventoryMgr) {
@@ -109,7 +116,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
 
         log.debug("Rescheduling drift detection schedules for " + r);
         Set<DriftDetectionSchedule> driftSchedules = container.getDriftSchedules();
-        if (driftSchedules!=null)
+        if (driftSchedules != null)
             for (DriftDetectionSchedule schedule : driftSchedules) {
                 schedulesQueue.addSchedule(schedule);
             }
@@ -184,16 +191,16 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
     @Override
     public void detectDrift(int resourceId, DriftConfiguration driftConfiguration) {
         if (log.isDebugEnabled()) {
-            log.debug("Received request to schedule drift detection immediately for [resourceId: " + resourceId +
-                ", driftConfigurationId: " + driftConfiguration.getId() + ", driftConfigurationName: " +
-                driftConfiguration.getName() + "]");
+            log.debug("Received request to schedule drift detection immediately for [resourceId: " + resourceId
+                + ", driftConfigurationId: " + driftConfiguration.getId() + ", driftConfigurationName: "
+                + driftConfiguration.getName() + "]");
         }
 
         DriftDetectionSchedule schedule = schedulesQueue.remove(resourceId, driftConfiguration);
         if (schedule == null) {
-            log.warn("No schedule found in the queue for [resourceId:" + resourceId + ", driftConfigurationId:" +
-                driftConfiguration.getId() + ", driftConfigurationName: " + driftConfiguration.getName() + "]. No " +
-                " work will be scheduled.");
+            log.warn("No schedule found in the queue for [resourceId:" + resourceId + ", driftConfigurationId:"
+                + driftConfiguration.getId() + ", driftConfigurationName: " + driftConfiguration.getName() + "]. No "
+                + " work will be scheduled.");
             return;
         }
         log.debug("Resetting " + schedule + " for immediate detection.");

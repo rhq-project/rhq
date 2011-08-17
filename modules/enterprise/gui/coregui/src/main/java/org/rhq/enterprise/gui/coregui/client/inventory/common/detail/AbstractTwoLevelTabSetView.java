@@ -18,12 +18,12 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common.detail;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import com.allen_sauer.gwt.log.client.Log;
-import com.google.gwt.user.client.History;
 import com.smartgwt.client.types.Side;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.layout.Layout;
@@ -140,9 +140,11 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
         // we want to prevent user initiation of another tab change. To block users from clicking tabs we 
         // disable the tab set.  We re-enable the tabset when safe. (see this method and also selectTab()). 
 
+        String historyToken = tabSelectedEvent.getHistoryToken();
+
         if (getSelectedItemId() == null) {
             this.tabSet.disable();
-            CoreGUI.goToView(History.getToken());
+            CoreGUI.goToView(historyToken);
 
         } else {
             String tabId = tabSelectedEvent.getId();
@@ -153,7 +155,7 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
             // If the selected tab or subtab is not already the current history item, the user clicked on the tab, rather
             // than going directly to the tab's URL. In this case, fire a history event to go to the tab and make it the
             // current history item.
-            if (!(History.getToken().equals(path) || History.getToken().startsWith(path + "/"))) {
+            if (!(historyToken.equals(path) || historyToken.startsWith(path + "/"))) {
                 this.tabSet.disable();
                 CoreGUI.goToView(path);
 
@@ -212,7 +214,15 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
 
         } else {
             // Same Resource - just switch tabs.
-            this.selectTab(this.tabName, this.subTabName, viewPath);
+            //
+            // until we finish the following work we're susceptible to fast-click issues in
+            // tree navigation.  So, wait until after it's done to notify listeners thatthe view is
+            // safely rendered.  Make sure to notify even on failure.            
+            try {
+                this.selectTab(this.tabName, this.subTabName, viewPath);
+            } finally {
+                notifyViewRenderedListeners();
+            }
         }
     }
 
@@ -224,6 +234,7 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
      * @param viewPath the view path, which may have additional view items to be rendered
      */
     public void selectTab(String tabName, String subtabName, ViewPath viewPath) {
+
         try {
             TwoLevelTab tab = (tabName != null) ? this.tabSet.getTabByName(tabName) : null;
             SubTab subtab = null;
@@ -331,6 +342,22 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
     public void destroy() {
         tabSet.destroy();
         super.destroy();
+    }
+
+    public interface ViewRenderedListener {
+        void onViewRendered();
+    }
+
+    private List<ViewRenderedListener> viewRenderedListeners = new ArrayList<ViewRenderedListener>();
+
+    public void addViewRenderedListener(ViewRenderedListener listener) {
+        viewRenderedListeners.add(listener);
+    }
+
+    protected void notifyViewRenderedListeners() {
+        for (ViewRenderedListener listener : viewRenderedListeners) {
+            listener.onViewRendered();
+        }
     }
 
 }

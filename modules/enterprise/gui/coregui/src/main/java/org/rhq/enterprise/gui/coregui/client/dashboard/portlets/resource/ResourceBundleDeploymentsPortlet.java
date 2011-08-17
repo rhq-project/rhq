@@ -19,7 +19,6 @@
 package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource;
 
 import com.allen_sauer.gwt.log.client.Log;
-import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.fields.LinkItem;
@@ -27,6 +26,7 @@ import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.bundle.BundleDeployment;
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.criteria.ResourceBundleDeploymentCriteria;
@@ -57,20 +57,22 @@ public class ResourceBundleDeploymentsPortlet extends GroupBundleDeploymentsPort
 
     private int resourceId = -1;
 
-    public ResourceBundleDeploymentsPortlet(String locatorId) {
-        super(locatorId);
-        //figure out which page we're loading
-        String currentPage = History.getToken();
-        String[] elements = currentPage.split("/");
-        int currentResourceIdentifier = Integer.valueOf(elements[1]);
-        this.resourceId = currentResourceIdentifier;
+    public ResourceBundleDeploymentsPortlet(String locatorId, int resourceId) {
+        super(locatorId, -1);
+
+        this.resourceId = resourceId;
     }
 
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final Portlet getInstance(String locatorId) {
-            return new ResourceBundleDeploymentsPortlet(locatorId);
+        public final Portlet getInstance(String locatorId, EntityContext context) {
+
+            if (EntityContext.Type.Resource != context.getType()) {
+                throw new IllegalArgumentException("Context [" + context + "] not supported by portlet");
+            }
+
+            return new ResourceBundleDeploymentsPortlet(locatorId, context.getResourceId());
         }
     }
 

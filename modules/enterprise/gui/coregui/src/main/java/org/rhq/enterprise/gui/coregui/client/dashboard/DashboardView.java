@@ -20,11 +20,10 @@ package org.rhq.enterprise.gui.coregui.client.dashboard;
 
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Set;
-import java.util.TreeMap;
 
-import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.AnimationCallback;
@@ -49,19 +48,14 @@ import com.smartgwt.client.widgets.menu.events.MenuItemClickEvent;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.dashboard.Dashboard;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
-import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceTypeFacet;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.group.GroupCategory;
-import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
-import org.rhq.core.domain.util.PageControl;
-import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
@@ -115,33 +109,58 @@ public class DashboardView extends LocatableVLayout {
     private MenuItem[] refreshMenuItems;
     private int refreshInterval = 0;
     private LocatableIMenuButton refreshMenuButton;
-    private HashMap<String, PortletViewFactory> portletMap = null;
-    private ResourceGroup group = null;
+
+    private EntityContext context;
     private ResourceGroupComposite groupComposite = null;
-    private Resource resource = null;
     private ResourceComposite resourceComposite = null;
 
     // this is used to prevent an odd smartgwt problem where onInit() can get called multiple times if
     // the view is set to a Tab's pane.
     private boolean isInitialized = false;
 
+    /**
+     * Convenience constructor for subsystem context.
+     * 
+     * @param locatorId
+     * @param dashboardContainer
+     * @param storedDashboard
+     */
     public DashboardView(String locatorId, DashboardContainer dashboardContainer, Dashboard storedDashboard) {
+
+        this(locatorId, dashboardContainer, storedDashboard, EntityContext.forSubsystemView(), null);
+    }
+
+    /**
+     * @param locatorId
+     * @param dashboardContainer
+     * @param storedDashboard
+     * @param context
+     * @param composite ResourceComposite, ResourceGroupComposite or null depending on context
+     */
+    public DashboardView(String locatorId, DashboardContainer dashboardContainer, Dashboard storedDashboard,
+        EntityContext context, Object composite) {
+
         super(locatorId);
 
         this.dashboardContainer = dashboardContainer;
         this.storedDashboard = storedDashboard;
-    }
+        this.context = context;
 
-    public DashboardView(String locatorId, DashboardContainer dashboardContainer, Dashboard storedDashboard,
-        ResourceGroupComposite groupCompositeValue, ResourceComposite resourceCompositeValue) {
-        this(locatorId, dashboardContainer, storedDashboard);
-        groupComposite = groupCompositeValue;
-        if (groupComposite != null) {
-            group = groupCompositeValue.getResourceGroup();
+        switch (this.context.getType()) {
+        case Resource: {
+            if (null == composite) {
+                throw new IllegalArgumentException("null composite for resource context");
+            }
+            this.resourceComposite = (ResourceComposite) composite;
+            break;
         }
-        resourceComposite = resourceCompositeValue;
-        if (resourceComposite != null) {
-            resource = resourceComposite.getResource();
+        case ResourceGroup: {
+            if (null == composite) {
+                throw new IllegalArgumentException("null composite for group context");
+            }
+            this.groupComposite = (ResourceGroupComposite) composite;
+            break;
+        }
         }
     }
 
@@ -197,65 +216,11 @@ public class DashboardView extends LocatableVLayout {
 
     private DynamicForm buildEditForm() {
         editForm = new LocatableDynamicForm(extendLocatorId("Editor"));
-        final Map<String, String> groupKeyNameMap = new HashMap<String, String>(PortletFactory
-            .getRegisteredGroupPortletNameMap());
-        //remove BundleDeployment and add back later if relevant.
-        groupKeyNameMap.remove(GroupBundleDeploymentsPortlet.KEY);
-        //if group, need to do asynch check for bundlePortlet to ensure only Platform members
-        if (groupComposite != null) {
-            final ResourceGroup group = groupComposite.getResourceGroup();
-            ResourceGroupCriteria criteria = new ResourceGroupCriteria();
-            criteria.addFilterId(group.getId());
-            criteria.fetchExplicitResources(true);
-            criteria.setPageControl(new PageControl(0, 1));
-            GWTServiceLookup.getResourceGroupService().findResourceGroupsByCriteria(criteria,
-                new AsyncCallback<PageList<ResourceGroup>>() {
-                    @Override
-                    public void onSuccess(PageList<ResourceGroup> results) {
-                        if (!results.isEmpty()) {
-                            ResourceGroup grp = results.get(0);
-                            Set<Resource> explicitMembers = grp.getExplicitResources();
-                            Resource[] currentResources = new Resource[explicitMembers.size()];
-                            explicitMembers.toArray(currentResources);
-                            //membership dynamically determined if all platforms then will be compatible.
-                            if (group.getGroupCategory().equals(GroupCategory.COMPATIBLE)) {
-                                if (currentResources[0].getResourceType().getCategory().equals(
-                                    ResourceCategory.PLATFORM)) {
-                                    //this portlet allowed to add bundle portlet monitoring
-                                    groupKeyNameMap.put(GroupBundleDeploymentsPortlet.KEY,
-                                        GroupBundleDeploymentsPortlet.NAME);
-                                }
-                            }
-                        }
-                        //now complet populating of portlet edit form.
-                        populateBuildEditForm(groupKeyNameMap);
-                    }
-
-                    @Override
-                    public void onFailure(Throwable caught) {
-                        Log.debug("Error retrieving information for group [" + group.getId() + "]:"
-                            + caught.getMessage());
-                    }
-                });
-
-        } else {//otherwise default groupKeyNameMap is sufficient as won't be used.
-            populateBuildEditForm(groupKeyNameMap);
-        }
-
-        return editForm;
-    }
-
-    /** Responsible for populating the edit form widget.
-     *  groupKepNameMap is updated for bundles.
-     *
-     * @param groupKeyNameMap
-     */
-    private void populateBuildEditForm(Map<String, String> groupKeyNameMap) {
         editForm.setMargin(5);
         editForm.setAutoWidth();
         editForm.setNumCols(canEditName() ? 12 : 10);
-        TextItem nameItem = null;
 
+        TextItem nameItem = null;
         if (dashboardContainer.supportsDashboardNameEdit()) {
             nameItem = new TextItem("name", MSG.common_title_dashboard_name());
             nameItem.setValue(storedDashboard.getName());
@@ -278,11 +243,9 @@ public class DashboardView extends LocatableVLayout {
         numColItem.setValue(storedDashboard.getColumns());
 
         ButtonItem addColumn = new ButtonItem("addColumn", MSG.common_title_add_column());
-
         addColumn.setAutoFit(true);
         addColumn.setStartRow(false);
         addColumn.setEndRow(false);
-
         addColumn.addClickHandler(new com.smartgwt.client.widgets.form.fields.events.ClickHandler() {
             public void onClick(com.smartgwt.client.widgets.form.fields.events.ClickEvent event) {
                 portalLayout.addMember(new PortalColumn());
@@ -296,7 +259,6 @@ public class DashboardView extends LocatableVLayout {
         removeColumn.setAutoFit(true);
         removeColumn.setStartRow(false);
         removeColumn.setEndRow(false);
-
         removeColumn.addClickHandler(new com.smartgwt.client.widgets.form.fields.events.ClickHandler() {
             public void onClick(com.smartgwt.client.widgets.form.fields.events.ClickEvent event) {
 
@@ -315,50 +277,40 @@ public class DashboardView extends LocatableVLayout {
             }
         });
 
+        // build the menu of valid portlets for this context, sorted by portlet name
         final Menu addPortletMenu = new LocatableMenu(editForm.extendLocatorId("PortletMenu"));
-        HashMap<String, String> keyNameMap = new HashMap<String, String>(PortletFactory.getRegisteredPortletNameMap());
-        // the assumption here is that the portlet names are unique. we want a sorted menu here, so create a
-        // sorted map from portlet name to portlet key and use that to generate the menu. It would be nice if you
-        // could just call Menu.sort() but it's not supported (yet?).
-        final TreeMap<String, String> nameKeyMap = new TreeMap<String, String>();
-        for (String portletKey : keyNameMap.keySet()) {
-            nameKeyMap.put(keyNameMap.get(portletKey), portletKey);
+        LinkedHashMap<String, String> valueMap;
+
+        switch (context.getType()) {
+        case SubsystemView:
+            valueMap = PortletFactory.getGlobalPortletMenuMap();
+            break;
+
+        case ResourceGroup:
+            valueMap = processPortletNameMapForGroup(this.groupComposite);
+            // In addition to the group-specific portlets, make the global portlets available
+            valueMap.putAll(PortletFactory.getGlobalPortletMenuMap());
+            break;
+
+        case Resource:
+            valueMap = processPortletNameMapForResource(this.resourceComposite);
+            // In addition to the resource-specific portlets, make the global portlets available
+            valueMap.putAll(PortletFactory.getGlobalPortletMenuMap());
+            break;
+
+        default:
+            throw new IllegalStateException("Unsupported context [" + context + "]");
         }
-
-        //if resourceGroup passed in then upate portlets list depending on grouptype and facets
-        if (this.group != null) {
-
-            //filter out portlets not relevent for group(compat|mixed) or facets
-            groupKeyNameMap = processPortletNameMapForGroup(groupKeyNameMap, this.groupComposite);
-
-            //add to default list of portlets.
-            for (String portletKey : groupKeyNameMap.keySet()) {
-                nameKeyMap.put(groupKeyNameMap.get(portletKey), portletKey);
-            }
-        }
-
-        HashMap<String, String> resourceKeyNameMap = new HashMap<String, String>(PortletFactory
-            .getRegisteredResourcePortletNameMap());
-        //if resource passed in then add additional portlets to list
-        if (this.resource != null) {
-            //trim out portlets that should not be visible
-            resourceKeyNameMap = processPortletNameMapForResource(resourceKeyNameMap, this.resourceComposite);
-
-            for (String portletKey : resourceKeyNameMap.keySet()) {
-                nameKeyMap.put(resourceKeyNameMap.get(portletKey), portletKey);
-            }
-        }
-
-        //build the addPortlet Menu item
-        // now use the reversed map for the menu generation
-        for (String portletName : nameKeyMap.keySet()) {
+        for (Iterator<String> i = valueMap.keySet().iterator(); i.hasNext();) {
+            String portletKey = i.next();
+            String portletName = valueMap.get(portletKey);
             MenuItem menuItem = new MenuItem(portletName);
-            menuItem.setAttribute("portletKey", nameKeyMap.get(portletName));
+            menuItem.setAttribute("portletKey", portletKey);
             addPortletMenu.addItem(menuItem);
         }
+
         addPortlet = new LocatableIMenuButton(editForm.extendLocatorId("AddPortlet"), MSG.common_title_add_portlet(),
             addPortletMenu);
-
         addPortlet.setIcon("[skin]/images/actions/add.png");
         addPortlet.setAutoFit(true);
 
@@ -460,98 +412,112 @@ public class DashboardView extends LocatableVLayout {
         } else {
             editForm.setItems(addCanvas, numColItem, addColumn, removeColumn, picker, refreshCanvas);
         }
+
         updateRefreshMenu();
         this.refreshMenuButton.markForRedraw();
+
         markForRedraw();
+
         //attempt to initialize
         editForm.markForRedraw();
         markForRedraw();
+
+        return editForm;
     }
 
-    /**Process the portletName map to exclude portlets that should not be visible for this
-     * resource.
+    /** Return the relevant sorted value map for the resource
      */
-    public static HashMap<String, String> processPortletNameMapForResource(HashMap<String, String> resourceKeyNameMap,
-        ResourceComposite composite) {
-        if ((composite != null) && (composite.getResource() != null) && (resourceKeyNameMap != null)
-            && !resourceKeyNameMap.isEmpty()) {
-            Resource resource = composite.getResource();
-            //filter out portlets not relevent for facets
+    public static LinkedHashMap<String, String> processPortletNameMapForResource(ResourceComposite composite) {
+
+        LinkedHashMap<String, String> resourceMenuMap = PortletFactory.getResourcePortletMenuMap();
+
+        if ((composite != null) && (composite.getResource() != null)) {
+            resourceMenuMap = new LinkedHashMap<String, String>(resourceMenuMap);
+
+            // filter out portlets not relevent for facets
             Set<ResourceTypeFacet> facets = composite.getResourceFacets().getFacets();
             if (!facets.isEmpty()) {
-                //Operation related portlets
+                // Operation related portlets
                 if (!facets.contains(ResourceTypeFacet.OPERATION)) {
-                    resourceKeyNameMap.remove(ResourceOperationsPortlet.KEY);
+                    resourceMenuMap.remove(ResourceOperationsPortlet.KEY);
                 }
-                //MEASUREMENT related portlets(METRICS)
+                // MEASUREMENT related portlets(METRICS)
                 if (!facets.contains(ResourceTypeFacet.MEASUREMENT)) {
-                    resourceKeyNameMap.remove(ResourceMetricsPortlet.KEY);
-                    resourceKeyNameMap.remove(ResourceMetricsPortlet.KEY);
+                    resourceMenuMap.remove(ResourceMetricsPortlet.KEY);
+                    resourceMenuMap.remove(ResourceMetricsPortlet.KEY);
                 }
-                //Content related portlets
+                // Content related portlets
                 if (!facets.contains(ResourceTypeFacet.CONTENT)) {
-                    resourceKeyNameMap.remove(ResourcePkgHistoryPortlet.KEY);
+                    resourceMenuMap.remove(ResourcePkgHistoryPortlet.KEY);
                 }
-                //Event related portlets
+                // Event related portlets
                 if (!facets.contains(ResourceTypeFacet.EVENT)) {
-                    resourceKeyNameMap.remove(ResourceEventsPortlet.KEY);
+                    resourceMenuMap.remove(ResourceEventsPortlet.KEY);
                 }
-                //Configuration related portlets
+                // Configuration related portlets
                 if (!facets.contains(ResourceTypeFacet.CONFIGURATION)) {
-                    resourceKeyNameMap.remove(ResourceConfigurationUpdatesPortlet.KEY);
+                    resourceMenuMap.remove(ResourceConfigurationUpdatesPortlet.KEY);
                 }
-            }
-            //Bundle related portlet
-            if (!resource.getResourceType().getCategory().equals(ResourceCategory.PLATFORM)) {
-                resourceKeyNameMap.remove(ResourceBundleDeploymentsPortlet.KEY);
+                // Bundle related portlets
+                if (!facets.contains(ResourceTypeFacet.BUNDLE)) {
+                    resourceMenuMap.remove(ResourceBundleDeploymentsPortlet.KEY);
+                }
             }
         }
-        return resourceKeyNameMap;
+
+        return resourceMenuMap;
     }
 
-    /**Process the portletName map to exclude portlets that should not be visible for this
-     * group. All except BundleDeployment visibility is handled here. Bundle requires runtime check.
+    /** Return the relevant sorted value map for the group
      */
-    public static Map<String, String> processPortletNameMapForGroup(Map<String, String> groupKeyNameMap,
-        ResourceGroupComposite composite) {
-        if ((composite != null) && (composite.getResourceGroup() != null) && (groupKeyNameMap != null)
-            && !groupKeyNameMap.isEmpty()) {
+    public static LinkedHashMap<String, String> processPortletNameMapForGroup(ResourceGroupComposite composite) {
 
-            //filter out portlets not relevent for facets
+        LinkedHashMap<String, String> groupMenuMap = PortletFactory.getGroupPortletMenuMap();
+
+        if ((composite != null) && (composite.getResourceGroup() != null)) {
+            groupMenuMap = new LinkedHashMap<String, String>(groupMenuMap);
+
+            // filter out portlets not relevent for facets
             Set<ResourceTypeFacet> facets = composite.getResourceFacets().getFacets();
             GroupCategory groupCategory = composite.getResourceGroup().getGroupCategory();
-            //if not a compatible group may need to do some pruning.
+
+            // if not a compatible group do some pruning.
             if (groupCategory != GroupCategory.COMPATIBLE) {
-                groupKeyNameMap.remove(GroupOperationsPortlet.KEY);
-                groupKeyNameMap.remove(GroupMetricsPortlet.KEY);
-                groupKeyNameMap.remove(GroupOobsPortlet.KEY);
-                groupKeyNameMap.remove(GroupPkgHistoryPortlet.KEY);
-                groupKeyNameMap.remove(GroupConfigurationUpdatesPortlet.KEY);
+                groupMenuMap.remove(GroupOperationsPortlet.KEY);
+                groupMenuMap.remove(GroupMetricsPortlet.KEY);
+                groupMenuMap.remove(GroupOobsPortlet.KEY);
+                groupMenuMap.remove(GroupPkgHistoryPortlet.KEY);
+                groupMenuMap.remove(GroupConfigurationUpdatesPortlet.KEY);
+
             } else {
-                //for compatible may still need to do some pruning.
+                // for compatible may still need to do some pruning.
                 if (!facets.isEmpty()) {
-                    //Operations related portlets(Config,PkgHistory)
+                    // Operations related portlets(Config,PkgHistory)
                     if (!facets.contains(ResourceTypeFacet.OPERATION)) {
-                        groupKeyNameMap.remove(GroupOperationsPortlet.KEY);
+                        groupMenuMap.remove(GroupOperationsPortlet.KEY);
                     }
-                    //MEASUREMENT related portlets(METRICS)
+                    // MEASUREMENT related portlets(METRICS)
                     if (!facets.contains(ResourceTypeFacet.MEASUREMENT)) {
-                        groupKeyNameMap.remove(GroupMetricsPortlet.KEY);
-                        groupKeyNameMap.remove(GroupOobsPortlet.KEY);
+                        groupMenuMap.remove(GroupMetricsPortlet.KEY);
+                        groupMenuMap.remove(GroupOobsPortlet.KEY);
                     }
-                    //CONTENT related portlets(CONTENT)
+                    // CONTENT related portlets(CONTENT)
                     if (!facets.contains(ResourceTypeFacet.CONTENT)) {
-                        groupKeyNameMap.remove(GroupPkgHistoryPortlet.KEY);
+                        groupMenuMap.remove(GroupPkgHistoryPortlet.KEY);
                     }
-                    //CONFIGURATION related portlets(CONFIGURATION)
+                    // CONFIGURATION related portlets(CONFIGURATION)
                     if (!facets.contains(ResourceTypeFacet.CONFIGURATION)) {
-                        groupKeyNameMap.remove(GroupConfigurationUpdatesPortlet.KEY);
+                        groupMenuMap.remove(GroupConfigurationUpdatesPortlet.KEY);
+                    }
+                    // BUNDLE related portlets(BUNDLE)
+                    if (!facets.contains(ResourceTypeFacet.BUNDLE)) {
+                        groupMenuMap.remove(GroupBundleDeploymentsPortlet.KEY);
                     }
                 }
             }
-
         }
-        return groupKeyNameMap;
+
+        return groupMenuMap;
     }
 
     private void loadPortletWindows() {
@@ -560,7 +526,7 @@ public class DashboardView extends LocatableVLayout {
             for (DashboardPortlet storedPortlet : storedDashboard.getPortlets(i)) {
                 String locatorId = getPortletLocatorId(portalLayout, storedPortlet);
 
-                PortletWindow portletWindow = new PortletWindow(locatorId, this, storedPortlet);
+                PortletWindow portletWindow = new PortletWindow(locatorId, this, storedPortlet, context);
                 portletWindow.setTitle(storedPortlet.getName());
                 portletWindow.setHeight(storedPortlet.getHeight());
                 portletWindow.setVisible(true);
@@ -602,7 +568,7 @@ public class DashboardView extends LocatableVLayout {
         storedDashboard.addPortlet(storedPortlet);
 
         String locatorId = getPortletLocatorId(portalLayout, storedPortlet);
-        final PortletWindow newPortletWindow = new PortletWindow(locatorId, this, storedPortlet);
+        final PortletWindow newPortletWindow = new PortletWindow(locatorId, this, storedPortlet, context);
         newPortletWindow.setTitle(portletName);
         newPortletWindow.setHeight(350);
         newPortletWindow.setVisible(false);
@@ -729,12 +695,6 @@ public class DashboardView extends LocatableVLayout {
 
     private void updatePortletWindows(Dashboard result) {
         if (result != null) {
-            if (portletMap == null) {
-                portletMap = new HashMap<String, PortletViewFactory>();
-                for (String key : PortletFactory.getRegisteredPortletKeys()) {
-                    portletMap.put(key, PortletFactory.getRegisteredPortletFactory(key));
-                }
-            }
             for (PortletWindow portletWindow : portletWindows) {
                 for (DashboardPortlet updatedPortlet : result.getPortlets()) {
                     if (equalsDashboardPortlet(portletWindow.getStoredPortlet(), updatedPortlet)) {
@@ -898,6 +858,10 @@ public class DashboardView extends LocatableVLayout {
 
     public Dashboard getStoredDashboard() {
         return storedDashboard;
+    }
+
+    public EntityContext getContext() {
+        return context;
     }
 
     public ResourceGroupComposite getGroupComposite() {

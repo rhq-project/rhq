@@ -31,6 +31,8 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Lob;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 import javax.persistence.Table;
 
 /**
@@ -45,7 +47,12 @@ import javax.persistence.Table;
  */
 @Entity
 @Table(name = "RHQ_DRIFT_FILE")
+@NamedQueries({
+    @NamedQuery(name = JPADriftFileBits.QUERY_FIND_BY_ID, query = "FROM JPADriftFileBits WHERE hashId = :hashId")
+})
 public class JPADriftFileBits extends AbstractJPADriftFile implements Serializable {
+    public static final String QUERY_FIND_BY_ID = "JPADriftFileBits.findById";
+
     private static final long serialVersionUID = 1L;
 
     // this is a hash/digest that should uniquely identify the content

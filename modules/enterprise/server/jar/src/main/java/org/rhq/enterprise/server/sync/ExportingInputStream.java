@@ -52,8 +52,9 @@ import org.rhq.core.domain.sync.ExporterMessages;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.server.sync.exporters.Exporter;
 import org.rhq.enterprise.server.sync.exporters.ExportingIterator;
+import org.rhq.enterprise.server.sync.util.IndentingXMLStreamWriter;
 import org.rhq.enterprise.server.sync.validators.ConsistencyValidator;
-import org.rhq.enterprise.server.xmlschema.ConfigurationInstanceUtil;
+import org.rhq.enterprise.server.xmlschema.ConfigurationInstanceDescriptorUtil;
 
 /**
  * Reading from this input stream produces the export file in a lazy (and therefore memory efficient)
@@ -212,13 +213,14 @@ public class ExportingInputStream extends InputStream {
         try {
             XMLOutputFactory ofactory = XMLOutputFactory.newInstance();
             ofactory.setProperty(XMLOutputFactory.IS_REPAIRING_NAMESPACES, true);
-
+            
             try {
                 out = exportOutput;
                 if (zipOutput) {
                     out = new GZIPOutputStream(out);
                 }
-                wrt = ofactory.createXMLStreamWriter(out, "UTF-8");
+                wrt = new IndentingXMLStreamWriter(ofactory.createXMLStreamWriter(out, "UTF-8"));
+                //wrt = ofactory.createXMLStreamWriter(out, "UTF-8");
             } catch (XMLStreamException e) {
                 LOG.error("Failed to create the XML stream writer to output the export file to.", e);
                 return;
@@ -255,7 +257,7 @@ public class ExportingInputStream extends InputStream {
     private void exportPrologue(XMLStreamWriter wrt) throws XMLStreamException {
         wrt.setDefaultNamespace(EXPORT_NAMESPACE);
         wrt.setPrefix(XMLConstants.DEFAULT_NS_PREFIX, EXPORT_NAMESPACE);
-        wrt.setPrefix("ci", ConfigurationInstanceUtil.NS_CONFIGURATION_INSTANCE);
+        wrt.setPrefix("ci", ConfigurationInstanceDescriptorUtil.NS_CONFIGURATION_INSTANCE);
         wrt.setPrefix("c", CONFIGURATION_NAMESPACE);
         
         NamespaceContext nsContext = new NamespaceContext() {
@@ -264,7 +266,7 @@ public class ExportingInputStream extends InputStream {
             private final Map<String, String> PREFIXES = new HashMap<String, String>();
             {
                 PREFIXES.put(XMLConstants.DEFAULT_NS_PREFIX, EXPORT_NAMESPACE);
-                PREFIXES.put("ci", ConfigurationInstanceUtil.NS_CONFIGURATION_INSTANCE);
+                PREFIXES.put("ci", ConfigurationInstanceDescriptorUtil.NS_CONFIGURATION_INSTANCE);
                 PREFIXES.put("c", CONFIGURATION_NAMESPACE);
             }
 
@@ -309,10 +311,10 @@ public class ExportingInputStream extends InputStream {
         };
 
         wrt.setNamespaceContext(nsContext);
-
+        
+        wrt.writeStartDocument();
         wrt.writeStartElement(EXPORT_NAMESPACE, CONFIGURATION_EXPORT_ELEMENT);
-        wrt.writeDefaultNamespace(EXPORT_NAMESPACE);
-        wrt.writeNamespace("ci", ConfigurationInstanceUtil.NS_CONFIGURATION_INSTANCE);
+        wrt.writeNamespace("ci", ConfigurationInstanceDescriptorUtil.NS_CONFIGURATION_INSTANCE);
         wrt.writeNamespace("c", CONFIGURATION_NAMESPACE);
 
         writeValidators(wrt);
@@ -444,7 +446,7 @@ public class ExportingInputStream extends InputStream {
         if (def != null) {
             ConfigurationTemplate template = def.getDefaultTemplate();
             if (template != null) {
-                ret = DefaultImportConfigurationDescriptor.create(ConfigurationInstanceUtil
+                ret = DefaultImportConfigurationDescriptor.create(ConfigurationInstanceDescriptorUtil
                     .createConfigurationInstance(def, template.getConfiguration()));
             }
         }

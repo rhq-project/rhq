@@ -119,13 +119,11 @@ public class SystemSettingsExporterTest extends JMockTest {
 
             assertEquals(m.getAttribute("referencedEntityId"), "0", "Unexpected referencedEntityId value");
             
-            assertEquals(m.getChildNodes().getLength(), 1, "Unexpected number of properties in the system settings.");
+            NodeList entries = m.getElementsByTagName("entry");
             
-            NodeList baseURLs = m.getElementsByTagName("entry");
+            assertEquals(entries.getLength(), 1, "Unexpected number of entry elements in the system settings export.");
             
-            assertEquals(baseURLs.getLength(), 1, "Unexpected number of baseURL elements in the system settings export.");
-            
-            Element baseURL = (Element) baseURLs.item(0);
+            Element baseURL = (Element) entries.item(0);
             
             assertEquals(baseURL.getAttribute("key"), "BaseURL");
             assertEquals(baseURL.getTextContent(), "herethereandeverywhere", "Unexpected value of baseURL");

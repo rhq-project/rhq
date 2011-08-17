@@ -61,11 +61,11 @@ public class SystemSettingsValidator implements ConsistencyValidator {
     }
 
     @Override
-    public void initializeValidation(ExportReader reader) throws XMLStreamException {
+    public void initializeExportedStateValidation(ExportReader reader) throws XMLStreamException {
     }
 
     @Override
-    public void validateCurrentState() throws InconsistentStateException {
+    public void validateExportedState() throws InconsistentStateException {
     }
 
     @Override

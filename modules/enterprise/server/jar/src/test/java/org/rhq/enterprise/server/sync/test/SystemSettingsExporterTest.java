@@ -38,23 +38,21 @@ import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.jmock.Expectations;
 import org.testng.annotations.Test;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import org.rhq.core.db.DatabaseType;
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.common.ProductInfo;
-import org.rhq.core.domain.common.ServerDetails;
 import org.rhq.core.domain.sync.ExporterMessages;
 import org.rhq.core.domain.sync.entity.SystemSettings;
 import org.rhq.enterprise.server.sync.ExportingInputStream;
 import org.rhq.enterprise.server.sync.Synchronizer;
 import org.rhq.enterprise.server.sync.SystemSettingsSynchronizer;
-import org.rhq.enterprise.server.system.InvalidSystemConfigurationException;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
+import org.rhq.test.JMockTest;
 
 /**
  * 
@@ -62,126 +60,32 @@ import org.rhq.enterprise.server.system.SystemManagerLocal;
  * @author Lukas Krejci
  */
 @Test
-public class SystemSettingsExporterTest {
+public class SystemSettingsExporterTest extends JMockTest {
 
     private static final Log LOG = LogFactory.getLog(MetricTemplateExporterTest.class);
 
-    private SystemManagerLocal systemManagerStub = new SystemManagerLocal() {
-
-        @Override
-        public long vacuumAppdef(Subject whoami) {
-            return 0;
-        }
-
-        @Override
-        public long vacuum(Subject whoami, String[] tableNames) {
-            return 0;
-        }
-
-        @Override
-        public long vacuum(Subject whoami) {
-            return 0;
-        }
-
-        @Override
-        public void undeployInstaller() {
-        }
-
-        @Override
-        public void setSystemConfiguration(Subject subject, Properties properties, boolean skipValidation)
-            throws Exception {
-        }
-
-        @Override
-        public void scheduleConfigCacheReloader() {
-        }
-
-        @Override
-        public long reindex(Subject whoami) {
-            return 0;
-        }
-
-        @Override
-        public void reconfigureSystem(Subject whoami) {
-        }
-
-        @Override
-        public void loadSystemConfigurationCacheInNewTx() {
-        }
-
-        @Override
-        public void loadSystemConfigurationCache() {
-        }
-
-        @Override
-        public boolean isExperimentalFeaturesEnabled() {
-            return false;
-        }
-
-        @Override
-        public boolean isDebugModeEnabled() {
-            return false;
-        }
-
-        @Override
-        public Properties getSystemConfiguration(Subject subject) {
-            HashMap<String, String> values = new HashMap<String, String>();
-            values.put("BaseURL", "herethereandeverywhere");
-            SystemSettings settings = new SystemSettings(values);
-
-            return settings.toProperties();
-        }
-
-        @Override
-        public void validateSystemConfiguration(Subject subject, Properties properties)
-            throws InvalidSystemConfigurationException {
-        }
-        
-        @Override
-        public ServerDetails getServerDetails(Subject subject) {
-            return null;
-        }
-
-        @Override
-        public ProductInfo getProductInfo(Subject subject) {
-            return null;
-        }
-
-        @Override
-        public DatabaseType getDatabaseType() {
-            return null;
-        }
-
-        @Override
-        public void enableHibernateStatistics() {
-        }
-
-        @Override
-        public long analyze(Subject whoami) {
-            return 0;
-        }
-
-        @Override
-        public org.rhq.core.domain.common.composite.SystemSettings getSystemSettings(Subject subject) {
-            return null;
-        }
-        
-        
-    };
-
     public void testCanExport() throws Exception {
-        SystemSettingsSynchronizer exporter = new SystemSettingsSynchronizer(systemManagerStub);
+        final SystemManagerLocal systemManager = context.mock(SystemManagerLocal.class);
+        
+        context.checking(new Expectations() {
+            {
+                allowing(systemManager).getSystemConfiguration(with(any(Subject.class)));
+                will(returnValue(getFakeSystemConfiguration()));
+            }
+        });
+        
+        SystemSettingsSynchronizer exporter = new SystemSettingsSynchronizer(systemManager);
 
         Set<Synchronizer<?, ?>> exporters = new HashSet<Synchronizer<?, ?>>();
         exporters.add(exporter);
 
         InputStream eis = new ExportingInputStream(exporters, new HashMap<String, ExporterMessages>(), 65536, false);
 
-                String exportContents = readAll(new InputStreamReader(eis, "UTF-8"));
-                
-                LOG.warn("Export contents:\n" + exportContents);
-                
-                eis = new ByteArrayInputStream(exportContents.getBytes("UTF-8"));
+//        String exportContents = readAll(new InputStreamReader(eis, "UTF-8"));
+//        
+//        LOG.warn("Export contents:\n" + exportContents);
+//        
+//        eis = new ByteArrayInputStream(exportContents.getBytes("UTF-8"));
 
 //         <?xml version="1.0" ?>
 //        <configuration-export>
@@ -215,13 +119,11 @@ public class SystemSettingsExporterTest {
 
             assertEquals(m.getAttribute("referencedEntityId"), "0", "Unexpected referencedEntityId value");
             
-            assertEquals(m.getChildNodes().getLength(), 1, "Unexpected number of properties in the system settings.");
+            NodeList entries = m.getElementsByTagName("entry");
             
-            NodeList baseURLs = m.getElementsByTagName("entry");
+            assertEquals(entries.getLength(), 1, "Unexpected number of entry elements in the system settings export.");
             
-            assertEquals(baseURLs.getLength(), 1, "Unexpected number of baseURL elements in the system settings export.");
-            
-            Element baseURL = (Element) baseURLs.item(0);
+            Element baseURL = (Element) entries.item(0);
             
             assertEquals(baseURL.getAttribute("key"), "BaseURL");
             assertEquals(baseURL.getTextContent(), "herethereandeverywhere", "Unexpected value of baseURL");
@@ -253,15 +155,11 @@ public class SystemSettingsExporterTest {
         return null;
     }
 
-    private static List<Node> getDirectChildrenByTagName(Node node, String tagName) {
-        List<Node> ret = new ArrayList<Node>();
-        for (int i = 0; i < node.getChildNodes().getLength(); ++i) {
-            Node n = node.getChildNodes().item(i);
-            if (n.getNodeName().equals(tagName)) {
-                ret.add(n);
-            }
-        }
+    private static Properties getFakeSystemConfiguration() {
+        HashMap<String, String> values = new HashMap<String, String>();
+        values.put("BaseURL", "herethereandeverywhere");
+        SystemSettings settings = new SystemSettings(values);
 
-        return ret;
+        return settings.toProperties();
     }
 }

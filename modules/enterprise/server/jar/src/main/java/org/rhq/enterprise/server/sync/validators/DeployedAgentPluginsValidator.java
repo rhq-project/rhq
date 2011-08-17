@@ -46,7 +46,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 public class DeployedAgentPluginsValidator implements ConsistencyValidator {
 
-    private static class ConsistentPlugin extends Plugin {
+    public static class ConsistentPlugin extends Plugin {
         
         private static final long serialVersionUID = 1L;
 
@@ -94,6 +94,22 @@ public class DeployedAgentPluginsValidator implements ConsistencyValidator {
         this.pluginManager = pluginManager;
     }
     
+    /**
+     * Provided for testability
+     * @return the pluginsToValidate
+     */
+    public Set<ConsistentPlugin> getPluginsToValidate() {
+        return pluginsToValidate;
+    }
+    
+    /**
+     * Provided for testability
+     * @param pluginsToValidate the pluginsToValidate to set
+     */
+    public void setPluginsToValidate(Set<ConsistentPlugin> pluginsToValidate) {
+        this.pluginsToValidate = pluginsToValidate;
+    }
+    
     @Override
     public void initialize(Subject subject, EntityManager entityManager) {
     }
@@ -114,7 +130,7 @@ public class DeployedAgentPluginsValidator implements ConsistencyValidator {
     }
 
     @Override
-    public void initializeValidation(ExportReader reader) throws XMLStreamException {
+    public void initializeExportedStateValidation(ExportReader reader) throws XMLStreamException {
         pluginsToValidate = new HashSet<ConsistentPlugin>();
 
         while (reader.hasNext()) {
@@ -136,7 +152,7 @@ public class DeployedAgentPluginsValidator implements ConsistencyValidator {
     }
 
     @Override
-    public void validateCurrentState() throws InconsistentStateException {
+    public void validateExportedState() throws InconsistentStateException {
         List<Plugin> localPlugins = pluginManager.getInstalledPlugins();
         Set<ConsistentPlugin> localAgentPlugins = new HashSet<ConsistentPlugin>();
         for(Plugin p : localPlugins) {

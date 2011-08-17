@@ -21,6 +21,7 @@ package org.rhq.enterprise.server.sync.test;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.fail;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -41,6 +42,7 @@ import javax.xml.stream.XMLStreamException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.jmock.Expectations;
 import org.testng.annotations.Test;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -49,7 +51,6 @@ import org.w3c.dom.NodeList;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.sync.ExporterMessages;
-import org.rhq.enterprise.server.sync.ExportException;
 import org.rhq.enterprise.server.sync.ExportWriter;
 import org.rhq.enterprise.server.sync.ExportingInputStream;
 import org.rhq.enterprise.server.sync.NoSingleEntity;
@@ -59,6 +60,7 @@ import org.rhq.enterprise.server.sync.exporters.Exporter;
 import org.rhq.enterprise.server.sync.exporters.ExportingIterator;
 import org.rhq.enterprise.server.sync.importers.Importer;
 import org.rhq.enterprise.server.sync.validators.ConsistencyValidator;
+import org.rhq.test.JMockTest;
 
 /**
  * 
@@ -66,7 +68,7 @@ import org.rhq.enterprise.server.sync.validators.ConsistencyValidator;
  * @author Lukas Krejci
  */
 @Test
-public class ExportingInputStreamTest {
+public class ExportingInputStreamTest extends JMockTest {
 
     private static final Log LOG = LogFactory.getLog(ExportingInputStreamTest.class);
     
@@ -149,7 +151,7 @@ public class ExportingInputStreamTest {
     }
     
 
-    public void testCanExport() throws Exception {
+    public void testSucessfulExport() throws Exception {
         List<String> list1 = Arrays.asList("a", "b", "c");
         List<Integer> list2 = Arrays.asList(1, 2, 3);
         
@@ -223,6 +225,144 @@ public class ExportingInputStreamTest {
         }
     }
     
+    @Test(expectedExceptions = IOException.class)
+    public void testExceptionHandling_Exporter_getExportingIterator() throws Exception {
+        final Exporter<?, ?> failingExporter = context.mock(Exporter.class);
+        
+        final Synchronizer<?, ?> syncer = context.mock(Synchronizer.class);
+        
+        context.checking(new Expectations() {
+            {
+                RuntimeException failure = new RuntimeException("Injected failure");
+                              
+                allowing(failingExporter).getExportingIterator();
+                will(throwException(failure));
+                
+                allowing(syncer).getRequiredValidators();
+                will(returnValue(Collections.emptySet()));
+                
+                allowing(syncer).getExporter();
+                will(returnValue(failingExporter));
+            }
+        });
+        
+        Set<Synchronizer<?, ?>> syncers = this.<Synchronizer<?, ?>>asSet(syncer);
+        
+        InputStream export = new ExportingInputStream(syncers, new HashMap<String, ExporterMessages>(), 1024, false);
+
+        readAll(new InputStreamReader(export, "UTF-8"));
+
+        //this should never be invoked, because reading the input stream should cause the exporter
+        //to fail...
+        
+        fail("Successfully read the export even though one of the exporters threw an exception when asked for the exported entity iterator.");
+    }
+    
+    @Test(expectedExceptions = IOException.class)
+    public void testExceptionHandling_ExportingIterator_next() throws Exception {
+        final ExportingIterator<?> iterator = context.mock(ExportingIterator.class);
+        
+        final Exporter<?, ?> exporter = context.mock(Exporter.class);
+        
+        final Synchronizer<?, ?> syncer = context.mock(Synchronizer.class);
+        
+        context.checking(new Expectations() {
+            {
+                RuntimeException failure = new RuntimeException("Injected failure");
+                          
+                allowing(iterator).hasNext();
+                will(returnValue(true));
+                
+                allowing(iterator).next();
+                will(onConsecutiveCalls(returnValue("Success"), throwException(failure)));
+                
+                allowing(iterator).export(with(any(ExportWriter.class)));
+                
+                allowing(iterator).getNotes();
+                
+                allowing(exporter).getExportingIterator();
+                will(returnValue(iterator));
+                
+                allowing(exporter).getNotes();
+                
+                allowing(syncer).getRequiredValidators();
+                will(returnValue(Collections.emptySet()));
+                
+                allowing(syncer).getExporter();
+                will(returnValue(exporter));
+            }
+        });
+        
+        Set<Synchronizer<?, ?>> syncers = this.<Synchronizer<?, ?>>asSet(syncer);
+        
+        InputStream export = new ExportingInputStream(syncers, new HashMap<String, ExporterMessages>(), 1024, false);
+
+        readAll(new InputStreamReader(export, "UTF-8"));
+
+        //this should never be invoked, because reading the input stream should cause the exporter
+        //to fail...
+        
+        fail("Successfully read the export even though one of the exporters threw an exception when asked for the next exported entity.");
+    }
+    
+    public void testExceptionHandling_ExportingIterator_export() throws Exception {
+        final ExportingIterator<?> iterator = context.mock(ExportingIterator.class);        
+        final Exporter<?, ?> exporter = context.mock(Exporter.class);
+        final Synchronizer<?, ?> syncer = context.mock(Synchronizer.class);
+        
+        context.checking(new Expectations() {
+            {
+                RuntimeException failure = new RuntimeException("Injected failure");
+                          
+                allowing(iterator).hasNext();
+                will(onConsecutiveCalls(returnValue(true), returnValue(true), returnValue(false)));
+                
+                allowing(iterator).next();
+                
+                allowing(iterator).export(with(any(ExportWriter.class)));
+                will(onConsecutiveCalls(returnValue(null), throwException(failure)));
+                
+                allowing(iterator).getNotes();
+                
+                allowing(exporter).getExportingIterator();
+                will(returnValue(iterator));
+                
+                allowing(exporter).getNotes();
+                
+                allowing(syncer).getRequiredValidators();
+                will(returnValue(Collections.emptySet()));
+                
+                allowing(syncer).getExporter();
+                will(returnValue(exporter));
+            }
+        });
+        
+        Set<Synchronizer<?, ?>> syncers = this.<Synchronizer<?, ?>>asSet(syncer);
+        
+        InputStream export = new ExportingInputStream(syncers, new HashMap<String, ExporterMessages>(), 1024, false);
+
+        String exportContents = readAll(new InputStreamReader(export, "UTF-8"));
+
+        LOG.warn("Export contents:\n" + exportContents);
+
+        export = new ByteArrayInputStream(exportContents.getBytes("UTF-8"));
+
+        DocumentBuilder bld = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+        
+        Document doc = bld.parse(export);
+        
+        Element root = doc.getDocumentElement();
+        
+        NodeList entities = root.getElementsByTagName(ExportingInputStream.ENTITY_EXPORT_ELEMENT);
+        
+        assertEquals(entities.getLength(), 2, "Unexpected number of exported elements");
+        
+        //get the entity with the error
+        Element failedEntity = (Element) entities.item(1);
+        Node errorMessage = getDirectChildByTagName(failedEntity, ExportingInputStream.ERROR_MESSAGE_ELEMENT);
+        assertNotNull(errorMessage, "Could not find the error-message element at the entity that failed to export.");
+    }
+
     private <T> LinkedHashSet<T> asSet(T... ts) {
         LinkedHashSet<T> ret = new LinkedHashSet<T>();
         for (T t : ts) {

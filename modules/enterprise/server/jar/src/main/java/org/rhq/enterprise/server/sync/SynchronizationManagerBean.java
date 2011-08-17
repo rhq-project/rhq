@@ -310,7 +310,7 @@ public class SynchronizationManagerBean implements SynchronizationManagerLocal, 
             switch (rdr.next()) {
             case XMLStreamConstants.START_ELEMENT:
                 if (ExportingInputStream.DATA_ELEMENT.equals(rdr.getName().getLocalPart())) {
-                    rdr.next();
+                    rdr.nextTag();
                     Object exportedEntity = importer.unmarshallExportedEntity(new ExportReader(rdr));
                     Class<?> exportedEntityClass = exportedEntity.getClass();
                     
@@ -390,8 +390,8 @@ public class SynchronizationManagerBean implements SynchronizationManagerLocal, 
         validator.initialize(subject, entityManager);
 
         //perform the validation
-        validator.initializeValidation(new ExportReader(rdr));
-        validator.validateCurrentState();
+        validator.initializeExportedStateValidation(new ExportReader(rdr));
+        validator.validateExportedState();
 
         return validator;
     }
@@ -416,7 +416,7 @@ public class SynchronizationManagerBean implements SynchronizationManagerLocal, 
             switch (rdr.next()) {
             case XMLStreamConstants.START_ELEMENT:
                 if (ExportingInputStream.DATA_ELEMENT.equals(rdr.getName().getLocalPart())) {
-                    rdr.next();
+                    rdr.nextTag();
                     X exportedEntity = importer.unmarshallExportedEntity(new ExportReader(rdr));
                     E entity = matcher == null ? null : matcher.findMatch(exportedEntity);
                     importer.update(entity, exportedEntity);

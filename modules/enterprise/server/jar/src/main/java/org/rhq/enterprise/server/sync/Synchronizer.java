@@ -40,7 +40,7 @@ public interface Synchronizer<Entity, ExportedEntity> {
 
     /**
      * Initializes the synchronizer so that it can access database
-     * and authorization aware.
+     * and is authorization aware.
      * 
      * @param subject the currently logged in user
      * @param entityManager the entity manager to access the database with (if not using one

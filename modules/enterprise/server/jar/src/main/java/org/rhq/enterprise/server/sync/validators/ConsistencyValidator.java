@@ -48,6 +48,7 @@ public interface ConsistencyValidator {
 
     /**
      * Initializes the validator with the current authentication info and access to database.
+     * This method is only called during import.
      * 
      * @param subject the currently authenticated user
      * @param entityManager the entity manager that can be used to access the database if the 
@@ -68,7 +69,7 @@ public interface ConsistencyValidator {
     
     /**
      * This method initializes the consistency checker to perform the
-     * {@link #validateCurrentState()} method later on.
+     * {@link #validateExportedState()} method later on.
      * <p>
      * This method is called during import and the reader points to a structure
      * previously stored by the {@link #exportState(ExportWriter)} method on 
@@ -77,18 +78,18 @@ public interface ConsistencyValidator {
      * @param reader
      * @throws XMLStreamException
      */
-    void initializeValidation(ExportReader reader) throws XMLStreamException;
+    void initializeExportedStateValidation(ExportReader reader) throws XMLStreamException;
     
     /**
      * Validates that the current RHQ installation is consistent with the state
      * mandated during the export.
      * <p>
-     * This method is only ever called after the {@link #initializeValidation(XMLStreamReader)} 
+     * This method is only ever called after the {@link #initializeExportedStateValidation(XMLStreamReader)} 
      * is invoked.
      * 
      * @throws InconsistentStateException in case of failed consistency check
      */
-    void validateCurrentState() throws InconsistentStateException;
+    void validateExportedState() throws InconsistentStateException;
     
     /**
      * Returns the types of exported entities this validator can validate before export.

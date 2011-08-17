@@ -155,6 +155,20 @@ public interface MeasurementScheduleManagerLocal {
         long collectionInterval, boolean updateExistingSchedules);
 
     /**
+     * Using this method one can both update the default collection interval AND enable or disable the 
+     * measurement definitions. This method is therefore preferable if you need to do both these things
+     * in 1 go.
+     * 
+     * @param subject the current user
+     * @param measurementDefinitionIds the ids of measurement definitions to update
+     * @param collectionInterval the default collection interval to set
+     * @param enable whether to enable or disable the measurement definition
+     * @param updateExistingSchedules whether to accordingly update the existing schedules
+     */
+    void updateDefaultCollectionIntervalAndEnablementForMeasurementDefinitions(Subject subject, int[] measurementDefinitionIds,
+        long collectionInterval, boolean enable, boolean updateExistingSchedules);
+    
+    /**
      * Enables all collection schedules attached to the given auto group whose schedules are based off the given
      * definitions. This does not enable the "templates" (aka definitions). If the passed group does not exist an
      * Exception is thrown.

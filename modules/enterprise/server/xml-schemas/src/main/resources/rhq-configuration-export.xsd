@@ -3,6 +3,7 @@
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
            targetNamespace="urn:xmlns:rhq-configuration-export"
            xmlns:ce="urn:xmlns:rhq-configuration-export"
+           xmlns:ci="urn:xmlns:rhq-configuration-instance"
            elementFormDefault="qualified"
            jaxb:version="2.0"
            xmlns:jaxb="http://java.sun.com/xml/ns/jaxb">
@@ -11,7 +12,15 @@
         <xs:documentation>
             A schema for RHQ server configuration export files.
         </xs:documentation>
+        <xs:appinfo>
+            <jaxb:schemaBindings>
+                <jaxb:package
+                    name="org.rhq.enterprise.server.xmlschema.generated.configuration.export" />
+            </jaxb:schemaBindings>
+        </xs:appinfo>
     </xs:annotation>
+    
+    <xs:import namespace="urn:xmlns:rhq-configuration-instance" schemaLocation="rhq-configuration-instance.xsd" />
     
     <xs:element name="configuration-export" type="ce:ConfigurationExport" />
 
@@ -31,8 +40,9 @@
     
     <xs:complexType name="EntitiesExport">
         <xs:sequence>
+            <xs:element type="ci:Configuration" name="default-configuration" minOccurs="0" maxOccurs="1"/>
             <xs:element minOccurs="0" maxOccurs="unbounded" type="ce:EntityExport" name="entity" />
-            <xs:element type="xs:string" name="notes" />
+            <xs:element type="xs:string" name="notes" minOccurs="0" maxOccurs="1"/>
         </xs:sequence>
         <xs:attribute name="id" type="xs:ID">
             <xs:annotation>
@@ -44,12 +54,10 @@
     </xs:complexType>
     
     <xs:complexType name="EntityExport">
-        <xs:choice>
-            <xs:sequence>
-                <xs:element name="data" />
-                <xs:element type="xs:string" name="notes"/>
-            </xs:sequence>
-            <xs:element type="xs:string" name="error-message" />
-        </xs:choice>
+        <xs:sequence>
+            <xs:element name="data" />
+            <xs:element type="xs:string" name="notes" minOccurs="0" maxOccurs="1"/>
+            <xs:element type="xs:string" name="error-message" minOccurs="0" maxOccurs="1"/>
+        </xs:sequence>
     </xs:complexType>
 </xs:schema>

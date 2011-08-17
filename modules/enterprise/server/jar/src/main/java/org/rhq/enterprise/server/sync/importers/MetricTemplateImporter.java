@@ -178,34 +178,38 @@ public class MetricTemplateImporter implements Importer<MeasurementDefinition, M
     public ExportedEntityMatcher<MeasurementDefinition, MetricTemplate> getExportedEntityMatcher() {
         return new ExportedEntityMatcher<MeasurementDefinition, MetricTemplate>() {
 
+            private Map<MetricTemplate, MeasurementDefinition> cache;
+            
+            {
+                //this instance will be used many many times to find the measurement
+                //definitions that correspond to the templates stored in the export file
+                //it is therefore more optimal to just preload all the mds in a cache
+                //and use that to find matches than to query the database each time.
+                cache = new HashMap<MetricTemplate, MeasurementDefinition>();
+                
+                Query q = entityManager.createQuery("SELECT md FROM MeasurementDefinition md");
+
+                for (Object r : q.getResultList()) {
+                    MeasurementDefinition md = (MeasurementDefinition) r;
+
+                    cache.put(new MetricTemplate(md), md);
+                }
+                
+            }
             @Override
             public MeasurementDefinition findMatch(MetricTemplate object) {
-                Query q =
-                    entityManager
-                        .createNamedQuery(MeasurementDefinition.FIND_RAW_OR_PER_MINUTE_BY_NAME_AND_RESOURCE_TYPE_NAME);
-                q.setParameter("name", object.getMetricName());
-                q.setParameter("resourceTypeName", object.getResourceTypeName());
-                q.setParameter("resourceTypePlugin", object.getResourceTypePlugin());
-                q.setParameter("perMinute", object.isPerMinute() ? 1 : 0);
-
-                List<?> results = q.getResultList();
-
-                if (results.isEmpty()) {
-                    if (LOG.isDebugEnabled()) {
+                MeasurementDefinition md = cache.get(object);
+                
+                if (md == null && LOG.isDebugEnabled()) {
                         LOG.debug("Failed to find a measurement definition corresponding to "
                             + object
                             + ". This means that the plugins in the source RHQ install were different than in this RHQ install "
                             + "but the DeployedAgentPluginsValidator failed to catch that. This most probably means that the "
                             + "export file has been tampered with. Letting the import continue because that might have been intentional change by the user.");
-                    }
-                    return null;
-                } else if (results.size() > 1) {
-                    throw new IllegalStateException(
-                        "Found more than one measurement definition with the same name and resource type. This should never happen. "
-                            + results);
-                } else {
-                    return (MeasurementDefinition) results.get(0);
+                                      
                 }
+                
+                return md;
             }
         };
     }

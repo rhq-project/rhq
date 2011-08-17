@@ -52,6 +52,7 @@ import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedE
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewFactory;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.InventoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.AbstractTwoLevelTabSetView;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.event.EventCompositeHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.configuration.GroupResourceConfigurationEditView;
@@ -67,6 +68,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.operation.h
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.operation.schedule.GroupOperationScheduleListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.summary.ActivityView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -76,6 +78,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  * @author Ian Springer
  */
 public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<ResourceGroupComposite, ResourceGroupTitleBar> {
+
     public static final String AUTO_CLUSTER_VIEW = "ResourceGroup/AutoCluster";
     public static final String AUTO_GROUP_VIEW = "Resource/AutoGroup";
 
@@ -258,7 +261,8 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         updateSubTab(this.summaryTab, this.summaryActivity, true, true, new ViewFactory() {
             @Override
             public Canvas createView() {
-                return new ActivityView(summaryActivity.extendLocatorId("View"), groupComposite);
+                return new ActivityView(summaryActivity.extendLocatorId("View"), groupComposite, isAutoCluster(),
+                    isAutoGroup());
             }
         });
         // TODO (ips): Add Timeline subtab?
@@ -451,7 +455,6 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         final boolean isAutoGroup = isAutoGroup();
         if (isAutoCluster) {
             criteria.addFilterVisible(false);
-
         } else if (isAutoGroup) {
             criteria.addFilterVisible(false);
             criteria.addFilterPrivate(true);
@@ -460,14 +463,15 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         GWTServiceLookup.getResourceGroupService().findResourceGroupCompositesByCriteria(criteria,
             new AsyncCallback<PageList<ResourceGroupComposite>>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(MSG.view_group_detail_failLoadComp(String.valueOf(groupId)),
-                        caught);
+                    Message message = new Message(MSG.view_group_detail_failLoadComp(String.valueOf(groupId)),
+                            Message.Severity.Warning);
+                    CoreGUI.goToView(InventoryView.VIEW_ID.getName(), message);
                 }
 
                 public void onSuccess(PageList<ResourceGroupComposite> result) {
                     if (result.isEmpty()) {
-                        CoreGUI.getErrorHandler().handleError(
-                            MSG.view_group_detail_failLoadComp(String.valueOf(groupId)));
+                        //noinspection ThrowableInstanceNeverThrown
+                        onFailure(new Exception("Group with id [" + groupId + "] does not exist."));
                     } else {
                         groupComposite = result.get(0);
                         loadResourceType(groupComposite, viewPath);
@@ -515,14 +519,25 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
                     ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
                 new ResourceTypeRepository.TypeLoadedCallback() {
                     public void onTypesLoaded(ResourceType type) {
-                        group.setResourceType(type);
-                        updateTabContent(groupComposite);
-                        selectTab(getTabName(), getSubTabName(), viewPath);
+                        // until we finish the following work we're susceptible to fast-click issues in
+                        // tree navigation.  So, wait until after it's done to notify listeners that the view is
+                        // safely rendered.  Make sure to notify even on failure.
+                        try {
+                            group.setResourceType(type);
+                            updateTabContent(groupComposite);
+                            selectTab(getTabName(), getSubTabName(), viewPath);
+                        } finally {
+                            notifyViewRenderedListeners();
+                        }
                     }
                 });
         } else {
-            updateTabContent(groupComposite);
-            selectTab(getTabName(), getSubTabName(), viewPath);
+            try {
+                updateTabContent(groupComposite);
+                selectTab(getTabName(), getSubTabName(), viewPath);
+            } finally {
+                notifyViewRenderedListeners();
+            }
         }
     }
 

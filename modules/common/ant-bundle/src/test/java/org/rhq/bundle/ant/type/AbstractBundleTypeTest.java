@@ -23,6 +23,8 @@
 
 package org.rhq.bundle.ant.type;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Pattern;
 
 import org.testng.annotations.Test;
@@ -30,6 +32,72 @@ import org.testng.annotations.Test;
 @Test
 public class AbstractBundleTypeTest {
     public void testGetPattern() {
+        Pattern regex;
+
+        regex = assertPatternsRegex("/basedir", "(/basedir/(easy\\.txt))|(/basedir/(test\\.txt))", "easy.txt",
+            "test.txt");
+        assert regex.matcher("/basedir/easy.txt").matches();
+        assert regex.matcher("/basedir/test.txt").matches();
+        assert !regex.matcher("/basedir/easyXtxt").matches();
+        assert !regex.matcher("/basedir/testXtxt").matches();
+        assert !regex.matcher("/basedir/easy.txtX").matches();
+        assert !regex.matcher("/basedir/test.txtX").matches();
+        assert !regex.matcher("/basedirX/easy.txt").matches();
+        assert !regex.matcher("/basedirX/test.txt").matches();
+        assert !regex.matcher("easy.txt").matches() : "missing basedir";
+        assert !regex.matcher("test.txt").matches() : "missing basedir";
+
+        regex = assertPatternsRegex("AB CD", "(AB CD/([^/]*\\.txt))|(AB CD/(test\\.[^/]*))", "*.txt", "test.*");
+        assert regex.matcher("AB CD/easy.txt").matches();
+        assert regex.matcher("AB CD/test.xml").matches();
+        assert regex.matcher("AB CD/test.txt").matches();
+        assert regex.matcher("AB CD/test.").matches();
+        assert regex.matcher("AB CD/test.wotgorilla?").matches();
+        assert regex.matcher("AB CD/.txt").matches();
+        assert !regex.matcher("AB CD/txt").matches();
+        assert !regex.matcher("AB CD/Xtxt").matches();
+        assert !regex.matcher("AB CD/testX").matches() : "missing the dot";
+        assert !regex.matcher("AB CD/easy.txtX").matches();
+        assert !regex.matcher("AB CDX/easy.txt").matches();
+        assert !regex.matcher("AB CDX/test.xml").matches();
+        assert !regex.matcher("easy.txt").matches() : "missing basedir";
+        assert !regex.matcher("test.txt").matches() : "missing basedir";
+
+        regex = assertPatternsRegex("A", "(A/(.*.\\.txt))|(A/(sub/.*[^/]*\\.xml))", "**/?.txt", "sub/**/*.xml");
+        assert regex.matcher("A/1.txt").matches();
+        assert regex.matcher("A/BB/CCC/1.txt").matches();
+        //assert !regex.matcher("A/12.txt").matches(); // TODO: THIS ASSERT FAILS! FIX THIS!!
+        //assert !regex.matcher("A/B/C/12.txt").matches(); // TODO: THIS ASSERT FAILS! FIX THIS!!
+        assert regex.matcher("A/sub/foo.xml").matches();
+        assert regex.matcher("A/sub/BB/CCC/1.xml").matches();
+        assert regex.matcher("A/sub/.xml").matches();
+        assert !regex.matcher("A/.txt").matches() : "? infers at least one and only one - this has nothing to match the ?";
+        assert !regex.matcher("A/1.txtX").matches();
+        assert !regex.matcher("A/subX/foo.xml").matches();
+        assert !regex.matcher("A/subX/BB/CCC/1.xml").matches();
+        assert !regex.matcher("A/sub/foo.xmlX").matches();
+        assert !regex.matcher("1.txt").matches() : "missing basedir";
+        assert !regex.matcher("sub/foo.xml").matches() : "missing basedir";
+    }
+
+    private Pattern assertPatternsRegex(String baseDir, String expectedPattern, String... patterns) {
+        List<FileSet> fileSets = new ArrayList<FileSet>();
+        for (String pattern : patterns) {
+            FileSet fileSet = new FileSet();
+            fileSet.setIncludes(pattern);
+            fileSet.setDir(baseDir);
+            fileSets.add(fileSet);
+        }
+        Pattern regex = AbstractBundleType.getPattern(fileSets);
+
+        assert regex != null : "The regex was not able to be produced - it was null";
+        assert expectedPattern.equals(regex.pattern()) : "The expected pattern [" + expectedPattern
+            + "] did not match the actual pattern [" + regex.pattern() + "]";
+
+        return regex;
+    }
+
+    public void testBuildIncludePatternRegex() {
         Pattern regex;
 
         regex = assertIncludePatternRegex("easy.txt", "easy\\.txt", "easy.txt");

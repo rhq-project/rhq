@@ -19,16 +19,14 @@
  */
 package org.rhq.enterprise.server.drift;
 
-import static javax.ejb.TransactionAttributeType.REQUIRES_NEW;
-
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -38,6 +36,7 @@ import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -45,7 +44,6 @@ import org.hibernate.Hibernate;
 
 import org.rhq.common.drift.ChangeSetReader;
 import org.rhq.common.drift.ChangeSetReaderImpl;
-import org.rhq.common.drift.DirectoryEntry;
 import org.rhq.common.drift.FileEntry;
 import org.rhq.common.drift.Headers;
 import org.rhq.core.clientapi.agent.drift.DriftAgentService;
@@ -67,14 +65,18 @@ import org.rhq.core.domain.drift.JPADriftFile;
 import org.rhq.core.domain.drift.JPADriftFileBits;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.util.StopWatch;
 import org.rhq.core.util.ZipUtil;
 import org.rhq.core.util.file.FileUtil;
+import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
+
+import static javax.ejb.TransactionAttributeType.REQUIRES_NEW;
 
 /**
  * The SLSB method implementation needed to support the JPA (RHQ Default) Drift Server Plugin.
@@ -97,6 +99,41 @@ public class JPADriftServerBean implements JPADriftServerLocal {
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
+
+    @Override
+    @TransactionAttribute(REQUIRES_NEW)
+    public int purgeOrphanedDriftFiles(Subject subject) {
+        Query q = entityManager.createNativeQuery(JPADriftFile.NATIVE_DELETE_ORPHANED_DRIFT_FILES);
+        int count = q.executeUpdate();
+        log.debug("purged [" + count + "] drift files that were orphaned (that is, no longer referenced by drift)");
+        return count;
+    }
+
+    @Override
+    @TransactionAttribute(REQUIRES_NEW)
+    public void purgeByDriftConfigurationName(Subject subject, int resourceId, String driftConfigName) throws Exception {
+
+        int driftsDeleted;
+        int changeSetsDeleted;
+        StopWatch timer = new StopWatch();
+
+        // purge all drift entities first
+        Query q = entityManager.createNamedQuery(JPADrift.QUERY_DELETE_BY_DRIFTCONFIG_RESOURCE);
+        q.setParameter("resourceId", resourceId);
+        q.setParameter("driftConfigurationName", driftConfigName);
+        driftsDeleted = q.executeUpdate();
+
+        // now purge all changesets
+        q = entityManager.createNamedQuery(JPADriftChangeSet.QUERY_DELETE_BY_DRIFTCONFIG_RESOURCE);
+        q.setParameter("resourceId", resourceId);
+        q.setParameter("driftConfigurationName", driftConfigName);
+        changeSetsDeleted = q.executeUpdate();
+
+        log.info("Purged [" + driftsDeleted + "] drift items and [" + changeSetsDeleted
+            + "] changesets associated with drift config [" + driftConfigName + "] from resource [" + resourceId
+            + "]. Elapsed time=[" + timer.getElapsed() + "]ms");
+        return;
+    }
 
     @Override
     public DriftSnapshot createSnapshot(Subject subject, DriftChangeSetCriteria criteria) {
@@ -216,30 +253,21 @@ public class JPADriftServerBean implements JPADriftServerLocal {
                         driftChangeSet = new JPADriftChangeSet(resource, version, category, config);
                         entityManager.persist(driftChangeSet);
 
-                        for (DirectoryEntry dir = reader.readDirectoryEntry(); null != dir; dir = reader
-                            .readDirectoryEntry()) {
+                        for (FileEntry entry : reader) {
+                            JPADriftFile oldDriftFile = getDriftFile(entry.getOldSHA(), emptyDriftFiles);
+                            JPADriftFile newDriftFile = getDriftFile(entry.getNewSHA(), emptyDriftFiles);
 
-                            for (Iterator<FileEntry> i = dir.iterator(); i.hasNext();) {
-                                FileEntry entry = i.next();
-                                JPADriftFile oldDriftFile = getDriftFile(entry.getOldSHA(),
-                                    (List<JPADriftFile>) emptyDriftFiles);
-                                JPADriftFile newDriftFile = getDriftFile(entry.getNewSHA(),
-                                    (List<JPADriftFile>) emptyDriftFiles);
+                            // TODO Figure out an efficient way to save coverage change sets.
+                            // The initial/coverage change set could contain hundreds or even thousands
+                            // of entries. We probably want to consider doing some kind of batch insert
+                            //
+                            // jsanda
 
-                                // TODO Figure out an efficient way to save coverage change sets.
-                                // The initial/coverage change set could contain hundreds or even thousands
-                                // of entries. We probably want to consider doing some kind of batch insert
-                                //
-                                // jsanda
-
-                                // use a path with only forward slashing to ensure consistent paths across reports
-                                String path = new File(dir.getDirectory(), entry.getFile()).getPath();
-                                path = FileUtil.useForwardSlash(path);
-                                JPADrift drift = new JPADrift(driftChangeSet, path, entry.getType(), oldDriftFile,
-                                    newDriftFile);
-                                entityManager.persist(drift);
-
-                            }
+                            // use a path with only forward slashing to ensure consistent paths across reports
+                            String path = FileUtil.useForwardSlash(entry.getFile());
+                            JPADrift drift = new JPADrift(driftChangeSet, path, entry.getType(), oldDriftFile,
+                                newDriftFile);
+                            entityManager.persist(drift);
                         }
                         // send a message to the agent requesting the empty JPADriftFile content
                         if (!emptyDriftFiles.isEmpty()) {
@@ -361,6 +389,20 @@ public class JPADriftServerBean implements JPADriftServerLocal {
             LogFactory.getLog(getClass()).info(
                 "Unable to delete " + dir.getAbsolutePath() + ". This directory and "
                     + "its contents are no longer needed. It can be deleted.");
+        }
+    }
+
+    @Override
+    public String getDriftFileBits(String hash) {
+        // TODO add security
+        try {
+            JPADriftFileBits content = (JPADriftFileBits) entityManager.createNamedQuery(
+                JPADriftFileBits.QUERY_FIND_BY_ID).setParameter("hashId", hash).getSingleResult();
+            byte[] bytes = StreamUtil.slurp(content.getBlob().getBinaryStream());
+            return new String(bytes);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
         }
     }
 }

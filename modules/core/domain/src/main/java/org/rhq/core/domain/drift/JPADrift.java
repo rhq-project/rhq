@@ -49,13 +49,20 @@ import javax.persistence.Table;
 @Entity
 @NamedQueries( { @NamedQuery(name = JPADrift.QUERY_DELETE_BY_RESOURCES, query = "" //
     + "DELETE FROM JPADrift d " //
-    + " WHERE d.changeSet IN ( SELECT dcs FROM JPADriftChangeSet dcs WHERE dcs.resource.id IN ( :resourceIds ) ) )") })
+    + " WHERE d.changeSet IN ( SELECT dcs FROM JPADriftChangeSet dcs WHERE dcs.resource.id IN ( :resourceIds ) ) )"), //
+    @NamedQuery(name = JPADrift.QUERY_DELETE_BY_DRIFTCONFIG_RESOURCE, query = "" //
+        + "DELETE FROM JPADrift d " //
+        + "  WHERE d.changeSet.id IN " //
+        + "       (SELECT dcs.id " //
+        + "          FROM JPADriftChangeSet dcs " //
+        + "         WHERE dcs.driftConfiguration.name = :driftConfigurationName AND dcs.resource.id = :resourceId)") })
 @Table(name = "RHQ_DRIFT")
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_DRIFT_ID_SEQ")
 public class JPADrift implements Serializable, Drift<JPADriftChangeSet, JPADriftFile> {
     private static final long serialVersionUID = 1L;
 
     public static final String QUERY_DELETE_BY_RESOURCES = "JPADrift.deleteByResources";
+    public static final String QUERY_DELETE_BY_DRIFTCONFIG_RESOURCE = "JPADrift.deleteByDriftConfigResource";
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")

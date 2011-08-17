@@ -22,6 +22,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client;
 
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.enterprise.gui.coregui.client.admin.roles.RolesView;
 import org.rhq.enterprise.gui.coregui.client.admin.users.UsersView;
@@ -36,7 +37,7 @@ public class LinkManager {
 
     public static String getResourceLink(int resourceId) {
         if (GWT) {
-            return "#Resource/" + resourceId + "/Summary/Activity";
+            return "#Resource/" + resourceId;
         } else {
             return "/rhq/resource/summary/overview.xhtml?id=" + resourceId;
         }
@@ -180,7 +181,6 @@ public class LinkManager {
         } else {
             link = "/rhq/resource/operation/resourceOperationHistoryDetails-plain.xhtml?id=" + resourceId + "&opId="
                 + opHistoryId;
-
         }
         return link;
     }
@@ -197,12 +197,24 @@ public class LinkManager {
         return link;
     }
 
-    public static String getSubsystemAlertHistoryLink(int resourceId, int alertHistoryId) {
+    public static String getAlertDetailLink(EntityContext entityContext, int alertId) {
         String link;
         if (GWT) {
-            link = "#Resource/" + resourceId + "/Alerts/History/" + alertHistoryId;
+            String baseLink = getResourceLink(entityContext.getResourceId());
+            switch (entityContext.getType()) {
+                case Resource:
+                    baseLink = getResourceTabLink(entityContext.getResourceId(), "Alerts", "History");
+                    break;
+                case ResourceGroup:
+                    baseLink = getResourceGroupTabLink(entityContext.getGroupId(), "Alerts", "History");
+                    break;
+                case SubsystemView:
+                    baseLink = "#Reports/Subsystems/RecentAlerts";
+                    break;
+            }
+            link = baseLink + "/" + alertId;
         } else {
-            link = "/rhq/subsystem/alertHistory.xhtml";
+            link = null; // TODO
         }
 
         return link;
@@ -459,7 +471,7 @@ public class LinkManager {
         return "#Resource/" + resourceId + "/Drift/History/" + driftId;
     }
 
-    public static String getDriftConfigLink(int resourceId, int driftConfigId) {
-        return "#Resource/" + resourceId + "/Drift/Config/" + driftConfigId;
+    public static String getDriftConfigurationLink(int resourceId, int driftConfigId) {
+        return "#Resource/" + resourceId + "/Drift/Configuration/" + driftConfigId;
     }
 }

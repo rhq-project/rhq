@@ -20,21 +20,17 @@
 package org.rhq.core.pc.drift;
 
 import java.io.File;
-import java.util.List;
 
 import org.testng.annotations.Test;
 
 import org.rhq.common.drift.ChangeSetReader;
 import org.rhq.common.drift.ChangeSetWriter;
-import org.rhq.common.drift.DirectoryEntry;
 import org.rhq.common.drift.Headers;
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
 
-import static java.util.Arrays.asList;
 import static org.rhq.common.drift.FileEntry.addedFileEntry;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.DRIFT;
-import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertNull;
@@ -57,13 +53,13 @@ public class ChangeSetManagerImplTest extends DriftTest {
         String serverConfHash = sha256(serverConf);
 
         ChangeSetWriter writer = changeSetMgr.getChangeSetWriter(resourceId(), createHeaders(config, COVERAGE));
-        writer.writeDirectoryEntry(new DirectoryEntry("conf").add(addedFileEntry("server.conf", serverConfHash)));
+        writer.write(addedFileEntry("conf/server.conf", serverConfHash));
         writer.close();
 
         ChangeSetReader reader = changeSetMgr.getChangeSetReader(resourceId(), config);
 
         assertNotNull(reader, "Expected to get a change set reader when change set exists");
-        assertReaderOpenedOnChangeSet(reader, asList("conf", "1"));
+        assertReaderOpenedOnChangeSet(reader);
     }
 
     @Test
@@ -76,7 +72,7 @@ public class ChangeSetManagerImplTest extends DriftTest {
         Headers headers = createHeaders(config, COVERAGE);
 
         ChangeSetWriter writer = changeSetMgr.getChangeSetWriter(resourceId(), headers);
-        writer.writeDirectoryEntry(new DirectoryEntry("conf").add(addedFileEntry("server.conf", sha256(serverConf))));
+        writer.write(addedFileEntry("conf/server.conf", sha256(serverConf)));
         writer.close();
 
         assertTrue(changeSetMgr.changeSetExists(resourceId(), headers), "Expected to find change set file.");
@@ -89,30 +85,10 @@ public class ChangeSetManagerImplTest extends DriftTest {
             "Did not expect to find change set file.");
     }
 
-    /**
-     * Verifies that a {@link ChangeSetReader} has been opened on the expected change set.
-     * This method first verifies that the reader is not null. It then reads the first
-     * {@link DirectoryEntry} from the reader and verifies that the directory and
-     * numberOfFiles properties match the expected values specified in dirEntry.
-     * <p/>
-     * This method does not rigorously check the entire contents of the change set file
-     * because that is handled by {@link ChangeSetReader} tests; rather, it aims to inspect
-     * just enough info to verify that the reader is opened on the correct change set.
-     *
-     * @param reader The ChangeSetReader returned from the ChangeSetManager under test
-     * @param dirEntry A list of strings representing the first line of a directory entry.
-     * The list should consist of two elements. The first being the directory path and the
-     * second being the number of files in the entry.
-     * @throws Exception
-     */
-    void assertReaderOpenedOnChangeSet(ChangeSetReader reader, List<String> dirEntry) throws Exception {
+    void assertReaderOpenedOnChangeSet(ChangeSetReader reader) throws Exception {
         assertNotNull(reader, "The " + ChangeSetReader.class.getSimpleName() + " should not be null.");
 
-        DirectoryEntry actual = reader.readDirectoryEntry();
-        assertNotNull(actual, "Expected to find a directory entry");
-        assertEquals(actual.getDirectory(), dirEntry.get(0), "The directory entry path is wrong");
-        assertEquals(Integer.toString(actual.getNumberOfFiles()), dirEntry.get(1),
-            "The number of files for the directory entry is wrong");
+        assertNotNull(reader.read(), "Expected to find a file entry");
     }
 
     Headers createHeaders(String driftConfigName, DriftChangeSetCategory type) {

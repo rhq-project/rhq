@@ -325,7 +325,21 @@
    <!-- log JDBC bind parameters -->
    <!--
    <category name="org.hibernate.type">
-      <priority value="INFO"/>
+      <priority value="DEBUG"/>
+   </category>
+   -->
+
+   <!-- log JDBC bind parameters -->
+   <!--
+   <category name="org.hibernate.engine.query">
+      <priority value="DEBUG"/>
+   </category>
+   -->
+
+   <!-- Log all JDBC resource acquisition -->
+   <!--
+   <category name="org.hibernate.jdbc">
+      <priority value="DEBUG"/>
    </category>
    -->
 

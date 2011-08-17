@@ -65,9 +65,11 @@
              up gwt compilation. -->
         <gwt.draftCompile>false</gwt.draftCompile>
         
-        <!-- Comma-separated list of the locales that should be included during GWT compilation. Currently supported
-             locales (i.e. locales for which we have localized message bundles) are "en", "de", and "ja". -->
-        <gwt.locale>en,de,ja</gwt.locale>
+        <!-- Comma-separated list of the locales that should be included during GWT compilation. The specified locales
+             should each have two corresponding message bundle properties files under
+             src/main/resources/org/rhq/enterprise/gui/coregui/client/. For example, the "ja" locale has
+             Messages_ja.properties and MessageConstants_ja.properties. -->
+        <gwt.locale>en,de,ja,pt,zh</gwt.locale>
     </properties>
 
 

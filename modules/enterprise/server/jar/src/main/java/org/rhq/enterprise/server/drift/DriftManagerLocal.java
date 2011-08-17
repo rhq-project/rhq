@@ -56,42 +56,6 @@ public interface DriftManagerLocal extends DriftServerPluginFacet, DriftManagerR
      */
     void addFiles(int resourceId, long zipSize, InputStream zipStream) throws Exception;
 
-    //TODO Should probably move to DriftServerPluginFacet
-    /**
-     * Remove the specified drifts.  Ids not identifying an actual drift record will be ignored.
-     *  
-     * @param subject
-     * @param 
-     * @param driftConfig
-     *
-     * @return the number of Drift records deleted
-     */
-    int deleteDrifts(Subject subject, String[] driftIds);
-
-    //TODO Should  probably move to JPADriftServerLocal when deleteDrifts graduates to server plugin facet
-    /**
-     * Remove the specified drift in its own transaction. This is used for chunking transactions and
-     * should not be exposed in a Remote interface.
-     * 
-     * @param subject
-     * @param 
-     * @param driftConfig
-     * 
-     * @return the number of Drift records deleted
-     */
-    int deleteDriftsInNewTransaction(Subject subject, String... driftIds);
-
-    //TODO Should probably move to DriftServerPluginFacet
-    /**
-     * Remove all drifts on the specified entity context.
-     *  
-     * @param subject
-     * @param entityContext the context
-     * 
-     * @return the number of Drift records deleted
-     */
-    int deleteDriftsByContext(Subject subject, EntityContext entityContext);
-
     /**
      * Remove the provided driftConfig (identified by name) on the specified entityContext.
      * Agents, if available, will be notified of the change. 
@@ -100,6 +64,11 @@ public interface DriftManagerLocal extends DriftServerPluginFacet, DriftManagerR
      * @param driftConfigName
      */
     void deleteDriftConfiguration(Subject subject, EntityContext entityContext, String driftConfigName);
+
+    /**
+     * This is for internal use only - do not call it unless you know what you are doing.
+     */
+    void deleteResourceDriftConfiguration(Subject subject, int resourceId, int driftConfigId);
 
     /**
      * One time on-demand request to detect drift on the specified entities, using the supplied config.
@@ -129,4 +98,21 @@ public interface DriftManagerLocal extends DriftServerPluginFacet, DriftManagerR
      * @param driftConfig
      */
     void updateDriftConfiguration(Subject subject, EntityContext entityContext, DriftConfiguration driftConfig);
+
+    /**
+     * This will remove all drift files that are no longer referenced by drift entries. This is a maintenance method
+     * to help reclaim space on the backend.
+     * 
+     * @param subject
+     * @return number of orphaned drife files that were removed
+     */
+    int purgeOrphanedDriftFiles(Subject subject);
+
+    /**
+     * Returns the content associated with the specified hash as a string
+     *
+     * @param hash The hash the uniquely identifies the requested content
+     * @return The content as a string
+     */
+    String getDriftFileBits(String hash);
 }

@@ -27,6 +27,7 @@ import com.google.gwt.core.client.RunAsyncCallback;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.types.SortDirection;
+import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.events.DataArrivedEvent;
 import com.smartgwt.client.widgets.grid.events.DataArrivedHandler;
@@ -40,18 +41,13 @@ import com.smartgwt.client.widgets.tree.TreeNode;
 import com.smartgwt.client.widgets.tree.events.NodeContextClickEvent;
 import com.smartgwt.client.widgets.tree.events.NodeContextClickHandler;
 
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftConfiguration;
-import org.rhq.core.domain.drift.DriftConfigurationDefinition;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
-import org.rhq.enterprise.gui.coregui.client.PopupWindow;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
-import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTreeGrid;
 
@@ -100,11 +96,15 @@ public abstract class AbstractDriftChangeSetsTreeView extends LocatableTreeGrid 
 
                 TreeNode eventNode = event.getNode();
 
-                if (eventNode instanceof ChangeSetTreeNode) {
-                    Menu menu = buildChangeSetTreeNodeContextMenu((ChangeSetTreeNode) eventNode);
-                    menu.showContextMenu();
+                Menu menu = null;
+                if (eventNode instanceof DriftConfigurationTreeNode) {
+                    menu = buildDriftConfigurationTreeNodeContextMenu((DriftConfigurationTreeNode) eventNode);
+                } else if (eventNode instanceof ChangeSetTreeNode) {
+                    menu = buildChangeSetTreeNodeContextMenu((ChangeSetTreeNode) eventNode);
                 } else if (eventNode instanceof DriftTreeNode) {
-                    Menu menu = buildDriftTreeNodeContextMenu((DriftTreeNode) eventNode);
+                    menu = buildDriftTreeNodeContextMenu((DriftTreeNode) eventNode);
+                }
+                if (menu != null) {
                     menu.showContextMenu();
                 }
             }
@@ -173,6 +173,78 @@ public abstract class AbstractDriftChangeSetsTreeView extends LocatableTreeGrid 
     protected abstract String getNodeDetailsLink(TreeNode node);
 
     /**
+     * Deletes the given drift configuration.
+     * 
+     * @param doomedDriftConfig the drift config to remove
+     */
+    protected abstract void deleteDriftConfiguration(DriftConfiguration doomedDriftConfig);
+
+    /**
+     * Immediately asks for a drift detection scan to be run.
+     * 
+     * @param driftConfiguration identifies the drift whose detection scan should be initiated.
+     */
+    protected abstract void detectDrift(DriftConfiguration driftConfiguration);
+
+    /**
+     * Builds the right-mouse-click context menu for the given drift configuration node
+     * @param node the drift configuration node whose menu is to be displayed
+     * @return the context menu to display
+     */
+    protected Menu buildDriftConfigurationTreeNodeContextMenu(final DriftConfigurationTreeNode node) {
+
+        Menu contextMenu = new Menu();
+
+        // title
+        String titleName = node.getTitle();
+        if (titleName.length() > 50) {
+            // make sure the title isn't really long so the menu is not abnormally wide
+            titleName = "..." + titleName.substring(titleName.length() - 50);
+        }
+        MenuItem titleItem = new MenuItem(titleName);
+        titleItem.setEnabled(false);
+        contextMenu.setItems(titleItem);
+
+        // separator
+        contextMenu.addItem(new MenuItemSeparator());
+
+        // item that deletes the config
+        MenuItem deleteItem = new MenuItem(MSG.common_button_delete());
+        deleteItem.setIcon(Window.getImgURL(ImageManager.getRemoveIcon()));
+        deleteItem.addClickHandler(new ClickHandler() {
+            public void onClick(MenuItemClickEvent event) {
+                DriftConfiguration driftConfig = node.getDriftConfiguration();
+                deleteDriftConfiguration(driftConfig);
+            }
+        });
+        contextMenu.addItem(deleteItem);
+
+        // item that initiates a drift detection scan
+        MenuItem detectNowItem = new MenuItem(MSG.view_drift_button_detectNow());
+        detectNowItem.addClickHandler(new ClickHandler() {
+            public void onClick(MenuItemClickEvent event) {
+                DriftConfiguration driftConfig = node.getDriftConfiguration();
+                detectDrift(driftConfig);
+            }
+        });
+        contextMenu.addItem(detectNowItem);
+
+        // item that links to the config details
+        MenuItem detailsItem = new MenuItem(MSG.common_title_details());
+        detailsItem.addClickHandler(new ClickHandler() {
+            public void onClick(MenuItemClickEvent event) {
+                String link = getNodeDetailsLink(node);
+                if (link != null) {
+                    CoreGUI.goToView(link);
+                }
+            }
+        });
+        contextMenu.addItem(detailsItem);
+
+        return contextMenu;
+    }
+
+    /**
      * Builds the right-mouse-click context menu for the given drift node
      * @param node the drift node whose menu is to be displayed
      * @return the context menu to display
@@ -227,49 +299,12 @@ public abstract class AbstractDriftChangeSetsTreeView extends LocatableTreeGrid 
         // separator
         contextMenu.addItem(new MenuItemSeparator());
 
-        // item that links to the history details
-        MenuItem deleteItem = new MenuItem(MSG.common_button_delete());
-        deleteItem.addClickHandler(new ClickHandler() {
-            public void onClick(MenuItemClickEvent event) {
-                // TODO: delete the change set
-            }
-        });
-        contextMenu.addItem(deleteItem);
-
         // item that shows the drift configuration
-        MenuItem configItem = new MenuItem(MSG.view_drift_changeset_tree_showConfiguration());
-        configItem.addClickHandler(new ClickHandler() {
-            public void onClick(MenuItemClickEvent event) {
-                showDriftConfiguration(node.getChangeSetId());
-            }
-        });
-        contextMenu.addItem(configItem);
+        MenuItem idItem = new MenuItem(MSG.common_title_id() + "=" + node.getChangeSetId());
+        idItem.setEnabled(false);
+        contextMenu.addItem(idItem);
 
         return contextMenu;
-    }
-
-    protected void showDriftConfiguration(final String changeSetId) {
-        ConfigurationDefinition def = DriftConfigurationDefinition.getInstance();
-        Configuration config = new Configuration();
-        ConfigurationEditor editor = new ConfigurationEditor(extendLocatorId("driftConfigEditor"), def, config);
-        editor.setReadOnly(true);
-        PopupWindow window = new PopupWindow("details", editor);
-        window.show();
-
-        //        DriftChangeSetCriteria criteria = new BasicDriftChangeSetCriteria();
-        //        criteria.addFilterId(changeSetId);
-        //        criteria.fetchDriftConfiguration(true);
-        //        GWTServiceLookup.getDriftService().findDriftChangeSetCompositesByCriteria(criteria,
-        //            new AsyncCallback<PageList<DriftChangeSet>>() {
-        //                public void onSuccess(PageList<DriftChangeSet> result) {
-        //                    // TODO
-        //                }
-        //
-        //                public void onFailure(Throwable t) {
-        //                    CoreGUI.getErrorHandler().handleError(MSG.view_drift_changeset_tree_loadConfigFailure(changeSetId),
-        //                        t);
-        //                }
-        //            });
     }
 
     /**
@@ -284,6 +319,8 @@ public abstract class AbstractDriftChangeSetsTreeView extends LocatableTreeGrid 
     }
 
     static class DriftConfigurationTreeNode extends TreeNode {
+        public static final String ATTR_DRIFT_CONFIG_OBJECT = "object";
+
         public DriftConfigurationTreeNode(DriftConfiguration driftConfig) {
             setIsFolder(true);
             if (driftConfig.isEnabled()) {
@@ -294,6 +331,16 @@ public abstract class AbstractDriftChangeSetsTreeView extends LocatableTreeGrid 
             setShowOpenIcon(true);
             setID(String.valueOf(driftConfig.getId()));
             setName(buildNodeName(driftConfig)); // we sort on this column
+            setAttribute(ATTR_DRIFT_CONFIG_OBJECT, driftConfig);
+        }
+
+        public int getDriftConfigurationId() {
+            String idAttrib = getAttribute("id");
+            return Integer.parseInt(idAttrib);
+        }
+
+        public DriftConfiguration getDriftConfiguration() {
+            return (DriftConfiguration) getAttributeAsObject(ATTR_DRIFT_CONFIG_OBJECT);
         }
 
         @Override

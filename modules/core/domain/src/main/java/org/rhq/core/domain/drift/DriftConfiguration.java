@@ -18,8 +18,6 @@
  */
 package org.rhq.core.domain.drift;
 
-import static java.util.Collections.emptyList;
-
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -45,6 +43,8 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext;
 import org.rhq.core.domain.resource.Resource;
 
+import static java.util.Collections.emptyList;
+
 /**
  * This is a convienence wrapper around a Configuration object whose schema is that
  * of {@link DriftConfigurationDefinition}.
@@ -53,8 +53,6 @@ import org.rhq.core.domain.resource.Resource;
  * with Configuration.
  * 
  * This object also has an optional relationship with a Resource.
- *
- * TODO: this is missing setters for includes/excludes filters. We should add those.
  *
  * @author John Sanda
  * @author John Mazzitelli
@@ -186,6 +184,16 @@ public class DriftConfiguration implements Serializable {
         }
     }
 
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("DriftConfiguration [id=").append(id).append(", name=").append(name).append(", enabled=")
+            .append(isEnabled).append(", interval=").append(interval).append(", resource=").append(resource).append(
+                ", basedir=").append(getBasedir()).append(", includes=").append(getIncludes()).append(", excludes=")
+            .append(getExcludes()).append("]");
+        return builder.toString();
+    }
+
     public static class BaseDirectory implements Serializable {
         private static final long serialVersionUID = 1L;
         private BaseDirValueContext context;
@@ -250,66 +258,6 @@ public class DriftConfiguration implements Serializable {
         }
     }
 
-    public static class Filter implements Serializable {
-        private static final long serialVersionUID = 1L;
-
-        private String path;
-        private String pattern;
-
-        public Filter(String path, String pattern) {
-            setPath(path);
-            setPattern(pattern);
-        }
-
-        public String getPath() {
-            return path;
-        }
-
-        public void setPath(String path) {
-            if (path == null) {
-                this.path = "";
-            } else {
-                this.path = path;
-            }
-        }
-
-        public String getPattern() {
-            return pattern;
-        }
-
-        public void setPattern(String pattern) {
-            if (pattern == null) {
-                this.pattern = "";
-            } else {
-                this.pattern = pattern;
-            }
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (obj == null) {
-                return false;
-            }
-
-            if (obj instanceof Filter) {
-                Filter that = (Filter) obj;
-                return this.path.equals(that.path) && this.pattern.equals(that.pattern);
-            }
-
-            return false;
-        }
-
-        @Override
-        public int hashCode() {
-            return 13 * (path.hashCode() + pattern.hashCode());
-        }
-
-        @Override
-        public String toString() {
-            return "Filter[path: " + path + ", pattern: " + pattern + "]";
-        }
-    }
-
     private String getNameProperty() {
         return configuration.getSimpleValue(DriftConfigurationDefinition.PROP_NAME, null);
     }
@@ -323,6 +271,10 @@ public class DriftConfiguration implements Serializable {
 
     public BaseDirectory getBasedir() {
         PropertyMap map = configuration.getMap(DriftConfigurationDefinition.PROP_BASEDIR);
+        if (map == null) {
+            return null;
+        }
+
         String valueContext = map.getSimpleValue(DriftConfigurationDefinition.PROP_BASEDIR_VALUECONTEXT, null);
         String valueName = map.getSimpleValue(DriftConfigurationDefinition.PROP_BASEDIR_VALUENAME, null);
 
@@ -390,6 +342,34 @@ public class DriftConfiguration implements Serializable {
 
     public List<Filter> getExcludes() {
         return getFilters(DriftConfigurationDefinition.PROP_EXCLUDES);
+    }
+
+    public void addInclude(Filter filter) {
+        PropertyList filtersList = configuration.getList(DriftConfigurationDefinition.PROP_INCLUDES);
+        if (filtersList == null) {
+            // this is going to be our first include filter - make sure we create an initial list and put it in the config
+            filtersList = new PropertyList(DriftConfigurationDefinition.PROP_INCLUDES);
+            configuration.put(filtersList);
+        }
+
+        PropertyMap filterMap = new PropertyMap(DriftConfigurationDefinition.PROP_INCLUDES_INCLUDE);
+        filterMap.put(new PropertySimple(DriftConfigurationDefinition.PROP_PATH, filter.getPath()));
+        filterMap.put(new PropertySimple(DriftConfigurationDefinition.PROP_PATTERN, filter.getPattern()));
+        filtersList.add(filterMap);
+    }
+
+    public void addExclude(Filter filter) {
+        PropertyList filtersList = configuration.getList(DriftConfigurationDefinition.PROP_EXCLUDES);
+        if (filtersList == null) {
+            // this is going to be our first include filter - make sure we create an initial list and put it in the config
+            filtersList = new PropertyList(DriftConfigurationDefinition.PROP_EXCLUDES);
+            configuration.put(filtersList);
+        }
+
+        PropertyMap filterMap = new PropertyMap(DriftConfigurationDefinition.PROP_EXCLUDES_EXCLUDE);
+        filterMap.put(new PropertySimple(DriftConfigurationDefinition.PROP_PATH, filter.getPath()));
+        filterMap.put(new PropertySimple(DriftConfigurationDefinition.PROP_PATTERN, filter.getPattern()));
+        filtersList.add(filterMap);
     }
 
     private List<Filter> getFilters(String type) {

@@ -607,14 +607,13 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
                 public void onFailure(Throwable caught) {
                     Message message = new Message(MSG.view_inventory_resource_loadFailed(String.valueOf(resourceId)),
                             Message.Severity.Warning);
-
                     CoreGUI.goToView(InventoryView.VIEW_ID.getName(), message);
                 }
 
                 public void onSuccess(PageList<ResourceComposite> result) {
                     if (result.isEmpty()) {
                         //noinspection ThrowableInstanceNeverThrown
-                        onFailure(new Exception(MSG.view_inventory_resource_loadFailed(String.valueOf(resourceId))));
+                        onFailure(new Exception("Resource with id [" + resourceId + "] does not exist."));
                     } else {
                         final ResourceComposite resourceComposite = result.get(0);
                         loadResourceType(resourceComposite, viewPath);

@@ -70,6 +70,11 @@ public abstract class AbstractRecentAlertsPortlet extends AlertHistoryView imple
         setShowHeader(false);//disable header for portlets
     }
 
+    @Override
+    protected boolean canSupportDeleteAndAcknowledgeAll() {
+        return false;
+    }
+
     public Timer getRefreshTimer() {
         return refreshTimer;
     }

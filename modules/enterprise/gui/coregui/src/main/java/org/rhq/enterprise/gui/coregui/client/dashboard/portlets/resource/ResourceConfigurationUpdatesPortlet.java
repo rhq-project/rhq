@@ -21,7 +21,6 @@ package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource;
 import java.util.ArrayList;
 
 import com.allen_sauer.gwt.log.client.Log;
-import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -29,6 +28,7 @@ import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -69,31 +69,20 @@ public class ResourceConfigurationUpdatesPortlet extends GroupConfigurationUpdat
     private ResourceConfigurationHistoryCriteriaView resourceHistoryTable;
 
     public ResourceConfigurationUpdatesPortlet(String locatorId, int resourceId) {
-        super(locatorId);
+        super(locatorId, null);
         this.resourceId = resourceId;
-        //figure out which page we're loading
-        String currentPage = History.getToken();
-        String[] elements = currentPage.split("/");
-        baseViewPath = elements[0];
     }
 
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        /* (non-Javadoc)
-         * TODO:  This factory ASSUMES the user is currently navigated to a group detail view, and generates a portlet
-         *        for that group.  It will fail in other scenarios.  This mechanism should be improved such that the
-         *        factory method can take an EntityContext explicitly indicating, in this case, the group.
-         * @see org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory#getInstance(java.lang.String)
-         */
-        public final Portlet getInstance(String locatorId) {
-            //figure out which page we're loading
-            String currentPage = History.getToken();
-            String[] elements = currentPage.split("/");
-            int currentResourceIdentifier = Integer.valueOf(elements[1]);
-            int resourceId = currentResourceIdentifier;
+        public final Portlet getInstance(String locatorId, EntityContext context) {
 
-            return new ResourceConfigurationUpdatesPortlet(locatorId, resourceId);
+            if (EntityContext.Type.Resource != context.getType()) {
+                throw new IllegalArgumentException("Context [" + context + "] not supported by portlet");
+            }
+
+            return new ResourceConfigurationUpdatesPortlet(locatorId, context.getResourceId());
         }
     }
 

@@ -18,15 +18,15 @@
  */
 package org.rhq.enterprise.gui.coregui.client.dashboard;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.TreeMap;
 
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.Label;
 
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
@@ -65,141 +65,165 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 
 /**
  * @author Simeon Pinder
- * @author Greg Hinkle
+ * @author Jay Shaughnessy
  */
 public class PortletFactory {
 
-    private static final HashMap<String, PortletViewFactory> registeredPortletFactoryMap;
-    private static final HashMap<String, String> registeredPortletNameMap;
+    private static final HashMap<String, PortletViewFactory> globalPortletFactoryMap;
+    // although portlet names are I18N, they are assumed to be unique. This  maps portlet names to portlet keys,
+    // and the keyset is sorted for convenient display.  
+    private static final TreeMap<String, String> globalPortletNameMap;
+    // although portlet names are I18N, they are assumed to be unique. This maps portlet keys to portlet names,
+    // and is suitable for a sorted Menu value map.  
+    private static final LinkedHashMap<String, String> globalPortletMenuMap;
 
     //Group portlet registrations, diff from default portlets as only applicable for specific group
-    private static final HashMap<String, PortletViewFactory> registeredGroupPortletFactoryMap;
+    private static final HashMap<String, PortletViewFactory> groupPortletFactoryMap;
+    private static final TreeMap<String, String> groupPortletNameMap;
+    private static final LinkedHashMap<String, String> groupPortletMenuMap;
+
     //Resource portlet registrations, diff from default portlets as only applicable for specific resource
-    private static final HashMap<String, PortletViewFactory> registeredResourcePortletFactoryMap;
-    private static final HashMap<String, String> registeredGroupPortletNameMap;
-    private static final HashMap<String, String> registeredResourcePortletNameMap;
-    private static HashMap<String, String> registeredPortletIconMap;
+    private static final HashMap<String, PortletViewFactory> resourcePortletFactoryMap;
+    private static final TreeMap<String, String> resourcePortletNameMap;
+    private static final LinkedHashMap<String, String> resourcePortletMenuMap;
+    private static HashMap<String, String> portletIconMap;
 
     static {
-        // ############# Global Dashboard  ############################
-        // defines portlet factory mappings for global Dashboard
-        registeredPortletFactoryMap = new HashMap<String, PortletViewFactory>();
-        registeredPortletFactoryMap.put(InventorySummaryPortlet.KEY, InventorySummaryPortlet.Factory.INSTANCE);
-        registeredPortletFactoryMap.put(RecentlyAddedResourcesPortlet.KEY,
-            RecentlyAddedResourcesPortlet.Factory.INSTANCE);
-        registeredPortletFactoryMap.put(PlatformSummaryPortlet.KEY, PlatformSummaryPortlet.Factory.INSTANCE);
-        registeredPortletFactoryMap.put(AutodiscoveryPortlet.KEY, AutodiscoveryPortlet.Factory.INSTANCE);
-        registeredPortletFactoryMap.put(RecentAlertsPortlet.KEY, RecentAlertsPortlet.Factory.INSTANCE);
-        registeredPortletFactoryMap.put(ResourceGraphPortlet.KEY, ResourceGraphPortlet.Factory.INSTANCE);
-        registeredPortletFactoryMap.put(ResourceGroupGraphPortlet.KEY, ResourceGroupGraphPortlet.Factory.INSTANCE);
-        registeredPortletFactoryMap.put(TagCloudPortlet.KEY, TagCloudPortlet.Factory.INSTANCE);
-        registeredPortletFactoryMap.put(FavoriteResourcesPortlet.KEY, FavoriteResourcesPortlet.Factory.INSTANCE);
-        registeredPortletFactoryMap.put(MashupPortlet.KEY, MashupPortlet.Factory.INSTANCE);
-        registeredPortletFactoryMap.put(MessagePortlet.KEY, MessagePortlet.Factory.INSTANCE);
-        registeredPortletFactoryMap.put(ProblemResourcesPortlet.KEY, ProblemResourcesPortlet.Factory.INSTANCE);
-        registeredPortletFactoryMap.put(OperationHistoryPortlet.KEY, OperationHistoryPortlet.Factory.INSTANCE);
-        registeredPortletFactoryMap.put(OperationSchedulePortlet.KEY, OperationSchedulePortlet.Factory.INSTANCE);
+        // GLOBAL Portlets
 
-        // defines portlet name mappings for global Dashboard
-        registeredPortletNameMap = new HashMap<String, String>(registeredPortletFactoryMap.size());
-        registeredPortletNameMap.put(InventorySummaryPortlet.KEY, InventorySummaryPortlet.NAME);
-        registeredPortletNameMap.put(RecentlyAddedResourcesPortlet.KEY, RecentlyAddedResourcesPortlet.NAME);
-        registeredPortletNameMap.put(PlatformSummaryPortlet.KEY, PlatformSummaryPortlet.NAME);
-        registeredPortletNameMap.put(AutodiscoveryPortlet.KEY, AutodiscoveryPortlet.NAME);
-        registeredPortletNameMap.put(RecentAlertsPortlet.KEY, RecentAlertsPortlet.NAME);
-        registeredPortletNameMap.put(ResourceGraphPortlet.KEY, ResourceGraphPortlet.NAME);
-        registeredPortletNameMap.put(ResourceGroupGraphPortlet.KEY, ResourceGroupGraphPortlet.NAME);
-        registeredPortletNameMap.put(TagCloudPortlet.KEY, TagCloudPortlet.NAME);
-        registeredPortletNameMap.put(FavoriteResourcesPortlet.KEY, FavoriteResourcesPortlet.NAME);
-        registeredPortletNameMap.put(MashupPortlet.KEY, MashupPortlet.NAME);
-        registeredPortletNameMap.put(MessagePortlet.KEY, MessagePortlet.NAME);
-        registeredPortletNameMap.put(ProblemResourcesPortlet.KEY, ProblemResourcesPortlet.NAME);
-        registeredPortletNameMap.put(OperationHistoryPortlet.KEY, OperationHistoryPortlet.NAME);
-        registeredPortletNameMap.put(OperationSchedulePortlet.KEY, OperationSchedulePortlet.NAME);
+        // Map portlet keys to portlet factories
+        globalPortletFactoryMap = new HashMap<String, PortletViewFactory>();
+        globalPortletFactoryMap.put(InventorySummaryPortlet.KEY, InventorySummaryPortlet.Factory.INSTANCE);
+        globalPortletFactoryMap.put(RecentlyAddedResourcesPortlet.KEY, RecentlyAddedResourcesPortlet.Factory.INSTANCE);
+        globalPortletFactoryMap.put(PlatformSummaryPortlet.KEY, PlatformSummaryPortlet.Factory.INSTANCE);
+        globalPortletFactoryMap.put(AutodiscoveryPortlet.KEY, AutodiscoveryPortlet.Factory.INSTANCE);
+        globalPortletFactoryMap.put(RecentAlertsPortlet.KEY, RecentAlertsPortlet.Factory.INSTANCE);
+        globalPortletFactoryMap.put(ResourceGraphPortlet.KEY, ResourceGraphPortlet.Factory.INSTANCE);
+        globalPortletFactoryMap.put(ResourceGroupGraphPortlet.KEY, ResourceGroupGraphPortlet.Factory.INSTANCE);
+        globalPortletFactoryMap.put(TagCloudPortlet.KEY, TagCloudPortlet.Factory.INSTANCE);
+        globalPortletFactoryMap.put(FavoriteResourcesPortlet.KEY, FavoriteResourcesPortlet.Factory.INSTANCE);
+        globalPortletFactoryMap.put(MashupPortlet.KEY, MashupPortlet.Factory.INSTANCE);
+        globalPortletFactoryMap.put(MessagePortlet.KEY, MessagePortlet.Factory.INSTANCE);
+        globalPortletFactoryMap.put(ProblemResourcesPortlet.KEY, ProblemResourcesPortlet.Factory.INSTANCE);
+        globalPortletFactoryMap.put(OperationHistoryPortlet.KEY, OperationHistoryPortlet.Factory.INSTANCE);
+        globalPortletFactoryMap.put(OperationSchedulePortlet.KEY, OperationSchedulePortlet.Factory.INSTANCE);
 
-        //############## Group Activity Dashboard  ############################################
-        //defines mapping for Group Activity Dashboard
-        registeredGroupPortletFactoryMap = new HashMap<String, PortletViewFactory>();
-        registeredGroupPortletFactoryMap.put(GroupAlertsPortlet.KEY, GroupAlertsPortlet.Factory.INSTANCE);
-        registeredGroupPortletFactoryMap.put(GroupMetricsPortlet.KEY, GroupMetricsPortlet.Factory.INSTANCE);
-        registeredGroupPortletFactoryMap.put(GroupOobsPortlet.KEY, GroupOobsPortlet.Factory.INSTANCE);
-        registeredGroupPortletFactoryMap.put(GroupEventsPortlet.KEY, GroupEventsPortlet.Factory.INSTANCE);
-        registeredGroupPortletFactoryMap.put(GroupOperationsPortlet.KEY, GroupOperationsPortlet.Factory.INSTANCE);
-        registeredGroupPortletFactoryMap.put(GroupPkgHistoryPortlet.KEY, GroupPkgHistoryPortlet.Factory.INSTANCE);
-        registeredGroupPortletFactoryMap.put(GroupBundleDeploymentsPortlet.KEY,
-            GroupBundleDeploymentsPortlet.Factory.INSTANCE);
-        registeredGroupPortletFactoryMap.put(GroupConfigurationUpdatesPortlet.KEY,
+        // sorted map of portlet names to portlet keys
+        globalPortletNameMap = new TreeMap<String, String>();
+        globalPortletNameMap.put(InventorySummaryPortlet.NAME, InventorySummaryPortlet.KEY);
+        globalPortletNameMap.put(RecentlyAddedResourcesPortlet.NAME, RecentlyAddedResourcesPortlet.KEY);
+        globalPortletNameMap.put(PlatformSummaryPortlet.NAME, PlatformSummaryPortlet.KEY);
+        globalPortletNameMap.put(AutodiscoveryPortlet.NAME, AutodiscoveryPortlet.KEY);
+        globalPortletNameMap.put(RecentAlertsPortlet.NAME, RecentAlertsPortlet.KEY);
+        globalPortletNameMap.put(ResourceGraphPortlet.NAME, ResourceGraphPortlet.KEY);
+        globalPortletNameMap.put(ResourceGroupGraphPortlet.NAME, ResourceGroupGraphPortlet.KEY);
+        globalPortletNameMap.put(TagCloudPortlet.NAME, TagCloudPortlet.KEY);
+        globalPortletNameMap.put(FavoriteResourcesPortlet.NAME, FavoriteResourcesPortlet.KEY);
+        globalPortletNameMap.put(MashupPortlet.NAME, MashupPortlet.KEY);
+        globalPortletNameMap.put(MessagePortlet.NAME, MessagePortlet.KEY);
+        globalPortletNameMap.put(ProblemResourcesPortlet.NAME, ProblemResourcesPortlet.KEY);
+        globalPortletNameMap.put(OperationHistoryPortlet.NAME, OperationHistoryPortlet.KEY);
+        globalPortletNameMap.put(OperationSchedulePortlet.NAME, OperationSchedulePortlet.KEY);
+
+        globalPortletMenuMap = new LinkedHashMap<String, String>(globalPortletNameMap.size());
+        for (Iterator<String> i = globalPortletNameMap.keySet().iterator(); i.hasNext();) {
+            String portletName = i.next();
+            globalPortletMenuMap.put(globalPortletNameMap.get(portletName), portletName);
+        }
+
+        // GROUP Portlets
+
+        // Map portlet keys to portlet factories        
+        groupPortletFactoryMap = new HashMap<String, PortletViewFactory>();
+        groupPortletFactoryMap.put(GroupAlertsPortlet.KEY, GroupAlertsPortlet.Factory.INSTANCE);
+        groupPortletFactoryMap.put(GroupMetricsPortlet.KEY, GroupMetricsPortlet.Factory.INSTANCE);
+        groupPortletFactoryMap.put(GroupOobsPortlet.KEY, GroupOobsPortlet.Factory.INSTANCE);
+        groupPortletFactoryMap.put(GroupEventsPortlet.KEY, GroupEventsPortlet.Factory.INSTANCE);
+        groupPortletFactoryMap.put(GroupOperationsPortlet.KEY, GroupOperationsPortlet.Factory.INSTANCE);
+        groupPortletFactoryMap.put(GroupPkgHistoryPortlet.KEY, GroupPkgHistoryPortlet.Factory.INSTANCE);
+        groupPortletFactoryMap.put(GroupBundleDeploymentsPortlet.KEY, GroupBundleDeploymentsPortlet.Factory.INSTANCE);
+        groupPortletFactoryMap.put(GroupConfigurationUpdatesPortlet.KEY,
             GroupConfigurationUpdatesPortlet.Factory.INSTANCE);
 
-        //register group portlet names
-        registeredGroupPortletNameMap = new HashMap<String, String>(registeredGroupPortletFactoryMap.size());
-        registeredGroupPortletNameMap.put(GroupAlertsPortlet.KEY, GroupAlertsPortlet.NAME);
-        registeredGroupPortletNameMap.put(GroupMetricsPortlet.KEY, GroupMetricsPortlet.NAME);
-        registeredGroupPortletNameMap.put(GroupOobsPortlet.KEY, GroupOobsPortlet.NAME);
-        registeredGroupPortletNameMap.put(GroupEventsPortlet.KEY, GroupEventsPortlet.NAME);
-        registeredGroupPortletNameMap.put(GroupOperationsPortlet.KEY, GroupOperationsPortlet.NAME);
-        registeredGroupPortletNameMap.put(GroupPkgHistoryPortlet.KEY, GroupPkgHistoryPortlet.NAME);
-        registeredGroupPortletNameMap.put(GroupBundleDeploymentsPortlet.KEY, GroupBundleDeploymentsPortlet.NAME);
-        registeredGroupPortletNameMap.put(GroupConfigurationUpdatesPortlet.KEY, GroupConfigurationUpdatesPortlet.NAME);
+        // sorted map of portlet names to portlet keys
+        groupPortletNameMap = new TreeMap<String, String>();
+        groupPortletNameMap.put(GroupAlertsPortlet.NAME, GroupAlertsPortlet.KEY);
+        groupPortletNameMap.put(GroupMetricsPortlet.NAME, GroupMetricsPortlet.KEY);
+        groupPortletNameMap.put(GroupOobsPortlet.NAME, GroupOobsPortlet.KEY);
+        groupPortletNameMap.put(GroupEventsPortlet.NAME, GroupEventsPortlet.KEY);
+        groupPortletNameMap.put(GroupOperationsPortlet.NAME, GroupOperationsPortlet.KEY);
+        groupPortletNameMap.put(GroupPkgHistoryPortlet.NAME, GroupPkgHistoryPortlet.KEY);
+        groupPortletNameMap.put(GroupBundleDeploymentsPortlet.NAME, GroupBundleDeploymentsPortlet.KEY);
+        groupPortletNameMap.put(GroupConfigurationUpdatesPortlet.NAME, GroupConfigurationUpdatesPortlet.KEY);
 
-        //############## Resource Activity Dashboard  ############################################
-        //defines mapping for Group Activity Dashboard
-        registeredResourcePortletFactoryMap = new HashMap<String, PortletViewFactory>();
-        registeredResourcePortletFactoryMap.put(ResourceMetricsPortlet.KEY, ResourceMetricsPortlet.Factory.INSTANCE);
-        registeredResourcePortletFactoryMap.put(ResourceEventsPortlet.KEY, ResourceEventsPortlet.Factory.INSTANCE);
-        registeredResourcePortletFactoryMap.put(ResourceOobsPortlet.KEY, ResourceOobsPortlet.Factory.INSTANCE);
-        registeredResourcePortletFactoryMap.put(ResourceAlertsPortlet.KEY, ResourceAlertsPortlet.Factory.INSTANCE);
-        registeredResourcePortletFactoryMap.put(ResourceOperationsPortlet.KEY,
-            ResourceOperationsPortlet.Factory.INSTANCE);
-        registeredResourcePortletFactoryMap.put(ResourcePkgHistoryPortlet.KEY,
-            ResourcePkgHistoryPortlet.Factory.INSTANCE);
-        registeredResourcePortletFactoryMap.put(ResourceBundleDeploymentsPortlet.KEY,
+        groupPortletMenuMap = new LinkedHashMap<String, String>(groupPortletNameMap.size());
+        for (Iterator<String> i = groupPortletNameMap.keySet().iterator(); i.hasNext();) {
+            String portletName = i.next();
+            groupPortletMenuMap.put(groupPortletNameMap.get(portletName), portletName);
+        }
+
+        // Resource Portlets
+
+        // Map portlet keys to portlet factories        
+        resourcePortletFactoryMap = new HashMap<String, PortletViewFactory>();
+        resourcePortletFactoryMap.put(ResourceMetricsPortlet.KEY, ResourceMetricsPortlet.Factory.INSTANCE);
+        resourcePortletFactoryMap.put(ResourceEventsPortlet.KEY, ResourceEventsPortlet.Factory.INSTANCE);
+        resourcePortletFactoryMap.put(ResourceOobsPortlet.KEY, ResourceOobsPortlet.Factory.INSTANCE);
+        resourcePortletFactoryMap.put(ResourceAlertsPortlet.KEY, ResourceAlertsPortlet.Factory.INSTANCE);
+        resourcePortletFactoryMap.put(ResourceOperationsPortlet.KEY, ResourceOperationsPortlet.Factory.INSTANCE);
+        resourcePortletFactoryMap.put(ResourcePkgHistoryPortlet.KEY, ResourcePkgHistoryPortlet.Factory.INSTANCE);
+        resourcePortletFactoryMap.put(ResourceBundleDeploymentsPortlet.KEY,
             ResourceBundleDeploymentsPortlet.Factory.INSTANCE);
-        registeredResourcePortletFactoryMap.put(ResourceConfigurationUpdatesPortlet.KEY,
+        resourcePortletFactoryMap.put(ResourceConfigurationUpdatesPortlet.KEY,
             ResourceConfigurationUpdatesPortlet.Factory.INSTANCE);
 
-        //register resource portlet names
-        registeredResourcePortletNameMap = new HashMap<String, String>(registeredResourcePortletFactoryMap.size());
-        registeredResourcePortletNameMap.put(ResourceMetricsPortlet.KEY, ResourceMetricsPortlet.NAME);
-        registeredResourcePortletNameMap.put(ResourceEventsPortlet.KEY, ResourceEventsPortlet.NAME);
-        registeredResourcePortletNameMap.put(ResourceOobsPortlet.KEY, ResourceOobsPortlet.NAME);
-        registeredResourcePortletNameMap.put(ResourceOperationsPortlet.KEY, ResourceOperationsPortlet.NAME);
-        registeredResourcePortletNameMap.put(ResourcePkgHistoryPortlet.KEY, ResourcePkgHistoryPortlet.NAME);
-        registeredResourcePortletNameMap.put(ResourceAlertsPortlet.KEY, ResourceAlertsPortlet.NAME);
-        registeredResourcePortletNameMap.put(ResourceBundleDeploymentsPortlet.KEY,
-            ResourceBundleDeploymentsPortlet.NAME);
-        registeredResourcePortletNameMap.put(ResourceConfigurationUpdatesPortlet.KEY,
-            ResourceConfigurationUpdatesPortlet.NAME);
+        // sorted map of portlet names to portlet keys
+        resourcePortletNameMap = new TreeMap<String, String>();
+        resourcePortletNameMap.put(ResourceMetricsPortlet.NAME, ResourceMetricsPortlet.KEY);
+        resourcePortletNameMap.put(ResourceEventsPortlet.NAME, ResourceEventsPortlet.KEY);
+        resourcePortletNameMap.put(ResourceOobsPortlet.NAME, ResourceOobsPortlet.KEY);
+        resourcePortletNameMap.put(ResourceOperationsPortlet.NAME, ResourceOperationsPortlet.KEY);
+        resourcePortletNameMap.put(ResourcePkgHistoryPortlet.NAME, ResourcePkgHistoryPortlet.KEY);
+        resourcePortletNameMap.put(ResourceAlertsPortlet.NAME, ResourceAlertsPortlet.KEY);
+        resourcePortletNameMap.put(ResourceBundleDeploymentsPortlet.NAME, ResourceBundleDeploymentsPortlet.KEY);
+        resourcePortletNameMap.put(ResourceConfigurationUpdatesPortlet.NAME, ResourceConfigurationUpdatesPortlet.KEY);
+
+        resourcePortletMenuMap = new LinkedHashMap<String, String>(resourcePortletNameMap.size());
+        for (Iterator<String> i = resourcePortletNameMap.keySet().iterator(); i.hasNext();) {
+            String portletName = i.next();
+            resourcePortletMenuMap.put(resourcePortletNameMap.get(portletName), portletName);
+        }
 
         //############## Portlet icon mappings  ############################################
         //register portlet names
-        registeredPortletIconMap = new HashMap<String, String>(registeredPortletFactoryMap.size());
-        registeredPortletIconMap.put(GroupAlertsPortlet.KEY, ImageManager.getAlertIcon());
-        registeredPortletIconMap.put(ResourceAlertsPortlet.KEY, ImageManager.getAlertIcon());
-        registeredPortletIconMap.put(GroupMetricsPortlet.KEY, ImageManager.getMonitorIcon());
-        registeredPortletIconMap.put(ResourceMetricsPortlet.KEY, ImageManager.getMonitorIcon());
-        registeredPortletIconMap.put(GroupOobsPortlet.KEY, ImageManager.getMonitorFailedIcon());
-        registeredPortletIconMap.put(ResourceOobsPortlet.KEY, ImageManager.getMonitorFailedIcon());
-        registeredPortletIconMap.put(GroupEventsPortlet.KEY, ImageManager.getEventIcon());
-        registeredPortletIconMap.put(ResourceEventsPortlet.KEY, ImageManager.getEventIcon());
-        registeredPortletIconMap.put(GroupOperationsPortlet.KEY, ImageManager.getOperationIcon());
-        registeredPortletIconMap.put(ResourceOperationsPortlet.KEY, ImageManager.getOperationIcon());
-        registeredPortletIconMap.put(GroupPkgHistoryPortlet.KEY, ImageManager.getActivityPackageIcon());
-        registeredPortletIconMap.put(ResourcePkgHistoryPortlet.KEY, ImageManager.getActivityPackageIcon());
-        registeredPortletIconMap.put(GroupBundleDeploymentsPortlet.KEY, ImageManager.getBundleIcon());
-        registeredPortletIconMap.put(ResourceBundleDeploymentsPortlet.KEY, ImageManager.getBundleIcon());
-        registeredPortletIconMap.put(GroupConfigurationUpdatesPortlet.KEY, ImageManager.getConfigureIcon());
-        registeredPortletIconMap.put(ResourceConfigurationUpdatesPortlet.KEY, ImageManager.getConfigureIcon());
+        portletIconMap = new HashMap<String, String>(globalPortletFactoryMap.size());
+        portletIconMap.put(GroupAlertsPortlet.KEY, ImageManager.getAlertIcon());
+        portletIconMap.put(ResourceAlertsPortlet.KEY, ImageManager.getAlertIcon());
+        portletIconMap.put(GroupMetricsPortlet.KEY, ImageManager.getMonitorIcon());
+        portletIconMap.put(ResourceMetricsPortlet.KEY, ImageManager.getMonitorIcon());
+        portletIconMap.put(GroupOobsPortlet.KEY, ImageManager.getMonitorFailedIcon());
+        portletIconMap.put(ResourceOobsPortlet.KEY, ImageManager.getMonitorFailedIcon());
+        portletIconMap.put(GroupEventsPortlet.KEY, ImageManager.getEventIcon());
+        portletIconMap.put(ResourceEventsPortlet.KEY, ImageManager.getEventIcon());
+        portletIconMap.put(GroupOperationsPortlet.KEY, ImageManager.getOperationIcon());
+        portletIconMap.put(ResourceOperationsPortlet.KEY, ImageManager.getOperationIcon());
+        portletIconMap.put(GroupPkgHistoryPortlet.KEY, ImageManager.getActivityPackageIcon());
+        portletIconMap.put(ResourcePkgHistoryPortlet.KEY, ImageManager.getActivityPackageIcon());
+        portletIconMap.put(GroupBundleDeploymentsPortlet.KEY, ImageManager.getBundleIcon());
+        portletIconMap.put(ResourceBundleDeploymentsPortlet.KEY, ImageManager.getBundleIcon());
+        portletIconMap.put(GroupConfigurationUpdatesPortlet.KEY, ImageManager.getConfigureIcon());
+        portletIconMap.put(ResourceConfigurationUpdatesPortlet.KEY, ImageManager.getConfigureIcon());
     }
 
-    public static Portlet buildPortlet(String locatorId, PortletWindow portletWindow, DashboardPortlet storedPortlet) {
+    public static Portlet buildPortlet(String locatorId, PortletWindow portletWindow, DashboardPortlet storedPortlet,
+        EntityContext context) {
 
-        PortletViewFactory viewFactory = registeredPortletFactoryMap.get(storedPortlet.getPortletKey());
+        PortletViewFactory viewFactory = globalPortletFactoryMap.get(storedPortlet.getPortletKey());
         if (viewFactory == null) {//check group view factory
-            viewFactory = registeredGroupPortletFactoryMap.get(storedPortlet.getPortletKey());
+            viewFactory = groupPortletFactoryMap.get(storedPortlet.getPortletKey());
 
             if (viewFactory == null) {//check resource view factory
-                viewFactory = registeredResourcePortletFactoryMap.get(storedPortlet.getPortletKey());
+                viewFactory = resourcePortletFactoryMap.get(storedPortlet.getPortletKey());
 
                 if (viewFactory == null) {
                     Message msg = new Message("Bad portlet: " + storedPortlet, Severity.Warning);
@@ -224,7 +248,7 @@ public class PortletFactory {
             }
         }
 
-        Portlet view = viewFactory.getInstance(locatorId);
+        Portlet view = viewFactory.getInstance(locatorId, context);
         view.configure(portletWindow, storedPortlet);
 
         //add code to initiate refresh cycle for portlets
@@ -235,89 +259,30 @@ public class PortletFactory {
         return view;
     }
 
-    public static List<String> getRegisteredPortletKeys() {
-
-        ArrayList<String> portletKeys = new ArrayList<String>(registeredPortletFactoryMap.keySet());
-        return portletKeys;
-    }
-
-    public static List<String> getRegisteredGroupPortletKeys() {
-
-        ArrayList<String> portletKeys = new ArrayList<String>(registeredGroupPortletFactoryMap.keySet());
-        return portletKeys;
-    }
-
-    public static List<String> getRegisteredResourcePortletKeys() {
-
-        ArrayList<String> portletKeys = new ArrayList<String>(registeredResourcePortletFactoryMap.keySet());
-        return portletKeys;
-    }
-
-    /** 
-     * @return Unmodifiable Map of registered portlet keys to names
+    /**
+     * @return Unprotected, make a copy if you need to alter the map entries.
      */
-    public static Map<String, String> getRegisteredPortletNameMap() {
-        return Collections.unmodifiableMap(registeredPortletNameMap);
+    public static LinkedHashMap<String, String> getGlobalPortletMenuMap() {
+        return globalPortletMenuMap;
     }
 
-    /** 
-     * @return Unmodifiable Map of registered portlet keys to names
+    /**
+     * @return Unprotected, make a copy if you need to alter the map entries.
      */
-    public static Map<String, String> getRegisteredGroupPortletNameMap() {
-
-        return Collections.unmodifiableMap(registeredGroupPortletNameMap);
+    public static LinkedHashMap<String, String> getGroupPortletMenuMap() {
+        return groupPortletMenuMap;
     }
 
-    /** 
-     * @return Unmodifiable Map of registered portlet keys to names
+    /**
+     * @return Unprotected, make a copy if you need to alter the map entries.
      */
-    public static Map<String, String> getRegisteredResourcePortletNameMap() {
-
-        return Collections.unmodifiableMap(registeredResourcePortletNameMap);
-    }
-
-    public static String getRegisteredPortletName(String key) {
-
-        return registeredPortletNameMap.get(key);
-    }
-
-    public static String getRegisteredGroupPortletName(String key) {
-
-        return registeredGroupPortletNameMap.get(key);
-    }
-
-    public static String getRegisteredResourcePortletName(String key) {
-
-        return registeredResourcePortletNameMap.get(key);
+    public static LinkedHashMap<String, String> getResourcePortletMenuMap() {
+        return resourcePortletMenuMap;
     }
 
     public static String getRegisteredPortletIcon(String key) {
 
-        return registeredPortletIconMap.get(key);
-    }
-
-    public static PortletViewFactory getRegisteredPortletFactory(String key) {
-        PortletViewFactory portletFactory = null;
-        if ((key != null) & (!key.trim().isEmpty())) {
-            portletFactory = registeredPortletFactoryMap.get(key);
-        }
-        return portletFactory;
-    }
-
-    public static PortletViewFactory getRegisteredGroupPortletFactory(String key) {
-        PortletViewFactory portletFactory = null;
-        if ((key != null) & (!key.trim().isEmpty())) {
-            portletFactory = registeredGroupPortletFactoryMap.get(key);
-        }
-        return portletFactory;
-    }
-
-    public static PortletViewFactory getRegisteredResourcePortletFactory(String key) {
-        PortletViewFactory portletFactory = null;
-        if ((key != null) & (!key.trim().isEmpty())) {
-            portletFactory = registeredResourcePortletFactoryMap.get(key);
-        }
-        return portletFactory;
+        return portletIconMap.get(key);
     }
 
 }

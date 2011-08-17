@@ -31,6 +31,7 @@ import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.SpacerItem;
 
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.core.domain.resource.group.GroupCategory;
@@ -193,7 +194,7 @@ public class ResourceGroupGraphPortlet extends ResourceGroupMetricGraphView impl
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final Portlet getInstance(String locatorId) {
+        public final Portlet getInstance(String locatorId, EntityContext context) {
 
             return new ResourceGroupGraphPortlet(locatorId);
         }

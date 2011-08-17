@@ -18,9 +18,6 @@
  */
 package org.rhq.enterprise.server.drift;
 
-import static javax.ejb.TransactionAttributeType.NOT_SUPPORTED;
-import static javax.ejb.TransactionAttributeType.REQUIRES_NEW;
-
 import java.io.File;
 import java.io.InputStream;
 
@@ -52,10 +49,10 @@ import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.domain.drift.DriftConfigurationComparator;
+import org.rhq.core.domain.drift.DriftConfigurationComparator.CompareMode;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition;
 import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.DriftSnapshot;
-import org.rhq.core.domain.drift.DriftConfigurationComparator.CompareMode;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.RHQConstants;
@@ -69,6 +66,9 @@ import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginManager;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 import org.rhq.enterprise.server.util.LookupUtil;
+
+import static javax.ejb.TransactionAttributeType.NOT_SUPPORTED;
+import static javax.ejb.TransactionAttributeType.REQUIRES_NEW;
 
 /**
  * The SLSB supporting Drift management to clients.  
@@ -335,6 +335,13 @@ public class DriftManagerBean implements DriftManagerLocal {
     public int purgeOrphanedDriftFiles(Subject subject, long purgeMillis) {
         DriftServerPluginFacet driftServerPlugin = getServerPlugin();
         return driftServerPlugin.purgeOrphanedDriftFiles(subject, purgeMillis);
+    }
+
+    @Override
+    @TransactionAttribute(NOT_SUPPORTED)
+    public String getDriftFileBits(String hash) {
+        DriftServerPluginFacet driftServerPlugin = getServerPlugin();
+        return driftServerPlugin.getDriftFileBits(hash);
     }
 
     @Override

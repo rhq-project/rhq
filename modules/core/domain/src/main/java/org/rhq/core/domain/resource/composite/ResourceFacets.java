@@ -38,8 +38,9 @@ public class ResourceFacets implements Serializable {
     private static final long serialVersionUID = 1L;
 
     public static ResourceFacets NONE = new ResourceFacets(-1, false, false, false, false, false, false, false, false,
-        false);
-    public static ResourceFacets ALL = new ResourceFacets(-1, true, true, true, true, true, true, true, true, true);
+        false, false);
+    public static ResourceFacets ALL = new ResourceFacets(-1, true, true, true, true, true, true, true, true, true,
+        true);
 
     private int resourceTypeId;
     private boolean measurement;
@@ -51,6 +52,7 @@ public class ResourceFacets implements Serializable {
     private boolean callTime;
     private boolean support;
     private boolean drift;
+    private boolean bundle;
     private Set<ResourceTypeFacet> facets;
 
     // no-arg constructor required by GWT compiler
@@ -58,7 +60,8 @@ public class ResourceFacets implements Serializable {
     }
 
     public ResourceFacets(int resourceTypeId, boolean measurement, boolean event, boolean pluginConfiguration,
-        boolean configuration, boolean operation, boolean content, boolean callTime, boolean support, boolean drift) {
+        boolean configuration, boolean operation, boolean content, boolean callTime, boolean support, boolean drift,
+        boolean bundle) {
         this.resourceTypeId = resourceTypeId;
         this.measurement = measurement;
         this.event = event;
@@ -69,11 +72,13 @@ public class ResourceFacets implements Serializable {
         this.callTime = callTime;
         this.support = support;
         this.drift = drift;
+        this.bundle = bundle;
         initEnum();
     }
 
     public ResourceFacets(int resourceTypeId, Number measurement, Number event, Number pluginConfiguration,
-        Number configuration, Number operation, Number content, Number callTime, Number support, Number drift) {
+        Number configuration, Number operation, Number content, Number callTime, Number support, Number drift,
+        Number bundle) {
         this.resourceTypeId = resourceTypeId;
         this.measurement = measurement.intValue() != 0;
         this.event = event.intValue() != 0;
@@ -84,6 +89,7 @@ public class ResourceFacets implements Serializable {
         this.callTime = callTime.intValue() != 0;
         this.support = support.intValue() != 0;
         this.drift = drift.intValue() != 0;
+        this.bundle = bundle.intValue() != 0;
         initEnum();
     }
 
@@ -175,6 +181,17 @@ public class ResourceFacets implements Serializable {
     }
 
     /**
+     * Does this resource expose bundle deploy capability? If so, the Bundle sub-tab will be displayed in the GUI
+     * (TODO: this is not currently implemented but we have other needs for knowning whether a type supports
+     * bundle deployment.
+     *
+     * @return true if the resource allows bundle deployment, false otherwise
+     */
+    public boolean isBundle() {
+        return bundle;
+    }
+
+    /**
      * Returns an enum representation of the facets.
      *
      * @return an enum representation of the facets
@@ -203,6 +220,7 @@ public class ResourceFacets implements Serializable {
             this.facets.add(ResourceTypeFacet.SUPPORT);
         if (drift)
             this.facets.add(ResourceTypeFacet.DRIFT);
-
+        if (bundle)
+            this.facets.add(ResourceTypeFacet.BUNDLE);
     }
 }

@@ -100,6 +100,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * @author Greg Hinkle
  * @author Ian Springer
  */
+@SuppressWarnings("unchecked")
 public class Table<DS extends RPCDataSource> extends LocatableHLayout implements RefreshableView {
 
     protected static final String FIELD_ID = "id";
@@ -644,7 +645,6 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     // and it doesn't handle Object types properly (seeing odd behavior because of this), so this method explicitly
     // supports adding array types and Objects.
     // This method takes the src criteria and adds it to the dest criteria.
-    @SuppressWarnings("unchecked")
     private static void addCriteria(Criteria dest, Criteria src) {
         Map otherMap = src.getValues();
         Set otherKeys = otherMap.keySet();

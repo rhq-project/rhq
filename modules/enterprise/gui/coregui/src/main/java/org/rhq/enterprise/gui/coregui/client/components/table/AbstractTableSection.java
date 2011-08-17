@@ -57,6 +57,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * @author Greg Hinkle
  * @author John Mazzitelli
  */
+@SuppressWarnings("unchecked")
 public abstract class AbstractTableSection<DS extends RPCDataSource, ID> extends Table<DS> implements BookmarkableView {
 
     private VLayout detailsHolder;

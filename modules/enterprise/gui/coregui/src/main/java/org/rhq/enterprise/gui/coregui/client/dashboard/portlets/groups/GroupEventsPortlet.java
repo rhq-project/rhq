@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.Map;
 
 import com.allen_sauer.gwt.log.client.Log;
-import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
@@ -33,6 +32,7 @@ import com.smartgwt.client.widgets.form.events.SubmitValuesEvent;
 import com.smartgwt.client.widgets.form.events.SubmitValuesHandler;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
@@ -89,11 +89,8 @@ public class GroupEventsPortlet extends LocatableVLayout implements CustomSettin
     protected LocatableCanvas recentEventsContent = new LocatableCanvas(extendLocatorId("RecentEvents"));
     protected boolean currentlyLoading = false;
 
-    public GroupEventsPortlet(String locatorId) {
+    public GroupEventsPortlet(String locatorId, int groupId) {
         super(locatorId);
-        //figure out which page we're loading
-        String currentPage = History.getToken();
-        int groupId = AbstractActivityView.groupIdLookup(currentPage);
         this.groupId = groupId;
     }
 
@@ -143,8 +140,13 @@ public class GroupEventsPortlet extends LocatableVLayout implements CustomSettin
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final Portlet getInstance(String locatorId) {
-            return new GroupEventsPortlet(locatorId);
+        public final Portlet getInstance(String locatorId, EntityContext context) {
+
+            if (EntityContext.Type.ResourceGroup != context.getType()) {
+                throw new IllegalArgumentException("Context [" + context + "] not supported by portlet");
+            }
+
+            return new GroupEventsPortlet(locatorId, context.getGroupId());
         }
     }
 

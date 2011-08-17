@@ -650,9 +650,16 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
                 ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
             new ResourceTypeRepository.TypeLoadedCallback() {
                 public void onTypesLoaded(ResourceType type) {
-                    resourceComposite.getResource().setResourceType(type);
-                    updateTabContent(resourceComposite);
-                    selectTab(getTabName(), getSubTabName(), viewPath);
+                    // until we finish the following work we're susceptible to fast-click issues in
+                    // tree navigation.  So, wait until after it's done to notify listeners thatthe view is
+                    // safely rendered.  Make sure to notify even on failure.
+                    try {
+                        resourceComposite.getResource().setResourceType(type);
+                        updateTabContent(resourceComposite);
+                        selectTab(getTabName(), getSubTabName(), viewPath);
+                    } finally {
+                        notifyViewRenderedListeners();
+                    }
                 }
             });
     }
@@ -667,5 +674,4 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         }
         return false;
     }
-
 }

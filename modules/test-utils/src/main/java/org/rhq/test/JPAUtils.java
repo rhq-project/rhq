@@ -60,8 +60,16 @@ public class JPAUtils {
             } catch (SystemException e) {
                 throw new RuntimeException("Failed to rollback transaction", e);
             }
-            throw new RuntimeException(t.getCause());
+            Throwable rootCause = getRootCause(t);
+            throw new RuntimeException(rootCause);
         }
+    }
+
+    private static Throwable getRootCause(Throwable t) {
+        while ((t.getCause() != null) && (t != t.getCause())) {
+            t = t.getCause();
+        }
+        return t;
     }
 
     public static void clearDB() {

@@ -19,14 +19,13 @@
  */
 package org.rhq.enterprise.server.drift;
 
-import static javax.ejb.TransactionAttributeType.REQUIRES_NEW;
-
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.ZipEntry;
@@ -69,12 +68,15 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.StopWatch;
 import org.rhq.core.util.ZipUtil;
 import org.rhq.core.util.file.FileUtil;
+import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
+
+import static javax.ejb.TransactionAttributeType.REQUIRES_NEW;
 
 /**
  * The SLSB method implementation needed to support the JPA (RHQ Default) Drift Server Plugin.
@@ -388,6 +390,20 @@ public class JPADriftServerBean implements JPADriftServerLocal {
             LogFactory.getLog(getClass()).info(
                 "Unable to delete " + dir.getAbsolutePath() + ". This directory and "
                     + "its contents are no longer needed. It can be deleted.");
+        }
+    }
+
+    @Override
+    public String getDriftFileBits(String hash) {
+        // TODO add security
+        try {
+            JPADriftFileBits content = (JPADriftFileBits) entityManager.createNamedQuery(
+                JPADriftFileBits.QUERY_FIND_BY_ID).setParameter("hashId", hash).getSingleResult();
+            byte[] bytes = StreamUtil.slurp(content.getBlob().getBinaryStream());
+            return new String(bytes);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
         }
     }
 }

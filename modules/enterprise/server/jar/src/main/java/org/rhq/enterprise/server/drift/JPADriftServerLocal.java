@@ -125,4 +125,6 @@ public interface JPADriftServerLocal {
      * @return number of orphaned drife files that were removed
      */
     int purgeOrphanedDriftFiles(Subject subject, long purgeMillis);
+
+    String getDriftFileBits(String hash);
 }

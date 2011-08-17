@@ -516,14 +516,25 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
                     ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
                 new ResourceTypeRepository.TypeLoadedCallback() {
                     public void onTypesLoaded(ResourceType type) {
-                        group.setResourceType(type);
-                        updateTabContent(groupComposite);
-                        selectTab(getTabName(), getSubTabName(), viewPath);
+                        // until we finish the following work we're susceptible to fast-click issues in
+                        // tree navigation.  So, wait until after it's done to notify listeners that the view is
+                        // safely rendered.  Make sure to notify even on failure.
+                        try {
+                            group.setResourceType(type);
+                            updateTabContent(groupComposite);
+                            selectTab(getTabName(), getSubTabName(), viewPath);
+                        } finally {
+                            notifyViewRenderedListeners();
+                        }
                     }
                 });
         } else {
-            updateTabContent(groupComposite);
-            selectTab(getTabName(), getSubTabName(), viewPath);
+            try {
+                updateTabContent(groupComposite);
+                selectTab(getTabName(), getSubTabName(), viewPath);
+            } finally {
+                notifyViewRenderedListeners();
+            }
         }
     }
 
@@ -563,5 +574,4 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
             super.renderView(viewPath);
         }
     }
-
 }

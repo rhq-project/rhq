@@ -390,8 +390,8 @@ public class SynchronizationManagerBean implements SynchronizationManagerLocal, 
         validator.initialize(subject, entityManager);
 
         //perform the validation
-        validator.initializeValidation(new ExportReader(rdr));
-        validator.validateCurrentState();
+        validator.initializeExportedStateValidation(new ExportReader(rdr));
+        validator.validateExportedState();
 
         return validator;
     }

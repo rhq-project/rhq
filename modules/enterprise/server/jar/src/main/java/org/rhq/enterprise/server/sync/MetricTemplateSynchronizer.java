@@ -20,6 +20,7 @@
 package org.rhq.enterprise.server.sync;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 import javax.persistence.EntityManager;
@@ -35,6 +36,7 @@ import org.rhq.enterprise.server.sync.importers.Importer;
 import org.rhq.enterprise.server.sync.importers.MetricTemplateImporter;
 import org.rhq.enterprise.server.sync.validators.ConsistencyValidator;
 import org.rhq.enterprise.server.sync.validators.DeployedAgentPluginsValidator;
+import org.rhq.enterprise.server.sync.validators.MetricTemplateValidator;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -73,7 +75,10 @@ public class MetricTemplateSynchronizer implements Synchronizer<MeasurementDefin
     }
 
     public Set<ConsistencyValidator> getRequiredValidators() {
-        return Collections.<ConsistencyValidator>singleton(new DeployedAgentPluginsValidator(pluginManager));
+        HashSet<ConsistencyValidator> ret = new HashSet<ConsistencyValidator>();
+        ret.add(new DeployedAgentPluginsValidator(pluginManager));
+        ret.add(new MetricTemplateValidator());
+        return ret;
     }
 
 }

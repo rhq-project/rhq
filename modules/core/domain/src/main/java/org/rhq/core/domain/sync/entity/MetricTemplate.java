@@ -39,25 +39,25 @@ public class MetricTemplate extends AbstractExportedEntity {
 
     @XmlAttribute
     private String resourceTypeName;
-    
+
     @XmlAttribute
     private String resourceTypePlugin;
-    
+
     @XmlAttribute
     private String metricName;
 
     @XmlAttribute
     private boolean perMinute;
-    
+
     @XmlAttribute
     private long defaultInterval;
-    
+
     @XmlAttribute
     private boolean enabled;
 
     public MetricTemplate() {
     }
-    
+
     public MetricTemplate(MeasurementDefinition definition) {
         resourceTypeName = definition.getResourceType().getName();
         resourceTypePlugin = definition.getResourceType().getPlugin();
@@ -67,7 +67,7 @@ public class MetricTemplate extends AbstractExportedEntity {
         perMinute = definition.getRawNumericType() != null;
         setReferencedEntityId(definition.getId());
     }
-    
+
     public String getResourceTypeName() {
         return resourceTypeName;
     }
@@ -114,22 +114,43 @@ public class MetricTemplate extends AbstractExportedEntity {
     public boolean isPerMinute() {
         return perMinute;
     }
-    
+
     /**
      * @param perMinute the perMinute to set
      */
     public void setPerMinute(boolean perMinute) {
         this.perMinute = perMinute;
     }
-    
+
+    @Override
+    public int hashCode() {
+        return (perMinute ? 31 : 1) * metricName.hashCode() * resourceTypeName.hashCode()
+            * resourceTypePlugin.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) {
+            return true;
+        }
+        
+        if (!(other instanceof MetricTemplate)) {
+            return false;
+        }
+        
+        MetricTemplate o = (MetricTemplate) other;
+        
+        return metricName.equals(o.metricName) && resourceTypeName.equals(o.resourceTypeName)
+            && resourceTypePlugin.equals(o.resourceTypePlugin) && (perMinute == o.perMinute);
+    }
+
     @Override
     public String toString() {
         StringBuilder bld = new StringBuilder();
-        bld.append("MetricTemplate[metric='").append(metricName).append("', resourceType='")
-            .append(resourceTypeName).append("', plugin='").append(resourceTypePlugin)
-            .append("', perMinute=").append(perMinute).append(", defaultInterval=")
-            .append(defaultInterval).append(", enabled=").append(enabled).append("]");
-        
+        bld.append("MetricTemplate[metric='").append(metricName).append("', resourceType='").append(resourceTypeName)
+            .append("', plugin='").append(resourceTypePlugin).append("', perMinute=").append(perMinute)
+            .append(", defaultInterval=").append(defaultInterval).append(", enabled=").append(enabled).append("]");
+
         return bld.toString();
     }
 }

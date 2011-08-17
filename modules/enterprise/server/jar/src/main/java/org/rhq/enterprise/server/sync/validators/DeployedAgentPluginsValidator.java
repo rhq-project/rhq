@@ -130,7 +130,7 @@ public class DeployedAgentPluginsValidator implements ConsistencyValidator {
     }
 
     @Override
-    public void initializeValidation(ExportReader reader) throws XMLStreamException {
+    public void initializeExportedStateValidation(ExportReader reader) throws XMLStreamException {
         pluginsToValidate = new HashSet<ConsistentPlugin>();
 
         while (reader.hasNext()) {
@@ -152,7 +152,7 @@ public class DeployedAgentPluginsValidator implements ConsistencyValidator {
     }
 
     @Override
-    public void validateCurrentState() throws InconsistentStateException {
+    public void validateExportedState() throws InconsistentStateException {
         List<Plugin> localPlugins = pluginManager.getInstalledPlugins();
         Set<ConsistentPlugin> localAgentPlugins = new HashSet<ConsistentPlugin>();
         for(Plugin p : localPlugins) {

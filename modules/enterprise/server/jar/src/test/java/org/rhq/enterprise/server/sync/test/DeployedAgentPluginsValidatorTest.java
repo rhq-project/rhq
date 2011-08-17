@@ -99,7 +99,7 @@ public class DeployedAgentPluginsValidatorTest extends JMockTest {
                 //this is what is expected by the validators
                 rdr.nextTag();
                 
-                validator.initializeValidation(new ExportReader(rdr));
+                validator.initializeExportedStateValidation(new ExportReader(rdr));
                 
                 rdr.close();
                 
@@ -137,14 +137,14 @@ public class DeployedAgentPluginsValidatorTest extends JMockTest {
         validator.setPluginsToValidate(pluginsToValidate);
         
         //this should validate cleanly
-        validator.validateCurrentState();
+        validator.validateExportedState();
         
         //now add 1 plugin to the validated state
         DeployedAgentPluginsValidator.ConsistentPlugin newPlugin = createPlugin("superfluous", "1", "md5_4");
         pluginsToValidate.add(newPlugin);
         
         try {
-            validator.validateCurrentState();
+            validator.validateExportedState();
             fail("validation should have detected that the current installation has one plugin less.");
         } catch (InconsistentStateException e) {
             //this is expected
@@ -155,7 +155,7 @@ public class DeployedAgentPluginsValidatorTest extends JMockTest {
         installedPlugins.add(newPlugin);
         
         try {
-            validator.validateCurrentState();
+            validator.validateExportedState();
             fail("validation should have detected that the current installation has one plugin more.");
         } catch (InconsistentStateException e) {
             //ok
@@ -169,7 +169,7 @@ public class DeployedAgentPluginsValidatorTest extends JMockTest {
         newPlugin.setMd5("md5_different");
         
         try {
-            validator.validateCurrentState();
+            validator.validateExportedState();
             fail("validation should have failed because one of the plugins differs between current and exported states.");
         } catch (InconsistentStateException e) {
             //ok
@@ -179,7 +179,7 @@ public class DeployedAgentPluginsValidatorTest extends JMockTest {
         newPluginCopy.setMd5("md5_different");
         
         try {
-            validator.validateCurrentState();
+            validator.validateExportedState();
             fail("validation should have failed because one of the plugins differs between current and exported states.");
         } catch (InconsistentStateException e) {
             //ok

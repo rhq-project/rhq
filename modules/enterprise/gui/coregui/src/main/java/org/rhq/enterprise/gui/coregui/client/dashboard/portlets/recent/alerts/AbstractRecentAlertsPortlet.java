@@ -17,6 +17,8 @@ import com.smartgwt.client.widgets.form.fields.CheckboxItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 
+import com.smartgwt.client.widgets.grid.CellFormatter;
+import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.authz.Permission;
@@ -30,9 +32,12 @@ import org.rhq.core.domain.util.OrderingField;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertDataSource;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertHistoryView;
 import org.rhq.enterprise.gui.coregui.client.components.measurement.CustomConfigMeasurementRangeEditor;
+import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortletUtil;
 import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
@@ -42,6 +47,7 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigura
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * A base class for deriving recent alerts portlets for different entity contexts.  In this way the
@@ -68,6 +74,28 @@ public abstract class AbstractRecentAlertsPortlet extends AlertHistoryView imple
         setOverflow(Overflow.VISIBLE);
         setShowFooterRefresh(false); //disable footer refresh button as redundant for portlets
         setShowHeader(false);//disable header for portlets
+    }
+
+    @Override
+    protected CellFormatter getDetailsLinkColumnCellFormatter() {
+        return new CellFormatter() {
+            public String format(Object value, ListGridRecord record, int i, int i1) {
+                String url = getAlertDetailLink(record);
+                String formattedValue = TimestampCellFormatter.format(value);
+                return SeleniumUtility.getLocatableHref(url, formattedValue, null);
+            }
+        };
+    }
+
+    @Override
+    public void showDetails(ListGridRecord record) {
+        String url = getAlertDetailLink(record);
+        CoreGUI.goToView(url);
+    }
+
+    private String getAlertDetailLink(ListGridRecord record) {
+        Integer alertId = getId(record);
+        return LinkManager.getAlertDetailLink(getContext(), alertId);
     }
 
     @Override

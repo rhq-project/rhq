@@ -57,7 +57,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * A view that displays a paginated table of fired {@link org.rhq.core.domain.alert.Alert alert}s, along with the
  * ability to filter those alerts, sort those alerts, double-click a row to view full details an alert, and perform
  * various operations on the the alerts: delete selected, delete all from source, ack selected, ack all from source.
- * This view full respects the user's authorization, and will not allow operations on the alerts unless the user is
+ * This view fully respects the user's authorization, and will not allow operations on the alerts unless the user is
  * either the inventory manager or has MANAGE_ALERTS permission on every resource corresponding to the alerts being
  * operated on.
  *
@@ -148,19 +148,6 @@ public class AlertHistoryView extends TableSection<AlertDataSource> {
     @Override
     protected String getDetailsLinkColumnName() {
         return AlertCriteria.SORT_FIELD_CTIME;
-    }
-
-    @Override
-    protected CellFormatter getDetailsLinkColumnCellFormatter() {
-        return new CellFormatter() {
-            public String format(Object value, ListGridRecord record, int i, int i1) {
-                Integer resourceId = record.getAttributeAsInt(AncestryUtil.RESOURCE_ID);
-                Integer alertHistoryId = getId(record);
-                String url = LinkManager.getSubsystemAlertHistoryLink(resourceId, alertHistoryId);
-                String formattedValue = TimestampCellFormatter.format(value);
-                return SeleniumUtility.getLocatableHref(url, formattedValue, null);
-            }
-        };
     }
 
     /**

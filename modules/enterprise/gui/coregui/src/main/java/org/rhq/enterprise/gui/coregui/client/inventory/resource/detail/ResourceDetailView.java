@@ -605,11 +605,10 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         GWTServiceLookup.getResourceService().findResourceCompositesByCriteria(criteria,
             new AsyncCallback<PageList<ResourceComposite>>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getMessageCenter().notify(
-                        new Message(MSG.view_inventory_resource_loadFailed(String.valueOf(resourceId)),
-                            Message.Severity.Warning));
+                    Message message = new Message(MSG.view_inventory_resource_loadFailed(String.valueOf(resourceId)),
+                            Message.Severity.Warning);
 
-                    CoreGUI.goToView(InventoryView.VIEW_ID.getName());
+                    CoreGUI.goToView(InventoryView.VIEW_ID.getName(), message);
                 }
 
                 public void onSuccess(PageList<ResourceComposite> result) {

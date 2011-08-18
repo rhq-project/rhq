@@ -244,6 +244,12 @@ public class GWTServiceLookup {
                 Log.error("SessionRpcRequestBuilder missing sessionId for request(" + serviceEntryPoint + ") ");
             }
 
+            final String RHQ_REQUEST_ID_HEADER = "x-rhq-request-id";
+            final String requestId = UserSessionManager.getRequestId();
+            if (requestId != null) {
+                rb.setHeader(RHQ_REQUEST_ID_HEADER, requestId);
+            }
+
             return rb;
         }
 

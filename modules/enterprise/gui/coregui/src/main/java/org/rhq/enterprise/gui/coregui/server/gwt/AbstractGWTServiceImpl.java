@@ -74,6 +74,12 @@ public abstract class AbstractGWTServiceImpl extends RemoteServiceServlet {
             continueProcessing = false;
         }
 
+        final String RHQ_REQUEST_ID_HEADER = "x-rhq-request-id";
+        String rid = req.getHeader(RHQ_REQUEST_ID_HEADER);
+        if (rid != null) {
+            resp.setHeader(RHQ_REQUEST_ID_HEADER, rid);
+        }
+
         if (continueProcessing) {
             // TODO: only execute this if the session lookup was successful, otherwise fail in some deterministic fashion
             //       alter callback handlers to capture expected failure and retry (at least once)

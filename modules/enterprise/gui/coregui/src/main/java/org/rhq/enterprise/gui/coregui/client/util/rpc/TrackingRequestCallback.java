@@ -64,6 +64,12 @@ public class TrackingRequestCallback implements RequestCallback {
 
         RemoteServiceStatistics.record(getName(), getAge());
         if (STATUS_CODE_OK == response.getStatusCode()) {
+            final String RHQ_REQUEST_ID_HEADER = "x-rhq-request-id";
+            String requestId = response.getHeader(RHQ_REQUEST_ID_HEADER);
+            if (requestId != null && !requestId.equals(UserSessionManager.getRequestId())) {
+                // user moved away from the page, so drop the response...
+                return;
+            }
             RPCTracker.getInstance().succeedCall(this);
             callback.onResponseReceived(request, response);
         } else {

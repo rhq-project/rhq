@@ -21,11 +21,12 @@
 package org.rhq.enterprise.gui.coregui.client.drift;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.smartgwt.client.widgets.Button;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.LinkItem;
 import com.smartgwt.client.widgets.form.fields.SpacerItem;
@@ -33,7 +34,6 @@ import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.TextAreaItem;
 import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
-import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.criteria.GenericDriftCriteria;
@@ -272,6 +272,38 @@ public class DriftDetailsView extends LocatableVLayout {
         return window;
     }
 
+    private LocatableWindow createViewer(String contents) {
+        LocatableWindow window = new LocatableWindow("test");
+        window.setTitle("File Viewer");
+        window.setWidth(800);
+        window.setHeight(600);
+        window.setIsModal(false);
+        window.setCanDragResize(true);
+        window.setShowResizer(true);
+        window.centerInPage();
+
+        VLayout layout = new VLayout();
+        DynamicForm form = new DynamicForm();
+        form.setWidth100();
+        form.setHeight100();
+
+        CanvasItem canvasItem = new CanvasItem();
+        canvasItem.setColSpan(2);
+        canvasItem.setShowTitle(false);
+        canvasItem.setWidth("*");
+        canvasItem.setHeight("*");
+
+        Canvas canvas = new Canvas();
+        canvas.setContents(contents);
+        canvasItem.setCanvas(canvas);
+
+        form.setItems(canvasItem);
+        layout.addMember(form);
+        window.addItem(layout);
+
+        return window;
+    }
+
     private void generateDiff(final Drift drift, final StaticTextItem changes, final LinkItem viewDiff) {
         GWTServiceLookup.getDriftService().generateUnifiedDiff(drift, new AsyncCallback<FileDiffReport>() {
             @Override
@@ -286,12 +318,30 @@ public class DriftDetailsView extends LocatableVLayout {
                 viewDiff.addClickHandler(new ClickHandler() {
                     @Override
                     public void onClick(ClickEvent clickEvent) {
-                        LocatableWindow window = createFileViewer(diffReport.getDiff());
+                        //LocatableWindow window = createFileViewer(diffReport.getDiff());
+                        LocatableWindow window = createViewer(toHtml(diffReport.getDiff()));
                         window.show();
                     }
                 });
             }
         });
+    }
+
+    private String toHtml(List<String> deltas) {
+        StringBuilder diff = new StringBuilder();
+        for (String line : deltas) {
+            if (line.startsWith("@@")) {
+                diff.append("<font color=\"purple\">").append(line).append("</font><br/>");
+            } else if (line.startsWith("-")) {
+                diff.append("<font color=\"red\">").append(line).append("</font><br/>");
+            } else if (line.startsWith("+")) {
+                diff.append("<font color=\"green\">").append(line).append("</font><br/>");
+            } else {
+                diff.append(line).append("<br/>");
+            }
+        }
+
+        return diff.toString();
     }
 
 }

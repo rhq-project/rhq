@@ -20,18 +20,19 @@
 package org.rhq.core.domain.drift;
 
 import java.io.Serializable;
+import java.util.List;
 
 public class FileDiffReport implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private int changes;
 
-    private String diff;
+    List<String> diff;
 
     public FileDiffReport() {
     }
 
-    public FileDiffReport(int numChanges, String diff) {
+    public FileDiffReport(int numChanges, List<String> diff) {
         changes = numChanges;
         this.diff = diff;
     }
@@ -40,7 +41,7 @@ public class FileDiffReport implements Serializable {
         return changes;
     }
 
-    public String getDiff() {
+    public List<String> getDiff() {
         return diff;
     }
 

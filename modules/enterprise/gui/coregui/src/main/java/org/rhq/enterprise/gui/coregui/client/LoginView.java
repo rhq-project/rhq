@@ -31,6 +31,7 @@ import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.Response;
+import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.FormErrorOrientation;
@@ -515,22 +516,27 @@ public class LoginView extends LocatableCanvas {
         }
     }
 
-    private void login(final String user, final String password) {
+    private void login(final String username, final String password) {
         BrowserUtility.forceIe6Hacks();
 
         loginButton.setDisabled(true);
 
         try {
-            RequestBuilder b = new RequestBuilder(RequestBuilder.POST, "/j_security_check.do");
-            b.setHeader("Content-Type", "application/x-www-form-urlencoded");
-            b.setRequestData("j_username=" + user + "&j_password=" + password);
-            b.setCallback(new RequestCallback() {
+            RequestBuilder requestBuilder = new RequestBuilder(RequestBuilder.POST, "/j_security_check.do");
+            requestBuilder.setHeader("Content-Type", "application/x-www-form-urlencoded");
+            // URL-encode the username and password in case they contain URL special characters ('?', '&', '%', '+',
+            // etc.), which would corrupt the request if not encoded.
+            String encodedUsername = URL.encode(username);
+            String encodedPassword = URL.encode(password);
+            String requestData = "j_username=" + encodedUsername + "&j_password=" + encodedPassword;
+            requestBuilder.setRequestData(requestData);
+            requestBuilder.setCallback(new RequestCallback() {
                 public void onResponseReceived(Request request, Response response) {
                     int statusCode = response.getStatusCode();
                     if (statusCode == 200) {
                         window.destroy();
                         loginShowing = false;
-                        UserSessionManager.login(user, password);
+                        UserSessionManager.login(username, password);
                     } else {
                         handleError(statusCode);
                     }
@@ -540,7 +546,7 @@ public class LoginView extends LocatableCanvas {
                     handleError(0);
                 }
             });
-            b.send();
+            requestBuilder.send();
         } catch (Exception e) {
             handleError(0);
         } finally {

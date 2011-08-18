@@ -188,13 +188,14 @@ public interface OperationManagerLocal {
     List<GroupOperationSchedule> findScheduledGroupOperations(Subject subject, int groupId) throws Exception;
 
     /**
-     * Given a resource job's details, this returns the schedule for that resource job.
+     * Given a Resource operation job's details, this returns a schedule POJO corresponding to that job.
      *
      * @param subject 
      * @param jobDetail
      *
-     * @return the object that encapsulates the resource schedule
+     * @return the object that encapsulates the resource schedule, or null if the specified job is no longer scheduled
      */
+    @Nullable
     ResourceOperationSchedule getResourceOperationSchedule(Subject subject, JobDetail jobDetail);
 
     /**
@@ -210,13 +211,14 @@ public interface OperationManagerLocal {
     ResourceOperationSchedule getResourceOperationSchedule(Subject subject, String jobId) throws SchedulerException;
 
     /**
-     * Given a group job's details, this returns the schedule for that group job.
+     * Given a group operation job's details, this returns a schedule POJO corresponding to that job.
      *
      * @param subject 
      * @param jobDetail
      *
-     * @return the object that encapsulates the group schedule
+     * @return the object that encapsulates the group schedule, , or null if the specified job is no longer scheduled
      */
+    @Nullable
     GroupOperationSchedule getGroupOperationSchedule(Subject subject, JobDetail jobDetail);
 
     /**
@@ -434,7 +436,7 @@ public interface OperationManagerLocal {
      *
      * @return the OperationDefinition object that corresponds to this operationId
      */
-    OperationDefinition getOperationDefinition(Subject whoami, int operationId);
+    OperationDefinition getOperationDefinition(Subject subject, int operationId);
 
     /**
      * @param  resourceTypeId
@@ -551,7 +553,7 @@ public interface OperationManagerLocal {
      *
      * @param  subject
      * @param  resourceId
-     * @param  beginDate filter used to show only results occurring after this epoch millis parameter, nullable
+     * @param  startDate filter used to show only results occurring after this epoch millis parameter, nullable
      * @param  endDate   filter used to show only results occurring before this epoch millis parameter, nullable
      * @param  pc
      * @return all operation histories for the given resource
@@ -574,12 +576,12 @@ public interface OperationManagerLocal {
         PageControl pc);
 
     /**
-     * #see {@link OperationManagerRemote#getOperationHistoryByHistoryId
+     * TODO
      */
     OperationHistory getOperationHistoryByHistoryId(Subject subject, int historyId);
 
     /**
-     * #see {@link OperationManagerRemote#getOperationHistoryByJobId
+     * TODO
      */
     OperationHistory getOperationHistoryByJobId(Subject subject, String historyJobId);
 
@@ -647,7 +649,7 @@ public interface OperationManagerLocal {
     void unscheduleResourceOperation(Subject subject, String jobId, int resourceId) throws UnscheduleException;
 
     /**
-     * #see {@link OperationManagerRemote#unscheduleGroupOperation(Subject, String, PageControl)
+     * see {@link OperationManagerRemote#unscheduleGroupOperation(org.rhq.core.domain.auth.Subject, String, int)}
      */
     void unscheduleGroupOperation(Subject subject, String jobId, int resourceGroupId) throws UnscheduleException;
 

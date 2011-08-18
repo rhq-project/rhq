@@ -113,21 +113,30 @@ public abstract class AbstractOperationScheduleDetailsView extends
     public void renderView(ViewPath viewPath) {
         super.renderView(viewPath);
 
-        int operationDefinitionId = 0;
+        // If the operationDefId has been seeded capture it now
+        this.operationDefinitionId = 0;
         if (!viewPath.isEnd()) {
-            operationDefinitionId = viewPath.getCurrentAsInt();
+            this.operationDefinitionId = viewPath.getCurrentAsInt();
             viewPath.next();
         }
 
         // Existing schedules are not editable. This may change in the future.
         boolean isReadOnly = (!hasControlPermission() || (getRecordId() != 0));
+
+        // Note: subclases may override this and perform async work prior to calling super, so
+        // be careful adding any code after this point in this method.
         init(isReadOnly);
+    }
+
+    @Override
+    protected void init(boolean isReadOnly) {
+        super.init(isReadOnly);
 
         // If the operationDefId has been seeded then treat it as a user-initiated change to
         // update associated widgets and button enablement.
-        if (operationDefinitionId > 0) {
+        if (this.operationDefinitionId != null) {
             FormItem nameField = this.getForm().getField(AbstractOperationScheduleDataSource.Field.OPERATION_NAME);
-            nameField.setValue(this.operationIdToNameMap.get(operationDefinitionId));
+            nameField.setValue(this.operationIdToNameMap.get(this.operationDefinitionId));
             handleOperationNameChange();
             getForm().rememberValues();
         }
@@ -269,11 +278,6 @@ public abstract class AbstractOperationScheduleDetailsView extends
     @Override
     protected Record createNewRecord() {
         Record record = super.createNewRecord();
-
-        if (this.operationDefinitionId != null) {
-            String operationName = this.operationIdToNameMap.get(this.operationDefinitionId);
-            record.setAttribute(AbstractOperationScheduleDataSource.Field.OPERATION_NAME, operationName);
-        }
 
         Subject sessionSubject = UserSessionManager.getSessionSubject();
         AbstractOperationScheduleDataSource.SubjectRecord subjectRecord = new AbstractOperationScheduleDataSource.SubjectRecord(

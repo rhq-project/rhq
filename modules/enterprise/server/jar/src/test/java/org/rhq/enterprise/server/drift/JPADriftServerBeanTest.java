@@ -36,14 +36,17 @@ import static org.rhq.test.JPAUtils.executeInTransaction;
 public class JPADriftServerBeanTest extends AbstractEJB3Test {
 
     @BeforeMethod
-    public void initDB() {
-        executeInTransaction(new TransactionCallback() {
-            @Override
-            public void execute() throws Exception {
-                EntityManager em = getEntityManager();
-                em.createQuery("delete from JPADriftFileBits").executeUpdate();
-            }
-        });
+    public void initDB() throws Exception {
+//        executeInTransaction(new TransactionCallback() {
+//            @Override
+//            public void execute() throws Exception {
+//                EntityManager em = getEntityManager();
+//                em.createQuery("delete from JPADriftFileBits").executeUpdate();
+//            }
+//        });
+        getTransactionManager().begin();
+        getEntityManager().createQuery("delete from JPADriftFileBits").executeUpdate();
+        getTransactionManager().commit();
     }
 
     @Test

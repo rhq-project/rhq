@@ -30,6 +30,7 @@ import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.domain.drift.DriftSnapshot;
+import org.rhq.core.domain.drift.FileDiffReport;
 import org.rhq.core.domain.util.PageList;
 
 /**
@@ -109,5 +110,7 @@ public interface DriftGWTService extends RemoteService {
     void updateDriftConfiguration(EntityContext entityContext, DriftConfiguration driftConfig) throws RuntimeException;
 
     String getDriftFileBits(String hash) throws RuntimeException;
+
+    FileDiffReport generateUnifiedDiff(Drift drift);
 
 }

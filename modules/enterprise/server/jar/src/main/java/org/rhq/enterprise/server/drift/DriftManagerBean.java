@@ -54,9 +54,9 @@ import org.rhq.core.domain.drift.DriftConfigurationComparator.CompareMode;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition;
 import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.DriftSnapshot;
+import org.rhq.core.domain.drift.FileDiffReport;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.core.util.file.DiffUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
@@ -69,6 +69,10 @@ import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 import org.rhq.enterprise.server.util.LookupUtil;
 
+import difflib.DiffUtils;
+import difflib.Patch;
+
+import static java.util.Arrays.asList;
 import static javax.ejb.TransactionAttributeType.NOT_SUPPORTED;
 import static javax.ejb.TransactionAttributeType.REQUIRES_NEW;
 
@@ -347,11 +351,27 @@ public class DriftManagerBean implements DriftManagerLocal {
     }
 
     @Override
-    public List<String> generateUnifiedDiff(Drift drift) {
+    public FileDiffReport generateUnifiedDiff(Drift drift) {
         String oldContent = getDriftFileBits(drift.getOldDriftFile().getHashId());
+        List<String> oldList = asList(oldContent.split("\\n"));
         String newContent = getDriftFileBits(drift.getNewDriftFile().getHashId());
+        List<String> newList = asList(newContent.split("\\n"));
 
-        return DiffUtil.generateUnifiedDiff(oldContent, newContent);
+        Patch patch = DiffUtils.diff(oldList, newList);
+        List<String> deltas = DiffUtils.generateUnifiedDiff(drift.getPath() + ":old", drift.getPath() + ":new",
+            oldList, patch, 10);
+
+        StringBuilder diff = new StringBuilder();
+        for (String delta : deltas) {
+            diff.append(delta).append("\n");
+        }
+
+        return new FileDiffReport(patch.getDeltas().size(), diff.toString());
+    }
+
+    @Override
+    public PageList<Drift> findHistory(Drift drift) {
+        return null;
     }
 
     @Override

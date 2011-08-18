@@ -26,6 +26,7 @@ import org.rhq.core.domain.criteria.DriftCriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftSnapshot;
+import org.rhq.core.domain.drift.FileDiffReport;
 import org.rhq.core.domain.util.PageList;
 
 @Remote
@@ -57,5 +58,7 @@ public interface DriftManagerRemote {
      * @return The content as a string
      */
     String getDriftFileBits(String hash);
+
+    FileDiffReport generateUnifiedDiff(Drift drift);
 
 }

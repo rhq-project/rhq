@@ -28,6 +28,7 @@ import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.domain.drift.DriftSnapshot;
+import org.rhq.core.domain.drift.FileDiffReport;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.gwt.DriftGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
@@ -144,6 +145,15 @@ public class DriftGWTServiceImpl extends AbstractGWTServiceImpl implements Drift
     public String getDriftFileBits(String hash) throws RuntimeException {
         try {
             return driftManager.getDriftFileBits(hash);
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    @Override
+    public FileDiffReport generateUnifiedDiff(Drift drift) {
+        try {
+            return driftManager.generateUnifiedDiff(drift);
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

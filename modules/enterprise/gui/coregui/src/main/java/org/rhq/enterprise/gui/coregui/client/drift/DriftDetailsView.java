@@ -23,6 +23,7 @@ package org.rhq.enterprise.gui.coregui.client.drift;
 import java.util.LinkedHashMap;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.widgets.Button;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.FormItem;
@@ -32,10 +33,12 @@ import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.TextAreaItem;
 import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
+import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.criteria.GenericDriftCriteria;
 import org.rhq.core.domain.drift.Drift;
+import org.rhq.core.domain.drift.FileDiffReport;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
@@ -46,6 +49,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 
+import static org.rhq.core.domain.drift.DriftCategory.FILE_CHANGED;
 import static org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter.DATE_TIME_FORMAT_FULL;
 
 /**
@@ -180,11 +184,37 @@ public class DriftDetailsView extends LocatableVLayout {
             break;
         }
 
-        //driftForm.setItems(id, path, category, timestamp, oldFile, newFile);
-        driftForm.setItems(id, spacer, path, spacer, category, spacer, timestamp, spacer, oldFile, oldFileLink,
+        if (drift.getCategory() == FILE_CHANGED) {
+            StaticTextItem numberOfChanges = new StaticTextItem("numberOfChanges", "Number of Changes");
+            numberOfChanges.setValue("Loading...");
+
+            LinkItem viewDiffLink = new LinkItem("viewDiff");
+            viewDiffLink.setLinkTitle("(view diff)");
+            viewDiffLink.setShowTitle(false);
+            viewDiffLink.setDisabled(true);
+
+            driftForm.setItems(id, spacer, path, spacer, category, spacer, timestamp, spacer, oldFile, oldFileLink,
+            newFile, newFileLink, numberOfChanges, viewDiffLink);
+
+            generateDiff(drift, numberOfChanges, viewDiffLink);
+        } else {
+            driftForm.setItems(id, spacer, path, spacer, category, spacer, timestamp, spacer, oldFile, oldFileLink,
             newFile, newFileLink);
+        }
 
         addMember(driftForm);
+
+//        HLayout layout = new HLayout();
+//        layout.setLayoutMargin(10);
+//        layout.setMembersMargin(20);
+//
+//        Button viewHistory = new Button("View History");
+//        Button viewDiff = new Button("View Diff");
+//        viewDiff.setDisabled(true);
+//
+//        layout.addMember(viewHistory);
+//        layout.addMember(viewDiff);
+//        addMember(layout);
     }
 
     private LinkItem createViewFileLink(final String hash) {
@@ -241,4 +271,27 @@ public class DriftDetailsView extends LocatableVLayout {
 
         return window;
     }
+
+    private void generateDiff(final Drift drift, final StaticTextItem changes, final LinkItem viewDiff) {
+        GWTServiceLookup.getDriftService().generateUnifiedDiff(drift, new AsyncCallback<FileDiffReport>() {
+            @Override
+            public void onFailure(Throwable caught) {
+                 CoreGUI.getErrorHandler().handleError("Failed to load change report", caught);
+            }
+
+            @Override
+            public void onSuccess(final FileDiffReport diffReport) {
+                changes.setValue(diffReport.getNumberOfChanges());
+                viewDiff.setDisabled(false);
+                viewDiff.addClickHandler(new ClickHandler() {
+                    @Override
+                    public void onClick(ClickEvent clickEvent) {
+                        LocatableWindow window = createFileViewer(diffReport.getDiff());
+                        window.show();
+                    }
+                });
+            }
+        });
+    }
+
 }

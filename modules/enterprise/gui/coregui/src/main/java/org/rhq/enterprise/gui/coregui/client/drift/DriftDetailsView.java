@@ -41,6 +41,7 @@ import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.FileDiffReport;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.PopupWindow;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
@@ -244,15 +245,6 @@ public class DriftDetailsView extends LocatableVLayout {
     }
 
     private LocatableWindow createFileViewer(String contents) {
-        LocatableWindow window = new LocatableWindow("test");
-        window.setTitle("File Viewer");
-        window.setWidth(800);
-        window.setHeight(600);
-        window.setIsModal(false);
-        window.setCanDragResize(true);
-        window.setShowResizer(true);
-        window.centerInPage();
-
         VLayout layout = new VLayout();
         DynamicForm form = new DynamicForm();
         form.setWidth100();
@@ -267,21 +259,14 @@ public class DriftDetailsView extends LocatableVLayout {
 
         form.setItems(textArea);
         layout.addMember(form);
-        window.addItem(layout);
+
+        PopupWindow window = new PopupWindow("fileViewer", layout);
+        window.setIsModal(false);
 
         return window;
     }
 
-    private LocatableWindow createViewer(String contents) {
-        LocatableWindow window = new LocatableWindow("test");
-        window.setTitle("File Viewer");
-        window.setWidth(800);
-        window.setHeight(600);
-        window.setIsModal(false);
-        window.setCanDragResize(true);
-        window.setShowResizer(true);
-        window.centerInPage();
-
+    private LocatableWindow createDiffViewer(String contents) {
         VLayout layout = new VLayout();
         DynamicForm form = new DynamicForm();
         form.setWidth100();
@@ -299,7 +284,9 @@ public class DriftDetailsView extends LocatableVLayout {
 
         form.setItems(canvasItem);
         layout.addMember(form);
-        window.addItem(layout);
+
+        PopupWindow window = new PopupWindow("diffViewer", layout);
+        window.setIsModal(false);
 
         return window;
     }
@@ -319,7 +306,7 @@ public class DriftDetailsView extends LocatableVLayout {
                     @Override
                     public void onClick(ClickEvent clickEvent) {
                         //LocatableWindow window = createFileViewer(diffReport.getDiff());
-                        LocatableWindow window = createViewer(toHtml(diffReport.getDiff()));
+                        LocatableWindow window = createDiffViewer(toHtml(diffReport.getDiff()));
                         window.show();
                     }
                 });

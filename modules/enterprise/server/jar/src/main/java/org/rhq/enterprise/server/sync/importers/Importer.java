@@ -37,6 +37,8 @@ public interface Importer<Entity, ExportedType> {
     /**
      * A configuration definition describing the configuration of the importer and
      * the default values for individual properties.
+     * <p>
+     * The returned configuration definition <b>MUST</b> define a default template.
      */
     ConfigurationDefinition getImportConfigurationDefinition();
     

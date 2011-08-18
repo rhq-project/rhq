@@ -153,7 +153,7 @@ public class ASConnection {
 
             //the following code is in place to help keep-alive http connection re-use to occur.
             if (conn != null) {//on error conditions it's still necessary to read the response so JDK knows can reuse
-                //the http connections behind the scenes.                
+                //the http connections behind the scenes.
                 es = conn.getErrorStream();
                 if (es != null) {
                     BufferedReader dr = new BufferedReader(new InputStreamReader(es));
@@ -232,6 +232,9 @@ public class ASConnection {
     public Result execute(Operation op, boolean isComplex) {
         JsonNode node = executeRaw(op);
 
+        if (node==null) {
+            log.warn("Operation [" + op + "] returned null");
+        }
         try {
             Result res;
             if (isComplex)

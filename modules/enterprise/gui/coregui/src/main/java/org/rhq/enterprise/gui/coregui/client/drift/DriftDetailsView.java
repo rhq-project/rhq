@@ -20,14 +20,19 @@
 
 package org.rhq.enterprise.gui.coregui.client.drift;
 
-import static org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter.DATE_TIME_FORMAT_FULL;
-
 import java.util.LinkedHashMap;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.form.fields.FormItem;
+import com.smartgwt.client.widgets.form.fields.LinkItem;
+import com.smartgwt.client.widgets.form.fields.SpacerItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
+import com.smartgwt.client.widgets.form.fields.TextAreaItem;
+import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
+import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
+import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.criteria.GenericDriftCriteria;
 import org.rhq.core.domain.drift.Drift;
@@ -39,6 +44,9 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
+
+import static org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter.DATE_TIME_FORMAT_FULL;
 
 /**
  * @author Jay Shaughnessy
@@ -84,7 +92,7 @@ public class DriftDetailsView extends LocatableVLayout {
             });
     }
 
-    private void show(Drift drift) {
+    private void show(final Drift drift) {
         for (Canvas child : getMembers()) {
             removeMember(child);
             child.destroy();
@@ -113,6 +121,9 @@ public class DriftDetailsView extends LocatableVLayout {
         driftForm.setIsGroup(true);
         driftForm.setGroupTitle(MSG.view_drift());
         driftForm.setWrapItemTitles(false);
+        driftForm.setNumCols(4);
+
+        SpacerItem spacer = new SpacerItem();
 
         StaticTextItem id = new StaticTextItem("id", MSG.common_title_id());
         id.setValue(drift.getId());
@@ -138,30 +149,96 @@ public class DriftDetailsView extends LocatableVLayout {
         category.setShowIcons(true);
 
         StaticTextItem oldFile = new StaticTextItem("oldFile", MSG.view_drift_table_oldFile());
+        FormItem oldFileLink = null;
+
         StaticTextItem newFile = new StaticTextItem("newFile", MSG.view_drift_table_newFile());
+        FormItem newFileLink = null;
 
         switch (drift.getCategory()) {
         case FILE_ADDED:
             category.setValue(DriftDataSource.CATEGORY_ICON_ADD);
             oldFile.setValue(MSG.common_label_none());
+            oldFileLink = spacer;
             newFile.setValue(drift.getNewDriftFile().getHashId());
+            newFileLink = createViewFileLink(drift.getNewDriftFile().getHashId());
             break;
 
         case FILE_CHANGED:
             category.setValue(DriftDataSource.CATEGORY_ICON_CHANGE);
             oldFile.setValue(drift.getOldDriftFile().getHashId());
+            oldFileLink = createViewFileLink(drift.getOldDriftFile().getHashId());
             newFile.setValue(drift.getNewDriftFile().getHashId());
+            newFileLink = createViewFileLink(drift.getNewDriftFile().getHashId());
             break;
 
         case FILE_REMOVED:
             category.setValue(DriftDataSource.CATEGORY_ICON_REMOVE);
             oldFile.setValue(drift.getOldDriftFile().getHashId());
+            oldFileLink = createViewFileLink(drift.getOldDriftFile().getHashId());
             newFile.setValue(MSG.common_label_none());
+            newFileLink = spacer;
             break;
         }
 
-        driftForm.setItems(id, path, category, timestamp, oldFile, newFile);
+        //driftForm.setItems(id, path, category, timestamp, oldFile, newFile);
+        driftForm.setItems(id, spacer, path, spacer, category, spacer, timestamp, spacer, oldFile, oldFileLink,
+            newFile, newFileLink);
 
         addMember(driftForm);
+    }
+
+    private LinkItem createViewFileLink(final String hash) {
+        LinkItem link = new LinkItem(hash + "_fileLink");
+        link.setShowTitle(false);
+        link.setLinkTitle("(view)");
+
+        link.addClickHandler(new ClickHandler() {
+            @Override
+            public void onClick(ClickEvent clickEvent) {
+                GWTServiceLookup.getDriftService().getDriftFileBits(hash, new AsyncCallback<String>() {
+                    @Override
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError("Failed to load file", caught);
+                    }
+
+                    @Override
+                    public void onSuccess(String result) {
+                        LocatableWindow fileViewer = createFileViewer(result);
+                        fileViewer.show();
+                    }
+                });
+            }
+        });
+
+        return link;
+    }
+
+    private LocatableWindow createFileViewer(String contents) {
+        LocatableWindow window = new LocatableWindow("test");
+        window.setTitle("File Viewer");
+        window.setWidth(800);
+        window.setHeight(600);
+        window.setIsModal(false);
+        window.setCanDragResize(true);
+        window.setShowResizer(true);
+        window.centerInPage();
+
+        VLayout layout = new VLayout();
+        DynamicForm form = new DynamicForm();
+        form.setWidth100();
+        form.setHeight100();
+
+        TextAreaItem textArea = new TextAreaItem();
+        textArea.setShowTitle(false);
+        textArea.setColSpan(2);
+        textArea.setValue(contents);
+        textArea.setWidth("*");
+        textArea.setHeight("*");
+
+        form.setItems(textArea);
+        layout.addMember(form);
+        window.addItem(layout);
+
+        return window;
     }
 }

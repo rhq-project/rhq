@@ -20,12 +20,14 @@
 package org.rhq.enterprise.server.drift;
 
 import java.io.InputStream;
+import java.util.List;
 
 import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.DriftConfigurationCriteria;
+import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginFacet;
@@ -116,4 +118,6 @@ public interface DriftManagerLocal extends DriftServerPluginFacet, DriftManagerR
      * @return The content as a string
      */
     String getDriftFileBits(String hash);
+
+    List<String> generateUnifiedDiff(Drift drift);
 }

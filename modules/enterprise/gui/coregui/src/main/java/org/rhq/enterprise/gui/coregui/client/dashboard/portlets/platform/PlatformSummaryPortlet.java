@@ -92,6 +92,7 @@ public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet
         setUseAllDataSourceFields(true);
         setAutoFitData(Autofit.VERTICAL);
         setOverflow(Overflow.AUTO);
+        setAutoFetchData(false);
 
         setDataSource(new PlatformMetricDataSource(this));
         setInitialCriteria(new Criteria(ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.PLATFORM
@@ -113,12 +114,13 @@ public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet
 
             public void onSuccess(PageList<ResourceType> result) {
                 setTypes(result);
-                buildUI();
+                fetchData(new Criteria(ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.PLATFORM
+                    .name()));
             }
         });
     }
 
-    private void buildUI() {
+    protected void onDraw() {
 
         ListGridField nameField = new ListGridField(ResourceDataSourceField.NAME.propertyName(), MSG
             .common_title_name());
@@ -150,8 +152,6 @@ public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet
         hideField(ResourceDataSourceField.PLUGIN.propertyName()); // its always the platform plugin, no need to show this
         hideField(ResourceDataSourceField.CATEGORY.propertyName()); // we only ever show platforms, no need to show this
         hideField(ResourceDataSourceField.AVAILABILITY.propertyName()); // the icon badging will indicate availability
-
-        this.fetchData(new Criteria(ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.PLATFORM.name()));
     }
 
     protected void loadMetricsForResource(Resource resource, final Record record) {

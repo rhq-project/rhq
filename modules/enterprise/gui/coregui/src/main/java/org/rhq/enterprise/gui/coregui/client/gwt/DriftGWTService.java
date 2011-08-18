@@ -108,4 +108,6 @@ public interface DriftGWTService extends RemoteService {
      */
     void updateDriftConfiguration(EntityContext entityContext, DriftConfiguration driftConfig) throws RuntimeException;
 
+    String getDriftFileBits(String hash) throws RuntimeException;
+
 }

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,22 +17,24 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.enterprise.server.sync.test;
+package org.rhq.core.util.file;
 
-import org.rhq.enterprise.server.sync.NoSingleEntity;
-import org.rhq.enterprise.server.sync.exporters.Exporter;
-import org.rhq.enterprise.server.sync.exporters.ExportingIterator;
+import java.util.List;
 
-public class DummyExporter<T> implements Exporter<NoSingleEntity, T> {
+import difflib.DiffUtils;
+import difflib.Patch;
 
-    @Override
-    public String getNotes() {
-        return null;
+import static java.util.Arrays.asList;
+
+public class DiffUtil {
+
+    public static List<String> generateUnifiedDiff(String oldContent, String newContent) {
+        List<String> oldList = asList(oldContent.split("\\n"));
+        List<String> newList = asList(newContent.split("\\n"));
+
+        Patch patch = DiffUtils.diff(oldList, newList);
+
+        return DiffUtils.generateUnifiedDiff("test.txt:12", "test.txt:32", oldList, patch, 5);
     }
 
-    @Override
-    public ExportingIterator<T> getExportingIterator() {
-        return null;
-    }
-    
 }

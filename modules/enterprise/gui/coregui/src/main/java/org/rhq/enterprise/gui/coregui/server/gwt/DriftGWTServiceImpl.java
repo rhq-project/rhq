@@ -139,4 +139,13 @@ public class DriftGWTServiceImpl extends AbstractGWTServiceImpl implements Drift
             throw getExceptionToThrowToClient(t);
         }
     }
+
+    @Override
+    public String getDriftFileBits(String hash) throws RuntimeException {
+        try {
+            return driftManager.getDriftFileBits(hash);
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
 }

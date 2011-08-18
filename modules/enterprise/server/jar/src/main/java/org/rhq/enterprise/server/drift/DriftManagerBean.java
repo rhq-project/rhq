@@ -358,8 +358,7 @@ public class DriftManagerBean implements DriftManagerLocal {
         List<String> newList = asList(newContent.split("\\n"));
 
         Patch patch = DiffUtils.diff(oldList, newList);
-        List<String> deltas = DiffUtils.generateUnifiedDiff(drift.getPath() + ":old", drift.getPath() + ":new",
-            oldList, patch, 10);
+        List<String> deltas = DiffUtils.generateUnifiedDiff(drift.getPath(), drift.getPath(), oldList, patch, 10);
 
         return new FileDiffReport(patch.getDeltas().size(), deltas);
     }

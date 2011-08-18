@@ -20,6 +20,7 @@ package org.rhq.enterprise.server.drift;
 
 import java.io.File;
 import java.io.InputStream;
+import java.util.List;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -55,6 +56,7 @@ import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.util.file.DiffUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
@@ -342,6 +344,14 @@ public class DriftManagerBean implements DriftManagerLocal {
     public String getDriftFileBits(String hash) {
         DriftServerPluginFacet driftServerPlugin = getServerPlugin();
         return driftServerPlugin.getDriftFileBits(hash);
+    }
+
+    @Override
+    public List<String> generateUnifiedDiff(Drift drift) {
+        String oldContent = getDriftFileBits(drift.getOldDriftFile().getHashId());
+        String newContent = getDriftFileBits(drift.getNewDriftFile().getHashId());
+
+        return DiffUtil.generateUnifiedDiff(oldContent, newContent);
     }
 
     @Override

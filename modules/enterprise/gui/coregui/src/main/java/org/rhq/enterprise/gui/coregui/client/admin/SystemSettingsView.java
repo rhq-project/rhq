@@ -423,7 +423,7 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
         driftFilePurge.setDisplayName(MSG.view_admin_systemSettings_DriftFilePurge_name());
         driftFilePurge.setPropertyGroupDefinition(dataManagerGroup);
         driftFilePurge.addConstraints(new IntegerRangeConstraint(Long.valueOf(1), null));
-        driftFilePurge.setDefaultValue("7");
+        driftFilePurge.setDefaultValue("31");
         def.put(driftFilePurge);
 
         PropertyDefinitionSimple dataReindex = new PropertyDefinitionSimple(Constant.DataReindex, MSG

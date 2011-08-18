@@ -28,10 +28,8 @@ import org.testng.annotations.Test;
 import org.rhq.core.domain.drift.JPADriftFileBits;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
-import org.rhq.test.TransactionCallback;
 
 import static org.rhq.core.domain.drift.DriftFileStatus.LOADED;
-import static org.rhq.test.JPAUtils.executeInTransaction;
 
 public class JPADriftServerBeanTest extends AbstractEJB3Test {
 
@@ -58,13 +56,18 @@ public class JPADriftServerBeanTest extends AbstractEJB3Test {
         content.setDataSize((long) string.length());
         content.setData(Hibernate.createBlob(string.getBytes()));
 
-        executeInTransaction(new TransactionCallback() {
-            @Override
-            public void execute() throws Exception {
-                EntityManager em = getEntityManager();
-                em.persist(content);
-            }
-        });
+        getTransactionManager().begin();
+        EntityManager em = getEntityManager();
+        em.persist(content);
+        getTransactionManager().commit();
+
+//        executeInTransaction(new TransactionCallback() {
+//            @Override
+//            public void execute() throws Exception {
+//                EntityManager em = getEntityManager();
+//                em.persist(content);
+//            }
+//        });
         JPADriftServerLocal driftServer = LookupUtil.getJPADriftServer();
 
         assertEquals("Failed to load content", string, driftServer.getDriftFileBits(content.getHashId()));

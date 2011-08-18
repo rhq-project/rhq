@@ -22,6 +22,7 @@ package org.rhq.enterprise.server.sync.test;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertSame;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -60,32 +61,8 @@ public class MetricTemplateImporterTest extends JMockTest {
         private EntityManager em;
         private Query q;
         private MeasurementScheduleManagerLocal msm;
-        private List<MeasurementDefinition>[] consecutiveMatchingResults;
-        private boolean expectationsOnQueryParameters = true;
+        private List<MeasurementDefinition> defs;
         
-        private class ReturnNextResultAction implements Action {
-            private int currentIndex = 0;
-
-            @Override
-            public void describeTo(Description descr) {
-                descr.appendText("Returning the result of a faked query for matching measurement definitions: ");
-                if (currentIndex < consecutiveMatchingResults.length) {
-                    descr.appendValue(consecutiveMatchingResults[currentIndex]);
-                } else {
-                    descr.appendText("already returned all available results. Current index is ")
-                        .appendText(Integer.toString(currentIndex)).appendText(" while only ")
-                        .appendText(Integer.toString(consecutiveMatchingResults.length))
-                        .appendText(" results are available.");
-                }
-            }
-
-            @Override
-            public Object invoke(Invocation invocation) throws Throwable {
-                return consecutiveMatchingResults[currentIndex++];
-            }
-
-        }
-
         public TestPrerequisities(Mockery context) {
             em = context.mock(EntityManager.class);
             msm = context.mock(MeasurementScheduleManagerLocal.class);
@@ -104,26 +81,17 @@ public class MetricTemplateImporterTest extends JMockTest {
             return msm;
         }
 
-        public void setConsecutiveResultsOfMatchingQuery(List<MeasurementDefinition>... consecutiveResults) {
-            consecutiveMatchingResults = consecutiveResults;
+        public void setMeasurementDefinitions(List<MeasurementDefinition> defs) {
+            this.defs = defs;
         }
 
-        public void setExpectationsOnQueryParameters(boolean value) {
-            expectationsOnQueryParameters = value;
-        }
-        
+        @SuppressWarnings("static-access")
         public void addExpectations(Expectations expectations) {
-            expectations.allowing(em).createNamedQuery(
-                expectations.with(MeasurementDefinition.FIND_RAW_OR_PER_MINUTE_BY_NAME_AND_RESOURCE_TYPE_NAME));
+            expectations.allowing(em).createQuery(expectations.with(expectations.any(String.class)));
             expectations.will(Expectations.returnValue(q));
-
-            if (expectationsOnQueryParameters) {
-                expectations.allowing(q).setParameter(expectations.with(Expectations.any(String.class)),
-                    expectations.with(Expectations.any(Object.class)));
-            }
             
             expectations.allowing(q).getResultList();
-            expectations.will(new ReturnNextResultAction());
+            expectations.will(Expectations.returnValue(defs));
         }
     };
 
@@ -139,6 +107,11 @@ public class MetricTemplateImporterTest extends JMockTest {
         def.setId(1);
         def.setDefaultOn(true);
         def.setDefaultInterval(1000);
+
+        //now we setup the prerequisites to return the faked results from the database
+        //for the non-matching template, we want the "database" to return no results
+        //while for the matching template, we want the "database" to return our own def.
+        prereqs.setMeasurementDefinitions(Collections.singletonList(def));
 
         //setup the expected behavior
         context.checking(new Expectations() {
@@ -158,13 +131,11 @@ public class MetricTemplateImporterTest extends JMockTest {
             new MetricTemplateImporter(null, prereqs.getEntityManager(), prereqs.getMeasurementScheduleManager());
 
         MetricTemplate nonMatching = new MetricTemplate();
+        nonMatching.setResourceTypeName("asf");
+        nonMatching.setResourceTypePlugin("asfd");
+        nonMatching.setMetricName("asf");
+        
         MetricTemplate matching = new MetricTemplate(def);
-
-        //now we setup the prerequisites to return the faked results from the database
-        //for the non-matching template, we want the "database" to return no results
-        //while for the matching template, we want the "database" to return our own def.
-        prereqs.setConsecutiveResultsOfMatchingQuery(Collections.<MeasurementDefinition> emptyList(),
-            Collections.singletonList(def));
 
         importer.configure(null);
 
@@ -199,6 +170,7 @@ public class MetricTemplateImporterTest extends JMockTest {
         defToDisable.setDefaultInterval(2000);
 
         final TestPrerequisities prereqs = new TestPrerequisities(context);
+        prereqs.setMeasurementDefinitions(Arrays.asList(defToEnable, defToDisable));
 
         context.checking(new Expectations() {
             {
@@ -213,9 +185,6 @@ public class MetricTemplateImporterTest extends JMockTest {
                     with(new int[] { 2 }), with(2000L), with(false), with(false));
             }
         });
-
-        prereqs.setConsecutiveResultsOfMatchingQuery(Collections.singletonList(defToEnable),
-            Collections.singletonList(defToDisable));
 
         MetricTemplateImporter importer =
             new MetricTemplateImporter(null, prereqs.getEntityManager(), prereqs.getMeasurementScheduleManager());
@@ -249,6 +218,7 @@ public class MetricTemplateImporterTest extends JMockTest {
         def.setDefaultInterval(1000);
 
         final TestPrerequisities prereqs = new TestPrerequisities(context);
+        prereqs.setMeasurementDefinitions(Collections.singletonList(def));
 
         context.checking(new Expectations() {
             {
@@ -260,8 +230,6 @@ public class MetricTemplateImporterTest extends JMockTest {
                     with(new int[] { 1 }), with(1000L), with(true), with(true));
             }
         });
-
-        prereqs.setConsecutiveResultsOfMatchingQuery(Collections.singletonList(def));
 
         MetricTemplateImporter importer =
             new MetricTemplateImporter(null, prereqs.getEntityManager(), prereqs.getMeasurementScheduleManager());
@@ -297,6 +265,7 @@ public class MetricTemplateImporterTest extends JMockTest {
         notUpdatedDef.setDefaultInterval(2000);
 
         final TestPrerequisities prereqs = new TestPrerequisities(context);
+        prereqs.setMeasurementDefinitions(Arrays.asList(updatedDef, notUpdatedDef));
 
         context.checking(new Expectations() {
             {
@@ -310,9 +279,6 @@ public class MetricTemplateImporterTest extends JMockTest {
                     with(new int[] { 2 }), with(2000L), with(true), with(false));
             }
         });
-
-        prereqs.setConsecutiveResultsOfMatchingQuery(Collections.singletonList(updatedDef),
-            Collections.singletonList(notUpdatedDef));
 
         MetricTemplateImporter importer =
             new MetricTemplateImporter(null, prereqs.getEntityManager(), prereqs.getMeasurementScheduleManager());
@@ -374,19 +340,12 @@ public class MetricTemplateImporterTest extends JMockTest {
         perMinuteDef.setRawNumericType(NumericType.TRENDSUP);
         
         final TestPrerequisities prereqs = new TestPrerequisities(context);
-        prereqs.setExpectationsOnQueryParameters(false);
+        prereqs.setMeasurementDefinitions(Arrays.asList(normalDef, perMinuteDef));
         
         context.checking(new Expectations() {
             {
-                prereqs.setExpectationsOnQueryParameters(false);
                 prereqs.addExpectations(this);
 
-                exactly(2).of(prereqs.getQuery()).setParameter(with("name"), with(any(Object.class)));
-                exactly(2).of(prereqs.getQuery()).setParameter(with("resourceTypeName"), with(any(Object.class)));
-                exactly(2).of(prereqs.getQuery()).setParameter(with("resourceTypePlugin"), with(any(Object.class)));
-                oneOf(prereqs.getQuery()).setParameter(with("perMinute"), with(0));
-                oneOf(prereqs.getQuery()).setParameter(with("perMinute"), with(1));
-                
                 MeasurementScheduleManagerLocal msm = prereqs.getMeasurementScheduleManager();
 
                 one(msm).updateDefaultCollectionIntervalAndEnablementForMeasurementDefinitions(with(any(Subject.class)),
@@ -395,9 +354,6 @@ public class MetricTemplateImporterTest extends JMockTest {
                     with(new int[] { 2 }), with(2000L), with(false), with(false));
             }
         });
-
-        prereqs.setConsecutiveResultsOfMatchingQuery(Collections.singletonList(normalDef),
-            Collections.singletonList(perMinuteDef));
 
         MetricTemplateImporter importer =
             new MetricTemplateImporter(null, prereqs.getEntityManager(), prereqs.getMeasurementScheduleManager());

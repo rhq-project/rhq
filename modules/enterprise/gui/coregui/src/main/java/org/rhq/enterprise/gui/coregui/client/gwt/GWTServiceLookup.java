@@ -214,11 +214,11 @@ public class GWTServiceLookup {
         public SessionRpcRequestBuilder(int timeout) {
             super();
 
-            this.timeout = (timeout <= 0) ? DEFAULT_RPC_TIMEOUT : timeout;
-
             int rpcTimeout = CoreGUI.get().getRpcTimeout();
             if (rpcTimeout > -1) {
                 this.timeout = rpcTimeout;
+            } else {
+                this.timeout = (timeout <= 0) ? DEFAULT_RPC_TIMEOUT : timeout;
             }
 
             if (CoreGUI.isDebugMode()) {

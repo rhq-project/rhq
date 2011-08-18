@@ -374,7 +374,7 @@
       name="help.onlineDocumentation"
       displayName="Online Documentation"
       newWindow="true"
-      url="http://www.redhat.com/docs/en-US/JBoss_ON/">
+      url="http://docs.redhat.com/docs/en-US/JBoss_Operations_Network/">
       <position
          name="help"
          placement="firstChild" />

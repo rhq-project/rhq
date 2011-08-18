@@ -57,7 +57,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * A view that displays a paginated table of fired {@link org.rhq.core.domain.alert.Alert alert}s, along with the
  * ability to filter those alerts, sort those alerts, double-click a row to view full details an alert, and perform
  * various operations on the the alerts: delete selected, delete all from source, ack selected, ack all from source.
- * This view full respects the user's authorization, and will not allow operations on the alerts unless the user is
+ * This view fully respects the user's authorization, and will not allow operations on the alerts unless the user is
  * either the inventory manager or has MANAGE_ALERTS permission on every resource corresponding to the alerts being
  * operated on.
  *
@@ -150,17 +150,17 @@ public class AlertHistoryView extends TableSection<AlertDataSource> {
         return AlertCriteria.SORT_FIELD_CTIME;
     }
 
-    @Override
-    protected CellFormatter getDetailsLinkColumnCellFormatter() {
-        return new CellFormatter() {
-            public String format(Object value, ListGridRecord record, int i, int i1) {
-                Integer resourceId = record.getAttributeAsInt(AncestryUtil.RESOURCE_ID);
-                Integer alertHistoryId = getId(record);
-                String url = LinkManager.getSubsystemAlertHistoryLink(resourceId, alertHistoryId);
-                String formattedValue = TimestampCellFormatter.format(value);
-                return SeleniumUtility.getLocatableHref(url, formattedValue, null);
-            }
-        };
+    /**
+     * Subclasses can override this to indicate they do not support
+     * deleting all alerts or acknowledging all alerts. Portlet subclasses
+     * that only trim their views to the top N alerts can override this to
+     * return false so they don't delete or acknowledge alerts that aren't displayed
+     * to the user.
+     * 
+     * @return this default implementation returns true
+     */
+    protected boolean canSupportDeleteAndAcknowledgeAll() {
+        return true;
     }
 
     protected void setupTableInteractions(final boolean hasWriteAccess) {
@@ -179,30 +179,33 @@ public class AlertHistoryView extends TableSection<AlertDataSource> {
                     acknowledge(selection);
                 }
             });
-        addTableAction("DeleteAll", MSG.common_button_delete_all(), MSG.view_alerts_delete_confirm_all(),
-            new TableAction() {
-                public boolean isEnabled(ListGridRecord[] selection) {
-                    ListGrid grid = getListGrid();
-                    ResultSet resultSet = (null != grid) ? grid.getResultSet() : null;
-                    return (hasWriteAccess && grid != null && resultSet != null && !resultSet.isEmpty());
-                }
 
-                public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    deleteAll();
-                }
-            });
-        addTableAction("AcknowledgeAll", MSG.common_button_ack_all(), MSG.view_alerts_ack_confirm_all(),
-            new TableAction() {
-                public boolean isEnabled(ListGridRecord[] selection) {
-                    ListGrid grid = getListGrid();
-                    ResultSet resultSet = (null != grid) ? grid.getResultSet() : null;
-                    return (hasWriteAccess && grid != null && resultSet != null && !resultSet.isEmpty());
-                }
+        if (canSupportDeleteAndAcknowledgeAll()) {
+            addTableAction("DeleteAll", MSG.common_button_delete_all(), MSG.view_alerts_delete_confirm_all(),
+                new TableAction() {
+                    public boolean isEnabled(ListGridRecord[] selection) {
+                        ListGrid grid = getListGrid();
+                        ResultSet resultSet = (null != grid) ? grid.getResultSet() : null;
+                        return (hasWriteAccess && grid != null && resultSet != null && !resultSet.isEmpty());
+                    }
 
-                public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    acknowledgeAll();
-                }
-            });
+                    public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                        deleteAll();
+                    }
+                });
+            addTableAction("AcknowledgeAll", MSG.common_button_ack_all(), MSG.view_alerts_ack_confirm_all(),
+                new TableAction() {
+                    public boolean isEnabled(ListGridRecord[] selection) {
+                        ListGrid grid = getListGrid();
+                        ResultSet resultSet = (null != grid) ? grid.getResultSet() : null;
+                        return (hasWriteAccess && grid != null && resultSet != null && !resultSet.isEmpty());
+                    }
+
+                    public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                        acknowledgeAll();
+                    }
+                });
+        }
     }
 
     void delete(ListGridRecord[] records) {

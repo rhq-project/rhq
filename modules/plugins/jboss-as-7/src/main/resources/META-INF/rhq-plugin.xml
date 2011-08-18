@@ -195,6 +195,7 @@
         <event name="logEntry" description="an entry in a log file"/>
 
         <resource-configuration>
+<!--
             <c:group name="attribute:schema-locations" displayName="Schema locations">
 
                 <c:list-property name="schema-locations" displayName="Schema locations" readOnly="true" required="false">
@@ -203,11 +204,12 @@
                     </c:map-property>
                 </c:list-property>
             </c:group>
+-->
 
             <c:group name="children:extension" displayName="Installed extensions">
 
                 <c:list-property name="*" displayName="Installed extensions" readOnly="true" required="false">
-                    <c:map-property name="*" displayName="Name">
+                    <c:map-property name="*" displayName="Name" readOnly="true">
                         <c:simple-property name="module" displayName="Module name"/>
                     </c:map-property>
                 </c:list-property>
@@ -418,6 +420,7 @@
 
         <resource-configuration>
 
+<!--
             <c:group name="attribute:schema-locations" displayName="Schema locations">
 
                 <c:list-property name="schema-locations" displayName="Schema locations" readOnly="true" required="false">
@@ -426,11 +429,12 @@
                     </c:map-property>
                 </c:list-property>
             </c:group>
+-->
 
             <c:group name="children:extension" displayName="Installed extensions">
 
                 <c:list-property name="*" displayName="Installed extensions" readOnly="true" required="false">
-                    <c:map-property name="*" displayName="Name">
+                    <c:map-property name="*" displayName="Name" readOnly="true">
                         <c:simple-property name="module" displayName="Module name"/>
                     </c:map-property>
                 </c:list-property>
@@ -733,9 +737,9 @@
                 <c:simple-property name="protocol" required="true" type="string" readOnly="true" description="The web connector protocol."/>
                 <c:simple-property name="socket-binding" required="true" type="string" readOnly="true"
                                    description="The web connector socket-binding reference, this connector should be bound to.">
-                    <c:option-source target="configuration" expression="socket-binding=name:type=SocketBindingGroup"/>
+                    <c:option-source target="configuration" expression="socket-binding=name:type=SocketBindingGroup"/> <!-- TODO different for Domain vs standalone -->
                 </c:simple-property>
-                <c:simple-property name="scheme" type="string" readOnly="true" default="http" description="The web connector scheme."/>
+                <c:simple-property name="scheme" type="string" readOnly="true" default="http" description="The web connector scheme." required="true"/>
                 <c:simple-property name="executor" type="string" readOnly="true" required="false"
                                    description="The name of the executor that should be used for the processing threads of this connector. Defaults to using an internal pool."/>
                 <c:simple-property name="enabled" type="boolean" readOnly="true" defaultValue="true"
@@ -760,19 +764,24 @@
                     <c:simple-property name="virtual-server" />
                 </c:list-property>
                 <c:map-property name="ssl" description="The SSL configuration of the connector." readOnly="true" required="false">
-                    <c:simple-property name="name" type="string" readOnly="true" description="The configuration name."/>
-                    <c:simple-property name="key-alias" type="string" readOnly="true" description="The key alias."/>
-                    <c:simple-property name="password" type="string" readOnly="true" description="Password."/>
-                    <c:simple-property name="certificate-key-file" type="string" readOnly="true" description="Key file for the certificate."/>
-                    <c:simple-property name="cipher-suite" type="string" readOnly="true" description="The allowed cipher suite."/>
-                    <c:simple-property name="protocol" type="string" readOnly="true" description="The SSL protocols that are enabled."/>
-                    <c:simple-property name="verify-client" type="string" readOnly="true" description="Enable client certificate verification."/>
-                    <c:simple-property name="verify-depth" type="integer" readOnly="true" description="Limit certificate nesting."/>
-                    <c:simple-property name="certificate-file" type="string" readOnly="true" description="Server certificate file."/>
-                    <c:simple-property name="ca-certificate-file" type="string" readOnly="true" description="Certificate authority."/>
-                    <c:simple-property name="ca-revocation-url" type="string" readOnly="true" description="Certificate authority revocation list."/>
-                    <c:simple-property name="session-cache-size" type="string" readOnly="true" description="SSL session cache."/>
-                    <c:simple-property name="session-timeout" type="string" readOnly="true" description="SSL session cache timeout."/>
+                    <c:simple-property name="name" type="string" readOnly="true" description="The configuration name." required="false"/>
+                    <c:simple-property name="key-alias" type="string" readOnly="true" description="The key alias." required="false"/>
+                    <c:simple-property name="password" type="password" readOnly="true" description="Password." required="false"/>
+                    <c:simple-property name="certificate-key-file" type="string" readOnly="true" description="Key file for the certificate." required="false"/>
+                    <c:simple-property name="cipher-suite" type="string" readOnly="true" description="The allowed cipher suite." required="false"/>
+                    <c:simple-property name="protocol" type="string" readOnly="true" description="The SSL protocols that are enabled." required="false"/>
+                    <c:simple-property name="verify-client" type="string" readOnly="true" required="false"
+                                       description="Enable client certificate verification."/>
+                    <c:simple-property name="verify-depth" type="integer" readOnly="true" required="false"
+                                       description="Limit certificate nesting."/>
+                    <c:simple-property name="certificate-file" type="string" readOnly="true" required="false"
+                                       description="Server certificate file."/>
+                    <c:simple-property name="ca-certificate-file" type="string" readOnly="true"
+                                       required="false" description="Certificate authority."/>
+                    <c:simple-property name="ca-revocation-url" type="string" readOnly="true"
+                                       required="false" description="Certificate authority revocation list."/>
+                    <c:simple-property name="session-cache-size" type="string" readOnly="true" description="SSL session cache." required="false"/>
+                    <c:simple-property name="session-timeout" type="string" readOnly="true" description="SSL session cache timeout." required="false"/>
                 </c:map-property>
             </resource-configuration>
 

@@ -731,7 +731,12 @@ public class ResourceTreeView extends LocatableVLayout {
             new AsyncCallback<List<ResourceLineageComposite>>() {
 
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_loadFailed_root(), caught);
+                    boolean resourceDoesNotExist = caught.getMessage().contains("ResourceNotFoundException");
+                    // If a Resource with the specified id does not exist, don't emit an error, since
+                    // ResourceDetailView.loadSelectedItem() will take care of emitting one.
+                    if (!resourceDoesNotExist) {
+                        CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_loadFailed_root(), caught);
+                    }
                 }
 
                 public void onSuccess(List<ResourceLineageComposite> result) {
@@ -743,6 +748,11 @@ public class ResourceTreeView extends LocatableVLayout {
                     for (ResourceLineageComposite r : result) {
                         lineage.add(r.getResource());
                         if (r.isLocked()) {
+                            if (r.getResource().getId() == selectedResourceId) {
+                                // The selected Resource itself is locked. This means the user doesn't have authz to be
+                                // viewing this Resource period, so just abort loading of the tree.
+                                return;
+                            }
                             lockedData.add(r.getResource());
                         }
                     }

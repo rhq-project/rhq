@@ -55,9 +55,9 @@ import java.util.Map;
 public class ConfigurationMaskingUtility {
 
     /**
-     * Mask the values of all simple properties of type PASSWORD in the configuration. The configuration does not
-     * need to be normalized; that is, properties defined by the configuration definition do not need to exist in the
-     * configuration.
+     * Mask the values of all simple properties of type PASSWORD in the configuration. The properties are masked by
+     * calling {@link PropertySimple#mask()}. The configuration does not need to be normalized; that is, properties
+     * defined by the configuration definition do not need to exist in the configuration.
      *
      * @param configuration the configuration to be masked
      * @param configurationDefinition the configuration definition corresponding to the specified configuration; this is
@@ -67,8 +67,9 @@ public class ConfigurationMaskingUtility {
     public static void maskConfiguration(@NotNull
                                          Configuration configuration, @NotNull
     ConfigurationDefinition configurationDefinition) {
-        if (configurationDefinition == null)
+        if (configurationDefinition == null) {
             return;
+        }
 
         Map<String, PropertyDefinition> childPropertyDefinitions = configurationDefinition.getPropertyDefinitions();
         for (PropertyDefinition childPropertyDefinition : childPropertyDefinitions.values()) {
@@ -141,6 +142,10 @@ public class ConfigurationMaskingUtility {
             // The property doesn't even exist, so there's nothing to unmask.
             return;
         }
+        if (unmaskedParentPropertyMap == null) {
+            // The parent map does not exist in the unmasked config, so no unmasking is possible.
+            return;
+        }
         if (property instanceof PropertySimple) {
             PropertySimple propertySimple = (PropertySimple) property;
             unmaskPropertySimple(propertySimple, unmaskedParentPropertyMap);
@@ -178,6 +183,10 @@ public class ConfigurationMaskingUtility {
     }
 
     private static void unmaskPropertyMap(AbstractPropertyMap propertyMap, PropertyMap unmaskedPropertyMap) {
+        if (unmaskedPropertyMap == null) {
+            // The map does not exist in the unmasked config, so no unmasking is possible.
+            return;
+        }
         Map<String, Property> memberProperties = propertyMap.getMap();
         for (Property memberProperty : memberProperties.values()) {
             unmaskProperty(memberProperty.getName(), propertyMap, unmaskedPropertyMap);

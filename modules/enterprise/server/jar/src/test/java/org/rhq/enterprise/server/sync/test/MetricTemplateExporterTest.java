@@ -22,9 +22,10 @@ package org.rhq.enterprise.server.sync.test;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
-import java.io.File;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -38,17 +39,15 @@ import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.jmock.Expectations;
 import org.testng.annotations.Test;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.MeasurementDefinitionCriteria;
-import org.rhq.core.domain.measurement.DataType;
-import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.resource.ResourceCategory;
@@ -57,15 +56,13 @@ import org.rhq.core.domain.sync.ExporterMessages;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
+import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.resource.metadata.PluginManagerLocal;
-import org.rhq.enterprise.server.resource.metadata.PluginStats;
 import org.rhq.enterprise.server.sync.ExportingInputStream;
 import org.rhq.enterprise.server.sync.MetricTemplateSynchronizer;
 import org.rhq.enterprise.server.sync.Synchronizer;
-import org.rhq.enterprise.server.sync.exporters.Exporter;
-import org.rhq.enterprise.server.sync.exporters.MetricTemplateExporter;
-import org.rhq.enterprise.server.sync.importers.MetricTemplateImporter;
 import org.rhq.enterprise.server.sync.validators.ConsistencyValidator;
+import org.rhq.test.JMockTest;
 
 /**
  * 
@@ -73,142 +70,25 @@ import org.rhq.enterprise.server.sync.validators.ConsistencyValidator;
  * @author Lukas Krejci
  */
 @Test
-public class MetricTemplateExporterTest {
+public class MetricTemplateExporterTest extends JMockTest {
 
     private static final Log LOG = LogFactory.getLog(MetricTemplateExporterTest.class);
 
-    private MeasurementDefinitionManagerLocal measurementDefManagerStub = new MeasurementDefinitionManagerLocal() {
-
-        @Override
-        public void removeMeasurementDefinition(MeasurementDefinition def) {
-        }
-
-        @Override
-        public MeasurementDefinition getMeasurementDefinition(Subject subject, int definitionId) {
-            return null;
-        }
-
-        @Override
-        public List<MeasurementDefinition> findMeasurementDefinitionsByResourceType(Subject user, int resourceTypeId,
-            DataType dataType, DisplayType displayType) {
-            return null;
-        }
-
-        @Override
-        public List<MeasurementDefinition> findMeasurementDefinitionsByIds(Subject subject,
-            Integer[] measurementDefinitionIds) {
-            return null;
-        }
-
-        @Override
-        public PageList<MeasurementDefinition> findMeasurementDefinitionsByCriteria(Subject subject,
-            MeasurementDefinitionCriteria criteria) {
-            List<MeasurementDefinition> ret = new ArrayList<MeasurementDefinition>();
-
-            ResourceType rt = new ResourceType("fakeType", "fakePlugin", ResourceCategory.PLATFORM, null);
-
-            ret.add(new MeasurementDefinition(rt, "m1"));
-            ret.add(new MeasurementDefinition(rt, "m2"));
-            ret.add(new MeasurementDefinition(rt, "m3"));
-
-            return new PageList<MeasurementDefinition>(ret, PageControl.getUnlimitedInstance());
-        }
-    };
-
-    private PluginManagerLocal pluginManagerStub = new PluginManagerLocal() {
-
-        @Override
-        public void setPluginEnabledFlag(Subject subject, int pluginId, boolean enabled) throws Exception {
-        }
-
-        @Override
-        public boolean registerPluginTypes(Plugin newPlugin, PluginDescriptor pluginDescriptor, boolean newOrUpdated,
-            boolean forceUpdate) throws Exception {
-            return false;
-        }
-
-        @Override
-        public void registerPlugin(Subject subject, Plugin plugin, PluginDescriptor metadata, File pluginFile,
-            boolean forceUpdate) throws Exception {
-        }
-
-        @Override
-        public void purgePlugins(List<Plugin> plugins) {
-        }
-
-        @Override
-        public void markPluginsForPurge(Subject subject, List<Integer> pluginIds) throws Exception {
-        }
-
-        @Override
-        public boolean isReadyForPurge(Plugin plugin) {
-            return false;
-        }
-
-        @Override
-        public boolean installPluginJar(Subject subject, Plugin newPlugin, PluginDescriptor pluginDescriptor,
-            File pluginFile) throws Exception {
-            return false;
-        }
-
-        @Override
-        public List<Plugin> getPluginsByResourceTypeAndCategory(String resourceTypeName,
-            ResourceCategory resourceCategory) {
-            return null;
-        }
-
-        @Override
-        public List<Plugin> getPlugins() {
-            return null;
-        }
-
-        @Override
-        public List<PluginStats> getPluginStats(List<Integer> pluginIds) {
-            return null;
-        }
-
-        @Override
-        public Plugin getPlugin(String name) {
-            return null;
-        }
-
-        @Override
-        public List<Plugin> getInstalledPlugins() {
-            Plugin p = new Plugin("fakePlugin", null, "12345");
-            p.setVersion("1.0.0.test");
-            return Collections.singletonList(p);
-        }
-
-        @Override
-        public List<Plugin> getAllPluginsById(List<Integer> pluginIds) {
-            return null;
-        }
-
-        @Override
-        public List<Plugin> findPluginsMarkedForPurge() {
-            return null;
-        }
-
-        @Override
-        public List<Plugin> findAllDeletedPlugins() {
-            return null;
-        }
-
-        @Override
-        public void enablePlugins(Subject subject, List<Integer> pluginIds) throws Exception {
-        }
-
-        @Override
-        public void disablePlugins(Subject subject, List<Integer> pluginIds) throws Exception {
-        }
-
-        @Override
-        public void deletePlugins(Subject subject, List<Integer> pluginIds) throws Exception {
-        }
-    };
-
     public void testCanExport() throws Exception {
-        MetricTemplateSynchronizer exporter = new MetricTemplateSynchronizer(measurementDefManagerStub, pluginManagerStub);
+        final MeasurementDefinitionManagerLocal measurementDefinitionManager = context.mock(MeasurementDefinitionManagerLocal.class);
+        final PluginManagerLocal pluginManager = context.mock(PluginManagerLocal.class);
+        final MeasurementScheduleManagerLocal measurementScheduleManager = context.mock(MeasurementScheduleManagerLocal.class);
+        context.checking(new Expectations() {
+            {
+                allowing(measurementDefinitionManager).findMeasurementDefinitionsByCriteria(with(any(Subject.class)), with(any(MeasurementDefinitionCriteria.class)));
+                will(returnValue(getFakeMeasurementDefinitions()));
+                
+                allowing(pluginManager).getInstalledPlugins();
+                will(returnValue(getFakeInstalledPlugins()));
+            }
+        });
+        
+        MetricTemplateSynchronizer exporter = new MetricTemplateSynchronizer(measurementDefinitionManager, measurementScheduleManager, pluginManager);
 
         Set<Synchronizer<?, ?>> exporters = new HashSet<Synchronizer<?, ?>>();
         exporters.add(exporter);
@@ -229,17 +109,17 @@ public class MetricTemplateExporterTest {
         //            <entities id="org.rhq.enterprise.server.sync.exporters.MetricTemplatesExporter">
         //                <entity>
         //                    <data>
-        //                        <metricTemplate referencedEntityId="0" enabled="false" defaultInterval="0" metricName="m1" resourceTypePlugin="fakePlugin" resourceTypeName="fakeType"></metricTemplate>
+        //                        <metricTemplate referencedEntityId="1" enabled="false" defaultInterval="0" metricName="m1" resourceTypePlugin="fakePlugin" resourceTypeName="fakeType"></metricTemplate>
         //                    </data>
         //                </entity>
         //                <entity>
         //                    <data>
-        //                        <metricTemplate referencedEntityId="0" enabled="false" defaultInterval="0" metricName="m2" resourceTypePlugin="fakePlugin" resourceTypeName="fakeType"></metricTemplate>
+        //                        <metricTemplate referencedEntityId="2" enabled="false" defaultInterval="0" metricName="m2" resourceTypePlugin="fakePlugin" resourceTypeName="fakeType"></metricTemplate>
         //                    </data>
         //                </entity>
         //                <entity>
         //                    <data>
-        //                        <metricTemplate referencedEntityId="0" enabled="false" defaultInterval="0" metricName="m3" resourceTypePlugin="fakePlugin" resourceTypeName="fakeType"></metricTemplate>
+        //                        <metricTemplate referencedEntityId="3" enabled="false" defaultInterval="0" metricName="m3" resourceTypePlugin="fakePlugin" resourceTypeName="fakeType"></metricTemplate>
         //                    </data>
         //                </entity>
         //            </entities>
@@ -282,9 +162,10 @@ public class MetricTemplateExporterTest {
         
         for(int i = 0; i < metricTemplates.getLength(); ++i) {
             Element m = (Element) metricTemplates.item(i);
-            String expectedName = "m" + (i + 1);
+            String index = Integer.toString(i + 1);
+            String expectedName = "m" + index;
             
-            assertEquals(m.getAttribute("referencedEntityId"), "0", "Unexpected referencedEntityId value");
+            assertEquals(m.getAttribute("referencedEntityId"), index, "Unexpected referencedEntityId value");
             assertEquals(m.getAttribute("enabled"), "false", "Unexpected enabled value");
             assertEquals(m.getAttribute("defaultInterval"), "0", "Unexpected defaultInterval value");
             assertEquals(m.getAttribute("metricName"), expectedName, "Unexpected metricName value");
@@ -328,5 +209,27 @@ public class MetricTemplateExporterTest {
         }
 
         return ret;
+    }
+    
+    private static PageList<MeasurementDefinition> getFakeMeasurementDefinitions() {
+        List<MeasurementDefinition> ret = new ArrayList<MeasurementDefinition>();
+
+        ResourceType rt = new ResourceType("fakeType", "fakePlugin", ResourceCategory.PLATFORM, null);
+
+        ret.add(new MeasurementDefinition(rt, "m1"));
+        ret.add(new MeasurementDefinition(rt, "m2"));
+        ret.add(new MeasurementDefinition(rt, "m3"));
+
+        for(int i = 0; i < ret.size(); ++i) {
+            ret.get(i).setId(i + 1);
+        }
+        
+        return new PageList<MeasurementDefinition>(ret, PageControl.getUnlimitedInstance());
+    }
+    
+    private static List<Plugin> getFakeInstalledPlugins() {
+        Plugin p = new Plugin("fakePlugin", null, "12345");
+        p.setVersion("1.0.0.test");
+        return Collections.singletonList(p);
     }
 }

@@ -48,6 +48,11 @@ import org.rhq.enterprise.server.system.SystemManagerLocal;
  */
 public class SystemSettingsImporter implements Importer<NoSingleEntity, SystemSettings> {
 
+    public static final String PROPERTIES_TO_IMPORT_PROPERTY = "propertiesToImport";
+    public static final String DEFAULT_IMPORTED_PROPERTIES_LIST =
+        "AGENT_MAX_QUIET_TIME_ALLOWED, ENABLE_AGENT_AUTO_UPDATE, ENABLE_DEBUG_MODE, ENABLE_EXPERIMENTAL_FEATURES, CAM_DATA_PURGE_1H, CAM_DATA_PURGE_6H, "
+            + "CAM_DATA_PURGE_1D, CAM_DATA_MAINTENANCE, DATA_REINDEX_NIGHTLY, RT_DATA_PURGE, ALERT_PURGE, EVENT_PURGE, TRAIT_PURGE, AVAILABILITY_PURGE, CAM_BASELINE_FREQUENCY, CAM_BASELINE_DATASET";
+    
     private Subject subject;
     private SystemManagerLocal systemManager;
     private Configuration importConfiguration;
@@ -61,20 +66,23 @@ public class SystemSettingsImporter implements Importer<NoSingleEntity, SystemSe
             unmarshaller = context.createUnmarshaller();
         } catch (JAXBException e) {
             throw new IllegalStateException("Failed to initialize JAXB marshaller for MetricTemplate.", e);
-        }        
+        }
     }
-    
+
     @Override
     public ConfigurationDefinition getImportConfigurationDefinition() {
         ConfigurationDefinition def = new ConfigurationDefinition("SystemSettingsConfiguration", null);
-        
-        PropertyDefinitionSimple props = new PropertyDefinitionSimple("propertiesToImport", "The names of the properties that should be imported. Note that these are the INTERNAL names as used in the RHQ database", true, PropertySimpleType.STRING); 
-        props.setDefaultValue("AGENT_MAX_QUIET_TIME_ALLOWED, ENABLE_AGENT_AUTO_UPDATE, ENABLE_DEBUG_MODE, ENABLE_EXPERIMENTAL_FEATURES, CAM_DATA_PURGE_1H, CAM_DATA_PURGE_6H, " +
-            "CAM_DATA_PURGE_1D, CAM_DATA_MAINTENANCE, DATA_REINDEX_NIGHTLY, RT_DATA_PURGE, ALERT_PURGE, EVENT_PURGE, TRAIT_PURGE, AVAILABILITY_PURGE, CAM_BASELINE_FREQUENCY, CAM_BASELINE_DATASET");
+
+        PropertyDefinitionSimple props =
+            new PropertyDefinitionSimple(
+                PROPERTIES_TO_IMPORT_PROPERTY,
+                "The names of the properties that should be imported. Note that these are the INTERNAL names as used in the RHQ database",
+                true, PropertySimpleType.STRING);
+        props.setDefaultValue(DEFAULT_IMPORTED_PROPERTIES_LIST);
         def.put(props);
-                
+
         ConfigurationUtility.initializeDefaultTemplate(def);
-        
+
         return def;
     }
 
@@ -94,22 +102,22 @@ public class SystemSettingsImporter implements Importer<NoSingleEntity, SystemSe
     @Override
     public void update(NoSingleEntity entity, SystemSettings exportedEntity) throws Exception {
         Properties props = exportedEntity.toProperties();
-        
+
         Set<String> propsToImport = getSettingNamesConfiguredForImport(importConfiguration);
-        
+
         Set<String> propsToRemove = new HashSet<String>();
-        
-        for(Object k : props.keySet()) {
+
+        for (Object k : props.keySet()) {
             String key = (String) k;
             if (!propsToImport.contains(key)) {
                 propsToRemove.add(key);
             }
         }
-        
-        for(String p : propsToRemove) {
+
+        for (String p : propsToRemove) {
             props.remove(p);
         }
-        
+
         systemManager.setSystemConfiguration(subject, props, true);
     }
 
@@ -125,15 +133,15 @@ public class SystemSettingsImporter implements Importer<NoSingleEntity, SystemSe
     @Override
     public void finishImport() {
     }
- 
+
     private Set<String> getSettingNamesConfiguredForImport(Configuration importConfiguration) {
-        String settingsToImport = importConfiguration.getSimpleValue("propertiesToImport", null);
-        
+        String settingsToImport = importConfiguration.getSimpleValue(PROPERTIES_TO_IMPORT_PROPERTY, null);
+
         if (settingsToImport == null) {
             return Collections.emptySet();
         } else {
             String[] vals = settingsToImport.split("\\s*,\\s*");
-            
+
             return new HashSet<String>(Arrays.asList(vals));
         }
     }

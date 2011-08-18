@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    xmlns:config="urn:xmlns:rhq-configuration" xmlns:ci="urn:xmlns:rhq-configuration-instance"
+    targetNamespace="urn:xmlns:rhq-configuration-instance"
+    elementFormDefault="qualified" jaxb:version="2.0"
+    xmlns:jaxb="http://java.sun.com/xml/ns/jaxb" blockDefault="">
+
+    <xs:annotation>
+        <xs:documentation>Schema for the definition of generic
+            configuration data.
+      </xs:documentation>
+        <xs:appinfo>
+            <jaxb:schemaBindings>
+                <jaxb:package
+                    name="org.rhq.enterprise.server.xmlschema.generated.configuration.instance" />
+            </jaxb:schemaBindings>
+        </xs:appinfo>
+    </xs:annotation>
+
+    <xs:import namespace="urn:xmlns:rhq-configuration" schemaLocation="rhq-configuration.xsd"/>
+
+    <xs:element name="configuration" type="ci:Configuration">
+        <xs:annotation>
+            <xs:documentation>Represents the configuration instance. The configuration instance specifies both the expected format of the configuration and the concrete values that conform to that format.</xs:documentation>
+        </xs:annotation>
+    </xs:element>
+    <xs:complexType name="Configuration">
+        <xs:annotation>
+            <xs:appinfo>
+                <jaxb:class name="ConfigurationInstanceDescriptor" />
+            </xs:appinfo>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element ref="ci:configuration-property"
+                minOccurs="0" maxOccurs="unbounded" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:element name="configuration-property" abstract="true" />
+
+    <xs:element name="simple-property"
+        substitutionGroup="ci:configuration-property">
+        <xs:annotation>
+            <xs:documentation>The simple property is defined by its name and value.</xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:annotation>
+                <xs:appinfo>
+                    <jaxb:class name="SimplePropertyInstanceDescriptor" />
+                </xs:appinfo>
+            </xs:annotation>
+            <xs:complexContent>
+                <xs:extension base="config:simpleProperty">
+                    <xs:attribute name="value" type="xs:string">
+                        <xs:annotation>
+                            <xs:documentation>The value of the property represented as a string. The value is interpreted according to the property type.</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="default" use="prohibited" />
+                    <xs:attribute name="defaultValue" use="prohibited" />
+                    <xs:attribute name="summary" use="prohibited" />
+                    <xs:attribute name="readOnly" use="prohibited" />
+                    <xs:attribute name="activationPolicy" use="prohibited" />
+                </xs:extension>
+            </xs:complexContent>
+        </xs:complexType>
+
+    </xs:element>
+
+    <xs:element name="list-property" type="ci:ListProperty"
+        substitutionGroup="ci:configuration-property">
+        <xs:annotation>
+            <xs:documentation>The list property contains the definition of the format of the list members. Additionally, the "values" tag contains the list of values in the specified format.</xs:documentation>
+        </xs:annotation>
+    </xs:element>
+    <xs:complexType name="ListProperty">
+        <xs:annotation>
+            <xs:appinfo>
+                <jaxb:class name="ListPropertyInstanceDescriptor" />
+            </xs:appinfo>
+        </xs:annotation>
+        <xs:complexContent>
+            <xs:extension base="config:listProperty">
+                <xs:sequence>
+                    <xs:element name="values" type="ci:PropertyValues"
+                        minOccurs="0" maxOccurs="1">
+                        <xs:annotation>
+                            <xs:documentation>The list of values that correspond to the list definition. The individual values are not required to specify the "property-name" attribute because it is implied to be the same as the name of the member property definition of this list.</xs:documentation>
+                        </xs:annotation>
+                    </xs:element>
+                </xs:sequence>
+                <xs:attribute name="default" use="prohibited" />
+                <xs:attribute name="defaultValue" use="prohibited" />
+                <xs:attribute name="summary" use="prohibited" />
+                <xs:attribute name="readOnly" use="prohibited" />
+                <xs:attribute name="activationPolicy" use="prohibited" />
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:element name="map-property" type="ci:MapProperty"
+        substitutionGroup="ci:configuration-property">
+        <xs:annotation>
+            <xs:documentation>Specifies the definition of the properties. The values of the properties are contained in the "values" tag.</xs:documentation>
+        </xs:annotation>
+    </xs:element>
+    <xs:complexType name="MapProperty">
+        <xs:annotation>
+            <xs:appinfo>
+                <jaxb:class name="MapPropertyInstanceDescriptor" />
+            </xs:appinfo>
+        </xs:annotation>
+        <xs:complexContent>
+            <xs:extension base="config:mapProperty">
+                <xs:sequence>
+                    <xs:element name="values" type="ci:PropertyValues"
+                        minOccurs="0" maxOccurs="1">
+                        <xs:annotation>
+                            <xs:documentation>The individual values in this map are required to specify the "property-name" attribute so they can be linked to the member property definition.</xs:documentation>
+                        </xs:annotation>
+                    </xs:element>
+                </xs:sequence>
+                <xs:attribute name="default" use="prohibited" />
+                <xs:attribute name="defaultValue" use="prohibited" />
+                <xs:attribute name="summary" use="prohibited" />
+                <xs:attribute name="readOnly" use="prohibited" />
+                <xs:attribute name="activationPolicy" use="prohibited" />
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:element name="complex-value" abstract="true">
+        <xs:annotation>
+            <xs:documentation>Specifies the value of a property.</xs:documentation>
+        </xs:annotation>
+    </xs:element>
+    <xs:complexType name="ComplexValue">
+        <xs:annotation>
+            <xs:appinfo>
+                <jaxb:class name="ComplexValueDescriptor" />
+            </xs:appinfo>
+        </xs:annotation>
+        <xs:attribute name="property-name" type="xs:string"
+            use="optional">
+            <xs:annotation>
+                <xs:documentation>The name of the property that defines the format of this value. This attribute is not mandatory if the value specifies a member in a list. It is required when specifying individual values of the members of a map.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+
+    <xs:complexType name="PropertyValues">
+        <xs:annotation>
+            <xs:appinfo>
+                <jaxb:class name="PropertyValuesDescriptor" />
+            </xs:appinfo>
+            <xs:documentation>This lists the individual values of the property containing this tag.</xs:documentation>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element ref="ci:complex-value" minOccurs="0"
+                maxOccurs="unbounded" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:element name="simple-value" type="ci:ComplexValueSimple"
+        substitutionGroup="ci:complex-value">
+        <xs:annotation>
+            <xs:documentation>This specifies the value of a simple property.</xs:documentation>
+        </xs:annotation>
+    </xs:element>
+    <xs:complexType name="ComplexValueSimple">
+        <xs:annotation>
+            <xs:appinfo>
+                <jaxb:class name="ComplexValueSimpleDescriptor" />
+            </xs:appinfo>
+        </xs:annotation>
+        <xs:complexContent>
+            <xs:extension base="ci:ComplexValue">            
+                <xs:attribute name="value" type="xs:string">
+                    <xs:annotation>
+                        <xs:documentation>The value of the property represented as a string. The string is interpreted according to the format of the property.</xs:documentation>
+                    </xs:annotation>
+                </xs:attribute>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:element name="list-value" type="ci:ComplexValueList"
+        substitutionGroup="ci:complex-value">
+        <xs:annotation>
+            <xs:documentation>This element represents a list value (i.e. a value that is in itself a list). This is different from defining a list and its values because the format of the list has already been defined in the parent element. The child values represent the individual elements of the list.</xs:documentation>
+        </xs:annotation>
+    </xs:element>
+    <xs:complexType name="ComplexValueList">
+        <xs:annotation>
+            <xs:appinfo>
+                <jaxb:class name="ComplexValueListDescriptor" />
+            </xs:appinfo>
+        </xs:annotation>
+        <xs:complexContent>
+            <xs:extension base="ci:ComplexValue">
+                <xs:sequence>
+                    <xs:element ref="ci:complex-value"
+                        minOccurs="0" maxOccurs="unbounded" />
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:element name="map-value" type="ci:ComplexValueMap"
+        substitutionGroup="ci:complex-value">
+        <xs:annotation>
+            <xs:documentation>This elements represents a map value (i.e. a value that is in itself a map). This is different from defining a map and its values because the format of the map has already been defined in the parent element. The child values reprenset the individual elements of the map.</xs:documentation>
+        </xs:annotation>
+    </xs:element>
+    <xs:complexType name="ComplexValueMap">
+        <xs:annotation>
+            <xs:appinfo>
+                <jaxb:class name="ComplexValueMapDescriptor" />
+            </xs:appinfo>
+        </xs:annotation>
+        <xs:complexContent>
+            <xs:extension base="ci:ComplexValue">
+                <xs:sequence>
+                    <xs:element ref="ci:complex-value"
+                        minOccurs="0" maxOccurs="unbounded" />
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+</xs:schema>

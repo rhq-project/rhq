@@ -79,4 +79,12 @@ public interface XmlSchemas {
     // the schema used to define content source metadata which is used by content plugins like the URL or Disk plugins
     public static final String XSD_SERVERPLUGIN_DRIFT = "rhq-serverplugin-drift.xsd";
     public static final String PKG_SERVERPLUGIN_DRIFT = "org.rhq.enterprise.server.xmlschema.generated.serverplugin.drift";
+    
+    //the schema that describes the format of the configuration export file
+    public static final String XSD_CONFIGURATION_EXPORT = "rhq-configuration-export.xsd";
+    public static final String PKG_CONFIGURATION_EXPORT = "org.rhq.enterprise.server.xmlschema.generated.configuration.export";
+    
+    //the schema that describes a configuration instance - a combination of configuration definition and concrete values
+    public static final String XSD_CONFIGURATION_INSTANCE = "rhq-configuration-instance.xsd";
+    public static final String PKG_CONFIGURATION_INSTANCE = "org.rhq.enterprise.server.xmlschema.generated.configuration.instance";
 }

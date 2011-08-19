@@ -201,6 +201,10 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
         return this.dataSource;
     }
 
+    public String getDataTypeName() {
+        return dataTypeName;
+    }
+
     public boolean isReadOnly() {
         return this.isReadOnly;
     }

@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,6 +51,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
@@ -64,6 +66,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.schedule.ResourceOperationScheduleDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.FormUtility;
 import org.rhq.enterprise.gui.coregui.client.util.TypeConversionUtility;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
@@ -87,8 +90,9 @@ public abstract class AbstractOperationScheduleDetailsView extends
     private StaticTextItem operationDescriptionItem;
     private StaticTextItem operationParametersItem;
     private LocatableHLayout operationParametersConfigurationHolder;
+    private ConfigurationEditor operationParametersConfigurationEditor;
+    private Configuration operationParameters;
     private JobTriggerEditor triggerEditor;
-    private Configuration parameters;
     private EnhancedDynamicForm notesForm;
     private Integer operationDefinitionId;
 
@@ -322,7 +326,7 @@ public abstract class AbstractOperationScheduleDetailsView extends
         }
         notesItem.setValue(notesValue);
 
-        this.parameters = (Configuration) record
+        this.operationParameters = (Configuration) record
             .getAttributeAsObject(AbstractOperationScheduleDataSource.Field.PARAMETERS);
 
         super.editExistingRecord(record);
@@ -330,12 +334,21 @@ public abstract class AbstractOperationScheduleDetailsView extends
 
     @Override
     protected void save(DSRequest requestProperties) {
-        requestProperties.setAttribute(AbstractOperationScheduleDataSource.RequestProperty.PARAMETERS, this.parameters);
+        if ((null != this.operationParametersConfigurationEditor && !this.operationParametersConfigurationEditor
+            .isValid())
+            || !this.triggerEditor.validate()) {
+            {
+                Message message = new Message(MSG.widget_recordEditor_warn_validation(this.getDataTypeName()),
+                    Message.Severity.Warning, EnumSet.of(Message.Option.Transient));
+                CoreGUI.getMessageCenter().notify(message);
 
-        if (!this.triggerEditor.validate()) {
-            // TODO: print error Message
-            return;
+                return;
+            }
         }
+
+        requestProperties.setAttribute(AbstractOperationScheduleDataSource.RequestProperty.PARAMETERS,
+            this.operationParameters);
+
         EnhancedDynamicForm form = getForm();
 
         Record jobTriggerRecord = new ListGridRecord();
@@ -393,21 +406,19 @@ public abstract class AbstractOperationScheduleDetailsView extends
             }
             this.operationParametersConfigurationHolder.hide();
         } else {
+            // make sure we wipe out anything left by the previous op def
+            for (Canvas child : this.operationParametersConfigurationHolder.getChildren()) {
+                child.destroy();
+            }
+
             final ConfigurationDefinition parametersDefinition = this.operationNameToParametersDefinitionMap
                 .get(operationName);
             if (parametersDefinition == null || parametersDefinition.getPropertyDefinitions().isEmpty()) {
                 value = "<i>" + MSG.view_operationScheduleDetails_noParameters() + "</i>";
-                // make sure we wipe out anything left by the previous op def
-                for (Canvas child : this.operationParametersConfigurationHolder.getChildren()) {
-                    child.destroy();
-                }
                 this.operationParametersConfigurationHolder.hide();
+
             } else {
                 value = isNewRecord() ? "<i>" + MSG.view_operationScheduleDetails_enterParametersBelow() + "</i>" : "";
-
-                for (Canvas child : this.operationParametersConfigurationHolder.getChildren()) {
-                    child.destroy();
-                }
 
                 // Add spacer so params are indented.
                 VLayout horizontalSpacer = new VLayout();
@@ -415,8 +426,9 @@ public abstract class AbstractOperationScheduleDetailsView extends
                 this.operationParametersConfigurationHolder.addMember(horizontalSpacer);
 
                 if (isNewRecord()) {
-                    this.parameters = (parametersDefinition.getDefaultTemplate() != null) ? parametersDefinition
-                        .getDefaultTemplate().createConfiguration() : new Configuration();
+                    this.operationParameters = (parametersDefinition.getDefaultTemplate() != null) ? parametersDefinition
+                        .getDefaultTemplate().createConfiguration()
+                        : new Configuration();
                 } else {
 
                 }
@@ -427,32 +439,24 @@ public abstract class AbstractOperationScheduleDetailsView extends
 
                         @Override
                         public void onFailure(Throwable throwable) {
-                            ConfigurationEditor configurationEditor = new ConfigurationEditor("ParametersEditor",
-                                parametersDefinition, parameters);
-                            configurationEditor.setReadOnly(isReadOnly());
-                            operationParametersConfigurationHolder.addMember(configurationEditor);
+                            operationParametersConfigurationEditor = new ConfigurationEditor("ParametersEditor",
+                                parametersDefinition, operationParameters);
+                            operationParametersConfigurationEditor.setReadOnly(isReadOnly());
+                            operationParametersConfigurationHolder.addMember(operationParametersConfigurationEditor);
                             operationParametersConfigurationHolder.show();
 
                         }
 
                         @Override
                         public void onSuccess(ConfigurationDefinition result) {
-                            ConfigurationEditor configurationEditor = new ConfigurationEditor("ParametersEditor",
-                                result, parameters);
-                            configurationEditor.setReadOnly(isReadOnly());
-                            operationParametersConfigurationHolder.addMember(configurationEditor);
+                            operationParametersConfigurationEditor = new ConfigurationEditor("ParametersEditor",
+                                result, operationParameters);
+                            operationParametersConfigurationEditor.setReadOnly(isReadOnly());
+                            operationParametersConfigurationHolder.addMember(operationParametersConfigurationEditor);
                             operationParametersConfigurationHolder.show();
 
                         }
                     });
-
-                /*
-                                ConfigurationEditor configurationEditor = new ConfigurationEditor("ParametersEditor",
-                                    parametersDefinition, this.parameters);
-                                configurationEditor.setReadOnly(isReadOnly());
-                                this.operationParametersConfigurationHolder.addMember(configurationEditor);
-                                this.operationParametersConfigurationHolder.show();
-                */
             }
         }
         this.operationParametersItem.setValue(value);

@@ -31,7 +31,7 @@
             <td>Name</td><td>${var.resourceName}</td>
         </tr>
         <tr>
-            <td>Id</td><td>${var.resourceId}</td>
+            <td>Id</td><td><a href="/rest/1/resource/${var.resourceId}.html">${var.resourceId}</a></td>
         </tr>
         <tr>
             <td>Type name</td><td>${var.typeName}</td>

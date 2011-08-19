@@ -33,6 +33,7 @@ import org.jboss.resteasy.spi.Link;
 
 import org.rhq.enterprise.server.rest.domain.AvailabilityRest;
 import org.rhq.enterprise.server.rest.domain.MetricSchedule;
+import org.rhq.enterprise.server.rest.domain.ResourceWithChildren;
 import org.rhq.enterprise.server.rest.domain.ResourceWithType;
 
 /**
@@ -67,6 +68,12 @@ public interface ResourceHandlerLocal {
     @Path("/platforms")
     @Produces("text/html")
     String getPlatformsHtml();
+
+
+    @GET
+    @Path("/{id}/hierarchy")
+    @Produces({"application/json","application/xml"})
+    ResourceWithChildren getHierarchy(@PathParam("id")int baseResourceId);
 
     @LinkResource(rel = "availability", value = AvailabilityRest.class)
     @GET

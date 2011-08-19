@@ -29,7 +29,6 @@ import java.util.Set;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
-import javax.ws.rs.PathParam;
 
 import org.jboss.resteasy.spi.Link;
 
@@ -43,8 +42,10 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
+import org.rhq.enterprise.server.plugin.pc.content.RepoSource;
 import org.rhq.enterprise.server.rest.domain.AvailabilityRest;
 import org.rhq.enterprise.server.rest.domain.MetricSchedule;
+import org.rhq.enterprise.server.rest.domain.ResourceWithChildren;
 import org.rhq.enterprise.server.rest.domain.ResourceWithType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
@@ -101,6 +102,42 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
     public String getPlatformsHtml() {
         List<ResourceWithType> list = getPlatforms();
         return renderTemplate("listResourceWithType", list);
+    }
+
+    @Override
+    public ResourceWithChildren getHierarchy(int baseResourceId) {
+        // TODO optimize to do less recursion
+        Resource start = resMgr.getResource(caller,baseResourceId);
+        ResourceWithChildren rwc = getHierarchy(start);
+        /*new ResourceWithChildren(""+start.getId(),start.getName());
+
+        PageControl pc = new PageControl();
+        List<Resource> ret = resMgr.findResourceByParentAndInventoryStatus(caller,start,InventoryStatus.COMMITTED,pc);
+        if (!ret.isEmpty()) {
+            List<ResourceWithChildren> resList = new ArrayList<ResourceWithChildren>(ret.size());
+            for (Resource res : ret) {
+                ResourceWithChildren child = getHierarchy(res.getId());
+                resList.add(child);
+            }
+            rwc.setChildren(resList);
+        }*/
+        return rwc;
+    }
+
+    ResourceWithChildren getHierarchy(Resource baseResource) {
+        ResourceWithChildren rwc = new ResourceWithChildren(""+baseResource.getId(),baseResource.getName());
+
+        PageControl pc = new PageControl();
+        List<Resource> ret = resMgr.findResourceByParentAndInventoryStatus(caller,baseResource,InventoryStatus.COMMITTED,pc);
+        if (!ret.isEmpty()) {
+            List<ResourceWithChildren> resList = new ArrayList<ResourceWithChildren>(ret.size());
+            for (Resource res : ret) {
+                ResourceWithChildren child = getHierarchy(res);
+                resList.add(child);
+            }
+            rwc.setChildren(resList);
+        }
+        return rwc;
     }
 
     @Override
@@ -167,7 +204,7 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
     }
 
     @Override
-    public List<Link> getAlertsForResource(@PathParam("id") int resourceId) {
+    public List<Link> getAlertsForResource(int resourceId) {
         AlertCriteria criteria = new AlertCriteria();
         criteria.addFilterResourceIds(resourceId);
         List<Alert> alerts = alertManager.findAlertsByCriteria(caller,criteria);

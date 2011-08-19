@@ -333,6 +333,13 @@
                           <artifactId>packagetype-cli</artifactId>
                           <version>${project.version}</version>
                         </artifactItem>
+                        
+                        <artifactItem>
+                          <groupId>org.rhq</groupId>
+                          <artifactId>rhq-serverplugin-drift</artifactId>
+                          <version>${project.version}</version>
+                        </artifactItem>
+                        
                      </artifactItems>
                      <outputDirectory>${earDirectory}/rhq-serverplugins</outputDirectory>
                   </configuration>

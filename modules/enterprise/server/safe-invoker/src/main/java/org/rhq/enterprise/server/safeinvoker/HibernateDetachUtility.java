@@ -72,20 +72,38 @@ public class HibernateDetachUtility {
 
     public static void nullOutUninitializedFields(Object value, SerializationType serializationType) throws Exception {
         long start = System.currentTimeMillis();
-        Map<Integer, Object> checkedObjects = new HashMap<Integer, Object>();
-        nullOutUninitializedFields(value, checkedObjects, 0, serializationType);
+        Map<Integer, Object> checkedObjectMap = new HashMap<Integer, Object>();
+        Map<Integer, List<Object>> checkedObjectCollisionMap = new HashMap<Integer, List<Object>>();
+        nullOutUninitializedFields(value, checkedObjectMap, checkedObjectCollisionMap, 0, serializationType);
         long duration = System.currentTimeMillis() - start;
         if (duration > 1000) {
-            LOG.info("Detached [" + checkedObjects.size() + "] objects in [" + duration + "]ms");
+            LOG.info("Detached [" + checkedObjectMap.size() + "] objects in [" + duration + "]ms");
         } else {
-            LOG.debug("Detached [" + checkedObjects.size() + "] objects in [" + duration + "]ms");
+            LOG.debug("Detached [" + checkedObjectMap.size() + "] objects in [" + duration + "]ms");
         }
         // help the garbage collector be clearing these before we leave
-        checkedObjects.clear();
+        checkedObjectMap.clear();
+        checkedObjectCollisionMap.clear();
     }
 
-    private static void nullOutUninitializedFields(Object value, Map<Integer, Object> checkedObjects, int depth,
-        SerializationType serializationType) throws Exception {
+    /**
+     * @param value the object needing to be detached/scrubbed.
+     * @param checkedObjectMap This maps identityHashCodes to Objects we've already detached. In that way we can
+     * quickly determine if we've already done the work for the incoming value and avoid taversing it again. This
+     * works well almost all of the time, but it is possible that two different objects can have the same identity hash
+     * (conflicts are always possible with a hash). In that case we utilize the checkedObjectCollisionMap (see below).
+     * @param checkedObjectCollisionMap checkedObjectMap maps the identityhash to the *first* object with that hash. In
+     * most cases there will only be mapping for one hash, but it is possible to encounter the same hash for multiple
+     * objects, especially on 32bit or IBM JVMs. It is important to know if an object has already been detached
+     * because if it is somehow self-referencing, we have to stop the recursion. This map holds the 2nd..Nth mapping
+     * for a single hash and is used to ensure we never try to detach an object already processed.
+     * @param depth used to stop infinite recursion, defaults to a depth we don't expectto see, but it is configurable.
+     * @param serializationType
+     * @throws Exception
+     */
+    private static void nullOutUninitializedFields(Object value, Map<Integer, Object> checkedObjectMap,
+        Map<Integer, List<Object>> checkedObjectCollisionMap, int depth, SerializationType serializationType)
+        throws Exception {
         if (depth > depthAllowed) {
             LOG.warn("Recursed too deep [" + depth + " > " + depthAllowed
                 + "], will not attempt to detach object of type ["
@@ -104,22 +122,72 @@ public class HibernateDetachUtility {
         // be the case.  So, we use it to try and avoid duplicating work, but handle the case when two objects may
         // have an identity crisis.
         Integer valueIdentity = System.identityHashCode(value);
-        Object checkedObject = checkedObjects.get(valueIdentity);
+        Object checkedObject = checkedObjectMap.get(valueIdentity);
 
         if (null == checkedObject) {
-            checkedObjects.put(valueIdentity, value);
+            // if we have not yet encountered an object with this hash, store it in our map and start scrubbing            
+            checkedObjectMap.put(valueIdentity, value);
 
         } else if (value == checkedObject) {
+            // if we have scrubbed this already, no more work to be done            
             return;
 
         } else {
+            // we have a situation where multiple objects have the same identity hashcode, work with our
+            // collision map to decide whether it needs to be scrubbed and add if necessary.
+            // Note that this code block is infrequently hit, it is by design that we've pushed the extra
+            // work, map, etc, involved for this infrequent case into its own block. The standard cases must
+            // be as fast and lean as possible.
+
+            boolean alreadyDetached = false;
+            List<Object> collisionObjects = checkedObjectCollisionMap.get(valueIdentity);
+
+            if (null == collisionObjects) {
+                // if this is the 2nd occurrence for this hash, create a new map entry                
+                collisionObjects = new ArrayList<Object>(1);
+                checkedObjectCollisionMap.put(valueIdentity, collisionObjects);
+
+            } else {
+                // if we have scrubbed this already, no more work to be done                
+                for (Object collisionObject : collisionObjects) {
+                    if (value == collisionObject) {
+                        alreadyDetached = true;
+                        break;
+                    }
+                }
+            }
+
             if (LOG.isDebugEnabled()) {
-                LOG.debug("UNEQUAL IDENTITY HASHCODE [" + valueIdentity + "]\n\tCurrent  : "
-                    + value.getClass().getName() + "\n\t" + value + "\n\tPrevious: "
-                    + checkedObject.getClass().getName() + "\n\t" + checkedObject);
+                StringBuilder message = new StringBuilder("\n\tIDENTITY HASHCODE COLLISION [hash=");
+                message.append(valueIdentity);
+                message.append(", alreadyDetached=");
+                message.append(alreadyDetached);
+                message.append("]");
+                message.append("\n\tCurrent  : ");
+                message.append(value.getClass().getName());
+                message.append("\n\t    ");
+                message.append(value);
+                message.append("\n\tPrevious : ");
+                message.append(checkedObject.getClass().getName());
+                message.append("\n\t    ");
+                message.append(checkedObject);
+                for (Object collisionObject : collisionObjects) {
+                    message.append("\n\tPrevious : ");
+                    message.append(collisionObject.getClass().getName());
+                    message.append("\n\t    ");
+                    message.append(collisionObject);
+                }
+
+                LOG.debug(message);
+            }
+
+            // if not already detached then add to the list of collision objects for this hash, and start scrubbing
+            if (!alreadyDetached) {
+                collisionObjects.add(value);
             }
         }
 
+        // Perform the detaching
         if (value instanceof Object[]) {
             Object[] objArray = (Object[]) value;
             for (int i = 0; i < objArray.length; i++) {
@@ -128,7 +196,8 @@ public class HibernateDetachUtility {
                 if (replaceEntry != null) {
                     objArray[i] = replaceEntry;
                 }
-                nullOutUninitializedFields(objArray[i], checkedObjects, depth + 1, serializationType);
+                nullOutUninitializedFields(objArray[i], checkedObjectMap, checkedObjectCollisionMap, depth + 1,
+                    serializationType);
             }
         } else if (value instanceof List) {
             // Null out any entries in initialized collections
@@ -140,7 +209,8 @@ public class HibernateDetachUtility {
                     val = replace;
                     i.set(replace);
                 }
-                nullOutUninitializedFields(val, checkedObjects, depth + 1, serializationType);
+                nullOutUninitializedFields(val, checkedObjectMap, checkedObjectCollisionMap, depth + 1,
+                    serializationType);
             }
 
         } else if (value instanceof Collection) {
@@ -154,7 +224,8 @@ public class HibernateDetachUtility {
                     replacementItems.add(replacementItem);
                     item = replacementItem;
                 }
-                nullOutUninitializedFields(item, checkedObjects, depth + 1, serializationType);
+                nullOutUninitializedFields(item, checkedObjectMap, checkedObjectCollisionMap, depth + 1,
+                    serializationType);
             }
             collection.removeAll(itemsToBeReplaced);
             collection.addAll(replacementItems); // watch out! if this collection is a Set, HashMap$MapSet doesn't support addAll. See BZ 688000
@@ -186,8 +257,10 @@ public class HibernateDetachUtility {
 
             // now go through each item in the map and null out their internal fields
             for (Object key : originalMap.keySet()) {
-                nullOutUninitializedFields(originalMap.get(key), checkedObjects, depth + 1, serializationType);
-                nullOutUninitializedFields(key, checkedObjects, depth + 1, serializationType);
+                nullOutUninitializedFields(originalMap.get(key), checkedObjectMap, checkedObjectCollisionMap,
+                    depth + 1, serializationType);
+                nullOutUninitializedFields(key, checkedObjectMap, checkedObjectCollisionMap, depth + 1,
+                    serializationType);
             }
         } else if (value instanceof Enum) {
             // don't need to detach enums, treat them as special objects
@@ -197,18 +270,19 @@ public class HibernateDetachUtility {
         if (serializationType == SerializationType.JAXB) {
             XmlAccessorType at = value.getClass().getAnnotation(XmlAccessorType.class);
             if (at != null && at.value() == XmlAccessType.FIELD) {
-                nullOutFieldsByFieldAccess(value, checkedObjects, depth, serializationType);
+                nullOutFieldsByFieldAccess(value, checkedObjectMap, checkedObjectCollisionMap, depth, serializationType);
             } else {
-                nullOutFieldsByAccessors(value, checkedObjects, depth, serializationType);
+                nullOutFieldsByAccessors(value, checkedObjectMap, checkedObjectCollisionMap, depth, serializationType);
             }
         } else if (serializationType == SerializationType.SERIALIZATION) {
-            nullOutFieldsByFieldAccess(value, checkedObjects, depth, serializationType);
+            nullOutFieldsByFieldAccess(value, checkedObjectMap, checkedObjectCollisionMap, depth, serializationType);
         }
 
     }
 
-    private static void nullOutFieldsByFieldAccess(Object object, Map<Integer, Object> checkedObjects, int depth,
-        SerializationType serializationType) throws Exception {
+    private static void nullOutFieldsByFieldAccess(Object object, Map<Integer, Object> checkedObjects,
+        Map<Integer, List<Object>> checkedObjectCollisionMap, int depth, SerializationType serializationType)
+        throws Exception {
 
         Class tmpClass = object.getClass();
         List<Field> fieldsToClean = new ArrayList<Field>();
@@ -224,11 +298,13 @@ public class HibernateDetachUtility {
             tmpClass = tmpClass.getSuperclass();
         }
 
-        nullOutFieldsByFieldAccess(object, fieldsToClean, checkedObjects, depth, serializationType);
+        nullOutFieldsByFieldAccess(object, fieldsToClean, checkedObjects, checkedObjectCollisionMap, depth,
+            serializationType);
     }
 
     private static void nullOutFieldsByFieldAccess(Object object, List<Field> classFields,
-        Map<Integer, Object> checkedObjects, int depth, SerializationType serializationType) throws Exception {
+        Map<Integer, Object> checkedObjects, Map<Integer, List<Object>> checkedObjectCollisionMap, int depth,
+        SerializationType serializationType) throws Exception {
 
         boolean accessModifierFlag = false;
         for (Field field : classFields) {
@@ -253,7 +329,8 @@ public class HibernateDetachUtility {
                         String className = fieldValue.getClass().getName();
                         className = className.substring(0, className.indexOf("_$$_"));
                         if (!replacement.getClass().getName().contains("hibernate")) {
-                            nullOutUninitializedFields(replacement, checkedObjects, depth + 1, serializationType);
+                            nullOutUninitializedFields(replacement, checkedObjects, checkedObjectCollisionMap,
+                                depth + 1, serializationType);
 
                             field.set(object, replacement);
                         } else {
@@ -313,7 +390,8 @@ public class HibernateDetachUtility {
                             replacement = new ArrayList((List) fieldValue);
                         } else if (fieldValue instanceof Set) {
                             ArrayList l = new ArrayList((Set) fieldValue); // cannot recurse Sets, see BZ 688000
-                            nullOutUninitializedFields(l, checkedObjects, depth + 1, serializationType);
+                            nullOutUninitializedFields(l, checkedObjects, checkedObjectCollisionMap, depth + 1,
+                                serializationType);
                             replacement = new HashSet(l); // convert it back to a Set since that's the type of the real collection, see BZ 688000
                             needToNullOutFields = false;
                         } else if (fieldValue instanceof Collection) {
@@ -322,7 +400,8 @@ public class HibernateDetachUtility {
                         setField(object, field.getName(), replacement);
 
                         if (needToNullOutFields) {
-                            nullOutUninitializedFields(replacement, checkedObjects, depth + 1, serializationType);
+                            nullOutUninitializedFields(replacement, checkedObjects, checkedObjectCollisionMap,
+                                depth + 1, serializationType);
                         }
                     }
 
@@ -330,7 +409,8 @@ public class HibernateDetachUtility {
                     if (fieldValue != null
                         && (fieldValue.getClass().getName().contains("org.rhq") || fieldValue instanceof Collection
                             || fieldValue instanceof Object[] || fieldValue instanceof Map))
-                        nullOutUninitializedFields((fieldValue), checkedObjects, depth + 1, serializationType);
+                        nullOutUninitializedFields((fieldValue), checkedObjects, checkedObjectCollisionMap, depth + 1,
+                            serializationType);
                 }
             }
             if (accessModifierFlag) {
@@ -350,7 +430,6 @@ public class HibernateDetachUtility {
                     Method m = assistClass.getMethod("writeReplace");
                     replacement = m.invoke(object);
 
-                    String className = object.getClass().getName();
                 } catch (Exception e) {
                     LOG.error("Unable to write replace object " + object.getClass(), e);
                 }
@@ -359,8 +438,9 @@ public class HibernateDetachUtility {
         return replacement;
     }
 
-    private static void nullOutFieldsByAccessors(Object value, Map<Integer, Object> checkedObjects, int depth,
-        SerializationType serializationType) throws Exception {
+    private static void nullOutFieldsByAccessors(Object value, Map<Integer, Object> checkedObjects,
+        Map<Integer, List<Object>> checkedObjectCollisionMap, int depth, SerializationType serializationType)
+        throws Exception {
         // Null out any collections that aren't loaded
         BeanInfo bi = Introspector.getBeanInfo(value.getClass(), Object.class);
 
@@ -395,7 +475,8 @@ public class HibernateDetachUtility {
             } else {
                 if ((propertyValue instanceof Collection)
                     || ((propertyValue != null) && propertyValue.getClass().getName().startsWith("org.rhq.core.domain"))) {
-                    nullOutUninitializedFields(propertyValue, checkedObjects, depth + 1, serializationType);
+                    nullOutUninitializedFields(propertyValue, checkedObjects, checkedObjectCollisionMap, depth + 1,
+                        serializationType);
                 }
             }
         }

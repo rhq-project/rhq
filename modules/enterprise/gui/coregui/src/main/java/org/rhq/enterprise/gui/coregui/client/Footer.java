@@ -235,6 +235,11 @@ public class Footer extends LocatableHLayout {
         return messageCenter;
     }
 
+    public void reset() {
+        messageBar.reset();
+        messageCenter.reset();
+    }
+
     private HLayout createHSpacer(int width) {
         HLayout spacer = new HLayout();
         spacer.setWidth(width);

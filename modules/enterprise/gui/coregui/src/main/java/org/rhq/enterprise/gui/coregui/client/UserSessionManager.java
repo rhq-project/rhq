@@ -505,10 +505,14 @@ public class UserSessionManager {
         }
 
         sessionState = State.IS_LOGGED_OUT;
+
         Log.info("Destroying session timer...");
         coreGuiSessionTimer.cancel();
-        Log.info("Destroying http session refresh timer...");
+
+        Log.info("Destroying HTTP session refresh timer...");
         httpSessionTimer.cancel();
+
+        CoreGUI.get().reset();
 
         // log out the web session on the server-side in a delayed fashion,
         // allowing enough time to pass to let in-flight requests complete

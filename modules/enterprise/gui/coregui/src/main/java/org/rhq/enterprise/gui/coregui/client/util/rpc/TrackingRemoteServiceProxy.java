@@ -42,7 +42,7 @@ import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
  *       work, the methods that are used prior to being authenticated can not be wrapped with this proxy.</li>
  *   <li>Wrap the existing {@link RequestCallback} in a {@link TrackingRequestCallback}, which will provide 1) a
  *       fall-back mechanism for exceptions/errors that occur while the user is logged out, and 2) a notification
- *       mechanism to send the {@link RPCTracker} events which will tell the activityIndicator when to spin.</li>
+ *       mechanism to send the {@link TrackerEventDispatcher} events which will tell the activityIndicator when to spin.</li>
  *   <li>Put the user's sessionId into the header of the request.</li>
  * 
  * @author Joseph Marques
@@ -96,7 +96,8 @@ public class TrackingRemoteServiceProxy extends RemoteServiceProxy {
         RequestCallback original = super.doCreateRequestCallback(responseReader, methodName, invocationCount, callback);
         TrackingRequestCallback trackingCallback = new TrackingRequestCallback(invocationCount, methodName, original);
 
-        RPCTracker.getInstance().register(trackingCallback);
+        TrackerEventDispatcher.getInstance().fireTrackerChanged(new TrackerChangedEvent(
+            trackingCallback, TrackerChangedEvent.CALL_REGISTER));
 
         return trackingCallback;
     }

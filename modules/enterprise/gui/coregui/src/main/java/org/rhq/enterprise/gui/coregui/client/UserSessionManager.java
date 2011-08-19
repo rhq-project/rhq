@@ -126,37 +126,6 @@ public class UserSessionManager {
         }
     };
 
-    private static volatile String requestId;
-
-    public static String getRequestId() {
-        return requestId;
-    }
-
-    public static void setRequestId(String requestId) {
-        UserSessionManager.requestId = requestId;
-    }
-
-    public static void makeRequestId() {
-        setRequestId(Long.toHexString((long) (Random.nextDouble() * Long.MAX_VALUE)));
-    }
-
-    private static final Event.NativePreviewHandler PREVIEW_HANDLER;
-
-    static {
-        PREVIEW_HANDLER = new Event.NativePreviewHandler() {
-            @Override
-            public void onPreviewNativeEvent(Event.NativePreviewEvent event) {
-                switch (event.getTypeInt()) {
-                    case Event.ONCLICK:
-                    case Event.ONDBLCLICK:
-                        makeRequestId();
-                        break;
-                }
-            }
-        };
-        Event.addNativePreviewHandler(PREVIEW_HANDLER);
-    }
-
     enum State {
         IS_LOGGED_IN, //
         IS_REGISTERING, //

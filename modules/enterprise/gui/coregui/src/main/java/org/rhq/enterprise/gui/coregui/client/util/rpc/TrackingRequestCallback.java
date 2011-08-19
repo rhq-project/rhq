@@ -23,6 +23,7 @@ import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.Response;
 
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 
 /**
@@ -50,10 +51,16 @@ public class TrackingRequestCallback implements RequestCallback {
             Log.trace(toString() + ": onError " + exception.getMessage());
         }
 
-        RemoteServiceStatistics.record(getName(), getAge());
-        RPCTracker.getInstance().failCall(this);
-        if (UserSessionManager.isLoggedIn()) { // only handle failures if user still logged in
-            callback.onError(request, exception);
+        try {
+            TrackerEventDispatcher.getInstance().fireStatusUpdate(
+                new TrackerStatusEvent(this, getName(), getAge(),
+                    TrackerStatusEvent.RECV_FAILURE));
+            if (UserSessionManager.isLoggedIn()) { // only handle failures if user still logged in
+                callback.onError(request, exception);
+            }
+        } finally {
+            TrackerEventDispatcher.getInstance().fireTrackerChanged(
+                new TrackerChangedEvent(this, TrackerChangedEvent.CALL_COMPLETE));
         }
     }
 
@@ -62,21 +69,32 @@ public class TrackingRequestCallback implements RequestCallback {
             Log.trace(toString() + ": " + response.getStatusCode() + "/" + response.getStatusText());
         }
 
-        RemoteServiceStatistics.record(getName(), getAge());
-        if (STATUS_CODE_OK == response.getStatusCode()) {
-            final String RHQ_REQUEST_ID_HEADER = "x-rhq-request-id";
-            String requestId = response.getHeader(RHQ_REQUEST_ID_HEADER);
-            if (requestId != null && !requestId.equals(UserSessionManager.getRequestId())) {
-                // user moved away from the page, so drop the response...
-                return;
+        try {
+            if (STATUS_CODE_OK == response.getStatusCode()) {
+                final String RHQ_REQUEST_ID_HEADER = "x-rhq-request-id";
+                String requestId = response.getHeader(RHQ_REQUEST_ID_HEADER);
+                if (requestId != null && !requestId.equals(CoreGUI.getRequestId())) {
+                    TrackerEventDispatcher.getInstance().fireStatusUpdate(
+                        new TrackerStatusEvent(this, getName(), getAge(),
+                            TrackerStatusEvent.VIEW_CHANGED));
+                } else {
+                    TrackerEventDispatcher.getInstance().fireStatusUpdate(
+                        new TrackerStatusEvent(this, getName(), getAge(),
+                            TrackerStatusEvent.RECV_SUCCESS));
+
+                    callback.onResponseReceived(request, response);
+                }
+            } else {
+                TrackerEventDispatcher.getInstance().fireStatusUpdate(
+                    new TrackerStatusEvent(this, getName(), getAge(),
+                        TrackerStatusEvent.RECV_FAILURE));
+                if (UserSessionManager.isLoggedIn()) { // only handle failures if user still logged in
+                    callback.onResponseReceived(request, response);
+                }
             }
-            RPCTracker.getInstance().succeedCall(this);
-            callback.onResponseReceived(request, response);
-        } else {
-            RPCTracker.getInstance().failCall(this);
-            if (UserSessionManager.isLoggedIn()) { // only handle failures if user still logged in
-                callback.onResponseReceived(request, response);
-            }
+        } finally {
+            TrackerEventDispatcher.getInstance().fireTrackerChanged(
+                new TrackerChangedEvent(this, TrackerChangedEvent.CALL_COMPLETE));
         }
     }
 

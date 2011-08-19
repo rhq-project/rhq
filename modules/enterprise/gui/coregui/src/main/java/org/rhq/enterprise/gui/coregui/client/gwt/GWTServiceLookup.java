@@ -245,7 +245,7 @@ public class GWTServiceLookup {
             }
 
             final String RHQ_REQUEST_ID_HEADER = "x-rhq-request-id";
-            final String requestId = UserSessionManager.getRequestId();
+            final String requestId = CoreGUI.getRequestId();
             if (requestId != null) {
                 rb.setHeader(RHQ_REQUEST_ID_HEADER, requestId);
             }

@@ -31,37 +31,61 @@ import org.rhq.enterprise.gui.coregui.client.util.rpc.RemoteServiceStatistics.Re
 public class RemoteServiceStatistics {
 
     public static class Record {
+
         private String serviceName;
         private String methodName;
         private List<Long> data = new ArrayList<Long>();
 
-        private Record(String remoteService, long millis) {
+        private int success;
+        private int errored;
+        private int dropped;
+
+        private Record(String remoteService) {
             // remoteService format "{ServiceName}_Proxy.{MethodName}"
             this.serviceName = remoteService.substring(0, remoteService.indexOf("_Proxy"));
             this.methodName = remoteService.substring(remoteService.indexOf('.') + 1);
-            this.data.add(millis);
         }
 
-        private void record(long millis) {
+        private void record(long millis, int status) {
             this.data.add(millis);
+            switch(status) {
+                case TrackerStatusEvent.VIEW_CHANGED:
+                    dropped++;
+                    break;
+                case TrackerStatusEvent.RECV_FAILURE:
+                    errored++;
+                    break;
+                case TrackerStatusEvent.RECV_SUCCESS:
+                    success++;
+                    break;
+            }
         }
 
         public Summary getSummary() {
-            return new Summary(serviceName, methodName, data);
+            return new Summary(serviceName, methodName, data, success, errored, dropped);
         }
 
         public static class Summary {
             public final String serviceName;
             public final String methodName;
+
+            private final int success;
+            private final int errored;
+            private final int dropped;
+
             public final int count;
+
             public final long slowest;
             public final long average;
             public final long fastest;
             public final long stddev;
 
-            private Summary(String serviceName, String methodName, List<Long> data) {
+            private Summary(String serviceName, String methodName, List<Long> data, int success, int errored, int dropped) {
                 this.serviceName = serviceName;
                 this.methodName = methodName;
+                this.success = success;
+                this.errored = errored;
+                this.dropped = dropped;
                 this.count = data.size();
 
                 if (!data.isEmpty()) {
@@ -102,6 +126,9 @@ public class RemoteServiceStatistics {
                     builder.append("empty");
                 } else {
                     builder.append("count=").append(count).append(',');
+                    builder.append("success=").append(success).append(',');
+                    builder.append("errored=").append(errored).append(',');
+                    builder.append("dropped=").append(dropped).append(',');
                     builder.append("slowest=").append(slowest).append(',');
                     builder.append("average=").append(average).append(',');
                     builder.append("fastest=").append(fastest).append(',');
@@ -120,42 +147,30 @@ public class RemoteServiceStatistics {
     }
 
     public static void record(String remoteService, long millis) {
-        Record record = statistics.get(remoteService);
-        if (record == null) {
-            record = new Record(remoteService, millis);
-            statistics.put(remoteService, record);
-        } else {
-            record.record(millis);
-        }
+        record(remoteService, millis, TrackerStatusEvent.RECV_SUCCESS);
     }
 
-    public static String recordAndPrint(String remoteService, long millis) {
-        record(remoteService, millis);
-        return print(remoteService);
+    public static void record(String remoteService, long millis, int status) {
+        Record record = statistics.get(remoteService);
+        if (record == null) {
+            record = new Record(remoteService);
+            statistics.put(remoteService, record);
+        }
+        record.record(millis, status);
     }
 
     public static String print(String remoteService) {
         Record record = statistics.get(remoteService);
         if (record == null) {
-            record = new Record(remoteService, 0);
+            record = new Record(remoteService);
         }
         return "RemoteServiceStatistics: " + remoteService + ": " + record.getSummary();
-    }
-
-    public static List<String> printAll() {
-        List<String> stats = new ArrayList<String>();
-
-        for (String remoteService : statistics.keySet()) {
-            stats.add(print(remoteService));
-        }
-
-        return stats;
     }
 
     public static Summary get(String remoteService) {
         Record stat = statistics.get(remoteService);
         if (stat == null) {
-            stat = new Record(remoteService, 0);
+            stat = new Record(remoteService);
         }
         return stat.getSummary();
     }
@@ -172,5 +187,17 @@ public class RemoteServiceStatistics {
 
     public static void clearAll() {
         statistics.clear();
+    }
+
+    public static class RemoteServiceStatisticsListenerAdapter implements TrackerStatusEventListener {
+        @Override
+        public void onStatusChanged(TrackerStatusEvent event) {
+            record(event.getName(), event.getAge(), event.getKind());
+        }
+    }
+
+    // Not very glamorous, but this class has static data.
+    public static void registerListeners(TrackerEventDispatcher dispatcher) {
+        dispatcher.addTrackerStatusEventListener(new RemoteServiceStatisticsListenerAdapter());
     }
 }

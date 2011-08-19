@@ -27,11 +27,7 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.http.client.URL;
-import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.History;
-import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.*;
 import com.google.gwt.user.client.Window.Location;
 import com.smartgwt.client.core.KeyIdentifier;
 import com.smartgwt.client.types.Overflow;
@@ -304,12 +300,24 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
         }
     }
 
+    private static volatile int requestId;
+
+    public static String getRequestId() {
+        return Integer.toString(requestId);
+    }
+
+    public static void makeRequestId() {
+        requestId++;
+    }
+
     public void onValueChange(ValueChangeEvent<String> stringValueChangeEvent) {
         currentView = URL.decodeComponent(stringValueChangeEvent.getValue());
         Log.debug("Handling history event for view: " + currentView);
 
         currentViewPath = new ViewPath(currentView);
         coreGUI.rootCanvas.renderView(currentViewPath);
+
+        makeRequestId();
     }
 
     public static void refresh() {

@@ -24,6 +24,7 @@ import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupDetailView;
+//import org.rhq.enterprise.gui.coregui.client.util.rpc.*;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 
 /**
@@ -36,6 +37,17 @@ public class ResourceTopView extends LocatableHLayout implements BookmarkableVie
     private ResourceTreeView treeView;
     private ResourceDetailView detailView;
     private ResourceGroupDetailView autoGroupDetailView;
+/*
+
+    private class InnerTrackerStatusEventListener implements TrackerStatusEventListener {
+        @Override
+        public void onStatusChanged(TrackerStatusEvent event) {
+            if (treeView.isDisabled() && event.getKind() == TrackerStatusEvent.VIEW_CHANGED) {
+                treeView.enable();
+            }
+        }
+    }
+*/
 
     public ResourceTopView(String locatorId) {
         super(locatorId);
@@ -50,6 +62,8 @@ public class ResourceTopView extends LocatableHLayout implements BookmarkableVie
         addMember(contentCanvas);
 
         setToDetailView();
+
+//        TrackerEventDispatcher.getInstance().addTrackerStatusEventListener(new InnerTrackerStatusEventListener());
     }
 
     public void setContent(Canvas newContent) {
@@ -91,6 +105,8 @@ public class ResourceTopView extends LocatableHLayout implements BookmarkableVie
 
     public void renderView(ViewPath viewPath) {
         // disable the tree until it's safe to click a new node to prevent fast-click issues
+        // TODO  - how in the world do we cross from the largely static to instance spheres to dispatch events without leaking memory?
+        // TODO - add to all canvases an addRpcEventHandler method?
         this.treeView.disable();
 
         if ("AutoGroup".equals(viewPath.getCurrent().getPath())) {

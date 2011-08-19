@@ -18,30 +18,34 @@
  */
 package org.rhq.enterprise.gui.coregui.client.util.rpc;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import com.allen_sauer.gwt.log.client.Log;
 import com.smartgwt.client.widgets.Img;
-
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
 
+import java.util.HashSet;
+import java.util.Set;
+
 /**
- * @author Greg Hinkle
- * @author Joseph Marques
+ * Updates the activity indicator based upon tracked callback status and life-cycle.
  */
-public class RPCTracker {
+public class ActivityIndicator implements TrackerChangedEventListener, TrackerStatusEventListener {
+
+    private static class LazyHolder {
+        public static final ActivityIndicator INSTANCE = new ActivityIndicator();
+    }
+
+    public static ActivityIndicator getInstance() {
+        return LazyHolder.INSTANCE;
+    }
 
     private static final Messages MSG = CoreGUI.getMessages();
-
-    private static final RPCTracker INSTANCE = new RPCTracker();
 
     private Set<TrackingRequestCallback> inProgress = new HashSet<TrackingRequestCallback>();
 
     private Img activityIndicator;
 
-    private RPCTracker() {
+    private ActivityIndicator() {
         activityIndicator = new Img("/coregui/images/ajax-loader.gif", 16, 16);
         activityIndicator.setZIndex(10000);
         activityIndicator.setLeft(10);
@@ -49,29 +53,9 @@ public class RPCTracker {
         activityIndicator.draw();
     }
 
-    public static RPCTracker getInstance() {
-        return INSTANCE;
-    }
-
-    public void register(TrackingRequestCallback callback) {
-        Log.debug("RPCTracker register: " + callback);
-
-        inProgress.add(callback);
-        refresh();
-    }
-
-    public void failCall(TrackingRequestCallback callback) {
-        Log.trace("RPCTracker failure: " + callback);
-
-        inProgress.remove(callback);
-        refresh();
-    }
-
-    public void succeedCall(TrackingRequestCallback callback) {
-        Log.trace("RPCTracker success: " + callback);
-
-        inProgress.remove(callback);
-        refresh();
+    public static void registerListeners(TrackerEventDispatcher dispatcher) {
+        dispatcher.addTrackerChangedEventListener(getInstance());
+        dispatcher.addTrackerStatusEventListener(getInstance());
     }
 
     public int getQueueDepth() {
@@ -97,4 +81,32 @@ public class RPCTracker {
         }
     }
 
+    @Override
+    public void onTrackerChanged(TrackerChangedEvent event) {
+        TrackingRequestCallback callback = event.getCallback();
+        if (event.getKind() == TrackerChangedEvent.CALL_REGISTER) {
+            Log.debug("RPCTracker added: " + callback);
+            inProgress.add(callback);
+        } else {
+            Log.debug("RPCTracker removed: " + callback);
+            inProgress.remove(callback);
+        }
+        refresh();
+    }
+
+    @Override
+    public void onStatusChanged(TrackerStatusEvent event) {
+        TrackingRequestCallback callback = event.getCallback();
+        switch (event.getKind()) {
+            case TrackerStatusEvent.RECV_SUCCESS:
+                Log.trace("RPCTracker success: " + callback);
+                break;
+            case TrackerStatusEvent.VIEW_CHANGED:
+                Log.trace("RPCTracker dropped: " + callback);
+                break;
+            case TrackerStatusEvent.RECV_FAILURE:
+                Log.trace("RPCTracker failure: " + callback);
+                break;
+        }
+    }
 }

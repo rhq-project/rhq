@@ -61,6 +61,9 @@ public class TestRemoteServiceStatisticsView extends Table {
     private static final String FIELD_SERVICENAME = "serviceName";
     private static final String FIELD_METHODNAME = "methodName";
     private static final String FIELD_COUNT = "count";
+    private static final String FIELD_SUCCESS = "success";
+    private static final String FIELD_DROPPED = "dropped";
+    private static final String FIELD_ERRORED = "errored";
     private static final String FIELD_SLOWEST = "slowest";
     private static final String FIELD_AVERAGE = "average";
     private static final String FIELD_FASTEST = "fastest";
@@ -91,6 +94,9 @@ public class TestRemoteServiceStatisticsView extends Table {
         ListGridField serviceName = new ListGridField(FIELD_SERVICENAME, "Service Name");
         ListGridField methodName = new ListGridField(FIELD_METHODNAME, "Method Name");
         ListGridField count = new ListGridField(FIELD_COUNT, "Count");
+        ListGridField success = new ListGridField(FIELD_COUNT, "Success");
+        ListGridField dropped = new ListGridField(FIELD_COUNT, "Dropped");
+        ListGridField errored = new ListGridField(FIELD_COUNT, "Errored");
         ListGridField slowest = new ListGridField(FIELD_SLOWEST, "Slowest (ms)");
         ListGridField average = new ListGridField(FIELD_AVERAGE, "Average (ms)");
         ListGridField fastest = new ListGridField(FIELD_FASTEST, "Fastest (ms)");
@@ -104,13 +110,16 @@ public class TestRemoteServiceStatisticsView extends Table {
 
         serviceName.setWidth("20%");
         methodName.setWidth("*");
-        count.setWidth("8%");
-        slowest.setWidth("13%");
-        average.setWidth("13%");
-        fastest.setWidth("13%");
-        stddev.setWidth("8%");
+        count.setWidth("5%");
+        success.setWidth("5%");
+        dropped.setWidth("5%");
+        errored.setWidth("5%");
+        slowest.setWidth("5%");
+        average.setWidth("5%");
+        fastest.setWidth("5%");
+        stddev.setWidth("5%");
 
-        getListGrid().setFields(serviceName, methodName, count, slowest, average, fastest, stddev);
+        getListGrid().setFields(serviceName, methodName, count, success, dropped, errored, slowest, average, fastest, stddev);
         refresh();
 
         addTableAction(extendLocatorId("deleteAll"), MSG.common_button_delete_all(), MSG.common_msg_areYouSure(),
@@ -130,6 +139,9 @@ public class TestRemoteServiceStatisticsView extends Table {
                     csv.append(FIELD_SERVICENAME).append(',') //
                         .append(FIELD_METHODNAME).append(',') //
                         .append(FIELD_COUNT).append(',') //
+                        .append(FIELD_SUCCESS).append(',') //
+                        .append(FIELD_DROPPED).append(',') //
+                        .append(FIELD_ERRORED).append(',') //
                         .append(FIELD_SLOWEST).append(',') //
                         .append(FIELD_AVERAGE).append(',') //
                         .append(FIELD_FASTEST).append(',') //
@@ -142,6 +154,9 @@ public class TestRemoteServiceStatisticsView extends Table {
                         csv.append(record.getAttribute(FIELD_SERVICENAME)).append(',') //
                             .append(record.getAttribute(FIELD_METHODNAME)).append(',') //
                             .append(record.getAttribute(FIELD_COUNT)).append(',') //
+                            .append(record.getAttribute(FIELD_SUCCESS)).append(',') //
+                            .append(record.getAttribute(FIELD_DROPPED)).append(',') //
+                            .append(record.getAttribute(FIELD_ERRORED)).append(',') //
                             .append(record.getAttribute(FIELD_SLOWEST)).append(',') //
                             .append(record.getAttribute(FIELD_AVERAGE)).append(',') //
                             .append(record.getAttribute(FIELD_FASTEST)).append(',') //

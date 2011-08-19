@@ -526,8 +526,8 @@ public class LoginView extends LocatableCanvas {
             requestBuilder.setHeader("Content-Type", "application/x-www-form-urlencoded");
             // URL-encode the username and password in case they contain URL special characters ('?', '&', '%', '+',
             // etc.), which would corrupt the request if not encoded.
-            String encodedUsername = URL.encode(username);
-            String encodedPassword = URL.encode(password);
+            String encodedUsername = URL.encodeComponent(username);
+            String encodedPassword = URL.encodeComponent(password);
             String requestData = "j_username=" + encodedUsername + "&j_password=" + encodedPassword;
             requestBuilder.setRequestData(requestData);
             requestBuilder.setCallback(new RequestCallback() {

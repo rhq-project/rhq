@@ -59,7 +59,7 @@ public class HostControllerComponent extends BaseServerComponent implements Oper
             Operation op = new Operation("shutdown","host",domainHost);
             Result res = getASConnection().execute(op);
 
-            postProcessResult(name,res);
+            return postProcessResult(name,res);
         }
 
         // Defer other stuff to the base component for now

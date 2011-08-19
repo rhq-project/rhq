@@ -20,6 +20,7 @@ package org.rhq.enterprise.server.drift;
 
 import java.io.File;
 import java.io.InputStream;
+import java.util.List;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -53,6 +54,7 @@ import org.rhq.core.domain.drift.DriftConfigurationComparator.CompareMode;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition;
 import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.DriftSnapshot;
+import org.rhq.core.domain.drift.FileDiffReport;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.RHQConstants;
@@ -67,6 +69,10 @@ import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 import org.rhq.enterprise.server.util.LookupUtil;
 
+import difflib.DiffUtils;
+import difflib.Patch;
+
+import static java.util.Arrays.asList;
 import static javax.ejb.TransactionAttributeType.NOT_SUPPORTED;
 import static javax.ejb.TransactionAttributeType.REQUIRES_NEW;
 
@@ -332,9 +338,9 @@ public class DriftManagerBean implements DriftManagerLocal {
 
     @Override
     @TransactionAttribute(NOT_SUPPORTED)
-    public int purgeOrphanedDriftFiles(Subject subject) {
+    public int purgeOrphanedDriftFiles(Subject subject, long purgeMillis) {
         DriftServerPluginFacet driftServerPlugin = getServerPlugin();
-        return driftServerPlugin.purgeOrphanedDriftFiles(subject);
+        return driftServerPlugin.purgeOrphanedDriftFiles(subject, purgeMillis);
     }
 
     @Override
@@ -342,6 +348,24 @@ public class DriftManagerBean implements DriftManagerLocal {
     public String getDriftFileBits(String hash) {
         DriftServerPluginFacet driftServerPlugin = getServerPlugin();
         return driftServerPlugin.getDriftFileBits(hash);
+    }
+
+    @Override
+    public FileDiffReport generateUnifiedDiff(Drift drift) {
+        String oldContent = getDriftFileBits(drift.getOldDriftFile().getHashId());
+        List<String> oldList = asList(oldContent.split("\\n"));
+        String newContent = getDriftFileBits(drift.getNewDriftFile().getHashId());
+        List<String> newList = asList(newContent.split("\\n"));
+
+        Patch patch = DiffUtils.diff(oldList, newList);
+        List<String> deltas = DiffUtils.generateUnifiedDiff(drift.getPath(), drift.getPath(), oldList, patch, 10);
+
+        return new FileDiffReport(patch.getDeltas().size(), deltas);
+    }
+
+    @Override
+    public PageList<Drift> findHistory(Drift drift) {
+        return null;
     }
 
     @Override

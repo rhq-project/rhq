@@ -342,6 +342,14 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
             updateExistingSchedules);
     }
 
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    public void updateDefaultCollectionIntervalAndEnablementForMeasurementDefinitions(Subject subject,
+        int[] measurementDefinitionIds, long collectionInterval, boolean enable, boolean updateExistingSchedules) {
+
+        modifyDefaultCollectionIntervalForMeasurementDefinitions(subject, measurementDefinitionIds, enable,
+            collectionInterval, updateExistingSchedules);
+    }
+
     /**
      * Updates the default enablement and/or collection intervals (i.e. metric templates) for the given measurement
      * definitions. If updateExistingSchedules is true, the schedules for the corresponding metrics or all inventoried

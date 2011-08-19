@@ -26,7 +26,9 @@ import javax.ejb.Local;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.DriftConfigurationCriteria;
+import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftConfiguration;
+import org.rhq.core.domain.drift.FileDiffReport;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginFacet;
 
@@ -104,9 +106,10 @@ public interface DriftManagerLocal extends DriftServerPluginFacet, DriftManagerR
      * to help reclaim space on the backend.
      * 
      * @param subject
+     * @param purgeMillis only those unused drift files that are older than this (in epoch millis) will be purged.
      * @return number of orphaned drife files that were removed
      */
-    int purgeOrphanedDriftFiles(Subject subject);
+    int purgeOrphanedDriftFiles(Subject subject, long purgeMillis);
 
     /**
      * Returns the content associated with the specified hash as a string
@@ -115,4 +118,8 @@ public interface DriftManagerLocal extends DriftServerPluginFacet, DriftManagerR
      * @return The content as a string
      */
     String getDriftFileBits(String hash);
+
+    FileDiffReport generateUnifiedDiff(Drift drift);
+
+    PageList<Drift> findHistory(Drift drift);
 }

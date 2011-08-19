@@ -438,6 +438,11 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
         return MSGCONST;
     }
 
+    public void reset() {
+        messageCenter.reset();
+        footer.reset();
+    }
+
     private class RootCanvas extends VLayout implements BookmarkableView {
         private ViewId currentViewId;
         private Canvas currentCanvas;

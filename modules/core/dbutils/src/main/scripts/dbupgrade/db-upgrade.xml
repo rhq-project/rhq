@@ -3616,6 +3616,16 @@
                     </statement>
                 </schema-directSQL>
             </schemaSpec>
+
+            <schemaSpec version="2.114">
+                <schema-directSQL>
+                    <statement desc="Adding drift file purge system setting">
+                        INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value)
+                        VALUES (58, 'DRIFT_FILE_PURGE', '2678400000', '2678400000')
+                    </statement>
+                </schema-directSQL>
+            </schemaSpec>
+
         </dbupgrade>
     </target>
 </project>

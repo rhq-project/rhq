@@ -222,7 +222,7 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
     }
 
     @Override
-    public int purgeOrphanedDriftFiles(Subject subject) {
+    public int purgeOrphanedDriftFiles(Subject subject, long purgeMillis) {
         // TODO implement me!
         return 0;
     }

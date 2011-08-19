@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,22 +17,32 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.enterprise.server.sync.test;
+package org.rhq.core.domain.drift;
 
-import org.rhq.enterprise.server.sync.NoSingleEntity;
-import org.rhq.enterprise.server.sync.exporters.Exporter;
-import org.rhq.enterprise.server.sync.exporters.ExportingIterator;
+import java.io.Serializable;
+import java.util.List;
 
-public class DummyExporter<T> implements Exporter<NoSingleEntity, T> {
+public class FileDiffReport implements Serializable {
+    private static final long serialVersionUID = 1L;
 
-    @Override
-    public String getNotes() {
-        return null;
+    private int changes;
+
+    List<String> diff;
+
+    public FileDiffReport() {
     }
 
-    @Override
-    public ExportingIterator<T> getExportingIterator() {
-        return null;
+    public FileDiffReport(int numChanges, List<String> diff) {
+        changes = numChanges;
+        this.diff = diff;
     }
-    
+
+    public int getNumberOfChanges() {
+        return changes;
+    }
+
+    public List<String> getDiff() {
+        return diff;
+    }
+
 }

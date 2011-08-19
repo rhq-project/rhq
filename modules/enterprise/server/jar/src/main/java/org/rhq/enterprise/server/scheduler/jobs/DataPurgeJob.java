@@ -121,7 +121,7 @@ public class DataPurgeJob extends AbstractStatefulJob {
         purgeOrphanedAlertNotifications(LookupUtil.getAlertNotificationManager());
         purgeMeasurementTraitData(LookupUtil.getMeasurementDataManager(), systemConfig);
         purgeAvailabilityData(LookupUtil.getAvailabilityManager(), systemConfig);
-        purgeOrphanedDriftFiles(LookupUtil.getDriftManager());
+        purgeOrphanedDriftFiles(LookupUtil.getDriftManager(), systemConfig);
     }
 
     private void purgeMeasurementTraitData(MeasurementDataManagerLocal measurementDataManager, Properties systemConfig) {
@@ -254,13 +254,16 @@ public class DataPurgeJob extends AbstractStatefulJob {
         }
     }
 
-    private void purgeOrphanedDriftFiles(DriftManagerLocal driftManager) {
+    private void purgeOrphanedDriftFiles(DriftManagerLocal driftManager, Properties systemConfig) {
         long timeStart = System.currentTimeMillis();
         LOG.info("Drift file orphan purge starting at " + new Date(timeStart));
         int orphansPurged = 0;
 
         try {
-            orphansPurged = driftManager.purgeOrphanedDriftFiles(LookupUtil.getSubjectManager().getOverlord());
+            long threshold = timeStart - Long.parseLong(systemConfig.getProperty(RHQConstants.DriftFilePurge));
+            LOG.info("Purging orphaned drift files older than " + new Date(threshold));
+            orphansPurged = driftManager.purgeOrphanedDriftFiles(LookupUtil.getSubjectManager().getOverlord(),
+                threshold);
         } catch (Exception e) {
             LOG.error("Failed to purge orphaned drift files. Cause: " + e, e);
         } finally {

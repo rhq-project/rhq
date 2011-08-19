@@ -20,25 +20,41 @@
 
 package org.rhq.enterprise.gui.coregui.client.drift;
 
-import static org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter.DATE_TIME_FORMAT_FULL;
-
 import java.util.LinkedHashMap;
+import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.form.fields.CanvasItem;
+import com.smartgwt.client.widgets.form.fields.FormItem;
+import com.smartgwt.client.widgets.form.fields.LinkItem;
+import com.smartgwt.client.widgets.form.fields.SpacerItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
+import com.smartgwt.client.widgets.form.fields.TextAreaItem;
+import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
+import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
+import com.smartgwt.client.widgets.layout.VLayout;
 
+import org.rhq.core.domain.criteria.GenericDriftChangeSetCriteria;
 import org.rhq.core.domain.criteria.GenericDriftCriteria;
 import org.rhq.core.domain.drift.Drift;
+import org.rhq.core.domain.drift.DriftChangeSet;
+import org.rhq.core.domain.drift.FileDiffReport;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.PopupWindow;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
+import org.rhq.enterprise.gui.coregui.client.gwt.DriftGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
+
+import static org.rhq.core.domain.drift.DriftCategory.FILE_CHANGED;
+import static org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter.DATE_TIME_FORMAT_FULL;
 
 /**
  * @author Jay Shaughnessy
@@ -60,10 +76,12 @@ public class DriftDetailsView extends LocatableVLayout {
     }
 
     private void show(String driftId) {
+        final DriftGWTServiceAsync driftService = GWTServiceLookup.getDriftService();
+
         GenericDriftCriteria criteria = new GenericDriftCriteria();
         criteria.addFilterId(driftId);
         criteria.fetchChangeSet(true);
-        GWTServiceLookup.getDriftService().findDriftsByCriteria(criteria,
+        driftService.findDriftsByCriteria(criteria,
             new AsyncCallback<PageList<? extends Drift>>() {
                 @Override
                 public void onSuccess(PageList<? extends Drift> result) {
@@ -73,8 +91,28 @@ public class DriftDetailsView extends LocatableVLayout {
                                 + "] results. Should have been 1. The details shown here might not be correct.",
                                 Severity.Warning));
                     }
-                    Drift drift = result.get(0);
-                    show(drift);
+                    final Drift drift = result.get(0);
+                    if (drift.getCategory() == FILE_CHANGED) {
+                        GenericDriftChangeSetCriteria criteria = new GenericDriftChangeSetCriteria();
+                        criteria.addFilterResourceId(drift.getChangeSet().getResourceId());
+                        criteria.addFilterDriftConfigurationId(drift.getChangeSet().getDriftConfigurationId());
+                        criteria.addFilterVersion(Integer.toString(drift.getChangeSet().getVersion() - 1));
+
+                        driftService.findDriftChangeSetsByCriteria(criteria,
+                            new AsyncCallback<PageList<? extends DriftChangeSet>>() {
+                            @Override
+                            public void onFailure(Throwable caught) {
+                                CoreGUI.getErrorHandler().handleError("Failed to load change set", caught);
+                            }
+
+                            @Override
+                            public void onSuccess(PageList<? extends DriftChangeSet> changeSets) {
+                                show(drift, changeSets.get(0));
+                            }
+                        });
+                    } else {
+                        show(drift, null);
+                    }
                 }
 
                 @Override
@@ -84,7 +122,7 @@ public class DriftDetailsView extends LocatableVLayout {
             });
     }
 
-    private void show(Drift drift) {
+    private void show(final Drift drift, final DriftChangeSet previousVersion) {
         for (Canvas child : getMembers()) {
             removeMember(child);
             child.destroy();
@@ -113,6 +151,9 @@ public class DriftDetailsView extends LocatableVLayout {
         driftForm.setIsGroup(true);
         driftForm.setGroupTitle(MSG.view_drift());
         driftForm.setWrapItemTitles(false);
+        driftForm.setNumCols(4);
+
+        SpacerItem spacer = new SpacerItem();
 
         StaticTextItem id = new StaticTextItem("id", MSG.common_title_id());
         id.setValue(drift.getId());
@@ -138,30 +179,183 @@ public class DriftDetailsView extends LocatableVLayout {
         category.setShowIcons(true);
 
         StaticTextItem oldFile = new StaticTextItem("oldFile", MSG.view_drift_table_oldFile());
+        FormItem oldFileLink = null;
+
         StaticTextItem newFile = new StaticTextItem("newFile", MSG.view_drift_table_newFile());
+        FormItem newFileLink = null;
 
         switch (drift.getCategory()) {
         case FILE_ADDED:
             category.setValue(DriftDataSource.CATEGORY_ICON_ADD);
             oldFile.setValue(MSG.common_label_none());
+            oldFileLink = spacer;
             newFile.setValue(drift.getNewDriftFile().getHashId());
+            newFileLink = createViewFileLink(drift.getNewDriftFile().getHashId(), drift.getPath(),
+                drift.getChangeSet().getVersion());
             break;
 
         case FILE_CHANGED:
             category.setValue(DriftDataSource.CATEGORY_ICON_CHANGE);
             oldFile.setValue(drift.getOldDriftFile().getHashId());
+            oldFileLink = createViewFileLink(drift.getOldDriftFile().getHashId(), drift.getPath(),
+                previousVersion.getVersion());
             newFile.setValue(drift.getNewDriftFile().getHashId());
+            newFileLink = createViewFileLink(drift.getNewDriftFile().getHashId(), drift.getPath(),
+                drift.getChangeSet().getVersion());
             break;
 
         case FILE_REMOVED:
             category.setValue(DriftDataSource.CATEGORY_ICON_REMOVE);
             oldFile.setValue(drift.getOldDriftFile().getHashId());
+            oldFileLink = createViewFileLink(drift.getOldDriftFile().getHashId(), drift.getPath(),
+                drift.getChangeSet().getVersion());
             newFile.setValue(MSG.common_label_none());
+            newFileLink = spacer;
             break;
         }
 
-        driftForm.setItems(id, path, category, timestamp, oldFile, newFile);
+        if (drift.getCategory() == FILE_CHANGED) {
+            StaticTextItem numberOfChanges = new StaticTextItem("numberOfChanges", "Number of Changes");
+            numberOfChanges.setValue("Loading...");
+
+            LinkItem viewDiffLink = new LinkItem("viewDiff");
+            viewDiffLink.setLinkTitle("(view diff)");
+            viewDiffLink.setShowTitle(false);
+            viewDiffLink.setDisabled(true);
+
+            driftForm.setItems(id, spacer, path, spacer, category, spacer, timestamp, spacer, oldFile, oldFileLink,
+            newFile, newFileLink, numberOfChanges, viewDiffLink);
+
+            generateDiff(drift, previousVersion.getVersion(), numberOfChanges, viewDiffLink);
+        } else {
+            driftForm.setItems(id, spacer, path, spacer, category, spacer, timestamp, spacer, oldFile, oldFileLink,
+            newFile, newFileLink);
+        }
 
         addMember(driftForm);
     }
+
+    private LinkItem createViewFileLink(final String hash, final String path, final int version) {
+        LinkItem link = new LinkItem(hash + "_fileLink");
+        link.setShowTitle(false);
+        link.setLinkTitle("(view)");
+
+        link.addClickHandler(new ClickHandler() {
+            @Override
+            public void onClick(ClickEvent clickEvent) {
+                GWTServiceLookup.getDriftService().getDriftFileBits(hash, new AsyncCallback<String>() {
+                    @Override
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError("Failed to load file", caught);
+                    }
+
+                    @Override
+                    public void onSuccess(String contents) {
+                        LocatableWindow fileViewer = createFileViewer(contents, path, version);
+                        fileViewer.show();
+                    }
+                });
+            }
+        });
+
+        return link;
+    }
+
+    private LocatableWindow createFileViewer(String contents, String path, int version) {
+        VLayout layout = new VLayout();
+        DynamicForm form = new DynamicForm();
+        form.setWidth100();
+        form.setHeight100();
+
+        TextAreaItem textArea = new TextAreaItem();
+        textArea.setShowTitle(false);
+        textArea.setColSpan(2);
+        textArea.setValue(contents);
+        textArea.setWidth("*");
+        textArea.setHeight("*");
+
+        form.setItems(textArea);
+        layout.addMember(form);
+
+        PopupWindow window = new PopupWindow("fileViewer", layout);
+        window.setIsModal(false);
+        window.setTitle(path + ":" + version);
+
+        return window;
+    }
+
+    private LocatableWindow createDiffViewer(String contents, String path, int oldVersion, int newVersion) {
+        VLayout layout = new VLayout();
+        DynamicForm form = new DynamicForm();
+        form.setWidth100();
+        form.setHeight100();
+
+        CanvasItem canvasItem = new CanvasItem();
+        canvasItem.setColSpan(2);
+        canvasItem.setShowTitle(false);
+        canvasItem.setWidth("*");
+        canvasItem.setHeight("*");
+
+        Canvas canvas = new Canvas();
+        canvas.setContents(contents);
+        canvasItem.setCanvas(canvas);
+
+        form.setItems(canvasItem);
+        layout.addMember(form);
+
+        PopupWindow window = new PopupWindow("diffViewer", layout);
+        window.setTitle(path + ":" + oldVersion + ":" + newVersion);
+        window.setIsModal(false);
+
+        return window;
+    }
+
+    private void generateDiff(final Drift drift, final int oldVersion, final StaticTextItem changes,
+        final LinkItem viewDiff) {
+        GWTServiceLookup.getDriftService().generateUnifiedDiff(drift, new AsyncCallback<FileDiffReport>() {
+            @Override
+            public void onFailure(Throwable caught) {
+                 CoreGUI.getErrorHandler().handleError("Failed to load change report", caught);
+            }
+
+            @Override
+            public void onSuccess(final FileDiffReport diffReport) {
+                changes.setValue(diffReport.getNumberOfChanges());
+                viewDiff.setDisabled(false);
+                viewDiff.addClickHandler(new ClickHandler() {
+                    @Override
+                    public void onClick(ClickEvent clickEvent) {
+                        int newVersion = drift.getChangeSet().getVersion();
+                        String diffContents = toHtml(diffReport.getDiff(), oldVersion, newVersion);
+
+                        //LocatableWindow window = createFileViewer(diffReport.getDiff());
+                        LocatableWindow window = createDiffViewer(diffContents, drift.getPath(), oldVersion, newVersion);
+                        window.show();
+                    }
+                });
+            }
+        });
+    }
+
+    private String toHtml(List<String> deltas, int oldVersion, int newVersion) {
+        StringBuilder diff = new StringBuilder();
+        diff.append("<font color=\"red\">").append(deltas.get(0)).append(":").append(oldVersion).append("</font><br/>");
+        diff.append("<font color=\"green\">").append(deltas.get(1)).append(":").append(newVersion)
+            .append("</font><br/>");
+
+        for (String line : deltas.subList(2, deltas.size())) {
+            if (line.startsWith("@@")) {
+                diff.append("<font color=\"purple\">").append(line).append("</font><br/>");
+            } else if (line.startsWith("-")) {
+                diff.append("<font color=\"red\">").append(line).append("</font><br/>");
+            } else if (line.startsWith("+")) {
+                diff.append("<font color=\"green\">").append(line).append("</font><br/>");
+            } else {
+                diff.append(line).append("<br/>");
+            }
+        }
+
+        return diff.toString();
+    }
+
 }

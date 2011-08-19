@@ -260,7 +260,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         Date next = scheduler.scheduleJob(jobDetail, trigger);
         ResourceOperationSchedule newSchedule = getResourceOperationSchedule(subject, jobDetail);
 
-        LOG.debug("Scheduled resource operation [" + newSchedule + "] - next fire time is [" + next + "]");
+        LOG.debug("Scheduled Resource operation [" + newSchedule + "] - next fire time is [" + next + "]");
 
         return newSchedule;
     }
@@ -439,12 +439,14 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
             JobDetail jobDetail = scheduler.getJobDetail(jobName, groupName);
             ResourceOperationSchedule sched = getResourceOperationSchedule(subject, jobDetail);
 
-            if (resourceId != sched.getResource().getId()) {
-                throw new IllegalStateException("Somehow a different resource [" + sched.getResource()
-                    + "] was scheduled in the same job group as resource [" + resource + "]");
-            }
+            if (sched != null) {
+                if (resourceId != sched.getResource().getId()) {
+                    throw new IllegalStateException("Somehow a different resource [" + sched.getResource()
+                        + "] was scheduled in the same job group as resource [" + resource + "]");
+                }
 
-            operationSchedules.add(sched);
+                operationSchedules.add(sched);
+            }
         }
 
         return operationSchedules;
@@ -462,12 +464,14 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
             JobDetail jobDetail = scheduler.getJobDetail(jobName, groupName);
             GroupOperationSchedule sched = getGroupOperationSchedule(subject, jobDetail);
 
-            if (groupId != sched.getGroup().getId()) {
-                throw new IllegalStateException("Somehow a different group [" + sched.getGroup()
-                    + "] was scheduled in the same job group as group [" + group + "]");
-            }
+            if (sched != null) {
+                if (groupId != sched.getGroup().getId()) {
+                    throw new IllegalStateException("Somehow a different group [" + sched.getGroup()
+                        + "] was scheduled in the same job group as group [" + group + "]");
+                }
 
-            operationSchedules.add(sched);
+                operationSchedules.add(sched);
+            }
         }
 
         return operationSchedules;
@@ -533,7 +537,13 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         sched.setSubject(subject);
         sched.setParameters(parameters);
         sched.setDescription(description);
+
         Trigger trigger = getTriggerOfJob(jobDetail);
+        if (trigger == null) {
+            // The job must have run for the last time - return null to inform the user the job is defunct.
+            return null;
+        }
+
         JobTrigger jobTrigger = convertToJobTrigger(trigger);
         sched.setJobTrigger(jobTrigger);
         sched.setNextFireTime(trigger.getNextFireTime());
@@ -564,7 +574,11 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         throws SchedulerException {
         JobId jobIdObject = new JobId(jobId);
         JobDetail jobDetail = scheduler.getJobDetail(jobIdObject.getJobName(), jobIdObject.getJobGroup());
-        return getResourceOperationSchedule(subject, jobDetail);
+        ResourceOperationSchedule resourceOperationSchedule = getResourceOperationSchedule(subject, jobDetail);
+        if (resourceOperationSchedule == null) {
+            throw new SchedulerException("The job with ID [" + jobId + "] is no longer scheduled.");
+        }
+        return resourceOperationSchedule;
     }
 
     public GroupOperationSchedule getGroupOperationSchedule(Subject subject, JobDetail jobDetail) {
@@ -626,7 +640,13 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         sched.setExecutionOrder(executionOrder);
         sched.setDescription(description);
         sched.setHaltOnFailure(haltOnFailure);
+
         Trigger trigger = getTriggerOfJob(jobDetail);
+        if (trigger == null) {
+            // The job must have run for the last time - return null to inform the user the job is defunct.
+            return null;
+        }
+
         JobTrigger jobTrigger = convertToJobTrigger(trigger);
         sched.setJobTrigger(jobTrigger);
         sched.setNextFireTime(trigger.getNextFireTime());
@@ -637,7 +657,11 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     public GroupOperationSchedule getGroupOperationSchedule(Subject subject, String jobId) throws SchedulerException {
         JobId jobIdObject = new JobId(jobId);
         JobDetail jobDetail = scheduler.getJobDetail(jobIdObject.getJobName(), jobIdObject.getJobGroup());
-        return getGroupOperationSchedule(subject, jobDetail);
+        GroupOperationSchedule groupOperationSchedule = getGroupOperationSchedule(subject, jobDetail);
+        if (groupOperationSchedule == null) {
+            throw new SchedulerException("The job with ID [" + jobId + "] is no longer scheduled.");
+        }
+        return groupOperationSchedule;
     }
 
     public OperationHistory getOperationHistoryByHistoryId(Subject subject, int historyId) {
@@ -1968,6 +1992,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return queryRunner.execute();
     }
 
+    @Nullable
     private Trigger getTriggerOfJob(JobDetail jobDetail) {
         Trigger[] triggers;
         try {
@@ -1975,12 +2000,12 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         } catch (SchedulerException e) {
             throw new RuntimeException("Failed to lookup trigger for job [" + jobDetail.getFullName() + "].", e);
         }
-        if (triggers.length == 0) {
-            throw new IllegalStateException("Job [" + jobDetail.getFullName() + "] has no triggers.");
-        }
         if (triggers.length > 1) {
             throw new IllegalStateException("Job [" + jobDetail.getFullName() + "] has more than one trigger: "
                 + Arrays.asList(triggers));
+        }
+        if (triggers.length == 0) {
+            return null;
         }
         return triggers[0];
     }

@@ -240,56 +240,51 @@ public class ResourceConfigurationUpdatesPortlet extends GroupConfigurationUpdat
                 //            }
                 //result timeframe if enabled
                 PropertySimple property = portletConfig.getSimple(Constant.METRIC_RANGE_ENABLE);
-                if (Boolean.valueOf(property.getBooleanValue())) {//then proceed setting
-
-                    boolean isAdvanced = false;
+                if (property != null && property.getBooleanValue()) {//then proceed setting
                     //detect type of widget[Simple|Advanced]
                     property = portletConfig.getSimple(Constant.METRIC_RANGE_BEGIN_END_FLAG);
-                    if (property != null) {
-                        isAdvanced = property.getBooleanValue();
-                    }
+                    boolean isAdvanced = (property != null) && property.getBooleanValue();
                     if (isAdvanced) {
                         //Advanced time settings
-                        property = portletConfig.getSimple(Constant.METRIC_RANGE);
-                        if (property != null) {
-                            String currentSetting = property.getStringValue();
-                            String[] range = currentSetting.split(",");
+                        String metricRange = portletConfig.getSimpleValue(Constant.METRIC_RANGE, null);
+                        if (metricRange != null) {
+                            String[] range = metricRange.split(",");
                             criteria.addFilterStartTime(Long.valueOf(range[0]));
                             criteria.addFilterEndTime(Long.valueOf(range[1]));
                         }
                     } else {
                         //Simple time settings
                         property = portletConfig.getSimple(Constant.METRIC_RANGE_LASTN);
-                        if (property != null) {
+                        if (property != null && property.getIntegerValue() != null) {
                             int lastN = property.getIntegerValue();
                             property = portletConfig.getSimple(Constant.METRIC_RANGE_UNIT);
-                            int lastUnits = property.getIntegerValue();
-                            ArrayList<Long> beginEnd = MeasurementUtility.calculateTimeFrame(lastN, Integer
-                                .valueOf(lastUnits));
-                            criteria.addFilterStartTime(Long.valueOf(beginEnd.get(0)));
-                            criteria.addFilterEndTime(Long.valueOf(beginEnd.get(1)));
+                            if (property != null && property.getIntegerValue() != null) {
+                                int lastUnits = property.getIntegerValue();
+                                ArrayList<Long> beginEnd = MeasurementUtility.calculateTimeFrame(lastN, Integer
+                                    .valueOf(lastUnits));
+                                criteria.addFilterStartTime(Long.valueOf(beginEnd.get(0)));
+                                criteria.addFilterEndTime(Long.valueOf(beginEnd.get(1)));
+                            }
                         }
                     }
                 }
 
                 //result count
-                property = portletConfig.getSimple(Constant.RESULT_COUNT);
-                if (property != null) {
-                    String currentSetting = property.getStringValue();
-                    if (currentSetting.trim().isEmpty() || currentSetting.equalsIgnoreCase("5")) {
+                String resultCount = portletConfig.getSimpleValue(Constant.RESULT_COUNT, null);
+                if (resultCount != null) {
+                    if (resultCount.trim().isEmpty() || resultCount.equals("5")) {
                         pageControl.setPageSize(5);
                     } else {
-                        pageControl = new PageControl(0, Integer.valueOf(currentSetting));
+                        pageControl = new PageControl(0, Integer.valueOf(resultCount));
                     }
                 }
                 criteria.setPageControl(pageControl);
 
                 //detect operation status filter
-                property = portletConfig.getSimple(Constant.CONFIG_UPDATE_STATUS);
-                if (property != null) {
-                    String currentSetting = property.getStringValue();
-                    String[] parsedValues = currentSetting.trim().split(",");
-                    if (currentSetting.trim().isEmpty()
+                String configUpdateStatus = portletConfig.getSimpleValue(Constant.CONFIG_UPDATE_STATUS, null);
+                if (configUpdateStatus != null) {
+                    String[] parsedValues = configUpdateStatus.trim().split(",");
+                    if (configUpdateStatus.trim().isEmpty()
                         || parsedValues.length == ConfigurationUpdateStatus.values().length) {
                         //all operation stati assumed
                     } else {

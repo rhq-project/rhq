@@ -19,10 +19,11 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.schedule;
 
+import java.util.Comparator;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.TreeSet;
 
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DataSourceField;
@@ -102,7 +103,14 @@ public abstract class AbstractOperationScheduleDataSource<T extends OperationSch
 
         DataSourceTextField operationNameField = createTextField(Field.OPERATION_NAME, MSG
             .dataSource_operationSchedule_field_operationName(), null, 100, true);
-        Set<OperationDefinition> operationDefinitions = this.resourceType.getOperationDefinitions();
+        // sort the op def names in the drop down
+        TreeSet<OperationDefinition> operationDefinitions = new TreeSet<OperationDefinition>(
+            new Comparator<OperationDefinition>() {
+                public int compare(OperationDefinition o1, OperationDefinition o2) {
+                    return o1.getDisplayName().compareTo(o2.getDisplayName());
+                }
+            });
+        operationDefinitions.addAll(this.resourceType.getOperationDefinitions());
         LinkedHashMap<String, String> valueMap = new LinkedHashMap<String, String>();
         for (OperationDefinition operationDefinition : operationDefinitions) {
             valueMap.put(operationDefinition.getName(), operationDefinition.getDisplayName());

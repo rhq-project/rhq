@@ -57,16 +57,22 @@ public abstract class AbstractMeasurementDataTraitListView extends TableSection 
 
     @Override
     protected void configureTable() {
+        super.configureTable();
+
         ListGrid listGrid = getListGrid();
         listGrid.setSelectionType(SelectionStyle.SINGLE);
 
         // Set widths and cell formatters on the fields.
-        listGrid.getField(MeasurementDataTraitCriteria.SORT_FIELD_DISPLAY_NAME).setWidth("20%");
-        ListGridField timestampField = listGrid.getField(MeasurementDataTraitCriteria.SORT_FIELD_TIMESTAMP);
-        timestampField.setWidth("20%");
-        timestampField.setCellFormatter(new TimestampCellFormatter());
+        ListGridField displayNameField = listGrid.getField(MeasurementDataTraitCriteria.SORT_FIELD_DISPLAY_NAME);
+        if (displayNameField != null) {
+            displayNameField.setWidth("20%");
+        }
 
-        super.configureTable();
+        ListGridField timestampField = listGrid.getField(MeasurementDataTraitCriteria.SORT_FIELD_TIMESTAMP);
+        if (timestampField != null) {
+            timestampField.setWidth("20%");
+            timestampField.setCellFormatter(new TimestampCellFormatter());
+        }
     }
 
     @Override

@@ -37,6 +37,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
+ * This step displays a config editor for the user to enter the new Resource's initial Resource or plugin configuration.
+ *
  * @author Jay Shaughnessy
  * @author Greg Hinkle
  */
@@ -100,12 +102,14 @@ public class ResourceFactoryConfigurationStep extends AbstractWizardStep {
 
                         public void onFailure(Throwable throwable) {
                             editor = new ConfigurationEditor(vLayout.extendLocatorId("Editor"), def, startingConfig);
+                            editor.setAllPropertiesWritable(true);
                             vLayout.addMember(editor, 0);
 
                         }
 
                         public void onSuccess(ConfigurationDefinition result) {
                             editor = new ConfigurationEditor(vLayout.extendLocatorId("Editor"), result, startingConfig);
+                            editor.setAllPropertiesWritable(true);
                             vLayout.addMember(editor, 0);
                         }
                     });

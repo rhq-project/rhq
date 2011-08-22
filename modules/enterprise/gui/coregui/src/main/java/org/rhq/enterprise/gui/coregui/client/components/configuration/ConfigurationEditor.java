@@ -171,6 +171,7 @@ public class ConfigurationEditor extends LocatableVLayout {
 
     private String editorTitle = null;
     private boolean readOnly = false;
+    private boolean allPropertiesWritable = false;
     private Map<String, String> invalidPropertyNameToDisplayNameMap = new HashMap<String, String>();
     private Set<PropertyValueChangeListener> propertyValueChangeListeners = new HashSet<PropertyValueChangeListener>();
 
@@ -236,6 +237,14 @@ public class ConfigurationEditor extends LocatableVLayout {
 
     public void setReadOnly(boolean readOnly) {
         this.readOnly = readOnly;
+    }
+
+    public boolean isAllPropertiesWritable() {
+        return allPropertiesWritable;
+    }
+
+    public void setAllPropertiesWritable(boolean allPropertiesWritable) {
+        this.allPropertiesWritable = allPropertiesWritable;
     }
 
     public String getEditorTitle() {
@@ -971,7 +980,8 @@ public class ConfigurationEditor extends LocatableVLayout {
         });
         fieldsList.add(editField);
 
-        if (!(readOnly || propertyDefinitionList.isReadOnly())) {
+        boolean propertyReadOnly = (readOnly || (!allPropertiesWritable && propertyDefinitionList.isReadOnly()));
+        if (!propertyReadOnly) {
             ListGridField removeField = new ListGridField("remove", 20);
             removeField.setType(ListGridFieldType.ICON);
             removeField.setCellIcon(Window.getImgURL(ImageManager.getRemoveIcon()));
@@ -1013,7 +1023,7 @@ public class ConfigurationEditor extends LocatableVLayout {
 
         ToolStrip toolStrip = new ToolStrip();
         toolStrip.setWidth100();
-        if (!(readOnly || propertyDefinitionList.isReadOnly())) {
+        if (!propertyReadOnly) {
             IButton addRowButton = new IButton();
             addRowButton.setIcon(Window.getImgURL("[SKIN]/actions/add.png"));
             addRowButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
@@ -1468,6 +1478,9 @@ public class ConfigurationEditor extends LocatableVLayout {
     protected boolean isReadOnly(PropertyDefinition propertyDefinition, Property property) {
         if (this.readOnly) {
             return true;
+        }
+        if (this.allPropertiesWritable) {
+            return false;
         }
         String errorMessage = property.getErrorMessage();
         if ((errorMessage != null) && (!errorMessage.trim().equals(""))) {

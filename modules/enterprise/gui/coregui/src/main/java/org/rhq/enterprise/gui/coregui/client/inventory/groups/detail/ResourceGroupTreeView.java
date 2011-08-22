@@ -190,7 +190,7 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
 
                 // only show the context menu for cluster nodes and our top root node
                 if (contextNode.isCompatibleGroupTopNode() || contextNode.isAutoClusterNode()) {
-                    contextMenu.showContextMenu(contextNode);
+                    contextMenu.showContextMenu(treeGrid.getTree(), contextNode);
                 }
             }
         });

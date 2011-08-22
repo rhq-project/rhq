@@ -18,7 +18,19 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource;
 
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.*;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.AVAILABILITY;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.CATEGORY;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.CTIME;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.DESCRIPTION;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.ITIME;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.KEY;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.LOCATION;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.MODIFIER;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.MTIME;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.NAME;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.PLUGIN;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.TYPE;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.VERSION;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -44,9 +56,9 @@ import org.rhq.core.domain.search.SearchSubsystem;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.table.EscapedHtmlCellFormatter;
+import org.rhq.enterprise.gui.coregui.client.components.table.IconField;
 import org.rhq.enterprise.gui.coregui.client.components.table.RecordExtractor;
 import org.rhq.enterprise.gui.coregui.client.components.table.ResourceAuthorizedTableAction;
-import org.rhq.enterprise.gui.coregui.client.components.table.IconField;
 import org.rhq.enterprise.gui.coregui.client.components.table.ResourceCategoryCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
@@ -63,8 +75,10 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 /**
  * The list view for {@link Resource}s.
  *
+ * @author Jay Shaughnessy
  * @author Greg Hinkle
  */
+@SuppressWarnings("unchecked")
 public class ResourceSearchView extends Table {
 
     private static final String DEFAULT_TITLE = MSG.view_inventory_resources_title();
@@ -103,7 +117,6 @@ public class ResourceSearchView extends Table {
      *
      * @param headerIcons 24x24 icon(s) to be displayed in the header
      */
-    @SuppressWarnings("unchecked")
     public ResourceSearchView(String locatorId, Criteria criteria, String title, SortSpecifier[] sortSpecifier,
         String[] excludeFields, String... headerIcons) {
         super(locatorId, title, criteria, sortSpecifier, excludeFields);
@@ -117,7 +130,6 @@ public class ResourceSearchView extends Table {
     }
 
     // surpress unchecked warnings because the subclasses may have different generic types for the datasource
-    @SuppressWarnings("unchecked")
     protected RPCDataSource getDataSourceInstance() {
         return ResourceDatasource.getInstance();
     }
@@ -154,7 +166,7 @@ public class ResourceSearchView extends Table {
                         CoreGUI.getMessageCenter().notify(
                             new Message(MSG.view_inventory_resources_uninventorySuccessful(), Severity.Info));
 
-                        ResourceSearchView.this.refresh();
+                        onUninventorySuccess();
                     }
                 });
             }
@@ -172,6 +184,10 @@ public class ResourceSearchView extends Table {
         });
     }
 
+    protected void onUninventorySuccess() {
+        refresh();
+    }
+
     protected List<ListGridField> createFields() {
         List<ListGridField> fields = new ArrayList<ListGridField>();
 
@@ -181,12 +197,12 @@ public class ResourceSearchView extends Table {
             public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
                 String resCat = record.getAttribute(CATEGORY.propertyName());
                 switch (ResourceCategory.valueOf(resCat)) {
-                    case PLATFORM:
-                        return MSG.common_title_platform();
-                    case SERVER:
-                        return MSG.common_title_server();
-                    case SERVICE:
-                        return MSG.common_title_service();
+                case PLATFORM:
+                    return MSG.common_title_platform();
+                case SERVER:
+                    return MSG.common_title_server();
+                case SERVICE:
+                    return MSG.common_title_service();
                 }
                 return null;
             }

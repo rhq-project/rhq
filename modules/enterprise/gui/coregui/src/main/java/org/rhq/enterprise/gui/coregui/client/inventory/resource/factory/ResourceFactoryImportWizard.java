@@ -97,6 +97,8 @@ public class ResourceFactoryImportWizard extends AbstractResourceFactoryWizard {
                         new Message(MSG.widget_resourceFactoryWizard_importSubmitted(getChildType().getName()),
                             Message.Severity.Info));
                     getView().closeDialog();
+                    // try a refresh now but the resource may not get added fast enough to show up.                    
+                    CoreGUI.refresh();
                 }
             });
     }

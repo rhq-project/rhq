@@ -27,6 +27,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGro
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 
 /**
+ * @author Jay Shaughnessy
  * @author Greg Hinkle
  */
 public class ResourceTopView extends LocatableHLayout implements BookmarkableView {

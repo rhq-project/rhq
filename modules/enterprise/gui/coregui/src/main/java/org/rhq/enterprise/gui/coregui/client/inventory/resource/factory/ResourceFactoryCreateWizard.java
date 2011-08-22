@@ -141,6 +141,8 @@ public class ResourceFactoryCreateWizard extends AbstractResourceFactoryWizard {
                             new Message(MSG.widget_resourceFactoryWizard_createSubmitType(getChildType().getName()),
                                 Message.Severity.Info));
                         getView().closeDialog();
+                        // try a refresh now but the resource may not get created fast enough to show up.         
+                        CoreGUI.refresh();
                     }
                 });
 
@@ -163,6 +165,8 @@ public class ResourceFactoryCreateWizard extends AbstractResourceFactoryWizard {
                             new Message(MSG.widget_resourceFactoryWizard_createSubmit(newResourceName),
                                 Message.Severity.Info));
                         getView().closeDialog();
+                        // try a refresh now but the resource may not get created fast enough to show up.
+                        CoreGUI.refresh();
                     }
                 });
 

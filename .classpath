@@ -177,6 +177,7 @@
 	<classpathentry kind="src" path="modules/enterprise/remoting/cli/src/test/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/sars/agent-sar/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/safe-invoker/src/main/java"/>
+	<classpathentry kind="src" path="modules/enterprise/server/safe-invoker/src/test/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/container-lib/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/ant-bundle/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/filetemplate-bundle/src/main/java"/>

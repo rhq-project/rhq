@@ -64,18 +64,49 @@ public class HibernateDetachUtility {
         SERIALIZATION, JAXB
     }
 
+    /*
+     * This is the type of object that will be used to generate identity
+     * hashcodes for objects that are being scanned during the detach.
+     * During production runtime, the hashCodeGenerator will use the
+     * java.lang.System mechanism, but since this is package scoped,
+     * tests can override this since. (See BZ 732089).
+     */
+    static interface HashCodeGenerator {
+        Integer getHashCode(Object value);
+    }
+
+    static class SystemHashCodeGenerator implements HashCodeGenerator {
+        @Override
+        public Integer getHashCode(Object value) {
+            return System.identityHashCode(value);
+        }
+    }
+
+    static HashCodeGenerator hashCodeGenerator = new SystemHashCodeGenerator();
+
     // be able to configure the deepest recursion this utility will be allowed to go (see BZ 702109 that precipitated this need)
     private static final String DEPTH_ALLOWED_SYSPROP = "rhq.server.hibernate-detach-utility.depth-allowed";
+    private static final String THROW_EXCEPTION_ON_DEPTH_LIMIT_SYSPROP = "rhq.server.hibernate-detach-utility.throw-exception-on-depth-limit";
     private static final int depthAllowed;
+    private static final boolean throwExceptionOnDepthLimit;
     static {
         int value;
         try {
-            String str = System.getProperty(DEPTH_ALLOWED_SYSPROP, "50");
+            String str = System.getProperty(DEPTH_ALLOWED_SYSPROP, "100");
             value = Integer.parseInt(str);
         } catch (Throwable t) {
-            value = 50;
+            value = 100;
         }
         depthAllowed = value;
+
+        boolean booleanValue;
+        try {
+            String str = System.getProperty(THROW_EXCEPTION_ON_DEPTH_LIMIT_SYSPROP, "true");
+            booleanValue = Boolean.parseBoolean(str);
+        } catch (Throwable t) {
+            booleanValue = true;
+        }
+        throwExceptionOnDepthLimit = booleanValue;
     }
 
     public static void nullOutUninitializedFields(Object value, SerializationType serializationType) throws Exception {
@@ -107,18 +138,24 @@ public class HibernateDetachUtility {
      * for a single hash and is used to ensure we never try to detach an object already processed.
      * @param depth used to stop infinite recursion, defaults to a depth we don't expectto see, but it is configurable.
      * @param serializationType
-     * @throws Exception
+     * @throws Exception if a problem occurs
+     * @throws IllegalStateException if the recursion depth limit is reached
      */
     private static void nullOutUninitializedFields(Object value, Map<Integer, Object> checkedObjectMap,
         Map<Integer, List<Object>> checkedObjectCollisionMap, int depth, SerializationType serializationType)
         throws Exception {
         if (depth > depthAllowed) {
-            LOG.warn("Recursed too deep [" + depth + " > " + depthAllowed
+            String warningMessage = "Recursed too deep [" + depth + " > " + depthAllowed
                 + "], will not attempt to detach object of type ["
                 + ((value != null) ? value.getClass().getName() : "N/A")
-                + "]. This may cause serialization errors later. If so, "
-                + "you can try to work around this by setting the system property [" + DEPTH_ALLOWED_SYSPROP
-                + "] to a value higher than [" + depth + "].");
+                + "]. This may cause serialization errors later. "
+                + "You can try to work around this by setting the system property [" + DEPTH_ALLOWED_SYSPROP
+                + "] to a value higher than [" + depth + "] or you can set the system property ["
+                + THROW_EXCEPTION_ON_DEPTH_LIMIT_SYSPROP + "] to 'false'";
+            LOG.warn(warningMessage);
+            if (throwExceptionOnDepthLimit) {
+                throw new IllegalStateException(warningMessage);
+            }
             return;
         }
 
@@ -129,7 +166,7 @@ public class HibernateDetachUtility {
         // System.identityHashCode is a hash code, and therefore not guaranteed to be unique. And we've seen this
         // be the case.  So, we use it to try and avoid duplicating work, but handle the case when two objects may
         // have an identity crisis.
-        Integer valueIdentity = System.identityHashCode(value);
+        Integer valueIdentity = hashCodeGenerator.getHashCode(value);
         Object checkedObject = checkedObjectMap.get(valueIdentity);
 
         if (null == checkedObject) {

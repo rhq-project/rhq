@@ -49,6 +49,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.JobTrigger;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
@@ -426,8 +427,8 @@ public abstract class AbstractOperationScheduleDetailsView extends
                 this.operationParametersConfigurationHolder.addMember(horizontalSpacer);
 
                 if (isNewRecord()) {
-                    this.operationParameters = (parametersDefinition.getDefaultTemplate() != null) ? parametersDefinition
-                        .getDefaultTemplate().createConfiguration()
+                    ConfigurationTemplate defaultTemplate = parametersDefinition.getDefaultTemplate();
+                    this.operationParameters = (defaultTemplate != null) ? defaultTemplate.createConfiguration()
                         : new Configuration();
                 } else {
 

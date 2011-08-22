@@ -94,15 +94,18 @@ public class TestRemoteServiceStatisticsView extends Table {
         ListGridField serviceName = new ListGridField(FIELD_SERVICENAME, "Service Name");
         ListGridField methodName = new ListGridField(FIELD_METHODNAME, "Method Name");
         ListGridField count = new ListGridField(FIELD_COUNT, "Count");
-        ListGridField success = new ListGridField(FIELD_COUNT, "Success");
-        ListGridField dropped = new ListGridField(FIELD_COUNT, "Dropped");
-        ListGridField errored = new ListGridField(FIELD_COUNT, "Errored");
+        ListGridField success = new ListGridField(FIELD_SUCCESS, "Success");
+        ListGridField dropped = new ListGridField(FIELD_DROPPED, "Dropped");
+        ListGridField errored = new ListGridField(FIELD_ERRORED, "Errored");
         ListGridField slowest = new ListGridField(FIELD_SLOWEST, "Slowest (ms)");
         ListGridField average = new ListGridField(FIELD_AVERAGE, "Average (ms)");
         ListGridField fastest = new ListGridField(FIELD_FASTEST, "Fastest (ms)");
         ListGridField stddev = new ListGridField(FIELD_STDDEV, "Std Dev");
 
         count.setAlign(Alignment.CENTER);
+        success.setAlign(Alignment.CENTER);
+        dropped.setAlign(Alignment.CENTER);
+        errored.setAlign(Alignment.CENTER);
         slowest.setAlign(Alignment.RIGHT);
         average.setAlign(Alignment.RIGHT);
         fastest.setAlign(Alignment.RIGHT);
@@ -267,6 +270,9 @@ public class TestRemoteServiceStatisticsView extends Table {
         record.setAttribute(FIELD_SERVICENAME, stat.serviceName);
         record.setAttribute(FIELD_METHODNAME, stat.methodName);
         record.setAttribute(FIELD_COUNT, stat.count);
+        record.setAttribute(FIELD_SUCCESS, stat.success);
+        record.setAttribute(FIELD_DROPPED, stat.dropped);
+        record.setAttribute(FIELD_ERRORED, stat.errored);
         record.setAttribute(FIELD_SLOWEST, stat.slowest);
         record.setAttribute(FIELD_AVERAGE, stat.average);
         record.setAttribute(FIELD_FASTEST, stat.fastest);

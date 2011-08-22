@@ -105,6 +105,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
     private MenuBarView menuBarView;
     private Footer footer;
     private int rpcTimeout;
+    private int requestId;
 
     public void onModuleLoad() {
         String hostPageBaseURL = GWT.getHostPageBaseURL();
@@ -300,13 +301,11 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
         }
     }
 
-    private static volatile int requestId;
-
-    public static String getRequestId() {
+    public String getRequestId() {
         return Integer.toString(requestId);
     }
 
-    public static void makeRequestId() {
+    public void makeRequestId() {
         requestId++;
     }
 

@@ -35,7 +35,6 @@ public class RemoteServiceStatistics {
         private String serviceName;
         private String methodName;
         private List<Long> data = new ArrayList<Long>();
-
         private int success;
         private int errored;
         private int dropped;
@@ -68,13 +67,10 @@ public class RemoteServiceStatistics {
         public static class Summary {
             public final String serviceName;
             public final String methodName;
-
-            private final int success;
-            private final int errored;
-            private final int dropped;
-
+            public final int success;
+            public final int errored;
+            public final int dropped;
             public final int count;
-
             public final long slowest;
             public final long average;
             public final long fastest;
@@ -137,7 +133,6 @@ public class RemoteServiceStatistics {
                 return builder.toString();
             }
         }
-
     }
 
     private static Map<String, Record> statistics = new HashMap<String, Record>();
@@ -157,6 +152,11 @@ public class RemoteServiceStatistics {
             statistics.put(remoteService, record);
         }
         record.record(millis, status);
+   }
+
+    public static String recordAndPrint(String remoteService, long millis) {
+        record(remoteService, millis);
+        return print(remoteService);
     }
 
     public static String print(String remoteService) {
@@ -165,6 +165,16 @@ public class RemoteServiceStatistics {
             record = new Record(remoteService);
         }
         return "RemoteServiceStatistics: " + remoteService + ": " + record.getSummary();
+    }
+
+    public static List<String> printAll() {
+        List<String> stats = new ArrayList<String>();
+
+        for (String remoteService : statistics.keySet()) {
+            stats.add(print(remoteService));
+        }
+
+        return stats;
     }
 
     public static Summary get(String remoteService) {
@@ -196,7 +206,6 @@ public class RemoteServiceStatistics {
         }
     }
 
-    // Not very glamorous, but this class has static data.
     public static void registerListeners(TrackerEventDispatcher dispatcher) {
         dispatcher.addTrackerStatusEventListener(new RemoteServiceStatisticsListenerAdapter());
     }

@@ -55,6 +55,7 @@ public class TrackingRequestCallback implements RequestCallback {
             TrackerEventDispatcher.getInstance().fireStatusUpdate(
                 new TrackerStatusEvent(this, getName(), getAge(),
                     TrackerStatusEvent.RECV_FAILURE));
+
             if (UserSessionManager.isLoggedIn()) { // only handle failures if user still logged in
                 callback.onError(request, exception);
             }
@@ -73,7 +74,7 @@ public class TrackingRequestCallback implements RequestCallback {
             if (STATUS_CODE_OK == response.getStatusCode()) {
                 final String RHQ_REQUEST_ID_HEADER = "x-rhq-request-id";
                 String requestId = response.getHeader(RHQ_REQUEST_ID_HEADER);
-                if (requestId != null && !requestId.equals(CoreGUI.getRequestId())) {
+                if (requestId != null && !requestId.equals(CoreGUI.get().getRequestId())) {
                     TrackerEventDispatcher.getInstance().fireStatusUpdate(
                         new TrackerStatusEvent(this, getName(), getAge(),
                             TrackerStatusEvent.VIEW_CHANGED));
@@ -81,14 +82,16 @@ public class TrackingRequestCallback implements RequestCallback {
                     TrackerEventDispatcher.getInstance().fireStatusUpdate(
                         new TrackerStatusEvent(this, getName(), getAge(),
                             TrackerStatusEvent.RECV_SUCCESS));
-
-                    callback.onResponseReceived(request, response);
                 }
+
+                // todo, n.b. if this is moved into the 'else' clause the entire gui breaks. why?
+                callback.onResponseReceived(request, response);
             } else {
-                TrackerEventDispatcher.getInstance().fireStatusUpdate(
-                    new TrackerStatusEvent(this, getName(), getAge(),
-                        TrackerStatusEvent.RECV_FAILURE));
                 if (UserSessionManager.isLoggedIn()) { // only handle failures if user still logged in
+                    TrackerEventDispatcher.getInstance().fireStatusUpdate(
+                        new TrackerStatusEvent(this, getName(), getAge(),
+                            TrackerStatusEvent.RECV_FAILURE));
+
                     callback.onResponseReceived(request, response);
                 }
             }

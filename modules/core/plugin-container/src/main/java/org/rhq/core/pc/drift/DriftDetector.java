@@ -103,6 +103,8 @@ public class DriftDetector implements Runnable {
             if (changeSetType == COVERAGE || changes > 0) {
                 driftClient.sendChangeSetToServer(schedule.getResourceId(), driftConfig, changeSetType);
             }
+        } catch (Throwable t) {
+            log.error("An unexpected error occurred during drift detection: " + t.getCause().getMessage(), t);
         } finally {
             scheduleQueue.deactivateSchedule();
         }

@@ -364,6 +364,21 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     }
 
     @Override
+    public FileDiffReport generateUnifiedDiff(Drift drift1, Drift drift2) {
+        String content1 = getDriftFileBits(drift1.getNewDriftFile().getHashId());
+        List<String> content1List = asList(content1.split("\\n"));
+
+        String content2 = getDriftFileBits(drift2.getNewDriftFile().getHashId());
+        List<String> content2List = asList(content2.split("\\n"));
+
+        Patch patch = DiffUtils.diff(content1List, content2List);
+        List<String> deltas = DiffUtils.generateUnifiedDiff(drift1.getPath(), drift2.getPath(), content1List, patch,
+            10);
+
+        return new FileDiffReport(patch.getDeltas().size(), deltas);
+    }
+
+    @Override
     public PageList<Drift> findHistory(Drift drift) {
         return null;
     }

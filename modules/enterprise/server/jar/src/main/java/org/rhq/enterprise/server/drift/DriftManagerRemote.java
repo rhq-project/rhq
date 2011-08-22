@@ -61,4 +61,6 @@ public interface DriftManagerRemote {
 
     FileDiffReport generateUnifiedDiff(Drift drift);
 
+    FileDiffReport generateUnifiedDiff(Drift drift1, Drift drift2);
+
 }

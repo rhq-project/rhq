@@ -290,7 +290,7 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout> extends Lo
 
         } catch (Exception e) {
             this.tabSet.enable();
-            Log.info("Failed to select tab " + tabName + "/" + subtabName + ": " + e);
+            Log.warn("Failed to select tab " + tabName + "/" + subtabName + ".", e);
         }
     }
 

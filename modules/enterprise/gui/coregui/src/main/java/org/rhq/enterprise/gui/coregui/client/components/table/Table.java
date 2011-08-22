@@ -502,6 +502,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             this.refreshButton = new LocatableIButton(extendLocatorId("Refresh"), MSG.common_button_refresh());
             refreshButton.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
+                    disableAllFooterControls();
                     refresh();
                 }
             });
@@ -530,8 +531,8 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     }
 
     private void disableAllFooterControls() {
-        for (TableActionInfo tableActionToDisable : tableActions) {
-            tableActionToDisable.actionCanvas.disable();
+        for (TableActionInfo tableAction : tableActions) {
+            tableAction.actionCanvas.disable();
         }
         for (Canvas extraWidget : extraWidgetsAboveFooter) {
             extraWidget.disable();
@@ -539,7 +540,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         for (Canvas extraWidget : extraWidgetsInMainFooter) {
             extraWidget.disable();
         }
-        if (isShowFooterRefresh()) {
+        if (isShowFooterRefresh() && this.refreshButton != null) {
             this.refreshButton.disable();
         }
     }
@@ -607,9 +608,6 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
      */
     public void refresh() {
         if (this.listGrid != null) {
-            if (isShowFooter()) {
-                disableAllFooterControls();
-            }
             Criteria criteria = getCurrentCriteria();
             this.listGrid.setCriteria(criteria);
             this.listGrid.invalidateCache();
@@ -911,7 +909,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
                 }
             }
             refreshRowCount();
-            if (isShowFooterRefresh()) {
+            if (isShowFooterRefresh() && this.refreshButton != null) {
                 this.refreshButton.enable();
             }
         }

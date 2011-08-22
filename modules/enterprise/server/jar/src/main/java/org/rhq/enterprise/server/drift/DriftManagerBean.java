@@ -90,7 +90,7 @@ import static javax.ejb.TransactionAttributeType.REQUIRES_NEW;
  * @author Jay Shaughnessy
  */
 @Stateless
-public class DriftManagerBean implements DriftManagerLocal {
+public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
 
     // TODO Should security checks be handled here instead of delegating to the drift plugin?
     // Currently any security checks that need to be performed are delegated to the plugin.

@@ -71,15 +71,22 @@ public class DriftDetector implements Runnable {
     public void run() {
         DriftDetectionSchedule schedule = scheduleQueue.getNextSchedule();
         if (schedule == null) {
+            log.debug("No schedules are in the queue.");
             return;
+        }
+
+        if (log.isDebugEnabled()) {
+            log.debug("Processing " + schedule);
         }
 
         try {
             if (schedule.getNextScan() > (System.currentTimeMillis() + 100L)) {
+                log.debug("Skipping " + schedule + " because it is too early to do the next detection.");
                 return;
             }
 
             if (!schedule.getDriftConfiguration().isEnabled()) {
+                log.debug("Skipping " + schedule + " because the drift configuration is disabled.");
                 return;
             }
 
@@ -111,6 +118,7 @@ public class DriftDetector implements Runnable {
     }
 
     private int generateDriftChangeSet(final DriftDetectionSchedule schedule) throws IOException {
+        log.debug("Generating drift change set for " + schedule);
         final File basedir = new File(basedir(schedule.getResourceId(), schedule.getDriftConfiguration()));
 
         final ChangeSetWriter driftWriter = changeSetMgr.getChangeSetWriter(schedule.getResourceId(),
@@ -128,6 +136,9 @@ public class DriftDetector implements Runnable {
             File file = new File(basedir, entry.getFile());
             if (!file.exists()) {
                 // The file has been deleted since the last scan
+                if (log.isInfoEnabled()) {
+                    log.info("Detected deleted file for " + schedule + " --> " + file.getAbsolutePath());
+                }
                 driftWriter.write(removedFileEntry(entry.getFile(), entry.getNewSHA()));
                 changes.incrementAndGet();
             } else {
@@ -135,6 +146,9 @@ public class DriftDetector implements Runnable {
                 String currentSHA = sha256(file);
                 if (!currentSHA.equals(entry.getNewSHA())) {
                     // The file has been updated
+                    if (log.isInfoEnabled()) {
+                        log.info("Detected modified file for " + schedule + " --> " + file.getAbsolutePath());
+                    }
                     FileEntry modifiedEntry = changedFileEntry(entry.getFile(), entry.getNewSHA(), currentSHA);
                     driftWriter.write(modifiedEntry);
                     coverageWriter.write(modifiedEntry);
@@ -155,6 +169,11 @@ public class DriftDetector implements Runnable {
                     if (processedFiles.contains(file)) {
                         return;
                     }
+
+                    if (log.isInfoEnabled()) {
+                        log.info("Detected added file for " + schedule + " --> " + file.getAbsolutePath());
+                    }
+
                     FileEntry newEntry = addedFileEntry(relativePath(basedir, file), sha256(file));
                     driftWriter.write(newEntry);
                     coverageWriter.write(newEntry);
@@ -175,6 +194,8 @@ public class DriftDetector implements Runnable {
     }
 
     private void generateCoverageChangeSet(final DriftDetectionSchedule schedule) throws IOException {
+        log.debug("Generating coverage change set for " + schedule);
+
         final ChangeSetWriter writer = changeSetMgr.getChangeSetWriter(schedule.getResourceId(), createHeaders(schedule,
             COVERAGE));
         final DriftConfiguration config = schedule.getDriftConfiguration();
@@ -185,6 +206,9 @@ public class DriftDetector implements Runnable {
             @Override
             public void visit(File file) {
                 try {
+                    if (log.isInfoEnabled()) {
+                        log.info("Adding " + file.getAbsolutePath() + " to coverage change set for " + schedule);
+                    }
                     writer.write(addedFileEntry(relativePath(basedir, file), sha256(file)));
                 } catch (IOException e) {
                     log.error("An error occurred while generating a coverage change set for " + schedule + ": " +

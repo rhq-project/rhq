@@ -20,7 +20,6 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.factory;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -80,15 +79,17 @@ public class ResourceFactoryCreateWizard extends AbstractResourceFactoryWizard {
 
             ConfigurationDefinition resourceConfigDef = getChildType().getResourceConfigurationDefinition();
             this.setNewResourceConfigurationDefinition(resourceConfigDef);
-            Map<String, ConfigurationTemplate> templates;
-            if (resourceConfigDef == null) {
-                templates = new LinkedHashMap<String, ConfigurationTemplate>();
-            } else {
-                templates = resourceConfigDef.getTemplates();
+
+            // Skip the choose-template step if the type does not define a resource config or does not define more than
+            // one resource config template.
+            if (resourceConfigDef != null) {
+                Map<String, ConfigurationTemplate> templates = resourceConfigDef.getTemplates();
+                if (templates.size() > 1) {
+                    steps.add(new ResourceFactoryInfoStep(ResourceFactoryCreateWizard.this, MSG
+                        .widget_resourceFactoryWizard_namePrompt(),
+                        MSG.widget_resourceFactoryWizard_configTemplatePrompt(), templates));
+                }
             }
-            steps.add(new ResourceFactoryInfoStep(ResourceFactoryCreateWizard.this, MSG
-                .widget_resourceFactoryWizard_namePrompt(), MSG.widget_resourceFactoryWizard_configTemplatePrompt(),
-                templates));
 
             steps.add(new ResourceFactoryConfigurationStep(ResourceFactoryCreateWizard.this));
 
@@ -141,8 +142,6 @@ public class ResourceFactoryCreateWizard extends AbstractResourceFactoryWizard {
                             new Message(MSG.widget_resourceFactoryWizard_createSubmitType(getChildType().getName()),
                                 Message.Severity.Info));
                         getView().closeDialog();
-                        // try a refresh now but the resource may not get created fast enough to show up.         
-                        CoreGUI.refresh();
                     }
                 });
 
@@ -165,8 +164,6 @@ public class ResourceFactoryCreateWizard extends AbstractResourceFactoryWizard {
                             new Message(MSG.widget_resourceFactoryWizard_createSubmit(newResourceName),
                                 Message.Severity.Info));
                         getView().closeDialog();
-                        // try a refresh now but the resource may not get created fast enough to show up.
-                        CoreGUI.refresh();
                     }
                 });
 

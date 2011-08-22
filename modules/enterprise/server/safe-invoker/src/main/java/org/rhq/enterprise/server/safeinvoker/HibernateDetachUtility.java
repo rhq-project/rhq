@@ -181,10 +181,13 @@ public class HibernateDetachUtility {
                 LOG.debug(message);
             }
 
-            // if not already detached then add to the list of collision objects for this hash, and start scrubbing
-            if (!alreadyDetached) {
-                collisionObjects.add(value);
+            // now that we've done our logging, if already detached we're done. Otherwise add to the list of collision
+            // objects for this hash, and start scrubbing
+            if (alreadyDetached) {
+                return;
             }
+
+            collisionObjects.add(value);
         }
 
         // Perform the detaching

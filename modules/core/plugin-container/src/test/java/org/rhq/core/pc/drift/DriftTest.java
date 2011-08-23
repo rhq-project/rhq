@@ -124,7 +124,7 @@ public class DriftTest {
      */
     @BeforeClass
     public void initResourcesAndChangeSetsDirs() throws Exception {
-        File basedir = new File("target", getClass().getSimpleName());
+        File basedir = basedir();
         deleteDirectory(basedir);
         basedir.mkdir();
 
@@ -146,6 +146,10 @@ public class DriftTest {
     public void setUp(Method test) {
         resourceDir = mkdir(resourcesDir, test.getName() + "-" + nextResourceId());
         changeSetMgr = new ChangeSetManagerImpl(changeSetsDir);
+    }
+
+    protected File basedir() {
+        return new File("target", getClass().getSimpleName());
     }
 
     /** @return The current or last resource id generated */

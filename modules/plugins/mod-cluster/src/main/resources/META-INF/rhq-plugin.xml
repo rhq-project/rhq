@@ -27,7 +27,7 @@
 
       <!-- Start - Configuration for HAModClusterService -->
       <service name="HA Service" discovery="ClassNameMBeanDiscoveryComponent" 
-        class="PolyPingMBeanResourceComponent" 
+        class="ModClusterServiceComponent" 
         supportsManualAdd="true" 
         description="HA Service Listener" singleton="true">
 
@@ -199,7 +199,7 @@
       <!-- End - Configuration for HAModClusterService -->
 
       <!-- Start - Configuration for ModClusterService -->
-      <service name="Service" discovery="ClassNameMBeanDiscoveryComponent" class="PolyPingMBeanResourceComponent" supportsManualAdd="true" description="HA Service Listener" singleton="true">
+      <service name="Service" discovery="ClassNameMBeanDiscoveryComponent" class="ModClusterServiceComponent" supportsManualAdd="true" description="HA Service Listener" singleton="true">
 
          <plugin-configuration>
             <c:simple-property name="objectName" readOnly="true" default="jboss.web:service=ModCluster" />

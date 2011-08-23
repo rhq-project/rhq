@@ -30,14 +30,16 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.util.exception.ThrowableUtil;
+import org.rhq.plugins.jmx.JMXComponent;
+import org.rhq.plugins.jmx.MBeanResourceComponent;
 import org.rhq.plugins.modcluster.config.ModClusterBeanFile;
 
 /**
  * @author Stefan Negrea
  *
  */
-@SuppressWarnings({ "deprecation" })
-public class FileConfiguredMBeanResourceComponent extends TimeUnitParamResourceComponent {
+@SuppressWarnings({ "deprecation", "rawtypes" })
+public class FileConfiguredMBeanResourceComponent extends MBeanResourceComponent<JMXComponent> {
 
     private static final Log log = LogFactory.getLog(FileConfiguredMBeanResourceComponent.class);
 

@@ -60,7 +60,7 @@ public class Footer extends LocatableHLayout {
         messageBar = new MessageBar();
 
         // leave space for the RPC Activity Spinner (I think this has been removed, giving back the space) 
-        // addMember(createHSpacer(16));
+        addMember(createHSpacer(16));
 
         addMember(messageBar);
 

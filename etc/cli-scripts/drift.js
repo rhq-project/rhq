@@ -78,6 +78,12 @@ function fetchHistory(rid, configName, path) {
 
     this.echo = function(msg) {println(msg);}
 
+    function findDrift(version) {
+      return find(entries, function(drift) { 
+        return drift.changeSet.version == version  
+      });
+    }
+
 
     var generate = function() {
       entries = [];
@@ -99,7 +105,7 @@ function fetchHistory(rid, configName, path) {
       });
     }
 
-    this.display = function() {
+    this.list = function() {
       var format = java.text.DateFormat.getDateTimeInstance();
       println(path + "\n-----------------------------------");
       foreach(entries, function(drift) {
@@ -107,14 +113,23 @@ function fetchHistory(rid, configName, path) {
       });
     } 
 
+    this.view = function(version) {
+      var drift = findDrift(version);
+      if (drift == null) {
+        return "Could not find version " + version;
+      }
+      return DriftManager.getDriftFileBits(drift.newDriftFile.hashId);
+    }
+
     this.compare = function(v1, v2) {
-      var d1 = find(entries, function(drift) { 
-        return drift.changeSet.version == v1;
-      });
-      var d2 = find(entries, function(drift) { 
-        return drift.changeSet.version == v2;
-      });
-      
+      var d1 = findDrift(v1);
+      if (d1 == null) {
+        return "Could not find version " + v1;
+      }
+      var d2 = findDrift(v2);    
+      if (d2 == null) {
+        return "Could not find version " + v2;
+      }
       var fileDiff = DriftManager.generateUnifiedDiff(d1, d2);
       foreach(fileDiff.diff, println);     
     }

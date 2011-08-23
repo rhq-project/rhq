@@ -119,7 +119,14 @@ public interface DriftManagerLocal extends DriftServerPluginFacet, DriftManagerR
      */
     String getDriftFileBits(String hash);
 
+    /**
+     * Generates a unified diff of the two files references by drift. In the case of a
+     * modified file, a Drift object references the current and previous versions of the
+     * file. This method generates a diff of the two versions.
+     *
+     * @param drift Specifies the two files that will be compared
+     * @return A report containing a unified diff of the two versions of the file
+     * referenced by drift
+     */
     FileDiffReport generateUnifiedDiff(Drift drift);
-
-    PageList<Drift> findHistory(Drift drift);
 }

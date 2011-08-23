@@ -379,11 +379,6 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     }
 
     @Override
-    public PageList<Drift> findHistory(Drift drift) {
-        return null;
-    }
-
-    @Override
     public void updateDriftConfiguration(Subject subject, EntityContext entityContext, DriftConfiguration driftConfig) {
 
         // before we do anything, make sure the drift config name is valid

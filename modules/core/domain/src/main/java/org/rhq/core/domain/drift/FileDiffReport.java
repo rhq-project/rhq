@@ -22,6 +22,10 @@ package org.rhq.core.domain.drift;
 import java.io.Serializable;
 import java.util.List;
 
+/**
+ * This is a data structure that encapsulates a file diff and is suitable for use in the
+ * GWT UI as well as in remote clients.
+ */
 public class FileDiffReport implements Serializable {
     private static final long serialVersionUID = 1L;
 
@@ -37,10 +41,17 @@ public class FileDiffReport implements Serializable {
         this.diff = diff;
     }
 
+    /** @return The number of changes in the diff */
     public int getNumberOfChanges() {
         return changes;
     }
 
+    /**
+     * Returns the actual diff as a list of strings where each line corresponds to an
+     * element in the list.
+     *
+     * @return The diff as a list of strings.
+     */
     public List<String> getDiff() {
         return diff;
     }

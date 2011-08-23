@@ -55,6 +55,7 @@ function diff(s1, s2) {
 
     var fileDiff = DriftManager.generateUnifiedDiff(e1, e2);
     foreach(fileDiff.diff, println);
+    return "";
   }
 
   function printEntry(entry) {

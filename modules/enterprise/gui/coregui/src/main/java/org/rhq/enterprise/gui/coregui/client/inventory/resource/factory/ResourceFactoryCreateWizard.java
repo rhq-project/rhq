@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.factory;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Map;
 
@@ -80,16 +81,13 @@ public class ResourceFactoryCreateWizard extends AbstractResourceFactoryWizard {
             ConfigurationDefinition resourceConfigDef = getChildType().getResourceConfigurationDefinition();
             this.setNewResourceConfigurationDefinition(resourceConfigDef);
 
-            // Skip the choose-template step if the type does not define a resource config or does not define more than
-            // one resource config template.
-            if (resourceConfigDef != null) {
-                Map<String, ConfigurationTemplate> templates = resourceConfigDef.getTemplates();
-                if (templates.size() > 1) {
-                    steps.add(new ResourceFactoryInfoStep(ResourceFactoryCreateWizard.this, MSG
-                        .widget_resourceFactoryWizard_namePrompt(),
-                        MSG.widget_resourceFactoryWizard_configTemplatePrompt(), templates));
-                }
-            }
+            // Even if the type doesn't define multiple resource config templates, we still need to include the info
+            // step, since it also prompts for the Resource name.
+            Map<String, ConfigurationTemplate> templates = (resourceConfigDef != null) ?
+                    resourceConfigDef.getTemplates() : Collections.<String, ConfigurationTemplate>emptyMap();
+            steps.add(new ResourceFactoryInfoStep(ResourceFactoryCreateWizard.this, MSG
+                .widget_resourceFactoryWizard_namePrompt(),
+                MSG.widget_resourceFactoryWizard_configTemplatePrompt(), templates));
 
             steps.add(new ResourceFactoryConfigurationStep(ResourceFactoryCreateWizard.this));
 

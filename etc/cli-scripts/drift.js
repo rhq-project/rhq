@@ -8,7 +8,7 @@
 function createSnapshot(rid, cname) {
   var config = findDriftConfig(rid, function(c) { return cname.equals(c.name) });
 
-  var criteria = BasicDriftChangeSetCriteria();
+  var criteria = GenericDriftChangeSetCriteria();
   criteria.addFilterResourceId(rid);
   criteria.addFilterDriftConfigurationId(config.id);
 
@@ -19,10 +19,10 @@ function createSnapshot(rid, cname) {
     } 
   }
 
-  return DriftServer.createSnapshot(criteria);
+  return DriftManager.createSnapshot(criteria);
 }
 
-function findDriftConfig(rid, fn) {
+function findDriftConfig(rid, filter) {
   var criteria = ResourceCriteria();
   criteria.addFilterId(rid);
   criteria.fetchDriftConfigurations(true);
@@ -31,12 +31,31 @@ function findDriftConfig(rid, fn) {
   var resource = resources.get(0);
 
   return find(resource.driftConfigurations, function(config) {
-    return fn(DriftConfiguration(config));
+    return filter(DriftConfiguration(config));
   });
 }
 
 function diff(s1, s2) {
   var theDiff = s1.diff(s2);
+
+  if (arguments.length > 2) {
+    var path = arguments[2];
+   
+    if (theDiff.elementsInConflict.size() == 0) {
+      // If the snapshot diff reports no files in conflict, then there
+      // is no need to call the server to perform the file diff. We can
+      // instead return quickly.
+      println("There are no differences to report");
+      return "";
+    } 
+    
+    var pathFilter = function(entry) { return entry.path == path; };
+    var e1 = find(s1.entries, pathFilter);
+    var e2 = find(s2.entries, pathFilter);
+
+    var fileDiff = DriftManager.generateUnifiedDiff(e1, e2);
+    foreach(fileDiff.diff, println);
+  }
 
   function printEntry(entry) {
     println(entry.newDriftFile.hashId + '\t' + entry.path);
@@ -53,14 +72,77 @@ function diff(s1, s2) {
   report('elements not in right', theDiff.elementsNotInRight);
 }
 
-function filterEntry(props) {
-  return function(entry) {
-    var filteredEntry = {};
-    foreach(props, function(prop) {
-      if (entry[prop]) {
-        filteredEntry[prop] = entry[prop];
-      }
-    });
-    return filteredEntry;
+function fetchHistory(rid, configName, path) {
+  function History() {
+    var entries = [];
+
+    this.echo = function(msg) {println(msg);}
+
+
+    var generate = function() {
+      entries = [];
+      var criteria = GenericDriftCriteria();
+      criteria.addFilterResourceIds([rid]);
+      criteria.fetchChangeSet(true);
+      criteria.addFilterPath(path);
+
+      var drifts = DriftManager.findDriftsByCriteria(criteria);
+      foreach(drifts, function(drift) {
+        if (drift.changeSet.driftConfiguration.name == configName && 
+          drift.path == path) {
+            entries.push(drift);
+        }
+      });
+
+      entries.sort(function(d1, d2) { 
+        return d1.changeSet.version <= d2.changeSet.version
+      });
+    }
+
+    this.display = function() {
+      var format = java.text.DateFormat.getDateTimeInstance();
+      println(path + "\n-----------------------------------");
+      foreach(entries, function(drift) {
+        println(drift.changeSet.version + "\t" + format.format(drift.ctime)); 
+      });
+    } 
+
+    this.compare = function(v1, v2) {
+      var d1 = find(entries, function(drift) { 
+        return drift.changeSet.version == v1;
+      });
+      var d2 = find(entries, function(drift) { 
+        return drift.changeSet.version == v2;
+      });
+      
+      var fileDiff = DriftManager.generateUnifiedDiff(d1, d2);
+      foreach(fileDiff.diff, println);     
+    }
+
+    generate();
   }
+
+  return new History();
+
+/*
+  var criteria = GenericDriftCriteria();
+  criteria.addFilterResourceIds([rid]);
+  criteria.fetchChangeSet(true);
+  criteria.addFilterPath(path);
+
+  var drifts = DriftManager.findDriftsByCriteria(criteria);
+  var history = [];
+  foreach(drifts, function(drift) {
+    if (drift.changeSet.driftConfiguration.name == configName && 
+      drift.path == path) {
+      history.push(drift);
+    }
+  });
+
+  history.sort(function(d1, d2) { 
+    return d1.changeSet.version <= d2.changeSet.version
+  });
+
+  return history;
+*/
 }

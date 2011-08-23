@@ -19,17 +19,10 @@
 package org.rhq.plugins.modcluster.config;
 
 import java.io.IOException;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 
 import org.w3c.dom.Attr;
 import org.w3c.dom.Node;
@@ -129,22 +122,6 @@ public class ModClusterBeanFile extends AbstractConfigurationFile {
     }
 
     /**
-     * @throws TransformerException
-     */
-    public void saveConfigurationFile() throws TransformerException {
-        Transformer transformer = TransformerFactory.newInstance().newTransformer();
-        transformer.setOutputProperty(OutputKeys.INDENT, "no");
-
-        //initialize StreamResult with File object to save to file
-        StreamResult result = new StreamResult(new StringWriter());
-        DOMSource source = new DOMSource(this.getDocument());
-        transformer.transform(source, result);
-
-        String xmlString = result.getWriter().toString();
-        System.out.println(xmlString);
-    }
-
-    /**
      * @param className
      * @return
      */
@@ -155,7 +132,6 @@ public class ModClusterBeanFile extends AbstractConfigurationFile {
             Node node = result.item(i);
             if (node.getAttributes().getNamedItem("class") != null
                 && className.equals(node.getAttributes().getNamedItem("class").getTextContent())) {
-                System.out.println(node.getAttributes().getNamedItem("class").getTextContent());
                 return node;
             }
         }
@@ -174,7 +150,6 @@ public class ModClusterBeanFile extends AbstractConfigurationFile {
             Node node = result.item(i);
             if (node.getAttributes().getNamedItem("name") != null
                 && beanName.equals(node.getAttributes().getNamedItem("name").getTextContent())) {
-                System.out.println(node.getAttributes().getNamedItem("name").getTextContent());
                 return node;
             }
         }
@@ -243,5 +218,4 @@ public class ModClusterBeanFile extends AbstractConfigurationFile {
 
         return listOfNodes;
     }
-
 }

@@ -30,21 +30,20 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.util.exception.ThrowableUtil;
-import org.rhq.plugins.jmx.MBeanResourceComponent;
 import org.rhq.plugins.modcluster.config.ModClusterBeanFile;
 
 /**
  * @author Stefan Negrea
  *
  */
-@SuppressWarnings({ "rawtypes", "deprecation" })
-public class FileConfiguredMBeanResourceComponent extends MBeanResourceComponent {
+@SuppressWarnings({ "deprecation" })
+public class FileConfiguredMBeanResourceComponent extends TimeUnitParamResourceComponent {
 
     private static final Log log = LogFactory.getLog(FileConfiguredMBeanResourceComponent.class);
 
     private static final String BEAN_CLASS_NAME_PROPERTY = "className";
     private static final String DEPENDENCY_BEAN_CLASS_NAME_PROPERTY = "dependencyClassName";
-    private static final String SERVER_HOME_DIR = "jboss.server.home.dir";
+    private static final String SERVER_HOME_DIR = "serverHomeDir";
     private static final String CONFIGURATION_FILE_RELATIVE_PATH = "/deploy/mod_cluster.sar/META-INF/mod_cluster-jboss-beans.xml";
 
     /**
@@ -105,7 +104,7 @@ public class FileConfiguredMBeanResourceComponent extends MBeanResourceComponent
     }
 
     private String getServerHomeDirectory() {
-        ModclusterServerComponent modClusterComponent = (ModclusterServerComponent) this.resourceContext
+        ModClusterServerComponent modClusterComponent = (ModClusterServerComponent) this.resourceContext
             .getParentResourceComponent();
 
         PropertySimple property = modClusterComponent.getResourceContext().getPluginConfiguration()

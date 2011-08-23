@@ -28,16 +28,19 @@ public class ServerConfigTest {
     public void TestConfig() {
 
         try {
+            //Test simple bean configuration
             ModClusterBeanFile config = new ModClusterBeanFile("org.jboss.modcluster.ha.HAModClusterService",
                 "/home/snegrea/Downloads/jboss51eap/jboss-as/server/all/deploy/mod_cluster.sar/META-INF/mod_cluster-jboss-beans.xml");
             config.setPropertyValue("processStatusFrequency", "4");
             config.setPropertyValue("test", "5");
             config.setPropertyValue("test", "123");
 
-            System.out.println(config.getPropertyValue("test"));
+            config.setPropertyValue("test", null);
+            config.setPropertyValue("processStatusFrequency", null);
 
             config.saveConfigurationFile();
 
+            //Test bean configuration with constructor dependency
             config = new ModClusterBeanFile("org.jboss.modcluster.ha.HAModClusterService",
                 "org.jboss.modcluster.config.ha.HAModClusterConfig",
                 "/home/snegrea/Downloads/jboss51eap/jboss-as/server/all/deploy/mod_cluster.sar/META-INF/mod_cluster-jboss-beans.xml");
@@ -45,11 +48,8 @@ public class ServerConfigTest {
             config.setPropertyValue("test", "5");
             config.setPropertyValue("test", "123");
 
-            System.out.println(config.getPropertyValue("test"));
-
-            config.saveConfigurationFile();
-
             config.setPropertyValue("test", null);
+            config.setPropertyValue("processStatusFrequency", null);
             config.saveConfigurationFile();
         } catch (Exception e) {
             // TODO Auto-generated catch block

@@ -90,6 +90,10 @@ public class ContextComponent extends MBeanResourceComponent<MBeanResourceCompon
                 configuration = new Object[] { context.getHost(), context.getPath() };
             }
 
+            if (context.getPath().equals("/")) {
+                configuration[1] = "ROOT";
+            }
+
             log.info(name + " - " + context.getHost() + " " + context.getPath());
 
             ClassLoader cl = Thread.currentThread().getContextClassLoader();

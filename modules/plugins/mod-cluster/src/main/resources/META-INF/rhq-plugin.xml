@@ -6,7 +6,9 @@
    <depends plugin="JMX" />
 
    <service name="mod_cluster" 
-        discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent" class="ModclusterServerComponent" supportsManualAdd="true" description="mod_cluster plugin" singleton="true">
+        discovery="ModClusterDiscoveryComponent" 
+        class="ModClusterServerComponent" 
+        supportsManualAdd="true" description="mod_cluster plugin" singleton="true">
 
       <runs-inside>
          <parent-resource-type name="JBossAS Server" plugin="JBossAS" />
@@ -17,13 +19,17 @@
          <c:simple-property name="objectName" readOnly="true" default="Catalina:type=ModClusterListener,*|jboss.web:service=ModCluster" />
          <c:simple-property name="engineObjectName" readOnly="true" default="jboss.web:type=Engine" />
          <c:simple-property name="nameTemplate" default="mod_cluster" />
+         <c:simple-property name="serverHomeDir"/>
       </plugin-configuration>
 
       <operation name="reset" displayName="Reset the node" description="Move this application server out of an error state." />
       <operation name="refresh" displayName="Refresh configuration" description="Refresh configuration for this application server." />
 
       <!-- Start - Configuration for HAModClusterService -->
-      <service name="HA Service" discovery="ClassNameMBeanDiscoveryComponent" class="PolyPingMBeanResourceComponent" supportsManualAdd="true" description="HA Service Listener" singleton="true">
+      <service name="HA Service" discovery="ClassNameMBeanDiscoveryComponent" 
+        class="PolyPingMBeanResourceComponent" 
+        supportsManualAdd="true" 
+        description="HA Service Listener" singleton="true">
 
          <plugin-configuration>
             <c:simple-property name="objectName" readOnly="true" default="jboss.web:service=ModCluster" />
@@ -35,18 +41,18 @@
          <!-- HA Operations -->
          <operation name="disableDomain" displayName="Disable domain" description="Disables all contexts on each node within the current domain. If the current domain is null, then all nodes are stopped.">
             <results>
-               <c:simple-property name="result" description="The result of the operation" />
+               <c:simple-property name="operationResult" description="The result of the operation" />
             </results>
          </operation>
          <operation name="enableDomain" displayName="Enable domain" description="Enable all contexts on each node within the current domain. If the current domain is null, then all nodes are stopped.">
             <results>
-               <c:simple-property name="result" type="boolean" description="The result of the operation" />
+               <c:simple-property name="operationResult" type="boolean" description="The result of the operation" />
             </results>
          </operation>
          <operation name="stopDomain" displayName="Stop domain" description="Gracefully stops all contexts on each node within the current domain. If the current domain is null, then all nodes are stopped.">
             <parameters>
-               <c:simple-property required="true" name="timeout" type="string" displayName="The number of units of time for which to wait for all sessions to drain on a given node." />
-               <c:simple-property required="true" name="unit" default="MILLISECONDS" displayName="Time unit of the timeout parameter">
+               <c:simple-property required="true" name="p1" type="string" displayName="The number of units of time for which to wait for all sessions to drain on a given node." />
+               <c:simple-property required="true" name="p2" default="MILLISECONDS" displayName="Time unit of the timeout parameter">
                   <c:property-options allowCustomValue="false">
                      <c:option value="MICROSECONDS" name="MICROSECONDS" />
                      <c:option value="MILLISECONDS" name="MILLISECONDS" />
@@ -58,7 +64,7 @@
                </c:simple-property>
             </parameters>
             <results>
-               <c:simple-property name="result" type="boolean" description="The result of the operation" />
+               <c:simple-property name="operationResult" type="boolean" description="The result of the operation" />
             </results>
          </operation>
 
@@ -66,59 +72,60 @@
 
          <operation name="pingHTTPD" displayName="Ping httpd" description="Ping httpd and determine whether each proxy is accessible and healthy. Returns the PING_RSP grouped by proxy address.">
             <results>
-               <c:simple-property name="result" description="Map of PING_RPS response, grouped by proxy.">
+               <c:simple-property name="operationResult" description="Map of PING_RPS response, grouped by proxy.">
                </c:simple-property>
             </results>
          </operation>
          <operation name="pingNodeByJVMRoute" displayName="Ping node by JVM Route"
             description="Ping a node from httpd and returns the PING_RSP grouped by proxy address. Dtermines whether the node configured with the specified jvm route is accessible from each proxy returning the PING_RSP grouped by proxy address.">
             <parameters>
-               <c:simple-property required="true" name="jvmRoute" type="string" displayName="JVM Route of node to ping." />
+               <c:simple-property required="true" name="p1" type="string" displayName="JVM Route of node to ping." />
             </parameters>
             <results>
-               <c:simple-property name="result" type="string" description="Map of PING_RPS response, grouped by proxy." />
+               <c:simple-property name="operationResult" type="string" description="Map of PING_RPS response, grouped by proxy." />
             </results>
          </operation>
          <operation name="pingNodeByAddress" displayName="Ping node by address"
             description="Ping a node from httpd and returns the PING_RSP grouped by proxy address. Determines whether the node configured with the specified jvm route is accessible from each proxy returning the PING_RSP grouped by proxy address.">
             <parameters>
-               <c:simple-property required="true" name="scheme" type="string" displayName="Scheme (ajp, http, https)" />
-               <c:simple-property required="true" name="hostname" type="string" displayName="Name or ip address of a node." />
-               <c:simple-property required="true" name="port" type="string" displayName="Port" />
+               <c:simple-property required="true" name="p1" type="string" displayName="Scheme (ajp, http, https)" />
+               <c:simple-property required="true" name="p2" type="string" displayName="Name or ip address of a node." />
+               <c:simple-property required="true" name="p3" type="integer" displayName="Port" />
             </parameters>
             <results>
-               <c:simple-property name="result" type="string" description="Map of PING_RPS response, grouped by proxy." />
+               <c:simple-property name="operationResult" type="string" description="Map of PING_RPS response, grouped by proxy." />
             </results>
          </operation>
 
          <operation name="addProxy" displayName="Add a proxy" description="Add a proxy.">
             <parameters>
-               <c:simple-property required="true" name="host" type="string" displayName="Proxy address" />
-               <c:simple-property required="true" name="port" type="string" displayName="Proxy port" />
+               <c:simple-property required="true" name="p1" type="string" displayName="Proxy address" />
+               <c:simple-property required="true" name="p2" type="integer" displayName="Proxy port" />
             </parameters>
          </operation>
          <operation name="removeProxy" displayName="Remove a proxy" description="Remove a proxy.">
             <parameters>
-               <c:simple-property required="true" name="host" type="string" displayName="Proxy address" />
-               <c:simple-property required="true" name="port" type="string" displayName="Proxy port" />
+               <c:simple-property required="true" name="p1" type="string" displayName="Proxy address" />
+               <c:simple-property required="true" name="p2" type="integer" displayName="Proxy port" />
             </parameters>
          </operation>
+         
          <operation name="disable" displayName="Disable all webpapps" description="Disable all webapps for all virtual hosts of this application server.">
             <results>
-               <c:simple-property name="result" description="The result of the operation">
+               <c:simple-property name="operationResult" description="The result of the operation">
                </c:simple-property>
             </results>
          </operation>
          <operation name="enable" displayName="Enable all webapps" description="Enable all webapps for all virtual hosts of this application server.">
             <results>
-               <c:simple-property name="result" description="The result of the operation">
+               <c:simple-property name="operationResult" description="The result of the operation">
                </c:simple-property>
             </results>
          </operation>
          <operation name="stop" displayName="Stop all webapps" description="Gracefully stops all webapps for all virtual hosts of this application server.">
             <parameters>
-               <c:simple-property required="true" name="timeout" type="string" displayName="Session draining timeout" />
-               <c:simple-property required="true" name="unit" default="MILLISECONDS" displayName="Time unit of the timeout parameter">
+               <c:simple-property required="true" name="p1" type="string" displayName="Session draining timeout" />
+               <c:simple-property required="true" name="p2" default="MILLISECONDS" displayName="Time unit of the timeout parameter">
                   <c:property-options allowCustomValue="false">
                      <c:option value="MICROSECONDS" name="MICROSECONDS" />
                      <c:option value="MILLISECONDS" name="MILLISECONDS" />
@@ -130,7 +137,7 @@
                </c:simple-property>
             </parameters>
             <results>
-               <c:simple-property name="result" type="boolean" description="The result of the operation" />
+               <c:simple-property name="operationResult" type="boolean" description="The result of the operation" />
             </results>
          </operation>
 
@@ -139,7 +146,7 @@
          <metric property="ProxyInfo" displayName="Proxy Info" displayType="summary" dataType="trait" />
 
          <resource-configuration>
-            <c:simple-property name="processStatusFrequency" type="integer" description="Process status frequency." />
+            <c:simple-property name="processStatusFrequency" type="integer" required="false" description="Process status frequency." />
          </resource-configuration>
       </service>
 
@@ -203,56 +210,57 @@
 
          <operation name="pingHTTPD" displayName="Ping httpd" description="Ping httpd and determine whether each proxy is accessible and healthy. Returns the PING_RSP grouped by proxy address.">
             <results>
-               <c:simple-property name="result" type="string" description="Map of PING_RPS response, grouped by proxy." />
+               <c:simple-property name="operationResult" type="string" description="Map of PING_RPS response, grouped by proxy." />
             </results>
          </operation>
          <operation name="pingNodeByJVMRoute" displayName="Ping node by JVM Route"
             description="Ping a node from httpd and returns the PING_RSP grouped by proxy address. Dtermines whether the node configured with the specified jvm route is accessible from each proxy returning the PING_RSP grouped by proxy address.">
             <parameters>
-               <c:simple-property required="true" name="jvmRoute" type="string" displayName="JVM Route of node to ping." />
+               <c:simple-property required="true" name="p1" type="string" displayName="JVM Route of node to ping." />
             </parameters>
             <results>
-               <c:simple-property name="result" type="string" description="Map of PING_RPS response, grouped by proxy." />
+               <c:simple-property name="operationResult" type="string" description="Map of PING_RPS response, grouped by proxy." />
             </results>
          </operation>
          <operation name="pingNodeByAddress" displayName="Ping node by address"
             description="Ping a node from httpd and returns the PING_RSP grouped by proxy address. Determines whether the node configured with the specified jvm route is accessible from each proxy returning the PING_RSP grouped by proxy address.">
             <parameters>
-               <c:simple-property required="true" name="scheme" type="string" displayName="Scheme (ajp, http, https)" />
-               <c:simple-property required="true" name="hostname" type="string" displayName="Name or ip address of a node." />
-               <c:simple-property required="true" name="port" type="string" displayName="Port" />
+               <c:simple-property required="true" name="p1" type="string" displayName="Scheme (ajp, http, https)" />
+               <c:simple-property required="true" name="p2" type="string" displayName="Name or ip address of a node." />
+               <c:simple-property required="true" name="p3" type="integer" displayName="Port" />
             </parameters>
             <results>
-               <c:simple-property name="result" type="string" description="Map of PING_RPS response, grouped by proxy." />
+               <c:simple-property name="operationResult" type="string" description="Map of PING_RPS response, grouped by proxy." />
             </results>
          </operation>
 
          <operation name="addProxy" displayName="Add a proxy" description="Add a proxy.">
             <parameters>
-               <c:simple-property required="true" name="host" type="string" displayName="Proxy address" />
-               <c:simple-property required="true" name="port" type="string" displayName="Proxy port" />
+               <c:simple-property required="true" name="p1" type="string" displayName="Proxy address" />
+               <c:simple-property required="true" name="p2" type="integer" displayName="Proxy port" />
             </parameters>
          </operation>
          <operation name="removeProxy" displayName="Remove a proxy" description="Remove a proxy.">
             <parameters>
-               <c:simple-property required="true" name="host" type="string" displayName="Proxy address" />
-               <c:simple-property required="true" name="port" type="string" displayName="Proxy port" />
+               <c:simple-property required="true" name="p1" type="string" displayName="Proxy address" />
+               <c:simple-property required="true" name="p2" type="integer" displayName="Proxy port" />
             </parameters>
          </operation>
+         
          <operation name="disable" displayName="Disable all webpapps" description="Disable all webapps for all virtual hosts of this application server.">
             <results>
-               <c:simple-property name="result" type="boolean" description="The result of the operation" />
+               <c:simple-property name="operationResult" type="boolean" description="The result of the operation" />
             </results>
          </operation>
          <operation name="enable" displayName="Enable all webapps" description="Enable all webapps for all virtual hosts of this application server.">
             <results>
-               <c:simple-property name="result" type="boolean" description="The result of the operation" />
+               <c:simple-property name="operationResult" type="boolean" description="The result of the operation" />
             </results>
          </operation>
          <operation name="stop" displayName="Stop all webapps" description="Gracefully stops all webapps for all virtual hosts of this application server.">
             <parameters>
-               <c:simple-property required="true" name="timeout" type="string" displayName="Session draining timeout" />
-               <c:simple-property required="true" name="unit" default="MILLISECONDS" displayName="Time unit of the timeout parameter">
+               <c:simple-property required="true" name="p1" type="string" displayName="Session draining timeout" />
+               <c:simple-property required="true" name="p2" default="MILLISECONDS" displayName="Time unit of the timeout parameter">
                   <c:property-options allowCustomValue="false">
                      <c:option value="MICROSECONDS" name="MICROSECONDS" />
                      <c:option value="MILLISECONDS" name="MILLISECONDS" />
@@ -264,7 +272,7 @@
                </c:simple-property>
             </parameters>
             <results>
-               <c:simple-property name="result" type="boolean" description="The result of the operation" />
+               <c:simple-property name="operationResult" type="boolean" description="The result of the operation" />
             </results>
          </operation>
 
@@ -338,12 +346,12 @@
          </operation>
          <operation name="disable" displayName="Disable all webpapps" description="Disable all webapps for all virtual hosts of this application server.">
             <results>
-               <c:simple-property name="result" type="boolean" description="The result of the operation" />
+               <c:simple-property name="operationResult" type="boolean" description="The result of the operation" />
             </results>
          </operation>
          <operation name="enable" displayName="Enable all webapps" description="Enable all webapps for all virtual hosts of this application server.">
             <results>
-               <c:simple-property name="result" type="boolean" description="The result of the operation" />
+               <c:simple-property name="operationResult" type="boolean" description="The result of the operation" />
             </results>
          </operation>
          <operation name="stop" displayName="Stop all webapps" description="Gracefully stops all webapps for all virtual hosts of this application server.">
@@ -361,7 +369,7 @@
                </c:simple-property>
             </parameters>
             <results>
-               <c:simple-property name="result" type="boolean" description="The result of the operation" />
+               <c:simple-property name="operationResult" type="boolean" description="The result of the operation" />
             </results>
          </operation>
 
@@ -396,11 +404,9 @@
             <c:simple-property name="nameTemplate" default="Dynamic Load Balancer Factor" />
          </plugin-configuration>
 
-         <metric property="Metrics" displayName="Collected Metrics" displayType="summary" dataType="trait" />
-
          <resource-configuration>
-            <c:simple-property name="DecayFactor" type="integer" description="The number of historical load values used to determine load factor." />
-            <c:simple-property name="History" type="integer" description="The exponential decay factor for historical load values." />
+            <c:simple-property name="decayFactor" type="integer" required="false" description="The number of historical load values used to determine load factor." />
+            <c:simple-property name="history" type="integer" required="false" description="The exponential decay factor for historical load values." />
          </resource-configuration>
       </service>
 
@@ -424,11 +430,13 @@
             <c:simple-property name="nameTemplate" default="Load Metric" />
          </plugin-configuration>
 
-         <metric property="Load" displayName="Load" category="utilization" description="The current load of this metric as a percent of the metric's capacity." dataType="measurement" />
+         <metric property="Load" displayName="Load" category="utilization" 
+         description="The current load of this metric as a percent of the metric's capacity." dataType="measurement" 
+         defaultOn="true" displayType="summary"/>
 
          <resource-configuration>
-            <c:simple-property name="Weight" type="integer" description="The significance of this load metric compared to the other metrics." />
-            <c:simple-property name="Capacity" type="double" description="Used to normalize the value returned by load expressed as a percentage of the capacity, such that: 0 &lt; (load/capacity) &lt; 1" />
+            <c:simple-property name="weight" type="integer" description="The significance of this load metric compared to the other metrics." />
+            <c:simple-property name="capacity" type="double" description="Used to normalize the value returned by load expressed as a percentage of the capacity, such that: 0 &lt; (load/capacity) &lt; 1" />
          </resource-configuration>
       </service>
 
@@ -436,7 +444,7 @@
 
          <operation name="disableContext" displayName="Disable webapp" description="Disable this webapp.">
             <results>
-               <c:simple-property name="result" type="boolean" description="The result of the operation." />
+               <c:simple-property name="operationResult" type="boolean" description="The result of the operation." />
             </results>
          </operation>
          <operation name="stopContext" displayName="Stop webapp" description="Gracefully stops this webapp.">
@@ -454,12 +462,12 @@
                </c:simple-property>
             </parameters>
             <results>
-               <c:simple-property name="result" type="boolean" description="The result of the operation" />
+               <c:simple-property name="operationResult" type="boolean" description="The result of the operation" />
             </results>
          </operation>
          <operation name="enableContext" displayName="Enable webapp" description="Enable this webapp.">
             <results>
-               <c:simple-property name="result" type="boolean" description="The result of the operation" />
+               <c:simple-property name="operationResult" type="boolean" description="The result of the operation" />
             </results>
          </operation>
 

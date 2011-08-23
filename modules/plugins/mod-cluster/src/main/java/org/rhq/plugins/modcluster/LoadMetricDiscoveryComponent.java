@@ -36,9 +36,6 @@ import org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent;
 @SuppressWarnings("rawtypes")
 public class LoadMetricDiscoveryComponent extends MBeanResourceDiscoveryComponent<JMXComponent> {
 
-    /* (non-Javadoc)
-     * @see org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent#discoverResources(org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext, boolean)
-     */
     @Override
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<JMXComponent> context,
         boolean skipUnknownProps) {

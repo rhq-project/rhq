@@ -1,6 +1,9 @@
 package org.rhq.plugins.modcluster;
 
+import java.util.concurrent.TimeUnit;
+
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.operation.OperationResult;
 
 /*
@@ -35,5 +38,15 @@ public class PolyPingMBeanResourceComponent extends FileConfiguredMBeanResourceC
         }
 
         return super.invokeOperation(name, parameters);
+    }
+
+    @Override
+    protected Object getPropertyValueAsType(PropertySimple propSimple, String typeName) {
+        System.out.println(typeName);
+        if (typeName.equals(TimeUnit.class.getName())) {
+            return TimeUnit.valueOf(propSimple.getStringValue());
+        }
+
+        return super.getPropertyValueAsType(propSimple, typeName);
     }
 }

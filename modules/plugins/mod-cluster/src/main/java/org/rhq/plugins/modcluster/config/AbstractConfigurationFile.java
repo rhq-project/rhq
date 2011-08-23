@@ -18,11 +18,18 @@
  */
 package org.rhq.plugins.modcluster.config;
 
+import java.io.File;
 import java.io.IOException;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Source;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
@@ -38,10 +45,12 @@ public abstract class AbstractConfigurationFile {
     public AbstractConfigurationFile(String fileName) throws ParserConfigurationException, SAXException, IOException {
         this.fileName = fileName;
 
-        DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
-        DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
-        this.document = docBuilder.parse(this.getFileName());
+        loadConfiguratonFile();
     }
+
+    abstract void setPropertyValue(String propertyName, String value);
+
+    abstract String getPropertyValue(String propertyName);
 
     /**
      * @return the fileName
@@ -57,9 +66,19 @@ public abstract class AbstractConfigurationFile {
         return document;
     }
 
-    abstract void setPropertyValue(String propertyName, String value);
+    public void saveConfigurationFile() throws Exception {
+        File file = new File(this.getFileName());
+        StreamResult result = new StreamResult(file);
+        Source source = new DOMSource(this.getDocument());
 
-    abstract String getPropertyValue(String propertyName);
+        Transformer transformer = TransformerFactory.newInstance().newTransformer();
+        transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+        transformer.transform(source, result);
+    }
 
-    abstract void saveConfigurationFile() throws Exception;
+    private void loadConfiguratonFile() throws ParserConfigurationException, SAXException, IOException {
+        DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
+        this.document = docBuilder.parse(this.getFileName());
+    }
 }

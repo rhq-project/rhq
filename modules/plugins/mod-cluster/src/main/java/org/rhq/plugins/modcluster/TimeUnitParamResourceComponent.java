@@ -16,35 +16,27 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+package org.rhq.plugins.modcluster;
 
-package org.rhq.plugins.modcluster.config;
+import java.util.concurrent.TimeUnit;
 
-import java.io.IOException;
-
-import javax.xml.parsers.ParserConfigurationException;
-
-import org.xml.sax.SAXException;
+import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.plugins.jmx.MBeanResourceComponent;
 
 /**
  * @author Stefan Negrea
  *
  */
-public class JBossWebServerFile extends AbstractConfigurationFile {
-
-    public JBossWebServerFile(String fileName) throws ParserConfigurationException, SAXException, IOException {
-        super(fileName);
-        // TODO Auto-generated constructor stub
-    }
+@SuppressWarnings("rawtypes")
+public class TimeUnitParamResourceComponent extends MBeanResourceComponent {
 
     @Override
-    void setPropertyValue(String propertyName, String value) {
-        // TODO Auto-generated method stub
+    protected Object getPropertyValueAsType(PropertySimple propSimple, String typeName) {
+        System.out.println(typeName);
+        if (typeName.equals(TimeUnit.class.getName())) {
+            return TimeUnit.valueOf(propSimple.getStringValue());
+        }
 
-    }
-
-    @Override
-    String getPropertyValue(String propertyName) {
-        // TODO Auto-generated method stub
-        return null;
+        return super.getPropertyValueAsType(propSimple, typeName);
     }
 }

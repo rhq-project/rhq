@@ -112,6 +112,7 @@ public class ModclusterPluginTest {
                 add(PLUGIN_NAME);
                 add("Webapp Context");
                 add("HA Service Configuration");
+                add("HA Service");
             }
         };
 
@@ -132,6 +133,15 @@ public class ModclusterPluginTest {
                     ResourceComponent resourceComponent = PluginContainer.getInstance().getInventoryManager()
                         .getResourceComponent(resource);
                     ((ConfigurationFacet) resourceComponent).loadResourceConfiguration();
+                } else if (resource.getResourceType().getName().equals("HA Service")) {
+                    ResourceComponent resourceComponent = PluginContainer.getInstance().getInventoryManager()
+                        .getResourceComponent(resource);
+
+                    Configuration config = new Configuration();
+                    config.put(new PropertySimple("p1", "1"));
+                    config.put(new PropertySimple("p2", java.util.concurrent.TimeUnit.SECONDS));
+                    OperationResult result = ((OperationFacet) resourceComponent).invokeOperation("stop", config);
+                    log.info("Result of operation stopContext was: " + result.getSimpleResult());
                 }
             }
         }

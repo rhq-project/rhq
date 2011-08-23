@@ -31,6 +31,11 @@
          <scope>provided</scope>
       </dependency>
       
+      <dependency>
+         <groupId>org.jboss.on</groupId>
+         <artifactId>jopr-jboss-as-plugin</artifactId>
+         <version>${project.version}</version>
+      </dependency>      
 
       <dependency>
          <groupId>log4j</groupId>

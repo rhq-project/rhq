@@ -58,7 +58,6 @@
             StringBuilder buf = new StringBuilder();
             for (AlertConditionLog log : alert.getConditionLogs()) {
                 buf.append("<b>Condition:</b>" + log.getCondition().getName() + "<br/>");
-                buf.append("<b>Condition:</b>" + log.getCondition().getThreshold() + "<br/>");
                 buf.append("<b>Value:</b>" + log.getValue() + "</b>");
             }
 

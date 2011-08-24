@@ -89,7 +89,7 @@ public class ClassNameMBeanDiscoveryComponent<T extends JMXComponent> extends MB
             emsConnection.queryBeans(objectName);
             bean = emsConnection.getBean(objectName);
         }
+
         return bean;
     }
-
 }

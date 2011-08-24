@@ -21,6 +21,7 @@ package org.rhq.plugins.modcluster;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
 import org.rhq.plugins.modcluster.helper.JBossHelper;
+import org.rhq.plugins.modcluster.model.ProxyInfo;
 
 /**
  * @author Stefan Negrea

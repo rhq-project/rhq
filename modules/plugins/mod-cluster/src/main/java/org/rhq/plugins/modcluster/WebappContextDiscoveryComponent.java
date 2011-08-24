@@ -30,6 +30,7 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
 import org.rhq.plugins.modcluster.helper.JBossHelper;
+import org.rhq.plugins.modcluster.model.ProxyInfo;
 
 /**
  * Discovers mod_cluster contexts from the proxyInfo mbean property.
@@ -37,7 +38,7 @@ import org.rhq.plugins.modcluster.helper.JBossHelper;
  * @author Stefan Negrea
  */
 @SuppressWarnings("rawtypes")
-public class ContextDiscoveryComponent implements ResourceDiscoveryComponent<MBeanResourceComponent> {
+public class WebappContextDiscoveryComponent implements ResourceDiscoveryComponent<MBeanResourceComponent> {
 
     private static final String JVM_ROUTE_PROPERTY = "jvmRoute";
     private static final String ENGINE_OBJECT_NAME = "engineObjectName";

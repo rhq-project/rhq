@@ -29,6 +29,7 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
 import org.rhq.plugins.modcluster.helper.JBossHelper;
+import org.rhq.plugins.modcluster.model.ProxyInfo;
 
 /**
  * Manages a mod_cluster context entity.
@@ -36,9 +37,9 @@ import org.rhq.plugins.modcluster.helper.JBossHelper;
  * @author Stefan Negrea
  */
 @SuppressWarnings({ "rawtypes", "deprecation" })
-public class ContextComponent extends MBeanResourceComponent<MBeanResourceComponent> {
+public class WebappContextComponent extends MBeanResourceComponent<MBeanResourceComponent> {
 
-    private static final Log log = LogFactory.getLog(ContextComponent.class);
+    private static final Log log = LogFactory.getLog(WebappContextComponent.class);
 
     @Override
     protected EmsBean loadBean() {

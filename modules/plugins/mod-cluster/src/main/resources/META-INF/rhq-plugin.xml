@@ -440,7 +440,7 @@
          </resource-configuration>
       </service>
 
-      <service name="Webapp Context" discovery="ContextDiscoveryComponent" class="ContextComponent" description="Webapp Context">
+      <service name="Webapp Context" discovery="WebappContextDiscoveryComponent" class="WebappContextComponent" description="Webapp Context">
 
          <operation name="disableContext" displayName="Disable webapp" description="Disable this webapp.">
             <results>

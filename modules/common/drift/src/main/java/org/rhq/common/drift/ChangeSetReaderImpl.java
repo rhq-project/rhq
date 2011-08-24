@@ -55,6 +55,8 @@ public class ChangeSetReaderImpl implements ChangeSetReader {
 
     private Headers headers;
 
+    private boolean closeStream;
+
     public ChangeSetReaderImpl(File metaDataFile) throws ChangeSetReaderException {
         try {
             this.metaDataFile = metaDataFile;
@@ -70,8 +72,23 @@ public class ChangeSetReaderImpl implements ChangeSetReader {
     }
 
     public ChangeSetReaderImpl(Reader metaDataFile) throws Exception {
+        this(metaDataFile, false);
+    }
+
+    /**
+     * Creates a new change set reader. This constructor takes a boolean argument that can
+     * be used to prevent the reader from closing the stream when using its iterator. Note
+     * that calling {@link #close()} will close the stream regardless of the value of
+     * closeStream.
+     *
+     * @param metaDataFile
+     * @param closeStream
+     * @throws Exception
+     */
+    public ChangeSetReaderImpl(Reader metaDataFile, boolean closeStream) throws Exception {
         reader = new BufferedReader(metaDataFile);
         readHeaders();
+        this.closeStream = closeStream;
     }
 
     private void readHeaders() throws IOException {
@@ -158,7 +175,7 @@ public class ChangeSetReaderImpl implements ChangeSetReader {
                 try {
                     FileEntry previous = next;
                     next = read();
-                    if (next == null) {
+                    if (next == null && closeStream) {
                         close();
                     }
                     return previous;

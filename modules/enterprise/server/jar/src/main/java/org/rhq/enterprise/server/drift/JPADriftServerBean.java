@@ -238,7 +238,7 @@ public class JPADriftServerBean implements JPADriftServerLocal {
 
                     try {
                         ChangeSetReader reader = new ChangeSetReaderImpl(new BufferedReader(new InputStreamReader(
-                            stream)));
+                            stream)), false);
 
                         // store the new change set info (not the actual blob)
                         DriftConfiguration config = findDriftConfiguration(resource, reader.getHeaders());

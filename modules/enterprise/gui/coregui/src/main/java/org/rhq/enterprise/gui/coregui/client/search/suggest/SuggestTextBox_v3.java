@@ -101,6 +101,8 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
         // suggestionMenu must be created before suggestionPopup, because
         // suggestionMenu is suggestionPopup's widget
         suggestionMenu = new SuggestionMenu(true);
+        // let the text box maintain focus when navigating the menu
+        suggestionMenu.setFocusOnHoverEnabled(false);
         suggestionPopup = createPopup();
 
         // need to fork PopupPanel to access the animation type
@@ -189,6 +191,8 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
         } else {
             suggestionPopup.hide();
         }
+
+        setFocus(true);
     }
 
     private void addEventsToTextBox() {

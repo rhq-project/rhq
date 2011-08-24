@@ -20,11 +20,8 @@
 package org.rhq.core.pc.drift;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -32,7 +29,6 @@ import org.testng.annotations.Test;
 import org.rhq.core.clientapi.server.drift.DriftServerService;
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.ServerServices;
-import org.rhq.core.util.stream.StreamUtil;
 
 import static org.rhq.core.util.ZipUtil.unzipFile;
 import static org.testng.Assert.assertEquals;
@@ -137,6 +133,8 @@ public class DriftManagerTest extends DriftTest {
             fail("Failed to unzip zip file from intput stream into " + zipDir.getPath(), e);
         }
 
+        assertEquals(zipDir.listFiles().length, expectedFiles.length, "The zip file has the wrong number of files");
+
         for (File expectedFile : expectedFiles) {
 
             File actualFile = findFile(zipDir, expectedFile);
@@ -161,13 +159,6 @@ public class DriftManagerTest extends DriftTest {
             }
         }
         return null;
-    }
-
-    private void addToZipFile(File file, ZipOutputStream stream) throws Exception {
-        FileInputStream fis = new FileInputStream(file);
-        stream.putNextEntry(new ZipEntry(file.getName()));
-        StreamUtil.copy(fis, stream, false);
-        fis.close();
     }
 
     /**

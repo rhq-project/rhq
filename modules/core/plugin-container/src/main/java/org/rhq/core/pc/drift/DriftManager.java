@@ -24,6 +24,7 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.List;
 import java.util.Set;
@@ -165,12 +166,19 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
     }
 
     @Override
-    public void sendChangeSetContentToServer(int resourceId, String driftConfigurationName, File contentDir) {
+    public void sendChangeSetContentToServer(int resourceId, String driftConfigurationName, final File contentDir) {
         try {
             File zipFile = new File(contentDir, "content.zip");
             ZipOutputStream stream = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(zipFile)));
 
-            for (File file : contentDir.listFiles()) {
+            FilenameFilter contentZipFilter = new FilenameFilter() {
+                @Override
+                public boolean accept(File dir, String name) {
+                    return dir.equals(contentDir) && !name.equals("content.zip");
+                }
+            };
+
+            for (File file : contentDir.listFiles(contentZipFilter)) {
                 FileInputStream fis = new FileInputStream(file);
                 stream.putNextEntry(new ZipEntry(file.getName()));
                 StreamUtil.copy(fis, stream, false);

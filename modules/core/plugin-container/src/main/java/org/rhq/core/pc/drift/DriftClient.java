@@ -13,6 +13,15 @@ public interface DriftClient {
 
     void sendChangeSetToServer(int resourceId, DriftConfiguration driftConfiguration, DriftChangeSetCategory type);
 
+    /**
+     * Sends requested content to the server. All of the files in the content directory are
+     * zipped up, and the zip file is sent to the server. After the zip file is sent to the
+     * server, the content directory is purged.
+     *
+     * @param resourceId
+     * @param driftConfigurationName
+     * @param contentDir
+     */
     void sendChangeSetContentToServer(int resourceId, String driftConfigurationName, File contentDir);
 
     File getAbsoluteBaseDirectory(int resourceId, DriftConfiguration driftConfiguration);

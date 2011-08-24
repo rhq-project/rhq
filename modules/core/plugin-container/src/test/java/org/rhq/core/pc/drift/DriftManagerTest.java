@@ -37,6 +37,8 @@ import org.rhq.core.util.stream.StreamUtil;
 import static org.rhq.core.util.ZipUtil.unzipFile;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 public class DriftManagerTest extends DriftTest {
 
@@ -46,7 +48,7 @@ public class DriftManagerTest extends DriftTest {
 
     private PluginContainerConfiguration pcConfig;
 
-//    private DriftManager driftMgr;
+    private DriftManager driftMgr;
 
     @BeforeMethod
     public void initTest() throws Exception {
@@ -59,6 +61,30 @@ public class DriftManagerTest extends DriftTest {
         pcConfig.setServerServices(serverServices);
         pcConfig.setDataDirectory(basedir());
         pcConfig.setTemporaryDirectory(tmpDir);
+
+        driftMgr = new DriftManager();
+        driftMgr.setConfiguration(pcConfig);
+    }
+
+    @Test
+    public void writeContentZipFileToChangeSetContentDirectory() throws Exception {
+        String configName = "send-content-in-zip";
+        File changeSetDir = changeSetDir(configName);
+        final File contentDir = mkdir(changeSetDir, "content");
+
+        createRandomFile(contentDir, "content-1");
+        createRandomFile(contentDir, "content-2");
+
+        setDriftServiceCallback(new DriftServiceCallback() {
+            @Override
+            public void execute() {
+                File contentZip = new File(contentDir, "content.zip");
+                assertTrue(contentZip.exists(), "Expected content zip file to be written to the change set content " +
+                    "directory: " + contentDir.getPath());
+            }
+        });
+
+        driftMgr.sendChangeSetContentToServer(resourceId(), configName, contentDir);
     }
 
     @Test
@@ -67,40 +93,52 @@ public class DriftManagerTest extends DriftTest {
         File changeSetDir = changeSetDir(configName);
         File contentDir = mkdir(changeSetDir, "content");
 
-        File content1 = createRandomFile(contentDir, "content-1");
-        File content2 = createRandomFile(contentDir, "content-2");
+        final File content1 = createRandomFile(contentDir, "content-1");
+        final File content2 = createRandomFile(contentDir, "content-2");
 
-        DriftManager driftMgr = new DriftManager();
-        driftMgr.setConfiguration(pcConfig);
+        setDriftServiceCallback(new DriftServiceCallback() {
+            @Override
+            public void execute() {
+                assertZipFileMatches(driftServerService.filesZipStream, content1, content2);
+            }
+        });
+
+        driftMgr.sendChangeSetContentToServer(resourceId(), configName, contentDir);
+    }
+
+    @Test
+    public void cleanUpAfterSendingContentToServer() throws Exception {
+        String configName = "clean-up-after-sending-content";
+        File changeSetDir = changeSetDir(configName);
+        File contentDir = mkdir(changeSetDir, "content");
+
+        createRandomFile(contentDir, "content-1");
+        createRandomFile(contentDir, "content-2");
 
         driftMgr.sendChangeSetContentToServer(resourceId(), configName, contentDir);
 
-        File outputDir = new File(tmpDir, "output");
-        outputDir.mkdir();
-        unzipFile(driftServerService.filesZipStream, outputDir);
-
-        assertEquals(outputDir.listFiles().length, 2, "Expected the zip file to contain two entries");
-        assertZipFileMatches(outputDir, content1, content2);
+        assertThatDirectoryIsEmpty(contentDir);
     }
-
-//    @Test
-//    public void cleanUpAfterSendingContentToServer() throws Exception {
-//        String configName = "clean-up-after-sending-content";
-//        File changeSetDir = changeSetDir(configName);
-//        File contentDir = mkdir(changeSetDir, "content");
-//    }
 
     /**
      * This method first verifies that each of the expected files is contained in the the
      * zip file. Then it verifies that the content for each file in the zip file matches
      * the expected files by comparing their SHA-256 hashes.
      *
-     * @param zipDir
+     * @param zipStream
      * @param expectedFiles
      * @throws IOException
      */
-    private void assertZipFileMatches(File zipDir, File... expectedFiles) throws IOException {
+    private void assertZipFileMatches(InputStream zipStream, File... expectedFiles) {
+        File zipDir = new File(tmpDir, "output");
+        try {
+            unzipFile(zipStream, zipDir);
+        } catch (IOException e) {
+            fail("Failed to unzip zip file from intput stream into " + zipDir.getPath(), e);
+        }
+
         for (File expectedFile : expectedFiles) {
+
             File actualFile = findFile(zipDir, expectedFile);
             assertNotNull(actualFile, "Expected zip file to contain " + expectedFile.getName());
 
@@ -110,6 +148,10 @@ public class DriftManagerTest extends DriftTest {
             assertEquals(actualHash, expectedHash, "The zip file content is wrong. The SHA-256 hash does not match " +
                 "for " + expectedFile.getName());
         }
+    }
+
+    private void assertThatDirectoryIsEmpty(File dir) {
+        assertEquals(dir.listFiles().length, 0, "Expected " + dir.getPath() + " to be empty");
     }
 
     private File findFile(File dir, File file) {
@@ -128,11 +170,26 @@ public class DriftManagerTest extends DriftTest {
         fis.close();
     }
 
+    /**
+     * Sets a callback that will be invoked immediately after DriftManager calls
+     * {@link DriftServerService#sendChangesetZip(int, long, java.io.InputStream)} or
+     * {@link DriftServerService#sendFilesZip(int, long, java.io.InputStream)}. The callback
+     * can perform any verification as necessary, and that will happen before the call to
+     * to DriftServerService returns.
+     *
+     * @param callback
+     */
+    private void setDriftServiceCallback(DriftServiceCallback callback) {
+        driftServerService.callback = callback;
+    }
+
     private static class TestDriftServerService implements DriftServerService {
 
         public int filesZipResourceId;
         public long filesZipSize;
         public InputStream filesZipStream;
+
+        public DriftServiceCallback callback;
 
         @Override
         public void sendChangesetZip(int resourceId, long zipSize, InputStream zipStream) {
@@ -143,7 +200,19 @@ public class DriftManagerTest extends DriftTest {
             filesZipResourceId = resourceId;
             filesZipSize = zipSize;
             filesZipStream = zipStream;
+
+            if (callback != null) {
+                callback.execute();
+            }
         }
+    }
+
+    /**
+     * This callback interface provides a hook for doing any verification immediately after
+     * DriftManager calls DriftServerService.
+     */
+    private static interface DriftServiceCallback {
+        void execute();
     }
 
 }

@@ -167,7 +167,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
     @Override
     public void sendChangeSetContentToServer(int resourceId, String driftConfigurationName, File contentDir) {
         try {
-            File zipFile = new File(pluginContainerConfiguration.getTemporaryDirectory(), "content.zip");
+            File zipFile = new File(contentDir, "content.zip");
             ZipOutputStream stream = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(zipFile)));
 
             for (File file : contentDir.listFiles()) {
@@ -184,6 +184,12 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
         } catch (IOException e) {
             log.error("An error occurred while trying to send content for changeset[resourceId: " + resourceId
                 + ", driftConfiguration: " + driftConfigurationName + "]", e);
+        }
+
+        for (File file : contentDir.listFiles()) {
+            if (!file.delete()) {
+                log.warn("Unable to clean up content directory. Failed to delete " + file.getPath());
+            }
         }
     }
 

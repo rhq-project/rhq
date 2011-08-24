@@ -202,8 +202,12 @@ public class DriftTest {
      * @return The SHA-256 hash as a string
      * @throws IOException
      */
-    protected String sha256(File file) throws IOException {
-        return digestGenerator.calcDigestString(file);
+    protected String sha256(File file) {
+        try {
+            return digestGenerator.calcDigestString(file);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to calculate SHA-256 hash for " + file.getPath(), e);
+        }
     }
 
     protected File createRandomFile(File dir, String fileName) throws Exception {

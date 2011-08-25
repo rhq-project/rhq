@@ -200,6 +200,15 @@ function onLoad() {
         });
     }
 
+    if (document.forms['show'].inventory.checked) {
+        link = "/resource/common/monitor/events/EventInventoryJSON.jsp?id=" + resourceId + "&begin=" + begin + "&end=" + end;
+        Timeline.loadJSON(link, function(json, url) {
+            eventSource.loadJSON(json, url);
+            document.getElementById("event-count").innerHTML = eventSource.getCount();
+            done();
+        });
+    }
+
     if (document.forms['show'].alerts.checked) {
         link = "/resource/common/monitor/events/EventAlertJSON.jsp?id=" + resourceId + "&begin=" + begin + "&end=" + end;
         Timeline.loadJSON(link, function(json, url) {
@@ -254,23 +263,30 @@ function onResize() {
 <span id="event-count" style="display:none;"></span>
 <div class="controls" id="controls"></div>
 <form action="#" onsubmit="onLoad()" name="show">
+<table><tr>
+<td>
   <input type="checkbox" name="inventory" checked="checked" onchange="onLoad()" id="inventoryField"/>
   <label for="inventoryField"><img src="/images/icons/Inventory_grey_16.png"/> Inventory Changes</label>
-&nbsp;
+</td><td>
   <input type="checkbox" name="alerts" checked="checked" onchange="onLoad()" id="alertsField"/>
   <label for="alertsField"><img src="/images/icons/Alert_grey_16.png"/> Alerts</label>
-&nbsp;
+</td><td>
   <input type="checkbox" name="events" checked="checked" onchange="onLoad()" id="eventsField"/>
   <label for="eventsField"><img src="/images/icons/Events_grey_16.png"/> Events</label>
-&nbsp;
+</td><td>
   <input type="checkbox" name="configurations" checked="checked" onchange="onLoad()" id="configurationsField"/>
   <label for="configurationsField"><img src="/images/icons/Configure_grey_16.png"/> Configuration Changes</label>
-&nbsp;
+</td></tr><tr><td>
   <input type="checkbox" name="operations" checked="checked" onchange="onLoad()" id="operationsField"/>
   <label for="operationsField"><img src="/images/icons/Operation_grey_16.png"/> Operations</label>
-&nbsp;
+</td><td>
+  <input type="checkbox" name="drift" checked="checked" onchange="onLoad()" id="driftField"/>
+  <label for="driftField"><img src="/images/icons/Drift_16.png"/> Drift</label>
+</td><td>
   <input type="checkbox" name="content" checked="checked" onchange="onLoad()" id="contentField"/>
   <label for="contentField"><img src="/images/icons/Content_grey_16.png"/> Content Changes</label>
+</td>
+</tr></table>
 </form>
-<div id="t1" style='height: 475px; border: 1px solid #aaa'></div>
+<div id="t1" style='height: 450px; border: 1px solid #aaa'></div>
 </body></html>

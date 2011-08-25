@@ -374,6 +374,7 @@
          </operation>
 
          <metric property="proxyConfiguration" displayName="Proxy Configuration" displayType="summary" dataType="trait" />
+         <metric property="proxyInfo" displayName="Proxy Info" displayType="summary" dataType="trait" />
          <metric property="modelerType" displayName="Type of the modeled resource" displayType="summary" dataType="trait" />
          <metric property="className" displayName="Fully qualified class name of the managed object" displayType="summary" dataType="trait" />
          <metric property="advertise" displayName="Enable autodiscovery of httpd servers." displayType="summary" dataType="trait" />

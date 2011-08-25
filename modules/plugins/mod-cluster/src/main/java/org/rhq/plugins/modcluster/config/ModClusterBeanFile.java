@@ -75,9 +75,10 @@ public class ModClusterBeanFile extends AbstractConfigurationFile {
      */
     public void setPropertyValue(String propertyName, String value) {
         boolean propertyFound = false;
+        NodeList nodeList = beanNode.getChildNodes();
 
-        for (int i = 0; i < beanNode.getChildNodes().getLength(); i++) {
-            Node currentNode = beanNode.getChildNodes().item(i);
+        for (int i = 0; i < nodeList.getLength(); i++) {
+            Node currentNode = nodeList.item(i);
 
             if (currentNode.getNodeName().equals("property")
                 && currentNode.getAttributes().getNamedItem("name") != null
@@ -131,7 +132,7 @@ public class ModClusterBeanFile extends AbstractConfigurationFile {
     private Node getBeanNodeByClass(String className) {
         NodeList nodeList = this.getDocument().getElementsByTagName("bean");
 
-        for (int i = 1; i < nodeList.getLength(); i++) {
+        for (int i = 0; i < nodeList.getLength(); i++) {
             Node node = nodeList.item(i);
 
             if (node.getAttributes().getNamedItem("class") != null
@@ -150,7 +151,7 @@ public class ModClusterBeanFile extends AbstractConfigurationFile {
     private Node getBeanNodeByName(String beanName) {
         NodeList nodeList = this.getDocument().getElementsByTagName("bean");
 
-        for (int i = 1; i < nodeList.getLength(); i++) {
+        for (int i = 0; i < nodeList.getLength(); i++) {
             Node node = nodeList.item(i);
 
             if (node.getAttributes().getNamedItem("name") != null

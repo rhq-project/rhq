@@ -236,6 +236,15 @@ function onLoad() {
         });
     }
 
+    if (document.forms['show'].drift.checked) {
+        link = "/resource/common/monitor/events/EventDriftJSON.jsp?id=" + resourceId + "&begin=" + begin + "&end=" + end;
+        Timeline.loadJSON(link, function(json, url) {
+            eventSource.loadJSON(json, url);
+            document.getElementById("event-count").innerHTML = eventSource.getCount();
+            done();
+        });
+    }
+
     if (document.forms['show']['content'].checked) {
         link = "/resource/common/monitor/events/EventContentJSON.jsp?id=" + resourceId + "&begin=" + begin + "&end=" + end;
         Timeline.loadJSON(link, function(json, url) {

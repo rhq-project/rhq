@@ -150,12 +150,15 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
     @Override
     public void sendChangeSetToServer(int resourceId, DriftConfiguration driftConfiguration, DriftChangeSetCategory type) {
         try {
+            if (!schedulesQueue.contains(resourceId, driftConfiguration)) {
+                return;
+            }
+
             File changeSetFile = changeSetMgr.findChangeSet(resourceId, driftConfiguration.getName(), type);
             if (changeSetFile == null) {
-                log
-                    .warn("changeset[resourceId: " + resourceId + ", driftConfiguration: "
-                        + driftConfiguration.getName()
-                        + "] was not found. Cancelling request to send change set to server");
+                log.warn("changeset[resourceId: " + resourceId + ", driftConfiguration: " +
+                    driftConfiguration.getName() + "] was not found. Cancelling request to send change set " +
+                    "to server");
                 return;
             }
 

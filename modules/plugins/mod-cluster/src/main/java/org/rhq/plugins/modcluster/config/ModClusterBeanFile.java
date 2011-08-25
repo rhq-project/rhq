@@ -18,6 +18,7 @@
  */
 package org.rhq.plugins.modcluster.config;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -44,7 +45,19 @@ public class ModClusterBeanFile extends AbstractConfigurationFile {
      * @throws SAXException
      * @throws IOException
      */
-    public ModClusterBeanFile(String className, String configurationFile) throws ParserConfigurationException,
+    public ModClusterBeanFile(String className, String configurationFileName) throws ParserConfigurationException,
+        SAXException, IOException {
+        this(className, new File(configurationFileName));
+    }
+
+    /**
+     * @param className
+     * @param configurationFile
+     * @throws ParserConfigurationException
+     * @throws SAXException
+     * @throws IOException
+     */
+    public ModClusterBeanFile(String className, File configurationFile) throws ParserConfigurationException,
         SAXException, IOException {
         super(configurationFile);
 
@@ -59,7 +72,20 @@ public class ModClusterBeanFile extends AbstractConfigurationFile {
      * @throws SAXException
      * @throws IOException
      */
-    public ModClusterBeanFile(String className, String constructorArgumentClassName, String configurationFile)
+    public ModClusterBeanFile(String className, String constructorArgumentClassName, String configurationFileName)
+        throws ParserConfigurationException, SAXException, IOException {
+        this(className, constructorArgumentClassName, new File(configurationFileName));
+    }
+
+    /**
+     * @param className
+     * @param constructorArgumentClassName
+     * @param configurationFile
+     * @throws ParserConfigurationException
+     * @throws SAXException
+     * @throws IOException
+     */
+    public ModClusterBeanFile(String className, String constructorArgumentClassName, File configurationFile)
         throws ParserConfigurationException, SAXException, IOException {
         super(configurationFile);
 

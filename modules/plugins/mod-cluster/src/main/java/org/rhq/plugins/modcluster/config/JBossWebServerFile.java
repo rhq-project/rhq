@@ -19,6 +19,7 @@
 
 package org.rhq.plugins.modcluster.config;
 
+import java.io.File;
 import java.io.IOException;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -43,6 +44,12 @@ public class JBossWebServerFile extends AbstractConfigurationFile {
     public JBossWebServerFile(String configurationFileName) throws ParserConfigurationException, SAXException,
         IOException {
         super(configurationFileName);
+
+        listenerNode = this.getListenerNode();
+    }
+
+    public JBossWebServerFile(File configurationFile) throws ParserConfigurationException, SAXException, IOException {
+        super(configurationFile);
 
         listenerNode = this.getListenerNode();
     }

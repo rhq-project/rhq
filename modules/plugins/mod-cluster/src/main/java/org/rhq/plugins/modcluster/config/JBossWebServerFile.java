@@ -23,6 +23,11 @@ import java.io.IOException;
 
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.apache.commons.lang.NotImplementedException;
+import org.w3c.dom.Attr;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 /**
@@ -31,20 +36,52 @@ import org.xml.sax.SAXException;
  */
 public class JBossWebServerFile extends AbstractConfigurationFile {
 
-    public JBossWebServerFile(String fileName) throws ParserConfigurationException, SAXException, IOException {
-        super(fileName);
-        // TODO Auto-generated constructor stub
+    private static final String CATALINA_LISTENER_CLASS_NAME = "org.jboss.modcluster.catalina.ModClusterListener";
+
+    private Node listenerNode;
+
+    public JBossWebServerFile(String configurationFileName) throws ParserConfigurationException, SAXException,
+        IOException {
+        super(configurationFileName);
+
+        listenerNode = this.getListenerNode();
     }
 
     @Override
-    void setPropertyValue(String propertyName, String value) {
-        // TODO Auto-generated method stub
+    public void setPropertyValue(String propertyName, String value) {
+        NamedNodeMap attributeList = listenerNode.getAttributes();
 
+        if (attributeList.getNamedItem(propertyName) != null && value != null) {
+            Node attributeNode = attributeList.getNamedItem(propertyName);
+            attributeNode.setTextContent(value);
+        } else if (attributeList.getNamedItem(propertyName) != null && value == null) {
+            attributeList.removeNamedItem(propertyName);
+        } else if (attributeList.getNamedItem(propertyName) == null && value != null) {
+            Attr property = this.getDocument().createAttribute(propertyName);
+            property.setValue(propertyName);
+            property.setTextContent(value);
+            attributeList.setNamedItem(property);
+        }
     }
 
     @Override
-    String getPropertyValue(String propertyName) {
-        // TODO Auto-generated method stub
+    public String getPropertyValue(String propertyName) {
+        throw new NotImplementedException(
+            "Property values should be retrieved from the JMX interface not from the configuration file.");
+    }
+
+    private Node getListenerNode() {
+        NodeList nodeList = this.getDocument().getElementsByTagName("Listener");
+
+        for (int i = 0; i < nodeList.getLength(); i++) {
+            Node node = nodeList.item(i);
+
+            if (node.getAttributes().getNamedItem("className") != null
+                && CATALINA_LISTENER_CLASS_NAME.equals(node.getAttributes().getNamedItem("className").getTextContent())) {
+                return node;
+            }
+        }
+
         return null;
     }
 }

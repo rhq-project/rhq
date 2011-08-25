@@ -325,7 +325,7 @@
       </service>
       <!-- End - Configuration for ModClusterService -->
 
-      <service name="Catalina Service" discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent" class="ModclusterServerComponent" supportsManualAdd="true" description="Catalina Service Listener" singleton="true">
+      <service name="Catalina Service" discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent" class="CatalinaServiceComponent" supportsManualAdd="true" description="Catalina Service Listener" singleton="true">
 
          <plugin-configuration>
             <c:simple-property name="objectName" readOnly="true" default="Catalina:type=ModClusterListener,*" />

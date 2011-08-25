@@ -20,12 +20,13 @@ package org.rhq.plugins.modcluster.test;
 
 import org.testng.annotations.Test;
 
+import org.rhq.plugins.modcluster.config.JBossWebServerFile;
 import org.rhq.plugins.modcluster.config.ModClusterBeanFile;
 
 public class ServerConfigTest {
 
     @Test
-    public void TestConfig() {
+    public void TestModClusterConfig() {
 
         try {
             //Test simple bean configuration
@@ -50,6 +51,27 @@ public class ServerConfigTest {
 
             config.setPropertyValue("test", null);
             config.setPropertyValue("processStatusFrequency", null);
+            config.saveConfigurationFile();
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void TestJBossWebConfig() {
+
+        try {
+            //Test simple bean configuration
+            JBossWebServerFile config = new JBossWebServerFile(
+                "/home/snegrea/Downloads/jboss42/server/all/deploy/jboss-web.deployer/server.xml");
+            config.setPropertyValue("processStatusFrequency", "4");
+            config.setPropertyValue("test", "5");
+            config.setPropertyValue("test", "123");
+
+            config.setPropertyValue("test", null);
+            config.setPropertyValue("processStatusFrequency", null);
+
             config.saveConfigurationFile();
         } catch (Exception e) {
             // TODO Auto-generated catch block

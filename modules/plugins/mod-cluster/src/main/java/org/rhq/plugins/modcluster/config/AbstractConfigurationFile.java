@@ -39,11 +39,16 @@ import org.xml.sax.SAXException;
  * @author Stefan Negrea
  */
 public abstract class AbstractConfigurationFile {
-    private String fileName;
+    private File configurationFile;
     private Document document;
 
     public AbstractConfigurationFile(String fileName) throws ParserConfigurationException, SAXException, IOException {
-        this.fileName = fileName;
+        this(new File(fileName));
+    }
+
+    public AbstractConfigurationFile(File configurationFile) throws ParserConfigurationException, SAXException,
+        IOException {
+        this.configurationFile = configurationFile;
 
         loadConfiguratonFile();
     }
@@ -53,13 +58,6 @@ public abstract class AbstractConfigurationFile {
     abstract String getPropertyValue(String propertyName);
 
     /**
-     * @return the fileName
-     */
-    public String getFileName() {
-        return fileName;
-    }
-
-    /**
      * @return the doc
      */
     public Document getDocument() {
@@ -67,8 +65,7 @@ public abstract class AbstractConfigurationFile {
     }
 
     public void saveConfigurationFile() throws Exception {
-        File file = new File(this.getFileName());
-        StreamResult result = new StreamResult(file);
+        StreamResult result = new StreamResult(this.configurationFile);
         Source source = new DOMSource(this.getDocument());
 
         Transformer transformer = TransformerFactory.newInstance().newTransformer();
@@ -79,6 +76,6 @@ public abstract class AbstractConfigurationFile {
     private void loadConfiguratonFile() throws ParserConfigurationException, SAXException, IOException {
         DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
         DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
-        this.document = docBuilder.parse(this.getFileName());
+        this.document = docBuilder.parse(this.configurationFile);
     }
 }

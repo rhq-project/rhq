@@ -18,19 +18,23 @@
  */
 package org.rhq.plugins.modcluster.test;
 
+import java.io.File;
+import java.net.URL;
+
 import org.testng.annotations.Test;
 
+import org.rhq.plugins.modcluster.config.JBossWebServerFile;
 import org.rhq.plugins.modcluster.config.ModClusterBeanFile;
 
 public class ServerConfigTest {
 
     @Test
-    public void TestConfig() {
-
+    public void TestSimpleBeanModClusterConfig() {
         try {
-            //Test simple bean configuration
-            ModClusterBeanFile config = new ModClusterBeanFile("org.jboss.modcluster.ha.HAModClusterService",
-                "/home/snegrea/Downloads/jboss51eap/jboss-as/server/all/deploy/mod_cluster.sar/META-INF/mod_cluster-jboss-beans.xml");
+            URL testConfigURL = getClass().getResource("/xml_config/mod_cluster-jboss-beans.xml");
+            File testFile = new File(testConfigURL.toURI());
+
+            ModClusterBeanFile config = new ModClusterBeanFile("org.jboss.modcluster.ha.HAModClusterService", testFile);
             config.setPropertyValue("processStatusFrequency", "4");
             config.setPropertyValue("test", "5");
             config.setPropertyValue("test", "123");
@@ -39,11 +43,19 @@ public class ServerConfigTest {
             config.setPropertyValue("processStatusFrequency", null);
 
             config.saveConfigurationFile();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
-            //Test bean configuration with constructor dependency
-            config = new ModClusterBeanFile("org.jboss.modcluster.ha.HAModClusterService",
-                "org.jboss.modcluster.config.ha.HAModClusterConfig",
-                "/home/snegrea/Downloads/jboss51eap/jboss-as/server/all/deploy/mod_cluster.sar/META-INF/mod_cluster-jboss-beans.xml");
+    @Test
+    public void TestBeanWithDependenciesModClusterConfig() {
+        try {
+            URL testConfigURL = getClass().getResource("/xml_config/mod_cluster-jboss-beans.xml");
+            File testFile = new File(testConfigURL.toURI());
+
+            ModClusterBeanFile config = new ModClusterBeanFile("org.jboss.modcluster.ha.HAModClusterService",
+                "org.jboss.modcluster.config.ha.HAModClusterConfig", testFile);
             config.setPropertyValue("processStatusFrequency", "4");
             config.setPropertyValue("test", "5");
             config.setPropertyValue("test", "123");
@@ -52,7 +64,26 @@ public class ServerConfigTest {
             config.setPropertyValue("processStatusFrequency", null);
             config.saveConfigurationFile();
         } catch (Exception e) {
-            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void TestJBossWebConfig() {
+        try {
+            URL testConfigURL = getClass().getResource("/xml_config/server.xml");
+            File testFile = new File(testConfigURL.toURI());
+
+            JBossWebServerFile config = new JBossWebServerFile(testFile);
+            config.setPropertyValue("processStatusFrequency", "4");
+            config.setPropertyValue("test", "5");
+            config.setPropertyValue("test", "123");
+
+            config.setPropertyValue("test", null);
+            config.setPropertyValue("processStatusFrequency", null);
+
+            config.saveConfigurationFile();
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

@@ -57,18 +57,6 @@ public class LoadMetricDiscoveryComponent extends MBeanResourceDiscoveryComponen
     }
 
     /**
-     * @param context
-     * @param objectName
-     * @return
-     */
-    public String getBeanConfiguredClassName(ResourceDiscoveryContext<JMXComponent> context, String objectName) {
-        EmsConnection connection = context.getParentResourceComponent().getEmsConnection();
-        EmsBean emsBean = loadBean(connection, objectName);
-
-        return emsBean.getClassTypeName();
-    }
-
-    /**
      * Loads the bean with the given object name.
      *
      * Subclasses are free to override this method in order to load the bean.
@@ -88,5 +76,17 @@ public class LoadMetricDiscoveryComponent extends MBeanResourceDiscoveryComponen
             bean = emsConnection.getBean(objectName);
         }
         return bean;
+    }
+
+    /**
+     * @param context
+     * @param objectName
+     * @return
+     */
+    private String getBeanConfiguredClassName(ResourceDiscoveryContext<JMXComponent> context, String objectName) {
+        EmsConnection connection = context.getParentResourceComponent().getEmsConnection();
+        EmsBean emsBean = loadBean(connection, objectName);
+
+        return emsBean.getClassTypeName();
     }
 }

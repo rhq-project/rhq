@@ -18,6 +18,7 @@
  */
 package org.rhq.plugins.modcluster.config;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -44,7 +45,19 @@ public class ModClusterBeanFile extends AbstractConfigurationFile {
      * @throws SAXException
      * @throws IOException
      */
-    public ModClusterBeanFile(String className, String configurationFile) throws ParserConfigurationException,
+    public ModClusterBeanFile(String className, String configurationFileName) throws ParserConfigurationException,
+        SAXException, IOException {
+        this(className, new File(configurationFileName));
+    }
+
+    /**
+     * @param className
+     * @param configurationFile
+     * @throws ParserConfigurationException
+     * @throws SAXException
+     * @throws IOException
+     */
+    public ModClusterBeanFile(String className, File configurationFile) throws ParserConfigurationException,
         SAXException, IOException {
         super(configurationFile);
 
@@ -59,7 +72,20 @@ public class ModClusterBeanFile extends AbstractConfigurationFile {
      * @throws SAXException
      * @throws IOException
      */
-    public ModClusterBeanFile(String className, String constructorArgumentClassName, String configurationFile)
+    public ModClusterBeanFile(String className, String constructorArgumentClassName, String configurationFileName)
+        throws ParserConfigurationException, SAXException, IOException {
+        this(className, constructorArgumentClassName, new File(configurationFileName));
+    }
+
+    /**
+     * @param className
+     * @param constructorArgumentClassName
+     * @param configurationFile
+     * @throws ParserConfigurationException
+     * @throws SAXException
+     * @throws IOException
+     */
+    public ModClusterBeanFile(String className, String constructorArgumentClassName, File configurationFile)
         throws ParserConfigurationException, SAXException, IOException {
         super(configurationFile);
 
@@ -75,9 +101,10 @@ public class ModClusterBeanFile extends AbstractConfigurationFile {
      */
     public void setPropertyValue(String propertyName, String value) {
         boolean propertyFound = false;
+        NodeList nodeList = beanNode.getChildNodes();
 
-        for (int i = 0; i < beanNode.getChildNodes().getLength(); i++) {
-            Node currentNode = beanNode.getChildNodes().item(i);
+        for (int i = 0; i < nodeList.getLength(); i++) {
+            Node currentNode = nodeList.item(i);
 
             if (currentNode.getNodeName().equals("property")
                 && currentNode.getAttributes().getNamedItem("name") != null
@@ -131,7 +158,7 @@ public class ModClusterBeanFile extends AbstractConfigurationFile {
     private Node getBeanNodeByClass(String className) {
         NodeList nodeList = this.getDocument().getElementsByTagName("bean");
 
-        for (int i = 1; i < nodeList.getLength(); i++) {
+        for (int i = 0; i < nodeList.getLength(); i++) {
             Node node = nodeList.item(i);
 
             if (node.getAttributes().getNamedItem("class") != null
@@ -150,7 +177,7 @@ public class ModClusterBeanFile extends AbstractConfigurationFile {
     private Node getBeanNodeByName(String beanName) {
         NodeList nodeList = this.getDocument().getElementsByTagName("bean");
 
-        for (int i = 1; i < nodeList.getLength(); i++) {
+        for (int i = 0; i < nodeList.getLength(); i++) {
             Node node = nodeList.item(i);
 
             if (node.getAttributes().getNamedItem("name") != null

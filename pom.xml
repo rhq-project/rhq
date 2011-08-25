@@ -894,70 +894,6 @@
        </plugin>
        -->
 
-        <plugin>
-          <artifactId>maven-antrun-plugin</artifactId>
-          <executions>
-              <execution>
-                  <id>write-build-properties-file</id>
-                  <goals>
-                      <goal>run</goal>
-                  </goals>
-                  <phase>generate-sources</phase>
-                  <configuration>
-                      <tasks>
-                          <mkdir dir="target" />
-
-                          <tstamp>
-                              <format property="buildTime" pattern="MM/dd/yy hh:mm aa z" locale="en,US" timezone="GMT" />
-                          </tstamp>
-                          <echo file="target/build.properties">buildTime = ${buildTime}${line.separator}</echo>
-
-                          <exec executable="git" outputproperty="buildNumber" failonerror="false" failifexecutionfails="false">
-                             <arg value="log" />
-                             <arg value="--pretty=format:%h" />
-                             <arg value="-n1" />
-                          </exec>
-                          <echo file="target/build.properties" append="true">buildNumber = ${buildNumber}${line.separator}</echo>
-                      </tasks>
-                  </configuration>
-              </execution>
-
-              <execution>
-                  <id>echo-build-properties</id>
-                  <phase>compile</phase>
-                  <goals>
-                      <goal>run</goal>
-                  </goals>
-                  <configuration>
-                      <tasks>
-                          <echo level="debug">buildTime = ${buildTime}</echo>
-                          <echo level="debug">buildNumber = ${buildNumber}</echo>
-                      </tasks>
-                  </configuration>
-              </execution>
-          </executions>
-      </plugin>
-
-      <plugin>
-          <groupId>org.codehaus.mojo</groupId>
-          <artifactId>properties-maven-plugin</artifactId>
-          <executions>
-              <execution>
-                  <id>read-build-properties-file</id>
-                  <phase>process-sources</phase>
-                  <goals>
-                      <goal>read-project-properties</goal>
-                  </goals>
-                  <configuration>
-                      <files>
-                          <file>${project.build.directory}/build.properties</file>
-                      </files>
-                      <quiet>true</quiet>
-                  </configuration>
-              </execution>
-          </executions>
-      </plugin>
-
     </plugins>
 
   </build>
@@ -1185,7 +1121,92 @@
             </plugins>
          </build>
       </profile>
-
+      
+      <!-- These plugins i)need to be active by default 
+       					 ii)need to be in a profile so that deactivation is possible for brew builds -->
+	  <profile>
+	    <id>build-properties</id>
+          <activation>
+              <file>
+                  <exists>.git</exists>
+              </file>
+          </activation>
+	    <build>
+           <plugins>
+               <plugin>
+		          <artifactId>maven-antrun-plugin</artifactId>
+		          <executions>
+		              <execution>
+		                  <id>write-build-properties-file</id>
+		                  <goals>
+		                      <goal>run</goal>
+		                  </goals>
+		                  <phase>generate-sources</phase>
+		                  <configuration>
+		                      <tasks>
+		                          <mkdir dir="target" />
+		
+		                          <tstamp>
+		                              <format property="buildTime" pattern="MM/dd/yy hh:mm aa z" locale="en,US" timezone="GMT" />
+		                          </tstamp>
+		                          <echo file="target/build.properties">buildTime = ${buildTime}${line.separator}</echo>
+		
+		                          <exec executable="git" outputproperty="buildNumber" failonerror="false" failifexecutionfails="false">
+		                             <arg value="log" />
+		                             <arg value="--pretty=format:%h" />
+		                             <arg value="-n1" />
+		                          </exec>
+		                          <echo file="target/build.properties" append="true">buildNumber = ${buildNumber}${line.separator}</echo>
+		                      </tasks>
+		                  </configuration>
+		              </execution>
+		
+		              <execution>
+		                  <id>echo-build-properties</id>
+		                  <phase>compile</phase>
+		                  <goals>
+		                      <goal>run</goal>
+		                  </goals>
+		                  <configuration>
+		                      <tasks>
+		                          <echo level="debug">buildTime = ${buildTime}</echo>
+		                          <echo level="debug">buildNumber = ${buildNumber}</echo>
+		                      </tasks>
+		                  </configuration>
+		              </execution>
+		          </executions>
+		      </plugin>
+              <plugin>
+	           <groupId>org.codehaus.mojo</groupId>
+	           <artifactId>exec-maven-plugin</artifactId>
+	           <!-- NOTE: Version 1.2 of this plugin appears to be broken, so do not
+	                      upgrade to that version. -->
+	           <version>1.1</version>
+	         </plugin>
+           
+             <plugin>
+		          <groupId>org.codehaus.mojo</groupId>
+		          <artifactId>properties-maven-plugin</artifactId>
+		          <executions>
+		              <execution>
+		                  <id>read-build-properties-file</id>
+		                  <phase>process-sources</phase>
+		                  <goals>
+		                      <goal>read-project-properties</goal>
+		                  </goals>
+		                  <configuration>
+		                      <files>
+		                          <file>${project.build.directory}/build.properties</file>
+		                      </files>
+		                      <quiet>true</quiet>
+		                  </configuration>
+		              </execution>
+		          </executions>
+		      </plugin>
+           </plugins>
+        </build>
+	  </profile>
+	  
   </profiles>
 
 

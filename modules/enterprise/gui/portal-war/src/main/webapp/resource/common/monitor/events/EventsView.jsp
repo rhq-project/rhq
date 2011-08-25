@@ -191,7 +191,7 @@ function onLoad() {
         });
     }
 
-    if (document.forms['show'].configurations.checked) {
+    if (document.forms['show'].inventory.checked) {
         link = "/resource/common/monitor/events/EventCreateDeleteChildJSON.jsp?id=" + resourceId + "&begin=" + begin + "&end=" + end;
         Timeline.loadJSON(link, function(json, url) {
             eventSource.loadJSON(json, url);
@@ -254,6 +254,9 @@ function onResize() {
 <span id="event-count" style="display:none;"></span>
 <div class="controls" id="controls"></div>
 <form action="#" onsubmit="onLoad()" name="show">
+  <input type="checkbox" name="inventory" checked="checked" onchange="onLoad()" id="inventoryField"/>
+  <label for="inventoryField"><img src="/images/icons/Inventory_grey_16.png"/> Inventory Changes</label>
+&nbsp;
   <input type="checkbox" name="alerts" checked="checked" onchange="onLoad()" id="alertsField"/>
   <label for="alertsField"><img src="/images/icons/Alert_grey_16.png"/> Alerts</label>
 &nbsp;

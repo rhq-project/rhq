@@ -561,15 +561,15 @@ public class MBeanResourceComponent<T extends JMXComponent> implements Measureme
                 paramIndex = Integer.valueOf(propName.substring(propName.indexOf('[') + 1, propName.indexOf(']')));
                 if (paramIndex < 0 || paramIndex >= emsParams.size()) {
                     throw new IllegalStateException("Index [" + paramIndex + "] specified for parameter of operation ["
-                            + name + "] on MBean [" + emsBean.getBeanName() + "] is invalid. The MBean operation takes "
-                            + emsParams.size() + " parameters.");
+                        + name + "] on MBean [" + emsBean.getBeanName() + "] is invalid. The MBean operation takes "
+                        + emsParams.size() + " parameters.");
                 }
             } else {
                 paramIndex = emsParamIndexesByName.get(propName);
                 if (paramIndex == null) {
                     throw new IllegalStateException("Name [" + propName + "] specified for parameter of operation ["
-                            + name + "] on MBean [" + emsBean.getBeanName()
-                            + "] is invalid. The MBean operation does not take a parameter by that name.");
+                        + name + "] on MBean [" + emsBean.getBeanName()
+                        + "] is invalid. The MBean operation does not take a parameter by that name.");
                 }
             }
             EmsParameter emsParam = emsParams.get(paramIndex);
@@ -611,7 +611,7 @@ public class MBeanResourceComponent<T extends JMXComponent> implements Measureme
         return resultToReturn;
     }
 
-    private Object getPropertyValueAsType(PropertySimple propSimple, String typeName) {
+    protected Object getPropertyValueAsType(PropertySimple propSimple, String typeName) {
         Object value;
         if (typeName.equals(String.class.getName())) {
             value = (propSimple == null) ? null : propSimple.getStringValue();
@@ -626,7 +626,8 @@ public class MBeanResourceComponent<T extends JMXComponent> implements Measureme
         } else if (typeName.equals(Double.class.getName()) || typeName.equals(double.class.getName())) {
             value = (propSimple == null) ? null : propSimple.getDoubleValue();
         } else {
-            throw new IllegalStateException("Operation parameter maps to MBean parameter with an unsupported type (" + typeName + ").");
+            throw new IllegalStateException("Operation parameter maps to MBean parameter with an unsupported type ("
+                + typeName + ").");
         }
         // TODO GH: Handle rest of types. (I think i have a mapper for this in mc4j
         return value;

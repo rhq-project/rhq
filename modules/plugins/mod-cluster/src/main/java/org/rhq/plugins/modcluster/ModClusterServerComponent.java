@@ -20,23 +20,26 @@ package org.rhq.plugins.modcluster;
 
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
+import org.rhq.plugins.modcluster.helper.JBossHelper;
+import org.rhq.plugins.modcluster.model.ProxyInfo;
 
 /**
  * @author Stefan Negrea
  *
  */
 @SuppressWarnings({ "rawtypes" })
-public class ModclusterServerComponent extends MBeanResourceComponent {
+public class ModClusterServerComponent extends MBeanResourceComponent {
 
-    /* (non-Javadoc)
-     * @see org.rhq.plugins.jmx.MBeanResourceComponent#getAvailability()
-     */
     @Override
     public AvailabilityType getAvailability() {
-        String rawProxyInfo = (String) getEmsBean().getAttribute("proxyInfo").refresh().toString();
-        ProxyInfo proxyInfo = new ProxyInfo(rawProxyInfo);
+        String rawProxyInfo = JBossHelper.getRawProxyInfo(getEmsBean());
 
-        if (proxyInfo.getAvailableContexts().size() == 0) {
+        if (rawProxyInfo == null) {
+            return AvailabilityType.DOWN;
+        }
+
+        ProxyInfo proxyInfo = new ProxyInfo(rawProxyInfo);
+        if (proxyInfo.getAvailableNodes().size() == 0) {
             return AvailabilityType.DOWN;
         }
 

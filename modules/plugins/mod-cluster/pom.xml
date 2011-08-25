@@ -23,6 +23,19 @@
          <version>${project.version}</version>
          <scope>provided</scope>
       </dependency>
+      
+      <dependency>
+         <groupId>org.jboss.on</groupId>
+         <artifactId>jopr-jboss-as-5-plugin</artifactId>
+         <version>${project.version}</version>
+         <scope>provided</scope>
+      </dependency>
+      
+      <dependency>
+         <groupId>org.jboss.on</groupId>
+         <artifactId>jopr-jboss-as-plugin</artifactId>
+         <version>${project.version}</version>
+      </dependency>      
 
       <dependency>
          <groupId>log4j</groupId>
@@ -56,51 +69,6 @@
                <plugin>
                   <artifactId>maven-antrun-plugin</artifactId>
                   <executions>
-                     <execution>
-                        <phase>process-test-resources</phase>
-                        <configuration>
-                           <tasks>
-                              <echo>Setting up plugin dependencies...</echo>
-                              <property name="settings.localRepository" location="${user.home}/.m2/repository" />
-                              <mkdir dir="target/testsetup" />
-                              
-                              <mkdir dir="target/testsetup/plugins" />
-                              <copy toDir="target/testsetup/plugins" flatten="true">
-                                 <fileset dir="${settings.localRepository}/">
-                                    <include name="org/rhq/rhq-platform-plugin/${project.version}/rhq-platform-plugin-${project.version}.jar" />
-                                    <include name="org/rhq/rhq-jmx-plugin/${project.version}/rhq-jmx-plugin-${project.version}.jar" />
-                                    <include name="org/jboss/on/jopr-jboss-as-plugin/${project.version}/jopr-jboss-as-plugin-${project.version}.jar" />
-                                    <include name="org/jboss/on/jopr-jboss-as-5-plugin/${project.version}/jopr-jboss-as-5-plugin-${project.version}.jar" />
-                                 </fileset>
-                                 <fileset dir="${rhq.deploymentDir}">
-                                    <include name="${project.artifactId}-${project.version}.jar" />
-                                 </fileset>
-                              </copy>
-                              
-                              <mkdir dir="target/testsetup/lib" />                              
-                              <unzip dest="target/testsetup/lib">
-                                 <fileset dir="${settings.localRepository}/org/hyperic/sigar-dist/${sigar.version}" includes="*.zip" />
-                                 <patternset>
-                                    <include name="**/lib/sigar.jar" />
-                                    <include name="**/lib/bcel*.jar" />
-                                    <include name="**/lib/*.so" />
-                                    <include name="**/lib/*.sl" />
-                                    <include name="**/lib/*.dll" />
-                                    <include name="**/lib/*.dylib" />
-                                 </patternset>
-                              </unzip>
-                              <move todir="target/testsetup/lib" flatten="true">
-                                 <fileset dir="target/testsetup/lib">
-                                    <include name="**/lib/*" />
-                                 </fileset>
-                              </move>
-                              <delete dir="target/testsetup/lib/hyperic-sigar-${sigar.version}" />
-                           </tasks>
-                        </configuration>
-                        <goals>
-                           <goal>run</goal>
-                        </goals>
-                     </execution>
 
                      <execution>
                         <id>deploy</id>
@@ -203,12 +171,10 @@
 
          <build>
             <plugins>
-
                <plugin>
                  <artifactId>maven-antrun-plugin</artifactId>
                  <version>1.1</version>
                  <executions>
-
                      <execution>
                         <id>deploy</id>
                         <phase>compile</phase>
@@ -258,14 +224,10 @@
                           <goal>run</goal>
                         </goals>
                      </execution>
-
                    </executions>
                </plugin>
-
             </plugins>
          </build>
       </profile>
-      
    </profiles>
-
 </project>

@@ -19,10 +19,8 @@
 package org.rhq.plugins.modcluster.test;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Queue;
 import java.util.Set;
 
@@ -45,6 +43,7 @@ import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.plugin.FileSystemPluginFinder;
 import org.rhq.core.pc.plugin.PluginEnvironment;
 import org.rhq.core.pc.plugin.PluginManager;
+import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
@@ -55,7 +54,7 @@ import org.rhq.core.pluginapi.operation.OperationResult;
  */
 @SuppressWarnings("rawtypes")
 @Test(groups = "modcluster-plugin")
-public class ModclusterPluginTest {
+public class ModClusterPluginIntegrationTest {
     private Log log = LogFactory.getLog(this.getClass());
     private static final String PLUGIN_NAME = "mod_cluster";
 
@@ -104,17 +103,7 @@ public class ModclusterPluginTest {
         assert report != null;
         log.info("Discovery took: " + (report.getEndTime() - report.getStartTime()) + "ms");
 
-        List<String> typeNames = new ArrayList<String>() {
-            private static final long serialVersionUID = 1L;
-
-            {
-                add(PLUGIN_NAME);
-                add(PLUGIN_NAME + " Webapp Context");
-            }
-        };
-
-        Set<Resource> resources = findResource(PluginContainer.getInstance().getInventoryManager().getPlatform(),
-            typeNames);
+        Set<Resource> resources = findResource(PluginContainer.getInstance().getInventoryManager().getPlatform());
         log.info("Found " + resources.size() + " mod_cluster and mod_cluster_context instance(s).");
 
         assert (resources.size() != 0) : "No mod_cluster or related instances found.";
@@ -123,17 +112,40 @@ public class ModclusterPluginTest {
             for (Object objectResource : resources.toArray()) {
                 Resource resource = (Resource) objectResource;
                 if (resource.getResourceType().getName().equals("mod_cluster")) {
-                    testResourceMeasurement(resource);
-                } else {
-                    testContextOperations(resource);
+                    testMainResource(resource);
+                } else if (resource.getResourceType().getName().equals("Webapp Context")) {
+                    testWebappContext(resource);
+                } else if (resource.getResourceType().getName().equals("HA Service Configuration")) {
+                    testLoadServiceConfiguration(resource);
+                } else if (resource.getResourceType().getName().equals("HA Service")) {
+                    testServiceMeasurement(resource);
+                    testServiceMethodInvocation(resource);
                 }
             }
         }
     }
 
-    private void testResourceMeasurement(Resource resource) throws Exception {
+    private void testServiceMethodInvocation(Resource resource) throws InterruptedException, Exception {
         ResourceComponent resourceComponent = PluginContainer.getInstance().getInventoryManager()
             .getResourceComponent(resource);
+
+        Configuration config = new Configuration();
+        config.put(new PropertySimple("p1", "1"));
+        config.put(new PropertySimple("p2", java.util.concurrent.TimeUnit.SECONDS));
+        OperationResult result = ((OperationFacet) resourceComponent).invokeOperation("stop", config);
+        log.info("Result of operation stopContext was: " + result.getSimpleResult());
+    }
+
+    private void testLoadServiceConfiguration(Resource resource) throws Exception {
+        ResourceComponent resourceComponent = PluginContainer.getInstance().getInventoryManager()
+            .getResourceComponent(resource);
+        ((ConfigurationFacet) resourceComponent).loadResourceConfiguration();
+    }
+
+    private void testServiceMeasurement(Resource resource) throws Exception {
+        ResourceComponent resourceComponent = PluginContainer.getInstance().getInventoryManager()
+            .getResourceComponent(resource);
+
         if (resourceComponent instanceof MeasurementFacet) {
             for (MeasurementDefinition def : resource.getResourceType().getMetricDefinitions()) {
                 Set<MeasurementScheduleRequest> metricList = new HashSet<MeasurementScheduleRequest>();
@@ -146,17 +158,24 @@ public class ModclusterPluginTest {
                 log.info("Measurement: " + def.getName() + "=" + data.getValue());
             }
         }
+    }
+
+    private void testMainResource(Resource resource) throws Exception {
+        ResourceComponent resourceComponent = PluginContainer.getInstance().getInventoryManager()
+            .getResourceComponent(resource);
 
         if (resourceComponent instanceof OperationFacet) {
-            OperationResult result = ((OperationFacet) resourceComponent).invokeOperation("reset", null);
+            OperationResult result = null;
+
+            result = ((OperationFacet) resourceComponent).invokeOperation("reset", new Configuration());
             log.info("Result of operation test was: " + result);
 
-            result = ((OperationFacet) resourceComponent).invokeOperation("disable", null);
-            log.info("Result of operation test was: " + result.getSimpleResult());
+            result = ((OperationFacet) resourceComponent).invokeOperation("refresh", new Configuration());
+            log.info("Result of operation test was: " + result);
         }
     }
 
-    private void testContextOperations(Resource resource) throws Exception {
+    private void testWebappContext(Resource resource) throws Exception {
         ResourceComponent resourceComponent = PluginContainer.getInstance().getInventoryManager()
             .getResourceComponent(resource);
 
@@ -166,7 +185,7 @@ public class ModclusterPluginTest {
                 log.info("Result of operation " + "enableContext" + " was: " + result.getSimpleResult());
 
                 Configuration config = new Configuration();
-                config.put(new PropertySimple("timeout", "1000"));
+                config.put(new PropertySimple("timeout", "1"));
                 config.put(new PropertySimple("unit", java.util.concurrent.TimeUnit.SECONDS));
                 result = ((OperationFacet) resourceComponent).invokeOperation("stopContext", config);
                 log.info("Result of operation stopContext was: " + result.getSimpleResult());
@@ -184,7 +203,7 @@ public class ModclusterPluginTest {
         }
     }
 
-    private Set<Resource> findResource(Resource parent, List<String> typeNames) {
+    private Set<Resource> findResource(Resource parent) {
         Set<Resource> found = new HashSet<Resource>();
 
         Queue<Resource> discoveryQueue = new LinkedList<Resource>();
@@ -194,7 +213,7 @@ public class ModclusterPluginTest {
             Resource currentResource = discoveryQueue.poll();
 
             log.info("Discovered resource of type: " + currentResource.getResourceType().getName());
-            if (typeNames.contains(currentResource.getResourceType().getName())) {
+            if (currentResource.getResourceType().getPlugin().equals(PLUGIN_NAME)) {
                 found.add(currentResource);
             }
 

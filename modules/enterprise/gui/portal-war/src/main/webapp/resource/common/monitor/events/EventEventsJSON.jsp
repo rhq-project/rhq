@@ -33,15 +33,8 @@
     boolean tooManyEvents = false;
 
     PageList<EventComposite> list =
-            eventManager.findEventComposites(subject, EntityContext.forResource(resourceId), begin, end, null, 
-                 null, null, new PageControl(0,10000, new OrderingField("timestamp", PageOrdering.ASC)));
-
-    /* TODO GH: Add alert to screen
-        if (list.getTotalSize() != list.size()) {
-        tooManyEvents = true;
-    }*/
-
-
+        eventManager.findEventComposites(subject, EntityContext.forResource(resourceId), begin, end, null, 
+            null, null, new PageControl(0,10000, new OrderingField("timestamp", PageOrdering.ASC)));
 %>
 
 <%! public String trimLength(String string, int length) {
@@ -51,16 +44,16 @@
     public String eventColor(EventSeverity severity) {
         switch (severity) {
             case DEBUG:
-                return "green";
+                return "#00FF00";
             case INFO:
-                return "blue";
+                return "#0000FF";
             case WARN:
-                return "olive";
+                return "#FFA500";
             case ERROR:
-                return "orange";
+                return "#FF0000";
             case FATAL:
             default:
-                return "red";
+                return "#FF0000";
         }
     }
 
@@ -81,7 +74,7 @@
         return events.get(0).getTimestamp();
     }
     public String getEventDetail() {
-        return events.size() + " events";
+        return events.size() + " Events";
     }
     public EventSeverity getSeverity() {
         EventSeverity highestSeverity = events.get(0).getSeverity();
@@ -157,19 +150,25 @@
             String color = eventColor(event.getSeverity());
             String icon = FunctionTagLibrary.getEventSeverityURL(event.getSeverity(), grouped);
 
-            String link = "/coregui/CoreGUI.html#Resource/" + resourceId + "/Events/History/" + event.getEventId();
+            String link;
+            if (grouped) {
+                link = "/coregui/CoreGUI.html#Resource/" + resourceId + "/Events/History";
+            } else {
+                link = "/coregui/CoreGUI.html#Resource/" + resourceId + "/Events/History/" + event.getEventId();            	
+            }
 
             String detail = null;
             if (grouped) {
                 StringBuilder buf = new StringBuilder();
                 for (EventComposite childEvent : ((GroupedEventComposite)event).events) {
+                	String childColor = eventColor(childEvent.getSeverity());
                     buf.append("<a href='/coregui/CoreGUI.html#Resource/" + resourceId + "/Events/History/" + childEvent.getEventId() + "'>");
-                    buf.append("<font size=\"-1\" color=\"" + color + "\">" + escapeBackslashes(trimLength(childEvent.getEventDetail(),80)) + "</font></a><br />");
+                    buf.append("<font color=\"" + childColor + "\">" + escapeBackslashes(trimLength(childEvent.getEventDetail(),80)) + "</font></a><br />");
                 }
                 detail = buf.toString();
             } else {
                 detail = escapeBackslashes(event.getEventDetail());
-                detail = "<b>Source:</b>" + escapeBackslashes(event.getSourceLocation()) + "<br/><b>Detail:</b>" + detail;
+                detail = "<b>Source:</b> " + escapeBackslashes(event.getSourceLocation()) + "<br/><b>Detail:</b> " + detail;
             }
 
 

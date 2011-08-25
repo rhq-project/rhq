@@ -59,13 +59,14 @@
             }
 
             String link = "/coregui/CoreGUI.html#Resource/" + resourceId  + "/Inventory/ChildHistory";
-
+            String username = entry.getSubjectName();
+            String resourceName = entry.getCreatedResourceName();
             %>
 
 { "start" : "<%=sdf.format(entry.getCreatedTime())%>",
-  "title" : "Child resource created",
+  "title" : "Child Resource Created",
   "link" : "<%=link%>",
-  "description" : "<b>User:</b> <%=(""+entry.getSubjectName()).replaceAll("[\"']","").trim()%><br/><b>Status:</b> <%=(""+entry.getStatus()).replaceAll("[\"']","").trim()%>",
+  "description" : "<b>Resource Name:</b> <%=(""+resourceName).replaceAll("[\"']","").trim()%><br/><b>User:</b> <%=(""+username).replaceAll("[\"']","").trim()%><br/><b>Status:</b> <%=(""+entry.getStatus())%>",
   "icon" : "<%=icon%>",
   "color" : "<%=(entry.getStatus() != CreateResourceStatus.FAILURE ? "#4EB84E" : "#DD5656")%>"
 }
@@ -96,12 +97,16 @@
             }
 
             String link = "/coregui/CoreGUI.html#Resource/" + resourceId + "/Inventory/ChildHistory";
-
+            String username = entry.getSubjectName();
+            String description = "<b>User:</b> "+ username.replaceAll("[\"']","").trim() + "<br/><b>Status:</b> " + entry.getStatus();
+            if (entry.getResource() != null) {
+            	description = "<b>Resource Name:</b> " +  entry.getResource().getName().replaceAll("[\"']","").trim() + "<br/>" + description;
+            }
     %>
 { "start" : "<%=sdf.format(entry.getCreatedTime())%>",
-  "title" : "Child resource deleted",
+  "title" : "Child Resource Deleted",
   "link" : "<%=link%>",
-  "description" : "<b>User:</b> <%=(""+entry.getSubjectName()).replaceAll("[\"']","").trim()%><br/><b>Status:</b> <%=(""+entry.getStatus()).replaceAll("[\"']","").trim()%>",
+  "description" : "<%= description %>",
   "icon" : "<%=icon%>",
   "color" : "<%=(entry.getStatus() != DeleteResourceStatus.FAILURE ? "#4EB84E" : "#DD5656")%>"
 }

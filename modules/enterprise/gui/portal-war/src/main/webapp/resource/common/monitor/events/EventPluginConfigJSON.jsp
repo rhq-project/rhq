@@ -58,7 +58,7 @@
             %>
 
 { "start" : "<%=sdf.format(configUpdate.getCreatedTime())%>",
-  "title" : "Plugin Configuration Change",
+  "title" : "Connection Settings Change",
   "link" : "<%=link%>",
   "description" : "<b>User:</b> <%=(""+configUpdate.getSubjectName()).replaceAll("[\"']","").trim()%><br/><b>Status:</b> <%=(""+configUpdate.getStatus()).replaceAll("[\"']","").trim()%>",
   "icon" : "<%=icon%>",

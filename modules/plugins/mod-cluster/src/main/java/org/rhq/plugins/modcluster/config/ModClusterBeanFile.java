@@ -75,6 +75,7 @@ public class ModClusterBeanFile extends AbstractConfigurationFile {
      */
     public void setPropertyValue(String propertyName, String value) {
         boolean propertyFound = false;
+
         for (int i = 0; i < beanNode.getChildNodes().getLength(); i++) {
             Node currentNode = beanNode.getChildNodes().item(i);
 
@@ -107,8 +108,10 @@ public class ModClusterBeanFile extends AbstractConfigurationFile {
      * @return
      */
     public String getPropertyValue(String propertyName) {
-        for (int i = 0; i < beanNode.getChildNodes().getLength(); i++) {
-            Node currentNode = beanNode.getChildNodes().item(i);
+        NodeList nodeList = beanNode.getChildNodes();
+
+        for (int i = 0; i < nodeList.getLength(); i++) {
+            Node currentNode = nodeList.item(i);
 
             if (currentNode.getNodeName().equals("property")
                 && currentNode.getAttributes().getNamedItem("name") != null
@@ -126,10 +129,11 @@ public class ModClusterBeanFile extends AbstractConfigurationFile {
      * @return
      */
     private Node getBeanNodeByClass(String className) {
-        NodeList result = this.getDocument().getElementsByTagName("bean");
+        NodeList nodeList = this.getDocument().getElementsByTagName("bean");
 
-        for (int i = 1; i < result.getLength(); i++) {
-            Node node = result.item(i);
+        for (int i = 1; i < nodeList.getLength(); i++) {
+            Node node = nodeList.item(i);
+
             if (node.getAttributes().getNamedItem("class") != null
                 && className.equals(node.getAttributes().getNamedItem("class").getTextContent())) {
                 return node;
@@ -144,10 +148,11 @@ public class ModClusterBeanFile extends AbstractConfigurationFile {
      * @return
      */
     private Node getBeanNodeByName(String beanName) {
-        NodeList result = this.getDocument().getElementsByTagName("bean");
+        NodeList nodeList = this.getDocument().getElementsByTagName("bean");
 
-        for (int i = 1; i < result.getLength(); i++) {
-            Node node = result.item(i);
+        for (int i = 1; i < nodeList.getLength(); i++) {
+            Node node = nodeList.item(i);
+
             if (node.getAttributes().getNamedItem("name") != null
                 && beanName.equals(node.getAttributes().getNamedItem("name").getTextContent())) {
                 return node;
@@ -163,17 +168,17 @@ public class ModClusterBeanFile extends AbstractConfigurationFile {
      * @return
      */
     private String getBeanFromConstructorArgument(Node beanNode, String constructorArgumentClassName) {
-        List<Node> tempNodeList = this.getChildNodesByName(beanNode, "constructor");
+        List<Node> nodeList = this.getChildrenNodesByName(beanNode, "constructor");
 
-        if (tempNodeList.size() > 0) {
-            Node constructorNode = tempNodeList.get(0);
+        if (nodeList.size() > 0) {
+            Node constructorNode = nodeList.get(0);
 
-            tempNodeList = this.getChildNodesByName(constructorNode, "parameter");
+            nodeList = this.getChildrenNodesByName(constructorNode, "parameter");
 
-            if (tempNodeList.size() > 0) {
+            if (nodeList.size() > 0) {
                 Node parameterNode = null;
 
-                for (Node currentNode : tempNodeList) {
+                for (Node currentNode : nodeList) {
                     if (currentNode.getAttributes().getNamedItem("class") != null
                         && constructorArgumentClassName.equals(currentNode.getAttributes().getNamedItem("class")
                             .getTextContent())) {
@@ -183,10 +188,10 @@ public class ModClusterBeanFile extends AbstractConfigurationFile {
                 }
 
                 if (parameterNode != null) {
-                    tempNodeList = this.getChildNodesByName(parameterNode, "inject");
+                    nodeList = this.getChildrenNodesByName(parameterNode, "inject");
 
-                    if (tempNodeList.size() > 0) {
-                        Node injectNode = tempNodeList.get(0);
+                    if (nodeList.size() > 0) {
+                        Node injectNode = nodeList.get(0);
                         Node beanAttribute = injectNode.getAttributes().getNamedItem("bean");
 
                         if (beanAttribute != null) {
@@ -205,17 +210,17 @@ public class ModClusterBeanFile extends AbstractConfigurationFile {
      * @param nodeName
      * @return
      */
-    private List<Node> getChildNodesByName(Node node, String nodeName) {
-        List<Node> listOfNodes = new ArrayList<Node>();
+    private List<Node> getChildrenNodesByName(Node node, String nodeName) {
+        List<Node> nodeList = new ArrayList<Node>();
 
         for (int i = 0; i < node.getChildNodes().getLength(); i++) {
             Node currentNode = node.getChildNodes().item(i);
 
             if (nodeName.equals(currentNode.getNodeName())) {
-                listOfNodes.add(currentNode);
+                nodeList.add(currentNode);
             }
         }
 
-        return listOfNodes;
+        return nodeList;
     }
 }

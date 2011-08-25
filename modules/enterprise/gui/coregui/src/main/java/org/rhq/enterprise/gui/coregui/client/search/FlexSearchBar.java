@@ -90,7 +90,6 @@ public class FlexSearchBar extends AbstractSearchBar {
     private SavedSearchGrid savedSearchesGrid;
 
     private Integer currentSearchId = 0;
-    private long lastNameFieldBlurTime = 0;
 
     private SearchSubsystem searchSubsystem;
     private String defaultSearchText;
@@ -384,8 +383,16 @@ public class FlexSearchBar extends AbstractSearchBar {
         }
 
         public void onBlur(BlurEvent event) {
-            lastNameFieldBlurTime = System.currentTimeMillis();
-            turnNameFieldIntoLabel(true);
+            // If this is a name change update (star on) then return to displaying the unchanged label.
+            // otherwise, abort the creation of the new saved search.
+            if (starImage.getUrl().endsWith(STAR_ON_URL)) {
+                patternNameField.setVisible(false);
+                patternNameLabel.setVisible(true);
+
+            } else {
+                patternNameField.setVisible(false);
+                patternNameLabel.setVisible(false);
+            }
         }
     }
 
@@ -397,20 +404,6 @@ public class FlexSearchBar extends AbstractSearchBar {
 
     class StarImageEventHandler implements ClickHandler, MouseOverHandler, MouseOutHandler {
         public void onClick(ClickEvent event) {
-            long diff = System.currentTimeMillis() - lastNameFieldBlurTime;
-            if (Math.abs(diff) < 750) {
-                /*
-                 * This event propagation is annoying.  If the threshold is set too low, then both
-                 * the name field blur event and this star image click event fire...but the blur
-                 * event fires first, which turns the star white.  Then a click on a white star
-                 * triggers edit mode, re-enabling the name field.  However, setting the threshold
-                 * too high will prevent the click event from being handled when the user naturally
-                 * wants to click on the star in rapid succession within the threshold time frame.
-                 * It is hoped that 750ms will strike a nice balance, and that most users will never
-                 * experienced any oddities from this trade-off.
-                 */
-                return;
-            }
 
             // note - since hover changes off to active, we never have the star off case here 
             if (starImage.getUrl().endsWith(STAR_ACTIVE_URL)) {

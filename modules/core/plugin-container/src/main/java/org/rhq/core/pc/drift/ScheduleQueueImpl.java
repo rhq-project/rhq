@@ -8,11 +8,19 @@ import org.rhq.core.domain.drift.DriftConfiguration;
 
 public class ScheduleQueueImpl implements ScheduleQueue {
 
+    private static final Runnable NO_OP = new Runnable() {
+        @Override
+        public void run() {
+        }
+    };
+
     private PriorityQueue<DriftDetectionSchedule> queue = new PriorityQueue<DriftDetectionSchedule>();
 
     private ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
     private DriftDetectionSchedule activeSchedule;
+
+    private Runnable deactivationTask;
 
     @Override
     public DriftDetectionSchedule getNextSchedule() {
@@ -44,6 +52,9 @@ public class ScheduleQueueImpl implements ScheduleQueue {
     public void deactivateSchedule() {
         try {
             lock.writeLock().lock();
+            if (deactivationTask != null) {
+                deactivationTask.run();
+            }
             if (activeSchedule == null) {
                 return;
             }
@@ -51,6 +62,7 @@ public class ScheduleQueueImpl implements ScheduleQueue {
             queue.offer(activeSchedule);
             activeSchedule = null;
         } finally {
+            deactivationTask = null;
             lock.writeLock().unlock();
         }
     }
@@ -68,10 +80,35 @@ public class ScheduleQueueImpl implements ScheduleQueue {
     }
 
     @Override
+    public boolean contains(int resourceId, DriftConfiguration config) {
+        if (isActiveSchedule(resourceId, config)) {
+                return true;
+            }
+        try {
+            lock.readLock().lock();
+            for (DriftDetectionSchedule schedule : queue) {
+                if (schedule.getResourceId() == resourceId &&
+                    schedule.getDriftConfiguration().getName().equals(config.getName())) {
+                    return true;
+                }
+            }
+            return false;
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    @Override
     public DriftDetectionSchedule remove(int resourceId, DriftConfiguration config) {
+        return removeAndExecute(resourceId, config, NO_OP);
+    }
+
+    @Override
+    public DriftDetectionSchedule removeAndExecute(int resourceId, DriftConfiguration config, Runnable task) {
         try {
             lock.writeLock().lock();
             if (isActiveSchedule(resourceId, config)) {
+                deactivationTask = task;
                 DriftDetectionSchedule removedSchedule = activeSchedule;
                 activeSchedule = null;
                 return removedSchedule;
@@ -83,6 +120,7 @@ public class ScheduleQueueImpl implements ScheduleQueue {
                 if (schedule.getResourceId() == resourceId
                     && schedule.getDriftConfiguration().getName().equals(config.getName())) {
                     iterator.remove();
+                    task.run();
                     return schedule;
                 }
             }

@@ -43,6 +43,17 @@ public interface ScheduleQueue {
     boolean addSchedule(DriftDetectionSchedule schedule);
 
     /**
+     * Checks the queue for a schedule with specified resource id and drift configuration
+     * whose name matches the specified configuration.
+     *
+     * @param resourceId The resource id of the schedule
+     * @param config The drift configuration of the schedule
+     * @return true if the queue contains a schedule with the specified resource id and a
+     * drift configuration whose name matches the name of the specified configuration.
+     */
+    boolean contains(int resourceId, DriftConfiguration config);
+
+    /**
      * This method attempts to update the schedule identified by the resource id the and
      * the drift configuration. More specifically, the schedule is identified by a
      * combination of resource id and drift configuraiton name. If the schedule to be
@@ -70,6 +81,33 @@ public interface ScheduleQueue {
      * schedule is found.
      */
     DriftDetectionSchedule remove(int resourceId, DriftConfiguration config);
+
+    /**
+     * Removes the schedule identified by the resource id and the drift configuration name.
+     * This method can remove either the active schedule or a schedule on the queue. When
+     * the schedule is in the queue, <code>task</code> is executed immediately after the
+     * schedule is removed from the queue. If the schedule is active, then <code>task</code>
+     * will be executed when the schedule is deactivated. If the schedule is not in the
+     * queue, that is it is neither the active schedule nor waiting in the queue, then
+     * <code>task</code>is never invoked and is discarded.
+     * <br/><br/>
+     * <code>task</code> will only be invoked once regardless of whether or the schedule is
+     * active or waiting in the queue.
+     * <br/><br/>
+     * The reason for accepting a task to execute upon removal of the schedule has to do
+     * with the active schedule. If a schedule is active, that means it is being processed
+     * by {@link DriftDetector}. The task may very well involve some clean up work that
+     * could interfere with {@link DriftDetector}. This approach ensures that the schedule
+     * is not in used before task is executed.
+     *
+     * @param resourceId The resource id
+     * @param config A {@link DriftConfiguration} belonging the resource with the specified id
+     * @param task A callback to perform any post-processing when the schedule is removed
+     * from the queue
+     * @return The {@link DriftDetectionSchedule} that is removed or null if no matching
+     * schedule is found.
+     */
+    DriftDetectionSchedule removeAndExecute(int resourceId, DriftConfiguration config, Runnable task);
 
     /**
      * Removes all elements from the queue and deactivates the active schedule.

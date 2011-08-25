@@ -27,11 +27,13 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.clientapi.server.drift.DriftServerService;
+import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.ServerServices;
 
 import static org.rhq.core.util.ZipUtil.unzipFile;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
@@ -61,6 +63,11 @@ public class DriftManagerTest extends DriftTest {
         driftMgr = new DriftManager();
         driftMgr.setConfiguration(pcConfig);
     }
+
+//    @AfterMethod
+//    public void shutDownDriftManager() {
+//        driftMgr.shutdown();
+//    }
 
     @Test
     public void writeContentZipFileToChangeSetContentDirectory() throws Exception {
@@ -114,6 +121,54 @@ public class DriftManagerTest extends DriftTest {
         driftMgr.sendChangeSetContentToServer(resourceId(), configName, contentDir);
 
         assertThatDirectoryIsEmpty(contentDir);
+    }
+
+    @Test
+    public void unschedulingDetectionRemovesScheduleFromQueue() throws Exception {
+        DriftConfiguration config = driftConfiguration("remove-from-queue", resourceDir.getAbsolutePath());
+
+        driftMgr.scheduleDriftDetection(resourceId(), config);
+        driftMgr.scheduleDriftDetection(resourceId() + 5, driftConfiguration("another-config", "."));
+        driftMgr.unscheduleDriftDetection(resourceId(), config);
+
+        assertFalse(driftMgr.getSchedulesQueue().contains(resourceId(), config),
+            new DriftDetectionSchedule(resourceId(), config) + " should have been removed from the schedule queue");
+    }
+
+    @Test
+    public void unschedulingDetectionDeletesChangeSetDirectoryWhenScheduleIsNotActive() throws Exception {
+        DriftConfiguration config = driftConfiguration("delete-changeset-dir", resourceDir.getAbsolutePath());
+        File changeSetDir = changeSetDir(config.getName());
+        File contentDir = mkdir(changeSetDir, "content");
+
+        createRandomFile(contentDir, "my_content");
+        createRandomFile(changeSetDir, "changeset.txt");
+
+        driftMgr.scheduleDriftDetection(resourceId(), config);
+        driftMgr.unscheduleDriftDetection(resourceId(), config);
+
+        assertFalse(changeSetDir.exists(), "The change set directory should have been deleted.");
+    }
+
+    @Test
+    public void unschedulingDetectionDeletesChangeSetDirectoryWhenScheduleIsDeactivated() throws Exception {
+        DriftConfiguration config = driftConfiguration("delete-changeset-dir", resourceDir.getAbsolutePath());
+        File changeSetDir = changeSetDir(config.getName());
+        File contentDir = mkdir(changeSetDir, "content");
+
+        createRandomFile(contentDir, "my_content");
+        createRandomFile(changeSetDir, "changeset.txt");
+
+        driftMgr.scheduleDriftDetection(resourceId(), config);
+        driftMgr.getSchedulesQueue().getNextSchedule();
+        driftMgr.unscheduleDriftDetection(resourceId(), config);
+
+        assertTrue(changeSetDir.exists(), "The change set directory should not be deleted while the schedule is " +
+            "still active.");
+
+        driftMgr.getSchedulesQueue().deactivateSchedule();
+        assertFalse(changeSetDir.exists(), "The change set directory should have been deleted after the schedule is " +
+            "deactivated.");
     }
 
     /**

@@ -53,6 +53,7 @@ import org.rhq.core.pc.measurement.MeasurementManager;
 import org.rhq.core.util.stream.StreamUtil;
 
 import static org.rhq.core.util.ZipUtil.zipFileOrDirectory;
+import static org.rhq.core.util.file.FileUtil.purge;
 
 public class DriftManager extends AgentService implements DriftAgentService, DriftClient, ContainerService {
 
@@ -125,6 +126,14 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
         for (Resource child : r.getChildResources()) {
             initSchedules(child, inventoryMgr);
         }
+    }
+
+    /**
+     * This method is provided as a test hook.
+     * @return The schedule queue
+     */
+    ScheduleQueue getSchedulesQueue() {
+        return schedulesQueue;
     }
 
     @Override
@@ -211,7 +220,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
 
         DriftDetectionSchedule schedule = schedulesQueue.remove(resourceId, driftConfiguration);
         if (schedule == null) {
-            log.warn("No schedule found in the queue for [resourceId:" + resourceId + ", driftConfigurationId:"
+            log.warn("No schedule found in the queue for [resourceId: " + resourceId + ", driftConfigurationId: "
                 + driftConfiguration.getId() + ", driftConfigurationName: " + driftConfiguration.getName() + "]. No "
                 + " work will be scheduled.");
             return;
@@ -241,7 +250,24 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
     }
 
     @Override
-    public void unscheduleDriftDetection(int resourceId, DriftConfiguration driftConfiguration) {
+    public void unscheduleDriftDetection(final int resourceId, final DriftConfiguration driftConfiguration) {
+        log.debug("Received request to unschedule drift detection for [resourceId:" + resourceId +
+            ", driftConfigurationId:" + driftConfiguration.getId() + ", driftConfigurationName: " +
+            driftConfiguration.getName() + "].");
+
+        DriftDetectionSchedule schedule = schedulesQueue.removeAndExecute(resourceId, driftConfiguration,
+            new Runnable() {
+                @Override
+                public void run() {
+                    File resourceDir = new File(changeSetsDir, Integer.toString(resourceId));
+                    File changeSetDir = new File(resourceDir, driftConfiguration.getName());
+                    purge(changeSetDir, true);
+
+                    log.debug("Removed change set directory " + changeSetDir.getAbsolutePath());
+                }
+            });
+
+        log.debug("Removed " + schedule + " from the schedule queue.");
     }
 
     @Override

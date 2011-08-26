@@ -52,9 +52,10 @@ import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.TypesLoadedCallback;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
- * A DataSource basically the same as ResourceDatasource in the fields it defines, but that works with
+ * A DataSource, basically the same as ResourceDatasource in the fields it defines, but that works with
  * ResourceComposite as opposed to Resource records.  In this way the Records can provide additional info,
  * like the user's resource permissions, for the resources. 
  *  
@@ -91,7 +92,12 @@ public class ResourceCompositeDataSource extends RPCDataSource<ResourceComposite
         getResourceService().findResourceCompositesByCriteria(criteria,
             new AsyncCallback<PageList<ResourceComposite>>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(MSG.view_inventory_resources_loadFailed(), caught);
+                    if (caught.getMessage().contains("SearchExpressionException")) {
+                        Message message = new Message("Invalid search expression.", Message.Severity.Error);
+                        CoreGUI.getMessageCenter().notify(message);
+                    } else {
+                        CoreGUI.getErrorHandler().handleError(MSG.view_inventory_resources_loadFailed(), caught);
+                    }
                     response.setStatus(RPCResponse.STATUS_FAILURE);
                     processResponse(request.getRequestId(), response);
                 }

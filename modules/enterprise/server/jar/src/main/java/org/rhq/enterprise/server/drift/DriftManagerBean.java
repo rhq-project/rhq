@@ -20,7 +20,9 @@ package org.rhq.enterprise.server.drift;
 
 import java.io.File;
 import java.io.InputStream;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -91,6 +93,47 @@ import static javax.ejb.TransactionAttributeType.REQUIRES_NEW;
  */
 @Stateless
 public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
+
+    private static Set<String> binaryFileTypes = new HashSet<String>();
+
+    static {
+        binaryFileTypes.add("jar");
+        binaryFileTypes.add("war");
+        binaryFileTypes.add("ear");
+        binaryFileTypes.add("sar");    // jboss service
+        binaryFileTypes.add("har");    // hibernate archive
+        binaryFileTypes.add("rar");   // resource adapter
+        binaryFileTypes.add("wsr");   // jboss web service archive
+        binaryFileTypes.add("zip");
+        binaryFileTypes.add("tar");
+        binaryFileTypes.add("bz2");
+        binaryFileTypes.add("gz");
+        binaryFileTypes.add("rpm");
+        binaryFileTypes.add("so");
+        binaryFileTypes.add("dll");
+        binaryFileTypes.add("exe");
+        binaryFileTypes.add("jpg");
+        binaryFileTypes.add("png");
+        binaryFileTypes.add("jpeg");
+        binaryFileTypes.add("pdf");
+        binaryFileTypes.add("swf");
+        binaryFileTypes.add("bpm");
+        binaryFileTypes.add("tiff");
+        binaryFileTypes.add("svg");
+        binaryFileTypes.add("doc");
+        binaryFileTypes.add("mp3");
+        binaryFileTypes.add("wav");
+        binaryFileTypes.add("m4a");
+        binaryFileTypes.add("mov");
+        binaryFileTypes.add("mpeg");
+        binaryFileTypes.add("avi");
+        binaryFileTypes.add("mp4");
+        binaryFileTypes.add("wmv");
+        binaryFileTypes.add("deb");
+        binaryFileTypes.add("sit");
+        binaryFileTypes.add("iso");
+        binaryFileTypes.add("dmg");
+    }
 
     // TODO Should security checks be handled here instead of delegating to the drift plugin?
     // Currently any security checks that need to be performed are delegated to the plugin.
@@ -438,6 +481,18 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
         default:
             throw new IllegalArgumentException("Entity Context Type not supported [" + entityContext + "]");
         }
+    }
+
+    @Override
+    public boolean isBinaryFile(Drift drift) {
+        String path = drift.getPath();
+        int index = path.lastIndexOf('.');
+
+        if (index == -1 || index == path.length() - 1) {
+            return false;
+        }
+
+        return binaryFileTypes.contains(path.substring(index + 1, path.length()));
     }
 
     private DriftServerPluginFacet getServerPlugin() {

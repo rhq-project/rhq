@@ -145,8 +145,95 @@ public class DriftDetailsView extends LocatableVLayout {
 
         addMember(changeSetForm);
 
-        // the drift history item itself
+        GWTServiceLookup.getDriftService().isBinaryFile(drift, new AsyncCallback<Boolean>() {
+            @Override
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError("Failed to look up file type", caught);
+            }
 
+            @Override
+            public void onSuccess(Boolean isBinary) {
+                if (isBinary) {
+                    addMember(createDriftFormForBinaryFile(drift, previousVersion));
+                } else {
+                    addMember(createDriftFormForTextFile(drift, previousVersion));
+                }
+            }
+        });
+    }
+
+    private DynamicForm createDriftFormForBinaryFile(Drift drift, DriftChangeSet previousVersion) {
+        DynamicForm driftForm = new LocatableDynamicForm(extendLocatorId("form"));
+        driftForm.setIsGroup(true);
+        driftForm.setGroupTitle(MSG.view_drift());
+        driftForm.setWrapItemTitles(false);
+        driftForm.setNumCols(4);
+
+        SpacerItem spacer = new SpacerItem();
+
+        StaticTextItem id = new StaticTextItem("id", MSG.common_title_id());
+        id.setValue(drift.getId());
+
+        StaticTextItem path = new StaticTextItem("path", MSG.common_title_path());
+        path.setValue(drift.getPath());
+
+        StaticTextItem timestamp = new StaticTextItem("timestamp", MSG.common_title_timestamp());
+        timestamp.setValue(TimestampCellFormatter.format(drift.getCtime(), DATE_TIME_FORMAT_FULL));
+
+        StaticTextItem category = new StaticTextItem("category", MSG.common_title_category());
+
+        LinkedHashMap<String, String> catIconsMap = new LinkedHashMap<String, String>(3);
+        catIconsMap.put(DriftDataSource.CATEGORY_ICON_ADD, DriftDataSource.CATEGORY_ICON_ADD);
+        catIconsMap.put(DriftDataSource.CATEGORY_ICON_CHANGE, DriftDataSource.CATEGORY_ICON_CHANGE);
+        catIconsMap.put(DriftDataSource.CATEGORY_ICON_REMOVE, DriftDataSource.CATEGORY_ICON_REMOVE);
+        LinkedHashMap<String, String> catValueMap = new LinkedHashMap<String, String>(3);
+        catValueMap.put(DriftDataSource.CATEGORY_ICON_ADD, MSG.view_drift_category_fileAdded());
+        catValueMap.put(DriftDataSource.CATEGORY_ICON_CHANGE, MSG.view_drift_category_fileChanged());
+        catValueMap.put(DriftDataSource.CATEGORY_ICON_REMOVE, MSG.view_drift_category_fileRemoved());
+        category.setValueMap(catValueMap);
+        category.setValueIcons(catIconsMap);
+        category.setShowIcons(true);
+
+        StaticTextItem oldFile = new StaticTextItem("oldFile", MSG.view_drift_table_oldFile());
+        FormItem oldFileLink = null;
+
+        StaticTextItem newFile = new StaticTextItem("newFile", MSG.view_drift_table_newFile());
+        FormItem newFileLink = null;
+
+        switch (drift.getCategory()) {
+        case FILE_ADDED:
+            category.setValue(DriftDataSource.CATEGORY_ICON_ADD);
+            oldFile.setValue(MSG.common_label_none());
+            oldFileLink = spacer;
+            newFile.setValue(drift.getNewDriftFile().getHashId());
+            newFileLink = spacer;
+            break;
+
+        case FILE_CHANGED:
+            category.setValue(DriftDataSource.CATEGORY_ICON_CHANGE);
+            oldFile.setValue(drift.getOldDriftFile().getHashId());
+            oldFileLink = createViewFileLink(drift.getOldDriftFile().getHashId(), drift.getPath(),
+                previousVersion.getVersion());
+            newFile.setValue(drift.getNewDriftFile().getHashId());
+            newFileLink = spacer;
+            break;
+
+        case FILE_REMOVED:
+            category.setValue(DriftDataSource.CATEGORY_ICON_REMOVE);
+            oldFile.setValue(drift.getOldDriftFile().getHashId());
+            oldFileLink = spacer;
+            newFile.setValue(MSG.common_label_none());
+            newFileLink = spacer;
+            break;
+        }
+
+        driftForm.setItems(id, spacer, path, spacer, category, spacer, timestamp, spacer, oldFile, oldFileLink,
+            newFile, newFileLink);
+
+        return driftForm;
+    }
+
+    private DynamicForm createDriftFormForTextFile(Drift drift, DriftChangeSet previousVersion) {
         DynamicForm driftForm = new LocatableDynamicForm(extendLocatorId("form"));
         driftForm.setIsGroup(true);
         driftForm.setGroupTitle(MSG.view_drift());
@@ -232,7 +319,7 @@ public class DriftDetailsView extends LocatableVLayout {
             newFile, newFileLink);
         }
 
-        addMember(driftForm);
+        return driftForm;
     }
 
     private LinkItem createViewFileLink(final String hash, final String path, final int version) {

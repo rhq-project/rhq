@@ -129,4 +129,6 @@ public interface DriftManagerLocal extends DriftServerPluginFacet, DriftManagerR
      * referenced by drift
      */
     FileDiffReport generateUnifiedDiff(Drift drift);
+
+    boolean isBinaryFile(Drift drift);
 }

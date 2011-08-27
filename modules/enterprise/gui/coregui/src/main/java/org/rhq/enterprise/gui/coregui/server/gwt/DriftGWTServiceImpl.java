@@ -151,9 +151,18 @@ public class DriftGWTServiceImpl extends AbstractGWTServiceImpl implements Drift
     }
 
     @Override
-    public FileDiffReport generateUnifiedDiff(Drift drift) {
+    public FileDiffReport generateUnifiedDiff(Drift drift) throws RuntimeException {
         try {
             return driftManager.generateUnifiedDiff(drift);
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    @Override
+    public boolean isBinaryFile(Drift drift) throws RuntimeException {
+        try {
+            return driftManager.isBinaryFile(drift);
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

@@ -18,6 +18,7 @@
  */
 package org.rhq.plugins.modcluster;
 
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
@@ -34,11 +35,21 @@ public class CatalinaServiceComponent extends MBeanResourceComponent {
 
     @Override
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
+        //Update JMX properties
         super.updateResourceConfiguration(report);
 
-        try {
-            saveResouceConfigurationToFile(report, true);
-        } catch (Exception e) {
+        if (report.getStatus() == ConfigurationUpdateStatus.SUCCESS) {
+            //Propagate the JMX configuration updates to HTTPD
+            try {
+                super.invokeOperation("refresh", new Configuration());
+            } catch (Exception e) {
+                report.setErrorMessage("Failed to save the resource configuration to file. " + e.getMessage());
+            }
+
+            //Persist configuration changes to configuration file
+            if (report.getStatus() == ConfigurationUpdateStatus.SUCCESS) {
+                saveResouceConfigurationToFile(report, true);
+            }
         }
     }
 
@@ -63,8 +74,7 @@ public class CatalinaServiceComponent extends MBeanResourceComponent {
                         }
                     } catch (Exception e) {
                         property.setErrorMessage(ThrowableUtil.getStackAsString(e));
-                        report
-                            .setErrorMessage("Failed setting resource configuration - see property error messages for details");
+                        report.setErrorMessage("Failed setting resource configuration. " + e.getMessage());
                         log.info("Failure setting MBean Resource configuration value for " + key, e);
                     }
                 }
@@ -72,6 +82,7 @@ public class CatalinaServiceComponent extends MBeanResourceComponent {
 
             jbossWebServerFile.saveConfigurationFile();
         } catch (Exception e) {
+            report.setErrorMessage("Failed to save the resource configuration to file. " + e.getMessage());
             log.debug("Unable to save mod_cluster configuration file.", e);
         }
     }

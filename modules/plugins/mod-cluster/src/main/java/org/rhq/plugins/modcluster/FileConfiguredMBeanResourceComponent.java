@@ -141,8 +141,7 @@ public class FileConfiguredMBeanResourceComponent extends MBeanResourceComponent
                         }
                     } catch (Exception e) {
                         property.setErrorMessage(ThrowableUtil.getStackAsString(e));
-                        report
-                            .setErrorMessage("Failed setting resource configuration - see property error messages for details");
+                        report.setErrorMessage("Failed setting resource configuration. " + e.getMessage());
                         log.info("Failure setting MBean Resource configuration value for " + key, e);
                     }
                 }
@@ -150,6 +149,7 @@ public class FileConfiguredMBeanResourceComponent extends MBeanResourceComponent
 
             modClusterBeanFile.saveConfigurationFile();
         } catch (Exception e) {
+            report.setErrorMessage("Failed to save the resource configuration to file. " + e.getMessage());
             log.debug("Unable to save mod_cluster configuration file.", e);
         }
     }

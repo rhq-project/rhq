@@ -16,7 +16,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-
 package org.rhq.plugins.modcluster.config;
 
 import java.io.File;
@@ -24,7 +23,6 @@ import java.io.IOException;
 
 import javax.xml.parsers.ParserConfigurationException;
 
-import org.apache.commons.lang.NotImplementedException;
 import org.w3c.dom.Attr;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
@@ -73,7 +71,7 @@ public class JBossWebServerFile extends AbstractConfigurationFile {
 
     @Override
     public String getPropertyValue(String propertyName) {
-        throw new NotImplementedException(
+        throw new UnsupportedOperationException(
             "Property values should be retrieved from the JMX interface not from the configuration file.");
     }
 

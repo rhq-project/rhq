@@ -52,17 +52,32 @@ public class ModClusterDiscoveryComponent extends MBeanResourceDiscoveryComponen
 
     @SuppressWarnings("static-access")
     public String findServerHomeDirectory(ResourceComponent parentResourceComponent) {
-        if (parentResourceComponent instanceof ApplicationServerComponent) {
-            ApplicationServerComponent parentComponent = (ApplicationServerComponent) parentResourceComponent;
+        try {
+            if (parentResourceComponent instanceof ApplicationServerComponent) {
+                ApplicationServerComponent parentComponent = (ApplicationServerComponent) parentResourceComponent;
 
-            return parentComponent.getResourceContext().getPluginConfiguration().getSimple("serverHomeDir")
-                .getStringValue();
+                return parentComponent.getResourceContext().getPluginConfiguration().getSimple("serverHomeDir")
+                    .getStringValue();
 
-        } else if (parentResourceComponent instanceof JBossASServerComponent) {
-            JBossASServerComponent parentComponent = (JBossASServerComponent) parentResourceComponent;
+            }
+        } catch (java.lang.NoClassDefFoundError e) {
+            //Do absolutely nothing, that means the class loader does not have this module loaded. 
+            //Just continue with the next discovery attempt.
+        }
 
-            return parentComponent.getPluginConfiguration().getSimple(parentComponent.JBOSS_HOME_DIR_CONFIG_PROP)
-                .getStringValue();
+        try {
+            if (parentResourceComponent instanceof JBossASServerComponent) {
+
+                JBossASServerComponent parentComponent = (JBossASServerComponent) parentResourceComponent;
+
+                System.out.println(parentComponent.getPluginConfiguration()
+                    .getSimple(parentComponent.CONFIGURATION_PATH_CONFIG_PROP).getStringValue());
+
+                return parentComponent.getPluginConfiguration()
+                    .getSimple(parentComponent.CONFIGURATION_PATH_CONFIG_PROP).getStringValue();
+            }
+        } catch (java.lang.NoClassDefFoundError e) {
+            //Do absolutely nothing, that means the class loader does not have this module loaded.
         }
 
         return null;

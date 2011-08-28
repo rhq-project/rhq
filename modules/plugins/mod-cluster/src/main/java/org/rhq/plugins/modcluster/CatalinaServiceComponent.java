@@ -20,6 +20,9 @@ package org.rhq.plugins.modcluster;
 
 import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -32,6 +35,9 @@ import org.rhq.plugins.modcluster.config.JBossWebServerFile;
 
 @SuppressWarnings({ "rawtypes", "deprecation" })
 public class CatalinaServiceComponent extends MBeanResourceComponent {
+
+    private static final Log log = LogFactory.getLog(CatalinaServiceComponent.class);
+
     private static final String SERVER_HOME_DIR = "serverHomeDir";
     private static final String CONFIGURATION_FILE_RELATIVE_PATH = "/deploy/jboss-web.deployer/server.xml";
 

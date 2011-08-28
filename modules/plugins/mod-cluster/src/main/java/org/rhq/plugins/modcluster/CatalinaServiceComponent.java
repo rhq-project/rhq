@@ -18,6 +18,8 @@
  */
 package org.rhq.plugins.modcluster;
 
+import java.util.concurrent.TimeUnit;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -51,6 +53,15 @@ public class CatalinaServiceComponent extends MBeanResourceComponent {
                 saveResouceConfigurationToFile(report, true);
             }
         }
+    }
+
+    @Override
+    protected Object getPropertyValueAsType(PropertySimple propSimple, String typeName) {
+        if (typeName.equals(TimeUnit.class.getName())) {
+            return TimeUnit.valueOf(propSimple.getStringValue());
+        }
+
+        return super.getPropertyValueAsType(propSimple, typeName);
     }
 
     private void saveResouceConfigurationToFile(ConfigurationUpdateReport report, boolean ignoreReadOnly) {

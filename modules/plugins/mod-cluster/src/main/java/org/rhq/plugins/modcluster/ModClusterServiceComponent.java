@@ -42,7 +42,6 @@ public class ModClusterServiceComponent extends FileConfiguredMBeanResourceCompo
 
     @Override
     protected Object getPropertyValueAsType(PropertySimple propSimple, String typeName) {
-        System.out.println(typeName);
         if (typeName.equals(TimeUnit.class.getName())) {
             return TimeUnit.valueOf(propSimple.getStringValue());
         }

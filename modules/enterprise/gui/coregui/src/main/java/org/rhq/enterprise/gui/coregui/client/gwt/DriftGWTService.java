@@ -111,6 +111,8 @@ public interface DriftGWTService extends RemoteService {
 
     String getDriftFileBits(String hash) throws RuntimeException;
 
-    FileDiffReport generateUnifiedDiff(Drift drift);
+    FileDiffReport generateUnifiedDiff(Drift drift) throws RuntimeException;
+
+    boolean isBinaryFile(Drift drift) throws RuntimeException;
 
 }

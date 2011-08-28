@@ -24,7 +24,6 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.List;
 import java.util.Set;
@@ -52,7 +51,6 @@ import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.core.pc.measurement.MeasurementManager;
 import org.rhq.core.util.stream.StreamUtil;
 
-import static org.rhq.core.util.ZipUtil.zipFileOrDirectory;
 import static org.rhq.core.util.file.FileUtil.purge;
 
 public class DriftManager extends AgentService implements DriftAgentService, DriftClient, ContainerService {
@@ -130,6 +128,15 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
 
     /**
      * This method is provided as a test hook.
+     *
+     * @param changeSetMgr
+     */
+    void setChangeSetMgr(ChangeSetManager changeSetMgr) {
+        this.changeSetMgr = changeSetMgr;
+    }
+
+    /**
+     * This method is provided as a test hook.
      * @return The schedule queue
      */
     ScheduleQueue getSchedulesQueue() {
@@ -165,12 +172,29 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
             DriftServerService driftServer = pluginContainerConfiguration.getServerServices().getDriftServerService();
 
             // TODO Include the version in the change set file name to ensure the file name is unique
-            File zipFile = new File(pluginContainerConfiguration.getTemporaryDirectory(), "changeset-" + resourceId
-                + driftConfiguration.getName() + ".zip");
-            zipFileOrDirectory(changeSetFile, zipFile);
+            String fileName = "changeset_" + System.currentTimeMillis() + ".zip";
+            final File zipFile = new File(changeSetFile.getParentFile(), fileName);
+            ZipOutputStream stream = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(zipFile)));
 
-            driftServer.sendChangesetZip(resourceId, zipFile.length(), remoteInputStream(new BufferedInputStream(
-                new FileInputStream(zipFile))));
+            FileInputStream fis = new FileInputStream(changeSetFile);
+            stream.putNextEntry(new ZipEntry(changeSetFile.getName()));
+            StreamUtil.copy(fis, stream, false);
+            fis.close();
+            stream.close();
+
+            // We want to clean up after we send the zip file to the server. We do this by
+            // deleting the files in the content directory and the content zip itself. They
+            // are no longer needed after being sent to the server. We cannot immediately
+            // delete the content zip file though because it is sent asynchronously, and we
+            // wind up deleting it before it is sent. The following approach allows us to
+            // safely delete it when the comm layer closes the remote input stream.
+            //
+            // jsanda
+            DriftInputStream inputStream = new DriftInputStream(new BufferedInputStream(new FileInputStream(zipFile)),
+                new DeleteFile(zipFile));
+
+            driftServer.sendChangesetZip(resourceId, zipFile.length(), remoteInputStream(inputStream));
+
         } catch (IOException e) {
             log.error("An error occurred while trying to send changeset[resourceId: " + resourceId
                 + ", driftConfiguration: " + driftConfiguration.getName() + "]", e);
@@ -180,17 +204,11 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
     @Override
     public void sendChangeSetContentToServer(int resourceId, String driftConfigurationName, final File contentDir) {
         try {
-            File zipFile = new File(contentDir, "content.zip");
+            String contentFileName = "content_" + System.currentTimeMillis() + ".zip";
+            final File zipFile = new File(contentDir.getParentFile(), contentFileName);
             ZipOutputStream stream = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(zipFile)));
 
-            FilenameFilter contentZipFilter = new FilenameFilter() {
-                @Override
-                public boolean accept(File dir, String name) {
-                    return dir.equals(contentDir) && !name.equals("content.zip");
-                }
-            };
-
-            for (File file : contentDir.listFiles(contentZipFilter)) {
+            for (File file : contentDir.listFiles()) {
                 FileInputStream fis = new FileInputStream(file);
                 stream.putNextEntry(new ZipEntry(file.getName()));
                 StreamUtil.copy(fis, stream, false);
@@ -198,9 +216,19 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
             }
             stream.close();
 
+            // We want to clean up after we send the zip file to the server. We do this by
+            // deleting the files in the content directory and the content zip itself. They
+            // are no longer needed after being sent to the server. We cannot immediately
+            // delete the content zip file though because it is sent asynchronously, and we
+            // wind up deleting it before it is sent. The following approach allows us to
+            // safely delete it when the comm layer closes the remote input stream.
+            //
+            // jsanda
+            DriftInputStream inputStream = new DriftInputStream(new BufferedInputStream(new FileInputStream(zipFile)),
+                new DeleteFile(zipFile));
+
             DriftServerService driftServer = pluginContainerConfiguration.getServerServices().getDriftServerService();
-            driftServer.sendFilesZip(resourceId, zipFile.length(), remoteInputStream(new BufferedInputStream(
-                new FileInputStream(zipFile))));
+            driftServer.sendFilesZip(resourceId, zipFile.length(), remoteInputStream(inputStream));
         } catch (IOException e) {
             log.error("An error occurred while trying to send content for changeset[resourceId: " + resourceId
                 + ", driftConfiguration: " + driftConfigurationName + "]", e);
@@ -380,5 +408,19 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
      */
     protected MeasurementManager getMeasurementManager() {
         return PluginContainer.getInstance().getMeasurementManager();
+    }
+
+    private static class DeleteFile implements Runnable {
+
+        private File file;
+
+        public DeleteFile(File file) {
+            this.file = file;
+        }
+
+        @Override
+        public void run() {
+            file.delete();
+        }
     }
 }

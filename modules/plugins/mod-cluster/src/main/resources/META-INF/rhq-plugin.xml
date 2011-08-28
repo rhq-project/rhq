@@ -29,7 +29,7 @@
       <service name="HA Service" discovery="ClassNameMBeanDiscoveryComponent" 
         class="ModClusterServiceComponent" 
         supportsManualAdd="true" 
-        description="HA Service Listener" singleton="true">
+        description="HA Service" singleton="true">
 
          <plugin-configuration>
             <c:simple-property name="objectName" readOnly="true" default="jboss.web:service=ModCluster" />
@@ -150,7 +150,8 @@
          </resource-configuration>
       </service>
 
-      <service name="HA Service Configuration" discovery="ClassNameMBeanDiscoveryComponent" class="FileConfiguredMBeanResourceComponent" supportsManualAdd="true" description="HA Service Configuration" singleton="true">
+      <service name="HA Service Configuration" discovery="ClassNameMBeanDiscoveryComponent" class="FileConfiguredMBeanResourceComponent" supportsManualAdd="true" 
+            description="HA Service Configuration" singleton="true">
 
          <plugin-configuration>
             <c:simple-property name="objectName" readOnly="true" default="jboss.web:service=ModCluster" />
@@ -199,11 +200,12 @@
       <!-- End - Configuration for HAModClusterService -->
 
       <!-- Start - Configuration for ModClusterService -->
-      <service name="Service" discovery="ClassNameMBeanDiscoveryComponent" class="ModClusterServiceComponent" supportsManualAdd="true" description="HA Service Listener" singleton="true">
+      <service name="Service" discovery="ClassNameMBeanDiscoveryComponent" class="ModClusterServiceComponent" supportsManualAdd="true" 
+            description="Service" singleton="true">
 
          <plugin-configuration>
             <c:simple-property name="objectName" readOnly="true" default="jboss.web:service=ModCluster" />
-            <c:simple-property name="nameTemplate" default="HA Service" />
+            <c:simple-property name="nameTemplate" default="Service" />
             <c:simple-property name="className" readOnly="true" default="org.jboss.modcluster.ModClusterService" />
             <c:simple-property name="proxyInfoProperty" readOnly="true" default="ProxyInfo" />
          </plugin-configuration>
@@ -280,11 +282,12 @@
          <metric property="ProxyInfo" displayName="Proxy Info" displayType="summary" dataType="trait" />
       </service>
 
-      <service name="Service Configuration" discovery="ClassNameMBeanDiscoveryComponent" class="FileConfiguredMBeanResourceComponent" supportsManualAdd="true" description="HA Service Configuration" singleton="true">
+      <service name="Service Configuration" discovery="ClassNameMBeanDiscoveryComponent" class="FileConfiguredMBeanResourceComponent" supportsManualAdd="true" 
+            description="Service Configuration" singleton="true">
 
          <plugin-configuration>
             <c:simple-property name="objectName" readOnly="true" default="jboss.web:service=ModCluster" />
-            <c:simple-property name="nameTemplate" default="HA Service Configuration" />
+            <c:simple-property name="nameTemplate" default="Service Configuration" />
             <c:simple-property name="className" readOnly="true" default="org.jboss.modcluster.ModClusterService" />
             <c:simple-property name="dependencyClassName" readOnly="true" default="org.jboss.modcluster.config.ModClusterConfig" />
             <c:simple-property name="proxyInfoProperty" readOnly="true" default="ProxyInfo" />
@@ -325,11 +328,12 @@
       </service>
       <!-- End - Configuration for ModClusterService -->
 
-      <service name="Catalina Service" discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent" class="CatalinaServiceComponent" supportsManualAdd="true" description="Catalina Service Listener" singleton="true">
+      <service name="Catalina Service" discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent" class="CatalinaServiceComponent" supportsManualAdd="true" 
+            description="Catalina Service" singleton="true">
 
          <plugin-configuration>
             <c:simple-property name="objectName" readOnly="true" default="Catalina:type=ModClusterListener,*" />
-            <c:simple-property name="nameTemplate" default="mod_cluster Catalina Listener" />
+            <c:simple-property name="nameTemplate" default="Catalina Service" />
          </plugin-configuration>
 
          <operation name="addProxy" displayName="Add a proxy" description="Add a proxy.">
@@ -397,7 +401,8 @@
          </resource-configuration>
       </service>
 
-      <service name="Dynamic Load Balancer Factor" discovery="ClassNameMBeanDiscoveryComponent" class="FileConfiguredMBeanResourceComponent" supportsManualAdd="true" description="Dynamic Load balancer factor for mod_cluster" singleton="true">
+      <service name="Dynamic Load Balancer Factor" discovery="ClassNameMBeanDiscoveryComponent" class="FileConfiguredMBeanResourceComponent" supportsManualAdd="true" 
+            description="Dynamic Load balancer factor for mod_cluster" singleton="true">
 
          <plugin-configuration>
             <c:simple-property name="objectName" readOnly="true" default="jboss.web:provider=LoadBalanceFactor,service=ModCluster,*" />
@@ -411,7 +416,8 @@
          </resource-configuration>
       </service>
 
-      <service name="Simple Load Balancer Factor" discovery="ClassNameMBeanDiscoveryComponent" class="FileConfiguredMBeanResourceComponent" supportsManualAdd="true" description="Simple load balancer factor for mod_cluster" singleton="true">
+      <service name="Simple Load Balancer Factor" discovery="ClassNameMBeanDiscoveryComponent" class="FileConfiguredMBeanResourceComponent" supportsManualAdd="true" 
+            description="Simple load balancer factor for mod_cluster" singleton="true">
 
          <plugin-configuration>
             <c:simple-property name="objectName" readOnly="true" default="jboss.web:provider=LoadBalanceFactor,service=ModCluster,*" />

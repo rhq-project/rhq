@@ -20,6 +20,8 @@ package org.rhq.plugins.modcluster;
 
 import java.util.Set;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.mc4j.ems.connection.EmsConnection;
 import org.mc4j.ems.connection.bean.EmsBean;
 
@@ -35,6 +37,8 @@ import org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent;
  */
 @SuppressWarnings("rawtypes")
 public class ClassNameMBeanDiscoveryComponent<T extends JMXComponent> extends MBeanResourceDiscoveryComponent<T> {
+
+    private static final Log log = LogFactory.getLog(FileConfiguredMBeanResourceComponent.class);
 
     private static final String CLASS_NAME = "className";
 
@@ -62,12 +66,22 @@ public class ClassNameMBeanDiscoveryComponent<T extends JMXComponent> extends MB
      * @return
      */
     public boolean isBeanConfiguredClassName(ResourceDiscoveryContext<T> context, String objectName) {
-        String className = context.getDefaultPluginConfiguration().getSimple(CLASS_NAME).getStringValue();
-
         EmsConnection connection = context.getParentResourceComponent().getEmsConnection();
         EmsBean emsBean = loadBean(connection, objectName);
+        ClassLoader cl = Thread.currentThread().getContextClassLoader();
 
-        return className.equals(emsBean.getClassTypeName());
+        try {
+            Thread.currentThread().setContextClassLoader(emsBean.getClass().getClassLoader());
+
+            String className = context.getDefaultPluginConfiguration().getSimple(CLASS_NAME).getStringValue();
+
+            return className.equals(emsBean.getClassTypeName());
+        } catch (Exception e) {
+            log.info(e);
+            return false;
+        } finally {
+            Thread.currentThread().setContextClassLoader(cl);
+        }
     }
 
     /**

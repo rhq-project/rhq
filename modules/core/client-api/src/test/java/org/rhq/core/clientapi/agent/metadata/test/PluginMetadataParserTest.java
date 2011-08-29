@@ -22,6 +22,7 @@ import static org.rhq.core.clientapi.shared.PluginDescriptorUtil.toPluginDescrip
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
 
 import java.util.HashMap;
 import java.util.List;
@@ -823,7 +824,7 @@ public class PluginMetadataParserTest {
             "The value is wrong for the <name> property that represents the drift configuration name");
 
         assertNotNull(enabled, "Expected to find simple property <enabled> for the drift configuration");
-        assertFalse(enabled.getBooleanValue(), "The <enabled> property should be set to a default value of false");
+        assertTrue(enabled.getBooleanValue(), "The <enabled> property should be set to a default value of true");
 
         test.assertDriftTemplate(driftTemplate);
     }

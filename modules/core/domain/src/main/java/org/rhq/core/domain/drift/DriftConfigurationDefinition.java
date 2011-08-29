@@ -62,7 +62,7 @@ public class DriftConfigurationDefinition implements Serializable {
     // Thus, we only allow config names to only include spaces or "." or "-" or alphanumeric or "_" characters.
     public static final String PROP_NAME_REGEX_PATTERN = "[ \\.\\-\\w]+";
 
-    public static final boolean DEFAULT_ENABLED = false;
+    public static final boolean DEFAULT_ENABLED = true;
     public static final long DEFAULT_INTERVAL = 1800L;
 
     /**

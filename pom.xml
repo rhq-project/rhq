@@ -1130,6 +1130,7 @@
               <file>
                   <exists>.git</exists>
               </file>
+
           </activation>
 	    <build>
            <plugins>

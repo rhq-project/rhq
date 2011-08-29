@@ -8,6 +8,7 @@
    <property name="conf.home" location="${output.dir}/conf" />
    <property name="jboss.home" location="${basedir}/target/jboss-${jboss.version}" />
    <property name="lib.home" location="${output.dir}/lib" />
+   <property name="samples.home" location="${output.dir}/samples"/>
 
    <target name="prepare-dist">
       <condition property="exclude.cli.jar" value="true">
@@ -20,6 +21,7 @@
       <antcall target="prepare-bin-dir" />
       <antcall target="prepare-conf-dir" />
       <antcall target="prepare-lib-dir" />
+      <antcall target="prepare-samples-dir" />
    </target>
 
    <target name="prepare-bin-dir">
@@ -66,6 +68,15 @@
       <copy file="${settings.localRepository}/org/testng/testng/${testng.version}/testng-${testng.version}.jar" tofile="${lib.home}/testng-${testng.version}.jar" verbose="true" />
    	  <copy file="${settings.localRepository}/org/rhq/rhq-script-bindings/${project.version}/rhq-script-bindings-${project.version}.jar" tofile="${lib.home}/rhq-script-bindings-${project.version}.jar" verbose="true" />
    	  <copy file="${settings.localRepository}/hibernate-annotations/hibernate-annotations/${hibernate-annotations.version}/hibernate-annotations-${hibernate-annotations.version}.jar" todir="${lib.home}" verbose="true" />
+   </target>
+
+   <target name="prepare-samples-dir">
+      <echo>*** Creating samples dir...</echo>
+      <mkdir dir="${samples.home}" />
+      <echo>*** Populating sample scripts...</echo>
+      <copy verbose="true" toDir="${samples.home}">
+         <fileset dir="${basedir}/src/main/samples/" includes="*.*" />
+      </copy>
    </target>
 
 </project>

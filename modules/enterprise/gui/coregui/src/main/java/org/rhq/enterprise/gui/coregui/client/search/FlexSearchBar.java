@@ -89,7 +89,7 @@ public class FlexSearchBar extends AbstractSearchBar {
     private final PopupPanel savedSearchesPanel = new PopupPanel(true);
     private SavedSearchGrid savedSearchesGrid;
 
-    private Integer currentSearchId = 0;
+    private int currentSearchId = 0;
 
     private SearchSubsystem searchSubsystem;
     private String defaultSearchText;
@@ -271,7 +271,7 @@ public class FlexSearchBar extends AbstractSearchBar {
             starImage.setUrl(STAR_OFF_URL);
         } else {
             // NOTE: currently do not support updated a saved search pattern
-            if (currentSearchId == 0) {
+            if (0 == currentSearchId) {
                 String pattern = autoCompletePatternField.getText();
                 createSavedSearch(name, pattern);
             } else if (nameJustUpdated) {

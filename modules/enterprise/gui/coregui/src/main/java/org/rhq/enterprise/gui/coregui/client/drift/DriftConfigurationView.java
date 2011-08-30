@@ -170,6 +170,9 @@ public class DriftConfigurationView extends TableSection<DriftConfigurationDataS
 
     private void add() {
         DriftAddConfigWizard.showWizard(context, this);
+        // we can refresh the table buttons immediately since the wizard is a dialog, the
+        // user can't access enabled buttons anyway.
+        DriftConfigurationView.this.refreshTableInfo();
     }
 
     private void delete(ListGridRecord[] records) {

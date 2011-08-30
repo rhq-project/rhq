@@ -354,7 +354,7 @@ public class GroupConfigurationUpdatesPortlet extends LocatableVLayout implement
         }
 
         @Override
-        protected void refreshTableInfo() {
+        public void refreshTableInfo() {
             super.refreshTableInfo();
             if (getTableInfo() != null) {
                 int count = getListGrid().getSelection().length;

@@ -801,14 +801,32 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         this.titleComponent = canvas;
     }
 
+    /**
+     * Note: To prevent user action while a current action completes, all widgets on the footer are disabled
+     * when footer actions take place, typically a button click.  It is up to the action to ensure the page
+     * (via refresh() or CoreGUI.refresh()) or footer (via refreshTableActions) are refreshed as needed at action
+     * completion. Failure to do so may leave the widgets disabled.
+     */
     public void addTableAction(String locatorId, String title, TableAction tableAction) {
         this.addTableAction(locatorId, title, null, null, tableAction);
     }
 
+    /**
+     * Note: To prevent user action while a current action completes, all widgets on the footer are disabled
+     * when footer actions take place, typically a button click.  It is up to the action to ensure the page
+     * (via refresh() or CoreGUI.refresh()) or footer (via refreshTableActions) are refreshed as needed at action
+     * completion. Failure to do so may leave the widgets disabled.
+     */
     public void addTableAction(String locatorId, String title, String confirmation, TableAction tableAction) {
         this.addTableAction(locatorId, title, confirmation, null, tableAction);
     }
 
+    /**
+     * Note: To prevent user action while a current action completes, all widgets on the footer are disabled
+     * when footer actions take place, typically a button click.  It is up to the action to ensure the page
+     * (via refresh() or CoreGUI.refresh()) or footer (via refreshTableActions) are refreshed as needed at action
+     * completion. Failure to do so may leave the widgets disabled.
+     */
     public void addTableAction(String locatorId, String title, String confirmation,
         LinkedHashMap<String, ? extends Object> valueMap, TableAction tableAction) {
         // If the specified locator ID is qualified, strip off the ancestry prefix, so we can make sure its locator ID
@@ -831,6 +849,11 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
 
     /**
      * Adds extra widgets to the bottom of the table view.
+     * <br/><br/>
+     * Note: To prevent user action while a current action completes, all widgets on the footer are disabled
+     * when footer actions take place, typically a button click.  It is up to the action to ensure the page
+     * (via refresh() or CoreGUI.refresh()) or footer (via refreshTableActions) are refreshed as needed at action
+     * completion. Failure to do so may leave the widgets disabled.
      *
      * @param widget the new widget to add to the table view
      * @param aboveFooter if true, the widget will be placed in a second toolstrip just above the main footer.
@@ -880,7 +903,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         return this.tableActionDisableOverride;
     }
 
-    protected void refreshTableInfo() {
+    public void refreshTableInfo() {
         if (this.showFooter && (this.listGrid != null)) {
             if (this.tableActionDisableOverride) {
                 this.listGrid.setSelectionType(SelectionStyle.NONE);

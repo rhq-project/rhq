@@ -152,6 +152,9 @@ public class ResourceCompositeSearchView extends ResourceSearchView {
                     public void executeAction(ListGridRecord[] selection, Object actionValue) {
                         ResourceFactoryImportWizard.showImportWizard(parentResourceComposite.getResource(),
                             (ResourceType) actionValue);
+                        // we can refresh the table buttons immediately since the wizard is a dialog, the
+                        // user can't access enabled buttons anyway.
+                        ResourceCompositeSearchView.this.refreshTableInfo();
                     }
                 });
         }
@@ -172,6 +175,9 @@ public class ResourceCompositeSearchView extends ResourceSearchView {
                     public void executeAction(ListGridRecord[] selection, Object actionValue) {
                         ResourceFactoryCreateWizard.showCreateWizard(parentResourceComposite.getResource(),
                             (ResourceType) actionValue);
+                        // we can refresh the table buttons immediately since the wizard is a dialog, the
+                        // user can't access enabled buttons anyway.
+                        ResourceCompositeSearchView.this.refreshTableInfo();
                     }
                 });
         }

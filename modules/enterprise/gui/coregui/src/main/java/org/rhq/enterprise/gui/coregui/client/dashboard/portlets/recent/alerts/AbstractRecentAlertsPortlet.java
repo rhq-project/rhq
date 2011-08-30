@@ -16,9 +16,9 @@ import com.smartgwt.client.widgets.form.events.SubmitValuesHandler;
 import com.smartgwt.client.widgets.form.fields.CheckboxItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
-
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.authz.Permission;
@@ -281,7 +281,7 @@ public abstract class AbstractRecentAlertsPortlet extends AlertHistoryView imple
     }
 
     @Override
-    protected void refreshTableInfo() {
+    public void refreshTableInfo() {
         super.refreshTableInfo();
         if (getTableInfo() != null) {
             int count = getListGrid().getSelection().length;

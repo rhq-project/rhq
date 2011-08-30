@@ -201,6 +201,9 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
                 Permission.MANAGE_INVENTORY) {
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     new GroupCreateWizard(ResourceGroupListView.this).startWizard();
+                    // we can refresh the table buttons immediately since the wizard is a dialog, the
+                    // user can't access enabled buttons anyway.
+                    ResourceGroupListView.this.refreshTableInfo();
                 }
             });
         }

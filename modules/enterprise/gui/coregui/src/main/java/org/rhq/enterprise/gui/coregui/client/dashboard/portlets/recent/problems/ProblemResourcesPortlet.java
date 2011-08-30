@@ -310,7 +310,7 @@ public class ProblemResourcesPortlet extends Table<ProblemResourcesDataSource> i
         return definition;
     }
 
-    protected void refreshTableInfo() {
+    public void refreshTableInfo() {
         if (isShowFooter()) {
             long begin = 0;
             List<Long> bounds = MeasurementUtility.calculateTimeFrame(getDataSource()

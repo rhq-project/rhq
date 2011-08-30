@@ -56,7 +56,8 @@ public class DriftMetadataParser {
     }
 
     private void initEnabled(ConfigurationTemplate template) {
-        template.getConfiguration().put(new PropertySimple(DriftConfigurationDefinition.PROP_ENABLED, false));
+        template.getConfiguration().put(new PropertySimple(DriftConfigurationDefinition.PROP_ENABLED,
+            DriftConfigurationDefinition.DEFAULT_ENABLED));
     }
 
     private void initName(DriftDescriptor descriptor, ConfigurationTemplate template) {

@@ -215,10 +215,7 @@ public class AutodiscoveryPortlet extends ResourceAutodiscoveryView implements C
     @Override
     public void refresh() {
         if (!isRefreshing()) {
-            if (null != dataSource) {
-                dataSource.invalidateCache();
-            }
-            markForRedraw();
+            super.refresh();
         }
     }
 }

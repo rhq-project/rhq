@@ -18,7 +18,14 @@
  */
 package org.rhq.plugins.modcluster;
 
+import java.util.Set;
+
+import org.mc4j.ems.connection.bean.EmsBean;
+
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.measurement.MeasurementDataTrait;
+import org.rhq.core.domain.measurement.MeasurementReport;
+import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
 import org.rhq.plugins.modcluster.helper.JBossHelper;
 import org.rhq.plugins.modcluster.model.ProxyInfo;
@@ -29,6 +36,21 @@ import org.rhq.plugins.modcluster.model.ProxyInfo;
  */
 @SuppressWarnings({ "rawtypes" })
 public class ModClusterServerComponent extends MBeanResourceComponent {
+
+    @SuppressWarnings("unchecked")
+    @Override
+    protected void getValues(MeasurementReport report, Set requests, EmsBean bean) {
+        for (MeasurementScheduleRequest request : (Set<MeasurementScheduleRequest>) requests) {
+            if (request.getName().equals("ProxyInformation")) {
+                String rawProxyInfo = JBossHelper.getRawProxyInfo(bean);
+                report.addData(new MeasurementDataTrait(request, rawProxyInfo));
+                requests.remove(request);
+                break;
+            }
+        }
+
+        super.getValues(report, requests, bean);
+    }
 
     @Override
     public AvailabilityType getAvailability() {

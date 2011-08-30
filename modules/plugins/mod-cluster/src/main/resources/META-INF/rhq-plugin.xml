@@ -24,6 +24,9 @@
 
       <operation name="reset" displayName="Reset the node" description="Move this application server out of an error state." />
       <operation name="refresh" displayName="Refresh configuration" description="Refresh configuration for this application server." />
+      
+      <metric property="ProxyInformation" displayName="Proxy Information" displayType="summary" dataType="trait" />
+      
 
       <!-- Start - Configuration for HAModClusterService -->
       <service name="HA Service" discovery="ClassNameMBeanDiscoveryComponent" 

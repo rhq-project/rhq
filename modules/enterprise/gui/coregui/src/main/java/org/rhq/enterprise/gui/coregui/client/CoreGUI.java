@@ -24,10 +24,15 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.http.client.URL;
-import com.google.gwt.user.client.*;
+import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.History;
+import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Window.Location;
 import com.smartgwt.client.core.KeyIdentifier;
 import com.smartgwt.client.types.Overflow;
@@ -280,6 +285,23 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
             rootCanvas.draw();
 
             History.addValueChangeHandler(this);
+
+            Event.addNativePreviewHandler(new Event.NativePreviewHandler() {
+                @Override
+                public void onPreviewNativeEvent(Event.NativePreviewEvent event) {
+                    Event what = Event.as(event.getNativeEvent());
+                    switch (what.getTypeInt()) {
+                        case Event.ONKEYDOWN:
+                            if (what.getKeyCode() != KeyCodes.KEY_ENTER) {
+                                break;
+                            }
+                        case Event.ONCLICK:
+                        case Event.ONDBLCLICK:
+                            makeRequestId();
+                            break;
+                    }
+                }
+            });
         }
 
         if (History.getToken().equals("") || History.getToken().equals(LOGOUT_VIEW)) {
@@ -310,13 +332,18 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
     }
 
     public void onValueChange(ValueChangeEvent<String> stringValueChangeEvent) {
-        currentView = URL.decodeComponent(stringValueChangeEvent.getValue());
+        final String oldView = currentView;
+        final String newView  = URL.decodeComponent(stringValueChangeEvent.getValue());
+        currentView = newView;
+
         Log.debug("Handling history event for view: " + currentView);
 
         currentViewPath = new ViewPath(currentView);
         coreGUI.rootCanvas.renderView(currentViewPath);
 
-        makeRequestId();
+        if (!newView.equals(oldView)) {
+            makeRequestId();
+        }
     }
 
     public static void refresh() {

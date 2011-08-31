@@ -188,6 +188,9 @@ Build-Number=${buildNumber}
                    <property name="jaxb-impl.version" value="${jaxb-impl.version}" />
                    <property name="jline.version" value="${jline.version}" />
                    <property name="augeas.version" value="${augeas.version}" />
+                   <property name="augeas.classifier" value="${augeas.classifier}"/>
+                   <property name="augeas.zip.location" value="${augeas.zip.location}"/>
+                   <property name="augeas.zip.mask" value="${augeas.zip.mask}"/>
                    <property name="augeas.zip.version" value="${augeas.zip.version}" />
                 </ant>
               </tasks>

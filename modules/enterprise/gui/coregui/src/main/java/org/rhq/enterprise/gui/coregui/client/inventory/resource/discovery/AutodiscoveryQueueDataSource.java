@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -65,7 +65,11 @@ public class AutodiscoveryQueueDataSource extends DataSource {
 
     private int unlimited = -1;
     private int maximumPlatformsToDisplay = -1;
-    private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService(1000000);
+
+    // Specify 60s timeout to compensate for slow loading of this view due to lack of paging of results.
+    // TODO (ips, 08/31/11): Remove this once paging has been implemented.
+    private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService(60 * 1000);
+
     private PermissionsLoader permissionsLoader = new PermissionsLoader();
     private TreeGrid dataContainerReference = null;
     private static final Permission MANAGE_INVENTORY = Permission.MANAGE_INVENTORY;

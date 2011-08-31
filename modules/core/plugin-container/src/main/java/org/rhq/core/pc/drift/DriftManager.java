@@ -243,8 +243,8 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
 
     @Override
     public void detectDrift(int resourceId, DriftConfiguration driftConfiguration) {
-        if (log.isDebugEnabled()) {
-            log.debug("Received request to schedule drift detection immediately for [resourceId: " + resourceId
+        if (log.isInfoEnabled()) {
+            log.info("Received request to schedule drift detection immediately for [resourceId: " + resourceId
                 + ", driftConfigurationId: " + driftConfiguration.getId() + ", driftConfigurationName: "
                 + driftConfiguration.getName() + "]");
         }
@@ -258,16 +258,41 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
         }
         log.debug("Resetting " + schedule + " for immediate detection.");
         schedule.resetSchedule();
-        schedulesQueue.addSchedule(schedule);
+        boolean queueUpdated = schedulesQueue.addSchedule(schedule);
+
+        if (queueUpdated) {
+            if (log.isDebugEnabled()) {
+                log.debug(schedule + " has been added to " + schedulesQueue + " for immediate detection.");
+            }
+        } else {
+            log.warn("Failed to add " + schedule + " to " + schedulesQueue + " for immediate detection.");
+        }
     }
 
     @Override
     public void scheduleDriftDetection(int resourceId, DriftConfiguration driftConfiguration) {
-        schedulesQueue.addSchedule(new DriftDetectionSchedule(resourceId, driftConfiguration));
+        DriftDetectionSchedule schedule = new DriftDetectionSchedule(resourceId, driftConfiguration);
+        if (log.isInfoEnabled()) {
+            log.info("Scheduling drift detection for " + schedule);
+        }
+        boolean added = schedulesQueue.addSchedule(schedule);
+
+        if (added) {
+            if (log.isDebugEnabled()) {
+                log.debug(schedule + " has been added to " + schedulesQueue);
+            } else {
+                log.warn("Failed to add " + schedule + " to " + schedulesQueue);
+            }
+        }
     }
 
     @Override
     public boolean requestDriftFiles(int resourceId, Headers headers, List<? extends DriftFile> driftFiles) {
+        if (log.isInfoEnabled()) {
+            log.info("Server is requesting files for [resourceId: " + resourceId + ", driftConfigurationId: " +
+                headers.getDriftCofigurationId() + ", driftConfigurationName: " + headers.getDriftConfigurationName() +
+                "]");
+        }
         DriftFilesSender sender = new DriftFilesSender();
         sender.setResourceId(resourceId);
         sender.setDriftClient(this);
@@ -282,8 +307,8 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
 
     @Override
     public void unscheduleDriftDetection(final int resourceId, final DriftConfiguration driftConfiguration) {
-        log.debug("Received request to unschedule drift detection for [resourceId:" + resourceId +
-            ", driftConfigurationId:" + driftConfiguration.getId() + ", driftConfigurationName: " +
+        log.info("Received request to unschedule drift detection for [resourceId:" + resourceId +
+            ", driftConfigurationId: " + driftConfiguration.getId() + ", driftConfigurationName: " +
             driftConfiguration.getName() + "].");
 
         DriftDetectionSchedule schedule = schedulesQueue.removeAndExecute(resourceId, driftConfiguration,
@@ -298,15 +323,29 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
                 }
             });
 
-        log.debug("Removed " + schedule + " from the schedule queue.");
+        if (log.isDebugEnabled()) {
+            log.debug("Removed " + schedule + " from the queue " + schedulesQueue);
+        }
     }
 
     @Override
     public void updateDriftDetection(int resourceId, DriftConfiguration driftConfiguration) {
+        log.info("Received request to update schedule for [resourceId: " + resourceId + ", driftConfigurationId: " +
+            driftConfiguration.getId() + ", driftConfigurationName: " + driftConfiguration.getName() + "]");
         DriftDetectionSchedule updatedSchedule = schedulesQueue.update(resourceId, driftConfiguration);
         if (updatedSchedule == null) {
             updatedSchedule = new DriftDetectionSchedule(resourceId, driftConfiguration);
-            schedulesQueue.addSchedule(updatedSchedule);
+            if (log.isInfoEnabled()) {
+                log.info("Adding " + updatedSchedule + " to " + schedulesQueue);
+            }
+            boolean added = schedulesQueue.addSchedule(updatedSchedule);
+            if (added) {
+                if (log.isDebugEnabled()) {
+                    log.debug(updatedSchedule + " has been added to " + schedulesQueue);
+                }
+            } else {
+                log.warn("Failed to add " + updatedSchedule + " to " + schedulesQueue);
+            }
         }
 
         InventoryManager inventoryMgr = PluginContainer.getInstance().getInventoryManager();

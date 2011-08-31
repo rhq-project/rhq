@@ -166,4 +166,25 @@ public class ScheduleQueueImpl implements ScheduleQueue {
             lock.writeLock().unlock();
         }
     }
+
+    @Override
+    public String toString() {
+        try {
+            lock.readLock().lock();
+            if (queue.isEmpty()) {
+                return "ScheduleQueue[]";
+            }
+            StringBuilder buffer = new StringBuilder("ScheduleQueue[");
+            for (DriftDetectionSchedule schedule : queue) {
+                buffer.append(schedule).append(", ");
+            }
+            int end = buffer.length();
+            buffer.delete(end - 2, end);
+            buffer.append("]");
+
+            return buffer.toString();
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
 }

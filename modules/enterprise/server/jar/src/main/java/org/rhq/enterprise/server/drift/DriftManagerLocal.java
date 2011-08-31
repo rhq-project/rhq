@@ -28,6 +28,7 @@ import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.DriftConfigurationCriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftConfiguration;
+import org.rhq.core.domain.drift.DriftDetails;
 import org.rhq.core.domain.drift.FileDiffReport;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginFacet;
@@ -129,6 +130,15 @@ public interface DriftManagerLocal extends DriftServerPluginFacet, DriftManagerR
      * referenced by drift
      */
     FileDiffReport generateUnifiedDiff(Drift drift);
+
+    /**
+     * Returns an object that encapsulates the information needed for viewing drift details
+     *
+     * @param subject
+     * @param driftId
+     * @return
+     */
+    DriftDetails getDriftDetails(Subject subject, String driftId);
 
     boolean isBinaryFile(Drift drift);
 }

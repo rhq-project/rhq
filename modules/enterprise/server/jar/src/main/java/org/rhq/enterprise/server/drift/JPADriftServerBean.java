@@ -77,6 +77,7 @@ import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 
 import static javax.ejb.TransactionAttributeType.REQUIRES_NEW;
+import static org.rhq.core.domain.drift.DriftFileStatus.LOADED;
 
 /**
  * The SLSB method implementation needed to support the JPA (RHQ Default) Drift Server Plugin.
@@ -217,7 +218,7 @@ public class JPADriftServerBean implements JPADriftServerLocal {
             throw new IllegalArgumentException("JPADriftFile not found [" + driftFile.getHashId() + "]");
         }
         df.setData(Hibernate.createBlob(new BufferedInputStream(data)));
-        df.setStatus(DriftFileStatus.LOADED);
+        df.setStatus(LOADED);
     }
 
     @Override

@@ -47,6 +47,8 @@ import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
 import org.rhq.core.domain.criteria.DriftConfigurationCriteria;
 import org.rhq.core.domain.criteria.DriftCriteria;
+import org.rhq.core.domain.criteria.GenericDriftChangeSetCriteria;
+import org.rhq.core.domain.criteria.GenericDriftCriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftComposite;
@@ -54,6 +56,7 @@ import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.domain.drift.DriftConfigurationComparator;
 import org.rhq.core.domain.drift.DriftConfigurationComparator.CompareMode;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition;
+import org.rhq.core.domain.drift.DriftDetails;
 import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.drift.FileDiffReport;
@@ -115,6 +118,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
         binaryFileTypes.add("jpg");
         binaryFileTypes.add("png");
         binaryFileTypes.add("jpeg");
+        binaryFileTypes.add("gif");
         binaryFileTypes.add("pdf");
         binaryFileTypes.add("swf");
         binaryFileTypes.add("bpm");
@@ -389,12 +393,14 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     @Override
     @TransactionAttribute(NOT_SUPPORTED)
     public String getDriftFileBits(String hash) {
+        log.debug("Retrieving drift file content for " + hash);
         DriftServerPluginFacet driftServerPlugin = getServerPlugin();
         return driftServerPlugin.getDriftFileBits(hash);
     }
 
     @Override
     public FileDiffReport generateUnifiedDiff(Drift drift) {
+        log.debug("Generating diff for " + drift);
         String oldContent = getDriftFileBits(drift.getOldDriftFile().getHashId());
         List<String> oldList = asList(oldContent.split("\\n"));
         String newContent = getDriftFileBits(drift.getNewDriftFile().getHashId());
@@ -493,6 +499,69 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
         }
 
         return binaryFileTypes.contains(path.substring(index + 1, path.length()));
+    }
+
+    @Override
+    @TransactionAttribute(NOT_SUPPORTED)
+    public DriftDetails getDriftDetails(Subject subject, String driftId) {
+        log.debug("Loading drift details for drift id: " + driftId);
+
+        GenericDriftCriteria criteria = new GenericDriftCriteria();
+        criteria.addFilterId(driftId);
+        criteria.fetchChangeSet(true);
+
+        DriftDetails driftDetails = new DriftDetails();
+        DriftServerPluginFacet driftServerPlugin = getServerPlugin();
+
+        DriftFile newFile = null;
+        DriftFile oldFile = null;
+
+        PageList<? extends Drift<?, ?>> results = driftServerPlugin.findDriftsByCriteria(subject, criteria);
+        if (results.size() == 0) {
+            log.warn("Unable to get the drift details for drift id " + driftId + ". No drift object found with that id.");
+            return null;
+        }
+
+        Drift drift = results.get(0);
+        driftDetails.setDrift(drift);
+        try {
+            switch (drift.getCategory()) {
+                case FILE_ADDED:
+                    newFile = driftServerPlugin.getDriftFile(subject, drift.getNewDriftFile().getHashId());
+                    driftDetails.setNewFileStatus(newFile.getStatus());
+                    break;
+                case FILE_CHANGED:
+                    newFile = driftServerPlugin.getDriftFile(subject, drift.getNewDriftFile().getHashId());
+                    oldFile = driftServerPlugin.getDriftFile(subject, drift.getOldDriftFile().getHashId());
+
+                    driftDetails.setNewFileStatus(newFile.getStatus());
+                    driftDetails.setOldFileStatus(oldFile.getStatus());
+
+                    driftDetails.setPreviousChangeSet(loadPreviousChangeSet(subject, drift));
+                    break;
+                case FILE_REMOVED:
+                    oldFile = driftServerPlugin.getDriftFile(subject, drift.getOldDriftFile().getHashId());
+                    driftDetails.setOldFileStatus(oldFile.getStatus());
+                    break;
+            }
+        } catch (Exception e) {
+            log.error("An error occurred while loading the drift details for drift id " + driftId + ": " +
+                e.getMessage());
+            throw new RuntimeException("An error occurred while loading th drift details for drift id " + driftId, e);
+        }
+        driftDetails.setBinaryFile(isBinaryFile(drift));
+        return driftDetails;
+    }
+
+    private DriftChangeSet loadPreviousChangeSet(Subject subject, Drift drift) {
+        GenericDriftChangeSetCriteria criteria = new GenericDriftChangeSetCriteria();
+        criteria.addFilterResourceId(drift.getChangeSet().getResourceId());
+        criteria.addFilterDriftConfigurationId(drift.getChangeSet().getDriftConfigurationId());
+        criteria.addFilterVersion(Integer.toString(drift.getChangeSet().getVersion() - 1));
+
+        PageList<? extends DriftChangeSet<?>> results = findDriftChangeSetsByCriteria(subject, criteria);
+        // TODO handle empty results
+        return results.get(0);
     }
 
     private DriftServerPluginFacet getServerPlugin() {

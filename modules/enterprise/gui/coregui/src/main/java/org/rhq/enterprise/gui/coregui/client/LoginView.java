@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -55,7 +55,6 @@ import com.smartgwt.client.widgets.form.fields.SubmitItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.KeyPressEvent;
 import com.smartgwt.client.widgets.form.fields.events.KeyPressHandler;
-import com.smartgwt.client.widgets.form.validator.LengthRangeValidator;
 import com.smartgwt.client.widgets.form.validator.RegExpValidator;
 import com.smartgwt.client.widgets.layout.HStack;
 
@@ -495,16 +494,6 @@ public class LoginView extends LocatableCanvas {
             for (FormItem item : form.getFields()) {
                 String name = item.getName();
                 if ((name != null) && (!name.isEmpty())) {
-                    if (name.equals(USERNAME)) {
-                        LengthRangeValidator validator = new LengthRangeValidator();
-                        validator.setMin(6);
-                        item.setValidators(validator);
-                    }
-                    if (name.equals(FIRST)) {
-                        LengthRangeValidator validator = new LengthRangeValidator();
-                        validator.setMin(1);
-                        item.setValidators(validator);
-                    }
                     if (name.equals(EMAIL)) {
                         RegExpValidator emailValidator = new RegExpValidator();
                         emailValidator.setErrorMessage(MSG.view_login_invalidEmail());

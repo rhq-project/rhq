@@ -71,6 +71,8 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
+import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
+import org.rhq.enterprise.server.alert.engine.AlertConditionCacheStats;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
@@ -169,6 +171,9 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
 
     @EJB
     private SubjectManagerLocal subjectManager;
+
+    @EJB
+    private AlertConditionCacheManagerLocal alertConditionCacheManager;
 
     // use a new transaction when putting things on the JMS queue. see 
     // http://management-platform.blogspot.com/2008/11/transaction-recovery-in-jbossas.html
@@ -359,6 +364,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     public DriftChangeSetSummary saveChangeSet(Subject subject, int resourceId, File changeSetZip) throws Exception {
         DriftServerPluginFacet driftServerPlugin = getServerPlugin();
         DriftChangeSetSummary summary = driftServerPlugin.saveChangeSet(subject, resourceId, changeSetZip);
+        notifyAlertConditionCacheManager("saveChangeSet", summary);
         return summary;
     }
 
@@ -520,7 +526,8 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
 
         PageList<? extends Drift<?, ?>> results = driftServerPlugin.findDriftsByCriteria(subject, criteria);
         if (results.size() == 0) {
-            log.warn("Unable to get the drift details for drift id " + driftId + ". No drift object found with that id.");
+            log.warn("Unable to get the drift details for drift id " + driftId
+                + ". No drift object found with that id.");
             return null;
         }
 
@@ -528,31 +535,38 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
         driftDetails.setDrift(drift);
         try {
             switch (drift.getCategory()) {
-                case FILE_ADDED:
-                    newFile = driftServerPlugin.getDriftFile(subject, drift.getNewDriftFile().getHashId());
-                    driftDetails.setNewFileStatus(newFile.getStatus());
-                    break;
-                case FILE_CHANGED:
-                    newFile = driftServerPlugin.getDriftFile(subject, drift.getNewDriftFile().getHashId());
-                    oldFile = driftServerPlugin.getDriftFile(subject, drift.getOldDriftFile().getHashId());
+            case FILE_ADDED:
+                newFile = driftServerPlugin.getDriftFile(subject, drift.getNewDriftFile().getHashId());
+                driftDetails.setNewFileStatus(newFile.getStatus());
+                break;
+            case FILE_CHANGED:
+                newFile = driftServerPlugin.getDriftFile(subject, drift.getNewDriftFile().getHashId());
+                oldFile = driftServerPlugin.getDriftFile(subject, drift.getOldDriftFile().getHashId());
 
-                    driftDetails.setNewFileStatus(newFile.getStatus());
-                    driftDetails.setOldFileStatus(oldFile.getStatus());
+                driftDetails.setNewFileStatus(newFile.getStatus());
+                driftDetails.setOldFileStatus(oldFile.getStatus());
 
-                    driftDetails.setPreviousChangeSet(loadPreviousChangeSet(subject, drift));
-                    break;
-                case FILE_REMOVED:
-                    oldFile = driftServerPlugin.getDriftFile(subject, drift.getOldDriftFile().getHashId());
-                    driftDetails.setOldFileStatus(oldFile.getStatus());
-                    break;
+                driftDetails.setPreviousChangeSet(loadPreviousChangeSet(subject, drift));
+                break;
+            case FILE_REMOVED:
+                oldFile = driftServerPlugin.getDriftFile(subject, drift.getOldDriftFile().getHashId());
+                driftDetails.setOldFileStatus(oldFile.getStatus());
+                break;
             }
         } catch (Exception e) {
-            log.error("An error occurred while loading the drift details for drift id " + driftId + ": " +
-                e.getMessage());
+            log.error("An error occurred while loading the drift details for drift id " + driftId + ": "
+                + e.getMessage());
             throw new RuntimeException("An error occurred while loading th drift details for drift id " + driftId, e);
         }
         driftDetails.setBinaryFile(isBinaryFile(drift));
         return driftDetails;
+    }
+
+    private void notifyAlertConditionCacheManager(String callingMethod, DriftChangeSetSummary summary) {
+        AlertConditionCacheStats stats = alertConditionCacheManager.checkConditions(summary);
+        if (log.isDebugEnabled()) {
+            log.debug(callingMethod + ": " + stats.toString());
+        }
     }
 
     private DriftChangeSet loadPreviousChangeSet(Subject subject, Drift drift) {

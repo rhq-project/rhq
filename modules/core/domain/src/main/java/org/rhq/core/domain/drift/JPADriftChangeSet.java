@@ -94,6 +94,12 @@ public class JPADriftChangeSet implements Serializable, DriftChangeSet<JPADrift>
     @ManyToOne(fetch = FetchType.EAGER, optional = false)
     private DriftConfiguration driftConfiguration;
 
+    // Note, this is mode at the time of the changeset processing. We cant use driftConfiguration.mode because
+    // that is the "live" setting.
+    @Column(name = "DRIFT_CONFIG_MODE", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private DriftConfiguration.Mode driftConfigurationMode;
+
     @JoinColumn(name = "RESOURCE_ID", referencedColumnName = "ID", nullable = false)
     @ManyToOne(optional = false)
     private Resource resource;
@@ -171,6 +177,14 @@ public class JPADriftChangeSet implements Serializable, DriftChangeSet<JPADrift>
 
     public void setDriftConfiguration(DriftConfiguration driftConfiguration) {
         this.driftConfiguration = driftConfiguration;
+    }
+
+    public DriftConfiguration.Mode getDriftConfigurationMode() {
+        return driftConfigurationMode;
+    }
+
+    public void setDriftConfigurationMode(DriftConfiguration.Mode driftConfigurationMode) {
+        this.driftConfigurationMode = driftConfigurationMode;
     }
 
     @Override

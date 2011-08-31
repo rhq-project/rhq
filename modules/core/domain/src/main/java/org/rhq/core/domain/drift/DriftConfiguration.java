@@ -18,6 +18,8 @@
  */
 package org.rhq.core.domain.drift;
 
+import static java.util.Collections.emptyList;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,6 +27,8 @@ import java.util.List;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -42,8 +46,6 @@ import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext;
 import org.rhq.core.domain.resource.Resource;
-
-import static java.util.Collections.emptyList;
 
 /**
  * This is a convienence wrapper around a Configuration object whose schema is that
@@ -77,6 +79,10 @@ public class DriftConfiguration implements Serializable {
 
     @Column(name = "IS_ENABLED", nullable = false)
     private boolean isEnabled;
+
+    @Column(name = "MODE", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private Mode mode;
 
     // unit = millis
     @Column(name = "INTERVAL", nullable = false)
@@ -143,6 +149,14 @@ public class DriftConfiguration implements Serializable {
 
         this.isEnabled = isEnabled;
         this.setEnabledProperty(isEnabled);
+    }
+
+    public Mode getMode() {
+        return mode;
+    }
+
+    public void setMode(Mode mode) {
+        this.mode = mode;
     }
 
     public long getInterval() {
@@ -386,5 +400,13 @@ public class DriftConfiguration implements Serializable {
         }
 
         return filters;
+    }
+
+    // Drift Handling Mode
+    public enum Mode {
+        // alerting, included in recent drift reporting
+        NORMAL,
+        // no alerting, not included in recent drift reporting, flagged in UI as planned
+        PLANNED_CHANGES
     }
 }

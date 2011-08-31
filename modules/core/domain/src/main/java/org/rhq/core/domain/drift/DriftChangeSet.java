@@ -20,6 +20,8 @@ package org.rhq.core.domain.drift;
 
 import java.util.Set;
 
+import org.rhq.core.domain.drift.DriftConfiguration.Mode;
+
 /**
  * A DriftChangeSet is somewhat similar to a commit in version control systems. It contains
  * information about files being monitored or tracked for drift detection. A change set
@@ -95,6 +97,26 @@ public interface DriftChangeSet<D extends Drift<?, ?>> {
      * @see DriftChangeSetCategory
      */
     void setCategory(DriftChangeSetCategory category);
+
+    /**
+     * Returns the mode of the owning drift configuration at the time of change set creation. 
+     * Because the value set on the owning drift configuration can change, the value must be
+     * stored with the change set such that it can be applied consistently when handling the
+     * associated drift.
+     *
+     * @return The {@link DriftConfiguration.Mode} mode
+     */
+    DriftConfiguration.Mode getDriftConfigurationMode();
+
+    /**
+     * Sets the drift configuration mode for the change set. It should be set to the owning drift
+     * configuration mode at the time of change set creation. Because the value set on the owning
+     * drift configuration can change, the value must be stored with the change set such that it
+     * can be applied consistently when handling the associated drift.
+     *
+     * @param mode The {@link DriftConfiguration.Mode} mode
+     */
+    void setDriftConfigurationMode(Mode mode);
 
     /**
      * Returns the id of the owning drift configuration. Note that while server plugins are

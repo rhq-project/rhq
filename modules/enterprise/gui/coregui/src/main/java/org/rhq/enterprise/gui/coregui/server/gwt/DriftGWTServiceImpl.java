@@ -27,6 +27,7 @@ import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.drift.DriftConfiguration;
+import org.rhq.core.domain.drift.DriftDetails;
 import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.drift.FileDiffReport;
 import org.rhq.core.domain.util.PageList;
@@ -154,6 +155,16 @@ public class DriftGWTServiceImpl extends AbstractGWTServiceImpl implements Drift
     public FileDiffReport generateUnifiedDiff(Drift drift) throws RuntimeException {
         try {
             return driftManager.generateUnifiedDiff(drift);
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    @Override
+    public DriftDetails getDriftDetails(String driftId) throws RuntimeException {
+        try {
+            DriftDetails details = driftManager.getDriftDetails(getSessionSubject(), driftId);
+            return SerialUtility.prepare(details, "DriftService.getDriftDetails");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

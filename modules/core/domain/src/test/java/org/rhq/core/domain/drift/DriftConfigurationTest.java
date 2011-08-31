@@ -1,12 +1,5 @@
 package org.rhq.core.domain.drift;
 
-import static java.util.Arrays.asList;
-import static org.rhq.core.domain.drift.DriftConfigurationDefinition.PROP_BASEDIR;
-import static org.rhq.core.domain.drift.DriftConfigurationDefinition.PROP_BASEDIR_VALUECONTEXT;
-import static org.rhq.core.domain.drift.DriftConfigurationDefinition.PROP_BASEDIR_VALUENAME;
-import static org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext.fileSystem;
-import static org.testng.Assert.assertEquals;
-
 import java.util.List;
 
 import org.testng.annotations.Test;
@@ -18,6 +11,13 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.drift.DriftConfigurationComparator.CompareMode;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext;
 
+import static java.util.Arrays.asList;
+import static org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext.fileSystem;
+import static org.rhq.core.domain.drift.DriftConfigurationDefinition.PROP_BASEDIR;
+import static org.rhq.core.domain.drift.DriftConfigurationDefinition.PROP_BASEDIR_VALUECONTEXT;
+import static org.rhq.core.domain.drift.DriftConfigurationDefinition.PROP_BASEDIR_VALUENAME;
+import static org.testng.Assert.assertEquals;
+
 public class DriftConfigurationTest {
     @Test
     public void getCompareIgnoreIncludesExcludes() {
@@ -28,7 +28,7 @@ public class DriftConfigurationTest {
 
         // make sure our comparator can deal with all the nulls that are in empty configs
         assert comparator.compare(dc1, dc2) == 0 : dc1 + " should equal " + dc2;
-        dc1.setEnabled(true);
+        dc1.setEnabled(false);
         assert comparator.compare(dc1, dc2) != 0 : dc1 + " should not equal " + dc2;
         assert comparator.compare(dc2, dc1) != 0 : dc2 + " should not equal " + dc1;
         dc1.setInterval(1000L);
@@ -38,14 +38,14 @@ public class DriftConfigurationTest {
         assert comparator.compare(dc1, dc2) != 0 : dc1 + " should not equal " + dc2;
         assert comparator.compare(dc2, dc1) != 0 : dc2 + " should not equal " + dc1;
 
-        dc2.setEnabled(true);
+        dc2.setEnabled(false);
         dc2.setInterval(1000L);
         dc2.setName("the-name");
 
         assert comparator.compare(dc1, dc2) == 0 : dc1 + " should equal " + dc2;
 
         dc1.setEnabled(!dc2.isEnabled());
-        assert comparator.compare(dc1, dc2) < 0 : dc1 + "  should have different enabled than " + dc2;
+        assert comparator.compare(dc1, dc2) > 0 : dc1 + "  should have different enabled than " + dc2;
 
         dc1.setEnabled(dc2.isEnabled()); // put them back to the same value
         dc1.setInterval(dc2.getInterval() + 2222L);

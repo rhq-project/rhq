@@ -242,6 +242,21 @@ import org.rhq.core.domain.operation.OperationRequestStatus;
         + "     AND ad.deleted = FALSE " //
         + "     AND ac.category = 'RESOURCE_CONFIG' " //
         + "ORDER BY ac.id"), //
+    @NamedQuery(name = AlertCondition.QUERY_BY_CATEGORY_DRIFT, query = "" //
+        + "  SELECT new org.rhq.core.domain.alert.composite.AlertConditionDriftCategoryComposite " //
+        + "       ( " //
+        + "         ac, " //
+        + "         res.id " //
+        + "       ) " //
+        + "    FROM AlertCondition AS ac " //
+        + "    JOIN ac.alertDefinition ad " //
+        + "    JOIN ad.resource res " //
+        + "   WHERE " + AlertCondition.RECOVERY_CONDITIONAL_EXPRESSION //
+        + "     AND ( res.agent.id = :agentId OR :agentId IS NULL ) " //
+        + "     AND ad.enabled = TRUE " //
+        + "     AND ad.deleted = FALSE " //
+        + "     AND ac.category = 'DRIFT' " //
+        + "ORDER BY ac.id"), //
     @NamedQuery(name = AlertCondition.QUERY_BY_CATEGORY_COUNT_PARAMETERIZED, query = "" //
         + "  SELECT count(ac.id) " //
         + "    FROM AlertCondition AS ac " //
@@ -273,6 +288,7 @@ public class AlertCondition implements Serializable {
     public static final String QUERY_BY_CATEGORY_THRESHOLD = "AlertCondition.byCategoryThreshold";
     public static final String QUERY_BY_CATEGORY_EVENT = "AlertCondition.byCategoryEvent";
     public static final String QUERY_BY_CATEGORY_RESOURCE_CONFIG = "AlertCondition.byCategoryResourceConfig";
+    public static final String QUERY_BY_CATEGORY_DRIFT = "AlertCondition.byCategoryDrift";
 
     public static final String QUERY_BY_CATEGORY_COUNT_BASELINE = "AlertCondition.byCategoryCountBaseline";
     public static final String QUERY_BY_CATEGORY_COUNT_PARAMETERIZED = "AlertCondition.byCategoryCountParameterized";
@@ -395,6 +411,8 @@ public class AlertCondition implements Serializable {
      * TRAIT: the name of the trait (TODO: today its the display name, very bad for i18n purposes)
      * CONTROL: the name of the operation (not its display name)
      * EVENT: the level of event to compare with (DEBUG, INFO, WARN, ERROR, FATAL)
+     * RESOURCE_CONFIG: n/a (null)
+     * DRIFT: n/a (null)
      * 
      * @return additional information about the condition
      */
@@ -450,7 +468,9 @@ public class AlertCondition implements Serializable {
      * TRAIT: n/a
      * CONTROL: the {@link OperationRequestStatus} name (SUCCESS, FAILURE, etc).
      * EVENT: the regular expression of the message to match (which may be empty string if not specified)
-     * 
+     * RESOURCE_CONFIG: n/a
+     * DRIFT: n/a (TODO driftalert - regular expression to match files whose content drifted (may be empty string if not specified)
+     *
      * @return additional information about the condition
      */
     public String getOption() {

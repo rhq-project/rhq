@@ -620,7 +620,9 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
          * flushing org.jboss.on.domain.event.alert.AlertConditionLog.alert -> org.jboss.on.domain.event.alert.Alert"
          */
         this.createAlert(newAlert);
-        log.debug("New alert identifier=" + newAlert.getId());
+        if (log.isDebugEnabled()) {
+            log.debug("New alert identifier=" + newAlert.getId());
+        }
 
         //        AlertNotificationLog alertNotifLog = new AlertNotificationLog(newAlert);  TODO - is that all?
         //        entityManager.persist(alertNotifLog);
@@ -628,7 +630,9 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         List<AlertConditionLog> unmatchedConditionLogs = alertConditionLogManager
             .getUnmatchedLogsByAlertDefinitionId(alertDefinitionId);
         for (AlertConditionLog unmatchedLog : unmatchedConditionLogs) {
-            log.debug("Matched alert condition log for alertId=" + newAlert.getId() + ": " + unmatchedLog);
+            if (log.isDebugEnabled()) {
+                log.debug("Matched alert condition log for alertId=" + newAlert.getId() + ": " + unmatchedLog);
+            }
             newAlert.addConditionLog(unmatchedLog); // adds both relationships
         }
 
@@ -651,7 +655,9 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
          * to give them some way to explicitly try to re-send the notification for some client-side auditing purposes
          */
         try {
-            log.debug("Sending alert notifications for " + alert.toSimpleString() + "...");
+            if (log.isDebugEnabled()) {
+                log.debug("Sending alert notifications for " + alert.toSimpleString() + "...");
+            }
             List<AlertNotification> alertNotifications = alert.getAlertDefinition().getAlertNotifications();
             //Set<String> emailAddresses = new LinkedHashSet<String>();
 
@@ -721,7 +727,9 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
     }
 
     public Collection<String> sendAlertNotificationEmails(Alert alert, Collection<String> emailAddresses) {
-        log.debug("Sending alert notifications for " + alert.toSimpleString() + "...");
+        if (log.isDebugEnabled()) {
+            log.debug("Sending alert notifications for " + alert.toSimpleString() + "...");
+        }
 
         if (emailAddresses.size() == 0) {
             return new ArrayList<String>(0); // No email to send -> no bad addresses
@@ -885,6 +893,13 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
             else
                 builder.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_CONFIG_PROPS_CB_AVAILABILITY,
                     condition.getOption()));
+        } else if (category == AlertConditionCategory.DRIFT) {
+            if (shortVersion)
+                builder.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_CONFIG_PROPS_CB_DRIFT_SHORT,
+                    condition.getOption()));
+            else
+                builder.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_CONFIG_PROPS_CB_DRIFT, condition
+                    .getOption()));
         } else {
             // do nothing
         }
@@ -915,17 +930,19 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         Integer recoveryDefinitionId = firedDefinition.getRecoveryId();
 
         if (recoveryDefinitionId != 0) {
-            log.debug("Processing recovery rules...");
-            log.debug("Found recoveryDefinitionId " + recoveryDefinitionId);
+            if (log.isDebugEnabled()) {
+                log.debug("Processing recovery rules... Found recoveryDefinitionId " + recoveryDefinitionId);
+            }
 
             AlertDefinition toBeRecoveredDefinition = alertDefinitionManager.getAlertDefinitionById(overlord,
                 recoveryDefinitionId);
             boolean wasEnabled = toBeRecoveredDefinition.getEnabled();
 
-            log
-                .debug(firedDefinition + (wasEnabled ? "does not need to recover " : "needs to recover ")
+            if (log.isDebugEnabled()) {
+                log.debug(firedDefinition + (wasEnabled ? "does not need to recover " : "needs to recover ")
                     + toBeRecoveredDefinition
                     + (wasEnabled ? ", it was already enabled " : ", it was currently disabled "));
+            }
 
             if (!wasEnabled) {
                 /*
@@ -941,7 +958,9 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
              * update the cache indirectly via the status field on the owning agent and the periodic job that checks it.
              */
         } else if (firedDefinition.getWillRecover()) {
-            log.debug("Disabling " + firedDefinition + " until recovered manually or by recovery definition");
+            if (log.isDebugEnabled()) {
+                log.debug("Disabling " + firedDefinition + " until recovered manually or by recovery definition");
+            }
 
             /*
              * disable until recovered manually or by recovery definition

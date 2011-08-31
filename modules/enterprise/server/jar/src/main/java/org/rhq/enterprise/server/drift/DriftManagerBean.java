@@ -18,6 +18,10 @@
  */
 package org.rhq.enterprise.server.drift;
 
+import static java.util.Arrays.asList;
+import static javax.ejb.TransactionAttributeType.NOT_SUPPORTED;
+import static javax.ejb.TransactionAttributeType.REQUIRES_NEW;
+
 import java.io.File;
 import java.io.InputStream;
 import java.util.HashSet;
@@ -36,6 +40,9 @@ import javax.jms.Session;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
+import difflib.DiffUtils;
+import difflib.Patch;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -52,11 +59,11 @@ import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.domain.drift.DriftConfigurationComparator;
-import org.rhq.core.domain.drift.DriftConfigurationComparator.CompareMode;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition;
 import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.drift.FileDiffReport;
+import org.rhq.core.domain.drift.DriftConfigurationComparator.CompareMode;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.RHQConstants;
@@ -64,19 +71,13 @@ import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
+import org.rhq.enterprise.server.plugin.pc.drift.DriftChangeSetSummary;
 import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginFacet;
 import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginManager;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 import org.rhq.enterprise.server.util.LookupUtil;
-
-import difflib.DiffUtils;
-import difflib.Patch;
-
-import static java.util.Arrays.asList;
-import static javax.ejb.TransactionAttributeType.NOT_SUPPORTED;
-import static javax.ejb.TransactionAttributeType.REQUIRES_NEW;
 
 /**
  * The SLSB supporting Drift management to clients.  
@@ -100,10 +101,10 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
         binaryFileTypes.add("jar");
         binaryFileTypes.add("war");
         binaryFileTypes.add("ear");
-        binaryFileTypes.add("sar");    // jboss service
-        binaryFileTypes.add("har");    // hibernate archive
-        binaryFileTypes.add("rar");   // resource adapter
-        binaryFileTypes.add("wsr");   // jboss web service archive
+        binaryFileTypes.add("sar"); // jboss service
+        binaryFileTypes.add("har"); // hibernate archive
+        binaryFileTypes.add("rar"); // resource adapter
+        binaryFileTypes.add("wsr"); // jboss web service archive
         binaryFileTypes.add("zip");
         binaryFileTypes.add("tar");
         binaryFileTypes.add("bz2");
@@ -351,9 +352,10 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
 
     @Override
     @TransactionAttribute(NOT_SUPPORTED)
-    public void saveChangeSet(Subject subject, int resourceId, File changeSetZip) throws Exception {
+    public DriftChangeSetSummary saveChangeSet(Subject subject, int resourceId, File changeSetZip) throws Exception {
         DriftServerPluginFacet driftServerPlugin = getServerPlugin();
-        driftServerPlugin.saveChangeSet(subject, resourceId, changeSetZip);
+        DriftChangeSetSummary summary = driftServerPlugin.saveChangeSet(subject, resourceId, changeSetZip);
+        return summary;
     }
 
     @Override
@@ -415,8 +417,8 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
         List<String> content2List = asList(content2.split("\\n"));
 
         Patch patch = DiffUtils.diff(content1List, content2List);
-        List<String> deltas = DiffUtils.generateUnifiedDiff(drift1.getPath(), drift2.getPath(), content1List, patch,
-            10);
+        List<String> deltas = DiffUtils
+            .generateUnifiedDiff(drift1.getPath(), drift2.getPath(), content1List, patch, 10);
 
         return new FileDiffReport(patch.getDeltas().size(), deltas);
     }

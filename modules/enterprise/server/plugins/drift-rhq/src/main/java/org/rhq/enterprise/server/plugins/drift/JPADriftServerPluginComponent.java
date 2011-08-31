@@ -19,6 +19,8 @@
  */
 package org.rhq.enterprise.server.plugins.drift;
 
+import static org.rhq.enterprise.server.util.LookupUtil.getJPADriftServer;
+
 import java.io.File;
 
 import org.apache.commons.logging.Log;
@@ -37,9 +39,8 @@ import org.rhq.core.domain.drift.JPADriftChangeSet;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginContext;
+import org.rhq.enterprise.server.plugin.pc.drift.DriftChangeSetSummary;
 import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginFacet;
-
-import static org.rhq.enterprise.server.util.LookupUtil.getJPADriftServer;
 
 /**
  * A drift server-side plugin component that the server uses to process drift files.
@@ -104,8 +105,8 @@ public class JPADriftServerPluginComponent implements DriftServerPluginFacet, Se
     }
 
     @Override
-    public void saveChangeSet(Subject subject, int resourceId, File changeSetZip) throws Exception {
-        getJPADriftServer().storeChangeSet(subject, resourceId, changeSetZip);
+    public DriftChangeSetSummary saveChangeSet(Subject subject, int resourceId, File changeSetZip) throws Exception {
+        return getJPADriftServer().storeChangeSet(subject, resourceId, changeSetZip);
     }
 
     @Override

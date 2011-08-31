@@ -32,6 +32,7 @@ import org.rhq.core.domain.alert.AlertConditionCategory;
 import org.rhq.core.domain.alert.composite.AbstractAlertConditionCategoryComposite;
 import org.rhq.core.domain.alert.composite.AlertConditionBaselineCategoryComposite;
 import org.rhq.core.domain.alert.composite.AlertConditionChangesCategoryComposite;
+import org.rhq.core.domain.alert.composite.AlertConditionDriftCategoryComposite;
 import org.rhq.core.domain.alert.composite.AlertConditionEventCategoryComposite;
 import org.rhq.core.domain.alert.composite.AlertConditionScheduleCategoryComposite;
 import org.rhq.core.domain.alert.composite.AlertConditionTraitCategoryComposite;
@@ -54,6 +55,7 @@ import org.rhq.enterprise.server.alert.engine.internal.AlertConditionCacheCoordi
 import org.rhq.enterprise.server.alert.engine.mbean.AlertConditionCacheMonitor;
 import org.rhq.enterprise.server.alert.engine.model.AlertConditionOperator;
 import org.rhq.enterprise.server.alert.engine.model.CallTimeDataCacheElement;
+import org.rhq.enterprise.server.alert.engine.model.DriftCacheElement;
 import org.rhq.enterprise.server.alert.engine.model.EventCacheElement;
 import org.rhq.enterprise.server.alert.engine.model.InvalidCacheElementException;
 import org.rhq.enterprise.server.alert.engine.model.MeasurementBaselineCacheElement;
@@ -63,6 +65,7 @@ import org.rhq.enterprise.server.alert.engine.model.NumericDoubleCacheElement;
 import org.rhq.enterprise.server.alert.engine.model.CallTimeDataCacheElement.CallTimeElementValue;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
+import org.rhq.enterprise.server.plugin.pc.drift.DriftChangeSetSummary;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -74,6 +77,7 @@ class AgentConditionCache extends AbstractConditionCache {
     private Map<Integer, List<MeasurementTraitCacheElement>> measurementTraitCache;
     private Map<Integer, List<CallTimeDataCacheElement>> callTimeCache;
     private Map<Integer, List<EventCacheElement>> eventsCache;
+    private Map<Integer, List<DriftCacheElement>> driftCache;
 
     private AlertConditionManagerLocal alertConditionManager;
     private MeasurementDataManagerLocal measurementDataManager;
@@ -90,6 +94,7 @@ class AgentConditionCache extends AbstractConditionCache {
         measurementTraitCache = new HashMap<Integer, List<MeasurementTraitCacheElement>>();
         callTimeCache = new HashMap<Integer, List<CallTimeDataCacheElement>>();
         eventsCache = new HashMap<Integer, List<EventCacheElement>>();
+        driftCache = new HashMap<Integer, List<DriftCacheElement>>();
 
         alertConditionManager = LookupUtil.getAlertConditionManager();
         measurementDataManager = LookupUtil.getMeasurementDataManager();
@@ -110,14 +115,15 @@ class AgentConditionCache extends AbstractConditionCache {
         AlertConditionCacheStats stats = new AlertConditionCacheStats();
 
         try {
-            if (log.isDebugEnabled())
+            if (log.isDebugEnabled()) {
                 log.debug("Loading Alert Condition Caches for agent[id=" + agentId + "]...");
+            }
 
             Subject overlord = subjectManager.getOverlord();
 
             EnumSet<AlertConditionCategory> supportedCategories = EnumSet.of(AlertConditionCategory.BASELINE,
                 AlertConditionCategory.CHANGE, AlertConditionCategory.TRAIT, AlertConditionCategory.THRESHOLD,
-                AlertConditionCategory.EVENT);
+                AlertConditionCategory.EVENT, AlertConditionCategory.DRIFT);
 
             for (AlertConditionCategory nextCategory : supportedCategories) {
                 // page thru all alert definitions
@@ -146,12 +152,14 @@ class AgentConditionCache extends AbstractConditionCache {
 
                     pc.setPageNumber(pc.getPageNumber() + 1);
                 }
-                if (log.isDebugEnabled())
+                if (log.isDebugEnabled()) {
                     log.debug("Loaded " + rowsProcessed + " Alert Condition Composites of type '" + nextCategory + "'");
+                }
             }
 
-            if (log.isDebugEnabled())
+            if (log.isDebugEnabled()) {
                 log.debug("Loaded Alert Condition Caches for agent[id=" + agentId + "]");
+            }
         } catch (Throwable t) {
             // don't let any exceptions bubble up to the calling SLSB layer
             log.error("Error loading cache for agent[id=" + agentId + "]", t);
@@ -304,6 +312,10 @@ class AgentConditionCache extends AbstractConditionCache {
             }
 
             addTo("eventsCache", eventsCache, eventComposite.getResourceId(), cacheElement, alertConditionId, stats);
+        } else if (alertConditionCategory == AlertConditionCategory.DRIFT) {
+            AlertConditionDriftCategoryComposite driftComposite = (AlertConditionDriftCategoryComposite) composite;
+            DriftCacheElement cacheElement = new DriftCacheElement(alertConditionOperator, alertConditionId);
+            addTo("driftCache", driftCache, driftComposite.getResourceId(), cacheElement, alertConditionId, stats);
         }
     }
 
@@ -340,7 +352,7 @@ class AgentConditionCache extends AbstractConditionCache {
                 log.debug("Check Measurements[size=" + measurementData.length + "] - " + stats);
         } catch (Throwable t) {
             // don't let any exceptions bubble up to the calling SLSB layer
-            log.error("Error during cache processing for agent[id=" + agentId + "]", t);
+            log.error("Error during measurement data cache processing for agent[id=" + agentId + "]", t);
         }
         return stats;
     }
@@ -372,8 +384,9 @@ class AgentConditionCache extends AbstractConditionCache {
     private HashMap<Integer, HashMap<String, ArrayList<CallTimeDataValue>>> produceOrderedCallTimeDataStructure(
         CallTimeData... callTime) {
         long beginTime = 0;
-        if (log.isDebugEnabled())
+        if (log.isDebugEnabled()) {
             beginTime = System.nanoTime();
+        }
 
         //Insert all CallTimeDataValue in data structure
         HashMap<Integer, HashMap<String, ArrayList<CallTimeDataValue>>> order = new HashMap<Integer, HashMap<String, ArrayList<CallTimeDataValue>>>();
@@ -396,9 +409,10 @@ class AgentConditionCache extends AbstractConditionCache {
             for (ArrayList<CallTimeDataValue> bottomList : topList.values())
                 Collections.sort(bottomList, getCallTimeComparator());
 
-        if (log.isDebugEnabled())
+        if (log.isDebugEnabled()) {
             log.debug("sorting call-time data during alerting took: "
                 + TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - beginTime) + "ms");
+        }
         return order;
     }
 
@@ -447,11 +461,32 @@ class AgentConditionCache extends AbstractConditionCache {
 
             AlertConditionCacheMonitor.getMBean().incrementEventCacheElementMatches(stats.matched);
             AlertConditionCacheMonitor.getMBean().incrementEventProcessingTime(stats.getAge());
-            if (log.isDebugEnabled())
+            if (log.isDebugEnabled()) {
                 log.debug("Check Events[size=" + events.length + "] - " + stats);
+            }
         } catch (Throwable t) {
             // don't let any exceptions bubble up to the calling SLSB layer
-            log.error("Error during cache processing for agent[id=" + agentId + "]", t);
+            log.error("Error during event cache processing for agent[id=" + agentId + "]", t);
+        }
+        return stats;
+    }
+
+    public AlertConditionCacheStats checkConditions(DriftChangeSetSummary driftChangeSetSummary) {
+        AlertConditionCacheStats stats = new AlertConditionCacheStats();
+        try {
+            int resourceId = driftChangeSetSummary.getResourceId();
+            List<DriftCacheElement> cacheElements = lookupDriftCacheElements(resourceId);
+
+            processCacheElements(cacheElements, (Object) "", driftChangeSetSummary.getCreatedTime(), stats);
+
+            AlertConditionCacheMonitor.getMBean().incrementDriftCacheElementMatches(stats.matched);
+            AlertConditionCacheMonitor.getMBean().incrementDriftProcessingTime(stats.getAge());
+            if (log.isDebugEnabled()) {
+                log.debug("Check Drift[resourceId=" + resourceId + "] - " + stats);
+            }
+        } catch (Throwable t) {
+            // don't let any exceptions bubble up to the calling SLSB layer
+            log.error("Error during drift cache processing for agent[id=" + agentId + "]", t);
         }
         return stats;
     }
@@ -470,6 +505,10 @@ class AgentConditionCache extends AbstractConditionCache {
 
     private List<EventCacheElement> lookupEventCacheElements(int resourceId) {
         return eventsCache.get(resourceId); // yup, might be null
+    }
+
+    private List<DriftCacheElement> lookupDriftCacheElements(int resourceId) {
+        return driftCache.get(resourceId); // yup, might be null
     }
 
     private Double getCalculatedBaselineValue(int conditionId, AlertConditionBaselineCategoryComposite composite,
@@ -517,6 +556,8 @@ class AgentConditionCache extends AbstractConditionCache {
             return AlertConditionCacheUtils.getMapListCount(callTimeCache);
         } else if (cache == AlertConditionCacheCoordinator.Cache.EventsCache) {
             return AlertConditionCacheUtils.getMapListCount(eventsCache);
+        } else if (cache == AlertConditionCacheCoordinator.Cache.DriftCache) {
+            return AlertConditionCacheUtils.getMapListCount(driftCache);
         } else {
             throw new IllegalArgumentException("The " + AgentConditionCache.class.getSimpleName()
                 + " either does not manage caches of type " + cache.type + ", or does not support obtaining their size");

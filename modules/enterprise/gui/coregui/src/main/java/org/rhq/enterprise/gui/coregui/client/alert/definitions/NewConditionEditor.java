@@ -99,6 +99,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
     private boolean supportsOperations = false;
     private boolean supportsEvents = false;
     private boolean supportsResourceConfig = false;
+    private boolean supportsDrift = false;
     private Runnable closeFunction; // this is called after a button is pressed and the editor should close 
     private ResourceType resourceType;
 
@@ -112,6 +113,8 @@ public class NewConditionEditor extends LocatableDynamicForm {
 
         this.supportsEvents = (rtype.getEventDefinitions() != null && rtype.getEventDefinitions().size() > 0);
         this.supportsResourceConfig = (rtype.getResourceConfigurationDefinition() != null);
+        this.supportsDrift = (rtype.getDriftConfigurationTemplates() != null && rtype.getDriftConfigurationTemplates()
+            .size() > 0);
 
         Set<MeasurementDefinition> metricDefinitions = rtype.getMetricDefinitions();
         if (metricDefinitions != null && metricDefinitions.size() > 0) {
@@ -183,6 +186,10 @@ public class NewConditionEditor extends LocatableDynamicForm {
             condTypes.put(AlertConditionCategory.EVENT.name(), MSG
                 .view_alert_definition_condition_editor_option_event());
         }
+        if (supportsDrift) {
+            condTypes.put(AlertConditionCategory.DRIFT.name(), MSG
+                .view_alert_definition_condition_editor_option_drift());
+        }
         conditionTypeSelectItem.setValueMap(condTypes);
         conditionTypeSelectItem.setDefaultValue(AlertConditionCategory.AVAILABILITY.name());
         conditionTypeSelectItem.setWrapTitle(false);
@@ -244,6 +251,9 @@ public class NewConditionEditor extends LocatableDynamicForm {
         }
         if (supportsResourceConfig) {
             formItems.addAll(buildResourceConfigChangeFormItems());
+        }
+        if (supportsDrift) {
+            formItems.addAll(buildDriftFormItems());
         }
         formItems.add(spacer2);
         formItems.add(ok);
@@ -363,6 +373,15 @@ public class NewConditionEditor extends LocatableDynamicForm {
             newCondition.setComparator(null);
             newCondition.setThreshold(null);
             newCondition.setOption(null);
+            newCondition.setMeasurementDefinition(null);
+            break;
+        }
+
+        case DRIFT: {
+            newCondition.setName(null);
+            newCondition.setComparator(null);
+            newCondition.setThreshold(null);
+            newCondition.setOption(null); // TODO driftalert - be able to regex for only certain files that drifted
             newCondition.setMeasurementDefinition(null);
             break;
         }
@@ -697,6 +716,18 @@ public class NewConditionEditor extends LocatableDynamicForm {
 
         String helpStr = MSG.view_alert_definition_condition_editor_resource_configuration_tooltip();
         StaticTextItem helpItem = buildHelpTextItem("changeConfigHelp", helpStr, ifFunc);
+        formItems.add(helpItem);
+
+        return formItems;
+    }
+
+    private ArrayList<FormItem> buildDriftFormItems() {
+        ArrayList<FormItem> formItems = new ArrayList<FormItem>();
+
+        ShowIfCategoryFunction ifFunc = new ShowIfCategoryFunction(AlertConditionCategory.DRIFT);
+
+        String helpStr = MSG.view_alert_definition_condition_editor_drift_tooltip();
+        StaticTextItem helpItem = buildHelpTextItem("driftHelp", helpStr, ifFunc);
         formItems.add(helpItem);
 
         return formItems;

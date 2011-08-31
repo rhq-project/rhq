@@ -187,6 +187,10 @@ public class AlertFormatUtility {
             }
             break;
         }
+        case DRIFT: {
+            str.append(MSG.view_alert_common_tab_conditions_type_drift());
+            break;
+        }
         default: {
             str.append(MSG.view_alert_common_tab_invalid_condition_category(category.name()));
             break;

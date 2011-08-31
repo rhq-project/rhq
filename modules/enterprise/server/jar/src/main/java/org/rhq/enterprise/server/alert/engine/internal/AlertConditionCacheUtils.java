@@ -49,6 +49,11 @@ class AlertConditionCacheUtils {
             return AlertConditionOperator.GREATER_THAN_OR_EQUAL_TO;
         }
 
+        if (category == AlertConditionCategory.DRIFT) {
+            // any drift that is detected infers a change to its previous state
+            return AlertConditionOperator.CHANGES;
+        }
+
         if (category == AlertConditionCategory.RESOURCE_CONFIG || category == AlertConditionCategory.CHANGE
             || category == AlertConditionCategory.TRAIT) {
             // the model currently supports CHANGE as a category type instead of a comparator

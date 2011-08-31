@@ -31,7 +31,8 @@ public enum AlertConditionCategory {
     CONTROL("Control Action"), //
     ALERT("Alert Fired"), //
     RESOURCE_CONFIG("Resource Configuration Property Value Change"), //
-    EVENT("Log Event");
+    EVENT("Log Event"), //
+    DRIFT("Drift Detected");
 
     /*
      * legacyOrder exists to support code that still uses the old EventConstants.TYPE_* attributes, which was one-based

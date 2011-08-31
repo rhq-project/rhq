@@ -834,6 +834,9 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
     }
 
     public void addDriftConfigurationTemplate(ConfigurationTemplate template) {
+        if (driftConfigurationTemplates == null) {
+            driftConfigurationTemplates = new HashSet<ConfigurationTemplate>(1);
+        }
         driftConfigurationTemplates.add(template);
     }
 

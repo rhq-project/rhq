@@ -42,6 +42,7 @@ public class AlertConditionCacheMonitor implements AlertConditionCacheMonitorMBe
     public AtomicInteger measurementCacheElementMatches = new AtomicInteger();
     public AtomicInteger resourceConfigurationCacheElementMatches = new AtomicInteger();
     public AtomicInteger operationCacheElementMatches = new AtomicInteger();
+    public AtomicInteger driftCacheElementMatches = new AtomicInteger();
     public AtomicInteger totalCacheElementMatches = new AtomicInteger();
 
     public AtomicLong availabilityProcessingTime = new AtomicLong();
@@ -49,6 +50,7 @@ public class AlertConditionCacheMonitor implements AlertConditionCacheMonitorMBe
     public AtomicLong measurementProcessingTime = new AtomicLong();
     public AtomicLong resourceConfigurationProcessingTime = new AtomicLong();
     public AtomicLong operationProcessingTime = new AtomicLong();
+    public AtomicLong driftProcessingTime = new AtomicLong();
     public AtomicLong totalProcessingTime = new AtomicLong();
 
     private static MBeanServer mbeanServer;
@@ -97,6 +99,11 @@ public class AlertConditionCacheMonitor implements AlertConditionCacheMonitorMBe
             AlertConditionCacheCoordinator.Cache.ResourceOperationCache);
     }
 
+    public int getDriftCacheElementCount() {
+        return AlertConditionCacheCoordinator.getInstance().getCacheSize(
+            AlertConditionCacheCoordinator.Cache.DriftCache);
+    }
+
     public Map<String, Integer> getCacheCounts() {
         return AlertConditionCacheCoordinator.getInstance().getCacheCounts();
     }
@@ -119,6 +126,10 @@ public class AlertConditionCacheMonitor implements AlertConditionCacheMonitorMBe
 
     public int getOperationCacheElementMatches() {
         return operationCacheElementMatches.get();
+    }
+
+    public int getDriftCacheElementMatches() {
+        return driftCacheElementMatches.get();
     }
 
     public int getTotalCacheElementMatches() {
@@ -150,6 +161,11 @@ public class AlertConditionCacheMonitor implements AlertConditionCacheMonitorMBe
         totalCacheElementMatches.addAndGet(matches);
     }
 
+    public void incrementDriftCacheElementMatches(int matches) {
+        driftCacheElementMatches.addAndGet(matches);
+        totalCacheElementMatches.addAndGet(matches);
+    }
+
     public long getAvailabilityProcessingTime() {
         return availabilityProcessingTime.get();
     }
@@ -164,6 +180,10 @@ public class AlertConditionCacheMonitor implements AlertConditionCacheMonitorMBe
 
     public long getOperationProcessingTime() {
         return operationProcessingTime.get();
+    }
+
+    public long getDriftProcessingTime() {
+        return driftProcessingTime.get();
     }
 
     public long getTotalProcessingTime() {
@@ -192,6 +212,11 @@ public class AlertConditionCacheMonitor implements AlertConditionCacheMonitorMBe
 
     public void incrementOperationProcessingTime(long moreMillis) {
         operationProcessingTime.addAndGet(moreMillis);
+        totalProcessingTime.addAndGet(moreMillis);
+    }
+
+    public void incrementDriftProcessingTime(long moreMillis) {
+        driftProcessingTime.addAndGet(moreMillis);
         totalProcessingTime.addAndGet(moreMillis);
     }
 

@@ -19,6 +19,8 @@
  */
 package org.rhq.enterprise.server.drift;
 
+import static javax.ejb.TransactionAttributeType.REQUIRES_NEW;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
@@ -73,10 +75,9 @@ import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
+import org.rhq.enterprise.server.plugin.pc.drift.DriftChangeSetSummary;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
-
-import static javax.ejb.TransactionAttributeType.REQUIRES_NEW;
 
 /**
  * The SLSB method implementation needed to support the JPA (RHQ Default) Drift Server Plugin.
@@ -222,11 +223,14 @@ public class JPADriftServerBean implements JPADriftServerLocal {
 
     @Override
     @TransactionAttribute(REQUIRES_NEW)
-    public void storeChangeSet(Subject subject, final int resourceId, File changeSetZip) throws Exception {
+    public DriftChangeSetSummary storeChangeSet(Subject subject, final int resourceId, File changeSetZip)
+        throws Exception {
         final Resource resource = entityManager.find(Resource.class, resourceId);
         if (null == resource) {
             throw new IllegalArgumentException("Resource not found [" + resourceId + "]");
         }
+
+        final DriftChangeSetSummary summary = new DriftChangeSetSummary();
 
         try {
             ZipUtil.walkZipFile(changeSetZip, new ChangeSetFileVisitor() {
@@ -254,6 +258,11 @@ public class JPADriftServerBean implements JPADriftServerLocal {
                         driftChangeSet = new JPADriftChangeSet(resource, version, category, config);
                         entityManager.persist(driftChangeSet);
 
+                        summary.setCategory(category);
+                        summary.setResourceId(resourceId);
+                        summary.setDriftConfigurationName(reader.getHeaders().getDriftConfigurationName());
+                        summary.setCreatedTime(driftChangeSet.getCtime());
+
                         for (FileEntry entry : reader) {
                             JPADriftFile oldDriftFile = getDriftFile(entry.getOldSHA(), emptyDriftFiles);
                             JPADriftFile newDriftFile = getDriftFile(entry.getNewSHA(), emptyDriftFiles);
@@ -269,6 +278,14 @@ public class JPADriftServerBean implements JPADriftServerLocal {
                             JPADrift drift = new JPADrift(driftChangeSet, path, entry.getType(), oldDriftFile,
                                 newDriftFile);
                             entityManager.persist(drift);
+
+                            // we are taking advantage of the fact that we know the summary is only used by the server
+                            // if the change set is a DRIFT report. If its a coverage report, it is not used (we do
+                            // not alert on coverage reports) - so don't waste memory by collecting all the paths
+                            // when we know they aren't going to be used anyway.
+                            if (category == DriftChangeSetCategory.DRIFT) {
+                                summary.addDriftPathname(path);
+                            }
                         }
                         // send a message to the agent requesting the empty JPADriftFile content
                         if (!emptyDriftFiles.isEmpty()) {
@@ -295,6 +312,9 @@ public class JPADriftServerBean implements JPADriftServerLocal {
                     return true;
                 }
             });
+
+            return summary;
+
         } catch (Exception e) {
             String msg = "Failed to store drift changeset for ";
             if (null != resource) {
@@ -304,6 +324,7 @@ public class JPADriftServerBean implements JPADriftServerLocal {
             }
             log.error(msg, e);
 
+            return null;
         } finally {
             // delete the changeSetFile?
         }

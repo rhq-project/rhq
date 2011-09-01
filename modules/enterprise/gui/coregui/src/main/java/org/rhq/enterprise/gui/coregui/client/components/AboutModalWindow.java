@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.coregui.client.components;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.Version;
+import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.Button;
@@ -99,12 +100,12 @@ public class AboutModalWindow extends LocatableWindow {
 
     private void finishOnInit() {
         LocatableVLayout contentPane = new LocatableVLayout(extendLocatorId("Content"));
-        contentPane.setPadding(15);
+        contentPane.setPadding(13);
         contentPane.setMembersMargin(25);
 
         HTMLFlow htmlFlow = new HTMLFlow();
         String html = "<span class=\"DisplaySubhead\">\n" + "  <a href=\"" + PRODUCT_INFO.getUrl() + "\" title=\""
-            + PRODUCT_INFO.getFullName() + " " + MSG.view_aboutBox_homepage() + "\" target=\"_blank\">"
+            + PRODUCT_INFO.getFullName() + " " + PRODUCT_INFO.getUrl() + "\" target=\"_blank\">"
             + PRODUCT_INFO.getFullName() + "</a>\n" + "</span><br/>\n" + "<span class=\"DisplayLabel\">"
             + MSG.view_aboutBox_version() + " " + PRODUCT_INFO.getVersion() + "</span><br/>\n"
             + "<span class=\"DisplayLabel\">" + MSG.view_aboutBox_buildNumber() + " " + PRODUCT_INFO.getBuildNumber()
@@ -119,12 +120,7 @@ public class AboutModalWindow extends LocatableWindow {
         contentPane.addMember(htmlFlow);
 
         LocatableHLayout buttonBar = new LocatableHLayout(contentPane.extendLocatorId("ButtonBar"));
-        buttonBar.setAlign(VerticalAlignment.BOTTOM);
-        contentPane.addMember(buttonBar);
-
-        Canvas spacer = new Canvas();
-        spacer.setWidth("*");
-        buttonBar.addMember(spacer);
+        buttonBar.setAlign(Alignment.RIGHT);
 
         LocatableIButton closeButton = new LocatableIButton(buttonBar.extendLocatorId("Close"),
                 MSG.common_button_close());
@@ -137,6 +133,11 @@ public class AboutModalWindow extends LocatableWindow {
             }
         });
         buttonBar.addMember(closeButton);
+
+        VLayout bottom = new VLayout();
+        bottom.setAlign(VerticalAlignment.BOTTOM);
+        bottom.addMember(buttonBar);
+        contentPane.addMember(bottom);
 
         // NOTE: Since this is a subclass of Window, we MUST use addItem(), rather than addMember() from the
         //       Layout class.

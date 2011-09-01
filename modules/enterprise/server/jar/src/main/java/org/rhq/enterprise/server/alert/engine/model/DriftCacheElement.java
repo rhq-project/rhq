@@ -25,7 +25,7 @@ import org.rhq.enterprise.server.plugin.pc.drift.DriftChangeSetSummary;
 
 public class DriftCacheElement extends AbstractCacheElement<Object> {
 
-    public static final Object UNUSED_CONDITION_VALUE = "unused";
+    public static final Object UNUSED_CONDITION_VALUE = "Drift Detected";
     private final Pattern driftConfigNameRegex;
     private final Pattern driftPathNameRegex;
 

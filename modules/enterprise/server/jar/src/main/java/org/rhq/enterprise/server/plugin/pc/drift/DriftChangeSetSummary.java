@@ -20,6 +20,7 @@
 package org.rhq.enterprise.server.plugin.pc.drift;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
@@ -39,6 +40,22 @@ public class DriftChangeSetSummary {
     private int resourceId;
     private String driftConfigurationName;
     private List<String> driftPathnames;
+
+    /**
+     * Because this summary object is used within the alert subsystem, this toString is used to display
+     * a message in the alert description if/when alerts are fired.
+     */
+    @Override
+    public String toString() {
+        if (category == DriftChangeSetCategory.COVERAGE) {
+            return "[" + new Date(createdTime) + "] Initial drift coverage includes ["
+                + obtainDriftPathnamesList().size() + "] files using drift configuration [" + driftConfigurationName
+                + "]";
+        } else {
+            return "[" + new Date(createdTime) + "] Drift detected in [" + obtainDriftPathnamesList().size()
+                + "] files using drift configuration [" + driftConfigurationName + "]";
+        }
+    }
 
     public long getCreatedTime() {
         return createdTime;

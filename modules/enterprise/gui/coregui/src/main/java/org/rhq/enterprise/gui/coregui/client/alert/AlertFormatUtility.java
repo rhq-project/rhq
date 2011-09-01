@@ -188,7 +188,26 @@ public class AlertFormatUtility {
             break;
         }
         case DRIFT: {
-            str.append(MSG.view_alert_common_tab_conditions_type_drift());
+            String configNameRegex = condition.getName();
+            String pathNameRegex = condition.getOption();
+            if (configNameRegex == null || configNameRegex.length() == 0) {
+                if (pathNameRegex == null || pathNameRegex.length() == 0) {
+                    // neither a config name regex nor path regex was specified 
+                    str.append(MSG.view_alert_common_tab_conditions_type_drift());
+                } else {
+                    // a path name regex was specified, but not a config name regex 
+                    str.append(MSG.view_alert_common_tab_conditions_type_drift_onlypaths(pathNameRegex));
+                }
+            } else {
+                if (pathNameRegex == null || pathNameRegex.length() == 0) {
+                    // a config name regex was specified, but not a path name regex 
+                    str.append(MSG.view_alert_common_tab_conditions_type_drift_onlyconfig(configNameRegex));
+                } else {
+                    // both a config name regex and a path regex was specified 
+                    str.append(MSG.view_alert_common_tab_conditions_type_drift_configpaths(pathNameRegex,
+                        configNameRegex));
+                }
+            }
             break;
         }
         default: {

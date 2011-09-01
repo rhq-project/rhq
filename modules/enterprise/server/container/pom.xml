@@ -8,7 +8,7 @@
     <version>4.1.0-SNAPSHOT</version>
     <relativePath>../../../../pom.xml</relativePath>
   </parent>
-
+  
   <groupId>org.rhq</groupId>
   <artifactId>rhq-enterprise-server-container</artifactId>
   <packaging>pom</packaging>
@@ -250,6 +250,10 @@
       <plugin>
         <artifactId>maven-assembly-plugin</artifactId>
         <configuration>
+          <archiverConfig>
+            <!-- permissions for archiver configuration are in decimal (not octal) -->
+            <defaultDirectoryMode>484</defaultDirectoryMode>
+          </archiverConfig>
           <descriptors>
             <descriptor>src/main/scripts/rhq-container.assembly.xml</descriptor>
           </descriptors>

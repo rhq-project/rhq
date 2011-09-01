@@ -212,12 +212,13 @@ public class JPADriftServerBean implements JPADriftServerLocal {
 
     @Override
     @TransactionAttribute(REQUIRES_NEW)
-    public void persistDriftFileData(JPADriftFile driftFile, InputStream data) throws Exception {
+    public void persistDriftFileData(JPADriftFile driftFile, InputStream data, long numBytes) throws Exception {
 
         JPADriftFileBits df = entityManager.find(JPADriftFileBits.class, driftFile.getHashId());
         if (null == df) {
             throw new IllegalArgumentException("JPADriftFile not found [" + driftFile.getHashId() + "]");
         }
+        df.setDataSize(numBytes);
         df.setData(Hibernate.createBlob(new BufferedInputStream(data)));
         df.setStatus(LOADED);
     }
@@ -398,7 +399,7 @@ public class JPADriftServerBean implements JPADriftServerLocal {
         for (File file : dir.listFiles()) {
             JPADriftFile driftFile = new JPADriftFile(file.getName());
             try {
-                JPADriftServer.persistDriftFileData(driftFile, new FileInputStream(file));
+                JPADriftServer.persistDriftFileData(driftFile, new FileInputStream(file), file.length());
             } catch (Exception e) {
                 LogFactory.getLog(getClass()).info("Skipping bad drift file", e);
             }
@@ -421,6 +422,9 @@ public class JPADriftServerBean implements JPADriftServerLocal {
         try {
             JPADriftFileBits content = (JPADriftFileBits) entityManager.createNamedQuery(
                 JPADriftFileBits.QUERY_FIND_BY_ID).setParameter("hashId", hash).getSingleResult();
+            if (content.getDataSize() == null || content.getDataSize() < 1) {
+                return "";
+            }
             byte[] bytes = StreamUtil.slurp(content.getBlob().getBinaryStream());
             return new String(bytes);
         } catch (SQLException e) {

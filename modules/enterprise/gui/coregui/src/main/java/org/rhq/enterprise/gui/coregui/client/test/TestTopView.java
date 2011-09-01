@@ -79,6 +79,7 @@ public class TestTopView extends AbstractSectionedLeftNavigationView {
     private static final ViewName MISC_SECTION_VIEW_ID = new ViewName("Misc");
     private static final ViewName PAGE_PLURALIZATION_TEST = new ViewName("PluralizationTest");
     private static final ViewName PAGE_ASYNC = new ViewName("Async");
+    private static final ViewName PAGE_RPC = new ViewName("Rpc");
 
     public TestTopView() {
         // This is a top level view, so our locator id can simply be our view id.
@@ -235,7 +236,13 @@ public class TestTopView extends AbstractSectionedLeftNavigationView {
             }
         });
 
-        return new NavigationSection(MISC_SECTION_VIEW_ID, pluralizationItem, asyncItem);
+        NavigationItem rpcItem = new NavigationItem(PAGE_RPC, null, new ViewFactory() {
+            public Canvas createView() {
+                return new TestRpcView(extendLocatorId(PAGE_RPC.getName()));
+            }
+        });
+
+        return new NavigationSection(MISC_SECTION_VIEW_ID, pluralizationItem, asyncItem, rpcItem);
     }
 
 }

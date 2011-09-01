@@ -86,7 +86,7 @@ public interface JPADriftServerLocal {
      * @param data
      * @throws Exception
      */
-    void persistDriftFileData(JPADriftFile driftFile, InputStream data) throws Exception;
+    void persistDriftFileData(JPADriftFile driftFile, InputStream data, long numBytes) throws Exception;
 
     /**
      * This method stores the provided change-set file for the resource. The version will be incremented based

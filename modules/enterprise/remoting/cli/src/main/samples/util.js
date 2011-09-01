@@ -1,4 +1,21 @@
 /**
+ * file: util.js
+ *
+ * description: This script contains functions that provide core, low-level
+ * functionality such as iterating over a collection or searching a collection.
+ * This has no other script or library dependencies. To load the functions into
+ * your CLI session execute the following from the CLI shell,
+ *
+ *   $ login <username> <password>
+ *   $ exec -f samples/util.js
+ *
+ * Note that you must login before you can load the script. 
+ *
+ * author: jsanda@redhat.com
+ */
+
+
+/**
  * If obj is a JS array or a java.util.Collection, each element is passed to
  * the callback function. If obj is a java.util.Map, each map entry is passed
  * to the callback function as a key/value pair. If obj is none of the

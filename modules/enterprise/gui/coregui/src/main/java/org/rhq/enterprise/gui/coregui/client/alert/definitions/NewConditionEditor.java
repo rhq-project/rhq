@@ -90,6 +90,8 @@ public class NewConditionEditor extends LocatableDynamicForm {
     private static final String OPERATION_RESULTS_ITEMNAME = "operationResults";
     private static final String EVENT_SEVERITY_ITEMNAME = "eventSeverity";
     private static final String EVENT_REGEX_ITEMNAME = "eventRegex";
+    private static final String DRIFT_CONFIGNAME_REGEX_ITEMNAME = "driftConfigNameRegex";
+    private static final String DRIFT_PATHNAME_REGEX_ITEMNAME = "driftPathNameRegex";
 
     private SelectItem conditionTypeSelectItem;
     private HashSet<AlertCondition> conditions; // the new condition we create goes into this set
@@ -294,7 +296,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
         case THRESHOLD: {
             if (!calltimeCategory) {
                 MeasurementDefinition measDef = getMeasurementDefinition(getValueAsString(THRESHOLD_METRIC_ITEMNAME));
-                newCondition.setName(measDef.getDisplayName()); // TODO should not use display name
+                newCondition.setName(measDef.getDisplayName());
                 newCondition.setThreshold(Double.valueOf(getValueAsString(THRESHOLD_ABSVALUE_ITEMNAME)));
                 newCondition.setComparator(getValueAsString(THRESHOLD_COMPARATOR_ITEMNAME));
                 newCondition.setOption(null);
@@ -312,7 +314,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
 
         case BASELINE: {
             MeasurementDefinition measDef = getMeasurementDefinition(getValueAsString(BASELINE_METRIC_ITEMNAME));
-            newCondition.setName(measDef.getDisplayName()); // TODO should not use display name
+            newCondition.setName(measDef.getDisplayName());
             newCondition.setThreshold(Double.valueOf(getValueAsString(BASELINE_PERCENTAGE_ITEMNAME)) / 100.0);
             newCondition.setComparator(getValueAsString(BASELINE_COMPARATOR_ITEMNAME));
             newCondition.setOption(getValueAsString(BASELINE_SELECTION_ITEMNAME));
@@ -323,7 +325,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
         case CHANGE: {
             if (!calltimeCategory) {
                 MeasurementDefinition measDef = getMeasurementDefinition(getValueAsString(CHANGE_METRIC_ITEMNAME));
-                newCondition.setName(measDef.getDisplayName()); // TODO should not use display name
+                newCondition.setName(measDef.getDisplayName());
                 newCondition.setComparator(null);
                 newCondition.setThreshold(null);
                 newCondition.setOption(null);
@@ -342,7 +344,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
 
         case TRAIT: {
             MeasurementDefinition measDef = getMeasurementDefinition(getValueAsString(TRAIT_METRIC_ITEMNAME));
-            newCondition.setName(measDef.getDisplayName()); // TODO should not use display name
+            newCondition.setName(measDef.getDisplayName());
             newCondition.setComparator(null);
             newCondition.setThreshold(null);
             newCondition.setOption(null);
@@ -378,10 +380,10 @@ public class NewConditionEditor extends LocatableDynamicForm {
         }
 
         case DRIFT: {
-            newCondition.setName(null);
+            newCondition.setName(getValueAsString(DRIFT_CONFIGNAME_REGEX_ITEMNAME));
             newCondition.setComparator(null);
             newCondition.setThreshold(null);
-            newCondition.setOption(null); // TODO driftalert - be able to regex for only certain files that drifted
+            newCondition.setOption(getValueAsString(DRIFT_PATHNAME_REGEX_ITEMNAME));
             newCondition.setMeasurementDefinition(null);
             break;
         }
@@ -729,6 +731,24 @@ public class NewConditionEditor extends LocatableDynamicForm {
         String helpStr = MSG.view_alert_definition_condition_editor_drift_tooltip();
         StaticTextItem helpItem = buildHelpTextItem("driftHelp", helpStr, ifFunc);
         formItems.add(helpItem);
+
+        TextItem driftConfigNameRegex = new TextItem(DRIFT_CONFIGNAME_REGEX_ITEMNAME, MSG
+            .view_alert_definition_condition_editor_drift_configname_regex());
+        driftConfigNameRegex.setRequired(false);
+        driftConfigNameRegex.setTooltip(MSG.view_alert_definition_condition_editor_drift_configname_regex_tooltip());
+        driftConfigNameRegex.setHoverWidth(200);
+        driftConfigNameRegex.setWrapTitle(false);
+        driftConfigNameRegex.setShowIfCondition(ifFunc);
+        formItems.add(driftConfigNameRegex);
+
+        TextItem driftPathNameRegex = new TextItem(DRIFT_PATHNAME_REGEX_ITEMNAME, MSG
+            .view_alert_definition_condition_editor_drift_pathname_regex());
+        driftPathNameRegex.setRequired(false);
+        driftPathNameRegex.setTooltip(MSG.view_alert_definition_condition_editor_drift_pathname_regex_tooltip());
+        driftPathNameRegex.setHoverWidth(200);
+        driftPathNameRegex.setWrapTitle(false);
+        driftPathNameRegex.setShowIfCondition(ifFunc);
+        formItems.add(driftPathNameRegex);
 
         return formItems;
     }

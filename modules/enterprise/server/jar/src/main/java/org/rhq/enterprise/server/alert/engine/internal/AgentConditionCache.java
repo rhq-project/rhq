@@ -73,11 +73,11 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 class AgentConditionCache extends AbstractConditionCache {
 
-    private Map<Integer, List<NumericDoubleCacheElement>> measurementDataCache;
-    private Map<Integer, List<MeasurementTraitCacheElement>> measurementTraitCache;
-    private Map<Integer, List<CallTimeDataCacheElement>> callTimeCache;
-    private Map<Integer, List<EventCacheElement>> eventsCache;
-    private Map<Integer, List<DriftCacheElement>> driftCache;
+    private Map<Integer, List<NumericDoubleCacheElement>> measurementDataCache; // key: schedule ID
+    private Map<Integer, List<MeasurementTraitCacheElement>> measurementTraitCache; // key: schedule ID
+    private Map<Integer, List<CallTimeDataCacheElement>> callTimeCache; // key: schedule ID
+    private Map<Integer, List<EventCacheElement>> eventsCache; // key: resource ID
+    private Map<Integer, List<DriftCacheElement>> driftCache; // key: resource ID
 
     private AlertConditionManagerLocal alertConditionManager;
     private MeasurementDataManagerLocal measurementDataManager;
@@ -314,7 +314,19 @@ class AgentConditionCache extends AbstractConditionCache {
             addTo("eventsCache", eventsCache, eventComposite.getResourceId(), cacheElement, alertConditionId, stats);
         } else if (alertConditionCategory == AlertConditionCategory.DRIFT) {
             AlertConditionDriftCategoryComposite driftComposite = (AlertConditionDriftCategoryComposite) composite;
-            DriftCacheElement cacheElement = new DriftCacheElement(alertConditionOperator, alertConditionId);
+
+            String driftConfigNameRegexStr = driftComposite.getCondition().getName();
+            String driftPathNameRegexStr = driftComposite.getCondition().getOption();
+
+            DriftCacheElement cacheElement = null;
+            try {
+                cacheElement = new DriftCacheElement(alertConditionOperator, driftConfigNameRegexStr,
+                    driftPathNameRegexStr, alertConditionId);
+            } catch (InvalidCacheElementException icee) {
+                log.info("Failed to create DriftCacheElement: id=" + alertConditionId + ", operator="
+                    + alertConditionOperator + ", driftConfigNameRegex=" + driftConfigNameRegexStr
+                    + ", driftPathNameRegex=" + driftPathNameRegexStr);
+            }
             addTo("driftCache", driftCache, driftComposite.getResourceId(), cacheElement, alertConditionId, stats);
         }
     }
@@ -477,7 +489,8 @@ class AgentConditionCache extends AbstractConditionCache {
             int resourceId = driftChangeSetSummary.getResourceId();
             List<DriftCacheElement> cacheElements = lookupDriftCacheElements(resourceId);
 
-            processCacheElements(cacheElements, (Object) "", driftChangeSetSummary.getCreatedTime(), stats);
+            processCacheElements(cacheElements, DriftCacheElement.UNUSED_CONDITION_VALUE, driftChangeSetSummary
+                .getCreatedTime(), stats, driftChangeSetSummary);
 
             AlertConditionCacheMonitor.getMBean().incrementDriftCacheElementMatches(stats.matched);
             AlertConditionCacheMonitor.getMBean().incrementDriftProcessingTime(stats.getAge());

@@ -412,7 +412,10 @@ public class AlertCondition implements Serializable {
      * CONTROL: the name of the operation (not its display name)
      * EVENT: the level of event to compare with (DEBUG, INFO, WARN, ERROR, FATAL)
      * RESOURCE_CONFIG: n/a (null)
-     * DRIFT: n/a (null)
+     * DRIFT: the name of the drift config that triggered the drift detection. This is actually a
+     *        regex that allows the user to match more than one drift config if they so choose.
+     *        (this value may be null, in which case it doesn't matter which drift configs were the ones
+     *         in which the drift was detected) 
      * 
      * @return additional information about the condition
      */
@@ -469,7 +472,7 @@ public class AlertCondition implements Serializable {
      * CONTROL: the {@link OperationRequestStatus} name (SUCCESS, FAILURE, etc).
      * EVENT: the regular expression of the message to match (which may be empty string if not specified)
      * RESOURCE_CONFIG: n/a
-     * DRIFT: n/a (TODO driftalert - regular expression to match files whose content drifted (may be empty string if not specified)
+     * DRIFT: a regular expression to match files whose content drifted (may be empty string or null if not specified)
      *
      * @return additional information about the condition
      */

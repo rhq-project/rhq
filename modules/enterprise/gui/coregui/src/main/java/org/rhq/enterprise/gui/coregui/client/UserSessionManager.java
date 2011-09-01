@@ -84,7 +84,7 @@ public class UserSessionManager {
 
     // We want the CoreGUI session timeout to rule them all.  The rhq subject session is refreshed on each SLSB
     // call. But the HTTP session will die after 30 minutes. Keep it alive until logout by pinging SessionAccessServlet
-    // occasionaly, as specified by this interval (which must be less than the 30 minutes).
+    // occasionally, as specified by this interval (which must be less than the 30 minutes).
     // Currently: 20 minutes
     private static int SESSION_ACCESS_REFRESH = 20 * 60 * 1000;
 
@@ -454,7 +454,7 @@ public class UserSessionManager {
                     scheduleWebUserUpdate(loggedInSubject);
                 }
 
-                CoreGUI.get().buildCoreUI();
+                CoreGUI.get().init();
             }
 
             public void onFailure(Throwable caught) {

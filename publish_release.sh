@@ -219,7 +219,7 @@ export LANG
 echo
 echo "========================== Environment Variables =============================="
 echo "JAVA_HOME=$JAVA_HOME"
-[ "$RELEASE_TYPE" = "enterprise" ]"
+[ "$RELEASE_TYPE" = "enterprise" ]
 #[ "$RELEASE_TYPE" = "enterprise" ] && echo "JAVA5_HOME=$JAVA5_HOME"
 echo "M2_HOME=$M2_HOME"
 echo "MAVEN_OPTS=$MAVEN_OPTS"

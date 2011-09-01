@@ -329,6 +329,7 @@ public abstract class AbstractTableSection<DS extends RPCDataSource, ID> extends
 
         // If the Table has not yet been initialized then ignore
         if (contents != null) {
+            // If the table view is visible then gracefully switch to the details view.
             if (contents.isVisible()) {
                 contents.animateHide(AnimationEffect.WIPE, new AnimationCallback() {
                     @Override
@@ -337,6 +338,14 @@ public abstract class AbstractTableSection<DS extends RPCDataSource, ID> extends
                     }
                 });
             } else {
+                // Even if the table view is not visible, it may not be hidden. Instead, it may be the
+                // case that its parent (the encompassing Table/HLayout) may not be visible.  This is unusual
+                // because typically we switch between the table and detail view while under the subtab, but
+                // if we navigate to the detail view from another subtab (for example, the drift tree context
+                // menu) the Table may not be visible and the table view may not be hidden.  To make a long
+                // story short, ensure the table view is hidden when displaying the details view.
+                contents.hide();
+
                 /*
                  * if the programmer chooses to go directly from the detailView in create-mode to the 
                  * detailsView in edit-mode, the content canvas will already be hidden, which means the

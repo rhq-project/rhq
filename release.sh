@@ -304,7 +304,7 @@ cat <<EOF >"${MAVEN_SETTINGS_FILE}"
 
             <rhq.testng.excludedGroups>agent-comm,comm-client,postgres-plugin,native-system</rhq.testng.excludedGroups>
 
-            <gwt-plugin.extraJvmArgs>-Xms512M -Xmx1024M -XX:PermSize=256M -XX:MaxPermSize=512M</gwt-plugin.extraJvmArgs>
+            <gwt-plugin.extraJvmArgs>-Xms512M -Xmx1024M -XX:PermSize=256M -XX:MaxPermSize=512M -Djava.io.tmpdir=gwt-tmp</gwt-plugin.extraJvmArgs>
          </properties>
       </profile>
 

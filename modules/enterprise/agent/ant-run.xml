@@ -211,7 +211,7 @@ Ant Script that provides ways to package the Agent.
     <delete file="${basedir}/target/rhq-enterprise-agent-${project.version}.zip" />
     <zip destfile="${basedir}/target/rhq-enterprise-agent-${project.version}.zip" >
       <!-- The zip task does not mantain file permissions, we have to make sure they are set here -->
-       <zipfileset dir="${basedir}/target">
+       <zipfileset dir="${basedir}/target" filemode="744" dirmode="744">
           <include name="rhq-agent/**"/>
           <exclude name="rhq-agent/bin/*.sh"/>
           <exclude name="rhq-agent/lib/*.so"/>
@@ -220,7 +220,7 @@ Ant Script that provides ways to package the Agent.
           <exclude name="rhq-agent/lib/*.dylib"/>
        	  <exclude name="rhq-agent/lib/augeas/**" />
        </zipfileset>
-       <zipfileset dir="${basedir}/target" filemode="755">
+       <zipfileset dir="${basedir}/target" filemode="755" dirmode="744">
           <include name="rhq-agent/bin/*.sh"/>
           <include name="rhq-agent/lib/*.so"/>
           <include name="rhq-agent/lib/*.sl"/>

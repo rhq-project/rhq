@@ -52,6 +52,7 @@ import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.DriftSnapshot;
+import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
 import org.rhq.core.domain.drift.dto.DriftChangeSetDTO;
 import org.rhq.core.domain.drift.dto.DriftDTO;
 import org.rhq.core.domain.drift.dto.DriftFileDTO;
@@ -119,6 +120,8 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
                 changeSet.setResourceId(resourceId);
                 // TODO Figure out how best to handle drift config reference
                 changeSet.setDriftConfigurationId(1);
+                // TODO Figure out how best to handle drift config drift handling mode
+                changeSet.setDriftHandlingMode(DriftHandlingMode.normal);
                 changeSet.setVersion(changeSetVersions++);
 
                 summary.setCategory(headers.getType());

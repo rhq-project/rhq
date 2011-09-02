@@ -114,9 +114,9 @@ public interface DriftChangeSet<D extends Drift<?, ?>> {
      * value set on the owning drift configuration can change, the value must be stored with 
      * the change set such that it can be applied consistently when handling the associated drift.
      *
-     * @param mode The {@link DriftConfiguration.DriftHandlingMode} mode
+     * @param driftHandlingMode The {@link DriftConfiguration.DriftHandlingMode} mode
      */
-    void setDriftHandlingMode(DriftHandlingMode mode);
+    void setDriftHandlingMode(DriftHandlingMode driftHandlingMode);
 
     /**
      * Returns the id of the owning drift configuration. Note that while server plugins are

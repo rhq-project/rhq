@@ -252,7 +252,8 @@
         <configuration>
           <archiverConfig>
             <!-- permissions for archiver configuration are in decimal (not octal) -->
-            <defaultDirectoryMode>484</defaultDirectoryMode>
+            <!-- 493 (decimal) = 755 (octal)-->
+            <defaultDirectoryMode>493</defaultDirectoryMode>
           </archiverConfig>
           <descriptors>
             <descriptor>src/main/scripts/rhq-container.assembly.xml</descriptor>

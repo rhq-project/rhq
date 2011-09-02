@@ -75,7 +75,7 @@
 
     </server>
     -->
-    <server name="HostController"
+    <server name="JBossAS7 Host Controller"
             discovery="BaseProcessDiscovery"
             class="HostControllerComponent"
             description="Domain controller (delegate) for this host"
@@ -1903,7 +1903,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
              description="A named network interface, along with required criteria for determining the IP address to associate with that interface">
 
         <runs-inside>
-            <parent-resource-type name="HostController"  plugin="jboss-as-7"/>
+            <parent-resource-type name="JBossAS7 Host Controller"  plugin="jboss-as-7"/>
             <parent-resource-type name="Host"  plugin="jboss-as-7"/>
             <parent-resource-type name="JBossAS7-Standalone"  plugin="jboss-as-7"/>
         </runs-inside>
@@ -1960,7 +1960,7 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
              class="BaseComponent"
             >
         <runs-inside>
-            <parent-resource-type name="HostController"  plugin="jboss-as-7"/>
+            <parent-resource-type name="JBossAS7 Host Controller"  plugin="jboss-as-7"/>
         </runs-inside>
 
 

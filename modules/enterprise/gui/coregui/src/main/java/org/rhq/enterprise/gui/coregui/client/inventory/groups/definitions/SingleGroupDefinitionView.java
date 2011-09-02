@@ -205,7 +205,7 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
                             if (recalc) {
                                 recalculate(dynaGroupChildrenView, newGroupDefinition.getId());
                             }
-                            History.newItem(basePath + "/" + newGroupDefinition.getId());
+                            CoreGUI.goToView(basePath + "/" + newGroupDefinition.getId());
                         }
                     } else {
                         dynaGroupChildrenView.refresh();

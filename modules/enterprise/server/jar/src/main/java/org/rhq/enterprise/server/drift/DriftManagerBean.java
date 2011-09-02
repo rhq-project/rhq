@@ -67,6 +67,7 @@ import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.drift.FileDiffReport;
 import org.rhq.core.domain.drift.DriftConfigurationComparator.CompareMode;
+import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.RHQConstants;
@@ -364,7 +365,9 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     public DriftChangeSetSummary saveChangeSet(Subject subject, int resourceId, File changeSetZip) throws Exception {
         DriftServerPluginFacet driftServerPlugin = getServerPlugin();
         DriftChangeSetSummary summary = driftServerPlugin.saveChangeSet(subject, resourceId, changeSetZip);
-        notifyAlertConditionCacheManager("saveChangeSet", summary);
+        if (DriftHandlingMode.plannedChanges != summary.getDriftHandlingMode()) {
+            notifyAlertConditionCacheManager("saveChangeSet", summary);
+        }
         return summary;
     }
 
@@ -407,7 +410,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     }
 
     @Override
-    public FileDiffReport generateUnifiedDiff(Drift drift) {
+    public FileDiffReport generateUnifiedDiff(Drift<?, ?> drift) {
         log.debug("Generating diff for " + drift);
         String oldContent = getDriftFileBits(drift.getOldDriftFile().getHashId());
         List<String> oldList = asList(oldContent.split("\\n"));
@@ -421,7 +424,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     }
 
     @Override
-    public FileDiffReport generateUnifiedDiff(Drift drift1, Drift drift2) {
+    public FileDiffReport generateUnifiedDiff(Drift<?, ?> drift1, Drift<?, ?> drift2) {
         String content1 = getDriftFileBits(drift1.getNewDriftFile().getHashId());
         List<String> content1List = asList(content1.split("\\n"));
 
@@ -498,7 +501,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     }
 
     @Override
-    public boolean isBinaryFile(Drift drift) {
+    public boolean isBinaryFile(Drift<?, ?> drift) {
         String path = drift.getPath();
         int index = path.lastIndexOf('.');
 
@@ -531,7 +534,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
             return null;
         }
 
-        Drift drift = results.get(0);
+        Drift<?, ?> drift = results.get(0);
         driftDetails.setDrift(drift);
         try {
             switch (drift.getCategory()) {
@@ -569,7 +572,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
         }
     }
 
-    private DriftChangeSet loadPreviousChangeSet(Subject subject, Drift drift) {
+    private DriftChangeSet<?> loadPreviousChangeSet(Subject subject, Drift<?, ?> drift) {
         GenericDriftChangeSetCriteria criteria = new GenericDriftChangeSetCriteria();
         criteria.addFilterResourceId(drift.getChangeSet().getResourceId());
         criteria.addFilterDriftConfigurationId(drift.getChangeSet().getDriftConfigurationId());

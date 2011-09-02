@@ -1,5 +1,12 @@
 package org.rhq.core.domain.drift;
 
+import static java.util.Arrays.asList;
+import static org.rhq.core.domain.drift.DriftConfigurationDefinition.PROP_BASEDIR;
+import static org.rhq.core.domain.drift.DriftConfigurationDefinition.PROP_BASEDIR_VALUECONTEXT;
+import static org.rhq.core.domain.drift.DriftConfigurationDefinition.PROP_BASEDIR_VALUENAME;
+import static org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext.fileSystem;
+import static org.testng.Assert.assertEquals;
+
 import java.util.List;
 
 import org.testng.annotations.Test;
@@ -10,13 +17,7 @@ import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.drift.DriftConfigurationComparator.CompareMode;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext;
-
-import static java.util.Arrays.asList;
-import static org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext.fileSystem;
-import static org.rhq.core.domain.drift.DriftConfigurationDefinition.PROP_BASEDIR;
-import static org.rhq.core.domain.drift.DriftConfigurationDefinition.PROP_BASEDIR_VALUECONTEXT;
-import static org.rhq.core.domain.drift.DriftConfigurationDefinition.PROP_BASEDIR_VALUENAME;
-import static org.testng.Assert.assertEquals;
+import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
 
 public class DriftConfigurationTest {
     @Test
@@ -32,6 +33,7 @@ public class DriftConfigurationTest {
         assert comparator.compare(dc1, dc2) != 0 : dc1 + " should not equal " + dc2;
         assert comparator.compare(dc2, dc1) != 0 : dc2 + " should not equal " + dc1;
         dc1.setInterval(1000L);
+        dc1.setDriftHandlingMode(DriftHandlingMode.normal);
         assert comparator.compare(dc1, dc2) != 0 : dc1 + " should not equal " + dc2;
         assert comparator.compare(dc2, dc1) != 0 : dc2 + " should not equal " + dc1;
         dc1.setName("the-name");
@@ -40,6 +42,7 @@ public class DriftConfigurationTest {
 
         dc2.setEnabled(false);
         dc2.setInterval(1000L);
+        dc2.setDriftHandlingMode(DriftHandlingMode.normal);
         dc2.setName("the-name");
 
         assert comparator.compare(dc1, dc2) == 0 : dc1 + " should equal " + dc2;
@@ -52,6 +55,10 @@ public class DriftConfigurationTest {
         assert comparator.compare(dc1, dc2) > 0 : dc1 + "  should have different interval than " + dc2;
 
         dc1.setInterval(dc2.getInterval()); // put them back to the same value
+        dc1.setDriftHandlingMode(DriftHandlingMode.plannedChanges);
+        assert comparator.compare(dc1, dc2) > 0 : dc1 + "  should have different drift handling mode than " + dc2;
+
+        dc1.setDriftHandlingMode(DriftHandlingMode.normal); // put them back to the same value
         dc1.setName("zzzzz" + dc2.getName());
         assert comparator.compare(dc1, dc2) > 0 : dc1 + "  should have different name than " + dc2;
 
@@ -84,10 +91,12 @@ public class DriftConfigurationTest {
 
         dc1.setEnabled(true);
         dc1.setInterval(1000L);
+        dc1.setDriftHandlingMode(DriftHandlingMode.normal);
         dc1.setName("the-name");
 
         dc2.setEnabled(true);
         dc2.setInterval(1000L);
+        dc2.setDriftHandlingMode(DriftHandlingMode.normal);
         dc2.setName("the-name");
 
         getCompareBaseInfoAndIncludesExcludes(comparator, dc1, dc2);
@@ -103,10 +112,12 @@ public class DriftConfigurationTest {
 
         dc1.setEnabled(false);
         dc1.setInterval(1111L);
+        dc2.setDriftHandlingMode(DriftHandlingMode.normal);
         dc1.setName("some-name");
 
         dc2.setEnabled(true);
         dc2.setInterval(2222L);
+        dc2.setDriftHandlingMode(DriftHandlingMode.plannedChanges);
         dc2.setName("another-name");
 
         getCompareBaseInfoAndIncludesExcludes(comparator, dc1, dc2);
@@ -236,6 +247,19 @@ public class DriftConfigurationTest {
         DriftConfiguration driftConfig = new DriftConfiguration(config);
 
         assertEquals(driftConfig.getInterval(), interval, "Failed to get drift configuration interval");
+    }
+
+    @Test
+    public void getDriftHandlingMode() {
+        DriftHandlingMode mode = DriftHandlingMode.normal;
+        Configuration config = new Configuration();
+        config.put(new PropertySimple(DriftConfigurationDefinition.PROP_DRIFT_HANDLING_MODE, mode.name()));
+        DriftConfiguration driftConfig = new DriftConfiguration(config);
+        assertEquals(driftConfig.getDriftHandlingMode(), mode, "Failed to get drift configuration drift handling mode");
+
+        mode = DriftHandlingMode.plannedChanges;
+        driftConfig.setDriftHandlingMode(mode);
+        assertEquals(driftConfig.getDriftHandlingMode(), mode, "Failed to get drift configuration drift handling mode");
     }
 
     @Test

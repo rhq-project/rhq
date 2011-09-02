@@ -33,7 +33,7 @@ public class DriftConfigurationComparator implements Comparator<DriftConfigurati
 
     public enum CompareMode {
         /**
-         * The comparator will only check the base information: name, enabled, interval.
+         * The comparator will only check the base information: name, enabled, interval, driftHandlingMode
          * The basedir/includes-excludes filters will be ignored. 
          */
         ONLY_BASE_INFO,
@@ -75,6 +75,10 @@ public class DriftConfigurationComparator implements Comparator<DriftConfigurati
 
             if (dc1.getInterval() != dc2.getInterval()) {
                 return dc1.getInterval() < dc2.getInterval() ? -1 : 1;
+            }
+
+            if (dc1.getDriftHandlingMode() != dc2.getDriftHandlingMode()) {
+                return dc1.getDriftHandlingMode().ordinal() < dc2.getDriftHandlingMode().ordinal() ? -1 : 1;
             }
 
             if (dc1.isEnabled() != dc2.isEnabled()) {

@@ -24,6 +24,7 @@ import java.util.Date;
 import java.util.List;
 
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
+import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
 
 /**
  * Provides a summary of a change set.
@@ -39,6 +40,7 @@ public class DriftChangeSetSummary {
     private DriftChangeSetCategory category;
     private int resourceId;
     private String driftConfigurationName;
+    private DriftHandlingMode driftHandlingMode;
     private List<String> driftPathnames;
 
     /**
@@ -107,4 +109,13 @@ public class DriftChangeSetSummary {
         }
         return driftPathnames;
     }
+
+    public DriftHandlingMode getDriftHandlingMode() {
+        return driftHandlingMode;
+    }
+
+    public void setDriftHandlingMode(DriftHandlingMode driftHandlingMode) {
+        this.driftHandlingMode = driftHandlingMode;
+    }
+
 }

@@ -129,7 +129,7 @@ public interface DriftManagerLocal extends DriftServerPluginFacet, DriftManagerR
      * @return A report containing a unified diff of the two versions of the file
      * referenced by drift
      */
-    FileDiffReport generateUnifiedDiff(Drift drift);
+    FileDiffReport generateUnifiedDiff(Drift<?, ?> drift);
 
     /**
      * Returns an object that encapsulates the information needed for viewing drift details
@@ -140,5 +140,5 @@ public interface DriftManagerLocal extends DriftServerPluginFacet, DriftManagerR
      */
     DriftDetails getDriftDetails(Subject subject, String driftId);
 
-    boolean isBinaryFile(Drift drift);
+    boolean isBinaryFile(Drift<?, ?> drift);
 }

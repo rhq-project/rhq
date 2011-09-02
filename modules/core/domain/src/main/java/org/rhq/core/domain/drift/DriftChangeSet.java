@@ -20,7 +20,7 @@ package org.rhq.core.domain.drift;
 
 import java.util.Set;
 
-import org.rhq.core.domain.drift.DriftConfiguration.Mode;
+import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
 
 /**
  * A DriftChangeSet is somewhat similar to a commit in version control systems. It contains
@@ -99,24 +99,24 @@ public interface DriftChangeSet<D extends Drift<?, ?>> {
     void setCategory(DriftChangeSetCategory category);
 
     /**
-     * Returns the mode of the owning drift configuration at the time of change set creation. 
-     * Because the value set on the owning drift configuration can change, the value must be
-     * stored with the change set such that it can be applied consistently when handling the
-     * associated drift.
+     * Returns the drift handling mode of the owning drift configuration at the time of change
+     * set creation.  Because the value set on the owning drift configuration can change, the 
+     * value must be stored with the change set such that it can be applied consistently when 
+     * handling the associated drift.
      *
-     * @return The {@link DriftConfiguration.Mode} mode
+     * @return The {@link DriftConfiguration.DriftHandlingMode} mode
      */
-    DriftConfiguration.Mode getDriftConfigurationMode();
+    DriftHandlingMode getDriftHandlingMode();
 
     /**
-     * Sets the drift configuration mode for the change set. It should be set to the owning drift
-     * configuration mode at the time of change set creation. Because the value set on the owning
-     * drift configuration can change, the value must be stored with the change set such that it
-     * can be applied consistently when handling the associated drift.
+     * Sets the drift handling mode for the change set. It should be set to the owning drift
+     * configuration's drift handling mode at the time of change set creation. Because the 
+     * value set on the owning drift configuration can change, the value must be stored with 
+     * the change set such that it can be applied consistently when handling the associated drift.
      *
-     * @param mode The {@link DriftConfiguration.Mode} mode
+     * @param mode The {@link DriftConfiguration.DriftHandlingMode} mode
      */
-    void setDriftConfigurationMode(Mode mode);
+    void setDriftHandlingMode(DriftHandlingMode mode);
 
     /**
      * Returns the id of the owning drift configuration. Note that while server plugins are

@@ -91,20 +91,18 @@ public class DriftConfigurationDataSource extends RPCDataSource<DriftConfigurati
         ListGridField enabledField = new ListGridField(ATTR_ENABLED, MSG.common_title_enabled());
         enabledField.setType(ListGridFieldType.IMAGE);
         enabledField.setAlign(Alignment.CENTER);
-        enabledField.setCanSort(false);
         fields.add(enabledField);
 
         ListGridField driftHandlingModeField = new ListGridField(ATTR_DRIFT_HANDLING_MODE, MSG
             .view_drift_table_driftHandlingMode());
-        driftHandlingModeField.setCanSort(true);
         fields.add(driftHandlingModeField);
 
         ListGridField intervalField = new ListGridField(ATTR_INTERVAL, MSG.common_title_interval());
-        intervalField.setCanSort(false);
         fields.add(intervalField);
 
         ListGridField baseDirField = new ListGridField(ATTR_BASE_DIR_STRING, MSG.view_drift_table_baseDir());
-        baseDirField.setCanSort(true);
+        // can't sort on this because it's not an entity field, it's derived from the config only
+        baseDirField.setCanSort(false);
         fields.add(baseDirField);
 
         if (this.entityContext.type != EntityContext.Type.Resource) {

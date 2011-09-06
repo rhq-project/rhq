@@ -51,7 +51,8 @@
             <module>client-api</module>
             <module>plugin-container</module>
             <module>gui</module>
-            <module>plugindoc</module>
+            <!-- spinder 8/29/11: disabling plugindoc for DocBook and Confluence as they don't seem to be used and causing brew build issues.
+            <module>plugindoc</module>-->
             <module>plugin-validator</module>
          </modules>
       </profile>

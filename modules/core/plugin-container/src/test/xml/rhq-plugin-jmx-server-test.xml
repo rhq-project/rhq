@@ -10,7 +10,7 @@
       <plugin-configuration>
          <c:simple-property name="type" type="string" description="The EMS connection type for this JMX Server">
             <c:property-options>
-               <c:option value="JDK5ConnectionType" default="true"/>
+               <c:option value="JDK5ConnectionType"/>
                <c:option value="JBossConnectionType"/>
             </c:property-options>
          </c:simple-property>

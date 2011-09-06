@@ -184,7 +184,7 @@ public class GroupResourceConfigurationEditView extends LocatableVLayout impleme
                                         resourceId, label, configuration);
                                     if (configuration == null || configuration.getProperties().isEmpty()) {
                                         throw new RuntimeException(
-                                            "One or more null or empty member connection settings was returned by the Server.");
+                                            "The server did not return the configuration for one or more member resources.");
                                     }
                                     memberConfigurations.add(memberConfiguration);
                                 }
@@ -212,11 +212,11 @@ public class GroupResourceConfigurationEditView extends LocatableVLayout impleme
 
                 public void onSuccess(Void result) {
                     String configHistoryUrl = LinkManager.getResourceGroupTabLink(group.getId(),
-                            ResourceDetailView.Tab.CONFIGURATION, ResourceDetailView.ConfigurationSubTab.HISTORY);
+                        ResourceDetailView.Tab.CONFIGURATION, ResourceDetailView.ConfigurationSubTab.HISTORY);
                     String configHistoryView = configHistoryUrl.substring(1); // chop off the leading '#'
                     Message message = new Message(MSG.view_group_resConfig_edit_saveInitiated_concise(), MSG
-                            .view_group_resConfig_edit_saveInitiated_full(group.getResourceType().getName(), group
-                                .getName()), Message.Severity.Info);
+                        .view_group_resConfig_edit_saveInitiated_full(group.getResourceType().getName(), group
+                            .getName()), Message.Severity.Info);
                     CoreGUI.goToView(configHistoryView, message);
                 }
             });

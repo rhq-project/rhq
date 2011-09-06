@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -31,9 +31,11 @@ import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.Response;
+import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.FormErrorOrientation;
+import com.smartgwt.client.types.ImageStyle;
 import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.IButton;
@@ -54,7 +56,6 @@ import com.smartgwt.client.widgets.form.fields.SubmitItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.KeyPressEvent;
 import com.smartgwt.client.widgets.form.fields.events.KeyPressHandler;
-import com.smartgwt.client.widgets.form.validator.LengthRangeValidator;
 import com.smartgwt.client.widgets.form.validator.RegExpValidator;
 import com.smartgwt.client.widgets.layout.HStack;
 
@@ -119,9 +120,16 @@ public class LoginView extends LocatableCanvas {
             form.setShowErrorText(true);
             form.setErrorOrientation(FormErrorOrientation.BOTTOM);
 
+            // NOTE: This image will either be an RHQ logo or a JON logo.
+            Img logoImg = new Img("header/rhq_logo_28px.png");
+            // NOTE: Don't explicitly specify a width, so the width will be scaled proportionally to the height.
+            logoImg.setImageType(ImageStyle.NORMAL);
+            logoImg.setImageHeight(40);
+
             CanvasItem logo = new CanvasItem();
-            logo.setCanvas(new Img("header/rhq_logo_28px.png", 80, 28));
             logo.setShowTitle(false);
+            logo.setHeight(logoImg.getImageHeight() + 4);
+            logo.setCanvas(logoImg);
 
             HeaderItem header = new HeaderItem();
             header.setValue(MSG.view_login_prompt());
@@ -494,16 +502,6 @@ public class LoginView extends LocatableCanvas {
             for (FormItem item : form.getFields()) {
                 String name = item.getName();
                 if ((name != null) && (!name.isEmpty())) {
-                    if (name.equals(USERNAME)) {
-                        LengthRangeValidator validator = new LengthRangeValidator();
-                        validator.setMin(6);
-                        item.setValidators(validator);
-                    }
-                    if (name.equals(FIRST)) {
-                        LengthRangeValidator validator = new LengthRangeValidator();
-                        validator.setMin(1);
-                        item.setValidators(validator);
-                    }
                     if (name.equals(EMAIL)) {
                         RegExpValidator emailValidator = new RegExpValidator();
                         emailValidator.setErrorMessage(MSG.view_login_invalidEmail());
@@ -515,22 +513,27 @@ public class LoginView extends LocatableCanvas {
         }
     }
 
-    private void login(final String user, final String password) {
+    private void login(final String username, final String password) {
         BrowserUtility.forceIe6Hacks();
 
         loginButton.setDisabled(true);
 
         try {
-            RequestBuilder b = new RequestBuilder(RequestBuilder.POST, "/j_security_check.do");
-            b.setHeader("Content-Type", "application/x-www-form-urlencoded");
-            b.setRequestData("j_username=" + user + "&j_password=" + password);
-            b.setCallback(new RequestCallback() {
+            RequestBuilder requestBuilder = new RequestBuilder(RequestBuilder.POST, "/j_security_check.do");
+            requestBuilder.setHeader("Content-Type", "application/x-www-form-urlencoded");
+            // URL-encode the username and password in case they contain URL special characters ('?', '&', '%', '+',
+            // etc.), which would corrupt the request if not encoded.
+            String encodedUsername = URL.encodeComponent(username);
+            String encodedPassword = URL.encodeComponent(password);
+            String requestData = "j_username=" + encodedUsername + "&j_password=" + encodedPassword;
+            requestBuilder.setRequestData(requestData);
+            requestBuilder.setCallback(new RequestCallback() {
                 public void onResponseReceived(Request request, Response response) {
                     int statusCode = response.getStatusCode();
                     if (statusCode == 200) {
                         window.destroy();
                         loginShowing = false;
-                        UserSessionManager.login(user, password);
+                        UserSessionManager.login(username, password);
                     } else {
                         handleError(statusCode);
                     }
@@ -540,7 +543,7 @@ public class LoginView extends LocatableCanvas {
                     handleError(0);
                 }
             });
-            b.send();
+            requestBuilder.send();
         } catch (Exception e) {
             handleError(0);
         } finally {

@@ -126,8 +126,12 @@
               DEFAULT_PROPERTY_VALUE="false" FREAD_ONLY="FALSE"/>
 
         <!-- default drift server plugin settings -->
-        <data ID="57" PROPERTY_KEY="ACTIVE_DRIFT_PLUGIN" PROPERTY_VALUE="drift-rhq"
-              DEFAULT_PROPERTY_VALUE="drift-rhq" FREAD_ONLY="FALSE"/>
+        <data ID="57" PROPERTY_KEY="ACTIVE_DRIFT_PLUGIN" PROPERTY_VALUE="drift-jpa"
+              DEFAULT_PROPERTY_VALUE="drift-jpa" FREAD_ONLY="FALSE"/>
+
+        <!-- purge drift files older than 31 days by default -->
+        <data ID="58" PROPERTY_KEY="DRIFT_FILE_PURGE" PROPERTY_VALUE="2678400000"
+              DEFAULT_PROPERTY_VALUE="2678400000" FREAD_ONLY="FALSE"/>
 
     </table>
 

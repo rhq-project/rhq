@@ -44,17 +44,7 @@
                 first = false;
 
             String icon = FunctionTagLibrary.getOperationStatusURL(operation.getStatus()); 
-
             String link = "/coregui/CoreGUI.html#Resource/" + resourceId + "/Operations/History/" + operation.getId();
-
-//            out.write(
-//                    "    <event start=\"" + sdf.format(new Date(operation.getCreatedTime())) + "\" " +
-//                    "title=\"Operation: " + operation.getOperationDefinition().getDisplayName() + "\" \n" +
-//                    "link=\"/rhq/resource/operation/resourceOperationHistoryDetails.xhtml?id=" + resourceId + "&amp;opId=" + operation.getId() + "\" " +
-//                    "icon=\"" + icon + "\" >\n" +
-//                            "&lt;b&gt;User:&lt;/b&gt; " + operation.getSubjectName() + "&lt;br/&gt;" +
-//                            "&lt;b&gt;Status:&lt;/b&gt; " + operation.getStatus() +
-//                    "    </event>\n\n");
 %>
 
 { "start" : "<%=sdf.format(new Date(operation.getCreatedTime()))%>",

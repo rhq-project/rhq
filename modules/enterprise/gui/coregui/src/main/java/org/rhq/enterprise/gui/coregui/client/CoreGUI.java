@@ -33,6 +33,7 @@ import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Window.Location;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.core.KeyIdentifier;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.util.KeyCallback;
@@ -41,10 +42,12 @@ import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.layout.VLayout;
 
+import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertHistoryView;
 import org.rhq.enterprise.gui.coregui.client.bundle.BundleTopView;
 import org.rhq.enterprise.gui.coregui.client.dashboard.DashboardsView;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.help.HelpView;
 import org.rhq.enterprise.gui.coregui.client.inventory.InventoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupDetailView;
@@ -109,6 +112,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
     private MenuBarView menuBarView;
     private Footer footer;
     private int rpcTimeout;
+    private ProductInfo productInfo;
 
     public void onModuleLoad() {
         String hostPageBaseURL = GWT.getHostPageBaseURL();
@@ -260,6 +264,28 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
 
     public static CoreGUI get() {
         return coreGUI;
+    }
+
+    public void init() {
+        if (productInfo == null) {
+            GWTServiceLookup.getSystemService().getProductInfo(new AsyncCallback<ProductInfo>() {
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError(MSG.view_aboutBox_failedToLoad(), caught);
+                    buildCoreUI();
+                }
+
+                public void onSuccess(ProductInfo result) {
+                    productInfo = result;
+                    buildCoreUI();
+                }
+            });
+        } else {
+            buildCoreUI();
+        }
+    }
+
+    public ProductInfo getProductInfo() {
+        return productInfo;
     }
 
     public void buildCoreUI() {
@@ -428,6 +454,11 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
 
     public static MessageConstants getMessageConstants() {
         return MSGCONST;
+    }
+
+    public void reset() {
+        messageCenter.reset();
+        footer.reset();
     }
 
     private class RootCanvas extends VLayout implements BookmarkableView {

@@ -30,6 +30,10 @@ import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardSte
 import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
+/**
+ * @author Jay Shaughnessy
+ *
+ */
 public class GetDeploymentOptionsStep extends AbstractWizardStep {
 
     static private final String DEPLOY_LATER = "later";

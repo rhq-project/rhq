@@ -104,7 +104,7 @@ public class ManagedASDiscovery extends AbstractBaseDiscovery
                 String homeDir = getHomeDirFromCommandLine(processInfo.getCommandLine());
                 initLogFile(scans, serverInfo.name, config, homeDir);
 
-                String version = homeDir.substring(homeDir.lastIndexOf("-") + 1);
+                String version = determineServerVersionFromHomeDir(homeDir);
 
                 DiscoveredResourceDetails detail = new DiscoveredResourceDetails(discoveryContext.getResourceType(), // ResourceType
                     hostName + "/" + serverInfo.name, // key

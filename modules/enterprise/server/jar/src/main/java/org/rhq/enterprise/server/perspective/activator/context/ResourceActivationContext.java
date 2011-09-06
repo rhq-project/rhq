@@ -82,7 +82,8 @@ public class ResourceActivationContext extends AbstractResourceOrGroupActivation
         if (this.resourcePermissions == null) {
             Set<Permission> perms = this.authorizationManager.getImplicitResourcePermissions(getSubject(),
                 this.resource.getId());
-            this.resourcePermissions = EnumSet.copyOf(perms);
+            this.resourcePermissions = EnumSet.noneOf(Permission.class);
+            this.resourcePermissions.addAll(perms);
         }
         return this.resourcePermissions;
     }

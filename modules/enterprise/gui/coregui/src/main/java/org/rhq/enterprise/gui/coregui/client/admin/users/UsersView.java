@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.ListGridField;
@@ -30,6 +31,7 @@ import com.smartgwt.client.widgets.grid.events.CellClickEvent;
 import com.smartgwt.client.widgets.grid.events.CellClickHandler;
 
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
 import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
 import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
@@ -37,6 +39,9 @@ import org.rhq.enterprise.gui.coregui.client.components.table.EscapedHtmlCellFor
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.gwt.SubjectGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
  * A table that lists all users and provides the ability to view or edit details of users, delete users, or create new
@@ -206,7 +211,32 @@ public class UsersView extends TableSection<UsersDataSource> {
             }
 
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                deleteSelectedRecords();
+                if (selection == null || selection.length == 0) {
+                    return;
+                }
+
+                final ArrayList<String> doomedNames = new ArrayList<String>(selection.length);
+                final int[] doomedIds = new int[selection.length];
+                int i = 0;
+                for (ListGridRecord record : selection) {
+                    doomedNames.add(record.getAttribute(UsersDataSource.Field.NAME));
+                    doomedIds[i++] = record.getAttributeAsInt(UsersDataSource.Field.ID);
+                }
+
+                SubjectGWTServiceAsync subjectService = GWTServiceLookup.getSubjectService();
+                subjectService.deleteSubjects(doomedIds, new AsyncCallback<Void>() {
+                    public void onFailure(Throwable caught) {
+                        String message = MSG.dataSource_users_deleteFailed(doomedNames.toString());
+                        CoreGUI.getErrorHandler().handleError(message, caught);
+                        UsersView.this.refresh();
+                    }
+
+                    public void onSuccess(Void result) {
+                        Message message = new Message(MSG.dataSource_users_delete(doomedNames.toString()));
+                        CoreGUI.getMessageCenter().notify(message);
+                        UsersView.this.refresh();
+                    }
+                });
             }
         };
     }

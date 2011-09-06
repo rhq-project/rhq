@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.platform;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Set;
 
@@ -34,6 +35,7 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.HLayout;
 
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.core.domain.measurement.MeasurementData;
@@ -46,7 +48,6 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
-import org.rhq.enterprise.gui.coregui.client.RefreshableView;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
@@ -84,21 +85,57 @@ public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet
         setWidth100();
         setHeight100();
 
-        prefetch();
-
         setShowRecordComponents(true);
         setShowRecordComponentsByCell(true);
 
-        setUseAllDataSourceFields(true);
         setAutoFitData(Autofit.VERTICAL);
         setOverflow(Overflow.AUTO);
+        setAutoFetchData(false);
 
         setDataSource(new PlatformMetricDataSource(this));
-        setInitialCriteria(new Criteria(ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.PLATFORM
-            .name()));
     }
 
-    private void prefetch() {
+    protected void onDraw() {
+        ArrayList<ListGridField> fields = new ArrayList<ListGridField>(5);
+
+        ListGridField nameField = new ListGridField(ResourceDataSourceField.NAME.propertyName(), MSG
+            .common_title_name());
+        nameField.setCellFormatter(new CellFormatter() {
+            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
+                return "<a href=\"" + LinkManager.getResourceLink(listGridRecord.getAttributeAsInt("id")) + "\">" + o
+                    + "</a>";
+            }
+        });
+        fields.add(nameField);
+
+        ListGridField versionField = new ListGridField(ResourceDataSourceField.VERSION.propertyName(), MSG
+            .common_title_version());
+        fields.add(versionField);
+
+        ListGridField cpuField = new ListGridField("cpu", MSG.dataSource_platforms_field_cpu());
+        fields.add(cpuField);
+        ListGridField memoryField = new ListGridField("memory", MSG.dataSource_platforms_field_memory());
+        fields.add(memoryField);
+        ListGridField swapField = new ListGridField("swap", MSG.dataSource_platforms_field_swap());
+        fields.add(swapField);
+
+        nameField.setWidth("20%");
+        versionField.setWidth("20%");
+        cpuField.setWidth("20%");
+        memoryField.setWidth("20%");
+        swapField.setWidth("20%");
+
+        // the way the field data is calculated, we can't sort on the graph columns
+        cpuField.setCanSort(false);
+        memoryField.setCanSort(false);
+        swapField.setCanSort(false);
+
+        setFields(fields.toArray(new ListGridField[fields.size()]));
+
+        initialFetch();
+    }
+
+    private void initialFetch() {
 
         ResourceTypeCriteria typeCriteria = new ResourceTypeCriteria();
         typeCriteria.addFilterCategory(ResourceCategory.PLATFORM);
@@ -113,45 +150,10 @@ public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet
 
             public void onSuccess(PageList<ResourceType> result) {
                 setTypes(result);
-                buildUI();
+                fetchData(new Criteria(ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.PLATFORM
+                    .name()));
             }
         });
-    }
-
-    private void buildUI() {
-
-        ListGridField nameField = new ListGridField(ResourceDataSourceField.NAME.propertyName(), MSG
-            .common_title_name());
-        nameField.setCellFormatter(new CellFormatter() {
-            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                return "<a href=\"" + LinkManager.getResourceLink(listGridRecord.getAttributeAsInt("id")) + "\">" + o
-                    + "</a>";
-            }
-        });
-        nameField.setWidth("20%");
-        setFields(nameField);
-
-        ListGridField cpuField = getField(FIELD_CPU);
-        ListGridField memoryField = getField(FIELD_MEMORY);
-        ListGridField swapField = getField(FIELD_SWAP);
-
-        cpuField.setWidth("20%");
-        memoryField.setWidth("20%");
-        swapField.setWidth("20%");
-
-        // the way the field data is calculated, we can't sort on the graph columns
-        cpuField.setCanSort(false);
-        memoryField.setCanSort(false);
-        swapField.setCanSort(false);
-
-        hideField("id");
-        hideField(ResourceDataSourceField.TYPE.propertyName()); // we could show this, do we want to indicate the kind of platform?
-        hideField(ResourceDataSourceField.DESCRIPTION.propertyName()); // we could show this, but it makes the table wider
-        hideField(ResourceDataSourceField.PLUGIN.propertyName()); // its always the platform plugin, no need to show this
-        hideField(ResourceDataSourceField.CATEGORY.propertyName()); // we only ever show platforms, no need to show this
-        hideField(ResourceDataSourceField.AVAILABILITY.propertyName()); // the icon badging will indicate availability
-
-        this.fetchData(new Criteria(ResourceDataSourceField.CATEGORY.propertyName(), ResourceCategory.PLATFORM.name()));
     }
 
     protected void loadMetricsForResource(Resource resource, final Record record) {
@@ -330,6 +332,7 @@ public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet
             this.property = property;
         }
 
+        @SuppressWarnings("unused")
         public String getProperty() {
             return property;
         }
@@ -344,6 +347,7 @@ public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet
             this.property = property;
         }
 
+        @SuppressWarnings("unused")
         public String getProperty() {
             return property;
         }
@@ -358,6 +362,7 @@ public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet
             this.property = property;
         }
 
+        @SuppressWarnings("unused")
         public String getProperty() {
             return property;
         }
@@ -369,6 +374,7 @@ public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet
         MeasurementDefinition freeSwap, usedSwap, totalSwap;
         MeasurementDefinition idleCpu, systemCpu, userCpu, waitCpu;
 
+        @SuppressWarnings("unused")
         MeasurementDefinition[] definitions = new MeasurementDefinition[] { freeMemory, usedMemory, totalMemory,
             freeSwap, usedSwap, totalSwap, idleCpu, systemCpu, userCpu, waitCpu };
 
@@ -383,7 +389,7 @@ public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final Portlet getInstance(String locatorId) {
+        public final Portlet getInstance(String locatorId, EntityContext context) {
             return new PlatformSummaryPortlet(locatorId);
         }
     }

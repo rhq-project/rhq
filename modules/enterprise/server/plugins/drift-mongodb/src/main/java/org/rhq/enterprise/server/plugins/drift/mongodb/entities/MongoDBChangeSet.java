@@ -1,3 +1,21 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2011 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
 package org.rhq.enterprise.server.plugins.drift.mongodb.entities;
 
 import java.io.Serializable;
@@ -14,16 +32,30 @@ import org.bson.types.ObjectId;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
 
+/**
+ * A change set that is stored in a MongoDB database. The change set along with its entries
+ * are stored as a single document.
+ */
 @Entity("changesets")
 public class MongoDBChangeSet implements DriftChangeSet<MongoDBChangeSetEntry>, Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    /**
+     * The database primary key. This is auto-generated.
+     */
     @Id
     private ObjectId id;
 
+    /**
+     * The time that the change set was created.
+     */
     private Long ctime = System.currentTimeMillis();
 
+    /**
+     * Each change set is assigned a version number that is unique across change sets
+     * belonging to a given drift configuration (and corresponding resource).
+     */
     private int version;
 
     private DriftChangeSetCategory category;
@@ -104,6 +136,7 @@ public class MongoDBChangeSet implements DriftChangeSet<MongoDBChangeSetEntry>, 
 
     public MongoDBChangeSet add(MongoDBChangeSetEntry entry) {
         entries.add(entry);
+        entry.setId(entries.size() - 1);
         entry.setChangeSet(this);
         return this;
     }

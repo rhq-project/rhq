@@ -114,13 +114,13 @@ public class DriftConfigurationEditView extends LocatableVLayout implements Prop
             removeMember(editor);
         }
 
-        GWTServiceLookup.getDriftService().getDriftConfiguration(context, driftConfigId,
+        GWTServiceLookup.getDriftService().getDriftConfiguration(driftConfigId,
             new AsyncCallback<DriftConfiguration>() {
                 @Override
                 public void onSuccess(final DriftConfiguration result) {
 
                     editor = new ConfigurationEditor(extendLocatorId("Editor"), DriftConfigurationDefinition
-                        .getInstance(), result.getConfiguration());
+                        .getInstanceForExistingConfiguration(), result.getConfiguration());
                     editor.setOverflow(Overflow.AUTO);
                     editor.addPropertyValueChangeListener(DriftConfigurationEditView.this);
                     editor.setReadOnly(!hasWriteAccess);

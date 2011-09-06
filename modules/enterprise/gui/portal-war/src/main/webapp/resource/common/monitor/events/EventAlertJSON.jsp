@@ -57,9 +57,8 @@
             String icon = FunctionTagLibrary.getAlertPriorityURL(alert.getAlertDefinition().getPriority());
             StringBuilder buf = new StringBuilder();
             for (AlertConditionLog log : alert.getConditionLogs()) {
-                buf.append("<b>Condition:</b>" + log.getCondition().getName() + "<br/>");
-                buf.append("<b>Condition:</b>" + log.getCondition().getThreshold() + "<br/>");
-                buf.append("<b>Value:</b>" + log.getValue() + "</b>");
+                buf.append("<b>Condition:</b> " + log.getCondition().getName() + "<br/>");
+                buf.append("<b>Value:</b> " + log.getValue());
             }
 
             String link = "/coregui/CoreGUI.html#Resource/" + resourceId + "/Alerts/History/" + alert.getId();

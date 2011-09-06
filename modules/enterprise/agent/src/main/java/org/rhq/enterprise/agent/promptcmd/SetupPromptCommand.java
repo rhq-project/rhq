@@ -593,6 +593,20 @@ public class SetupPromptCommand implements AgentPromptCommand {
                 .getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_PCOPINVOCATIONTIMEOUT_HELP)));
 
         instr.add(new DefaultSetupInstruction(
+            AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSDRIFTDETECTIONPERIOD_PREF,
+            AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSDRIFTDETECTIONPERIOD_DEFAULT, new LongSetupValidityChecker(
+                0L, null),
+            SETUPMSG.getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSDRIFTDETECTIONPERIOD_PROMPT), SETUPMSG
+                .getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSDRIFTDETECTIONPERIOD_HELP)));
+
+        instr.add(new DefaultSetupInstruction(
+            AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSDRIFTDETECTIONINITIALDELAY_PREF,
+            AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSDRIFTDETECTIONINITIALDELAY_DEFAULT,
+            new LongSetupValidityChecker(1L, null), SETUPMSG
+                .getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSDRIFTDETECTIONINITIALDELAY_PROMPT), SETUPMSG
+                .getMsg(AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSDRIFTDETECTIONINITIALDELAY_HELP)));
+
+        instr.add(new DefaultSetupInstruction(
             AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSCONTENTDISCOVERYPERIOD_PREF,
             AgentSetupInstructions.SETUP_INSTRUCTION_PLUGINSCONTENTDISCOVERYPERIOD_DEFAULT,
             new LongSetupValidityChecker(0L, null), SETUPMSG

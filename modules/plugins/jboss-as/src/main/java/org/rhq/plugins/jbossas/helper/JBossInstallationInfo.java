@@ -47,7 +47,11 @@ public class JBossInstallationInfo {
 
     public JBossInstallationInfo(File installationDir) throws IOException {
         File binDir = new File(installationDir, "bin");
-        File runJar = new File(binDir, "run.jar");        
+        File runJar = new File(binDir, "run.jar");
+        if (!runJar.exists()) {
+            throw new RuntimeException(runJar + " does not exist - " + installationDir
+                    + " does not appear to be a JBoss installation/home directory.");
+        }
         Attributes jarManifestAttributes = loadManifestAttributesFromJar(runJar);
         this.productType = JBossProductType.determineJBossProductType(jarManifestAttributes);
         this.version = getVersion(jarManifestAttributes);

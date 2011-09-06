@@ -28,6 +28,7 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
+import org.rhq.core.domain.configuration.definition.constraint.RegexConstraint;
 
 /**
  * The drift subsystem has a fixed configuration definition. That is, its property definitions
@@ -56,7 +57,12 @@ public class DriftConfigurationDefinition implements Serializable {
     public static final String PROP_PATH = "path"; // for both include and exclude
     public static final String PROP_PATTERN = "pattern"; // for both include and exclude
 
-    public static final boolean DEFAULT_ENABLED = false;
+    // because we know drift config names will actually be used by the agent's plugin container as directories names,
+    // we must make sure they are restricted to only be characters valid for file system pathnames.
+    // Thus, we only allow config names to only include spaces or "." or "-" or alphanumeric or "_" characters.
+    public static final String PROP_NAME_REGEX_PATTERN = "[ \\.\\-\\w]+";
+
+    public static final boolean DEFAULT_ENABLED = true;
     public static final long DEFAULT_INTERVAL = 1800L;
 
     /**
@@ -74,24 +80,59 @@ public class DriftConfigurationDefinition implements Serializable {
     private static final ConfigurationDefinition INSTANCE = new ConfigurationDefinition("GLOBAL_DRIFT_CONFIG_DEF",
         "The drift configuration definition");
 
+    /**
+     * For drift configurations that have already been created, this definition can be used for editing those existing configuration.
+     * Existing drift configurations cannot have their name changed nor can their base directory or includes/excludes be altered.
+     */
+    private static final ConfigurationDefinition INSTANCE_FOR_EXISTING_CONFIGS = new ConfigurationDefinition(
+        "GLOBAL_DRIFT_CONFIG_DEF", "The drift configuration definition");
+
+    /**
+     * Returns a configuration definition suitable for showing a new configuration form - that is,
+     * a configuration that has not yet been created.
+     * This will allow all fields to be editable.
+     * If you need a configuration definition to show an existing configuration, use the definition
+     * returned by {@link #getInstanceForExistingConfiguration()}.
+     * 
+     * @return configuration definition
+     */
     public static ConfigurationDefinition getInstance() {
         return INSTANCE;
+    }
+
+    /**
+     * Returns a configuration definition suitable for showing an existing drift configuration.
+     * This will set certain fields as read-only - those fields which the user is not allowed to
+     * edit on exiting drift configurations (which includes name, basedir and includes/excludes filters).
+     * 
+     * @return configuration definition
+     */
+    public static ConfigurationDefinition getInstanceForExistingConfiguration() {
+        return INSTANCE_FOR_EXISTING_CONFIGS;
     }
 
     static {
         //INSTANCE.setId(1);
         INSTANCE.setConfigurationFormat(ConfigurationFormat.STRUCTURED);
+        INSTANCE.put(createName(INSTANCE, false));
+        INSTANCE.put(createEnabled(INSTANCE));
+        INSTANCE.put(createBasedir(INSTANCE, false));
+        INSTANCE.put(createInterval(INSTANCE));
+        INSTANCE.put(createIncludes(INSTANCE, false));
+        INSTANCE.put(createExcludes(INSTANCE, false));
 
-        INSTANCE.put(createName());
-        INSTANCE.put(createEnabled());
-        INSTANCE.put(createBasedir());
-        INSTANCE.put(createInterval());
-        INSTANCE.put(createIncludes());
-        INSTANCE.put(createExcludes());
+        //INSTANCE_FOR_EXISTING_CONFIGS.setId(1);
+        INSTANCE_FOR_EXISTING_CONFIGS.setConfigurationFormat(ConfigurationFormat.STRUCTURED);
+        INSTANCE_FOR_EXISTING_CONFIGS.put(createName(INSTANCE_FOR_EXISTING_CONFIGS, true));
+        INSTANCE_FOR_EXISTING_CONFIGS.put(createEnabled(INSTANCE_FOR_EXISTING_CONFIGS));
+        INSTANCE_FOR_EXISTING_CONFIGS.put(createBasedir(INSTANCE_FOR_EXISTING_CONFIGS, true));
+        INSTANCE_FOR_EXISTING_CONFIGS.put(createInterval(INSTANCE_FOR_EXISTING_CONFIGS));
+        INSTANCE_FOR_EXISTING_CONFIGS.put(createIncludes(INSTANCE_FOR_EXISTING_CONFIGS, true));
+        INSTANCE_FOR_EXISTING_CONFIGS.put(createExcludes(INSTANCE_FOR_EXISTING_CONFIGS, true));
 
     }
 
-    private static PropertyDefinitionSimple createName() {
+    private static PropertyDefinitionSimple createName(ConfigurationDefinition configDef, boolean readOnly) {
         String name = PROP_NAME;
         String description = "The drift configuration name";
         boolean required = true;
@@ -100,15 +141,20 @@ public class DriftConfigurationDefinition implements Serializable {
         PropertyDefinitionSimple pd = new PropertyDefinitionSimple(name, description, required, type);
         //pd.setId(1);
         pd.setDisplayName("Drift Configuration Name");
-        pd.setReadOnly(false);
+        pd.setReadOnly(readOnly);
         pd.setSummary(true);
         pd.setOrder(0);
         pd.setAllowCustomEnumeratedValue(false);
-        pd.setConfigurationDefinition(INSTANCE);
+        pd.setConfigurationDefinition(configDef);
+
+        RegexConstraint constrait = new RegexConstraint();
+        constrait.setDetails(PROP_NAME_REGEX_PATTERN);
+        pd.addConstraints(constrait);
+
         return pd;
     }
 
-    private static PropertyDefinitionSimple createEnabled() {
+    private static PropertyDefinitionSimple createEnabled(ConfigurationDefinition configDef) {
         String name = PROP_ENABLED;
         String description = "Enables or disables the drift configuration";
         boolean required = true;
@@ -121,31 +167,31 @@ public class DriftConfigurationDefinition implements Serializable {
         pd.setSummary(true);
         pd.setOrder(1);
         pd.setAllowCustomEnumeratedValue(false);
-        pd.setConfigurationDefinition(INSTANCE);
+        pd.setConfigurationDefinition(configDef);
         pd.setDefaultValue(String.valueOf(DEFAULT_ENABLED));
         return pd;
     }
 
-    private static PropertyDefinitionMap createBasedir() {
+    private static PropertyDefinitionMap createBasedir(ConfigurationDefinition configDef, boolean readOnly) {
         String name = PROP_BASEDIR;
         String description = "The root directory from which snapshots will be generated during drift monitoring.";
         boolean required = true;
 
-        PropertyDefinitionSimple valueContext = createBasedirValueContext();
-        PropertyDefinitionSimple valueName = createBasedirValueName();
+        PropertyDefinitionSimple valueContext = createBasedirValueContext(readOnly);
+        PropertyDefinitionSimple valueName = createBasedirValueName(readOnly);
 
         PropertyDefinitionMap pd = new PropertyDefinitionMap(name, description, required, valueContext, valueName);
         //pd.setId(3);
         pd.setDisplayName("Base Directory");
-        pd.setReadOnly(false);
+        pd.setReadOnly(readOnly);
         pd.setSummary(true);
         pd.setOrder(2);
-        pd.setConfigurationDefinition(INSTANCE);
+        pd.setConfigurationDefinition(configDef);
 
         return pd;
     }
 
-    private static PropertyDefinitionSimple createBasedirValueContext() {
+    private static PropertyDefinitionSimple createBasedirValueContext(boolean readOnly) {
         String name = PROP_BASEDIR_VALUECONTEXT;
         String description = "Identifies where the named value can be found.";
         boolean required = true;
@@ -154,7 +200,7 @@ public class DriftConfigurationDefinition implements Serializable {
         PropertyDefinitionSimple pd = new PropertyDefinitionSimple(name, description, required, type);
         //pd.setId(4);
         pd.setDisplayName("Value Context");
-        pd.setReadOnly(false);
+        pd.setReadOnly(readOnly);
         pd.setSummary(true);
         pd.setOrder(0);
 
@@ -188,7 +234,7 @@ public class DriftConfigurationDefinition implements Serializable {
         return pd;
     }
 
-    private static PropertyDefinitionSimple createBasedirValueName() {
+    private static PropertyDefinitionSimple createBasedirValueName(boolean readOnly) {
         String name = PROP_BASEDIR_VALUENAME;
         String description = "The name of the value as found in the context";
         boolean required = true;
@@ -197,14 +243,14 @@ public class DriftConfigurationDefinition implements Serializable {
         PropertyDefinitionSimple pd = new PropertyDefinitionSimple(name, description, required, type);
         //pd.setId(5);
         pd.setDisplayName("Value Name");
-        pd.setReadOnly(false);
+        pd.setReadOnly(readOnly);
         pd.setSummary(true);
         pd.setOrder(1);
         pd.setAllowCustomEnumeratedValue(false);
         return pd;
     }
 
-    private static PropertyDefinitionSimple createInterval() {
+    private static PropertyDefinitionSimple createInterval(ConfigurationDefinition configDef) {
         String name = PROP_INTERVAL;
         String description = "The frequency in seconds in which drift monitoring should run. Defaults to 1800 seconds (i.e. 30 minutes)";
         boolean required = false;
@@ -217,46 +263,46 @@ public class DriftConfigurationDefinition implements Serializable {
         pd.setSummary(true);
         pd.setOrder(3);
         pd.setAllowCustomEnumeratedValue(false);
-        pd.setConfigurationDefinition(INSTANCE);
+        pd.setConfigurationDefinition(configDef);
         pd.setDefaultValue(String.valueOf(DEFAULT_INTERVAL));
         return pd;
     }
 
-    private static PropertyDefinitionList createIncludes() {
+    private static PropertyDefinitionList createIncludes(ConfigurationDefinition configDef, boolean readOnly) {
         String name = PROP_INCLUDES;
         String description = "A set of patterns that specify files and/or directories to include.";
         boolean required = false;
 
-        PropertyDefinitionMap map = createInclude();
+        PropertyDefinitionMap map = createInclude(readOnly);
 
         PropertyDefinitionList pd = new PropertyDefinitionList(name, description, required, map);
         //pd.setId(7);
         pd.setDisplayName("Includes");
-        pd.setReadOnly(false);
+        pd.setReadOnly(readOnly);
         pd.setSummary(true);
         pd.setOrder(4);
-        pd.setConfigurationDefinition(INSTANCE);
+        pd.setConfigurationDefinition(configDef);
         return pd;
     }
 
-    private static PropertyDefinitionMap createInclude() {
+    private static PropertyDefinitionMap createInclude(boolean readOnly) {
         String name = PROP_INCLUDES_INCLUDE;
         String description = "A pattern that specifies a file or directory to include.";
         boolean required = true;
 
-        PropertyDefinitionSimple path = createIncludePath();
-        PropertyDefinitionSimple pattern = createIncludePattern();
+        PropertyDefinitionSimple path = createIncludePath(readOnly);
+        PropertyDefinitionSimple pattern = createIncludePattern(readOnly);
 
         PropertyDefinitionMap pd = new PropertyDefinitionMap(name, description, required, path, pattern);
         //pd.setId(8);
         pd.setDisplayName("Include");
-        pd.setReadOnly(false);
+        pd.setReadOnly(readOnly);
         pd.setSummary(true);
         pd.setOrder(0);
         return pd;
     }
 
-    private static PropertyDefinitionSimple createIncludePath() {
+    private static PropertyDefinitionSimple createIncludePath(boolean readOnly) {
         String name = PROP_PATH;
         String description = "A file system path that can be a directory or a file. The path is assumed to be relative to the base directory of the drift configuration.";
         boolean required = true;
@@ -265,14 +311,14 @@ public class DriftConfigurationDefinition implements Serializable {
         PropertyDefinitionSimple pd = new PropertyDefinitionSimple(name, description, required, type);
         //pd.setId(9);
         pd.setDisplayName("Path");
-        pd.setReadOnly(false);
+        pd.setReadOnly(readOnly);
         pd.setSummary(true);
         pd.setOrder(0);
         pd.setAllowCustomEnumeratedValue(false);
         return pd;
     }
 
-    private static PropertyDefinitionSimple createIncludePattern() {
+    private static PropertyDefinitionSimple createIncludePattern(boolean readOnly) {
         String name = PROP_PATTERN;
         String description = "Pathname pattern that must match for the items in the directory path to be included.";
         boolean required = false;
@@ -281,48 +327,48 @@ public class DriftConfigurationDefinition implements Serializable {
         PropertyDefinitionSimple pd = new PropertyDefinitionSimple(name, description, required, type);
         //pd.setId(10);
         pd.setDisplayName("Pattern");
-        pd.setReadOnly(false);
+        pd.setReadOnly(readOnly);
         pd.setSummary(true);
         pd.setOrder(1);
         pd.setAllowCustomEnumeratedValue(false);
         return pd;
     }
 
-    private static PropertyDefinitionList createExcludes() {
+    private static PropertyDefinitionList createExcludes(ConfigurationDefinition configDef, boolean readOnly) {
         String name = PROP_EXCLUDES;
         String description = "A set of patterns that specify files and/or directories to exclude.";
         boolean required = false;
 
-        PropertyDefinitionMap map = createExclude();
+        PropertyDefinitionMap map = createExclude(readOnly);
 
         PropertyDefinitionList pd = new PropertyDefinitionList(name, description, required, map);
         //pd.setId(11);
         pd.setDisplayName("Excludes");
-        pd.setReadOnly(false);
+        pd.setReadOnly(readOnly);
         pd.setSummary(true);
         pd.setOrder(5);
-        pd.setConfigurationDefinition(INSTANCE);
+        pd.setConfigurationDefinition(configDef);
         return pd;
     }
 
-    private static PropertyDefinitionMap createExclude() {
+    private static PropertyDefinitionMap createExclude(boolean readOnly) {
         String name = PROP_EXCLUDES_EXCLUDE;
         String description = "A pattern that specifies a file or directory to exclude.";
         boolean required = true;
 
-        PropertyDefinitionSimple path = createExcludePath();
-        PropertyDefinitionSimple pattern = createExcludePattern();
+        PropertyDefinitionSimple path = createExcludePath(readOnly);
+        PropertyDefinitionSimple pattern = createExcludePattern(readOnly);
 
         PropertyDefinitionMap pd = new PropertyDefinitionMap(name, description, required, path, pattern);
         //pd.setId(12);
         pd.setDisplayName("Exclude");
-        pd.setReadOnly(false);
+        pd.setReadOnly(readOnly);
         pd.setSummary(true);
         pd.setOrder(0);
         return pd;
     }
 
-    private static PropertyDefinitionSimple createExcludePath() {
+    private static PropertyDefinitionSimple createExcludePath(boolean readOnly) {
         String name = PROP_PATH;
         String description = "A file system path that can be a directory or a file. The path is assumed to be relative to the base directory of the drift configuration.";
         boolean required = true;
@@ -331,14 +377,14 @@ public class DriftConfigurationDefinition implements Serializable {
         PropertyDefinitionSimple pd = new PropertyDefinitionSimple(name, description, required, type);
         //pd.setId(13);
         pd.setDisplayName("Path");
-        pd.setReadOnly(false);
+        pd.setReadOnly(readOnly);
         pd.setSummary(true);
         pd.setOrder(0);
         pd.setAllowCustomEnumeratedValue(false);
         return pd;
     }
 
-    private static PropertyDefinitionSimple createExcludePattern() {
+    private static PropertyDefinitionSimple createExcludePattern(boolean readOnly) {
         String name = PROP_PATTERN;
         String description = "Pathname pattern that must match for the items in the directory path to be excluded.";
         boolean required = false;
@@ -347,7 +393,7 @@ public class DriftConfigurationDefinition implements Serializable {
         PropertyDefinitionSimple pd = new PropertyDefinitionSimple(name, description, required, type);
         //pd.setId(14);
         pd.setDisplayName("Pattern");
-        pd.setReadOnly(false);
+        pd.setReadOnly(readOnly);
         pd.setSummary(true);
         pd.setOrder(1);
         pd.setAllowCustomEnumeratedValue(false);

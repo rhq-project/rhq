@@ -138,6 +138,9 @@ public class BundlesListView extends Table<BundlesWithLatestVersionDataSource> {
                 (hasAuth) ? TableActionEnablement.ALWAYS : TableActionEnablement.NEVER) {
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     new BundleCreateWizard().startWizard();
+                    // we can refresh the table buttons immediately since the wizard is a dialog, the
+                    // user can't access enabled buttons anyway.
+                    BundlesListView.this.refreshTableInfo();
                 }
             });
 
@@ -185,6 +188,9 @@ public class BundlesListView extends Table<BundlesWithLatestVersionDataSource> {
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     if (selection.length == 0) {
                         new BundleDeployWizard().startWizard();
+                        // we can refresh the table buttons immediately since the wizard is a dialog, the
+                        // user can't access enabled buttons anyway.
+                        BundlesListView.this.refreshTableInfo();
                         return;
                     }
 
@@ -207,6 +213,9 @@ public class BundlesListView extends Table<BundlesWithLatestVersionDataSource> {
                                 return;
                             }
                             new BundleDeployWizard(result.get(0).getId()).startWizard();
+                            // we can refresh the table buttons immediately since the wizard is a dialog, the
+                            // user can't access enabled buttons anyway.
+                            BundlesListView.this.refreshTableInfo();
                         }
                     });
                 }

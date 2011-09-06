@@ -18,24 +18,13 @@
  */
 package org.rhq.enterprise.gui.coregui.client;
 
-import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.widgets.events.ClickEvent;
-import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
 
-import org.rhq.core.domain.alert.Alert;
-import org.rhq.core.domain.alert.AlertPriority;
-import org.rhq.core.domain.criteria.AlertCriteria;
-import org.rhq.core.domain.criteria.Criteria.Restriction;
-import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.alert.AlertHistoryView;
 import org.rhq.enterprise.gui.coregui.client.footer.FavoritesButton;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.report.ReportTopView;
 import org.rhq.enterprise.gui.coregui.client.util.message.MessageBar;
 import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenterView;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
@@ -68,15 +57,12 @@ public class Footer extends LocatableHLayout {
 
         messageCenter = new MessageCenterView(extendLocatorId(MessageCenterView.LOCATOR_ID));
         final FavoritesButton favoritesButton = new FavoritesButton(extendLocatorId("Favorites"));
-        final AlertsMessage alertsMessage = new AlertsMessage(extendLocatorId("Alerts"));
         messageBar = new MessageBar();
 
-        // leave space for the RPC Activity Spinner 
+        // leave space for the RPC Activity Spinner (I think this has been removed, giving back the space) 
         addMember(createHSpacer(16));
 
         addMember(messageBar);
-
-        addMember(alertsMessage);
 
         VLayout favoritesLayout = new VLayout();
         favoritesLayout.setHeight100();
@@ -87,35 +73,7 @@ public class Footer extends LocatableHLayout {
 
         addMember(getMessageCenterButton());
 
-        // people don't like the refresh and CoreGUI.refresh() isn't refreshing everything I want
-        // if we ever want to reintroduce the refresh button to manually call CoreGUI.refresh(), just uncomment this line
-        // addMember(getRefreshButton());
-
         addMember(createHSpacer(0));
-
-        alertsMessage.schedule(60000);
-    }
-
-    private LocatableVLayout getRefreshButton() {
-        LocatableVLayout layout = new LocatableVLayout(extendLocatorId("refreshLayout"));
-        layout.setHeight100();
-        layout.setAlign(Alignment.CENTER);
-        layout.setAutoWidth();
-
-        LocatableIButton button = new LocatableIButton(extendLocatorId("refreshButton"), "");
-        button.setAlign(Alignment.CENTER);
-        button.setAutoFit(true);
-        button.setIcon("[SKIN]/actions/refresh.png");
-        button.setPrompt(CoreGUI.getMessages().common_button_refresh());
-        button.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(ClickEvent event) {
-                CoreGUI.refresh();
-            }
-        });
-
-        layout.addMember(button);
-        return layout;
     }
 
     private LocatableVLayout getMessageCenterButton() {
@@ -139,6 +97,8 @@ public class Footer extends LocatableHLayout {
         return layout;
     }
 
+    // Leaving this although it's unused. It used to be the subclass for the alert count mechanism, which is now
+    // gone, but this may be useful in the future for something else.
     public abstract static class RefreshableLabel extends LocatableLabel {
         public RefreshableLabel(String locatorId) {
             super(locatorId);
@@ -176,63 +136,17 @@ public class Footer extends LocatableHLayout {
         }
     }
 
-    public static class AlertsMessage extends RefreshableLabel {
-        public AlertsMessage(String locatorId) {
-            super(locatorId);
-            setHeight100();
-            setWidth(25);
-            setPadding(5);
-            setHoverWidth(200);
-            setIconSize(16);
-            setWrap(false);
-            changeIcon(0);
-            addClickHandler(new ClickHandler() {
-                public void onClick(ClickEvent clickEvent) {
-                    History.newItem(ReportTopView.VIEW_ID.getName() + "/" + ReportTopView.SECTION_SUBSYSTEMS_VIEW_ID
-                        + "/" + AlertHistoryView.SUBSYSTEM_VIEW_ID);
-                }
-            });
-        }
-
-        private void changeIcon(int alertCount) {
-            if (alertCount == 0) {
-                setPrompt(MSG.view_core_noRecentAlerts());
-                setContents(imgHTML("subsystems/alert/Alerts_16.png", 16, 16)
-                    + "<span style=\"display:inline-block; vertical-align:middle\">0</span>");
-            } else {
-                setPrompt(MSG.view_core_recentAlerts(String.valueOf(alertCount)));
-                String link = '#' + ReportTopView.VIEW_ID.getName() + "/" + ReportTopView.SECTION_SUBSYSTEMS_VIEW_ID
-                    + "/" + AlertHistoryView.SUBSYSTEM_VIEW_ID;
-                setContents("<a href=\"" + link + "\">" + imgHTML(ImageManager.getAlertIcon(AlertPriority.HIGH))
-                    + "<span style=\"display:inline-block; vertical-align:middle\">" + String.valueOf(alertCount)
-                    + "</span></a>");
-            }
-        }
-
-        public void refreshLoggedIn() {
-            AlertCriteria alertCriteria = new AlertCriteria();
-            alertCriteria.addFilterStartTime(System.currentTimeMillis() - (1000L * 60 * 60 * 8)); // last 8 hrs
-            alertCriteria.setRestriction(Restriction.COUNT_ONLY);
-
-            GWTServiceLookup.getAlertService().findAlertsByCriteria(alertCriteria,
-                new AsyncCallback<PageList<Alert>>() {
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError(MSG.view_core_error_1(), caught);
-                    }
-
-                    public void onSuccess(PageList<Alert> result) {
-                        changeIcon(result.getTotalSize());
-                    }
-                });
-        }
-    }
-
     public MessageBar getMessageBar() {
         return messageBar;
     }
 
     public MessageCenterView getMessageCenter() {
         return messageCenter;
+    }
+
+    public void reset() {
+        messageBar.reset();
+        messageCenter.reset();
     }
 
     private HLayout createHSpacer(int width) {

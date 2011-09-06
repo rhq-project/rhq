@@ -21,6 +21,7 @@ package org.rhq.enterprise.server.sync.test;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.fail;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -41,6 +42,7 @@ import javax.xml.stream.XMLStreamException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.jmock.Expectations;
 import org.testng.annotations.Test;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -48,8 +50,10 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.sync.ExporterMessages;
-import org.rhq.enterprise.server.sync.ExportException;
+import org.rhq.enterprise.server.sync.ExportReader;
 import org.rhq.enterprise.server.sync.ExportWriter;
 import org.rhq.enterprise.server.sync.ExportingInputStream;
 import org.rhq.enterprise.server.sync.NoSingleEntity;
@@ -57,8 +61,10 @@ import org.rhq.enterprise.server.sync.Synchronizer;
 import org.rhq.enterprise.server.sync.exporters.AbstractDelegatingExportingIterator;
 import org.rhq.enterprise.server.sync.exporters.Exporter;
 import org.rhq.enterprise.server.sync.exporters.ExportingIterator;
+import org.rhq.enterprise.server.sync.importers.ExportedEntityMatcher;
 import org.rhq.enterprise.server.sync.importers.Importer;
 import org.rhq.enterprise.server.sync.validators.ConsistencyValidator;
+import org.rhq.test.JMockTest;
 
 /**
  * 
@@ -66,7 +72,7 @@ import org.rhq.enterprise.server.sync.validators.ConsistencyValidator;
  * @author Lukas Krejci
  */
 @Test
-public class ExportingInputStreamTest {
+public class ExportingInputStreamTest extends JMockTest {
 
     private static final Log LOG = LogFactory.getLog(ExportingInputStreamTest.class);
     
@@ -82,9 +88,7 @@ public class ExportingInputStreamTest {
             }
             
             public void export(ExportWriter output) throws XMLStreamException {
-                output.writeStartElement("item");
                 output.writeCData(getCurrent().toString());
-                output.writeEndElement();
             }
             
             public String getNotes() {
@@ -109,6 +113,37 @@ public class ExportingInputStreamTest {
         }        
     }
     
+    private static class DummyImporter<T> implements Importer<NoSingleEntity, T> {
+
+        @Override
+        public ConfigurationDefinition getImportConfigurationDefinition() {
+            return null;
+        }
+
+        @Override
+        public void configure(Configuration importConfiguration) {
+        }
+
+        @Override
+        public ExportedEntityMatcher<NoSingleEntity, T> getExportedEntityMatcher() {
+            return null;
+        }
+
+        @Override
+        public void update(NoSingleEntity entity, T exportedEntity) throws Exception {
+        }
+
+        @Override
+        public T unmarshallExportedEntity(ExportReader reader) throws XMLStreamException {
+            return null;
+        }
+
+        @Override
+        public void finishImport() throws Exception {
+        }
+        
+    }
+    
     private static class ListToStringSynchronizer<T> implements Synchronizer<NoSingleEntity, T> {
         private List<T> list;
         
@@ -123,7 +158,7 @@ public class ExportingInputStreamTest {
         
         @Override
         public Importer<NoSingleEntity, T> getImporter() {
-            return null;
+            return new DummyImporter<T>();
         }
         
         @Override
@@ -149,7 +184,7 @@ public class ExportingInputStreamTest {
     }
     
 
-    public void testCanExport() throws Exception {
+    public void testSucessfulExport() throws Exception {
         List<String> list1 = Arrays.asList("a", "b", "c");
         List<Integer> list2 = Arrays.asList(1, 2, 3);
         
@@ -174,18 +209,24 @@ public class ExportingInputStreamTest {
         
         assertEquals(ExportingInputStream.CONFIGURATION_EXPORT_ELEMENT, root.getNodeName());
         
-        assertEquals(root.getChildNodes().getLength(), 2, "Unexpected number of entities elements");
+        NodeList entities = root.getElementsByTagName(ExportingInputStream.ENTITIES_EXPORT_ELEMENT);
+        assertEquals(entities.getLength(), 2, "Unexpected number of entities elements");
         
-        Element export1 = (Element) root.getChildNodes().item(0);
-        Element export2 = (Element) root.getChildNodes().item(1);
+        Element export1 = (Element) entities.item(0);
+        Element export2 = (Element) entities.item(1);
         
         assertEquals(export1.getAttribute("id"), StringListSynchronizer.class.getName());
         assertEquals(export2.getAttribute("id"), IntegerListSynchronizer.class.getName());
 
         String[] expectedNotes = new String[] {list1.toString(), list2.toString()};
         
-        for(int i = 0; i < root.getChildNodes().getLength(); ++i) {
-            Element entitiesElement = (Element) root.getChildNodes().item(i);
+        for(int i = 0, elementIndex = 0; i < root.getChildNodes().getLength(); ++i) {
+            Node node = root.getChildNodes().item(i);
+            if (!(node instanceof Element)) {
+                continue;
+            }
+            
+            Element entitiesElement = (Element) node;
             
             assertEquals(entitiesElement.getNodeName(), ExportingInputStream.ENTITIES_EXPORT_ELEMENT);
             
@@ -197,7 +238,7 @@ public class ExportingInputStreamTest {
             assertNotNull(note, "Couldn't find exporter notes.");
             
             String notesText = ((Element)note).getTextContent();
-            assertEquals(notesText, expectedNotes[i], "Unexpected notes for entities.");
+            assertEquals(notesText, expectedNotes[elementIndex], "Unexpected notes for entities.");
             
             NodeList entityElements = entitiesElement.getElementsByTagName(ExportingInputStream.ENTITY_EXPORT_ELEMENT);
             
@@ -220,9 +261,159 @@ public class ExportingInputStreamTest {
                  
                 assertEquals(notesText, ListToStringExporter.NOTE_PREFIX + dataText, "Unexpected discrepancy between data and notes in the export.");
             }
+            
+            ++elementIndex;
         }
     }
     
+    @Test(expectedExceptions = IOException.class)
+    public void testExceptionHandling_Exporter_getExportingIterator() throws Exception {
+        final Exporter<?, ?> failingExporter = context.mock(Exporter.class);
+        
+        final Synchronizer<?, ?> syncer = context.mock(Synchronizer.class);
+        
+        context.checking(new Expectations() {
+            {
+                RuntimeException failure = new RuntimeException("Injected failure");
+                              
+                allowing(failingExporter).getExportingIterator();
+                will(throwException(failure));
+                
+                allowing(syncer).getRequiredValidators();
+                will(returnValue(Collections.emptySet()));
+                
+                allowing(syncer).getExporter();
+                will(returnValue(failingExporter));
+            }
+        });
+        
+        Set<Synchronizer<?, ?>> syncers = this.<Synchronizer<?, ?>>asSet(syncer);
+        
+        InputStream export = new ExportingInputStream(syncers, new HashMap<String, ExporterMessages>(), 1024, false);
+
+        readAll(new InputStreamReader(export, "UTF-8"));
+
+        //this should never be invoked, because reading the input stream should cause the exporter
+        //to fail...
+        
+        fail("Successfully read the export even though one of the exporters threw an exception when asked for the exported entity iterator.");
+    }
+    
+    @Test(expectedExceptions = IOException.class)
+    public void testExceptionHandling_ExportingIterator_next() throws Exception {
+        final ExportingIterator<?> iterator = context.mock(ExportingIterator.class);        
+        final Exporter<?, ?> exporter = context.mock(Exporter.class);
+        final Importer<?, ?> importer = context.mock(Importer.class);
+        final Synchronizer<?, ?> syncer = context.mock(Synchronizer.class);
+        
+        context.checking(new Expectations() {
+            {
+                RuntimeException failure = new RuntimeException("Injected failure");
+                          
+                allowing(iterator).hasNext();
+                will(returnValue(true));
+                
+                allowing(iterator).next();
+                will(onConsecutiveCalls(returnValue("Success"), throwException(failure)));
+                
+                allowing(iterator).export(with(any(ExportWriter.class)));
+                
+                allowing(iterator).getNotes();
+                
+                allowing(exporter).getExportingIterator();
+                will(returnValue(iterator));
+                
+                allowing(exporter).getNotes();
+                
+                allowing(syncer).getRequiredValidators();
+                will(returnValue(Collections.emptySet()));
+                
+                allowing(syncer).getExporter();
+                will(returnValue(exporter));
+                
+                allowing(syncer).getImporter();
+                will(returnValue(importer));
+                
+                allowing(importer).getImportConfigurationDefinition();
+            }
+        });
+        
+        Set<Synchronizer<?, ?>> syncers = this.<Synchronizer<?, ?>>asSet(syncer);
+        
+        InputStream export = new ExportingInputStream(syncers, new HashMap<String, ExporterMessages>(), 1024, false);
+
+        readAll(new InputStreamReader(export, "UTF-8"));
+
+        //this should never be invoked, because reading the input stream should cause the exporter
+        //to fail...
+        
+        fail("Successfully read the export even though one of the exporters threw an exception when asked for the next exported entity.");
+    }
+    
+    public void testExceptionHandling_ExportingIterator_export() throws Exception {
+        final ExportingIterator<?> iterator = context.mock(ExportingIterator.class);        
+        final Exporter<?, ?> exporter = context.mock(Exporter.class);
+        final Importer<?, ?> importer = context.mock(Importer.class);
+        final Synchronizer<?, ?> syncer = context.mock(Synchronizer.class);
+        
+        context.checking(new Expectations() {
+            {
+                RuntimeException failure = new RuntimeException("Injected failure");
+                          
+                allowing(iterator).hasNext();
+                will(onConsecutiveCalls(returnValue(true), returnValue(true), returnValue(false)));
+                
+                allowing(iterator).next();
+                
+                allowing(iterator).export(with(any(ExportWriter.class)));
+                will(onConsecutiveCalls(returnValue(null), throwException(failure)));
+                
+                allowing(iterator).getNotes();
+                
+                allowing(exporter).getExportingIterator();
+                will(returnValue(iterator));
+                
+                allowing(exporter).getNotes();
+                
+                allowing(syncer).getRequiredValidators();
+                will(returnValue(Collections.emptySet()));
+                
+                allowing(syncer).getExporter();
+                will(returnValue(exporter));
+                
+                allowing(syncer).getImporter();
+                will(returnValue(importer));
+                
+                allowing(importer).getImportConfigurationDefinition();
+            }
+        });
+        
+        Set<Synchronizer<?, ?>> syncers = this.<Synchronizer<?, ?>>asSet(syncer);
+        
+        InputStream export = new ExportingInputStream(syncers, new HashMap<String, ExporterMessages>(), 1024, false);
+
+        String exportContents = readAll(new InputStreamReader(export, "UTF-8"));
+
+        LOG.warn("Export contents:\n" + exportContents);
+
+        export = new ByteArrayInputStream(exportContents.getBytes("UTF-8"));
+
+        DocumentBuilder bld = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+        
+        Document doc = bld.parse(export);
+        
+        Element root = doc.getDocumentElement();
+        
+        NodeList entities = root.getElementsByTagName(ExportingInputStream.ENTITY_EXPORT_ELEMENT);
+        
+        assertEquals(entities.getLength(), 2, "Unexpected number of exported elements");
+        
+        //get the entity with the error
+        Element failedEntity = (Element) entities.item(1);
+        Node errorMessage = getDirectChildByTagName(failedEntity, ExportingInputStream.ERROR_MESSAGE_ELEMENT);
+        assertNotNull(errorMessage, "Could not find the error-message element at the entity that failed to export.");
+    }
+
     private <T> LinkedHashSet<T> asSet(T... ts) {
         LinkedHashSet<T> ret = new LinkedHashSet<T>();
         for (T t : ts) {

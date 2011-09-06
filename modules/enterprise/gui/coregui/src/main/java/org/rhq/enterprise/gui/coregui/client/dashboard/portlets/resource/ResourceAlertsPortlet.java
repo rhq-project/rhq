@@ -18,8 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource;
 
-import com.google.gwt.user.client.History;
-
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
@@ -52,19 +50,13 @@ public class ResourceAlertsPortlet extends AbstractRecentAlertsPortlet {
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        /* (non-Javadoc)
-         * TODO:  This factory ASSUMES the user is currently navigated to a resource detail view, and generates a portlet
-         *        for that resource.  It will fail in other scenarios.  This mechanism should be improved such that the
-         *        factory method can take an EntityContext explicitly indicating, in this case, the resource. 
-         * @see org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory#getInstance(java.lang.String)
-         */
-        public final Portlet getInstance(String locatorId) {
+        public final Portlet getInstance(String locatorId, EntityContext context) {
 
-            String currentPage = History.getToken();
-            String[] elements = currentPage.split("/");
-            int resourceId = Integer.valueOf(elements[1]);
+            if (EntityContext.Type.Resource != context.getType()) {
+                throw new IllegalArgumentException("Context [" + context + "] not supported by portlet");
+            }
 
-            return new ResourceAlertsPortlet(locatorId, resourceId);
+            return new ResourceAlertsPortlet(locatorId, context.getResourceId());
         }
     }
 

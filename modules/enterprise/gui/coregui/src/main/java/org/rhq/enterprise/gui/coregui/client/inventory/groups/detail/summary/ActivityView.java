@@ -33,6 +33,7 @@ import com.smartgwt.client.widgets.events.ClickHandler;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.criteria.DashboardCriteria;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
@@ -53,7 +54,6 @@ import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.dashboard.DashboardContainer;
 import org.rhq.enterprise.gui.coregui.client.dashboard.DashboardView;
-import org.rhq.enterprise.gui.coregui.client.dashboard.PortletFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupAlertsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupBundleDeploymentsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupConfigurationUpdatesPortlet;
@@ -77,6 +77,8 @@ public class ActivityView extends LocatableVLayout implements DashboardContainer
     private static final String DASHBOARD_NAME_PREFIX = "GroupDashboard_";
 
     private ResourceGroupComposite groupComposite;
+    private boolean isAutoGroup;
+    private boolean isAutoCluster;
 
     private DashboardGWTServiceAsync dashboardService = GWTServiceLookup.getDashboardService();
 
@@ -98,9 +100,12 @@ public class ActivityView extends LocatableVLayout implements DashboardContainer
     private int rowRight = 0;
     private boolean displayLeft = false;
 
-    public ActivityView(String locatorId, ResourceGroupComposite groupComposite) {
+    public ActivityView(String locatorId, ResourceGroupComposite groupComposite, boolean isAutoCluster,
+        boolean isAutoGroup) {
         super(locatorId);
         this.groupComposite = groupComposite;
+        this.isAutoCluster = isAutoCluster;
+        this.isAutoGroup = isAutoGroup;
     }
 
     @Override
@@ -144,7 +149,10 @@ public class ActivityView extends LocatableVLayout implements DashboardContainer
         Canvas[] members = getMembers();
         removeMembers(members);
         //pass in the group information
-        dashboardView = new DashboardView(extendLocatorId(dashboard.getName()), this, dashboard, groupComposite, null);
+        EntityContext context = EntityContext.forGroup(groupComposite.getResourceGroup().getId(), isAutoCluster,
+            isAutoGroup);
+        dashboardView = new DashboardView(extendLocatorId(dashboard.getName()), this, dashboard, context,
+            groupComposite);
         addMember(dashboardView);
 
         footer = new LocatableToolStrip(extendLocatorId("Footer"));
@@ -203,11 +211,7 @@ public class ActivityView extends LocatableVLayout implements DashboardContainer
         dashboard.getConfiguration().put(new PropertySimple(Dashboard.CFG_BACKGROUND, "#F1F2F3"));
 
         //figure out which portlets to display and how
-        Map<String, String> groupKeyNameMap = new HashMap<String, String>(PortletFactory
-            .getRegisteredGroupPortletNameMap());
-        //remove BundleDeployment and add back later if relevant.
-        groupKeyNameMap.remove(GroupBundleDeploymentsPortlet.KEY);
-        groupKeyNameMap = DashboardView.processPortletNameMapForGroup(groupKeyNameMap, groupComposite);
+        Map<String, String> groupKeyNameMap = DashboardView.processPortletNameMapForGroup(groupComposite);
 
         //initiate asynch call to execute and then update the dashboard with bundle deployment portlet if necessary
         ResourceGroupCriteria criteria = new ResourceGroupCriteria();

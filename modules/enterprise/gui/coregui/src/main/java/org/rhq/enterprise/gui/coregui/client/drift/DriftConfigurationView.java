@@ -20,10 +20,11 @@
 package org.rhq.enterprise.gui.coregui.client.drift;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.data.Record;
+import com.smartgwt.client.data.RecordList;
 import com.smartgwt.client.data.ResultSet;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.SortDirection;
@@ -139,14 +140,14 @@ public class DriftConfigurationView extends TableSection<DriftConfigurationDataS
             }
         });
 
-        addTableAction("Delete", MSG.common_button_delete(), MSG.view_drift_delete_confirm(), new AbstractTableAction(
-            deleteEnablement) {
-            public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                delete(selection);
-            }
-        });
+        addTableAction("Delete", MSG.common_button_delete(), MSG.view_drift_delete_configConfirm(),
+            new AbstractTableAction(deleteEnablement) {
+                public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                    delete(selection);
+                }
+            });
 
-        addTableAction("DeleteAll", MSG.common_button_delete_all(), MSG.view_drift_delete_confirmAll(),
+        addTableAction("DeleteAll", MSG.common_button_delete_all(), MSG.view_drift_delete_configConfirmAll(),
             new TableAction() {
                 public boolean isEnabled(ListGridRecord[] selection) {
                     ListGrid grid = getListGrid();
@@ -162,54 +163,60 @@ public class DriftConfigurationView extends TableSection<DriftConfigurationDataS
         addTableAction("DetectNow", MSG.view_drift_button_detectNow(), null, new AbstractTableAction(
             detectNowEnablement) {
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                detectDrift(selection);
+                detectDrift(selection); // will only ever be a single selection - see detectNowEnablement variable
             }
         });
     }
 
     private void add() {
         DriftAddConfigWizard.showWizard(context, this);
+        // we can refresh the table buttons immediately since the wizard is a dialog, the
+        // user can't access enabled buttons anyway.
+        DriftConfigurationView.this.refreshTableInfo();
     }
 
     private void delete(ListGridRecord[] records) {
-        final int[] driftConfigIds = new int[records.length];
+        final String[] driftConfigNames = new String[records.length];
         for (int i = 0, selectionLength = records.length; i < selectionLength; i++) {
             ListGridRecord record = records[i];
-            Integer driftConfigId = record.getAttributeAsInt("id");
-            driftConfigIds[i] = driftConfigId;
+            String driftConfigName = record.getAttribute(DriftConfigurationDataSource.ATTR_NAME);
+            driftConfigNames[i] = driftConfigName;
         }
 
-        GWTServiceLookup.getDriftService().deleteDriftConfigurations(driftConfigIds, new AsyncCallback<Integer>() {
-            public void onSuccess(Integer resultCount) {
-                CoreGUI.getMessageCenter().notify(
-                    new Message(MSG.view_drift_success_deleteConfigs(String.valueOf(resultCount)),
-                        Message.Severity.Info));
-                refresh();
-            }
-
-            public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError(MSG.view_drift_failure_delete(Arrays.toString(driftConfigIds)),
-                    caught);
-            }
-        });
+        deleteDriftConfigurationsByName(driftConfigNames);
     }
 
     private void deleteAll() {
-        GWTServiceLookup.getDriftService().deleteDriftConfigurationsByContext(context, new AsyncCallback<Integer>() {
-            public void onSuccess(Integer resultCount) {
-                CoreGUI.getMessageCenter().notify(
-                    new Message(MSG.view_drift_success_delete(String.valueOf(resultCount)), Message.Severity.Info));
-                refresh();
-            }
+        final RecordList records = getListGrid().getDataAsRecordList();
+        final int numRecords = records.getLength();
+        final String[] driftConfigNames = new String[numRecords];
+        for (int i = 0; i < numRecords; i++) {
+            Record record = records.get(i);
+            String driftConfigName = record.getAttribute(DriftConfigurationDataSource.ATTR_NAME);
+            driftConfigNames[i] = driftConfigName;
+        }
 
-            public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError(MSG.view_drift_failure_deleteAll(), caught);
-            }
-        });
+        deleteDriftConfigurationsByName(driftConfigNames);
+    }
+
+    private void deleteDriftConfigurationsByName(final String[] driftConfigNames) {
+        GWTServiceLookup.getDriftService().deleteDriftConfigurationsByContext(context, driftConfigNames,
+            new AsyncCallback<Integer>() {
+                public void onSuccess(Integer resultCount) {
+                    CoreGUI.getMessageCenter().notify(
+                        new Message(MSG.view_drift_success_deleteConfigs(String.valueOf(resultCount)),
+                            Message.Severity.Info));
+                    refresh();
+                }
+
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError(MSG.view_drift_failure_deleteConfigs(), caught);
+                }
+            });
     }
 
     private void detectDrift(ListGridRecord[] records) {
-        // why only the [0] item?
+        // we will only ever have a single record selected, hence why we can access the [0] item
         DriftConfiguration driftConfig = (DriftConfiguration) records[0]
             .getAttributeAsObject(DriftConfigurationDataSource.ATTR_ENTITY);
         GWTServiceLookup.getDriftService().detectDrift(context, driftConfig, new AsyncCallback<Void>() {

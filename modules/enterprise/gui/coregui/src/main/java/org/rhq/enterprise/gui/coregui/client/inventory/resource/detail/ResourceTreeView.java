@@ -94,6 +94,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableMenu;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
+ * @author Jay Shaughnessy
  * @author Greg Hinkle
  */
 public class ResourceTreeView extends LocatableVLayout {
@@ -310,6 +311,10 @@ public class ResourceTreeView extends LocatableVLayout {
     }
 
     private void updateSelection() {
+        updateSelection(false);
+    }
+
+    private void updateSelection(boolean isRefresh) {
 
         TreeNode selectedNode;
 
@@ -325,11 +330,15 @@ public class ResourceTreeView extends LocatableVLayout {
                 treeGrid.selectRecord(selectedNode);
             }
 
+            if (isRefresh) {
+                treeGrid.getTree().reloadChildren(selectedNode);
+            }
+
             treeGrid.markForRedraw();
         }
     }
 
-    private void showContextMenu(AutoGroupTreeNode agNode) {
+    private void showContextMenu(final AutoGroupTreeNode agNode) {
         getAutoGroupBackingGroup(agNode, new AsyncCallback<ResourceGroup>() {
 
             public void onFailure(Throwable caught) {
@@ -337,7 +346,7 @@ public class ResourceTreeView extends LocatableVLayout {
             }
 
             public void onSuccess(ResourceGroup result) {
-                autoGroupContextMenu.showContextMenu(result);
+                autoGroupContextMenu.showContextMenu(treeGrid.getTree(), agNode, result);
             }
         });
     }
@@ -380,7 +389,7 @@ public class ResourceTreeView extends LocatableVLayout {
                             new ResourceTypeRepository.TypeLoadedCallback() {
 
                                 public void onTypesLoaded(ResourceType type) {
-                                    buildResourceContextMenu(resourceComposite, type);
+                                    buildResourceContextMenu(node, resourceComposite, type);
                                     resourceContextMenu.showContextMenu();
                                 }
                             });
@@ -389,7 +398,8 @@ public class ResourceTreeView extends LocatableVLayout {
             });
     }
 
-    private void buildResourceContextMenu(final ResourceComposite resourceComposite, final ResourceType resourceType) {
+    private void buildResourceContextMenu(final ResourceTreeNode node, final ResourceComposite resourceComposite,
+        final ResourceType resourceType) {
         final Resource resource = resourceComposite.getResource();
         final ResourcePermission resourcePermission = resourceComposite.getResourcePermission();
 
@@ -399,6 +409,19 @@ public class ResourceTreeView extends LocatableVLayout {
         // resource type name
         resourceContextMenu.addItem(new MenuItem(MSG.view_tree_common_contextMenu_type_name_label(resourceType
             .getName())));
+
+        // separator
+        resourceContextMenu.addItem(new MenuItemSeparator());
+
+        // refresh node
+        MenuItem refresh = new MenuItem(MSG.common_button_refresh());
+        refresh.addClickHandler(new ClickHandler() {
+
+            public void onClick(MenuItemClickEvent event) {
+                treeGrid.getTree().reloadChildren(node);
+            }
+        });
+        resourceContextMenu.addItem(refresh);
 
         // separator
         resourceContextMenu.addItem(new MenuItemSeparator());
@@ -701,14 +724,14 @@ public class ResourceTreeView extends LocatableVLayout {
         this.rootResource = rootResource;
     }
 
-    public void setSelectedResource(final int selectedResourceId) {
+    public void setSelectedResource(final int selectedResourceId, boolean isRefresh) {
 
         selectedNodeId = ResourceTreeNode.idOf(selectedResourceId);
 
         if (treeGrid != null && treeGrid.getTree() != null && (treeGrid.getTree().findById(selectedNodeId)) != null) {
             // This is the case where the tree was previously loaded and we get fired to look at a different
             // node in the same tree and just have to switch the selection            
-            updateSelection();
+            updateSelection(isRefresh);
 
         } else {
             // This is for cases where we have to load the tree fresh including down to the currently visible node
@@ -731,7 +754,12 @@ public class ResourceTreeView extends LocatableVLayout {
             new AsyncCallback<List<ResourceLineageComposite>>() {
 
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_loadFailed_root(), caught);
+                    boolean resourceDoesNotExist = caught.getMessage().contains("ResourceNotFoundException");
+                    // If a Resource with the specified id does not exist, don't emit an error, since
+                    // ResourceDetailView.loadSelectedItem() will take care of emitting one.
+                    if (!resourceDoesNotExist) {
+                        CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_loadFailed_root(), caught);
+                    }
                 }
 
                 public void onSuccess(List<ResourceLineageComposite> result) {
@@ -743,6 +771,11 @@ public class ResourceTreeView extends LocatableVLayout {
                     for (ResourceLineageComposite r : result) {
                         lineage.add(r.getResource());
                         if (r.isLocked()) {
+                            if (r.getResource().getId() == selectedResourceId) {
+                                // The selected Resource itself is locked. This means the user doesn't have authz to be
+                                // viewing this Resource period, so just abort loading of the tree.
+                                return;
+                            }
                             lockedData.add(r.getResource());
                         }
                     }
@@ -890,6 +923,7 @@ public class ResourceTreeView extends LocatableVLayout {
     */
 
     public void renderView(ViewPath viewPath) {
+
         ViewId currentViewId = viewPath.getCurrent();
         String currentViewIdPath = currentViewId.getPath();
         if ("AutoGroup".equals(currentViewIdPath)) {
@@ -901,8 +935,7 @@ public class ResourceTreeView extends LocatableVLayout {
         } else {
             String resourceIdString = currentViewId.getPath();
             Integer resourceId = Integer.parseInt(resourceIdString);
-            setSelectedResource(resourceId);
+            setSelectedResource(resourceId, viewPath.isRefresh());
         }
     }
-
 }

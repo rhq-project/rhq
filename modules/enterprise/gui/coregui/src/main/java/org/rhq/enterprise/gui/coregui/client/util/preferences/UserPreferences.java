@@ -85,28 +85,45 @@ public class UserPreferences {
                 this.autoPersister = new UserPreferenceChangeListener() {
                     @Override
                     public void onPreferenceChange(UserPreferenceChangeEvent event) {
-                        persist(event.name);
+                        persist(event);
                     }
 
                     @Override
                     public void onPreferenceRemove(UserPreferenceChangeEvent event) {
-                        persist(event.name);
+                        persist(event);
                     }
 
-                    private void persist(final String preferenceThatChanged) {
+                    private void persist(final UserPreferenceChangeEvent event) {
+
                         store(new AsyncCallback<Subject>() {
                             @Override
                             public void onSuccess(Subject result) {
+                                if (event instanceof AutoPersistAwareChangeEvent) {
+                                    AutoPersistAwareChangeEvent apaEvent = (AutoPersistAwareChangeEvent) event;
+                                    AsyncCallback<Subject> persistCallback = apaEvent.getPersistCallback();
+                                    if (null != persistCallback) {
+                                        persistCallback.onSuccess(result);
+                                    }
+                                }
+
                                 // Don't announce anything to message center, this should happen under the covers - just refresh the current page.
                                 // But we should not blindly refresh - if we are changing preferences that should not affect the current
                                 // page, don't refresh as this could cause additional and unnecessary server-side hits (BZ 680167)
-                                if (!preferencesThatShouldNotCauseRefresh.contains(preferenceThatChanged)) {
+                                if (!preferencesThatShouldNotCauseRefresh.contains(event.getName())) {
                                     CoreGUI.refresh();
                                 }
                             }
 
                             @Override
                             public void onFailure(Throwable caught) {
+                                if (event instanceof AutoPersistAwareChangeEvent) {
+                                    AutoPersistAwareChangeEvent apaEvent = (AutoPersistAwareChangeEvent) event;
+                                    AsyncCallback<Subject> persistCallback = apaEvent.getPersistCallback();
+                                    if (null != persistCallback) {
+                                        persistCallback.onFailure(caught);
+                                    }
+                                }
+
                                 CoreGUI.getErrorHandler().handleError("Cannot store preferences", caught);
                             }
                         });
@@ -126,25 +143,25 @@ public class UserPreferences {
         return getPreferenceAsIntegerSet(UserPreferenceNames.RESOURCE_HEALTH_RESOURCES);
     }
 
-    public void setFavoriteResources(Set<Integer> resourceIds, AsyncCallback<Subject> callback) {
-        setPreference(UserPreferenceNames.RESOURCE_HEALTH_RESOURCES, resourceIds);
-        store(callback);
+    public void setFavoriteResources(Set<Integer> resourceIds, AsyncCallback<Subject> persistCallback) {
+        setPreference(UserPreferenceNames.RESOURCE_HEALTH_RESOURCES, resourceIds, persistCallback);
+        storeIfNotAutoPersisted(persistCallback);
     }
 
     public Set<Integer> getFavoriteResourceGroups() {
         return getPreferenceAsIntegerSet(UserPreferenceNames.GROUP_HEALTH_GROUPS);
     }
 
-    public void setFavoriteResourceGroups(Set<Integer> resourceGroupIds, AsyncCallback<Subject> callback) {
-        setPreference(UserPreferenceNames.GROUP_HEALTH_GROUPS, resourceGroupIds);
-        store(callback);
+    public void setFavoriteResourceGroups(Set<Integer> resourceGroupIds, AsyncCallback<Subject> persistCallback) {
+        setPreference(UserPreferenceNames.GROUP_HEALTH_GROUPS, resourceGroupIds, persistCallback);
+        storeIfNotAutoPersisted(persistCallback);
     }
 
     public List<Integer> getRecentResources() {
         return this.getPreferenceAsIntegerList(UserPreferenceNames.RECENT_RESOURCES);
     }
 
-    public void addRecentResource(Integer resourceId, AsyncCallback<Subject> callback) {
+    public void addRecentResource(Integer resourceId, AsyncCallback<Subject> persistCallback) {
         List<Integer> recentResources = getRecentResources();
         if (!recentResources.isEmpty() && recentResources.get(0).equals(resourceId)) {
             return;
@@ -157,15 +174,15 @@ public class UserPreferences {
         if (size > 10) {
             recentResources.remove(10);
         }
-        setPreference(UserPreferenceNames.RECENT_RESOURCES, recentResources);
-        store(callback);
+        setPreference(UserPreferenceNames.RECENT_RESOURCES, recentResources, persistCallback);
+        storeIfNotAutoPersisted(persistCallback);
     }
 
     public List<Integer> getRecentResourceGroups() {
         return getPreferenceAsIntegerList(UserPreferenceNames.RECENT_RESOURCE_GROUPS);
     }
 
-    public void addRecentResourceGroup(Integer resourceGroupId, AsyncCallback<Subject> callback) {
+    public void addRecentResourceGroup(Integer resourceGroupId, AsyncCallback<Subject> persistCallback) {
         List<Integer> recentResourceGroups = getRecentResourceGroups();
         if (!recentResourceGroups.isEmpty() && recentResourceGroups.get(0).equals(resourceGroupId)) {
             return;
@@ -178,8 +195,8 @@ public class UserPreferences {
         if (size > 5) {
             recentResourceGroups.remove(5);
         }
-        setPreference(UserPreferenceNames.RECENT_RESOURCE_GROUPS, recentResourceGroups);
-        store(callback);
+        setPreference(UserPreferenceNames.RECENT_RESOURCE_GROUPS, recentResourceGroups, persistCallback);
+        storeIfNotAutoPersisted(persistCallback);
     }
 
     public int getPageRefreshInterval() {
@@ -190,9 +207,9 @@ public class UserPreferences {
         return getPreferenceAsInteger(UserPreferenceNames.PAGE_REFRESH_PERIOD);
     }
 
-    public void setPageRefreshInterval(int refreshInterval, AsyncCallback<Subject> callback) {
-        setPreference(UserPreferenceNames.PAGE_REFRESH_PERIOD, String.valueOf(refreshInterval));
-        store(callback);
+    public void setPageRefreshInterval(int refreshInterval, AsyncCallback<Subject> persistCallback) {
+        setPreference(UserPreferenceNames.PAGE_REFRESH_PERIOD, String.valueOf(refreshInterval), persistCallback);
+        storeIfNotAutoPersisted(persistCallback);
     }
 
     protected String getPreference(String name) {
@@ -221,6 +238,10 @@ public class UserPreferences {
     }
 
     protected void setPreference(String name, Collection<?> value) {
+        setPreference(name, value, null);
+    }
+
+    protected void setPreference(String name, Collection<?> value, AsyncCallback<Subject> persistCallback) {
         StringBuilder buffer = new StringBuilder();
         boolean first = true;
         for (Object item : value) {
@@ -231,10 +252,14 @@ public class UserPreferences {
             }
             buffer.append(item);
         }
-        setPreference(name, buffer.toString());
+        setPreference(name, buffer.toString(), persistCallback);
     }
 
     protected void setPreference(String name, String value) {
+        setPreference(name, value, null);
+    }
+
+    protected void setPreference(String name, String value, AsyncCallback<Subject> persistCallback) {
         PropertySimple prop = this.userConfiguration.getSimple(name);
         String oldValue = null;
         if (prop == null) {
@@ -244,20 +269,24 @@ public class UserPreferences {
             prop.setStringValue(value);
         }
 
-        UserPreferenceChangeEvent event = new UserPreferenceChangeEvent(name, value, oldValue);
+        UserPreferenceChangeEvent event = new AutoPersistAwareChangeEvent(name, value, oldValue, persistCallback);
         for (UserPreferenceChangeListener listener : changeListeners) {
             listener.onPreferenceChange(event);
         }
     }
 
     protected void unsetPreference(String name) {
+        unsetPreference(name, null);
+    }
+
+    protected void unsetPreference(String name, AsyncCallback<Subject> persistCallback) {
         PropertySimple doomedProp = this.userConfiguration.getSimple(name);
 
         // it's possible property was already removed, and thus this operation becomes a no-op
         if (doomedProp != null) {
             String oldValue = doomedProp.getStringValue();
             this.userConfiguration.remove(name);
-            UserPreferenceChangeEvent event = new UserPreferenceChangeEvent(name, null, oldValue);
+            UserPreferenceChangeEvent event = new AutoPersistAwareChangeEvent(name, null, oldValue, persistCallback);
             for (UserPreferenceChangeListener listener : changeListeners) {
                 listener.onPreferenceRemove(event);
             }
@@ -271,8 +300,16 @@ public class UserPreferences {
         }
     }
 
-    public void store(AsyncCallback<Subject> callback) {
-        this.subjectService.updateSubject(this.subject, callback);
+    private void storeIfNotAutoPersisted(AsyncCallback<Subject> persistCallback) {
+        // if not auto persisted then perform store of the preference change, otherwise it
+        // is assumed autopersist will take care of it.
+        if (null == this.autoPersister) {
+            store(persistCallback);
+        }
+    }
+
+    public void store(AsyncCallback<Subject> persistCallback) {
+        this.subjectService.updateSubject(this.subject, persistCallback);
     }
 
     public Configuration getConfiguration() {
@@ -337,5 +374,21 @@ public class UserPreferences {
 
     public void addChangeListener(UserPreferenceChangeListener listener) {
         changeListeners.add(listener);
+    }
+
+    private static class AutoPersistAwareChangeEvent extends UserPreferenceChangeEvent {
+
+        private AsyncCallback<Subject> persistCallback;
+
+        public AutoPersistAwareChangeEvent(String name, String newValue, String oldValue,
+            AsyncCallback<Subject> persistCallback) {
+
+            super(name, newValue, oldValue);
+            this.persistCallback = persistCallback;
+        }
+
+        public AsyncCallback<Subject> getPersistCallback() {
+            return persistCallback;
+        }
     }
 }

@@ -1,3 +1,22 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2011 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+
 package org.rhq.core.pc.drift;
 
 import java.io.BufferedOutputStream;
@@ -5,6 +24,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.util.Random;
 
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
@@ -16,6 +36,7 @@ import org.rhq.core.util.MessageDigestGenerator;
 
 import static java.util.Arrays.asList;
 import static org.apache.commons.io.FileUtils.deleteDirectory;
+import static org.apache.commons.io.IOUtils.write;
 import static org.apache.commons.io.IOUtils.writeLines;
 import static org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext.fileSystem;
 
@@ -90,6 +111,11 @@ public class DriftTest {
     private MessageDigestGenerator digestGenerator;
 
     /**
+     * Used for creating random files in {@link #createRandomFile(java.io.File, String)}
+     */
+    private Random random = new Random();
+
+    /**
      * Deletes the base output directory (which is the name of the test class), removing
      * output from a previous run. The output directories (i.e., change sets and resources)
      * are then recreated.
@@ -98,7 +124,7 @@ public class DriftTest {
      */
     @BeforeClass
     public void initResourcesAndChangeSetsDirs() throws Exception {
-        File basedir = new File("target", getClass().getSimpleName());
+        File basedir = basedir();
         deleteDirectory(basedir);
         basedir.mkdir();
 
@@ -120,6 +146,10 @@ public class DriftTest {
     public void setUp(Method test) {
         resourceDir = mkdir(resourcesDir, test.getName() + "-" + nextResourceId());
         changeSetMgr = new ChangeSetManagerImpl(changeSetsDir);
+    }
+
+    protected File basedir() {
+        return new File("target", getClass().getSimpleName());
     }
 
     /** @return The current or last resource id generated */
@@ -172,8 +202,23 @@ public class DriftTest {
      * @return The SHA-256 hash as a string
      * @throws IOException
      */
-    protected String sha256(File file) throws IOException {
-        return digestGenerator.calcDigestString(file);
+    protected String sha256(File file) {
+        try {
+            return digestGenerator.calcDigestString(file);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to calculate SHA-256 hash for " + file.getPath(), e);
+        }
+    }
+
+    protected File createRandomFile(File dir, String fileName) throws Exception {
+        File file = new File(dir, fileName);
+        FileOutputStream stream = new FileOutputStream(file);
+        byte[] bytes = new byte[32];
+        random.nextBytes(bytes);
+        write(bytes, stream);
+        stream.close();
+
+        return file;
     }
 
     protected void writeChangeSet(File changeSetDir, String... changeSet) throws Exception {
@@ -201,4 +246,5 @@ public class DriftTest {
 
         return config;
     }
+
 }

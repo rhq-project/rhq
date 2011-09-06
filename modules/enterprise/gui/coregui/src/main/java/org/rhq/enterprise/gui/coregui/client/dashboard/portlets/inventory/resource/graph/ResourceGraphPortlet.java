@@ -29,6 +29,7 @@ import com.smartgwt.client.widgets.form.events.SubmitValuesHandler;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.enterprise.gui.coregui.client.components.lookup.ResourceLookupComboBoxItem;
@@ -173,7 +174,7 @@ public class ResourceGraphPortlet extends ResourceMetricGraphView implements Cus
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final Portlet getInstance(String locatorId) {
+        public final Portlet getInstance(String locatorId, EntityContext context) {
 
             return new ResourceGraphPortlet(locatorId);
         }

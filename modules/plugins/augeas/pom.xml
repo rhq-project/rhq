@@ -18,7 +18,7 @@
    <description>An abstract plugin for configuring resources via Augeas</description>
 
    <properties>
-      <augeas.version>0.0.2</augeas.version>
+      <augeas-bindings.version>0.0.2</augeas-bindings.version>
    </properties>
 
    <dependencies>
@@ -50,7 +50,7 @@
       <dependency>
          <groupId>net.augeas</groupId>
          <artifactId>augeas</artifactId>
-         <version>${augeas.version}</version>
+         <version>${augeas-bindings.version}</version>
       </dependency>
 
       <dependency>
@@ -84,7 +84,7 @@
                         <artifactItem>
                             <groupId>net.augeas</groupId>
                             <artifactId>augeas</artifactId>
-                            <version>${augeas.version}</version>
+                            <version>${augeas-bindings.version}</version>
                         </artifactItem>
 
                      </artifactItems>

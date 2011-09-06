@@ -47,7 +47,6 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.DetailsView;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
-import org.rhq.enterprise.gui.coregui.client.util.CanvasUtility;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
@@ -60,6 +59,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  *
  * @author Ian Springer
  */
+@SuppressWarnings("unchecked")
 public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends LocatableVLayout implements
     BookmarkableView, DetailsView {
 
@@ -201,6 +201,10 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
         return this.dataSource;
     }
 
+    public String getDataTypeName() {
+        return dataTypeName;
+    }
+
     public boolean isReadOnly() {
         return this.isReadOnly;
     }
@@ -229,13 +233,15 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
             IButton saveButton = this.buttonBar.getSaveButton();
             if (saveButton.isDisabled()) {
                 saveButton.setDisabled(false);
-                CanvasUtility.blink(saveButton);
+                // removing blink, I think it's distracting and it's not consistent with the rest of the gui (jshaughn)
+                //CanvasUtility.blink(saveButton);
             }
 
             IButton resetButton = this.buttonBar.getResetButton();
             if (resetButton.isDisabled()) {
                 resetButton.setDisabled(false);
-                CanvasUtility.blink(resetButton);
+                // removing blink, I think it's distracting and it's not consistent with the rest of the gui (jshaughn)                
+                //CanvasUtility.blink(resetButton);
             }
         }
     }
@@ -455,9 +461,9 @@ public abstract class AbstractRecordEditor<DS extends RPCDataSource> extends Loc
             resetButton.setDisabled(true);
             resetButton.addClickHandler(new ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
-                    reset();
                     resetButton.disable();
                     saveButton.disable();
+                    reset();
                 }
             });
             hLayout.addMember(resetButton);

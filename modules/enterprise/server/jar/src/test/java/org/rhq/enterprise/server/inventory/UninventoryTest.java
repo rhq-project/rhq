@@ -18,10 +18,8 @@
  */
 package org.rhq.enterprise.server.inventory;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
-import java.util.Set;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
@@ -77,9 +75,7 @@ public class UninventoryTest extends AbstractEJB3Test {
                 DriftConfiguration driftConfig = new DriftConfiguration(config);
                 driftConfig.setBasedir(new BaseDirectory(BaseDirValueContext.fileSystem, "/boo"));
                 driftConfig.setName("drift-config-name");
-                Set<Configuration> driftConfigSet = new HashSet<Configuration>(1);
-                driftConfigSet.add(driftConfig.getConfiguration());
-                resource.setDriftConfigurations(driftConfigSet);
+                resource.addDriftConfiguration(driftConfig);
             }
         };
 
@@ -92,7 +88,7 @@ public class UninventoryTest extends AbstractEJB3Test {
         Query qTemplate;
         Query qConfig;
         String qTemplateString = "select ct from ConfigurationTemplate ct where ct.id = :id";
-        String qConfigString = "select c from Configuration c where c.id = :id";
+        String qConfigString = "select dc from DriftConfiguration dc where dc.id = :id";
 
         getTransactionManager().begin();
         try {

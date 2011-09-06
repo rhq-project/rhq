@@ -73,6 +73,10 @@ public class MessageCenter {
         return messages;
     }
 
+    public void reset() {
+        this.messages.clear();
+    }
+
     public interface MessageListener {
         void onMessage(Message message);
     }

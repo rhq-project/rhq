@@ -41,6 +41,7 @@ import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
@@ -291,7 +292,7 @@ public class ProblemResourcesPortlet extends Table<ProblemResourcesDataSource> i
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final Portlet getInstance(String locatorId) {
+        public final Portlet getInstance(String locatorId, EntityContext context) {
 
             return new ProblemResourcesPortlet(locatorId);
         }
@@ -309,7 +310,7 @@ public class ProblemResourcesPortlet extends Table<ProblemResourcesDataSource> i
         return definition;
     }
 
-    protected void refreshTableInfo() {
+    public void refreshTableInfo() {
         if (isShowFooter()) {
             long begin = 0;
             List<Long> bounds = MeasurementUtility.calculateTimeFrame(getDataSource()

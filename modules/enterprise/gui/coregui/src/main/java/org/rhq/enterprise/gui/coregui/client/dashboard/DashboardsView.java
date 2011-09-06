@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2009 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -45,6 +45,7 @@ import com.smartgwt.client.widgets.tab.events.TabSelectedEvent;
 import com.smartgwt.client.widgets.tab.events.TabSelectedHandler;
 
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.criteria.DashboardCriteria;
 import org.rhq.core.domain.dashboard.Dashboard;
@@ -361,21 +362,32 @@ public class DashboardsView extends LocatableVLayout implements DashboardContain
         dashboard.setColumnWidths("32%");
         dashboard.getConfiguration().put(new PropertySimple(Dashboard.CFG_BACKGROUND, "#F1F2F3"));
 
+        ProductInfo productInfo = CoreGUI.get().getProductInfo();
+        boolean isRHQ = (productInfo != null) && "RHQ".equals(productInfo.getShortName());
+
         // Left Column
-        DashboardPortlet welcome = new DashboardPortlet(MessagePortlet.NAME, MessagePortlet.KEY, 250);
-        dashboard.addPortlet(welcome, 0, 0);
+        int columnIndex = 0;
+        int rowIndex = 0;
+
+        if (isRHQ) {
+            DashboardPortlet welcome = new DashboardPortlet(MessagePortlet.NAME, MessagePortlet.KEY, 250);
+            dashboard.addPortlet(welcome, columnIndex, rowIndex++);
+        }
 
         DashboardPortlet summary = new DashboardPortlet(InventorySummaryPortlet.NAME, InventorySummaryPortlet.KEY, 250);
-        dashboard.addPortlet(summary, 0, 1);
+        dashboard.addPortlet(summary, columnIndex, rowIndex++);
 
         DashboardPortlet news = new DashboardPortlet(MashupPortlet.NAME, MashupPortlet.KEY, 300);
         news.getConfiguration().put(
             new PropertySimple("address", "http://rhq-project.org/display/RHQ/RHQ+News?decorator=popup"));
-        dashboard.addPortlet(news, 0, 2);
+        dashboard.addPortlet(news, columnIndex, rowIndex++);
 
         // Right Column
+        columnIndex = 1;
+        rowIndex = 0;
+
         DashboardPortlet recentAlerts = new DashboardPortlet(RecentAlertsPortlet.NAME, RecentAlertsPortlet.KEY, 250);
-        dashboard.addPortlet(recentAlerts, 1, 0);
+        dashboard.addPortlet(recentAlerts, columnIndex, rowIndex++);
 
         DashboardPortlet problemResources = new DashboardPortlet(ProblemResourcesPortlet.NAME,
             ProblemResourcesPortlet.KEY, 250);
@@ -388,11 +400,11 @@ public class DashboardsView extends LocatableVLayout implements DashboardContain
             .put(
                 new PropertySimple(ProblemResourcesPortlet.PROBLEM_RESOURCE_SHOW_HRS,
                     ProblemResourcesPortlet.defaultValue));
-        dashboard.addPortlet(problemResources, 1, 1);
+        dashboard.addPortlet(problemResources, columnIndex, rowIndex++);
 
         DashboardPortlet operations = new DashboardPortlet(OperationHistoryPortlet.NAME, OperationHistoryPortlet.KEY,
             200);
-        dashboard.addPortlet(operations, 1, 2);
+        dashboard.addPortlet(operations, columnIndex, rowIndex++);
 
         return dashboard;
     }

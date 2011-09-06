@@ -26,6 +26,7 @@ import com.smartgwt.client.types.ContentsType;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
@@ -60,8 +61,8 @@ public class MessagePortlet extends LocatableHTMLPane implements ConfigurablePor
     public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
         String contents = storedPortlet.getConfiguration().getSimpleValue(MESSAGE_PROPERTY, null);
         if (contents != null) {
-            if (UserSessionManager.getSessionSubject().getId() != UsersDataSource.ID_RHQADMIN &&
-                    !contents.equals(DEFAULT_MESSAGE)) {
+            if (UserSessionManager.getSessionSubject().getId() != UsersDataSource.ID_RHQADMIN
+                && !contents.equals(DEFAULT_MESSAGE)) {
                 // To avoid XSS attacks, don't allow non-superusers to enter HTML.
                 // TODO (ips, 04/06/11): Sanitize this, rather than escaping it, once we upgrade to GWT 2.1 or later.
                 contents = StringUtility.escapeHtml(contents);
@@ -89,7 +90,7 @@ public class MessagePortlet extends LocatableHTMLPane implements ConfigurablePor
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        public final Portlet getInstance(String locatorId) {
+        public final Portlet getInstance(String locatorId, EntityContext context) {
             return new MessagePortlet(locatorId);
         }
     }

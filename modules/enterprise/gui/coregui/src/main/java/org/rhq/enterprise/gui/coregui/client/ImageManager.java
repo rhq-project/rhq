@@ -8,6 +8,8 @@ import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.ResourceAvailability;
 import org.rhq.core.domain.operation.OperationRequestStatus;
+import org.rhq.core.domain.resource.CreateResourceStatus;
+import org.rhq.core.domain.resource.DeleteResourceStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
@@ -526,5 +528,51 @@ public class ImageManager {
 
     public static String getConfigureIcon() {
         return "subsystems/configure/Configure_16.png";
+    }
+
+    public static String getChildCreateIcon() {
+        return "subsystems/inventory/CreateChild_16.png";
+    }
+
+    public static String getChildCreateIcon(CreateResourceStatus createStatus) {
+        if (createStatus == null) {
+            return getChildCreateIcon();
+        } else {
+            switch (createStatus) {
+            case SUCCESS: {
+                return "subsystems/inventory/CreateChild_success_16.png";
+            }
+            case IN_PROGRESS: {
+                return getChildCreateIcon();
+            }
+            default: {
+                // all others will use the failure icon
+                return "subsystems/inventory/CreateChild_failed_16.png";
+            }
+            }
+        }
+    }
+
+    public static String getChildDeleteIcon() {
+        return "subsystems/inventory/DeleteChild_16.png";
+    }
+
+    public static String getChildDeleteIcon(DeleteResourceStatus deleteStatus) {
+        if (deleteStatus == null) {
+            return getChildDeleteIcon();
+        } else {
+            switch (deleteStatus) {
+            case SUCCESS: {
+                return "subsystems/inventory/DeleteChild_success_16.png";
+            }
+            case IN_PROGRESS: {
+                return getChildDeleteIcon();
+            }
+            default: {
+                // all others will use the failure icon
+                return "subsystems/inventory/DeleteChild_failed_16.png";
+            }
+            }
+        }
     }
 }

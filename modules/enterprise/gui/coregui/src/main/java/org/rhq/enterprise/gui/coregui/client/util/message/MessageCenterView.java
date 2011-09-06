@@ -100,7 +100,7 @@ public class MessageCenterView extends Table implements MessageCenter.MessageLis
                         try {
                             window.hide();
                         } catch (Throwable e) {
-                            Log.warn("Cannot destroy message center", e);
+                            Log.warn("Cannot hide message center", e);
                         }
                     }
                 });
@@ -125,6 +125,13 @@ public class MessageCenterView extends Table implements MessageCenter.MessageLis
         } catch (Throwable e) {
             Log.error("Cannot process message", e);
         }
+    }
+
+    public void reset() {
+        if (window != null) {
+            window.hide();
+        }
+        refresh();
     }
 
     @Override

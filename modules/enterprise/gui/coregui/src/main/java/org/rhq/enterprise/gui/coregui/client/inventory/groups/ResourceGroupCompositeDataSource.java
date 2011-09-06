@@ -47,6 +47,7 @@ import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
  * @author Joseph Marques
@@ -105,7 +106,12 @@ public class ResourceGroupCompositeDataSource extends RPCDataSource<ResourceGrou
         groupService.findResourceGroupCompositesByCriteria(criteria,
             new AsyncCallback<PageList<ResourceGroupComposite>>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(MSG.view_inventory_groups_loadFailed(), caught);
+                    if (caught.getMessage().contains("SearchExpressionException")) {
+                        Message message = new Message("Invalid search expression.", Message.Severity.Error);
+                        CoreGUI.getMessageCenter().notify(message);
+                    } else {
+                        CoreGUI.getErrorHandler().handleError(MSG.view_inventory_groups_loadFailed(), caught);
+                    }
                     response.setStatus(RPCResponse.STATUS_FAILURE);
                     processResponse(request.getRequestId(), response);
                 }

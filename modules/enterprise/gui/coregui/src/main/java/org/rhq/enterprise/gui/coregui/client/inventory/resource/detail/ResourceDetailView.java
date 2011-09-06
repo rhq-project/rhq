@@ -71,6 +71,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitorin
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.history.ResourceOperationHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.schedule.ResourceOperationScheduleListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary.ActivityView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.summary.TimelineView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
@@ -273,31 +274,35 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
     }
 
     protected void updateTabContent(ResourceComposite resourceComposite) {
-        this.resourceComposite = resourceComposite;
-        for (ResourceSelectListener selectListener : this.selectListeners) {
-            selectListener.onResourceSelected(this.resourceComposite);
+        try {
+            this.resourceComposite = resourceComposite;
+            for (ResourceSelectListener selectListener : this.selectListeners) {
+                selectListener.onResourceSelected(this.resourceComposite);
+            }
+            Resource resource = this.resourceComposite.getResource();
+            getTitleBar().setResource(this.resourceComposite);
+
+            // wipe the canvas views for the current set of subtabs.
+            this.getTabSet().destroyViews();
+
+            ResourcePermission resourcePermissions = this.resourceComposite.getResourcePermission();
+            Set<ResourceTypeFacet> facets = this.resourceComposite.getResourceFacets().getFacets();
+
+            updateSummaryTabContent(resource);
+            updateInventoryTabContent(resourceComposite, resource, facets);
+            updateAlertsTabContent(resourceComposite);
+            updateMonitoringTabContent(resource, facets);
+            updateEventsTabContent(resourceComposite, facets);
+            updateOperationsTabContent(facets);
+            updateConfigurationTabContent(resourceComposite, resource, resourcePermissions, facets);
+            updateDriftTabContent(resourceComposite, resource, resourcePermissions, facets);
+            updateContentTabContent(resource, facets);
+
+            this.show();
+            markForRedraw();
+        } catch (Exception e) {
+            CoreGUI.getErrorHandler().handleError("Failed to update tab content.", e);
         }
-        Resource resource = this.resourceComposite.getResource();
-        getTitleBar().setResource(this.resourceComposite);
-
-        // wipe the canvas views for the current set of subtabs.
-        this.getTabSet().destroyViews();
-
-        ResourcePermission resourcePermissions = this.resourceComposite.getResourcePermission();
-        Set<ResourceTypeFacet> facets = this.resourceComposite.getResourceFacets().getFacets();
-
-        updateSummaryTabContent(resource);
-        updateInventoryTabContent(resourceComposite, resource, facets);
-        updateAlertsTabContent(resourceComposite);
-        updateMonitoringTabContent(resource, facets);
-        updateEventsTabContent(resourceComposite, facets);
-        updateOperationsTabContent(facets);
-        updateConfigurationTabContent(resourceComposite, resource, resourcePermissions, facets);
-        updateDriftTabContent(resourceComposite, resource, resourcePermissions, facets);
-        updateContentTabContent(resource, facets);
-
-        this.show();
-        markForRedraw();
     }
 
     private void updateSummaryTabContent(final Resource resource) {
@@ -311,8 +316,7 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         updateSubTab(this.summaryTab, this.summaryTimeline, true, true, new ViewFactory() {
             @Override
             public Canvas createView() {
-                return new FullHTMLPane(summaryTimeline.extendLocatorId("View"),
-                    "/rhq/resource/summary/timeline-plain.xhtml?id=" + resource.getId());
+                return new TimelineView(summaryTimeline.extendLocatorId("View"), resourceComposite);
             }
         });
     }
@@ -601,17 +605,15 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         GWTServiceLookup.getResourceService().findResourceCompositesByCriteria(criteria,
             new AsyncCallback<PageList<ResourceComposite>>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getMessageCenter().notify(
-                        new Message(MSG.view_inventory_resource_loadFailed(String.valueOf(resourceId)),
-                            Message.Severity.Warning));
-
-                    CoreGUI.goToView(InventoryView.VIEW_ID.getName());
+                    Message message = new Message(MSG.view_inventory_resource_loadFailed(String.valueOf(resourceId)),
+                        Message.Severity.Warning);
+                    CoreGUI.goToView(InventoryView.VIEW_ID.getName(), message);
                 }
 
                 public void onSuccess(PageList<ResourceComposite> result) {
                     if (result.isEmpty()) {
                         //noinspection ThrowableInstanceNeverThrown
-                        onFailure(new Exception(MSG.view_inventory_resource_loadFailed(String.valueOf(resourceId))));
+                        onFailure(new Exception("Resource with id [" + resourceId + "] does not exist."));
                     } else {
                         final ResourceComposite resourceComposite = result.get(0);
                         loadResourceType(resourceComposite, viewPath);
@@ -646,9 +648,16 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
                 ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
             new ResourceTypeRepository.TypeLoadedCallback() {
                 public void onTypesLoaded(ResourceType type) {
-                    resourceComposite.getResource().setResourceType(type);
-                    updateTabContent(resourceComposite);
-                    selectTab(getTabName(), getSubTabName(), viewPath);
+                    // until we finish the following work we're susceptible to fast-click issues in
+                    // tree navigation.  So, wait until after it's done to notify listeners thatthe view is
+                    // safely rendered.  Make sure to notify even on failure.
+                    try {
+                        resourceComposite.getResource().setResourceType(type);
+                        updateTabContent(resourceComposite);
+                        selectTab(getTabName(), getSubTabName(), viewPath);
+                    } finally {
+                        notifyViewRenderedListeners();
+                    }
                 }
             });
     }
@@ -663,5 +672,4 @@ public class ResourceDetailView extends AbstractTwoLevelTabSetView<ResourceCompo
         }
         return false;
     }
-
 }

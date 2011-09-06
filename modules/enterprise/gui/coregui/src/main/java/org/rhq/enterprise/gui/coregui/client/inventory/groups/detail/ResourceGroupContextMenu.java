@@ -40,6 +40,8 @@ import com.smartgwt.client.widgets.menu.MenuItem;
 import com.smartgwt.client.widgets.menu.MenuItemSeparator;
 import com.smartgwt.client.widgets.menu.events.ClickHandler;
 import com.smartgwt.client.widgets.menu.events.MenuItemClickEvent;
+import com.smartgwt.client.widgets.tree.Tree;
+import com.smartgwt.client.widgets.tree.TreeNode;
 
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.criteria.DashboardCriteria;
@@ -58,11 +60,14 @@ import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.groups.graph.ResourceGroupGraphPortlet;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceDetailView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceTreeDatasource.AutoGroupTreeNode;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceTreeDatasource.ResourceTreeNode;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableMenu;
 
 /**
+ * @author Jay Shaughnessy
  * @author Greg Hinkle
  */
 public class ResourceGroupContextMenu extends LocatableMenu {
@@ -78,7 +83,7 @@ public class ResourceGroupContextMenu extends LocatableMenu {
         super(locatorId);
     }
 
-    public void showContextMenu(final ResourceGroup group) {
+    public void showContextMenu(final Tree tree, final TreeNode node, final ResourceGroup group) {
         // we need the group composite to access permissions for context menu authz, so get it now
         ResourceGroupCriteria criteria = new ResourceGroupCriteria();
         criteria.addFilterId(group.getId());
@@ -107,13 +112,13 @@ public class ResourceGroupContextMenu extends LocatableMenu {
                         CoreGUI.getErrorHandler().handleError(
                             MSG.view_group_detail_failLoadComp(String.valueOf(group.getId())));
                     } else {
-                        showContextMenu(result.get(0));
+                        showContextMenu(tree, node, result.get(0));
                     }
                 }
             });
     }
 
-    public void showContextMenu(ResourceGroupComposite groupComposite) {
+    public void showContextMenu(final Tree tree, final TreeNode node, ResourceGroupComposite groupComposite) {
         this.groupComposite = groupComposite;
         group = groupComposite.getResourceGroup();
         groupMemberType = group.getResourceType();
@@ -130,18 +135,44 @@ public class ResourceGroupContextMenu extends LocatableMenu {
                 public void onTypesLoaded(ResourceType type) {
 
                     groupMemberType = type;
-                    buildResourceGroupContextMenu(group, type);
+                    buildResourceGroupContextMenu(tree, node, group, type);
                     showContextMenu();
                 }
             });
     }
 
-    private void buildResourceGroupContextMenu(final ResourceGroup group, final ResourceType resourceType) {
+    private void buildResourceGroupContextMenu(final Tree tree, final TreeNode node, final ResourceGroup group,
+        final ResourceType resourceType) {
         // name
         setItems(new MenuItem(group.getName()));
 
         // type name
         addItem(new MenuItem("Type: " + resourceType.getName()));
+
+        // Mixed group refresh is not needed as there is only a single top node. Compat group
+        // refresh makes sense after a group membership change but we already perform a CoreGUI refresh to
+        // reset the whole detail view after that user action. So, only suuport refresh for autogroup nodes
+        // in the resource tree.
+        if (node instanceof AutoGroupTreeNode) {
+            // separator
+            addItem(new MenuItemSeparator());
+
+            // refresh node
+            MenuItem refresh = new MenuItem(MSG.common_button_refresh());
+            refresh.addClickHandler(new ClickHandler() {
+
+                public void onClick(MenuItemClickEvent event) {
+                    // autogroup nodes are in the resource tree and reloads are performed only on resource nodes.
+                    // so find the actual resource parent node, traversing through subcategory nodes as needed.
+                    TreeNode resourceNode = tree.getParent(node);
+                    while (!(resourceNode instanceof ResourceTreeNode)) {
+                        resourceNode = tree.getParent(resourceNode);
+                    }
+                    tree.reloadChildren(resourceNode);
+                }
+            });
+            addItem(refresh);
+        }
 
         // separator
         addItem(new MenuItemSeparator());

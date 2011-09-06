@@ -171,31 +171,34 @@ public class DriftDetector implements Runnable {
             }
         }
 
-        // Now we need to do a directory tree scan to look for newly added files
-        forEachFile(basedir, new FilterFileVisitor(basedir, schedule.getDriftConfiguration().getIncludes(), schedule
-            .getDriftConfiguration().getExcludes(), new FileVisitor() {
-            @Override
-            public void visit(File file) {
-                try {
-                    if (processedFiles.contains(file)) {
-                        return;
-                    }
+        // If the basedir is still valid we need to do a directory tree scan to look for newly added files
+        if (basedir.isDirectory()) {
+            forEachFile(basedir, new FilterFileVisitor(basedir, schedule.getDriftConfiguration().getIncludes(),
+                schedule.getDriftConfiguration().getExcludes(), new FileVisitor() {
+                    @Override
+                    public void visit(File file) {
+                        try {
+                            if (processedFiles.contains(file)) {
+                                return;
+                            }
 
-                    if (log.isInfoEnabled()) {
-                        log.info("Detected added file for " + schedule + " --> " + file.getAbsolutePath());
-                    }
+                            if (log.isInfoEnabled()) {
+                                log.info("Detected added file for " + schedule + " --> " + file.getAbsolutePath());
+                            }
 
-                    FileEntry newEntry = addedFileEntry(relativePath(basedir, file), sha256(file));
-                    driftWriter.write(newEntry);
-                    coverageWriter.write(newEntry);
-                    changes.incrementAndGet();
-                } catch (IOException e) {
-                    log.error("An error occurred while generating a drift change set for " + schedule + ": "
-                        + e.getMessage());
-                    throw new DriftDetectionException("An error occurred while generating a drift change set", e);
-                }
-            }
-        }));
+                            FileEntry newEntry = addedFileEntry(relativePath(basedir, file), sha256(file));
+                            driftWriter.write(newEntry);
+                            coverageWriter.write(newEntry);
+                            changes.incrementAndGet();
+                        } catch (IOException e) {
+                            log.error("An error occurred while generating a drift change set for " + schedule + ": "
+                                + e.getMessage());
+                            throw new DriftDetectionException("An error occurred while generating a drift change set",
+                                e);
+                        }
+                    }
+                }));
+        }
 
         driftWriter.close();
         coverageWriter.close();
@@ -211,24 +214,28 @@ public class DriftDetector implements Runnable {
             schedule, COVERAGE));
         final DriftConfiguration config = schedule.getDriftConfiguration();
         final File basedir = new File(basedir(schedule.getResourceId(), config));
+        if (basedir.isDirectory()) {
 
-        forEachFile(basedir, new FilterFileVisitor(basedir, config.getIncludes(), config.getExcludes(),
-            new FileVisitor() {
-                @Override
-                public void visit(File file) {
-                    try {
-                        if (log.isInfoEnabled()) {
-                            log.info("Adding " + file.getAbsolutePath() + " to coverage change set for " + schedule);
+            forEachFile(basedir, new FilterFileVisitor(basedir, config.getIncludes(), config.getExcludes(),
+                new FileVisitor() {
+                    @Override
+                    public void visit(File file) {
+                        try {
+                            if (log.isInfoEnabled()) {
+                                log
+                                    .info("Adding " + file.getAbsolutePath() + " to coverage change set for "
+                                        + schedule);
+                            }
+                            writer.write(addedFileEntry(relativePath(basedir, file), sha256(file)));
+                        } catch (IOException e) {
+                            log.error("An error occurred while generating a coverage change set for " + schedule + ": "
+                                + e.getMessage());
+                            throw new DriftDetectionException(
+                                "An error occurred while generating a coverage change set for " + schedule, e);
                         }
-                        writer.write(addedFileEntry(relativePath(basedir, file), sha256(file)));
-                    } catch (IOException e) {
-                        log.error("An error occurred while generating a coverage change set for " + schedule + ": "
-                            + e.getMessage());
-                        throw new DriftDetectionException(
-                            "An error occurred while generating a coverage change set for " + schedule, e);
                     }
-                }
-            }));
+                }));
+        }
         writer.close();
     }
 

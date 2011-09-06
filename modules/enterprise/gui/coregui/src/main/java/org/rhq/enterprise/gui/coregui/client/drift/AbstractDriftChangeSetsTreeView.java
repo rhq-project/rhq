@@ -85,6 +85,10 @@ public abstract class AbstractDriftChangeSetsTreeView extends LocatableTreeGrid 
             public void onDataArrived(DataArrivedEvent dataArrivedEvent) {
                 if (null != pendingPath) {
                     selectPath(pendingPath);
+                } else {
+                    // open config folders initially
+                    Tree tree = getTree();
+                    tree.openFolders(tree.getChildren(tree.getRoot()));
                 }
             }
         });

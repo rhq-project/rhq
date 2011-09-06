@@ -57,8 +57,12 @@ public class DriftConfigurationDataSource extends RPCDataSource<DriftConfigurati
     public static final String ATTR_ID = "id";
     public static final String ATTR_NAME = "name";
     public static final String ATTR_INTERVAL = "interval";
+    public static final String ATTR_DRIFT_HANDLING_MODE = "driftHandlingMode";
     public static final String ATTR_BASE_DIR_STRING = "baseDirString";
     public static final String ATTR_ENABLED = "enabled";
+
+    public static final String DRIFT_HANDLING_MODE_NORMAL = MSG.view_drift_table_driftHandlingMode_normal();
+    public static final String DRIFT_HANDLING_MODE_PLANNED = MSG.view_drift_table_driftHandlingMode_plannedChanges();
 
     private DriftGWTServiceAsync driftService = GWTServiceLookup.getDriftService();
     private EntityContext entityContext;
@@ -90,12 +94,17 @@ public class DriftConfigurationDataSource extends RPCDataSource<DriftConfigurati
         enabledField.setCanSort(false);
         fields.add(enabledField);
 
+        ListGridField driftHandlingModeField = new ListGridField(ATTR_DRIFT_HANDLING_MODE, MSG
+            .view_drift_table_driftHandlingMode());
+        driftHandlingModeField.setCanSort(true);
+        fields.add(driftHandlingModeField);
+
         ListGridField intervalField = new ListGridField(ATTR_INTERVAL, MSG.common_title_interval());
         intervalField.setCanSort(false);
         fields.add(intervalField);
 
         ListGridField baseDirField = new ListGridField(ATTR_BASE_DIR_STRING, MSG.view_drift_table_baseDir());
-        baseDirField.setCanSort(false);
+        baseDirField.setCanSort(true);
         fields.add(baseDirField);
 
         if (this.entityContext.type != EntityContext.Type.Resource) {
@@ -120,15 +129,17 @@ public class DriftConfigurationDataSource extends RPCDataSource<DriftConfigurati
 
             nameField.setWidth("20%");
             enabledField.setWidth(60);
+            driftHandlingModeField.setWidth("10%");
             intervalField.setWidth(100);
-            baseDirField.setWidth("20%");
+            baseDirField.setWidth("*");
             resourceNameField.setWidth("20%");
             ancestryField.setWidth("40%");
         } else {
             nameField.setWidth("20%");
             enabledField.setWidth(60);
+            driftHandlingModeField.setWidth("10%");
             intervalField.setWidth(100);
-            baseDirField.setWidth("80%");
+            baseDirField.setWidth("*");
         }
 
         return fields;
@@ -239,6 +250,14 @@ public class DriftConfigurationDataSource extends RPCDataSource<DriftConfigurati
 
         record.setAttribute(ATTR_ID, from.getId());
         record.setAttribute(ATTR_NAME, from.getName());
+        switch (from.getDriftHandlingMode()) {
+        case plannedChanges:
+            record.setAttribute(ATTR_DRIFT_HANDLING_MODE, DRIFT_HANDLING_MODE_PLANNED);
+            break;
+        default:
+            record.setAttribute(ATTR_DRIFT_HANDLING_MODE, DRIFT_HANDLING_MODE_NORMAL);
+            break;
+        }
         record.setAttribute(ATTR_INTERVAL, String.valueOf(from.getInterval()));
         record.setAttribute(ATTR_BASE_DIR_STRING, getBaseDirString(from.getBasedir()));
         record.setAttribute(ATTR_ENABLED, ImageManager.getAvailabilityIcon(from.isEnabled()));

@@ -67,11 +67,7 @@ public class ModClusterDiscoveryComponent extends MBeanResourceDiscoveryComponen
 
         try {
             if (parentResourceComponent instanceof JBossASServerComponent) {
-
                 JBossASServerComponent parentComponent = (JBossASServerComponent) parentResourceComponent;
-
-                System.out.println(parentComponent.getPluginConfiguration()
-                    .getSimple(parentComponent.CONFIGURATION_PATH_CONFIG_PROP).getStringValue());
 
                 return parentComponent.getPluginConfiguration()
                     .getSimple(parentComponent.CONFIGURATION_PATH_CONFIG_PROP).getStringValue();

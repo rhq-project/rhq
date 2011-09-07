@@ -37,6 +37,7 @@ import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.DriftConfigurationCriteria;
 import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.domain.drift.DriftConfiguration.BaseDirectory;
+import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
@@ -248,14 +249,7 @@ public class DriftConfigurationDataSource extends RPCDataSource<DriftConfigurati
 
         record.setAttribute(ATTR_ID, from.getId());
         record.setAttribute(ATTR_NAME, from.getName());
-        switch (from.getDriftHandlingMode()) {
-        case plannedChanges:
-            record.setAttribute(ATTR_DRIFT_HANDLING_MODE, DRIFT_HANDLING_MODE_PLANNED);
-            break;
-        default:
-            record.setAttribute(ATTR_DRIFT_HANDLING_MODE, DRIFT_HANDLING_MODE_NORMAL);
-            break;
-        }
+        record.setAttribute(ATTR_DRIFT_HANDLING_MODE, getDriftHandlingModeDisplayName(from.getDriftHandlingMode()));
         record.setAttribute(ATTR_INTERVAL, String.valueOf(from.getInterval()));
         record.setAttribute(ATTR_BASE_DIR_STRING, getBaseDirString(from.getBasedir()));
         record.setAttribute(ATTR_ENABLED, ImageManager.getAvailabilityIcon(from.isEnabled()));
@@ -268,6 +262,16 @@ public class DriftConfigurationDataSource extends RPCDataSource<DriftConfigurati
         // record.setAttribute(AncestryUtil.RESOURCE_TYPE_ID, resource.getResourceType().getId());
 
         return record;
+    }
+
+    public static String getDriftHandlingModeDisplayName(DriftHandlingMode driftHandlingMode) {
+        switch (driftHandlingMode) {
+        case plannedChanges:
+            return DRIFT_HANDLING_MODE_PLANNED;
+
+        default:
+            return DRIFT_HANDLING_MODE_NORMAL;
+        }
     }
 
     private static String getBaseDirString(BaseDirectory basedir) {

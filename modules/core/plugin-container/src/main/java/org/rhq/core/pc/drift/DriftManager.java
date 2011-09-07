@@ -26,7 +26,6 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.ZipEntry;
@@ -115,11 +114,9 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
         }
 
         log.debug("Rescheduling drift detection schedules for " + r);
-        Set<DriftDetectionSchedule> driftSchedules = container.getDriftSchedules();
-        if (driftSchedules != null)
-            for (DriftDetectionSchedule schedule : driftSchedules) {
-                schedulesQueue.addSchedule(schedule);
-            }
+        for (DriftConfiguration c : container.getDriftConfigurations()) {
+            schedulesQueue.addSchedule(new DriftDetectionSchedule(r.getId(), c));
+        }
 
         for (Resource child : r.getChildResources()) {
             initSchedules(child, inventoryMgr);
@@ -280,9 +277,13 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
         if (added) {
             if (log.isDebugEnabled()) {
                 log.debug(schedule + " has been added to " + schedulesQueue);
-            } else {
-                log.warn("Failed to add " + schedule + " to " + schedulesQueue);
             }
+            ResourceContainer container = getInventoryManager().getResourceContainer(resourceId);
+            if (container != null) {
+                container.addDriftConfiguration(driftConfiguration);
+            }
+        } else {
+            log.warn("Failed to add " + schedule + " to " + schedulesQueue);
         }
     }
 
@@ -322,10 +323,17 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
                     log.debug("Removed change set directory " + changeSetDir.getAbsolutePath());
                 }
             });
+        if (schedule != null) {
+            ResourceContainer container = getInventoryManager().getResourceContainer(resourceId);
+            if (container != null) {
+                container.removeDriftConfiguration(schedule.getDriftConfiguration());
+            }
+        }
 
         if (log.isDebugEnabled()) {
             log.debug("Removed " + schedule + " from the queue " + schedulesQueue);
         }
+
     }
 
     @Override
@@ -351,7 +359,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
         InventoryManager inventoryMgr = PluginContainer.getInstance().getInventoryManager();
         ResourceContainer container = inventoryMgr.getResourceContainer(resourceId);
         if (container != null) {
-            container.getDriftSchedules().add(updatedSchedule);
+            container.addDriftConfiguration(driftConfiguration);
         }
     }
 

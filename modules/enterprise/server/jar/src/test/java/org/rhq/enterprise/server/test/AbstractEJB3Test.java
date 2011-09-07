@@ -22,7 +22,6 @@ import static org.rhq.test.JPAUtils.clearDB;
 import static org.rhq.test.JPAUtils.lookupEntityManager;
 import static org.rhq.test.JPAUtils.lookupTransactionManager;
 
-import java.io.File;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Hashtable;
@@ -47,7 +46,6 @@ import org.testng.annotations.BeforeSuite;
 import org.jboss.ejb3.embedded.EJB3StandaloneBootstrap;
 import org.jboss.ejb3.embedded.EJB3StandaloneDeployer;
 import org.jboss.mx.util.MBeanServerLocator;
-import org.jboss.system.server.ServerConfigImpl;
 
 import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.db.PostgresqlDatabaseType;
@@ -71,11 +69,11 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public abstract class AbstractEJB3Test extends AssertJUnit {
 
     private static EJB3StandaloneDeployer deployer;
-    private static MBeanServer dummyJBossMBeanServer;
     private static Statistics stats;
     private static long start; // see endTest() if you want to output this
     private SchedulerService schedulerService;
     private ServerPluginService serverPluginService;
+    private MBeanServer dummyJBossMBeanServer;
 
     @BeforeClass
     public void resetDB() throws Exception {
@@ -91,9 +89,6 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
     //@BeforeSuite(groups = {"integration.ejb3","PERF"}) // TODO investigate again
     @BeforeSuite(alwaysRun = true)
     public static void startupEmbeddedJboss() throws Exception {
-
-        // need to create the JBoss MBeanServer and register the ServerConfig service for JMS subsystem to start properly
-        prepareServerConfigMBean();
 
         // Setting content location to the tmp dir
         System.setProperty(ContentSourceManagerBean.FILESYSTEM_PROPERTY, System.getProperty("java.io.tmpdir"));
@@ -111,9 +106,6 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
 
             deployer.setClassLoader(AbstractEJB3Test.class.getClassLoader());
             System.err.println("...... embedded container classloader set....");
-
-            deployer.setMbeanServer(getJBossMBeanServer());
-            System.err.println("...... embedded container mbean server set....");
 
             deployer.getArchivesByResource().add("META-INF/persistence.xml");
             System.err.println("...... embedded container persistence xml deployed....");
@@ -177,10 +169,6 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
             }
         }
         EJB3StandaloneBootstrap.shutdown();
-        if (dummyJBossMBeanServer != null) {
-            MBeanServerFactory.releaseMBeanServer(dummyJBossMBeanServer);
-            dummyJBossMBeanServer = null;
-        }
     }
 
     @BeforeMethod
@@ -250,7 +238,7 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
      *
      * @return MBeanServer instance
      */
-    public static MBeanServer getJBossMBeanServer() {
+    public MBeanServer getJBossMBeanServer() {
         if (dummyJBossMBeanServer == null) {
             dummyJBossMBeanServer = MBeanServerFactory.createMBeanServer("jboss");
             MBeanServerLocator.setJBoss(dummyJBossMBeanServer);
@@ -358,31 +346,5 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
             getJBossMBeanServer().unregisterMBean(SchedulerServiceMBean.SCHEDULER_MBEAN_NAME);
             schedulerService = null;
         }
-    }
-
-    private static final void prepareServerConfigMBean() throws Exception {
-        // the JMS state service needs this, but for some reason, this deployed but the 
-        // state server can't find it in the JBoss MBeanServer. So this method deploys this manually.
-        //
-        // <bean name="jboss.system:type=ServerConfig" class="org.jboss.system.server.ServerConfigImpl">
-        //    <constructor>
-        //       <parameter class="java.util.Properties">
-        //          <map keyClass="java.lang.String" valueClass="java.lang.String">
-        //             <entry>
-        //                <key>jboss.home.dir</key>
-        //                <value>target</value>
-        //             </entry>
-        //          </map>
-        //       </parameter>
-        //    </constructor>
-        // </bean>
-        Properties props = new Properties();
-        File jbossHomeDir = new File("target/test-classes/test-jboss-home-dir");
-        assert jbossHomeDir.isDirectory() : "Test framework did not setup jboss home directory properly: "
-            + jbossHomeDir.getAbsolutePath();
-        props.setProperty("jboss.home.dir", jbossHomeDir.getAbsolutePath());
-        ServerConfigImpl serverConfigService = new ServerConfigImpl(props);
-        serverConfigService.initURLs();
-        getJBossMBeanServer().registerMBean(serverConfigService, ServerConfigImpl.OBJECT_NAME);
     }
 }

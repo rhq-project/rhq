@@ -71,8 +71,7 @@
       <property name="workManager"><inject bean="jms-rar-WorkManager"/></property>
    </bean>
 
-   <bean name="jboss.mq:service=StateManager" class="org.jboss.mq.sm.file.DynamicStateManager">
-      <property name="stateFile">jbossmq-state.xml</property>
+   <bean name="jboss.mq:service=StateManager" class="org.jboss.mq.sm.none.NullStateManager">
    </bean>
 
    <bean name="BasicQueueParameters" class="org.jboss.mq.server.BasicQueueParameters"/>

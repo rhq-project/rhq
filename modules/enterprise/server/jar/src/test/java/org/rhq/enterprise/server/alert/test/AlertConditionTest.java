@@ -19,22 +19,13 @@
 
 package org.rhq.enterprise.server.alert.test;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.testng.annotations.Test;
 
-import org.rhq.enterprise.server.drift.DriftManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
-import org.rhq.enterprise.server.util.LookupUtil;
 
 @Test
 public class AlertConditionTest extends AbstractEJB3Test {
     public void test() throws Exception {
-        DriftManagerLocal mgr = LookupUtil.getDriftManager();
-        Log log = LogFactory.getLog("TESTING");
-        log.fatal("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-        mgr.addChangeSet(1, 0, null);
-        Thread.sleep(5000);
-        log.fatal("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+        // TODO need tests here
     }
 }

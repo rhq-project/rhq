@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<StateManager>
+   <Users>
+      <User>
+         <Name>guest</Name>
+         <Password>guest</Password>
+      </User>
+   </Users>
+   <Roles>
+      <Role name="guest">
+         <UserName>guest</UserName>
+      </Role>
+   </Roles>
+   <DurableSubscriptions>
+   </DurableSubscriptions>
+</StateManager>

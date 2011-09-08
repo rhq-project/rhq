@@ -25,7 +25,9 @@ import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.transaction.TransactionManager;
 
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.alert.Alert;
@@ -59,6 +61,10 @@ import org.rhq.test.TransactionCallbackWithContext;
 
 @Test
 public class AlertConditionTest extends UpdatePluginMetadataTestBase {
+    // this must match the constant found in ServerManagerBean
+    private static final String RHQ_SERVER_NAME_PROPERTY = "rhq.server.high-availability.name";
+    private static final String RHQ_SERVER_NAME_PROPERTY_VALUE = "AlertConditionTestServer";
+
     private Resource resource;
     private Server server;
 
@@ -77,6 +83,16 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         deleteServerIdentity();
 
         return;
+    }
+
+    @BeforeClass(alwaysRun = true)
+    public void setSysProp() {
+        System.setProperty(RHQ_SERVER_NAME_PROPERTY, RHQ_SERVER_NAME_PROPERTY_VALUE);
+    }
+
+    @AfterClass(alwaysRun = true)
+    public void unsetSysProp() {
+        System.setProperty(RHQ_SERVER_NAME_PROPERTY, "");
     }
 
     public void testBZ736685() throws Exception {
@@ -210,7 +226,7 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
 
     private void createServerIdentity() {
         server = new Server();
-        server.setName("localhost"); // this is the default assumed in the SLSB code, we must match it
+        server.setName(RHQ_SERVER_NAME_PROPERTY_VALUE);
         server.setAddress("localhost");
         server.setPort(7080);
         server.setSecurePort(7443);

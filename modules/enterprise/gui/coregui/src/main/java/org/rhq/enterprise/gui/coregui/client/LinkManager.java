@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -101,8 +101,39 @@ public class LinkManager {
         return link;
     }
 
-    public static String getResourcePluginConfigurationUpdateHistoryLink(int groupId) {
-        return getResourceLink(groupId) + "/Inventory/ConnectionSettingsHistory";
+    public static String getEntityTabLink(EntityContext entityContext, String tabName, String subTabName) {
+        String link;
+        switch (entityContext.getType()) {
+            case Resource:
+                link = getResourceTabLink(entityContext.getResourceId(), tabName, subTabName);
+                break;
+            case ResourceGroup:
+                if (entityContext.isAutoGroup()) {
+                    link = getAutoGroupTabLink(entityContext.getGroupId(), tabName, subTabName);
+                } else if (entityContext.isAutoCluster()) {
+                    link = getAutoClusterTabLink(entityContext.getGroupId(), tabName, subTabName);
+                } else {
+                    link = getResourceGroupTabLink(entityContext.getGroupId(), tabName, subTabName);
+                }
+                break;
+            case SubsystemView:
+                if (tabName.equals("Alerts") && subTabName.equals("Definitions")) {
+                    link = "#Reports/Subsystems/AlertDefinitions";
+                } else if (tabName.equals("Alerts") && subTabName.equals("History")) {
+                    link = "#Reports/Subsystems/RecentAlerts";
+                } else if (tabName.equals("Operations") && subTabName.equals("History")) {
+                    link = "#Reports/Subsystems/RecentOperations";
+                } else if (tabName.equals("Configuration") && subTabName.equals("History")) {
+                    link = "#Reports/Subsystems/ConfigurationHistoryView";
+                } else {
+                    throw new IllegalArgumentException("Subsystem link not supported for tab " + tabName + ">"
+                            + subTabName + ".");
+                }
+                break;
+            default:
+                throw new IllegalArgumentException("Unsupported entity context type: " + entityContext.getType());
+        }
+        return link;
     }
 
     public static String getGroupPluginConfigurationUpdateHistoryLink(int groupId, Integer groupUpdateHistoryId) {
@@ -200,18 +231,7 @@ public class LinkManager {
     public static String getAlertDetailLink(EntityContext entityContext, int alertId) {
         String link;
         if (GWT) {
-            String baseLink = getResourceLink(entityContext.getResourceId());
-            switch (entityContext.getType()) {
-                case Resource:
-                    baseLink = getResourceTabLink(entityContext.getResourceId(), "Alerts", "History");
-                    break;
-                case ResourceGroup:
-                    baseLink = getResourceGroupTabLink(entityContext.getGroupId(), "Alerts", "History");
-                    break;
-                case SubsystemView:
-                    baseLink = "#Reports/Subsystems/RecentAlerts";
-                    break;
-            }
+            String baseLink = getEntityTabLink(entityContext, "Alerts", "History");
             link = baseLink + "/" + alertId;
         } else {
             link = null; // TODO
@@ -273,7 +293,7 @@ public class LinkManager {
 
     public static String getHubServerssLink() {
         if (GWT) {
-            return "#Inventory/Serers";
+            return "#Inventory/Servers";
         } else {
             return "/rhq/inventory/browseResources.xhtml?subtab=server";
         }
@@ -321,7 +341,7 @@ public class LinkManager {
 
     public static String getAdminUsersLink() {
         if (GWT) {
-            return "#Administration/Security/Manage Users";
+            return "#Administration/Security/Users";
         } else {
             return "/admin/user/UserAdmin.do?mode=list";
         }
@@ -329,7 +349,7 @@ public class LinkManager {
 
     public static String getAdminRolesLink() {
         if (GWT) {
-            return "#Administration/Security/Manage Roles";
+            return "#Administration/Security/Roles";
         } else {
             return "/admin/role/RoleAdmin.do?mode=list";
         }
@@ -474,4 +494,5 @@ public class LinkManager {
     public static String getDriftConfigurationLink(int resourceId, int driftConfigId) {
         return "#Resource/" + resourceId + "/Drift/Configuration/" + driftConfigId;
     }
+
 }

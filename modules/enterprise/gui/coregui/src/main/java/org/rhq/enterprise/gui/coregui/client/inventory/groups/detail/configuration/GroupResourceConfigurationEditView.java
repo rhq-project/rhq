@@ -211,7 +211,7 @@ public class GroupResourceConfigurationEditView extends LocatableVLayout impleme
                 }
 
                 public void onSuccess(Void result) {
-                    String configHistoryUrl = LinkManager.getResourceGroupTabLink(group.getId(),
+                    String configHistoryUrl = LinkManager.getResourceGroupTabLink(group,
                         ResourceDetailView.Tab.CONFIGURATION, ResourceDetailView.ConfigurationSubTab.HISTORY);
                     String configHistoryView = configHistoryUrl.substring(1); // chop off the leading '#'
                     Message message = new Message(MSG.view_group_resConfig_edit_saveInitiated_concise(), MSG

@@ -57,6 +57,7 @@ import org.rhq.plugins.perftest.trait.TraitFactory;
 
 import java.io.InputStream;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 import java.util.Arrays;
 
@@ -70,9 +71,12 @@ public class PerfTestComponent implements ResourceComponent, MeasurementFacet, C
     // Attributes  --------------------------------------------
     private Log log = LogFactory.getLog(PerfTestComponent.class);
 
+    public static final Random RANDOM = new Random();
+
     private ResourceContext resourceContext;
     private EventPoller eventPoller;
     private Configuration resourceConfiguration;
+
 
     // ResourceComponent Implementation  --------------------------------------------
 
@@ -186,9 +190,17 @@ public class PerfTestComponent implements ResourceComponent, MeasurementFacet, C
 
         if (name.equals("createEvents")) {
             return createEvents(parameters);
+        } else {
+            // Sleep for a bit to simulate actually doing something.
+            Thread.sleep(500);
+            // Make roughly 1 out of 10 invocations fail.
+            if ((RANDOM.nextInt(10) % 9) == 0) {
+                throw new Exception("Operation failed!");
+            } else {
+                // Assume the operation returns an empty result config.
+                return new OperationResult();
+            }
         }
-
-        return null;
     }
 
     private OperationResult createEvents(Configuration params) {

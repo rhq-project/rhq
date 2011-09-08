@@ -97,7 +97,47 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         System.setProperty(RHQ_SERVER_NAME_PROPERTY, "");
     }
 
-    public void testBZ736685() throws Exception {
+    public void testBZ735262_RangeCondition() throws Exception {
+        // create our resource with alert definition
+        MeasurementDefinition metricDef = createResourceWithMetricSchedule();
+        createAlertDefinitionWithTwoConditionsALL(metricDef);
+
+        // re-load the resource so we get the measurement schedule
+        Resource resourceWithSchedules = loadResourceWithSchedules();
+        MeasurementSchedule schedule = resourceWithSchedules.getSchedules().iterator().next();
+
+        // simulate a measurement report coming from the agent
+        MeasurementScheduleRequest request = new MeasurementScheduleRequest(schedule);
+        MeasurementReport report = new MeasurementReport();
+        report.addData(new MeasurementDataNumeric(getTimestamp(60), request, Double.valueOf(20.0))); // 20 < 60 but !(20 > 40)
+        report.addData(new MeasurementDataNumeric(getTimestamp(30), request, Double.valueOf(70.0))); // !(70 < 60) but 70 > 40
+        MeasurementDataManagerLocal dataManager = LookupUtil.getMeasurementDataManager();
+        dataManager.mergeMeasurementReport(report);
+
+        // wait for our JMS messages to process and see if we get any alerts
+        Thread.sleep(5000);
+
+        // make sure no alert was triggered
+        AlertManagerLocal alertManager = LookupUtil.getAlertManager();
+        AlertCriteria alertCriteria = new AlertCriteria();
+        alertCriteria.addFilterResourceIds(resourceWithSchedules.getId());
+        PageList<Alert> alerts = alertManager.findAlertsByCriteria(getOverlord(), alertCriteria);
+        assert alerts.size() == 0 : "0 alert should have fired: " + alerts;
+
+        // purge the resource fully, which should remove all alert defs and alert conditions and condition logs
+        int resourceId = resource.getId();
+        deleteNewResource(resource);
+        resource = null;
+
+        AlertDefinitionManagerLocal alertDefManager = LookupUtil.getAlertDefinitionManager();
+        PageList<AlertDefinition> defs = alertDefManager.findAlertDefinitions(getOverlord(), resourceId, PageControl
+            .getUnlimitedInstance());
+        assert defs.isEmpty() : "failed to delete the alert definition - are condition logs still around?";
+
+        return;
+    }
+
+    public void testBZ736685_DeleteConditionLogButNoAlert() throws Exception {
         // create our resource with alert definition
         MeasurementDefinition metricDef = createResourceWithMetricSchedule();
         AlertDefinition alertDef = createAlertDefinitionWithTwoConditionsALL(metricDef);

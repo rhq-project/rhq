@@ -43,6 +43,9 @@ import org.rhq.core.system.SystemInfo;
 @SuppressWarnings({"UnusedDeclaration"})
 public class FileSystemDiscoveryComponent implements ResourceDiscoveryComponent<PlatformComponent> {
 
+    private static final String SYS_TYPE_NAME_LOFS = "lofs";
+    private static final String SYS_TYPE_NAME_TMPFS = "tmpfs";
+
     private final Log log = LogFactory.getLog(this.getClass());
 
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<PlatformComponent> discoveryContext)
@@ -67,7 +70,7 @@ public class FileSystemDiscoveryComponent implements ResourceDiscoveryComponent<
                     break;
                 default:
                     String sysTypeName = fs.getSysTypeName();
-                    if (!(sysTypeName.equals("lofs") || sysTypeName.equals("tmpfs"))) {
+                    if (!(SYS_TYPE_NAME_LOFS.equals(sysTypeName) || SYS_TYPE_NAME_TMPFS.equals(sysTypeName))) {
                         continue;
                     }
             }

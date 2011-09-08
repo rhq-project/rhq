@@ -100,10 +100,10 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
     public void testBZ735262_RangeCondition() throws Exception {
         // create our resource with alert definition
         MeasurementDefinition metricDef = createResourceWithMetricSchedule();
-        createAlertDefinitionWithTwoConditionsALL(metricDef);
+        createAlertDefinitionWithTwoConditionsALL(metricDef, resource.getId());
 
         // re-load the resource so we get the measurement schedule
-        Resource resourceWithSchedules = loadResourceWithSchedules();
+        Resource resourceWithSchedules = loadResourceWithSchedules(resource.getId());
         MeasurementSchedule schedule = resourceWithSchedules.getSchedules().iterator().next();
 
         // simulate a measurement report coming from the agent
@@ -118,11 +118,8 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         Thread.sleep(5000);
 
         // make sure no alert was triggered
-        AlertManagerLocal alertManager = LookupUtil.getAlertManager();
-        AlertCriteria alertCriteria = new AlertCriteria();
-        alertCriteria.addFilterResourceIds(resourceWithSchedules.getId());
-        PageList<Alert> alerts = alertManager.findAlertsByCriteria(getOverlord(), alertCriteria);
-        assert alerts.size() == 0 : "0 alert should have fired: " + alerts;
+        PageList<Alert> alerts = getAlerts(resourceWithSchedules.getId());
+        assert alerts.size() == 0 : "no alerts should have fired: " + alerts;
 
         // purge the resource fully, which should remove all alert defs and alert conditions and condition logs
         int resourceId = resource.getId();
@@ -140,10 +137,10 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
     public void testBZ736685_DeleteConditionLogButNoAlert() throws Exception {
         // create our resource with alert definition
         MeasurementDefinition metricDef = createResourceWithMetricSchedule();
-        AlertDefinition alertDef = createAlertDefinitionWithTwoConditionsALL(metricDef);
+        AlertDefinition alertDef = createAlertDefinitionWithTwoConditionsALL(metricDef, resource.getId());
 
         // re-load the resource so we get the measurement schedule
-        Resource resourceWithSchedules = loadResourceWithSchedules();
+        Resource resourceWithSchedules = loadResourceWithSchedules(resource.getId());
         MeasurementSchedule schedule = resourceWithSchedules.getSchedules().iterator().next();
 
         // simulate a measurement report coming from the agent
@@ -157,12 +154,8 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         // wait for our JMS messages to process and see if we get any alerts
         Thread.sleep(5000);
 
-        // make sure no alert was triggered...
-        AlertManagerLocal alertManager = LookupUtil.getAlertManager();
-        AlertCriteria alertCriteria = new AlertCriteria();
-        alertCriteria.addFilterResourceIds(resourceWithSchedules.getId());
-        PageList<Alert> alerts = alertManager.findAlertsByCriteria(getOverlord(), alertCriteria);
-        assert alerts.size() == 0 : "0 alert should have fired: " + alerts;
+        PageList<Alert> alerts = getAlerts(resourceWithSchedules.getId());
+        assert alerts.size() == 0 : "no alerts should have fired: " + alerts;
 
         // ...but make sure a condition was true (the condition we know is true is "< 60")
         int condId = 0;
@@ -192,6 +185,14 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         return;
     }
 
+    private PageList<Alert> getAlerts(int resourceId) {
+        AlertManagerLocal alertManager = LookupUtil.getAlertManager();
+        AlertCriteria alertCriteria = new AlertCriteria();
+        alertCriteria.addFilterResourceIds(resourceId);
+        PageList<Alert> alerts = alertManager.findAlertsByCriteria(getOverlord(), alertCriteria);
+        return alerts;
+    }
+
     private AlertCondition getAlertConditionWithLogs(final int conditionId) {
         return JPAUtils.executeInTransaction(new TransactionCallbackWithContext<AlertCondition>() {
             @Override
@@ -203,9 +204,9 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         });
     }
 
-    private Resource loadResourceWithSchedules() {
+    private Resource loadResourceWithSchedules(int resourceId) {
         ResourceCriteria resourceCriteria = new ResourceCriteria();
-        resourceCriteria.addFilterId(resource.getId());
+        resourceCriteria.addFilterId(resourceId);
         resourceCriteria.fetchSchedules(true);
         Resource resourceWithSchedules = getResource(resourceCriteria);
         assert resourceWithSchedules != null : "could not obtain resource from DB";
@@ -213,7 +214,7 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         return resourceWithSchedules;
     }
 
-    private AlertDefinition createAlertDefinitionWithTwoConditionsALL(MeasurementDefinition metricDef) {
+    private AlertDefinition createAlertDefinitionWithTwoConditionsALL(MeasurementDefinition metricDef, int resourceId) {
         // create alert definition with the conditions "metric value > 40 AND metric value < 60"
         HashSet<AlertCondition> conditions = new HashSet<AlertCondition>(2);
         AlertCondition cond1 = new AlertCondition();
@@ -244,7 +245,7 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         alertDefinition.setConditions(conditions);
 
         AlertDefinitionManagerLocal alertDefManager = LookupUtil.getAlertDefinitionManager();
-        int defId = alertDefManager.createAlertDefinition(getOverlord(), alertDefinition, resource.getId());
+        int defId = alertDefManager.createAlertDefinition(getOverlord(), alertDefinition, resourceId);
         alertDefinition = alertDefManager.getAlertDefinition(getOverlord(), defId); // load it back so we get its ID and all condition IDs
         assert alertDefinition != null && alertDefinition.getId() > 0 : "did not persist alert def properly: "
             + alertDefinition;
@@ -255,6 +256,13 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         return alertDefinition;
     }
 
+    /**
+     * Creates a resource, stores it in the "resource" data field and returns the measurement definition
+     * that the schedule is for.
+     * 
+     * @return measurement definition that was used to create the schedule for the new resource
+     * @throws Exception
+     */
     private MeasurementDefinition createResourceWithMetricSchedule() throws Exception {
         registerPlugin("type-with-metric.xml");
         ResourceType resourceType = getResourceType("TypeWithMetrics");

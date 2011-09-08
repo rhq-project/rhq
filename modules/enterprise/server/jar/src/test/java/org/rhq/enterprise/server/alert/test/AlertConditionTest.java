@@ -20,6 +20,7 @@
 package org.rhq.enterprise.server.alert.test;
 
 import java.util.HashSet;
+import java.util.Set;
 
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
@@ -33,6 +34,7 @@ import org.testng.annotations.Test;
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
+import org.rhq.core.domain.alert.AlertConditionLog;
 import org.rhq.core.domain.alert.AlertDampening;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.AlertPriority;
@@ -96,34 +98,48 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
     }
 
     public void testBZ736685() throws Exception {
-        // TODO: note that once BZ 735262 is fixed, THIS test will need to be rewritten
-        // TODO: since this assumes the bad behavior of 735262 to test 736685
-
         // create our resource with alert definition
         MeasurementDefinition metricDef = createResourceWithMetricSchedule();
-        createAlertDefinitionWithTwoConditionsALL(metricDef);
+        AlertDefinition alertDef = createAlertDefinitionWithTwoConditionsALL(metricDef);
 
         // re-load the resource so we get the measurement schedule
         Resource resourceWithSchedules = loadResourceWithSchedules();
         MeasurementSchedule schedule = resourceWithSchedules.getSchedules().iterator().next();
 
-        // simulate some measurement reports coming from the agent
+        // simulate a measurement report coming from the agent
+        // with a single metric that makes a condition trigger but does not fire an alert
         MeasurementScheduleRequest request = new MeasurementScheduleRequest(schedule);
         MeasurementReport report = new MeasurementReport();
-        report.addData(new MeasurementDataNumeric(getTimestamp(60), request, Double.valueOf(20.0))); // 20 < 60
-        report.addData(new MeasurementDataNumeric(getTimestamp(30), request, Double.valueOf(50.0))); // 50 > 40, 50 < 60
+        report.addData(new MeasurementDataNumeric(getTimestamp(60), request, Double.valueOf(20.0))); // 20 < 60 but !(20 > 40)
         MeasurementDataManagerLocal dataManager = LookupUtil.getMeasurementDataManager();
         dataManager.mergeMeasurementReport(report);
 
         // wait for our JMS messages to process and see if we get any alerts
         Thread.sleep(5000);
 
+        // make sure no alert was triggered...
         AlertManagerLocal alertManager = LookupUtil.getAlertManager();
         AlertCriteria alertCriteria = new AlertCriteria();
         alertCriteria.addFilterResourceIds(resourceWithSchedules.getId());
         PageList<Alert> alerts = alertManager.findAlertsByCriteria(getOverlord(), alertCriteria);
-        assert alerts.size() == 1 : "1 alert should have fired: " + alerts;
+        assert alerts.size() == 0 : "0 alert should have fired: " + alerts;
 
+        // ...but make sure a condition was true (the condition we know is true is "< 60")
+        int condId = 0;
+        for (AlertCondition cond : alertDef.getConditions()) {
+            if (cond.getComparator().equals("<")) {
+                condId = cond.getId();
+                break;
+            }
+        }
+        assert condId > 0 : "failed to get the condition ID - something is wrong with test setup";
+        AlertCondition conditionWithLogs = getAlertConditionWithLogs(condId); // should eagerly load logs
+        Set<AlertConditionLog> logs = conditionWithLogs.getConditionLogs();
+        assert logs != null && logs.size() > 0 : "missing condition log - we should have one that was generated";
+        AlertConditionLog log = logs.iterator().next();
+        assert log.getAlert() == null : "condition should not have fired an alert: " + logs;
+
+        // purge the resource fully, which should remove all alert defs and alert conditions and condition logs
         int resourceId = resource.getId();
         deleteNewResource(resource);
         resource = null;
@@ -136,6 +152,17 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         return;
     }
 
+    private AlertCondition getAlertConditionWithLogs(final int conditionId) {
+        return JPAUtils.executeInTransaction(new TransactionCallbackWithContext<AlertCondition>() {
+            @Override
+            public AlertCondition execute(TransactionManager tm, EntityManager em) throws Exception {
+                AlertCondition cond = em.find(AlertCondition.class, conditionId);
+                cond.getConditionLogs().size(); // force the load
+                return cond;
+            }
+        });
+    }
+
     private Resource loadResourceWithSchedules() {
         ResourceCriteria resourceCriteria = new ResourceCriteria();
         resourceCriteria.addFilterId(resource.getId());
@@ -146,7 +173,7 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         return resourceWithSchedules;
     }
 
-    private void createAlertDefinitionWithTwoConditionsALL(MeasurementDefinition metricDef) {
+    private AlertDefinition createAlertDefinitionWithTwoConditionsALL(MeasurementDefinition metricDef) {
         // create alert definition with the conditions "metric value > 40 AND metric value < 60"
         HashSet<AlertCondition> conditions = new HashSet<AlertCondition>(2);
         AlertCondition cond1 = new AlertCondition();
@@ -178,10 +205,14 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
 
         AlertDefinitionManagerLocal alertDefManager = LookupUtil.getAlertDefinitionManager();
         int defId = alertDefManager.createAlertDefinition(getOverlord(), alertDefinition, resource.getId());
-        alertDefinition.setId(defId);
+        alertDefinition = alertDefManager.getAlertDefinition(getOverlord(), defId); // load it back so we get its ID and all condition IDs
+        assert alertDefinition != null && alertDefinition.getId() > 0 : "did not persist alert def properly: "
+            + alertDefinition;
 
         // now that we created an alert def, we have to reload the alert condition cache
         reloadAllAlertConditionCaches();
+
+        return alertDefinition;
     }
 
     private MeasurementDefinition createResourceWithMetricSchedule() throws Exception {

@@ -659,47 +659,48 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
                 log.debug("Sending alert notifications for " + alert.toSimpleString() + "...");
             }
             List<AlertNotification> alertNotifications = alert.getAlertDefinition().getAlertNotifications();
-            //Set<String> emailAddresses = new LinkedHashSet<String>();
 
-            AlertSenderPluginManager alertSenderPluginManager = getAlertPluginManager();
+            if (alertNotifications != null && alertNotifications.size() > 0) {
+                AlertSenderPluginManager alertSenderPluginManager = getAlertPluginManager();
 
-            for (AlertNotification alertNotification : alertNotifications) {
-                AlertNotificationLog notificationLog = null;
+                for (AlertNotification alertNotification : alertNotifications) {
+                    AlertNotificationLog notificationLog = null;
 
-                String senderName = alertNotification.getSenderName();
-                if (senderName == null) {
-                    notificationLog = new AlertNotificationLog(alert, senderName, ResultState.FAILURE, "Sender '"
-                        + senderName + "' is not defined");
-                } else {
-
-                    AlertSender<?> notificationSender = alertSenderPluginManager
-                        .getAlertSenderForNotification(alertNotification);
-                    if (notificationSender == null) {
-                        notificationLog = new AlertNotificationLog(alert, senderName, ResultState.FAILURE,
-                            "Failed to obtain a sender with given name");
+                    String senderName = alertNotification.getSenderName();
+                    if (senderName == null) {
+                        notificationLog = new AlertNotificationLog(alert, senderName, ResultState.FAILURE, "Sender '"
+                            + senderName + "' is not defined");
                     } else {
-                        try {
-                            SenderResult result = notificationSender.send(alert);
-                            if (log.isDebugEnabled()) {
-                                log.debug(result);
-                            }
 
-                            if (result == null) {
-                                notificationLog = new AlertNotificationLog(alert, senderName, ResultState.UNKNOWN,
-                                    "Sender did not return any result");
-                            } else {
-                                notificationLog = new AlertNotificationLog(alert, senderName, result);
-                            }
-                        } catch (Throwable t) {
-                            log.error("Notification processing terminated abruptly" + t.getMessage());
+                        AlertSender<?> notificationSender = alertSenderPluginManager
+                            .getAlertSenderForNotification(alertNotification);
+                        if (notificationSender == null) {
                             notificationLog = new AlertNotificationLog(alert, senderName, ResultState.FAILURE,
-                                "Notification processing terminated abruptly, cause: " + t.getMessage());
+                                "Failed to obtain a sender with given name");
+                        } else {
+                            try {
+                                SenderResult result = notificationSender.send(alert);
+                                if (log.isDebugEnabled()) {
+                                    log.debug(result);
+                                }
+
+                                if (result == null) {
+                                    notificationLog = new AlertNotificationLog(alert, senderName, ResultState.UNKNOWN,
+                                        "Sender did not return any result");
+                                } else {
+                                    notificationLog = new AlertNotificationLog(alert, senderName, result);
+                                }
+                            } catch (Throwable t) {
+                                log.error("Notification processing terminated abruptly" + t.getMessage());
+                                notificationLog = new AlertNotificationLog(alert, senderName, ResultState.FAILURE,
+                                    "Notification processing terminated abruptly, cause: " + t.getMessage());
+                            }
                         }
                     }
-                }
 
-                entityManager.persist(notificationLog);
-                alert.addAlertNotificatinLog(notificationLog);
+                    entityManager.persist(notificationLog);
+                    alert.addAlertNotificatinLog(notificationLog);
+                }
             }
         } catch (Throwable t) {
             log.error("Failed to send all notifications for " + alert.toSimpleString(), t);

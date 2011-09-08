@@ -32,7 +32,7 @@ import org.rhq.core.domain.resource.ResourceType;
  * Note, plugins are registered in new transactions. for tests, this means
  * you can't do everything in a trans and roll back at the end. You must clean up manually.
  */
-public class UpdateNativesSubsystemTest extends UpdateSubsytemTestBase {
+public class UpdateNativesSubsystemTest extends UpdatePluginMetadataTestBase {
 
     @Override
     protected String getSubsystemDirectory() {

@@ -1,1 +1,0 @@
-jbossmq-state.xml is to allow for the JBossMQ JMS service to start in the embedded microcontainer. See AbstractEJB3Test. 

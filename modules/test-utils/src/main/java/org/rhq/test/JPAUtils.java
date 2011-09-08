@@ -50,13 +50,38 @@ public class JPAUtils {
     }
 
     public static void executeInTransaction(TransactionCallback callback) {
+        TransactionManager tm = null;
         try {
-            lookupTransactionManager().begin();
+            tm = lookupTransactionManager();
+            tm.begin();
             callback.execute();
-            lookupTransactionManager().commit();
+            tm.commit();
         } catch (Throwable t) {
             try {
-                lookupTransactionManager().rollback();
+                if (tm != null) {
+                    tm.rollback();
+                }
+            } catch (SystemException e) {
+                throw new RuntimeException("Failed to rollback transaction", e);
+            }
+            Throwable rootCause = getRootCause(t);
+            throw new RuntimeException(rootCause);
+        }
+    }
+
+    public static <T> T executeInTransaction(TransactionCallbackWithContext<T> callback) {
+        TransactionManager tm = null;
+        try {
+            tm = lookupTransactionManager();
+            tm.begin();
+            T results = callback.execute(tm, lookupEntityManager());
+            tm.commit();
+            return results;
+        } catch (Throwable t) {
+            try {
+                if (tm != null) {
+                    tm.rollback();
+                }
             } catch (SystemException e) {
                 throw new RuntimeException("Failed to rollback transaction", e);
             }
@@ -161,7 +186,8 @@ public class JPAUtils {
                 em.createNativeQuery("delete from rhq_measurement_sched");
                 em.createNativeQuery("delete from rhq_measurement_def");
                 em.createNativeQuery("delete from rhq_plugin");
-                em.createNativeQuery("delete from rhq_system_config where id not in (1, 2, 3, 4, 9, 10, 32, 34, 35, 36, 51, 52, 53, 54, 55, 56, 57, 58)");
+                em
+                    .createNativeQuery("delete from rhq_system_config where id not in (1, 2, 3, 4, 9, 10, 32, 34, 35, 36, 51, 52, 53, 54, 55, 56, 57, 58)");
                 em.createNativeQuery("delete from rhq_alert_notification");
                 em.createNativeQuery("delete from rhq_alert_condition_log");
                 em.createNativeQuery("delete from rhq_alert");

@@ -25,11 +25,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-import javax.ejb.EJB;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
-import javax.persistence.PersistenceContext;
 import javax.transaction.Status;
+import javax.transaction.TransactionManager;
 import javax.xml.XMLConstants;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
@@ -40,7 +39,6 @@ import javax.xml.validation.SchemaFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.BeforeTest;
 
 import org.rhq.core.clientapi.agent.measurement.MeasurementAgentService;
 import org.rhq.core.clientapi.descriptor.DescriptorPackages;
@@ -58,28 +56,20 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.MessageDigestGenerator;
-import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
-import org.rhq.enterprise.server.resource.metadata.ResourceMetadataManagerLocal;
 import org.rhq.enterprise.server.resource.metadata.PluginManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TestServerCommunicationsService;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.test.JPAUtils;
+import org.rhq.test.TransactionCallbackWithContext;
 
-// TODO: Fix typo in class name.
-public class UpdateSubsytemTestBase extends AbstractEJB3Test {
-
-    @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
-    @EJB
-    protected ResourceManagerLocal resMgr;
+public class UpdatePluginMetadataTestBase extends AbstractEJB3Test {
 
     protected TestServerCommunicationsService agentServiceContainer;
 
-    protected int agentId;
-    protected int plugin1Id;
-
-    protected static final String PLUGIN_NAME = "ResourceMetaDataManagerBeanTest";
+    protected static final String PLUGIN_NAME = "ResourceMetaDataManagerBeanTest"; // don't change this - our test descriptor .xml files use it as plugin name
     protected static final String AGENT_NAME = "-dummy agent-";
     protected static final String COMMON_PATH_PREFIX = "./test/metadata/";
 
@@ -104,9 +94,13 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
     @BeforeClass
     public void beforeClass() {
         agentServiceContainer = prepareForTestAgents();
-        agentServiceContainer.measurementService = new MockAgentService();
+        prepareMockAgentServiceContainer();
 
         prepareScheduler();
+    }
+
+    protected void prepareMockAgentServiceContainer() {
+        agentServiceContainer.measurementService = new MockMeasurementAgentService();
     }
 
     @AfterClass
@@ -116,19 +110,12 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
         cleanupTest();
     }
 
-//    @BeforeTest
-//    public void beforeTest() throws Exception {
-////        startTest(); Done in super.@BeforeMethod already ??
-//        // cleanup anything left over from a previous, interrupted run.
-//        cleanupTest();
-//    }
-
     protected ResourceType getResourceType(String typeName) {
         return getResourceType(typeName, PLUGIN_NAME);
     }
 
     protected ResourceType getResourceType(String typeName, String pluginName) {
-        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+        Subject overlord = getOverlord();
 
         ResourceTypeCriteria resourceTypeCriteria = new ResourceTypeCriteria();
         resourceTypeCriteria.setStrict(true);
@@ -160,7 +147,7 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
     }
 
     protected Resource getResource(ResourceCriteria resourceCriteria) {
-        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+        Subject overlord = getOverlord();
 
         PageList<Resource> results = resourceManager.findResourcesByCriteria(overlord, resourceCriteria);
         if (results.size() == 0) {
@@ -185,7 +172,7 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
         System.out.println("Registering plugin with descriptor [" + pathToDescriptor + "]...");
         String md5 = MessageDigestGenerator.getDigestString(pathToDescriptor);
         Plugin testPlugin = new Plugin(PLUGIN_NAME, "foo.jar", md5);
-        testPlugin.setDisplayName("ResourceMetaDataManagerBeanTest: " + pathToDescriptor);
+        testPlugin.setDisplayName(PLUGIN_NAME + ": " + pathToDescriptor);
         PluginDescriptor descriptor = loadPluginDescriptor(pathToDescriptor);
         // if caller passed in their own version, use it - otherwise, use the plugin descriptor version.
         // this allows our tests to reuse descriptors without having to duplicate them
@@ -195,8 +182,7 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
             testPlugin.setVersion(descriptor.getVersion());
         }
         try {
-            pluginMgr.registerPlugin(LookupUtil.getSubjectManager().getOverlord(), testPlugin, descriptor, null,
-                    true);
+            pluginMgr.registerPlugin(getOverlord(), testPlugin, descriptor, null, true);
         } catch (Throwable t) {
             t.printStackTrace();
             throw new RuntimeException(t);
@@ -236,62 +222,69 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
         return found;
     }
 
-    protected int getPluginId(EntityManager entityManager) {
+    protected int getPluginId(EntityManager entityManager) throws NoResultException {
         Plugin existingPlugin;
         try {
             existingPlugin = (Plugin) entityManager.createNamedQuery(Plugin.QUERY_FIND_BY_NAME).setParameter("name",
                 PLUGIN_NAME).getSingleResult();
-            plugin1Id = existingPlugin.getId();
+            int plugin1Id = existingPlugin.getId();
             return plugin1Id;
         } catch (NoResultException nre) {
             throw nre;
         }
     }
 
-    protected int getAgentId(EntityManager entityManager) {
-        Agent existingAgent;
+    protected int getAgentId(EntityManager entityManager) throws NoResultException {
         try {
-            existingAgent = (Agent) entityManager.createNamedQuery(Agent.QUERY_FIND_BY_NAME).setParameter("name",
-                AGENT_NAME).getSingleResult();
-            agentId = existingAgent.getId();
+            Agent existingAgent = getAgent(entityManager);
+            int agentId = existingAgent.getId();
             return agentId;
         } catch (NoResultException nre) {
             throw nre;
         }
     }
 
+    protected Agent getAgent(EntityManager entityManager) throws NoResultException {
+        Agent existingAgent;
+        try {
+            existingAgent = (Agent) entityManager.createNamedQuery(Agent.QUERY_FIND_BY_NAME).setParameter("name",
+                AGENT_NAME).getSingleResult();
+            return existingAgent;
+        } catch (NoResultException nre) {
+            throw nre;
+        }
+    }
+
     protected void setUpAgent(EntityManager entityManager, Resource testResource) {
-        Agent agent = new Agent(AGENT_NAME, "localhost", 12345, "http://localhost:12345/", "-dummy token-");
-        entityManager.persist(agent);
+        Agent agent;
+        try {
+            agent = getAgent(entityManager);
+        } catch (NoResultException nre) {
+            agent = new Agent(AGENT_NAME, "localhost", 12345, "http://localhost:12345/", "-dummy token-");
+            entityManager.persist(agent);
+        }
 
         testResource.setAgent(agent);
         agentServiceContainer.addStartedAgent(agent);
-        agentId = agent.getId();
     }
 
     /**
      * A dummy that needs to be set up before running ResourceManager.deleteResource()
      */
-    public class MockAgentService implements MeasurementAgentService {
+    public class MockMeasurementAgentService implements MeasurementAgentService {
 
         @Override
         public Set<MeasurementData> getRealTimeMeasurementValue(int resourceId, List<MeasurementDataRequest> requests) {
-            return null;  //To change body of implemented methods use File | Settings | File Templates.
+            return null;
         }
 
         public void scheduleCollection(Set<ResourceMeasurementScheduleRequest> resourceSchedules) {
-            // TODO Auto-generated method stub
-
         }
 
         public void unscheduleCollection(Set<Integer> resourceIds) {
-            // TODO Auto-generated method stub
-
         }
 
         public void updateCollection(Set<ResourceMeasurementScheduleRequest> resourceSchedules) {
-            // TODO Auto-generated method stub
-
         }
 
         public Map<String, Object> getMeasurementScheduleInfoForResource(int resourceId) {
@@ -300,51 +293,61 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
     }
 
     protected void cleanupTest() throws Exception {
+        cleanupMetadata();
+        cleanupAgent();
+        cleanupPlugin();
+    }
+
+    protected void cleanupMetadata() throws Exception {
+        String pathToDescriptor = COMMON_PATH_PREFIX + "/noTypes.xml";
+        registerPluginInternal(pathToDescriptor, null);
+    }
+
+    protected void cleanupAgent() throws Exception {
+        getTransactionManager().begin();
+        EntityManager em = getEntityManager();
         try {
-            String pathToDescriptor = COMMON_PATH_PREFIX + "/noTypes.xml";
-            registerPluginInternal(pathToDescriptor, null);
-
-            /*cleanupResourceType("constraintPlatform");
-            cleanupResourceType("events");
-            cleanupResourceType("groupDeletedPlatform");
-            cleanupResourceType("groupPropDeletedPlatform");
-            cleanupResourceType("groupPropMovedPlatform");
-            cleanupResourceType("myPlatform");
-            cleanupResourceType("myPlatform3");
-            cleanupResourceType("myPlatform4");
-            cleanupResourceType("myPlatform5");
-            cleanupResourceType("myPlatform6");
-            cleanupResourceType("myPlatform7");
-            cleanupResourceType("ops");
-            cleanupResourceType("testApp1");
-            cleanupResourceType("testServer1");
-            cleanupResourceType("testServer2");
-            cleanupResourceType("testService1");
-            cleanupResourceType("testService2");
-            cleanupResourceType("TestServer");*/
-
-            getTransactionManager().begin();
-            EntityManager entityManager = getEntityManager();
-
             try {
-                agentId = getAgentId(entityManager);
-                Agent agent = entityManager.getReference(Agent.class, agentId);
+                int agentId = getAgentId(em);
+                Agent agent = em.getReference(Agent.class, agentId);
                 if (null != agent) {
-                    entityManager.remove(agent);
+                    em.remove(agent);
                 }
-            } catch (Exception e) {
-                // ignore, agent does not exist
+            } catch (NoResultException nre) {
+                // ignore, nothing to clean up
             }
+        } catch (Exception e) {
+            if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
+                getTransactionManager().rollback();
+            }
+            System.out.println("CANNOT CLEAN UP AGENT: " + e);
+            throw e;
+        } finally {
+            if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
+                getTransactionManager().commit();
+            }
+        }
+    }
 
+    protected void cleanupPlugin() throws Exception {
+        getTransactionManager().begin();
+        EntityManager em = getEntityManager();
+        try {
             try {
-                plugin1Id = getPluginId(entityManager);
-                Plugin plugin1 = entityManager.getReference(Plugin.class, plugin1Id);
+                int plugin1Id = getPluginId(em);
+                Plugin plugin1 = em.getReference(Plugin.class, plugin1Id);
                 if (null != plugin1) {
-                    entityManager.remove(plugin1);
+                    em.remove(plugin1);
                 }
-            } catch (Exception e) {
-                // ignore, plugin1 does not exist
+            } catch (NoResultException nre) {
+                // ignore, nothing to do
             }
+        } catch (Exception e) {
+            if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
+                getTransactionManager().rollback();
+            }
+            System.out.println("CANNOT CLEAN UP PLUGIN: " + e);
+            throw e;
         } finally {
             if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
                 getTransactionManager().commit();
@@ -357,7 +360,7 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
             ResourceType rt = getResourceType(rtName);
 
             if (null != rt) {
-                Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+                Subject overlord = getOverlord();
                 ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
 
                 // delete any resources first
@@ -396,7 +399,7 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
             if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
                 getTransactionManager().rollback();
             }
-            System.out.println("CANNOT CLEAN UP TEST (cleanupResourceType): " + e);
+            System.out.println("CANNOT CLEAN UP RESOURCE TYPE: " + rtName + ": " + e);
             throw e;
         } finally {
             if (Status.STATUS_NO_TRANSACTION != getTransactionManager().getStatus()) {
@@ -404,4 +407,40 @@ public class UpdateSubsytemTestBase extends AbstractEJB3Test {
             }
         }
     }
+
+    //
+    // provide some convience methods to create resources
+    //
+
+    protected Subject getOverlord() {
+        return LookupUtil.getSubjectManager().getOverlord();
+    }
+
+    protected Resource persistNewResource(final String resourceTypeName) throws Exception {
+        return JPAUtils.executeInTransaction(new TransactionCallbackWithContext<Resource>() {
+            @Override
+            public Resource execute(TransactionManager tm, EntityManager em) throws Exception {
+                ResourceType resourceType = getResourceType(resourceTypeName);
+                Resource resource = new Resource("reskey" + System.currentTimeMillis(), "resname", resourceType);
+                resource.setUuid(UUID.randomUUID().toString());
+                resource.setInventoryStatus(InventoryStatus.COMMITTED);
+                setUpAgent(em, resource);
+                em.persist(resource);
+                return resource;
+            }
+        });
+    }
+
+    protected void deleteNewResource(final Resource resource) throws Exception {
+        try {
+            List<Integer> deletedIds = resourceManager.uninventoryResource(getOverlord(), resource.getId());
+            for (Integer deletedResourceId : deletedIds) {
+                resourceManager.uninventoryResourceAsyncWork(getOverlord(), deletedResourceId);
+            }
+        } catch (Exception e) {
+            System.out.println("CANNOT CLEAN UP RESOURCE: " + resource + ": " + e);
+            throw e;
+        }
+    }
+
 }

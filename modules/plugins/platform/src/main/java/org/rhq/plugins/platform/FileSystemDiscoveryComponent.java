@@ -1,6 +1,6 @@
  /*
   * RHQ Management Platform
-  * Copyright (C) 2005-2010 Red Hat, Inc.
+  * Copyright (C) 2005-2011 Red Hat, Inc.
   * All rights reserved.
   *
   * This program is free software; you can redistribute it and/or modify
@@ -42,6 +42,7 @@ import org.rhq.core.system.SystemInfo;
  */
 @SuppressWarnings({"UnusedDeclaration"})
 public class FileSystemDiscoveryComponent implements ResourceDiscoveryComponent<PlatformComponent> {
+
     private final Log log = LogFactory.getLog(this.getClass());
 
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<PlatformComponent> discoveryContext)
@@ -65,23 +66,27 @@ public class FileSystemDiscoveryComponent implements ResourceDiscoveryComponent<
                 case FileSystem.TYPE_NETWORK:
                     break;
                 default:
-                    if (!(fs.getDevName().equals("lofs") ||
-                          fs.getDevName().equals("tmpfs"))) {
-                       continue;
+                    String sysTypeName = fs.getSysTypeName();
+                    if (!(sysTypeName.equals("lofs") || sysTypeName.equals("tmpfs"))) {
+                        continue;
                     }
             }
 
-            Configuration pluginConfig = discoveryContext.getDefaultPluginConfiguration();
             try {
                 String key = fsInfo.getMountPoint();
+                String name = fsInfo.getMountPoint();
+                String description = fsInfo.getFileSystem().getDevName() + ": "
+                        + fsInfo.getFileSystem().getDirName();
+                Configuration pluginConfig = discoveryContext.getDefaultPluginConfiguration();
                 DiscoveredResourceDetails details = new DiscoveredResourceDetails(discoveryContext.getResourceType(),
-                    key, key, null, fsInfo.getFileSystem().getDevName() + ": "
-                        + fsInfo.getFileSystem().getDirName(), pluginConfig, null);
+                    key, name, null, description, pluginConfig, null);
                 results.add(details);
             } catch (Exception e) {
-                log.error("File system discovery failed for [" + fsInfo + "]: " + e);                
+                log.error("File system discovery failed for [" + fsInfo + "].", e);
             }
         }
+
         return results;
     }
+
 }

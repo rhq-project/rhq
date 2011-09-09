@@ -901,6 +901,69 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
             else
                 builder.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_CONFIG_PROPS_CB_DRIFT, condition
                     .getOption()));
+        } else if (category == AlertConditionCategory.RANGE) {
+            Double loValue = condition.getThreshold();
+            String hiValueStr = condition.getOption();
+
+            String loValueFormatted;
+            String hiValueFormatted;
+            MeasurementUnits units = condition.getMeasurementDefinition().getUnits();
+            if (units == null) {
+                loValueFormatted = "" + loValue;
+                hiValueFormatted = hiValueStr;
+            } else {
+                loValueFormatted = MeasurementConverter.format(loValue, units, true);
+                try {
+                    hiValueFormatted = MeasurementConverter.format(Double.parseDouble(hiValueStr), units, true);
+                } catch (Exception e) {
+                    hiValueFormatted = "?[" + hiValueStr + "]?";
+                }
+            }
+
+            if ("<".equals(condition.getComparator())) {
+                if (shortVersion) {
+                    builder.append(AlertI18NFactory.getMessage(
+                        AlertI18NResourceKeys.ALERT_CONFIG_PROPS_CB_INSIDE_EXCL_RANGE_SHORT, loValueFormatted,
+                        hiValueFormatted));
+                } else {
+                    builder.append(AlertI18NFactory.getMessage(
+                        AlertI18NResourceKeys.ALERT_CONFIG_PROPS_CB_INSIDE_EXCL_RANGE, loValueFormatted,
+                        hiValueFormatted));
+                }
+            } else if (">".equals(condition.getComparator())) {
+                if (shortVersion) {
+                    builder.append(AlertI18NFactory.getMessage(
+                        AlertI18NResourceKeys.ALERT_CONFIG_PROPS_CB_OUTSIDE_EXCL_RANGE_SHORT, loValueFormatted,
+                        hiValueFormatted));
+                } else {
+                    builder.append(AlertI18NFactory.getMessage(
+                        AlertI18NResourceKeys.ALERT_CONFIG_PROPS_CB_OUTSIDE_EXCL_RANGE, loValueFormatted,
+                        hiValueFormatted));
+                }
+            } else if ("<=".equals(condition.getComparator())) {
+                if (shortVersion) {
+                    builder.append(AlertI18NFactory.getMessage(
+                        AlertI18NResourceKeys.ALERT_CONFIG_PROPS_CB_INSIDE_INCL_RANGE_SHORT, loValueFormatted,
+                        hiValueFormatted));
+                } else {
+                    builder.append(AlertI18NFactory.getMessage(
+                        AlertI18NResourceKeys.ALERT_CONFIG_PROPS_CB_INSIDE_INCL_RANGE, loValueFormatted,
+                        hiValueFormatted));
+                }
+            } else if (">=".equals(condition.getComparator())) {
+                if (shortVersion) {
+                    builder.append(AlertI18NFactory.getMessage(
+                        AlertI18NResourceKeys.ALERT_CONFIG_PROPS_CB_OUTSIDE_INCL_RANGE_SHORT, loValueFormatted,
+                        hiValueFormatted));
+                } else {
+                    builder.append(AlertI18NFactory.getMessage(
+                        AlertI18NResourceKeys.ALERT_CONFIG_PROPS_CB_OUTSIDE_INCL_RANGE, loValueFormatted,
+                        hiValueFormatted));
+                }
+            } else {
+                builder.append("invalid range comparator [" + condition.getComparator() + "] (" + loValueFormatted
+                    + "," + hiValueFormatted + ")");
+            }
         } else {
             // do nothing
         }

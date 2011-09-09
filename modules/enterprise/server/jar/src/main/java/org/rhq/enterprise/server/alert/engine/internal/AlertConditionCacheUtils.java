@@ -49,6 +49,19 @@ class AlertConditionCacheUtils {
             return AlertConditionOperator.GREATER_THAN_OR_EQUAL_TO;
         }
 
+        if (category == AlertConditionCategory.RANGE) {
+            // range can support <= and >=, which we look for here. It can also support < and >, which is checked down below further.
+            // note that RANGE does not support =, so we throw an exception if caller tries that
+            if (comparator.equals("<=")) {
+                return AlertConditionOperator.LESS_THAN_OR_EQUAL_TO;
+            } else if (comparator.equals(">=")) {
+                return AlertConditionOperator.GREATER_THAN_OR_EQUAL_TO;
+            } else if (comparator.equals("=")) {
+                throw new UnsupportedAlertConditionOperatorException("Comparator [" + comparator + "] "
+                    + "is not supported for category: " + category.name());
+            }
+        }
+
         if (category == AlertConditionCategory.DRIFT) {
             // any drift that is detected infers a change to its previous state
             return AlertConditionOperator.CHANGES;
@@ -89,8 +102,8 @@ class AlertConditionCacheUtils {
         } else if (comparator.equals("=")) {
             return AlertConditionOperator.EQUALS;
         } else {
-            throw new UnsupportedAlertConditionOperatorException("Comparator '" + comparator + "' "
-                + "is not supported for ArtifactConditionCategory." + category.name());
+            throw new UnsupportedAlertConditionOperatorException("Comparator [" + comparator + "] "
+                + "is not supported for category: " + category.name());
         }
     }
 

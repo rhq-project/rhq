@@ -257,6 +257,25 @@ import org.rhq.core.domain.operation.OperationRequestStatus;
         + "     AND ad.deleted = FALSE " //
         + "     AND ac.category = 'DRIFT' " //
         + "ORDER BY ac.id"), //
+    @NamedQuery(name = AlertCondition.QUERY_BY_CATEGORY_RANGE, query = "" //
+        + "  SELECT new org.rhq.core.domain.alert.composite.AlertConditionRangeCategoryComposite " //
+        + "       ( " //
+        + "         ac, " //
+        + "         ms.id, " //
+        + "         md.dataType " //
+        + "       ) " //
+        + "    FROM AlertCondition AS ac " //
+        + "    JOIN ac.alertDefinition ad " //
+        + "    JOIN ad.resource res " //
+        + "    JOIN ac.measurementDefinition md, MeasurementSchedule ms " //
+        + "   WHERE " + AlertCondition.RECOVERY_CONDITIONAL_EXPRESSION //
+        + "     AND ( res.agent.id = :agentId OR :agentId IS NULL ) " //
+        + "     AND ad.enabled = TRUE " //
+        + "     AND ad.deleted = FALSE " //
+        + "     AND ms.definition = md " //
+        + "     AND ms.resource = res " //
+        + "     AND ac.category = 'RANGE' " //
+        + "ORDER BY ac.id"), //
     @NamedQuery(name = AlertCondition.QUERY_BY_CATEGORY_COUNT_PARAMETERIZED, query = "" //
         + "  SELECT count(ac.id) " //
         + "    FROM AlertCondition AS ac " //
@@ -289,6 +308,7 @@ public class AlertCondition implements Serializable {
     public static final String QUERY_BY_CATEGORY_EVENT = "AlertCondition.byCategoryEvent";
     public static final String QUERY_BY_CATEGORY_RESOURCE_CONFIG = "AlertCondition.byCategoryResourceConfig";
     public static final String QUERY_BY_CATEGORY_DRIFT = "AlertCondition.byCategoryDrift";
+    public static final String QUERY_BY_CATEGORY_RANGE = "AlertCondition.byCategoryRange";
 
     public static final String QUERY_BY_CATEGORY_COUNT_BASELINE = "AlertCondition.byCategoryCountBaseline";
     public static final String QUERY_BY_CATEGORY_COUNT_PARAMETERIZED = "AlertCondition.byCategoryCountParameterized";
@@ -416,6 +436,7 @@ public class AlertCondition implements Serializable {
      *        regex that allows the user to match more than one drift config if they so choose.
      *        (this value may be null, in which case it doesn't matter which drift configs were the ones
      *         in which the drift was detected) 
+     * RANGE: the name of the metric (TODO: today its the display name, very bad for i18n purposes)
      * 
      * @return additional information about the condition
      */
@@ -428,10 +449,11 @@ public class AlertCondition implements Serializable {
     }
 
     /**
-     * Will be one of these comparators: "<", ">" or "=" but only for THRESHOLD
-     * and BASELINE condition categories. For calltime alert conditions (i.e. category
-     * CHANGE for calltime metric definitions), comparator will be one of these
-     * comparators: "HI", "LO", "CH" (where "CH" means "change").
+     * THRESHOLD and BASELINE: one of these comparators: "<", ">" or "=" 
+     * For calltime alert conditions (i.e. category CHANGE for calltime metric definitions),
+     * comparator will be one of these comparators: "HI", "LO", "CH" (where "CH" means "change").
+     * RANGE: one of these comparators "<", ">" (meaning inside and outside the range respectively)
+     *        or one of these "<=", ">=" (meaning inside and outside inclusive respectively)
      * 
      * Other types of conditions will return <code>null</code> (i.e. this will be
      * null if the condition does not compare values).
@@ -448,9 +470,12 @@ public class AlertCondition implements Serializable {
 
     /**
      * Returns the threshold to compare a measurement value to see if the condition is true.
-     * This is only valid for conditions of category THRESHOLD, BASELINE and CHANGE (but
+     * This is only valid for conditions of category THRESHOLD, BASELINE, RANGE and CHANGE (but
      * only where CHANGE is for a calltime metric alert condition). All other
      * condition types will return <code>null</code>.
+     * 
+     * Note: If RANGE condition, this threshold is always the LOW end of the range.
+     *       The high end of the range is in {@link #getOption()}.
      *  
      * @return threshold value or null
      */
@@ -473,6 +498,7 @@ public class AlertCondition implements Serializable {
      * EVENT: the regular expression of the message to match (which may be empty string if not specified)
      * RESOURCE_CONFIG: n/a
      * DRIFT: a regular expression to match files whose content drifted (may be empty string or null if not specified)
+     * RANGE: the string form of a double value that is the HIGH end of the range (low end is {@link #getThreshold()})
      *
      * @return additional information about the condition
      */

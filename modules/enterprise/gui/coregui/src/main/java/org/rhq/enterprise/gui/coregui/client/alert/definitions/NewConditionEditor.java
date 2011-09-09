@@ -92,6 +92,10 @@ public class NewConditionEditor extends LocatableDynamicForm {
     private static final String EVENT_REGEX_ITEMNAME = "eventRegex";
     private static final String DRIFT_CONFIGNAME_REGEX_ITEMNAME = "driftConfigNameRegex";
     private static final String DRIFT_PATHNAME_REGEX_ITEMNAME = "driftPathNameRegex";
+    private static final String RANGE_METRIC_ITEMNAME = "rangeMetric";
+    private static final String RANGE_COMPARATOR_ITEMNAME = "rangeComparator";
+    private static final String RANGE_LO_ABSVALUE_ITEMNAME = "rangeMetricLoValue";
+    private static final String RANGE_HI_ABSVALUE_ITEMNAME = "rangeMetricHiValue";
 
     private SelectItem conditionTypeSelectItem;
     private HashSet<AlertCondition> conditions; // the new condition we create goes into this set
@@ -165,6 +169,8 @@ public class NewConditionEditor extends LocatableDynamicForm {
                 .view_alert_definition_condition_editor_option_metric_baseline());
             condTypes.put(AlertConditionCategory.CHANGE.name(), MSG
                 .view_alert_definition_condition_editor_option_metric_change());
+            condTypes.put(AlertConditionCategory.RANGE.name(), MSG
+                .view_alert_definition_condition_editor_option_metric_range());
         }
         if (supportsCalltimeMetrics) {
             condTypes.put(ALERT_CONDITION_CATEGORY_CALLTIME_THRESHOLD, MSG
@@ -235,6 +241,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
         formItems.addAll(buildAvailabilityChangeFormItems());
         if (supportsMetrics) {
             formItems.addAll(buildMetricThresholdFormItems());
+            formItems.addAll(buildMetricRangeFormItems());
             formItems.addAll(buildMetricBaselineFormItems());
             formItems.addAll(buildMetricChangeFormItems());
         }
@@ -388,6 +395,16 @@ public class NewConditionEditor extends LocatableDynamicForm {
             break;
         }
 
+        case RANGE: {
+            MeasurementDefinition measDef = getMeasurementDefinition(getValueAsString(RANGE_METRIC_ITEMNAME));
+            newCondition.setName(measDef.getDisplayName());
+            newCondition.setThreshold(Double.valueOf(getValueAsString(RANGE_LO_ABSVALUE_ITEMNAME)));
+            newCondition.setComparator(getValueAsString(RANGE_COMPARATOR_ITEMNAME));
+            newCondition.setOption(Double.valueOf(getValueAsString(RANGE_HI_ABSVALUE_ITEMNAME)).toString());
+            newCondition.setMeasurementDefinition(measDef);
+            break;
+        }
+
         default: {
             CoreGUI.getErrorHandler()
                 .handleError(MSG.view_alert_common_tab_invalid_condition_category(category.name())); // should never happen
@@ -419,6 +436,42 @@ public class NewConditionEditor extends LocatableDynamicForm {
         absoluteValue.setValidators(new IsFloatValidator());
         absoluteValue.setShowIfCondition(ifFunc);
         formItems.add(absoluteValue);
+
+        return formItems;
+    }
+
+    private ArrayList<FormItem> buildMetricRangeFormItems() {
+        ArrayList<FormItem> formItems = new ArrayList<FormItem>();
+
+        ShowIfCategoryFunction ifFunc = new ShowIfCategoryFunction(AlertConditionCategory.RANGE);
+
+        String helpStr = MSG.view_alert_definition_condition_editor_metric_range_tooltip();
+        StaticTextItem helpItem = buildHelpTextItem("rangeHelp", helpStr, ifFunc);
+        formItems.add(helpItem);
+
+        formItems.add(buildMetricDropDownMenu(RANGE_METRIC_ITEMNAME, false, ifFunc));
+        formItems.add(buildRangeComparatorDropDownMenu(RANGE_COMPARATOR_ITEMNAME, ifFunc));
+        TextItem absoluteLowValue = new TextItem(RANGE_LO_ABSVALUE_ITEMNAME, MSG
+            .view_alert_definition_condition_editor_metric_range_lovalue());
+        absoluteLowValue.setWrapTitle(false);
+        absoluteLowValue.setRequired(true);
+        absoluteLowValue.setTooltip(MSG.view_alert_definition_condition_editor_metric_range_lovalue_tooltip());
+        absoluteLowValue.setHoverWidth(200);
+        absoluteLowValue.setValidateOnChange(true);
+        absoluteLowValue.setValidators(new IsFloatValidator());
+        absoluteLowValue.setShowIfCondition(ifFunc);
+        formItems.add(absoluteLowValue);
+
+        TextItem absoluteHighValue = new TextItem(RANGE_HI_ABSVALUE_ITEMNAME, MSG
+            .view_alert_definition_condition_editor_metric_range_hivalue());
+        absoluteHighValue.setWrapTitle(false);
+        absoluteHighValue.setRequired(true);
+        absoluteHighValue.setTooltip(MSG.view_alert_definition_condition_editor_metric_range_hivalue_tooltip());
+        absoluteHighValue.setHoverWidth(200);
+        absoluteHighValue.setValidateOnChange(true);
+        absoluteHighValue.setValidators(new IsFloatValidator());
+        absoluteHighValue.setShowIfCondition(ifFunc);
+        formItems.add(absoluteHighValue);
 
         return formItems;
     }
@@ -838,6 +891,24 @@ public class NewConditionEditor extends LocatableDynamicForm {
         comparatorSelection.setDefaultValue("CH");
         comparatorSelection.setTooltip(MSG
             .view_alert_definition_condition_editor_metric_calltime_common_comparator_tooltip());
+        comparatorSelection.setHoverWidth(200);
+        comparatorSelection.setShowIfCondition(ifFunc);
+        return comparatorSelection;
+    }
+
+    private SelectItem buildRangeComparatorDropDownMenu(String itemName, FormItemIfFunction ifFunc) {
+
+        LinkedHashMap<String, String> comparators = new LinkedHashMap<String, String>(2);
+        comparators.put("<", MSG.view_alert_definition_condition_editor_metric_range_comparator_inside_exclusive());
+        comparators.put(">", MSG.view_alert_definition_condition_editor_metric_range_comparator_outside_exclusive());
+        comparators.put("<=", MSG.view_alert_definition_condition_editor_metric_range_comparator_inside_inclusive());
+        comparators.put(">=", MSG.view_alert_definition_condition_editor_metric_range_comparator_outside_inclusive());
+
+        SelectItem comparatorSelection = new SelectItem(itemName, MSG
+            .view_alert_definition_condition_editor_metric_range_comparator());
+        comparatorSelection.setValueMap(comparators);
+        comparatorSelection.setDefaultValue("<");
+        comparatorSelection.setTooltip(MSG.view_alert_definition_condition_editor_metric_range_comparator_tooltip());
         comparatorSelection.setHoverWidth(200);
         comparatorSelection.setShowIfCondition(ifFunc);
         return comparatorSelection;

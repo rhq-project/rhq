@@ -75,7 +75,7 @@ public class ConverterValidatorManager {
         AlertConditionCategory category = fromCondition.getCategory();
 
         if ((category == AlertConditionCategory.THRESHOLD) || (category == AlertConditionCategory.BASELINE)
-            || (category == AlertConditionCategory.CHANGE)) {
+            || (category == AlertConditionCategory.RANGE) || (category == AlertConditionCategory.CHANGE)) {
             DataType measDataType = null;
             if (fromCondition.getMeasurementDefinition() != null)
                 measDataType = fromCondition.getMeasurementDefinition().getDataType();

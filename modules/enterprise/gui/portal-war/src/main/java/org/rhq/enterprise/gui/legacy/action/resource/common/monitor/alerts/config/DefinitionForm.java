@@ -142,6 +142,8 @@ public final class DefinitionForm extends ResourceForm {
     private static String[] comparators = new String[] { Constants.ALERT_THRESHOLD_COMPARATOR_GT,
         Constants.ALERT_THRESHOLD_COMPARATOR_EQ, Constants.ALERT_THRESHOLD_COMPARATOR_LT };
 
+    private static String[] rangeComparators = new String[] { "<", ">", "<=", ">=" };
+
     private static String[] calltimeOptions = new String[] { Constants.CALLTIME_MAX, Constants.CALLTIME_MIN,
         Constants.CALLTIME_AVG };
 
@@ -453,6 +455,10 @@ public final class DefinitionForm extends ResourceForm {
 
     public String[] getComparators() {
         return comparators;
+    }
+
+    public String[] getRangeComparators() {
+        return rangeComparators;
     }
 
     @Override

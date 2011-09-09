@@ -110,7 +110,7 @@ public final class AlertDefUtil {
             textValue.append(cond.getMeasurementDefinition().getDisplayName());
             textValue.append(" (");
             textValue.append(cond.getOption());
-            if (cond.getName()!=null && !cond.getName().equals("")) {
+            if (cond.getName() != null && !cond.getName().equals("")) {
                 textValue.append("; pattern=[");
                 textValue.append(cond.getName());
                 textValue.append("]");
@@ -173,6 +173,37 @@ public final class AlertDefUtil {
         } else if (category == AlertConditionCategory.AVAILABILITY) {
             textValue = new StringBuffer(RequestUtils.message(request, "alert.config.props.CB.Availability",
                 new String[] { cond.getOption() }));
+        } else if (category == AlertConditionCategory.RANGE) {
+            textValue = new StringBuffer();
+
+            String metricName = cond.getName();
+            MeasurementUnits units = cond.getMeasurementDefinition().getUnits();
+            double loValue = cond.getThreshold();
+            String formattedLoValue = MeasurementConverter.format(loValue, units, true);
+            String formattedHiValue = cond.getOption();
+            try {
+                double hiValue = Double.parseDouble(formattedHiValue);
+                formattedHiValue = MeasurementConverter.format(hiValue, units, true);
+            } catch (Exception e) {
+                formattedHiValue = "?[" + formattedHiValue + "]?"; // signify something is wrong with the value
+            }
+            // < means "inside the range", > means "outside the range" - exclusive
+            // <= means "inside the range", >= means "outside the range" - inclusive
+            if (cond.getComparator().equals("<")) {
+                textValue.append("Metric Value Range: [" + metricName + "] between [" + formattedLoValue + "] and ["
+                    + formattedHiValue + "], exclusive");
+            } else if (cond.getComparator().equals(">")) {
+                textValue.append("Metric Value Range: [" + metricName + "] outside [" + formattedLoValue + "] and ["
+                    + formattedHiValue + "], exclusive");
+            } else if (cond.getComparator().equals("<=")) {
+                textValue.append("Metric Value Range: [" + metricName + "] between [" + formattedLoValue + "] and ["
+                    + formattedHiValue + "], inclusive");
+            } else if (cond.getComparator().equals(">=")) {
+                textValue.append("Metric Value Range: [" + metricName + "] outside [" + formattedLoValue + "] and ["
+                    + formattedHiValue + "], inclusive");
+            } else {
+                textValue.append("BAD COMPARATOR! Report this bug: " + cond.getComparator());
+            }
         } else {
             // do nothing
         }

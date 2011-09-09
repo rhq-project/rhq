@@ -105,7 +105,7 @@ public class ViewAlertAction extends TilesAction {
             if (category == AlertConditionCategory.CONTROL) {
                 alertCondBean.setActualValue(RequestUtils.message(request, "alert.current.list.ControlActualValue"));
             } else if ((category == AlertConditionCategory.THRESHOLD) || (category == AlertConditionCategory.BASELINE)
-                || (category == AlertConditionCategory.CHANGE)) {
+                || (category == AlertConditionCategory.RANGE) || (category == AlertConditionCategory.CHANGE)) {
 
                 // Format threshold and value.
                 MeasurementDefinition definition = condLog.getCondition().getMeasurementDefinition();

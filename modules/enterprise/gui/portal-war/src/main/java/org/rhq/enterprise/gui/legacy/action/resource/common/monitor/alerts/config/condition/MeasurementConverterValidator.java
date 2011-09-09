@@ -41,6 +41,7 @@ class MeasurementConverterValidator implements ConditionBeanConverterValidator {
     public static final String TYPE_ABS = "absolute";
     public static final String TYPE_PERC = "percentage";
     public static final String TYPE_CHG = "changed";
+    public static final String TYPE_RANGE = "range";
 
     private MeasurementDefinitionManagerLocal definitionManager;
 
@@ -68,6 +69,17 @@ class MeasurementConverterValidator implements ConditionBeanConverterValidator {
             toCondition.setThreshold(threshold.getValue());
             toCondition.setComparator(fromBean.getPercentageComparator());
             toCondition.setOption(fromBean.getBaselineOption());
+
+        } else if (fromBean.getThresholdType().equals(TYPE_RANGE)) {
+            MeasurementNumericValueAndUnits loValueAndUnits = MeasurementParser.parse(fromBean.getRangeLo(), definition
+                .getUnits());
+            MeasurementNumericValueAndUnits hiValueAndUnits = MeasurementParser.parse(fromBean.getRangeHi(), definition
+                .getUnits());
+
+            toCondition.setCategory(AlertConditionCategory.RANGE);
+            toCondition.setThreshold(loValueAndUnits.getValue());
+            toCondition.setComparator(fromBean.getRangeComparator());
+            toCondition.setOption(hiValueAndUnits.getValue().toString());
 
         } else {
             toCondition.setCategory(AlertConditionCategory.CHANGE);
@@ -117,6 +129,29 @@ class MeasurementConverterValidator implements ConditionBeanConverterValidator {
 
             toBean.setAbsoluteComparator(null);
             toBean.setPercentageComparator(null);
+        } else if (fromCondition.getCategory() == AlertConditionCategory.RANGE) {
+            toBean.setThresholdType(TYPE_RANGE);
+            MeasurementDefinition definition = fromCondition.getMeasurementDefinition();
+            toBean.setMetricId(definition.getId());
+
+            try {
+                // this is coming from the backing store, so
+                String loFormattedValue = MeasurementConverter.format(fromCondition.getThreshold(), definition
+                    .getUnits(), true);
+                toBean.setRangeLo(loFormattedValue);
+            } catch (MeasurementConversionException mce) {
+                toBean.setRangeLo("Conversion Error");
+            }
+            try {
+                // this is coming from the backing store, so
+                String hiFormattedValue = MeasurementConverter.format(Double.parseDouble(fromCondition.getOption()),
+                    definition.getUnits(), true);
+                toBean.setRangeHi(hiFormattedValue);
+            } catch (MeasurementConversionException mce) {
+                toBean.setRangeHi("Conversion Error");
+            }
+
+            toBean.setRangeComparator(fromCondition.getComparator());
         }
     }
 
@@ -162,8 +197,24 @@ class MeasurementConverterValidator implements ConditionBeanConverterValidator {
             } else {
                 // some sort of error handling here?
             }
+        } else if (bean.getThresholdType().equals(TYPE_RANGE)) {
+            if (!GenericValidator.matchRegexp(bean.getRangeLo(), DOUBLE_REGEX)) {
+                ActionMessage err = new ActionMessage("errors.double", "RangeLo");
+                errors.add("condition[" + index + "].rangeLo", err);
+                return false;
+            } else // double
+            {
+                // do nothing
+            }
+            if (!GenericValidator.matchRegexp(bean.getRangeHi(), DOUBLE_REGEX)) {
+                ActionMessage err = new ActionMessage("errors.double", "RangeHi");
+                errors.add("condition[" + index + "].rangeHi", err);
+                return false;
+            } else // double
+            {
+                // do nothing
+            }
         }
-
         return true;
     }
 

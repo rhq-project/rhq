@@ -61,8 +61,36 @@ public final class ConditionBean {
     private Integer traitId;
     private String traitName;
 
+    private String rangeLo;
+    private String rangeHi;
+    private String rangeComparator;
+
     public ConditionBean() {
         ConverterValidatorManager.setDefaults(this);
+    }
+
+    public String getRangeLo() {
+        return rangeLo;
+    }
+
+    public void setRangeLo(String rangeLo) {
+        this.rangeLo = rangeLo;
+    }
+
+    public String getRangeHi() {
+        return rangeHi;
+    }
+
+    public void setRangeHi(String rangeHi) {
+        this.rangeHi = rangeHi;
+    }
+
+    public String getRangeComparator() {
+        return rangeComparator;
+    }
+
+    public void setRangeComparator(String rangeComparator) {
+        this.rangeComparator = rangeComparator;
     }
 
     public Integer getId() {

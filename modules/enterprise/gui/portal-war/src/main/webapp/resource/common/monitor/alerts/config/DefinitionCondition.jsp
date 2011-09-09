@@ -104,6 +104,29 @@
           <fmt:message key="alert.config.props.CB.Content.Changes"/>
         </td>
       </tr>
+      <tr>
+        <td>&nbsp;</td>
+        <logic:messagesPresent property="condition[${i}].rangeLo"><c:set var="rangeLoErrs" value="true"/></logic:messagesPresent>
+        <logic:messagesPresent property="condition[${i}].rangeHi"><c:set var="rangeHiErrs" value="true"/></logic:messagesPresent>
+        <c:choose>
+        <c:when test="${rangeLoErrs || rangeHiErrs}"><td width="100%" class="ErrorField"></c:when>
+        <c:otherwise><td width="100%"></c:otherwise>
+        </c:choose>
+          <html:radio property="condition[${i}].thresholdType" value="range"/>
+          <fmt:message key="alert.config.props.CB.Content.Is"/>
+          <html:select property="condition[${i}].rangeComparator">
+            <hq:optionMessageList property="rangeComparators" baseKey="alert.config.props.CB.Content.RangeComparator" filter="true"/>
+          </html:select>
+          low:&nbsp;<html:text property="condition[${i}].rangeLo" size="6" maxlength="6"/>&nbsp;
+          high:&nbsp;<html:text property="condition[${i}].rangeHi" size="6" maxlength="6"/>&nbsp;
+          <c:if test="${rangeLoErrs || rangeHiErrs}">
+          <span class="ErrorFieldContent">
+          <c:if test="${rangeLoErrs}"><br>- <html:errors property="condition[${i}].rangeLo"/></c:if>
+          <c:if test="${rangeHiErrs}"><br>- <html:errors property="condition[${i}].rangeHi"/></c:if>
+          </span>
+          </c:if>
+        </td>
+      </tr>
     </table>
 
   </td>

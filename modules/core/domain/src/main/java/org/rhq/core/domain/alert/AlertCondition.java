@@ -240,6 +240,25 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
         + "     AND ad.deleted = FALSE " //
         + "     AND ac.category = 'RESOURCE_CONFIG' " //
         + "ORDER BY ac.id"), //
+    @NamedQuery(name = AlertCondition.QUERY_BY_CATEGORY_RANGE, query = "" //
+        + "  SELECT new org.rhq.core.domain.alert.composite.AlertConditionRangeCategoryComposite " //
+        + "       ( " //
+        + "         ac, " //
+        + "         ms.id, " //
+        + "         md.dataType " //
+        + "       ) " //
+        + "    FROM AlertCondition AS ac " //
+        + "    JOIN ac.alertDefinition ad " //
+        + "    JOIN ad.resource res " //
+        + "    JOIN ac.measurementDefinition md, MeasurementSchedule ms " //
+        + "   WHERE " + AlertCondition.RECOVERY_CONDITIONAL_EXPRESSION //
+        + "     AND ( res.agent.id = :agentId OR :agentId IS NULL ) " //
+        + "     AND ad.enabled = TRUE " //
+        + "     AND ad.deleted = FALSE " //
+        + "     AND ms.definition = md " //
+        + "     AND ms.resource = res " //
+        + "     AND ac.category = 'RANGE' " //
+        + "ORDER BY ac.id"), //
     @NamedQuery(name = AlertCondition.QUERY_BY_CATEGORY_COUNT_PARAMETERIZED, query = "" //
         + "  SELECT count(ac.id) " //
         + "    FROM AlertCondition AS ac " //
@@ -271,6 +290,7 @@ public class AlertCondition implements Serializable {
     public static final String QUERY_BY_CATEGORY_THRESHOLD = "AlertCondition.byCategoryThreshold";
     public static final String QUERY_BY_CATEGORY_EVENT = "AlertCondition.byCategoryEvent";
     public static final String QUERY_BY_CATEGORY_RESOURCE_CONFIG = "AlertCondition.byCategoryResourceConfig";
+    public static final String QUERY_BY_CATEGORY_RANGE = "AlertCondition.byCategoryRange";
 
     public static final String QUERY_BY_CATEGORY_COUNT_BASELINE = "AlertCondition.byCategoryCountBaseline";
     public static final String QUERY_BY_CATEGORY_COUNT_PARAMETERIZED = "AlertCondition.byCategoryCountParameterized";
@@ -382,6 +402,18 @@ public class AlertCondition implements Serializable {
         this.name = name;
     }
 
+    /**
+     * THRESHOLD and BASELINE: one of these comparators: "<", ">" or "=" 
+     * For calltime alert conditions (i.e. category CHANGE for calltime metric definitions),
+     * comparator will be one of these comparators: "HI", "LO", "CH" (where "CH" means "change").
+     * RANGE: one of these comparators "<", ">" (meaning inside and outside the range respectively)
+     *        or one of these "<=", ">=" (meaning inside and outside inclusive respectively)
+     * 
+     * Other types of conditions will return <code>null</code> (i.e. this will be
+     * null if the condition does not compare values).
+     *
+     * @return comparator string
+     */
     public String getComparator() {
         return this.comparator;
     }
@@ -390,6 +422,17 @@ public class AlertCondition implements Serializable {
         this.comparator = comparator;
     }
 
+    /**
+     * Returns the threshold to compare a measurement value to see if the condition is true.
+     * This is only valid for conditions of category THRESHOLD, BASELINE, RANGE and CHANGE (but
+     * only where CHANGE is for a calltime metric alert condition). All other
+     * condition types will return <code>null</code>.
+     * 
+     * Note: If RANGE condition, this threshold is always the LOW end of the range.
+     *       The high end of the range is in {@link #getOption()}.
+     *  
+     * @return threshold value or null
+     */
     public Double getThreshold() {
         return this.threshold;
     }

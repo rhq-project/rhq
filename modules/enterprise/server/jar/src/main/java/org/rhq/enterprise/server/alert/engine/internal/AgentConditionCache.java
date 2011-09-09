@@ -33,6 +33,7 @@ import org.rhq.core.domain.alert.composite.AbstractAlertConditionCategoryComposi
 import org.rhq.core.domain.alert.composite.AlertConditionBaselineCategoryComposite;
 import org.rhq.core.domain.alert.composite.AlertConditionChangesCategoryComposite;
 import org.rhq.core.domain.alert.composite.AlertConditionEventCategoryComposite;
+import org.rhq.core.domain.alert.composite.AlertConditionRangeCategoryComposite;
 import org.rhq.core.domain.alert.composite.AlertConditionScheduleCategoryComposite;
 import org.rhq.core.domain.alert.composite.AlertConditionTraitCategoryComposite;
 import org.rhq.core.domain.auth.Subject;
@@ -58,6 +59,7 @@ import org.rhq.enterprise.server.alert.engine.model.EventCacheElement;
 import org.rhq.enterprise.server.alert.engine.model.InvalidCacheElementException;
 import org.rhq.enterprise.server.alert.engine.model.MeasurementBaselineCacheElement;
 import org.rhq.enterprise.server.alert.engine.model.MeasurementNumericCacheElement;
+import org.rhq.enterprise.server.alert.engine.model.MeasurementRangeNumericCacheElement;
 import org.rhq.enterprise.server.alert.engine.model.MeasurementTraitCacheElement;
 import org.rhq.enterprise.server.alert.engine.model.NumericDoubleCacheElement;
 import org.rhq.enterprise.server.alert.engine.model.CallTimeDataCacheElement.CallTimeElementValue;
@@ -70,10 +72,10 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 class AgentConditionCache extends AbstractConditionCache {
 
-    private Map<Integer, List<NumericDoubleCacheElement>> measurementDataCache;
-    private Map<Integer, List<MeasurementTraitCacheElement>> measurementTraitCache;
-    private Map<Integer, List<CallTimeDataCacheElement>> callTimeCache;
-    private Map<Integer, List<EventCacheElement>> eventsCache;
+    private Map<Integer, List<NumericDoubleCacheElement>> measurementDataCache; // key: schedule ID
+    private Map<Integer, List<MeasurementTraitCacheElement>> measurementTraitCache; // key: schedule ID
+    private Map<Integer, List<CallTimeDataCacheElement>> callTimeCache; // key: schedule ID
+    private Map<Integer, List<EventCacheElement>> eventsCache; // key: resource ID
 
     private AlertConditionManagerLocal alertConditionManager;
     private MeasurementDataManagerLocal measurementDataManager;
@@ -117,7 +119,7 @@ class AgentConditionCache extends AbstractConditionCache {
 
             EnumSet<AlertConditionCategory> supportedCategories = EnumSet.of(AlertConditionCategory.BASELINE,
                 AlertConditionCategory.CHANGE, AlertConditionCategory.TRAIT, AlertConditionCategory.THRESHOLD,
-                AlertConditionCategory.EVENT);
+                AlertConditionCategory.EVENT, AlertConditionCategory.RANGE);
 
             for (AlertConditionCategory nextCategory : supportedCategories) {
                 // page thru all alert definitions
@@ -181,7 +183,7 @@ class AgentConditionCache extends AbstractConditionCache {
 
                     addTo("callTimeDataCache", callTimeCache, scheduleId, cacheElement, alertConditionId, stats);
                 } catch (InvalidCacheElementException icee) {
-                    log.info("Failed to create NumericDoubleCacheElement with parameters: "
+                    log.info("Failed to create CallTimeDataCacheElement with parameters: "
                         + AlertConditionCacheUtils.getCacheElementErrorString(alertConditionId, alertConditionOperator,
                             null, alertCondition.getThreshold()));
                 }
@@ -196,7 +198,7 @@ class AgentConditionCache extends AbstractConditionCache {
                     addTo("measurementDataCache", callTimeCache, thresholdComposite.getScheduleId(), cacheElement,
                         alertConditionId, stats);
                 } catch (InvalidCacheElementException icee) {
-                    log.info("Failed to create NumberDoubleCacheElement with parameters: "
+                    log.info("Failed to create CallTimeDataCacheElement with parameters: "
                         + AlertConditionCacheUtils.getCacheElementErrorString(alertConditionId, alertConditionOperator,
                             null, alertCondition.getThreshold()));
                 }
@@ -224,7 +226,7 @@ class AgentConditionCache extends AbstractConditionCache {
                 addTo("measurementDataCache", measurementDataCache, baselineComposite.getScheduleId(), cacheElement,
                     alertConditionId, stats);
             } catch (InvalidCacheElementException icee) {
-                log.info("Failed to create NumericDoubleCacheElement with parameters: "
+                log.info("Failed to create MeasurementBaselineCacheElement with parameters: "
                     + AlertConditionCacheUtils.getCacheElementErrorString(alertConditionId, alertConditionOperator,
                         null, calculatedValue));
             }
@@ -240,7 +242,7 @@ class AgentConditionCache extends AbstractConditionCache {
 
                 addTo("measurementDataCache", measurementDataCache, scheduleId, cacheElement, alertConditionId, stats);
             } catch (InvalidCacheElementException icee) {
-                log.info("Failed to create NumericDoubleCacheElement with parameters: "
+                log.info("Failed to create MeasurementNumericCacheElement with parameters: "
                     + AlertConditionCacheUtils.getCacheElementErrorString(alertConditionId, alertConditionOperator,
                         null, numeric));
             }
@@ -260,7 +262,7 @@ class AgentConditionCache extends AbstractConditionCache {
                 addTo("measurementTraitCache", measurementTraitCache, traitsComposite.getScheduleId(), cacheElement,
                     alertConditionId, stats);
             } catch (InvalidCacheElementException icee) {
-                log.info("Failed to create StringCacheElement with parameters: "
+                log.info("Failed to create MeasurementTraitCacheElement with parameters: "
                     + AlertConditionCacheUtils.getCacheElementErrorString(alertConditionId, alertConditionOperator,
                         null, value));
             }
@@ -274,7 +276,7 @@ class AgentConditionCache extends AbstractConditionCache {
                 cacheElement = new MeasurementNumericCacheElement(alertConditionOperator, thresholdValue,
                     alertConditionId);
             } catch (InvalidCacheElementException icee) {
-                log.info("Failed to create NumberDoubleCacheElement with parameters: "
+                log.info("Failed to create MeasurementNumericCacheElement with parameters: "
                     + AlertConditionCacheUtils.getCacheElementErrorString(alertConditionId, alertConditionOperator,
                         null, thresholdValue));
             }
@@ -304,6 +306,34 @@ class AgentConditionCache extends AbstractConditionCache {
             }
 
             addTo("eventsCache", eventsCache, eventComposite.getResourceId(), cacheElement, alertConditionId, stats);
+        } else if (alertConditionCategory == AlertConditionCategory.RANGE) {
+            AlertConditionRangeCategoryComposite rangeComposite = (AlertConditionRangeCategoryComposite) composite;
+            Double loValue = alertCondition.getThreshold();
+            String hiValueStr = alertCondition.getOption();
+
+            MeasurementNumericCacheElement cacheElement = null;
+            try {
+                if (hiValueStr == null) {
+                    throw new NumberFormatException("The range alert condition is missing the high value");
+                }
+                Double hiValue = Double.valueOf(hiValueStr);
+                cacheElement = new MeasurementRangeNumericCacheElement(alertConditionOperator, loValue, hiValue,
+                    alertConditionId);
+            } catch (InvalidCacheElementException icee) {
+                log.info("Failed to create MeasurementRangeNumericCacheElement with parameters: "
+                    + AlertConditionCacheUtils.getCacheElementErrorString(alertConditionId, alertConditionOperator,
+                        hiValueStr, loValue));
+            } catch (NumberFormatException nfe) {
+                log.info("Failed to create MeasurementRangeNumericCacheElement with parameters: "
+                    + AlertConditionCacheUtils.getCacheElementErrorString(alertConditionId, alertConditionOperator,
+                        hiValueStr, loValue));
+            }
+
+            if (cacheElement != null) {
+                addTo("measurementDataCache", measurementDataCache, rangeComposite.getScheduleId(), cacheElement,
+                    alertConditionId, stats);
+
+            }
         }
     }
 

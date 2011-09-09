@@ -28,6 +28,44 @@ import mazz.i18n.annotation.I18NResourceBundle;
 
 @I18NResourceBundle(baseName = "alert-messages", defaultLocale = "en")
 public interface AlertI18NResourceKeys {
+    @I18NMessages( { @I18NMessage("value is between {0} and {1}, inclusive"),
+        @I18NMessage(locale = "de", value = "Der Wert zwischen {0} und {1}, pauschal") })
+    String ALERT_CONFIG_PROPS_CB_INSIDE_INCL_RANGE = "alert.config.props.CB.InsideRange.incl.";
+
+    @I18NMessages( { @I18NMessage("between {0} and {1}, incl"),
+        @I18NMessage(locale = "de", value = "zwischen {0} und {1}, paus") })
+    String ALERT_CONFIG_PROPS_CB_INSIDE_INCL_RANGE_SHORT = "alert.config.props.CB.InsideRange.incl.short";
+
+    @I18NMessages( { @I18NMessage("value is between {0} and {1}, exclusive"),
+        @I18NMessage(locale = "de", value = "Der Wert zwischen {0} und {1}, exklusiv") })
+    String ALERT_CONFIG_PROPS_CB_INSIDE_EXCL_RANGE = "alert.config.props.CB.InsideRange.excl";
+
+    @I18NMessages( { @I18NMessage("between {0} and {1}, excl"),
+        @I18NMessage(locale = "de", value = "zwischen {0} und {1}, exkl.") })
+    String ALERT_CONFIG_PROPS_CB_INSIDE_EXCL_RANGE_SHORT = "alert.config.props.CB.InsideRange.excl.short";
+
+    @I18NMessages( { @I18NMessage("value is outside {0} and {1}, inclusive"),
+        @I18NMessage(locale = "de", value = "Der Wert außerhalb {0} und {1}, pauschal") })
+    String ALERT_CONFIG_PROPS_CB_OUTSIDE_INCL_RANGE = "alert.config.props.CB.OutsideRange.incl";
+
+    @I18NMessages( { @I18NMessage("outside {0} and {1}, incl"),
+        @I18NMessage(locale = "de", value = "außerhalb {0} und {1}, paus") })
+    String ALERT_CONFIG_PROPS_CB_OUTSIDE_INCL_RANGE_SHORT = "alert.config.props.CB.OutsideRange.incl.short";
+
+    @I18NMessages( { @I18NMessage("value is outside {0} and {1}, exclusive"),
+        @I18NMessage(locale = "de", value = "Der Wert außerhalb {0} und {1}, exklusiv") })
+    String ALERT_CONFIG_PROPS_CB_OUTSIDE_EXCL_RANGE = "alert.config.props.CB.OutsideRange.excl";
+
+    @I18NMessages( { @I18NMessage("outside {0} and {1}, excl"),
+        @I18NMessage(locale = "de", value = "außerhalb {0} und {1}, exkl") })
+    String ALERT_CONFIG_PROPS_CB_OUTSIDE_EXCL_RANGE_SHORT = "alert.config.props.CB.OutsideRange.excl.short";
+
+    @I18NMessages( { @I18NMessage("Drift detected"), @I18NMessage(locale = "de", value = "Änderung erkannt") })
+    String ALERT_CONFIG_PROPS_CB_DRIFT = "alert.config.props.CB.Drift";
+
+    @I18NMessages( { @I18NMessage("Drift detected"), @I18NMessage(locale = "de", value = "Änderung erkannt") })
+    String ALERT_CONFIG_PROPS_CB_DRIFT_SHORT = "alert.config.props.CB.Drift.short";
+
     @I18NMessages( { @I18NMessage("Availability goes {0}"),
         @I18NMessage(locale = "de", value = "Verf�gbarkeit wird {0}") })
     String ALERT_CONFIG_PROPS_CB_AVAILABILITY = "alert.config.props.CB.Availability";

@@ -24,13 +24,16 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.clientapi.server.drift.DriftServerService;
 import org.rhq.core.domain.drift.DriftConfiguration;
+import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.ServerServices;
@@ -373,6 +376,16 @@ public class DriftManagerTest extends DriftTest {
             if (callback != null) {
                 callback.execute();
             }
+        }
+
+        @Override
+        public Map<Integer, List<DriftConfiguration>> getDriftConfigurations(Set<Integer> resourceIds) {
+            return null;
+        }
+
+        @Override
+        public DriftSnapshot getCurrentSnapshot(int driftConfigurationId) {
+            return null;
         }
     }
 

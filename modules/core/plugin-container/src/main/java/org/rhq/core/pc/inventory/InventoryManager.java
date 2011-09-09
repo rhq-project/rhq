@@ -27,10 +27,12 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -63,6 +65,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
+import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.ResourceMeasurementScheduleRequest;
@@ -78,17 +81,15 @@ import org.rhq.core.domain.resource.ResourceUpgradeReport;
 import org.rhq.core.pc.ContainerService;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.PluginContainerConfiguration;
-import org.rhq.core.pc.RebootRequestListener;
 import org.rhq.core.pc.ServerServices;
 import org.rhq.core.pc.agent.AgentRegistrar;
 import org.rhq.core.pc.agent.AgentService;
 import org.rhq.core.pc.availability.AvailabilityCollectorThreadPool;
 import org.rhq.core.pc.content.ContentContextImpl;
+import org.rhq.core.pc.drift.DriftManager;
 import org.rhq.core.pc.event.EventContextImpl;
 import org.rhq.core.pc.inventory.ResourceContainer.ResourceComponentState;
 import org.rhq.core.pc.operation.OperationContextImpl;
-import org.rhq.core.pc.operation.OperationManager;
-import org.rhq.core.pc.operation.OperationServicesAdapter;
 import org.rhq.core.pc.plugin.BlacklistedException;
 import org.rhq.core.pc.plugin.CanonicalResourceKey;
 import org.rhq.core.pc.plugin.PluginComponentFactory;
@@ -100,7 +101,6 @@ import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pc.util.LoggingThreadFactory;
 import org.rhq.core.pluginapi.availability.AvailabilityFacet;
 import org.rhq.core.pluginapi.content.ContentContext;
-import org.rhq.core.pluginapi.content.ContentServices;
 import org.rhq.core.pluginapi.event.EventContext;
 import org.rhq.core.pluginapi.inventory.ClassLoaderFacet;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
@@ -112,7 +112,6 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.pluginapi.operation.OperationContext;
-import org.rhq.core.pluginapi.operation.OperationServices;
 import org.rhq.core.pluginapi.upgrade.ResourceUpgradeContext;
 import org.rhq.core.pluginapi.upgrade.ResourceUpgradeFacet;
 import org.rhq.core.system.SystemInfo;
@@ -1978,6 +1977,12 @@ public class InventoryManager extends AgentService implements ContainerService, 
         performServiceScan(syncInfo.getId()); // NOTE: This will block (the initial scan blocks).
     }
 
+    /**
+     * This method is called for a resource tree that exists in the server inventory but
+     * not in the agent's inventory.
+     *
+     * @param resource
+     */
     private void syncSchedulesRecursively(Resource resource) {
         if (resource.getInventoryStatus() == InventoryStatus.COMMITTED) {
             if (resource.getResourceType().getCategory() == ResourceCategory.PLATFORM) {
@@ -2003,6 +2008,36 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
     }
 
+    private void syncDriftConfigurationsRecursively(Resource resource) {
+        if (resource.getInventoryStatus() != InventoryStatus.COMMITTED) {
+            return;
+        }
+
+        Deque<Resource> resources = new LinkedList<Resource>();
+        resources.push(resource);
+
+        Set<Integer> resourceIds = new HashSet<Integer>();
+
+        while (!resources.isEmpty()) {
+            Resource r = resources.pop();
+            if (supportsDriftManagement(r)) {
+                resourceIds.add(r.getId());
+            }
+            for (Resource child : r.getChildResources()) {
+                resources.push(child);
+            }
+        }
+        Map<Integer, List<DriftConfiguration>> configs = configuration.getServerServices().getDriftServerService()
+            .getDriftConfigurations(resourceIds);
+        installDriftConfigurations(configs);
+    }
+
+    private boolean supportsDriftManagement(Resource r) {
+        PluginMetadataManager metaDataMgr = PluginContainer.getInstance().getPluginManager().getMetadataManager();
+        ResourceType type = metaDataMgr.getType(r.getResourceType());
+        return type.getDriftConfigurationTemplates() != null && !type.getDriftConfigurationTemplates().isEmpty();
+    }
+
     private void syncSchedules(Set<Resource> resources) {
         if (log.isDebugEnabled()) {
             log.debug("syncSchedules(Set<Resource>) for resources: " + resources);
@@ -2022,6 +2057,27 @@ public class InventoryManager extends AgentService implements ContainerService, 
         Set<ResourceMeasurementScheduleRequest> scheduleRequests = configuration.getServerServices()
             .getMeasurementServerService().getLatestSchedulesForResourceIds(committedResourceIds, false);
         installSchedules(scheduleRequests);
+    }
+
+    private void syncDriftConfigurations(Set<Resource> resources) {
+        if (log.isDebugEnabled()) {
+            log.debug("Syncing drift configurations for " + resources);
+        }
+
+        if (resources.isEmpty()) {
+            return;
+        }
+
+        Set<Integer> committedResourceIds = new HashSet<Integer>();
+        for (Resource resource : resources) {
+            if (resource.getInventoryStatus() == InventoryStatus.COMMITTED) {
+                committedResourceIds.add(resource.getId());
+            }
+        }
+
+        Map<Integer, List<DriftConfiguration>> driftConfigs = configuration.getServerServices().getDriftServerService()
+            .getDriftConfigurations(committedResourceIds);
+        installDriftConfigurations(driftConfigs);
     }
 
     private void postProcessNewlyCommittedResources(Set<Resource> resources) {
@@ -2058,6 +2114,25 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 }
                 ResourceContainer resourceContainer = getResourceContainer(resourceRequest.getResourceId());
                 resourceContainer.setMeasurementSchedule(resourceRequest.getMeasurementSchedules());
+            }
+        }
+    }
+
+    private void installDriftConfigurations(Map<Integer, List<DriftConfiguration>> driftConfigurations) {
+        DriftManager driftMgr = PluginContainer.getInstance().getDriftManager();
+        if (driftMgr != null) {
+            for (Integer resourceId : driftConfigurations.keySet()) {
+                for (DriftConfiguration c : driftConfigurations.get(resourceId)) {
+                    driftMgr.scheduleDriftDetection(resourceId, c);
+                }
+            }
+        } else {
+            log.info("DriftManager is not available. Drift configurations will be persisted but not scheduled.");
+            for (Integer resourceId : driftConfigurations.keySet()) {
+                ResourceContainer container = getResourceContainer(resourceId);
+                for (DriftConfiguration c : driftConfigurations.get(resourceId)) {
+                    container.addDriftConfiguration(c);
+                }
             }
         }
     }
@@ -2473,6 +2548,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         Set<Resource> modifiedResources = configuration.getServerServices().getDiscoveryServerService().getResources(
             modifiedResourceIds, false);
         syncSchedules(modifiedResources); // RHQ-792, mtime is the indicator that schedules should be sync'ed too
+        syncDriftConfigurations(modifiedResources);
         for (Resource modifiedResource : modifiedResources) {
             mergeResource(modifiedResource);
         }
@@ -2497,6 +2573,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 if (resourceType != null) {
                     mergeResource(unknownResource);
                     syncSchedulesRecursively(unknownResource);
+                    syncDriftConfigurationsRecursively(unknownResource);
                 } else {
                     toBeIgnored.add(unknownResource.getId());
                     if (log.isDebugEnabled()) {

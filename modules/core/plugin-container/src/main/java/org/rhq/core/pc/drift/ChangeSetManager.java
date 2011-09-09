@@ -30,7 +30,7 @@ import org.rhq.core.domain.drift.DriftConfiguration;
 
 public interface ChangeSetManager {
 
-    boolean changeSetExists(int resourceId, Headers headers) throws IOException;
+    boolean changeSetExists(int resourceId, Headers headers);
 
     /**
      * Locates the latest coverage change set for the specified resource id and drift

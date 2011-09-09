@@ -69,11 +69,11 @@ public class DriftServerServiceImpl implements DriftServerService {
         PageList<DriftConfiguration> configs = getDriftManager().findDriftConfigurationsByCriteria(overlord, criteria);
 
         Map<Integer, List<DriftConfiguration>> map = new HashMap<Integer, List<DriftConfiguration>>();
+        for (Integer resourceId : resourceIds) {
+            map.put(resourceId, new ArrayList<DriftConfiguration>());
+        }
         for (DriftConfiguration c : configs) {
             List<DriftConfiguration> list = map.get(c.getResource().getId());
-            if (list == null) {
-                list = new ArrayList<DriftConfiguration>();
-            }
             list.add(c);
             map.put(c.getResource().getId(), list);
         }

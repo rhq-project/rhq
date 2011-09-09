@@ -38,9 +38,11 @@ import org.rhq.common.drift.ChangeSetWriter;
 import org.rhq.common.drift.Headers;
 import org.rhq.core.clientapi.agent.drift.DriftAgentService;
 import org.rhq.core.clientapi.server.drift.DriftServerService;
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.drift.DriftConfiguration;
+import org.rhq.core.domain.drift.DriftConfigurationComparator;
 import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.resource.Resource;
@@ -56,6 +58,7 @@ import org.rhq.core.util.stream.StreamUtil;
 import static org.rhq.common.drift.FileEntry.addedFileEntry;
 import static org.rhq.common.drift.FileEntry.changedFileEntry;
 import static org.rhq.common.drift.FileEntry.removedFileEntry;
+import static org.rhq.core.domain.drift.DriftConfigurationComparator.CompareMode.BOTH_BASE_INFO_AND_DIRECTORY_SPECIFICATIONS;
 import static org.rhq.core.util.file.FileUtil.purge;
 
 public class DriftManager extends AgentService implements DriftAgentService, DriftClient, ContainerService {
@@ -72,6 +75,8 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
 
     private ChangeSetManager changeSetMgr;
 
+    private boolean initialized;
+
     public DriftManager() {
         super(DriftAgentService.class);
     }
@@ -81,6 +86,10 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
         pluginContainerConfiguration = configuration;
         changeSetsDir = new File(pluginContainerConfiguration.getDataDirectory(), "changesets");
         changeSetsDir.mkdir();
+    }
+
+    public boolean isInitialized() {
+        return initialized;
     }
 
     @Override
@@ -96,8 +105,9 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
         long startTime = System.currentTimeMillis();
         initSchedules(inventoryMgr.getPlatform(), inventoryMgr);
         long endTime = System.currentTimeMillis();
-
         log.info("Finished initializing drift detection schedules in " + (endTime - startTime) + " ms");
+
+        purgeDeletedDriftConfigDirs();
 
         driftThreadPool = new ScheduledThreadPoolExecutor(5);
 
@@ -109,6 +119,8 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
         } else {
             log.info("Drift detection has been globally disabled as per plugin container configuration");
         }
+
+        initialized = true;
     }
 
     private void initSchedules(Resource r, InventoryManager inventoryMgr) {
@@ -165,6 +177,25 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
         }
     }
 
+    private void purgeDeletedDriftConfigDirs() {
+        log.info("Checking for deleted drift configurations");
+        DriftConfigurationComparator comparator = new DriftConfigurationComparator(
+            BOTH_BASE_INFO_AND_DIRECTORY_SPECIFICATIONS);
+        for (File resourceDir : changeSetsDir.listFiles()) {
+            int resourceId = Integer.parseInt(resourceDir.getName());
+            for (File configDir : resourceDir.listFiles()) {
+                DriftConfiguration config = new DriftConfiguration(new Configuration());
+                config.setName(configDir.getName());
+                if (!schedulesQueue.contains(resourceId, config, comparator)) {
+                    log.info("Detected deleted drift configuration, DriftConfiguration[name: " + config.getName() +
+                        ", resourceId: " + resourceId + "]");
+                    log.info("Deleting drift configuration directory " + configDir.getPath());
+                    purge(configDir, true);
+                }
+            }
+        }
+    }
+
     private String toString(Resource r, DriftConfiguration c) {
         return "DriftConfiguration[id: " + c.getId() + ", resourceId: " + r.getId() + ", name: " + c.getName() + "]";
     }
@@ -192,7 +223,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
      * This method is provided as a test hook.
      * @return The schedule queue
      */
-    ScheduleQueue getSchedulesQueue() {
+    public ScheduleQueue getSchedulesQueue() {
         return schedulesQueue;
     }
 

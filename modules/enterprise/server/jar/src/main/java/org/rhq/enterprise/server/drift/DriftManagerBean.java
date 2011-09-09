@@ -300,6 +300,7 @@ public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
     @Override
     public void deleteResourceDriftConfiguration(Subject subject, int resourceId, int driftConfigId) {
         DriftConfiguration doomed = entityManager.getReference(DriftConfiguration.class, driftConfigId);
+        doomed.getResource().setAgentSynchronizationNeeded();
         entityManager.remove(doomed);
         return;
     }

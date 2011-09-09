@@ -36,6 +36,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -66,6 +67,7 @@ import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.drift.DriftConfiguration;
+import org.rhq.core.domain.drift.DriftConfigurationComparator;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.ResourceMeasurementScheduleRequest;
@@ -86,7 +88,9 @@ import org.rhq.core.pc.agent.AgentRegistrar;
 import org.rhq.core.pc.agent.AgentService;
 import org.rhq.core.pc.availability.AvailabilityCollectorThreadPool;
 import org.rhq.core.pc.content.ContentContextImpl;
+import org.rhq.core.pc.drift.DriftDetectionSchedule;
 import org.rhq.core.pc.drift.DriftManager;
+import org.rhq.core.pc.drift.ScheduleQueue;
 import org.rhq.core.pc.event.EventContextImpl;
 import org.rhq.core.pc.inventory.ResourceContainer.ResourceComponentState;
 import org.rhq.core.pc.operation.OperationContextImpl;
@@ -118,6 +122,8 @@ import org.rhq.core.system.SystemInfo;
 import org.rhq.core.system.SystemInfoFactory;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.exception.WrappedRemotingException;
+
+import static org.rhq.core.domain.drift.DriftConfigurationComparator.CompareMode.BOTH_BASE_INFO_AND_DIRECTORY_SPECIFICATIONS;
 
 /**
  * Manages the process of both auto-detection of servers and runtime detection of services across all plugins. Manages
@@ -2120,17 +2126,75 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
     private void installDriftConfigurations(Map<Integer, List<DriftConfiguration>> driftConfigurations) {
         DriftManager driftMgr = PluginContainer.getInstance().getDriftManager();
-        if (driftMgr != null) {
+        if (driftMgr != null && driftMgr.isInitialized()) {
+            // First check for drift configurations that have been deleted
+            for (Integer resourceId : driftConfigurations.keySet()) {
+                Set<DriftConfiguration> resourceConfigs = new TreeSet<DriftConfiguration>(
+                    new DriftConfigurationComparator(BOTH_BASE_INFO_AND_DIRECTORY_SPECIFICATIONS));
+                resourceConfigs.addAll(driftConfigurations.get(resourceId));
+
+                List<DriftConfiguration> deleted = new ArrayList<DriftConfiguration>();
+                ScheduleQueue queue = driftMgr.getSchedulesQueue();
+
+                for (DriftDetectionSchedule schedule : queue.toArray()) {
+                    if (!resourceConfigs.contains(schedule.getDriftConfiguration())) {
+                        if (log.isDebugEnabled()) {
+                            log.debug("Detected stale drift configuration. Preparing to unschedule " + schedule);
+                        }
+                        deleted.add(schedule.getDriftConfiguration());
+                    }
+                }
+                for (DriftConfiguration c : deleted) {
+                    driftMgr.unscheduleDriftDetection(resourceId, c);
+                }
+            }
+
+            // add drift configurations received from the server. These could be
+            // new or updated configurations.
             for (Integer resourceId : driftConfigurations.keySet()) {
                 for (DriftConfiguration c : driftConfigurations.get(resourceId)) {
+                    driftMgr.unscheduleDriftDetection(resourceId, c);
                     driftMgr.scheduleDriftDetection(resourceId, c);
                 }
             }
         } else {
             log.info("DriftManager is not available. Drift configurations will be persisted but not scheduled.");
+
+            // First check for drift configurations that have been deleted
+            log.debug("Checking for stale drift configurations that need to be purged from inventory");
+            for (Integer resourceId : driftConfigurations.keySet()) {
+                ResourceContainer container = getResourceContainer(resourceId);
+                Set<DriftConfiguration> resourceConfigs = new TreeSet<DriftConfiguration>(
+                    new DriftConfigurationComparator(BOTH_BASE_INFO_AND_DIRECTORY_SPECIFICATIONS));
+                resourceConfigs.addAll(driftConfigurations.get(resourceId));
+
+                List<DriftConfiguration> deleted = new ArrayList<DriftConfiguration>();
+
+                for (DriftConfiguration c : container.getDriftConfigurations()) {
+                    if (!resourceConfigs.contains(c)) {
+                        if (log.isDebugEnabled()) {
+                            log.debug("Detected stale drift configuration. Preparing to delete DriftConfiguration[" +
+                                "name: " + c.getName() + ", resourceId: " + resourceId + "]");
+                        }
+                        deleted.add(c);
+                    }
+                }
+
+                for (DriftConfiguration c : deleted) {
+                    container.removeDriftConfiguration(c);
+                }
+            }
+
+            // Now add any any drift configurations received from the server. These
+            // could be new or updated configurations.
+            log.debug("Checking for new or updated drift configurations");
             for (Integer resourceId : driftConfigurations.keySet()) {
                 ResourceContainer container = getResourceContainer(resourceId);
                 for (DriftConfiguration c : driftConfigurations.get(resourceId)) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Adding or updating DriftConfiguration[name: " + c.getName() + ", resourceId: " +
+                            resourceId + "]");
+                    }
                     container.addDriftConfiguration(c);
                 }
             }

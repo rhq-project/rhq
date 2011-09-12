@@ -2128,20 +2128,22 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
     }
 
-    private void installDriftConfigurations(Map<Integer, List<DriftConfiguration>> driftConfigurations) {
+    private void installDriftConfigurations(Map<Integer, List<DriftConfiguration>> configsFromServer) {
         DriftManager driftMgr = PluginContainer.getInstance().getDriftManager();
         if (driftMgr != null && driftMgr.isInitialized()) {
+            DriftConfigurationComparator comparator =
+                new DriftConfigurationComparator(BOTH_BASE_INFO_AND_DIRECTORY_SPECIFICATIONS);
+            ScheduleQueue queue = driftMgr.getSchedulesQueue();
+
             // First check for drift configurations that have been deleted
-            for (Integer resourceId : driftConfigurations.keySet()) {
-                Set<DriftConfiguration> resourceConfigs = new TreeSet<DriftConfiguration>(
-                    new DriftConfigurationComparator(BOTH_BASE_INFO_AND_DIRECTORY_SPECIFICATIONS));
-                resourceConfigs.addAll(driftConfigurations.get(resourceId));
+            for (Integer resourceId : configsFromServer.keySet()) {
+                Set<DriftConfiguration> configsFromServerSet = new TreeSet<DriftConfiguration>(comparator);
+                configsFromServerSet.addAll(configsFromServer.get(resourceId));
 
                 List<DriftConfiguration> deleted = new ArrayList<DriftConfiguration>();
-                ScheduleQueue queue = driftMgr.getSchedulesQueue();
 
                 for (DriftDetectionSchedule schedule : queue.toArray()) {
-                    if (!resourceConfigs.contains(schedule.getDriftConfiguration())) {
+                    if (!configsFromServerSet.contains(schedule.getDriftConfiguration())) {
                         if (log.isDebugEnabled()) {
                             log.debug("Detected stale drift configuration. Preparing to unschedule " + schedule);
                         }
@@ -2153,12 +2155,18 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 }
             }
 
-            // add drift configurations received from the server. These could be
-            // new or updated configurations.
-            for (Integer resourceId : driftConfigurations.keySet()) {
-                for (DriftConfiguration c : driftConfigurations.get(resourceId)) {
-                    driftMgr.unscheduleDriftDetection(resourceId, c);
-                    driftMgr.scheduleDriftDetection(resourceId, c);
+            // add new drift configurations received from the server
+            for (Integer resourceId : configsFromServer.keySet()) {
+                for (DriftConfiguration c : configsFromServer.get(resourceId)) {
+                    if (!queue.contains(resourceId, c, comparator)) {
+                        if (log.isDebugEnabled()) {
+                            log.debug("Detected new drift configuration. Creating new schedule for " +
+                                "DriftConfiguration[name: " + c.getName() + ", resourceId: " + resourceId + "]");
+                        }
+                        driftMgr.scheduleDriftDetection(resourceId, c);
+                    }
+//                    driftMgr.unscheduleDriftDetection(resourceId, c);
+//                    driftMgr.scheduleDriftDetection(resourceId, c);
                 }
             }
         } else {
@@ -2166,11 +2174,11 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
             // First check for drift configurations that have been deleted
             log.debug("Checking for stale drift configurations that need to be purged from inventory");
-            for (Integer resourceId : driftConfigurations.keySet()) {
+            for (Integer resourceId : configsFromServer.keySet()) {
                 ResourceContainer container = getResourceContainer(resourceId);
                 Set<DriftConfiguration> resourceConfigs = new TreeSet<DriftConfiguration>(
                     new DriftConfigurationComparator(BOTH_BASE_INFO_AND_DIRECTORY_SPECIFICATIONS));
-                resourceConfigs.addAll(driftConfigurations.get(resourceId));
+                resourceConfigs.addAll(configsFromServer.get(resourceId));
 
                 List<DriftConfiguration> deleted = new ArrayList<DriftConfiguration>();
 
@@ -2192,9 +2200,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
             // Now add any any drift configurations received from the server. These
             // could be new or updated configurations.
             log.debug("Checking for new or updated drift configurations");
-            for (Integer resourceId : driftConfigurations.keySet()) {
+            for (Integer resourceId : configsFromServer.keySet()) {
                 ResourceContainer container = getResourceContainer(resourceId);
-                for (DriftConfiguration c : driftConfigurations.get(resourceId)) {
+                for (DriftConfiguration c : configsFromServer.get(resourceId)) {
                     if (log.isDebugEnabled()) {
                         log.debug("Adding or updating DriftConfiguration[name: " + c.getName() + ", resourceId: " +
                             resourceId + "]");

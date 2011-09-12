@@ -20,8 +20,8 @@
         <exclude>**/*.sl</exclude>
         <exclude>**/*.dylib</exclude>        
       </excludes>
-      <fileMode>0744</fileMode>
-      <directoryMode>0744</directoryMode>
+      <fileMode>0644</fileMode>
+      <directoryMode>0755</directoryMode>
     </fileSet>
     <fileSet>
       <directory>${project.build.outputDirectory}</directory>    
@@ -32,8 +32,8 @@
         <include>**/*.sl</include>
         <include>**/*.dylib</include>
       </includes>            
-      <fileMode>0744</fileMode>
-      <directoryMode>0744</directoryMode>
+      <fileMode>0755</fileMode>
+      <directoryMode>0755</directoryMode>
     </fileSet>
   </fileSets>
 </assembly>

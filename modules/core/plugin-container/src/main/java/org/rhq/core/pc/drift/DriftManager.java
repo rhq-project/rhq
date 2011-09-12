@@ -94,6 +94,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
 
     @Override
     public void initialize() {
+        changeSetsDir.mkdir();
         changeSetMgr = new ChangeSetManagerImpl(changeSetsDir);
 
         DriftDetector driftDetector = new DriftDetector();

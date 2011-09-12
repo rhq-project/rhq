@@ -33,7 +33,11 @@ public class PluginContainerTest {
     public void testStartup() {
         PluginContainerConfiguration config = new PluginContainerConfiguration();
         config.setPluginFinder(new FileSystemPluginFinder(new File(".")));
-        config.setDataDirectory(new File("target/PluginContainerTest"));
+
+        File dataDir = new File("target/PluginContainerTest");
+        dataDir.mkdirs();
+
+        config.setDataDirectory(dataDir);
         PluginContainer pc = PluginContainer.getInstance();
         pc.setConfiguration(config);
         pc.initialize();

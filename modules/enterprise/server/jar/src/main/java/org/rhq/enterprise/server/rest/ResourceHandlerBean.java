@@ -135,7 +135,8 @@ public class ResourceHandlerBean extends AbstractRestBean implements ResourceHan
                 ResourceWithChildren child = getHierarchy(res);
                 resList.add(child);
             }
-            rwc.setChildren(resList);
+            if (!resList.isEmpty())
+                rwc.setChildren(resList);
         }
         return rwc;
     }

@@ -25,8 +25,11 @@ package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -45,6 +48,7 @@ import com.smartgwt.client.widgets.form.validator.IsFloatValidator;
 
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
+import org.rhq.core.domain.alert.BooleanExpression;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.DataType;
@@ -54,6 +58,8 @@ import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 
 /**
@@ -70,11 +76,14 @@ public class NewConditionEditor extends LocatableDynamicForm {
     private static final String THRESHOLD_METRIC_ITEMNAME = "thresholdMetric";
     private static final String THRESHOLD_COMPARATOR_ITEMNAME = "thresholdComparator";
     private static final String THRESHOLD_ABSVALUE_ITEMNAME = "metricAbsoluteValue";
+    private static final String THRESHOLD_NO_METRICS_ITEMNAME = "thresholdNoMetrics";
     private static final String BASELINE_METRIC_ITEMNAME = "baselineMetric";
     private static final String BASELINE_COMPARATOR_ITEMNAME = "baselineComparator";
     private static final String BASELINE_PERCENTAGE_ITEMNAME = "baselinePercentage";
     private static final String BASELINE_SELECTION_ITEMNAME = "baselineSelection";
+    private static final String BASELINE_NO_METRICS_ITEMNAME = "baselineNoMetrics";
     private static final String CHANGE_METRIC_ITEMNAME = "changeMetric";
+    private static final String CHANGE_NO_METRICS_ITEMNAME = "changeNoMetrics";
     private static final String CALLTIME_THRESHOLD_METRIC_ITEMNAME = "calltimeThresholdMetric";
     private static final String CALLTIME_THRESHOLD_MINMAXAVG_ITEMNAME = "calltimeThresholdMinMaxAvgSelection";
     private static final String CALLTIME_THRESHOLD_COMPARATOR_ITEMNAME = "calltimeThresholdComparator";
@@ -96,9 +105,11 @@ public class NewConditionEditor extends LocatableDynamicForm {
     private static final String RANGE_COMPARATOR_ITEMNAME = "rangeComparator";
     private static final String RANGE_LO_ABSVALUE_ITEMNAME = "rangeMetricLoValue";
     private static final String RANGE_HI_ABSVALUE_ITEMNAME = "rangeMetricHiValue";
+    private static final String RANGE_NO_METRICS_ITEMNAME = "rangeNoMetrics";
 
     private SelectItem conditionTypeSelectItem;
     private HashSet<AlertCondition> conditions; // the new condition we create goes into this set
+    private final SelectItem conditionExpression; // this is the GWT menu where the user selects ALL or ANY conjunction
     private boolean supportsMetrics = false;
     private boolean supportsCalltimeMetrics = false;
     private boolean supportsTraits = false;
@@ -109,11 +120,12 @@ public class NewConditionEditor extends LocatableDynamicForm {
     private Runnable closeFunction; // this is called after a button is pressed and the editor should close 
     private ResourceType resourceType;
 
-    public NewConditionEditor(String locatorId, HashSet<AlertCondition> conditions, ResourceType rtype,
-        Runnable closeFunc) {
+    public NewConditionEditor(String locatorId, HashSet<AlertCondition> conditions, SelectItem conditionExpression,
+        ResourceType rtype, Runnable closeFunc) {
 
         super(locatorId);
         this.conditions = conditions;
+        this.conditionExpression = conditionExpression;
         this.closeFunction = closeFunc;
         this.resourceType = rtype;
 
@@ -219,8 +231,9 @@ public class NewConditionEditor extends LocatableDynamicForm {
             @Override
             public void onClick(ClickEvent event) {
                 if (validate(false)) {
-                    saveNewCondition();
-                    closeFunction.run();
+                    if (saveNewCondition()) {
+                        closeFunction.run();
+                    }
                 }
             }
         });
@@ -271,7 +284,28 @@ public class NewConditionEditor extends LocatableDynamicForm {
         setFields(formItems.toArray(new FormItem[formItems.size()]));
     };
 
-    private void saveNewCondition() {
+    private boolean saveNewCondition() {
+
+        // Find out if this is using the ALL conjunction - if it is, we can't have more than one conditional use the same metric.
+        // If we do, immediately abort and warn the user. See BZ 737565
+        if ((BooleanExpression.ALL.name().equals(this.conditionExpression.getValue().toString()))
+            && (supportsMetrics && this.resourceType.getMetricDefinitions() != null)) {
+
+            Map<Integer, String> metricIdsUsed = new HashMap<Integer, String>();
+            for (AlertCondition condition : this.conditions) {
+                if (condition.getMeasurementDefinition() != null) {
+                    Integer id = Integer.valueOf(condition.getMeasurementDefinition().getId());
+                    if (metricIdsUsed.containsKey(id)) {
+                        String msg = MSG.view_alert_definition_condition_editor_metricswarning(metricIdsUsed.get(id));
+                        Message warning = new Message(msg, Severity.Warning, EnumSet.of(Message.Option.Transient));
+                        CoreGUI.getMessageCenter().notify(warning);
+                        return false; // multiple conditions used the same metric with ALL conjunction, this doesn't work - abort (BZ 737565)
+                    }
+                    metricIdsUsed.put(id, condition.getMeasurementDefinition().getDisplayName());
+                }
+            }
+        }
+
         final boolean calltimeCategory;
         final AlertConditionCategory category;
 
@@ -413,6 +447,8 @@ public class NewConditionEditor extends LocatableDynamicForm {
         }
 
         this.conditions.add(newCondition);
+
+        return true;
     }
 
     private ArrayList<FormItem> buildMetricThresholdFormItems() {
@@ -424,18 +460,25 @@ public class NewConditionEditor extends LocatableDynamicForm {
         StaticTextItem helpItem = buildHelpTextItem("thresholdHelp", helpStr, ifFunc);
         formItems.add(helpItem);
 
-        formItems.add(buildMetricDropDownMenu(THRESHOLD_METRIC_ITEMNAME, false, ifFunc));
-        formItems.add(buildComparatorDropDownMenu(THRESHOLD_COMPARATOR_ITEMNAME, ifFunc));
-        TextItem absoluteValue = new TextItem(THRESHOLD_ABSVALUE_ITEMNAME, MSG
-            .view_alert_definition_condition_editor_metric_threshold_value());
-        absoluteValue.setWrapTitle(false);
-        absoluteValue.setRequired(true);
-        absoluteValue.setTooltip(MSG.view_alert_definition_condition_editor_metric_threshold_value_tooltip());
-        absoluteValue.setHoverWidth(200);
-        absoluteValue.setValidateOnChange(true);
-        absoluteValue.setValidators(new IsFloatValidator());
-        absoluteValue.setShowIfCondition(ifFunc);
-        formItems.add(absoluteValue);
+        SelectItem metricDropDownMenu = buildMetricDropDownMenu(THRESHOLD_METRIC_ITEMNAME, false, ifFunc);
+        if (metricDropDownMenu != null) {
+            formItems.add(metricDropDownMenu);
+            formItems.add(buildComparatorDropDownMenu(THRESHOLD_COMPARATOR_ITEMNAME, ifFunc));
+            TextItem absoluteValue = new TextItem(THRESHOLD_ABSVALUE_ITEMNAME, MSG
+                .view_alert_definition_condition_editor_metric_threshold_value());
+            absoluteValue.setWrapTitle(false);
+            absoluteValue.setRequired(true);
+            absoluteValue.setTooltip(MSG.view_alert_definition_condition_editor_metric_threshold_value_tooltip());
+            absoluteValue.setHoverWidth(200);
+            absoluteValue.setValidateOnChange(true);
+            absoluteValue.setValidators(new IsFloatValidator());
+            absoluteValue.setShowIfCondition(ifFunc);
+            formItems.add(absoluteValue);
+        } else {
+            String noMetricsStr = MSG.view_alert_definition_condition_editor_metric_nometrics();
+            StaticTextItem noMetrics = buildHelpTextItem(THRESHOLD_NO_METRICS_ITEMNAME, noMetricsStr, ifFunc);
+            formItems.add(noMetrics);
+        }
 
         return formItems;
     }
@@ -449,29 +492,36 @@ public class NewConditionEditor extends LocatableDynamicForm {
         StaticTextItem helpItem = buildHelpTextItem("rangeHelp", helpStr, ifFunc);
         formItems.add(helpItem);
 
-        formItems.add(buildMetricDropDownMenu(RANGE_METRIC_ITEMNAME, false, ifFunc));
-        formItems.add(buildRangeComparatorDropDownMenu(RANGE_COMPARATOR_ITEMNAME, ifFunc));
-        TextItem absoluteLowValue = new TextItem(RANGE_LO_ABSVALUE_ITEMNAME, MSG
-            .view_alert_definition_condition_editor_metric_range_lovalue());
-        absoluteLowValue.setWrapTitle(false);
-        absoluteLowValue.setRequired(true);
-        absoluteLowValue.setTooltip(MSG.view_alert_definition_condition_editor_metric_range_lovalue_tooltip());
-        absoluteLowValue.setHoverWidth(200);
-        absoluteLowValue.setValidateOnChange(true);
-        absoluteLowValue.setValidators(new IsFloatValidator());
-        absoluteLowValue.setShowIfCondition(ifFunc);
-        formItems.add(absoluteLowValue);
+        SelectItem metricDropDownMenu = buildMetricDropDownMenu(RANGE_METRIC_ITEMNAME, false, ifFunc);
+        if (metricDropDownMenu != null) {
+            formItems.add(metricDropDownMenu);
+            formItems.add(buildRangeComparatorDropDownMenu(RANGE_COMPARATOR_ITEMNAME, ifFunc));
+            TextItem absoluteLowValue = new TextItem(RANGE_LO_ABSVALUE_ITEMNAME, MSG
+                .view_alert_definition_condition_editor_metric_range_lovalue());
+            absoluteLowValue.setWrapTitle(false);
+            absoluteLowValue.setRequired(true);
+            absoluteLowValue.setTooltip(MSG.view_alert_definition_condition_editor_metric_range_lovalue_tooltip());
+            absoluteLowValue.setHoverWidth(200);
+            absoluteLowValue.setValidateOnChange(true);
+            absoluteLowValue.setValidators(new IsFloatValidator());
+            absoluteLowValue.setShowIfCondition(ifFunc);
+            formItems.add(absoluteLowValue);
 
-        TextItem absoluteHighValue = new TextItem(RANGE_HI_ABSVALUE_ITEMNAME, MSG
-            .view_alert_definition_condition_editor_metric_range_hivalue());
-        absoluteHighValue.setWrapTitle(false);
-        absoluteHighValue.setRequired(true);
-        absoluteHighValue.setTooltip(MSG.view_alert_definition_condition_editor_metric_range_hivalue_tooltip());
-        absoluteHighValue.setHoverWidth(200);
-        absoluteHighValue.setValidateOnChange(true);
-        absoluteHighValue.setValidators(new IsFloatValidator());
-        absoluteHighValue.setShowIfCondition(ifFunc);
-        formItems.add(absoluteHighValue);
+            TextItem absoluteHighValue = new TextItem(RANGE_HI_ABSVALUE_ITEMNAME, MSG
+                .view_alert_definition_condition_editor_metric_range_hivalue());
+            absoluteHighValue.setWrapTitle(false);
+            absoluteHighValue.setRequired(true);
+            absoluteHighValue.setTooltip(MSG.view_alert_definition_condition_editor_metric_range_hivalue_tooltip());
+            absoluteHighValue.setHoverWidth(200);
+            absoluteHighValue.setValidateOnChange(true);
+            absoluteHighValue.setValidators(new IsFloatValidator());
+            absoluteHighValue.setShowIfCondition(ifFunc);
+            formItems.add(absoluteHighValue);
+        } else {
+            String noMetricsStr = MSG.view_alert_definition_condition_editor_metric_nometrics();
+            StaticTextItem noMetrics = buildHelpTextItem(RANGE_NO_METRICS_ITEMNAME, noMetricsStr, ifFunc);
+            formItems.add(noMetrics);
+        }
 
         return formItems;
     }
@@ -486,33 +536,41 @@ public class NewConditionEditor extends LocatableDynamicForm {
         formItems.add(helpItem);
 
         // if a metric is trending (up or down), it will never have baselines calculated for it so only show dynamic metrics
-        formItems.add(buildMetricDropDownMenu(BASELINE_METRIC_ITEMNAME, true, ifFunc));
-        formItems.add(buildComparatorDropDownMenu(BASELINE_COMPARATOR_ITEMNAME, ifFunc));
+        SelectItem metricDropDownMenu = buildMetricDropDownMenu(BASELINE_METRIC_ITEMNAME, true, ifFunc);
+        if (metricDropDownMenu != null) {
+            formItems.add(metricDropDownMenu);
+            formItems.add(buildComparatorDropDownMenu(BASELINE_COMPARATOR_ITEMNAME, ifFunc));
 
-        TextItem baselinePercentage = new TextItem(BASELINE_PERCENTAGE_ITEMNAME, MSG
-            .view_alert_definition_condition_editor_metric_baseline_percentage());
-        baselinePercentage.setWrapTitle(false);
-        baselinePercentage.setRequired(true);
-        baselinePercentage.setTooltip(MSG.view_alert_definition_condition_editor_metric_baseline_percentage_tooltip());
-        baselinePercentage.setHoverWidth(200);
-        baselinePercentage.setShowIfCondition(ifFunc);
-        baselinePercentage.setValidateOnChange(true);
-        baselinePercentage.setValidators(new IsFloatValidator());
-        formItems.add(baselinePercentage);
+            TextItem baselinePercentage = new TextItem(BASELINE_PERCENTAGE_ITEMNAME, MSG
+                .view_alert_definition_condition_editor_metric_baseline_percentage());
+            baselinePercentage.setWrapTitle(false);
+            baselinePercentage.setRequired(true);
+            baselinePercentage.setTooltip(MSG
+                .view_alert_definition_condition_editor_metric_baseline_percentage_tooltip());
+            baselinePercentage.setHoverWidth(200);
+            baselinePercentage.setShowIfCondition(ifFunc);
+            baselinePercentage.setValidateOnChange(true);
+            baselinePercentage.setValidators(new IsFloatValidator());
+            formItems.add(baselinePercentage);
 
-        SelectItem baselineSelection = new SelectItem(BASELINE_SELECTION_ITEMNAME, MSG
-            .view_alert_definition_condition_editor_metric_baseline_value());
-        LinkedHashMap<String, String> baselines = new LinkedHashMap<String, String>(3);
-        baselines.put("min", MSG.view_alert_definition_condition_editor_common_min()); // TODO can we have the current value of the min baseline
-        baselines.put("mean", MSG.view_alert_definition_condition_editor_common_avg()); // TODO can we have the current value of the avg baseline
-        baselines.put("max", MSG.view_alert_definition_condition_editor_common_max()); // TODO can we have the current value of the max baseline
-        baselineSelection.setValueMap(baselines);
-        baselineSelection.setDefaultValue("mean");
-        baselineSelection.setWrapTitle(false);
-        baselineSelection.setWidth("*");
-        baselineSelection.setRedrawOnChange(true);
-        baselineSelection.setShowIfCondition(ifFunc);
-        formItems.add(baselineSelection);
+            SelectItem baselineSelection = new SelectItem(BASELINE_SELECTION_ITEMNAME, MSG
+                .view_alert_definition_condition_editor_metric_baseline_value());
+            LinkedHashMap<String, String> baselines = new LinkedHashMap<String, String>(3);
+            baselines.put("min", MSG.view_alert_definition_condition_editor_common_min()); // TODO can we have the current value of the min baseline
+            baselines.put("mean", MSG.view_alert_definition_condition_editor_common_avg()); // TODO can we have the current value of the avg baseline
+            baselines.put("max", MSG.view_alert_definition_condition_editor_common_max()); // TODO can we have the current value of the max baseline
+            baselineSelection.setValueMap(baselines);
+            baselineSelection.setDefaultValue("mean");
+            baselineSelection.setWrapTitle(false);
+            baselineSelection.setWidth("*");
+            baselineSelection.setRedrawOnChange(true);
+            baselineSelection.setShowIfCondition(ifFunc);
+            formItems.add(baselineSelection);
+        } else {
+            String noMetricsStr = MSG.view_alert_definition_condition_editor_metric_nometrics();
+            StaticTextItem noMetrics = buildHelpTextItem(BASELINE_NO_METRICS_ITEMNAME, noMetricsStr, ifFunc);
+            formItems.add(noMetrics);
+        }
 
         return formItems;
     }
@@ -526,7 +584,14 @@ public class NewConditionEditor extends LocatableDynamicForm {
         StaticTextItem helpItem = buildHelpTextItem("changeMetricHelp", helpStr, ifFunc);
         formItems.add(helpItem);
 
-        formItems.add(buildMetricDropDownMenu(CHANGE_METRIC_ITEMNAME, false, ifFunc));
+        SelectItem metricDropDownMenu = buildMetricDropDownMenu(CHANGE_METRIC_ITEMNAME, false, ifFunc);
+        if (metricDropDownMenu != null) {
+            formItems.add(metricDropDownMenu);
+        } else {
+            String noMetricsStr = MSG.view_alert_definition_condition_editor_metric_nometrics();
+            StaticTextItem noMetrics = buildHelpTextItem(CHANGE_NO_METRICS_ITEMNAME, noMetricsStr, ifFunc);
+            formItems.add(noMetrics);
+        }
 
         return formItems;
     }
@@ -808,6 +873,16 @@ public class NewConditionEditor extends LocatableDynamicForm {
 
     private SelectItem buildMetricDropDownMenu(String itemName, boolean dynamicOnly, FormItemIfFunction ifFunc) {
 
+        // find out if this is the ALL - if it is, we can't have more than one conditional use the same metric (BZ 737565)
+        Set<String> metricIdsToHide = new HashSet<String>();
+        if (BooleanExpression.ALL.name().equals(this.conditionExpression.getValue().toString())) {
+            for (AlertCondition condition : this.conditions) {
+                if (condition.getMeasurementDefinition() != null) {
+                    metricIdsToHide.add(String.valueOf(condition.getMeasurementDefinition().getId()));
+                }
+            }
+        }
+
         LinkedHashMap<String, String> metricsMap = new LinkedHashMap<String, String>();
         TreeSet<MeasurementDefinition> sortedDefs = new TreeSet<MeasurementDefinition>(
             new Comparator<MeasurementDefinition>() {
@@ -822,10 +897,16 @@ public class NewConditionEditor extends LocatableDynamicForm {
         for (MeasurementDefinition def : sortedDefs) {
             if (def.getDataType() == DataType.MEASUREMENT) {
                 if (!dynamicOnly || def.getNumericType() == NumericType.DYNAMIC) {
-                    // use id as opposed to name for key, the name is not unique when per-minute metric is also used 
-                    metricsMap.put(String.valueOf(def.getId()), def.getDisplayName());
+                    String idString = String.valueOf(def.getId()); // use id, not name, for key; name is not unique when per-minute metric is also used
+                    if (!metricIdsToHide.contains(idString)) {
+                        metricsMap.put(idString, def.getDisplayName());
+                    }
                 }
             }
+        }
+
+        if (metricsMap.isEmpty()) {
+            return null; // all metrics should be hidden
         }
 
         SelectItem metricSelection = new SelectItem(itemName, MSG

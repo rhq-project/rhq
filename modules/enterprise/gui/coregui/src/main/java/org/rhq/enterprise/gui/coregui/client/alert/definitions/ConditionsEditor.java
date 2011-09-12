@@ -36,6 +36,7 @@ import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
 import com.smartgwt.client.widgets.events.CloseClientEvent;
+import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.alert.AlertCondition;
@@ -57,12 +58,15 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
  */
 public class ConditionsEditor extends LocatableVLayout {
 
-    private ResourceType resourceType;
+    private final ResourceType resourceType;
     private HashSet<AlertCondition> conditions;
     private Table<ConditionDataSource> table;
+    private final SelectItem conditionExpression;
 
-    public ConditionsEditor(String locatorId, ResourceType resourceType, HashSet<AlertCondition> conditions) {
+    public ConditionsEditor(String locatorId, SelectItem conditionExpression, ResourceType resourceType,
+        HashSet<AlertCondition> conditions) {
         super(locatorId);
+        this.conditionExpression = conditionExpression;
         this.resourceType = resourceType;
         setConditions(conditions);
     }
@@ -160,7 +164,8 @@ public class ConditionsEditor extends LocatableVLayout {
 
                                 NewConditionEditor newConditionEditor = new NewConditionEditor(
                                     extendLocatorId("newConditionEditor"), conditions,
-                                    ConditionsEditor.this.resourceType, new Runnable() {
+                                    ConditionsEditor.this.conditionExpression, ConditionsEditor.this.resourceType,
+                                    new Runnable() {
                                         @Override
                                         public void run() {
                                             winModal.markForDestroy();

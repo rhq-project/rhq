@@ -4,6 +4,7 @@
     <title>Resource tree</title>
     <script type="text/javascript" src="js/d3.js"></script>
     <script type="text/javascript" src="js/d3.layout.js"></script>
+    <script type="text/javascript" src="js/resource_tree.js"></script>
     <style type="text/css">
 
 body {
@@ -38,58 +39,6 @@ svg {
 
   <div class='gallery' id='chart'></div>
 
-    <script type="text/javascript">
-
-
-var r = 960 / 2;
-
- var tree = d3.layout.tree()
-     .size([360, r - 120])
-     .separation(function(a, b) { return (a.parent == b.parent ? 1 : 2) / a.depth; });
-
- var diagonal = d3.svg.diagonal.radial()
-     .projection(function(d) { return [d.y, d.x / 180 * Math.PI]; });
-
- var vis = d3.select("#chart").append("svg:svg")
-     .attr("width", r * 2)
-     .attr("height", r * 2 - 150)
-   .append("svg:g")
-     .attr("transform", "translate(" + r + "," + r + ")");
-
-// d3.json("/rest/1/resource/10702/hierarchy.json", function(json) {
- d3.json("/rest/1/resource/10703/hierarchy.json", function(json) {
-   var inner = json.resourceWithChildren;
-   var nodes = tree.nodes(inner);
-
-   var link = vis.selectAll("path.link")
-       .data(tree.links(nodes))
-     .enter().append("svg:path")
-       .attr("class", "link")
-       .attr("d", diagonal);
-
-   var node = vis.selectAll("g.node")
-       .data(nodes)
-     .enter().append("svg:g")
-       .attr("class", "node")
-       .attr("transform", function(d) { return "rotate(" + (d.x - 90) + ")translate(" + d.y + ")"; })
-
-   node.append("svg:circle")
-       .attr("r", 4.5);
-
-   var hyperLink = node.append("a") // TODO works in adding to tree, but
-     .attr("xlink:href",function(d) { return "/rest/1/resource/" + d.id; });
-
-   node.append("svg:text")
-       .attr("dx", function(d) { return d.x < 180 ? 8 : -8; })
-       .attr("dy", ".31em")
-       .attr("text-anchor", function(d) { return d.x < 180 ? "start" : "end"; })
-       .attr("transform", function(d) { return d.x < 180 ? null : "rotate(180)"; })
-       .text(function(d) { return d.name; })
-       .on("mousedown",function(d) { window.location= "/rest/1/resource/" + d.id; })
-       .on("mouseover", function() {d3.select(this).style("fill","red").style("font-size","20px");})
-       .on("mouseout", function() {d3.select(this).style("fill","black").style("font-size","10px");});
-
- });
-    </script>
+    <script>resourceTree(10001,'chart')</script>
   </body>
 </html>

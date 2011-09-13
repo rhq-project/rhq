@@ -1,20 +1,5 @@
 #!/bin/sh
 
-if [ -n "$RELEASE_DEBUG" ]; then
-   echo "Debug output is enabled."
-   set -x
-fi
-
-
-# Constants
-
-PROJECT_NAME="rhq"
-PROJECT_DISPLAY_NAME="RHQ"
-PROJECT_GIT_WEB_URL="http://git.fedorahosted.org/git/?p=rhq/rhq.git"
-TAG_PREFIX="RHQ"
-MINIMUM_MAVEN_VERSION="2.1.0"
-
-
 # Functions
 
 abort()
@@ -161,6 +146,14 @@ validate_git()
    fi
 }
 
+
+#### THE RELEASE SCRIPT ######
+
+if [ -n "$RELEASE_DEBUG" ]; then
+   echo "Debug output is enabled."
+   set -x
+fi
+
 # Process command line args.
 
 EXE=`basename $0`
@@ -196,6 +189,14 @@ validate_maven
 validate_git
 
 # Set various environment variables.
+
+# Constants
+
+PROJECT_NAME="rhq"
+PROJECT_DISPLAY_NAME="RHQ"
+PROJECT_GIT_WEB_URL="http://git.fedorahosted.org/git/?p=rhq/rhq.git"
+TAG_PREFIX="RHQ"
+MINIMUM_MAVEN_VERSION="2.1.0"
 
 MAVEN_OPTS="-Xms512M -Xmx1024M -XX:PermSize=128M -XX:MaxPermSize=256M"
 export MAVEN_OPTS

@@ -2165,8 +2165,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
                         }
                         driftMgr.scheduleDriftDetection(resourceId, c);
                     }
-//                    driftMgr.unscheduleDriftDetection(resourceId, c);
-//                    driftMgr.scheduleDriftDetection(resourceId, c);
                 }
             }
         } else {

@@ -23,18 +23,28 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.clientapi.server.drift.DriftServerService;
 import org.rhq.core.domain.drift.DriftConfiguration;
+import org.rhq.core.domain.drift.DriftSnapshot;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.ServerServices;
+import org.rhq.core.pc.inventory.InventoryManager;
+import org.rhq.core.pc.inventory.ResourceContainer;
 
+import static java.util.Arrays.asList;
 import static org.apache.commons.io.FileUtils.deleteDirectory;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
 import static org.rhq.core.util.ZipUtil.unzipFile;
+import static org.rhq.test.AssertUtils.assertCollectionMatchesNoOrder;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
@@ -49,7 +59,7 @@ public class DriftManagerTest extends DriftTest {
 
     private PluginContainerConfiguration pcConfig;
 
-    private DriftManager driftMgr;
+    private TestDriftManager driftMgr;
 
     @BeforeMethod
     public void initTest() throws Exception {
@@ -63,7 +73,7 @@ public class DriftManagerTest extends DriftTest {
         pcConfig.setDataDirectory(basedir());
         pcConfig.setTemporaryDirectory(tmpDir);
 
-        driftMgr = new DriftManager();
+        driftMgr = new TestDriftManager();
         driftMgr.setConfiguration(pcConfig);
     }
 
@@ -203,6 +213,21 @@ public class DriftManagerTest extends DriftTest {
 
         assertFalse(driftMgr.getSchedulesQueue().contains(resourceId(), config),
             new DriftDetectionSchedule(resourceId(), config) + " should have been removed from the schedule queue");
+    }
+
+    @Test
+    public void unschedulingDetectionRemovesDriftConfigFromResourceContainer() throws Exception {
+        DriftConfiguration config = driftConfiguration("remove-from-queue", resourceDir.getAbsolutePath());
+        DriftConfiguration config2 = driftConfiguration("do-not-remove", resourceDir.getAbsolutePath());
+
+        driftMgr.scheduleDriftDetection(resourceId(), config);
+        driftMgr.scheduleDriftDetection(resourceId(), config2);
+        driftMgr.unscheduleDriftDetection(resourceId(), config);
+
+        ResourceContainer container = driftMgr.getInventoryManager().getResourceContainer(resourceId());
+
+        assertCollectionMatchesNoOrder(config + " should have been removed from the resource container ",
+            asList(config2), container.getDriftConfigurations());
     }
 
     @Test
@@ -352,6 +377,16 @@ public class DriftManagerTest extends DriftTest {
                 callback.execute();
             }
         }
+
+        @Override
+        public Map<Integer, List<DriftConfiguration>> getDriftConfigurations(Set<Integer> resourceIds) {
+            return null;
+        }
+
+        @Override
+        public DriftSnapshot getCurrentSnapshot(int driftConfigurationId) {
+            return null;
+        }
     }
 
     /**
@@ -360,6 +395,32 @@ public class DriftManagerTest extends DriftTest {
      */
     private static interface DriftServiceCallback {
         void execute();
+    }
+
+    private static class TestDriftManager extends DriftManager {
+
+        FakeInventoryManager inventoryMgr = new FakeInventoryManager();
+
+        @Override
+        public InventoryManager getInventoryManager() {
+            return inventoryMgr;
+        }
+    }
+
+    private static class FakeInventoryManager extends InventoryManager {
+        private Map<Integer, ResourceContainer> resourceContainers = new HashMap<Integer, ResourceContainer>();
+
+        @Override
+        public ResourceContainer getResourceContainer(Integer resourceId) {
+            ResourceContainer container = resourceContainers.get(resourceId);
+            if (container == null) {
+                Resource resource = new Resource();
+                resource.setId(resourceId);
+                container = new ResourceContainer(resource, getClass().getClassLoader());
+                resourceContainers.put(resourceId, container);
+            }
+            return container;
+        }
     }
 
 }

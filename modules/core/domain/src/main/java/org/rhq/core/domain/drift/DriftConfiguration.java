@@ -18,6 +18,8 @@
  */
 package org.rhq.core.domain.drift;
 
+import static java.util.Collections.emptyList;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,6 +27,8 @@ import java.util.List;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -41,9 +45,8 @@ import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext;
+import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
 import org.rhq.core.domain.resource.Resource;
-
-import static java.util.Collections.emptyList;
 
 /**
  * This is a convienence wrapper around a Configuration object whose schema is that
@@ -77,6 +80,10 @@ public class DriftConfiguration implements Serializable {
 
     @Column(name = "IS_ENABLED", nullable = false)
     private boolean isEnabled;
+
+    @Column(name = "MODE", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private DriftHandlingMode driftHandlingMode;
 
     // unit = millis
     @Column(name = "INTERVAL", nullable = false)
@@ -145,6 +152,19 @@ public class DriftConfiguration implements Serializable {
         this.setEnabledProperty(isEnabled);
     }
 
+    public DriftHandlingMode getDriftHandlingMode() {
+        return driftHandlingMode;
+    }
+
+    public void setDriftHandlingMode(DriftHandlingMode driftHandlingMode) {
+        if (null == driftHandlingMode) {
+            driftHandlingMode = DriftConfigurationDefinition.DEFAULT_DRIFT_HANDLING_MODE;
+        }
+
+        this.driftHandlingMode = driftHandlingMode;
+        this.setDriftHandlingModeProperty(driftHandlingMode);
+    }
+
     public long getInterval() {
         return interval;
     }
@@ -171,6 +191,7 @@ public class DriftConfiguration implements Serializable {
         this.name = this.getNameProperty();
         this.isEnabled = this.getIsEnabledProperty();
         this.interval = this.getIntervalProperty();
+        this.driftHandlingMode = this.getDriftHandlingModeProperty();
     }
 
     public Resource getResource() {
@@ -325,6 +346,16 @@ public class DriftConfiguration implements Serializable {
 
     private void setIntervalProperty(Long interval) {
         configuration.put(new PropertySimple(DriftConfigurationDefinition.PROP_INTERVAL, interval.toString()));
+    }
+
+    private DriftHandlingMode getDriftHandlingModeProperty() {
+        return DriftHandlingMode.valueOf(configuration.getSimpleValue(
+            DriftConfigurationDefinition.PROP_DRIFT_HANDLING_MODE,
+            DriftConfigurationDefinition.DEFAULT_DRIFT_HANDLING_MODE.name()));
+    }
+
+    private void setDriftHandlingModeProperty(DriftHandlingMode mode) {
+        configuration.put(new PropertySimple(DriftConfigurationDefinition.PROP_DRIFT_HANDLING_MODE, mode.name()));
     }
 
     private boolean getIsEnabledProperty() {

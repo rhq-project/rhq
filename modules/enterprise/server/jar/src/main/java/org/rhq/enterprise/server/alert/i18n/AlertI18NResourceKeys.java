@@ -28,34 +28,70 @@ import mazz.i18n.annotation.I18NResourceBundle;
 
 @I18NResourceBundle(baseName = "alert-messages", defaultLocale = "en")
 public interface AlertI18NResourceKeys {
+    @I18NMessages( { @I18NMessage("value is between {0} and {1}, inclusive"),
+        @I18NMessage(locale = "de", value = "Der Wert zwischen {0} und {1}, pauschal") })
+    String ALERT_CONFIG_PROPS_CB_INSIDE_INCL_RANGE = "alert.config.props.CB.InsideRange.incl.";
+
+    @I18NMessages( { @I18NMessage("between {0} and {1}, incl"),
+        @I18NMessage(locale = "de", value = "zwischen {0} und {1}, paus") })
+    String ALERT_CONFIG_PROPS_CB_INSIDE_INCL_RANGE_SHORT = "alert.config.props.CB.InsideRange.incl.short";
+
+    @I18NMessages( { @I18NMessage("value is between {0} and {1}, exclusive"),
+        @I18NMessage(locale = "de", value = "Der Wert zwischen {0} und {1}, exklusiv") })
+    String ALERT_CONFIG_PROPS_CB_INSIDE_EXCL_RANGE = "alert.config.props.CB.InsideRange.excl";
+
+    @I18NMessages( { @I18NMessage("between {0} and {1}, excl"),
+        @I18NMessage(locale = "de", value = "zwischen {0} und {1}, exkl.") })
+    String ALERT_CONFIG_PROPS_CB_INSIDE_EXCL_RANGE_SHORT = "alert.config.props.CB.InsideRange.excl.short";
+
+    @I18NMessages( { @I18NMessage("value is outside {0} and {1}, inclusive"),
+        @I18NMessage(locale = "de", value = "Der Wert auÃŸerhalb {0} und {1}, pauschal") })
+    String ALERT_CONFIG_PROPS_CB_OUTSIDE_INCL_RANGE = "alert.config.props.CB.OutsideRange.incl";
+
+    @I18NMessages( { @I18NMessage("outside {0} and {1}, incl"),
+        @I18NMessage(locale = "de", value = "auÃŸerhalb {0} und {1}, paus") })
+    String ALERT_CONFIG_PROPS_CB_OUTSIDE_INCL_RANGE_SHORT = "alert.config.props.CB.OutsideRange.incl.short";
+
+    @I18NMessages( { @I18NMessage("value is outside {0} and {1}, exclusive"),
+        @I18NMessage(locale = "de", value = "Der Wert auÃŸerhalb {0} und {1}, exklusiv") })
+    String ALERT_CONFIG_PROPS_CB_OUTSIDE_EXCL_RANGE = "alert.config.props.CB.OutsideRange.excl";
+
+    @I18NMessages( { @I18NMessage("outside {0} and {1}, excl"),
+        @I18NMessage(locale = "de", value = "auÃŸerhalb {0} und {1}, exkl") })
+    String ALERT_CONFIG_PROPS_CB_OUTSIDE_EXCL_RANGE_SHORT = "alert.config.props.CB.OutsideRange.excl.short";
+
+    @I18NMessages( { @I18NMessage("Drift detected"), @I18NMessage(locale = "de", value = "Ã„nderung erkannt") })
+    String ALERT_CONFIG_PROPS_CB_DRIFT = "alert.config.props.CB.Drift";
+
+    @I18NMessages( { @I18NMessage("Drift detected"), @I18NMessage(locale = "de", value = "Ã„nderung erkannt") })
+    String ALERT_CONFIG_PROPS_CB_DRIFT_SHORT = "alert.config.props.CB.Drift.short";
+
     @I18NMessages( { @I18NMessage("Availability goes {0}"),
-        @I18NMessage(locale = "de", value = "VerfŸgbarkeit wird {0}") })
+        @I18NMessage(locale = "de", value = "Verfï¿½gbarkeit wird {0}") })
     String ALERT_CONFIG_PROPS_CB_AVAILABILITY = "alert.config.props.CB.Availability";
 
-    @I18NMessages( { @I18NMessage("Avail goes {0}"),
-        @I18NMessage(locale = "de", value = "Verf. wird {0}") })
+    @I18NMessages( { @I18NMessage("Avail goes {0}"), @I18NMessage(locale = "de", value = "Verf. wird {0}") })
     String ALERT_CONFIG_PROPS_CB_AVAILABILITY_SHORT = "alert.config.props.CB.Availability.short";
 
     @I18NMessages( { @I18NMessage("Event Severity: {0}"),
         @I18NMessage(locale = "de", value = "Schwere des Ereignesses: {0}") })
     String ALERT_CONFIG_PROPS_CB_EVENT_SEVERITY = "alert.config.props.CB.EventSeverity";
 
-    @I18NMessages( { @I18NMessage("Sev: {0}"),
-        @I18NMessage(locale = "de", value = "Schwere: {0}") })
+    @I18NMessages( { @I18NMessage("Sev: {0}"), @I18NMessage(locale = "de", value = "Schwere: {0}") })
     String ALERT_CONFIG_PROPS_CB_EVENT_SEVERITY_SHORT = "alert.config.props.CB.EventSeverity.short";
 
     @I18NMessages( { @I18NMessage("Event Severity: {0} and matching expression \"{1}\""),
-        @I18NMessage(locale = "de", value = "Schwere des Ereignesses: {0} und zugehšriger Ausdruck  \"{1}\"") })
+        @I18NMessage(locale = "de", value = "Schwere des Ereignesses: {0} und zugehï¿½riger Ausdruck  \"{1}\"") })
     String ALERT_CONFIG_PROPS_CB_EVENT_SEVERITY_REGEX_MATCH = "alert.config.props.CB.EventSeverity.RegexMatch";
 
     @I18NMessages( { @I18NMessage("Sev: {0} & exp \"{1}\""),
         @I18NMessage(locale = "de", value = "Schwere: {0} & Ausdruck  \"{1}\"") })
     String ALERT_CONFIG_PROPS_CB_EVENT_SEVERITY_REGEX_MATCH_SHORT = "alert.config.props.CB.EventSeverity.RegexMatch.short";
 
-    @I18NMessages( { @I18NMessage("value changed"), @I18NMessage(locale = "de", value = "Der Wert hat sich geŠndert") })
+    @I18NMessages( { @I18NMessage("value changed"), @I18NMessage(locale = "de", value = "Der Wert hat sich geï¿½ndert") })
     String ALERT_CURRENT_LIST_VALUE_CHANGED = "alert.current.list.ValueChanged";
 
-    @I18NMessages( { @I18NMessage("val chg"), @I18NMessage(locale = "de", value = "WertŠnd.") })
+    @I18NMessages( { @I18NMessage("val chg"), @I18NMessage(locale = "de", value = "Wertï¿½nd.") })
     String ALERT_CURRENT_LIST_VALUE_CHANGED_SHORT = "alert.current.list.ValueChanged.short";
 
     @I18NMessages( {
@@ -64,9 +100,7 @@ public interface AlertI18NResourceKeys {
             + "\\  - Details: {3}\\n\\\n") })
     String ALERT_EMAIL_CONDITION_LOG_FORMAT = "alert.email.condition.log.format";
 
-    @I18NMessages( {
-        @I18NMessage("\\  - Cond {0}: {1}\\n\\\n" + "\\  - Time: {2}\\n\\\n" + "\\  - Det: {3}\\n\\\n"),
-        @I18NMessage(locale = "de", value = "  - Bed {0}: {1}\\n\\\n  - Zeit: {2}\\n\\\n"
-            + "\\  - Det: {3}\\n\\\n") })
+    @I18NMessages( { @I18NMessage("\\  - Cond {0}: {1}\\n\\\n" + "\\  - Time: {2}\\n\\\n" + "\\  - Det: {3}\\n\\\n"),
+        @I18NMessage(locale = "de", value = "  - Bed {0}: {1}\\n\\\n  - Zeit: {2}\\n\\\n" + "\\  - Det: {3}\\n\\\n") })
     String ALERT_EMAIL_CONDITION_LOG_FORMAT_SHORT = "alert.email.condition.log.format.short";
 }

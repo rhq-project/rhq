@@ -42,6 +42,7 @@ import org.rhq.core.domain.criteria.GenericDriftCriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftCategory;
 import org.rhq.core.domain.drift.DriftComposite;
+import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
@@ -295,8 +296,10 @@ public class DriftDataSource extends RPCDataSource<DriftComposite, GenericDriftC
         GenericDriftCriteria criteria = new GenericDriftCriteria();
         // grab the change set for the drift
         criteria.fetchChangeSet(true);
+
         // only get the desired drift categories
         criteria.addFilterCategories(categoriesFilter);
+
         // only get the desired changeset version (substring match)
         if (null != changeSetFilter && !changeSetFilter.isEmpty()) {
             try {
@@ -317,6 +320,9 @@ public class DriftDataSource extends RPCDataSource<DriftComposite, GenericDriftC
         if (null != pathFilter && !pathFilter.isEmpty()) {
             criteria.addFilterPath(pathFilter);
         }
+
+        // do not get planned drifts
+        criteria.addFilterDriftHandlingModes(DriftHandlingMode.normal);
 
         switch (entityContext.getType()) {
         case Resource:

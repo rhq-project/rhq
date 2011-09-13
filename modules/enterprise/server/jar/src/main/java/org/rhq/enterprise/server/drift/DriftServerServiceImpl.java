@@ -19,11 +19,24 @@
  */
 package org.rhq.enterprise.server.drift;
 
-import static org.rhq.enterprise.server.util.LookupUtil.getDriftManager;
-
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.rhq.core.clientapi.server.drift.DriftServerService;
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
+import org.rhq.core.domain.criteria.DriftConfigurationCriteria;
+import org.rhq.core.domain.criteria.GenericDriftChangeSetCriteria;
+import org.rhq.core.domain.drift.DriftConfiguration;
+import org.rhq.core.domain.drift.DriftSnapshot;
+import org.rhq.core.domain.util.PageList;
+
+import static org.rhq.enterprise.server.util.LookupUtil.getDriftManager;
+import static org.rhq.enterprise.server.util.LookupUtil.getSubjectManager;
 
 public class DriftServerServiceImpl implements DriftServerService {
     @Override
@@ -46,4 +59,39 @@ public class DriftServerServiceImpl implements DriftServerService {
         }
     }
 
+    @Override
+    public Map<Integer, List<DriftConfiguration>> getDriftConfigurations(Set<Integer> resourceIds) {
+        DriftConfigurationCriteria criteria = new DriftConfigurationCriteria();
+        criteria.addFilterResourceIds(resourceIds.toArray(new Integer[resourceIds.size()]));
+        criteria.fetchConfiguration(true);
+
+        Subject overlord = getSubjectManager().getOverlord();
+        PageList<DriftConfiguration> configs = getDriftManager().findDriftConfigurationsByCriteria(overlord, criteria);
+
+        Map<Integer, List<DriftConfiguration>> map = new HashMap<Integer, List<DriftConfiguration>>();
+        for (Integer resourceId : resourceIds) {
+            map.put(resourceId, new ArrayList<DriftConfiguration>());
+        }
+        for (DriftConfiguration c : configs) {
+            List<DriftConfiguration> list = map.get(c.getResource().getId());
+            list.add(c);
+            map.put(c.getResource().getId(), list);
+        }
+
+        return map;
+    }
+
+    @Override
+    public DriftSnapshot getCurrentSnapshot(int driftConfigurationId) {
+        DriftChangeSetCriteria criteria = new GenericDriftChangeSetCriteria();
+        criteria.addFilterDriftConfigurationId(driftConfigurationId);
+
+        Subject overlord = getSubjectManager().getOverlord();
+
+        try {
+            return getDriftManager().createSnapshot(overlord, criteria);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

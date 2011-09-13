@@ -1,6 +1,7 @@
 package org.rhq.core.pc.drift;
 
 import org.rhq.core.domain.drift.DriftConfiguration;
+import org.rhq.core.domain.drift.DriftConfigurationComparator;
 
 /**
  * Manages the drift detection schedules that are processed by the drift detector. The
@@ -12,6 +13,8 @@ import org.rhq.core.domain.drift.DriftConfiguration;
  * "active" state meaning it is currently being processed by the drift detector.
  */
 public interface ScheduleQueue {
+
+     DriftDetectionSchedule[] toArray();
 
     /**
      * Removes the head of the queue and returns a copy of the schedule that was removed.
@@ -52,6 +55,8 @@ public interface ScheduleQueue {
      * drift configuration whose name matches the name of the specified configuration.
      */
     boolean contains(int resourceId, DriftConfiguration config);
+
+    boolean contains(int resourceId, DriftConfiguration config, DriftConfigurationComparator comparator);
 
     /**
      * This method attempts to update the schedule identified by the resource id the and

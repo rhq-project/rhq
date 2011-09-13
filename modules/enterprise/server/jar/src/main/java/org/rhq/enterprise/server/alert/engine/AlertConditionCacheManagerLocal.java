@@ -31,6 +31,7 @@ import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.calltime.CallTimeData;
 import org.rhq.core.domain.operation.OperationHistory;
+import org.rhq.enterprise.server.plugin.pc.drift.DriftChangeSetSummary;
 
 /**
  * This is the SLSB interface for interacting with the clustered cache that stores and computes whether AlertDefinition
@@ -94,6 +95,14 @@ public interface AlertConditionCacheManagerLocal {
      * @return the number of conditions that were true against this argument
      */
     AlertConditionCacheStats checkConditions(ResourceConfigurationUpdate update);
+
+    /**
+     * Drift changes that an agent reported.
+     * 
+     * @param driftChangeSetSummary data on the change set that is to be checked
+     * @return the number of conditions that were true against this argument
+     */
+    AlertConditionCacheStats checkConditions(DriftChangeSetSummary driftChangeSetSummary);
 
     void reloadCachesForAgent(int agentId);
 

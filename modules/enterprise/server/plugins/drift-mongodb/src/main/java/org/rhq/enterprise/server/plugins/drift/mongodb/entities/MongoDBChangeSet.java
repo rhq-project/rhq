@@ -31,6 +31,7 @@ import org.bson.types.ObjectId;
 
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
+import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
 
 /**
  * A change set that is stored in a MongoDB database. The change set along with its entries
@@ -61,6 +62,8 @@ public class MongoDBChangeSet implements DriftChangeSet<MongoDBChangeSetEntry>, 
     private DriftChangeSetCategory category;
 
     private int configId;
+
+    private DriftHandlingMode driftHandlingMode;
 
     private int resourceId;
 
@@ -118,6 +121,16 @@ public class MongoDBChangeSet implements DriftChangeSet<MongoDBChangeSetEntry>, 
     @Override
     public void setDriftConfigurationId(int id) {
         configId = id;
+    }
+
+    @Override
+    public DriftHandlingMode getDriftHandlingMode() {
+        return this.driftHandlingMode;
+    }
+
+    @Override
+    public void setDriftHandlingMode(DriftHandlingMode driftHandlingMode) {
+        this.driftHandlingMode = driftHandlingMode;
     }
 
     @Override

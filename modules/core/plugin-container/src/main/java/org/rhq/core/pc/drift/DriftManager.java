@@ -26,7 +26,6 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.ZipEntry;
@@ -35,12 +34,17 @@ import java.util.zip.ZipOutputStream;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.common.drift.ChangeSetWriter;
 import org.rhq.common.drift.Headers;
 import org.rhq.core.clientapi.agent.drift.DriftAgentService;
 import org.rhq.core.clientapi.server.drift.DriftServerService;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.drift.DriftConfiguration;
+import org.rhq.core.domain.drift.DriftConfigurationComparator;
 import org.rhq.core.domain.drift.DriftFile;
+import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.pc.ContainerService;
 import org.rhq.core.pc.PluginContainer;
@@ -51,6 +55,10 @@ import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.core.pc.measurement.MeasurementManager;
 import org.rhq.core.util.stream.StreamUtil;
 
+import static org.rhq.common.drift.FileEntry.addedFileEntry;
+import static org.rhq.common.drift.FileEntry.changedFileEntry;
+import static org.rhq.common.drift.FileEntry.removedFileEntry;
+import static org.rhq.core.domain.drift.DriftConfigurationComparator.CompareMode.BOTH_BASE_INFO_AND_DIRECTORY_SPECIFICATIONS;
 import static org.rhq.core.util.file.FileUtil.purge;
 
 public class DriftManager extends AgentService implements DriftAgentService, DriftClient, ContainerService {
@@ -67,6 +75,8 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
 
     private ChangeSetManager changeSetMgr;
 
+    private boolean initialized;
+
     public DriftManager() {
         super(DriftAgentService.class);
     }
@@ -78,8 +88,13 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
         changeSetsDir.mkdir();
     }
 
+    public boolean isInitialized() {
+        return initialized;
+    }
+
     @Override
     public void initialize() {
+        changeSetsDir.mkdir();
         changeSetMgr = new ChangeSetManagerImpl(changeSetsDir);
 
         DriftDetector driftDetector = new DriftDetector();
@@ -88,7 +103,12 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
         driftDetector.setDriftClient(this);
 
         InventoryManager inventoryMgr = PluginContainer.getInstance().getInventoryManager();
+        long startTime = System.currentTimeMillis();
         initSchedules(inventoryMgr.getPlatform(), inventoryMgr);
+        long endTime = System.currentTimeMillis();
+        log.info("Finished initializing drift detection schedules in " + (endTime - startTime) + " ms");
+
+        purgeDeletedDriftConfigDirs();
 
         driftThreadPool = new ScheduledThreadPoolExecutor(5);
 
@@ -100,6 +120,8 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
         } else {
             log.info("Drift detection has been globally disabled as per plugin container configuration");
         }
+
+        initialized = true;
     }
 
     private void initSchedules(Resource r, InventoryManager inventoryMgr) {
@@ -115,15 +137,78 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
         }
 
         log.debug("Rescheduling drift detection schedules for " + r);
-        Set<DriftDetectionSchedule> driftSchedules = container.getDriftSchedules();
-        if (driftSchedules != null)
-            for (DriftDetectionSchedule schedule : driftSchedules) {
-                schedulesQueue.addSchedule(schedule);
+        for (DriftConfiguration c : container.getDriftConfigurations()) {
+            try {
+                syncWithServer(r, c);
+                schedulesQueue.addSchedule(new DriftDetectionSchedule(r.getId(), c));
+            } catch (IOException e) {
+                log.error("Failed to sync with server for " + toString(r, c) + ". Drift detection will not be " +
+                    "scheduled.", e);
             }
+        }
 
         for (Resource child : r.getChildResources()) {
             initSchedules(child, inventoryMgr);
         }
+    }
+
+    private void syncWithServer(Resource resource, DriftConfiguration configuration) throws IOException {
+        Headers headers = createHeaders(resource, configuration);
+        if (!changeSetMgr.changeSetExists(resource.getId(), headers)) {
+            log.info("No snapshot found for " + toString(resource, configuration) + ". Downloading snapshot from " +
+                "server");
+            DriftSnapshot snapshot = pluginContainerConfiguration.getServerServices().getDriftServerService()
+                .getCurrentSnapshot(configuration.getId());
+            ChangeSetWriter writer = changeSetMgr.getChangeSetWriter(resource.getId(), headers);
+
+            for (Drift drift : snapshot.getEntries()) {
+                switch (drift.getCategory()) {
+                    case FILE_ADDED:
+                        writer.write(addedFileEntry(drift.getPath(), drift.getNewDriftFile().getHashId()));
+                        break;
+                    case FILE_CHANGED:
+                        writer.write(changedFileEntry(drift.getPath(), drift.getOldDriftFile().getHashId(),
+                            drift.getNewDriftFile().getHashId()));
+                        break;
+                    default:  // FILE_REMOVED
+                        writer.write(removedFileEntry(drift.getPath(), drift.getOldDriftFile().getHashId()));
+                }
+            }
+            writer.close();
+        }
+    }
+
+    private void purgeDeletedDriftConfigDirs() {
+        log.info("Checking for deleted drift configurations");
+        DriftConfigurationComparator comparator = new DriftConfigurationComparator(
+            BOTH_BASE_INFO_AND_DIRECTORY_SPECIFICATIONS);
+        for (File resourceDir : changeSetsDir.listFiles()) {
+            int resourceId = Integer.parseInt(resourceDir.getName());
+            for (File configDir : resourceDir.listFiles()) {
+                DriftConfiguration config = new DriftConfiguration(new Configuration());
+                config.setName(configDir.getName());
+                if (!schedulesQueue.contains(resourceId, config, comparator)) {
+                    log.info("Detected deleted drift configuration, DriftConfiguration[name: " + config.getName() +
+                        ", resourceId: " + resourceId + "]");
+                    log.info("Deleting drift configuration directory " + configDir.getPath());
+                    purge(configDir, true);
+                }
+            }
+        }
+    }
+
+    private String toString(Resource r, DriftConfiguration c) {
+        return "DriftConfiguration[id: " + c.getId() + ", resourceId: " + r.getId() + ", name: " + c.getName() + "]";
+    }
+
+    private Headers createHeaders(Resource resource, DriftConfiguration configuration) {
+        Headers headers = new Headers();
+        headers.setResourceId(resource.getId());
+        headers.setDriftCofigurationId(configuration.getId());
+        headers.setType(DriftChangeSetCategory.COVERAGE);
+        headers.setDriftConfigurationName(configuration.getName());
+        headers.setBasedir(getAbsoluteBaseDirectory(resource.getId(), configuration).getAbsolutePath());
+        return headers;
     }
 
     /**
@@ -139,7 +224,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
      * This method is provided as a test hook.
      * @return The schedule queue
      */
-    ScheduleQueue getSchedulesQueue() {
+    public ScheduleQueue getSchedulesQueue() {
         return schedulesQueue;
     }
 
@@ -280,9 +365,13 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
         if (added) {
             if (log.isDebugEnabled()) {
                 log.debug(schedule + " has been added to " + schedulesQueue);
-            } else {
-                log.warn("Failed to add " + schedule + " to " + schedulesQueue);
             }
+            ResourceContainer container = getInventoryManager().getResourceContainer(resourceId);
+            if (container != null) {
+                container.addDriftConfiguration(driftConfiguration);
+            }
+        } else {
+            log.warn("Failed to add " + schedule + " to " + schedulesQueue);
         }
     }
 
@@ -322,10 +411,17 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
                     log.debug("Removed change set directory " + changeSetDir.getAbsolutePath());
                 }
             });
+        if (schedule != null) {
+            ResourceContainer container = getInventoryManager().getResourceContainer(resourceId);
+            if (container != null) {
+                container.removeDriftConfiguration(schedule.getDriftConfiguration());
+            }
+        }
 
         if (log.isDebugEnabled()) {
             log.debug("Removed " + schedule + " from the queue " + schedulesQueue);
         }
+
     }
 
     @Override
@@ -351,7 +447,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
         InventoryManager inventoryMgr = PluginContainer.getInstance().getInventoryManager();
         ResourceContainer container = inventoryMgr.getResourceContainer(resourceId);
         if (container != null) {
-            container.getDriftSchedules().add(updatedSchedule);
+            container.addDriftConfiguration(driftConfiguration);
         }
     }
 

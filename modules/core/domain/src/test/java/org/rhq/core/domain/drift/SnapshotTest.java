@@ -16,6 +16,8 @@ import java.util.Set;
 
 import org.testng.annotations.Test;
 
+import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
+
 @SuppressWarnings("unchecked")
 public class SnapshotTest {
 
@@ -160,6 +162,7 @@ public class SnapshotTest {
         private int version;
         private DriftChangeSetCategory category;
         private int configId;
+        private DriftHandlingMode mode = DriftHandlingMode.normal;
         private Set<Drift> drifts = new HashSet<Drift>();
         private long ctime = System.currentTimeMillis();
 
@@ -235,6 +238,16 @@ public class SnapshotTest {
         public FakeDriftChangeSet add(Drift drift) {
             drifts.add(drift);
             return this;
+        }
+
+        @Override
+        public DriftHandlingMode getDriftHandlingMode() {
+            return this.mode;
+        }
+
+        @Override
+        public void setDriftHandlingMode(DriftHandlingMode mode) {
+            this.mode = mode;
         }
     }
 

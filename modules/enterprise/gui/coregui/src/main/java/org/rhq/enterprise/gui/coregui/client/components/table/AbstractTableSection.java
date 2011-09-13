@@ -23,7 +23,6 @@
 package org.rhq.enterprise.gui.coregui.client.components.table;
 
 import com.allen_sauer.gwt.log.client.Log;
-import com.google.gwt.user.client.History;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.AnimationEffect;
@@ -39,6 +38,7 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.DetailsView;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
@@ -248,7 +248,7 @@ public abstract class AbstractTableSection<DS extends RPCDataSource, ID> extends
      * @see #showDetails(ListGridRecord)
      */
     public void newDetails() {
-        History.newItem(basePath + "/0"); // assumes the subclasses will understand "0" means "new details page"
+        CoreGUI.goToView(basePath + "/0"); // assumes the subclasses will understand "0" means "new details page"
     }
 
     /**

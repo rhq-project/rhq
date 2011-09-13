@@ -20,6 +20,9 @@
 
 package org.rhq.enterprise.gui.coregui.client.drift;
 
+import static org.rhq.core.domain.drift.DriftFileStatus.LOADED;
+import static org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter.DATE_TIME_FORMAT_FULL;
+
 import java.util.LinkedHashMap;
 import java.util.List;
 
@@ -37,6 +40,7 @@ import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.drift.Drift;
+import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftDetails;
 import org.rhq.core.domain.drift.DriftFileStatus;
 import org.rhq.core.domain.drift.FileDiffReport;
@@ -48,9 +52,6 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
-
-import static org.rhq.core.domain.drift.DriftFileStatus.LOADED;
-import static org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter.DATE_TIME_FORMAT_FULL;
 
 /**
  * @author Jay Shaughnessy
@@ -134,87 +135,90 @@ public class DriftDetailsView extends LocatableVLayout {
 
         if (driftDetails.isBinaryFile()) {
             switch (driftDetails.getDrift().getCategory()) {
-                case FILE_ADDED:
-                    category.setValue(DriftDataSource.CATEGORY_ICON_ADD);
-                    oldFile.setValue(MSG.common_label_none());
-                    oldFileLink = spacer;
-                    newFile.setValue(driftDetails.getDrift().getNewDriftFile().getHashId());
-                    newFileLink = spacer;
-                    break;
-                case FILE_CHANGED:
-                    category.setValue(DriftDataSource.CATEGORY_ICON_CHANGE);
-                    oldFile.setValue(driftDetails.getDrift().getOldDriftFile().getHashId());
-                    oldFileLink = createViewFileLink(driftDetails.getDrift().getOldDriftFile().getHashId(),
-                        driftDetails.getDrift().getPath(), driftDetails.getPreviousChangeSet().getVersion());
-                    newFile.setValue(driftDetails.getDrift().getNewDriftFile().getHashId());
-                    newFileLink = spacer;
-                    break;
-                case FILE_REMOVED:
-                    category.setValue(DriftDataSource.CATEGORY_ICON_REMOVE);
-                    oldFile.setValue(driftDetails.getDrift().getOldDriftFile().getHashId());
-                    oldFileLink = spacer;
-                    newFile.setValue(MSG.common_label_none());
-                    newFileLink = spacer;
-                    break;
+            case FILE_ADDED:
+                category.setValue(DriftDataSource.CATEGORY_ICON_ADD);
+                oldFile.setValue(MSG.common_label_none());
+                oldFileLink = spacer;
+                newFile.setValue(driftDetails.getDrift().getNewDriftFile().getHashId());
+                newFileLink = spacer;
+                break;
+            case FILE_CHANGED:
+                category.setValue(DriftDataSource.CATEGORY_ICON_CHANGE);
+                oldFile.setValue(driftDetails.getDrift().getOldDriftFile().getHashId());
+                oldFileLink = createViewFileLink(driftDetails.getDrift().getOldDriftFile().getHashId(), driftDetails
+                    .getDrift().getPath(), driftDetails.getPreviousChangeSet().getVersion());
+                newFile.setValue(driftDetails.getDrift().getNewDriftFile().getHashId());
+                newFileLink = spacer;
+                break;
+            case FILE_REMOVED:
+                category.setValue(DriftDataSource.CATEGORY_ICON_REMOVE);
+                oldFile.setValue(driftDetails.getDrift().getOldDriftFile().getHashId());
+                oldFileLink = spacer;
+                newFile.setValue(MSG.common_label_none());
+                newFileLink = spacer;
+                break;
             }
             driftForm.setItems(id, spacer, path, spacer, category, spacer, timestamp, spacer, oldFile, oldFileLink,
-            newFile, newFileLink);
+                newFile, newFileLink);
         } else {
             FormItem viewDiffLink = spacer;
             switch (driftDetails.getDrift().getCategory()) {
-                case FILE_ADDED:
-                    category.setValue(DriftDataSource.CATEGORY_ICON_ADD);
-                    oldFile.setValue(MSG.common_label_none());
-                    oldFileLink = spacer;
-                    newFile.setValue(driftDetails.getDrift().getNewDriftFile().getHashId());
-                    newFileLink = createViewFileLink(driftDetails.getDrift().getNewDriftFile().getHashId(),
-                        driftDetails.getDrift().getPath(), driftDetails.getChangeSet().getVersion(),
-                        driftDetails.getNewFileStatus());
-                    break;
-                case FILE_CHANGED:
-                    category.setValue(DriftDataSource.CATEGORY_ICON_CHANGE);
-                    oldFile.setValue(driftDetails.getDrift().getOldDriftFile().getHashId());
-                    oldFileLink = createViewFileLink(driftDetails.getDrift().getOldDriftFile().getHashId(),
-                        driftDetails.getDrift().getPath(), driftDetails.getPreviousChangeSet().getVersion(),
-                        driftDetails.getOldFileStatus());
-                    newFile.setValue(driftDetails.getDrift().getNewDriftFile().getHashId());
-                    newFileLink = createViewFileLink(driftDetails.getDrift().getNewDriftFile().getHashId(),
-                        driftDetails.getDrift().getPath(), driftDetails.getChangeSet().getVersion(),
-                        driftDetails.getNewFileStatus());
-                    if (driftDetails.getNewFileStatus() == LOADED && driftDetails.getOldFileStatus() == LOADED) {
-                        viewDiffLink = createViewDiffLink(driftDetails.getDrift(),
-                            driftDetails.getPreviousChangeSet().getVersion());
-                    }
-                    break;
-                case FILE_REMOVED:
-                    category.setValue(DriftDataSource.CATEGORY_ICON_REMOVE);
-                    oldFile.setValue(driftDetails.getDrift().getOldDriftFile().getHashId());
-                    oldFileLink = createViewFileLink(driftDetails.getDrift().getOldDriftFile().getHashId(),
-                        driftDetails.getDrift().getPath(), driftDetails.getChangeSet().getVersion(),
-                        driftDetails.getOldFileStatus());
-                    newFile.setValue(MSG.common_label_none());
-                    newFileLink = spacer;
-                    break;
+            case FILE_ADDED:
+                category.setValue(DriftDataSource.CATEGORY_ICON_ADD);
+                oldFile.setValue(MSG.common_label_none());
+                oldFileLink = spacer;
+                newFile.setValue(driftDetails.getDrift().getNewDriftFile().getHashId());
+                newFileLink = createViewFileLink(driftDetails.getDrift().getNewDriftFile().getHashId(), driftDetails
+                    .getDrift().getPath(), driftDetails.getChangeSet().getVersion(), driftDetails.getNewFileStatus());
+                break;
+            case FILE_CHANGED:
+                category.setValue(DriftDataSource.CATEGORY_ICON_CHANGE);
+                oldFile.setValue(driftDetails.getDrift().getOldDriftFile().getHashId());
+                oldFileLink = createViewFileLink(driftDetails.getDrift().getOldDriftFile().getHashId(), driftDetails
+                    .getDrift().getPath(), driftDetails.getPreviousChangeSet().getVersion(), driftDetails
+                    .getOldFileStatus());
+                newFile.setValue(driftDetails.getDrift().getNewDriftFile().getHashId());
+                newFileLink = createViewFileLink(driftDetails.getDrift().getNewDriftFile().getHashId(), driftDetails
+                    .getDrift().getPath(), driftDetails.getChangeSet().getVersion(), driftDetails.getNewFileStatus());
+                if (driftDetails.getNewFileStatus() == LOADED && driftDetails.getOldFileStatus() == LOADED) {
+                    viewDiffLink = createViewDiffLink(driftDetails.getDrift(), driftDetails.getPreviousChangeSet()
+                        .getVersion());
+                }
+                break;
+            case FILE_REMOVED:
+                category.setValue(DriftDataSource.CATEGORY_ICON_REMOVE);
+                oldFile.setValue(driftDetails.getDrift().getOldDriftFile().getHashId());
+                oldFileLink = createViewFileLink(driftDetails.getDrift().getOldDriftFile().getHashId(), driftDetails
+                    .getDrift().getPath(), driftDetails.getChangeSet().getVersion(), driftDetails.getOldFileStatus());
+                newFile.setValue(MSG.common_label_none());
+                newFileLink = spacer;
+                break;
             }
             driftForm.setItems(id, spacer, path, spacer, category, spacer, timestamp, spacer, oldFile, oldFileLink,
-            newFile, newFileLink, spacer, spacer, spacer, viewDiffLink);
+                newFile, newFileLink, spacer, spacer, spacer, viewDiffLink);
         }
         addMember(driftForm);
     }
 
-    private DynamicForm createChangeSetForm(Drift drift) {
+    private DynamicForm createChangeSetForm(Drift<?, ?> drift) {
         DynamicForm changeSetForm = new LocatableDynamicForm(extendLocatorId("changeSetForm"));
         changeSetForm.setIsGroup(true);
         changeSetForm.setGroupTitle(MSG.view_drift_table_changeSet());
         changeSetForm.setWrapItemTitles(false);
 
+        DriftChangeSet<?> changeSet = drift.getChangeSet();
         StaticTextItem changeSetId = new StaticTextItem("changeSetId", MSG.common_title_id());
-        changeSetId.setValue(drift.getChangeSet().getId());
+        changeSetId.setValue(changeSet.getId());
         StaticTextItem changeSetCategory = new StaticTextItem("changeSetCategory", MSG.common_title_category());
-        changeSetCategory.setValue(drift.getChangeSet().getCategory().name());
+        changeSetCategory.setValue(changeSet.getCategory().name());
         StaticTextItem changeSetVersion = new StaticTextItem("changeSetVersion", MSG.common_title_version());
-        changeSetVersion.setValue(drift.getChangeSet().getVersion());
-        changeSetForm.setItems(changeSetId, changeSetCategory, changeSetVersion);
+        changeSetVersion.setValue(changeSet.getVersion());
+        StaticTextItem changeSetDriftHandling = new StaticTextItem("changeSetDriftHandling", MSG
+            .view_drift_table_driftHandlingMode());
+        changeSetDriftHandling.setValue(DriftConfigurationDataSource.getDriftHandlingModeDisplayName(changeSet
+            .getDriftHandlingMode()));
+
+        changeSetForm.setItems(changeSetId, changeSetCategory, changeSetVersion, changeSetDriftHandling);
 
         return changeSetForm;
     }
@@ -309,7 +313,7 @@ public class DriftDetailsView extends LocatableVLayout {
         return window;
     }
 
-    private LinkItem createViewDiffLink(final Drift drift, final int oldVersion) {
+    private LinkItem createViewDiffLink(final Drift<?, ?> drift, final int oldVersion) {
         LinkItem viewDiffLink = new LinkItem("viewDiff");
         viewDiffLink.setLinkTitle("(view diff)");
         viewDiffLink.setShowTitle(false);
@@ -327,8 +331,7 @@ public class DriftDetailsView extends LocatableVLayout {
                     public void onSuccess(FileDiffReport diffReport) {
                         int newVersion = drift.getChangeSet().getVersion();
                         String diffContents = toHtml(diffReport.getDiff(), oldVersion, newVersion);
-                        LocatableWindow window = createDiffViewer(diffContents, drift.getPath(), oldVersion,
-                            newVersion);
+                        LocatableWindow window = createDiffViewer(diffContents, drift.getPath(), oldVersion, newVersion);
                         window.show();
                     }
                 });
@@ -340,8 +343,8 @@ public class DriftDetailsView extends LocatableVLayout {
     private String toHtml(List<String> deltas, int oldVersion, int newVersion) {
         StringBuilder diff = new StringBuilder();
         diff.append("<font color=\"red\">").append(deltas.get(0)).append(":").append(oldVersion).append("</font><br/>");
-        diff.append("<font color=\"green\">").append(deltas.get(1)).append(":").append(newVersion)
-            .append("</font><br/>");
+        diff.append("<font color=\"green\">").append(deltas.get(1)).append(":").append(newVersion).append(
+            "</font><br/>");
 
         for (String line : deltas.subList(2, deltas.size())) {
             if (line.startsWith("@@")) {

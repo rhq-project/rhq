@@ -187,6 +187,62 @@ public class AlertFormatUtility {
             }
             break;
         }
+        case DRIFT: {
+            String configNameRegex = condition.getName();
+            String pathNameRegex = condition.getOption();
+            if (configNameRegex == null || configNameRegex.length() == 0) {
+                if (pathNameRegex == null || pathNameRegex.length() == 0) {
+                    // neither a config name regex nor path regex was specified 
+                    str.append(MSG.view_alert_common_tab_conditions_type_drift());
+                } else {
+                    // a path name regex was specified, but not a config name regex 
+                    str.append(MSG.view_alert_common_tab_conditions_type_drift_onlypaths(pathNameRegex));
+                }
+            } else {
+                if (pathNameRegex == null || pathNameRegex.length() == 0) {
+                    // a config name regex was specified, but not a path name regex 
+                    str.append(MSG.view_alert_common_tab_conditions_type_drift_onlyconfig(configNameRegex));
+                } else {
+                    // both a config name regex and a path regex was specified 
+                    str.append(MSG.view_alert_common_tab_conditions_type_drift_configpaths(pathNameRegex,
+                        configNameRegex));
+                }
+            }
+            break;
+        }
+        case RANGE: {
+            String metricName = condition.getName();
+            MeasurementUnits units = condition.getMeasurementDefinition().getUnits();
+            double loValue = condition.getThreshold();
+            String formattedLoValue = MeasurementConverterClient.format(loValue, units, true);
+            String formattedHiValue = condition.getOption();
+            try {
+                double hiValue = Double.parseDouble(formattedHiValue);
+                formattedHiValue = MeasurementConverterClient.format(hiValue, units, true);
+            } catch (Exception e) {
+                formattedHiValue = "?[" + formattedHiValue + "]?"; // signify something is wrong with the value
+            }
+
+            // < means "inside the range", > means "outside the range" - exclusive
+            // <= means "inside the range", >= means "outside the range" - inclusive
+
+            if (condition.getComparator().equals("<")) {
+                str.append(MSG.view_alert_common_tab_conditions_type_metric_range_inside_exclusive(metricName,
+                    formattedLoValue, formattedHiValue));
+            } else if (condition.getComparator().equals(">")) {
+                str.append(MSG.view_alert_common_tab_conditions_type_metric_range_outside_exclusive(metricName,
+                    formattedLoValue, formattedHiValue));
+            } else if (condition.getComparator().equals("<=")) {
+                str.append(MSG.view_alert_common_tab_conditions_type_metric_range_inside_inclusive(metricName,
+                    formattedLoValue, formattedHiValue));
+            } else if (condition.getComparator().equals(">=")) {
+                str.append(MSG.view_alert_common_tab_conditions_type_metric_range_outside_inclusive(metricName,
+                    formattedLoValue, formattedHiValue));
+            } else {
+                str.append("BAD COMPARATOR! Report this bug: " + condition.getComparator());
+            }
+            break;
+        }
         default: {
             str.append(MSG.view_alert_common_tab_invalid_condition_category(category.name()));
             break;

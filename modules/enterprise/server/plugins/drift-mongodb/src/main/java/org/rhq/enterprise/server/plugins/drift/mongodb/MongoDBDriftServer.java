@@ -19,6 +19,8 @@
 
 package org.rhq.enterprise.server.plugins.drift.mongodb;
 
+import static org.rhq.enterprise.server.util.LookupUtil.getResourceManager;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
@@ -46,9 +48,11 @@ import org.rhq.core.domain.criteria.DriftCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
+import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.DriftSnapshot;
+import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
 import org.rhq.core.domain.drift.dto.DriftChangeSetDTO;
 import org.rhq.core.domain.drift.dto.DriftDTO;
 import org.rhq.core.domain.drift.dto.DriftFileDTO;
@@ -58,13 +62,12 @@ import org.rhq.core.util.ZipUtil;
 import org.rhq.core.util.file.FileUtil;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginContext;
+import org.rhq.enterprise.server.plugin.pc.drift.DriftChangeSetSummary;
 import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginFacet;
 import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBChangeSet;
 import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBChangeSetEntry;
 import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBFile;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
-
-import static org.rhq.enterprise.server.util.LookupUtil.getResourceManager;
 
 public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginComponent {
 
@@ -101,7 +104,11 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
     }
 
     @Override
-    public void saveChangeSet(final Subject subject, final int resourceId, final File changeSetZip) throws Exception {
+    public DriftChangeSetSummary saveChangeSet(final Subject subject, final int resourceId, final File changeSetZip)
+        throws Exception {
+
+        final DriftChangeSetSummary summary = new DriftChangeSetSummary();
+
         ZipUtil.walkZipFile(changeSetZip, new ZipUtil.ZipEntryVisitor() {
             @Override
             public boolean visit(ZipEntry zipEntry, ZipInputStream stream) throws Exception {
@@ -113,7 +120,14 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
                 changeSet.setResourceId(resourceId);
                 // TODO Figure out how best to handle drift config reference
                 changeSet.setDriftConfigurationId(1);
+                // TODO Figure out how best to handle drift config drift handling mode
+                changeSet.setDriftHandlingMode(DriftHandlingMode.normal);
                 changeSet.setVersion(changeSetVersions++);
+
+                summary.setCategory(headers.getType());
+                summary.setResourceId(resourceId);
+                summary.setDriftConfigurationName(headers.getDriftConfigurationName());
+                summary.setCreatedTime(changeSet.getCtime());
 
                 for (FileEntry fileEntry : reader) {
                     String path = FileUtil.useForwardSlash(fileEntry.getFile());
@@ -121,12 +135,22 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
                     entry.setCategory(fileEntry.getType());
                     entry.setPath(path);
                     changeSet.add(entry);
+
+                    // we are taking advantage of the fact that we know the summary is only used by the server
+                    // if the change set is a DRIFT report. If its a coverage report, it is not used (we do
+                    // not alert on coverage reports) - so don't waste memory by collecting all the paths
+                    // when we know they aren't going to be used anyway.
+                    if (headers.getType() == DriftChangeSetCategory.DRIFT) {
+                        summary.addDriftPathname(path);
+                    }
                 }
 
                 ds.save(changeSet);
                 return true;
             }
         });
+
+        return summary;
     }
 
     @Override

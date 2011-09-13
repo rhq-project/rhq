@@ -44,6 +44,7 @@ import com.smartgwt.client.widgets.tree.events.NodeContextClickHandler;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftConfiguration;
+import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
@@ -85,6 +86,10 @@ public abstract class AbstractDriftChangeSetsTreeView extends LocatableTreeGrid 
             public void onDataArrived(DataArrivedEvent dataArrivedEvent) {
                 if (null != pendingPath) {
                     selectPath(pendingPath);
+                } else {
+                    // open config folders initially
+                    Tree tree = getTree();
+                    tree.openFolders(tree.getChildren(tree.getRoot()));
                 }
             }
         });
@@ -383,7 +388,14 @@ public abstract class AbstractDriftChangeSetsTreeView extends LocatableTreeGrid 
             str.append(" (");
             str.append(TimestampCellFormatter.format(changeset.getCtime(),
                 TimestampCellFormatter.DATE_TIME_FORMAT_SHORT));
+
+            if (DriftHandlingMode.plannedChanges == changeset.getDriftHandlingMode()) {
+                str.append(", ");
+                str.append(MSG.view_drift_table_driftHandlingMode_plannedChanges());
+            }
+
             str.append(")");
+
             return str.toString();
         }
     }

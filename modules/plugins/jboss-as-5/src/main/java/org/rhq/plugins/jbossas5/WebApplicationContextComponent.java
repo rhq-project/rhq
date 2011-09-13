@@ -32,6 +32,7 @@ import org.apache.commons.logging.LogFactory;
 import org.jboss.deployers.spi.management.ManagementView;
 import org.jboss.managed.api.ComponentType;
 import org.jboss.managed.api.ManagedComponent;
+import org.jboss.managed.api.ManagedProperty;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
@@ -62,6 +63,9 @@ public class WebApplicationContextComponent extends ManagedComponentComponent
 
     private static final String VIRTUAL_HOST_TRAIT = "virtualHost";
 
+    private static final String CLUSTERED_TRAIT = "clustered";
+    private static final String DISTRIBUTABLE_MANAGED_PROPERTY = "Distributable";
+    
     // A regex for the names of all MBean:Servlet components for a WAR.
     private static final String SERVLET_COMPONENT_NAMES_REGEX_TEMPLATE =
             "jboss.web:J2EEApplication=none,J2EEServer=none,"
@@ -82,6 +86,8 @@ public class WebApplicationContextComponent extends ManagedComponentComponent
     private String servletComponentNamesRegex;
     private ResponseTimeLogParser logParser;
 
+    private boolean clustered;
+    
     @Override
     public void start(ResourceContext<ProfileServiceComponent> resourceContext) throws Exception
     {
@@ -98,6 +104,15 @@ public class WebApplicationContextComponent extends ManagedComponentComponent
             this.logParser.setTransforms(responseTimeConfig.getTransforms());
         }
 
+        try {
+            ManagedProperty distributableProp = getManagedComponent().getProperty(DISTRIBUTABLE_MANAGED_PROPERTY);
+            if (distributableProp != null) {
+                Boolean distributable = (Boolean) getInnerValue(distributableProp.getValue());
+                clustered = distributable != null && distributable.booleanValue();
+            }
+        } catch (Exception e) {
+            log.warn("Failed to determine whether the web app context " + resourceContext.getResourceKey() + " is clustered or not.", e);
+        }
     }
 
     @Override
@@ -106,7 +121,8 @@ public class WebApplicationContextComponent extends ManagedComponentComponent
     {
         ProfileServiceComponent warComponent = getResourceContext().getParentResourceComponent();
         ManagementView managementView = warComponent.getConnection().getManagementView();
-        Set<MeasurementScheduleRequest> remainingRequests = new LinkedHashSet<MeasurementScheduleRequest>();
+        
+        ManagedComponent component = prepareForMetricCollection(requests);
         for (MeasurementScheduleRequest request : requests)
         {
             String metricName = request.getName();
@@ -140,10 +156,28 @@ public class WebApplicationContextComponent extends ManagedComponentComponent
                           + RESPONSE_TIME_LOG_FILE_CONFIG_PROP + "' connection property.");
                       // TODO: Communicate this error back to the server for display in the GUI.
                    }
+                } 
+                else if (metricName.equals(CLUSTERED_TRAIT)) 
+                {
+                    MeasurementDataTrait trait = new MeasurementDataTrait(request, Boolean.toString(clustered));
+                    report.addData(trait);
                 }
                 else
                 {
-                    remainingRequests.add(request);
+                    String metricNameToUse = metricName;
+                    if (clustered && !"runState".equals(metricName)) {
+                        metricNameToUse = toUpperCaseFirstLetter(metricName);
+                    }
+                    
+                    String value = getMeasurement(component, metricNameToUse);
+                    
+                    if (clustered && !"runState".equals(metricName) && value == null) {
+                        //hmm... so it looks like https://issues.jboss.org/browse/JBPAPP-7172 has been fixed
+                        //and we're getting the metric names in lower case even for clustered contexts
+                        value = getMeasurement(component, metricName);
+                    }
+                    
+                    addValueToMeasurementReport(report, request, value);
                 }
             }
             catch (Exception e)
@@ -153,9 +187,12 @@ public class WebApplicationContextComponent extends ManagedComponentComponent
                         + " Resource with key " + getResourceContext().getResourceKey() + ".", e);
             }
         }
-        super.getValues(report, remainingRequests);
     }
 
+    public boolean isClustered() {
+        return clustered;
+    }
+    
     private Double getServletMetric(ManagementView managementView, String metricName) throws Exception
     {
         ComponentType servletComponentType = MoreKnownComponentTypes.MBean.Servlet.getType();
@@ -239,5 +276,15 @@ public class WebApplicationContextComponent extends ManagedComponentComponent
         }
 
         return result;
+    }
+    
+    private static String toUpperCaseFirstLetter(String name) {
+        if (name == null || name.length() == 0) {
+            return name;
+        }
+        
+        char first = name.charAt(0);
+        
+        return Character.toUpperCase(first) + name.substring(1);
     }
 }

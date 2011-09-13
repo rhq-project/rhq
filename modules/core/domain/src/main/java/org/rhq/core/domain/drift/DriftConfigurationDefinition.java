@@ -50,6 +50,7 @@ public class DriftConfigurationDefinition implements Serializable {
     public static final String PROP_BASEDIR_VALUECONTEXT = "valueContext";
     public static final String PROP_BASEDIR_VALUENAME = "valueName";
     public static final String PROP_INTERVAL = "interval";
+    public static final String PROP_DRIFT_HANDLING_MODE = "driftHandlingMode";
     public static final String PROP_INCLUDES = "includes";
     public static final String PROP_INCLUDES_INCLUDE = "include";
     public static final String PROP_EXCLUDES = "excludes";
@@ -64,6 +65,7 @@ public class DriftConfigurationDefinition implements Serializable {
 
     public static final boolean DEFAULT_ENABLED = true;
     public static final long DEFAULT_INTERVAL = 1800L;
+    public static final DriftHandlingMode DEFAULT_DRIFT_HANDLING_MODE = DriftHandlingMode.normal;
 
     /**
      * The basedir property is specified in two parts - a "context" and a "name". Taken together
@@ -75,6 +77,13 @@ public class DriftConfigurationDefinition implements Serializable {
      */
     public enum BaseDirValueContext {
         pluginConfiguration, resourceConfiguration, measurementTrait, fileSystem
+    }
+
+    /**
+     * The enumerated values for drift handling mode property
+     */
+    public enum DriftHandlingMode {
+        normal, plannedChanges
     }
 
     private static final ConfigurationDefinition INSTANCE = new ConfigurationDefinition("GLOBAL_DRIFT_CONFIG_DEF",
@@ -112,24 +121,23 @@ public class DriftConfigurationDefinition implements Serializable {
     }
 
     static {
-        //INSTANCE.setId(1);
         INSTANCE.setConfigurationFormat(ConfigurationFormat.STRUCTURED);
         INSTANCE.put(createName(INSTANCE, false));
         INSTANCE.put(createEnabled(INSTANCE));
-        INSTANCE.put(createBasedir(INSTANCE, false));
+        INSTANCE.put(createDriftHandlingMode(INSTANCE));
         INSTANCE.put(createInterval(INSTANCE));
+        INSTANCE.put(createBasedir(INSTANCE, false));
         INSTANCE.put(createIncludes(INSTANCE, false));
         INSTANCE.put(createExcludes(INSTANCE, false));
 
-        //INSTANCE_FOR_EXISTING_CONFIGS.setId(1);
         INSTANCE_FOR_EXISTING_CONFIGS.setConfigurationFormat(ConfigurationFormat.STRUCTURED);
         INSTANCE_FOR_EXISTING_CONFIGS.put(createName(INSTANCE_FOR_EXISTING_CONFIGS, true));
         INSTANCE_FOR_EXISTING_CONFIGS.put(createEnabled(INSTANCE_FOR_EXISTING_CONFIGS));
-        INSTANCE_FOR_EXISTING_CONFIGS.put(createBasedir(INSTANCE_FOR_EXISTING_CONFIGS, true));
+        INSTANCE_FOR_EXISTING_CONFIGS.put(createDriftHandlingMode(INSTANCE_FOR_EXISTING_CONFIGS));
         INSTANCE_FOR_EXISTING_CONFIGS.put(createInterval(INSTANCE_FOR_EXISTING_CONFIGS));
+        INSTANCE_FOR_EXISTING_CONFIGS.put(createBasedir(INSTANCE_FOR_EXISTING_CONFIGS, true));
         INSTANCE_FOR_EXISTING_CONFIGS.put(createIncludes(INSTANCE_FOR_EXISTING_CONFIGS, true));
         INSTANCE_FOR_EXISTING_CONFIGS.put(createExcludes(INSTANCE_FOR_EXISTING_CONFIGS, true));
-
     }
 
     private static PropertyDefinitionSimple createName(ConfigurationDefinition configDef, boolean readOnly) {
@@ -139,7 +147,6 @@ public class DriftConfigurationDefinition implements Serializable {
         PropertySimpleType type = PropertySimpleType.STRING;
 
         PropertyDefinitionSimple pd = new PropertyDefinitionSimple(name, description, required, type);
-        //pd.setId(1);
         pd.setDisplayName("Drift Configuration Name");
         pd.setReadOnly(readOnly);
         pd.setSummary(true);
@@ -161,7 +168,6 @@ public class DriftConfigurationDefinition implements Serializable {
         PropertySimpleType type = PropertySimpleType.BOOLEAN;
 
         PropertyDefinitionSimple pd = new PropertyDefinitionSimple(name, description, required, type);
-        //pd.setId(2);
         pd.setDisplayName("Enabled");
         pd.setReadOnly(false);
         pd.setSummary(true);
@@ -169,6 +175,60 @@ public class DriftConfigurationDefinition implements Serializable {
         pd.setAllowCustomEnumeratedValue(false);
         pd.setConfigurationDefinition(configDef);
         pd.setDefaultValue(String.valueOf(DEFAULT_ENABLED));
+        return pd;
+    }
+
+    private static PropertyDefinitionSimple createDriftHandlingMode(ConfigurationDefinition configDef) {
+        String name = PROP_DRIFT_HANDLING_MODE;
+        String description = "" //
+            + "Specifies the way in which drift occurrences will be handled when reported. Normal " //
+            + "handling implies the reported drift is unexpected and as such can trigger alerts, " //
+            + "will be present in recent drift reports, etc.  Setting to 'Planned Changes' implies " //
+            + "that the reported drift is happening at a time when drift is expected due to " //
+            + "planned changes in the monitored environment, such as an application deployment, a " //
+            + "configuration change, or something similar.  With this setting drift is only reported " //
+            + " for inspection, in the drift history view.";
+        boolean required = true;
+        PropertySimpleType type = PropertySimpleType.STRING;
+
+        PropertyDefinitionSimple pd = new PropertyDefinitionSimple(name, description, required, type);
+        pd.setDisplayName("Drift Handling Mode");
+        pd.setReadOnly(false);
+        pd.setSummary(true);
+        pd.setOrder(2);
+        pd.setConfigurationDefinition(configDef);
+
+        PropertyDefinitionEnumeration normalEnum = new PropertyDefinitionEnumeration(DriftHandlingMode.normal.name(),
+            DriftHandlingMode.normal.name());
+        normalEnum.setOrderIndex(0);
+
+        PropertyDefinitionEnumeration plannedEnum = new PropertyDefinitionEnumeration(DriftHandlingMode.plannedChanges
+            .name(), DriftHandlingMode.plannedChanges.name());
+        plannedEnum.setOrderIndex(1);
+
+        ArrayList<PropertyDefinitionEnumeration> pdEnums = new ArrayList<PropertyDefinitionEnumeration>(2);
+        pdEnums.add(normalEnum);
+        pdEnums.add(plannedEnum);
+        pd.setEnumeratedValues(pdEnums, false);
+        pd.setDefaultValue(DEFAULT_DRIFT_HANDLING_MODE.name());
+
+        return pd;
+    }
+
+    private static PropertyDefinitionSimple createInterval(ConfigurationDefinition configDef) {
+        String name = PROP_INTERVAL;
+        String description = "The frequency in seconds in which drift monitoring should run. Defaults to 1800 seconds (i.e. 30 minutes)";
+        boolean required = false;
+        PropertySimpleType type = PropertySimpleType.LONG;
+
+        PropertyDefinitionSimple pd = new PropertyDefinitionSimple(name, description, required, type);
+        pd.setDisplayName("Interval");
+        pd.setReadOnly(false);
+        pd.setSummary(true);
+        pd.setOrder(3);
+        pd.setAllowCustomEnumeratedValue(false);
+        pd.setConfigurationDefinition(configDef);
+        pd.setDefaultValue(String.valueOf(DEFAULT_INTERVAL));
         return pd;
     }
 
@@ -181,11 +241,10 @@ public class DriftConfigurationDefinition implements Serializable {
         PropertyDefinitionSimple valueName = createBasedirValueName(readOnly);
 
         PropertyDefinitionMap pd = new PropertyDefinitionMap(name, description, required, valueContext, valueName);
-        //pd.setId(3);
         pd.setDisplayName("Base Directory");
         pd.setReadOnly(readOnly);
         pd.setSummary(true);
-        pd.setOrder(2);
+        pd.setOrder(4);
         pd.setConfigurationDefinition(configDef);
 
         return pd;
@@ -198,7 +257,6 @@ public class DriftConfigurationDefinition implements Serializable {
         PropertySimpleType type = PropertySimpleType.STRING;
 
         PropertyDefinitionSimple pd = new PropertyDefinitionSimple(name, description, required, type);
-        //pd.setId(4);
         pd.setDisplayName("Value Context");
         pd.setReadOnly(readOnly);
         pd.setSummary(true);
@@ -206,22 +264,18 @@ public class DriftConfigurationDefinition implements Serializable {
 
         PropertyDefinitionEnumeration pcEnum = new PropertyDefinitionEnumeration(
             BaseDirValueContext.pluginConfiguration.name(), BaseDirValueContext.pluginConfiguration.name());
-        //pcEnum.setId(1);
         pcEnum.setOrderIndex(0);
 
         PropertyDefinitionEnumeration rcEnum = new PropertyDefinitionEnumeration(
             BaseDirValueContext.resourceConfiguration.name(), BaseDirValueContext.resourceConfiguration.name());
-        //rcEnum.setId(2);
         rcEnum.setOrderIndex(1);
 
         PropertyDefinitionEnumeration mtEnum = new PropertyDefinitionEnumeration(BaseDirValueContext.measurementTrait
             .name(), BaseDirValueContext.measurementTrait.name());
-        //mtEnum.setId(3);
         mtEnum.setOrderIndex(2);
 
         PropertyDefinitionEnumeration fsEnum = new PropertyDefinitionEnumeration(BaseDirValueContext.fileSystem.name(),
             BaseDirValueContext.fileSystem.name());
-        //fsEnum.setId(4);
         fsEnum.setOrderIndex(3);
 
         ArrayList<PropertyDefinitionEnumeration> pdEnums = new ArrayList<PropertyDefinitionEnumeration>(4);
@@ -236,35 +290,16 @@ public class DriftConfigurationDefinition implements Serializable {
 
     private static PropertyDefinitionSimple createBasedirValueName(boolean readOnly) {
         String name = PROP_BASEDIR_VALUENAME;
-        String description = "The name of the value as found in the context";
+        String description = "The name of the value as found in the context.";
         boolean required = true;
         PropertySimpleType type = PropertySimpleType.STRING;
 
         PropertyDefinitionSimple pd = new PropertyDefinitionSimple(name, description, required, type);
-        //pd.setId(5);
         pd.setDisplayName("Value Name");
         pd.setReadOnly(readOnly);
         pd.setSummary(true);
         pd.setOrder(1);
         pd.setAllowCustomEnumeratedValue(false);
-        return pd;
-    }
-
-    private static PropertyDefinitionSimple createInterval(ConfigurationDefinition configDef) {
-        String name = PROP_INTERVAL;
-        String description = "The frequency in seconds in which drift monitoring should run. Defaults to 1800 seconds (i.e. 30 minutes)";
-        boolean required = false;
-        PropertySimpleType type = PropertySimpleType.LONG;
-
-        PropertyDefinitionSimple pd = new PropertyDefinitionSimple(name, description, required, type);
-        //pd.setId(6);
-        pd.setDisplayName("Interval");
-        pd.setReadOnly(false);
-        pd.setSummary(true);
-        pd.setOrder(3);
-        pd.setAllowCustomEnumeratedValue(false);
-        pd.setConfigurationDefinition(configDef);
-        pd.setDefaultValue(String.valueOf(DEFAULT_INTERVAL));
         return pd;
     }
 
@@ -276,11 +311,10 @@ public class DriftConfigurationDefinition implements Serializable {
         PropertyDefinitionMap map = createInclude(readOnly);
 
         PropertyDefinitionList pd = new PropertyDefinitionList(name, description, required, map);
-        //pd.setId(7);
         pd.setDisplayName("Includes");
         pd.setReadOnly(readOnly);
         pd.setSummary(true);
-        pd.setOrder(4);
+        pd.setOrder(5);
         pd.setConfigurationDefinition(configDef);
         return pd;
     }
@@ -294,7 +328,6 @@ public class DriftConfigurationDefinition implements Serializable {
         PropertyDefinitionSimple pattern = createIncludePattern(readOnly);
 
         PropertyDefinitionMap pd = new PropertyDefinitionMap(name, description, required, path, pattern);
-        //pd.setId(8);
         pd.setDisplayName("Include");
         pd.setReadOnly(readOnly);
         pd.setSummary(true);
@@ -309,7 +342,6 @@ public class DriftConfigurationDefinition implements Serializable {
         PropertySimpleType type = PropertySimpleType.STRING;
 
         PropertyDefinitionSimple pd = new PropertyDefinitionSimple(name, description, required, type);
-        //pd.setId(9);
         pd.setDisplayName("Path");
         pd.setReadOnly(readOnly);
         pd.setSummary(true);
@@ -325,7 +357,6 @@ public class DriftConfigurationDefinition implements Serializable {
         PropertySimpleType type = PropertySimpleType.STRING;
 
         PropertyDefinitionSimple pd = new PropertyDefinitionSimple(name, description, required, type);
-        //pd.setId(10);
         pd.setDisplayName("Pattern");
         pd.setReadOnly(readOnly);
         pd.setSummary(true);
@@ -342,11 +373,10 @@ public class DriftConfigurationDefinition implements Serializable {
         PropertyDefinitionMap map = createExclude(readOnly);
 
         PropertyDefinitionList pd = new PropertyDefinitionList(name, description, required, map);
-        //pd.setId(11);
         pd.setDisplayName("Excludes");
         pd.setReadOnly(readOnly);
         pd.setSummary(true);
-        pd.setOrder(5);
+        pd.setOrder(6);
         pd.setConfigurationDefinition(configDef);
         return pd;
     }
@@ -360,7 +390,6 @@ public class DriftConfigurationDefinition implements Serializable {
         PropertyDefinitionSimple pattern = createExcludePattern(readOnly);
 
         PropertyDefinitionMap pd = new PropertyDefinitionMap(name, description, required, path, pattern);
-        //pd.setId(12);
         pd.setDisplayName("Exclude");
         pd.setReadOnly(readOnly);
         pd.setSummary(true);
@@ -375,7 +404,6 @@ public class DriftConfigurationDefinition implements Serializable {
         PropertySimpleType type = PropertySimpleType.STRING;
 
         PropertyDefinitionSimple pd = new PropertyDefinitionSimple(name, description, required, type);
-        //pd.setId(13);
         pd.setDisplayName("Path");
         pd.setReadOnly(readOnly);
         pd.setSummary(true);
@@ -391,7 +419,6 @@ public class DriftConfigurationDefinition implements Serializable {
         PropertySimpleType type = PropertySimpleType.STRING;
 
         PropertyDefinitionSimple pd = new PropertyDefinitionSimple(name, description, required, type);
-        //pd.setId(14);
         pd.setDisplayName("Pattern");
         pd.setReadOnly(readOnly);
         pd.setSummary(true);

@@ -33,6 +33,7 @@ import org.rhq.core.domain.drift.JPADrift;
 import org.rhq.core.domain.drift.JPADriftChangeSet;
 import org.rhq.core.domain.drift.JPADriftFile;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.plugin.pc.drift.DriftChangeSetSummary;
 
 /**
  * The SLSB methods needed to support the JPA (RHQ Default) Drift Server Plugin.
@@ -94,9 +95,10 @@ public interface JPADriftServerLocal {
      *  
      * @param resourceId The resource for which the change-set is being reported.
      * @param changeSetZip The change-set zip file
+     * @return a summary of the change set that was persisted
      * @throws Exception
      */
-    void storeChangeSet(Subject subject, int resourceId, File changeSetZip) throws Exception;
+    DriftChangeSetSummary storeChangeSet(Subject subject, int resourceId, File changeSetZip) throws Exception;
 
     /**
      * This method stores the provided drift files. The files should correspond to requested drift files.

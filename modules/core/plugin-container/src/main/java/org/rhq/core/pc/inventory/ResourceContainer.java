@@ -28,6 +28,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -48,11 +49,11 @@ import org.jetbrains.annotations.Nullable;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
+import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.pc.drift.DriftDetectionSchedule;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pc.util.LoggingThreadFactory;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
@@ -89,7 +90,7 @@ public class ResourceContainer implements Serializable {
     private SynchronizationState synchronizationState = SynchronizationState.NEW;
     private Set<MeasurementScheduleRequest> measurementSchedule = new HashSet<MeasurementScheduleRequest>();
     private Set<ResourcePackageDetails> installedPackages = new HashSet<ResourcePackageDetails>();
-    private Set<DriftDetectionSchedule> driftSchedules = new HashSet<DriftDetectionSchedule>();
+    private Map<String, DriftConfiguration> driftConfigurations = new HashMap<String, DriftConfiguration>();
 
     // transient fields
     private transient ResourceComponent resourceComponent;
@@ -244,14 +245,22 @@ public class ResourceContainer implements Serializable {
         }
     }
 
-    public Set<DriftDetectionSchedule> getDriftSchedules() {
+    public Collection<DriftConfiguration> getDriftConfigurations() {
         synchronized (this) {
-            return driftSchedules;
+            return driftConfigurations.values();
         }
     }
 
-    public void setDriftSchedules(Set<DriftDetectionSchedule> schedules) {
-        driftSchedules = schedules;
+    public void addDriftConfiguration(DriftConfiguration c) {
+        synchronized (this) {
+            driftConfigurations.put(c.getName(), c);
+        }
+    }
+
+    public void removeDriftConfiguration(DriftConfiguration c) {
+        synchronized (this) {
+            driftConfigurations.remove(c.getName());
+        }
     }
 
     public ResourceComponentState getResourceComponentState() {

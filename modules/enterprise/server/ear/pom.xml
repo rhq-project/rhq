@@ -84,6 +84,12 @@
          <groupId>org.rhq</groupId>
          <artifactId>rhq-script-bindings</artifactId>
          <version>${project.version}</version>
+         <exclusions>
+           <exclusion>
+             <groupId>org.rhq</groupId>
+             <artifactId>rhq-core-domain</artifactId>
+           </exclusion>
+         </exclusions>         
       </dependency>
 
       <dependency>

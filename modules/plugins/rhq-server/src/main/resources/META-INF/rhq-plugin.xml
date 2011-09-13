@@ -48,6 +48,8 @@
               description="The number of elements in the alerts cache that check conditions against operation history data"/>
       <metric property="ResourceConfigurationCacheElementCount" category="throughput" displayType="summary"
               description="The number of elements in the alerts cache that check conditions against resource configuration data"/>
+      <metric property="DriftCacheElementCount" category="throughput" displayType="summary"
+              description="The number of elements in the alerts cache that check conditions against drift data"/>
 
       <metric property="TotalCacheElementMatches" category="throughput" displayType="summary" measurementType="trendsup"
               description="The total number of times ANY cache element has triggered against incoming data since this RHQ Server instance was started"/>
@@ -61,6 +63,8 @@
               description="The total number of times resource configuration-based conditions have triggered against incoming data since this RHQ Server instance was started"/>
       <metric property="OperationCacheElementMatches" category="throughput" displayType="summary" measurementType="trendsup"
               description="The total number of times operation-based conditions have triggered against incoming data since this RHQ Server instance was started"/>
+      <metric property="DriftCacheElementMatches" category="throughput" displayType="summary" measurementType="trendsup"
+              description="The total number of times drift conditions have triggered against incoming data since this RHQ Server instance was started"/>
 
       <metric property="TotalProcessingTime" units="milliseconds" displayType="summary" measurementType="trendsup"
               description="The total amount of time spent by the alerts cache processing ALL types of data"/>
@@ -74,6 +78,8 @@
               description="The total amount of time spent by the alerts cache processing resource configuration data"/>
       <metric property="OperationProcessingTime" units="milliseconds" displayType="summary" measurementType="trendsup"
               description="The total amount of time spent by the alerts cache processing operation history data"/>
+      <metric property="DriftProcessingTime" units="milliseconds" displayType="summary" measurementType="trendsup"
+              description="The total amount of time spent by the alerts cache processing drift data"/>
 
    </service>
 

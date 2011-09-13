@@ -40,8 +40,8 @@ public interface DriftManagerRemote {
      * @param criteria
      * @return The DriftChangeSets matching the criteria
      */
-    PageList<? extends DriftChangeSet<?>> findDriftChangeSetsByCriteria(Subject subject,
-        DriftChangeSetCriteria criteria) throws Exception;
+    PageList<? extends DriftChangeSet<?>> findDriftChangeSetsByCriteria(Subject subject, DriftChangeSetCriteria criteria)
+        throws Exception;
 
     /**
      * Standard criteria based fetch method
@@ -68,7 +68,7 @@ public interface DriftManagerRemote {
      * @return A report containing a unified diff of the two versions of the file
      * referenced by drift
      */
-    FileDiffReport generateUnifiedDiff(Drift drift);
+    FileDiffReport generateUnifiedDiff(Drift<?, ?> drift);
 
     /**
      * Generates a unified diff of the two files referenced by drift1 and drift2. More
@@ -79,6 +79,6 @@ public interface DriftManagerRemote {
      * @param drift2 References the second file to be compared
      * @return A report containing a unified diff of the two files compared
      */
-    FileDiffReport generateUnifiedDiff(Drift drift1, Drift drift2);
+    FileDiffReport generateUnifiedDiff(Drift<?, ?> drift1, Drift<?, ?> drift2);
 
 }

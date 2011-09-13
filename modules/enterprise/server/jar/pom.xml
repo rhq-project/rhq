@@ -552,6 +552,36 @@ Build-OS-Version=${os.version}
             </executions>
          </plugin>
 
+         <!--  in order to get JMS to work properly in embedded test container, extract jms-rs.rar classes -->
+         <plugin>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <executions>
+
+               <execution>
+                  <id>Extract JMS classes from RAR needed for JMS tests</id>
+                  <phase>process-classes</phase>
+                  <configuration>
+                     <tasks>
+                        <unzip src="src/test/resources/jms-ra.rar" dest="target">
+                           <patternset>
+                              <include name="jms-ra.jar"/>
+                           </patternset>
+                        </unzip>
+                        <unzip src="target/jms-ra.jar" dest="target/test-classes">
+                           <patternset>
+                              <include name="org/**"/>
+                           </patternset>
+                        </unzip>
+                     </tasks>
+                  </configuration>
+                  <goals>
+                     <goal>run</goal>
+                  </goals>
+               </execution>
+
+            </executions>
+         </plugin>
+
      <plugin>
             <artifactId>maven-surefire-plugin</artifactId>
             <!-- Everything but the web service tests, this is the standard test execution -->

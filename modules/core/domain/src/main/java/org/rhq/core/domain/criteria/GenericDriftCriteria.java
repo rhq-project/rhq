@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.rhq.core.domain.drift.DriftCategory;
+import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageOrdering;
 
@@ -51,6 +52,8 @@ public class GenericDriftCriteria implements Serializable, DriftCriteria {
     private Integer filterChangeSetStartVersion;
 
     private Integer filterChangeSetEndVersion;
+
+    private List<DriftHandlingMode> filterDriftHandlingModes = new ArrayList<DriftHandlingMode>();
 
     private String filterPath;
 
@@ -109,6 +112,16 @@ public class GenericDriftCriteria implements Serializable, DriftCriteria {
     @Override
     public void addFilterChangeSetEndVersion(Integer filterChangeSetEndVersion) {
         this.filterChangeSetEndVersion = filterChangeSetEndVersion;
+    }
+
+    @Override
+    public void addFilterDriftHandlingModes(DriftHandlingMode... filterDriftHandlingModes) {
+        this.filterDriftHandlingModes = getListIgnoringNulls(filterDriftHandlingModes);
+    }
+
+    @Override
+    public DriftHandlingMode[] getFilterDriftHandlingModes() {
+        return filterDriftHandlingModes.toArray(new DriftHandlingMode[filterDriftHandlingModes.size()]);
     }
 
     @Override

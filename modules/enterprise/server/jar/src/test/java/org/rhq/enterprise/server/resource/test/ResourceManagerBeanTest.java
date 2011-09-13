@@ -24,7 +24,6 @@ import java.util.Random;
 import javax.persistence.EntityManager;
 
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -37,7 +36,7 @@ import org.rhq.core.domain.resource.ResourceErrorType;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.discovery.DiscoveryServerServiceImpl;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
-import org.rhq.enterprise.server.resource.metadata.test.UpdateSubsytemTestBase;
+import org.rhq.enterprise.server.resource.metadata.test.UpdatePluginMetadataTestBase;
 import org.rhq.enterprise.server.test.TestServerCommunicationsService;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -45,33 +44,21 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * Test for {@link ResourceManagerLocal} SLSB.
  */
 @Test
-public class ResourceManagerBeanTest extends UpdateSubsytemTestBase {
-    private ResourceManagerLocal resourceManager;
+public class ResourceManagerBeanTest extends UpdatePluginMetadataTestBase {
     private Subject superuser;
     private Resource newResource;
 
     TestServerCommunicationsService agentServiceContainer;
 
-    @Override
-    @BeforeClass
-    public void beforeClass() {
-        super.beforeClass();
-        agentServiceContainer = prepareForTestAgents();
-        agentServiceContainer.measurementService = new MockAgentService();
-
-        prepareScheduler();
-    }
-
     @BeforeMethod
     public void beforeMethod() throws Exception {
-        resourceManager = LookupUtil.getResourceManager();
         superuser = LookupUtil.getSubjectManager().getOverlord();
-        newResource = createNewResource();
+        newResource = createNewResourceWithNewType();
     }
 
     @AfterMethod
     public void afterMethod() throws Exception {
-        deleteNewResource(newResource);
+        deleteNewResourceAgentResourceType(newResource);
     }
 
     public void testResourceErrors() {
@@ -123,7 +110,7 @@ public class ResourceManagerBeanTest extends UpdateSubsytemTestBase {
         assert errors.size() == 0;
     }
 
-    private Resource createNewResource() throws Exception {
+    private Resource createNewResourceWithNewType() throws Exception {
         getTransactionManager().begin();
         EntityManager em = getEntityManager();
 
@@ -158,7 +145,7 @@ public class ResourceManagerBeanTest extends UpdateSubsytemTestBase {
         return resource;
     }
 
-    private void deleteNewResource(Resource resource) throws Exception {
+    private void deleteNewResourceAgentResourceType(Resource resource) throws Exception {
         if (resource != null) {
             getTransactionManager().begin();
             EntityManager em = getEntityManager();

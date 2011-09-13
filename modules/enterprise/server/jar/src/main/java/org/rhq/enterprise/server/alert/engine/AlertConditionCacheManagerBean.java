@@ -38,6 +38,7 @@ import org.rhq.core.domain.operation.OperationHistory;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.enterprise.server.alert.engine.internal.AlertConditionCacheCoordinator;
 import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
+import org.rhq.enterprise.server.plugin.pc.drift.DriftChangeSetSummary;
 
 /**
  * @author Joseph Marques
@@ -85,6 +86,12 @@ public class AlertConditionCacheManagerBean implements AlertConditionCacheManage
     public AlertConditionCacheStats checkConditions(ResourceConfigurationUpdate update) {
         AlertConditionCacheStats stats;
         stats = AlertConditionCacheCoordinator.getInstance().checkConditions(update);
+        return stats;
+    }
+
+    public AlertConditionCacheStats checkConditions(DriftChangeSetSummary driftChangeSetSummary) {
+        AlertConditionCacheStats stats;
+        stats = AlertConditionCacheCoordinator.getInstance().checkConditions(driftChangeSetSummary);
         return stats;
     }
 

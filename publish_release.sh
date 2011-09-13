@@ -171,6 +171,69 @@ validate_arguments()
    fi
 }
 
+set_variables()
+{
+   PROJECT_NAME="rhq"
+   PROJECT_DISPLAY_NAME="RHQ"
+   PROJECT_GIT_WEB_URL="http://git.fedorahosted.org/git/?p=rhq/rhq.git"
+   TAG_PREFIX="RHQ"
+   MINIMUM_MAVEN_VERSION="2.1.0"
+
+   # Set various environment variables.
+   MAVEN_OPTS="-Xms512M -Xmx1024M -XX:PermSize=128M -XX:MaxPermSize=256M"
+   export MAVEN_OPTS
+
+
+   # Set various local variables.
+
+   if [ -n "$HUDSON_URL" ] && [ -n "$WORKSPACE" ]; then
+      echo "We appear to be running in a Hudson job." 
+      WORKING_DIR="$WORKSPACE"
+      MAVEN_LOCAL_REPO_DIR="$HOME/.m2/hudson-release-$RELEASE_TYPE-repository"
+      #MAVEN_SETTINGS_FILE="$HOME/.m2/hudson-$JOB_NAME-settings.xml"
+   elif [ -z "$WORKING_DIR" ]; then
+      WORKING_DIR="$HOME/release/rhq"
+      MAVEN_LOCAL_REPO_DIR="$HOME/release/m2-repository"
+      #MAVEN_LOCAL_REPO_DIR="$HOME/.m2/repository"
+      MAVEN_SETTINGS_FILE="$HOME/release/m2-settings.xml"
+   fi
+
+   MAVEN_SETTINGS_FILE="$WORKSPACE/settings.xml"
+
+   PROJECT_GIT_URL="git://git.fedorahosted.org/rhq/rhq.git"
+
+   MAVEN_ARGS="--settings $MAVEN_SETTINGS_FILE --batch-mode --errors -Prhq-publish-release,enterprise,dist"
+
+   if [ "$MODE" = "test" ]; then
+      MAVEN_ARGS="$MAVEN_ARGS -DskipTests=true"
+   fi
+
+   if [ "$RELEASE_TYPE" = "enterprise" ]; then
+      MAVEN_ARGS="$MAVEN_ARGS -Dexclude-webdav "
+      #MAVEN_ARGS="$MAVEN_ARGS -Dexclude-webdav -Djava5.home=$JAVA5_HOME/jre"
+   fi
+   if [ -n "$RELEASE_DEBUG" ]; then
+      MAVEN_ARGS="$MAVEN_ARGS --debug"
+   fi
+   if [ -n "$RELEASE_ADDITIONAL_MAVEN_ARGS" ]; then
+      MAVEN_ARGS="$MAVEN_ARGS $RELEASE_ADDITIONAL_MAVEN_ARGS"
+   fi
+
+   if [ "$MODE" = "production" ] && [ "$RELEASE_TYPE" = "community" ]; then
+      MAVEN_RELEASE_PERFORM_GOAL="deploy"
+   else
+      MAVEN_RELEASE_PERFORM_GOAL="install"
+   fi
+
+   # Set the system character encoding to ISO-8859-1 to ensure i18log reads its 
+   # messages and writes its resource bundle properties files in that encoding, 
+   # since that is how the German and French I18NMessage annotation values are
+   # encoded and the encoding used by i18nlog to read in resource bundle
+   # property files.
+   LANG=en_US.iso8859
+   export LANG
+}
+
 
 #### THE RELEASE SCRIPT ######
 
@@ -192,70 +255,7 @@ validate_maven
 
 validate_git
 
-# Set various environment variables.
-
-# Constants
-
-PROJECT_NAME="rhq"
-PROJECT_DISPLAY_NAME="RHQ"
-PROJECT_GIT_WEB_URL="http://git.fedorahosted.org/git/?p=rhq/rhq.git"
-TAG_PREFIX="RHQ"
-MINIMUM_MAVEN_VERSION="2.1.0"
-
-MAVEN_OPTS="-Xms512M -Xmx1024M -XX:PermSize=128M -XX:MaxPermSize=256M"
-export MAVEN_OPTS
-
-
-# Set various local variables.
-
-if [ -n "$HUDSON_URL" ] && [ -n "$WORKSPACE" ]; then
-   echo "We appear to be running in a Hudson job." 
-   WORKING_DIR="$WORKSPACE"
-   MAVEN_LOCAL_REPO_DIR="$HOME/.m2/hudson-release-$RELEASE_TYPE-repository"
-   #MAVEN_SETTINGS_FILE="$HOME/.m2/hudson-$JOB_NAME-settings.xml"
-elif [ -z "$WORKING_DIR" ]; then
-   WORKING_DIR="$HOME/release/rhq"
-   MAVEN_LOCAL_REPO_DIR="$HOME/release/m2-repository"
-   #MAVEN_LOCAL_REPO_DIR="$HOME/.m2/repository"
-   MAVEN_SETTINGS_FILE="$HOME/release/m2-settings.xml"
-fi
-
-MAVEN_SETTINGS_FILE="$WORKSPACE/settings.xml"
-
-PROJECT_GIT_URL="git://git.fedorahosted.org/rhq/rhq.git"
-
-MAVEN_ARGS="--settings $MAVEN_SETTINGS_FILE --batch-mode --errors -Prhq-publish-release,enterprise,dist"
-
-if [ "$MODE" = "test" ]; then
-   MAVEN_ARGS="$MAVEN_ARGS -DskipTests=true"
-fi
-
-if [ "$RELEASE_TYPE" = "enterprise" ]; then
-   MAVEN_ARGS="$MAVEN_ARGS -Dexclude-webdav "
-   #MAVEN_ARGS="$MAVEN_ARGS -Dexclude-webdav -Djava5.home=$JAVA5_HOME/jre"
-fi
-if [ -n "$RELEASE_DEBUG" ]; then
-   MAVEN_ARGS="$MAVEN_ARGS --debug"
-fi
-if [ -n "$RELEASE_ADDITIONAL_MAVEN_ARGS" ]; then
-   MAVEN_ARGS="$MAVEN_ARGS $RELEASE_ADDITIONAL_MAVEN_ARGS"
-fi
-
-if [ "$MODE" = "production" ] && [ "$RELEASE_TYPE" = "community" ]; then
-   MAVEN_RELEASE_PERFORM_GOAL="deploy"
-else   
-   MAVEN_RELEASE_PERFORM_GOAL="install"
-fi
-
-
-# Set the system character encoding to ISO-8859-1 to ensure i18log reads its 
-# messages and writes its resource bundle properties files in that encoding, 
-# since that is how the German and French I18NMessage annotation values are
-# encoded and the encoding used by i18nlog to read in resource bundle
-# property files.
-LANG=en_US.iso8859
-export LANG
-
+set_variables
 
 # Print out a summary of the environment.
 echo "========================== Environment Variables =============================="

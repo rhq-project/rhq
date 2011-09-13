@@ -51,6 +51,7 @@ public class ChangeSetWriterImpl implements ChangeSetWriter {
         writer.write(headers.getDriftConfigurationName() + "\n");
         writer.write(headers.getBasedir() + "\n");
         writer.write(headers.getType().code() + "\n");
+        writer.write(headers.getVersion() + "\n");
     }
 
     public void write(FileEntry entry) throws IOException {

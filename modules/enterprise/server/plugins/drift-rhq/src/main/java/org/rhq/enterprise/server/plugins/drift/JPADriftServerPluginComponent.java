@@ -39,6 +39,7 @@ import org.rhq.core.domain.drift.JPADriftChangeSet;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginContext;
+import org.rhq.enterprise.server.plugin.pc.drift.DriftChangeSetSummary;
 import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginFacet;
 
 /**
@@ -104,8 +105,8 @@ public class JPADriftServerPluginComponent implements DriftServerPluginFacet, Se
     }
 
     @Override
-    public void saveChangeSet(Subject subject, int resourceId, File changeSetZip) throws Exception {
-        getJPADriftServer().storeChangeSet(subject, resourceId, changeSetZip);
+    public DriftChangeSetSummary saveChangeSet(Subject subject, int resourceId, File changeSetZip) throws Exception {
+        return getJPADriftServer().storeChangeSet(subject, resourceId, changeSetZip);
     }
 
     @Override
@@ -113,4 +114,18 @@ public class JPADriftServerPluginComponent implements DriftServerPluginFacet, Se
         getJPADriftServer().storeFiles(subject, changeSetFilesZip);
     }
 
+    @Override
+    public void purgeByDriftConfigurationName(Subject subject, int resourceId, String driftConfigName) throws Exception {
+        getJPADriftServer().purgeByDriftConfigurationName(subject, resourceId, driftConfigName);
+    }
+
+    @Override
+    public int purgeOrphanedDriftFiles(Subject subject, long purgeMillis) {
+        return getJPADriftServer().purgeOrphanedDriftFiles(subject, purgeMillis);
+    }
+
+    @Override
+    public String getDriftFileBits(String hash) {
+        return getJPADriftServer().getDriftFileBits(hash);
+    }
 }

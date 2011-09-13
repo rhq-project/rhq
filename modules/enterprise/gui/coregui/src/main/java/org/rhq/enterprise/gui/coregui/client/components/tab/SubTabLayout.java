@@ -25,6 +25,7 @@ import java.util.Set;
 
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.History;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.SelectionType;
 import com.smartgwt.client.widgets.Button;
@@ -35,6 +36,7 @@ import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableButton;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -65,7 +67,7 @@ public class SubTabLayout extends LocatableVLayout {
         setMargin(0);
         setPadding(0);
 
-        buttonBar = new ToolStrip();
+        buttonBar = new LocatableToolStrip(extendLocatorId("ButtonBar"));
         buttonBar.setBackgroundColor("grey");
         buttonBar.setWidth100();
         buttonBar.setBorder(null);
@@ -291,7 +293,7 @@ public class SubTabLayout extends LocatableVLayout {
 
     public void fireSubTabSelection() {
         TwoLevelTabSelectedEvent event = new TwoLevelTabSelectedEvent("?", getCurrentSubTab().getName(), -1,
-            getCurrentCanvas());
+            getCurrentCanvas(), History.getToken());
         hm.fireEvent(event);
     }
 

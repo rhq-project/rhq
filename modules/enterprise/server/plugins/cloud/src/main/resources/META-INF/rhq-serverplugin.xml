@@ -33,7 +33,7 @@
                                summary="true"
                                description="Indicates the type of trigger this synchronize job will use">
                 <c:property-options>
-                    <c:option value="periodic" default="true"/>
+                    <c:option value="periodic" />
                     <c:option value="cron"/>
                 </c:property-options>
             </c:simple-property>

@@ -32,6 +32,9 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.stream.XMLStreamException;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.clientapi.agent.configuration.ConfigurationUtility;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
@@ -40,7 +43,6 @@ import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
-import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
@@ -58,22 +60,31 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 public class MetricTemplateImporter implements Importer<MeasurementDefinition, MetricTemplate> {
 
+    private static final Log LOG = LogFactory.getLog(MetricTemplateImporter.class);
+
     private static final boolean UPDATE_SCHEDULES_DEFAULT = false;
-    private static final String UPDATE_ALL_SCHEDULES_PROPERTY = "updateAllSchedules";
-    private static final String METRIC_NAME_PROPERTY = "metricName";
-    private static final String RESOURCE_TYPE_NAME_PROPERTY = "resourceTypeName";
-    private static final String RESOURCE_TYPE_PLUGIN_PROPERTY = "resourceTypePlugin";
-    private static final String UPDATE_SCHEDULES_PROPERTY = "updateSchedules";
-    private static final String METRIC_UPDATE_OVERRIDES_PROPERTY = "metricUpdateOverrides";
-    private static final String METRIC_UPDATE_OVERRIDE = "metricUpdateOverride";
+    public static final String UPDATE_ALL_SCHEDULES_PROPERTY = "updateAllSchedules";
+    public static final String METRIC_NAME_PROPERTY = "metricName";
+    public static final String RESOURCE_TYPE_NAME_PROPERTY = "resourceTypeName";
+    public static final String RESOURCE_TYPE_PLUGIN_PROPERTY = "resourceTypePlugin";
+    public static final String UPDATE_SCHEDULES_PROPERTY = "updateSchedules";
+    public static final String METRIC_UPDATE_OVERRIDES_PROPERTY = "metricUpdateOverrides";
+    public static final String METRIC_UPDATE_OVERRIDE_PROPERTY = "metricUpdateOverride";
 
-    private static class CollectionIntervalAndUpdateSchedules {
-        public long collectionInterval;
-        public boolean updateSchedules;
+    private static class UpdateKey {
+        public final long collectionInterval;
+        public final boolean updateSchedules;
+        public final boolean enable;
 
-        @Override 
+        public UpdateKey(long collectionInterval, boolean updateSchedules, boolean enable) {
+            this.collectionInterval = collectionInterval;
+            this.updateSchedules = updateSchedules;
+            this.enable = enable;
+        }
+
+        @Override
         public int hashCode() {
-            return (int) collectionInterval * (updateSchedules ? 31 : 1);
+            return (int) collectionInterval * (updateSchedules ? 31 : 1) * (enable ? 31 : 1);
         }
 
         @Override
@@ -82,26 +93,31 @@ public class MetricTemplateImporter implements Importer<MeasurementDefinition, M
                 return true;
             }
 
-            if (!(other instanceof CollectionIntervalAndUpdateSchedules)) {
+            if (!(other instanceof UpdateKey)) {
                 return false;
             }
 
-            CollectionIntervalAndUpdateSchedules o = (CollectionIntervalAndUpdateSchedules) other;
+            UpdateKey o = (UpdateKey) other;
 
-            return o.collectionInterval == collectionInterval && o.updateSchedules == updateSchedules;
+            return o.collectionInterval == collectionInterval && o.updateSchedules == updateSchedules
+                && enable == o.enable;
         }
     }
 
     private Subject subject;
     private EntityManager entityManager;
-    private List<MeasurementDefinition> definitionsToEnable = new ArrayList<MeasurementDefinition>();
-    private List<MeasurementDefinition> definitionsToDisable = new ArrayList<MeasurementDefinition>();
-    private Map<CollectionIntervalAndUpdateSchedules, List<MeasurementDefinition>> definitionsByCollectionIntervalAndUpdateSchedules = 
-        new HashMap<MetricTemplateImporter.CollectionIntervalAndUpdateSchedules, List<MeasurementDefinition>>();
+    private Map<UpdateKey, List<MeasurementDefinition>> definitionsByUpdateKey =
+        new HashMap<UpdateKey, List<MeasurementDefinition>>();
     private Configuration importConfiguration;
     private Unmarshaller unmarshaller;
-    
+    private MeasurementScheduleManagerLocal measurementScheduleManager;
+
     public MetricTemplateImporter(Subject subject, EntityManager entityManager) {
+        this(subject, entityManager, LookupUtil.getMeasurementScheduleManager());
+    }
+
+    public MetricTemplateImporter(Subject subject, EntityManager entityManager,
+        MeasurementScheduleManagerLocal measurementScheduleManager) {
         try {
             this.subject = subject;
             this.entityManager = entityManager;
@@ -110,27 +126,46 @@ public class MetricTemplateImporter implements Importer<MeasurementDefinition, M
         } catch (JAXBException e) {
             throw new IllegalStateException("Failed to initialize JAXB marshaller for MetricTemplate.", e);
         }
+        this.measurementScheduleManager = measurementScheduleManager;
     }
-    
+
     @Override
     public ConfigurationDefinition getImportConfigurationDefinition() {
         ConfigurationDefinition def = new ConfigurationDefinition("MetricTemplateImportConfiguration", null);
-        PropertyDefinitionSimple updateAllSchedules = new PropertyDefinitionSimple(UPDATE_ALL_SCHEDULES_PROPERTY, "If set to true, all the metric templates will update all the existing schedules on corresponding resources.", true, PropertySimpleType.BOOLEAN);
+        PropertyDefinitionSimple updateAllSchedules =
+            new PropertyDefinitionSimple(
+                UPDATE_ALL_SCHEDULES_PROPERTY,
+                "If set to true, all the metric templates will update all the existing schedules on corresponding resources.",
+                true, PropertySimpleType.BOOLEAN);
         updateAllSchedules.setDefaultValue(Boolean.toString(UPDATE_SCHEDULES_DEFAULT));
         def.put(updateAllSchedules);
 
-        PropertyDefinitionSimple metricName = new PropertyDefinitionSimple(METRIC_NAME_PROPERTY, "The name of the metric", true, PropertySimpleType.STRING);
-        PropertyDefinitionSimple resourceTypeName = new PropertyDefinitionSimple(RESOURCE_TYPE_NAME_PROPERTY, "The name of the resource type defining the metric", true, PropertySimpleType.STRING);
-        PropertyDefinitionSimple resourceTypePlugin = new PropertyDefinitionSimple(RESOURCE_TYPE_PLUGIN_PROPERTY, "The name of the plugin defining the resource type that defines the metric", true, PropertySimpleType.STRING);
-        PropertyDefinitionSimple updateSchedules = new PropertyDefinitionSimple(UPDATE_SCHEDULES_PROPERTY, "Whether to update the schedules of this metric on existing resources", true, PropertySimpleType.BOOLEAN);
-        
-        PropertyDefinitionMap metricUpdateOverride = new PropertyDefinitionMap(METRIC_UPDATE_OVERRIDE, null, true, metricName, resourceTypeName, resourceTypePlugin, updateSchedules); 
-        PropertyDefinitionList metricUpdateOverrides = new PropertyDefinitionList(METRIC_UPDATE_OVERRIDES_PROPERTY, "Per metric settings", false, metricUpdateOverride);
-        
+        PropertyDefinitionSimple metricName =
+            new PropertyDefinitionSimple(METRIC_NAME_PROPERTY, "The name of the metric", true,
+                PropertySimpleType.STRING);
+        PropertyDefinitionSimple resourceTypeName =
+            new PropertyDefinitionSimple(RESOURCE_TYPE_NAME_PROPERTY,
+                "The name of the resource type defining the metric", true, PropertySimpleType.STRING);
+        PropertyDefinitionSimple resourceTypePlugin =
+            new PropertyDefinitionSimple(RESOURCE_TYPE_PLUGIN_PROPERTY,
+                "The name of the plugin defining the resource type that defines the metric", true,
+                PropertySimpleType.STRING);
+        PropertyDefinitionSimple updateSchedules =
+            new PropertyDefinitionSimple(UPDATE_SCHEDULES_PROPERTY,
+                "Whether to update the schedules of this metric on existing resources", true,
+                PropertySimpleType.BOOLEAN);
+
+        PropertyDefinitionMap metricUpdateOverride =
+            new PropertyDefinitionMap(METRIC_UPDATE_OVERRIDE_PROPERTY, null, true, metricName, resourceTypeName,
+                resourceTypePlugin, updateSchedules);
+        PropertyDefinitionList metricUpdateOverrides =
+            new PropertyDefinitionList(METRIC_UPDATE_OVERRIDES_PROPERTY, "Per metric settings", false,
+                metricUpdateOverride);
+
         def.put(metricUpdateOverrides);
 
         ConfigurationUtility.initializeDefaultTemplate(def);
-        
+
         return def;
     }
 
@@ -143,38 +178,49 @@ public class MetricTemplateImporter implements Importer<MeasurementDefinition, M
     public ExportedEntityMatcher<MeasurementDefinition, MetricTemplate> getExportedEntityMatcher() {
         return new ExportedEntityMatcher<MeasurementDefinition, MetricTemplate>() {
 
+            private Map<MetricTemplate, MeasurementDefinition> cache;
+            
+            {
+                //this instance will be used many many times to find the measurement
+                //definitions that correspond to the templates stored in the export file
+                //it is therefore more optimal to just preload all the mds in a cache
+                //and use that to find matches than to query the database each time.
+                cache = new HashMap<MetricTemplate, MeasurementDefinition>();
+                
+                Query q = entityManager.createQuery("SELECT md FROM MeasurementDefinition md");
+
+                for (Object r : q.getResultList()) {
+                    MeasurementDefinition md = (MeasurementDefinition) r;
+
+                    cache.put(new MetricTemplate(md), md);
+                }
+                
+            }
             @Override
             public MeasurementDefinition findMatch(MetricTemplate object) {
-                Query q = entityManager.createNamedQuery(MeasurementDefinition.FIND_RAW_OR_PER_MINUTE_BY_NAME_AND_RESOURCE_TYPE_NAME);
-                q.setParameter("name", object.getMetricName());
-                q.setParameter("resourceTypeName", object.getResourceTypeName());
-                q.setParameter("resourceTypePlugin", object.getResourceTypePlugin());
-                q.setParameter("perMinute", object.isPerMinute() ? 1 : 0);
+                MeasurementDefinition md = cache.get(object);
                 
-                List<?> results = q.getResultList();
-
-                if (results.isEmpty()) {
-                    return null;
-                } else if (results.size() > 1) {
-                    throw new IllegalStateException(
-                        "Found more than one measurement definition with the same name and resource type. This should never happen. "
-                            + results);
-                } else {
-                    return (MeasurementDefinition) results.get(0);
+                if (md == null && LOG.isDebugEnabled()) {
+                        LOG.debug("Failed to find a measurement definition corresponding to "
+                            + object
+                            + ". This means that the plugins in the source RHQ install were different than in this RHQ install "
+                            + "but the DeployedAgentPluginsValidator failed to catch that. This most probably means that the "
+                            + "export file has been tampered with. Letting the import continue because that might have been intentional change by the user.");
+                                      
                 }
+                
+                return md;
             }
         };
     }
 
     @Override
     public void update(MeasurementDefinition entity, MetricTemplate exportedEntity) {
-        if (exportedEntity.isEnabled()) {
-            definitionsToEnable.add(entity);
-        } else {
-            definitionsToDisable.add(entity);
+        if (entity == null) {
+            return;
         }
 
-        addToCollectionIntervalMap(exportedEntity, entity);
+        addToUpdateMap(exportedEntity, entity);
     }
 
     @Override
@@ -188,14 +234,14 @@ public class MetricTemplateImporter implements Importer<MeasurementDefinition, M
 
     @Override
     public void finishImport() {
-        MeasurementScheduleManagerLocal sm = LookupUtil.getMeasurementScheduleManager();
-
-        sm.enableMeasurementTemplates(subject, getIdsFromDefs(definitionsToEnable));
-        sm.disableMeasurementTemplates(subject, getIdsFromDefs(definitionsToDisable));
-
-        for (Map.Entry<CollectionIntervalAndUpdateSchedules, List<MeasurementDefinition>> e : definitionsByCollectionIntervalAndUpdateSchedules.entrySet()) {
-            sm.updateDefaultCollectionIntervalForMeasurementDefinitions(subject, getIdsFromDefs(e.getValue()), e.getKey().collectionInterval,
-                e.getKey().updateSchedules);
+        for (Map.Entry<UpdateKey, List<MeasurementDefinition>> e : definitionsByUpdateKey.entrySet()) {
+            int[] ids = getIdsFromDefs(e.getValue());
+            boolean enable = e.getKey().enable;
+            boolean updateSchedules = e.getKey().updateSchedules;
+            long collectionInterval = e.getKey().collectionInterval;
+            
+            measurementScheduleManager.updateDefaultCollectionIntervalAndEnablementForMeasurementDefinitions(subject,
+                ids, collectionInterval, enable, updateSchedules);
         }
     }
 
@@ -210,16 +256,13 @@ public class MetricTemplateImporter implements Importer<MeasurementDefinition, M
         return ids;
     }
 
-    private void addToCollectionIntervalMap(MetricTemplate metricTemplate, MeasurementDefinition def) {
-        CollectionIntervalAndUpdateSchedules key = new CollectionIntervalAndUpdateSchedules();
-        key.collectionInterval = metricTemplate.getDefaultInterval();
-        key.updateSchedules = shouldUpdateSchedules(metricTemplate);
-        
-        List<MeasurementDefinition> defs = definitionsByCollectionIntervalAndUpdateSchedules.get(key);
+    private void addToUpdateMap(MetricTemplate metricTemplate, MeasurementDefinition def) {
+        UpdateKey key = new UpdateKey(metricTemplate.getDefaultInterval(), shouldUpdateSchedules(metricTemplate), metricTemplate.isEnabled());
 
+        List<MeasurementDefinition> defs = definitionsByUpdateKey.get(key);
         if (defs == null) {
             defs = new ArrayList<MeasurementDefinition>();
-            definitionsByCollectionIntervalAndUpdateSchedules.put(key, defs);
+            definitionsByUpdateKey.put(key, defs);
         }
 
         defs.add(def);
@@ -232,7 +275,9 @@ public class MetricTemplateImporter implements Importer<MeasurementDefinition, M
 
         String updateAll = importConfiguration.getSimpleValue(UPDATE_ALL_SCHEDULES_PROPERTY, null);
         if (updateAll != null) {
-            return Boolean.parseBoolean(updateAll);
+            if (Boolean.parseBoolean(updateAll)) {
+                return true;
+            }
         }
 
         PropertyList perMetricOverrides = importConfiguration.getList(METRIC_UPDATE_OVERRIDES_PROPERTY);

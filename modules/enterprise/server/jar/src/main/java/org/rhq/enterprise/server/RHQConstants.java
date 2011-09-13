@@ -91,6 +91,9 @@ public class RHQConstants {
     // How long do we keep event data
     public static final String EventPurge = "EVENT_PURGE";
 
+    // How long do we keep orphaned drift files
+    public static final String DriftFilePurge = "DRIFT_FILE_PURGE";
+
     // How long do we keep trait data
     public static final String TraitPurge = "TRAIT_PURGE";
 

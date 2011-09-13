@@ -190,7 +190,7 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
 
                 // only show the context menu for cluster nodes and our top root node
                 if (contextNode.isCompatibleGroupTopNode() || contextNode.isAutoClusterNode()) {
-                    contextMenu.showContextMenu(contextNode);
+                    contextMenu.showContextMenu(treeGrid.getTree(), contextNode);
                 }
             }
         });
@@ -257,7 +257,7 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
     public void setSelectedGroup(final int groupId, boolean isAutoCluster) {
         ResourceGroupCriteria criteria = new ResourceGroupCriteria();
         criteria.addFilterId(groupId);
-        criteria.addFilterVisible(Boolean.valueOf(!isAutoCluster));
+        criteria.addFilterVisible(!isAutoCluster);
         criteria.fetchResourceType(true);
 
         GWTServiceLookup.getResourceGroupService().findResourceGroupsByCriteria(criteria,
@@ -269,6 +269,12 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
                 }
 
                 public void onSuccess(PageList<ResourceGroup> result) {
+                    if (result.isEmpty()) {
+                        // This means either that a group with the specified id does not exist or that the user does is
+                        // not authorized to view the group. In either case, just return, and let
+                        // ResourceGroupDetailView.loadSelectedItem() handle emitting an error message.
+                        return;
+                    }
                     ResourceGroup group = result.get(0);
                     ResourceGroupTreeView.this.currentGroup = group;
 
@@ -685,4 +691,5 @@ public class ResourceGroupTreeView extends LocatableVLayout implements Bookmarka
         }
 
     }
+
 }

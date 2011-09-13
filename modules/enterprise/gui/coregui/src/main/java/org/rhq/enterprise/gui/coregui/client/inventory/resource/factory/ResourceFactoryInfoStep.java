@@ -152,7 +152,7 @@ public class ResourceFactoryInfoStep extends AbstractWizardStep {
                 templateSelect.setAlign(Alignment.LEFT);
                 templateSelect.setWidth(300);
 
-                if (templates != null && !templates.isEmpty()) {
+                if (templates != null && templates.size() > 1) {
                     templateSelect.setValueMap(templates.keySet().toArray(new String[templates.size()]));
                     templateSelect.setValue("default");
                     wizard.setNewResourceStartingConfiguration(templates.get("default").createConfiguration());
@@ -166,7 +166,7 @@ public class ResourceFactoryInfoStep extends AbstractWizardStep {
                         }
                     });
                 } else {
-                    templateSelect.setDisabled(true);
+                    templateSelect.setVisible(false);
                 }
 
                 formItems.add(templateSelect);

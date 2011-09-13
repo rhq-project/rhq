@@ -29,7 +29,9 @@ import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.drift.DriftConfiguration;
+import org.rhq.core.domain.drift.DriftDetails;
 import org.rhq.core.domain.drift.DriftSnapshot;
+import org.rhq.core.domain.drift.FileDiffReport;
 import org.rhq.core.domain.util.PageList;
 
 /**
@@ -40,56 +42,15 @@ public interface DriftGWTService extends RemoteService {
     DriftSnapshot createSnapshot(Subject subject, GenericDriftChangeSetCriteria criteria) throws RuntimeException;
 
     /**
-     * Delete the drifts with the specified ids if the current user has permission to do so (i.e. either
+     * Delete all named drift configurations for the specified context if the current user has permission to do so (i.e. either
      * the MANAGE_INVENTORY global permission, or the MANAGE_DRIFT permission for all corresponding resources).
-     * If the user does not have permission for all of the specified drifts, then none of the drifts will be deleted
-     * and a PermissionException will be thrown.
-     *
-     * If any of the ids do not correspond to drift entities that exist, those ids will be gracefully ignored.
-     *
-     * @param driftIds the ids of the drifts to be deleted
-     * @return the number of drifts deleted
-     */
-    int deleteDrifts(String[] driftIds) throws RuntimeException;
-
-    /**
-     * Delete all drifts for the specified context if the current user has permission to do so (i.e. either
-     * the MANAGE_INVENTORY global permission, or the MANAGE_DRIFT permission for all corresponding resources).
-     * If the user does not have permission for all of the specified drifts, then none of the drifts will be deleted
-     * and a PermissionException will be thrown.
-     *
-     * If the entity does not correspond to an existing entity, it will be gracefully ignored.
      *
      * @param entityContext the context for deletion
-     * @return the number of drifts deleted
-     */
-    int deleteDriftsByContext(EntityContext entityContext) throws RuntimeException;
-
-    /**
-     * Delete the drift configs with the specified ids if the current user has permission to do so (i.e. either
-     * the MANAGE_INVENTORY global permission, or the MANAGE_DRIFT permission for all corresponding resources).
-     * If the user does not have permission for all of the specified drift configs, then none of them  will be deleted
-     * and a PermissionException will be thrown.
-     *
-     * If any of the ids do not correspond to drift entities that exist, those ids will be gracefully ignored.
-     *
-     * @param driftConfigIds the ids of the drift configs to be deleted
+     * @param driftConfigNames the names of the configs to delete
      * @return the number of drift configs deleted
      */
-    int deleteDriftConfigurations(int[] driftConfigIds) throws RuntimeException;
-
-    /**
-     * Delete all drift configurations for the specified context if the current user has permission to do so (i.e. either
-     * the MANAGE_INVENTORY global permission, or the MANAGE_DRIFT permission for all corresponding resources).
-     * If the user does not have permission for all of the specified drifts, then none of the drifts will be deleted
-     * and a PermissionException will be thrown.
-     *
-     * If the entity does not correspond to an existing entity, it will be gracefully ignored.
-     *
-     * @param entityContext the context for deletion
-     * @return the number of drift configs deleted
-     */
-    int deleteDriftConfigurationsByContext(EntityContext entityContext) throws RuntimeException;
+    int deleteDriftConfigurationsByContext(EntityContext entityContext, String[] driftConfigNames)
+        throws RuntimeException;
 
     /**
      * One time on-demand request to detect drift on the specified entities, using the supplied config.
@@ -147,6 +108,14 @@ public interface DriftGWTService extends RemoteService {
      * @param entityContext
      * @param driftConfig
      */
-    void updateDriftConfiguration(EntityContext entityContext, DriftConfiguration driftConfig);
+    void updateDriftConfiguration(EntityContext entityContext, DriftConfiguration driftConfig) throws RuntimeException;
+
+    String getDriftFileBits(String hash) throws RuntimeException;
+
+    FileDiffReport generateUnifiedDiff(Drift drift) throws RuntimeException;
+
+    boolean isBinaryFile(Drift drift) throws RuntimeException;
+
+    DriftDetails getDriftDetails(String driftId) throws RuntimeException;
 
 }

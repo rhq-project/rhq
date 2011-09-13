@@ -24,7 +24,6 @@ import java.util.HashMap;
 import java.util.List;
 
 import com.allen_sauer.gwt.log.client.Log;
-import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
@@ -36,6 +35,7 @@ import com.smartgwt.client.widgets.form.events.SubmitValuesEvent;
 import com.smartgwt.client.widgets.form.events.SubmitValuesHandler;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -61,7 +61,6 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigura
 import org.rhq.enterprise.gui.coregui.client.gwt.ConfigurationGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView;
-import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupDetailView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.configuration.GroupResourceConfigurationDataSource;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.configuration.HistoryGroupResourceConfigurationTable;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
@@ -80,7 +79,9 @@ public class GroupConfigurationUpdatesPortlet extends LocatableVLayout implement
     // A default displayed, persisted name for the portlet
     public static final String NAME = MSG.view_portlet_defaultName_group_config_updates();
 
-    private int groupId = -1;
+    // context provides whether this is a standard group, autocluster or autogroup
+    private EntityContext context;
+
     protected LocatableCanvas recentConfigurationContent = new LocatableCanvas(
         extendLocatorId("RecentConfigurationUpdates"));
 
@@ -109,7 +110,6 @@ public class GroupConfigurationUpdatesPortlet extends LocatableVLayout implement
     private ResourceGroupComposite groupComposite;
     protected boolean portletConfigInitialized = false;
     protected boolean currentlyLoading = false;
-    protected String baseViewPath = "";
     private GroupConfigurationHistoryCriteriaTable groupHistoryTable;
 
     protected static HashMap<String, String> updatedMapping = new HashMap<String, String>();
@@ -117,16 +117,9 @@ public class GroupConfigurationUpdatesPortlet extends LocatableVLayout implement
         updatedMapping.putAll(PortletConfigurationEditorComponent.CONFIG_PROPERTY_INITIALIZATION);
     }
 
-    public GroupConfigurationUpdatesPortlet(String locatorId, int groupId) {
+    public GroupConfigurationUpdatesPortlet(String locatorId, EntityContext context) {
         super(locatorId);
-        //figure out which page we're loading
-        String currentPage = History.getToken();
-        this.groupId = groupId;
-        baseViewPath = AbstractActivityView.groupPathLookup(currentPage);
-    }
-
-    public GroupConfigurationUpdatesPortlet(String locatorId) {
-        super(locatorId);
+        this.context = context;
     }
 
     /**Defines layout for the portlet page.
@@ -234,25 +227,13 @@ public class GroupConfigurationUpdatesPortlet extends LocatableVLayout implement
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
-        /* (non-Javadoc)
-         * TODO:  This factory ASSUMES the user is currently navigated to a group detail view, and generates a portlet
-         *        for that group.  It will fail in other scenarios.  This mechanism should be improved such that the
-         *        factory method can take an EntityContext explicitly indicating, in this case, the group.
-         * @see org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory#getInstance(java.lang.String)
-         */
-        public final Portlet getInstance(String locatorId) {
+        public final Portlet getInstance(String locatorId, EntityContext context) {
 
-            String currentPage = History.getToken();
-            int groupId = -1;
-            String[] elements = currentPage.split("/");
-            // process for groups and auto groups Ex. ResourceGroup/10111 or ResourceGroup/AutoCluster/10321
-            try {
-                groupId = Integer.valueOf(elements[1]);
-            } catch (NumberFormatException nfe) {
-                groupId = Integer.valueOf(elements[2]);
+            if (EntityContext.Type.ResourceGroup != context.getType()) {
+                throw new IllegalArgumentException("Context [" + context + "] not supported by portlet");
             }
 
-            return new GroupConfigurationUpdatesPortlet(locatorId, groupId);
+            return new GroupConfigurationUpdatesPortlet(locatorId, context);
         }
     }
 
@@ -299,18 +280,16 @@ public class GroupConfigurationUpdatesPortlet extends LocatableVLayout implement
         //populate composite data
         //locate resourceGroupRef
         ResourceGroupCriteria criteria = new ResourceGroupCriteria();
-        criteria.addFilterId(this.groupId);
+        criteria.addFilterId(context.getGroupId());
         criteria.fetchConfigurationUpdates(false);
         criteria.fetchExplicitResources(false);
         criteria.fetchGroupDefinition(false);
         criteria.fetchOperationHistories(false);
 
         // for autoclusters and autogroups we need to add more criteria
-        final boolean isAutoCluster = isAutoCluster();
-        final boolean isAutoGroup = isAutoGroup();
-        if (isAutoCluster) {
+        if (context.isAutoCluster()) {
             criteria.addFilterVisible(false);
-        } else if (isAutoGroup) {
+        } else if (context.isAutoGroup()) {
             criteria.addFilterVisible(false);
             criteria.addFilterPrivate(true);
         }
@@ -320,7 +299,7 @@ public class GroupConfigurationUpdatesPortlet extends LocatableVLayout implement
             new AsyncCallback<PageList<ResourceGroupComposite>>() {
                 @Override
                 public void onFailure(Throwable caught) {
-                    Log.debug("Error retrieving resource group composite for group [" + groupId + "]:"
+                    Log.debug("Error retrieving resource group composite for group [" + context.getGroupId() + "]:"
                         + caught.getMessage());
                     currentlyLoading = false;
                 }
@@ -337,7 +316,7 @@ public class GroupConfigurationUpdatesPortlet extends LocatableVLayout implement
                         //TODO: spinder: move this up into the pageControl.
                         criteria.addSortStatus(PageOrdering.DESC);
                         List<Integer> filterResourceGroupIds = new ArrayList<Integer>();
-                        filterResourceGroupIds.add(groupId);
+                        filterResourceGroupIds.add(context.getGroupId());
                         criteria.addFilterResourceGroupIds(filterResourceGroupIds);
 
                         groupHistoryTable = new GroupConfigurationHistoryCriteriaTable(extendLocatorId("Table"),
@@ -353,7 +332,7 @@ public class GroupConfigurationUpdatesPortlet extends LocatableVLayout implement
 
                     //update table for portlet display.                    
                     groupHistoryTable.setDataSource(new GroupConfigurationUdpatesCriteriaDataSource(portletConfig,
-                        groupId));
+                        context.getGroupId()));
                     groupHistoryTable.setShowHeader(false);
                     groupHistoryTable.setShowFooterRefresh(false);
 
@@ -368,18 +347,6 @@ public class GroupConfigurationUpdatesPortlet extends LocatableVLayout implement
             });
     }
 
-    private boolean isAutoGroup() {
-        return ResourceGroupDetailView.AUTO_GROUP_VIEW.equals(getBaseViewPath());
-    }
-
-    private boolean isAutoCluster() {
-        return ResourceGroupDetailView.AUTO_CLUSTER_VIEW.equals(getBaseViewPath());
-    }
-
-    public String getBaseViewPath() {
-        return baseViewPath;
-    }
-
     class GroupConfigurationHistoryCriteriaTable extends HistoryGroupResourceConfigurationTable {
 
         public GroupConfigurationHistoryCriteriaTable(String locatorId, ResourceGroupComposite groupComposite) {
@@ -387,7 +354,7 @@ public class GroupConfigurationUpdatesPortlet extends LocatableVLayout implement
         }
 
         @Override
-        protected void refreshTableInfo() {
+        public void refreshTableInfo() {
             super.refreshTableInfo();
             if (getTableInfo() != null) {
                 int count = getListGrid().getSelection().length;

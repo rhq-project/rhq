@@ -90,6 +90,12 @@ public class NewConditionEditor extends LocatableDynamicForm {
     private static final String OPERATION_RESULTS_ITEMNAME = "operationResults";
     private static final String EVENT_SEVERITY_ITEMNAME = "eventSeverity";
     private static final String EVENT_REGEX_ITEMNAME = "eventRegex";
+    private static final String DRIFT_CONFIGNAME_REGEX_ITEMNAME = "driftConfigNameRegex";
+    private static final String DRIFT_PATHNAME_REGEX_ITEMNAME = "driftPathNameRegex";
+    private static final String RANGE_METRIC_ITEMNAME = "rangeMetric";
+    private static final String RANGE_COMPARATOR_ITEMNAME = "rangeComparator";
+    private static final String RANGE_LO_ABSVALUE_ITEMNAME = "rangeMetricLoValue";
+    private static final String RANGE_HI_ABSVALUE_ITEMNAME = "rangeMetricHiValue";
 
     private SelectItem conditionTypeSelectItem;
     private HashSet<AlertCondition> conditions; // the new condition we create goes into this set
@@ -99,6 +105,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
     private boolean supportsOperations = false;
     private boolean supportsEvents = false;
     private boolean supportsResourceConfig = false;
+    private boolean supportsDrift = false;
     private Runnable closeFunction; // this is called after a button is pressed and the editor should close 
     private ResourceType resourceType;
 
@@ -112,6 +119,8 @@ public class NewConditionEditor extends LocatableDynamicForm {
 
         this.supportsEvents = (rtype.getEventDefinitions() != null && rtype.getEventDefinitions().size() > 0);
         this.supportsResourceConfig = (rtype.getResourceConfigurationDefinition() != null);
+        this.supportsDrift = (rtype.getDriftConfigurationTemplates() != null && rtype.getDriftConfigurationTemplates()
+            .size() > 0);
 
         Set<MeasurementDefinition> metricDefinitions = rtype.getMetricDefinitions();
         if (metricDefinitions != null && metricDefinitions.size() > 0) {
@@ -160,6 +169,8 @@ public class NewConditionEditor extends LocatableDynamicForm {
                 .view_alert_definition_condition_editor_option_metric_baseline());
             condTypes.put(AlertConditionCategory.CHANGE.name(), MSG
                 .view_alert_definition_condition_editor_option_metric_change());
+            condTypes.put(AlertConditionCategory.RANGE.name(), MSG
+                .view_alert_definition_condition_editor_option_metric_range());
         }
         if (supportsCalltimeMetrics) {
             condTypes.put(ALERT_CONDITION_CATEGORY_CALLTIME_THRESHOLD, MSG
@@ -182,6 +193,10 @@ public class NewConditionEditor extends LocatableDynamicForm {
         if (supportsEvents) {
             condTypes.put(AlertConditionCategory.EVENT.name(), MSG
                 .view_alert_definition_condition_editor_option_event());
+        }
+        if (supportsDrift) {
+            condTypes.put(AlertConditionCategory.DRIFT.name(), MSG
+                .view_alert_definition_condition_editor_option_drift());
         }
         conditionTypeSelectItem.setValueMap(condTypes);
         conditionTypeSelectItem.setDefaultValue(AlertConditionCategory.AVAILABILITY.name());
@@ -226,6 +241,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
         formItems.addAll(buildAvailabilityChangeFormItems());
         if (supportsMetrics) {
             formItems.addAll(buildMetricThresholdFormItems());
+            formItems.addAll(buildMetricRangeFormItems());
             formItems.addAll(buildMetricBaselineFormItems());
             formItems.addAll(buildMetricChangeFormItems());
         }
@@ -244,6 +260,9 @@ public class NewConditionEditor extends LocatableDynamicForm {
         }
         if (supportsResourceConfig) {
             formItems.addAll(buildResourceConfigChangeFormItems());
+        }
+        if (supportsDrift) {
+            formItems.addAll(buildDriftFormItems());
         }
         formItems.add(spacer2);
         formItems.add(ok);
@@ -284,7 +303,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
         case THRESHOLD: {
             if (!calltimeCategory) {
                 MeasurementDefinition measDef = getMeasurementDefinition(getValueAsString(THRESHOLD_METRIC_ITEMNAME));
-                newCondition.setName(measDef.getDisplayName()); // TODO should not use display name
+                newCondition.setName(measDef.getDisplayName());
                 newCondition.setThreshold(Double.valueOf(getValueAsString(THRESHOLD_ABSVALUE_ITEMNAME)));
                 newCondition.setComparator(getValueAsString(THRESHOLD_COMPARATOR_ITEMNAME));
                 newCondition.setOption(null);
@@ -302,7 +321,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
 
         case BASELINE: {
             MeasurementDefinition measDef = getMeasurementDefinition(getValueAsString(BASELINE_METRIC_ITEMNAME));
-            newCondition.setName(measDef.getDisplayName()); // TODO should not use display name
+            newCondition.setName(measDef.getDisplayName());
             newCondition.setThreshold(Double.valueOf(getValueAsString(BASELINE_PERCENTAGE_ITEMNAME)) / 100.0);
             newCondition.setComparator(getValueAsString(BASELINE_COMPARATOR_ITEMNAME));
             newCondition.setOption(getValueAsString(BASELINE_SELECTION_ITEMNAME));
@@ -313,7 +332,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
         case CHANGE: {
             if (!calltimeCategory) {
                 MeasurementDefinition measDef = getMeasurementDefinition(getValueAsString(CHANGE_METRIC_ITEMNAME));
-                newCondition.setName(measDef.getDisplayName()); // TODO should not use display name
+                newCondition.setName(measDef.getDisplayName());
                 newCondition.setComparator(null);
                 newCondition.setThreshold(null);
                 newCondition.setOption(null);
@@ -332,7 +351,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
 
         case TRAIT: {
             MeasurementDefinition measDef = getMeasurementDefinition(getValueAsString(TRAIT_METRIC_ITEMNAME));
-            newCondition.setName(measDef.getDisplayName()); // TODO should not use display name
+            newCondition.setName(measDef.getDisplayName());
             newCondition.setComparator(null);
             newCondition.setThreshold(null);
             newCondition.setOption(null);
@@ -367,6 +386,25 @@ public class NewConditionEditor extends LocatableDynamicForm {
             break;
         }
 
+        case DRIFT: {
+            newCondition.setName(getValueAsString(DRIFT_CONFIGNAME_REGEX_ITEMNAME));
+            newCondition.setComparator(null);
+            newCondition.setThreshold(null);
+            newCondition.setOption(getValueAsString(DRIFT_PATHNAME_REGEX_ITEMNAME));
+            newCondition.setMeasurementDefinition(null);
+            break;
+        }
+
+        case RANGE: {
+            MeasurementDefinition measDef = getMeasurementDefinition(getValueAsString(RANGE_METRIC_ITEMNAME));
+            newCondition.setName(measDef.getDisplayName());
+            newCondition.setThreshold(Double.valueOf(getValueAsString(RANGE_LO_ABSVALUE_ITEMNAME)));
+            newCondition.setComparator(getValueAsString(RANGE_COMPARATOR_ITEMNAME));
+            newCondition.setOption(Double.valueOf(getValueAsString(RANGE_HI_ABSVALUE_ITEMNAME)).toString());
+            newCondition.setMeasurementDefinition(measDef);
+            break;
+        }
+
         default: {
             CoreGUI.getErrorHandler()
                 .handleError(MSG.view_alert_common_tab_invalid_condition_category(category.name())); // should never happen
@@ -398,6 +436,42 @@ public class NewConditionEditor extends LocatableDynamicForm {
         absoluteValue.setValidators(new IsFloatValidator());
         absoluteValue.setShowIfCondition(ifFunc);
         formItems.add(absoluteValue);
+
+        return formItems;
+    }
+
+    private ArrayList<FormItem> buildMetricRangeFormItems() {
+        ArrayList<FormItem> formItems = new ArrayList<FormItem>();
+
+        ShowIfCategoryFunction ifFunc = new ShowIfCategoryFunction(AlertConditionCategory.RANGE);
+
+        String helpStr = MSG.view_alert_definition_condition_editor_metric_range_tooltip();
+        StaticTextItem helpItem = buildHelpTextItem("rangeHelp", helpStr, ifFunc);
+        formItems.add(helpItem);
+
+        formItems.add(buildMetricDropDownMenu(RANGE_METRIC_ITEMNAME, false, ifFunc));
+        formItems.add(buildRangeComparatorDropDownMenu(RANGE_COMPARATOR_ITEMNAME, ifFunc));
+        TextItem absoluteLowValue = new TextItem(RANGE_LO_ABSVALUE_ITEMNAME, MSG
+            .view_alert_definition_condition_editor_metric_range_lovalue());
+        absoluteLowValue.setWrapTitle(false);
+        absoluteLowValue.setRequired(true);
+        absoluteLowValue.setTooltip(MSG.view_alert_definition_condition_editor_metric_range_lovalue_tooltip());
+        absoluteLowValue.setHoverWidth(200);
+        absoluteLowValue.setValidateOnChange(true);
+        absoluteLowValue.setValidators(new IsFloatValidator());
+        absoluteLowValue.setShowIfCondition(ifFunc);
+        formItems.add(absoluteLowValue);
+
+        TextItem absoluteHighValue = new TextItem(RANGE_HI_ABSVALUE_ITEMNAME, MSG
+            .view_alert_definition_condition_editor_metric_range_hivalue());
+        absoluteHighValue.setWrapTitle(false);
+        absoluteHighValue.setRequired(true);
+        absoluteHighValue.setTooltip(MSG.view_alert_definition_condition_editor_metric_range_hivalue_tooltip());
+        absoluteHighValue.setHoverWidth(200);
+        absoluteHighValue.setValidateOnChange(true);
+        absoluteHighValue.setValidators(new IsFloatValidator());
+        absoluteHighValue.setShowIfCondition(ifFunc);
+        formItems.add(absoluteHighValue);
 
         return formItems;
     }
@@ -702,6 +776,36 @@ public class NewConditionEditor extends LocatableDynamicForm {
         return formItems;
     }
 
+    private ArrayList<FormItem> buildDriftFormItems() {
+        ArrayList<FormItem> formItems = new ArrayList<FormItem>();
+
+        ShowIfCategoryFunction ifFunc = new ShowIfCategoryFunction(AlertConditionCategory.DRIFT);
+
+        String helpStr = MSG.view_alert_definition_condition_editor_drift_tooltip();
+        StaticTextItem helpItem = buildHelpTextItem("driftHelp", helpStr, ifFunc);
+        formItems.add(helpItem);
+
+        TextItem driftConfigNameRegex = new TextItem(DRIFT_CONFIGNAME_REGEX_ITEMNAME, MSG
+            .view_alert_definition_condition_editor_drift_configname_regex());
+        driftConfigNameRegex.setRequired(false);
+        driftConfigNameRegex.setTooltip(MSG.view_alert_definition_condition_editor_drift_configname_regex_tooltip());
+        driftConfigNameRegex.setHoverWidth(200);
+        driftConfigNameRegex.setWrapTitle(false);
+        driftConfigNameRegex.setShowIfCondition(ifFunc);
+        formItems.add(driftConfigNameRegex);
+
+        TextItem driftPathNameRegex = new TextItem(DRIFT_PATHNAME_REGEX_ITEMNAME, MSG
+            .view_alert_definition_condition_editor_drift_pathname_regex());
+        driftPathNameRegex.setRequired(false);
+        driftPathNameRegex.setTooltip(MSG.view_alert_definition_condition_editor_drift_pathname_regex_tooltip());
+        driftPathNameRegex.setHoverWidth(200);
+        driftPathNameRegex.setWrapTitle(false);
+        driftPathNameRegex.setShowIfCondition(ifFunc);
+        formItems.add(driftPathNameRegex);
+
+        return formItems;
+    }
+
     private SelectItem buildMetricDropDownMenu(String itemName, boolean dynamicOnly, FormItemIfFunction ifFunc) {
 
         LinkedHashMap<String, String> metricsMap = new LinkedHashMap<String, String>();
@@ -787,6 +891,24 @@ public class NewConditionEditor extends LocatableDynamicForm {
         comparatorSelection.setDefaultValue("CH");
         comparatorSelection.setTooltip(MSG
             .view_alert_definition_condition_editor_metric_calltime_common_comparator_tooltip());
+        comparatorSelection.setHoverWidth(200);
+        comparatorSelection.setShowIfCondition(ifFunc);
+        return comparatorSelection;
+    }
+
+    private SelectItem buildRangeComparatorDropDownMenu(String itemName, FormItemIfFunction ifFunc) {
+
+        LinkedHashMap<String, String> comparators = new LinkedHashMap<String, String>(2);
+        comparators.put("<", MSG.view_alert_definition_condition_editor_metric_range_comparator_inside_exclusive());
+        comparators.put(">", MSG.view_alert_definition_condition_editor_metric_range_comparator_outside_exclusive());
+        comparators.put("<=", MSG.view_alert_definition_condition_editor_metric_range_comparator_inside_inclusive());
+        comparators.put(">=", MSG.view_alert_definition_condition_editor_metric_range_comparator_outside_inclusive());
+
+        SelectItem comparatorSelection = new SelectItem(itemName, MSG
+            .view_alert_definition_condition_editor_metric_range_comparator());
+        comparatorSelection.setValueMap(comparators);
+        comparatorSelection.setDefaultValue("<");
+        comparatorSelection.setTooltip(MSG.view_alert_definition_condition_editor_metric_range_comparator_tooltip());
         comparatorSelection.setHoverWidth(200);
         comparatorSelection.setShowIfCondition(ifFunc);
         return comparatorSelection;

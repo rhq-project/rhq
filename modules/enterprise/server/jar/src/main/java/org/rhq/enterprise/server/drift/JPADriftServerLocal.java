@@ -33,6 +33,7 @@ import org.rhq.core.domain.drift.JPADrift;
 import org.rhq.core.domain.drift.JPADriftChangeSet;
 import org.rhq.core.domain.drift.JPADriftFile;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.plugin.pc.drift.DriftChangeSetSummary;
 
 /**
  * The SLSB methods needed to support the JPA (RHQ Default) Drift Server Plugin.
@@ -85,7 +86,7 @@ public interface JPADriftServerLocal {
      * @param data
      * @throws Exception
      */
-    void persistDriftFileData(JPADriftFile driftFile, InputStream data) throws Exception;
+    void persistDriftFileData(JPADriftFile driftFile, InputStream data, long numBytes) throws Exception;
 
     /**
      * This method stores the provided change-set file for the resource. The version will be incremented based
@@ -94,9 +95,10 @@ public interface JPADriftServerLocal {
      *  
      * @param resourceId The resource for which the change-set is being reported.
      * @param changeSetZip The change-set zip file
+     * @return a summary of the change set that was persisted
      * @throws Exception
      */
-    void storeChangeSet(Subject subject, int resourceId, File changeSetZip) throws Exception;
+    DriftChangeSetSummary storeChangeSet(Subject subject, int resourceId, File changeSetZip) throws Exception;
 
     /**
      * This method stores the provided drift files. The files should correspond to requested drift files.
@@ -108,4 +110,23 @@ public interface JPADriftServerLocal {
      */
     void storeFiles(Subject subject, File filesZip) throws Exception;
 
+    /**
+     * SUPPORTS JPA DRIFT SERVER PLUGIN
+     * This is for internal use only - do not call it unless you know what you are doing.
+     * This purges all drift entities and changeset entities associated with the drift config.
+     */
+    void purgeByDriftConfigurationName(Subject subject, int resourceId, String driftConfigName) throws Exception;
+
+    /**
+     * SUPPORTS JPA DRIFT SERVER PLUGIN
+     * This will remove all drift files that are no longer referenced by drift entries. This is a maintenance method
+     * to help reclaim space on the backend.
+     * 
+     * @param subject
+     * @param purgeMillis 
+     * @return number of orphaned drife files that were removed
+     */
+    int purgeOrphanedDriftFiles(Subject subject, long purgeMillis);
+
+    String getDriftFileBits(String hash);
 }

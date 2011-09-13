@@ -106,6 +106,12 @@
          <version>${project.version}</version>
       </dependency>
 
+       <dependency>
+           <groupId>com.googlecode.java-diff-utils</groupId>
+           <artifactId>diffutils</artifactId>
+           <version>1.2.1</version>
+       </dependency>
+
       <!--================ Test Deps ================-->
 
       <!-- Note, the test deps are intentionally placed above the other scoped deps because of classpath
@@ -568,6 +574,36 @@ Build-Jdk=${java.version}
 Build-OS-Name=${os.name}
 Build-OS-Version=${os.version}
 </echo>
+                     </tasks>
+                  </configuration>
+                  <goals>
+                     <goal>run</goal>
+                  </goals>
+               </execution>
+
+            </executions>
+         </plugin>
+
+         <!--  in order to get JMS to work properly in embedded test container, extract jms-rs.rar classes -->
+         <plugin>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <executions>
+
+               <execution>
+                  <id>Extract JMS classes from RAR needed for JMS tests</id>
+                  <phase>process-classes</phase>
+                  <configuration>
+                     <tasks>
+                        <unzip src="src/test/resources/jms-ra.rar" dest="target">
+                           <patternset>
+                              <include name="jms-ra.jar"/>
+                           </patternset>
+                        </unzip>
+                        <unzip src="target/jms-ra.jar" dest="target/test-classes">
+                           <patternset>
+                              <include name="org/**"/>
+                           </patternset>
+                        </unzip>
                      </tasks>
                   </configuration>
                   <goals>

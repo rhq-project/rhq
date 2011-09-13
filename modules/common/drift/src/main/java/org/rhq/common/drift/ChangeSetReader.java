@@ -19,12 +19,44 @@
 
 package org.rhq.common.drift;
 
-public interface ChangeSetReader extends Iterable<DirectoryEntry> {
+/**
+ * Reads change set file in a sequential fashion. Note that class extends {@link Iterable}
+ * which means you can iterate over change set files as follows:
+ * <pre>
+ *     ChangeSetReader reader = ...
+ *     for (FileEntry entry : reader) {
+ *         ...
+ *     }
+ * </pre>
+ */
+public interface ChangeSetReader extends Iterable<FileEntry> {
 
+    /**
+     * Returns the headers from change set file. This method can be called multiple times.
+     * Given a properly formatted change set file, this method should never return null.
+     *
+     * @return The change set headers
+     *
+     * @throws ChangeSetReaderException If an error occurs reading the file or the headers
+     * are not formatted correctly.
+     */
     Headers getHeaders() throws ChangeSetReaderException;
 
-    DirectoryEntry readDirectoryEntry() throws ChangeSetReaderException;
+    /**
+     * Read and return the next file entry or null if the end of the file has been reached.
+     *
+     * @return The next file entry
+     *
+     * @throws ChangeSetReaderException if an IO error occurs or if the file entry is not
+     * properly formatted.
+     */
+    FileEntry read() throws ChangeSetReaderException;
 
+    /**
+     * Closes the reader.
+     *
+     * @throws ChangeSetReaderException if an IO error occurs
+     */
     void close() throws ChangeSetReaderException;
 
 }

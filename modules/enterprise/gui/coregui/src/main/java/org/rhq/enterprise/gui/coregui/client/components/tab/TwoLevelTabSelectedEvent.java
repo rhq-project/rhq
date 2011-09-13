@@ -30,16 +30,16 @@ public class TwoLevelTabSelectedEvent extends GwtEvent<TwoLevelTabSelectedHandle
 
     private String id;
     private String subTabId;
-
     private int tabNum;
-
     private Canvas subTabPane;
+    private String historyToken;
 
-    public TwoLevelTabSelectedEvent(String id, String subTabId, int tabNum, Canvas subTabPane) {
+    public TwoLevelTabSelectedEvent(String id, String subTabId, int tabNum, Canvas subTabPane, String historyToken) {
         this.id = id;
         this.subTabId = subTabId;
         this.tabNum = tabNum;
         this.subTabPane = subTabPane;
+        this.historyToken = historyToken;
     }
 
     public String getId() {
@@ -74,6 +74,13 @@ public class TwoLevelTabSelectedEvent extends GwtEvent<TwoLevelTabSelectedHandle
         this.subTabPane = subTabPane;
     }
 
+    public String getHistoryToken() {
+        return historyToken;
+    }
+
+    public void setHistoryToken(String historyToken) {
+        this.historyToken = historyToken;
+    }
 
     @Override
     public Type<TwoLevelTabSelectedHandler> getAssociatedType() {
@@ -84,6 +91,5 @@ public class TwoLevelTabSelectedEvent extends GwtEvent<TwoLevelTabSelectedHandle
     protected void dispatch(TwoLevelTabSelectedHandler handler) {
         handler.onTabSelected(this);
     }
-
 
 }

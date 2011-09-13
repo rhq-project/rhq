@@ -40,6 +40,7 @@ import com.smartgwt.client.widgets.events.MouseOverEvent;
 import com.smartgwt.client.widgets.events.MouseOverHandler;
 
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
@@ -64,6 +65,9 @@ public class PortletWindow extends LocatableWindow {
 
     // The actual portlet content view
     private Portlet view;
+
+    // The context applied to the portlet instance 
+    private EntityContext context;
 
     private static final ClickHandler NO_OP_HANDLER = new ClickHandler() {
         public void onClick(ClickEvent clickEvent) {
@@ -108,11 +112,14 @@ public class PortletWindow extends LocatableWindow {
         }
     };
 
-    public PortletWindow(String locatorId, DashboardView dashboardView, DashboardPortlet dashboardPortlet) {
+    public PortletWindow(String locatorId, DashboardView dashboardView, DashboardPortlet dashboardPortlet,
+        EntityContext context) {
         super(locatorId);
 
         this.dashboardView = dashboardView;
         this.storedPortlet = dashboardPortlet;
+        this.context = context;
+
         setEdgeSize(2);
 
         //        if (!showFrame) {
@@ -204,7 +211,7 @@ public class PortletWindow extends LocatableWindow {
         super.onInit();
 
         // each portletWindow wraps a single portlet view, so just extend the window's locatorId with a static id
-        view = PortletFactory.buildPortlet(extendLocatorId("View"), this, storedPortlet);
+        view = PortletFactory.buildPortlet(extendLocatorId("View"), this, storedPortlet, context);
 
         Canvas canvas = (Canvas) view;
         addItem(canvas);

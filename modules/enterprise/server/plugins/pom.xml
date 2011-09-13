@@ -83,8 +83,12 @@
     <module>alert-cli</module>
     <module>alert-log4j</module>
     <module>cobbler</module>
-    <module>drift-rhq</module>    
+    <module>drift-rhq</module>
+    <!-- spinder,jsanda 8/26/11: Disabled from list of server plugins as
+           i)not ready for release 
+           ii)causes plugin dependency issues with brew.       
     <module>drift-mongodb</module>
+    -->
     <module>filetemplate-bundle</module>
     <module>ant-bundle</module>
     <module>validate-all-serverplugins</module>

@@ -16,12 +16,12 @@
     <description>Server side plugin providing RHQ Backend for drift management</description>
 
     <scm>
-        <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/plugins/drift/</connection>
-        <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/plugins/drift/</developerConnection>
+        <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/plugins/drift-rhq/</connection>
+        <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/plugins/drift-rhq/</developerConnection>
     </scm>
 
     <properties>
-        <scm.module.path>modules/enterprise/server/plugins/drift/</scm.module.path>
+        <scm.module.path>modules/enterprise/server/plugins/drift-rhq/</scm.module.path>
     </properties>
 
     <dependencies>

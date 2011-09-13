@@ -43,6 +43,33 @@ import javax.persistence.Table;
 public class JPADriftFile extends AbstractJPADriftFile implements Serializable, DriftFile {
     private static final long serialVersionUID = 1L;
 
+    /*
+     * This should be proper JPSQL to delete drift file entities if there are no drift entities referencing them:
+     * 
+     * DELETE FROM JPADriftFile f
+     *  WHERE f.hashId NOT IN (SELECT d1.oldDriftFile FROM JPADrift d1)
+     *    AND f.hashId NOT IN (SELECT d2.newDriftFile FROM JPADrift d2)
+     *
+     * However, Hibernate erroneously translates this to:
+     * 
+     * delete from RHQ_DRIFT_FILE
+     *  where (HASH_ID not in (select jpadrift1_.OLD_DRIFT_FILE from RHQ_DRIFT jpadrift1_))
+     *    and (jpadriftfi0_.HASH_ID not in  (select jpadrift2_.NEW_DRIFT_FILE from RHQ_DRIFT jpadrift2_))
+     *
+     * Notice "jpadriftfi0_" SHOULD be the alias of RHQ_DRIFT_FILE, but it is not being defined by Hibernate.
+     * Thus, that alias is unknown and a parse error occurs in the database engine.
+     * 
+     * Therefore, we need to define a native query that we know works. This should be periodically executed
+     * in order to purge unused drift files.
+     * 
+     * Note that we also add the AND clause to also check for CTIME. 
+     */
+    public static final String NATIVE_DELETE_ORPHANED_DRIFT_FILES = "" //
+        + "DELETE FROM RHQ_DRIFT_FILE " //
+        + " WHERE (HASH_ID NOT IN (SELECT OLD_DRIFT_FILE FROM RHQ_DRIFT)) " //
+        + "   AND (HASH_ID NOT IN (SELECT NEW_DRIFT_FILE FROM RHQ_DRIFT)) " //
+        + "   AND CTIME < ?";
+
     // this is a hash/digest that should uniquely identify the content
     @Id
     @Column(name = "HASH_ID", nullable = false)

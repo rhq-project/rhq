@@ -139,7 +139,7 @@ public class HistoryGroupResourceConfigurationSettings extends LocatableVLayout 
                                         resourceId, label, configuration);
                                     if (configuration == null || configuration.getProperties().isEmpty()) {
                                         throw new RuntimeException(
-                                            "One or more null or empty member connection settings was returned by the Server.");
+                                            "The server did not return the configuration for one or more member resources.");
                                     }
                                     memberConfigurations.add(memberConfiguration);
                                 }

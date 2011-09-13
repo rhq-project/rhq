@@ -19,7 +19,6 @@
 package org.rhq.enterprise.server.drift;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
@@ -35,8 +34,6 @@ import org.testng.annotations.Test;
 
 import org.rhq.common.drift.ChangeSetWriter;
 import org.rhq.common.drift.ChangeSetWriterImpl;
-import org.rhq.common.drift.DirectoryEntry;
-import org.rhq.common.drift.FileEntry;
 import org.rhq.common.drift.Headers;
 import org.rhq.core.clientapi.agent.drift.DriftAgentService;
 import org.rhq.core.clientapi.server.drift.DriftServerService;
@@ -68,7 +65,6 @@ import org.rhq.enterprise.server.util.LookupUtil;
 
 import static org.apache.commons.io.FileUtils.deleteDirectory;
 import static org.apache.commons.io.FileUtils.toFile;
-import static org.apache.commons.io.IOUtils.write;
 import static org.rhq.common.drift.FileEntry.addedFileEntry;
 import static org.rhq.common.drift.FileEntry.changedFileEntry;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
@@ -154,7 +150,7 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
 
         File changeSet1 = new File(changeSetsDir, "changeset-1.txt");
         ChangeSetWriter writer = new ChangeSetWriterImpl(changeSet1, headers);
-        writer.writeDirectoryEntry(new DirectoryEntry("test").add(addedFileEntry("file-1", file1Hash)));
+        writer.write(addedFileEntry("test/file-1", file1Hash));
         writer.close();
 
         File changeSet1Zip = new File(changeSetsDir, "changeset-1.zip");
@@ -183,7 +179,7 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
         File changeSet2 = new File(changeSetsDir, "changeset-2.txt");
 
         writer = new ChangeSetWriterImpl(changeSet2, headers);
-        writer.writeDirectoryEntry(new DirectoryEntry("test").add(changedFileEntry("file-1", file1Hash, modifiedFile1Hash)));
+        writer.write(changedFileEntry("test/file-1", file1Hash, modifiedFile1Hash));
         writer.close();
 
         File changeSet2Zip = new File(changeSetsDir, "changeset-2.zip");

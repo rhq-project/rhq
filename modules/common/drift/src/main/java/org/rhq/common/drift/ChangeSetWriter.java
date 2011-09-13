@@ -22,19 +22,17 @@ package org.rhq.common.drift;
 import java.io.IOException;
 
 /**
- * Generates a drift change set file. A change set is stored as a UTF-8 text file. It
- * consists of file paths with some associated meta data. Files are grouped by directory.
- * The meta data includes the SHA-256 hash, the old SHA-256 hash (if one exists), the
- * file name, and a single character code indicating whether the file has been added,
- * changed, or removed in this change set. The codes are taken from
+ * Generates a change set file. A change set is stored as a UTF-8 text file. It consists of
+ * file paths with some associated meta data. The meta data includes the SHA-256 hash, the
+ * old SHA-256 hash (if one exists), and a single character code indicating whether the file
+ * has been added, changed, or removed in the change set. The codes are taken from
  * {@link org.rhq.core.domain.drift.DriftCategory DriftCategory}.
  * <br/>
  * <br/>
  * The current format of the change set file is:
  * <pre>
- * HEADER
- * DRIFT_ENTRY
- *     FILE_ENTRY (1..N)
+ * HEADERS
+ * FILE_ENTRY (1..N)
  * </pre>
  * where HEADER corresponds to {@link Headers} and the header fields are written out in the
  * following order:
@@ -46,8 +44,6 @@ import java.io.IOException;
  *   <li>change set type flag indicating whether this is a coverage or drift changeset</li>
  * </ul>
  * <br/>
- * DRIFT_ENTRY has two field that are space delimited. The first is the number of files
- * included in DRIFT_ENTRY. The second is the relative path of the directory, that is
  * <br/>
  * FILE_ENTRY has four, space-delimited fields - type, new_sha, old_sha, file_name.<br/>
  * Here is an example change set:
@@ -57,26 +53,31 @@ import java.io.IOException;
  * 2345
  * Core Server JARs
  * /var/lib/myserver
- * 2 lib
- * C 1706b5c18e4358041b463995efc30f8f721766fab0e018d50d85978b46df013c 1536b5c18e4358041b463995efc30f8f721766fab0e018d50d85978b46df013c foo.jar
- * A 2706b5c18e4358041b463995efc30f8f721766fab0e018d50d85978b46df013a 0 bar.jar
- * 1 conf
- * R 0 2206b5af8e4358041b463995efc30f8f721766fab0e018d50d85978b46df013a foo.conf
+ * C 1706b5c18e4358041b463995efc30f8f721766fab0e018d50d85978b46df013c 1536b5c18e4358041b463995efc30f8f721766fab0e018d50d85978b46df013c lib/foo.jar
+ * A 2706b5c18e4358041b463995efc30f8f721766fab0e018d50d85978b46df013a 0 lib/bar.jar
+ * R 0 2206b5af8e4358041b463995efc30f8f721766fab0e018d50d85978b46df013a conf/foo.conf
  * </pre>
  *
- * For the first directory entry, notice that the old_sha field has a value of 0 for bar.jar.
- * This is because it is a new file, and there is no previous SHA-256 hash for the file. For
- * the second directory entry, notice that the new_sha field has a value of 0 for foo.conf.
- * This is because the file has been removed and so there is no new SHA-256 hash.
+ * Note that the file paths in each entry are relative to the path in the base directory
+ * header. For the entry with a path of lib/bar.jar notice that the old_sha field has a
+ * value of 0. This is because it is a new file, and there is no previous SHA-256 hash for
+ * the file. For the entry with conf/foo.conf as its path, notices that the new_sha field
+ * has a value of 0 for foo.conf. This is because the file has been deleted and so there is
+ * no new SHA-256 hash.
+ * <p/>
+ * Lastly and importantly, the format of this file is still subject to change. Additional
+ * headers may be added, maybe allowing for optional headers. The format of the file entry
+ * may change as well. Currently a place holder value of 0 is used to indicate the lack
+ * of a SHA-256 hash. That place holder is not really needed and may go away.
  */
 public interface ChangeSetWriter {
 
     /**
      *
-     * @param dirEntry
+     * @param entry
      * @throws IOException
      */
-    void writeDirectoryEntry(DirectoryEntry dirEntry) throws IOException;
+    void write(FileEntry entry) throws IOException;
 
     void close() throws IOException;
 

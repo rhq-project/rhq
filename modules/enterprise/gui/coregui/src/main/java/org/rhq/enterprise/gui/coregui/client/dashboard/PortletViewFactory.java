@@ -18,10 +18,12 @@
  */
 package org.rhq.enterprise.gui.coregui.client.dashboard;
 
+import org.rhq.core.domain.common.EntityContext;
+
 /**
- * @author Greg Hinkle
+ * @author Jay Shaughnessy
  */
 public interface PortletViewFactory {
 
-    Portlet getInstance(String locatorId);
+    Portlet getInstance(String locatorId, EntityContext context);
 }

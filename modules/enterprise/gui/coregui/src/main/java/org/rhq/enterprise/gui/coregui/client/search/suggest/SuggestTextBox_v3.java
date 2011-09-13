@@ -30,7 +30,6 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.dom.client.HandlesAllKeyEvents;
 import com.google.gwt.event.dom.client.HasAllFocusHandlers;
-import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.dom.client.KeyPressEvent;
@@ -62,12 +61,16 @@ import com.google.gwt.user.client.ui.SuggestOracle.Suggestion;
 
 import org.rhq.core.domain.search.SearchSuggestion;
 import org.rhq.core.domain.search.SearchSuggestion.Kind;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.SearchGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.search.AbstractSearchBar;
 
 public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocusHandlers, HasValue<String>,
     HasSelectionHandlers<Suggestion> {
+
+    private static final Messages MSG = CoreGUI.getMessages();
 
     private final AbstractSearchBar searchBar;
     private final SearchSuggestOracle oracle;
@@ -101,6 +104,8 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
         // suggestionMenu must be created before suggestionPopup, because
         // suggestionMenu is suggestionPopup's widget
         suggestionMenu = new SuggestionMenu(true);
+        // let the text box maintain focus when navigating the menu
+        suggestionMenu.setFocusOnHoverEnabled(false);
         suggestionPopup = createPopup();
 
         // need to fork PopupPanel to access the animation type
@@ -189,59 +194,41 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
         } else {
             suggestionPopup.hide();
         }
+
+        setFocus(true);
     }
 
     private void addEventsToTextBox() {
         class TextBoxEvents extends HandlesAllKeyEvents implements ValueChangeHandler<String>, ClickHandler {
 
             private boolean isInstructionalCommentSelected() {
+                if (!suggestionPopup.isAttached() || suggestionMenu.getSelectedItemIndex() < 0) {
+                    return false;
+                }
+
                 SearchSuggestion searchSuggestion = suggestionMenu.getSearchSuggestion();
                 Kind kind = searchSuggestion.getKind();
                 return kind == Kind.InstructionalTextComment;
             }
 
+            // We used to allow clicking and keypress to select from the suggestion list. But this
+            // could be confusing because we keep focus in the text box.  A return would likely mean
+            // the user wants to submit the current pattern in the text box for search. But if the mouse
+            // was hovering over a suggest menu item, which could be accidental as the menu can be large and
+            // pops up automatically, his pattern would get replaced by a random suggestion entry and then
+            // that would get submitted.  So, we now only accept clicking to select from the suggest menu
+            // and we assume a return means the user wants to submit the current text box pattern.
             public void onClick(ClickEvent event) {
+
+                // if the user clicked on one of our helpful little messages then just ignore it
+                if (isInstructionalCommentSelected()) {
+                    return;
+                }
+
                 handleSuggestions();
             }
 
             public void onKeyDown(KeyDownEvent event) {
-                /*
-                 * Make sure that the menu is actually showing.  These
-                 * keystrokes are only relevant when choosing a suggestion.
-                 */
-                if (suggestionPopup.isAttached()) {
-                    switch (event.getNativeKeyCode()) {
-                    case KeyCodes.KEY_DOWN:
-                        suggestionMenu.moveSelectionDown();
-                        if (isInstructionalCommentSelected()) {
-                            if (suggestionMenu.getNumItems() == 1) {
-                                suggestionMenu.selectItem(null);
-                            } else {
-                                suggestionMenu.moveSelectionDown();
-                            }
-                        }
-                        event.preventDefault();
-                        break;
-                    case KeyCodes.KEY_UP:
-                        suggestionMenu.moveSelectionUp();
-                        if (isInstructionalCommentSelected()) {
-                            if (suggestionMenu.getNumItems() == 1) {
-                                suggestionMenu.selectItem(null);
-                            } else {
-                                suggestionMenu.moveSelectionUp();
-                            }
-                        }
-                        event.preventDefault();
-                        break;
-                    case KeyCodes.KEY_ENTER:
-                        if (suggestionMenu.getSelectedItemIndex() < 0) {
-                            suggestionPopup.hide();
-                        } else {
-                            suggestionMenu.doSelectedItemAction();
-                        }
-                        break;
-                    }
-                }
                 delegateEvent(SuggestTextBox_v3.this, event);
             }
 
@@ -398,6 +385,7 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
             setStyleName("");
         }
 
+        @SuppressWarnings("unused")
         public void doSelectedItemAction() {
             // In order to perform the action of the item that is currently
             // selected, the menu must be showing.
@@ -680,8 +668,8 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
                 }
 
                 public void onFailure(Throwable caught) {
-                    SearchSuggestion errorInform = new SearchSuggestion(Kind.InstructionalTextComment, caught
-                        .getMessage());
+                    SearchSuggestion errorInform = new SearchSuggestion(Kind.InstructionalTextComment, MSG
+                        .view_searchBar_instructional_failSuggest());
                     adaptAndHandle(errorInform);
                 }
 
@@ -689,6 +677,10 @@ public class SuggestTextBox_v3 extends Composite implements HasText, HasAllFocus
                     List<SearchSuggestionOracleAdapter> adaptedResults = new java.util.ArrayList<SearchSuggestionOracleAdapter>();
                     for (SearchSuggestion next : searchSuggestionResults) {
                         adaptedResults.add(new SearchSuggestionOracleAdapter(next));
+                    }
+                    if (adaptedResults.isEmpty()) {
+                        adaptedResults.add(new SearchSuggestionOracleAdapter(new SearchSuggestion(
+                            Kind.InstructionalTextComment, MSG.view_searchBar_instructional_noSuggest())));
                     }
                     SuggestOracle.Response response = new SuggestOracle.Response(adaptedResults);
                     callback.onSuggestionsReady(request, response);

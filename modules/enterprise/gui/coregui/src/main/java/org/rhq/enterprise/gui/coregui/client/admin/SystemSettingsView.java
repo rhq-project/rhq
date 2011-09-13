@@ -87,6 +87,7 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
         String TraitPurge = "TRAIT_PURGE";
         String RtDataPurge = "RT_DATA_PURGE";
         String EventPurge = "EVENT_PURGE";
+        String DriftFilePurge = "DRIFT_FILE_PURGE";
         String DataReindex = "DATA_REINDEX_NIGHTLY";
         String BaselineFrequency = "CAM_BASELINE_FREQUENCY";
         String BaselineDataSet = "CAM_BASELINE_DATASET";
@@ -105,7 +106,6 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
         String LDAPBindPW = "CAM_LDAP_BIND_PW";
 
         String ACTIVE_DRIFT_PLUGIN = "ACTIVE_DRIFT_PLUGIN";
-        String DRIFT_PLUGINS = "DRIFT_PLUGINS";
     }
 
     public SystemSettingsView(String locatorId) {
@@ -154,8 +154,8 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
                         value = convertMillisToHours(value);
                     } else if (Constant.AvailabilityPurge.equals(name) || Constant.AlertPurge.equals(name)
                         || Constant.TraitPurge.equals(name) || Constant.RtDataPurge.equals(name)
-                        || Constant.EventPurge.equals(name) || Constant.BaselineFrequency.equals(name)
-                        || Constant.BaselineDataSet.equals(name)) {
+                        || Constant.EventPurge.equals(name) || Constant.DriftFilePurge.equals(name)
+                        || Constant.BaselineFrequency.equals(name) || Constant.BaselineDataSet.equals(name)) {
                         value = convertMillisToDays(value);
                     } else if (Constant.EnableAgentAutoUpdate.equals(name)) {
                         if (value.trim().length() == 0) {
@@ -251,6 +251,7 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
                 } else if (Constant.AvailabilityPurge.equals(simple.getName())
                     || Constant.AlertPurge.equals(simple.getName()) || Constant.TraitPurge.equals(simple.getName())
                     || Constant.RtDataPurge.equals(simple.getName()) || Constant.EventPurge.equals(simple.getName())
+                    || Constant.DriftFilePurge.equals(simple.getName())
                     || Constant.BaselineFrequency.equals(simple.getName())
                     || Constant.BaselineDataSet.equals(simple.getName())) {
                     value = convertDaysToMillis(value);
@@ -309,11 +310,10 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
      *               be converted to the types the definition will expect - for example,
      *               the JAAS setting will not be "LDAP" or "JDBC" as the server would know it,
      *               rather the value will be "true" or "false" (i.e. is ldap enabled or not?)
-     *
+     * @param driftPlugins the set of drift server plugins that are currently deployed
      * @return system settings config def
      */
-    private ConfigurationDefinition getSystemSettingsDefinition(Configuration config,
-        Map<String, String> driftPlugins) {
+    private ConfigurationDefinition getSystemSettingsDefinition(Configuration config, Map<String, String> driftPlugins) {
         ConfigurationDefinition def = new ConfigurationDefinition("sysset", MSG.view_adminConfig_systemSettings());
 
         ///////////////////////////////////
@@ -417,6 +417,14 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
         eventPurge.addConstraints(new IntegerRangeConstraint(Long.valueOf(1), null));
         eventPurge.setDefaultValue("14");
         def.put(eventPurge);
+
+        PropertyDefinitionSimple driftFilePurge = new PropertyDefinitionSimple(Constant.DriftFilePurge, MSG
+            .view_admin_systemSettings_DriftFilePurge_desc(), true, PropertySimpleType.INTEGER);
+        driftFilePurge.setDisplayName(MSG.view_admin_systemSettings_DriftFilePurge_name());
+        driftFilePurge.setPropertyGroupDefinition(dataManagerGroup);
+        driftFilePurge.addConstraints(new IntegerRangeConstraint(Long.valueOf(1), null));
+        driftFilePurge.setDefaultValue("31");
+        def.put(driftFilePurge);
 
         PropertyDefinitionSimple dataReindex = new PropertyDefinitionSimple(Constant.DataReindex, MSG
             .view_admin_systemSettings_DataReindex_desc(), true, PropertySimpleType.BOOLEAN);
@@ -530,20 +538,19 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
         ///////////////////////////////////////////
         // Drift Server Configuration Properties //
         ///////////////////////////////////////////
-        PropertyGroupDefinition driftGroup = new PropertyGroupDefinition("drift server");
-        driftGroup.setDisplayName("Drift Server Configuration Settings");
+        PropertyGroupDefinition driftGroup = new PropertyGroupDefinition("drift");
+        driftGroup.setDisplayName(MSG.view_admin_systemSettings_group_drift());
         driftGroup.setOrder(4);
         driftGroup.setDefaultHidden(false);
 
-        PropertyDefinitionSimple activeDriftServer = new PropertyDefinitionSimple("ACTIVE_DRIFT_PLUGIN",
-            "The drift server plugin that manages the persistence of drift-related entities and content", true,
-            PropertySimpleType.STRING);
-        activeDriftServer.setDisplayName("Active Drift Server Plugin");
+        PropertyDefinitionSimple activeDriftServer = new PropertyDefinitionSimple(Constant.ACTIVE_DRIFT_PLUGIN, MSG
+            .view_admin_systemSettings_ActiveDriftServerPlugin_desc(), true, PropertySimpleType.STRING);
+        activeDriftServer.setDisplayName(MSG.view_admin_systemSettings_ActiveDriftServerPlugin_name());
         activeDriftServer.setPropertyGroupDefinition(driftGroup);
 
         List<PropertyDefinitionEnumeration> options = new ArrayList<PropertyDefinitionEnumeration>();
         for (Map.Entry<String, String> entry : driftPlugins.entrySet()) {
-            options.add(new PropertyDefinitionEnumeration(entry.getValue(), entry.getKey())) ;
+            options.add(new PropertyDefinitionEnumeration(entry.getValue(), entry.getKey()));
         }
 
         activeDriftServer.setEnumeratedValues(options, false);
@@ -570,7 +577,7 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
     }
 
     private DynamicForm getServerDetails() {
-        DynamicForm form = new LocatableDynamicForm(extendLocatorId("serverDetails"));
+        final DynamicForm form = new LocatableDynamicForm(extendLocatorId("serverDetails"));
         form.setWidth100();
         form.setExtraSpace(15);
         form.setIsGroup(true);
@@ -624,21 +631,23 @@ public class SystemSettingsView extends LocatableVLayout implements PropertyValu
             @Override
             public void onSuccess(ServerDetails result) {
                 ProductInfo productInfo = result.getProductInfo();
-                productName.setValue(productInfo.getName());
-                productVersion.setValue(productInfo.getVersion());
-                productBuildNumber.setValue(productInfo.getBuildNumber());
+                form.setValue(productName.getName(), productInfo.getName());
+                form.setValue(productVersion.getName(), productInfo.getVersion());
+                form.setValue(productBuildNumber.getName(), productInfo.getBuildNumber());
 
-                HashMap<Detail, String> details = result.getDetails();
-                serverTimezone.setValue(details.get(ServerDetails.Detail.SERVER_TIMEZONE));
-                serverTime.setValue(details.get(ServerDetails.Detail.SERVER_LOCAL_TIME));
-                serverInstallDir.setValue(details.get(ServerDetails.Detail.SERVER_INSTALL_DIR));
-                dbUrl.setValue(details.get(ServerDetails.Detail.DATABASE_CONNECTION_URL));
-                dbProductName.setValue(details.get(ServerDetails.Detail.DATABASE_PRODUCT_NAME));
-                dbProductVersion.setValue(details.get(ServerDetails.Detail.DATABASE_PRODUCT_VERSION));
-                dbDriverName.setValue(details.get(ServerDetails.Detail.DATABASE_DRIVER_NAME));
-                dbDriverVersion.setValue(details.get(ServerDetails.Detail.DATABASE_DRIVER_VERSION));
-                currentMeasRawTable.setValue(details.get(ServerDetails.Detail.CURRENT_MEASUREMENT_TABLE));
-                nextMeasTableRotation.setValue(details.get(ServerDetails.Detail.NEXT_MEASUREMENT_TABLE_ROTATION));
+                Map<Detail, String> details = result.getDetails();
+                form.setValue(serverTimezone.getName(), details.get(ServerDetails.Detail.SERVER_TIMEZONE));
+                form.setValue(serverTime.getName(), details.get(ServerDetails.Detail.SERVER_LOCAL_TIME));
+                form.setValue(serverInstallDir.getName(), details.get(ServerDetails.Detail.SERVER_INSTALL_DIR));
+                form.setValue(dbUrl.getName(), details.get(ServerDetails.Detail.DATABASE_CONNECTION_URL));
+                form.setValue(dbProductName.getName(), details.get(ServerDetails.Detail.DATABASE_PRODUCT_NAME));
+                form.setValue(dbProductVersion.getName(), details.get(ServerDetails.Detail.DATABASE_PRODUCT_VERSION));
+                form.setValue(dbDriverName.getName(), details.get(ServerDetails.Detail.DATABASE_DRIVER_NAME));
+                form.setValue(dbDriverVersion.getName(), details.get(ServerDetails.Detail.DATABASE_DRIVER_VERSION));
+                form.setValue(currentMeasRawTable.getName(), details
+                    .get(ServerDetails.Detail.CURRENT_MEASUREMENT_TABLE));
+                form.setValue(nextMeasTableRotation.getName(), details
+                    .get(ServerDetails.Detail.NEXT_MEASUREMENT_TABLE_ROTATION));
             }
 
             @Override

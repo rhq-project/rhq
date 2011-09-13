@@ -59,6 +59,10 @@ public class DriftFileBean implements MessageListener {
     @Override
     public void onMessage(Message message) {
         try {
+            if (log.isDebugEnabled()) {
+                log.debug("Received drift file message");
+            }
+
             ObjectMessage msg = (ObjectMessage) message;
             DriftUploadRequest request = (DriftUploadRequest) msg.getObject();
 
@@ -95,7 +99,7 @@ public class DriftFileBean implements MessageListener {
 
         } catch (Throwable t) {
             // catch Throwable here, don't let anything escape as bad things can happen wrt XA/2PhaseCommit  
-            log.error(t);
+            log.error("Error processing drift file message", t);
         }
     }
 

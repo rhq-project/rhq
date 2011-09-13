@@ -22,6 +22,7 @@ import static org.rhq.core.clientapi.shared.PluginDescriptorUtil.toPluginDescrip
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
 
 import java.util.HashMap;
 import java.util.List;
@@ -42,7 +43,7 @@ import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition;
 import org.rhq.core.domain.drift.DriftConfiguration.BaseDirectory;
-import org.rhq.core.domain.drift.DriftConfiguration.Filter;
+import org.rhq.core.domain.drift.Filter;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext;
 import org.rhq.core.domain.resource.ResourceType;
 
@@ -651,7 +652,7 @@ public class PluginMetadataParserTest {
                 assertNotNull(includes, "Expected to find default property set for <includes>");
                 assertEquals(includes.size(), 2, "Expected <includes> property list to have two property elements.");
 
-                DriftConfiguration.Filter include1 = includes.get(0);
+                Filter include1 = includes.get(0);
                 String path1 = include1.getPath();
                 String pattern1 = include1.getPattern();
 
@@ -661,7 +662,7 @@ public class PluginMetadataParserTest {
                 assertNotNull(pattern1, "Expected to find a simple property for the pattern of the first <include>");
                 assertEquals(pattern1, "*.ijar", "The value is wrong for the pattern of the first <include>");
 
-                DriftConfiguration.Filter include2 = includes.get(1);
+                Filter include2 = includes.get(1);
                 String path2 = include2.getPath();
                 String pattern2 = include2.getPattern();
 
@@ -691,7 +692,7 @@ public class PluginMetadataParserTest {
                 assertNotNull(excludes, "Expected to find default property set for <excludes>");
                 assertEquals(excludes.size(), 2, "Expected <excludes> property list to have two property elements.");
 
-                DriftConfiguration.Filter exclude1 = excludes.get(0);
+                Filter exclude1 = excludes.get(0);
                 String path1 = exclude1.getPath();
                 String pattern1 = exclude1.getPattern();
 
@@ -701,7 +702,7 @@ public class PluginMetadataParserTest {
                 assertNotNull(pattern1, "Expected to find a simple property for the pattern of the first <exclude>");
                 assertEquals(pattern1, "*.ejar", "The value is wrong for the pattern of the first <exclude>");
 
-                DriftConfiguration.Filter exclude2 = excludes.get(1);
+                Filter exclude2 = excludes.get(1);
                 String path2 = exclude2.getPath();
                 String pattern2 = exclude2.getPattern();
 
@@ -728,7 +729,7 @@ public class PluginMetadataParserTest {
                 assertNotNull(includes, "Expected to find default property set for <includes>");
                 assertEquals(includes.size(), 2, "Expected <includes> property list to have two property elements.");
 
-                DriftConfiguration.Filter include1 = includes.get(0);
+                Filter include1 = includes.get(0);
                 String path1 = include1.getPath();
                 String pattern1 = include1.getPattern();
 
@@ -738,7 +739,7 @@ public class PluginMetadataParserTest {
                 assertNotNull(pattern1, "Expected to find a simple property for the pattern of the first <include>");
                 assertEquals(pattern1, "*.ijar", "The value is wrong for the pattern of the first <include>");
 
-                DriftConfiguration.Filter include2 = includes.get(1);
+                Filter include2 = includes.get(1);
                 String path2 = include2.getPath();
                 String pattern2 = include2.getPattern();
 
@@ -753,7 +754,7 @@ public class PluginMetadataParserTest {
                 assertNotNull(excludes, "Expected to find default property set for <excludes>");
                 assertEquals(excludes.size(), 2, "Expected <excludes> property list to have two property elements.");
 
-                DriftConfiguration.Filter exclude1 = excludes.get(0);
+                Filter exclude1 = excludes.get(0);
                 path1 = exclude1.getPath();
                 pattern1 = exclude1.getPattern();
 
@@ -763,7 +764,7 @@ public class PluginMetadataParserTest {
                 assertNotNull(pattern1, "Expected to find a simple property for the pattern of the first <exclude>");
                 assertEquals(pattern1, "*.ejar", "The value is wrong for the pattern of the first <exclude>");
 
-                DriftConfiguration.Filter exclude2 = excludes.get(1);
+                Filter exclude2 = excludes.get(1);
                 path2 = exclude2.getPath();
                 pattern2 = exclude2.getPattern();
 
@@ -823,7 +824,7 @@ public class PluginMetadataParserTest {
             "The value is wrong for the <name> property that represents the drift configuration name");
 
         assertNotNull(enabled, "Expected to find simple property <enabled> for the drift configuration");
-        assertFalse(enabled.getBooleanValue(), "The <enabled> property should be set to a default value of false");
+        assertTrue(enabled.getBooleanValue(), "The <enabled> property should be set to a default value of true");
 
         test.assertDriftTemplate(driftTemplate);
     }

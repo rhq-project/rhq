@@ -22,6 +22,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.alert.definitions;
 
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -38,12 +39,15 @@ import com.smartgwt.client.widgets.events.CloseClientEvent;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.alert.AlertCondition;
+import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertFormatUtility;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.MetadataType;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
@@ -55,7 +59,7 @@ public class ConditionsEditor extends LocatableVLayout {
 
     private ResourceType resourceType;
     private HashSet<AlertCondition> conditions;
-    private Table table;
+    private Table<ConditionDataSource> table;
 
     public ConditionsEditor(String locatorId, ResourceType resourceType, HashSet<AlertCondition> conditions) {
         super(locatorId);
@@ -110,36 +114,63 @@ public class ConditionsEditor extends LocatableVLayout {
         protected void configureTable() {
             addTableAction(this.extendLocatorId("add"), "Add", null, new AbstractTableAction() {
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    final Window winModal = new LocatableWindow(ConditionsEditor.this
-                        .extendLocatorId("newConditionEditorWindow"));
-                    winModal.setTitle(MSG.view_alert_common_tab_conditions_modal_title());
-                    winModal.setOverflow(Overflow.VISIBLE);
-                    winModal.setShowMinimizeButton(false);
-                    winModal.setIsModal(true);
-                    winModal.setShowModalMask(true);
-                    winModal.setAutoSize(true);
-                    winModal.setAutoCenter(true);
-                    //winModal.setShowResizer(true);
-                    //winModal.setCanDragResize(true);
-                    winModal.centerInPage();
-                    winModal.addCloseClickHandler(new CloseClickHandler() {
-                        @Override
-                        public void onCloseClick(CloseClientEvent event) {
-                            winModal.markForDestroy();
-                        }
-                    });
 
-                    NewConditionEditor newConditionEditor = new NewConditionEditor(
-                        extendLocatorId("newConditionEditor"), conditions, ConditionsEditor.this.resourceType,
-                        new Runnable() {
+                    // we need the drift config templates (if there are any) so we know if we should offer drift conditions as an option
+                    ResourceTypeRepository.Cache.getInstance().getResourceTypes(resourceType.getId(),
+                        EnumSet.of(MetadataType.driftConfigurationTemplates),
+                        new ResourceTypeRepository.TypeLoadedCallback() {
                             @Override
-                            public void run() {
-                                winModal.markForDestroy();
-                                refresh();
+                            public void onTypesLoaded(ResourceType type) {
+                                // the resource type repo caches types - so if this resource type was already cached prior
+                                // to the conditions editor component created (which it probably was) then we are getting the same
+                                // exact instance that we had before (resourceType). When this happens, great! Our resourceType
+                                // instance will have its drift config templates populated. But, I'm being paranoid. If somehow
+                                // we have a resourceType that is different than the type being passed to us, we need to copy
+                                // the drift config.
+                                if (type != resourceType) {
+                                    // paranoia, unsure if this is needed but clear out any old drift config still hanging around
+                                    if (resourceType.getDriftConfigurationTemplates() != null) {
+                                        resourceType.getDriftConfigurationTemplates().clear();
+                                    }
+                                    // if the newly loaded resource type supports drift, put it in our type object
+                                    if (type.getDriftConfigurationTemplates() != null) {
+                                        for (ConfigurationTemplate ct : type.getDriftConfigurationTemplates()) {
+                                            resourceType.addDriftConfigurationTemplate(ct);
+                                        }
+                                    }
+                                }
+                                final Window winModal = new LocatableWindow(ConditionsEditor.this
+                                    .extendLocatorId("newConditionEditorWindow"));
+                                winModal.setTitle(MSG.view_alert_common_tab_conditions_modal_title());
+                                winModal.setOverflow(Overflow.VISIBLE);
+                                winModal.setShowMinimizeButton(false);
+                                winModal.setIsModal(true);
+                                winModal.setShowModalMask(true);
+                                winModal.setAutoSize(true);
+                                winModal.setAutoCenter(true);
+                                //winModal.setShowResizer(true);
+                                //winModal.setCanDragResize(true);
+                                winModal.centerInPage();
+                                winModal.addCloseClickHandler(new CloseClickHandler() {
+                                    @Override
+                                    public void onCloseClick(CloseClientEvent event) {
+                                        winModal.markForDestroy();
+                                    }
+                                });
+
+                                NewConditionEditor newConditionEditor = new NewConditionEditor(
+                                    extendLocatorId("newConditionEditor"), conditions,
+                                    ConditionsEditor.this.resourceType, new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            winModal.markForDestroy();
+                                            refresh();
+                                        }
+                                    });
+                                winModal.addItem(newConditionEditor);
+                                winModal.show();
                             }
                         });
-                    winModal.addItem(newConditionEditor);
-                    winModal.show();
                 }
             });
 

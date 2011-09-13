@@ -30,6 +30,10 @@ import org.rhq.enterprise.gui.coregui.client.components.selector.AbstractSelecto
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
 
+/**
+ * @author Jay Shaughnessy
+ *
+ */
 public class SelectBundleStep extends AbstractWizardStep {
 
     private final BundleDeployWizard wizard;

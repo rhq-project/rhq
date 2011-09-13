@@ -37,6 +37,7 @@ import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.DriftConfigurationCriteria;
 import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.domain.drift.DriftConfiguration.BaseDirectory;
+import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
@@ -57,8 +58,12 @@ public class DriftConfigurationDataSource extends RPCDataSource<DriftConfigurati
     public static final String ATTR_ID = "id";
     public static final String ATTR_NAME = "name";
     public static final String ATTR_INTERVAL = "interval";
+    public static final String ATTR_DRIFT_HANDLING_MODE = "driftHandlingMode";
     public static final String ATTR_BASE_DIR_STRING = "baseDirString";
     public static final String ATTR_ENABLED = "enabled";
+
+    public static final String DRIFT_HANDLING_MODE_NORMAL = MSG.view_drift_table_driftHandlingMode_normal();
+    public static final String DRIFT_HANDLING_MODE_PLANNED = MSG.view_drift_table_driftHandlingMode_plannedChanges();
 
     private DriftGWTServiceAsync driftService = GWTServiceLookup.getDriftService();
     private EntityContext entityContext;
@@ -87,14 +92,17 @@ public class DriftConfigurationDataSource extends RPCDataSource<DriftConfigurati
         ListGridField enabledField = new ListGridField(ATTR_ENABLED, MSG.common_title_enabled());
         enabledField.setType(ListGridFieldType.IMAGE);
         enabledField.setAlign(Alignment.CENTER);
-        enabledField.setCanSort(false);
         fields.add(enabledField);
 
+        ListGridField driftHandlingModeField = new ListGridField(ATTR_DRIFT_HANDLING_MODE, MSG
+            .view_drift_table_driftHandlingMode());
+        fields.add(driftHandlingModeField);
+
         ListGridField intervalField = new ListGridField(ATTR_INTERVAL, MSG.common_title_interval());
-        intervalField.setCanSort(false);
         fields.add(intervalField);
 
         ListGridField baseDirField = new ListGridField(ATTR_BASE_DIR_STRING, MSG.view_drift_table_baseDir());
+        // can't sort on this because it's not an entity field, it's derived from the config only
         baseDirField.setCanSort(false);
         fields.add(baseDirField);
 
@@ -120,15 +128,17 @@ public class DriftConfigurationDataSource extends RPCDataSource<DriftConfigurati
 
             nameField.setWidth("20%");
             enabledField.setWidth(60);
+            driftHandlingModeField.setWidth("10%");
             intervalField.setWidth(100);
-            baseDirField.setWidth("20%");
+            baseDirField.setWidth("*");
             resourceNameField.setWidth("20%");
             ancestryField.setWidth("40%");
         } else {
             nameField.setWidth("20%");
             enabledField.setWidth(60);
+            driftHandlingModeField.setWidth("10%");
             intervalField.setWidth(100);
-            baseDirField.setWidth("80%");
+            baseDirField.setWidth("*");
         }
 
         return fields;
@@ -239,6 +249,7 @@ public class DriftConfigurationDataSource extends RPCDataSource<DriftConfigurati
 
         record.setAttribute(ATTR_ID, from.getId());
         record.setAttribute(ATTR_NAME, from.getName());
+        record.setAttribute(ATTR_DRIFT_HANDLING_MODE, getDriftHandlingModeDisplayName(from.getDriftHandlingMode()));
         record.setAttribute(ATTR_INTERVAL, String.valueOf(from.getInterval()));
         record.setAttribute(ATTR_BASE_DIR_STRING, getBaseDirString(from.getBasedir()));
         record.setAttribute(ATTR_ENABLED, ImageManager.getAvailabilityIcon(from.isEnabled()));
@@ -251,6 +262,16 @@ public class DriftConfigurationDataSource extends RPCDataSource<DriftConfigurati
         // record.setAttribute(AncestryUtil.RESOURCE_TYPE_ID, resource.getResourceType().getId());
 
         return record;
+    }
+
+    public static String getDriftHandlingModeDisplayName(DriftHandlingMode driftHandlingMode) {
+        switch (driftHandlingMode) {
+        case plannedChanges:
+            return DRIFT_HANDLING_MODE_PLANNED;
+
+        default:
+            return DRIFT_HANDLING_MODE_NORMAL;
+        }
     }
 
     private static String getBaseDirString(BaseDirectory basedir) {

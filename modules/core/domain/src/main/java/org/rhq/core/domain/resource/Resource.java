@@ -80,7 +80,7 @@ import org.rhq.core.domain.tagging.Tag;
 import org.rhq.core.domain.util.Summary;
 
 /**
- * Represents a JON managed resource (i.e. a platform, server, or service).
+ * Represents an RHQ managed resource (i.e. a platform, server, or service).
  */
 @Entity
 @NamedQueries( {
@@ -1085,7 +1085,7 @@ public class Resource implements Comparable<Resource>, Serializable {
      * Primarily for deserialization and cases where the resource object is just a reference to the real one in the db.
      * (Key is this avoids the irrelevant UUID generation that has contention problems.
      *
-     * @param id
+     * @param id the Resource's id
      */
     public Resource(int id) {
         this.id = id;
@@ -1093,7 +1093,7 @@ public class Resource implements Comparable<Resource>, Serializable {
 
     public Resource( //
         @NotNull String resourceKey, //
-        @NotNull String name, //
+        String name, //
         @NotNull ResourceType type) {
         this.resourceKey = resourceKey;
         this.name = name;
@@ -1133,12 +1133,11 @@ public class Resource implements Comparable<Resource>, Serializable {
         this.uuid = uuid;
     }
 
-    @NotNull
     public String getName() {
         return this.name;
     }
 
-    public void setName(@NotNull String name) {
+    public void setName(String name) {
         this.name = name;
     }
 
@@ -1147,8 +1146,8 @@ public class Resource implements Comparable<Resource>, Serializable {
     }
 
     /**
-     * In general this method should not be called by application code. At least not for any Resource that will be
-     * persisted or merged.  The ancestry string is maintained internally. {@link #updateAncestryForResource()}.
+     * In general this method should not be called by application code, at least not for any Resource that will be
+     * persisted or merged.  The ancestry string is maintained internally (see {@link #updateAncestryForResource()}).
      * 
      * @param ancestry
      */

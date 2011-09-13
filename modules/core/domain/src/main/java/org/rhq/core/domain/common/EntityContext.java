@@ -41,7 +41,7 @@ public class EntityContext implements Serializable {
         Resource, // 
         ResourceTemplate, //
         ResourceGroup, // 
-        AutoGroup, //
+        AutoGroup, // TODO: Deprecated, used in portal war
         SubsystemView;
     }
 
@@ -52,7 +52,31 @@ public class EntityContext implements Serializable {
     public int parentResourceId;
     public int resourceTypeId;
 
+    // further decoration available for the ResourceGroup context      
+    private boolean isAutoCluster = false;
+    private boolean isAutoGroup = false;
+
     public EntityContext() {
+    }
+
+    public boolean isResource() {
+        return Type.Resource == type;
+    }
+
+    public boolean isResourceGroup() {
+        return Type.ResourceGroup == type;
+    }
+
+    public boolean isAutoCluster() {
+        return Type.ResourceGroup == type && isAutoCluster;
+    }
+
+    public boolean isAutoGroup() {
+        return Type.ResourceGroup == type && isAutoGroup;
+    }
+
+    public boolean isSubsystemView() {
+        return Type.SubsystemView == type;
     }
 
     public Type getType() {
@@ -109,6 +133,14 @@ public class EntityContext implements Serializable {
         return new EntityContext(null, groupId, null, null);
     }
 
+    public static EntityContext forGroup(int groupId, boolean isAutoCluster, boolean isAutoGroup) {
+        EntityContext context = new EntityContext(null, groupId, null, null);
+        context.isAutoCluster = isAutoCluster;
+        context.isAutoGroup = isAutoGroup;
+        return context;
+    }
+
+    // TODO: deprecated
     public static EntityContext forAutoGroup(int parentResourceId, int resourceTypeId) {
         return new EntityContext(null, null, parentResourceId, resourceTypeId);
     }

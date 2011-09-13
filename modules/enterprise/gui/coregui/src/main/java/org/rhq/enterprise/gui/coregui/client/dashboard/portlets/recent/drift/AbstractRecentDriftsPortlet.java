@@ -293,7 +293,7 @@ public abstract class AbstractRecentDriftsPortlet extends DriftHistoryView imple
     }
 
     @Override
-    protected void refreshTableInfo() {
+    public void refreshTableInfo() {
         super.refreshTableInfo();
         if (getTableInfo() != null) {
             int count = getListGrid().getSelection().length;

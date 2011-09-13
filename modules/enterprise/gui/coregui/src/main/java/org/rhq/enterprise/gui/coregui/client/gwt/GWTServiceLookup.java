@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -56,6 +56,10 @@ public class GWTServiceLookup {
 
     public static ConfigurationGWTServiceAsync getConfigurationService() {
         return secure(ConfigurationGWTServiceAsync.Util.getInstance());
+    }
+
+    public static ConfigurationGWTServiceAsync getConfigurationService(int timeout) {
+        return secure(ConfigurationGWTServiceAsync.Util.getInstance(), timeout);
     }
 
     public static DriftGWTServiceAsync getDriftService() {
@@ -190,6 +194,10 @@ public class GWTServiceLookup {
         return secure(AgentGWTServiceAsync.Util.getInstance());
     }
 
+    public static TestGWTServiceAsync getTestService() {
+        return secure(TestGWTServiceAsync.Util.getInstance());
+    }
+
     @SuppressWarnings("unchecked")
     private static <T> T secure(Object sdt) {
         return (T) secure(sdt, -1);
@@ -208,20 +216,21 @@ public class GWTServiceLookup {
     public static class SessionRpcRequestBuilder extends RpcRequestBuilder {
 
         private static int DEBUG_TIMEOUT_FUDGE_FACTOR = 30000;
-        private static int DEFAULT_RPC_TIMEOUT = 10000;
+        private static int DEFAULT_RPC_TIMEOUT = 30000;
+
         private int timeout;
 
         public SessionRpcRequestBuilder(int timeout) {
             super();
 
-            this.timeout = (timeout <= 0) ? DEFAULT_RPC_TIMEOUT : timeout;
-
             int rpcTimeout = CoreGUI.get().getRpcTimeout();
             if (rpcTimeout > -1) {
                 this.timeout = rpcTimeout;
+            } else {
+                this.timeout = (timeout <= 0) ? DEFAULT_RPC_TIMEOUT : timeout;
             }
 
-            if (CoreGUI.isDebugMode()) {
+            if (CoreGUI.isDebugMode() && (this.timeout != 0)) {
                 // debug mode is slow, so give requests more time to complete otherwise you'll get
                 // weird exceptions whose messages are extremely unhelpful in finding root cause
                 this.timeout += DEBUG_TIMEOUT_FUDGE_FACTOR;

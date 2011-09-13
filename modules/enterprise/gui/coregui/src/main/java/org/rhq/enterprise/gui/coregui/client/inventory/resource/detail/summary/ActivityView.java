@@ -13,6 +13,7 @@ import com.smartgwt.client.widgets.events.ClickHandler;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.criteria.DashboardCriteria;
 import org.rhq.core.domain.dashboard.Dashboard;
@@ -28,7 +29,6 @@ import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.dashboard.DashboardContainer;
 import org.rhq.enterprise.gui.coregui.client.dashboard.DashboardView;
-import org.rhq.enterprise.gui.coregui.client.dashboard.PortletFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourceAlertsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourceConfigurationUpdatesPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.resource.ResourceMetricsPortlet;
@@ -112,8 +112,8 @@ public class ActivityView extends LocatableVLayout implements DashboardContainer
         Canvas[] members = getMembers();
         removeMembers(members);
         //pass in the resource information
-        dashboardView = new DashboardView(extendLocatorId(dashboard.getName()), this, dashboard, null,
-            resourceComposite);
+        dashboardView = new DashboardView(extendLocatorId(dashboard.getName()), this, dashboard, EntityContext
+            .forResource(resourceComposite.getResource().getId()), resourceComposite);
         addMember(dashboardView);
 
         footer = new LocatableToolStrip(extendLocatorId("Footer"));
@@ -173,9 +173,7 @@ public class ActivityView extends LocatableVLayout implements DashboardContainer
         dashboard.getConfiguration().put(new PropertySimple(Dashboard.CFG_BACKGROUND, "#F1F2F3"));
 
         //figure out which portlets to display and how
-        HashMap<String, String> resKeyNameMap = new HashMap<String, String>(PortletFactory
-            .getRegisteredResourcePortletNameMap());
-        resKeyNameMap = DashboardView.processPortletNameMapForResource(resKeyNameMap, resourceComposite);
+        HashMap<String, String> resKeyNameMap = DashboardView.processPortletNameMapForResource(resourceComposite);
         int colLeft = 0;
         int colRight = 1;
         int rowLeft = 0;

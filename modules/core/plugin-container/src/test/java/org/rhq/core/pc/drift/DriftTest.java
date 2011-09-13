@@ -124,7 +124,7 @@ public class DriftTest {
      */
     @BeforeClass
     public void initResourcesAndChangeSetsDirs() throws Exception {
-        File basedir = new File("target", getClass().getSimpleName());
+        File basedir = basedir();
         deleteDirectory(basedir);
         basedir.mkdir();
 
@@ -146,6 +146,10 @@ public class DriftTest {
     public void setUp(Method test) {
         resourceDir = mkdir(resourcesDir, test.getName() + "-" + nextResourceId());
         changeSetMgr = new ChangeSetManagerImpl(changeSetsDir);
+    }
+
+    protected File basedir() {
+        return new File("target", getClass().getSimpleName());
     }
 
     /** @return The current or last resource id generated */
@@ -198,8 +202,12 @@ public class DriftTest {
      * @return The SHA-256 hash as a string
      * @throws IOException
      */
-    protected String sha256(File file) throws IOException {
-        return digestGenerator.calcDigestString(file);
+    protected String sha256(File file) {
+        try {
+            return digestGenerator.calcDigestString(file);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to calculate SHA-256 hash for " + file.getPath(), e);
+        }
     }
 
     protected File createRandomFile(File dir, String fileName) throws Exception {

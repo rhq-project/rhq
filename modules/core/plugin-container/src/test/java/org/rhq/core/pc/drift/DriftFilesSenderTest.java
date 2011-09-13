@@ -27,7 +27,6 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.common.drift.ChangeSetWriter;
-import org.rhq.common.drift.DirectoryEntry;
 import org.rhq.common.drift.Headers;
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.drift.DriftFile;
@@ -70,9 +69,8 @@ public class DriftFilesSenderTest extends DriftTest {
         Headers headers = createHeaders(driftConfigName, COVERAGE);
 
         ChangeSetWriter writer = changeSetMgr.getChangeSetWriter(resourceId(), headers);
-        writer.writeDirectoryEntry(new DirectoryEntry("conf")
-            .add(addedFileEntry("server-1.conf", server1ConfHash))
-            .add(addedFileEntry("server-2.conf", server2ConfHash)));
+        writer.write(addedFileEntry("conf/server-1.conf", server1ConfHash));
+        writer.write(addedFileEntry("conf/server-2.conf", server2ConfHash));
         writer.close();
 
         sender.setDriftFiles(driftFiles(server1ConfHash, server2ConfHash));
@@ -107,12 +105,10 @@ public class DriftFilesSenderTest extends DriftTest {
         Headers headers = createHeaders(driftConfigName, COVERAGE);
 
         ChangeSetWriter writer = changeSetMgr.getChangeSetWriter(resourceId(), headers);
-        writer.writeDirectoryEntry(new DirectoryEntry("conf")
-            .add(addedFileEntry("server-1.conf", server1ConfHash))
-            .add(addedFileEntry("server-2.conf", server2ConfHash)));
-        writer.writeDirectoryEntry(new DirectoryEntry("lib")
-            .add(addedFileEntry("server-1.jar", server1JarHash))
-            .add(addedFileEntry("server-2.jar", server2JarHash)));
+        writer.write(addedFileEntry("conf/server-1.conf", server1ConfHash));
+        writer.write(addedFileEntry("conf/server-2.conf", server2ConfHash));
+        writer.write(addedFileEntry("lib/server-1.jar", server1JarHash));
+        writer.write(addedFileEntry("lib/server-2.jar", server2JarHash));
         writer.close();
 
         // Note that the order of the drift files is random. When the server sends a request
@@ -146,9 +142,8 @@ public class DriftFilesSenderTest extends DriftTest {
         Headers headers = createHeaders(driftConfigName, COVERAGE);
 
         ChangeSetWriter writer = changeSetMgr.getChangeSetWriter(resourceId(), headers);
-        writer.writeDirectoryEntry(new DirectoryEntry("conf")
-            .add(addedFileEntry("server-1.conf", server1ConfHash))
-            .add(addedFileEntry("server-2.conf", server2ConfHash)));
+        writer.write(addedFileEntry("conf/server-1.conf", server1ConfHash));
+        writer.write(addedFileEntry("conf/server-2.conf", server2ConfHash));
         writer.close();
 
         // It is possible that the server can request a file that has been deleted since it

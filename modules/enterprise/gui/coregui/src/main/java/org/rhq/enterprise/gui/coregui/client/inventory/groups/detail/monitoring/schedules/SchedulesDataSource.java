@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2010 Red Hat, Inc.
+ * Copyright (C) 2010-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -43,7 +43,10 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
  * @author Ian Springer
  */
 public class SchedulesDataSource extends AbstractMeasurementScheduleCompositeDataSource {
-    private MeasurementDataGWTServiceAsync measurementService = GWTServiceLookup.getMeasurementDataService();
+
+    // Specify 60s timeout to compensate for schedule updates taking a long time for large groups.
+    // TODO (ips, 08/31/11): Remove this once updating of group schedules has been optimized.
+    private MeasurementDataGWTServiceAsync measurementService = GWTServiceLookup.getMeasurementDataService(60 * 1000);
     private int resourceGroupId;
 
     public SchedulesDataSource(int resourceGroupId) {
@@ -157,4 +160,5 @@ public class SchedulesDataSource extends AbstractMeasurementScheduleCompositeDat
                 }
             });
     }
+
 }

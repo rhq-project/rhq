@@ -174,6 +174,10 @@ public class WizardView extends LocatableVLayout {
                 closeDialog();
             }
         });
+        buttonBar.addMember(cancelButton);
+
+        buttonBar.addMember(new LayoutSpacer());
+
         previousButton = new LocatableIButton(extendLocatorId("Previous"), PREVIOUS);
         previousButton.setDisabled(true);
         previousButton.addClickHandler(new ClickHandler() {
@@ -185,6 +189,11 @@ public class WizardView extends LocatableVLayout {
                 }
             }
         });
+        if (wizard.getSteps().size() <= 1) {
+            previousButton.setVisible(false);
+        }
+        buttonBar.addMember(previousButton);
+
         nextButton = new LocatableIButton(extendLocatorId("Next"), NEXT);
         nextButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
@@ -195,17 +204,14 @@ public class WizardView extends LocatableVLayout {
                 }
             }
         });
-
-        buttonBar.addMember(cancelButton);
-        buttonBar.addMember(new LayoutSpacer());
-        buttonBar.addMember(previousButton);
         buttonBar.addMember(nextButton);
-
     }
 
     private void setStep(final int stepIndex) {
+        previousButton.setVisible(stepIndex >= 1);
+
         if (stepIndex < 0) {
-            this.previousButton.setDisabled(true);
+            previousButton.setDisabled(true);
             return;
         }
 
@@ -235,9 +241,9 @@ public class WizardView extends LocatableVLayout {
             buttonBar.removeMember(button);
         }
         customButtons.clear();
-        List<IButton> cbs = wizard.getCustomButtons(currentStep);
-        if (cbs != null) {
-            for (IButton button : cbs) {
+        List<IButton> newCustomButtons = wizard.getCustomButtons(currentStep);
+        if (newCustomButtons != null) {
+            for (IButton button : newCustomButtons) {
                 button.setDisabled(true);
                 buttonBar.addMember(button);
                 customButtons.add(button);

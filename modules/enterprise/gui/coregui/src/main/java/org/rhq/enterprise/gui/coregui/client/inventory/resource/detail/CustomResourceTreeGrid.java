@@ -25,6 +25,7 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceTreeDatasource.ResourceTreeNode;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceTreeDatasource.SubCategoryTreeNode;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableTreeGrid;
 
 /**
@@ -52,6 +53,8 @@ public class CustomResourceTreeGrid extends LocatableTreeGrid {
                     boolean up = resource.getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP;
                     return ImageManager.getResourceIcon(resource.getResourceType().getCategory(), up);
                 }
+            } else if (record instanceof SubCategoryTreeNode) {
+                return "resources/folder_mixed_" + (open ? "opened" : "closed") + ".png";
             } else {
                 return "resources/folder_group_" + (open ? "opened" : "closed") + ".png";
             }

@@ -198,8 +198,8 @@
 
                                 <unzip dest="target/itest/lib">
                                     <fileset
-                                        dir="${settings.localRepository}/net/augeas/augeas-native/${augeas.version}"
-                                        includes="*.zip" />
+                                        dir="${augeas.zip.location}"
+                                        includes="${augeas.zip.mask}" />
                                     <patternset>
                                         <include name="**/lib*/*.so" />
                                         <include name="**/lib*/*.so.*" />

@@ -32,7 +32,7 @@ import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition;
-import org.rhq.core.domain.drift.DriftConfiguration.Filter;
+import org.rhq.core.domain.drift.Filter;
 import org.rhq.core.domain.drift.DriftConfigurationDefinition.BaseDirValueContext;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.InventoryStatus;
@@ -168,7 +168,7 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
         for (ConfigurationTemplate drift : drifts) {
             if (drift.getName().equals("drift-pc")) {
                 driftConfig = new DriftConfiguration(drift.getConfiguration());
-                assertFalse(driftConfig.isEnabled());
+                assertTrue(driftConfig.isEnabled());
                 assertEquals(BaseDirValueContext.pluginConfiguration, driftConfig.getBasedir().getValueContext());
                 assertEquals("connectionPropertyX", driftConfig.getBasedir().getValueName());
                 assertEquals(123456L, driftConfig.getInterval());
@@ -185,7 +185,7 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
                 assertEquals("", filter.getPattern());
             } else if (drift.getName().equals("drift-fs")) {
                 driftConfig = new DriftConfiguration(drift.getConfiguration());
-                assertFalse(driftConfig.isEnabled());
+                assertTrue(driftConfig.isEnabled());
                 assertEquals(BaseDirValueContext.fileSystem, driftConfig.getBasedir().getValueContext());
                 assertEquals("/", driftConfig.getBasedir().getValueName());
                 assertEquals(DriftConfigurationDefinition.DEFAULT_INTERVAL, driftConfig.getInterval());
@@ -290,7 +290,7 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
         for (ConfigurationTemplate drift : drifts) {
             if (drift.getName().equals("drift-rc")) {
                 driftConfig = new DriftConfiguration(drift.getConfiguration());
-                assertFalse(driftConfig.isEnabled());
+                assertTrue(driftConfig.isEnabled());
                 assertEquals(BaseDirValueContext.resourceConfiguration, driftConfig.getBasedir().getValueContext());
                 assertEquals("resourceConfig1", driftConfig.getBasedir().getValueName());
                 assertEquals(DriftConfigurationDefinition.DEFAULT_INTERVAL, driftConfig.getInterval());
@@ -298,7 +298,7 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
                 assertEquals(0, driftConfig.getExcludes().size());
             } else if (drift.getName().equals("drift-mt")) {
                 driftConfig = new DriftConfiguration(drift.getConfiguration());
-                assertFalse(driftConfig.isEnabled());
+                assertTrue(driftConfig.isEnabled());
                 assertEquals(BaseDirValueContext.measurementTrait, driftConfig.getBasedir().getValueContext());
                 assertEquals("trait1", driftConfig.getBasedir().getValueName());
                 assertEquals(DriftConfigurationDefinition.DEFAULT_INTERVAL, driftConfig.getInterval());

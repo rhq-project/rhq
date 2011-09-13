@@ -865,6 +865,25 @@ public interface AgentSetupInstructions {
         + "by defining its own timeouts within its plugin descriptor.") })
     String SETUP_INSTRUCTION_PCOPINVOCATIONTIMEOUT_HELP = "PromptCommand.setup.instruction.opinvocationtimeout.help";
 
+    // PLUGINS DRIFT DETECTION PERIOD
+    String SETUP_INSTRUCTION_PLUGINSDRIFTDETECTIONPERIOD_PREF = AgentConfigurationConstants.PLUGINS_DRIFT_DETECTION_PERIOD;
+    String SETUP_INSTRUCTION_PLUGINSDRIFTDETECTIONPERIOD_DEFAULT = Long
+        .toString(AgentConfigurationConstants.DEFAULT_PLUGINS_DRIFT_DETECTION_PERIOD);
+    @I18NMessages( { @I18NMessage("Drift Detection Period") })
+    String SETUP_INSTRUCTION_PLUGINSDRIFTDETECTIONPERIOD_PROMPT = "PromptCommand.setup.instruction.plugins.driftdetection-period.prompt";
+    @I18NMessages( { @I18NMessage("The time in seconds that defines how often drift detection scans are run.\\n\\\n"
+        + "If 0 or less, drift discovery scans are disabled.") })
+    String SETUP_INSTRUCTION_PLUGINSDRIFTDETECTIONPERIOD_HELP = "PromptCommand.setup.instruction.plugins.driftdiscovery-period.help";
+
+    // PLUGINS DRIFT DETECTION INITIAL DELAY
+    String SETUP_INSTRUCTION_PLUGINSDRIFTDETECTIONINITIALDELAY_PREF = AgentConfigurationConstants.PLUGINS_DRIFT_DETECTION_INITIAL_DELAY;
+    String SETUP_INSTRUCTION_PLUGINSDRIFTDETECTIONINITIALDELAY_DEFAULT = Long
+        .toString(AgentConfigurationConstants.DEFAULT_PLUGINS_DRIFT_DETECTION_INITIAL_DELAY);
+    @I18NMessages( { @I18NMessage("Drift Detection Initial Delay") })
+    String SETUP_INSTRUCTION_PLUGINSDRIFTDETECTIONINITIALDELAY_PROMPT = "PromptCommand.setup.instruction.plugins.driftdetection-initialdelay.prompt";
+    @I18NMessages( { @I18NMessage("The time in seconds before the initial drift detection scan is performed.") })
+    String SETUP_INSTRUCTION_PLUGINSDRIFTDETECTIONINITIALDELAY_HELP = "PromptCommand.setup.instruction.plugins.driftdetection-initialdelay.help";
+
     // PLUGINS CONTENT DISCOVERY THREADPOOL SIZE
     String SETUP_INSTRUCTION_PLUGINSCONTENTDISCOVERYTHREADCOUNT_PREF = AgentConfigurationConstants.PLUGINS_CONTENT_DISCOVERY_THREADPOOL_SIZE;
     String SETUP_INSTRUCTION_PLUGINSCONTENTDISCOVERYTHREADCOUNT_DEFAULT = Integer

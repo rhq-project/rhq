@@ -54,7 +54,8 @@ public class ResourceFactoryImportWizard extends AbstractResourceFactoryWizard {
 
         ArrayList<WizardStep> steps = new ArrayList<WizardStep>();
 
-        // skip the info step if the type has only the default template to offer for user selection or no plugin config
+        // Skip the choose-template step if the type does not define a plugin config or does not define more than one
+        // plugin config template.
         if (childTypePluginConfigDef != null) {
             Map<String, ConfigurationTemplate> templates = childTypePluginConfigDef.getTemplates();
             if (templates.size() > 1) {

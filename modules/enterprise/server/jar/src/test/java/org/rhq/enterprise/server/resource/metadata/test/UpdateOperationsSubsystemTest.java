@@ -39,7 +39,7 @@ import org.rhq.core.domain.resource.ResourceType;
  * Note, plugins are registered in new transactions. for tests, this means
  * you can't do everything in a trans and roll back at the end. You must clean up manually.
  */
-public class UpdateOperationsSubsystemTest extends UpdateSubsytemTestBase {
+public class UpdateOperationsSubsystemTest extends UpdatePluginMetadataTestBase {
 
     private static final boolean ENABLED = true;
 

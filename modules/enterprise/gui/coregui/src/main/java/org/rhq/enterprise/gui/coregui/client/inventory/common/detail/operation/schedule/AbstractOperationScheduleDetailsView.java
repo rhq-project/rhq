@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,8 +49,10 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.JobTrigger;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
@@ -64,6 +67,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.schedule.ResourceOperationScheduleDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.FormUtility;
 import org.rhq.enterprise.gui.coregui.client.util.TypeConversionUtility;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
@@ -72,6 +76,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
  *
  * @author Ian Springer
  */
+@SuppressWarnings("unchecked")
 public abstract class AbstractOperationScheduleDetailsView extends
     AbstractRecordEditor<AbstractOperationScheduleDataSource> {
 
@@ -86,8 +91,9 @@ public abstract class AbstractOperationScheduleDetailsView extends
     private StaticTextItem operationDescriptionItem;
     private StaticTextItem operationParametersItem;
     private LocatableHLayout operationParametersConfigurationHolder;
+    private ConfigurationEditor operationParametersConfigurationEditor;
+    private Configuration operationParameters;
     private JobTriggerEditor triggerEditor;
-    private Configuration parameters;
     private EnhancedDynamicForm notesForm;
     private Integer operationDefinitionId;
 
@@ -112,6 +118,8 @@ public abstract class AbstractOperationScheduleDetailsView extends
     public void renderView(ViewPath viewPath) {
         super.renderView(viewPath);
 
+        // If the operationDefId has been seeded capture it now
+        this.operationDefinitionId = 0;
         if (!viewPath.isEnd()) {
             this.operationDefinitionId = viewPath.getCurrentAsInt();
             viewPath.next();
@@ -119,7 +127,24 @@ public abstract class AbstractOperationScheduleDetailsView extends
 
         // Existing schedules are not editable. This may change in the future.
         boolean isReadOnly = (!hasControlPermission() || (getRecordId() != 0));
+
+        // Note: subclases may override this and perform async work prior to calling super, so
+        // be careful adding any code after this point in this method.
         init(isReadOnly);
+    }
+
+    @Override
+    protected void init(boolean isReadOnly) {
+        super.init(isReadOnly);
+
+        // If the operationDefId has been seeded then treat it as a user-initiated change to
+        // update associated widgets and button enablement.
+        if (this.operationDefinitionId != null) {
+            FormItem nameField = this.getForm().getField(AbstractOperationScheduleDataSource.Field.OPERATION_NAME);
+            nameField.setValue(this.operationIdToNameMap.get(this.operationDefinitionId));
+            handleOperationNameChange();
+            getForm().rememberValues();
+        }
     }
 
     @Override
@@ -146,8 +171,7 @@ public abstract class AbstractOperationScheduleDetailsView extends
         items.add(operationNameItem);
         operationNameItem.addChangedHandler(new ChangedHandler() {
             public void onChanged(ChangedEvent event) {
-                refreshOperationDescriptionItem();
-                refreshOperationParametersItem();
+                handleOperationNameChange();
             }
         });
 
@@ -162,6 +186,23 @@ public abstract class AbstractOperationScheduleDetailsView extends
         items.add(this.operationParametersItem);
 
         return items;
+    }
+
+    // override reset because we can't just blindly reset the op def name and leave behind associated widgets
+    @Override
+    protected void reset() {
+        super.reset();
+        handleOperationNameChange();
+    }
+
+    // The same logic needs to get applied to a user-initiated change, direct navigation to an op def, and
+    // a reset, which may reset to a selected op def, or to no op def.
+    private void handleOperationNameChange() {
+        refreshOperationDescriptionItem();
+        refreshOperationParametersItem();
+        if (null != getSelectedOperationName()) {
+            onItemChanged();
+        }
     }
 
     @Override
@@ -243,11 +284,6 @@ public abstract class AbstractOperationScheduleDetailsView extends
     protected Record createNewRecord() {
         Record record = super.createNewRecord();
 
-        if (this.operationDefinitionId != null) {
-            String operationName = this.operationIdToNameMap.get(this.operationDefinitionId);
-            record.setAttribute(AbstractOperationScheduleDataSource.Field.OPERATION_NAME, operationName);
-        }
-
         Subject sessionSubject = UserSessionManager.getSessionSubject();
         AbstractOperationScheduleDataSource.SubjectRecord subjectRecord = new AbstractOperationScheduleDataSource.SubjectRecord(
             sessionSubject);
@@ -291,7 +327,7 @@ public abstract class AbstractOperationScheduleDetailsView extends
         }
         notesItem.setValue(notesValue);
 
-        this.parameters = (Configuration) record
+        this.operationParameters = (Configuration) record
             .getAttributeAsObject(AbstractOperationScheduleDataSource.Field.PARAMETERS);
 
         super.editExistingRecord(record);
@@ -299,12 +335,21 @@ public abstract class AbstractOperationScheduleDetailsView extends
 
     @Override
     protected void save(DSRequest requestProperties) {
-        requestProperties.setAttribute(AbstractOperationScheduleDataSource.RequestProperty.PARAMETERS, this.parameters);
+        if ((null != this.operationParametersConfigurationEditor && !this.operationParametersConfigurationEditor
+            .isValid())
+            || !this.triggerEditor.validate()) {
+            {
+                Message message = new Message(MSG.widget_recordEditor_warn_validation(this.getDataTypeName()),
+                    Message.Severity.Warning, EnumSet.of(Message.Option.Transient));
+                CoreGUI.getMessageCenter().notify(message);
 
-        if (!this.triggerEditor.validate()) {
-            // TODO: print error Message
-            return;
+                return;
+            }
         }
+
+        requestProperties.setAttribute(AbstractOperationScheduleDataSource.RequestProperty.PARAMETERS,
+            this.operationParameters);
+
         EnhancedDynamicForm form = getForm();
 
         Record jobTriggerRecord = new ListGridRecord();
@@ -357,22 +402,24 @@ public abstract class AbstractOperationScheduleDetailsView extends
         String value;
         if (operationName == null) {
             value = "<i>" + MSG.view_operationScheduleDetails_fieldDefault_parameters() + "</i>";
+            for (Canvas child : this.operationParametersConfigurationHolder.getChildren()) {
+                child.destroy();
+            }
+            this.operationParametersConfigurationHolder.hide();
         } else {
+            // make sure we wipe out anything left by the previous op def
+            for (Canvas child : this.operationParametersConfigurationHolder.getChildren()) {
+                child.destroy();
+            }
+
             final ConfigurationDefinition parametersDefinition = this.operationNameToParametersDefinitionMap
                 .get(operationName);
             if (parametersDefinition == null || parametersDefinition.getPropertyDefinitions().isEmpty()) {
                 value = "<i>" + MSG.view_operationScheduleDetails_noParameters() + "</i>";
-
-                for (Canvas child : this.operationParametersConfigurationHolder.getChildren()) {
-                    child.destroy();
-                }
                 this.operationParametersConfigurationHolder.hide();
+
             } else {
                 value = isNewRecord() ? "<i>" + MSG.view_operationScheduleDetails_enterParametersBelow() + "</i>" : "";
-
-                for (Canvas child : this.operationParametersConfigurationHolder.getChildren()) {
-                    child.destroy();
-                }
 
                 // Add spacer so params are indented.
                 VLayout horizontalSpacer = new VLayout();
@@ -380,45 +427,37 @@ public abstract class AbstractOperationScheduleDetailsView extends
                 this.operationParametersConfigurationHolder.addMember(horizontalSpacer);
 
                 if (isNewRecord()) {
-                    this.parameters = (parametersDefinition.getDefaultTemplate() != null) ? parametersDefinition
-                        .getDefaultTemplate().createConfiguration() : new Configuration();
+                    ConfigurationTemplate defaultTemplate = parametersDefinition.getDefaultTemplate();
+                    this.operationParameters = (defaultTemplate != null) ? defaultTemplate.createConfiguration()
+                        : new Configuration();
                 } else {
 
                 }
 
                 ConfigurationGWTServiceAsync configurationService = GWTServiceLookup.getConfigurationService();
-                configurationService.getOptionValuesForConfigDefinition(parametersDefinition,new AsyncCallback<ConfigurationDefinition>() {
+                configurationService.getOptionValuesForConfigDefinition(parametersDefinition,
+                    new AsyncCallback<ConfigurationDefinition>() {
 
+                        @Override
+                        public void onFailure(Throwable throwable) {
+                            operationParametersConfigurationEditor = new ConfigurationEditor("ParametersEditor",
+                                parametersDefinition, operationParameters);
+                            operationParametersConfigurationEditor.setReadOnly(isReadOnly());
+                            operationParametersConfigurationHolder.addMember(operationParametersConfigurationEditor);
+                            operationParametersConfigurationHolder.show();
 
-                    @Override
-                    public void onFailure(Throwable throwable) {
-                        ConfigurationEditor configurationEditor = new ConfigurationEditor("ParametersEditor",
-                            parametersDefinition, parameters);
-                        configurationEditor.setReadOnly(isReadOnly());
-                        operationParametersConfigurationHolder.addMember(configurationEditor);
-                        operationParametersConfigurationHolder.show();
+                        }
 
-                    }
+                        @Override
+                        public void onSuccess(ConfigurationDefinition result) {
+                            operationParametersConfigurationEditor = new ConfigurationEditor("ParametersEditor",
+                                result, operationParameters);
+                            operationParametersConfigurationEditor.setReadOnly(isReadOnly());
+                            operationParametersConfigurationHolder.addMember(operationParametersConfigurationEditor);
+                            operationParametersConfigurationHolder.show();
 
-                    @Override
-                    public void onSuccess(ConfigurationDefinition result) {
-                        ConfigurationEditor configurationEditor = new ConfigurationEditor("ParametersEditor",
-                            result, parameters);
-                        configurationEditor.setReadOnly(isReadOnly());
-                        operationParametersConfigurationHolder.addMember(configurationEditor);
-                        operationParametersConfigurationHolder.show();
-
-                    }
-                });
-
-
-/*
-                ConfigurationEditor configurationEditor = new ConfigurationEditor("ParametersEditor",
-                    parametersDefinition, this.parameters);
-                configurationEditor.setReadOnly(isReadOnly());
-                this.operationParametersConfigurationHolder.addMember(configurationEditor);
-                this.operationParametersConfigurationHolder.show();
-*/
+                        }
+                    });
             }
         }
         this.operationParametersItem.setValue(value);

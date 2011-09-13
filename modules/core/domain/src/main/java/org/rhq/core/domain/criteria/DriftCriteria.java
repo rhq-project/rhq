@@ -19,6 +19,7 @@
 package org.rhq.core.domain.criteria;
 
 import org.rhq.core.domain.drift.DriftCategory;
+import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
 import org.rhq.core.domain.util.PageOrdering;
 
 /**
@@ -40,6 +41,8 @@ public interface DriftCriteria extends BaseCriteria {
     void addFilterChangeSetStartVersion(Integer filterChangeSetStartVersion);
 
     void addFilterChangeSetEndVersion(Integer filterChangeSetEndVersion);
+
+    void addFilterDriftHandlingModes(DriftHandlingMode... filterDriftHandlingModes);
 
     void addFilterPath(String filterPath);
 
@@ -65,6 +68,8 @@ public interface DriftCriteria extends BaseCriteria {
     Integer getFilterChangeSetStartVersion();
 
     Integer getFilterChangeSetEndVersion();
+
+    DriftHandlingMode[] getFilterDriftHandlingModes();
 
     String getFilterPath();
 

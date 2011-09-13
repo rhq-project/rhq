@@ -44,6 +44,7 @@ import javax.persistence.PrePersist;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
+import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
 import org.rhq.core.domain.resource.Resource;
 
 /**
@@ -55,13 +56,22 @@ import org.rhq.core.domain.resource.Resource;
 @Entity
 @NamedQueries( { @NamedQuery(name = JPADriftChangeSet.QUERY_DELETE_BY_RESOURCES, query = "" //
     + "DELETE FROM JPADriftChangeSet dcs " //
-    + " WHERE dcs.resource.id IN ( :resourceIds )") })
+    + " WHERE dcs.resource.id IN ( :resourceIds )"), //
+    @NamedQuery(name = JPADriftChangeSet.QUERY_DELETE_BY_DRIFTCONFIG_RESOURCE, query = "" //
+        + "DELETE FROM JPADriftChangeSet dcs " //
+        + " WHERE dcs.resource.id = :resourceId " //
+        + "   AND dcs.driftConfiguration.id IN " //
+        + "       (SELECT dc.id " //
+        + "          FROM DriftConfiguration dc " //
+        + "         WHERE dc.resource.id = :resourceId AND dc.name = :driftConfigurationName)" //
+    ) })
 @Table(name = "RHQ_DRIFT_CHANGE_SET")
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_DRIFT_CHANGE_SET_ID_SEQ")
 public class JPADriftChangeSet implements Serializable, DriftChangeSet<JPADrift> {
     private static final long serialVersionUID = 1L;
 
     public static final String QUERY_DELETE_BY_RESOURCES = "JPADriftChangeSet.deleteByResources";
+    public static final String QUERY_DELETE_BY_DRIFTCONFIG_RESOURCE = "JPADriftChangeSet.deleteByDriftConfigResource";
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
@@ -85,6 +95,12 @@ public class JPADriftChangeSet implements Serializable, DriftChangeSet<JPADrift>
     @ManyToOne(fetch = FetchType.EAGER, optional = false)
     private DriftConfiguration driftConfiguration;
 
+    // Note, this is mode at the time of the changeset processing. We cant use driftConfiguration.mode because
+    // that is the "live" setting.
+    @Column(name = "DRIFT_CONFIG_MODE", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private DriftHandlingMode driftHandlingMode;
+
     @JoinColumn(name = "RESOURCE_ID", referencedColumnName = "ID", nullable = false)
     @ManyToOne(optional = false)
     private Resource resource;
@@ -101,6 +117,7 @@ public class JPADriftChangeSet implements Serializable, DriftChangeSet<JPADrift>
         this.version = version;
         this.category = category;
         this.driftConfiguration = driftConfiguration;
+        this.driftHandlingMode = driftConfiguration.getDriftHandlingMode();
     }
 
     @Override
@@ -162,6 +179,14 @@ public class JPADriftChangeSet implements Serializable, DriftChangeSet<JPADrift>
 
     public void setDriftConfiguration(DriftConfiguration driftConfiguration) {
         this.driftConfiguration = driftConfiguration;
+    }
+
+    public DriftHandlingMode getDriftHandlingMode() {
+        return driftHandlingMode;
+    }
+
+    public void setDriftHandlingMode(DriftHandlingMode driftHandlingMode) {
+        this.driftHandlingMode = driftHandlingMode;
     }
 
     @Override

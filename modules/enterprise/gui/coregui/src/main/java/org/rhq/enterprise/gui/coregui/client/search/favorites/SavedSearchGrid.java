@@ -167,7 +167,8 @@ public class SavedSearchGrid extends Grid {
 
                 @Override
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError("Could not load saved searches", caught);
+                    CoreGUI.getErrorHandler().handleError(
+                        CoreGUI.getMessages().view_searchBar_savedSearch_failFind("*"), caught);
 
                     callback.onFailure(caught);
                 }

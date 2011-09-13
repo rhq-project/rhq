@@ -18,22 +18,19 @@
  */
 package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.platform;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.smartgwt.client.data.DataSourceField;
-import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDatasource;
 
 /**
  * @author Greg Hinkle
  */
 public class PlatformMetricDataSource extends ResourceDatasource {
-    private static final Messages MSG = CoreGUI.getMessages();
 
     PlatformSummaryPortlet view;
 
@@ -47,17 +44,7 @@ public class PlatformMetricDataSource extends ResourceDatasource {
 
     @Override
     protected List<DataSourceField> addDataSourceFields() {
-        List<DataSourceField> fields = super.addDataSourceFields();
-
-        DataSourceTextField cpuField = new DataSourceTextField("cpu", MSG.dataSource_platforms_field_cpu());
-        fields.add(cpuField);
-        DataSourceTextField memoryField = new DataSourceTextField("memory", MSG.dataSource_platforms_field_memory());
-        fields.add(memoryField);
-
-        DataSourceTextField swapField = new DataSourceTextField("swap", MSG.dataSource_platforms_field_swap());
-        fields.add(swapField);
-
-        return fields;
+        return new ArrayList<DataSourceField>();
     }
 
     @Override

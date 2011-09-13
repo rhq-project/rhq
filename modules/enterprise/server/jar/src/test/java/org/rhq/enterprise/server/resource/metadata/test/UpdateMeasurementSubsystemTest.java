@@ -39,7 +39,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.util.LookupUtil;
 
-public class UpdateMeasurementSubsystemTest extends UpdateSubsytemTestBase {
+public class UpdateMeasurementSubsystemTest extends UpdatePluginMetadataTestBase {
 
     static final boolean ENABLED = true;
 

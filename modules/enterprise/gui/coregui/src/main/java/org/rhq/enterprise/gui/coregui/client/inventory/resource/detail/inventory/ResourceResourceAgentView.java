@@ -174,7 +174,8 @@ public class ResourceResourceAgentView extends LocatableVLayout implements Refre
                 nameValue.setValue(agent.getName());
                 addressValue.setValue(agent.getAddress());
                 portValue.setValue(agent.getPort());
-                lastAvailReportValue.setValue(new Date(agent.getLastAvailabilityReport()));
+                Long lastAvail = agent.getLastAvailabilityReport();
+                lastAvailReportValue.setValue((null != lastAvail) ? new Date(lastAvail) : MSG.common_val_none());
                 String remoteEndpoint = agent.getRemoteEndpoint();
                 if (remoteEndpoint != null) {
                     // some browsers (firefox in particular) won't wrap unless you put breaks in the string

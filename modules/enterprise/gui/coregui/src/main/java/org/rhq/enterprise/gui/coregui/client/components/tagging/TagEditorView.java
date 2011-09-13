@@ -96,6 +96,7 @@ public class TagEditorView extends LocatableLayout {
         this.readOnly = readOnly;
         this.callback = callback;
 
+        // create the following widgets once and re-use as needed
         tagTitleLabel = new HTMLFlow("<b>" + MSG.view_tags_tags() + ":</b>");
         tagTitleLabel.setAutoWidth();
 
@@ -131,24 +132,27 @@ public class TagEditorView extends LocatableLayout {
     }
 
     private void setup() {
-        // remove old members
-        removeMember(tagTitleLabel);
+        // destroy dated tagLayouts
         if (tagLayouts != null) {
             for (LocatableHLayout tagLayout : tagLayouts) {
                 removeMember(tagLayout);
                 tagLayout.destroy();
             }
         }
-        if (addImg != null) {
-            removeMember(addImg);
+        // remove remaining members
+        for (Canvas canvas : getMembers()) {
+            removeMember(canvas);
         }
 
-        // add new members
+        // [re]build
+
         addMember(tagTitleLabel);
+
         tagLayouts = createTagLayouts();
         for (LocatableHLayout tagLayout : tagLayouts) {
             addMember(tagLayout);
         }
+
         if (!readOnly) {
             addMember(addImg);
             tagInputDialog.place(addImg);

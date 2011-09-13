@@ -12,8 +12,11 @@ Ant Script that provides ways to package the Agent.
    <property name="settings.localRepository" location="${user.home}/.m2/repository"/>
    <property name="project.version" value="2.0.0-SNAPSHOT"/>
    <property name="sigar.version" value="1.6.5.132"/>
-   <property name="augeas.version" value="0.7.1.1"/> 
-   <property name="augeas.zip.version" value="0.7.1"/> 
+   <property name="augeas.version" value="0.9.0"/>
+   <property name="augeas.classifier" value="el5"/>
+   <property name="augeas.zip.location" value="${settings.localRepository}/net/augeas/augeas-native/${augeas.version}/"/>
+   <property name="augeas.zip.mask" value="*-${augeas.classifier}.zip"/>
+   <property name="augeas.zip.version" value="0.9.0"/> 
    <property name="getopt.version" value="1.0.13"/>
    <property name="jaxb-api.version" value="2.1"/>
    <property name="jaxb-impl.version" value="2.1"/>
@@ -79,8 +82,8 @@ Ant Script that provides ways to package the Agent.
       <include name="org/hyperic/sigar-dist/${sigar.version}/sigar-dist-${sigar.version}.zip" />
    </fileset>
 
-   <fileset dir="${settings.localRepository}" id="augeas.native.fileset">
-	  <include name="net/augeas/augeas-native/${augeas.version}/augeas-native-${augeas.version}.zip" />
+   <fileset dir="${augeas.zip.location}" id="augeas.native.fileset">
+	  <include name="${augeas.zip.mask}" />
    </fileset>
 
    <fileset dir="${settings.localRepository}" id="plugins.fileset">
@@ -208,7 +211,7 @@ Ant Script that provides ways to package the Agent.
     <delete file="${basedir}/target/rhq-enterprise-agent-${project.version}.zip" />
     <zip destfile="${basedir}/target/rhq-enterprise-agent-${project.version}.zip" >
       <!-- The zip task does not mantain file permissions, we have to make sure they are set here -->
-       <zipfileset dir="${basedir}/target">
+       <zipfileset dir="${basedir}/target" filemode="644" dirmode="755">
           <include name="rhq-agent/**"/>
           <exclude name="rhq-agent/bin/*.sh"/>
           <exclude name="rhq-agent/lib/*.so"/>
@@ -217,7 +220,7 @@ Ant Script that provides ways to package the Agent.
           <exclude name="rhq-agent/lib/*.dylib"/>
        	  <exclude name="rhq-agent/lib/augeas/**" />
        </zipfileset>
-       <zipfileset dir="${basedir}/target" filemode="755">
+       <zipfileset dir="${basedir}/target" filemode="755" dirmode="755">
           <include name="rhq-agent/bin/*.sh"/>
           <include name="rhq-agent/lib/*.so"/>
           <include name="rhq-agent/lib/*.sl"/>

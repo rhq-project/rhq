@@ -26,7 +26,7 @@
 
     ContentUIManagerLocal contentManager = LookupUtil.getContentUIManager();
 
-    PageList<InstalledPackageHistory> history = contentManager.getInstalledPackageHistoryForResource(resourceId, new PageControl(0,100, new OrderingField("iph.timestamp",PageOrdering.DESC)));
+    PageList<InstalledPackageHistory> history = contentManager.getInstalledPackageHistoryForResource(resourceId, new PageControl(0,20, new OrderingField("iph.timestamp",PageOrdering.DESC)));
 
 %>
 
@@ -65,13 +65,18 @@
             String link = "#Resource/" + resourceId + "/Content/Deployed"; 
             // "/rhq/resource/content/installed_package_details.xhtml?id=" + resourceId + "&currentPackageId=" + installedPackage.getId();
 
+            String version = installedPackage.getPackageVersion().getDisplayVersion();
+            String username = "-Autodetected-";
+            if (installedPackage.getContentServiceRequest() != null) {
+            	username = installedPackage.getContentServiceRequest().getSubjectName();
+            }
             %>
 { "start" : "<%=sdf.format(new Date(installedPackage.getTimestamp()))%>",
   "title" : "<% out.write(
   (installedPackage.getPackageVersion().getDisplayName()==null ? null : installedPackage.getPackageVersion().getDisplayName().replaceAll("[\"']","")) + " " +
   (installedPackage.getPackageVersion().getDisplayVersion() ==null ? null : installedPackage.getPackageVersion().getDisplayVersion().replaceAll("[\"']","")));%>",
   "link" : "<%=link%>",
-  "description" : "<b>User:</b> <% out.write((installedPackage.getContentServiceRequest() == null ? "-Detected- " : installedPackage.getContentServiceRequest().getSubjectName().replaceAll("[\"']","").trim())+"<br/> <b>Version: "+(installedPackage.getPackageVersion().getDisplayVersion() ==null ? null :installedPackage.getPackageVersion().getDisplayVersion().replaceAll("[\"']","").trim())+" </b> <br/><b>Status:</b> "+installedPackage.getStatus());%>",
+  "description" : "<b>User:</b> <% out.write(username.replaceAll("[\"']","").trim()+"<br/> <b>Version:</b> "+(version.replaceAll("[\"']","").trim())+"<br/><b>Status:</b> "+installedPackage.getStatus());%>",
   "icon" : "<%=icon%>",
   "color" : "<%=(installedPackage.getStatus() != InstalledPackageHistoryStatus.FAILED ? "#4EB84E" : "#DD5656")%>"
 }

@@ -57,6 +57,10 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.Locatable;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
+/**
+ * @author Jay Shaughnessy
+ *
+ */
 public class GetDestinationStep extends AbstractWizardStep {
 
     private final BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();

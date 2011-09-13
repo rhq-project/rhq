@@ -46,7 +46,7 @@ public class ChangeSetManagerImpl implements ChangeSetManager {
     }
 
     @Override
-    public boolean changeSetExists(int resourceId, Headers headers) throws IOException {
+    public boolean changeSetExists(int resourceId, Headers headers) {
         File changeSetDir = findChangeSetDir(resourceId, headers.getDriftConfigurationName());
         if (changeSetDir == null || !changeSetDir.exists()) {
             return false;

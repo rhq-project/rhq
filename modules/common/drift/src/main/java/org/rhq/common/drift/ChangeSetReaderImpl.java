@@ -19,10 +19,6 @@
 
 package org.rhq.common.drift;
 
-import static org.rhq.common.drift.FileEntry.addedFileEntry;
-import static org.rhq.common.drift.FileEntry.changedFileEntry;
-import static org.rhq.common.drift.FileEntry.removedFileEntry;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -34,6 +30,10 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
+
+import static org.rhq.common.drift.FileEntry.addedFileEntry;
+import static org.rhq.common.drift.FileEntry.changedFileEntry;
+import static org.rhq.common.drift.FileEntry.removedFileEntry;
 
 /**
  * Note that this implementation does not do any validation for the most part. It assumes
@@ -99,6 +99,7 @@ public class ChangeSetReaderImpl implements ChangeSetReader {
             headers.setDriftConfigurationName(reader.readLine());
             headers.setBasedir(reader.readLine());
             headers.setType(DriftChangeSetCategory.fromCode(reader.readLine()));
+            headers.setVersion(Integer.parseInt(reader.readLine()));
         } catch (IOException e) {
             throw e;
         } catch (Throwable t) {

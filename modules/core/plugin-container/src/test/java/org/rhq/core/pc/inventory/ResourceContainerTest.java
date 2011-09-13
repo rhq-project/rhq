@@ -49,7 +49,9 @@ public class ResourceContainerTest {
     @BeforeClass
     public void beforeClass() {
         PluginContainerConfiguration config = new PluginContainerConfiguration();
-        config.setDataDirectory(new File("target/PluginContainerTest"));
+        File dataDir = new File("target/PluginContainerTest");
+        dataDir.mkdirs();
+        config.setDataDirectory(dataDir);
         PluginContainer pc = PluginContainer.getInstance();
         pc.setConfiguration(config);
         pc.initialize();

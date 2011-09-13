@@ -23,6 +23,7 @@ public class ChangeSetReaderImplTest {
                            "file-added-test\n" +
                            "myresource\n" +
                            "C\n" +
+                           "1\n" +
                            "A " + sha + " 0 conf/myconf.conf";
 
         ChangeSetReaderImpl reader = new ChangeSetReaderImpl(new StringReader(changeset));
@@ -34,6 +35,7 @@ public class ChangeSetReaderImplTest {
         expectedHeaders.setDriftConfigurationName("file-added-test");
         expectedHeaders.setBasedir("myresource");
         expectedHeaders.setType(COVERAGE);
+        expectedHeaders.setVersion(1);
 
         assertHeadersEquals(actualHeaders, expectedHeaders);
 
@@ -53,6 +55,7 @@ public class ChangeSetReaderImplTest {
                            "file-removed-test\n" +
                            "myresource\n" +
                            "C\n" +
+                           "1\n" +
                            "R 0 " + sha + " conf/myconf.conf";
 
         ChangeSetReaderImpl reader = new ChangeSetReaderImpl(new StringReader(changeset));
@@ -64,6 +67,7 @@ public class ChangeSetReaderImplTest {
         expectedHeaders.setDriftConfigurationName("file-removed-test");
         expectedHeaders.setBasedir("myresource");
         expectedHeaders.setType(COVERAGE);
+        expectedHeaders.setVersion(1);
 
         assertHeadersEquals(actualHeaders, expectedHeaders);
 
@@ -84,6 +88,7 @@ public class ChangeSetReaderImplTest {
                            "file-changed-test\n" +
                            "myresource\n" +
                            "C\n" +
+                           "1\n" +
                            "C " + newSha + " " + oldSha + " conf/myconf.conf";
 
         ChangeSetReaderImpl reader = new ChangeSetReaderImpl(new StringReader(changeset));
@@ -95,6 +100,7 @@ public class ChangeSetReaderImplTest {
         expectedHeaders.setDriftConfigurationName("file-changed-test");
         expectedHeaders.setBasedir("myresource");
         expectedHeaders.setType(COVERAGE);
+        expectedHeaders.setVersion(1);
 
         assertHeadersEquals(actualHeaders, expectedHeaders);
 
@@ -114,6 +120,7 @@ public class ChangeSetReaderImplTest {
                            "file-name-test\n" +
                            "myresource\n" +
                            "C\n" +
+                           "1\n" +
                            "A " + sha + " 0 conf/file with spaces.conf";
 
         ChangeSetReaderImpl reader = new ChangeSetReaderImpl(new StringReader(changeset));
@@ -125,6 +132,7 @@ public class ChangeSetReaderImplTest {
         expectedHeaders.setDriftConfigurationName("file-name-test");
         expectedHeaders.setBasedir("myresource");
         expectedHeaders.setType(COVERAGE);
+        expectedHeaders.setVersion(1);
 
         assertHeadersEquals(actualHeaders, expectedHeaders);
 
@@ -153,6 +161,7 @@ public class ChangeSetReaderImplTest {
                            "multiple-dir-entries-test\n" +
                            "myresource\n" +
                            "C\n" +
+                           "1\n" +
                            "A " + sha256("resource.conf") +  " 0 conf/resource.conf\n" +
                            "A " + sha256("resource.jar") + " 0 lib/resource.jar";
 
@@ -175,6 +184,7 @@ public class ChangeSetReaderImplTest {
                            "single-dir-entry-test\n" +
                            "myresource\n" +
                            "C\n" +
+                           "1\n" +
                            "A " + sha + " 0 conf/resource.conf\n";
 
         ChangeSetReaderImpl reader = new ChangeSetReaderImpl(new StringReader(changeset));
@@ -198,7 +208,8 @@ public class ChangeSetReaderImplTest {
                            "1\n" +
                            "empty-changeset-test\n" +
                            "myresouce\n" +
-                           "C\n";
+                           "C\n" +
+                           "1\n";
 
         ChangeSetReaderImpl reader = new ChangeSetReaderImpl(new StringReader(changeset));
         int numEntries = 0;

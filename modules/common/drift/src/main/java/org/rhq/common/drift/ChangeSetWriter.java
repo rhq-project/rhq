@@ -42,6 +42,7 @@ import java.io.IOException;
  *   <li>drift configuration name</li>
  *   <li>drift configuration base directory</li>
  *   <li>change set type flag indicating whether this is a coverage or drift changeset</li>
+ *   <li>change set version number</li>
  * </ul>
  * <br/>
  * <br/>

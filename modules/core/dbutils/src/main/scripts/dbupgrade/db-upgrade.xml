@@ -3474,8 +3474,8 @@
                 <schema-alterColumn table="RHQ_DRIFT_CONFIG" column="INTERVAL" nullable="FALSE" />                
                 <schema-addColumn   table="RHQ_DRIFT_CONFIG" column="IS_ENABLED" columnType="BOOLEAN" />
                 <schema-alterColumn table="RHQ_DRIFT_CONFIG" column="IS_ENABLED" nullable="FALSE" />
-                <schema-addColumn   table="RHQ_DRIFT_CONFIG" column="MODE" columnType="VARCHAR2" precision="20" />
-                <schema-alterColumn table="RHQ_DRIFT_CONFIG" column="MODE" nullable="FALSE" />                
+                <schema-addColumn   table="RHQ_DRIFT_CONFIG" column="DRIFT_HANDLING_MODE" columnType="VARCHAR2" precision="20" />
+                <schema-alterColumn table="RHQ_DRIFT_CONFIG" column="DRIFT_HANDLING_MODE" nullable="FALSE" />                
                 <schema-addColumn   table="RHQ_DRIFT_CONFIG" column="CONFIG_ID" columnType="INTEGER" />
                 <schema-alterColumn table="RHQ_DRIFT_CONFIG" column="CONFIG_ID" nullable="FALSE" />                
                 <schema-directSQL>

@@ -53,6 +53,7 @@
     <product.supportEmail>info@rhq-project.org</product.supportEmail>
     <product.version>${project.version}</product.version>
     <product.helpDocRoot>http://support.rhq-project.org/display/RHQ/</product.helpDocRoot>
+    <product.buildPropertiesFile>target/build.properties</product.buildPropertiesFile>
 
     <doUpdate>false</doUpdate>
 
@@ -1155,14 +1156,14 @@
 		                          <tstamp>
 		                              <format property="buildTime" pattern="MM/dd/yy hh:mm aa z" locale="en,US" timezone="GMT" />
 		                          </tstamp>
-		                          <echo file="target/build.properties">buildTime = ${buildTime}${line.separator}</echo>
+		                          <echo file="${product.buildPropertiesFile}">buildTime = ${buildTime}${line.separator}</echo>
 		
 		                          <exec executable="git" outputproperty="buildNumber" failonerror="false" failifexecutionfails="false">
 		                             <arg value="log" />
 		                             <arg value="--pretty=format:%h" />
 		                             <arg value="-n1" />
 		                          </exec>
-		                          <echo file="target/build.properties" append="true">buildNumber = ${buildNumber}${line.separator}</echo>
+		                          <echo file="${product.buildPropertiesFile}" append="true">buildNumber = ${buildNumber}${line.separator}</echo>
 		                      </tasks>
 		                  </configuration>
 		              </execution>
@@ -1202,7 +1203,7 @@
 		                  </goals>
 		                  <configuration>
 		                      <files>
-		                          <file>${project.build.directory}/build.properties</file>
+		                          <file>${product.buildPropertiesFile}</file>
 		                      </files>
 		                      <quiet>true</quiet>
 		                  </configuration>
@@ -1240,8 +1241,8 @@
                                                     timezone="GMT"/>
                                         </tstamp>
                                         <mkdir dir="target"/>
-                                        <echo file="target/build-time.properties" level="error">buildTime = ${maven.build.timestamp}</echo>
-                                        <echo file="target/build-number.properties" level="error">buildNumber = ${rhq.build.number}</echo>
+                                        <echo file="${product.buildPropertiesFile}">buildTime = ${buildTime}${line.separator}</echo>
+                                        <echo file="${product.buildPropertiesFile}" append="true">buildNumber = ${buildNumber}${line.separator}</echo>
                                     </tasks>
                                 </configuration>
                             </execution>
@@ -1255,7 +1256,7 @@
                                 </goals>
                                 <configuration>
                                     <tasks>
-                                        <echo level="debug">buildTime = ${maven.build.timestamp}</echo>
+                                        <echo level="debug">buildTime = ${buildTime}</echo>
                                         <echo level="debug">buildNumber = ${rhq.build.number}</echo>
                                     </tasks>
                                 </configuration>
@@ -1274,8 +1275,7 @@
                                 </goals>
                                 <configuration>
                                     <files>
-                                        <file>${project.build.directory}/build-time.properties</file>
-                                        <file>${project.build.directory}/build-number.properties</file>
+                                        <file>${product.buildPropertiesFile}</file>
                                     </files>
                                 </configuration>
                             </execution>

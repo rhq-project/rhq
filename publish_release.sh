@@ -37,6 +37,8 @@ print_program_versions()
 
 usage() 
 {   
+   EXE=`basename $0`
+
    abort "$@" "Usage:   $EXE community|enterprise RELEASE_BRANCH test|production" "Example: $EXE enterprise release-3.0.0 test"
 }
 
@@ -146,6 +148,29 @@ validate_git()
    fi
 }
 
+validate_arguments()
+{
+   if [ "$#" -ne 3 ]; then
+      usage
+   fi
+   RELEASE_TYPE="$1"
+   if [ "$RELEASE_TYPE" != "community" ] && [ "$RELEASE_TYPE" != "enterprise" ]; then
+      usage "Invalid release type: $RELEASE_TYPE (valid release types are 'community' or 'enterprise')"
+   fi
+   RELEASE_BRANCH="$2"
+   MODE="$3"
+
+   if [ "$MODE" != "test" ] && [ "$MODE" != "production" ]; then
+      usage "Invalid mode: $MODE (valid modes are 'test' or 'production')"
+   fi
+
+   if [ "$MODE" = "production" ]; then
+      if [ -z "$JBOSS_ORG_USERNAME" ] || [ -z "$JBOSS_ORG_PASSWORD" ]; then
+         usage "In production mode, jboss.org credentials must be specified via the JBOSS_ORG_USERNAME and JBOSS_ORG_PASSWORD environment variables."
+      fi
+   fi
+}
+
 
 #### THE RELEASE SCRIPT ######
 
@@ -156,27 +181,7 @@ fi
 
 # Process command line args.
 
-EXE=`basename $0`
-if [ "$#" -ne 3 ]; then
-   usage
-fi  
-RELEASE_TYPE="$1"
-if [ "$RELEASE_TYPE" != "community" ] && [ "$RELEASE_TYPE" != "enterprise" ]; then
-   usage "Invalid release type: $RELEASE_TYPE (valid release types are 'community' or 'enterprise')"
-fi
-RELEASE_BRANCH="$2"
-MODE="$3"
-
-if [ "$MODE" != "test" ] && [ "$MODE" != "production" ]; then
-   usage "Invalid mode: $MODE (valid modes are 'test' or 'production')"
-fi
-
-if [ "$MODE" = "production" ]; then
-   if [ -z "$JBOSS_ORG_USERNAME" ] || [ -z "$JBOSS_ORG_PASSWORD" ]; then
-      usage "In production mode, jboss.org credentials must be specified via the JBOSS_ORG_USERNAME and JBOSS_ORG_PASSWORD environment variables."
-   fi    
-fi
-
+validate_arguments $@
 
 # TODO: Check that JDK version is < 1.7.
 
@@ -274,8 +279,6 @@ program_versions=("git --version" "java -version" "mvn --version")
 print_program_versions "${program_versions[@]}"
 
 echo "==============================================================================="
-
-
 
 # We only need to worry about cloning the repo if we are not running on hudson
 if [ ! "$HUDSON_URL" ]; then

@@ -180,7 +180,6 @@ if [ -n "$RELEASE_DEBUG" ]; then
 fi
 
 # Process command line args.
-
 validate_arguments $@
 
 # TODO: Check that JDK version is < 1.7.
@@ -241,9 +240,6 @@ fi
 if [ -n "$RELEASE_ADDITIONAL_MAVEN_ARGS" ]; then
    MAVEN_ARGS="$MAVEN_ARGS $RELEASE_ADDITIONAL_MAVEN_ARGS"
 fi
-if [ -z "$MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS" ]; then
-   MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS="6"
-fi
 
 if [ "$MODE" = "production" ] && [ "$RELEASE_TYPE" = "community" ]; then
    MAVEN_RELEASE_PERFORM_GOAL="deploy"
@@ -269,7 +265,7 @@ print_variables "${environment_variables[@]}"
 
 echo "============================= Local Variables ================================="
 local_variables=("WORKING_DIR" "PROJECT_NAME" "PROJECT_GIT_URL" "RELEASE_TYPE" "DEVELOPMENT_VERSION" \
-                  "RELEASE_BRANCH" "MODE" "MAVEN_LOCAL_REPO_DIR" "MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS" \
+                  "RELEASE_BRANCH" "MODE" "MAVEN_LOCAL_REPO_DIR" \
                   "MAVEN_SETTINGS_FILE" "MAVEN_ARGS" "MAVEN_RELEASE_PERFORM_GOAL" "JBOSS_ORG_USERNAME")
 print_variables "${local_variables[@]}"
 

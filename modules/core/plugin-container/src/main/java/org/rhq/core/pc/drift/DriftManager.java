@@ -432,7 +432,8 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
         if (updatedSchedule == null) {
             updatedSchedule = new DriftDetectionSchedule(resourceId, driftConfiguration);
             if (log.isInfoEnabled()) {
-                log.info("Adding " + updatedSchedule + " to " + schedulesQueue);
+                log.info("No matching schedule was found in the queue. This must be a request to add a new " +
+                    "schedule. Adding " + updatedSchedule + " to " + schedulesQueue);
             }
             boolean added = schedulesQueue.addSchedule(updatedSchedule);
             if (added) {
@@ -441,6 +442,12 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
                 }
             } else {
                 log.warn("Failed to add " + updatedSchedule + " to " + schedulesQueue);
+            }
+        } else {
+            if (log.isDebugEnabled()) {
+                log.debug(updatedSchedule + " has been updated and added back to " + schedulesQueue);
+            } else if (log.isInfoEnabled()) {
+                log.info(updatedSchedule + " has been updated.");
             }
         }
 

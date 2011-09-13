@@ -1242,7 +1242,7 @@
                                         </tstamp>
                                         <mkdir dir="target"/>
                                         <echo file="${product.buildPropertiesFile}">buildTime = ${buildTime}${line.separator}</echo>
-                                        <echo file="${product.buildPropertiesFile}" append="true">buildNumber = ${buildNumber}${line.separator}</echo>
+                                        <echo file="${product.buildPropertiesFile}" append="true">buildNumber = ${rhq.build.number}${line.separator}</echo>
                                     </tasks>
                                 </configuration>
                             </execution>

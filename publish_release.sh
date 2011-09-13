@@ -275,23 +275,6 @@ print_program_versions "${program_versions[@]}"
 echo "==============================================================================="
 
 
-# Clean the Maven local repo if it hasn't been purged recently.
-
-if [ -f "$MAVEN_LOCAL_REPO_DIR" ]; then
-   if [ "$MODE" = "production" ]; then
-      echo "Purging MAVEN_LOCAL_REPO_DIR ($MAVEN_LOCAL_REPO_DIR) since this is a production build..."
-      #rm -rf "$MAVEN_LOCAL_REPO_DIR"
-   else
-      echo boo
-      #OUTPUT=`find "$MAVEN_LOCAL_REPO_DIR" -maxdepth 0 -mtime $MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS`
-      #if [ -n "$OUTPUT" ]; then       
-      #   echo "MAVEN_LOCAL_REPO_DIR ($MAVEN_LOCAL_REPO_DIR) has existed for more than $MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS hours - purging it for a clean-clean build..."
-      #   rm -rf "$MAVEN_LOCAL_REPO_DIR"
-      #fi
-   fi
-   
-fi
-mkdir -p "$MAVEN_LOCAL_REPO_DIR"
 
 # We only need to worry about cloning the repo if we are not running on hudson
 if [ ! "$HUDSON_URL" ]; then

@@ -71,7 +71,7 @@ public class PerfTestComponent implements ResourceComponent, MeasurementFacet, C
     // Attributes  --------------------------------------------
     private Log log = LogFactory.getLog(PerfTestComponent.class);
 
-    public static final Random RANDOM = new Random();
+    private static final Random RANDOM = new Random();
 
     private ResourceContext resourceContext;
     private EventPoller eventPoller;

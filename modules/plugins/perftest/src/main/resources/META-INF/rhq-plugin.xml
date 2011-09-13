@@ -146,6 +146,12 @@
       <metric property="metric8" defaultOn="true" displayType="summary"/>
       <metric property="metric9" defaultOn="true" displayType="summary"/>
 
+      <metric property="trait000" defaultOn="true" dataType="trait" displayType="summary"/>
+      <metric property="trait001" defaultOn="true" dataType="trait" displayType="summary"/>
+      <metric property="trait002" defaultOn="true" dataType="trait" displayType="summary"/>
+      <metric property="trait003" defaultOn="true" dataType="trait" displayType="summary"/>
+      <metric property="trait004" defaultOn="true" dataType="trait" displayType="summary"/>
+
       <event name="PerfTestEventType" description="a test event type"/>
 
       <content name="artifact0" displayName="Artifact 0" category="configuration"/>
@@ -163,6 +169,8 @@
             <c:simple-property name="childProperty2" default="blue"/>
          </plugin-configuration>
 
+         <operation name="childOperation0"/>
+
          <metric property="childMetric0" defaultOn="true" displayType="summary"/>
          <metric property="childMetric1" defaultOn="true" displayType="summary"/>
          <metric property="childMetric2" defaultOn="true" displayType="summary"/>
@@ -173,6 +181,12 @@
          <metric property="childMetric7" defaultOn="true" displayType="summary"/>
          <metric property="childMetric8" defaultOn="true" displayType="summary"/>
          <metric property="childMetric9" defaultOn="true" displayType="summary"/>
+
+         <metric property="childTrait000" defaultOn="true" dataType="trait" displayType="summary"/>
+         <metric property="childTrait001" defaultOn="true" dataType="trait" displayType="summary"/>
+         <metric property="childTrait002" defaultOn="true" dataType="trait" displayType="summary"/>
+         <metric property="childTrait003" defaultOn="true" dataType="trait" displayType="summary"/>
+         <metric property="childTrait004" defaultOn="true" dataType="trait" displayType="summary"/>
 
          <content name="childArtifact0" displayName="Child Artifact 0" category="configuration"/>
 

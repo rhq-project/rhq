@@ -274,7 +274,7 @@ public class ResourceUpgradeDelegate {
         ResourceUpgradeReport upgradeReport = null;
         try {
             upgradeReport = inventoryManager.invokeDiscoveryComponentResourceUpgradeFacet(resource.getResourceType(),
-                discoveryComponent, upgradeContext);
+                discoveryComponent, upgradeContext, parentResourceContainer);
         } catch (Throwable t) {
             log.error("ResourceUpgradeFacet threw an exception while upgrading resource [" + resource + "]", t);
             request.setErrorProperties(t);

@@ -317,7 +317,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
         try {
             ResourceDiscoveryComponent proxy = this.discoveryComponentProxyFactory.getDiscoveryComponentProxy(context
-                .getResourceType(), component, timeout);
+                .getResourceType(), component, timeout, parentResourceContainer);
             Set<DiscoveredResourceDetails> results = proxy.discoverResources(context);
             return results;
         } catch (TimeoutException te) {
@@ -337,20 +337,23 @@ public class InventoryManager extends AgentService implements ContainerService, 
      * an empty set if nothing is discovered. This may return <code>null</code> if for some reason
      * we could not invoke the discovery component.
      *
+     *
      * @param component the discovery component that will actually go out and discover resources
      * @param pluginConfig the plugin configuration to be used to connect to the resource to be discovered
      * @param context the context for use by the discovery component
+     * @param parentResourceContainer
      * @return the details of all discovered resources, may be empty or <code>null</code>
      *
      * @throws Exception if the discovery component threw an exception
      */
     private DiscoveredResourceDetails discoverResource(ResourceDiscoveryComponent component,
-        Configuration pluginConfig, ResourceDiscoveryContext context) throws Exception {
+                                                       Configuration pluginConfig, ResourceDiscoveryContext context,
+                                                       ResourceContainer parentResourceContainer) throws Exception {
         long timeout = getDiscoveryComponentTimeout(context.getResourceType());
 
         try {
             ManualAddFacet proxy = this.discoveryComponentProxyFactory.getDiscoveryComponentProxy(context
-                .getResourceType(), component, timeout, ManualAddFacet.class);
+                .getResourceType(), component, timeout, ManualAddFacet.class, parentResourceContainer);
             DiscoveredResourceDetails result = proxy.discoverResource(pluginConfig, context);
             return result;
         } catch (TimeoutException te) {
@@ -386,7 +389,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         long timeout = getDiscoveryComponentTimeout(resourceType);
 
         ClassLoaderFacet proxy = this.discoveryComponentProxyFactory.getDiscoveryComponentProxy(resourceType,
-            component, timeout, ClassLoaderFacet.class);
+            component, timeout, ClassLoaderFacet.class, parentContainer);
 
         ResourceDiscoveryContext discoveryContext = new ResourceDiscoveryContext(resourceType, parentComponent,
             parentResourceContext, SystemInfoFactory.createSystemInfo(), null, null, this.configuration
@@ -406,14 +409,14 @@ public class InventoryManager extends AgentService implements ContainerService, 
     }
 
     public <T extends ResourceComponent> ResourceUpgradeReport invokeDiscoveryComponentResourceUpgradeFacet(
-        ResourceType resourceType, ResourceDiscoveryComponent<T> component,
-        ResourceUpgradeContext<T> inventoriedResource) throws Throwable {
+            ResourceType resourceType, ResourceDiscoveryComponent<T> component,
+            ResourceUpgradeContext<T> inventoriedResource, ResourceContainer parentResourceContainer) throws Throwable {
 
         long timeout = getDiscoveryComponentTimeout(resourceType);
         try {
             @SuppressWarnings("unchecked")
             ResourceUpgradeFacet<T> proxy = this.discoveryComponentProxyFactory.getDiscoveryComponentProxy(
-                resourceType, component, timeout, ResourceUpgradeFacet.class);
+                resourceType, component, timeout, ResourceUpgradeFacet.class, parentResourceContainer);
 
             return proxy.upgrade(inventoriedResource);
         } catch (BlacklistedException e) {
@@ -683,7 +686,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
                 // Ask the plugin's discovery component to find the new resource, throwing exceptions if it cannot be
                 // found at all.
-                discoveredResourceDetails = discoverResource(discoveryComponent, pluginConfiguration, discoveryContext);
+                discoveredResourceDetails = discoverResource(discoveryComponent, pluginConfiguration, discoveryContext,
+                        parentResourceContainer);
                 if (discoveredResourceDetails == null) {
                     log.info("Plugin Error: During manual add, discovery component method ["
                         + discoveryComponent.getClass().getName() + ".discoverResource()] returned null "
@@ -1513,7 +1517,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             // wrap the discovery component in a proxy to allow us to timeout discovery invocations
             try {
                 discoveryComponent = this.discoveryComponentProxyFactory.getDiscoveryComponentProxy(type,
-                    discoveryComponent, getDiscoveryComponentTimeout(type));
+                    discoveryComponent, getDiscoveryComponentTimeout(type), parentResourceContainer);
             } catch (Exception e) {
                 discoveryComponent = null;
                 log.warn("Cannot give activated resource its discovery component. Cause: " + e);

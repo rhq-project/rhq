@@ -41,8 +41,11 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.pc.PluginContainer;
+import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.core.pc.inventory.TimeoutException;
 import org.rhq.core.pc.plugin.BlacklistedException;
+import org.rhq.core.pc.plugin.PluginComponentFactory;
 import org.rhq.core.pluginapi.inventory.ClassLoaderFacet;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 
@@ -65,20 +68,24 @@ public class DiscoveryComponentProxyFactory {
     private final Set<ResourceType> blacklist = new HashSet<ResourceType>();
 
     /**
-     * Same as {@link #getDiscoveryComponentProxy(ResourceType, ResourceDiscoveryComponent, long)} except
+     * Same as {@link #getDiscoveryComponentProxy(org.rhq.core.domain.resource.ResourceType, org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent, long, org.rhq.core.pc.inventory.ResourceContainer)} except
      * this lets you provide the interface of the discovery component you want to talk to. For example,
      * use this to talk to the {@link ClassLoaderFacet} of a discovery component.
      */
     @SuppressWarnings("unchecked")
     public <T> T getDiscoveryComponentProxy(ResourceType type, ResourceDiscoveryComponent component, long timeout,
-        Class<T> componentInterface) throws PluginContainerException, BlacklistedException {
+                                            Class<T> componentInterface, ResourceContainer parentResourceContainer)
+            throws PluginContainerException, BlacklistedException {
 
         if (isResourceTypeBlacklisted(type)) {
             throw new BlacklistedException("Discovery component for resource type [" + type + "] has been blacklisted");
         }
 
         try {
-            ClassLoader pluginClassLoader = component.getClass().getClassLoader();
+            PluginComponentFactory pluginComponentFactory = PluginContainer.getInstance().getPluginComponentFactory();
+
+            ClassLoader pluginClassLoader =
+                    pluginComponentFactory.getDiscoveryComponentClassLoader(parentResourceContainer, type.getPlugin());
 
             // This is the handler that will actually invoke the method calls.
             ResourceDiscoveryComponentInvocationHandler handler = new ResourceDiscoveryComponentInvocationHandler(type,
@@ -99,10 +106,12 @@ public class DiscoveryComponentProxyFactory {
      * to make calls into the plugin discovery component and not deadlock if that plugin misbehaves and never returns
      * (or takes too long to return).
      *
+     *
      * @param type the resource type that is to be discovered by the given discovery component
      * @param component the discovery component to be wrapped in a timer proxy
      * @param timeout the time, in milliseconds, that invocations can take to invoke discovery component methods
-     * 
+     *
+     * @param parentResourceContainer
      * @return the discovery component wrapped in a proxy that should be used to make calls to the component
      *
      * @throws PluginContainerException if this method failed to create the proxy
@@ -111,9 +120,11 @@ public class DiscoveryComponentProxyFactory {
      */
     @SuppressWarnings("unchecked")
     public ResourceDiscoveryComponent getDiscoveryComponentProxy(ResourceType type,
-        ResourceDiscoveryComponent component, long timeout) throws PluginContainerException, BlacklistedException {
-
-        return getDiscoveryComponentProxy(type, component, timeout, ResourceDiscoveryComponent.class);
+                                                                 ResourceDiscoveryComponent component, long timeout,
+                                                                 ResourceContainer parentResourceContainer)
+            throws PluginContainerException, BlacklistedException {
+        return getDiscoveryComponentProxy(type, component, timeout, ResourceDiscoveryComponent.class,
+                parentResourceContainer);
     }
 
     public void initialize() {

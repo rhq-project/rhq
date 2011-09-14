@@ -23,6 +23,7 @@
 package org.rhq.core.pc.inventory;
 
 import static org.rhq.core.domain.drift.DriftConfigurationComparator.CompareMode.BOTH_BASE_INFO_AND_DIRECTORY_SPECIFICATIONS;
+import static org.rhq.core.util.file.FileUtil.purge;
 
 import java.io.File;
 import java.net.URL;
@@ -124,9 +125,6 @@ import org.rhq.core.system.SystemInfo;
 import org.rhq.core.system.SystemInfoFactory;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.exception.WrappedRemotingException;
-
-import static org.rhq.core.domain.drift.DriftConfigurationComparator.CompareMode.BOTH_BASE_INFO_AND_DIRECTORY_SPECIFICATIONS;
-import static org.rhq.core.util.file.FileUtil.purge;
 
 /**
  * Manages the process of both auto-detection of servers and runtime detection of services across all plugins. Manages
@@ -2178,8 +2176,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 }
             }
         } else {
-            log.info("DriftManager is not available. Drift configurations will be persisted but detection will not " +
-                    "be scheduled.");
+            log.info("DriftManager is not available. Drift configurations will be persisted but detection will not "
+                + "be scheduled.");
 
             // First check for drift configurations that have been deleted
             log.debug("Checking for stale drift configurations that need to be purged from inventory");
@@ -2220,8 +2218,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 ResourceContainer container = getResourceContainer(resourceId);
                 for (DriftConfiguration c : configsFromServer.get(resourceId)) {
                     if (log.isDebugEnabled()) {
-                        log.debug("Adding DriftConfiguration[name: " + c.getName() + ", resourceId: " + resourceId +
-                            "]");
+                        log.debug("Adding DriftConfiguration[name: " + c.getName() + ", resourceId: " + resourceId
+                            + "]");
                     }
                     container.addDriftConfiguration(c);
                 }

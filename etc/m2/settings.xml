@@ -61,6 +61,7 @@
             <!--<enforcer.skip>true</enforcer.skip>-->
 
             <!-- *** surefire plugin settings *** -->
+            <!--<skipTests>true</skipTests>-->
             <!--<maven.test.skip>true</maven.test.skip>-->
             <!--<maven.test.failure.ignore>true</maven.test.failure.ignore>-->
             <!--<maven.test.error.ignore>true</maven.test.error.ignore>-->

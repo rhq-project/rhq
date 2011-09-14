@@ -2149,7 +2149,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
                 List<DriftConfiguration> deleted = new ArrayList<DriftConfiguration>();
 
-                for (DriftDetectionSchedule schedule : queue.toArray()) {
+                for (DriftDetectionSchedule schedule : getSchedulesForResource(resourceId, queue.toArray())) {
                     if (!configsFromServerSet.contains(schedule.getDriftConfiguration())) {
                         if (log.isDebugEnabled()) {
                             log.debug("Detected stale drift configuration. Preparing to unschedule " + schedule);
@@ -2225,6 +2225,16 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 }
             }
         }
+    }
+
+    private List<DriftDetectionSchedule> getSchedulesForResource(int resourceId, DriftDetectionSchedule[] schedules) {
+        List<DriftDetectionSchedule> resourceSchedules = new LinkedList<DriftDetectionSchedule>();
+        for (DriftDetectionSchedule s : schedules) {
+            if (s.getResourceId() == resourceId) {
+                resourceSchedules.add(s);
+            }
+        }
+        return resourceSchedules;
     }
 
     /**

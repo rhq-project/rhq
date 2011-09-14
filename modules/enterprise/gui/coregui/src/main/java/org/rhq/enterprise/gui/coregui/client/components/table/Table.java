@@ -530,7 +530,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         refreshTableInfo();
     }
 
-    private void disableAllFooterControls() {
+    public void disableAllFooterControls() {
         for (TableActionInfo tableAction : tableActions) {
             tableAction.actionCanvas.disable();
         }

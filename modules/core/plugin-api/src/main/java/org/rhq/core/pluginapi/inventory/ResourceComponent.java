@@ -54,7 +54,7 @@ import org.rhq.core.pluginapi.support.SupportFacet;
  * @param <T> the parent resource component type for this component. This means you can nest a hierarchy of resource
  *            components that mimic the resource type hierarchy as defined in a plugin deployment descriptor.
  */
-public interface ResourceComponent<T extends ResourceComponent> extends AvailabilityFacet {
+public interface ResourceComponent<T extends ResourceComponent<?>> extends AvailabilityFacet {
     /**
      * Initializes the resource component, possibly connecting to the managed resource itself. The implementation can be
      * custom to the plugin or resource, but the idea is that a resource component can create a single connection to

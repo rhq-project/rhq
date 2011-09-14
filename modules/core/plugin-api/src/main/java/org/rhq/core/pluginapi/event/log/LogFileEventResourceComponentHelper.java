@@ -24,23 +24,23 @@ import java.text.SimpleDateFormat;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.PropertyList;
-import org.rhq.core.domain.configuration.Property;
-import org.rhq.core.domain.configuration.PropertyMap;
-import org.rhq.core.domain.event.EventSeverity;
-import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
-import org.rhq.core.pluginapi.inventory.ResourceContext;
-import org.rhq.core.pluginapi.event.EventPoller;
-import org.rhq.core.pluginapi.event.EventContext;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.PropertyList;
+import org.rhq.core.domain.configuration.PropertyMap;
+import org.rhq.core.domain.event.EventSeverity;
+import org.rhq.core.pluginapi.event.EventContext;
+import org.rhq.core.pluginapi.event.EventPoller;
+import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
+import org.rhq.core.pluginapi.inventory.ResourceContext;
 
 /**
  * @author Ian Springer
  */
-public class LogFileEventResourceComponentHelper
-{
+public class LogFileEventResourceComponentHelper {
     public static final String LOG_ENTRY_EVENT_TYPE = "logEntry";
 
     public static final String LOG_EVENT_SOURCES_CONFIG_PROP = "logEventSources";
@@ -56,10 +56,9 @@ public class LogFileEventResourceComponentHelper
 
     private final Log log = LogFactory.getLog(this.getClass());
 
-    private ResourceContext resourceContext;
+    private ResourceContext<?> resourceContext;
 
-    public LogFileEventResourceComponentHelper(ResourceContext resourceContext)
-    {
+    public LogFileEventResourceComponentHelper(ResourceContext<?> resourceContext) {
         this.resourceContext = resourceContext;
     }
 
@@ -71,13 +70,14 @@ public class LogFileEventResourceComponentHelper
             Boolean enabled = Boolean.valueOf(logEventSource.getSimpleValue(LogEventSourcePropertyNames.ENABLED, null));
             if (enabled) {
                 String logFilePathname = logEventSource.getSimpleValue(LogEventSourcePropertyNames.LOG_FILE_PATH, null);
-                if (logFilePathname==null) {
+                if (logFilePathname == null) {
                     log.info("LOGFILE: No logfile path given, can not watch this event log.");
                     return;
                 }
                 File logFile = new File(logFilePathname);
                 if (!logFile.exists() || !logFile.canRead()) {
-                    log.error("LOGFILE: Logfile at location " + logFilePathname + " does not exist or is not readable. Can not start watching the event log.");
+                    log.error("LOGFILE: Logfile at location " + logFilePathname
+                        + " does not exist or is not readable. Can not start watching the event log.");
                     return;
                 }
 

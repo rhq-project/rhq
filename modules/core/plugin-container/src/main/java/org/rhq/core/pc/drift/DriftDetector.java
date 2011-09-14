@@ -69,7 +69,12 @@ public class DriftDetector implements Runnable {
 
     @Override
     public void run() {
+        log.debug("Starting drift detection..");
+        long startTime = System.currentTimeMillis();
         try {
+            if (log.isDebugEnabled()) {
+                log.debug("Fetching next schedule from " + scheduleQueue);
+            }
 
             DriftDetectionSchedule schedule = scheduleQueue.getNextSchedule();
             if (schedule == null) {
@@ -78,7 +83,6 @@ public class DriftDetector implements Runnable {
             }
 
             if (log.isDebugEnabled()) {
-                log.debug("Preparing to run drift detection for the next schedule in " + scheduleQueue);
                 log.debug("Processing " + schedule);
 
             }
@@ -121,6 +125,8 @@ public class DriftDetector implements Runnable {
         } finally {
             try {
                 scheduleQueue.deactivateSchedule();
+                long endTime = System.currentTimeMillis();
+                log.debug("Finished drift detection in " + (endTime - startTime) + " ms");
 
             } catch (Throwable t) {
                 Throwable cause = t.getCause();

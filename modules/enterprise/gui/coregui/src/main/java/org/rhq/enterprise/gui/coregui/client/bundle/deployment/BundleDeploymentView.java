@@ -334,6 +334,7 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
     @SuppressWarnings("unchecked")
     private Table addMemberDeploymentsTable() {
         Table table = new Table(extendLocatorId("Deployments"), MSG.view_bundle_deploy_deploymentPlatforms());
+        table.setShowFooterRefresh(false);
 
         table.setTitleComponent(new HTMLFlow(MSG.view_bundle_deploy_selectARow()));
 

@@ -18,12 +18,12 @@
  */
 package org.rhq.core.domain.drift;
 
-import static org.rhq.core.domain.drift.DriftCategory.FILE_REMOVED;
-
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Map;
 import java.util.TreeMap;
+
+import static org.rhq.core.domain.drift.DriftCategory.FILE_REMOVED;
 
 /**
  * A representation of an agent's drift file monitoring. 
@@ -34,7 +34,11 @@ public class DriftSnapshot implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private int version;
+    /**
+     * The version is initially -1 which indicates that there are no
+     * change sets as opposed to an empty change set.
+     */
+    private int version = -1;
 
     private Map<String, Drift<?, ?>> entries = new TreeMap<String, Drift<?, ?>>();
 

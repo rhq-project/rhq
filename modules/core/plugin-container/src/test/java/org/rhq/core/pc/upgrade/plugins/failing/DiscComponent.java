@@ -37,16 +37,16 @@ import org.rhq.core.pluginapi.upgrade.ResourceUpgradeFacet;
  *
  * @author Lukas Krejci
  */
-public class DiscComponent implements ResourceDiscoveryComponent<ResourceComponent>,
-    ResourceUpgradeFacet<ResourceComponent> {
-    
+public class DiscComponent<T extends ResourceComponent<?>> implements ResourceDiscoveryComponent<T>,
+    ResourceUpgradeFacet<T> {
+
     private static final String RESOURCE_KEY = "resource-key-failing";
     private static final String RESOURCE_NAME = "resource-name-failing";
     private static final String RESOURCE_DESCRIPTION = "resource-description-failing";
 
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<ResourceComponent> context)
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<T> context)
         throws InvalidPluginConfigurationException, Exception {
-        
+
         //create a marker file so that the testing code knows this method has run
         File dataDir = context.getParentResourceContext().getDataDirectory();
         if (dataDir != null) {
@@ -59,12 +59,12 @@ public class DiscComponent implements ResourceDiscoveryComponent<ResourceCompone
             } catch (IOException e) {
             }
         }
-        
+
         return Collections.singleton(new DiscoveredResourceDetails(context.getResourceType(), RESOURCE_KEY,
             RESOURCE_NAME, null, RESOURCE_DESCRIPTION, context.getDefaultPluginConfiguration(), null));
     }
 
-    public ResourceUpgradeReport upgrade(ResourceUpgradeContext<ResourceComponent> inventoriedResource) {
+    public ResourceUpgradeReport upgrade(ResourceUpgradeContext<T> inventoriedResource) {
         throw new RuntimeException("Failing the upgrade purposefully.");
     }
 }

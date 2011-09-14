@@ -53,7 +53,7 @@ import org.rhq.core.system.SystemInfo;
  *
  * @author John Mazzitelli
  */
-public class ResourceDiscoveryContext<T extends ResourceComponent> {
+public class ResourceDiscoveryContext<T extends ResourceComponent<?>> {
     private final ResourceType resourceType;
     private final T parentComponent;
     private final PluginContainerDeployment pluginContainerDeployment;
@@ -61,7 +61,7 @@ public class ResourceDiscoveryContext<T extends ResourceComponent> {
     /**
      * @since 1.0.1
      */
-    private final ResourceContext parentResourceContext;
+    private final ResourceContext<?> parentResourceContext;
     private final SystemInfo systemInformation;
     private final List<ProcessScanResult> processScanResults;
     private final List<Configuration> pluginConfigurations;
@@ -86,12 +86,11 @@ public class ResourceDiscoveryContext<T extends ResourceComponent> {
      *                             can be assured this name is unique across <b>all</b> plugin containers/agents running
      * @param pluginContainerDeployment  indicates where the plugin container is running
      */
-    @SuppressWarnings("unchecked")
     public ResourceDiscoveryContext(ResourceType resourceType, T parentComponent,
-        ResourceContext parentResourceContext, SystemInfo systemInfo, List<ProcessScanResult> processScanResults,
+        ResourceContext<?> parentResourceContext, SystemInfo systemInfo, List<ProcessScanResult> processScanResults,
         String pluginContainerName, PluginContainerDeployment pluginContainerDeployment) {
         this(resourceType, parentComponent, parentResourceContext, systemInfo, processScanResults, null,
-                pluginContainerName, pluginContainerDeployment);
+            pluginContainerName, pluginContainerDeployment);
     }
 
     /**
@@ -119,7 +118,7 @@ public class ResourceDiscoveryContext<T extends ResourceComponent> {
      */
     @SuppressWarnings("unchecked")
     public ResourceDiscoveryContext(ResourceType resourceType, T parentComponent,
-        ResourceContext parentResourceContext, SystemInfo systemInfo, List<ProcessScanResult> processScanResults,
+        ResourceContext<?> parentResourceContext, SystemInfo systemInfo, List<ProcessScanResult> processScanResults,
         List<Configuration> pluginConfigurations, String pluginContainerName,
         PluginContainerDeployment pluginContainerDeployment) {
         this.resourceType = resourceType;
@@ -161,7 +160,7 @@ public class ResourceDiscoveryContext<T extends ResourceComponent> {
      * @return the resource context for the parent
      * @since 1.0.1
      */
-    public ResourceContext getParentResourceContext() {
+    public ResourceContext<?> getParentResourceContext() {
         return parentResourceContext;
     }
 

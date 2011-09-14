@@ -42,6 +42,7 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.criteria.Criteria;
+import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertFormatUtility;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
@@ -84,11 +85,40 @@ public class ConditionsEditor extends LocatableVLayout {
     public void setConditions(Set<AlertCondition> set) {
         conditions = new HashSet<AlertCondition>(); // make our own copy
         if (set != null) {
+
+            // we need to make sure we have the full measurement definition, including the units.
+            // this is so we can display the condition values with the proper units. If an alert
+            // condition is a measurement condition, but the measurement definition isn't the full
+            // definition, look up the full definition from the resource type and use it.
+            for (AlertCondition alertCondition : set) {
+                MeasurementDefinition measDef = alertCondition.getMeasurementDefinition();
+                if (measDef != null) {
+                    if (measDef.getUnits() == null) {
+                        MeasurementDefinition fullMeasDef = findMeasurementDefinition(measDef.getId());
+                        if (fullMeasDef != null) {
+                            alertCondition.setMeasurementDefinition(fullMeasDef);
+                        }
+                    }
+                }
+            }
+
             conditions.addAll(set);
         }
         if (table != null) {
             table.refresh();
         }
+    }
+
+    private MeasurementDefinition findMeasurementDefinition(int measurementDefinitionId) {
+        Set<MeasurementDefinition> measDefs = this.resourceType.getMetricDefinitions();
+        if (measDefs != null) {
+            for (MeasurementDefinition measDef : measDefs) {
+                if (measDef.getId() == measurementDefinitionId) {
+                    return measDef;
+                }
+            }
+        }
+        return null;
     }
 
     @Override

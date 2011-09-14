@@ -30,7 +30,7 @@ import org.rhq.core.pluginapi.upgrade.ResourceUpgradeFacet;
  *
  * @author Lukas Krejci
  */
-public class BaseUpgradingDiscoveryComponent<T extends BaseResourceComponent> extends BaseDiscoveryComponent<T>
+public class BaseUpgradingDiscoveryComponent<T extends BaseResourceComponent<?>> extends BaseDiscoveryComponent<T>
     implements ResourceUpgradeFacet<T> {
 
     public ResourceUpgradeReport upgrade(ResourceUpgradeContext<T> inventoriedResource) {
@@ -45,16 +45,16 @@ public class BaseUpgradingDiscoveryComponent<T extends BaseResourceComponent> ex
         if (!fail && parent != null) {
             String typeName = inventoriedResource.getResourceType().getName();
             Set<Integer> failingOrdinals = parent.getChildrenToFailUpgrade().get(typeName);
-            
+
             fail = failingOrdinals != null && failingOrdinals.contains(Integer.valueOf(ordinal));
         }
 
         if (fail) {
             throw new RuntimeException("Failing the resource upgrade purposefully.");
         }
-        
+
         boolean checkParentUpgraded = Boolean.parseBoolean(pluginConfig.getSimpleValue("checkParentUpgraded", "false"));
-        
+
         if (checkParentUpgraded) {
             if (!inventoriedResource.getParentResourceContext().getResourceKey().startsWith("UPGRADED")) {
                 throw new RuntimeException("The parent resource ["
@@ -62,7 +62,7 @@ public class BaseUpgradingDiscoveryComponent<T extends BaseResourceComponent> ex
                     + "] doesn't seem like it's upgraded but this resource expects it to be.");
             }
         }
-        
+
         String newKey = pluginConfig.getSimpleValue("upgradedKey", null);
 
         if (newKey == null) {

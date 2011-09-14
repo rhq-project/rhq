@@ -21,6 +21,7 @@ package org.rhq.core.pc.upgrade.plugins.failing;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
@@ -30,17 +31,18 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
  *
  * @author Lukas Krejci
  */
-public class ResComponent implements ResourceComponent<ResourceComponent> {
+public class ResComponent<T extends ResourceComponent<?>> implements ResourceComponent<T> {
     private static final Log log = LogFactory.getLog(ResComponent.class);
-    
+
     public AvailabilityType getAvailability() {
         return AvailabilityType.UP;
     }
-    
-    public void start(ResourceContext<ResourceComponent> context) throws InvalidPluginConfigurationException, Exception {
-        log.info("~~~ starting the resource upgrade test failing component with resource key: " + context.getResourceKey());
+
+    public void start(ResourceContext<T> context) throws InvalidPluginConfigurationException, Exception {
+        log.info("~~~ starting the resource upgrade test failing component with resource key: "
+            + context.getResourceKey());
     }
-    
+
     public void stop() {
     }
 }

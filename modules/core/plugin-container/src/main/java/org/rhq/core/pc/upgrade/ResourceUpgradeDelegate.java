@@ -148,7 +148,7 @@ public class ResourceUpgradeDelegate {
             try {
                 //check the validity of the upgrades now that we have a complete picture
                 //about the changes and the inventory looks like it was already upgraded.
-                for(ResourceUpgradeRequest request : requests) {
+                for (ResourceUpgradeRequest request : requests) {
                     ResourceContainer container = inventoryManager.getResourceContainer(request.getResourceId());
                     if (container != null) {
                         Resource resource = container.getResource();
@@ -158,12 +158,12 @@ public class ResourceUpgradeDelegate {
                             //in the code below. Let's use the original resource for the error message so that we don't confuse
                             //the user.  
                             ResourceUpgradeRequest orig = findOriginal(request);
-                            
+
                             //orig should never be null, but let's be paranoid
-                            if (orig != null) { 
+                            if (orig != null) {
                                 orig.updateResource(resource);
                             }
-                            
+
                             String errorString = "Upgrading the resource [" + resource + "] using these updates ["
                                 + request + "] would render the inventory invalid because of the following reasons: "
                                 + upgradeErrors;
@@ -240,7 +240,7 @@ public class ResourceUpgradeDelegate {
     }
 
     @SuppressWarnings("unchecked")
-    private <T extends ResourceComponent> boolean executeResourceUpgradeFacetAndStoreRequest(
+    private <T extends ResourceComponent<?>> boolean executeResourceUpgradeFacetAndStoreRequest(
         ResourceContainer resourceContainer) throws PluginContainerException {
 
         ResourceComponent<T> parentResourceComponent = resourceContainer.getResourceContext()
@@ -318,7 +318,7 @@ public class ResourceUpgradeDelegate {
             s.append("After the upgrade, the following resources would have the same resource key which is illegal. This is an issue of either the old or the new version of the plugin '"
                 + resource.getResourceType().getPlugin()
                 + "'. Please consult the documentation of the plugin to see what are the recommended steps to resolve this situation:\n");
-            
+
             //ok, this is a little tricky
             //this method is called when the inventory is in the state as it would look after a
             //successful upgrade.
@@ -330,19 +330,19 @@ public class ResourceUpgradeDelegate {
             for (Resource r : duplicitSiblings) {
                 ResourceUpgradeRequest fakeRequest = new ResourceUpgradeRequest(r.getId());
                 fakeRequest.fillInFromResource(r);
-                
+
                 ResourceUpgradeRequest orig = findOriginal(fakeRequest);
-                
+
                 //we might not find the original, because this resource might not need an upgrade.
                 //in that case, the reporting will be accurate because upgrade didn't touch the resource.
                 if (orig != null) {
                     orig.updateResource(r);
                 }
-                
+
                 //now we have the resource as it looked before the upgrade kicked in (which is in this
                 //case also what it will look like after the upgrade finishes, because we're failing it).
                 s.append(r).append(",\n");
-                
+
                 //and revert the resource back to what it looked like (i.e. back to the upgraded state so
                 //that we don't introduce side-effects in this method).
                 if (orig != null) {
@@ -395,14 +395,14 @@ public class ResourceUpgradeDelegate {
 
         failedResourceTypesInParent.add(resource.getResourceType());
     }
-    
+
     private ResourceUpgradeRequest findOriginal(ResourceUpgradeRequest request) {
-        for(ResourceUpgradeRequest original : originalResourceData) {
+        for (ResourceUpgradeRequest original : originalResourceData) {
             if (original.equals(request)) {
                 return original;
             }
         }
-        
+
         return null;
     }
 }

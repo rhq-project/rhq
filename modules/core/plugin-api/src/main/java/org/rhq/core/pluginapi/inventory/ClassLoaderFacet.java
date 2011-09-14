@@ -37,7 +37,7 @@ import java.util.List;
  *
  * @author John Mazzitelli
  */
-public interface ClassLoaderFacet<T extends ResourceComponent> {
+public interface ClassLoaderFacet<T extends ResourceComponent<?>> {
     /**
      * This method provides the location for additional jars that are needed in the resource's classloader
      * in order to properly connect and talk to the managed resource.

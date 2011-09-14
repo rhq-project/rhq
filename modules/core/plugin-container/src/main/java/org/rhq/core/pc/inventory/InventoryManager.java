@@ -124,6 +124,7 @@ import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.exception.WrappedRemotingException;
 
 import static org.rhq.core.domain.drift.DriftConfigurationComparator.CompareMode.BOTH_BASE_INFO_AND_DIRECTORY_SPECIFICATIONS;
+import static org.rhq.core.util.file.FileUtil.purge;
 
 /**
  * Manages the process of both auto-detection of servers and runtime detection of services across all plugins. Manages
@@ -2172,7 +2173,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
             // First check for drift configurations that have been deleted
             log.debug("Checking for stale drift configurations that need to be purged from inventory");
+            File changeSetsDir = new File(configuration.getDataDirectory(), "changesets");
             for (Integer resourceId : configsFromServer.keySet()) {
+                File resourceDir = new File(changeSetsDir, resourceId.toString());
                 ResourceContainer container = getResourceContainer(resourceId);
                 Set<DriftConfiguration> resourceConfigs = new TreeSet<DriftConfiguration>(
                     new DriftConfigurationComparator(BOTH_BASE_INFO_AND_DIRECTORY_SPECIFICATIONS));
@@ -2192,6 +2195,10 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
                 for (DriftConfiguration c : deleted) {
                     container.removeDriftConfiguration(c);
+                    File changeSetDir = new File(resourceDir, c.getName());
+                    if (changeSetDir.exists()) {
+                        purge(changeSetDir, true);
+                    }
                 }
             }
 
@@ -2205,6 +2212,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                         log.debug("Adding or updating DriftConfiguration[name: " + c.getName() + ", resourceId: " +
                             resourceId + "]");
                     }
+                    // TODO does this handle renamed configs?
                     container.addDriftConfiguration(c);
                 }
             }

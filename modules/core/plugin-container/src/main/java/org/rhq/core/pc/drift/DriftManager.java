@@ -159,6 +159,16 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
                 "server");
             DriftSnapshot snapshot = pluginContainerConfiguration.getServerServices().getDriftServerService()
                 .getCurrentSnapshot(configuration.getId());
+
+            if (snapshot.getVersion() == -1) {
+                // A version of -1 indicates that no change sets have been reported
+                // for this configuration. This can occur when a user creates a
+                // drift configuration while the agent is offline for example. At
+                // this point we just return and allow the agent to generate the
+                // initial snapshot file.
+                return;
+            }
+
             ChangeSetWriter writer = changeSetMgr.getChangeSetWriter(resource.getId(), headers);
 
             for (Drift drift : snapshot.getEntries()) {
@@ -187,7 +197,7 @@ public class DriftManager extends AgentService implements DriftAgentService, Dri
             for (File configDir : resourceDir.listFiles()) {
                 DriftConfiguration config = new DriftConfiguration(new Configuration());
                 config.setName(configDir.getName());
-                if (!schedulesQueue.contains(resourceId, config, comparator)) {
+                if (!schedulesQueue.contains(resourceId, config)) {
                     log.info("Detected deleted drift configuration, DriftConfiguration[name: " + config.getName() +
                         ", resourceId: " + resourceId + "]");
                     log.info("Deleting drift configuration directory " + configDir.getPath());

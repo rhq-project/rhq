@@ -18,7 +18,8 @@
    <properties>
        <scm.module.path>modules/integration-tests/mod_cluster-plugin-test</scm.module.path>
                <!-- jbossas.version>6.0.0.20100429-M3</jbossas.version-->
-               <jbossas.version>6.0.0.M1</jbossas.version>
+               <!-- jbossas.version>6.0.0.M1</jbossas.version-->
+               <jbossas.version>6.0.0.Final</jbossas.version>
        
     </properties>
     
@@ -49,11 +50,11 @@
          <scope>provided</scope>
       </dependency>
       
-        <dependency>
+        <!-- dependency>
           <groupId>org.jboss.integration</groupId>
           <artifactId>jboss-profileservice-spi</artifactId>
           <scope>provided</scope>
-        </dependency>
+        </dependency-->
 
       <dependency>
          <groupId>${rhq.groupId}</groupId>
@@ -82,11 +83,11 @@
           <scope>test</scope>
        </dependency>
 
-        <dependency>
+        <!--dependency>
           <groupId>org.jboss.microcontainer</groupId>
           <artifactId>jboss-kernel</artifactId>
           <scope>test</scope>
-        </dependency>
+        </dependency-->
 
         <dependency>
           <groupId>org.jboss.jbossas</groupId>
@@ -108,11 +109,11 @@
           <scope>test</scope>
         </dependency>
 
-        <dependency>
+        <!-- dependency>
           <groupId>org.jboss.security</groupId>
           <artifactId>jboss-security-spi</artifactId>
           <scope>test</scope>
-        </dependency>
+        </dependency-->
 
         <!-- dependency>
           <groupId>org.jboss.javaee</groupId>

@@ -19,13 +19,6 @@
 
 package org.rhq.core.pc.drift;
 
-import static org.rhq.common.drift.FileEntry.addedFileEntry;
-import static org.rhq.common.drift.FileEntry.changedFileEntry;
-import static org.rhq.common.drift.FileEntry.removedFileEntry;
-import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
-import static org.rhq.core.domain.drift.DriftChangeSetCategory.DRIFT;
-import static org.rhq.core.util.file.FileUtil.forEachFile;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.HashSet;
@@ -43,6 +36,13 @@ import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.drift.DriftConfiguration;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.file.FileVisitor;
+
+import static org.rhq.common.drift.FileEntry.addedFileEntry;
+import static org.rhq.common.drift.FileEntry.changedFileEntry;
+import static org.rhq.common.drift.FileEntry.removedFileEntry;
+import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
+import static org.rhq.core.domain.drift.DriftChangeSetCategory.DRIFT;
+import static org.rhq.core.util.file.FileUtil.forEachFile;
 
 public class DriftDetector implements Runnable {
     private Log log = LogFactory.getLog(DriftDetector.class);
@@ -78,7 +78,9 @@ public class DriftDetector implements Runnable {
             }
 
             if (log.isDebugEnabled()) {
+                log.debug("Preparing to run drift detection for the next schedule in " + scheduleQueue);
                 log.debug("Processing " + schedule);
+
             }
 
             if (schedule.getNextScan() > (System.currentTimeMillis() + 100L)) {

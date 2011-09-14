@@ -671,7 +671,7 @@
         <column name="NAME" type="VARCHAR2" size="512" required="true"/>        
         <column name="INTERVAL" type="LONG" required="true"/>
         <column name="IS_ENABLED" type="BOOLEAN" required="true"/>        
-        <column name="MODE" type="VARCHAR2" size="20" required="true"/>        
+        <column name="DRIFT_HANDLING_MODE" type="VARCHAR2" size="20" required="true"/>        
         <column name="CONFIG_ID" type="INTEGER" required="true" references="RHQ_CONFIG"/>
         <column name="RESOURCE_ID" type="INTEGER" required="false" references="RHQ_RESOURCE"/>
     </table>
@@ -685,6 +685,7 @@
         <column name="CATEGORY" type="VARCHAR2" size="20" required="true"/>                         
         <column name="RESOURCE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE"/>
         <column name="DRIFT_CONFIG_ID" type="INTEGER" required="true" references="RHQ_DRIFT_CONFIG"/>
+        <!--  the drift handling mode at changeset creation time -->
         <column name="DRIFT_CONFIG_MODE" type="VARCHAR2" size="20" required="true"/>        
     </table>
     

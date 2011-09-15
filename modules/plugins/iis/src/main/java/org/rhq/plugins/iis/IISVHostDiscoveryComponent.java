@@ -38,13 +38,13 @@ import org.rhq.plugins.iis.util.IISMetaBase;
  *
  * @author Greg Hinkle
  */
-public class IISVHostDiscoveryComponent implements ResourceDiscoveryComponent<IISServerComponent> {
+public class IISVHostDiscoveryComponent implements ResourceDiscoveryComponent<IISServerComponent<?>> {
 
     private static final String PDH_WEB_SERVICE = "Web Service";
     private static final String PDH_TOTAL = "_Total";
 
     public Set<DiscoveredResourceDetails> discoverResources(
-        ResourceDiscoveryContext<IISServerComponent> resourceDiscoveryContext)
+        ResourceDiscoveryContext<IISServerComponent<?>> resourceDiscoveryContext)
         throws InvalidPluginConfigurationException, Exception {
 
         List<String> vhosts = new ArrayList<String>();

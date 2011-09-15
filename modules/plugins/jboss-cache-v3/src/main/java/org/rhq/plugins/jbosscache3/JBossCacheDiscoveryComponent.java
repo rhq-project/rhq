@@ -48,13 +48,13 @@ import org.rhq.plugins.jmx.ObjectNameQueryUtility;
  * 
  */
 public class JBossCacheDiscoveryComponent implements
-		ResourceDiscoveryComponent<ProfileServiceComponent> {
+		ResourceDiscoveryComponent<ProfileServiceComponent<?>> {
 	private String REGEX = "(,|:)jmx-resource=[^,]*(,|\\z)";
 	private static String[] RESOURCE_NAME_KEY_PROPS = { "cluster", "config" };
     private static final String DEFAULT_RESOURCE_DESCRIPTION = "JBoss Cache";
 
     public Set<DiscoveredResourceDetails> discoverResources(
-			ResourceDiscoveryContext<ProfileServiceComponent> context)
+			ResourceDiscoveryContext<ProfileServiceComponent<?>> context)
 			throws InvalidPluginConfigurationException, Exception {
 
 		ProfileServiceComponent parentComponent = context

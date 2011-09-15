@@ -47,7 +47,7 @@ import org.rhq.core.util.exception.ThrowableUtil;
  * @author Heiko W. Rupp
  *
  */
-public class SnmpTrapdComponent implements ResourceComponent, MeasurementFacet {
+public class SnmpTrapdComponent implements ResourceComponent<ResourceComponent<?>>, MeasurementFacet {
 
     private final Log log = LogFactory.getLog(SnmpTrapdComponent.class);
 

@@ -54,19 +54,19 @@ import org.rhq.enterprise.agent.EnvironmentScriptFileUpdate.NameValuePair;
  *
  * @author John Mazzitelli
  */
-public class AgentJavaServiceWrapperComponent implements ResourceComponent<AgentServerComponent>, ConfigurationFacet,
-    OperationFacet {
+public class AgentJavaServiceWrapperComponent implements ResourceComponent<AgentServerComponent<?>>,
+    ConfigurationFacet, OperationFacet {
 
     private Log log = LogFactory.getLog(AgentJavaServiceWrapperComponent.class);
 
-    private ResourceContext<AgentServerComponent> resourceContext;
+    private ResourceContext<AgentServerComponent<?>> resourceContext;
 
     private File launcherScript;
     private File configFile;
     private File environmentFile;
     private File includeFile;
 
-    public void start(ResourceContext<AgentServerComponent> rc) throws Exception {
+    public void start(ResourceContext<AgentServerComponent<?>> rc) throws Exception {
 
         this.resourceContext = rc;
 

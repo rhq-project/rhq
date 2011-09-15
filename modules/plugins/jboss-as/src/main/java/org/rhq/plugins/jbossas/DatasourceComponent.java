@@ -45,7 +45,7 @@ import org.rhq.plugins.jmx.MBeanResourceComponent;
 /**
  * @author Greg Hinkle
  */
-public class DatasourceComponent extends MBeanResourceComponent<JBossASServerComponent> implements ConfigurationFacet,
+public class DatasourceComponent extends MBeanResourceComponent<JBossASServerComponent<?>> implements ConfigurationFacet,
     DeleteResourceFacet, OperationFacet
 {
     private static final String CONNECTION_POOL_OBJECT_NAME = "jboss.jca:name=%NAME%,service=ManagedConnectionPool";
@@ -62,7 +62,7 @@ public class DatasourceComponent extends MBeanResourceComponent<JBossASServerCom
     }
 
     @Override
-    public void start(ResourceContext<JBossASServerComponent> resourceContext)
+    public void start(ResourceContext<JBossASServerComponent<?>> resourceContext)
     {
         super.start(resourceContext);
         this.name = getResourceContext().getPluginConfiguration().getSimpleValue("name", null);

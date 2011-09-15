@@ -37,12 +37,12 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
  *
  * @author Ian Springer
  */
-public class JBossWebDiscoveryComponent implements ResourceDiscoveryComponent<ProfileServiceComponent>
+public class JBossWebDiscoveryComponent implements ResourceDiscoveryComponent<ProfileServiceComponent<?>>
 {
     private final Log log = LogFactory.getLog(this.getClass());
 
     public Set<DiscoveredResourceDetails> discoverResources(
-            ResourceDiscoveryContext<ProfileServiceComponent> discoveryContext)
+            ResourceDiscoveryContext<ProfileServiceComponent<?>> discoveryContext)
     {
         Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>();
         ResourceType resourceType = discoveryContext.getResourceType();

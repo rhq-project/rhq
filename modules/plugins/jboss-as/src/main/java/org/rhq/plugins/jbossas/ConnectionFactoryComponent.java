@@ -42,7 +42,7 @@ import java.util.Set;
 /**
  * @author Mark Spritzler
  */
-public class ConnectionFactoryComponent extends MBeanResourceComponent<JBossASServerComponent> implements ConfigurationFacet,
+public class ConnectionFactoryComponent extends MBeanResourceComponent<JBossASServerComponent<?>> implements ConfigurationFacet,
     DeleteResourceFacet {
     private static final String CONNECTION_POOL_OBJECT_NAME = "jboss.jca:name=%NAME%,service=ManagedConnectionPool";
 
@@ -56,7 +56,7 @@ public class ConnectionFactoryComponent extends MBeanResourceComponent<JBossASSe
     }
 
     @Override
-    public void start(ResourceContext<JBossASServerComponent> resourceContext) {
+    public void start(ResourceContext<JBossASServerComponent<?>> resourceContext) {
         super.start(resourceContext);
 
         this.name = getResourceContext().getPluginConfiguration().getSimpleValue("name", null);

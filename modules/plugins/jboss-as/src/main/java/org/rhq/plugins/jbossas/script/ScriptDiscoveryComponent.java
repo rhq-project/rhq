@@ -1,25 +1,25 @@
- /*
-  * Jopr Management Platform
-  * Copyright (C) 2005-2011 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * Jopr Management Platform
+ * Copyright (C) 2005-2011 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.plugins.jbossas.script;
 
 import java.io.File;
@@ -28,16 +28,18 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.resource.ResourceUpgradeReport;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
+import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
-import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.upgrade.ResourceUpgradeContext;
 import org.rhq.core.pluginapi.upgrade.ResourceUpgradeFacet;
 import org.rhq.core.system.ProcessInfo;
@@ -48,14 +50,14 @@ import org.rhq.plugins.jbossas.JBossASServerComponent;
  *
  * @author Ian Springer
  */
-public class ScriptDiscoveryComponent implements ResourceDiscoveryComponent<JBossASServerComponent>,
-        ResourceUpgradeFacet<JBossASServerComponent> {
+public class ScriptDiscoveryComponent implements ResourceDiscoveryComponent<JBossASServerComponent<?>>,
+    ResourceUpgradeFacet<JBossASServerComponent<?>> {
 
     private final Log log = LogFactory.getLog(this.getClass());
 
     public Set<DiscoveredResourceDetails> discoverResources(
-            ResourceDiscoveryContext<JBossASServerComponent> discoveryContext)
-            throws InvalidPluginConfigurationException {
+        ResourceDiscoveryContext<JBossASServerComponent<?>> discoveryContext)
+        throws InvalidPluginConfigurationException {
         Set<DiscoveredResourceDetails> resources = new HashSet<DiscoveredResourceDetails>();
         // TODO: Upgrade to new manual discovery API.
         List<Configuration> pluginConfigs = discoveryContext.getPluginConfigurations();
@@ -68,7 +70,7 @@ public class ScriptDiscoveryComponent implements ResourceDiscoveryComponent<JBos
     }
 
     @Override
-    public ResourceUpgradeReport upgrade(ResourceUpgradeContext<JBossASServerComponent> upgradeContext) {
+    public ResourceUpgradeReport upgrade(ResourceUpgradeContext<JBossASServerComponent<?>> upgradeContext) {
         String inventoriedResourceKey = upgradeContext.getResourceKey();
 
         ResourceContext parentResourceContext = upgradeContext.getParentResourceContext();
@@ -92,17 +94,18 @@ public class ScriptDiscoveryComponent implements ResourceDiscoveryComponent<JBos
 
     private File getServerBinDirectory(ResourceContext parentResourceContext) {
         Configuration parentPluginConfig = parentResourceContext.getPluginConfiguration();
-        String homeDir = parentPluginConfig.getSimple(JBossASServerComponent.JBOSS_HOME_DIR_CONFIG_PROP).getStringValue();
+        String homeDir = parentPluginConfig.getSimple(JBossASServerComponent.JBOSS_HOME_DIR_CONFIG_PROP)
+            .getStringValue();
         return new File(homeDir, "bin");
     }
 
     private static String buildResourceKey(String scriptPath, File binDir) {
-        return (scriptPath.startsWith(binDir.getPath())) ? scriptPath.substring(binDir.getPath().length() + 1) :
-                scriptPath;
+        return (scriptPath.startsWith(binDir.getPath())) ? scriptPath.substring(binDir.getPath().length() + 1)
+            : scriptPath;
     }
 
-    private void processAutoDiscoveredResources(ResourceDiscoveryContext<JBossASServerComponent> discoveryContext,
-                                                Set<DiscoveredResourceDetails> resources) {
+    private void processAutoDiscoveredResources(ResourceDiscoveryContext<JBossASServerComponent<?>> discoveryContext,
+        Set<DiscoveredResourceDetails> resources) {
         ResourceContext parentResourceContext = discoveryContext.getParentResourceContext();
         File binDir = getServerBinDirectory(parentResourceContext);
         log.debug("Searching for scripts beneath JBossAS server bin directory (" + binDir + ")...");
@@ -120,8 +123,8 @@ public class ScriptDiscoveryComponent implements ResourceDiscoveryComponent<JBos
         }
     }
 
-    private void processManuallyAddedResources(ResourceDiscoveryContext<JBossASServerComponent> discoveryContext,
-                                               Set<DiscoveredResourceDetails> resources, List<Configuration> pluginConfigs) {
+    private void processManuallyAddedResources(ResourceDiscoveryContext<JBossASServerComponent<?>> discoveryContext,
+        Set<DiscoveredResourceDetails> resources, List<Configuration> pluginConfigs) {
         ResourceContext parentResourceContext = discoveryContext.getParentResourceContext();
         File binDir = getServerBinDirectory(parentResourceContext);
         for (Configuration pluginConfig : pluginConfigs) {
@@ -167,7 +170,7 @@ public class ScriptDiscoveryComponent implements ResourceDiscoveryComponent<JBos
     }
 
     private DiscoveredResourceDetails createResourceDetails(
-        ResourceDiscoveryContext<JBossASServerComponent> discoveryContext, Configuration pluginConfig, File homeDir) {
+        ResourceDiscoveryContext<JBossASServerComponent<?>> discoveryContext, Configuration pluginConfig, File homeDir) {
         String path = pluginConfig.getSimple(ScriptComponent.PATH_CONFIG_PROP).getStringValue();
         String key = buildResourceKey(path, homeDir);
         String name = new File(path).getName();

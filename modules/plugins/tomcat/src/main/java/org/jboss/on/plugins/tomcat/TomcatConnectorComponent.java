@@ -54,7 +54,7 @@ import org.rhq.plugins.jmx.ObjectNameQueryUtility;
  * @author Jay Shaughnessy
  * @author Jason Dobies
  */
-public class TomcatConnectorComponent extends MBeanResourceComponent<TomcatServerComponent> {
+public class TomcatConnectorComponent extends MBeanResourceComponent<TomcatServerComponent<?>> {
 
     /**
      * property name for the protocol of the connector
@@ -103,7 +103,7 @@ public class TomcatConnectorComponent extends MBeanResourceComponent<TomcatServe
     }
 
     @Override
-    public void start(ResourceContext<TomcatServerComponent> context) {
+    public void start(ResourceContext<TomcatServerComponent<?>> context) {
         if (UNKNOWN.equals(context.getPluginConfiguration().getSimple(PLUGIN_CONFIG_HANDLER).getStringValue())) {
             throw new InvalidPluginConfigurationException(
                 "The connector is not listening for requests on the configured port. This is most likely due to the configured port being in use at Tomcat startup. In some cases (AJP connectors) Tomcat will assign an open port. This happens most often when there are multiple Tomcat servers running on the same platform. Check your Tomcat configuration for conflicts: "
@@ -206,7 +206,7 @@ public class TomcatConnectorComponent extends MBeanResourceComponent<TomcatServe
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
 
         // When starting the component get the connector type specific property keys
-        ResourceContext<TomcatServerComponent> context = getResourceContext();
+        ResourceContext<TomcatServerComponent<?>> context = getResourceContext();
         ConfigurationDefinition configDef = context.getResourceType().getResourceConfigurationDefinition();
         String protocol = report.getConfiguration().getSimpleValue(CONFIG_PROTOCOL, null);
         if ((null == protocol) || protocol.toUpperCase().contains("HTTP")) {

@@ -24,7 +24,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
 
@@ -68,7 +67,7 @@ import org.rhq.plugins.augeas.helper.AugeasNode;
  * @author Ian Springer
  * @author Lukas Krejci
  */
-public class AugeasConfigurationComponent<T extends ResourceComponent> implements ResourceComponent<T>,
+public class AugeasConfigurationComponent<T extends ResourceComponent<?>> implements ResourceComponent<T>,
     ConfigurationFacet, CreateChildResourceFacet, DeleteResourceFacet {
     /* Plugin config prop names */
     public static final String INCLUDE_GLOBS_PROP = "configurationFilesInclusionPatterns";
@@ -78,7 +77,7 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
     public static final String AUGEAS_ROOT_PATH_PROP = "augeasRootPath";
 
     private static final boolean IS_WINDOWS = (File.separatorChar == '\\');
-    public static final String DEFAULT_AUGEAS_ROOT_PATH = (IS_WINDOWS) ? "C:/" : "/";    
+    public static final String DEFAULT_AUGEAS_ROOT_PATH = (IS_WINDOWS) ? "C:/" : "/";
 
     private final Log log = LogFactory.getLog(this.getClass());
 
@@ -90,7 +89,7 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
     private AugeasNode resourceConfigRootNode;
     private String augeasRootPath;
     private String augeasLoadPath;
-    
+
     protected String getAugeasRootPath() {
         return augeasRootPath;
     }
@@ -102,7 +101,7 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
     protected String getAugeasLoadPath() {
         return augeasLoadPath;
     }
-    
+
     public void start(ResourceContext<T> resourceContext) throws InvalidPluginConfigurationException, Exception {
         this.resourceContext = resourceContext;
         this.resourceDescription = this.resourceContext.getResourceType() + " Resource with key ["
@@ -112,9 +111,10 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
         Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
         this.augeasRootPath = pluginConfig.getSimpleValue(AUGEAS_ROOT_PATH_PROP, DEFAULT_AUGEAS_ROOT_PATH);
         log.debug("Augeas Root Path = \"" + this.augeasRootPath + "\"");
-        
-        augeasLoadPath = resourceContext.getDataDirectory().getAbsolutePath() + File.separator + AugeasPluginLifecycleListener.LENSES_SUBDIRECTORY_NAME;
-        
+
+        augeasLoadPath = resourceContext.getDataDirectory().getAbsolutePath() + File.separator
+            + AugeasPluginLifecycleListener.LENSES_SUBDIRECTORY_NAME;
+
         if (isAugeasAvailable()) {
             initAugeas();
         } else {
@@ -755,16 +755,16 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
             }
         }
     }
-    
+
     private void checkModuleErrors(Augeas augeas) {
         List<String> errors = augeas.match("/augeas/load//error");
         if (errors != null && errors.size() > 0) {
             StringBuilder errorMessage = new StringBuilder();
-            for(String nodePath : errors) {
+            for (String nodePath : errors) {
                 AugeasNode node = new AugeasNode(nodePath);
                 String moduleName = node.getParent().getName();
                 String errorText = augeas.get(nodePath);
-                
+
                 errorMessage.append("Module '").append(moduleName).append("' failed with the following errors:\n");
                 errorMessage.append(errorText);
                 errorMessage.append("\n\n");
@@ -772,7 +772,7 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
             throw new IllegalStateException("Augeas modules didn't load cleanly.\n" + errorMessage);
         }
     }
-    
+
     /* (non-Javadoc)
      * @see java.lang.Object#finalize()
      */

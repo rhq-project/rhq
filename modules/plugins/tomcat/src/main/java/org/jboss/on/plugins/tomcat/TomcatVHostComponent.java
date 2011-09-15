@@ -64,7 +64,7 @@ import org.rhq.plugins.jmx.MBeanResourceComponent;
  * @author Heiko W. Rupp
  *
  */
-public class TomcatVHostComponent extends MBeanResourceComponent<TomcatServerComponent> implements
+public class TomcatVHostComponent extends MBeanResourceComponent<TomcatServerComponent<?>> implements
     ApplicationServerComponent, CreateChildResourceFacet {
 
     public static final String CONFIG_ALIASES = "aliases";
@@ -358,9 +358,8 @@ public class TomcatVHostComponent extends MBeanResourceComponent<TomcatServerCom
                 deployer = new TomcatApplicationDeployer(connection, getName());
             }
         } catch (Throwable e) {
-            log
-                .error("Unable to access Deployer MBean required for creation and deletion of managed resources - this should never happen. Cause: "
-                    + e);
+            log.error("Unable to access Deployer MBean required for creation and deletion of managed resources - this should never happen. Cause: "
+                + e);
         }
 
         return deployer;

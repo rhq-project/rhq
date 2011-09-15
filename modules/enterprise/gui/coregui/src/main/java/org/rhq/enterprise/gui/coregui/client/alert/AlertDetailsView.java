@@ -197,6 +197,7 @@ public class AlertDetailsView extends LocatableVLayout implements BookmarkableVi
             this.record = record;
             setHeight("35%");
             setWidth100();
+            setShowFooterRefresh(false);
         }
 
         @Override
@@ -263,6 +264,7 @@ public class AlertDetailsView extends LocatableVLayout implements BookmarkableVi
             this.record = record;
             setHeight("35%");
             setWidth100();
+            setShowFooterRefresh(false);
         }
 
         @Override

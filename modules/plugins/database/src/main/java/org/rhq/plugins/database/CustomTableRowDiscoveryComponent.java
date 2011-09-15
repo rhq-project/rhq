@@ -40,9 +40,9 @@ import org.rhq.core.util.jdbc.JDBCUtil;
  *
  * @author Greg Hinkle
  */
-public class CustomTableRowDiscoveryComponent implements ResourceDiscoveryComponent<DatabaseComponent> {
+public class CustomTableRowDiscoveryComponent implements ResourceDiscoveryComponent<DatabaseComponent<?>> {
     public Set<DiscoveredResourceDetails> discoverResources(
-        ResourceDiscoveryContext<DatabaseComponent> resourceDiscoveryContext)
+        ResourceDiscoveryContext<DatabaseComponent<?>> resourceDiscoveryContext)
         throws InvalidPluginConfigurationException, Exception {
         Statement statement = null;
         ResultSet resultSet = null;

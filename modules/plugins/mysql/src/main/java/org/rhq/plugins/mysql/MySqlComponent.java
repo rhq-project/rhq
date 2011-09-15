@@ -50,7 +50,8 @@ import org.rhq.plugins.database.DatabaseQueryUtility;
  * @author Greg Hinkle
  * @author Steve Millidge
  */
-public class MySqlComponent implements DatabaseComponent, ResourceComponent, MeasurementFacet {
+public class MySqlComponent implements DatabaseComponent<ResourceComponent<?>>,
+    ResourceComponent<ResourceComponent<?>>, MeasurementFacet {
 
     private ResourceContext resourceContext;
     private AggregateProcessInfo aggregateProcessInfo;

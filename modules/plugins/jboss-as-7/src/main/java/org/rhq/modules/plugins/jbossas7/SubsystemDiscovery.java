@@ -18,16 +18,6 @@
  */
 package org.rhq.modules.plugins.jbossas7;
 
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
-import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
-import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
-import org.rhq.modules.plugins.jbossas7.json.Address;
-import org.rhq.modules.plugins.jbossas7.json.ReadChildrenNames;
-import org.rhq.modules.plugins.jbossas7.json.ReadResource;
-import org.rhq.modules.plugins.jbossas7.json.Result;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -38,6 +28,16 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.map.DeserializationConfig;
 import org.codehaus.jackson.map.ObjectMapper;
+
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
+import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
+import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.modules.plugins.jbossas7.json.Address;
+import org.rhq.modules.plugins.jbossas7.json.ReadChildrenNames;
+import org.rhq.modules.plugins.jbossas7.json.ReadResource;
+import org.rhq.modules.plugins.jbossas7.json.Result;
 
 /**
  * Discover subsystems. We need to distinguish two cases denoted by the path
@@ -55,28 +55,26 @@ import org.codehaus.jackson.map.ObjectMapper;
  *
  * @author Heiko W. Rupp
  */
-@SuppressWarnings("unused")
-public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseComponent> {
+public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseComponent<?>> {
 
     private final Log log = LogFactory.getLog(this.getClass());
 
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<BaseComponent> context)
-            throws Exception {
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<BaseComponent<?>> context)
+        throws Exception {
 
         Set<DiscoveredResourceDetails> details = new HashSet<DiscoveredResourceDetails>();
 
         ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES,false);
-        mapper.configure(DeserializationConfig.Feature.READ_ENUMS_USING_TO_STRING,true);
+        mapper.configure(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        mapper.configure(DeserializationConfig.Feature.READ_ENUMS_USING_TO_STRING, true);
 
         BaseComponent parentComponent = context.getParentResourceComponent();
         ASConnection connection = parentComponent.getASConnection();
 
-
         Configuration config = context.getDefaultPluginConfiguration();
         String confPath = config.getSimpleValue("path", "");
-        if (confPath==null || confPath.isEmpty()) {
-            log.error("Path plugin config is null for ResourceType [" + context.getResourceType().getName() +"].");
+        if (confPath == null || confPath.isEmpty()) {
+            log.error("Path plugin config is null for ResourceType [" + context.getResourceType().getName() + "].");
             return details;
         }
 
@@ -89,14 +87,13 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
         // Construct the full path including the parent
         String path;
         String parentPath = parentComponent.getPath();
-        if (parentPath==null || parentPath.isEmpty())
+        if (parentPath == null || parentPath.isEmpty())
             path = "";
         else
             path = parentPath;
 
         if (Boolean.getBoolean("as7plugin.verbose"))
             log.info("total path: [" + path + "]");
-
 
         if (lookForChildren) {
             // Looking for multiple resource of type 'childType'
@@ -105,10 +102,8 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
             List<String> subTypes = new ArrayList<String>();
             if (confPath.contains("|")) {
                 subTypes.addAll(Arrays.asList(confPath.split("\\|")));
-            }
-            else
+            } else
                 subTypes.add(confPath);
-
 
             for (String cpath : subTypes) {
 
@@ -128,31 +123,28 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
 
                         String resKey;
 
-                        if (path==null||path.isEmpty())
+                        if (path == null || path.isEmpty())
                             resKey = newPath;
                         else {
                             if (path.startsWith(","))
                                 path = path.substring(1);
-                            resKey = path + "," +cpath + "=" + val;
+                            resKey = path + "," + cpath + "=" + val;
                         }
 
-                        PropertySimple pathProp = new PropertySimple("path",resKey);
+                        PropertySimple pathProp = new PropertySimple("path", resKey);
                         config2.put(pathProp);
 
-                        DiscoveredResourceDetails detail = new DiscoveredResourceDetails(
-                                context.getResourceType(), // DataType
-                                resKey, // Key
-                                val, // Name
-                                null, // Version
-                                context.getResourceType().getDescription(), // subsystem.description
-                                config2,
-                                null);
+                        DiscoveredResourceDetails detail = new DiscoveredResourceDetails(context.getResourceType(), // DataType
+                            resKey, // Key
+                            val, // Name
+                            null, // Version
+                            context.getResourceType().getDescription(), // subsystem.description
+                            config2, null);
                         details.add(detail);
                     }
                 }
             }
-        }
-        else {
+        } else {
             // Single subsystem
             path += "," + confPath;
             if (path.startsWith(","))
@@ -163,17 +155,15 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
                 String resKey = path;
                 String name = resKey.substring(resKey.lastIndexOf("=") + 1);
                 Configuration config2 = context.getDefaultPluginConfiguration();
-                PropertySimple pathProp = new PropertySimple("path",path);
+                PropertySimple pathProp = new PropertySimple("path", path);
                 config2.put(pathProp);
 
-                DiscoveredResourceDetails detail = new DiscoveredResourceDetails(
-                        context.getResourceType(), // DataType
-                        path, // Key
-                        name, // Name
-                        null, // Version
-                        context.getResourceType().getDescription(), // Description
-                        config2,
-                        null);
+                DiscoveredResourceDetails detail = new DiscoveredResourceDetails(context.getResourceType(), // DataType
+                    path, // Key
+                    name, // Name
+                    null, // Version
+                    context.getResourceType().getDescription(), // Description
+                    config2, null);
                 details.add(detail);
             }
         }

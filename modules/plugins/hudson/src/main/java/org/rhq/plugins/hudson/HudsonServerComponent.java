@@ -18,21 +18,21 @@
  */
 package org.rhq.plugins.hudson;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
+
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 
-import java.util.HashMap;
-import java.util.Map;
-
 /**
  * @author Greg Hinkle
  */
-public class HudsonServerComponent implements ResourceComponent {
-
+public class HudsonServerComponent implements ResourceComponent<ResourceComponent<?>> {
 
     private ResourceContext resourceContext;
     private Map<String, JSONArray> healthMap = new HashMap<String, JSONArray>();
@@ -46,8 +46,8 @@ public class HudsonServerComponent implements ResourceComponent {
 
     public AvailabilityType getAvailability() {
         try {
-            JSONObject server = HudsonJSONUtility.getData(this.resourceContext.getPluginConfiguration().getSimple("urlBase").getStringValue(), 1);
-
+            JSONObject server = HudsonJSONUtility.getData(
+                this.resourceContext.getPluginConfiguration().getSimple("urlBase").getStringValue(), 1);
 
             JSONArray jobs = server.getJSONArray("jobs");
             for (int i = 0; i < jobs.length(); i++) {

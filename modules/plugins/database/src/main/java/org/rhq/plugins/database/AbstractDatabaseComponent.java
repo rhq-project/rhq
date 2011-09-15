@@ -19,13 +19,14 @@
 package org.rhq.plugins.database;
 
 import java.sql.Connection;
+
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 
 /**
  * @author Greg Hinkle
  */
-public abstract class AbstractDatabaseComponent<T extends DatabaseComponent> implements DatabaseComponent {
+public abstract class AbstractDatabaseComponent<T extends DatabaseComponent<?>> implements DatabaseComponent {
     protected ResourceContext<T> resourceContext;
 
     public void start(ResourceContext resourceContext) throws InvalidPluginConfigurationException, Exception {

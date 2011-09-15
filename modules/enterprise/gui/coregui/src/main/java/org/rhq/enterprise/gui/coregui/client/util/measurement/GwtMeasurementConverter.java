@@ -5,7 +5,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import com.google.gwt.i18n.client.NumberFormat;
-import com.google.gwt.i18n.client.TimeZone;
 
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.MeasurementUnits;
@@ -17,9 +16,8 @@ import org.rhq.core.domain.measurement.util.MeasurementConversionException;
  *
  * @author Simeon Pinder
  */
+// TODO: what is different here vs. MeasurementConverterClient? we should combine the two
 public class GwtMeasurementConverter {
-
-    public static TimeZone tz = null;
 
     private static final int MAX_PRECISION_DIGITS = 4;
     private static final String NULL_OR_NAN_FORMATTED_VALUE = "--no data available--";

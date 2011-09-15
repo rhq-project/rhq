@@ -23,7 +23,6 @@
 package org.rhq.plugins.jbossas5;
 
 import java.io.File;
-import java.util.LinkedHashSet;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
@@ -53,8 +52,7 @@ import org.rhq.plugins.jbossas5.util.ResourceComponentUtils;
  *
  * @author Ian Springer
  */
-public class WebApplicationContextComponent extends ManagedComponentComponent
-{
+public class WebApplicationContextComponent extends ManagedComponentComponent {
     public static final String VIRTUAL_HOST_PROPERTY = "virtualHost";
     public static final String CONTEXT_PATH_PROPERTY = "contextPath";
 
@@ -65,12 +63,10 @@ public class WebApplicationContextComponent extends ManagedComponentComponent
 
     private static final String CLUSTERED_TRAIT = "clustered";
     private static final String DISTRIBUTABLE_MANAGED_PROPERTY = "Distributable";
-    
+
     // A regex for the names of all MBean:Servlet components for a WAR.
-    private static final String SERVLET_COMPONENT_NAMES_REGEX_TEMPLATE =
-            "jboss.web:J2EEApplication=none,J2EEServer=none,"
-                    + "WebModule=//%" + VIRTUAL_HOST_PROPERTY + "%"
-                    + "%" + CONTEXT_PATH_PROPERTY + "%,j2eeType=Servlet,name=[^,]+";
+    private static final String SERVLET_COMPONENT_NAMES_REGEX_TEMPLATE = "jboss.web:J2EEApplication=none,J2EEServer=none,"
+        + "WebModule=//%" + VIRTUAL_HOST_PROPERTY + "%" + "%" + CONTEXT_PATH_PROPERTY + "%,j2eeType=Servlet,name=[^,]+";
 
     private static final String SERVLET_METRIC_PREFIX = "Servlet.";
 
@@ -87,15 +83,13 @@ public class WebApplicationContextComponent extends ManagedComponentComponent
     private ResponseTimeLogParser logParser;
 
     private boolean clustered;
-    
+
     @Override
-    public void start(ResourceContext<ProfileServiceComponent> resourceContext) throws Exception
-    {
+    public void start(ResourceContext<ProfileServiceComponent<?>> resourceContext) throws Exception {
         super.start(resourceContext);
         Configuration pluginConfig = getResourceContext().getPluginConfiguration();
-        this.servletComponentNamesRegex =
-                ResourceComponentUtils.replacePropertyExpressionsInTemplate(SERVLET_COMPONENT_NAMES_REGEX_TEMPLATE,
-                        pluginConfig);
+        this.servletComponentNamesRegex = ResourceComponentUtils.replacePropertyExpressionsInTemplate(
+            SERVLET_COMPONENT_NAMES_REGEX_TEMPLATE, pluginConfig);
         ResponseTimeConfiguration responseTimeConfig = new ResponseTimeConfiguration(pluginConfig);
         File logFile = responseTimeConfig.getLogFile();
         if (logFile != null) {
@@ -111,80 +105,67 @@ public class WebApplicationContextComponent extends ManagedComponentComponent
                 clustered = distributable != null && distributable.booleanValue();
             }
         } catch (Exception e) {
-            log.warn("Failed to determine whether the web app context " + resourceContext.getResourceKey() + " is clustered or not.", e);
+            log.warn("Failed to determine whether the web app context " + resourceContext.getResourceKey()
+                + " is clustered or not.", e);
         }
     }
 
     @Override
-    public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests)
-            throws Exception
-    {
+    public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests) throws Exception {
         ProfileServiceComponent warComponent = getResourceContext().getParentResourceComponent();
         ManagementView managementView = warComponent.getConnection().getManagementView();
-        
+
         ManagedComponent component = prepareForMetricCollection(requests);
-        for (MeasurementScheduleRequest request : requests)
-        {
+        for (MeasurementScheduleRequest request : requests) {
             String metricName = request.getName();
-            try
-            {
-                if (metricName.startsWith(SERVLET_METRIC_PREFIX))
-                {
+            try {
+                if (metricName.startsWith(SERVLET_METRIC_PREFIX)) {
                     Double value = getServletMetric(managementView, metricName);
                     MeasurementDataNumeric metric = new MeasurementDataNumeric(request, value);
                     report.addData(metric);
-                }
-                else if (metricName.equals(VIRTUAL_HOST_TRAIT))
-                {
+                } else if (metricName.equals(VIRTUAL_HOST_TRAIT)) {
                     Configuration pluginConfig = getResourceContext().getPluginConfiguration();
                     String virtualHost = pluginConfig.getSimple(VIRTUAL_HOST_PROPERTY).getStringValue();
                     MeasurementDataTrait trait = new MeasurementDataTrait(request, virtualHost);
                     report.addData(trait);
-                }
-                else if (metricName.equals(RESPONSE_TIME_METRIC)) {
-                   if (this.logParser != null) {
-                      try {
-                          CallTimeData callTimeData = new CallTimeData(request);
-                          this.logParser.parseLog(callTimeData);
-                          report.addData(callTimeData);
-                      } catch (Exception e) {
-                          log.error("Failed to retrieve HTTP call-time data.", e);
-                      }
-                  } else {
-                      log.error("The '" + RESPONSE_TIME_METRIC + "' metric is enabled for WAR resource '"
-                          + getComponentName() + "', but no value is defined for the '"
-                          + RESPONSE_TIME_LOG_FILE_CONFIG_PROP + "' connection property.");
-                      // TODO: Communicate this error back to the server for display in the GUI.
-                   }
-                } 
-                else if (metricName.equals(CLUSTERED_TRAIT)) 
-                {
+                } else if (metricName.equals(RESPONSE_TIME_METRIC)) {
+                    if (this.logParser != null) {
+                        try {
+                            CallTimeData callTimeData = new CallTimeData(request);
+                            this.logParser.parseLog(callTimeData);
+                            report.addData(callTimeData);
+                        } catch (Exception e) {
+                            log.error("Failed to retrieve HTTP call-time data.", e);
+                        }
+                    } else {
+                        log.error("The '" + RESPONSE_TIME_METRIC + "' metric is enabled for WAR resource '"
+                            + getComponentName() + "', but no value is defined for the '"
+                            + RESPONSE_TIME_LOG_FILE_CONFIG_PROP + "' connection property.");
+                        // TODO: Communicate this error back to the server for display in the GUI.
+                    }
+                } else if (metricName.equals(CLUSTERED_TRAIT)) {
                     MeasurementDataTrait trait = new MeasurementDataTrait(request, Boolean.toString(clustered));
                     report.addData(trait);
-                }
-                else
-                {
+                } else {
                     String metricNameToUse = metricName;
                     if (clustered && !"runState".equals(metricName)) {
                         metricNameToUse = toUpperCaseFirstLetter(metricName);
                     }
-                    
+
                     String value = getMeasurement(component, metricNameToUse);
-                    
+
                     if (clustered && !"runState".equals(metricName) && value == null) {
                         //hmm... so it looks like https://issues.jboss.org/browse/JBPAPP-7172 has been fixed
                         //and we're getting the metric names in lower case even for clustered contexts
                         value = getMeasurement(component, metricName);
                     }
-                    
+
                     addValueToMeasurementReport(report, request, value);
                 }
-            }
-            catch (Exception e)
-            {
+            } catch (Exception e) {
                 // Don't let one bad apple spoil the barrel.
                 log.error("Failed to collect metric '" + metricName + "' for " + getResourceContext().getResourceType()
-                        + " Resource with key " + getResourceContext().getResourceKey() + ".", e);
+                    + " Resource with key " + getResourceContext().getResourceKey() + ".", e);
             }
         }
     }
@@ -192,99 +173,78 @@ public class WebApplicationContextComponent extends ManagedComponentComponent
     public boolean isClustered() {
         return clustered;
     }
-    
-    private Double getServletMetric(ManagementView managementView, String metricName) throws Exception
-    {
+
+    private Double getServletMetric(ManagementView managementView, String metricName) throws Exception {
         ComponentType servletComponentType = MoreKnownComponentTypes.MBean.Servlet.getType();
         //Set<ManagedComponent> servletComponents = managementView.getMatchingComponents(this.servletComponentNamesRegex,
         //        servletComponentType, new RegularExpressionNameMatcher());
         Set<ManagedComponent> servletComponents = ManagedComponentUtils.getManagedComponents(managementView,
-                servletComponentType, this.servletComponentNamesRegex, new RegularExpressionNameMatcher());
+            servletComponentType, this.servletComponentNamesRegex, new RegularExpressionNameMatcher());
 
         long min = Long.MAX_VALUE;
         long max = 0;
         long processingTime = 0;
         int requestCount = 0;
         int errorCount = 0;
-        for (ManagedComponent servletComponent : servletComponents)
-        {
-            if (metricName.equals(SERVLET_MINIMUM_RESPONSE_TIME_METRIC))
-            {
-                Long longValue = (Long)ManagedComponentUtils.getSimplePropertyValue(servletComponent, "minTime");
+        for (ManagedComponent servletComponent : servletComponents) {
+            if (metricName.equals(SERVLET_MINIMUM_RESPONSE_TIME_METRIC)) {
+                Long longValue = (Long) ManagedComponentUtils.getSimplePropertyValue(servletComponent, "minTime");
                 if (longValue < min)
                     min = longValue;
-            }
-            else if (metricName.equals(SERVLET_MAXIMUM_RESPONSE_TIME_METRIC))
-            {
-                Long longValue = (Long)ManagedComponentUtils.getSimplePropertyValue(servletComponent, "maxTime");
+            } else if (metricName.equals(SERVLET_MAXIMUM_RESPONSE_TIME_METRIC)) {
+                Long longValue = (Long) ManagedComponentUtils.getSimplePropertyValue(servletComponent, "maxTime");
                 if (longValue > max)
                     max = longValue;
-            }
-            else if (metricName.equals(SERVLET_AVERAGE_RESPONSE_TIME_METRIC))
-            {
-                Long longValue = (Long)ManagedComponentUtils.getSimplePropertyValue(servletComponent, "processingTime");
+            } else if (metricName.equals(SERVLET_AVERAGE_RESPONSE_TIME_METRIC)) {
+                Long longValue = (Long) ManagedComponentUtils
+                    .getSimplePropertyValue(servletComponent, "processingTime");
                 processingTime += longValue;
-                Integer intValue = (Integer)ManagedComponentUtils.getSimplePropertyValue(servletComponent, "requestCount");
+                Integer intValue = (Integer) ManagedComponentUtils.getSimplePropertyValue(servletComponent,
+                    "requestCount");
                 requestCount += intValue;
-            }
-            else if (metricName.equals(SERVLET_REQUEST_COUNT_METRIC))
-            {
-                Integer intValue = (Integer)ManagedComponentUtils.getSimplePropertyValue(servletComponent, "requestCount");
+            } else if (metricName.equals(SERVLET_REQUEST_COUNT_METRIC)) {
+                Integer intValue = (Integer) ManagedComponentUtils.getSimplePropertyValue(servletComponent,
+                    "requestCount");
                 requestCount += intValue;
-            }
-            else if (metricName.equals(SERVLET_ERROR_COUNT_METRIC))
-            {
-                Integer intValue = (Integer)ManagedComponentUtils.getSimplePropertyValue(servletComponent, "errorCount");
+            } else if (metricName.equals(SERVLET_ERROR_COUNT_METRIC)) {
+                Integer intValue = (Integer) ManagedComponentUtils.getSimplePropertyValue(servletComponent,
+                    "errorCount");
                 errorCount += intValue;
-            }
-            else if (metricName.equals(SERVLET_TOTAL_RESPONSE_TIME_METRIC))
-            {
-                Long longValue = (Long)ManagedComponentUtils.getSimplePropertyValue(servletComponent, "processingTime");
+            } else if (metricName.equals(SERVLET_TOTAL_RESPONSE_TIME_METRIC)) {
+                Long longValue = (Long) ManagedComponentUtils
+                    .getSimplePropertyValue(servletComponent, "processingTime");
                 processingTime += longValue;
             }
         }
 
         Double result;
-        if (metricName.equals(SERVLET_AVERAGE_RESPONSE_TIME_METRIC))
-        {
-            result = (requestCount > 0) ? ((double)processingTime / (double)requestCount) : Double.NaN;
-        }
-        else if (metricName.equals(SERVLET_MINIMUM_RESPONSE_TIME_METRIC))
-        {
-            result = (min != Long.MAX_VALUE) ? (double)min : Double.NaN;
-        }
-        else if (metricName.equals(SERVLET_MAXIMUM_RESPONSE_TIME_METRIC))
-        {
-            result = (max != 0) ? (double)max : Double.NaN;
-        }
-        else if (metricName.equals(SERVLET_ERROR_COUNT_METRIC))
-        {
-            result = (double)errorCount;
-        }
-        else if (metricName.equals(SERVLET_REQUEST_COUNT_METRIC))
-        {
-            result = (double)requestCount;
-        }
-        else if (metricName.equals(SERVLET_TOTAL_RESPONSE_TIME_METRIC))
-        {
-            result = (double)processingTime;
-        }
-        else
-        {
+        if (metricName.equals(SERVLET_AVERAGE_RESPONSE_TIME_METRIC)) {
+            result = (requestCount > 0) ? ((double) processingTime / (double) requestCount) : Double.NaN;
+        } else if (metricName.equals(SERVLET_MINIMUM_RESPONSE_TIME_METRIC)) {
+            result = (min != Long.MAX_VALUE) ? (double) min : Double.NaN;
+        } else if (metricName.equals(SERVLET_MAXIMUM_RESPONSE_TIME_METRIC)) {
+            result = (max != 0) ? (double) max : Double.NaN;
+        } else if (metricName.equals(SERVLET_ERROR_COUNT_METRIC)) {
+            result = (double) errorCount;
+        } else if (metricName.equals(SERVLET_REQUEST_COUNT_METRIC)) {
+            result = (double) requestCount;
+        } else if (metricName.equals(SERVLET_TOTAL_RESPONSE_TIME_METRIC)) {
+            result = (double) processingTime;
+        } else {
             // fallback
             result = Double.NaN;
         }
 
         return result;
     }
-    
+
     private static String toUpperCaseFirstLetter(String name) {
         if (name == null || name.length() == 0) {
             return name;
         }
-        
+
         char first = name.charAt(0);
-        
+
         return Character.toUpperCase(first) + name.substring(1);
     }
 }

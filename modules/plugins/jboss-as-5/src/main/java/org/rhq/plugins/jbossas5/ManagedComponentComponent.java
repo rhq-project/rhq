@@ -129,7 +129,7 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
         }
     }
 
-    public void start(ResourceContext<ProfileServiceComponent> resourceContext) throws Exception {
+    public void start(ResourceContext<ProfileServiceComponent<?>> resourceContext) throws Exception {
         super.start(resourceContext);
         this.componentType = ConversionUtils.getComponentType(getResourceContext().getResourceType());
         Configuration pluginConfig = resourceContext.getPluginConfiguration();
@@ -271,8 +271,8 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
             if (null == isRuntimeMetric) {
                 //log.info("\nADDING MAP ENTRY FOR METRIC=" + request.getName());
                 ManagedProperty managedProp = getManagedProperty(managedComponent, request);
-                runtimeMetricMap.put(request.getName(), Boolean.valueOf((null == managedProp || managedProp
-                    .hasViewUse(ViewUse.RUNTIME))));
+                runtimeMetricMap.put(request.getName(),
+                    Boolean.valueOf((null == managedProp || managedProp.hasViewUse(ViewUse.RUNTIME))));
             }
 
             if (Boolean.FALSE.equals(runtimeMetricMap.get(request.getName()))) {
@@ -284,7 +284,7 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
 
         return getManagedComponent(forceRefresh);
     }
-    
+
     protected String getMeasurement(ManagedComponent component, String metricName) throws Exception {
         if ("runState".equals(metricName)) {
             return component.getRunState().name();
@@ -293,7 +293,7 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
             return value == null ? null : toString(value);
         }
     }
-    
+
     protected void updateComponent(ManagedComponent managedComponent) throws Exception {
         log.trace("Updating " + getResourceDescription() + " with component " + toString(managedComponent) + "...");
         ManagementView managementView = getConnection().getManagementView();
@@ -340,7 +340,7 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
         }
         return getInnerValue(metaValue);
     }
-    
+
     /**
      * The name of the measurement schedule request (i.e. the metric name) can be in one of two forms:
      * <p/>

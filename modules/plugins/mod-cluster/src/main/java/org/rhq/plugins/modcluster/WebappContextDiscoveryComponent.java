@@ -37,8 +37,7 @@ import org.rhq.plugins.modcluster.model.ProxyInfo;
  *
  * @author Stefan Negrea
  */
-@SuppressWarnings("rawtypes")
-public class WebappContextDiscoveryComponent implements ResourceDiscoveryComponent<MBeanResourceComponent> {
+public class WebappContextDiscoveryComponent implements ResourceDiscoveryComponent<MBeanResourceComponent<?>> {
 
     private static final String JVM_ROUTE_PROPERTY = "jvmRoute";
     private static final String ENGINE_OBJECT_NAME = "engineObjectName";
@@ -46,7 +45,7 @@ public class WebappContextDiscoveryComponent implements ResourceDiscoveryCompone
     /* (non-Javadoc)
      * @see org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent#discoverResources(org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext)
      */
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<MBeanResourceComponent> context) {
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<MBeanResourceComponent<?>> context) {
         String jvmRoute = this.getJvmRoute(context);
 
         EmsBean configBean = context.getParentResourceComponent().getEmsBean();
@@ -72,7 +71,7 @@ public class WebappContextDiscoveryComponent implements ResourceDiscoveryCompone
      * @param context the discovery context
      * @return node's jvm route
      */
-    private String getJvmRoute(ResourceDiscoveryContext<MBeanResourceComponent> context) {
+    private String getJvmRoute(ResourceDiscoveryContext<MBeanResourceComponent<?>> context) {
         Configuration pluginConfig = context.getParentResourceComponent().getResourceContext().getPluginConfiguration();
         String engineObjectName = pluginConfig.getSimple(ENGINE_OBJECT_NAME).getStringValue();
         EmsBean engineBean = this.loadBean(engineObjectName, context.getParentResourceComponent());

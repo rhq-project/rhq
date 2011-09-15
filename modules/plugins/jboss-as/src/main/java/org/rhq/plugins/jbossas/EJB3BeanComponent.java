@@ -53,7 +53,7 @@ import org.rhq.plugins.jmx.MBeanResourceComponent;
  * @author Greg Hinkle
  * @author Ian Springer
  */
-public class EJB3BeanComponent extends MBeanResourceComponent<JBossASServerComponent> {
+public class EJB3BeanComponent extends MBeanResourceComponent<JBossASServerComponent<?>> {
     private final Log log = LogFactory.getLog(EJB3BeanComponent.class);
 
     private Map<Integer, CallTimeData> previousRawCallTimeDatas = new HashMap<Integer, CallTimeData>();

@@ -35,8 +35,7 @@ import org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent;
  *
  * @author Stefan Negrea
  */
-@SuppressWarnings("rawtypes")
-public class ClassNameMBeanDiscoveryComponent<T extends JMXComponent> extends MBeanResourceDiscoveryComponent<T> {
+public class ClassNameMBeanDiscoveryComponent<T extends JMXComponent<?>> extends MBeanResourceDiscoveryComponent<T> {
 
     private static final Log log = LogFactory.getLog(FileConfiguredMBeanResourceComponent.class);
 

@@ -44,7 +44,7 @@ import org.rhq.plugins.jmx.ObjectNameQueryUtility;
 * Abstract base class to discover JBossMessaging and JBossMQ related stuff
 * @author Heiko W. Rupp
 */
-public abstract class AbstractMessagingDiscoveryComponent extends MBeanResourceDiscoveryComponent<JMXComponent> {
+public abstract class AbstractMessagingDiscoveryComponent extends MBeanResourceDiscoveryComponent<JMXComponent<?>> {
 
     /**
      * Do the real discovery
@@ -55,7 +55,7 @@ public abstract class AbstractMessagingDiscoveryComponent extends MBeanResourceD
      * @param versionSource A string that determines how to obtain the version. See {@link #getVersionFromSource(org.mc4j.ems.connection.EmsConnection, String)}
      * @return The details of a discovered resource.
      */
-    protected Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<JMXComponent> context, String objectName, String resourceName, String resourceDescription, String versionSource) {
+    protected Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<JMXComponent<?>> context, String objectName, String resourceName, String resourceDescription, String versionSource) {
 
         Set<DiscoveredResourceDetails> result = new HashSet<DiscoveredResourceDetails>();
 

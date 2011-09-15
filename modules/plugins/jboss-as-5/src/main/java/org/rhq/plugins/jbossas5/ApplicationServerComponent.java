@@ -100,8 +100,9 @@ import org.rhq.plugins.jbossas5.util.ManagedComponentUtils;
  * @author Mark Spritzler
  * @author Ian Springer
  */
-public class ApplicationServerComponent implements ResourceComponent, ProfileServiceComponent,
-    CreateChildResourceFacet, MeasurementFacet, ConfigurationFacet, ProgressListener, ContentFacet, OperationFacet {
+public class ApplicationServerComponent<T extends ResourceComponent<?>> implements ResourceComponent<T>,
+    ProfileServiceComponent<T>, CreateChildResourceFacet, MeasurementFacet, ConfigurationFacet, ProgressListener,
+    ContentFacet, OperationFacet {
 
     private static final Pattern METRIC_NAME_PATTERN = Pattern.compile("(.*)\\|(.*)\\|(.*)\\|(.*)");
 
@@ -148,8 +149,8 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
                 //this component represents. This is to prevent 2 servers
                 //with the same JNP URL to be reported as UP when just one
                 //of them can be up at a time.
-                ManagedComponent serverConfig = managementView.getComponentsForType(
-                    new ComponentType("MCBean", "ServerConfig")).iterator().next();
+                ManagedComponent serverConfig = managementView
+                    .getComponentsForType(new ComponentType("MCBean", "ServerConfig")).iterator().next();
 
                 String reportedServerHomeDirPath = (String) ((SimpleValue) serverConfig.getProperty("serverHomeDir")
                     .getValue()).getValue();
@@ -464,8 +465,8 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
     public OperationResult invokeOperation(String name, Configuration parameters) throws InterruptedException,
         Exception {
 
-        ApplicationServerSupportedOperations operation = Enum.valueOf(ApplicationServerSupportedOperations.class, name
-            .toUpperCase());
+        ApplicationServerSupportedOperations operation = Enum.valueOf(ApplicationServerSupportedOperations.class,
+            name.toUpperCase());
         return this.operationDelegate.invoke(operation, parameters);
     }
 
@@ -509,8 +510,8 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
     private JBPMWorkflowManager createJbpmWorkflowManager(ResourceContext resourceContext) {
         ContentContext contentContext = resourceContext.getContentContext();
         ControlActionFacade controlActionFacade = initControlActionFacade();
-        JBPMWorkflowManager workflowManager = new JBPMWorkflowManager(contentContext, controlActionFacade, this
-            .getJBossASPaths());
+        JBPMWorkflowManager workflowManager = new JBPMWorkflowManager(contentContext, controlActionFacade,
+            this.getJBossASPaths());
         return workflowManager;
     }
 

@@ -39,9 +39,9 @@ import org.rhq.core.util.jdbc.JDBCUtil;
  *
  * @author Greg Hinkle
  */
-public class CustomTableDiscoveryComponent implements ManualAddFacet<DatabaseComponent>, ResourceDiscoveryComponent<DatabaseComponent> {
+public class CustomTableDiscoveryComponent implements ManualAddFacet<DatabaseComponent<?>>, ResourceDiscoveryComponent<DatabaseComponent<?>> {
     public Set<DiscoveredResourceDetails> discoverResources(
-            ResourceDiscoveryContext<DatabaseComponent> resourceDiscoveryContext)
+            ResourceDiscoveryContext<DatabaseComponent<?>> resourceDiscoveryContext)
             throws InvalidPluginConfigurationException, Exception {
         Statement statement = null;
         try {
@@ -75,7 +75,7 @@ public class CustomTableDiscoveryComponent implements ManualAddFacet<DatabaseCom
         return Collections.emptySet();
     }
 
-    public DiscoveredResourceDetails discoverResource(Configuration pluginConfiguration, ResourceDiscoveryContext<DatabaseComponent> discoveryContext)
+    public DiscoveredResourceDetails discoverResource(Configuration pluginConfiguration, ResourceDiscoveryContext<DatabaseComponent<?>> discoveryContext)
             throws InvalidPluginConfigurationException {
 
         Configuration config = pluginConfiguration;

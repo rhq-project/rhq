@@ -28,6 +28,7 @@ import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.augeas.util.Glob;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.resource.ResourceType;
@@ -37,13 +38,12 @@ import org.rhq.core.pluginapi.inventory.ManualAddFacet;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
-import org.rhq.augeas.util.Glob;
 
 /**
  * @author Ian Springer
  * @author Lukas Krejci
  */
-public class AugeasConfigurationDiscoveryComponent<T extends ResourceComponent> implements
+public class AugeasConfigurationDiscoveryComponent<T extends ResourceComponent<?>> implements
     ResourceDiscoveryComponent<T>, ManualAddFacet<T> {
     private final Log log = LogFactory.getLog(this.getClass());
 
@@ -87,8 +87,8 @@ public class AugeasConfigurationDiscoveryComponent<T extends ResourceComponent> 
         Configuration pluginConfig) {
         ResourceType resourceType = discoveryContext.getResourceType();
         String resourceKey = composeResourceKey(pluginConfig);
-        DiscoveredResourceDetails resource = new DiscoveredResourceDetails(resourceType, resourceKey, resourceType
-            .getName(), null, resourceType.getDescription(), pluginConfig, null);
+        DiscoveredResourceDetails resource = new DiscoveredResourceDetails(resourceType, resourceKey,
+            resourceType.getName(), null, resourceType.getDescription(), pluginConfig, null);
         return resource;
     }
 
@@ -122,7 +122,7 @@ public class AugeasConfigurationDiscoveryComponent<T extends ResourceComponent> 
             .getSimple(AugeasConfigurationComponent.EXCLUDE_GLOBS_PROP);
 
         String augeasRootPath = pluginConfiguration.getSimpleValue(AugeasConfigurationComponent.AUGEAS_ROOT_PATH_PROP,
-                AugeasConfigurationComponent.DEFAULT_AUGEAS_ROOT_PATH);
+            AugeasConfigurationComponent.DEFAULT_AUGEAS_ROOT_PATH);
         File root = new File(augeasRootPath);
 
         List<String> includeGlobs = getGlobList(includeGlobsProp);

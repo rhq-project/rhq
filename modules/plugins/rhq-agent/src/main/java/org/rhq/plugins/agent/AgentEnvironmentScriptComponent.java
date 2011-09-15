@@ -47,12 +47,12 @@ import org.rhq.enterprise.agent.EnvironmentScriptFileUpdate.NameValuePair;
  *
  * @author John Mazzitelli
  */
-public class AgentEnvironmentScriptComponent implements ResourceComponent<AgentServerComponent>, ConfigurationFacet {
+public class AgentEnvironmentScriptComponent implements ResourceComponent<AgentServerComponent<?>>, ConfigurationFacet {
     private Log log = LogFactory.getLog(AgentEnvironmentScriptComponent.class);
 
     private File script;
 
-    public void start(ResourceContext<AgentServerComponent> resourceContext) throws Exception {
+    public void start(ResourceContext<AgentServerComponent<?>> resourceContext) throws Exception {
         Configuration pc = resourceContext.getPluginConfiguration();
         PropertySimple pathnameProp = pc.getSimple(AgentEnvironmentScriptDiscoveryComponent.PLUGINCONFIG_PATHNAME);
         if (pathnameProp == null) {

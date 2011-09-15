@@ -22,9 +22,9 @@
  */
 package org.rhq.plugins.jmx;
 
+import java.lang.reflect.Method;
 import java.util.HashSet;
 import java.util.Set;
-import java.lang.reflect.Method;
 
 import org.mc4j.ems.connection.EmsConnection;
 import org.mc4j.ems.connection.bean.EmsBean;
@@ -47,8 +47,8 @@ import org.rhq.core.system.ProcessInfo;
  * 
  * @author Greg Hinkle
  */
-public class EmbeddedJMXServerDiscoveryComponent implements ResourceDiscoveryComponent<JMXComponent> {    
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<JMXComponent> context)
+public class EmbeddedJMXServerDiscoveryComponent implements ResourceDiscoveryComponent<JMXComponent<?>> {
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<JMXComponent<?>> context)
         throws Exception {
         Set<DiscoveredResourceDetails> discoveredServers = new HashSet<DiscoveredResourceDetails>();
 
@@ -98,8 +98,8 @@ public class EmbeddedJMXServerDiscoveryComponent implements ResourceDiscoveryCom
         if (runtimeMBean != null) {
             String version = getSystemProperty(runtimeMBean, "java.version");
             DiscoveredResourceDetails server = new DiscoveredResourceDetails(context.getResourceType(), "JVM",
-                ParentDefinedJMXServerNamingUtility.getJVMName(context), version, context.getResourceType().getDescription(),
-                    configuration, null);
+                ParentDefinedJMXServerNamingUtility.getJVMName(context), version, context.getResourceType()
+                    .getDescription(), configuration, null);
             discoveredServers.add(server);
         }
 
@@ -111,11 +111,11 @@ public class EmbeddedJMXServerDiscoveryComponent implements ResourceDiscoveryCom
         // ClassCastExceptions due to EMS having used a different classloader than us to load them.
         Object tabularDataObj = runtimeMBean.getAttribute("systemProperties").refresh();
         Method getMethod = tabularDataObj.getClass().getMethod("get",
-                new Class[] { Class.forName("[Ljava.lang.Object;") });
+            new Class[] { Class.forName("[Ljava.lang.Object;") });
         // varargs don't work out when the arg itself is an array, so specify the parameters explicitly using arrays.
-        Object compositeDataObj = getMethod.invoke(tabularDataObj, new Object[] { new Object[] { propertyName }});
+        Object compositeDataObj = getMethod.invoke(tabularDataObj, new Object[] { new Object[] { propertyName } });
         getMethod = compositeDataObj.getClass().getMethod("get", String.class);
-        String version = (String)getMethod.invoke(compositeDataObj, "value");
+        String version = (String) getMethod.invoke(compositeDataObj, "value");
         return version;
     }
 }

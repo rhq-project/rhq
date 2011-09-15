@@ -30,35 +30,29 @@ import org.rhq.plugins.jbossas5.connection.ProfileServiceConnection;
 /**
  * @author Ian Springer
  */
-public abstract class AbstractManagedComponent implements ProfileServiceComponent<ProfileServiceComponent>
-{
-    private ResourceContext<ProfileServiceComponent> resourceContext;
+public abstract class AbstractManagedComponent implements ProfileServiceComponent<ProfileServiceComponent<?>> {
+    private ResourceContext<ProfileServiceComponent<?>> resourceContext;
     private String resourceDescription;
 
-    public void start(ResourceContext<ProfileServiceComponent> resourceContext) throws Exception
-    {
+    public void start(ResourceContext<ProfileServiceComponent<?>> resourceContext) throws Exception {
         this.resourceContext = resourceContext;
-        this.resourceDescription = this.resourceContext.getResourceType()
-                + " Resource with key [" + this.resourceContext.getResourceKey() + "]";
+        this.resourceDescription = this.resourceContext.getResourceType() + " Resource with key ["
+            + this.resourceContext.getResourceKey() + "]";
     }
 
-    public void stop()
-    {
+    public void stop() {
         return;
-    }    
+    }
 
-    public ResourceContext<ProfileServiceComponent> getResourceContext()
-    {
+    public ResourceContext<ProfileServiceComponent<?>> getResourceContext() {
         return this.resourceContext;
     }
 
-    public ProfileServiceConnection getConnection()
-    {
+    public ProfileServiceConnection getConnection() {
         return this.resourceContext.getParentResourceComponent().getConnection();
     }
 
-    protected String getResourceDescription()
-    {
+    protected String getResourceDescription() {
         return this.resourceDescription;
     }
 

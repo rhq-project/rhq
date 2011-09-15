@@ -39,37 +39,42 @@ import org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent;
  * @author Jason Dobies
  * @author Ian Springer
  */
-public class EmbeddedWarDiscoveryComponent extends MBeanResourceDiscoveryComponent<JMXComponent> {
+public class EmbeddedWarDiscoveryComponent extends MBeanResourceDiscoveryComponent<JMXComponent<?>> {
     // ResourceDiscoveryComponent Implementation  --------------------------------------------
 
     @Override
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<JMXComponent> context) {
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<JMXComponent<?>> context) {
         // Generate object name based on the parent EAR with the following format.
         //   jboss.management.local:J2EEApplication=rhq.ear,J2EEServer=Local,j2eeType=WebModule,name=on-portal.war
 
         ApplicationComponent parentEarComponent = (ApplicationComponent) context.getParentResourceComponent();
         String parentEar = parentEarComponent.getApplicationName();
 
-        String objectName = "jboss.management.local:J2EEApplication=" + parentEar + ",J2EEServer=Local,j2eeType=WebModule,name=%name%";
+        String objectName = "jboss.management.local:J2EEApplication=" + parentEar
+            + ",J2EEServer=Local,j2eeType=WebModule,name=%name%";
 
         // Stuff the object name into the default plugin configuration to look like any other JMX discovery
         // where the objectName is read from the default plugin configuration
         Configuration defaultPluginConfiguration = context.getDefaultPluginConfiguration();
-        defaultPluginConfiguration.put(new PropertySimple(MBeanResourceDiscoveryComponent.PROPERTY_OBJECT_NAME, objectName));
+        defaultPluginConfiguration.put(new PropertySimple(MBeanResourceDiscoveryComponent.PROPERTY_OBJECT_NAME,
+            objectName));
 
         // Call the base MBean discovery method to perform the actual discovery
-        Set<DiscoveredResourceDetails> resourceDetails = super.performDiscovery(defaultPluginConfiguration, parentEarComponent, context.getResourceType());
+        Set<DiscoveredResourceDetails> resourceDetails = super.performDiscovery(defaultPluginConfiguration,
+            parentEarComponent, context.getResourceType());
 
         // Once we've finished making sure the plugin configurations have the data we need:
         // 1) First the stuff generic to all WARs...
         JBossASServerComponent grandparentJBossASComponent = parentEarComponent.getParentResourceComponent();
-        resourceDetails = WarDiscoveryHelper.initPluginConfigurations(grandparentJBossASComponent, resourceDetails,parentEarComponent);
+        resourceDetails = WarDiscoveryHelper.initPluginConfigurations(grandparentJBossASComponent, resourceDetails,
+            parentEarComponent);
 
         // 2) Then the stuff specific to embedded WARs...
         String parentEarFullFileName = parentEarComponent.getFileName() + File.separator;
         for (DiscoveredResourceDetails resource : resourceDetails) {
             Configuration pluginConfiguration = resource.getPluginConfiguration();
-            pluginConfiguration.put(new PropertySimple(WarComponent.FILE_NAME, parentEarFullFileName + resource.getResourceName()));
+            pluginConfiguration.put(new PropertySimple(WarComponent.FILE_NAME, parentEarFullFileName
+                + resource.getResourceName()));
         }
 
         return resourceDetails;

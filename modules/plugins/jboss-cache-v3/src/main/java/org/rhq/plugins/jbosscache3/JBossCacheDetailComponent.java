@@ -53,16 +53,16 @@ import org.rhq.plugins.jbossas5.connection.ProfileServiceConnection;
  * 
  */
 public class JBossCacheDetailComponent implements MeasurementFacet,
-		OperationFacet, ProfileServiceComponent<ProfileServiceComponent> {
+		OperationFacet, ProfileServiceComponent<ProfileServiceComponent<?>> {
 
 	public static String JMX_NAME = "jmx-name";
 	public static String CACHE_DETAIL_BEAN_NAME = "bean-name";
 	public ProfileServiceComponent parentComponent;
 	private String beanName;
 	private final Log log = LogFactory.getLog(this.getClass());
-    private ResourceContext<ProfileServiceComponent> resourceContext;
+    private ResourceContext<ProfileServiceComponent<?>> resourceContext;
 
-    public void start(ResourceContext<ProfileServiceComponent> context)
+    public void start(ResourceContext<ProfileServiceComponent<?>> context)
 			throws InvalidPluginConfigurationException, Exception {
 
         resourceContext = context;
@@ -104,7 +104,7 @@ public class JBossCacheDetailComponent implements MeasurementFacet,
 	}
 
     @NotNull
-    public ResourceContext<ProfileServiceComponent> getResourceContext() {
+    public ResourceContext<ProfileServiceComponent<?>> getResourceContext() {
         return resourceContext;
     }
 

@@ -34,11 +34,11 @@ import java.util.Set;
  *
  * @author Ian Springer
  */
-public class JBossMessagingDiscoveryComponent extends ManagedComponentDiscoveryComponent<ApplicationServerComponent> {
+public class JBossMessagingDiscoveryComponent extends ManagedComponentDiscoveryComponent<ApplicationServerComponent<?>> {
     private static final String DEFAULT_RESOURCE_NAME = "JBoss Messaging";
 
     @Override
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<ApplicationServerComponent> discoveryContext)
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<ApplicationServerComponent<?>> discoveryContext)
             throws Exception {
         return super.discoverResources(discoveryContext);                
     }

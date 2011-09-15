@@ -39,7 +39,7 @@ import org.rhq.enterprise.agent.Version;
  *
  * @author John Mazzitelli
  */
-public class AgentEnvironmentScriptDiscoveryComponent implements ResourceDiscoveryComponent<AgentServerComponent> {
+public class AgentEnvironmentScriptDiscoveryComponent implements ResourceDiscoveryComponent<AgentServerComponent<?>> {
     private final Log log = LogFactory.getLog(AgentEnvironmentScriptDiscoveryComponent.class);
 
     /**
@@ -53,7 +53,7 @@ public class AgentEnvironmentScriptDiscoveryComponent implements ResourceDiscove
      *
      * @see ResourceDiscoveryComponent#discoverResources(ResourceDiscoveryContext)
      */
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<AgentServerComponent> context) {
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<AgentServerComponent<?>> context) {
         log.info("Discovering RHQ Agent's environment setup script...");
 
         HashSet<DiscoveredResourceDetails> set = new HashSet<DiscoveredResourceDetails>();
@@ -90,7 +90,7 @@ public class AgentEnvironmentScriptDiscoveryComponent implements ResourceDiscove
      * 
      * @return <code>true</code> if this method discovers the script; <code>false</code> if not
      */
-    private boolean findInAgentHome(ResourceDiscoveryContext<AgentServerComponent> context, String version,
+    private boolean findInAgentHome(ResourceDiscoveryContext<AgentServerComponent<?>> context, String version,
         String baseName, HashSet<DiscoveredResourceDetails> discoveries) {
 
         try {
@@ -111,7 +111,7 @@ public class AgentEnvironmentScriptDiscoveryComponent implements ResourceDiscove
         }
     }
 
-    private DiscoveredResourceDetails createDetails(ResourceDiscoveryContext<AgentServerComponent> context,
+    private DiscoveredResourceDetails createDetails(ResourceDiscoveryContext<AgentServerComponent<?>> context,
         String version, File discoveredScript) {
 
         String key = "environment-setup-script"; // this is a singleton resource; only ever one of these

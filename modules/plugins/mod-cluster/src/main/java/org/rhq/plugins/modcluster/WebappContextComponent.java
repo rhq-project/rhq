@@ -36,8 +36,8 @@ import org.rhq.plugins.modcluster.model.ProxyInfo;
  * 
  * @author Stefan Negrea
  */
-@SuppressWarnings({ "rawtypes", "deprecation" })
-public class WebappContextComponent extends MBeanResourceComponent<MBeanResourceComponent> {
+@SuppressWarnings({ "deprecation" })
+public class WebappContextComponent extends MBeanResourceComponent<MBeanResourceComponent<?>> {
 
     private static final Log log = LogFactory.getLog(WebappContextComponent.class);
 

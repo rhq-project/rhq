@@ -47,7 +47,7 @@ import org.rhq.plugins.jmx.JMXComponent;
  *
  * @author Heiko W. Rupp
  */
-public class JBossCacheSubsystemComponent<T extends JMXComponent<JBossASServerComponent>> implements
+public class JBossCacheSubsystemComponent<T extends JMXComponent<JBossASServerComponent<?>>> implements
     ResourceComponent<T>, CreateChildResourceFacet {
 
     private final Log log = LogFactory.getLog(JBossCacheSubsystemComponent.class);

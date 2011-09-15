@@ -28,7 +28,7 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
  * 
  * @author Heiko W. Rupp
  */
-public class JBossCacheSubsystemDiscovery implements ResourceDiscoveryComponent<JBossCacheSubsystemComponent>
+public class JBossCacheSubsystemDiscovery implements ResourceDiscoveryComponent<JBossCacheSubsystemComponent<?>>
 {
 
    private static final String JBOSS_CACHE_SUBSYSTEM = "JBoss Cache subsystem";
@@ -38,7 +38,7 @@ public class JBossCacheSubsystemDiscovery implements ResourceDiscoveryComponent<
     * 
     * @see org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent#discoverResources(org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext)
     */
-   public Set<DiscoveredResourceDetails> discoverResources( ResourceDiscoveryContext<JBossCacheSubsystemComponent> context)
+   public Set<DiscoveredResourceDetails> discoverResources( ResourceDiscoveryContext<JBossCacheSubsystemComponent<?>> context)
             throws InvalidPluginConfigurationException, Exception {
 
       Set<DiscoveredResourceDetails> subsystem = new HashSet<DiscoveredResourceDetails>(1);

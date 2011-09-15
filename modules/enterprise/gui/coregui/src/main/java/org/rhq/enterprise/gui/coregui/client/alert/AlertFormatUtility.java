@@ -78,8 +78,10 @@ public class AlertFormatUtility {
                 // this is a calltime threshold condition
                 str.append(MSG.view_alert_common_tab_conditions_type_metric_calltime_threshold());
                 str.append(" [");
-                str.append(condition.getMeasurementDefinition().getDisplayName());
-                str.append(" ");
+                if (condition.getMeasurementDefinition() != null) {
+                    str.append(condition.getMeasurementDefinition().getDisplayName());
+                    str.append(" ");
+                }
                 str.append(condition.getOption()); // MIN, MAX, AVG (never null)
                 str.append(" ");
                 str.append(condition.getComparator()); // <, >, =
@@ -124,8 +126,10 @@ public class AlertFormatUtility {
                 // this is a calltime change condition
                 str.append(MSG.view_alert_common_tab_conditions_type_metric_calltime_change());
                 str.append(" [");
-                str.append(condition.getMeasurementDefinition().getDisplayName());
-                str.append(" ");
+                if (condition.getMeasurementDefinition() != null) {
+                    str.append(condition.getMeasurementDefinition().getDisplayName());
+                    str.append(" ");
+                }
                 str.append(condition.getOption()); // MIN, MAX, AVG (never null)
                 str.append(" ");
                 str.append(getCalltimeChangeComparator(condition.getComparator())); // LO, HI, CH

@@ -19,7 +19,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components;
 
-import com.google.gwt.user.client.Window;
 import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.Label;
 
@@ -91,15 +90,16 @@ public class TitleBar extends LocatableToolStrip {
 
         String contents;
         String windowTitle;
-        if (title == null) {
-            contents = null;
-            windowTitle = "RHQ";
-        } else {
-            contents = "<span class='HeaderLabel'>" + title + "</span>";
-            windowTitle = "RHQ: " + title;
-        }
-        this.label.setContents(contents);
-        Window.setTitle(windowTitle);
+        //spinder 9/15/11: Commenting out to let CoreGUI handle all title setting.         
+        //        if (title == null) {
+        //            contents = null;
+        //            windowTitle = "RHQ";
+        //        } else {
+        //            contents = "<span class='HeaderLabel'>" + title + "</span>";
+        //            windowTitle = "RHQ: " + title;
+        //        }
+        //        this.label.setContents(contents);
+        //        Window.setTitle(windowTitle);
     }
 
 }

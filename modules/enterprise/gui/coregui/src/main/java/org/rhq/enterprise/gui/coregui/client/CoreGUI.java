@@ -64,6 +64,8 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.MessageCenter;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
+import java.util.List;
+
 /**
  * The GWT {@link EntryPoint entry point} to the RHQ GUI.
  *
@@ -276,6 +278,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
 
                 public void onSuccess(ProductInfo result) {
                     productInfo = result;
+                    Window.setTitle(productInfo.getName());
                     buildCoreUI();
                 }
             });
@@ -470,22 +473,25 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
             setHeight100();
         }
 
+        // TODO (ips, 09/06/11): i18n the title.
         private String getViewPathTitle(ViewPath viewPath) {
-            // default title is the path minus any IDs we find. That should give a least some nice default title.
+            // Set the default title to the view path minus any IDs.
             StringBuilder viewPathTitle = new StringBuilder();
-            for (ViewId viewId : viewPath.getViewPath()) {
-                // none of our path elements start with a digit that is NOT an ID; if we see an ID, skip it
-                if (!Character.isDigit(viewId.getPath().charAt(0))) {
-                    if (viewPathTitle.length() > 0) {
+            String productName = (productInfo != null) ? productInfo.getName() : "RHQ";
+            List<ViewId> viewIds = viewPath.getViewPath();
+            if (!viewIds.isEmpty()) {
+                viewPathTitle.append(productName).append(": ");
+                viewPathTitle.append(viewIds.get(0));
+                for (int i = 1, viewPathSize = viewIds.size(); i < viewPathSize; i++) {
+                    ViewId viewId = viewIds.get(i);
+                    // None of our path elements start with a digit that is NOT an ID, so if we see an ID, skip it.
+                    if (!Character.isDigit(viewId.getPath().charAt(0))) {
                         viewPathTitle.append(" | ");
+                        viewPathTitle.append(viewId.getPath());
                     }
-                    viewPathTitle.append(viewId.getPath());
                 }
             }
-            if (viewPathTitle.length() == 0) {
-                viewPathTitle.append("Core Application");
-            }
-            return "RHQ: " + viewPathTitle.toString();
+            return viewPathTitle.toString();
         }
 
         public void initCanvas() {

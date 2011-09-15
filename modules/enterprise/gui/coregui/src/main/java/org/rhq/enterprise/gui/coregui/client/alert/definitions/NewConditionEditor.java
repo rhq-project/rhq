@@ -44,7 +44,6 @@ import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
-import com.smartgwt.client.widgets.form.validator.IsFloatValidator;
 
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
@@ -53,11 +52,14 @@ import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.NumericType;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.components.form.NumberWithUnitsValidator;
+import org.rhq.enterprise.gui.coregui.client.util.measurement.MeasurementParser;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
@@ -286,169 +288,187 @@ public class NewConditionEditor extends LocatableDynamicForm {
 
     private boolean saveNewCondition() {
 
-        // Find out if this is using the ALL conjunction - if it is, we can't have more than one conditional use the same metric.
-        // If we do, immediately abort and warn the user. See BZ 737565
-        if ((BooleanExpression.ALL.name().equals(this.conditionExpression.getValue().toString()))
-            && (supportsMetrics && this.resourceType.getMetricDefinitions() != null)) {
+        try {
+            // Find out if this is using the ALL conjunction - if it is, we can't have more than one conditional use the same metric.
+            // If we do, immediately abort and warn the user. See BZ 737565
+            if ((BooleanExpression.ALL.name().equals(this.conditionExpression.getValue().toString()))
+                && (supportsMetrics && this.resourceType.getMetricDefinitions() != null)) {
 
-            Map<Integer, String> metricIdsUsed = new HashMap<Integer, String>();
-            for (AlertCondition condition : this.conditions) {
-                if (condition.getMeasurementDefinition() != null) {
-                    Integer id = Integer.valueOf(condition.getMeasurementDefinition().getId());
-                    if (metricIdsUsed.containsKey(id)) {
-                        String msg = MSG.view_alert_definition_condition_editor_metricswarning(metricIdsUsed.get(id));
-                        Message warning = new Message(msg, Severity.Warning, EnumSet.of(Message.Option.Transient));
-                        CoreGUI.getMessageCenter().notify(warning);
-                        return false; // multiple conditions used the same metric with ALL conjunction, this doesn't work - abort (BZ 737565)
+                Map<Integer, String> metricIdsUsed = new HashMap<Integer, String>();
+                for (AlertCondition condition : this.conditions) {
+                    if (condition.getMeasurementDefinition() != null) {
+                        Integer id = Integer.valueOf(condition.getMeasurementDefinition().getId());
+                        if (metricIdsUsed.containsKey(id)) {
+                            String msg = MSG.view_alert_definition_condition_editor_metricswarning(metricIdsUsed
+                                .get(id));
+                            Message warning = new Message(msg, Severity.Warning, EnumSet.of(Message.Option.Transient));
+                            CoreGUI.getMessageCenter().notify(warning);
+                            return false; // multiple conditions used the same metric with ALL conjunction, this doesn't work - abort (BZ 737565)
+                        }
+                        metricIdsUsed.put(id, condition.getMeasurementDefinition().getDisplayName());
                     }
-                    metricIdsUsed.put(id, condition.getMeasurementDefinition().getDisplayName());
                 }
             }
-        }
 
-        final boolean calltimeCategory;
-        final AlertConditionCategory category;
+            final boolean calltimeCategory;
+            final AlertConditionCategory category;
 
-        String selectedCategory = conditionTypeSelectItem.getValue().toString();
-        if (selectedCategory.equals(ALERT_CONDITION_CATEGORY_CALLTIME_THRESHOLD)) {
-            calltimeCategory = true;
-            category = AlertConditionCategory.THRESHOLD;
-        } else if (selectedCategory.equals(ALERT_CONDITION_CATEGORY_CALLTIME_CHANGE)) {
-            calltimeCategory = true;
-            category = AlertConditionCategory.CHANGE;
-        } else {
-            calltimeCategory = false;
-            category = AlertConditionCategory.valueOf(selectedCategory);
-        }
-
-        AlertCondition newCondition = new AlertCondition();
-        newCondition.setCategory(category);
-
-        switch (category) {
-        case AVAILABILITY: {
-            newCondition.setName(null);
-            newCondition.setComparator(null);
-            newCondition.setThreshold(null);
-            newCondition.setOption(getValueAsString(AVAILABILITY_ITEMNAME));
-            newCondition.setMeasurementDefinition(null);
-            break;
-        }
-
-        case THRESHOLD: {
-            if (!calltimeCategory) {
-                MeasurementDefinition measDef = getMeasurementDefinition(getValueAsString(THRESHOLD_METRIC_ITEMNAME));
-                newCondition.setName(measDef.getDisplayName());
-                newCondition.setThreshold(Double.valueOf(getValueAsString(THRESHOLD_ABSVALUE_ITEMNAME)));
-                newCondition.setComparator(getValueAsString(THRESHOLD_COMPARATOR_ITEMNAME));
-                newCondition.setOption(null);
-                newCondition.setMeasurementDefinition(measDef);
+            String selectedCategory = conditionTypeSelectItem.getValue().toString();
+            if (selectedCategory.equals(ALERT_CONDITION_CATEGORY_CALLTIME_THRESHOLD)) {
+                calltimeCategory = true;
+                category = AlertConditionCategory.THRESHOLD;
+            } else if (selectedCategory.equals(ALERT_CONDITION_CATEGORY_CALLTIME_CHANGE)) {
+                calltimeCategory = true;
+                category = AlertConditionCategory.CHANGE;
             } else {
-                MeasurementDefinition measDef = getMeasurementDefinition(getValueAsString(CALLTIME_THRESHOLD_METRIC_ITEMNAME));
-                newCondition.setName(getValueAsString(CALLTIME_THRESHOLD_REGEX_ITEMNAME));
-                newCondition.setThreshold(Double.valueOf(getValueAsString(CALLTIME_THRESHOLD_ABSVALUE_ITEMNAME)));
-                newCondition.setComparator(getValueAsString(CALLTIME_THRESHOLD_COMPARATOR_ITEMNAME));
-                newCondition.setOption(getValueAsString(CALLTIME_THRESHOLD_MINMAXAVG_ITEMNAME));
-                newCondition.setMeasurementDefinition(measDef);
+                calltimeCategory = false;
+                category = AlertConditionCategory.valueOf(selectedCategory);
             }
-            break;
-        }
 
-        case BASELINE: {
-            MeasurementDefinition measDef = getMeasurementDefinition(getValueAsString(BASELINE_METRIC_ITEMNAME));
-            newCondition.setName(measDef.getDisplayName());
-            newCondition.setThreshold(Double.valueOf(getValueAsString(BASELINE_PERCENTAGE_ITEMNAME)) / 100.0);
-            newCondition.setComparator(getValueAsString(BASELINE_COMPARATOR_ITEMNAME));
-            newCondition.setOption(getValueAsString(BASELINE_SELECTION_ITEMNAME));
-            newCondition.setMeasurementDefinition(measDef);
-            break;
-        }
+            AlertCondition newCondition = new AlertCondition();
+            newCondition.setCategory(category);
 
-        case CHANGE: {
-            if (!calltimeCategory) {
-                MeasurementDefinition measDef = getMeasurementDefinition(getValueAsString(CHANGE_METRIC_ITEMNAME));
+            switch (category) {
+            case AVAILABILITY: {
+                newCondition.setName(null);
+                newCondition.setComparator(null);
+                newCondition.setThreshold(null);
+                newCondition.setOption(getValueAsString(AVAILABILITY_ITEMNAME));
+                newCondition.setMeasurementDefinition(null);
+                break;
+            }
+
+            case THRESHOLD: {
+                if (!calltimeCategory) {
+                    MeasurementDefinition measDef = getMeasurementDefinition(getValueAsString(THRESHOLD_METRIC_ITEMNAME));
+                    newCondition.setName(measDef.getDisplayName());
+                    newCondition.setThreshold(getMeasurementValue(measDef,
+                        getValueAsString(THRESHOLD_ABSVALUE_ITEMNAME)));
+                    newCondition.setComparator(getValueAsString(THRESHOLD_COMPARATOR_ITEMNAME));
+                    newCondition.setOption(null);
+                    newCondition.setMeasurementDefinition(measDef);
+                } else {
+                    MeasurementDefinition measDef = getMeasurementDefinition(getValueAsString(CALLTIME_THRESHOLD_METRIC_ITEMNAME));
+                    newCondition.setName(getValueAsString(CALLTIME_THRESHOLD_REGEX_ITEMNAME));
+                    newCondition.setThreshold(getMeasurementValue(measDef,
+                        getValueAsString(CALLTIME_THRESHOLD_ABSVALUE_ITEMNAME)));
+                    newCondition.setComparator(getValueAsString(CALLTIME_THRESHOLD_COMPARATOR_ITEMNAME));
+                    newCondition.setOption(getValueAsString(CALLTIME_THRESHOLD_MINMAXAVG_ITEMNAME));
+                    newCondition.setMeasurementDefinition(measDef);
+                }
+                break;
+            }
+
+            case BASELINE: {
+                MeasurementDefinition measDef = getMeasurementDefinition(getValueAsString(BASELINE_METRIC_ITEMNAME));
+                newCondition.setName(measDef.getDisplayName());
+                newCondition.setThreshold(getMeasurementValueByUnits(MeasurementUnits.PERCENTAGE,
+                    getValueAsString(BASELINE_PERCENTAGE_ITEMNAME)));
+                newCondition.setComparator(getValueAsString(BASELINE_COMPARATOR_ITEMNAME));
+                newCondition.setOption(getValueAsString(BASELINE_SELECTION_ITEMNAME));
+                newCondition.setMeasurementDefinition(measDef);
+                break;
+            }
+
+            case CHANGE: {
+                if (!calltimeCategory) {
+                    MeasurementDefinition measDef = getMeasurementDefinition(getValueAsString(CHANGE_METRIC_ITEMNAME));
+                    newCondition.setName(measDef.getDisplayName());
+                    newCondition.setComparator(null);
+                    newCondition.setThreshold(null);
+                    newCondition.setOption(null);
+                    newCondition.setMeasurementDefinition(measDef);
+                } else {
+                    MeasurementDefinition measDef = getMeasurementDefinition(getValueAsString(CALLTIME_CHANGE_METRIC_ITEMNAME));
+                    newCondition.setName(getValueAsString(CALLTIME_CHANGE_REGEX_ITEMNAME));
+                    newCondition.setThreshold(getMeasurementValueByUnits(MeasurementUnits.PERCENTAGE,
+                        getValueAsString(CALLTIME_CHANGE_PERCENTAGE_ITEMNAME)));
+                    newCondition.setComparator(getValueAsString(CALLTIME_CHANGE_COMPARATOR_ITEMNAME));
+                    newCondition.setOption(getValueAsString(CALLTIME_CHANGE_MINMAXAVG_ITEMNAME));
+                    newCondition.setMeasurementDefinition(measDef);
+                }
+                break;
+            }
+
+            case TRAIT: {
+                MeasurementDefinition measDef = getMeasurementDefinition(getValueAsString(TRAIT_METRIC_ITEMNAME));
                 newCondition.setName(measDef.getDisplayName());
                 newCondition.setComparator(null);
                 newCondition.setThreshold(null);
                 newCondition.setOption(null);
                 newCondition.setMeasurementDefinition(measDef);
-            } else {
-                MeasurementDefinition measDef = getMeasurementDefinition(getValueAsString(CALLTIME_CHANGE_METRIC_ITEMNAME));
-                newCondition.setName(getValueAsString(CALLTIME_CHANGE_REGEX_ITEMNAME));
-                newCondition
-                    .setThreshold(Double.valueOf(getValueAsString(CALLTIME_CHANGE_PERCENTAGE_ITEMNAME)) / 100.0);
-                newCondition.setComparator(getValueAsString(CALLTIME_CHANGE_COMPARATOR_ITEMNAME));
-                newCondition.setOption(getValueAsString(CALLTIME_CHANGE_MINMAXAVG_ITEMNAME));
-                newCondition.setMeasurementDefinition(measDef);
+                break;
             }
-            break;
-        }
 
-        case TRAIT: {
-            MeasurementDefinition measDef = getMeasurementDefinition(getValueAsString(TRAIT_METRIC_ITEMNAME));
-            newCondition.setName(measDef.getDisplayName());
-            newCondition.setComparator(null);
-            newCondition.setThreshold(null);
-            newCondition.setOption(null);
-            newCondition.setMeasurementDefinition(measDef);
-            break;
-        }
+            case CONTROL: {
+                newCondition.setName(getValueAsString(OPERATION_NAME_ITEMNAME));
+                newCondition.setComparator(null);
+                newCondition.setThreshold(null);
+                newCondition.setOption(getValueAsString(OPERATION_RESULTS_ITEMNAME));
+                newCondition.setMeasurementDefinition(null);
+                break;
+            }
 
-        case CONTROL: {
-            newCondition.setName(getValueAsString(OPERATION_NAME_ITEMNAME));
-            newCondition.setComparator(null);
-            newCondition.setThreshold(null);
-            newCondition.setOption(getValueAsString(OPERATION_RESULTS_ITEMNAME));
-            newCondition.setMeasurementDefinition(null);
-            break;
-        }
+            case EVENT: {
+                newCondition.setName(getValueAsString(EVENT_SEVERITY_ITEMNAME));
+                newCondition.setComparator(null);
+                newCondition.setThreshold(null);
+                newCondition.setOption(getValueAsString(EVENT_REGEX_ITEMNAME));
+                newCondition.setMeasurementDefinition(null);
+                break;
+            }
 
-        case EVENT: {
-            newCondition.setName(getValueAsString(EVENT_SEVERITY_ITEMNAME));
-            newCondition.setComparator(null);
-            newCondition.setThreshold(null);
-            newCondition.setOption(getValueAsString(EVENT_REGEX_ITEMNAME));
-            newCondition.setMeasurementDefinition(null);
-            break;
-        }
+            case RESOURCE_CONFIG: {
+                newCondition.setName(null);
+                newCondition.setComparator(null);
+                newCondition.setThreshold(null);
+                newCondition.setOption(null);
+                newCondition.setMeasurementDefinition(null);
+                break;
+            }
 
-        case RESOURCE_CONFIG: {
-            newCondition.setName(null);
-            newCondition.setComparator(null);
-            newCondition.setThreshold(null);
-            newCondition.setOption(null);
-            newCondition.setMeasurementDefinition(null);
-            break;
-        }
+            case DRIFT: {
+                newCondition.setName(getValueAsString(DRIFT_CONFIGNAME_REGEX_ITEMNAME));
+                newCondition.setComparator(null);
+                newCondition.setThreshold(null);
+                newCondition.setOption(getValueAsString(DRIFT_PATHNAME_REGEX_ITEMNAME));
+                newCondition.setMeasurementDefinition(null);
+                break;
+            }
 
-        case DRIFT: {
-            newCondition.setName(getValueAsString(DRIFT_CONFIGNAME_REGEX_ITEMNAME));
-            newCondition.setComparator(null);
-            newCondition.setThreshold(null);
-            newCondition.setOption(getValueAsString(DRIFT_PATHNAME_REGEX_ITEMNAME));
-            newCondition.setMeasurementDefinition(null);
-            break;
-        }
+            case RANGE: {
+                MeasurementDefinition measDef = getMeasurementDefinition(getValueAsString(RANGE_METRIC_ITEMNAME));
+                newCondition.setName(measDef.getDisplayName());
+                newCondition.setThreshold(getMeasurementValue(measDef, getValueAsString(RANGE_LO_ABSVALUE_ITEMNAME)));
+                newCondition.setComparator(getValueAsString(RANGE_COMPARATOR_ITEMNAME));
+                newCondition.setOption(getMeasurementValue(measDef, getValueAsString(RANGE_HI_ABSVALUE_ITEMNAME))
+                    .toString());
+                newCondition.setMeasurementDefinition(measDef);
+                break;
+            }
 
-        case RANGE: {
-            MeasurementDefinition measDef = getMeasurementDefinition(getValueAsString(RANGE_METRIC_ITEMNAME));
-            newCondition.setName(measDef.getDisplayName());
-            newCondition.setThreshold(Double.valueOf(getValueAsString(RANGE_LO_ABSVALUE_ITEMNAME)));
-            newCondition.setComparator(getValueAsString(RANGE_COMPARATOR_ITEMNAME));
-            newCondition.setOption(Double.valueOf(getValueAsString(RANGE_HI_ABSVALUE_ITEMNAME)).toString());
-            newCondition.setMeasurementDefinition(measDef);
-            break;
-        }
+            default: {
+                CoreGUI.getErrorHandler().handleError(
+                    MSG.view_alert_common_tab_invalid_condition_category(category.name())); // should never happen
+                break;
+            }
+            }
 
-        default: {
-            CoreGUI.getErrorHandler()
-                .handleError(MSG.view_alert_common_tab_invalid_condition_category(category.name())); // should never happen
-            break;
-        }
-        }
+            this.conditions.add(newCondition);
 
-        this.conditions.add(newCondition);
+            return true;
+        } catch (Exception e) {
+            CoreGUI.getErrorHandler().handleError("Problem creating condition", e);
+            return false;
+        }
+    }
 
-        return true;
+    private Double getMeasurementValue(MeasurementDefinition measDef, String userEnteredValue) {
+        return getMeasurementValueByUnits(measDef.getUnits(), userEnteredValue);
+    }
+
+    private Double getMeasurementValueByUnits(MeasurementUnits units, String userEnteredValue) {
+        return MeasurementParser.parse(userEnteredValue, units).getValue();
     }
 
     private ArrayList<FormItem> buildMetricThresholdFormItems() {
@@ -471,7 +491,8 @@ public class NewConditionEditor extends LocatableDynamicForm {
             absoluteValue.setTooltip(MSG.view_alert_definition_condition_editor_metric_threshold_value_tooltip());
             absoluteValue.setHoverWidth(200);
             absoluteValue.setValidateOnChange(true);
-            absoluteValue.setValidators(new IsFloatValidator());
+            absoluteValue.setValidators(new NumberWithUnitsValidator(this.resourceType.getMetricDefinitions(),
+                metricDropDownMenu));
             absoluteValue.setShowIfCondition(ifFunc);
             formItems.add(absoluteValue);
         } else {
@@ -503,7 +524,8 @@ public class NewConditionEditor extends LocatableDynamicForm {
             absoluteLowValue.setTooltip(MSG.view_alert_definition_condition_editor_metric_range_lovalue_tooltip());
             absoluteLowValue.setHoverWidth(200);
             absoluteLowValue.setValidateOnChange(true);
-            absoluteLowValue.setValidators(new IsFloatValidator());
+            absoluteLowValue.setValidators(new NumberWithUnitsValidator(this.resourceType.getMetricDefinitions(),
+                metricDropDownMenu));
             absoluteLowValue.setShowIfCondition(ifFunc);
             formItems.add(absoluteLowValue);
 
@@ -514,7 +536,8 @@ public class NewConditionEditor extends LocatableDynamicForm {
             absoluteHighValue.setTooltip(MSG.view_alert_definition_condition_editor_metric_range_hivalue_tooltip());
             absoluteHighValue.setHoverWidth(200);
             absoluteHighValue.setValidateOnChange(true);
-            absoluteHighValue.setValidators(new IsFloatValidator());
+            absoluteHighValue.setValidators(new NumberWithUnitsValidator(this.resourceType.getMetricDefinitions(),
+                metricDropDownMenu));
             absoluteHighValue.setShowIfCondition(ifFunc);
             formItems.add(absoluteHighValue);
         } else {
@@ -550,7 +573,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
             baselinePercentage.setHoverWidth(200);
             baselinePercentage.setShowIfCondition(ifFunc);
             baselinePercentage.setValidateOnChange(true);
-            baselinePercentage.setValidators(new IsFloatValidator());
+            baselinePercentage.setValidators(new NumberWithUnitsValidator(MeasurementUnits.PERCENTAGE));
             formItems.add(baselinePercentage);
 
             SelectItem baselineSelection = new SelectItem(BASELINE_SELECTION_ITEMNAME, MSG
@@ -605,7 +628,8 @@ public class NewConditionEditor extends LocatableDynamicForm {
         StaticTextItem helpItem = buildHelpTextItem("calltimeThresholdHelp", helpStr, ifFunc);
         formItems.add(helpItem);
 
-        formItems.add(buildCalltimeMetricDropDownMenu(CALLTIME_THRESHOLD_METRIC_ITEMNAME, ifFunc));
+        SelectItem metricDropDownMenu = buildCalltimeMetricDropDownMenu(CALLTIME_THRESHOLD_METRIC_ITEMNAME, ifFunc);
+        formItems.add(metricDropDownMenu);
 
         SelectItem minMaxAvgSelection = new SelectItem(CALLTIME_THRESHOLD_MINMAXAVG_ITEMNAME, MSG
             .view_alert_definition_condition_editor_metric_calltime_common_limit());
@@ -633,7 +657,8 @@ public class NewConditionEditor extends LocatableDynamicForm {
         absoluteValue.setHoverWidth(200);
         absoluteValue.setShowIfCondition(ifFunc);
         absoluteValue.setValidateOnChange(true);
-        absoluteValue.setValidators(new IsFloatValidator());
+        absoluteValue.setValidators(new NumberWithUnitsValidator(this.resourceType.getMetricDefinitions(),
+            metricDropDownMenu));
         formItems.add(absoluteValue);
 
         TextItem regex = new TextItem(CALLTIME_THRESHOLD_REGEX_ITEMNAME, MSG
@@ -686,7 +711,7 @@ public class NewConditionEditor extends LocatableDynamicForm {
         percentage.setHoverWidth(200);
         percentage.setShowIfCondition(ifFunc);
         percentage.setValidateOnChange(true);
-        percentage.setValidators(new IsFloatValidator());
+        percentage.setValidators(new NumberWithUnitsValidator(MeasurementUnits.PERCENTAGE));
         formItems.add(percentage);
 
         TextItem regex = new TextItem(CALLTIME_CHANGE_REGEX_ITEMNAME, MSG

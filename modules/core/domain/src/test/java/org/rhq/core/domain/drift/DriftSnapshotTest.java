@@ -1,5 +1,13 @@
 package org.rhq.core.domain.drift;
 
+import java.io.Serializable;
+import java.util.HashSet;
+import java.util.Set;
+
+import org.testng.annotations.Test;
+
+import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
+
 import static java.util.Arrays.asList;
 import static org.rhq.core.domain.drift.DriftCategory.FILE_ADDED;
 import static org.rhq.core.domain.drift.DriftCategory.FILE_CHANGED;
@@ -10,16 +18,8 @@ import static org.rhq.core.domain.drift.DriftFileStatus.LOADED;
 import static org.rhq.test.AssertUtils.assertCollectionMatchesNoOrder;
 import static org.testng.Assert.assertEquals;
 
-import java.io.Serializable;
-import java.util.HashSet;
-import java.util.Set;
-
-import org.testng.annotations.Test;
-
-import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
-
 @SuppressWarnings("unchecked")
-public class SnapshotTest {
+public class DriftSnapshotTest {
 
     @Test
     public void addChangeSetWithAddedFile() {

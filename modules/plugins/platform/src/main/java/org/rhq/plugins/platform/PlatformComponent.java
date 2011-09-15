@@ -65,7 +65,8 @@ import org.rhq.core.system.SystemInfo;
  *
  * @author John Mazzitelli
  */
-public class PlatformComponent implements ResourceComponent, ConfigurationFacet, MeasurementFacet, OperationFacet {
+public class PlatformComponent implements ResourceComponent<PlatformComponent>, ConfigurationFacet, MeasurementFacet,
+    OperationFacet {
 
     private final Log log = LogFactory.getLog(PlatformComponent.class);
 
@@ -229,9 +230,7 @@ public class PlatformComponent implements ResourceComponent, ConfigurationFacet,
                 pm.put(new PropertySimple("name", process.getBaseName()));
                 pm.put(new PropertySimple("size", (process.getMemory() != null) ? process.getMemory().getSize() : "0"));
                 pm.put(new PropertySimple("userTime", (process.getTime() != null) ? process.getTime().getUser() : "0"));
-                pm
-                    .put(new PropertySimple("kernelTime", (process.getTime() != null) ? process.getTime().getSys()
-                        : "0"));
+                pm.put(new PropertySimple("kernelTime", (process.getTime() != null) ? process.getTime().getSys() : "0"));
                 processList.add(pm);
             }
 

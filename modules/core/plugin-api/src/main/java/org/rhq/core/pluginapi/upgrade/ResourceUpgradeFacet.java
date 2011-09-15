@@ -34,7 +34,7 @@ import org.rhq.core.pluginapi.inventory.ResourceComponent;
  * 
  * @author Lukas Krejci
  */
-public interface ResourceUpgradeFacet<T extends ResourceComponent> {
+public interface ResourceUpgradeFacet<T extends ResourceComponent<?>> {
     /**
      * Specifies what data should change on the provided resource to upgrade it to the current version.
      * 

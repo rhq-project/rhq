@@ -67,6 +67,7 @@ public class ChangeSetWriterImplTest {
         headers.setDriftConfigurationName("add-file-test");
         headers.setBasedir(resourceDir.getAbsolutePath());
         headers.setType(COVERAGE);
+        headers.setVersion(1);
 
         ChangeSetWriterImpl writer = new ChangeSetWriterImpl(changeSetFile, headers);
 
@@ -76,10 +77,10 @@ public class ChangeSetWriterImplTest {
         File metaDataFile = writer.getChangeSetFile();
         List<String> lines = readLines(new FileInputStream(metaDataFile));
 
-        assertEquals(lines.size(), 6, "Expected to find seven lines in " + metaDataFile.getPath() +
-            " - five for the header followed by one file entry.");
+        assertEquals(lines.size(), 7, "Expected to find seven lines in " + metaDataFile.getPath() +
+            " - six for the header followed by one file entry.");
         assertHeadersEquals(lines, headers);
-        assertFileEntryEquals(lines.get(5), "A a34ef6 0 conf/myconf.conf");
+        assertFileEntryEquals(lines.get(6), "A a34ef6 0 conf/myconf.conf");
     }
 
     @Test
@@ -94,6 +95,7 @@ public class ChangeSetWriterImplTest {
         headers.setDriftConfigurationName("removed-file-test");
         headers.setBasedir(resourceDir.getAbsolutePath());
         headers.setType(COVERAGE);
+        headers.setVersion(1);
 
         ChangeSetWriterImpl writer = new ChangeSetWriterImpl(changeSetFile, headers);
 
@@ -103,10 +105,10 @@ public class ChangeSetWriterImplTest {
         File metaDataFile = writer.getChangeSetFile();
         List<String> lines = readLines(new FileInputStream(metaDataFile));
 
-        assertEquals(lines.size(), 6, "Expected to find six lines in " + metaDataFile.getPath() +
-            " - five for the header followed by one file entry.");
+        assertEquals(lines.size(), 7, "Expected to find seven lines in " + metaDataFile.getPath() +
+            " - six for the header followed by one file entry.");
         assertHeadersEquals(lines, headers);
-        assertFileEntryEquals(lines.get(5), "R 0 a34ef6 conf/myconf.conf");
+        assertFileEntryEquals(lines.get(6), "R 0 a34ef6 conf/myconf.conf");
     }
 
     @Test
@@ -121,6 +123,7 @@ public class ChangeSetWriterImplTest {
         headers.setDriftConfigurationName("changed-file-test");
         headers.setBasedir(resourceDir.getAbsolutePath());
         headers.setType(COVERAGE);
+        headers.setVersion(1);
 
         ChangeSetWriterImpl writer = new ChangeSetWriterImpl(changeSetFile, headers);
 
@@ -130,10 +133,10 @@ public class ChangeSetWriterImplTest {
         File metaDataFile = writer.getChangeSetFile();
         List<String> lines = readLines(new FileInputStream(metaDataFile));
 
-        assertEquals(lines.size(), 6, "Expected to find six lines in " + metaDataFile.getPath() +
-            " - five for the header followed by one file entry.");
+        assertEquals(lines.size(), 7, "Expected to find seven lines in " + metaDataFile.getPath() +
+            " - six for the header followed by one file entry.");
         assertHeadersEquals(lines, headers);
-        assertFileEntryEquals(lines.get(5), "C c2d55f a34ef6 conf/myconf.conf");
+        assertFileEntryEquals(lines.get(6), "C c2d55f a34ef6 conf/myconf.conf");
     }
 
     /**
@@ -154,6 +157,8 @@ public class ChangeSetWriterImplTest {
             "base directory.");
         assertEquals(lines.get(4), headers.getType().code(), "The fifth header entry should be the change set " +
             "category code");
+        assertEquals(Integer.parseInt(lines.get(5)), headers.getVersion(),
+            "The sixth header entry should be the change set version.");
     }
 
     /**
@@ -168,8 +173,8 @@ public class ChangeSetWriterImplTest {
         String[] expectedFields = expected.split(" ");
         String[] actualFields = actual.split(" ");
 
-        assertEquals(4, expectedFields.length, "<" + expected + "> should contain 4 fields");
-        assertEquals(4, actualFields.length, "<" + expected + "> should contain 4 fields");
+        assertEquals(expectedFields.length, 4, "<" + expected + "> should contain 4 fields");
+        assertEquals(actualFields.length, 4, "<" + actual + "> should contain 4 fields");
 
         assertEquals(actualFields[0], expectedFields[0], "The first column, the SHA-256, is wrong");
         assertEquals(actualFields[1], expectedFields[1], "The second column, the old SHA-256, is wrong");

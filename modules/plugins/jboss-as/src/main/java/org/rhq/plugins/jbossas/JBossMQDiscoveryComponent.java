@@ -41,7 +41,7 @@ public class JBossMQDiscoveryComponent extends AbstractMessagingDiscoveryCompone
     private static final String VERSION_SOURCE = "jboss.mq:service=DestinationManager;Interceptor";
 
     @Override
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<JMXComponent> context) {
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<JMXComponent<?>> context) {
         String objectNameQueryTemplate = "jboss.mq:service=DestinationManager";
         Set<DiscoveredResourceDetails> result = super.discoverResources(context, objectNameQueryTemplate,
                 DEFAULT_RESOURCE_NAME, DEFAULT_RESOURCE_DESCRIPTION,

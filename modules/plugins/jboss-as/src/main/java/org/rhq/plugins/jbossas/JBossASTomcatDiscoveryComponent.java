@@ -1,25 +1,25 @@
- /*
-  * Jopr Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * Jopr Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.plugins.jbossas;
 
 import java.io.File;
@@ -48,14 +48,14 @@ import org.rhq.core.system.ProcessInfo;
  * @author Greg Hinkle
  * @author Ian Springer
  */
-public class JBossASTomcatDiscoveryComponent implements ResourceDiscoveryComponent<JBossASServerComponent> {
+public class JBossASTomcatDiscoveryComponent implements ResourceDiscoveryComponent<JBossASServerComponent<?>> {
     private final Log log = LogFactory.getLog(JBossASTomcatDiscoveryComponent.class);
 
     public static final String EMBEDDED_TOMCAT_PRE42_DIR = "jbossweb-tomcat";
     public static final String EMBEDDED_TOMCAT_42_DIR = "jboss-web.";
     private static final String SERVER_INFO_PROPERTIES_RESOURCE = "org/apache/catalina/util/ServerInfo.properties";
 
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<JBossASServerComponent> context)
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<JBossASServerComponent<?>> context)
         throws InvalidPluginConfigurationException, Exception {
         log.debug("Discovering Tomcat servers embedded in JBossAS server...");
 
@@ -86,8 +86,8 @@ public class JBossASTomcatDiscoveryComponent implements ResourceDiscoveryCompone
                 + File.separator + ")";
             Configuration pluginConfig = null;
             ProcessInfo processInfo = null;
-            DiscoveredResourceDetails resource = new DiscoveredResourceDetails(context.getResourceType(), key, getResourceName(pre42),
-                version, description, pluginConfig, processInfo);
+            DiscoveredResourceDetails resource = new DiscoveredResourceDetails(context.getResourceType(), key,
+                getResourceName(pre42), version, description, pluginConfig, processInfo);
             set.add(resource);
         }
 
@@ -97,7 +97,7 @@ public class JBossASTomcatDiscoveryComponent implements ResourceDiscoveryCompone
     private String getResourceName(boolean pre42) {
         return pre42 ? "Embedded Tomcat Server" : "Embedded JBossWeb Server";
     }
-    
+
     private String getVersion(File jbossWebDir) throws IOException {
         boolean pre42 = jbossWebDir.getName().startsWith(EMBEDDED_TOMCAT_PRE42_DIR);
         String jarFileName = (pre42) ? "catalina.jar" : "jbossweb.jar";

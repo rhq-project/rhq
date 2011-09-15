@@ -30,8 +30,8 @@ import org.rhq.plugins.jmx.MBeanResourceComponent;
  * @author Stefan Negrea
  *
  */
-@SuppressWarnings({ "rawtypes", "deprecation" })
-public class ClassNameMBeanComponent extends MBeanResourceComponent<JMXComponent> {
+@SuppressWarnings({ "deprecation" })
+public class ClassNameMBeanComponent extends MBeanResourceComponent<JMXComponent<?>> {
     private static final Log log = LogFactory.getLog(WebappContextComponent.class);
 
     private static final String CLASS_NAME = "className";

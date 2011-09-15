@@ -33,6 +33,7 @@ import org.apache.commons.logging.LogFactory;
 import org.mc4j.ems.connection.EmsConnection;
 import org.mc4j.ems.connection.bean.EmsBean;
 import org.mc4j.ems.connection.bean.EmsBeanName;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
@@ -48,13 +49,13 @@ import org.rhq.plugins.jmx.ObjectNameQueryUtility;
  * @author Jason Dobies
  * @author Ian Springer
  */
-public class TomcatConnectorDiscoveryComponent extends MBeanResourceDiscoveryComponent<TomcatServerComponent> {
+public class TomcatConnectorDiscoveryComponent extends MBeanResourceDiscoveryComponent<TomcatServerComponent<?>> {
     private final Log log = LogFactory.getLog(this.getClass());
 
     // MBeanResourceDiscoveryComponent Overridden Methods  --------------------------------------------
 
     @Override
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<TomcatServerComponent> context) {
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<TomcatServerComponent<?>> context) {
 
         // Connector objectNames can have two formats:
         // Catalina:type=Connector,port=%port% (this is the default for the connector type in the plugin desc) 

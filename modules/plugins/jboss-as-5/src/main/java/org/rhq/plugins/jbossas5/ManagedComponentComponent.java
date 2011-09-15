@@ -129,7 +129,7 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
         }
     }
 
-    public void start(ResourceContext<ProfileServiceComponent> resourceContext) throws Exception {
+    public void start(ResourceContext<ProfileServiceComponent<?>> resourceContext) throws Exception {
         super.start(resourceContext);
         this.componentType = ConversionUtils.getComponentType(getResourceContext().getResourceType());
         Configuration pluginConfig = resourceContext.getPluginConfiguration();
@@ -235,6 +235,24 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
     // MeasurementFacet Implementation  --------------------------------------------
 
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
+        ManagedComponent managedComponent = prepareForMetricCollection(metrics);
+        RunState runState = managedComponent.getRunState();
+        for (MeasurementScheduleRequest request : metrics) {
+            try {
+                String value = getMeasurement(managedComponent, request.getName());
+                addValueToMeasurementReport(report, request, value);
+            } catch (Exception e) {
+                if (runState == RunState.RUNNING) {
+                    log.error("Failed to collect metric for " + request, e);
+                } else {
+                    log.debug("Failed to collect metric for " + request
+                        + ", but managed component is not in the RUNNING state.", e);
+                }
+            }
+        }
+    }
+
+    protected ManagedComponent prepareForMetricCollection(Set<MeasurementScheduleRequest> metrics) {
         // this bit could be synchronized but I don't think it really hurts to perhaps go through this logic more
         // than once, it will settle down near immediately
         Map<String, Boolean> runtimeMetricMap = runtimeMetricMaps.get(this.getClass().getName());
@@ -253,8 +271,8 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
             if (null == isRuntimeMetric) {
                 //log.info("\nADDING MAP ENTRY FOR METRIC=" + request.getName());
                 ManagedProperty managedProp = getManagedProperty(managedComponent, request);
-                runtimeMetricMap.put(request.getName(), Boolean.valueOf((null == managedProp || managedProp
-                    .hasViewUse(ViewUse.RUNTIME))));
+                runtimeMetricMap.put(request.getName(),
+                    Boolean.valueOf((null == managedProp || managedProp.hasViewUse(ViewUse.RUNTIME))));
             }
 
             if (Boolean.FALSE.equals(runtimeMetricMap.get(request.getName()))) {
@@ -264,24 +282,15 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
             }
         }
 
-        ManagedComponent managedComponent = getManagedComponent(forceRefresh);
-        RunState runState = managedComponent.getRunState();
-        for (MeasurementScheduleRequest request : metrics) {
-            try {
-                if (request.getName().equals("runState")) {
-                    report.addData(new MeasurementDataTrait(request, runState.name()));
-                } else {
-                    Object value = getSimpleValue(managedComponent, request);
-                    addValueToMeasurementReport(report, request, value);
-                }
-            } catch (Exception e) {
-                if (runState == RunState.RUNNING) {
-                    log.error("Failed to collect metric for " + request, e);
-                } else {
-                    log.debug("Failed to collect metric for " + request
-                        + ", but managed component is not in the RUNNING state.", e);
-                }
-            }
+        return getManagedComponent(forceRefresh);
+    }
+
+    protected String getMeasurement(ManagedComponent component, String metricName) throws Exception {
+        if ("runState".equals(metricName)) {
+            return component.getRunState().name();
+        } else {
+            Object value = getSimpleValue(managedComponent, metricName);
+            return value == null ? null : toString(value);
         }
     }
 
@@ -307,6 +316,11 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
     @Nullable
     protected Object getSimpleValue(ManagedComponent managedComponent, MeasurementScheduleRequest request) {
         String metricName = request.getName();
+        return getSimpleValue(managedComponent, metricName);
+    }
+
+    @Nullable
+    protected Object getSimpleValue(ManagedComponent managedComponent, String metricName) {
         int pipeIndex = metricName.indexOf(PREFIX_DELIMITER);
         // Remove the prefix if there is one (e.g. "ThreadPool|currentThreadCount" -> "currentThreadCount").
         String compositePropName = (pipeIndex == -1) ? metricName : metricName.substring(pipeIndex + 1);
@@ -352,7 +366,7 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
 
     // TODO: Move this to a utility class.
     @Nullable
-    private static Object getInnerValue(MetaValue metaValue) {
+    protected static Object getInnerValue(MetaValue metaValue) {
         if (metaValue == null) {
             return null;
         }

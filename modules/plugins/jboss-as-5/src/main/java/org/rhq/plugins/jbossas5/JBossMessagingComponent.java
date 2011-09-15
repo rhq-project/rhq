@@ -22,6 +22,8 @@
   */
 package org.rhq.plugins.jbossas5;
 
+import java.util.Set;
+
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
@@ -31,23 +33,21 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.plugins.jbossas5.helper.CreateChildResourceFacetDelegate;
 
-import java.util.Set;
-
 /**
  * The ResourceComponent for the singleton JBoss Messaging ResourceType, which supports creation of two child
  * ResourceTypes - Queue and Topic.
  *
  * @author Ian Springer
  */
-public class JBossMessagingComponent extends ManagedComponentComponent
-        implements CreateChildResourceFacet, MeasurementFacet {
+public class JBossMessagingComponent extends ManagedComponentComponent implements CreateChildResourceFacet,
+    MeasurementFacet {
     private CreateChildResourceFacetDelegate createChildResourceDelegate;
 
     public AvailabilityType getAvailability() {
         return super.getAvailability();
     }
 
-    public void start(ResourceContext resourceContext) throws Exception {
+    public void start(ResourceContext<ProfileServiceComponent<?>> resourceContext) throws Exception {
         super.start(resourceContext);
         this.createChildResourceDelegate = new CreateChildResourceFacetDelegate(this);
     }

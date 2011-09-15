@@ -27,6 +27,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 import org.mc4j.ems.connection.EmsConnection;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
@@ -39,54 +40,51 @@ import org.rhq.plugins.jbossas5.connection.ProfileServiceConnection;
  * @author Filip Drabek
  * 
  */
-public class JBossCacheComponent implements
-		ProfileServiceComponent<ProfileServiceComponent> {
+public class JBossCacheComponent implements ProfileServiceComponent<ProfileServiceComponent<?>> {
 
-	private final Log log = LogFactory.getLog(this.getClass());
+    private final Log log = LogFactory.getLog(this.getClass());
 
-	public static String CACHE_SEARCH_STRING = "searchString";
+    public static String CACHE_SEARCH_STRING = "searchString";
 
-	private ProfileServiceComponent parentComp;
+    private ProfileServiceComponent<?> parentComp;
 
-	private String beanName;
+    private String beanName;
 
-    private ResourceContext<ProfileServiceComponent> resourceContext;
+    private ResourceContext<ProfileServiceComponent<?>> resourceContext;
 
-    public void start(ResourceContext<ProfileServiceComponent> context)
-			throws InvalidPluginConfigurationException, Exception {
+    public void start(ResourceContext<ProfileServiceComponent<?>> context) throws InvalidPluginConfigurationException,
+        Exception {
 
         resourceContext = context;
-		parentComp = context.getParentResourceComponent();
+        parentComp = context.getParentResourceComponent();
 
-		Configuration configuration = context.getPluginConfiguration();
+        Configuration configuration = context.getPluginConfiguration();
 
-		if (configuration.get(JBossCacheComponent.CACHE_SEARCH_STRING) != null)
-			beanName = configuration.getSimple(
-					JBossCacheComponent.CACHE_SEARCH_STRING).getStringValue();
-		else
-			throw new InvalidPluginConfigurationException(
-					"Invalid plugin configuration in JBossCache component.");
+        if (configuration.get(JBossCacheComponent.CACHE_SEARCH_STRING) != null)
+            beanName = configuration.getSimple(JBossCacheComponent.CACHE_SEARCH_STRING).getStringValue();
+        else
+            throw new InvalidPluginConfigurationException("Invalid plugin configuration in JBossCache component.");
 
-	}
+    }
 
-	public void stop() {
-		return;
-	}
+    public void stop() {
+        return;
+    }
 
-	public AvailabilityType getAvailability() {
-		return parentComp.getAvailability();
-	}
+    public AvailabilityType getAvailability() {
+        return parentComp.getAvailability();
+    }
 
-	public ProfileServiceConnection getConnection() {
-		return parentComp.getConnection();
-	}
+    public ProfileServiceConnection getConnection() {
+        return parentComp.getConnection();
+    }
 
-	public EmsConnection getEmsConnection() {
-		return parentComp.getEmsConnection();
-	}
+    public EmsConnection getEmsConnection() {
+        return parentComp.getEmsConnection();
+    }
 
     @NotNull
-    public ResourceContext<ProfileServiceComponent> getResourceContext() {
+    public ResourceContext<ProfileServiceComponent<?>> getResourceContext() {
         return resourceContext;
     }
 }

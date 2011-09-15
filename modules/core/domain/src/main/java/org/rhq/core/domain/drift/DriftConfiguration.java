@@ -81,7 +81,7 @@ public class DriftConfiguration implements Serializable {
     @Column(name = "IS_ENABLED", nullable = false)
     private boolean isEnabled;
 
-    @Column(name = "MODE", nullable = false)
+    @Column(name = "DRIFT_HANDLING_MODE", nullable = false)
     @Enumerated(EnumType.STRING)
     private DriftHandlingMode driftHandlingMode;
 

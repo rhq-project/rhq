@@ -75,7 +75,7 @@ import org.rhq.core.util.exception.ThrowableUtil;
  * @author Greg Hinkle
  * @author John Mazzitelli
  */
-public class MBeanResourceComponent<T extends JMXComponent> implements MeasurementFacet, OperationFacet,
+public class MBeanResourceComponent<T extends JMXComponent<?>> implements MeasurementFacet, OperationFacet,
     ConfigurationFacet, JMXComponent<T> {
 
     /**

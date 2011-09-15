@@ -40,7 +40,7 @@ import org.rhq.core.system.ProcessInfo;
  * in the area of processes and host.xml
  * @author Heiko W. Rupp
  */
-public abstract class AbstractBaseDiscovery<T extends ResourceComponent> implements ResourceDiscoveryComponent<T> {
+public abstract class AbstractBaseDiscovery<T extends ResourceComponent<?>> implements ResourceDiscoveryComponent<T> {
     static final String DORG_JBOSS_BOOT_LOG_FILE = "-Dorg.jboss.boot.log.file=";
     private static final String DJBOSS_SERVER_HOME_DIR = "-Djboss.home.dir";
     static final int DEFAULT_MGMT_PORT = 9990;

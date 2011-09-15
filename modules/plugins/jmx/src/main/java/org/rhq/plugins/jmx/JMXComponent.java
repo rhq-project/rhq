@@ -32,7 +32,7 @@ import org.rhq.core.pluginapi.inventory.ResourceComponent;
  *
  * @author Greg Hinkle
  */
-public interface JMXComponent<T extends ResourceComponent> extends ResourceComponent<T> {
+public interface JMXComponent<T extends ResourceComponent<?>> extends ResourceComponent<T> {
     public static final String PRINCIPAL_CONFIG_PROP = "principal";
     public static final String CREDENTIALS_CONFIG_PROP = "credentials";
 

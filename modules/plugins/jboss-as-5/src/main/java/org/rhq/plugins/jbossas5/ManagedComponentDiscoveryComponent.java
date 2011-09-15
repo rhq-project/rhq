@@ -27,9 +27,11 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.jboss.deployers.spi.management.ManagementView;
 import org.jboss.managed.api.ComponentType;
 import org.jboss.managed.api.ManagedComponent;
+
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
@@ -45,7 +47,7 @@ import org.rhq.plugins.jbossas5.util.ConversionUtils;
  * @author Mark Spritzer
  * @author Ian Springer
  */
-public class ManagedComponentDiscoveryComponent<P extends ProfileServiceComponent> implements
+public class ManagedComponentDiscoveryComponent<P extends ProfileServiceComponent<?>> implements
     ResourceDiscoveryComponent<P> {
     private final Log log = LogFactory.getLog(this.getClass());
 
@@ -68,9 +70,8 @@ public class ManagedComponentDiscoveryComponent<P extends ProfileServiceComponen
             throw new IllegalStateException("Failed to get component types for " + resourceType + ".", e);
         }
         if (resourceType.isSingleton() && components.size() > 1) {
-            throw new IllegalStateException("Discovered multiple [" + componentType
-                    + "] managed components during [" + resourceType
-                    + "] discovery, but expected to find no more than one - components were: " + components);
+            throw new IllegalStateException("Discovered multiple [" + componentType + "] managed components during ["
+                + resourceType + "] discovery, but expected to find no more than one - components were: " + components);
         }
 
         Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>(components.size());
@@ -92,8 +93,8 @@ public class ManagedComponentDiscoveryComponent<P extends ProfileServiceComponen
                 String version = getResourceVersion(component);
 
                 DiscoveredResourceDetails resource = new DiscoveredResourceDetails(resourceType, resourceKey,
-                    resourceName, version, resourceType.getDescription(), discoveryContext
-                        .getDefaultPluginConfiguration(), null);
+                    resourceName, version, resourceType.getDescription(),
+                    discoveryContext.getDefaultPluginConfiguration(), null);
 
                 resource.getPluginConfiguration().put(
                     new PropertySimple(ManagedComponentComponent.Config.COMPONENT_NAME, resourceKey));

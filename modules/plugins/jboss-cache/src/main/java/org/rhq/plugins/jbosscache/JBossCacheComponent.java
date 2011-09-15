@@ -69,7 +69,7 @@ import org.rhq.plugins.jmx.ObjectNameQueryUtility;
  * @author Heiko W. Rupp
  *
  */
-public class JBossCacheComponent implements ResourceComponent<JMXComponent>, MeasurementFacet, OperationFacet,
+public class JBossCacheComponent implements ResourceComponent<JMXComponent<?>>, MeasurementFacet, OperationFacet,
     ConfigurationFacet {
 
     private final static Log log = LogFactory.getLog(JBossCacheComponent.class);
@@ -86,7 +86,7 @@ public class JBossCacheComponent implements ResourceComponent<JMXComponent>, Mea
         this.context = context;
 
         PropertySimple tcProp = context.getPluginConfiguration().getSimple("isTreeCache");
-        if (tcProp==null || tcProp.getBooleanValue()==null)
+        if (tcProp == null || tcProp.getBooleanValue() == null)
             throw new InvalidPluginConfigurationException("Cache flavour not provided");
         else
             isTreeCache = tcProp.getBooleanValue();
@@ -200,7 +200,7 @@ public class JBossCacheComponent implements ResourceComponent<JMXComponent>, Mea
     public Configuration loadResourceConfiguration() throws Exception {
 
         File file = DeploymentUtility.getDescriptorFile(parentServer.getEmsConnection(), context.getResourceKey());
-        if (file==null) {
+        if (file == null) {
             log.warn("Can not find the deployment descriptor for this cache ");
             return null;
         }
@@ -286,7 +286,7 @@ public class JBossCacheComponent implements ResourceComponent<JMXComponent>, Mea
             report.setErrorMessage("Failed to determine the deployment descriptor file for mbean '" + mbeanName + "'.");
             return;
         }
-        
+
         CacheConfigurationHelper helper = new CacheConfigurationHelper();
         try {
             helper.writeConfig(file, newOne, mbeanName, true);

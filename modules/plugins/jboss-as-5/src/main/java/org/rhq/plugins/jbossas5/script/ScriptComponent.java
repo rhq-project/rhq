@@ -40,6 +40,7 @@ import java.util.regex.Pattern;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.content.PackageDetailsKey;
@@ -66,7 +67,6 @@ import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.plugins.jbossas5.ApplicationServerComponent;
 import org.rhq.plugins.jbossas5.ApplicationServerPluginConfigurationProperties;
 import org.rhq.plugins.jbossas5.connection.ProfileServiceConnection;
-import org.rhq.plugins.jbossas5.deploy.Deployer;
 import org.rhq.plugins.jbossas5.deploy.RemoteDownloader;
 import org.rhq.plugins.jbossas5.deploy.ScriptDeployer;
 
@@ -76,13 +76,14 @@ import org.rhq.plugins.jbossas5.deploy.ScriptDeployer;
  * @author Ian Springer
  * @author Lukas Krejci
  */
-public class ScriptComponent implements ResourceComponent<ApplicationServerComponent>, OperationFacet, DeleteResourceFacet, ContentFacet {
+public class ScriptComponent implements ResourceComponent<ApplicationServerComponent<?>>, OperationFacet,
+    DeleteResourceFacet, ContentFacet {
     public static final String TYPE_NAME = "Script";
     public static final String PACKAGE_TYPE = "script";
-    
+
     public static final String PATH_CONFIG_PROP = "path";
     public static final String ENVIRONMENT_VARIABLES_CONFIG_PROP = "environmentVariables";
-    
+
     public static final String EXECUTE_OPERATION = "execute";
 
     public static final String COMMAND_LINE_ARGUMENTS_PARAM_PROP = "commandLineArguments";
@@ -92,12 +93,12 @@ public class ScriptComponent implements ResourceComponent<ApplicationServerCompo
 
     private static final String PACKAGE_VERSION = "none";
     private static final String PACKAGE_ARCHITECTURE = "noarch";
-    
+
     private final Log log = LogFactory.getLog(this.getClass());
 
-    private ResourceContext<ApplicationServerComponent> resourceContext;
+    private ResourceContext<ApplicationServerComponent<?>> resourceContext;
 
-    public void start(ResourceContext<ApplicationServerComponent> resourceContext) {
+    public void start(ResourceContext<ApplicationServerComponent<?>> resourceContext) {
         this.resourceContext = resourceContext;
     }
 
@@ -160,14 +161,14 @@ public class ScriptComponent implements ResourceComponent<ApplicationServerCompo
 
     public void deleteResource() throws Exception {
         String path = resourceContext.getPluginConfiguration().getSimpleValue(PATH_CONFIG_PROP, null);
-        
+
         File f = new File(path);
-        
+
         if (!f.delete()) {
             throw new IOException("Failed to delete the file on the configured path: " + path);
         }
     }
-    
+
     public List<DeployPackageStep> generateInstallationSteps(ResourcePackageDetails packageDetails) {
         return null;
     }
@@ -180,24 +181,28 @@ public class ScriptComponent implements ResourceComponent<ApplicationServerCompo
             response.setOverallRequestErrorMessage("Only one script can be updated at a time.");
             return response;
         }
-        
+
         try {
-            String jbossHomeDir = resourceContext.getParentResourceComponent().getResourceContext().getPluginConfiguration().getSimpleValue(ApplicationServerPluginConfigurationProperties.HOME_DIR, null);
+            String jbossHomeDir = resourceContext.getParentResourceComponent().getResourceContext()
+                .getPluginConfiguration().getSimpleValue(ApplicationServerPluginConfigurationProperties.HOME_DIR, null);
             SystemInfo systemInfo = resourceContext.getSystemInformation();
-            ProfileServiceConnection profileServiceConnection = resourceContext.getParentResourceComponent().getConnection();
-            
-            ScriptDeployer deployer = new ScriptDeployer(jbossHomeDir, systemInfo, new RemoteDownloader(resourceContext, true, profileServiceConnection));
+            ProfileServiceConnection profileServiceConnection = resourceContext.getParentResourceComponent()
+                .getConnection();
+
+            ScriptDeployer deployer = new ScriptDeployer(jbossHomeDir, systemInfo, new RemoteDownloader(
+                resourceContext, true, profileServiceConnection));
             ResourcePackageDetails packageDetails = packages.iterator().next();
-            
-            DeployIndividualPackageResponse scriptUpdateResult = deployer.update(packageDetails, resourceContext.getResourceType());
-            
-            response.setOverallRequestResult(scriptUpdateResult.getResult());            
-            response.addPackageResponse(scriptUpdateResult);            
+
+            DeployIndividualPackageResponse scriptUpdateResult = deployer.update(packageDetails,
+                resourceContext.getResourceType());
+
+            response.setOverallRequestResult(scriptUpdateResult.getResult());
+            response.addPackageResponse(scriptUpdateResult);
         } catch (Exception e) {
             response.setOverallRequestErrorMessage(e.getMessage());
             response.setOverallRequestResult(ContentResponseResult.FAILURE);
         }
-        
+
         return response;
     }
 
@@ -209,8 +214,9 @@ public class ScriptComponent implements ResourceComponent<ApplicationServerCompo
         Set<ResourcePackageDetails> results = new HashSet<ResourcePackageDetails>();
         if (PACKAGE_TYPE.equals(type.getName())) {
             File scriptFile = new File(resourceContext.getResourceKey());
-            
-            PackageDetailsKey key = new PackageDetailsKey(scriptFile.getName(), PACKAGE_VERSION, PACKAGE_TYPE, PACKAGE_ARCHITECTURE);
+
+            PackageDetailsKey key = new PackageDetailsKey(scriptFile.getName(), PACKAGE_VERSION, PACKAGE_TYPE,
+                PACKAGE_ARCHITECTURE);
             ResourcePackageDetails details = new ResourcePackageDetails(key);
             details.setDisplayName(scriptFile.getName());
             details.setFileName(scriptFile.getAbsolutePath());
@@ -219,24 +225,26 @@ public class ScriptComponent implements ResourceComponent<ApplicationServerCompo
             details.setFileCreatedDate(scriptFile.lastModified());
             details.setInstallationTimestamp(System.currentTimeMillis());
             try {
-                details.setSHA256(new MessageDigestGenerator(MessageDigestGenerator.SHA_256).calcDigestString(scriptFile));
+                details.setSHA256(new MessageDigestGenerator(MessageDigestGenerator.SHA_256)
+                    .calcDigestString(scriptFile));
             } catch (IOException e) {
                 log.warn("Failed to compute the SHA256 digest of the script: " + scriptFile.getAbsolutePath(), e);
             }
             results.add(details);
         }
-        
+
         return results;
     }
 
     public InputStream retrievePackageBits(ResourcePackageDetails packageDetails) {
-        String jbossHomeDir = resourceContext.getParentResourceComponent().getResourceContext().getPluginConfiguration().getSimpleValue(ApplicationServerPluginConfigurationProperties.HOME_DIR, null);
+        String jbossHomeDir = resourceContext.getParentResourceComponent().getResourceContext()
+            .getPluginConfiguration().getSimpleValue(ApplicationServerPluginConfigurationProperties.HOME_DIR, null);
         File binDir = new File(jbossHomeDir, "bin");
 
         String scriptName = packageDetails.getKey().getName();
-        
+
         File script = new File(binDir, scriptName);
-        
+
         try {
             return new FileInputStream(script);
         } catch (FileNotFoundException e) {

@@ -24,6 +24,7 @@
 package org.jboss.on.plugins.tomcat;
 
 import org.jboss.on.plugins.tomcat.helper.CreateResourceHelper;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.CreateResourceStatus;
 import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
@@ -35,7 +36,8 @@ import org.rhq.plugins.jmx.MBeanResourceComponent;
  * 
  * @author Jay Shaughnessy
  */
-public class TomcatUserDatabaseComponent extends MBeanResourceComponent<TomcatServerComponent> implements CreateChildResourceFacet {
+public class TomcatUserDatabaseComponent extends MBeanResourceComponent<TomcatServerComponent<?>> implements
+    CreateChildResourceFacet {
 
     public CreateResourceReport createResource(CreateResourceReport report) {
         String resourceTypeName = report.getResourceType().getName();

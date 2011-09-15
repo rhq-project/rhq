@@ -76,16 +76,17 @@ public class AlertFormatUtility {
                 str.append("]");
             } else {
                 // this is a calltime threshold condition
-                // the name of the metric is only obtainable by querying for the name from the meas def ID
-                // but since most times (all the time?) there is only one calltime metric per resource,
-                // not showing the metric name probably isn't detrimental
                 str.append(MSG.view_alert_common_tab_conditions_type_metric_calltime_threshold());
                 str.append(" [");
+                if (condition.getMeasurementDefinition() != null) {
+                    str.append(condition.getMeasurementDefinition().getDisplayName());
+                    str.append(" ");
+                }
                 str.append(condition.getOption()); // MIN, MAX, AVG (never null)
                 str.append(" ");
                 str.append(condition.getComparator()); // <, >, =
                 str.append(" ");
-                str.append(condition.getThreshold());
+                str.append(formatted);
                 str.append("]");
                 if (condition.getName() != null && condition.getName().length() > 0) {
                     str.append(" ");
@@ -123,11 +124,12 @@ public class AlertFormatUtility {
                 str.append("]");
             } else {
                 // this is a calltime change condition
-                // the name of the metric is only obtainable by querying for the name from the meas def ID
-                // but since most times (all the time?) there is only one calltime metric per resource,
-                // not showing the metric name probably isn't detrimental
                 str.append(MSG.view_alert_common_tab_conditions_type_metric_calltime_change());
                 str.append(" [");
+                if (condition.getMeasurementDefinition() != null) {
+                    str.append(condition.getMeasurementDefinition().getDisplayName());
+                    str.append(" ");
+                }
                 str.append(condition.getOption()); // MIN, MAX, AVG (never null)
                 str.append(" ");
                 str.append(getCalltimeChangeComparator(condition.getComparator())); // LO, HI, CH
@@ -276,129 +278,4 @@ public class AlertFormatUtility {
         }
         return recoveryInfo;
     }
-    /* THIS IS THE OLD CODE - IT HAS LOTS OF TODOs AND DIDN'T FULLY WORK
-
-    public static String formatAlertConditionForDisplay(AlertCondition condition) {
-        AlertConditionCategory category = condition.getCategory();
-
-        StringBuilder textValue = new StringBuilder();
-
-        // first format the LHS of the operator
-        if (category == AlertConditionCategory.CONTROL) {
-            try {
-                String operationName = condition.getName();
-                //Integer resourceTypeId = condition.getAlertDefinition().getResource().getResourceType().getId();
-                //OperationManagerLocal operationManager = LookupUtil.getOperationManager();
-                //OperationDefinition definition = operationManager.getOperationDefinitionByResourceTypeAndName(
-                //    resourceTypeId, operationName, false);
-                //String operationDisplayName = definition.getDisplayName();
-                textValue.append(operationName).append(' ');
-            } catch (Exception e) {
-                textValue.append(condition.getName()).append(' ');
-            }
-        } else if (category == AlertConditionCategory.RESOURCE_CONFIG) {
-            textValue.append("Resource Configuration").append(' ');
-        } else {
-            textValue.append(condition.getName()).append(' ');
-        }
-
-        // next format the RHS
-        if (category == AlertConditionCategory.CONTROL) {
-            textValue.append(condition.getOption());
-        } else if ((category == AlertConditionCategory.THRESHOLD) || (category == AlertConditionCategory.BASELINE)) {
-            textValue.append(condition.getComparator());
-            textValue.append(' ');
-
-            MeasurementSchedule schedule = null;
-
-            MeasurementUnits units;
-            double value = condition.getThreshold();
-            if (category == AlertConditionCategory.THRESHOLD) {
-                units = condition.getMeasurementDefinition().getUnits();
-            } else // ( category == AlertConditionCategory.BASELINE )
-            {
-                units = MeasurementUnits.PERCENTAGE;
-            }
-
-            String formatted = MeasurementConverterClient.format(value, units, true);
-            textValue.append(formatted);
-
-            if (category == AlertConditionCategory.BASELINE) {
-                textValue.append(" of ");
-                textValue.append(getBaselineText(condition.getOption(), schedule));
-            }
-        } else if (category == AlertConditionCategory.RESOURCE_CONFIG || category == AlertConditionCategory.CHANGE
-            || category == AlertConditionCategory.TRAIT) {
-            textValue.append("Value Changed");
-        } else if (category == AlertConditionCategory.EVENT) {
-            String msgKey = "alert.config.props.CB.EventSeverity";
-            List<String> args = new ArrayList<String>(2);
-
-            args.add(condition.getName());
-            if ((condition.getOption() != null) && (condition.getOption().length() > 0)) {
-                msgKey += ".RegexMatch";
-                args.add(condition.getOption());
-            }
-            // TODO
-            textValue.append("TODO ").append(args);
-        } else if (category == AlertConditionCategory.AVAILABILITY) {
-            // TODO
-            textValue.append("Availability ").append(condition.getOption());
-        } else {
-            // do nothing
-        }
-
-        return textValue.toString();
-    }
-
-    private static String getBaselineText(String baselineOption, MeasurementSchedule schedule) {
-        final String BASELINE_OPT_MEAN = "mean";
-        final String BASELINE_OPT_MIN = "min";
-        final String BASELINE_OPT_MAX = "max";
-
-        final String MEASUREMENT_BASELINE_MIN_TEXT = "Min Value";
-        final String MEASUREMENT_BASELINE_MEAN_TEXT = "Baseline Value";
-        final String MEASUREMENT_BASELINE_MAX_TEXT = "Max Value";
-
-        if ((null != schedule) && (null != schedule.getBaseline())) {
-            MeasurementBaseline baseline = schedule.getBaseline();
-
-            String lookupText = null;
-            Double value = null;
-
-            if (baselineOption.equals(BASELINE_OPT_MIN)) {
-                lookupText = MEASUREMENT_BASELINE_MIN_TEXT;
-                value = baseline.getMin();
-            } else if (baselineOption.equals(BASELINE_OPT_MEAN)) {
-                lookupText = MEASUREMENT_BASELINE_MEAN_TEXT;
-                value = baseline.getMean();
-            } else if (baselineOption.equals(BASELINE_OPT_MAX)) {
-                lookupText = MEASUREMENT_BASELINE_MAX_TEXT;
-                value = baseline.getMax();
-            }
-
-            if (value != null) {
-                try {
-                    String formatted = MeasurementConverterClient.scaleAndFormat(value, schedule, true);
-                    return formatted + " (" + lookupText + ")";
-                } catch (MeasurementConversionException mce) {
-                    return lookupText;
-                }
-            }
-            
-            // will need a fall-through here because the value was null; this can happen when the user requests to view
-            // the formatted baseline before the first time it has been calculated
-        }
-
-        // here is the fall-through
-        if (BASELINE_OPT_MIN.equals(baselineOption)) {
-            return MEASUREMENT_BASELINE_MIN_TEXT;
-        } else if (BASELINE_OPT_MAX.equals(baselineOption)) {
-            return MEASUREMENT_BASELINE_MAX_TEXT;
-        } else {
-            return MEASUREMENT_BASELINE_MEAN_TEXT;
-        }
-    }
-
-    */
 }

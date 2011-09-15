@@ -1,0 +1,96 @@
+[INFO] 
+NOTE: Maven is executing in offline mode. Any artifacts not already in your local
+repository will be inaccessible.
+
+[INFO] Scanning for projects...
+[INFO] ------------------------------------------------------------------------
+[INFO] Building RHQ Plugin Container
+[INFO]    task-segment: [clean, install]
+[INFO] ------------------------------------------------------------------------
+[INFO] [clean:clean {execution: default-clean}]
+[INFO] Deleting /home/jsanda/Development/redhat/rhq/modules/core/plugin-container/target
+[INFO] [enforcer:enforce {execution: enforce-versions}]
+[INFO] [build-helper:maven-version {execution: default}]
+[INFO] [resources:resources {execution: default-resources}]
+[INFO] Using 'ISO-8859-1' encoding to copy filtered resources.
+[INFO] skip non existing resourceDirectory /home/jsanda/Development/redhat/rhq/modules/core/plugin-container/src/main/resources
+[INFO] [compiler:compile {execution: default-compile}]
+[INFO] Compiling 105 source files to /home/jsanda/Development/redhat/rhq/modules/core/plugin-container/target/classes
+[WARNING] /home/jsanda/Development/redhat/rhq/modules/core/plugin-container/src/main/java/org/rhq/core/pc/plugin/FileSystemPluginFinder.java:[124,32] [deprecation] toURL() in java.io.File has been deprecated
+[WARNING] /home/jsanda/Development/redhat/rhq/modules/core/plugin-container/src/main/java/org/rhq/core/pc/inventory/ResourceContainer.java:[465,49] [unchecked] unchecked conversion
+found   : java.util.concurrent.Callable
+required: java.util.concurrent.Callable<T>
+[WARNING] /home/jsanda/Development/redhat/rhq/modules/core/plugin-container/src/main/java/org/rhq/core/pc/inventory/ResourceContainer.java:[465,48] [unchecked] unchecked method invocation: <T>submit(java.util.concurrent.Callable<T>) in java.util.concurrent.ExecutorService is applied to (java.util.concurrent.Callable)
+[WARNING] /home/jsanda/Development/redhat/rhq/modules/core/plugin-container/src/main/java/org/rhq/core/pc/inventory/InventoryManager.java:[321,76] [unchecked] unchecked call to discoverResources(org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext<T>) as a member of the raw type org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent
+[WARNING] /home/jsanda/Development/redhat/rhq/modules/core/plugin-container/src/main/java/org/rhq/core/pc/inventory/InventoryManager.java:[321,76] [unchecked] unchecked conversion
+found   : java.util.Set
+required: java.util.Set<org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails>
+[WARNING] /home/jsanda/Development/redhat/rhq/modules/core/plugin-container/src/main/java/org/rhq/core/pc/inventory/InventoryManager.java:[357,69] [unchecked] unchecked call to discoverResource(org.rhq.core.domain.configuration.Configuration,org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext<T>) as a member of the raw type org.rhq.core.pluginapi.inventory.ManualAddFacet
+[WARNING] /home/jsanda/Development/redhat/rhq/modules/core/plugin-container/src/main/java/org/rhq/core/pc/inventory/InventoryManager.java:[394,52] [unchecked] unchecked call to ResourceDiscoveryContext(org.rhq.core.domain.resource.ResourceType,T,org.rhq.core.pluginapi.inventory.ResourceContext,org.rhq.core.system.SystemInfo,java.util.List<org.rhq.core.pluginapi.inventory.ProcessScanResult>,java.util.List<org.rhq.core.domain.configuration.Configuration>,java.lang.String,org.rhq.core.pluginapi.inventory.PluginContainerDeployment) as a member of the raw type org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext
+[WARNING] /home/jsanda/Development/redhat/rhq/modules/core/plugin-container/src/main/java/org/rhq/core/pc/inventory/InventoryManager.java:[406,60] [unchecked] unchecked call to getAdditionalClasspathUrls(org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext<T>,org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails) as a member of the raw type org.rhq.core.pluginapi.inventory.ClassLoaderFacet
+[WARNING] /home/jsanda/Development/redhat/rhq/modules/core/plugin-container/src/main/java/org/rhq/core/pc/inventory/InventoryManager.java:[406,60] [unchecked] unchecked conversion
+found   : java.util.List
+required: java.util.List<java.net.URL>
+[WARNING] /home/jsanda/Development/redhat/rhq/modules/core/plugin-container/src/main/java/org/rhq/core/pc/inventory/InventoryManager.java:[1534,87] [unchecked] unchecked conversion
+found   : org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent
+required: org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent<org.rhq.core.pluginapi.inventory.ResourceComponent<capture#841 of ?>>
+[WARNING] /home/jsanda/Development/redhat/rhq/modules/core/plugin-container/src/main/java/org/rhq/core/pc/inventory/InventoryManager.java:[1534,59] [unchecked] unchecked method invocation: <T>createResourceContext(org.rhq.core.domain.resource.Resource,T,org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent<T>) in org.rhq.core.pc.inventory.InventoryManager is applied to (org.rhq.core.domain.resource.Resource,org.rhq.core.pluginapi.inventory.ResourceComponent<capture#841 of ?>,org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent)
+[WARNING] /home/jsanda/Development/redhat/rhq/modules/core/plugin-container/src/main/java/org/rhq/core/pc/inventory/InventoryManager.java:[2383,47] [unchecked] unchecked call to ResourceDiscoveryContext(org.rhq.core.domain.resource.ResourceType,T,org.rhq.core.pluginapi.inventory.ResourceContext,org.rhq.core.system.SystemInfo,java.util.List<org.rhq.core.pluginapi.inventory.ProcessScanResult>,java.util.List<org.rhq.core.domain.configuration.Configuration>,java.lang.String,org.rhq.core.pluginapi.inventory.PluginContainerDeployment) as a member of the raw type org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext
+[WARNING] /home/jsanda/Development/redhat/rhq/modules/core/plugin-container/src/main/java/org/rhq/core/pc/inventory/InventoryManager.java:[2436,30] [unchecked] unchecked conversion
+found   : java.util.Set
+required: java.util.Set<org.rhq.core.domain.resource.Resource>
+[WARNING] /home/jsanda/Development/redhat/rhq/modules/core/plugin-container/src/main/java/org/rhq/core/pc/measurement/MeasurementCollectorRunner.java:[111,85] [unchecked] unchecked cast
+found   : java.util.Set<capture#736 of ? extends org.rhq.core.domain.measurement.MeasurementScheduleRequest>
+required: java.util.Set<org.rhq.core.domain.measurement.MeasurementScheduleRequest>
+[WARNING] /home/jsanda/Development/redhat/rhq/modules/core/plugin-container/src/main/java/org/rhq/core/pc/inventory/InventoryFile.java:[116,85] [unchecked] unchecked cast
+found   : java.lang.Object
+required: java.util.Map<java.lang.String,org.rhq.core.pc.inventory.ResourceContainer>
+[WARNING] /home/jsanda/Development/redhat/rhq/modules/core/plugin-container/src/main/java/org/rhq/core/pc/util/InventoryPrinter.java:[285,41] [unchecked] unchecked call to HashSet(java.util.Collection<? extends E>) as a member of the raw type java.util.HashSet
+[WARNING] /home/jsanda/Development/redhat/rhq/modules/core/plugin-container/src/main/java/org/rhq/core/pc/util/InventoryPrinter.java:[285,41] [unchecked] unchecked conversion
+found   : java.util.HashSet
+required: java.util.Set<org.rhq.core.domain.resource.Resource>
+[WARNING] /home/jsanda/Development/redhat/rhq/modules/core/plugin-container/src/main/java/org/rhq/core/pc/configuration/StructuredAndRawConfigManagement.java:[58,25] [unchecked] unchecked conversion
+found   : java.util.Set
+required: java.util.Set<org.rhq.core.domain.configuration.RawConfiguration>
+[WARNING] /home/jsanda/Development/redhat/rhq/modules/core/plugin-container/src/main/java/org/rhq/core/pc/drift/SnapshotGenerator.java:[106,19] [unchecked] unchecked call to add(E) as a member of the raw type java.util.Collection
+[INFO] [resources:testResources {execution: default-testResources}]
+[INFO] Using 'ISO-8859-1' encoding to copy filtered resources.
+[INFO] Copying 5 resources
+[WARNING] DEPRECATED [tasks]: Use target instead
+[INFO] [antrun:run {execution: process-test-resources}]
+[WARNING] Parameter tasks is deprecated, use target instead
+[INFO] Executing tasks
+
+main:
+     [echo] SIGAR java library version used is 1.6.5.132
+     [echo] Copying/unzipping SIGAR native libraries (version 1.6.5.132) to local build directory
+    [mkdir] Created dir: /home/jsanda/Development/redhat/rhq/modules/core/plugin-container/target/jboss-sigar
+     [copy] Copying 1 file to /home/jsanda/Development/redhat/rhq/modules/core/plugin-container/target/jboss-sigar
+    [unzip] Expanding: /home/jsanda/Development/redhat/rhq/modules/core/plugin-container/target/jboss-sigar/sigar-dist-1.6.5.132.zip into /home/jsanda/Development/redhat/rhq/modules/core/plugin-container/target/jboss-sigar
+     [move] Moving 22 files to /home/jsanda/Development/redhat/rhq/modules/core/plugin-container/target/jboss-sigar
+[INFO] Executed tasks
+[INFO] [compiler:testCompile {execution: default-testCompile}]
+[INFO] Not compiling test sources
+[WARNING] DEPRECATED [tasks]: Use target instead
+[INFO] [antrun:run {execution: process-test-classes}]
+[WARNING] Parameter tasks is deprecated, use target instead
+[INFO] Executing tasks
+
+main:
+[INFO] Executed tasks
+[INFO] [surefire:test {execution: default-test}]
+[INFO] Tests are skipped.
+[INFO] [jar:jar {execution: default-jar}]
+[INFO] Building jar: /home/jsanda/Development/redhat/rhq/modules/core/plugin-container/target/rhq-core-plugin-container-4.1.0-SNAPSHOT.jar
+[INFO] [jar:jar {execution: default}]
+[INFO] [jar:test-jar {execution: default}]
+[INFO] Skipping packaging of the test-jar
+[INFO] [install:install {execution: default-install}]
+[INFO] Installing /home/jsanda/Development/redhat/rhq/modules/core/plugin-container/target/rhq-core-plugin-container-4.1.0-SNAPSHOT.jar to /home/jsanda/.m2/repository/org/rhq/rhq-core-plugin-container/4.1.0-SNAPSHOT/rhq-core-plugin-container-4.1.0-SNAPSHOT.jar
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESSFUL
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time: 7 seconds
+[INFO] Finished at: Tue Sep 13 16:43:45 EDT 2011
+[INFO] Final Memory: 59M/481M
+[INFO] ------------------------------------------------------------------------

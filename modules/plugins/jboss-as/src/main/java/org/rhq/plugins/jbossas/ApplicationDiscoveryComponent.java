@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.mc4j.ems.connection.EmsConnection;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.resource.ResourceType;
@@ -46,10 +47,10 @@ import org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent;
 *
 * @author Jason Dobies
 */
-public class ApplicationDiscoveryComponent extends MBeanResourceDiscoveryComponent<JMXComponent> {
+public class ApplicationDiscoveryComponent extends MBeanResourceDiscoveryComponent<JMXComponent<?>> {
     // ResourceDiscoveryComponent Implementation  --------------------------------------------
 
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<JMXComponent> context) {
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<JMXComponent<?>> context) {
         // Parent will discover deployed applications through JMX
         Set<DiscoveredResourceDetails> jmxResources = super.discoverResources(context);
 
@@ -57,7 +58,8 @@ public class ApplicationDiscoveryComponent extends MBeanResourceDiscoveryCompone
         JMXComponent parentComponent = context.getParentResourceComponent();
         ApplicationServerComponent applicationServerComponent = (ApplicationServerComponent) parentComponent;
         EmsConnection emsConnection = parentComponent.getEmsConnection();
-        String deployDirectoryPath = generateDeployDirectory(applicationServerComponent.getConfigurationPath().getPath());
+        String deployDirectoryPath = generateDeployDirectory(applicationServerComponent.getConfigurationPath()
+            .getPath());
 
         List<String> earNames = new ArrayList<String>();
         for (DiscoveredResourceDetails jmxResource : jmxResources) {
@@ -95,14 +97,15 @@ public class ApplicationDiscoveryComponent extends MBeanResourceDiscoveryCompone
      * @return set of all applications discovered on the file system; this should include at least some of the
      *         applications discovered through JMX as well
      */
-    private Set<DiscoveredResourceDetails> discoverFileSystem(ResourceDiscoveryContext<JMXComponent> context) {
+    private Set<DiscoveredResourceDetails> discoverFileSystem(ResourceDiscoveryContext<JMXComponent<?>> context) {
         Configuration defaultConfiguration = context.getDefaultPluginConfiguration();
 
         // Find the location of the deploy directory
         JMXComponent parentComponent = context.getParentResourceComponent();
         ApplicationServerComponent applicationServerComponent = (ApplicationServerComponent) parentComponent;
 
-        String deployDirectoryPath = generateDeployDirectory(applicationServerComponent.getConfigurationPath().getPath());
+        String deployDirectoryPath = generateDeployDirectory(applicationServerComponent.getConfigurationPath()
+            .getPath());
         File deployDirectory = new File(deployDirectoryPath);
 
         // Set up filter for application type
@@ -120,7 +123,8 @@ public class ApplicationDiscoveryComponent extends MBeanResourceDiscoveryCompone
             String resourceName = file.getName();
             String description = defaultConfiguration.getSimple("descriptionTemplate").getStringValue();
 
-            DiscoveredResourceDetails resource = new DiscoveredResourceDetails(resourceType, resourceKey, resourceName, "", description, null, null);
+            DiscoveredResourceDetails resource = new DiscoveredResourceDetails(resourceType, resourceKey, resourceName,
+                "", description, null, null);
             Configuration resourcePluginConfiguration = resource.getPluginConfiguration();
             resourcePluginConfiguration.put(new PropertySimple("name", resourceName));
             resourcePluginConfiguration.put(new PropertySimple("objectName", objectName));

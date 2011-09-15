@@ -1,6 +1,9 @@
 package org.rhq.core.pc.drift;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 import java.util.PriorityQueue;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -197,15 +200,36 @@ public class ScheduleQueueImpl implements ScheduleQueue {
         }
     }
 
+    /**
+     * Generates a string representation of the schedules in the queue. The schedules that
+     * appear in the string are in sorted order. If there is an active schedule it will
+     * appear first. This method can be useful for debugging since it shows the contents of
+     * the queue in sorted order. Use it cautiously however as writes to the queue are
+     * blocked until this method returns.
+     *
+     * @return A string representation of the queue with the schedules appearing in sorted
+     * order.
+     */
     @Override
     public String toString() {
         try {
             lock.readLock().lock();
-            if (queue.isEmpty()) {
+
+            if (activeSchedule == null && queue.isEmpty()) {
                 return "ScheduleQueue[]";
             }
+
+            DriftDetectionSchedule[] schedules = toArray();
+            Arrays.sort(schedules);
+
+            List<DriftDetectionSchedule> list = new ArrayList<DriftDetectionSchedule>(schedules.length + 1);
+            if (activeSchedule != null) {
+                list.add(activeSchedule);
+            }
+            list.addAll(Arrays.asList(schedules));
+
             StringBuilder buffer = new StringBuilder("ScheduleQueue[");
-            for (DriftDetectionSchedule schedule : queue) {
+            for (DriftDetectionSchedule schedule : list) {
                 buffer.append(schedule).append(", ");
             }
             int end = buffer.length();

@@ -40,7 +40,7 @@ import org.rhq.core.domain.configuration.Configuration;
  *
  * @author Ian Springer
  */
-public interface ManualAddFacet<T extends ResourceComponent> {
+public interface ManualAddFacet<T extends ResourceComponent<?>> {
     /**
      * Using the specified plugin configuration, creates a DiscoveredResourceDetails object describing a new Resource
      * to be added to inventory.

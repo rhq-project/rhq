@@ -23,8 +23,10 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.HashSet;
 import java.util.Set;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
@@ -36,12 +38,12 @@ import org.rhq.core.util.jdbc.JDBCUtil;
  *
  * @author Greg Hinkle
  */
-public class PostgresUserDiscoveryComponent implements ResourceDiscoveryComponent<PostgresServerComponent> {
+public class PostgresUserDiscoveryComponent implements ResourceDiscoveryComponent<PostgresServerComponent<?>> {
     private static final Log log = LogFactory.getLog(PostgresTableDiscoveryComponent.class);
 
     public static final String USERS_QUERY = "select * from pg_roles";
 
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<PostgresServerComponent> context)
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<PostgresServerComponent<?>> context)
         throws Exception {
         log.info("Discovering postgres users");
         Set<DiscoveredResourceDetails> discoveredUsers = new HashSet<DiscoveredResourceDetails>();

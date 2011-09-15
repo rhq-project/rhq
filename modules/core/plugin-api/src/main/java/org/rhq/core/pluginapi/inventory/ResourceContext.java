@@ -58,14 +58,14 @@ import org.rhq.core.system.pquery.ProcessInfoQuery;
  * @author John Mazzitelli
  */
 @SuppressWarnings("unchecked")
-public class ResourceContext<T extends ResourceComponent> {
+public class ResourceContext<T extends ResourceComponent<?>> {
     private final String resourceKey;
     private final ResourceType resourceType;
     private final String version;
     private final T parentResourceComponent;
     private final Configuration pluginConfiguration;
     private final SystemInfo systemInformation;
-    private final ResourceDiscoveryComponent resourceDiscoveryComponent;
+    private final ResourceDiscoveryComponent<T> resourceDiscoveryComponent;
     private final File temporaryDirectory;
     private final File dataDirectory;
     private final String pluginContainerName;
@@ -105,7 +105,7 @@ public class ResourceContext<T extends ResourceComponent> {
      * @param pluginContainerDeployment  indicates where the plugin container is running
      */
     public ResourceContext(Resource resource, T parentResourceComponent,
-        ResourceDiscoveryComponent resourceDiscoveryComponent, SystemInfo systemInfo, File temporaryDirectory,
+        ResourceDiscoveryComponent<T> resourceDiscoveryComponent, SystemInfo systemInfo, File temporaryDirectory,
         File dataDirectory, String pluginContainerName, EventContext eventContext, OperationContext operationContext,
         ContentContext contentContext, Executor availCollectorThreadPool,
         PluginContainerDeployment pluginContainerDeployment) {
@@ -221,11 +221,11 @@ public class ResourceContext<T extends ResourceComponent> {
             if (this.resourceDiscoveryComponent != null) {
                 try {
                     Set<DiscoveredResourceDetails> details;
-                    ResourceDiscoveryContext<ResourceComponent<?>> context;
+                    ResourceDiscoveryContext<T> context;
 
-                    context = new ResourceDiscoveryContext<ResourceComponent<?>>(this.resourceType,
-                        this.parentResourceComponent, this, this.systemInformation, getNativeProcessesForType(),
-                        Collections.EMPTY_LIST, getPluginContainerName(), getPluginContainerDeployment());
+                    context = new ResourceDiscoveryContext<T>(this.resourceType, this.parentResourceComponent, this,
+                        this.systemInformation, getNativeProcessesForType(), Collections.EMPTY_LIST,
+                        getPluginContainerName(), getPluginContainerDeployment());
 
                     details = this.resourceDiscoveryComponent.discoverResources(context);
 

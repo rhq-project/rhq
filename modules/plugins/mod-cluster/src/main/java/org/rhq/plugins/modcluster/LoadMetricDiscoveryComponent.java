@@ -33,11 +33,10 @@ import org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent;
  * @author Stefan Negrea
  *
  */
-@SuppressWarnings("rawtypes")
-public class LoadMetricDiscoveryComponent extends MBeanResourceDiscoveryComponent<JMXComponent> {
+public class LoadMetricDiscoveryComponent extends MBeanResourceDiscoveryComponent<JMXComponent<?>> {
 
     @Override
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<JMXComponent> context,
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<JMXComponent<?>> context,
         boolean skipUnknownProps) {
 
         Set<DiscoveredResourceDetails> results = super.discoverResources(context, skipUnknownProps);
@@ -83,7 +82,7 @@ public class LoadMetricDiscoveryComponent extends MBeanResourceDiscoveryComponen
      * @param objectName
      * @return
      */
-    private String getBeanConfiguredClassName(ResourceDiscoveryContext<JMXComponent> context, String objectName) {
+    private String getBeanConfiguredClassName(ResourceDiscoveryContext<JMXComponent<?>> context, String objectName) {
         EmsConnection connection = context.getParentResourceComponent().getEmsConnection();
         EmsBean emsBean = loadBean(connection, objectName);
 

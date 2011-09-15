@@ -1,5 +1,5 @@
 <plugin name="jboss-as-7"
-        displayName="JBoss-AS-7-Plugin"
+        displayName="JBoss Application Server 7.x"
         description="Management of JBossAS 7"
         package="org.rhq.modules.plugins.jbossas7"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"

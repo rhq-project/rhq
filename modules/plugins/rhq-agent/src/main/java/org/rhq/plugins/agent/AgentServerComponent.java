@@ -50,6 +50,7 @@ import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.event.log.LogFileEventResourceComponentHelper;
+import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
@@ -70,8 +71,8 @@ import org.rhq.plugins.jmx.JMXServerComponent;
  *
  * @author John Mazzitelli
  */
-public class AgentServerComponent extends JMXServerComponent implements JMXComponent, MeasurementFacet, OperationFacet,
-    ConfigurationFacet, SupportFacet {
+public class AgentServerComponent<T extends ResourceComponent<?>> extends JMXServerComponent<T> implements
+    JMXComponent<T>, MeasurementFacet, OperationFacet, ConfigurationFacet, SupportFacet {
     private static Log log = LogFactory.getLog(AgentServerComponent.class);
 
     /**

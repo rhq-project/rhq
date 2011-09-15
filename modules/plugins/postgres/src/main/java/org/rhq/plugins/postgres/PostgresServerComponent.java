@@ -55,6 +55,7 @@ import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
+import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
@@ -70,7 +71,7 @@ import org.rhq.plugins.postgres.util.PostgresqlConfFile;
  *
  * @author Greg Hinkle
  */
-public class PostgresServerComponent implements DatabaseComponent, ConfigurationFacet, MeasurementFacet,
+public class PostgresServerComponent<T extends ResourceComponent<?>> implements DatabaseComponent<T>, ConfigurationFacet, MeasurementFacet,
     OperationFacet, CreateChildResourceFacet {
     private static Log log = LogFactory.getLog(PostgresServerComponent.class);
 

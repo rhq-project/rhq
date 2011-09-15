@@ -407,11 +407,15 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     }
 
     public void deleteOperationScheduleEntity(ScheduleJobId jobId) {
-        OperationScheduleEntity doomed = findOperationScheduleEntity(jobId);
-        if (doomed != null) {
-            LOG.debug("Deleting schedule entity: " + jobId);
-            entityManager.remove(doomed);
-        } else {
+        try {
+            OperationScheduleEntity doomed = findOperationScheduleEntity(jobId);
+            if (doomed != null) {
+                LOG.debug("Deleting schedule entity: " + jobId);
+                entityManager.remove(doomed);
+            } else {
+                LOG.info("Asked to delete unknown schedule - ignoring: " + jobId);
+            }
+        } catch (NoResultException nre) {
             LOG.info("Asked to delete unknown schedule - ignoring: " + jobId);
         }
 
@@ -2106,7 +2110,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     }
 
     private static void validateOperationNameAndParameters(ResourceType resourceType, String operationName,
-                                                           Configuration parameters) {
+        Configuration parameters) {
         Set<OperationDefinition> operationDefinitions = resourceType.getOperationDefinitions();
         OperationDefinition matchingOperationDefinition = null;
         for (OperationDefinition operationDefinition : operationDefinitions) {
@@ -2117,14 +2121,14 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         }
         if (matchingOperationDefinition == null) {
             throw new IllegalArgumentException("[" + operationName
-                    + "] is not a valid operation name for Resources of type [" + resourceType.getName() + "]." );
+                + "] is not a valid operation name for Resources of type [" + resourceType.getName() + "].");
         }
-        ConfigurationDefinition parametersDefinition =
-                matchingOperationDefinition.getParametersConfigurationDefinition();
+        ConfigurationDefinition parametersDefinition = matchingOperationDefinition
+            .getParametersConfigurationDefinition();
         List<String> errors = ConfigurationUtility.validateConfiguration(parameters, parametersDefinition);
         if (!errors.isEmpty()) {
-            throw new IllegalArgumentException("Parameters for [" + operationName
-                    + "] on Resource of type [" + resourceType.getName() + "] are not valid: " + errors );
+            throw new IllegalArgumentException("Parameters for [" + operationName + "] on Resource of type ["
+                + resourceType.getName() + "] are not valid: " + errors);
         }
     }
 

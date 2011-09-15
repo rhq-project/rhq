@@ -45,7 +45,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * Test for {@link AlertManagerLocal} SLSB.
  */
 @Test(enabled = false)
-public class AlertManagerBeanTest extends AbstractEJB3Test {
+public class DeleteAlertsTest extends AbstractEJB3Test {
     private AlertManagerLocal alertManager;
     private Subject superuser;
     private Resource newResource;
@@ -88,8 +88,8 @@ public class AlertManagerBeanTest extends AbstractEJB3Test {
     }
 
     IDataSet getDataSet() throws Exception {
-        FlatXmlProducer xmlProducer = new FlatXmlProducer(new InputSource(getClass()
-            .getResourceAsStream("AlertManagerBeanTest.xml")));
+        FlatXmlProducer xmlProducer = new FlatXmlProducer(new InputSource(getClass().getResourceAsStream(
+            "AlertManagerBeanTest.xml")));
         xmlProducer.setColumnSensing(true);
         return new FlatXmlDataSet(xmlProducer);
     }
@@ -104,20 +104,16 @@ public class AlertManagerBeanTest extends AbstractEJB3Test {
         int deletedCount = alertManager.deleteAlertsByContext(superuser, EntityContext.forTemplate(resourceTypeId));
 
         List<AlertConditionLog> alertConditionLogs = getEntityManager().createQuery(
-            "from AlertConditionLog log where log.id = :id")
-            .setParameter("id", 2)
-            .getResultList();
+            "from AlertConditionLog log where log.id = :id").setParameter("id", 2).getResultList();
 
         List<AlertNotificationLog> notificationLogs = getEntityManager().createQuery(
-            "from AlertNotificationLog log where log.id = :id")
-            .setParameter("id", 2)
-            .getResultList();
+            "from AlertNotificationLog log where log.id = :id").setParameter("id", 2).getResultList();
 
         assertEquals("Failed to delete alerts by template", 1, deletedCount);
-        assertEquals("Failed to delete alert condition logs when deleting alerts by template", 0,
-            alertConditionLogs.size());
-        assertEquals("Failed to delete alert notification logs when deleting alerts by template", 0,
-            notificationLogs.size());
+        assertEquals("Failed to delete alert condition logs when deleting alerts by template", 0, alertConditionLogs
+            .size());
+        assertEquals("Failed to delete alert notification logs when deleting alerts by template", 0, notificationLogs
+            .size());
     }
 
     public void testAlertDeleteInRange() {

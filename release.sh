@@ -1,18 +1,7 @@
 #!/bin/sh
 
-if [ -n "$RELEASE_DEBUG" ]; then
-   echo "Debug output is enabled."
-   set -x
-fi
 
-
-# Constants
-
-PROJECT_NAME="rhq"
-PROJECT_DISPLAY_NAME="RHQ"
-PROJECT_GIT_WEB_URL="http://git.fedorahosted.org/git/?p=rhq/rhq.git"
-TAG_PREFIX="RHQ"
-MINIMUM_MAVEN_VERSION="2.1.0"
+source `dirname $0`/rhq_bash.lib
 
 
 # Functions
@@ -30,6 +19,21 @@ usage()
 {   
    abort "$@" "Usage:   $EXE community|enterprise RELEASE_VERSION DEVELOPMENT_VERSION RELEASE_BRANCH GIT_USERNAME test|production" "Example: $EXE enterprise 3.0.0.GA 3.0.0-SNAPSHOT release-3.0.0 ips test"
 }
+
+
+if [ -n "$RELEASE_DEBUG" ]; then
+   echo "Debug output is enabled."
+   set -x
+fi
+
+
+# Constants
+
+PROJECT_NAME="rhq"
+PROJECT_DISPLAY_NAME="RHQ"
+PROJECT_GIT_WEB_URL="http://git.fedorahosted.org/git/?p=rhq/rhq.git"
+TAG_PREFIX="RHQ"
+MINIMUM_MAVEN_VERSION="2.1.0"
 
 
 # Process command line args.
@@ -57,103 +61,15 @@ if [ "$MODE" = "production" ]; then
    fi    
 fi
 
-
-# Make sure JAVA_HOME points to a valid JDK 1.6+ install.
-
-if [ -z "$JAVA_HOME" ]; then
-   abort "JAVA_HOME environment variable is not set - JAVA_HOME must point to a JDK (not JRE) 6 install dir."
-fi
-
-if [ ! -d "$JAVA_HOME" ]; then
-   abort "JAVA_HOME ($JAVA_HOME) does not exist or is not a directory - JAVA_HOME must point to a JDK (not JRE) 6 install dir."
-fi
-
-echo "Prepending $JAVA_HOME/bin to PATH..."
-PATH="$JAVA_HOME/bin:$PATH"
-
-if ! which java >/dev/null 2>&1; then
-   abort "java not found in PATH ($PATH) - JAVA_HOME must point to a JDK (not JRE) 6 install dir."
-fi
-
-if ! which javac >/dev/null 2>&1; then
-   abort "javac not found in PATH ($PATH) - JAVA_HOME must point to a JDK (not JRE) 6 install dir."
-fi
-
-if ! javap java.util.Deque >/dev/null 2>&1; then
-   abort "java.util.Deque not found - Java version appears to be less than 1.6 - Jave version must be 1.6 or later."
-fi
-
 # TODO: Check that JDK version is < 1.7.
 
-# spinder 8/30/11: commenting out the JAVA5 support, but leaving logic in place for when we need the same backwards 
-# compatibility logic for JD6 vs. JDK7 support.
-# If this is an enterprise release, make sure JAVA5_HOME points to a valid JDK 1.5 install. 
-# We need this to validate only Java 5 or earlier APIs are used in all modules, except the CLI, which requires Java 6.
-#
-#if [ "$RELEASE_TYPE" = "enterprise" ]; then
-#    if [ -z "$JAVA5_HOME" ]; then
-#       abort "JAVA5_HOME environment variable is not set - JAVA5_HOME must point to a JDK (not JRE) 1.5 install dir."
-#    fi
-#
-#    if [ ! -d "$JAVA5_HOME" ]; then
-#       abort "JAVA5_HOME ($JAVA5_HOME) does not exist or is not a directory - JAVA5_HOME must point to a JDK (not JRE) 1.5 install dir."
-#    fi
-#
-#    if [ ! -x "$JAVA5_HOME/bin/java" ]; then
-#       abort "$JAVA5_HOME/bin/java does not exist or is not executable - JAVA5_HOME must point to a JDK (not JRE) 1.5 install dir."
-#    fi
-#
-#    if [ ! -x "$JAVA5_HOME/bin/javac" ]; then
-#       abort "$JAVA5_HOME/bin/javac does not exist or is not executable - JAVA5_HOME must point to a JDK (not JRE) 1.5 install dir."
-#    fi
-#
-#    if ! "$JAVA5_HOME/bin/javap" java.lang.Enum >/dev/null 2>&1; then
-#       abort "java.lang.Enum not found - JAVA5_HOME ($JAVA5_HOME) version appears to be less than 1.5 - version must be 1.5.x."
-#    fi
-#
-#    if "$JAVA5_HOME/bin/javap" java.util.Deque >/dev/null 2>&1; then
-#       abort "java.util.Deque found - JAVA5_HOME ($JAVA5_HOME) version appears to be greater than or equal to 1.6 - version must be 1.5.x."
-#    fi
-#fi
+validate_java_6
 
+validate_java_5
 
-# Make sure M2_HOME points to a valid Maven 2.1.x or 2.2.x install.
+validate_maven
 
-if [ -z "$M2_HOME" ]; then
-   abort "M2_HOME environment variable is not set - M2_HOME must point to a Maven, $MINIMUM_MAVEN_VERSION or later, install dir."
-fi
-
-if [ ! -d "$M2_HOME" ]; then
-   abort "M2_HOME ($M2_HOME) does not exist or is not a directory - M2_HOME must point to a Maven, $MINIMUM_MAVEN_VERSION or later, install dir."
-fi
-
-echo "Prepending $M2_HOME/bin to PATH..."
-PATH="$M2_HOME/bin:$PATH"
-
-if ! which mvn >/dev/null 2>&1; then
-   abort "mvn not found in PATH ($PATH) - M2_HOME must point to a Maven, $MINIMUM_MAVEN_VERSION or later, install dir."
-fi
-
-mvn -version >/dev/null
-[ $? -ne 0 ] && abort "mvn --version failed with exit code $?."
-MAVEN_VERSION=`mvn -version | head -1 | sed 's|[^0-9]*\([^ ]*\).*|\1|'`
-if echo $MAVEN_VERSION | grep -Ev "^(2\.[12]|3\.0)"; then
-   abort "Unsupported Maven version - $MAVEN_VERSION. Only Maven 2.1.x, 2.2.x, or 3.0.x is supported. Please update the value of M2_HOME, then try again."
-fi
-
-
-# Make sure git 1.6.x or 1.7.x is in the PATH.
-
-if ! which git >/dev/null 2>&1; then
-   abort "git not found in PATH ($PATH)."
-fi
-
-git --version >/dev/null
-[ $? -ne 0 ] && abort "git --version failed with exit code $?."
-GIT_VERSION=`git --version | sed 's|[^0-9]*\([^ ]*\).*|\1|'`
-if echo $GIT_VERSION | grep -v "^1.[67]"; then
-   abort "Unsupported git version - $GIT_VERSION. Only git 1.6.x or 1.7.x are supported. Please add a directory containing a supported version of git to your PATH, then try again."
-fi
+validate_git
 
 
 # Set various environment variables.
@@ -194,9 +110,6 @@ fi
 if [ -n "$RELEASE_ADDITIONAL_MAVEN_ARGS" ]; then
    MAVEN_ARGS="$MAVEN_ARGS $RELEASE_ADDITIONAL_MAVEN_ARGS"
 fi
-if [ -z "$MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS" ]; then
-   MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS="6"
-fi
 
 # TODO: We may eventually want to reenable publishing of enterprise artifacts.
 #if [ "$MODE" = "production" ] && [ "$RELEASE_TYPE" = "community" ]; then
@@ -220,59 +133,25 @@ export LANG
 
 
 # Print out a summary of the environment.
-
-echo
 echo "========================== Environment Variables =============================="
-echo "JAVA_HOME=$JAVA_HOME"
-[ "$RELEASE_TYPE" = "enterprise" ] 
-#[ "$RELEASE_TYPE" = "enterprise" ] && echo "JAVA5_HOME=$JAVA5_HOME"
-echo "M2_HOME=$M2_HOME"
-echo "MAVEN_OPTS=$MAVEN_OPTS"
-echo "PATH=$PATH"
-echo "LANG=$LANG"
+environment_variables=("JAVA_HOME" "M2_HOME" "MAVEN_OPTS" "PATH" "LANG" "RELEASE_TYPE")
+print_variables "${environment_variables[@]}"
+
+
 echo "============================= Local Variables ================================="
-echo "WORKING_DIR=$WORKING_DIR"
-echo "PROJECT_NAME=$PROJECT_NAME"
-echo "PROJECT_GIT_URL=$PROJECT_GIT_URL"
-echo "RELEASE_TYPE=$RELEASE_TYPE"
-echo "RELEASE_VERSION=$RELEASE_VERSION"
-echo "DEVELOPMENT_VERSION=$DEVELOPMENT_VERSION"
-echo "RELEASE_BRANCH=$RELEASE_BRANCH"
-echo "RELEASE_TAG=$RELEASE_TAG"
-echo "MODE=$MODE"
-echo "MAVEN_LOCAL_REPO_DIR=$MAVEN_LOCAL_REPO_DIR"
-echo "MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS=$MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS"
-echo "MAVEN_SETTINGS_FILE=$MAVEN_SETTINGS_FILE"
-echo "MAVEN_ARGS=$MAVEN_ARGS"
-echo "MAVEN_RELEASE_PERFORM_GOAL=$MAVEN_RELEASE_PERFORM_GOAL"
-echo "JBOSS_ORG_USERNAME=$JBOSS_ORG_USERNAME"
+local_variables=("WORKING_DIR" "PROJECT_NAME" "PROJECT_GIT_URL" "RELEASE_TYPE" "DEVELOPMENT_VERSION" \
+                  "RELEASE_BRANCH" "MODE" "MAVEN_LOCAL_REPO_DIR" \
+                  "MAVEN_SETTINGS_FILE" "MAVEN_ARGS" "MAVEN_RELEASE_PERFORM_GOAL" "JBOSS_ORG_USERNAME" \
+                  "RELEASE_VERSION" "RELEASE_TAG")
+print_variables "${local_variables[@]}"
+
+
+
 echo "============================= Program Versions ================================"
-git --version
-echo
-java -version
-echo
-mvn --version | head -1
+program_versions=("git --version" "java -version" "mvn --version")
+print_program_versions "${program_versions[@]}"
+
 echo "==============================================================================="
-echo
-
-
-# Clean the Maven local repo if it hasn't been purged recently.
-
-if [ -f "$MAVEN_LOCAL_REPO_DIR" ]; then
-   if [ "$MODE" = "production" ]; then
-      echo "Purging MAVEN_LOCAL_REPO_DIR ($MAVEN_LOCAL_REPO_DIR) since this is a production build..."
-      #rm -rf "$MAVEN_LOCAL_REPO_DIR"
-   else
-      echo boo
-      #OUTPUT=`find "$MAVEN_LOCAL_REPO_DIR" -maxdepth 0 -mtime $MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS`
-      #if [ -n "$OUTPUT" ]; then       
-      #   echo "MAVEN_LOCAL_REPO_DIR ($MAVEN_LOCAL_REPO_DIR) has existed for more than $MAVEN_LOCAL_REPO_PURGE_INTERVAL_HOURS hours - purging it for a clean-clean build..."
-      #   rm -rf "$MAVEN_LOCAL_REPO_DIR"
-      #fi
-   fi
-   
-fi
-mkdir -p "$MAVEN_LOCAL_REPO_DIR"
 
 
 # Create the Maven settings file.

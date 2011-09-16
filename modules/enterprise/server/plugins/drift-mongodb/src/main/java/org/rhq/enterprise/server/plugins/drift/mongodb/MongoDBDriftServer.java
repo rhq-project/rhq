@@ -19,8 +19,6 @@
 
 package org.rhq.enterprise.server.plugins.drift.mongodb;
 
-import static org.rhq.enterprise.server.util.LookupUtil.getResourceManager;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
@@ -50,9 +48,9 @@ import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.drift.DriftComposite;
+import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
 import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.DriftSnapshot;
-import org.rhq.core.domain.drift.DriftConfigurationDefinition.DriftHandlingMode;
 import org.rhq.core.domain.drift.dto.DriftChangeSetDTO;
 import org.rhq.core.domain.drift.dto.DriftDTO;
 import org.rhq.core.domain.drift.dto.DriftFileDTO;
@@ -68,6 +66,8 @@ import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBChangeSet
 import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBChangeSetEntry;
 import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBFile;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+
+import static org.rhq.enterprise.server.util.LookupUtil.getResourceManager;
 
 public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginComponent {
 
@@ -113,14 +113,12 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
             @Override
             public boolean visit(ZipEntry zipEntry, ZipInputStream stream) throws Exception {
                 ChangeSetReader reader = new ChangeSetReaderImpl(new BufferedReader(new InputStreamReader(stream)));
-
                 Headers headers = reader.getHeaders();
+
                 MongoDBChangeSet changeSet = new MongoDBChangeSet();
                 changeSet.setCategory(headers.getType());
                 changeSet.setResourceId(resourceId);
-                // TODO Figure out how best to handle drift config reference
-                changeSet.setDriftConfigurationId(1);
-                // TODO Figure out how best to handle drift config drift handling mode
+                changeSet.setDriftConfigurationId(headers.getDriftCofigurationId());
                 changeSet.setDriftHandlingMode(DriftHandlingMode.normal);
                 changeSet.setVersion(changeSetVersions++);
 

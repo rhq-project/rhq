@@ -54,4 +54,5 @@ public class MongoDBFile implements Serializable, DriftFile {
     public void setStatus(DriftFileStatus status) {
         this.status = status;
     }
+
 }

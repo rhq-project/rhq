@@ -41,6 +41,10 @@ import static org.testng.Assert.assertNotNull;
 
 public class GridFSTest {
 
+    // Tests need to be disabled when committed/pushed to the remote repo until we get
+    // mongodb installed on the hudson slave
+    static final boolean ENABLED = false;
+
     Mongo connection;
 
     DB db;
@@ -53,7 +57,7 @@ public class GridFSTest {
 
     }
 
-    @Test(enabled = false)
+    @Test(enabled = ENABLED)
     public void writeAndReadFile() throws Exception {
         GridFS gridFS = new GridFS(db);
         File file = new File("/home/jsanda/clojure-plugin.tar");

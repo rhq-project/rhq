@@ -36,6 +36,14 @@ import org.rhq.core.pc.inventory.InventoryManager;
 
 import static org.rhq.core.domain.drift.DriftConfigurationComparator.CompareMode.BOTH_BASE_INFO_AND_DIRECTORY_SPECIFICATIONS;
 
+/**
+ * This class handles syncing drift configurations during inventory sync. This class is
+ * intended to server as the public interface (so to speak) to {@link InventoryManager} for
+ * syncing drift configurations.
+ * <br/><br/>
+ * Please review the docs for each of the setter methods to determine which properties
+ * should be set before invoking any business logic methods.
+ */
 public class DriftSyncManager {
     private final Log log = LogFactory.getLog(DriftSyncManager.class);
 
@@ -47,18 +55,36 @@ public class DriftSyncManager {
 
     private File dataDir;
 
+    /**
+     * @param driftServer The interface to the remote server. This property must be set.
+     * It is injected to facilitate testing with stubs or mocks.
+     */
     public void setDriftServer(DriftServerService driftServer) {
         this.driftServer = driftServer;
     }
 
+    /**
+     * @param driftManager The drift manager singleton created by the plugin container.
+     * This property must be set even if drift manager is not yet initialized. It is
+     * injected to facilitate testing with stubs or mocks.
+     */
     public void setDriftManager(DriftManager driftManager) {
         driftMgr = driftManager;
     }
 
+    /**
+     * @param inventoryManager The inventory manager singleton created by the plugin
+     * container. This property must be set. It is injected to facilitate testing with stubs
+     * or mocks.
+     */
     public void setInventoryManager(InventoryManager inventoryManager) {
         inventoryMgr = inventoryManager;
     }
 
+    /**
+     * @param dataDirectory The plugin container data directory where inventory files are
+     * stored. This property must be set. It is injected to facilitate testing.
+     */
     public void setDataDirectory(File dataDirectory) {
         dataDir = dataDirectory;
     }

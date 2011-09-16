@@ -24,15 +24,61 @@ import java.util.Set;
 
 import org.rhq.core.domain.drift.DriftConfiguration;
 
+/**
+ * A DriftSynchronizer is responsible for sycning {@link DriftConfiguration}s in the
+ * server's with those in the local inventory.
+ */
 public interface DriftSynchronizer {
 
+    /**
+     * Determines which drift configurations for a resource have been deleted on the server
+     * and need to be purged from the local inventory. This method should not make any
+     * changes to the local inventory.
+     *
+     * @param resourceId
+     * @param configurationsFromServer A set of drift configurations belonging to the
+     * resource with the specified id. The set uses a {@link org.rhq.core.domain.drift.DriftConfigurationComparator DriftConfigurationComparator}
+     * with the compare mode set to {@link org.rhq.core.domain.drift.DriftConfigurationComparator.CompareMode#BOTH_BASE_INFO_AND_DIRECTORY_SPECIFICATIONS BOTH_BASE_INFO_AND_DIRECTORY_SPECIFICATIONS}.
+     * @return A list of drift configurations that need to be purged from the local inventory.
+     */
     List<DriftConfiguration> getDeletedConfigurations(int resourceId,
         Set<DriftConfiguration> configurationsFromServer);
 
 
+    /**
+     * Removes the drift configurations from local inventory. Implementations are responsible
+     * for deciding how that is to be done. For example, if the plugin container is not
+     * fully initialized, then purging will involve removing configurations from the
+     * {@link org.rhq.core.pc.inventory.ResourceContainer ResourceContainer}. But if the
+     * plugin container is initialized, then drift detection will have to be unscheduled.
+     *
+     * @param resourceId
+     * @param configurations The drift configurations to purge from local inventory
+     */
     void purgeFromLocalInventory(int resourceId, List<DriftConfiguration> configurations);
 
+    /**
+     * Determines which drift configurations for a resource have been added on the server
+     * and need to be added to the local inventory. This method should not make any changes
+     * to the local inventory.
+     *
+     * @param resourceId
+     * @param configurationsFromServer A set of drift configurations belonging to the
+     * resource with the specified id. The set uses a {@link org.rhq.core.domain.drift.DriftConfigurationComparator DriftConfigurationComparator}
+     * with the compare mode set to {@link org.rhq.core.domain.drift.DriftConfigurationComparator.CompareMode#BOTH_BASE_INFO_AND_DIRECTORY_SPECIFICATIONS BOTH_BASE_INFO_AND_DIRECTORY_SPECIFICATIONS}.
+     * @return A list of drift configurations that need to be purged from the local inventory.
+     */
     List<DriftConfiguration> getAddedConfigurations(int resourceId, Set<DriftConfiguration> configurationsFromServer);
 
+    /**
+     * Adds the drift configurations to the local inventory. Implementations are responsible
+     * for deciding how that is to be done. For example, if the plugin container is not
+     * fully initialized, then adding a configuration will involve adding it to the
+     * {@link org.rhq.core.pc.inventory.ResourceContainer ResourceContainer}. But if the
+     * plugin container is initialized, drift detection will have to be scheduled.
+     *
+     * @param resourceId
+     * @param configurations The drift configurations to add to the local inventory.
+     */
     void addToLocalInventory(int resourceId, List<DriftConfiguration> configurations);
 }

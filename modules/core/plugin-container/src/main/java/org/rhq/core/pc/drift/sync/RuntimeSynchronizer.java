@@ -34,6 +34,20 @@ import org.rhq.core.pc.drift.ScheduleQueue;
 
 import static org.rhq.core.domain.drift.DriftConfigurationComparator.CompareMode.BOTH_BASE_INFO_AND_DIRECTORY_SPECIFICATIONS;
 
+/**
+ * As its name implies, this class synchronizes drift configurations at runtime. By runtime
+ * we mean when {@link DriftManager} is fully initialized. Updating the local inventory is
+ * done through DriftManager. When this class determines that a drift configuration needs
+ * to be purged from the local inventory, it does so by calling DriftManager to unschedule
+ * drift detection. Likewise when this class determines that a drift configuration needs
+ * to be added to the local inventory, it does so by calling DriftManager to schedule
+ * detection.
+ * <br/><br/>
+ * Note that inventory sync happens regularly after the plugin container is initialized.
+ * Discovery scans are performed at fixed intervals. The results of a discovery scan are
+ * reported to the server, and the server sends back {@link org.rhq.core.domain.discovery.ResourceSyncInfo resource sync info}
+ * which is then used to sync with the local inventory.
+ */
 class RuntimeSynchronizer implements DriftSynchronizer {
     private final Log log = LogFactory.getLog(RuntimeSynchronizer.class);
 

@@ -33,6 +33,16 @@ import org.rhq.core.pc.inventory.ResourceContainer;
 
 import static org.rhq.core.util.file.FileUtil.purge;
 
+/**
+ * As its name implies, this class synchronizes drift configurations at start up or any
+ * time when the plugin container is not fully initialized. If the plugin container is not
+ * fully initialized, then that means {@link org.rhq.core.pc.drift.DriftManager DriftManager}
+ * is not available to call into to schedule or unschedule drift detection.
+ * StartupSynchronizer therefore deals only with the drift configurations attached to
+ * {@link ResourceContainer} objects. As part of its initialization DriftManager
+ * creates or recreates detection schedules from the configurations attached to the
+ * resource containers.
+ */
 class StartupSynchronizer implements DriftSynchronizer {
     private final Log log = LogFactory.getLog(StartupSynchronizer.class);
 

@@ -26,3 +26,4 @@ modules/enterprise/gui/coregui/build/classes/*
 modules/enterprise/gui/content_http-war/build/classes/*
 settings.xml
 *rsa
+*_private.sh

@@ -145,6 +145,7 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
         headers.setDriftConfigurationName("test-1");
         headers.setBasedir(rootDir.getAbsolutePath());
         headers.setType(COVERAGE);
+        headers.setVersion(0);
 
         String file1Hash = sha256("test-1-file-1");
 
@@ -176,6 +177,7 @@ public class DriftManagerBeanTest extends AbstractEJB3Test {
         // the second change set should report drift
         String modifiedFile1Hash = sha256("test-2-file-1-modified");
         headers.setType(DRIFT);
+        headers.setVersion(1);
         File changeSet2 = new File(changeSetsDir, "changeset-2.txt");
 
         writer = new ChangeSetWriterImpl(changeSet2, headers);

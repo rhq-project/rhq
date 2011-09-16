@@ -183,7 +183,7 @@ public class RecentlyAddedResourcesPortlet extends LocatableVLayout implements C
         // second combobox for timeframe for problem resources search.
         final SelectItem maximumTimeRecentlyAddedComboBox = new SelectItem(RECENTLY_ADDED_SHOW_HRS);
         maximumTimeRecentlyAddedComboBox.setTitle("Over ");
-        maximumTimeRecentlyAddedComboBox.setHint("<nobr><b> " + MSG.common_label_hours() + " </b></nobr>");
+        maximumTimeRecentlyAddedComboBox.setHint("<nobr><b> " + MSG.common_unit_hours() + " </b></nobr>");
         //spinder 9/3/10: the following is required workaround to disable editability of combobox.
         maximumTimeRecentlyAddedComboBox.setType("selection");
         //define acceptable values for display amount

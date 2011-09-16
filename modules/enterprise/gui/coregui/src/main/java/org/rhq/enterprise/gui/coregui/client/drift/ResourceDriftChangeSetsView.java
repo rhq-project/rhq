@@ -27,7 +27,7 @@ import org.rhq.core.domain.resource.composite.ResourceComposite;
  */
 public class ResourceDriftChangeSetsView extends DriftChangeSetsView {
     public static ResourceDriftChangeSetsView get(String locatorId, ResourceComposite composite) {
-        String tableTitle = MSG.view_drift_changeSets_resourceViewTitle();
+        String tableTitle = MSG.view_drift_snapshots_resourceViewTitle();
         EntityContext context = EntityContext.forResource(composite.getResource().getId());
         boolean hasWriteAccess = composite.getResourcePermission().isDrift();
         return new ResourceDriftChangeSetsView(locatorId, tableTitle, context, hasWriteAccess);

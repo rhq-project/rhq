@@ -194,7 +194,7 @@ public abstract class AbstractOperationHistoryDetailsView<T extends OperationHis
                 statusItem.setTooltip(MSG.common_status_failed());
             }
             LinkItem errorLinkItem = new LinkItem("errorLink");
-            errorLinkItem.setTitle(MSG.common_title_error());
+            errorLinkItem.setTitle(MSG.common_severity_error());
             errorLinkItem.setLinkTitle(getShortErrorMessage(operationHistory));
             errorLinkItem.addClickHandler(new ClickHandler() {
                 @Override

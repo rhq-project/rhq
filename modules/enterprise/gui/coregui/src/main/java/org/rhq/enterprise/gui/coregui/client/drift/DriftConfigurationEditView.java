@@ -150,7 +150,7 @@ public class DriftConfigurationEditView extends LocatableVLayout implements Prop
                 }
 
                 public void onSuccess(Void result) {
-                    Message message = new Message(MSG.view_drift_success_configurationUpdated(), Message.Severity.Info);
+                    Message message = new Message(MSG.view_drift_success_defUpdated(), Message.Severity.Info);
 
                     switch (context.getType()) {
                     case Resource:

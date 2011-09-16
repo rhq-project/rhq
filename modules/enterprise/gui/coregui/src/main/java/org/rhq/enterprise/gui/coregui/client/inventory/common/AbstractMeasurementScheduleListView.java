@@ -39,9 +39,8 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
  */
 public abstract class AbstractMeasurementScheduleListView extends Table {
 
-    private static final SortSpecifier[] SORT_SPECIFIERS = new SortSpecifier[] {
-        new SortSpecifier(MeasurementScheduleCriteria.SORT_FIELD_DISPLAY_NAME, SortDirection.ASCENDING)
-    };
+    private static final SortSpecifier[] SORT_SPECIFIERS = new SortSpecifier[] { new SortSpecifier(
+        MeasurementScheduleCriteria.SORT_FIELD_DISPLAY_NAME, SortDirection.ASCENDING) };
 
     public AbstractMeasurementScheduleListView(String locatorId, String title,
         AbstractMeasurementScheduleCompositeDataSource dataSource, Criteria criteria, String[] excludedFieldNames) {
@@ -122,27 +121,27 @@ public abstract class AbstractMeasurementScheduleListView extends Table {
                     if (minutes > 60) {
                         long hours = minutes / 60;
                         minutes = minutes % 60;
-                        result.append(hours).append(" ").append(MSG.common_label_hours());
+                        result.append(hours).append(" ").append(MSG.common_unit_hours());
                     }
                     if (minutes != 0) {
                         if (result.length() != 0) {
                             result.append(", ");
                         }
-                        result.append(minutes).append(" ").append(MSG.common_label_minutes());
+                        result.append(minutes).append(" ").append(MSG.common_unit_minutes());
                     }
                 }
                 if (seconds != 0) {
                     if (result.length() != 0) {
                         result.append(", ");
                     }
-                    result.append(seconds).append(" ").append(MSG.common_label_seconds());
+                    result.append(seconds).append(" ").append(MSG.common_unit_seconds());
                 }
             }
             if (milliseconds != 0) {
                 if (result.length() != 0) {
                     result.append(", ");
                 }
-                result.append(milliseconds).append(" ").append(MSG.common_label_milliseconds());
+                result.append(milliseconds).append(" ").append(MSG.common_unit_milliseconds());
             }
             return result.toString();
         }

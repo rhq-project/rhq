@@ -67,7 +67,7 @@ public class ResourceDriftChangeSetsTreeDataSource extends AbstractDriftChangeSe
             }
 
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError(MSG.view_drift_changeset_tree_loadFailure(), caught);
+                CoreGUI.getErrorHandler().handleError(MSG.view_drift_snapshots_tree_loadFailure(), caught);
                 response.setStatus(DSResponse.STATUS_FAILURE);
                 processResponse(request.getRequestId(), response);
             }

@@ -274,7 +274,7 @@ public class AlertDetailsView extends LocatableVLayout implements BookmarkableVi
             grid.setData((Record[]) input);
             ListGridField condition = new ListGridField("text", MSG.view_alert_common_tab_conditions_text());
             condition.setWidth("60%");
-            ListGridField value = new ListGridField("value", MSG.view_alert_common_tab_conditions_value());
+            ListGridField value = new ListGridField("value", MSG.common_title_value());
 
             grid.setFields(condition, value);
         }

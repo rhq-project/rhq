@@ -74,9 +74,9 @@ public abstract class AbstractMeasurementRangeEditor extends LocatableDynamicFor
 
     static {
         lastUnits = new LinkedHashMap<String, String>(3);
-        lastUnits.put(String.valueOf(MeasurementUtility.UNIT_MINUTES), MSG.common_label_minutes());
-        lastUnits.put(String.valueOf(MeasurementUtility.UNIT_HOURS), MSG.common_label_hours());
-        lastUnits.put(String.valueOf(MeasurementUtility.UNIT_DAYS), MSG.common_label_days());
+        lastUnits.put(String.valueOf(MeasurementUtility.UNIT_MINUTES), MSG.common_unit_minutes());
+        lastUnits.put(String.valueOf(MeasurementUtility.UNIT_HOURS), MSG.common_unit_hours());
+        lastUnits.put(String.valueOf(MeasurementUtility.UNIT_DAYS), MSG.common_unit_days());
 
         lastValues = new String[] { "4", "8", "12", "24", "30", "36", "48", "60", "90", "120" };
     }

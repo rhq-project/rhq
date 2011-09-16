@@ -208,7 +208,7 @@ public class ResourceGroupContextMenu extends LocatableMenu {
         addItem(new MenuItemSeparator());
 
         // Operations Menu
-        MenuItem operations = new MenuItem(MSG.view_tree_common_contextMenu_operations());
+        MenuItem operations = new MenuItem(MSG.common_title_operations());
         boolean operationsEnabled = (groupComposite.getResourcePermission().isControl()
             && null != resourceType.getOperationDefinitions() && !resourceType.getOperationDefinitions().isEmpty());
         operations.setEnabled(operationsEnabled);

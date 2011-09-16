@@ -77,9 +77,9 @@ public class DriftDataSource extends RPCDataSource<DriftComposite, GenericDriftC
     public static final String ATTR_PATH = "path";
 
     public static final String FILTER_CATEGORIES = "categories";
-    public static final String FILTER_CONFIGURATION = "configuration";
-    public static final String FILTER_CHANGE_SET = "changeSet";
+    public static final String FILTER_DEFINITION = "definition";
     public static final String FILTER_PATH = "path";
+    public static final String FILTER_SNAPSHOT = "snapshot";
 
     private DriftGWTServiceAsync driftService = GWTServiceLookup.getDriftService();
 
@@ -109,11 +109,10 @@ public class DriftDataSource extends RPCDataSource<DriftComposite, GenericDriftC
         ctimeField.setHoverCustomizer(TimestampCellFormatter.getHoverCustomizer(ATTR_CTIME));
         fields.add(ctimeField);
 
-        ListGridField changeSetConfigField = new ListGridField(ATTR_CHANGESET_CONFIG, MSG.common_title_configuration());
+        ListGridField changeSetConfigField = new ListGridField(ATTR_CHANGESET_CONFIG, MSG.common_title_definition());
         fields.add(changeSetConfigField);
 
-        ListGridField changeSetVersionField = new ListGridField(ATTR_CHANGESET_VERSION, MSG
-            .view_drift_table_changeSet());
+        ListGridField changeSetVersionField = new ListGridField(ATTR_CHANGESET_VERSION, MSG.view_drift_table_snapshot());
         fields.add(changeSetVersionField);
 
         ListGridField categoryField = new ListGridField(ATTR_CATEGORY, MSG.common_title_category());
@@ -199,7 +198,7 @@ public class DriftDataSource extends RPCDataSource<DriftComposite, GenericDriftC
                 // only get the desired config names (substring match)
                 // note - this does not alter the PageList row count, which, I think, makes this
                 //        ok without messing up paging.
-                String configFilter = getFilter(request, FILTER_CONFIGURATION, String.class);
+                String configFilter = getFilter(request, FILTER_DEFINITION, String.class);
                 if (null != configFilter && !configFilter.isEmpty()) {
                     configFilter = configFilter.toLowerCase();
                     for (Iterator<DriftComposite> i = result.getValues().iterator(); i.hasNext();) {
@@ -288,7 +287,7 @@ public class DriftDataSource extends RPCDataSource<DriftComposite, GenericDriftC
             return null; // user didn't select any priorities - return null to indicate no data should be displayed
         }
 
-        String changeSetFilter = getFilter(request, FILTER_CHANGE_SET, String.class);
+        String changeSetFilter = getFilter(request, FILTER_SNAPSHOT, String.class);
         String pathFilter = getFilter(request, FILTER_PATH, String.class);
         // note, this criteria does not allow for query-time config name filtering. That filter is applied lazily
         // to the query results.

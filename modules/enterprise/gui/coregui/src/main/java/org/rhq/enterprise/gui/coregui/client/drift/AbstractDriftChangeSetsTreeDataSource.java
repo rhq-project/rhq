@@ -109,7 +109,7 @@ public abstract class AbstractDriftChangeSetsTreeDataSource extends RPCDataSourc
                     }
 
                     public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError(MSG.view_drift_changeset_tree_loadFailure(), caught);
+                        CoreGUI.getErrorHandler().handleError(MSG.view_drift_snapshots_tree_loadFailure(), caught);
                         response.setStatus(DSResponse.STATUS_FAILURE);
                         processResponse(request.getRequestId(), response);
                     }
@@ -123,7 +123,7 @@ public abstract class AbstractDriftChangeSetsTreeDataSource extends RPCDataSourc
 
             driftService.findDriftsByCriteria(criteria, new AsyncCallback<PageList<? extends Drift>>() {
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(MSG.view_drift_changeset_tree_loadFailure(), caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.view_drift_snapshots_tree_loadFailure(), caught);
                     response.setStatus(DSResponse.STATUS_FAILURE);
                     processResponse(request.getRequestId(), response);
                 }

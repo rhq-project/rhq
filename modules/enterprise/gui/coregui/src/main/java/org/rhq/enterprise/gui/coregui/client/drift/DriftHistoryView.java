@@ -122,9 +122,8 @@ public class DriftHistoryView extends StringIDTableSection<DriftDataSource> {
         SelectItem categoryFilter = new EnumSelectItem(DriftDataSource.FILTER_CATEGORIES, MSG.common_title_category(),
             DriftCategory.class, categories, categoryIcons);
 
-        TextItem configurationFilter = new TextItem(DriftDataSource.FILTER_CONFIGURATION, MSG
-            .common_title_configuration());
-        TextItem changeSetFilter = new TextItem(DriftDataSource.FILTER_CHANGE_SET, MSG.view_drift_table_changeSet());
+        TextItem configurationFilter = new TextItem(DriftDataSource.FILTER_DEFINITION, MSG.common_title_definition());
+        TextItem changeSetFilter = new TextItem(DriftDataSource.FILTER_SNAPSHOT, MSG.view_drift_table_snapshot());
         TextItem pathFilter = new TextItem(DriftDataSource.FILTER_PATH, MSG.common_title_path());
 
         if (isShowFilterForm()) {

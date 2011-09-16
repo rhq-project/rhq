@@ -19,9 +19,6 @@
  */
 package org.rhq.enterprise.server.drift;
 
-import static javax.ejb.TransactionAttributeType.REQUIRES_NEW;
-import static org.rhq.core.domain.drift.DriftFileStatus.LOADED;
-
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
@@ -79,6 +76,9 @@ import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.drift.DriftChangeSetSummary;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
+
+import static javax.ejb.TransactionAttributeType.REQUIRES_NEW;
+import static org.rhq.core.domain.drift.DriftFileStatus.LOADED;
 
 /**
  * The SLSB method implementation needed to support the JPA (RHQ Default) Drift Server Plugin.
@@ -253,7 +253,13 @@ public class JPADriftServerBean implements JPADriftServerLocal {
                                 + "]. Change set cannot be saved.");
                             return false;
                         }
-                        int version = getChangeSetVersion(resource, config);
+                        // Commenting out the following line for now. We want to set the
+                        // version to the value specified in the headers, but we also
+                        // want to get the latest version we have in the database so that
+                        // we can make sure that the agent is in sync with the server.
+                        //
+                        //int version = getChangeSetVersion(resource, config);
+                        int version = reader.getHeaders().getVersion();
 
                         DriftChangeSetCategory category = reader.getHeaders().getType();
                         driftChangeSet = new JPADriftChangeSet(resource, version, category, config);

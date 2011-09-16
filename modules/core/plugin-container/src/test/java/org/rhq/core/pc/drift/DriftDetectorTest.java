@@ -46,6 +46,8 @@ import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
 import static org.rhq.core.domain.drift.DriftChangeSetCategory.DRIFT;
 import static org.rhq.test.AssertUtils.assertCollectionMatchesNoOrder;
 import static org.rhq.test.AssertUtils.assertPropertiesMatch;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 
 public class DriftDetectorTest extends DriftTest {
@@ -163,6 +165,34 @@ public class DriftDetectorTest extends DriftTest {
 
     @SuppressWarnings("unchecked")
     @Test
+    public void doNotUpdateSnapshotOrGenerateDriftChangeSetIfNothingChanges() throws Exception {
+        File confDir = mkdir(resourceDir, "conf");
+        File serverConf = createRandomFile(confDir, "server.conf");
+
+        DriftConfiguration config = driftConfiguration("nothing-to-update", resourceDir.getAbsolutePath());
+
+        scheduleQueue.addSchedule(new DriftDetectionSchedule(resourceId(), config));
+        detector.run();
+
+        File changeSet = changeSet(config.getName(), COVERAGE);
+        String originalHash = sha256(changeSet);
+
+        // Run the detector again. Note that nothing has changed so the snapshot should
+        // remain the same and no drift change set file should be generated.
+        detector.run();
+
+        String newHash = sha256(changeSet);
+
+        assertEquals(newHash, originalHash, "The snapshot file should not have changed since there was no drift.");
+
+        File driftChangeSet = changeSet(config.getName(), DRIFT);
+
+        assertFalse(driftChangeSet.exists(), "A drift change set file should not have been generated since there was "
+            + "no drift");
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
     public void skipScheduledThatHasConfigDisabled() throws Exception {
         detector.setDriftClient(new DriftClientTestStub() {
             {
@@ -210,7 +240,7 @@ public class DriftDetectorTest extends DriftTest {
 
         // verify that the drift change set was generated
         assertTrue(driftChangeSet.exists(), "Expected to find drift change set " + driftChangeSet.getPath());
-        assertHeaderEquals(driftChangeSet, createHeaders(config, DRIFT));
+        assertHeaderEquals(driftChangeSet, createHeaders(config, DRIFT, 1));
         assertFileEntriesMatch("The drift change set does not match the expected values", driftEntries, driftChangeSet);
 
         File coverageChangeSet = changeSet(config.getName(), COVERAGE);
@@ -219,7 +249,7 @@ public class DriftDetectorTest extends DriftTest {
             addedFileEntry("conf/server-2.conf", sha256(server2Conf)));
 
         // verify that the coverage change set was updated
-        assertHeaderEquals(coverageChangeSet, createHeaders(config, COVERAGE));
+        assertHeaderEquals(coverageChangeSet, createHeaders(config, COVERAGE, 1));
         assertFileEntriesMatch("The coverage change set was not updated as expected", coverageEntries,
             coverageChangeSet);
     }
@@ -250,14 +280,14 @@ public class DriftDetectorTest extends DriftTest {
 
         // verify that the drift change set was generated
         assertTrue(driftChangeSet.exists(), "Expected to find drift change set " + driftChangeSet.getPath());
-        assertHeaderEquals(driftChangeSet, createHeaders(config, DRIFT));
+        assertHeaderEquals(driftChangeSet, createHeaders(config, DRIFT, 1));
         assertFileEntriesMatch("The drift change set does not match the expected values", driftEntries, driftChangeSet);
 
         File coverageChangeSet = changeSet(config.getName(), COVERAGE);
         List<FileEntry> coverageEntries = asList(changedFileEntry("conf/server-1.conf", oldHash, newHash));
 
         // verify that the coverage change set was updated
-        assertHeaderEquals(coverageChangeSet, createHeaders(config, COVERAGE));
+        assertHeaderEquals(coverageChangeSet, createHeaders(config, COVERAGE, 1));
         assertFileEntriesMatch("The coverage change set was not updated as expected", coverageEntries,
             coverageChangeSet);
     }
@@ -286,7 +316,7 @@ public class DriftDetectorTest extends DriftTest {
 
         // verify that the drift change set was generated
         assertTrue(driftChangeSet.exists(), "Expected to find drift change set " + driftChangeSet.getPath());
-        assertHeaderEquals(driftChangeSet, createHeaders(config, DRIFT));
+        assertHeaderEquals(driftChangeSet, createHeaders(config, DRIFT, 1));
         assertFileEntriesMatch("The drift change set does not match the expected values", driftEntries, driftChangeSet);
 
         File coverageChangeSet = changeSet(config.getName(), COVERAGE);
@@ -295,7 +325,7 @@ public class DriftDetectorTest extends DriftTest {
             addedFileEntry("conf/subconf/server-2.conf", sha256(server2Conf)));
 
         // verify that the coverage change set was updated
-        assertHeaderEquals(coverageChangeSet, createHeaders(config, COVERAGE));
+        assertHeaderEquals(coverageChangeSet, createHeaders(config, COVERAGE, 1));
         assertFileEntriesMatch("The coverage change set was not updated as expected", coverageEntries,
             coverageChangeSet);
     }
@@ -327,20 +357,20 @@ public class DriftDetectorTest extends DriftTest {
 
         // verify that the drift change set was generated
         assertTrue(driftChangeSet.exists(), "Expected to find drift change set " + driftChangeSet.getPath());
-        assertHeaderEquals(driftChangeSet, createHeaders(config, DRIFT));
+        assertHeaderEquals(driftChangeSet, createHeaders(config, DRIFT, 1));
         assertFileEntriesMatch("The drift change set does not match the expected values", driftEntries, driftChangeSet);
 
         // verify that the coverage change set was updated
         File coverageChangeSet = changeSet(config.getName(), COVERAGE);
         List<FileEntry> coverageEntries = asList(addedFileEntry("conf/server-1.conf", sha256(server1Conf)));
 
-        assertHeaderEquals(coverageChangeSet, createHeaders(config, COVERAGE));
+        assertHeaderEquals(coverageChangeSet, createHeaders(config, COVERAGE, 1));
         assertFileEntriesMatch("The coverage change set was not updated as expected", coverageEntries,
             coverageChangeSet);
     }
 
     @SuppressWarnings("unchecked")
-    @Test(enabled = false)
+    @Test
     public void includeFilesInRemovedDirectoryInDriftChangeSet() throws Exception {
         DriftConfiguration config = driftConfiguration("dir-removed-test", resourceDir.getAbsolutePath());
 
@@ -356,19 +386,22 @@ public class DriftDetectorTest extends DriftTest {
         server1Conf.delete();
         confDir.delete();
 
+        scheduleQueue.addSchedule(new DriftDetectionSchedule(resourceId(), config));
+        detector.run();
+
         File driftChangeSet = changeSet(config.getName(), DRIFT);
         List<FileEntry> driftEntries = asList(removedFileEntry("conf/server-1.conf", server1Hash));
 
         // verify that the drift change set was generated
         assertTrue(driftChangeSet.exists(), "Expected to find drift change set " + driftChangeSet.getPath());
-        assertHeaderEquals(driftChangeSet, createHeaders(config, DRIFT));
+        assertHeaderEquals(driftChangeSet, createHeaders(config, DRIFT, 1));
         assertFileEntriesMatch("The drift change set does not match the expected values", driftEntries, driftChangeSet);
 
         // verify that the coverage change set was updated
         File coverageChangeSet = changeSet(config.getName(), COVERAGE);
         List<FileEntry> coverageEntries = emptyList();
 
-        assertHeaderEquals(coverageChangeSet, createHeaders(config, COVERAGE));
+        assertHeaderEquals(coverageChangeSet, createHeaders(config, COVERAGE, 1));
         assertFileEntriesMatch("The coverage change set was not updated as expected", coverageEntries,
             coverageChangeSet);
     }
@@ -392,12 +425,17 @@ public class DriftDetectorTest extends DriftTest {
     }
 
     Headers createHeaders(DriftConfiguration driftConfig, DriftChangeSetCategory type) {
+        return createHeaders(driftConfig, type, 0);
+    }
+
+    Headers createHeaders(DriftConfiguration driftConfig, DriftChangeSetCategory type, int version) {
         Headers headers = new Headers();
         headers.setResourceId(resourceId());
         headers.setDriftCofigurationId(driftConfig.getId());
         headers.setDriftConfigurationName(driftConfig.getName());
         headers.setBasedir(resourceDir.getAbsolutePath());
         headers.setType(type);
+        headers.setVersion(version);
 
         return headers;
     }

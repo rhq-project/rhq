@@ -19,6 +19,7 @@
 
 package org.rhq.enterprise.server.plugins.drift.mongodb;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -32,6 +33,11 @@ import com.mongodb.gridfs.GridFSInputFile;
 import org.bson.types.ObjectId;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+
+import org.rhq.core.util.stream.StreamUtil;
+
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
 
 public class GridFSTest {
 
@@ -48,7 +54,7 @@ public class GridFSTest {
     }
 
     @Test(enabled = false)
-    public void writeFile() throws Exception {
+    public void writeAndReadFile() throws Exception {
         GridFS gridFS = new GridFS(db);
         File file = new File("/home/jsanda/clojure-plugin.tar");
         GridFSInputFile inputFile = gridFS.createFile(new FileInputStream(file), file.getName());
@@ -58,6 +64,16 @@ public class GridFSTest {
         FileOutputStream stream = new FileOutputStream("/home/jsanda/gridfs-test.tar");
         GridFSDBFile gridFSDBFile = gridFS.findOne((ObjectId) inputFile.getId());
         gridFSDBFile.writeTo(stream);
+
+        GridFSDBFile dbFile = gridFS.findOne(file.getName());
+        assertNotNull(dbFile);
+
+        File outputFile = new File("/tmp/clojure-plugin.tar");
+        outputFile.delete();
+
+        StreamUtil.copy(dbFile.getInputStream(), new BufferedOutputStream(new FileOutputStream(outputFile)), true);
+
+        assertEquals(outputFile.length(), file.length());
     }
 
 }

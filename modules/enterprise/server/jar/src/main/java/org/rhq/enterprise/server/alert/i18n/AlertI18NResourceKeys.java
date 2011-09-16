@@ -22,77 +22,172 @@ import mazz.i18n.annotation.I18NMessage;
 import mazz.i18n.annotation.I18NMessages;
 import mazz.i18n.annotation.I18NResourceBundle;
 
-/**
- * @author Joseph Marques
- */
-
 @I18NResourceBundle(baseName = "alert-messages", defaultLocale = "en")
 public interface AlertI18NResourceKeys {
-    @I18NMessages( { @I18NMessage("value is between {0} and {1}, inclusive"),
-        @I18NMessage(locale = "de", value = "Der Wert zwischen {0} und {1}, pauschal") })
-    String ALERT_CONFIG_PROPS_CB_INSIDE_INCL_RANGE = "alert.config.props.CB.InsideRange.incl.";
+    @I18NMessages( { @I18NMessage("Availability goes UP"),
+        @I18NMessage(locale = "de", value = "Verf�gbarkeit wird AUF") })
+    String ALERT_AVAILABILITY_UP = "alert.condition.availability.up";
 
-    @I18NMessages( { @I18NMessage("between {0} and {1}, incl"),
-        @I18NMessage(locale = "de", value = "zwischen {0} und {1}, paus") })
-    String ALERT_CONFIG_PROPS_CB_INSIDE_INCL_RANGE_SHORT = "alert.config.props.CB.InsideRange.incl.short";
+    @I18NMessages( { @I18NMessage("Avail goes UP"), @I18NMessage(locale = "de", value = "Verf. wird AUF") })
+    String ALERT_AVAILABILITY_UP_SHORT = "alert.condition.availability.up.short";
 
-    @I18NMessages( { @I18NMessage("value is between {0} and {1}, exclusive"),
-        @I18NMessage(locale = "de", value = "Der Wert zwischen {0} und {1}, exklusiv") })
-    String ALERT_CONFIG_PROPS_CB_INSIDE_EXCL_RANGE = "alert.config.props.CB.InsideRange.excl";
+    @I18NMessages( { @I18NMessage("Availability goes DOWN"),
+        @I18NMessage(locale = "de", value = "Verf�gbarkeit wird NACH UNTEN") })
+    String ALERT_AVAILABILITY_DOWN = "alert.condition.availability.down";
 
-    @I18NMessages( { @I18NMessage("between {0} and {1}, excl"),
-        @I18NMessage(locale = "de", value = "zwischen {0} und {1}, exkl.") })
-    String ALERT_CONFIG_PROPS_CB_INSIDE_EXCL_RANGE_SHORT = "alert.config.props.CB.InsideRange.excl.short";
+    @I18NMessages( { @I18NMessage("Avail goes DOWN"), @I18NMessage(locale = "de", value = "Verf. wird NACH UNTEN") })
+    String ALERT_AVAILABILITY_DOWN_SHORT = "alert.condition.availability.down.short";
 
-    @I18NMessages( { @I18NMessage("value is outside {0} and {1}, inclusive"),
-        @I18NMessage(locale = "de", value = "Der Wert außerhalb {0} und {1}, pauschal") })
-    String ALERT_CONFIG_PROPS_CB_OUTSIDE_INCL_RANGE = "alert.config.props.CB.OutsideRange.incl";
+    // Foo Prop > 10.0% of Baseline Mean Value 
+    @I18NMessages( { @I18NMessage("{0} {1} {2} of Baseline Mean Value") /*, @I18NMessage(locale = "de", value = "") */})
+    String ALERT_BASELINE_MEAN = "alert.condition.baseline.mean";
 
-    @I18NMessages( { @I18NMessage("outside {0} and {1}, incl"),
-        @I18NMessage(locale = "de", value = "außerhalb {0} und {1}, paus") })
-    String ALERT_CONFIG_PROPS_CB_OUTSIDE_INCL_RANGE_SHORT = "alert.config.props.CB.OutsideRange.incl.short";
+    // Foo Prop > 10.0% bl mean
+    @I18NMessages( { @I18NMessage("{0} {1} {2} bl mean") /*, @I18NMessage(locale = "de", value = "") */})
+    String ALERT_BASELINE_MEAN_SHORT = "alert.condition.baseline.mean.short";
 
-    @I18NMessages( { @I18NMessage("value is outside {0} and {1}, exclusive"),
-        @I18NMessage(locale = "de", value = "Der Wert außerhalb {0} und {1}, exklusiv") })
-    String ALERT_CONFIG_PROPS_CB_OUTSIDE_EXCL_RANGE = "alert.config.props.CB.OutsideRange.excl";
+    @I18NMessages( { @I18NMessage("{0} {1} {2} of Baseline Minimum Value") /*, @I18NMessage(locale = "de", value = "") */})
+    String ALERT_BASELINE_MIN = "alert.condition.baseline.min";
 
-    @I18NMessages( { @I18NMessage("outside {0} and {1}, excl"),
-        @I18NMessage(locale = "de", value = "außerhalb {0} und {1}, exkl") })
-    String ALERT_CONFIG_PROPS_CB_OUTSIDE_EXCL_RANGE_SHORT = "alert.config.props.CB.OutsideRange.excl.short";
+    @I18NMessages( { @I18NMessage("{0} {1} {2} bl min") /*, @I18NMessage(locale = "de", value = "") */})
+    String ALERT_BASELINE_MIN_SHORT = "alert.condition.baseline.min.short";
 
-    @I18NMessages( { @I18NMessage("Drift detected"), @I18NMessage(locale = "de", value = "Änderung erkannt") })
-    String ALERT_CONFIG_PROPS_CB_DRIFT = "alert.config.props.CB.Drift";
+    @I18NMessages( { @I18NMessage("{0} {1} {2} of Baseline Maximum Value") /*, @I18NMessage(locale = "de", value = "") */})
+    String ALERT_BASELINE_MAX = "alert.condition.baseline.max";
 
-    @I18NMessages( { @I18NMessage("Drift detected"), @I18NMessage(locale = "de", value = "Änderung erkannt") })
-    String ALERT_CONFIG_PROPS_CB_DRIFT_SHORT = "alert.config.props.CB.Drift.short";
+    @I18NMessages( { @I18NMessage("{0} {1} {2} bl max") /*, @I18NMessage(locale = "de", value = "") */})
+    String ALERT_BASELINE_MAX_SHORT = "alert.condition.baseline.max.short";
 
-    @I18NMessages( { @I18NMessage("Availability goes {0}"),
-        @I18NMessage(locale = "de", value = "Verf�gbarkeit wird {0}") })
-    String ALERT_CONFIG_PROPS_CB_AVAILABILITY = "alert.config.props.CB.Availability";
+    // Calltime Metric Foo MAX > 1.0 with calltime destination matching "*.txt"
+    @I18NMessages( { @I18NMessage("Calltime Metric {0} {1} {2} {3} with calltime destination matching \"{4}\"") /*, @I18NMessage(locale = "de", value = "") */})
+    String ALERT_METRIC_CALLTIME_THRESHOLD_WITH_EXPR = "alert.condition.calltime-threshold-with-expr";
 
-    @I18NMessages( { @I18NMessage("Avail goes {0}"), @I18NMessage(locale = "de", value = "Verf. wird {0}") })
-    String ALERT_CONFIG_PROPS_CB_AVAILABILITY_SHORT = "alert.config.props.CB.Availability.short";
+    // Foo MAX > 1.0 matching "*.txt"
+    @I18NMessages( { @I18NMessage("{0} {1} {2} {3} matching \"{4}\"") /*, @I18NMessage(locale = "de", value = "") */})
+    String ALERT_METRIC_CALLTIME_THRESHOLD_WITH_EXPR_SHORT = "alert.condition.calltime-threshold-with-expr.short";
 
-    @I18NMessages( { @I18NMessage("Event Severity: {0}"),
-        @I18NMessage(locale = "de", value = "Schwere des Ereignesses: {0}") })
-    String ALERT_CONFIG_PROPS_CB_EVENT_SEVERITY = "alert.config.props.CB.EventSeverity";
+    // Calltime Metric Foo MAX > 1.0
+    @I18NMessages( { @I18NMessage("Calltime Metric {0} {1} {2} {3}") /*, @I18NMessage(locale = "de", value = "") */})
+    String ALERT_METRIC_CALLTIME_THRESHOLD = "alert.condition.calltime-threshold";
 
-    @I18NMessages( { @I18NMessage("Sev: {0}"), @I18NMessage(locale = "de", value = "Schwere: {0}") })
-    String ALERT_CONFIG_PROPS_CB_EVENT_SEVERITY_SHORT = "alert.config.props.CB.EventSeverity.short";
+    // Foo MAX > 1.0
+    @I18NMessages( { @I18NMessage("{0} {1} {2} {3}") /*, @I18NMessage(locale = "de", value = "") */})
+    String ALERT_METRIC_CALLTIME_THRESHOLD_SHORT = "alert.condition.calltime-threshold.short";
 
-    @I18NMessages( { @I18NMessage("Event Severity: {0} and matching expression \"{1}\""),
-        @I18NMessage(locale = "de", value = "Schwere des Ereignesses: {0} und zugeh�riger Ausdruck  \"{1}\"") })
-    String ALERT_CONFIG_PROPS_CB_EVENT_SEVERITY_REGEX_MATCH = "alert.config.props.CB.EventSeverity.RegexMatch";
+    @I18NMessages( { @I18NMessage("grows") /*, @I18NMessage(locale = "de", value = "") */})
+    String ALERT_METRIC_CALLTIME_CHANGE_GROWS = "alert.condition.calltime-change.grows";
 
-    @I18NMessages( { @I18NMessage("Sev: {0} & exp \"{1}\""),
-        @I18NMessage(locale = "de", value = "Schwere: {0} & Ausdruck  \"{1}\"") })
-    String ALERT_CONFIG_PROPS_CB_EVENT_SEVERITY_REGEX_MATCH_SHORT = "alert.config.props.CB.EventSeverity.RegexMatch.short";
+    @I18NMessages( { @I18NMessage("shrinks") /*, @I18NMessage(locale = "de", value = "") */})
+    String ALERT_METRIC_CALLTIME_CHANGE_SHRINKS = "alert.condition.calltime-change.shrinks";
 
-    @I18NMessages( { @I18NMessage("value changed"), @I18NMessage(locale = "de", value = "Der Wert hat sich ge�ndert") })
-    String ALERT_CURRENT_LIST_VALUE_CHANGED = "alert.current.list.ValueChanged";
+    @I18NMessages( { @I18NMessage("changes") /*, @I18NMessage(locale = "de", value = "") */})
+    String ALERT_METRIC_CALLTIME_CHANGE_CHANGES = "alert.condition.calltime-change.changes";
 
-    @I18NMessages( { @I18NMessage("val chg"), @I18NMessage(locale = "de", value = "Wert�nd.") })
-    String ALERT_CURRENT_LIST_VALUE_CHANGED_SHORT = "alert.current.list.ValueChanged.short";
+    // Calltime Metric Foo MAX (grows/shrinks/changes) by at least 1% with calltime destination matching "*.txt"
+    @I18NMessages( { @I18NMessage("Calltime Metric {0} {1} {2} by at least {3} with calltime destination matching \"{4}\"") /*, @I18NMessage(locale = "de", value = "") */})
+    String ALERT_METRIC_CALLTIME_CHANGE_WITH_EXPR = "alert.condition.calltime-change-with-expr";
+
+    // Foo MAX (grows/shrinks/changes) by 1% matching "*.txt"
+    @I18NMessages( { @I18NMessage("{0} {1} {2} by {3} matching \"{4}\"") /*, @I18NMessage(locale = "de", value = "") */})
+    String ALERT_METRIC_CALLTIME_CHANGE_WITH_EXPR_SHORT = "alert.condition.calltime-change-with-expr.short";
+
+    // Calltime Metric Foo MAX (grows/shrinks/changes) by at least 1%
+    @I18NMessages( { @I18NMessage("Calltime Metric {0} {1} {2} by at least {3}") /*, @I18NMessage(locale = "de", value = "") */})
+    String ALERT_METRIC_CALLTIME_CHANGE = "alert.condition.calltime-change";
+
+    // Foo MAX (grows/shrinks/changes) by 1%
+    @I18NMessages( { @I18NMessage("{0} {1} {2} by {3}") /*, @I18NMessage(locale = "de", value = "") */})
+    String ALERT_METRIC_CALLTIME_CHANGE_SHORT = "alert.condition.calltime-change.short";
+
+    // Foo Value Changed
+    @I18NMessages( { @I18NMessage("{0} Value Changed"),
+        @I18NMessage(locale = "de", value = "{0} Der Wert hat sich ge�ndert") })
+    String ALERT_METRIC_CHANGED = "alert.condition.metric.changed";
+
+    @I18NMessages( { @I18NMessage("{0} Val Chg"), @I18NMessage(locale = "de", value = "{0} Wert�nd.") })
+    String ALERT_METRIC_CHANGED_SHORT = "alert.condition.metric.changed.short";
+
+    @I18NMessages( { @I18NMessage("Operation [{0}] has status=[{1}]") /*, @I18NMessage(locale = "de", value = "") */})
+    String ALERT_OPERATION = "alert.condition.op";
+
+    @I18NMessages( { @I18NMessage("Op [{0}]={1}") /*, @I18NMessage(locale = "de", value = "") */})
+    String ALERT_OPERATION_SHORT = "alert.condition.op.short";
+
+    @I18NMessages( { @I18NMessage("Resource Configuration Changed") /*, @I18NMessage(locale = "de", value = "") */})
+    String ALERT_RESOURCECONFIGCHANGE = "alert.condition.resconfigchange";
+
+    @I18NMessages( { @I18NMessage("Res Config Chg") /*, @I18NMessage(locale = "de", value = "") */})
+    String ALERT_RESOURCECONFIGCHANGE_SHORT = "alert.condition.resconfigchange.short";
+
+    @I18NMessages( { @I18NMessage("Event With Severity [{0}]") /*, @I18NMessage(locale = "de", value = "") */})
+    String ALERT_EVENT = "alert.condition.event";
+
+    // [WARN] Event
+    @I18NMessages( { @I18NMessage("[{0}] Event") /*, @I18NMessage(locale = "de", value = "") */})
+    String ALERT_EVENT_SHORT = "alert.condition.event.short";
+
+    @I18NMessages( { @I18NMessage("Event With Severity [{0}] Matching Expression \"{1}\"") /*, @I18NMessage(locale = "de", value = "") */})
+    String ALERT_EVENT_WITH_EXPR = "alert.condition.event-with-expr";
+
+    @I18NMessages( { @I18NMessage("[{0}] Event Matching \"{1}\"") /*, @I18NMessage(locale = "de", value = "") */})
+    String ALERT_EVENT_WITH_EXPR_SHORT = "alert.condition.event-with-expr.short";
+
+    @I18NMessages( { @I18NMessage("Drift Detected") /*, @I18NMessage(locale = "de", value = "") */})
+    String ALERT_DRIFT = "alert.condition.drift";
+
+    @I18NMessages( { @I18NMessage("Drift!") /*, @I18NMessage(locale = "de", value = "") */})
+    String ALERT_DRIFT_SHORT = "alert.condition.drift.short";
+
+    @I18NMessages( { @I18NMessage("Drift detected for files that match \"{0}\" and for drift configuration [{1}]") /*, @I18NMessage(locale = "de", value = "") */})
+    String ALERT_DRIFT_CONFIGPATHS = "alert.condition.drift.configpaths";
+
+    @I18NMessages( { @I18NMessage("Drift matching \"{0}\", config=[{1}]") /*, @I18NMessage(locale = "de", value = "") */})
+    String ALERT_DRIFT_CONFIGPATHS_SHORT = "alert.condition.drift.configpaths.short";
+
+    @I18NMessages( { @I18NMessage("Drift detected for drift configuration [{0}]") /*, @I18NMessage(locale = "de", value = "") */})
+    String ALERT_DRIFT_ONLYCONFIG = "alert.condition.drift.onlyconfig";
+
+    @I18NMessages( { @I18NMessage("Drift! config=[{0}]") /*, @I18NMessage(locale = "de", value = "") */})
+    String ALERT_DRIFT_ONLYCONFIG_SHORT = "alert.condition.drift.onlyconfig.short";
+
+    @I18NMessages( { @I18NMessage("Drift detected for files that match \"{0}\"") /*, @I18NMessage(locale = "de", value = "") */})
+    String ALERT_DRIFT_ONLYPATHS = "alert.condition.drift.onlypaths";
+
+    @I18NMessages( { @I18NMessage("Drift matching \"{0}\"") /*, @I18NMessage(locale = "de", value = "") */})
+    String ALERT_DRIFT_ONLYPATHS_SHORT = "alert.condition.drift.onlypaths.short";
+
+    // Foo Value is Between 1.0B and 2.0B, Inclusive
+    @I18NMessages( { @I18NMessage("{0} Value is Between {1} and {2}, Inclusive"),
+        @I18NMessage(locale = "de", value = "{0} Der Wert zwischen {1} und {2}, pauschal") })
+    String ALERT_RANGE_INSIDE_INCL = "alert.condition.range.in.incl";
+
+    @I18NMessages( { @I18NMessage("{0} Between {1} - {2}, incl"),
+        @I18NMessage(locale = "de", value = "{0} zwischen {1} und {2}, paus") })
+    String ALERT_RANGE_INSIDE_INCL_SHORT = "alert.condition.range.in.incl.short";
+
+    @I18NMessages( { @I18NMessage("{0} Value is Between {1} and {2}, Exclusive"),
+        @I18NMessage(locale = "de", value = "{0} Der Wert zwischen {1} und {2}, exklusiv") })
+    String ALERT_RANGE_INSIDE_EXCL = "alert.condition.range.in.excl";
+
+    @I18NMessages( { @I18NMessage("{0} Between {1} - {2}, excl"),
+        @I18NMessage(locale = "de", value = "{0} zwischen {1} - {2}, exkl.") })
+    String ALERT_RANGE_INSIDE_EXCL_SHORT = "alert.condition.range.in.excl.short";
+
+    @I18NMessages( { @I18NMessage("{0} Value is Outside {1} and {2}, Inclusive"),
+        @I18NMessage(locale = "de", value = "{0} Der Wert außerhalb {1} und {2}, pauschal") })
+    String ALERT_RANGE_OUTSIDE_INCL = "alert.condition.range.out.incl";
+
+    @I18NMessages( { @I18NMessage("{0} Outside {1} - {2}, incl"),
+        @I18NMessage(locale = "de", value = "{0} außerhalb {1} und {2}, paus") })
+    String ALERT_RANGE_OUTSIDE_INCL_SHORT = "alert.condition.range.out.incl.short";
+
+    @I18NMessages( { @I18NMessage("{0} Value is Outside {1} and {2}, Exclusive"),
+        @I18NMessage(locale = "de", value = "{0} Der Wert außerhalb {1} und {2}, exklusiv") })
+    String ALERT_RANGE_OUTSIDE_EXCL = "alert.condition.range.out.excl";
+
+    @I18NMessages( { @I18NMessage("{0} Outside {1} - {2}, excl"),
+        @I18NMessage(locale = "de", value = "{0} außerhalb {1} und {2}, exkl") })
+    String ALERT_RANGE_OUTSIDE_EXCL_SHORT = "alert.condition.range.out.excl.short";
 
     @I18NMessages( {
         @I18NMessage("\\  - Condition {0}: {1}\\n\\\n" + "\\  - Date/Time: {2}\\n\\\n" + "\\  - Details: {3}\\n\\\n"),

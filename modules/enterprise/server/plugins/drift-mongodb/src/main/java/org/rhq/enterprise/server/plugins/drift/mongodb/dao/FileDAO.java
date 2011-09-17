@@ -19,10 +19,16 @@
 
 package org.rhq.enterprise.server.plugins.drift.mongodb.dao;
 
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.gridfs.GridFS;
 import com.mongodb.gridfs.GridFSDBFile;
+import com.mongodb.gridfs.GridFSInputFile;
 
 public class FileDAO {
 
@@ -35,8 +41,14 @@ public class FileDAO {
         gridFS = new GridFS(this.db);
     }
 
-    GridFSDBFile findOne(String hash) {
+    public GridFSDBFile findOne(String hash) {
         return gridFS.findOne(new BasicDBObject("_id", hash));
+    }
+
+    public void save(File file) throws IOException {
+        GridFSInputFile inputFile = gridFS.createFile(new BufferedInputStream(new FileInputStream(file)));
+        inputFile.put("_id", file.getName());
+        inputFile.save();
     }
 
 }

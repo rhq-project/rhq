@@ -62,6 +62,7 @@ import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginContext;
 import org.rhq.enterprise.server.plugin.pc.drift.DriftChangeSetSummary;
 import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginFacet;
+import org.rhq.enterprise.server.plugins.drift.mongodb.dao.FileDAO;
 import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBChangeSet;
 import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBChangeSetEntry;
 import org.rhq.enterprise.server.plugins.drift.mongodb.entities.MongoDBFile;
@@ -79,13 +80,14 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
 
     private Datastore ds;
 
-    static int changeSetVersions = 0;
+    private FileDAO fileDAO;
 
     @Override
     public void initialize(ServerPluginContext context) throws Exception {
         connection = new Mongo("localhost");
         morphia = new Morphia().map(MongoDBChangeSet.class).map(MongoDBChangeSetEntry.class).map(MongoDBFile.class);
         ds = morphia.createDatastore(connection, "rhq");
+        fileDAO = new FileDAO(ds.getDB());
     }
 
     @Override
@@ -120,7 +122,7 @@ public class MongoDBDriftServer implements DriftServerPluginFacet, ServerPluginC
                 changeSet.setResourceId(resourceId);
                 changeSet.setDriftConfigurationId(headers.getDriftCofigurationId());
                 changeSet.setDriftHandlingMode(DriftHandlingMode.normal);
-                changeSet.setVersion(changeSetVersions++);
+                changeSet.setVersion(headers.getVersion());
 
                 summary.setCategory(headers.getType());
                 summary.setResourceId(resourceId);

@@ -21,6 +21,7 @@ package org.rhq.enterprise.server.rest;
 import java.util.List;
 
 import javax.ejb.Local;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -75,6 +76,7 @@ public interface MetricHandlerLocal {
 
     @PUT
     @Path("/schedule/{id}")
+    @Consumes("application/json")
     MetricSchedule updateSchedule(@PathParam("id") int scheduleId, MetricSchedule in);
 
 }

@@ -154,11 +154,14 @@ public class MetricHandlerBean  extends AbstractRestBean implements MetricHandle
         if (in==null)
             throw new StuffNotFoundException("Input is null"); // TODO other type of exception
 
+        if (in.getScheduleId()==null)
+            throw new StuffNotFoundException("Invalid input data");
+
         MeasurementSchedule schedule = scheduleManager.getScheduleById(caller, scheduleId);
         if (schedule==null)
             throw new StuffNotFoundException("Schedule with id " + scheduleId);
 
-        schedule.setEnabled(in.isEnabled());
+        schedule.setEnabled(in.getEnabled());
         schedule.setInterval(in.getCollectionInterval());
 
         scheduleManager.updateSchedule(caller, schedule);

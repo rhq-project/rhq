@@ -37,7 +37,7 @@
             <td>Name</td><td>${var.displayName}</td>
         </tr>
         <tr>
-            <td>Enabled</td><td>${var.enabled}</td>
+            <td>Enabled</td><td>${var.enabled?string("Yes","No")}</td>
         </tr>
         <tr>
             <td>Collection interval (ms)</td><td>${var.collectionInterval}</td>

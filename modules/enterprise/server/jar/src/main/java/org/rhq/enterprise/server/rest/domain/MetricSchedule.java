@@ -75,7 +75,7 @@ public class MetricSchedule {
         this.scheduleName = scheduleName;
     }
 
-    public Boolean isEnabled() {
+    public Boolean getEnabled() {
         return enabled;
     }
 
@@ -115,7 +115,7 @@ public class MetricSchedule {
         this.type = type;
     }
 
-    public String getEnabled() {
-        return String.valueOf(enabled);
-    }
+//    public String getEnabled() {
+//        return String.valueOf(enabled);
+//    }
 }

@@ -64,6 +64,14 @@ public class ChangeSetDAO extends BasicDAO<MongoDBChangeSet, ObjectId> {
             query.field("files.category").in(asList(criteria.getFilterCategories()));
         }
 
+        if (criteria.getFilterStartTime() != null) {
+            query.field("files.ctime").greaterThanOrEq(criteria.getFilterStartTime());
+        }
+
+        if (criteria.getFilterEndTime() != null) {
+            query.field("files.ctime").lessThanOrEq(criteria.getFilterEndTime());
+        }
+
         return query.asList();
     }
 

@@ -23,6 +23,7 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
@@ -41,8 +42,12 @@ public class FileDAO {
         gridFS = new GridFS(this.db);
     }
 
-    public GridFSDBFile findOne(String hash) {
-        return gridFS.findOne(new BasicDBObject("_id", hash));
+    public InputStream findOne(String hash) {
+        GridFSDBFile dbFile = gridFS.findOne(new BasicDBObject("_id", hash));
+        if (dbFile == null) {
+            return null;
+        }
+        return dbFile.getInputStream();
     }
 
     public void save(File file) throws IOException {

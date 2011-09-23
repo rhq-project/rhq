@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Random;
 
 import com.google.code.morphia.Datastore;
@@ -71,7 +72,7 @@ public class FileDAOTest {
 
     @BeforeClass
     public void initDB() throws Exception {
-        connection = new Mongo("localhost");
+        connection = new Mongo("127.0.0.1");
 
         morphia = new Morphia()
             .map(MongoDBChangeSet.class)
@@ -100,31 +101,54 @@ public class FileDAOTest {
 
     @Test(enabled = ENABLED)
     public void findFile() throws Exception {
-        File file = createRandomFile("findFile.expected");
+        File file = createRandomFile();
         String hash = sha256(file);
 
         GridFSInputFile inputFile = gridFS.createFile(new FileInputStream(file));
         inputFile.put("_id", hash);
         inputFile.save();
 
-        GridFSDBFile dbFile = dao.findOne(hash);
+        InputStream dbInputStream = dao.findOne(hash);
 
-        assertNotNull(dbFile, "Expected to find file with name " + hash);
+        assertNotNull(dbInputStream, "Expected to find file with name " + hash);
         File actualFile = new File(dataDir, "findFile.actual");
-        StreamUtil.copy(dbFile.getInputStream(), new FileOutputStream(actualFile), true);
+        StreamUtil.copy(dbInputStream, new FileOutputStream(actualFile), true);
 
-        assertTrue(actualFile.exists(), "Expected to file " + actualFile.getPath());
+        assertTrue(actualFile.exists(), "Expected to find file " + actualFile.getPath());
     }
 
-    private File createRandomFile(String fileName) throws Exception {
-        File file = new File(dataDir, fileName);
-        FileOutputStream stream = new FileOutputStream(file);
+    @Test(enabled = ENABLED)
+    public void saveAndFindFile() throws Exception {
+        File file = createRandomFile();
+        String hash = file.getName();
+
+        dao.save(file);
+        InputStream dbInputStream = dao.findOne(hash);
+
+        assertNotNull(dbInputStream, "Expected to find file with name " + hash);
+        File actualFile = new File(dataDir, "saveAndFindFile.actual");
+        StreamUtil.copy(dbInputStream, new FileOutputStream(actualFile), true);
+
+        assertTrue(actualFile.exists(), "Expected to find file " + actualFile.getPath());
+    }
+
+    private File createRandomFile() throws Exception {
         byte[] bytes = new byte[32];
         random.nextBytes(bytes);
+        File file = new File(dataDir, sha256(bytes));
+        FileOutputStream stream = new FileOutputStream(file);
         write(bytes, stream);
         stream.close();
 
         return file;
+    }
+
+    protected String sha256(byte[] bytes) {
+        try {
+            return digestGenerator.calcDigestString(bytes);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to calculate SHA-256 hash", e);
+        }
     }
 
     protected String sha256(File file) {
